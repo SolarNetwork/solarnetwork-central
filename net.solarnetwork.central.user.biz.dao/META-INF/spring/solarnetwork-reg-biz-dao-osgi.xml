@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:osgi="http://www.springframework.org/schema/osgi"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+						http://www.springframework.org/schema/osgi http://www.springframework.org/schema/osgi/spring-osgi.xsd">
+
+	<!-- Service References -->
+	
+	<osgi:reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
+	
+	<osgi:reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
+	
+	<osgi:reference id="userNodeConfirmationDao" interface="net.solarnetwork.central.user.dao.UserNodeConfirmationDao"/>
+	
+	<osgi:reference id="userValidator" interface="org.springframework.validation.Validator"
+		cardinality="0..1"
+		filter="(&amp;(targetClassName=net.solarnetwork.central.user.domain.User)(mode=Registration))"/>
+	
+	<osgi:reference id="solarLocationDao" interface="net.solarnetwork.central.dao.SolarLocationDao"/>
+	
+	<osgi:reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
+	
+	<osgi:reference id="transactionManager"
+		interface="org.springframework.transaction.PlatformTransactionManager"
+		filter="(db=central)"/>
+	
+	<osgi:reference id="networkIdentityBiz" 
+		interface="net.solarnetwork.central.in.biz.NetworkIdentityBiz"/>
+	
+	<!-- Published Services -->
+	
+	<osgi:service ref="daoRegistrationBiz" 
+		ranking="1">
+		<osgi:interfaces>
+			<value>net.solarnetwork.central.user.biz.RegistrationBiz</value>
+			<value>net.solarnetwork.central.user.biz.UserBiz</value>
+		</osgi:interfaces>
+	</osgi:service>
+	
+</beans>
