@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SolarNet User
+Bundle-SymbolicName: net.solarnetwork.central.user
+Bundle-Version: 1.0.1
+Bundle-Vendor: SolarNetwork
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: 
+ net.solarnetwork.central.user.biz;version="1.0.0",
+ net.solarnetwork.central.user.dao;version="1.0.0",
+ net.solarnetwork.central.user.domain;version="1.0.0"
+Import-Package: 
+ net.solarnetwork.central.dao;version="[1.0.0,2.0.0)",
+ net.solarnetwork.central.user.domain;version="[1.0.0,2.0.0)",
+ net.solarnetwork.central.domain;version="1.0.0",
+ net.solarnetwork.domain;version="[1.0,2.0)",
+ org.joda.time;version="[1.6,3.0)"
