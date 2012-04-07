@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="WeatherLocation">
+
+	<insert id="insert-WeatherLocation" parameterClass="WeatherLocation">
+		<selectKey resultClass="long" keyProperty="id"> 
+              SELECT nextval('solarnet.solarnet_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_weather_loc 
+			(id
+			<isNotNull property="created">, created</isNotNull>
+			, source_id, source_data, loc_id)
+		VALUES
+			(#id#
+			<isNotNull property="created">, #created#</isNotNull>
+			, #source.id#, #sourceData#, #location.id#)
+	</insert>
+
+	<update id="update-WeatherLocation" parameterClass="WeatherLocation">
+		UPDATE solarnet.sn_weather_loc SET
+			source_id = #source.id#,
+			source_data = #sourceData#,
+			loc_id = #location.id#
+		WHERE
+			id = #id#
+	</update>
+
+	<sql id="fragment-WeatherLocation-full-result">
+		wloc.id AS sn_weather_loc_id,
+		wloc.created AS sn_weather_loc_created,
+		wloc.source_data AS sn_weather_loc_source_data
+	</sql>
+
+	<resultMap id="WeatherLocationFullResult" class="WeatherLocation">
+		<result column="sn_weather_loc_id" property="id"/>
+		<result column="sn_weather_loc_created" property="created"/>
+		<result column="sn_weather_loc_source_data" property="sourceData"/>
+		<result property="source" resultMap="WeatherSource.WeatherSourceFullResult"/>
+		<result property="location" resultMap="SolarLocation.SolarLocationFullResult"/>
+	</resultMap>
+	
+	<select id="get-WeatherLocation-for-id" resultMap="WeatherLocationFullResult">
+		SELECT
+			<include refid="fragment-WeatherLocation-full-result"/>,
+			<include refid="fragment-WeatherSource-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_weather_loc wloc
+		INNER JOIN 
+			solarnet.sn_weather_source wsource ON wsource.id = wloc.source_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = wloc.loc_id
+		WHERE
+			wloc.id = #id#
+	</select>
+	
+	<select id="get-WeatherLocation-for-name" resultMap="WeatherLocationFullResult">
+		SELECT
+			<include refid="fragment-WeatherLocation-full-result"/>,
+			<include refid="fragment-WeatherSource-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_weather_loc wloc
+		INNER JOIN 
+			solarnet.sn_weather_source wsource ON wsource.id = wloc.source_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = wloc.loc_id
+		<dynamic prepend="WHERE">
+			<!--  TODO: FTS on name -->
+			<isNotNull prepend="AND" property="sourceName">
+				wsource.sname = #sourceName#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.country">
+				l.country = #filter.country#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.region">
+				l.region = #filter.region#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.stateOrProvince">
+				l.state_prov = #filter.stateOrProvince#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.postalCode">
+				l.postal_code = #filter.postalCode#
+			</isNotNull>
+		</dynamic>
+	</select>
+
+	<select id="findall-WeatherLocation-SourceLocationMatch" resultMap="WeatherLocationFullResult">
+		SELECT
+			<include refid="fragment-WeatherLocation-full-result"/>,
+			<include refid="fragment-WeatherSource-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_weather_loc wloc
+		INNER JOIN 
+			solarnet.sn_weather_source wsource ON wsource.id = wloc.source_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = wloc.loc_id
+		<dynamic prepend="WHERE">
+			<!--  TODO: FTS on name -->
+			<isNotNull prepend="AND" property="filter.source">
+				wsource.sname = #filter.source#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.location.name">
+				l.loc_name = #filter.location.name#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.location.country">
+				l.country = #filter.location.country#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.location.region">
+				l.region = #filter.location.region#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.location.stateOrProvince">
+				l.state_prov = #filter.location.stateOrProvince#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.location.postalCode">
+				l.postal_code = #filter.location.postalCode#
+			</isNotNull>
+		</dynamic>
+	</select>
+
+</sqlMap>

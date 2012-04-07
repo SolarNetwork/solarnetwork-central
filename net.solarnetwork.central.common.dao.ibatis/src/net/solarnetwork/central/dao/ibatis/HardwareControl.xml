@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="HardwareControl">
+
+	<insert id="insert-HardwareControl" parameterClass="HardwareControl">
+		<selectKey resultClass="long" keyProperty="id"> 
+              SELECT nextval('solarnet.solarnet_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_hardware_control
+			(id
+			<isNotNull prepend="," property="created">created</isNotNull>
+			, hw_id, ctl_name, unit)
+		VALUES
+			(#id#
+			<isNotNull prepend="," property="created">#created#</isNotNull>
+			, #hardware.id#, #name#, #unit#)
+	</insert>
+
+	<update id="update-HardwareControl" parameterClass="HardwareControl">
+		UPDATE
+			solarnet.sn_hardware_control
+		SET
+			hw_id = #hardware.id#, 
+			ctl_name = #name#, 
+			unit = #unit#
+		WHERE
+			id = #id#
+	</update>
+
+	<sql id="fragment-HardwareControl-full-result">
+		hwc.id AS sn_hardware_control_id, 
+		hwc.created AS sn_hardware_control_created,
+		hwc.hw_id AS sn_hardware_control_hw_id,
+		hwc.ctl_name AS sn_hardware_control_ctl_name,
+		hwc.unit AS sn_hardware_control_unit
+	</sql>
+
+	<resultMap id="HardwareControlFullResult" class="HardwareControl">
+		<result column="sn_hardware_control_id" property="id"/>
+		<result column="sn_hardware_control_created" property="created"/>
+		<result column="sn_hardware_control_ctl_name" property="name"/>
+		<result column="sn_hardware_control_unit" property="unit"/>
+		<result property="hardware" resultMap="Hardware.HardwareFullResult"/>
+	</resultMap>
+	
+	<select id="get-HardwareControl-for-id" resultMap="HardwareControlFullResult" parameterClass="long">
+		SELECT
+			<include refid="fragment-HardwareControl-full-result"/>,
+			<include refid="fragment-Hardware-full-result"/>
+		FROM
+			solarnet.sn_hardware_control hwc
+		INNER JOIN
+			solarnet.sn_hardware hw ON hw.id = hwc.hw_id
+		WHERE
+			hwc.id = #id#
+	</select>
+	
+	<!--  Filter search -->
+	
+	<select id="findall-HardwareControl-EntityMatch" resultMap="HardwareControlFullResult" parameterClass="map">
+		SELECT 
+			<include refid="fragment-HardwareControl-full-result"/>,
+			<include refid="fragment-Hardware-full-result"/>
+		FROM
+			solarnet.sn_hardware_control hwc
+		INNER JOIN
+			solarnet.sn_hardware hw ON hw.id = hwc.hw_id
+		<dynamic prepend="WHERE">
+			<isPropertyAvailable prepend="AND" property="fts">
+				hw.fts_default @@ plainto_tsquery(#fts#)
+			</isPropertyAvailable>
+			<isNotNull prepend="AND" property="filter.hardwareId">
+				hw.id = #filter.hardwareId#
+			</isNotNull>
+		</dynamic>
+		ORDER BY hwc.id
+	</select>
+	
+</sqlMap>

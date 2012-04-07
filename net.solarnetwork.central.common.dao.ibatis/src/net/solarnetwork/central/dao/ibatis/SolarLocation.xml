@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="SolarLocation">
+
+	<insert id="insert-SolarLocation" parameterClass="SolarLocation">
+		<selectKey resultClass="long" keyProperty="id"> 
+              SELECT nextval('solarnet.solarnet_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_loc 
+			(id
+			<isNotNull prepend="," property="created">created</isNotNull>
+			, loc_name, country, time_zone, region, state_prov, locality, postal_code,
+			address, latitude, longitude)
+		VALUES
+			(#id#
+			<isNotNull prepend="," property="created">#created#</isNotNull>
+			, #name#, #country#, #timeZoneId#, #region#, 
+			#stateOrProvince#, #locality#, #postalCode#, #street#,
+			#latitude#, #longitude#)
+	</insert>
+
+	<update id="update-SolarLocation" parameterClass="SolarLocation">
+		UPDATE
+			solarnet.sn_loc
+		SET
+			loc_name = #name#, 
+			country = #country#, 
+			time_zone = #timeZoneId#, 
+			region = #region#,
+			state_prov = #stateOrProvince#,
+			locality = #locality#,
+			postal_code = #postalCode#, 
+			address = #street#, 
+			latitude = #latitude#,
+			longitude = #longitude#
+		WHERE
+			id = #id#
+	</update>
+
+	<sql id="fragment-SolarLocation-full-result">
+		l.id AS sn_loc_id, 
+		l.created AS sn_loc_created,
+		l.loc_name AS sn_loc_loc_name,
+		l.country AS sn_loc_country,
+		l.time_zone AS sn_loc_time_zone,
+		l.region AS sn_loc_region,
+		l.state_prov AS sn_loc_state_prov,
+		l.locality AS sn_loc_locality,
+		l.postal_code AS sn_loc_postal_code,
+		l.address AS sn_loc_address,
+		l.latitude AS sn_loc_latitude,
+		l.longitude AS sn_loc_longitude
+	</sql>
+
+	<resultMap id="SolarLocationFullResult" class="SolarLocation">
+		<result column="sn_loc_id" property="id"/>
+		<result column="sn_loc_created" property="created"/>
+		<result column="sn_loc_loc_name" property="name"/>
+		<result column="sn_loc_country" property="country"/>
+		<result column="sn_loc_time_zone" property="timeZoneId"/>
+		<result column="sn_loc_region" property="region"/>
+		<result column="sn_loc_state_prov" property="stateOrProvince"/>
+		<result column="sn_loc_locality" property="locality"/>
+		<result column="sn_loc_postal_code" property="postalCode"/>
+		<result column="sn_loc_address" property="street"/>
+		<result column="sn_loc_latitude" property="latitude"/>
+		<result column="sn_loc_longitude" property="longitude"/>
+	</resultMap>
+	
+	<select id="get-SolarLocation-for-id" resultMap="SolarLocationFullResult" parameterClass="long">
+		SELECT
+			<include refid="fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_loc l
+		WHERE
+			l.id = #id#
+	</select>
+	
+	<select id="find-SolarLocation-for-name" resultMap="SolarLocationFullResult" parameterClass="string">
+		SELECT
+			<include refid="fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_loc l
+		WHERE
+			l.loc_name = #name#
+		ORDER BY
+			l.id
+	</select>
+	
+</sqlMap>

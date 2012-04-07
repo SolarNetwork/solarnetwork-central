@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMapConfig 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-config-2.dtd"> 
+<sqlMapConfig>
+
+	<typeAlias alias="Hardware" type="net.solarnetwork.central.domain.Hardware"/>
+	<typeAlias alias="HardwareControl" type="net.solarnetwork.central.domain.HardwareControl"/>
+	<typeAlias alias="PriceLocation" type="net.solarnetwork.central.domain.PriceLocation"/>
+	<typeAlias alias="PriceSource" type="net.solarnetwork.central.domain.PriceSource"/>
+	<typeAlias alias="SolarLocation" type="net.solarnetwork.central.domain.SolarLocation"/>
+	<typeAlias alias="SolarNode" type="net.solarnetwork.central.domain.SolarNode"/>
+	<typeAlias alias="WeatherLocation" type="net.solarnetwork.central.domain.WeatherLocation"/>
+	<typeAlias alias="WeatherSource" type="net.solarnetwork.central.domain.WeatherSource"/>
+	
+	<typeHandler javaType="org.joda.time.DateTime" 
+		callback="net.solarnetwork.central.dao.ibatis.JodaDateTimeTypeHandlerCallback" />
+	<typeHandler javaType="org.joda.time.LocalDateTime" 
+		callback="net.solarnetwork.central.dao.ibatis.JodaLocalDateTimeTypeHandlerCallback" />
+	<typeHandler javaType="org.joda.time.LocalDate" 
+		callback="net.solarnetwork.central.dao.ibatis.JodaLocalDateTypeHandlerCallback" />
+	<typeHandler javaType="org.joda.time.LocalTime" 
+		callback="net.solarnetwork.central.dao.ibatis.JodaLocalTimeTypeHandlerCallback" />
+
+</sqlMapConfig>

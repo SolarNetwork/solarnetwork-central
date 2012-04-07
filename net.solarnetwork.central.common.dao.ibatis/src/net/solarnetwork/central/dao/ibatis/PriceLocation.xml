@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="PriceLocation">
+
+	<insert id="insert-PriceLocation" parameterClass="PriceLocation">
+		<selectKey resultClass="long" keyProperty="id"> 
+              SELECT nextval('solarnet.solarnet_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_price_loc 
+			(id, loc_name, currency, unit, source_id, source_data)
+		VALUES
+			(#id#, #name#, #currency#, #unit#, #source.id#, #sourceData#)
+	</insert>
+
+	<update id="update-PriceLocation" parameterClass="PriceLocation">
+		UPDATE solarnet.sn_price_loc SET
+			loc_name = #name#,
+			currency = #currency#,
+			unit = #unit#,
+			source_id = #source.id#,
+			source_data = #sourceData#
+		WHERE
+			id = #id#
+	</update>
+
+	<resultMap id="PriceLocationFullResult" class="PriceLocation">
+		<result column="id" property="id"/>
+		<result column="created" property="created"/>
+		<result column="loc_name" property="name"/>
+		<result column="currency" property="currency"/>
+		<result column="unit" property="unit"/>
+		<result column="source_data" property="sourceData"/>
+		<result column="source_id" property="source.id"/>
+		<result column="source_created" property="source.created"/>
+		<result column="source_name" property="source.name"/>
+	</resultMap>
+	
+	<select id="get-PriceLocation-for-id" resultMap="PriceLocationFullResult">
+		SELECT
+			l.id,
+			l.created,
+			l.loc_name,
+			l.currency,
+			l.unit,
+			l.source_data,
+			l.source_id,
+			s.created as "source_created",
+			s.sname as "source_name"
+		FROM
+			solarnet.sn_price_loc l
+		INNER JOIN solarnet.sn_price_source s ON s.id = l.source_id
+		WHERE
+			l.id = #id#
+	</select>
+	
+	<select id="get-PriceLocation-for-name" resultMap="PriceLocationFullResult">
+		SELECT
+			l.id,
+			l.created,
+			l.loc_name,
+			l.currency,
+			l.unit,
+			l.source_data,
+			l.source_id,
+			s.created as "source_created",
+			s.sname as "source_name"
+		FROM
+			solarnet.sn_price_loc l
+		INNER JOIN solarnet.sn_price_source s ON s.id = l.source_id
+		WHERE
+			l.loc_name = #locationName#
+			AND s.sname = #sourceName#
+	</select>
+
+</sqlMap>
