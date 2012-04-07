@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beansProjectDescription>
+	<version>1</version>
+	<pluginVersion><![CDATA[2.3.3.201004292200-CI-R3769-B726]]></pluginVersion>
+	<configSuffixes>
+		<configSuffix><![CDATA[xml]]></configSuffix>
+	</configSuffixes>
+	<enableImports><![CDATA[false]]></enableImports>
+	<configs>
+		<config>META-INF/spring/solarnetwork-query-biz-dao-osgi.xml</config>
+	</configs>
+	<configSets>
+	</configSets>
+</beansProjectDescription>

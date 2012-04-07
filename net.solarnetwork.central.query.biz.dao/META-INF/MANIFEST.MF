@@ -1,0 +1,20 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SolarNetwork Central DAO Query Biz
+Bundle-SymbolicName: net.solarnetwork.central.query.biz.dao
+Bundle-Version: 1.2.0
+Bundle-Vendor: SolarNetwork
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: 
+ net.solarnetwork.central.dao;version="[1.0.0,2.0.0)",
+ net.solarnetwork.central.domain;version="[1.0.0,2.0.0)",
+ net.solarnetwork.central.datum.dao;version="[1.0.0,2.0.0)",
+ net.solarnetwork.central.datum.domain;version="[1.0.0,2.0.0)",
+ net.solarnetwork.central.query.biz;version="[1.1.0,2.0.0)",
+ org.joda.time;version="[1.6,2.0)",
+ org.joda.time.base;version="[1.6,2.0)",
+ org.joda.time.field;version="[1.6,2.0)",
+ org.springframework.beans;version="[3.0,4.0)",
+ org.springframework.beans.factory.annotation;version="[3.0,4.0)",
+ org.springframework.core;version="[3.0,4.0)",
+ org.springframework.stereotype;version="[3.0,4.0)"
