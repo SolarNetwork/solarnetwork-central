@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:osgi="http://www.springframework.org/schema/osgi"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util
+		http://www.springframework.org/schema/util/spring-util-3.0.xsd
+		http://www.springframework.org/schema/osgi
+		http://www.springframework.org/schema/osgi/spring-osgi.xsd">
+
+	<!-- Service References -->
+	
+	<osgi:reference id="txManager" interface="org.springframework.transaction.PlatformTransactionManager"
+		filter="(db=central)"/>
+	
+	<osgi:reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
+
+	<osgi:reference id="eventExecutor"
+		interface="net.solarnetwork.central.dras.biz.EventExecutor" cardinality="0..1">
+		<osgi:listener bind-method="onBind" unbind-method="onUnbind" ref="optionalEventExecutor"/>
+	</osgi:reference>
+
+ 	<osgi:reference id="capabilityDao" interface="net.solarnetwork.central.dras.dao.CapabilityDao"/>
+	<osgi:reference id="constraintDao" interface="net.solarnetwork.central.dras.dao.ConstraintDao"/>
+	<osgi:reference id="effectiveDao" interface="net.solarnetwork.central.dras.dao.EffectiveDao"/>
+	<osgi:reference id="eventDao" interface="net.solarnetwork.central.dras.dao.EventDao"/>
+	<osgi:reference id="eventExecutionInfoDao" interface="net.solarnetwork.central.dras.dao.EventExecutionInfoDao"/>
+	<osgi:reference id="locationDao" interface="net.solarnetwork.central.dras.dao.LocationDao"/>
+	<osgi:reference id="participantDao" interface="net.solarnetwork.central.dras.dao.ParticipantDao"/>
+	<osgi:reference id="participantGroupDao" interface="net.solarnetwork.central.dras.dao.ParticipantGroupDao"/>
+	<osgi:reference id="programDao" interface="net.solarnetwork.central.dras.dao.ProgramDao"/>
+	<osgi:reference id="userDao" interface="net.solarnetwork.central.dras.dao.UserDao"/>
+	<osgi:reference id="userGroupDao" interface="net.solarnetwork.central.dras.dao.UserGroupDao"/>
+	
+	<!-- Published Services -->
+	
+	<osgi:service ref="daoEventBiz" 
+		interface="net.solarnetwork.central.dras.biz.EventBiz"
+		ranking="1"/>
+	
+	<osgi:service ref="daoEventBiz" 
+		interface="net.solarnetwork.central.dras.biz.EventAdminBiz"
+		ranking="1"/>
+	
+	<osgi:service ref="daoLocationBiz" 
+		interface="net.solarnetwork.central.dras.biz.LocationBiz"
+		ranking="1"/>
+	
+	<osgi:service ref="daoLocationBiz" 
+		interface="net.solarnetwork.central.dras.biz.LocationAdminBiz"
+		ranking="1"/>
+	
+	<osgi:service ref="daoParticipantBiz" 
+		interface="net.solarnetwork.central.dras.biz.ParticipantBiz"
+		ranking="1"/>
+	
+	<osgi:service ref="daoParticipantBiz" 
+		interface="net.solarnetwork.central.dras.biz.ParticipantAdminBiz"
+		ranking="1"/>
+	
+	<osgi:service ref="daoProgramBiz" 
+		interface="net.solarnetwork.central.dras.biz.ProgramBiz"
+		ranking="1"/>
+	
+	<osgi:service ref="daoProgramBiz" 
+		interface="net.solarnetwork.central.dras.biz.ProgramAdminBiz"
+		ranking="1"/>
+	
+	<osgi:service ref="daoUserBiz" 
+		interface="net.solarnetwork.central.dras.biz.UserBiz"
+		ranking="1"/>
+	
+	<osgi:service ref="daoUserBiz" 
+		interface="net.solarnetwork.central.dras.biz.UserAdminBiz"
+		ranking="1"/>
+
+	<osgi:service ref="eventScheduler" interface="org.osgi.service.event.EventHandler">
+		<osgi:service-properties>
+			<entry>
+				<key><util:constant static-field="org.osgi.service.event.EventConstants.EVENT_TOPIC"/></key>
+				<array value-type="java.lang.String">
+					<value>net/solarnetwork/central/dras/ENTITY_UPDATE</value>
+				</array>
+			</entry>
+			<entry>
+				<key><util:constant static-field="org.osgi.service.event.EventConstants.EVENT_FILTER"/></key>
+				<value>(ClassName=net.solarnetwork.central.dras.domain.Event)</value>
+			</entry>
+		</osgi:service-properties>
+	</osgi:service>
+
+	<osgi:service ref="eventPublisher" interface="org.osgi.service.event.EventHandler">
+		<osgi:service-properties>
+			<entry>
+				<key><util:constant static-field="org.osgi.service.event.EventConstants.EVENT_TOPIC"/></key>
+				<array value-type="java.lang.String">
+					<value>net/solarnetwork/central/dras/ddrs/PUBLISH_EVENT</value>
+				</array>
+			</entry>
+		</osgi:service-properties>
+	</osgi:service>
+
+</beans>
