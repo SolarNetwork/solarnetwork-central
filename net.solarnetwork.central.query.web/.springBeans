@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beansProjectDescription>
+	<version>1</version>
+	<pluginVersion><![CDATA[2.3.3.201004292200-CI-R3769-B726]]></pluginVersion>
+	<configSuffixes>
+		<configSuffix><![CDATA[xml]]></configSuffix>
+	</configSuffixes>
+	<enableImports><![CDATA[false]]></enableImports>
+	<configs>
+		<config>WEB-INF/osgi-context.xml</config>
+		<config>WEB-INF/app-context.xml</config>
+		<config>WEB-INF/webmvc-context.xml</config>
+	</configs>
+	<configSets>
+		<configSet>
+			<name><![CDATA[SolarQuery Webapp]]></name>
+			<allowBeanDefinitionOverriding>true</allowBeanDefinitionOverriding>
+			<incomplete>false</incomplete>
+			<configs>
+				<config>WEB-INF/osgi-context.xml</config>
+				<config>WEB-INF/app-context.xml</config>
+				<config>WEB-INF/webmvc-context.xml</config>
+			</configs>
+		</configSet>
+	</configSets>
+</beansProjectDescription>

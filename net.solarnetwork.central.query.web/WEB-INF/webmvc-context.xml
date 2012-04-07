@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+			http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.0.xsd
+			http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+
+	<!-- See http://forum.springsource.org/archive/index.php/t-54188.html for discussion
+		on getting component-scan to work in PDE. We are required to add are Eclipse build
+		path to the Bundle-Classpath value. -->
+
+	<context:component-scan base-package="net.solarnetwork.central.query.web"/>
+
+	<bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter" />
+
+	<bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"/>
+
+	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"/>
+
+	<bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+		<property name="mappings">
+			<props>
+				<prop key="/consumptionData.*">consumptionDataController</prop>
+				<prop key="/generationData.*">generationDataController</prop>
+				<prop key="/hardwareControlData.*">hardwareControlDataController</prop>
+				<prop key="/powerData.*">generationDataController</prop>
+				<prop key="/priceData.*">priceDataController</prop>
+				<prop key="/dayData.*">dayDataController</prop>
+			</props>
+		</property>
+	</bean>
+	
+	<bean id="beanNameViewResolver"
+		class="org.springframework.web.servlet.view.BeanNameViewResolver ">
+		<property name="order" value="1"/>
+	</bean>
+
+	<bean id="generationDataController" class="net.solarnetwork.central.query.web.AggregatedDatumController">
+		<property name="solarNodeDao" ref="solarNodeDao"/>
+		<property name="datumDao" ref="powerDatumDao"/>
+	</bean>
+	
+	<bean id="consumptionDataController" class="net.solarnetwork.central.query.web.AggregatedDatumController">
+		<property name="solarNodeDao" ref="solarNodeDao"/>
+		<property name="datumDao" ref="consumptionDatumDao"/>
+	</bean>
+	
+	<bean id="priceDataController" class="net.solarnetwork.central.query.web.AggregatedDatumController">
+		<property name="solarNodeDao" ref="solarNodeDao"/>
+		<property name="datumDao" ref="priceDatumDao"/>
+	</bean>
+	
+	<bean id="dayDataController" class="net.solarnetwork.central.query.web.AggregatedDatumController">
+		<property name="solarNodeDao" ref="solarNodeDao"/>
+		<property name="datumDao" ref="dayDatumDao"/>
+	</bean>
+
+	<bean id="hardwareControlDataController" class="net.solarnetwork.central.query.web.AggregatedDatumController">
+		<property name="solarNodeDao" ref="solarNodeDao"/>
+		<property name="datumDao" ref="hardwareControlDatumDao"/>
+	</bean>
+
+	<bean id="propertySerializerRegistrar"
+		class="net.solarnetwork.util.PropertySerializerRegistrar">
+		<property name="classSerializers">
+			<map>
+				<entry key="org.joda.time.DateTime">
+					<bean class="net.solarnetwork.util.JodaDatePropertySerializer">
+						<constructor-arg value="yyyy-MM-dd HH:mm:ss.SSSZ"/>
+					</bean>
+				</entry>
+				<entry key="org.joda.time.LocalDateTime">
+					<bean class="net.solarnetwork.util.JodaDatePropertySerializer">
+						<constructor-arg value="yyyy-MM-dd HH:mm"/>
+					</bean>
+				</entry>
+				<entry key="org.joda.time.LocalTime">
+					<bean class="net.solarnetwork.util.JodaDatePropertySerializer">
+						<constructor-arg value="HH:mm"/>
+					</bean>
+				</entry>
+				<entry key="org.joda.time.LocalDate">
+					<bean class="net.solarnetwork.util.JodaDatePropertySerializer">
+						<constructor-arg value="yyyy-MM-dd"/>
+					</bean>
+				</entry>
+				<entry key="sun.util.calendar.ZoneInfo">
+					<bean class="net.solarnetwork.util.TimeZonePropertySerializer"/>
+				</entry>
+				<entry key="org.springframework.validation.BeanPropertyBindingResult">
+					<bean class="net.solarnetwork.util.BindingResultSerializer"/>
+				</entry>
+			</map>
+		</property>
+	</bean>
+
+	<!-- Views -->
+	
+	<bean id="xml" class="net.solarnetwork.web.support.SimpleXmlView">
+		<property name="contentType" value="text/xml;charset=UTF-8"/>
+		<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
+		<property name="classNamesAllowedForNesting">
+			<set>
+				<value>net.solarnetwork</value>
+			</set>
+		</property>
+	</bean>
+	
+	<bean id="json" class="net.solarnetwork.web.support.JSONView">
+		<property name="contentType" value="application/json;charset=UTF-8"/>
+		<property name="indentAmount" value="${JSONView.indentAmount}"/>
+		<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
+		<property name="includeParentheses" value="false"/>
+	</bean>
+	
+</beans>
