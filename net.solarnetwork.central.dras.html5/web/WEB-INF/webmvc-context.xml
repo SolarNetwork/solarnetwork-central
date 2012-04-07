@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-3.0.xsd
+		http://www.springframework.org/schema/jee
+		http://www.springframework.org/schema/jee/spring-jee-3.0.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+
+	<bean id="messageSource" class="net.solarnetwork.web.support.ReloadableResourceBundleMessagesSource">
+		<property name="cacheSeconds" value="-1"/>
+		<property name="basename" value="WEB-INF/messages"/>
+	</bean>
+	
+	<bean id="servletContextInjector"  init-method="init"
+		class="net.solarnetwork.web.support.ServletContextBeanInjector">
+		<property name="beans">
+			<map>
+				<entry key="env" value-ref="dras.html5.cfg"/>
+			</map>
+		</property>
+	</bean>
+	
+	<!-- See http://forum.springsource.org/archive/index.php/t-54188.html for discussion
+		on getting component-scan to work in PDE. We are required to add are Eclipse build
+		path to the Bundle-Classpath value. -->
+
+	<ctx:component-scan base-package="net.solarnetwork.central.dras.control"/>
+
+	<!-- Maps request paths to @RequestMapping annotations -->
+	<bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">
+		<property name="order" value="0"/>
+	</bean>
+
+	<!-- Maps request paths to flows in the flowRegistry; e.g. a path of /hotels/booking looks for a flow with id "hotels/booking" 
+	<bean class="org.springframework.webflow.mvc.servlet.FlowHandlerMapping">
+		<property name="order" value="1" />
+		<property name="flowRegistry" ref="flowRegistry" />
+	</bean>-->
+
+	<!-- Maps request paths to @Controller classes; e.g. a path of /hotels looks for a controller named HotelsController -->
+	<bean class="org.springframework.web.servlet.mvc.support.ControllerClassNameHandlerMapping">
+		<property name="order" value="1" />
+		<property name="defaultHandler">
+			<!-- If no @Controller match, map path to a view to render; e.g. the "/intro" path would map to the view named "intro" -->	
+			<bean class="org.springframework.web.servlet.mvc.UrlFilenameViewController" />
+		</property>
+	</bean>
+	
+	<bean id="handlerMapping" 
+          class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">    
+		<property name="order" value="2" />        
+        <property name="mappings">
+            <props>
+                <prop key="*.do">urlViewController</prop>
+            </props>
+        </property>
+    </bean>
+    <bean id="urlViewController" class="org.springframework.web.servlet.mvc.UrlFilenameViewController"/>
+
+	<!-- Dispatches requests mapped to POJO @Controllers implementations -->
+	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"/>
+	
+	<!-- Enables plain Controllers -->
+    <bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter" />
+
+	<!-- Dispatches flow requests 
+	<bean class="org.springframework.webflow.mvc.servlet.FlowHandlerAdapter">
+		<property name="flowExecutor" ref="flowExecutor"/>
+	</bean>-->
+	
+	<!-- Resolves logical view names returned by Controllers to Tiles; 
+		a view name to resolve is treated as the name of a tiles definition -->
+	<bean id="tilesViewResolver" class="org.springframework.js.ajax.AjaxUrlBasedViewResolver">
+		<property name="order" value="0"/>
+		<property name="viewClass" value="org.springframework.webflow.mvc.view.FlowAjaxTilesView"/>
+	</bean>
+
+	<!-- Configures the Tiles layout system -->
+	<bean id="tilesConfigurer" class="org.springframework.web.servlet.view.tiles2.TilesConfigurer">
+		<property name="definitions">
+			<list>
+				<value>/WEB-INF/layouts/layout.xml</value>
+				<value>/WEB-INF/**/views.xml</value>
+			</list>
+		</property>
+	</bean>
+
+	<!-- If Tiles view not found, try a bean name (xml, json below) -->
+	<bean id="beanNameViewResolver" class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order" value="2"/>
+	</bean>
+	
+	<bean id="msgController" class="net.solarnetwork.central.web.MessageController"/>
+
+	<bean id="json" class="net.solarnetwork.web.support.JSONView">
+		<property name="contentType" value="application/json;charset=UTF-8"/>
+		<property name="indentAmount" value="${JSONView.indentAmount}"/>
+		<property name="includeParentheses" value="false"/>
+	</bean>
+	
+</beans>

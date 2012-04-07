@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+	"-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+	"http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+<tiles-definitions>
+	
+	<definition name="login" extends="unsecure">
+		<put-attribute name="body" value="/WEB-INF/jsp/login.jsp" />
+	</definition>
+
+	<definition name="loggedout" extends="unsecure">
+		<put-attribute name="body" value="/WEB-INF/jsp/loggedout.jsp" />
+	</definition>
+	
+	<definition name="home" extends="default">
+		<put-attribute name="tab" value="home"/>
+		<put-attribute name="body" value="/WEB-INF/jsp/home.jsp" />
+	</definition>
+	
+	<definition name="users" extends="default">
+		<put-attribute name="tab" value="users"/>
+		<put-attribute name="body" value="/WEB-INF/jsp/users.jsp" />
+	</definition>
+	
+	<definition name="programs" extends="default">
+		<put-attribute name="tab" value="programs"/>
+		<put-attribute name="body" value="/WEB-INF/jsp/programs.jsp" />
+	</definition>
+	
+	<definition name="events" extends="default">
+		<put-attribute name="tab" value="events"/>
+		<put-attribute name="body" value="/WEB-INF/jsp/events.jsp" />
+	</definition>
+	
+	<definition name="reports" extends="default">
+		<put-attribute name="tab" value="reports"/>
+		<put-attribute name="body" value="/WEB-INF/jsp/reports.jsp" />
+	</definition>
+	
+	<definition name="about" extends="default">
+		<put-attribute name="tab" value="about"/>
+		<put-attribute name="body" value="/WEB-INF/jsp/about.jsp" />
+	</definition>
+	
+</tiles-definitions>

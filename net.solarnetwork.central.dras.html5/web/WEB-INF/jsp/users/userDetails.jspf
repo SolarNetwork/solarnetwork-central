@@ -1,0 +1,32 @@
+
+		
+		<tr><td class="tableLabel">Contact: </td><td>
+			
+			<div class="ui-state-highlight ui-corner-all"> 
+					<p style="margin-top:5px;margin-bottom:5px;"><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-info"></span>
+					<fmt:message key="user.alerts.firstContact"/>
+					</p>
+			</div>
+		
+			<input type="hidden" name="user.contactInfo[0].priority" value="1"/>
+			<select name="user.contactInfo[0].kind" class="required"><option value="MOBILE"><fmt:message key="contactKind.MOBILE"/></option><option value="EMAIL"><fmt:message key="contactKind.EMAIL"/></select>
+			<input type="text" name="user.contactInfo[0].contact" class="required"/>
+			<br/>
+
+			<input type="hidden" name="user.contactInfo[1].priority" value="2"/>
+			<select name="user.contactInfo[1].kind" class="required"><option value="MOBILE"><fmt:message key="contactKind.MOBILE"/></option><option value="EMAIL"><fmt:message key="contactKind.EMAIL"/></option></select>
+			<input type="text" name="user.contactInfo[1].contact" class="required"/><br/>
+		</td></tr>
+		
+		<%-- FIXME: use /user/roles.json to get list of all available roles --%>
+		<tr><td class="tableLabel">Roles: </td><td>
+			<input type="checkbox" name="roles" class="userRole" value="SUPPLIER"><fmt:message key="role.SUPPLIER"/><br>
+			<input type="checkbox" name="roles" class="userRole" value="OPERATOR"><fmt:message key="role.OPERATOR"/><br>
+			<input type="checkbox" name="roles" class="userRole" value="ANALYST"><fmt:message key="role.ANALYST"/><br>
+			<input type="checkbox" name="roles" class="userRole" value="PROGRAM_ADMIN"><fmt:message key="role.PROGRAM_ADMIN"/><br>
+			<input type="checkbox" name="roles" class="userRole" value="USER_ADMIN"><fmt:message key="role.USER_ADMIN"/><br>
+		</td></tr>
+		
+		<tr><td class="tableLabel">Programs: </td><td>
+			<span class="userPrograms"></span>
+		</td></tr>

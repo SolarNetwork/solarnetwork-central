@@ -1,0 +1,189 @@
+/* DOM elements section */
+body {
+	font-family: Verdana,Tahoma,Helvetica,sans-serif;	
+	/*background-color: #5C5C5C;*/
+	background-color: #687D93;
+}
+
+table.left th {
+	text-align: left;
+}
+
+h1 {
+	font-size: 14pt;
+}
+
+h2 {
+	font-size: 12pt;
+}
+
+/* Common section */
+.bodyPanel {
+	border: 1px #CCC solid;
+	-moz-box-shadow: 5px 5px 5px #333333;
+	-webkit-box-shadow: 5px 5px 5px #333333;
+	box-shadow: 5px 5px 5px #333333;
+}
+.leftPanel {
+	width: 50%;
+	float: left;	
+}
+.rightPanel {
+	width: 50%;
+	float: right;	
+}
+.title {
+	float:left;
+}
+.titleButton {
+	float:right;
+	margin-top: 20px;
+}
+.panel {
+	border: 1px #CCC solid;
+	-moz-box-shadow: 5px 5px 5px #ccc;
+	-webkit-box-shadow: 5px 5px 5px #ccc;
+	box-shadow: 5px 5px 5px #ccc;
+	margin: 5px;
+	padding: 5px;
+}
+.flatPanel {
+	border: 1px #CCC solid;
+	padding: 5px;
+}
+.dras-toolbar {
+	padding: 5px;
+	margin-bottom: 20px;
+}
+.clear {
+	clear: both;
+}
+.dialogTable {
+	margin: 5px;
+}
+
+.dialogTableLabel {
+	min-width: 220px;
+}
+.tableLabel {
+	vertical-align:top;
+}
+/* Header section */
+.banner {
+	/*background: #ebebeb; /* Old browsers */
+	/*background: -moz-linear-gradient(top, #ebebeb 0%, #fdfdfd 50%, #fdfdfd 51%, #ebebeb 100%); /* FF3.6+ */
+	/*background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ebebeb), color-stop(50%,#fdfdfd), color-stop(51%,#fdfdfd), color-stop(100%,#ebebeb)); /* Chrome,Safari4+ */
+	/*background: -webkit-linear-gradient(top, #ebebeb 0%,#fdfdfd 50%,#fdfdfd 51%,#ebebeb 100%); /* Chrome10+,Safari5.1+ */
+	/*background: -o-linear-gradient(top, #ebebeb 0%,#fdfdfd 50%,#fdfdfd 51%,#ebebeb 100%); /* Opera11.10+ */
+	/*background: -ms-linear-gradient(top, #ebebeb 0%,#fdfdfd 50%,#fdfdfd 51%,#ebebeb 100%); /* IE10+ */
+	/*filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#EBEBEB', endColorstr='#EBEBEB',GradientType=0 ); /* IE6-9 */
+	/*background: linear-gradient(top, #ebebeb 0%,#fdfdfd 50%,#fdfdfd 51%,#ebebeb 100%); /* W3C */
+	border: 1px solid #AAA;
+	padding: 5px 10px;
+	margin-bottom:8px;
+	height: 54px;
+}
+.bannerImage {
+	float: left;
+	height: 54px;
+}
+.bannerTitle {
+	vertical-align: middle;
+	text-align: center;	
+	color: #666666;
+	height: 54px;
+	float: left;
+	margin-left: 100px;
+	margin-top: 18px;
+	text-shadow: 2px 2px 2px #999999;
+}
+
+/* Login section */
+.loginPanel {
+	border: 1px #CCC solid;
+	-moz-box-shadow: 5px 5px 5px #333333;
+	-webkit-box-shadow: 5px 5px 5px #333333;
+	box-shadow: 5px 5px 5px #333333;
+	width: 500px; 
+	margin: 0 auto;
+	margin-top: 200px;
+	padding: 5px;
+	background: #FFFFFF;
+}
+.loginPanel .bodyPanel {
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	box-shadow: none;
+}
+div.login table {
+	margin: auto;
+}
+
+/* Tabs */
+.ui-tabs .ui-tabs-nav .logout {
+	float: right;
+}
+
+/* Event Section */
+.mapParticipantInfo {
+	width: 300px;	
+}
+ul.mapParticipantInfo {
+	height: 200px;
+	overflow: auto;
+	list-style-type: none;
+}
+.eventMap {
+	height: 600px;
+}
+.editEventMap {
+	width: 474px;
+	height: 474px;
+}
+.eventMemberSearch {
+	width: 300px;
+}
+
+.programSelector {
+	float:left;
+}
+.eventCreator {
+	float:right;
+}
+
+/* jq validation */
+label.error { float: none; color: red; padding-left: .5em; vertical-align: top; }
+
+/* UI Theme overrides */
+.ui-widget-content {
+	background: #FFF;	
+	color: #000;
+}
+.ui-tabs .ui-tabs-panel {
+	padding-left: 0px;
+	padding-right: 0px;
+}
+.ui-widget {
+	font-size: 1em;
+}
+.ui-dialog .ui-dialog-content {
+	padding: 0px;
+}
+.ui-widget-overlay {
+	background: #666666 url(smoothness/images/ui-bg_diagonals-thick_20_666666_40x40.png) 50% 50% repeat; opacity: .50;filter:Alpha(Opacity=50);
+}
+
+/* css for timepicker */
+.ui-timepicker-div .ui-widget-header{ margin-bottom: 8px; }
+.ui-timepicker-div dl{ text-align: left; }
+.ui-timepicker-div dl dt{ height: 25px; }
+.ui-timepicker-div dl dd{ margin: -25px 0 10px 65px; }
+.ui-timepicker-div td { font-size: 90%; }
+
+/** Datatable overrides */
+.gradeA a {
+	color: #043E00;
+}
+.dataTables_wrapper {
+    min-height: 20px;
+}
