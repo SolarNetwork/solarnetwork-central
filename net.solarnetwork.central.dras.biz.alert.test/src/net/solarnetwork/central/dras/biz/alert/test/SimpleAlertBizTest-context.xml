@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xmlns:sec="http://www.springframework.org/schema/security"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="mailSender" class="net.solarnetwork.central.mail.mock.MockMailSender"/>
+	
+	<bean class="net.solarnetwork.central.dras.biz.alert.SimpleAlertBiz">
+		<property name="mailSender" ref="mailSender"/>
+		<property name="eventDao" ref="eventDao"/>
+		<property name="outboundMailDao" ref="outboundMailDao"/>
+		<property name="programDao" ref="programDao"/>
+		<property name="userDao" ref="userDao"/>
+		<property name="processor">
+			<bean class="net.solarnetwork.central.test.CallingThreadExecutorService"/>
+		</property>
+	</bean>
+
+</beans>
