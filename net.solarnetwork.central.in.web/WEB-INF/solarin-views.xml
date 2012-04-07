@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+	<bean id="xml" class="net.solarnetwork.web.support.SimpleXmlView">
+		<property name="contentType" value="text/xml;charset=UTF-8"/>
+		<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
+		<property name="classNamesAllowedForNesting">
+			<set>
+				<value>net.solarnetwork</value>
+			</set>
+		</property>
+	</bean>
+	
+	<bean id="json" class="net.solarnetwork.web.support.JSONView">
+		<property name="contentType" value="application/json;charset=UTF-8"/>
+		<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
+		<property name="includeParentheses" value="false"/>
+	</bean>
+
+</beans>
