@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+	<bean id="sqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation" 
+			value="classpath:/net/solarnetwork/central/dras/dao/ibatis/test/sqlmap-config.xml"/>
+		<property name="mappingLocations">
+			<list>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/Global.xml</value>
+				
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/Capability.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/Constraint.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/Effective.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/EventRule.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/EventTargets.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/Fee.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/Location.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/OutboundMail.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/Participant.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/ParticipantGroup.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/Program.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/User.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/UserGroup.xml</value>
+
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/Event.xml</value>
+				<value>classpath:/net/solarnetwork/central/dras/dao/ibatis/EventExecutionInfo.xml</value>
+			</list>
+		</property>
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	
+	<bean id="abstractIbatisDao" abstract="true">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+	</bean>
+	
+	<bean id="capabilityDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisCapabilityDao"/>
+	
+	<bean id="constraintDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisConstraintDao"/>
+	
+	<bean id="effectiveDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisEffectiveDao"/>
+	
+	<bean id="eventDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisEventDao"/>
+	
+	<bean id="eventExecutionInfoDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisEventExecutionInfoDao"/>
+	
+	<bean id="eventRuleDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisEventRuleDao"/>
+	
+	<bean id="eventTargetsDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisEventTargetsDao"/>
+	
+	<bean id="locationDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisLocationDao"/>
+	
+	<bean id="feeDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisFeeDao"/>
+	
+	<bean id="outboundMailDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisOutboundMailDao"/>
+	
+	<bean id="participantDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisParticipantDao"/>
+	
+	<bean id="participantGroupDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisParticipantGroupDao"/>
+	
+	<bean id="programDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisProgramDao"/>
+	
+	<bean id="userDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisUserDao"/>
+	
+	<bean id="userGroupDao" parent="abstractIbatisDao" 
+		class="net.solarnetwork.central.dras.dao.ibatis.IbatisUserGroupDao"/>
+
+</beans>
