@@ -1,0 +1,40 @@
+* Dump/restore with column reordering
+
+To dump/restore with column reordering, you must create a dump of INSERT
+statements with column names, then use psql to execute load that dump
+into the new database.
+
+For example:
+
+1) Dump old database
+
+/usr/local/pgsql8.4/bin/pg_dump -F p -a --column-inserts -x -U postgres solarnetwork \
+>solarnetwork-8.4.sql
+
+2) Create new database to load into
+
+createdb -U postgres -E UTF8 -O solarnet -T template0 solarnetwork_tmp
+
+3) Establish default permissions
+
+If default permissions are desired, configure those now.
+
+4) Create tables in new database
+
+psql -d solarnetwork_tmp -U solarnet -1 -f postgres-init.sql
+
+5) Disable triggers so data load faster
+
+psql -d solarnetwork_tmp -U postgres -1 -f postgres-disable-triggers.sql 
+
+6) Load data
+
+psql -d solarnetwork_tmp -U solarnet -1 -q -f solarnetwork-8.4.sql 2>&1 |tee import.log
+
+7) Enable triggers
+
+psql -d solarnetwork_tmp -U postgres -1 -f postgres-enable-triggers.sql 
+
+8) Reestablish permissions
+
+Since no permissions were dumped/restored, these must be set up manually now.
