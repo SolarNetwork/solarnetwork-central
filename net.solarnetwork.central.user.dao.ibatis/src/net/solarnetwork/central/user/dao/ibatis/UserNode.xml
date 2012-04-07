@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="UserNode">
+
+	<insert id="insert-UserNode" parameterClass="UserNode">
+		INSERT INTO solaruser.user_node 
+			(node_id
+			<isNotNull prepend="," property="created">created</isNotNull>
+			, user_id, disp_name, description)
+		VALUES
+			(#node.id#
+			<isNotNull prepend="," property="created">#created#</isNotNull>
+			, #user.id#, #name#, #description#)
+	</insert>
+
+	<update id="update-UserNode" parameterClass="UserNode">
+		UPDATE
+			solaruser.user_node 
+		SET
+			disp_name = #name#, 
+			user_id = #user.id#,
+			description = #description#
+		WHERE
+			node_id = #node.id#
+	</update>
+
+	<sql id="fragment-UserNode-full-result">
+		un.node_id AS user_node_node_id,
+		un.created AS user_node_created,
+		un.disp_name AS user_node_disp_name,
+		un.user_id AS user_node_user_id,
+		un.description AS user_node_description
+	</sql>
+
+	<resultMap id="UserNodeFullResult" class="UserNode">
+		<result column="user_node_node_id" property="id"/>
+		<result column="user_node_created" property="created"/>
+		<result column="user_node_disp_name" property="name"/>
+		<result column="user_node_description" property="description"/>
+		<result property="node" resultMap="SolarNode.SolarNodeFullResult"/>
+		<result property="user" resultMap="User.UserFullResult"/>
+	</resultMap>
+	
+	<select id="get-UserNode-for-id" resultMap="UserNodeFullResult" parameterClass="long">
+		SELECT
+			<include refid="fragment-UserNode-full-result"/>,
+			<include refid="fragment-SolarNode-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>,
+			<include refid="fragment-User-full-result"/>
+		
+		FROM
+			solaruser.user_node un
+		INNER JOIN
+			solarnet.sn_node n ON n.node_id = un.node_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		INNER JOIN
+			solaruser.user_user u ON u.id = un.user_id
+		WHERE
+			un.node_id = #id#
+	</select>
+	
+	<select id="find-UserNode-for-User" resultMap="UserNodeFullResult" parameterClass="long">
+		SELECT
+			<include refid="fragment-UserNode-full-result"/>,
+			<include refid="fragment-SolarNode-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>,
+			<include refid="fragment-User-full-result"/>
+		FROM
+			solaruser.user_node un
+		INNER JOIN
+			solarnet.sn_node n ON n.node_id = un.node_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		INNER JOIN
+			solaruser.user_user u ON u.id = un.user_id
+		WHERE
+			u.id = #id#
+		ORDER BY
+			un.created
+	</select>
+	
+</sqlMap>
