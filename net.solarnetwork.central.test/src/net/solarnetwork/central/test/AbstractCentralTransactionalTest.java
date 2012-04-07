@@ -1,0 +1,199 @@
+/* ==================================================================
+ * AbstractCentralTransactionalTest.java - Jan 11, 2010 9:59:13 AM
+ * 
+ * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * 
+ * This program is free software; you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as 
+ * published by the Free Software Foundation; either version 2 of 
+ * the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ * 02111-1307 USA
+ * ==================================================================
+ * $Id$
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.test;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
+
+import org.apache.log4j.Logger;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
+import org.springframework.test.context.transaction.BeforeTransaction;
+import org.springframework.test.context.transaction.TransactionConfiguration;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Base test class for transactional unit tests.
+ * 
+ * @author matt
+ * @version $Id$
+ */
+@ContextConfiguration(locations={"classpath:/net/solarnetwork/central/test/test-context.xml"})
+@TransactionConfiguration(transactionManager="txManager", defaultRollback=true) 
+@Transactional
+public abstract class AbstractCentralTransactionalTest 
+extends AbstractTransactionalJUnit4SpringContextTests {
+	
+	/** A test Node ID. */
+	public static final Long TEST_NODE_ID = -1L;
+
+	/** A test Weather Source ID. */
+	public static final Long TEST_WEATHER_SOURCE_ID = -1L;
+	
+	/** A test Weather Source name. */
+	public static final String TEST_WEATHER_SOURCE_NAME = "Test weather source";
+	
+	/** A test Location ID. */
+	public static final Long TEST_LOC_ID = -1L;
+	
+	/** A test location country. */
+	public static final String TEST_LOC_COUNTRY = "NZ";
+
+	/** A test location name */
+	public static final String TEST_LOC_NAME = "Test Location";
+
+	/** A test location region */
+	public static final String TEST_LOC_REGION = "Wellington";
+
+	/** A test location postal code */
+	public static final String TEST_LOC_POSTAL_CODE = "6011";
+
+	/** A test weather Location ID. */
+	public static final Long TEST_WEATHER_LOC_ID = -1L;
+	
+	/** A test hardware ID. */
+	public static final Long TEST_HARDWARE_ID = -1L;
+	
+	/** A test hardware manufacturer. */
+	public static final String TEST_HARDWARE_MANUFACTURER = "Test Manufacturer";
+	
+	/** A test hardware model. */
+	public static final String TEST_HARDWARE_MODEL = "Test Model";
+	
+	/** A test hardware control ID. */
+	public static final Long TEST_HARDWARE_CONTROL_ID = -1L;
+	
+	/** A test TimeZone ID. */
+	public static final String TEST_TZ = "Pacific/Auckland";
+
+	/** A date + time format. */
+	public final DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+	/** A class-level logger. */
+	protected final Logger log = Logger.getLogger(getClass());
+	
+	/**
+	 * Setup the {@link #dateTimeFormat} timezone.
+	 */
+	@BeforeTransaction
+	public void setupDateTime() {
+		dateTimeFormat.setTimeZone(TimeZone.getTimeZone(TEST_TZ));		
+	}
+	
+	/**
+	 * Insert a test node into the sn_node table.
+	 */
+	protected void setupTestNode() {
+		setupTestLocation();
+		setupTestNode(TEST_NODE_ID);
+	}
+	
+	/**
+	 * Insert a test node into the sn_node table.
+	 * @param nodeId the ID to assign to the node
+	 */
+	protected void setupTestNode(Long nodeId) {
+		setupTestNode(nodeId, TEST_LOC_ID, TEST_WEATHER_LOC_ID);
+	}
+	
+	/**
+	 * Insert a test node into the sn_node table.
+	 * @param nodeId the ID to assign to the node
+	 * @param locId the location ID
+	 * @param weatherLocationId the weather location ID
+	 */
+	protected void setupTestNode(Long nodeId, Long locationId, Long weatherLocationId) {
+		simpleJdbcTemplate.update(
+				"insert into solarnet.sn_node (node_id, loc_id, wloc_id) values (?,?,?)", 
+				nodeId, locationId, weatherLocationId);
+		int count = simpleJdbcTemplate.queryForInt(
+				"select count(*) from solarnet.sn_node where node_id = ?", nodeId);
+		log.debug("Test SolarNode [" +nodeId +"] created: " +count);
+	}
+	
+	/**
+	 * Insert a test location into the sn_loc table.
+	 */
+	protected void setupTestLocation() {
+		setupTestLocation(TEST_LOC_ID, TEST_WEATHER_LOC_ID, TEST_LOC_NAME);
+	}
+	
+	/**
+	 * Insert a test location into the sn_loc table and weather location 
+	 * in the sn_weather_loc table.
+	 */
+	protected void setupTestLocation(Long id, Long weatherLocId, String name) {
+		simpleJdbcTemplate.update(
+				"insert into solarnet.sn_loc (id,loc_name,country,region,postal_code,time_zone) values (?,?,?,?,?,?)", 
+				id, name, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, TEST_TZ);
+		simpleJdbcTemplate.update(
+				"insert into solarnet.sn_weather_source (id,sname) values (?,?)", 
+				TEST_WEATHER_SOURCE_ID, TEST_WEATHER_SOURCE_NAME);
+		simpleJdbcTemplate.update(
+				"insert into solarnet.sn_weather_loc (id,loc_id,source_id) values (?,?,?)", 
+				weatherLocId, id, TEST_WEATHER_SOURCE_ID);
+	}
+
+	/**
+	 * Insert a test hardware into the sn_hardware table.
+	 */
+	protected void setupTestHardware() {
+		setupTestHardware(TEST_HARDWARE_ID, TEST_HARDWARE_MANUFACTURER, TEST_HARDWARE_MODEL);
+	}
+	
+	/**
+	 * Insert a test hardware into the sn_hardware table.
+	 * 
+	 * @param id the primary key
+	 * @param manufacturer the manufacturer
+	 * @param model the model
+	 */
+	protected void setupTestHardware(Long id, String manufacturer, String model) {
+		simpleJdbcTemplate.update(
+				"insert into solarnet.sn_hardware (id,manufact,model) values (?,?,?)", 
+				id, manufacturer, model);
+	}
+
+	/**
+	 * Insert a test hardware control into the sn_hardware_control table.
+	 */
+	protected void setupTestHardwareControl() {
+		setupTestHardwareControl(TEST_HARDWARE_ID, TEST_HARDWARE_CONTROL_ID);
+	}
+	
+	/**
+	 * Insert a test hardware control into the sn_hardware_control table.
+	 * 
+	 * @param hardwareId the hardware primary key
+	 * @param controlId the control primary key
+	 */
+	protected void setupTestHardwareControl(Long hardwareId, Long controlId) {
+		simpleJdbcTemplate.update(
+				"insert into solarnet.sn_hardware_control (id,hw_id,ctl_name,unit) values (?,?,?,?)", 
+				controlId, hardwareId, "Test Hardware Control", "W");
+	}
+
+}
