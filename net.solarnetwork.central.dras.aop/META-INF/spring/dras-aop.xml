@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+	<aop:aspectj-autoproxy/>
+	
+	<bean id="entityChangeNotificationAspect"
+		class="net.solarnetwork.central.dras.aop.EntityChangeNotificationAspect">
+		<constructor-arg ref="eventAdmin"/>
+		<constructor-arg ref="userDao"/>
+	</bean>
+	
+	<bean id="filterSecurityAspect" class="net.solarnetwork.central.dras.aop.FilterSecurityAspect">
+		<constructor-arg ref="userDao"/>
+	</bean>
+	
+	<bean id="aopEventBiz"
+		class="net.solarnetwork.central.dras.biz.support.DelegatingEventBiz">
+		<constructor-arg ref="eventBiz"/>
+	</bean>
+	
+	<bean id="aopEventAdminBiz"
+		class="net.solarnetwork.central.dras.biz.support.DelegatingEventAdminBiz">
+		<constructor-arg ref="eventAdminBiz"/>
+	</bean>
+	
+	<bean id="aopParticipantBiz"
+		class="net.solarnetwork.central.dras.biz.support.DelegatingParticipantBiz">
+		<constructor-arg ref="participantBiz"/>
+	</bean>
+	
+	<bean id="aopProgramBiz"
+		class="net.solarnetwork.central.dras.biz.support.DelegatingProgramBiz">
+		<constructor-arg ref="programBiz"/>
+	</bean>
+	
+	<bean id="aopProgramAdminBiz"
+		class="net.solarnetwork.central.dras.biz.support.DelegatingProgramAdminBiz">
+		<constructor-arg ref="programAdminBiz"/>
+	</bean>
+	
+	<bean id="aopUserBiz"
+		class="net.solarnetwork.central.dras.biz.support.DelegatingUserBiz">
+		<constructor-arg ref="userBiz"/>
+	</bean>
+	
+</beans>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:osgi="http://www.springframework.org/schema/osgi"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/osgi
+		http://www.springframework.org/schema/osgi/spring-osgi.xsd">
+
+	<!-- Service References -->
+
+	<osgi:reference id="alertBiz" cardinality="1..1" interface="net.solarnetwork.central.dras.biz.AlertBiz"/>
+	<osgi:reference id="userDao" cardinality="1..1" interface="net.solarnetwork.central.dras.dao.UserDao"/>
+	<osgi:reference id="eventAdmin" cardinality="1..1" interface="org.osgi.service.event.EventAdmin"/>
+
+	<osgi:reference id="eventBiz" 
+		interface="net.solarnetwork.central.dras.biz.EventBiz" 
+		cardinality="0..1" 
+		filter="(!(aop=true))"/>
+	
+	<osgi:reference id="eventAdminBiz" 
+		interface="net.solarnetwork.central.dras.biz.EventAdminBiz" 
+		cardinality="0..1" 
+		filter="(!(aop=true))"/>
+	
+	<osgi:reference id="participantBiz" 
+		interface="net.solarnetwork.central.dras.biz.ParticipantBiz" 
+		cardinality="0..1" 
+		filter="(!(aop=true))"/>
+	
+	<osgi:reference id="programBiz" 
+		interface="net.solarnetwork.central.dras.biz.ProgramBiz" 
+		cardinality="0..1" 
+		filter="(!(aop=true))"/>
+	
+	<osgi:reference id="programAdminBiz" 
+		interface="net.solarnetwork.central.dras.biz.ProgramAdminBiz" 
+		cardinality="0..1" 
+		filter="(!(aop=true))"/>
+	
+	<osgi:reference id="userBiz" 
+		interface="net.solarnetwork.central.dras.biz.UserBiz" 
+		cardinality="0..1" 
+		filter="(!(aop=true))"/>
+	
+	<!-- Published Services -->
+
+	<osgi:service ref="aopEventBiz" 
+		interface="net.solarnetwork.central.dras.biz.EventBiz"
+		ranking="10">
+		<osgi:service-properties>
+			<entry key="aop" value="true"/>
+		</osgi:service-properties>
+	</osgi:service>
+
+	<osgi:service ref="aopEventAdminBiz" 
+		interface="net.solarnetwork.central.dras.biz.EventAdminBiz"
+		ranking="10">
+		<osgi:service-properties>
+			<entry key="aop" value="true"/>
+		</osgi:service-properties>
+	</osgi:service>
+
+	<osgi:service ref="aopParticipantBiz" 
+		interface="net.solarnetwork.central.dras.biz.ParticipantBiz"
+		ranking="10">
+		<osgi:service-properties>
+			<entry key="aop" value="true"/>
+		</osgi:service-properties>
+	</osgi:service>
+
+	<osgi:service ref="aopProgramBiz" 
+		interface="net.solarnetwork.central.dras.biz.ProgramBiz"
+		ranking="10">
+		<osgi:service-properties>
+			<entry key="aop" value="true"/>
+		</osgi:service-properties>
+	</osgi:service>
+
+	<osgi:service ref="aopProgramAdminBiz" 
+		interface="net.solarnetwork.central.dras.biz.ProgramAdminBiz"
+		ranking="10">
+		<osgi:service-properties>
+			<entry key="aop" value="true"/>
+		</osgi:service-properties>
+	</osgi:service>
+
+	<osgi:service ref="aopUserBiz" 
+		interface="net.solarnetwork.central.dras.biz.UserBiz"
+		ranking="10">
+		<osgi:service-properties>
+			<entry key="aop" value="true"/>
+		</osgi:service-properties>
+	</osgi:service>
+
+</beans>

@@ -1,0 +1,37 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SolarADR AOP
+Bundle-SymbolicName: net.solarnetwork.central.dras.aop
+Bundle-Version: 1.0.2
+Bundle-Vendor: SolarNetwork
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ClassPath: .,build/eclipse/
+Import-Package: 
+ net.solarnetwork.central.dao;version="1.6.0",
+ net.solarnetwork.central.datum.domain;version="[1.0.0,2.0.0)",
+ net.solarnetwork.central.domain;version="1.8.0",
+ net.solarnetwork.central.dras.biz;version="1.0.0",
+ net.solarnetwork.central.dras.biz.support;version="1.0.0",
+ net.solarnetwork.central.dras.dao;version="1.0.0",
+ net.solarnetwork.central.dras.domain;version="1.0.0",
+ net.solarnetwork.central.dras.support;version="1.0.0",
+ net.solarnetwork.central.security;version="1.0.0",
+ net.solarnetwork.central.support;version="1.2.0",
+ org.aopalliance.aop;version="1.0.0",
+ org.aspectj.lang;version="[1.6.6, 2.0)",
+ org.aspectj.lang.annotation;version="[1.6.6, 2.0)",
+ org.joda.time;version="[1.6,3.0)",
+ org.joda.time.base;version="[1.6,3.0)",
+ org.osgi.service.event;version="[1.2,2.0)",
+ org.slf4j;version="[1.5.0,2.0.0)",
+ org.springframework.aop;version="[3.0.5,4.0)",
+ org.springframework.aop.framework;version="[3.0.5,4.0)",
+ org.springframework.aop.aspectj.autoproxy;version="[3.0.5,4.0)",
+ org.springframework.beans;version="[3.0.5,4.0)",
+ org.springframework.beans.factory.annotation;version="[3.0.5,4.0)",
+ org.springframework.core;version="[3.0.5,4.0)",
+ org.springframework.security.core;version="[3.0,4.0)",
+ org.springframework.security.core.context;version="[3.0,4.0)",
+ org.springframework.stereotype;version="[3.0.5,4.0)",
+ org.springframework.transaction;version="[3.0.5,4.0)",
+ org.springframework.transaction.annotation;version="[3.0.5,4.0)"
