@@ -1,0 +1,166 @@
+html {
+	background-color: #efefef;
+	color: black;
+}
+
+body {
+	font-size: 7pt;
+	background-color: #efefef;
+	color: black;
+}
+
+.chart-container {
+	font-size: 10pt !important;
+}
+
+#date-picker-div {
+	margin-top: 1em;
+}
+
+#date-range-display {
+	font-weight: bold;
+	color: #666;
+	background: inherit;
+	border: 0;
+	width: 100%;
+	margin-top: 0.5em;
+}
+
+#main-div,
+#chart-main {
+	margin-top: 1em;
+	margin-left: 1em;
+	width: 840px;
+}
+
+#hourly-cost-div,
+#chart-box2 {
+	margin-top: 35px;
+	margin-left: 1em;
+	width: 425px;
+	float: left;
+}
+
+#chart-box3 {
+	margin-top: 35px;
+	margin-left: 1em;
+	width: 375px;
+	float: left;
+}
+
+#chart-box3 .jqplot-point-label,
+#chart-box2 .jqplot-point-label {
+  border: 1.5px solid #aaaaaa;
+  padding: 1px 3px;
+  background-color: #ddeeff;
+}
+
+.jqplot-point-label span.cost {
+	color: #900;
+}
+
+#week-cost-div {
+	width: 375px;
+}
+
+#monthly-cost-div {
+	width: 375px;
+}
+
+#week-weather-div {
+	width: 375px;
+}
+
+#monthly-weather-div {
+	width: 375px;
+}
+
+div.chart-switcher {
+	float: right;
+	margin-top: 5px;
+	margin-right: 5px;
+	cursor: pointer;
+}
+
+.chart-box {
+	background-color: white;
+	color: inherit;
+	border: 1px solid #999;
+	-moz-box-shadow: 5px 5px 30px #ccc;
+	-webkit-box-shadow: 5px 5px 30px #ccc;
+	box-shadow: 5px 5px 30px #ccc;
+	padding: 10px 10px 10px 20px;
+}
+
+.chart-box h2 {
+	margin-top: 0;
+}
+
+/* Current weather */
+
+#current-weather-div {
+	font-family: helvetica, sans-serif;
+	float: right;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	margin: 1em 25px 1em 1em;
+	padding: 1em 2em 1em 2em;
+}
+
+#current-weather-div h2 {
+	width: 128px;
+	text-align: center;
+}
+
+.updated {
+	font-style: italic;
+	font-size: 7pt;
+	color: #999;
+	background-color: inherit;
+	text-align: center;
+	margin-top: 4px;
+}
+
+.weather-icon {
+	clear: both;
+	width: 128px;
+	height: 128px;
+}
+
+.current-temp {
+	float: left;
+	width: 70%;
+	font-size: 34px;
+	line-height: 34px;
+	font-weight: normal;
+	margin-bottom: 4px;
+}
+
+.highlow-temp {
+	font-size: 13px;
+	font-weight: normal;
+	color: #999;
+	background-color: inherit;
+	line-height: 15px;
+	margin-top: 1px;
+}
+
+.highlow-temp .label {
+	display: inline-block;
+	width: 1.1em;
+}
+
+.weather-extra {
+	clear: both;
+	font-weight: normal;
+	font-size: 9pt;
+	color: #999;
+	background-color: inherit;
+}
+
+.weather-extra .label {
+	display: inline-block;
+	font-style: italic;
+	width: 70%;
+}

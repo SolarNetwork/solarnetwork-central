@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+	"-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+	"http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+<tiles-definitions>
+	
+	<definition name="index" extends="default">
+		<put-attribute name="body" value="/WEB-INF/jsp/index.jsp" />
+	</definition>
+	
+	<definition name="net-gen-dashboard" extends="default">
+		<put-attribute name="body" value="/WEB-INF/jsp/net-gen-dashboard.jsp" />
+	</definition>
+	
+	<definition name="node-gen-dashboard" extends="default">
+		<put-attribute name="body" value="/WEB-INF/jsp/node-gen-dashboard.jsp" />
+	</definition>
+	
+	<definition name="node-dashboard" extends="default">
+		<put-attribute name="body" value="/WEB-INF/jsp/node-dashboard.jsp" />
+	</definition>
+	
+	
+</tiles-definitions>

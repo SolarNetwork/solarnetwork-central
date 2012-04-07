@@ -1,0 +1,62 @@
+html {
+	background-color: #efefef;
+	color: black;
+}
+
+body {
+	font-size: 7pt;
+	background-color: #efefef;
+	color: black;
+}
+
+.chart-container {
+	font-size: 10pt !important;
+}
+
+#date-picker-div {
+	margin-top: 1em;
+}
+
+#date-range-display {
+	font-weight: bold;
+	color: #666;
+	background: inherit;
+	border: 0;
+	width: 100%;
+	margin-top: 0.5em;
+}
+
+#main-div,
+#chart-main {
+	margin-top: 1em;
+	margin-left: 1em;
+	width: 840px;
+}
+
+#hourly-cost-div,
+#chart-box2 {
+	margin-top: 35px;
+	margin-left: 1em;
+	width: 840px;
+}
+
+div.chart-switcher {
+	float: right;
+	margin-top: 5px;
+	margin-right: 5px;
+	cursor: pointer;
+}
+
+.chart-box {
+	background-color: white;
+	color: inherit;
+	border: 1px solid #999;
+	-moz-box-shadow: 5px 5px 30px #ccc;
+	-webkit-box-shadow: 5px 5px 30px #ccc;
+	box-shadow: 5px 5px 30px #ccc;
+	padding: 10px 10px 10px 20px;
+}
+
+.chart-box h2 {
+	margin-top: 0;
+}
