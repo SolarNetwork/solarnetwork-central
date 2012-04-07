@@ -1,0 +1,13 @@
+<ivy-module version="2.0">
+    <info organisation="SolarNetwork" module="${bundle.name}" />
+    <dependencies>
+    	<dependency org="org.apache.tomcat" name="com.springsource.org.apache.tomcat.jdbc" rev="1.0.9.3" />
+		<dependency org="org.springframework" name="org.springframework.beans" rev="3.0.5.RELEASE"/>
+		<dependency org="org.springframework" name="org.springframework.core" rev="3.0.5.RELEASE"/>
+		<dependency org="org.springframework" name="org.springframework.jdbc" rev="3.0.5.RELEASE"/>
+		<dependency org="org.springframework" name="org.springframework.transaction" rev="3.0.5.RELEASE"/>
+    	<dependency org="org.osgi" name="org.osgi.compendium" rev="4.2.0" />
+    	<dependency org="org.osgi" name="org.osgi.core" rev="4.2.0"/>
+    	<dependency org="org.osgi" name="org.osgi.enterprise" rev="4.2.0"/>
+    </dependencies>
+</ivy-module>

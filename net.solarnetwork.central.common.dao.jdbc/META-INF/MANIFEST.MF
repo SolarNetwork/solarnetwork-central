@@ -1,0 +1,28 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SolarNetwork JDBC
+Bundle-SymbolicName: net.solarnetwork.central.common.dao.jdbc
+Bundle-Version: 1.1.0
+Bundle-Vendor: SolarNetwork
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: 
+ javax.sql,
+ net.solarnetwork.dao.jdbc;version="1.0.0",
+ org.apache.commons.logging;version="[1.1,1.2)",
+ org.apache.tomcat.jdbc.pool;version="1.0.9.3",
+ org.osgi.service.cm;version="1.2.0",
+ org.osgi.service.jdbc;version="[1.0,2.0)",
+ org.slf4j;version="[1.6,2.0)",
+ org.springframework.beans;version="[3.0,4.0)",
+ org.springframework.beans.factory;version="[3.0,4.0)",
+ org.springframework.core.io;version="[3.0,4.0)",
+ org.springframework.jdbc;version="[3.0,4.0)",
+ org.springframework.jdbc.core;version="[3.0,4.0)",
+ org.springframework.jdbc.core.simple;version="[3.0,4.0)",
+ org.springframework.jdbc.core.support;version="[3.0,4.0)",
+ org.springframework.jdbc.datasource;version="[3.0,4.0)",
+ org.springframework.jdbc.support;version="[3.0,4.0)",
+ org.springframework.osgi.compendium.cm;version="[1.2.1,2.0.0)",
+ org.springframework.osgi.compendium.config;version="[1.2.1,2.0.0)",
+ org.springframework.transaction;version="[3.0,4.0)",
+ org.springframework.util;version="[3.0,4.0)"
