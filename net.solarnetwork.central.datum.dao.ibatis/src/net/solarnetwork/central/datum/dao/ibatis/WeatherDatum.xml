@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="WeatherDatum">
+
+	<insert id="insert-WeatherDatum" parameterClass="weatherDatum">
+		<selectKey resultClass="long" keyProperty="id"> 
+              SELECT nextval('solarnet.solarnet_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_weather_datum 
+			(id
+			<isNotNull prepend="," property="created">created</isNotNull>
+			, loc_id, info_date, temperature, sky,
+			humidity, bar, bar_dir, visibility, uv_index, dew)
+		VALUES
+			(#id#
+			<isNotNull prepend="," property="created">#created#</isNotNull>
+			, #locationId#, #infoDate#, #temperatureCelcius#,
+			#skyConditions#, #humidity#, #barometricPressure#, 
+			#barometerDelta#, #visibility#, #uvIndex#, #dewPoint#)
+	</insert>
+
+	<update id="update-WeatherDatum" parameterClass="weatherDatum">
+		UPDATE solarnet.sn_weather_datum SET
+			created = #created#,
+			loc_id = #locationId#, 
+			info_date = #infoDate#,
+			temperature = #temperatureCelcius#,
+			sky = #skyConditions#,
+			humidity = #humidity#,
+			bar = #barometricPressure#,
+			bar_dir = #barometerDelta#,
+			visibility = #visibility#,
+			uv_index = #uvIndex#,
+			dew = #dewPoint#
+		WHERE
+			id = #id#
+	</update>
+
+	<sql id="fragment-WeatherDatum-full-result">
+		wdatum.id AS sn_weather_datum_id,
+		wdatum.created AS sn_weather_datum_created,
+		wdatum.loc_id AS sn_weather_datum_loc_id,
+		wdatum.info_date AS sn_weather_datum_info_date,
+		wdatum.temperature AS sn_weather_datum_temperature,
+		wdatum.sky AS sn_weather_datum_sky,
+		wdatum.humidity AS sn_weather_datum_humidity,
+		wdatum.bar AS sn_weather_datum_bar,
+		wdatum.bar_dir AS sn_weather_datum_bar_dir,
+		wdatum.visibility AS sn_weather_datum_visibility,
+		wdatum.uv_index AS sn_weather_datum_uv_index,
+		wdatum.dew AS sn_weather_datum_dew
+	</sql>
+	
+	<resultMap id="WeatherDatumFullResult" class="WeatherDatum">
+		<result column="sn_weather_datum_id" property="id"/>
+		<result column="sn_weather_datum_created" property="created"/>
+		<result column="sn_weather_datum_loc_id" property="locationId"/>
+		<result column="sn_weather_datum_info_date" property="infoDate"/>
+		<result column="sn_weather_datum_temperature" property="temperatureCelcius"/>
+		<result column="sn_weather_datum_sky" property="skyConditions"/>
+		<result column="sn_weather_datum_humidity" property="humidity"/>
+		<result column="sn_weather_datum_bar" property="barometricPressure"/>
+		<result column="sn_weather_datum_bar_dir" property="barometerDelta"/>
+		<result column="sn_weather_datum_visibility" property="visibility"/>
+		<result column="sn_weather_datum_uv_index" property="uvIndex"/>
+		<result column="sn_weather_datum_dew" property="dewPoint"/>
+	</resultMap>
+	
+	<select id="get-WeatherDatum-for-id" resultMap="WeatherDatumFullResult">
+		SELECT
+			<include refid="fragment-WeatherDatum-full-result"/>
+		FROM
+			solarnet.sn_weather_datum wdatum
+		WHERE
+			wdatum.id = #id#
+	</select>
+	
+	<select id="find-WeatherDatum-for-date" resultMap="WeatherDatumFullResult">
+		SELECT
+			<include refid="fragment-WeatherDatum-full-result"/>
+		FROM
+			solarnet.sn_weather_datum wdatum
+		WHERE
+			wdatum.loc_id = #id#
+			AND wdatum.info_date = #date#
+	</select>
+	
+	<resultMap id="WeatherDatumAggResult" class="ReportingWeatherDatum">
+		<result column="created" property="localDateTime"/>
+		<result column="loc_id" property="locationId"/>
+		<result column="info_date" property="infoDate"/>
+		<result column="temperature" property="temperatureCelcius"/>
+		<result column="sky" property="skyConditions"/>
+		<result column="humidity" property="humidity"/>
+		<result column="bar" property="barometricPressure"/>
+		<result column="bar_dir" property="barometerDelta"/>
+		<result column="visibility" property="visibility"/>
+		<result column="uv_index" property="uvIndex"/>
+		<result column="dew" property="dewPoint"/>
+	</resultMap>
+	
+	<select id="find-WeatherDatum-for-most-recent" resultMap="WeatherDatumAggResult">
+		<![CDATA[
+		SELECT
+			w.info_date at time zone l.time_zone as created,
+			w.loc_id,
+			w.info_date,
+			w.temperature,
+			w.sky,
+			w.humidity,
+			w.bar,
+			w.bar_dir,
+			w.visibility,
+			w.uv_index,
+			w.dew
+		FROM
+			solarnet.sn_weather_datum w
+		INNER JOIN solarnet.sn_node n ON n.wloc_id = w.loc_id
+		INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE
+			n.node_id = #node#
+			AND w.info_date <= #upToDate#
+		ORDER BY
+			w.info_date DESC
+		]]>
+	</select>
+	
+</sqlMap>

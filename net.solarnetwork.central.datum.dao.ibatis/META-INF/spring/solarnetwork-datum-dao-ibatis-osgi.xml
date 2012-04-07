@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:osgi="http://www.springframework.org/schema/osgi"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+						http://www.springframework.org/schema/osgi http://www.springframework.org/schema/osgi/spring-osgi.xsd">
+
+	<!-- Service References -->
+	
+	<osgi:reference id="dataSource" interface="javax.sql.DataSource" filter="(db=central)"/>
+	
+	<osgi:reference id="txManager" interface="org.springframework.transaction.PlatformTransactionManager"
+		filter="(db=central)"/>
+	
+	<!-- Published Services -->
+	
+	<osgi:service ref="consumptionDatumDao" interface="net.solarnetwork.central.datum.dao.ConsumptionDatumDao" ranking="1"/>
+	<osgi:service ref="dayDatumDao" interface="net.solarnetwork.central.datum.dao.DayDatumDao" ranking="1"/>
+	<osgi:service ref="hardwareControlDatumDao" interface="net.solarnetwork.central.datum.dao.HardwareControlDatumDao" ranking="1"/>
+	<osgi:service ref="powerDatumDao" interface="net.solarnetwork.central.datum.dao.PowerDatumDao" ranking="1"/>
+	<osgi:service ref="priceDatumDao" interface="net.solarnetwork.central.datum.dao.PriceDatumDao" ranking="1"/>
+	<osgi:service ref="weatherDatumDao" interface="net.solarnetwork.central.datum.dao.WeatherDatumDao" ranking="1"/>
+
+	<osgi:service ref="sqlMapClient" interface="com.ibatis.sqlmap.client.SqlMapClient">
+		<osgi:service-properties>
+			<entry key="db" value="central"/>
+			<entry key="function" value="datum"/>
+		</osgi:service-properties>
+	</osgi:service>
+
+</beans>

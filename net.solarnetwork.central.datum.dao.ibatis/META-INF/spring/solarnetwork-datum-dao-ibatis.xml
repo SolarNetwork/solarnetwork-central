@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+			http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.0.xsd
+			http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+	<!-- Use Java @Transactional annotations to declare transactions. -->
+	<tx:annotation-driven transaction-manager="txManager"/>
+	
+	<util:map id="skyConditionMap">
+		<entry key="^(clear|sunny|fine)" value="Clear"/>
+		<entry key="^(?:mostly\s+)?cloudy" value="Overcast"/>
+		<entry key="^fair" value="Clear"/>
+		<entry key="^(?:heavy\s+)?(?:rain|shower)" value="Showers"/>
+		<entry key="drizzle" value="ShowersScattered"/>
+		<entry key="^(?:few|light)\s+(rain|drizzle|shower)" value="ShowersScattered"/>
+		<entry key="^partly\s+cloudy" value="FewClouds"/>
+		<entry key="fog" value="Fog"/>
+		<entry key="snow" value="Snow"/>
+	</util:map>
+	
+	<bean id="consumptionDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisConsumptionDatumDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+	</bean>
+	
+	<bean id="dayDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisDayDatumDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+		<property name="conditionMap" ref="skyConditionMap"/>
+	</bean>
+	
+	<bean id="hardwareControlDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisHardwareControlDatumDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+	</bean>
+	
+	<bean id="priceDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisPriceDatumDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+	</bean>
+	
+	<bean id="powerDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisPowerDatumDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+	</bean>
+	
+	<bean id="weatherDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisWeatherDatumDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+		<property name="conditionMap" ref="skyConditionMap"/>
+	</bean>
+	
+	<bean id="sqlMapClient"
+		class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation" value="/META-INF/sqlmap-config.xml"/>
+		<property name="mappingLocations">
+			<list>
+				<value>classpath:/net/solarnetwork/central/dao/ibatis/Hardware.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/ibatis/HardwareControl.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/ibatis/SolarLocation.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/ibatis/SolarNode.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/ConsumptionDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/DayDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/Global.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/HardwareControlDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/PowerDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/PriceDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/WeatherDatum.xml</value>
+			</list>
+		</property>
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+
+</beans>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="HardwareControlDatum">
+
+	<insert id="insert-HardwareControlDatum" parameterClass="HardwareControlDatum">
+		<selectKey resultClass="long" keyProperty="id"> 
+              SELECT nextval('solarnet.solarnet_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_hardware_control_datum 
+			(id
+			<isNotNull prepend="," property="created">created</isNotNull>
+			, node_id, source_id, int_val, float_val)
+		VALUES
+			(#id#
+			<isNotNull prepend="," property="created">#created#</isNotNull>
+			, #nodeId#, #sourceId#, #integerValue#, #floatValue#)
+	</insert>
+
+	<update id="update-HardwareControlDatum" parameterClass="HardwareControlDatum">
+		UPDATE 
+			solarnet.sn_hardware_control_datum
+		SET
+			source_id = #sourceId#,
+			int_val = #integerValue#
+			float_val = #floatValue#
+		WHERE
+			id = #id#
+	</update>
+
+	<sql id="fragment-HardwareControlDatum-full-result">
+		hcdatum.id AS sn_hardware_control_datum_id,
+		hcdatum.created AS sn_hardware_control_datum_created,
+		hcdatum.node_id AS sn_hardware_control_datum_node_id,
+		hcdatum.source_id AS sn_hardware_control_datum_source_id,
+		hcdatum.int_val AS sn_hardware_control_datum_int_val,
+		hcdatum.float_val AS sn_hardware_control_datum_float_val
+	</sql>
+	
+	<resultMap id="HardwareControlDatumFullResult" class="HardwareControlDatum">
+		<result column="sn_hardware_control_datum_id" property="id"/>
+		<result column="sn_hardware_control_datum_created" property="created"/>
+		<result column="sn_hardware_control_datum_node_id" property="nodeId"/>
+		<result column="sn_hardware_control_datum_source_id" property="sourceId"/>
+		<result column="sn_hardware_control_datum_int_val" property="integerValue"/>
+		<result column="sn_hardware_control_datum_float_val" property="floatValue"/>
+	</resultMap>
+	
+	<select id="get-HardwareControlDatum-for-id" resultMap="HardwareControlDatumFullResult">
+		SELECT
+			<include refid="fragment-HardwareControlDatum-full-result"/>
+		FROM
+			solarnet.sn_hardware_control_datum hcdatum
+		WHERE
+			hcdatum.id = #id#
+	</select>
+	
+	<select id="find-HardwareControlDatum-for-date" resultMap="HardwareControlDatumFullResult">
+		SELECT
+			<include refid="fragment-HardwareControlDatum-full-result"/>
+		FROM
+			solarnet.sn_hardware_control_datum hcdatum
+		WHERE
+			hcdatum.node_id = #id#
+			AND hcdatum.created = #date#
+	</select>
+	
+	<select id="find-HardwareControlDatum-most-recent" resultMap="HardwareControlDatumFullResult">
+		SELECT
+			<include refid="fragment-HardwareControlDatum-full-result"/>
+		FROM
+			solarnet.sn_hardware_control_datum_most_recent recent
+		INNER JOIN
+			solarnet.sn_hardware_control_datum hcdatum ON hcdatum.id = recent.datum_id
+		WHERE
+			recent.node_id = #node#
+			<isNotNull property="source">
+				AND recent.source_id = #source#
+			</isNotNull>
+		ORDER BY
+			hcdatum.source_id
+	</select>
+	
+</sqlMap>

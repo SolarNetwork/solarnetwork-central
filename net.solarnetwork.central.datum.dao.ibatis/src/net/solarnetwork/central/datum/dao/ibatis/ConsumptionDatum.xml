@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="ConsumptionDatum">
+
+	<insert id="insert-ConsumptionDatum" parameterClass="ConsumptionDatum">
+		<selectKey resultClass="long" keyProperty="id"> 
+              SELECT nextval('solarnet.solarnet_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_consum_datum 
+			(id
+			<isNotNull prepend="," property="created">created</isNotNull>
+			<isNotNull prepend="," property="posted">posted</isNotNull>
+			, node_id, source_id, price_loc_id, watts, watt_hour)
+		VALUES
+			(#id#
+			<isNotNull prepend="," property="created">#created#</isNotNull>
+			<isNotNull prepend="," property="posted">#posted#</isNotNull>
+			, #nodeId#, #sourceId#, #locationId#, #watts#, #wattHourReading#)
+	</insert>
+
+	<update id="update-ConsumptionDatum" parameterClass="ConsumptionDatum">
+		UPDATE solarnet.sn_consum_datum SET
+			node_id = #nodeId#, 
+			price_loc_id = #locationId#,
+			source_id = #sourceId#,
+			watts = #watts#,
+			watt_hour = #wattHourReading#
+		WHERE
+			id = #id#
+	</update>
+
+	<sql id="fragment-ConsumptionDatum-full-result">
+		cdatum.id AS sn_consum_datum_id, 
+		cdatum.created AS sn_consum_datum_created,
+		cdatum.posted AS sn_consum_datum_posted,
+		cdatum.node_id AS sn_consum_datum_node_id,
+		cdatum.source_id AS sn_consum_datum_source_id,
+		cdatum.price_loc_id AS sn_consum_datum_price_loc_id,
+		cdatum.watts AS sn_consum_datum_watts,
+		cdatum.watt_hour AS sn_consum_datum_watt_hour
+	</sql>
+	
+	<resultMap id="ConsumptionDatumFullResult" class="ConsumptionDatum">
+		<result column="sn_consum_datum_id" property="id"/>
+		<result column="sn_consum_datum_created" property="created"/>
+		<result column="sn_consum_datum_posted" property="posted"/>
+		<result column="sn_consum_datum_node_id" property="nodeId"/>
+		<result column="sn_consum_datum_source_id" property="sourceId"/>
+		<result column="sn_consum_datum_price_loc_id" property="locationId"/>
+		<result column="sn_consum_datum_watts" property="watts"/>
+		<result column="sn_consum_datum_watt_hour" property="wattHourReading"/>
+	</resultMap>
+	
+	<select id="get-ConsumptionDatum-for-id" resultMap="ConsumptionDatumFullResult">
+		SELECT
+			<include refid="fragment-ConsumptionDatum-full-result"/>
+		FROM
+			solarnet.sn_consum_datum cdatum
+		WHERE
+			cdatum.id = #id#
+	</select>
+
+	<select id="find-ConsumptionDatum-for-date" resultMap="ConsumptionDatumFullResult">
+		SELECT
+			<include refid="fragment-ConsumptionDatum-full-result"/>
+		FROM
+			solarnet.sn_consum_datum cdatum
+		WHERE
+			cdatum.node_id = #id#
+			AND cdatum.created = #date#
+	</select>
+
+	<select id="find-ConsumptionDatum-most-recent" resultMap="ConsumptionDatumFullResult">
+		SELECT
+			<include refid="fragment-ConsumptionDatum-full-result"/>
+		FROM
+			solarnet.sn_consum_datum_most_recent recent
+		INNER JOIN
+			solarnet.sn_consum_datum cdatum ON cdatum.id = recent.datum_id
+		WHERE
+			recent.node_id = #node#
+			<isNotNull property="source">
+				AND recent.source_id = #source#
+			</isNotNull>
+		ORDER BY
+			cdatum.source_id
+	</select>
+	
+	<resultMap id="ConsumptionDatumAggResult" class="ReportingConsumptionDatum">
+		<result column="created_date" property="localDateTime"/>
+		<result column="source" property="sourceId"/>
+		<result column="watts" property="watts"/>
+	</resultMap>
+		
+	<select id="find-ConsumptionDatum-for-agg-minute" resultMap="ConsumptionDatumAggResult">
+		SELECT 
+			dates.d AS created_date,
+			COALESCE(data.source, '') AS source,
+			COALESCE(data.watts, -1) AS watts
+		FROM ( 
+			SELECT #start#::timestamp + (series.d * interval '1 minute') AS d 
+			FROM generate_series(0, floor(extract('epoch' from #end#::timestamp - #start#::timestamp))::integer / 60 - #precision#, #precision#) AS series(d)
+		) AS dates
+		LEFT OUTER JOIN (
+			SELECT 
+				to_timestamp(
+					extract('epoch' from date_trunc('minute', c.created at time zone l.time_zone))
+					- ((cast(extract('minute' from c.created) as integer) % #precision#) * 60)
+				) as created_date,
+				c.source_id as source,
+				avg(c.watts) as watts
+		
+			FROM solarnet.sn_consum_datum c
+			INNER JOIN solarnet.sn_node n ON n.node_id = #node#
+			INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+			
+			WHERE 
+				c.node_id = #node#
+				<isPropertyAvailable property="source">
+					AND c.source_id = #source#
+				</isPropertyAvailable>
+				<isPropertyAvailable property="sources">
+					AND c.source_id IN
+					<iterate open="(" close=")" conjunction="," property="sources">#sources[]#</iterate>					
+				</isPropertyAvailable>
+				AND c.created BETWEEN (#start#::timestamp at time zone l.time_zone) 
+					AND (#end#::timestamp at time zone l.time_zone)
+				
+			GROUP BY created_date, c.source_id
+		) AS data ON data.created_date = dates.d
+		
+		ORDER BY created_date, source
+	</select>
+
+	<sql id="fragment-ReportingConsumptionDatum-agg-result">
+		dates.d AS created_date,
+		COALESCE(data.source, '') AS source,
+		COALESCE(data.watts, -1) AS watts,
+		COALESCE(data.wh, -1) AS wh,
+		COALESCE(data.cost_amt, -1) AS cost_amt,
+		COALESCE(data.cost_curr, '') AS cost_curr
+	</sql>
+	
+	<resultMap id="ReportingConsumptionDatumAggResult" class="ReportingConsumptionDatum">
+		<result column="created_date" property="localDateTime"/>
+		<result column="source" property="sourceId"/>
+		<result column="watts" property="watts"/>
+		<result column="wh" property="wattHours"/>
+		<result column="cost_amt" property="cost"/>
+		<result column="cost_curr" property="currency"/>
+	</resultMap>
+		
+	<select id="find-ConsumptionDatum-for-agg-hour" resultMap="ReportingConsumptionDatumAggResult">
+		SELECT 
+			<include refid="fragment-ReportingConsumptionDatum-agg-result"/>
+			
+		FROM generate_series(#start#::timestamp, #end#::timestamp, '1 hour') AS dates(d)
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				c.created_hour as created_date,
+				c.source_id as source,
+				avg(c.watts) as watts,
+				sum(c.watt_hours) as wh,
+				sum(c.cost_amt) as cost_amt,
+				min(c.cost_currency) as cost_curr
+		
+			FROM solarrep.rep_consum_datum_hourly c
+		
+			WHERE 
+				c.node_id = #node#
+				<isPropertyAvailable property="source">
+					AND c.source_id = #source#
+				</isPropertyAvailable>
+				<isPropertyAvailable property="sources">
+					AND c.source_id IN
+					<iterate open="(" close=")" conjunction="," property="sources">#sources[]#</iterate>					
+				</isPropertyAvailable>
+				AND c.created_hour BETWEEN #start# AND #end#
+				
+			GROUP BY created_date, c.source_id
+		) AS data ON data.created_date = dates.d
+		
+		ORDER BY created_date, source
+	</select>
+	
+	<select id="find-ConsumptionDatum-for-agg-day" resultMap="ReportingConsumptionDatumAggResult">
+		SELECT 
+			dates.d AS created_date,
+			COALESCE(data.source, '') AS source,
+			COALESCE(data.watts, -1) AS watts,
+			COALESCE(data.wh, -1) AS wh,
+			COALESCE(data.cost_amt, -1) AS cost_amt,
+			COALESCE(data.cost_curr, '') AS cost_curr
+			
+		FROM ( 
+			SELECT date(#start#) + series.d AS d 
+			FROM generate_series(0, date(#end#) - date(#start#)) AS series(d)
+		) AS dates
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				c.created_day as created_date,
+				c.source_id as source,
+				avg(c.watts) as watts,
+				sum(c.watt_hours) as wh,
+				sum(c.cost_amt) as cost_amt,
+				min(c.cost_currency) as cost_curr
+		
+			FROM solarrep.rep_consum_datum_daily c
+		
+			WHERE 
+				c.node_id = #node#
+				<isPropertyAvailable property="source">
+					AND c.source_id = #source#
+				</isPropertyAvailable>
+				<isPropertyAvailable property="sources">
+					AND c.source_id IN
+					<iterate open="(" close=")" conjunction="," property="sources">#sources[]#</iterate>					
+				</isPropertyAvailable>
+				AND c.created_day BETWEEN #start#::date AND #end#::date
+				
+			GROUP BY created_date, c.source_id
+		) AS data ON data.created_date = dates.d
+		
+		ORDER BY created_date, source
+	</select>
+	
+	<select id="find-ConsumptionDatum-for-agg-week" resultMap="ReportingConsumptionDatumAggResult">
+		SELECT 
+			<include refid="fragment-ReportingConsumptionDatum-agg-result"/>
+			
+		FROM ( 
+			SELECT date_trunc('week', #start#::timestamp) + (series.d * interval '1 week') AS d 
+			FROM generate_series(0, 
+				CAST(extract('days' from date_trunc('week', #end#::timestamp) 
+					- date_trunc('week', #start#::timestamp)) / 7 AS INTEGER)
+			) AS series(d)
+		) AS dates
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				date_trunc('week', c.created_day) as created_date,
+				c.source_id as source,
+				avg(c.watts) as watts,
+				sum(c.watt_hours) as wh,
+				sum(c.cost_amt) as cost_amt,
+				min(c.cost_currency) as cost_curr
+		
+			FROM solarrep.rep_consum_datum_daily c
+		
+			WHERE 
+				c.node_id = #node#
+				<isPropertyAvailable property="source">
+					AND c.source_id = #source#
+				</isPropertyAvailable>
+				<isPropertyAvailable property="sources">
+					AND c.source_id IN
+					<iterate open="(" close=")" conjunction="," property="sources">#sources[]#</iterate>					
+				</isPropertyAvailable>
+				AND c.created_day &gt;= date_trunc('week', #start#::timestamp)::date
+				AND c.created_day &lt; (date_trunc('week', #end#::timestamp) + interval '1 week')::date
+				
+			GROUP BY created_date, c.source_id
+		) AS data ON data.created_date = dates.d
+		
+		ORDER BY created_date, source
+	</select>
+	
+	<select id="find-ConsumptionDatum-for-agg-month" resultMap="ReportingConsumptionDatumAggResult">
+		SELECT 
+			<include refid="fragment-ReportingConsumptionDatum-agg-result"/>
+			
+		FROM ( 
+			SELECT date_trunc('month', date(#start#)) + (series.d * interval '1 month') AS d 
+			FROM generate_series(0, 
+				(((extract('year' from #end#::timestamp) - extract('year' from #start#::timestamp)) * 12)
+					+ (extract('month' from #end#::timestamp) - extract('month' from #start#::timestamp)))::integer
+			) AS series(d)
+		) AS dates
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				date_trunc('month', c.created_day) as created_date,
+				c.source_id as source,
+				avg(c.watts) as watts,
+				sum(c.watt_hours) as wh,
+				sum(c.cost_amt) as cost_amt,
+				min(c.cost_currency) as cost_curr
+		
+			FROM solarrep.rep_consum_datum_daily c
+		
+			WHERE 
+				c.node_id = #node#
+				<isPropertyAvailable property="source">
+					AND c.source_id = #source#
+				</isPropertyAvailable>
+				<isPropertyAvailable property="sources">
+					AND c.source_id IN
+					<iterate open="(" close=")" conjunction="," property="sources">#sources[]#</iterate>					
+				</isPropertyAvailable>
+				AND c.created_day &gt;= #start#::date
+				AND c.created_day &lt; (#end#::date + interval '1 month')::date
+				
+			GROUP BY created_date, c.source_id
+		) AS data ON data.created_date = dates.d
+		
+		ORDER BY created_date, source
+	</select>
+	
+</sqlMap>

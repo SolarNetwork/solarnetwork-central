@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMapConfig 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-config-2.dtd"> 
+<sqlMapConfig>
+
+	<typeHandler javaType="org.joda.time.DateTime" 
+		callback="net.solarnetwork.central.dao.ibatis.JodaDateTimeTypeHandlerCallback" />
+	<typeHandler javaType="org.joda.time.LocalDateTime" 
+		callback="net.solarnetwork.central.dao.ibatis.JodaLocalDateTimeTypeHandlerCallback" />
+	<typeHandler javaType="org.joda.time.LocalDate" 
+		callback="net.solarnetwork.central.dao.ibatis.JodaLocalDateTypeHandlerCallback" />
+	<typeHandler javaType="org.joda.time.LocalTime" 
+		callback="net.solarnetwork.central.dao.ibatis.JodaLocalTimeTypeHandlerCallback" />
+
+	<typeAlias alias="Hardware" type="net.solarnetwork.central.domain.Hardware"/>
+	<typeAlias alias="HardwareControl" type="net.solarnetwork.central.domain.HardwareControl"/>
+	<typeAlias alias="SolarLocation" type="net.solarnetwork.central.domain.SolarLocation"/>
+	<typeAlias alias="SolarNode" type="net.solarnetwork.central.domain.SolarNode"/>
+	
+	<typeAlias alias="ConsumptionDatum" type="net.solarnetwork.central.datum.domain.ConsumptionDatum"/>
+	<typeAlias alias="DayDatum" type="net.solarnetwork.central.datum.domain.DayDatum"/>
+	<typeAlias alias="HardwareControlDatum" type="net.solarnetwork.central.datum.domain.HardwareControlDatum"/>
+	<typeAlias alias="PriceDatum" type="net.solarnetwork.central.datum.domain.PriceDatum"/>
+	<typeAlias alias="PowerDatum" type="net.solarnetwork.central.datum.domain.PowerDatum"/>
+	<typeAlias alias="WeatherDatum" type="net.solarnetwork.central.datum.domain.WeatherDatum"/>
+	
+	<typeAlias alias="ReportingConsumptionDatum" type="net.solarnetwork.central.datum.domain.ReportingConsumptionDatum"/>
+	<typeAlias alias="ReportingDayDatum" type="net.solarnetwork.central.datum.domain.ReportingDayDatum"/>
+	<typeAlias alias="ReportingPowerDatum" type="net.solarnetwork.central.datum.domain.ReportingPowerDatum"/>
+	<typeAlias alias="ReportingPriceDatum" type="net.solarnetwork.central.datum.domain.ReportingPriceDatum"/>
+	<typeAlias alias="ReportingWeatherDatum" type="net.solarnetwork.central.datum.domain.ReportingWeatherDatum"/>
+	
+</sqlMapConfig>
