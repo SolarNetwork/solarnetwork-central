@@ -1,0 +1,17 @@
+<ivy-module version="2.0">
+    <info organisation="SolarNetwork" module="${bundle.name}" />
+    <dependencies>
+		<dependency org="javax.servlet" name="com.springsource.javax.servlet" rev="2.5.0" />
+    	<dependency org="org.apache.tiles" name="com.springsource.org.apache.tiles" rev="2.1.2.osgi" />
+    	<dependency org="org.apache.tiles" name="com.springsource.org.apache.tiles.core" rev="2.1.2.osgi" />
+    	<dependency org="org.apache.tiles" name="com.springsource.org.apache.tiles.jsp" rev="2.1.2" />
+    	<dependency org="org.apache.tiles" name="com.springsource.org.apache.tiles.servlet" rev="2.1.2" />
+    	<dependency org="org.codehaus.jackson" name="com.springsource.org.codehaus.jackson" rev="1.0.0" />
+    	<dependency org="org.slf4j" name="com.springsource.slf4j.org.apache.commons.logging" rev="1.5.0" />
+		<dependency org="org.springframework" name="org.springframework.beans" rev="3.0.5.RELEASE"/>
+		<dependency org="org.springframework" name="org.springframework.context" rev="3.0.5.RELEASE"/>
+		<dependency org="org.springframework" name="org.springframework.core" rev="3.0.5.RELEASE"/>
+		<dependency org="org.springframework" name="org.springframework.web" rev="3.0.5.RELEASE"/>
+		<dependency org="org.springframework" name="org.springframework.web.servlet" rev="3.0.5.RELEASE"/>
+    </dependencies>
+</ivy-module>
