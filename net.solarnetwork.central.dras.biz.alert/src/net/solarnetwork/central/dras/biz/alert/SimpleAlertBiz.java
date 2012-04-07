@@ -33,6 +33,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Identity;
 import net.solarnetwork.central.dras.biz.AlertBiz;
 import net.solarnetwork.central.dras.dao.EventDao;
@@ -245,11 +246,11 @@ public class SimpleAlertBiz implements AlertBiz {
 		String currentUserName = auth.getName();
 		SimpleUserFilter filter = new SimpleUserFilter();
 		filter.setUniqueId(currentUserName);
-		List<Match> results = userDao.findFiltered(filter, null, null, null);
-		if ( results.size() < 1 ) {
+		FilterResults<Match> results = userDao.findFiltered(filter, null, null, null);
+		if ( results.getReturnedResultCount() < 1 ) {
 			return null;
 		}
-		return results.get(0).getId();
+		return results.getResults().iterator().next().getId();
 	}
 	
 	/**

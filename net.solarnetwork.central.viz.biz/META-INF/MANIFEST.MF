@@ -9,4 +9,4 @@ Export-Package: net.solarnetwork.central.viz.biz;version="1.0.0"
 Import-Package: 
  net.solarnetwork.central.datum.domain;version="[1.0.0,2.0.0)",
  net.solarnetwork.central.domain;version="[1.0.0,2.0.0)",
- org.joda.time;version="[1.6.0,2.0)"
+ org.joda.time;version="[1.6,3.0)"

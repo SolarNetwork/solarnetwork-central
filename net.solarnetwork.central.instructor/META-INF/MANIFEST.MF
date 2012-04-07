@@ -14,4 +14,4 @@ Import-Package:
  net.solarnetwork.central.dao;version="[1.4.0,2.0.0)",
  net.solarnetwork.central.domain;version="[1.1.0,2.0.0)",
  net.solarnetwork.util;version="1.4.0",
- org.joda.time;version="[1.6,2.0)"
+ org.joda.time;version="[1.6,3.0)"

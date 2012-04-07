@@ -168,7 +168,7 @@ public class MockDRASObserverBiz implements DRASObserverBiz {
 		uniProgramParticipants = new LinkedHashSet<Identity<Long>>(numNodes);
 		participantGroupMemebers = new LinkedHashMap<Long, Set<CapabilityInformation>>(numGroups);
 		for ( int i = 0; i < numNodes; i++ ) {
-			SolarNode participant = new SolarNode(counter.decrementAndGet(), createRandomLocation().getId(), tz.getID());
+			SolarNode participant = new SolarNode(counter.decrementAndGet(), createRandomLocation().getId());
 			uniProgramParticipants.add(participant);
 			int groupIndex = (i % numGroups);
 			SimpleCapabilityInformation group = (SimpleCapabilityInformation)participantGroups.get(groupIndex);

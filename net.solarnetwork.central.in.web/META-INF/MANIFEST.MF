@@ -29,7 +29,7 @@ Import-Package:
  javax.xml.stream,
  org.apache.taglibs.response;version="1.0.1",
  org.eclipse.virgo.web.dm;version="[2.1.0,3.0.0)",
- org.joda.time;version="[1.6,2.0)",
+ org.joda.time;version="[1.6,3.0)",
  org.mortbay.servlet;version="[6.1,7.0)",
  org.slf4j;version="[1.5.0,2.0.0)",
  org.springframework.beans;version="[3.0,4.0)",
