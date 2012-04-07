@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xmlns:sec="http://www.springframework.org/schema/security"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+	<bean class="net.solarnetwork.central.dras.biz.dao.DaoEventBiz">
+		<constructor-arg ref="eventDao"/>
+		<constructor-arg ref="effectiveDao"/>
+		<constructor-arg ref="userDao"/>
+	</bean>
+
+	<bean class="net.solarnetwork.central.dras.biz.dao.DaoLocationBiz">
+		<constructor-arg ref="locationDao"/>
+	</bean>
+
+	<bean class="net.solarnetwork.central.dras.biz.dao.DaoParticipantBiz">
+		<constructor-arg ref="effectiveDao"/>
+		<constructor-arg ref="userDao"/>
+		<constructor-arg ref="capabilityDao"/>
+		<constructor-arg ref="locationDao"/>
+		<constructor-arg ref="participantDao"/>
+		<constructor-arg ref="participantGroupDao"/>
+		<constructor-arg ref="constraintDao"/>
+	</bean>
+
+	<bean class="net.solarnetwork.central.dras.biz.dao.DaoUserBiz">
+		<constructor-arg ref="effectiveDao"/>
+		<constructor-arg ref="programDao"/>
+		<constructor-arg ref="userDao"/>
+		<constructor-arg ref="userGroupDao"/>
+		<constructor-arg ref="constraintDao"/>
+	</bean>
+
+</beans>
