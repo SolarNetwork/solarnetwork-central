@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="drasObserverBiz"
+		class="net.solarnetwork.central.dras.mock.biz.MockDRASObserverBiz"/>
+	
+	<bean id="drasOperatorBiz"
+		class="net.solarnetwork.central.dras.mock.biz.MockDRASOperatorBiz">
+		<property name="mockObserverBiz" ref="drasObserverBiz"/>
+	</bean>
+	
+	<bean id="drasQueryBiz"
+		class="net.solarnetwork.central.dras.mock.biz.MockDRASQueryBiz">
+		<constructor-arg ref="drasObserverBiz"/>
+	</bean>
+	
+</beans>

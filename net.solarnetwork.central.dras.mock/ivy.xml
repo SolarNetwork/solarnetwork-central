@@ -1,0 +1,7 @@
+<ivy-module version="2.0">
+    <info organisation="SolarNetwork" module="${bundle.name}" />
+    <dependencies>
+		<dependency org="org.joda" name="com.springsource.org.joda.time" rev="1.6.0" />
+    	<dependency org="org.slf4j" name="com.springsource.slf4j.org.apache.commons.logging" rev="1.5.0" />
+    </dependencies>
+</ivy-module>
