@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+	"-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+	"http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+<tiles-definitions>
+	
+	<definition name="index" extends="default">
+		<put-attribute name="body" value="/WEB-INF/jsp/index.jsp" />
+	</definition>
+	
+	<definition name="login" extends="default">
+		<put-attribute name="head" value="/WEB-INF/jsp/login-head.jsp"/>
+		<put-attribute name="body" value="/WEB-INF/jsp/login.jsp" />
+	</definition>
+	
+	<definition name="logoutSuccess" extends="default">
+		<put-attribute name="body" value="/WEB-INF/jsp/loggedout.jsp"/>
+	</definition>
+	
+	<definition name="home" extends="default">
+		<put-attribute name="body" value="/WEB-INF/jsp/home.jsp"/>
+	</definition>
+	
+</tiles-definitions>

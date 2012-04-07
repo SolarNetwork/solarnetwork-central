@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+	"-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+	"http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+<tiles-definitions>
+	
+	<definition name="registration/start" extends="defaultLayout">
+		<put-attribute name="head" value="/WEB-INF/flows/register/head.jsp" />
+		<put-attribute name="body" value="start.body" />
+	</definition>
+	
+    <definition name="start.body" template="/WEB-INF/flows/register/form-template.jsp">
+        <put-attribute name="intro" value="/WEB-INF/flows/register/start-intro.jsp" />
+        <put-attribute name="detail" value="/WEB-INF/jsp/user/detail-form.jsp" />
+        <put-attribute name="actions" value="/WEB-INF/flows/register/start-actions.jsp" />
+        <put-attribute name="conclusion" value="/WEB-INF/flows/register/start-conclusion.jsp" />
+    </definition>
+	
+	<definition name="registration/review" extends="defaultLayout">
+		<put-attribute name="head" value="/WEB-INF/flows/register/head.jsp" />
+		<put-attribute name="body" value="review.body" />
+	</definition>
+	
+    <definition name="review.body" template="/WEB-INF/flows/register/form-template.jsp">
+        <put-attribute name="intro" value="/WEB-INF/flows/register/review-intro.jsp" />
+        <put-attribute name="detail" value="/WEB-INF/jsp/user/detail-view.jsp" />
+        <put-attribute name="actions" value="/WEB-INF/flows/register/review-actions.jsp" />
+        <put-attribute name="conclusion" value="/WEB-INF/flows/register/review-conclusion.jsp" />
+    </definition>
+	
+	<definition name="registration/submitted" extends="defaultLayout">
+		<put-attribute name="head" value="/WEB-INF/flows/register/head.jsp" />
+		<put-attribute name="body" value="/WEB-INF/flows/register/submitted.jsp" />
+	</definition>
+	
+</tiles-definitions>

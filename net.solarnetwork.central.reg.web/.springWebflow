@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<webflow-project-description>
+	<version>1</version>
+	<pluginVersion><![CDATA[2.6.0.201103160035-RELEASE]]></pluginVersion>
+	<configs>
+		<config>
+			<file>web/WEB-INF/flows/register/confirm/confirm-flow.xml</file>
+			<name><![CDATA[confirm-flow]]></name>
+		</config>
+		<config>
+			<file>web/WEB-INF/flows/my-nodes/my-nodes-flow.xml</file>
+			<name><![CDATA[my-nodes-flow]]></name>
+		</config>
+		<config>
+			<file>web/WEB-INF/flows/register/register-flow.xml</file>
+			<name><![CDATA[register-flow]]></name>
+		</config>
+	</configs>
+</webflow-project-description>

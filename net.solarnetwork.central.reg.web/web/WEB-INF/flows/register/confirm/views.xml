@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+	"-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+	"http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+<tiles-definitions>
+	
+	<definition name="registration/confirm/confirmed" extends="defaultLayout">
+		<put-attribute name="head" value="/WEB-INF/flows/register/head.jsp" />
+		<put-attribute name="body" value="/WEB-INF/flows/register/confirm/confirmed.jsp" />
+	</definition>
+	
+	<definition name="registration/confirm/error" extends="defaultLayout">
+		<put-attribute name="head" value="/WEB-INF/flows/register/head.jsp" />
+		<put-attribute name="body" value="/WEB-INF/flows/register/confirm/error.jsp" />
+	</definition>
+	
+</tiles-definitions>

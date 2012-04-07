@@ -1,0 +1,21 @@
+form.registration-form div.button-group {
+	margin-left: 60pt;
+}
+
+form.registration-form div.caption {
+	margin-left: 60pt;
+}
+
+form.registration-form input[type=text],
+form.registration-form input[type=password] {
+	width: 180pt;
+}
+
+form.registration-form label {
+	width: 60pt;
+	padding-right: 0;
+}
+
+form.registration-form span.error {
+	margin-left: 60pt;
+}

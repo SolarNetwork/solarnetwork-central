@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+	"-//Apache Software Foundation//DTD Tiles Configuration 2.0//EN"
+	"http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
+<tiles-definitions>
+	
+	<definition name="myNodesLayout" extends="defaultLayout">
+		<put-attribute name="head" value="/WEB-INF/flows/my-nodes/head.jsp" />
+	</definition>
+	
+	<definition name="my-nodes/start" extends="myNodesLayout">
+		<put-attribute name="body" value="/WEB-INF/flows/my-nodes/start.jsp" />
+	</definition>
+	
+	<definition name="my-nodes/invite-node" extends="myNodesLayout">
+		<put-attribute name="body" value="/WEB-INF/flows/my-nodes/invite-node.jsp" />
+	</definition>
+	
+</tiles-definitions>
