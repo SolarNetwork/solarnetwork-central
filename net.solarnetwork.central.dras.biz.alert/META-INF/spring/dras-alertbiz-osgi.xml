@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:osgi="http://www.springframework.org/schema/osgi"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util
+		http://www.springframework.org/schema/util/spring-util-3.0.xsd
+		http://www.springframework.org/schema/osgi
+		http://www.springframework.org/schema/osgi/spring-osgi.xsd">
+
+	<!-- Service References -->
+	
+	<osgi:reference id="txManager" interface="org.springframework.transaction.PlatformTransactionManager"
+		filter="(db=central)"/>
+		
+	<osgi:reference id="mailSender" interface="org.springframework.mail.MailSender"/>
+
+	<osgi:reference id="outboundMailDao" interface="net.solarnetwork.central.dras.dao.OutboundMailDao"/>
+	<osgi:reference id="eventDao" interface="net.solarnetwork.central.dras.dao.EventDao"/>
+	<osgi:reference id="programDao" interface="net.solarnetwork.central.dras.dao.ProgramDao"/>
+	<osgi:reference id="userDao" interface="net.solarnetwork.central.dras.dao.UserDao"/>
+	
+	<!-- Published Services -->
+
+	<osgi:service ref="simpleAlertBiz" 
+		interface="net.solarnetwork.central.dras.biz.AlertBiz"
+		ranking="1"/>
+
+	<osgi:service ref="eventChangeListener" interface="org.osgi.service.event.EventHandler">
+		<osgi:service-properties>
+			<entry>
+				<key><util:constant static-field="org.osgi.service.event.EventConstants.EVENT_TOPIC"/></key>
+				<array value-type="java.lang.String">
+					<value>net/solarnetwork/central/dras/ENTITY_UPDATE</value>
+				</array>
+			</entry>
+			<entry>
+				<key><util:constant static-field="org.osgi.service.event.EventConstants.EVENT_FILTER"/></key>
+				<value>(|(ClassName=net.solarnetwork.central.dras.domain.Event)(ClassName=net.solarnetwork.central.dras.domain.Program))</value>
+			</entry>
+		</osgi:service-properties>
+	</osgi:service>
+
+</beans>
+	
