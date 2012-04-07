@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.openadr.org/DRAS/DRASClientSOAP/"
+	xmlns:tns="http://www.openadr.org/DRAS/DRASClientSOAP/"
+	xmlns:xsd1="http://www.openadr.org/DRAS/EventState">
+	<xsd:import namespace="http://www.openadr.org/DRAS/EventState" schemaLocation="EventState.xsd"/> 
+
+	<xsd:element name="GetEventStates" type="tns:GetEventStates"/>
+	<xsd:element name="GetEventStatesResponse" type="tns:GetEventStatesResponse"/>
+	<xsd:complexType name="GetEventStates">
+		<xsd:sequence>
+			<xsd:element name="empty"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="GetEventStatesResponse">
+		<xsd:sequence>
+			<xsd:element name="returnValue" type="xsd:string">
+				<xsd:annotation>
+					<xsd:documentation> This is a string used to signify SUCCESS or FAILURE. If the string value is
+						SUCCESS then the operation was successful. If the value is not SUCCESS then this signifies
+						FAILURE and there may be additional free form text which can be used to further elaborate on the
+						nature of the error. </xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="eventStates" type="xsd1:ListOfEventStates">
+				<xsd:annotation>
+					<xsd:documentation> This represents a list of Event States. See EventState.xsd. </xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:element name="SetEventStateConfirmation" type="tns:SetEventStateConfirmation"/>
+	<xsd:element name="SetEventStateConfirmationResponse" type="tns:SetEventStateConfirmationResponse"/>
+	<xsd:complexType name="SetEventStateConfirmation">
+		<xsd:sequence>
+			<xsd:element name="eventStateConfirmation" type="xsd1:EventStateConfirmation">
+				<xsd:annotation>
+					<xsd:documentation> This is used to send a confirmation of the reception of an EventState.
+					</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="SetEventStateConfirmationResponse">
+		<xsd:sequence>
+			<xsd:element name="returnValue" type="xsd:string">
+				<xsd:annotation>
+					<xsd:documentation> This is a string used to signify SUCCESS or FAILURE. If the string value is
+						SUCCESS then the operation was successful. If the value is not SUCCESS then this signifies
+						FAILURE and there may be additional free form text which can be used to further elaborate on the
+						nature of the error. </xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Created with Liquid XML Studio 1.0.8.0 (http://www.liquid-technologies.com) -->
+<xs:schema xmlns="http://www.openadr.org/DRAS/EventState" elementFormDefault="qualified" targetNamespace="http://www.openadr.org/DRAS/EventState" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="EventState">
+    <xs:annotation>
+      <xs:documentation>This represents the state of a single DR Event.  There will be one of these senT for each DR Event that is either pending or active.  If there are no DR Events pending or active then there will be one of these sent with the EventStatus field of the simpleDRModeData set to "NONE".  Note that when the EventStatus is set to NONE then some of the elements and attributes of this entity are not applicable.  See the documentation for each element and attribute to see which are not applicable when the EventStatus is set to NONE.
+</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="simpleDRModeData" type="SimpleClientEventData">
+        <xs:annotation>
+          <xs:documentation>Simple event data associated with the DR event.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" nillable="true" name="drEventData" type="SmartClientDREventData">
+        <xs:annotation>
+          <xs:documentation>Complete DR event data.
+If the EventStatus field is NONE indicating that there is no pending or active DR event then this field is not applicable.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" nillable="true" name="customData">
+        <xs:annotation>
+          <xs:documentation>This is a placeholder for  information that may be sent to the DRAS Client in order to perform functions or send information that is not normally within the scope of the EventState of a DR event.  Having this placeholder allows the standard EventState message to be used for systems that may need to communicate messages to the facility while still using the standard EventState mechanisms and schemas.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" nillable="true" name="generalInfoInstances" type="GeneralInfoInstance">
+              <xs:annotation>
+                <xs:documentation>List of one or more instances of GeneralInfoInstance.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="programName" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Identifier of the program that this DR event was issued for.
+If the EventStatus field is NONE indicating that there is no pending or active DR event then this field is not applicable.
+</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="eventModNumber" type="xs:unsignedInt" use="required">
+      <xs:annotation>
+        <xs:documentation>Modification number of the DR event.  Used to indicate if the DR Event has been modified by the Utility.  Each time it is modified this number is incremented.
+If the EventStatus field is NONE indicating that there is no pending or active DR event then this field is not applicable.
+</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="eventIdentifier" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Identifier for the DR event that was created when the DR event was first issued.
+If the EventStatus field is NONE indicating that there is no pending or active DR event then this field is not applicable.
+</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="drasClientID" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Identifier of the DRAS client that this EventState is being sent to.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="eventStateID" type="xs:unsignedInt" use="required">
+      <xs:annotation>
+        <xs:documentation>This is a transaction ID that is guaranteed to be unique for each instance of the EventState that is generated and sent to the DRAS Client.
+It is used by the DRAS Client to confirm reception of the EventState from the DRAS.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="schemaVersion" type="xs:string" default="1.0" >
+      <xs:annotation>
+        <xs:documentation>This is the version number for the Event State schema itself.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="drasName" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Optional field that is the name and/or version of the DRAS that is sending the EventState mesage.  The contents of this field are implementation specific and can be blank if not needed.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="testEvent" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>This attribute signifies whether this is a test event or not.  Test events may be issued by the Utility/ISO like other DR Events.
+
+</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="offLine" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>This field signifiies whether from the DRAS point of view the DRAS Client is off line.  If this field is TRUE then the DRAS Client is off line and if it is FALSE then the DRAS Client is on line.
+If the DRAS Client is off line then it will not receive any DR Events that have been issued by the Utility/ISO.
+If this mode is set true the values of the EventStatus and OperationModeValue can still change if they are explictely set using the SetTestModeState method.  This may done in order to explictely set the values to manually test the state transitions of the DRAS Client, typically right after it has been installed to insure it is working properly.
+
+
+ </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="SmartClientDREventData">
+    <xs:annotation>
+      <xs:documentation>This is used to represent all the information associated with a DR Event.  It can be used by Smart DRAS Clients.
+</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="notificationTime" type="xs:dateTime">
+        <xs:annotation>
+          <xs:documentation>Date and time that the DRAS Client should first be notified of the upcoming DR event.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="startTime" type="xs:dateTime">
+        <xs:annotation>
+          <xs:documentation>Date and time for when the DR event begins.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="endTime" type="xs:dateTime">
+        <xs:annotation>
+          <xs:documentation>Date time for when the DR event ends</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" maxOccurs="unbounded" nillable="true" name="eventInfoInstances" type="EventInfoInstance">
+        <xs:annotation>
+          <xs:documentation>List of zero or more instances of DR event information</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="SimpleClientEventData">
+    <xs:annotation>
+      <xs:documentation>This represents a simple representation of the DR Event information.  The information represented here was translated from complete DR Event information represented in the SmartClientDREventData into a sequence of simple operation modes and states so that it can more easily be used by Simple DRAS Clients.
+</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="EventStatus">
+        <xs:annotation>
+          <xs:documentation>This is the DR event status that is valid at the time specified by the currentTime field.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="OperationModeValue">
+        <xs:annotation>
+          <xs:documentation>This is the operation mode value that is valid at the time specified by the currentTime field.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="currentTime" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>This is the relative time in seconds from the beginning of the DR event window that this particular instance of the EventState is valid for.
+If the EventStatus field is NONE indicating that there is no pending or active DR event then this field is not applicable.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" nillable="true" name="operationModeSchedule">
+        <xs:annotation>
+          <xs:documentation>This is the entire schedule of opertion states for the DR event.  This schedule in conjunction with the currentTime can be used to derive the values in the EventStatus and OperationModeVlaue fields.  The entire schedule is sent for the sake of reliability so that it may be possible to build Simple DRAS Clients that can cache these values in the event that communications with the DRAS are lost during the course of a DR event.
+If the EventStatus field is NONE indicating that there is no pending or active DR event then this field is not applicable.
+</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" nillable="true" name="modeSlot" type="OperationState">
+              <xs:annotation>
+                <xs:documentation>This is the operations states within the operationModeSchedule.
+
+</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="EventInfoInstance">
+    <xs:annotation>
+      <xs:documentation>This represents an instance of information that is associated with a DR event.  An instance of such information represents a specific type of information that was defiend to exist for DR events when the program was first set up.  For example a DR program my have bben set up to use real-time pricing as the values that are sent when DR events are issued.  Furthermore each EventInfoInstance may have a schedule of values that are valid across the entire period for then the DR event is active.  Therefore a single EventInfoInstance may have multiple values each or which are valid during a different time period.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="eventInfoTypeID" type="EventInfoTypeID">
+        <xs:annotation>
+          <xs:documentation>Identifier for the Event information type that was created when the DR program was established and configured.  It is analogous to a variable type.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="eventInfoName">
+        <xs:annotation>
+          <xs:documentation>This is the name for the Event Info Type that was given by the Utility when the DR program was first established.  It is analogous to a variable name. By having a name it allows multiple instances of the same type (i.e. PRICE_ABSOLUTE) to be sent in the Event Instance.</xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string" />
+        </xs:simpleType>
+      </xs:element>
+      <xs:element maxOccurs="unbounded" name="eventInfoValues" type="EventInfoValue">
+        <xs:annotation>
+          <xs:documentation>List of one or more event info values that are time sequenced.
+If there is more than one value then the time slots field specifies when the various values are valid. </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="EventInfoValue">
+    <xs:annotation>
+      <xs:documentation>This is an instance of a value for the information that is associated with a DR event when it is issued by the Utility.  This instance includes a number value for the information and a time parameter that defines a time slot with the DR events active period for when this value is valid.  By putting together sequences of these types there can be a schedule of values that are valid across the entire active period of the DR event.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="value" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>The numeric value of the event information</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="timeOffset" type="xs:unsignedInt">
+        <xs:annotation>
+          <xs:documentation>Relative offset from the beginning of the DR event period in seconds.
+This time signifies when the time slot for this value ends and when the time slot for
+the next value begins.
+For example the third time slot value specifies the end of the time slot for the
+third DR event information in the value field.
+</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="eventState" type="EventState" />
+  <xs:complexType name="OperationState">
+    <xs:annotation>
+      <xs:documentation>This represents a single state within a Simple DRAS Clients operation mode schedule.  Each state is represented by an operation mode value and a time parameter that is used to specify the time slot of this state during the period when the DR event is active.  A sequence of these states defines an entire response schedule.
+</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="OperationModeValue">
+        <xs:annotation>
+          <xs:documentation>This is simply the Operation mode value for this time slot.
+</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="modeTimeSlot" type="xs:nonNegativeInteger">
+        <xs:annotation>
+          <xs:documentation>This is a single number with the units of seconds that defines the relative time offset from the beginning of the DR event period that this time slot begins at.  
+Note that since this is a single number then the end of this time slot is defined by the starting time of the next time slot.  
+This helps to insure that there are no time gaps or overlapping slots in the Operation mode schedule.
+</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="OperationModeValue">
+    <xs:annotation>
+      <xs:documentation>These are the enumerations of the values that may exist as part of the operation mode schedules.  The values are determined by a set of rules in the DRAS that take into consideratrion the EventInfoInstance values and how they are to be mapped into these values.  The possible values are the following:
+
+NORMAL - This is the value that is set whenever the DR event status is not ACTIVE.
+
+MODERATE - This is typicaly used to signify a moderate level shed.  How the faciity reacts to this value is user defined.
+
+HIGH- This is typicaly used to signify a high level shed.  How the faciity reacts to this value is user defined.
+
+SPECIAL- This is typicaly used to signify a special circumstance.  How the faciity reacts to this value is user defined.
+
+See the documentation of the ResponseSchedules for more discussion on how these are set up and mapped within the DRAS.
+
+
+</xs:documentation>
+    </xs:annotation>
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:enumeration value="NORMAL" />
+        <xs:enumeration value="MODERATE" />
+        <xs:enumeration value="HIGH" />
+        <xs:enumeration value="SPECIAL" />
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="EventStatus">
+    <xs:annotation>
+      <xs:documentation>These are the enumeration of values that can be used to describe the status of the DR event that is described by the EventState message that contains this status.  They may take on the following values:
+
+NONE - There is no DR events pending or active.
+
+FAR - The DR event described by the EventState message is pending and it is "FAR" into the future.
+
+NEAR - The DR event described by the EventState message is pending and it is "NEAR" into the future.
+
+ACTIVE - The DR event described by the EventState message is currently active.
+
+Note that the difference between NEAR and FAR is configured when the program parameters are configured within the DRAS.  Depending upon how the NEAR and FAR transition times are configured, the status for a DR Event may transition in the following manner over the lifetime of a DR Event:
+
+NONE - FAR - NEAR - ACTIVE - NONE  
+
+NONE - NEAR - ACTIVE -  NONE  
+
+NONE -  FAR - ACTIVE - NONE
+</xs:documentation>
+    </xs:annotation>
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:enumeration value="NONE" />
+        <xs:enumeration value="FAR" />
+        <xs:enumeration value="NEAR" />
+        <xs:enumeration value="ACTIVE" />
+        <xs:enumeration value="CANCELED" />
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:complexType name="EventInfoTypeID">
+    <xs:annotation>
+      <xs:documentation>This identifies the data type of an EventInfoType definition and may take on any of the following values:
+•	PRICE_ABSOLUTE - Price number, i.e. $0.25
+•	PRICE_RELATIVE - Change in price, i.e. -$0.05
+•	PRICE_MULTIPLE - Multiple of current price, i.e. 1.5
+•	LOAD_LEVEL - Amount of load based on an enumeration, i.e. moderate, high, etc
+•	LOAD_AMOUNT - Fixed amount of load to shed, i.e. 5 MW
+•	LOAD_PERCENTAGE - Percentage of load to shed, i.e. 10%
+•	GRID_RELIABILITY - Number signifying the reliability of the grid
+</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:string" />
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="CustomData">
+    <xs:annotation>
+      <xs:documentation>This represents  information that may be sent to the DRAS Client in order to perform fucntions or send information that is not normally within the scope of the EventState of a DR event.  Definition of what may be sent in these fields is outside the scope of the </xs:documentation>
+    </xs:annotation>
+  </xs:complexType>
+  <xs:complexType name="GeneralInfoInstance">
+    <xs:annotation>
+      <xs:documentation>This is an instance of the general information that is reserved for use outside the scope of the normal EventState information.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="infoName" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>This is the name given for the name-value pairs for this instance of general information.
+</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="infoType" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>This may be used to specify the type of the information and is user defined.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="unbounded" name="infoValues" type="GeneralInfoValue">
+        <xs:annotation>
+          <xs:documentation>These values represent the value part of the name-value pair.  Note that instead of being a single entity it may be a time sequenced list of values.
+</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="GeneralInfoValue">
+    <xs:annotation>
+      <xs:documentation>This is the value part of in the name-value pair of an instance of GeneralInfoInstance.  It consists of a value field and an optional time field which can be used to specify the time slot of a schedule for when this value is valid.
+
+</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="value" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>The value of the GeneralInfoValue instance.  Note that it is a string which allows the value field to take on any sort of type.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="timeOffset" type="xs:unsignedInt">
+        <xs:annotation>
+          <xs:documentation>Relative offset from the beginning of the DR event period in seconds.
+This time signifies when the time slot for this value ends and when the time slot for
+the next value begins.
+For example the third time slot value specifies the end of the time slot for the
+third genearl event information in the value field.
+</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="EventStateConfirmation">
+    <xs:annotation>
+      <xs:documentation>This represents the message that is sent from the DRAS Client to the DRAS upon receiving an EventState message.
+</xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="programName" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Identifier of the program the DR event was issued for.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="eventModNumber" type="xs:unsignedInt" use="required">
+      <xs:annotation>
+        <xs:documentation>Modification number of the DR event.  Used to indicate if the DR Event has been modified by the Utility.  Each time it is modified this number is incremented.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="eventIdentifier" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Identifier for the DR event that was created when the DR event was first issued.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="drasClientID" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Identifier of the DRAS client that this DR event confirmation is being sent from.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="eventStateID" type="xs:unsignedLong" use="required">
+      <xs:annotation>
+        <xs:documentation>This is a transaction ID that is guaranteed to be unique for each instance of the EventState that is generated and sent to the DRAS Client.
+It is used by the DRAS Client to confirm reception of the EventState from the DRAS.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute fixed="20080509" name="schemaVersion" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>This is the version number for the Event State Confirmation schema itself.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="operationModeValue" use="optional">
+      <xs:annotation>
+        <xs:documentation>If this the confirmation is coming from a Simple DRAS Client then this attribute specifies the current state of the DRAS Client.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="NORMAL" />
+          <xs:enumeration value="MODERATE" />
+          <xs:enumeration value="HIGH" />
+          <xs:enumeration value="SPECIAL" />
+          <xs:enumeration value="UNKNOWN" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="optInStatus" type="xs:boolean" use="optional">
+      <xs:annotation>
+        <xs:documentation>This specifies whether the DRAS Client is opting in or out of the DR Event.  If this attribute is missing then the opt-in state is unkown.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="currentTime" type="xs:decimal">
+      <xs:annotation>
+        <xs:documentation>This is the relative time in seconds from the beginning of the DR event window that this particualr instance of the confirmation message was generated for.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="signature" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>This is an optional signature string that can be used for the purposes of non-repudiation.
+It is meant to hold an electronic signature that uniquely identifies the DRAS Client for 
+the purposes of non-repudiation  of the fact that the DRAS Client received the DR Event signal.
+</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="drasName" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>This is the name and/or version of the DARS that sent the EventState message.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="ListOfEventStates">
+    <xs:annotation>
+      <xs:documentation>This is used to represent a list of EventState entities.
+</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="eventStates" minOccurs="0" maxOccurs="unbounded" nillable="true" type="EventState">
+        <xs:annotation>
+          <xs:documentation>This is an instance of an EventState in the list of EventStates.
+</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>
