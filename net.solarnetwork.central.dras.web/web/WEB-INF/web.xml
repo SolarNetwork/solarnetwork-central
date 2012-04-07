@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) 2002-2006 Solarnetwork.net Dev Team
+  
+  This program is free software; you can redistribute it and/or 
+  modify it under the terms of the GNU General Public License as 
+  published by the Free Software Foundation; either version 2 of 
+  the License, or (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful, 
+  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+  General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License 
+  along with this program; if not, write to the Free Software 
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+  02111-1307 USA
+
+  $Id: web.xml,v 1.58 2007/08/27 04:04:21 matt Exp $
+-->
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	version="2.5">
+
+	<display-name>SolarNetwork Demand Response Automation System</display-name>
+    <description>SolarNetwork Demand Response Automation System Server</description>
+
+	<context-param>
+		<param-name>contextClass</param-name>
+		<param-value>org.eclipse.virgo.web.dm.ServerOsgiBundleXmlWebApplicationContext</param-value>
+	</context-param>
+	
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>
+			/WEB-INF/*-context.xml
+		</param-value>
+	</context-param>
+	
+	<!-- Security Filter -->
+	<filter>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+	</filter>
+	
+	<filter-mapping>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<!-- Compression filter -->
+	<filter>
+		<filter-name>Compression Filter</filter-name>
+		<filter-class>org.mortbay.servlet.GzipFilter</filter-class>
+		<!--init-param>
+			<param-name>mimeTypes</param-name>
+			<param-value>application/javascript,application/json,application/xhtml+xml,image/svg+xml,text/css,text/html,text/javascript,text/plain,text/xml</param-value>
+		</init-param-->
+		<init-param>
+			<param-name>minGzipSize</param-name>
+			<param-value>1024</param-value>
+		</init-param>
+	</filter>
+	
+	<filter-mapping>
+		<filter-name>Compression Filter</filter-name>
+		<url-pattern>*.do</url-pattern>
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>Compression Filter</filter-name>
+		<url-pattern>*.json</url-pattern>
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>Compression Filter</filter-name>
+		<url-pattern>*.xml</url-pattern>
+	</filter-mapping>
+	
+	<!-- Character encoding filter -->
+	<filter>
+		<filter-name>Set Character Encoding</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>UTF-8</param-value>
+		</init-param>
+	</filter>
+	
+	<filter-mapping>
+		<filter-name>Set Character Encoding</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>	
+	
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+
+	<servlet>
+		<servlet-name>solardras</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value></param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>solardras</servlet-name>
+		<url-pattern>/login.do</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>solardras</servlet-name>
+		<url-pattern>/loggedout.do</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>solardras</servlet-name>
+		<url-pattern>/u/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+		<display-name>PackServlet</display-name>
+		<servlet-name>PackServlet</servlet-name>
+		<servlet-class>net.sf.packtag.servlet.PackServlet</servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>PackServlet</servlet-name>
+		<url-pattern>*.pack</url-pattern>
+	</servlet-mapping>
+	
+	<welcome-file-list>
+		<welcome-file>index.do</welcome-file>
+	</welcome-file-list>
+
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>Secure</web-resource-name>
+			<description>SolarADR secure resources</description>
+			<url-pattern>/u/*</url-pattern>
+			<http-method>GET</http-method>
+			<http-method>POST</http-method>
+		</web-resource-collection>
+		<auth-constraint>
+			<description>These are the roles who have access</description>
+			<role-name>AUTHENTICATED_USER</role-name>
+		</auth-constraint>
+	</security-constraint>
+
+	<login-config>
+		<auth-method>FORM</auth-method>
+		<realm-name>SolarADR</realm-name>
+		<form-login-config>
+			<form-login-page>/login.do</form-login-page>
+			<form-error-page>/login.do?error=true</form-error-page>
+		</form-login-config>
+	</login-config>
+
+	<security-role>
+		<role-name>AUTHENTICATED_USER</role-name>
+	</security-role>
+	<security-role>
+		<role-name>ANALYST</role-name>
+	</security-role>
+	<security-role>
+		<role-name>OPERATOR</role-name>
+	</security-role>
+	<security-role>
+		<role-name>PROGRAM_ADMIN</role-name>
+	</security-role>
+	<security-role>
+		<role-name>SUPPLIER</role-name>
+	</security-role>
+	<security-role>
+		<role-name>USER_ADMIN</role-name>
+	</security-role>
+
+</web-app>

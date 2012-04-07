@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:osgi="http://www.springframework.org/schema/osgi"
+	xmlns:osgix="http://www.springframework.org/schema/osgi-compendium"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/osgi
+		http://www.springframework.org/schema/osgi/spring-osgi.xsd
+		http://www.springframework.org/schema/osgi-compendium
+		http://www.springframework.org/schema/osgi-compendium/spring-osgi-compendium.xsd">
+
+	<!-- Configuration -->
+
+	<osgix:cm-properties id="dras.web.cfg" persistent-id="net.solarnetwork.central.dras.web">
+		<prop key="mail.sender">nobody@localhost.localdomain</prop>
+		<prop key="JSONView.indentAmount">0</prop>
+	</osgix:cm-properties>
+	
+	<!-- Service References -->
+	
+	<osgi:reference id="txManager"
+		interface="org.springframework.transaction.PlatformTransactionManager"
+		filter="(db=central)"/>
+	
+	<osgi:reference id="drasObserverBiz"
+		interface="net.solarnetwork.central.dras.biz.DRASObserverBiz"/>
+	
+	<osgi:reference id="drasOperatorBiz"
+		interface="net.solarnetwork.central.dras.biz.DRASOperatorBiz"/>
+	
+	<osgi:reference id="eventBiz"
+		interface="net.solarnetwork.central.dras.biz.EventBiz"/>
+	
+	<osgi:reference id="eventAdminBiz"
+		interface="net.solarnetwork.central.dras.biz.EventAdminBiz"/>
+	
+	<osgi:reference id="locationBiz"
+		interface="net.solarnetwork.central.dras.biz.LocationBiz"/>
+	
+	<osgi:reference id="locationAdminBiz"
+		interface="net.solarnetwork.central.dras.biz.LocationAdminBiz"/>
+	
+	<osgi:reference id="participantBiz"
+		interface="net.solarnetwork.central.dras.biz.ParticipantBiz"/>
+	
+	<osgi:reference id="participantAdminBiz"
+		interface="net.solarnetwork.central.dras.biz.ParticipantAdminBiz"/>
+	
+	<osgi:reference id="programBiz"
+		interface="net.solarnetwork.central.dras.biz.ProgramBiz"/>
+	
+	<osgi:reference id="programAdminBiz"
+		interface="net.solarnetwork.central.dras.biz.ProgramAdminBiz"/>
+	
+	<osgi:reference id="userBiz"
+		interface="net.solarnetwork.central.dras.biz.UserBiz"/>
+	
+	<osgi:reference id="userAdminBiz"
+		interface="net.solarnetwork.central.dras.biz.UserAdminBiz"/>
+	
+	<osgi:reference id="mailSender" interface="org.springframework.mail.MailSender"/>
+	
+</beans>
