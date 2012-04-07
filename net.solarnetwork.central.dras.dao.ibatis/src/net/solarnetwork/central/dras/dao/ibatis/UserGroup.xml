@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="UserGroup">
+	
+	<insert id="insert-UserGroup" parameterClass="UserGroup">
+		<selectKey resultClass="long" keyProperty="id"> 
+              SELECT nextval('solardras.solardras_seq') AS id 
+		</selectKey>
+		INSERT INTO solardras.dras_user_group
+			(id, groupname, loc_id, enabled)
+		VALUES
+			(#id#, #name#, #locationId#, #enabled#)
+	</insert>
+
+	<update id="update-UserGroup" parameterClass="UserGroup">
+		UPDATE solardras.dras_user_group SET
+			groupname = #name#,
+			loc_id = #locationId#,
+			enabled = #enabled#
+		WHERE
+			id = #id#
+	</update>
+
+	<resultMap id="UserGroupFullResult" class="UserGroup">
+		<result column="id" property="id"/>
+		<result column="created" property="created"/>
+		<result column="groupname" property="name"/>
+		<result column="loc_id" property="locationId"/>
+		<result column="enabled" property="enabled"/>
+	</resultMap>
+	
+	<select id="get-UserGroup-for-id" resultMap="UserGroupFullResult" parameterClass="long">
+		SELECT id, created, groupname, loc_id, enabled
+		FROM solardras.dras_user_group
+		WHERE id = #id#
+	</select>
+
+	<resultMap id="UserGroupFilterResult" class="UserGroup">
+		<result column="id" property="id"/>
+		<result column="groupname" property="name"/>
+		<result column="loc_id" property="locationId"/>
+		<result column="enabled" property="enabled"/>
+	</resultMap>
+	
+	<select id="findall-UserGroup-Match" resultMap="UserGroupFilterResult" parameterClass="map">
+		SELECT g.id, g.groupname, g.loc_id, g.enabled
+		FROM solardras.dras_user_group g
+		<isEqual property="filter.box" compareValue="true">
+		INNER JOIN solardras.loc l ON l.id = g.loc_id
+		</isEqual>
+		<dynamic prepend="WHERE">
+			<isPropertyAvailable prepend="AND" property="fts">
+			fts_default @@ plainto_tsquery(#fts#)
+			</isPropertyAvailable>
+			<isNotNull prepend="AND" property="filter.enabled">
+			g.enabled = #filter.enabled#
+			</isNotNull>
+			<include refid="fragment-LocationBoxFilter"/>
+		</dynamic>
+		ORDER BY g.groupname
+	</select>
+	
+	<resultMap id="UserMemberResult" class="User">
+		<result column="id" property="id"/>
+		<result column="username" property="username"/>
+	</resultMap>
+
+	<select id="findall-UserGroup-Member" resultMap="UserMemberResult" parameterClass="map">
+		SELECT u.id, u.username
+		FROM solardras.dras_user_group_member m
+		LEFT OUTER JOIN solardras.dras_user u ON m.usr_id = u.id
+		WHERE m.ugr_id = #id#
+		AND m.eff_id = (
+			SELECT MAX(eff_id)
+			FROM solardras.dras_user_group_member m
+			INNER JOIN solardras.effective e ON e.id = m.eff_id
+			WHERE m.ugr_id = #id# 
+				AND e.effective &lt;= 
+				<isPropertyAvailable property="date">
+					#date,jdbcType=TIMESTAMP#
+				</isPropertyAvailable>
+				<isNotPropertyAvailable property="date">
+					CURRENT_TIMESTAMP
+				</isNotPropertyAvailable>
+		)
+		ORDER BY u.id
+	</select>
+	
+	<delete id="delete-UserGroup-Member" parameterClass="map">
+		DELETE FROM solardras.dras_user_group_member
+		WHERE ugr_id = #id# AND eff_id = #effectiveId#
+	</delete>
+
+	<insert id="insert-UserGroup-Member" parameterClass="map">
+		INSERT INTO solardras.dras_user_group_member
+			(ugr_id, usr_id, eff_id)
+		VALUES
+			(#id#, #memberId#, #effectiveId#)
+	</insert>
+	
+</sqlMap>

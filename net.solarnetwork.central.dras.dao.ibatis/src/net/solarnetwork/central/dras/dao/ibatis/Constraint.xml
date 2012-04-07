@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="Constraint">
+	
+	<insert id="insert-Constraint" parameterClass="Constraint">
+		<selectKey resultClass="long" keyProperty="id"> 
+              SELECT nextval('solardras.solardras_seq') AS id 
+		</selectKey>
+		INSERT INTO solardras.dras_constraint 
+			(id, 
+			event_window_start, event_window_end, 
+			<isNotNull property="eventWindowFilter">event_window_filter,</isNotNull> 
+			max_event_dur, 
+			<isNotNull property="maxEventDurationFilter">max_event_dur_filter,</isNotNull>
+			notif_window_max, notif_window_min, 
+			<isNotNull property="notificationWindowFilter">notif_window_filter,</isNotNull>
+			max_consec_days, 
+			<isNotNull property="maxConsecutiveDaysFilter">max_consec_days_filter,</isNotNull>
+			<isNotNull property="blackoutDatesFilter">blackout_filter,</isNotNull>
+			<isNotNull property="validDatesFilter">valid_filter</isNotNull>
+			)
+		VALUES
+			(#id#, 
+			#eventWindowStart#, #eventWindowEnd#,
+			<isNotNull property="eventWindowFilter">CAST(#eventWindowFilter# AS solardras.dras_constraint_filter),</isNotNull>
+			CAST(#maxEventDuration# AS interval), 
+			<isNotNull property="maxEventDurationFilter">CAST(#maxEventDurationFilter# AS solardras.dras_constraint_filter),</isNotNull>
+			CAST(#notificationWindowMax# AS interval), CAST(#notificationWindowMin# AS interval), 
+			<isNotNull property="notificationWindowFilter">CAST(#notificationWindowFilter# AS solardras.dras_constraint_filter),</isNotNull>
+			#maxConsecutiveDays#, 
+			<isNotNull property="maxConsecutiveDaysFilter">CAST(#maxConsecutiveDaysFilter# AS solardras.dras_constraint_filter),</isNotNull>
+			<isNotNull property="blackoutDatesFilter">CAST(#blackoutDatesFilter# AS solardras.dras_constraint_filter),</isNotNull>
+			<isNotNull property="validDatesFilter">CAST(#validDatesFilter# AS solardras.dras_constraint_filter)</isNotNull>
+			)
+	</insert>
+
+	<update id="update-Constraint" parameterClass="Constraint">
+		UPDATE solardras.dras_constraint SET
+			event_window_start = #eventWindowStart#, 
+			event_window_end = #eventWindowEnd#, 
+			event_window_filter = CAST(#eventWindowFilter# AS solardras.dras_constraint_filter), 
+			max_event_dur = CAST(#maxEventDuration# AS interval), 
+			max_event_dur_filter = CAST(#maxEventDurationFilter# AS solardras.dras_constraint_filter),
+			notif_window_max = CAST(#notificationWindowMax# AS interval), 
+			notif_window_min = CAST(#notificationWindowMin# AS interval), 
+			notif_window_filter = CAST(#notificationWindowFilter# AS solardras.dras_constraint_filter),
+			max_consec_days = #maxConsecutiveDays#, 
+			max_consec_days_filter = CAST(#maxConsecutiveDaysFilter# AS solardras.dras_constraint_filter),
+			blackout_filter = CAST(#blackoutDatesFilter# AS solardras.dras_constraint_filter), 
+			valid_filter = CAST(#validDatesFilter# AS solardras.dras_constraint_filter)
+		WHERE
+			id = #id#
+	</update>
+	
+	<delete id="delete-Constraint" parameterClass="long">
+		DELETE FROM solardras.dras_constraint
+		WHERE id = #id#
+	</delete>
+
+	<resultMap id="BlackoutDateResult" class="DateTimeWindow">
+		<result column="blackout_start_date" property="startDate"/>
+		<result column="blackout_end_date" property="endDate"/>
+	</resultMap>
+	
+	<resultMap id="ValidDateResult" class="DateTimeWindow">
+		<result column="valid_start_date" property="startDate"/>
+		<result column="valid_end_date" property="endDate"/>
+	</resultMap>
+	
+	<resultMap id="ConstraintFullResult" class="Constraint" groupBy="id">
+		<result column="con_id" property="id"/>
+		<result column="event_window_start" property="eventWindowStart"/>
+		<result column="event_window_end" property="eventWindowEnd"/>
+		<result column="event_window_filter" property="eventWindowFilter"/>
+		<result column="max_event_dur" property="maxEventDuration"/>
+		<result column="max_event_dur_filter" property="maxEventDurationFilter"/>
+		<result column="notif_window_max" property="notificationWindowMax"/>
+		<result column="notif_window_min" property="notificationWindowMin"/>
+		<result column="notif_window_filter" property="notificationWindowFilter"/>
+		<result column="max_consec_days" property="maxConsecutiveDays"/>
+		<result column="max_consec_days_filter" property="maxConsecutiveDaysFilter"/>
+		<result column="blackout_filter" property="blackoutDatesFilter"/>
+		<result column="valid_filter" property="validDatesFilter"/>
+		<result property="blackoutDates" resultMap="Constraint.BlackoutDateResult" 
+			notNullColumn="blackout_con_id"/>
+		<result property="validDates" resultMap="Constraint.ValidDateResult"
+			notNullColumn="valid_con_id"/>
+	</resultMap>
+	
+	<sql id="fragment-Constraint-full-result">
+		c.id AS con_id, 
+		c.event_window_start, c.event_window_end, c.event_window_filter, 
+		CAST(c.max_event_dur AS text), c.max_event_dur_filter,
+		CAST(c.notif_window_max AS text), CAST(c.notif_window_min AS text), c.notif_window_filter,
+		c.max_consec_days, c.max_consec_days_filter,
+		c.blackout_filter, c.valid_filter,
+		CASE cwin.kind WHEN CAST('BLACKOUT' as solardras.dtwindow_kind) THEN cwin.con_id END AS blackout_con_id,
+		cwin.start_date as blackout_start_date,
+		cwin.end_date as blackout_end_date,
+		CASE cwin.kind WHEN CAST('VALID' as solardras.dtwindow_kind) THEN cwin.con_id END AS valid_con_id,
+		cwin.start_date as valid_start_date,
+		cwin.end_date as valid_end_date
+	</sql>
+	
+	<select id="get-Constraint-for-id" resultMap="ConstraintFullResult" parameterClass="long">
+		SELECT 
+		<include refid="fragment-Constraint-full-result"/>
+		FROM solardras.dras_constraint c
+		LEFT OUTER JOIN solardras.dras_constraint_dtwindow cwin ON cwin.con_id = c.id
+		WHERE c.id = #id#
+		ORDER BY c.id, cwin.idx 
+	</select>
+
+	<!-- ConstraintWindow support -->
+	
+	<resultMap id="ConstraintWindowFullResult" class="DateTimeWindow">
+		<result column="start_date" property="startDate"/>
+		<result column="end_date" property="endDate"/>
+	</resultMap>
+
+	<select id="findall-Constraint-ConstraintWindow" resultMap="ConstraintWindowFullResult" parameterClass="long">
+		SELECT start_date, end_date
+		FROM solardras.dras_constraint_dtwindow
+		WHERE con_id = #id#
+		ORDER BY idx
+	</select>
+	
+	<delete id="delete-Constraint-ConstraintWindow" parameterClass="map">
+		DELETE FROM solardras.dras_constraint_dtwindow
+		WHERE con_id = #id#
+		<isPropertyAvailable property="index">
+			AND idx = #index#
+		</isPropertyAvailable>
+	</delete>
+
+	<insert id="insert-Constraint-ConstraintWindow" parameterClass="map">
+		INSERT INTO solardras.dras_constraint_dtwindow
+			(con_id, idx, kind, start_date, end_date)
+		VALUES
+			(#id#, #index#, CAST(#obj.kind# AS solardras.dtwindow_kind), 
+			#obj.startDate#, #obj.endDate#)
+	</insert>
+
+	<update id="update-Constraint-ConstraintWindow" parameterClass="map">
+		UPDATE solardras.dras_constraint_dtwindow
+		SET kind = CAST(#obj.kind# AS solardras.dtwindow_kind), 
+			start_date = #obj.startDate#,
+			end_date = #obj.endDate#
+		WHERE con_id = #id# AND idx = #index#
+	</update>
+
+</sqlMap>

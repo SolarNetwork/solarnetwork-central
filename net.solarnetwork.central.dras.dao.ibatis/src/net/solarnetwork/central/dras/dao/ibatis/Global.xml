@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap>
+
+	<select id="NOW" resultClass="org.joda.time.DateTime">
+		SELECT CURRENT_TIMESTAMP
+	</select>
+
+	<sql id="fragment-LocationBoxFilter">
+		<isEqual prepend="AND" property="filter.box" compareValue="true">
+			l.latitude BETWEEN #filter.latitude# AND #filter.boxLatitude#
+			AND l.longitude BETWEEN #filter.longitude# AND #filter.boxLongitude#
+		</isEqual>
+		<isNotNull prepend="AND" property="filter.gxp">
+			l.gxp = #filter.gxp#
+		</isNotNull>
+		<isNotNull prepend="AND" property="filter.icp">
+			l.icp = #filter.icp#
+		</isNotNull>
+		<isNotNull prepend="AND" property="filter.postalCode">
+			l.postal_code = #filter.postalCode#
+		</isNotNull>
+		<isNotNull prepend="AND" property="filter.region">
+			l.region = #filter.region#
+		</isNotNull>
+	</sql>
+
+</sqlMap>

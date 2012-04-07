@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:osgi="http://www.springframework.org/schema/osgi"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/osgi
+		http://www.springframework.org/schema/osgi/spring-osgi.xsd">
+
+	<!-- Service References -->
+	
+	<osgi:reference id="dataSource" interface="javax.sql.DataSource" filter="(db=central)"/>
+	
+	<osgi:reference id="txManager" interface="org.springframework.transaction.PlatformTransactionManager"
+		filter="(db=central)"/>
+	
+	<!-- Published Services -->
+	
+	<osgi:service ref="capabilityDao" interface="net.solarnetwork.central.dras.dao.CapabilityDao" ranking="1"/>
+	<osgi:service ref="constraintDao" interface="net.solarnetwork.central.dras.dao.ConstraintDao" ranking="1"/>
+	<osgi:service ref="effectiveDao" interface="net.solarnetwork.central.dras.dao.EffectiveDao" ranking="1"/>
+	<osgi:service ref="eventDao" interface="net.solarnetwork.central.dras.dao.EventDao" ranking="1"/>
+	<osgi:service ref="eventExecutionInfoDao" interface="net.solarnetwork.central.dras.dao.EventExecutionInfoDao" ranking="1"/>
+	<osgi:service ref="eventRuleDao" interface="net.solarnetwork.central.dras.dao.EventRuleDao" ranking="1"/>
+	<osgi:service ref="eventTargetsDao" interface="net.solarnetwork.central.dras.dao.EventTargetsDao" ranking="1"/>
+	<osgi:service ref="feeDao" interface="net.solarnetwork.central.dras.dao.FeeDao" ranking="1"/>
+	<osgi:service ref="locationDao" interface="net.solarnetwork.central.dras.dao.LocationDao" ranking="1"/>
+	<osgi:service ref="outboundMailDao" interface="net.solarnetwork.central.dras.dao.OutboundMailDao" ranking="1"/>
+	<osgi:service ref="participantDao" interface="net.solarnetwork.central.dras.dao.ParticipantDao" ranking="1"/>
+	<osgi:service ref="participantGroupDao" interface="net.solarnetwork.central.dras.dao.ParticipantGroupDao" ranking="1"/>
+	<osgi:service ref="programDao" interface="net.solarnetwork.central.dras.dao.ProgramDao" ranking="1"/>
+	<osgi:service ref="userDao" interface="net.solarnetwork.central.dras.dao.UserDao" ranking="1"/>
+	<osgi:service ref="userGroupDao" interface="net.solarnetwork.central.dras.dao.UserGroupDao" ranking="1"/>
+
+	<osgi:service ref="sqlMapClient" interface="com.ibatis.sqlmap.client.SqlMapClient">
+		<osgi:service-properties>
+			<entry key="db" value="central"/>
+			<entry key="function" value="dras"/>
+		</osgi:service-properties>
+	</osgi:service>
+
+</beans>
