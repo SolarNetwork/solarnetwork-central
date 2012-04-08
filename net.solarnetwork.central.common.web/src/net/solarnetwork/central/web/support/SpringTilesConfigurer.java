@@ -86,6 +86,7 @@ import org.springframework.web.servlet.view.tiles2.TilesView;
  * @see org.springframework.web.servlet.view.UrlBasedViewResolver
  * @see http://richardbarabe.wordpress.com/2009/02/23/apache-tiles-2-integration-with-spring-mvc/
  */
+@SuppressWarnings("deprecation")
 public class SpringTilesConfigurer implements ServletContextAware, InitializingBean, DisposableBean {
 
     protected final static Log logger = LogFactory.getLog(SpringTilesConfigurer.class);
