@@ -475,7 +475,7 @@ CREATE TRIGGER populate_local_created
  * @param double precision	starting Wh
  * @param interval			time interval
  */
-CREATE OR REPLACE FUNCTION calc_avg_watt_hours(integer, integer, double precision, double precision, interval)
+CREATE OR REPLACE FUNCTION solarnet.calc_avg_watt_hours(integer, integer, double precision, double precision, interval)
   RETURNS double precision AS
 $BODY$
 	SELECT CASE 
@@ -495,7 +495,7 @@ $BODY$
 				ABS(($1 + $2) / 2) * ((extract('epoch' from $5)) / 3600)
 		END
 $BODY$
-  LANGUAGE sql IMMUTABLE
+  LANGUAGE sql IMMUTABLE;
 
 /* =========================================================================
    =========================================================================
@@ -521,10 +521,6 @@ CREATE TABLE solarnet.sn_consum_datum (
 		FOREIGN KEY (price_loc_id) REFERENCES solarnet.sn_price_loc (id)
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT consum_datum_node_unq UNIQUE (created,node_id,source_id)
-)
-WITH (
-	OIDS = FALSE,
-	FILLFACTOR = 100
 );
 
 CREATE INDEX consum_datum_prev_datum_idx ON solarnet.sn_consum_datum (prev_datum);
