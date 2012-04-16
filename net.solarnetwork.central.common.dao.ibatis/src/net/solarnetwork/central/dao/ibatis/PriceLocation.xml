@@ -9,9 +9,9 @@
               SELECT nextval('solarnet.solarnet_seq') AS id 
 		</selectKey>
 		INSERT INTO solarnet.sn_price_loc 
-			(id, loc_name, currency, unit, source_id, source_data)
+			(id, loc_name, currency, unit, source_id, source_data, time_zone)
 		VALUES
-			(#id#, #name#, #currency#, #unit#, #source.id#, #sourceData#)
+			(#id#, #name#, #currency#, #unit#, #source.id#, #sourceData#, #timeZoneId#)
 	</insert>
 
 	<update id="update-PriceLocation" parameterClass="PriceLocation">
@@ -20,58 +20,72 @@
 			currency = #currency#,
 			unit = #unit#,
 			source_id = #source.id#,
-			source_data = #sourceData#
+			source_data = #sourceData#,
+			time_zone = #timeZoneId#
 		WHERE
 			id = #id#
 	</update>
 
+	<sql id="fragment-PriceLocation-full-result">
+		ploc.id AS sn_price_loc_id,
+		ploc.created AS sn_price_loc_created,
+		ploc.loc_name AS sn_price_loc_name,
+		ploc.currency AS sn_price_loc_currency,
+		ploc.unit AS sn_price_loc_unit,
+		ploc.source_data AS sn_price_loc_source_data,
+		ploc.time_zone AS sn_price_loc_time_zone
+	</sql>
+
 	<resultMap id="PriceLocationFullResult" class="PriceLocation">
-		<result column="id" property="id"/>
-		<result column="created" property="created"/>
-		<result column="loc_name" property="name"/>
-		<result column="currency" property="currency"/>
-		<result column="unit" property="unit"/>
-		<result column="source_data" property="sourceData"/>
-		<result column="source_id" property="source.id"/>
-		<result column="source_created" property="source.created"/>
-		<result column="source_name" property="source.name"/>
+		<result column="sn_price_loc_id" property="id"/>
+		<result column="sn_price_loc_created" property="created"/>
+		<result column="sn_price_loc_name" property="name"/>
+		<result column="sn_price_loc_currency" property="currency"/>
+		<result column="sn_price_loc_unit" property="unit"/>
+		<result column="sn_price_loc_source_data" property="sourceData"/>
+		<result column="sn_price_loc_time_zone" property="timeZoneId"/>
+		<result property="source" resultMap="PriceSource.PriceSourceFullResult"/>
 	</resultMap>
 	
 	<select id="get-PriceLocation-for-id" resultMap="PriceLocationFullResult">
 		SELECT
-			l.id,
-			l.created,
-			l.loc_name,
-			l.currency,
-			l.unit,
-			l.source_data,
-			l.source_id,
-			s.created as "source_created",
-			s.sname as "source_name"
+			<include refid="fragment-PriceLocation-full-result"/>,
+			<include refid="fragment-PriceSource-full-result"/>
 		FROM
-			solarnet.sn_price_loc l
-		INNER JOIN solarnet.sn_price_source s ON s.id = l.source_id
+			solarnet.sn_price_loc ploc
+		INNER JOIN solarnet.sn_price_source psource ON psource.id = ploc.source_id
 		WHERE
-			l.id = #id#
+			ploc.id = #id#
 	</select>
 	
 	<select id="get-PriceLocation-for-name" resultMap="PriceLocationFullResult">
 		SELECT
-			l.id,
-			l.created,
-			l.loc_name,
-			l.currency,
-			l.unit,
-			l.source_data,
-			l.source_id,
-			s.created as "source_created",
-			s.sname as "source_name"
+			<include refid="fragment-PriceLocation-full-result"/>,
+			<include refid="fragment-PriceSource-full-result"/>
 		FROM
-			solarnet.sn_price_loc l
-		INNER JOIN solarnet.sn_price_source s ON s.id = l.source_id
+			solarnet.sn_price_loc ploc
+		INNER JOIN solarnet.sn_price_source psource ON psource.id = ploc.source_id
 		WHERE
-			l.loc_name = #locationName#
-			AND s.sname = #sourceName#
+			ploc.loc_name = #locationName#
+			AND psource.sname = #sourceName#
+	</select>
+
+	<select id="findall-PriceLocation-SourceLocationMatch" resultMap="PriceLocationFullResult">
+		SELECT
+			<include refid="fragment-PriceLocation-full-result"/>,
+			<include refid="fragment-PriceSource-full-result"/>
+		FROM
+			solarnet.sn_price_loc ploc
+		INNER JOIN 
+			solarnet.sn_price_source psource ON psource.id = ploc.source_id
+		<dynamic prepend="WHERE">
+			<isNotNull prepend="AND" property="filter.source">
+				psource.sname = #filter.source#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.location.name">
+				ploc.loc_name = #filter.location.name#
+			</isNotNull>
+		</dynamic>
 	</select>
 
 </sqlMap>

@@ -1,5 +1,5 @@
 /* ==================================================================
- * IbatisWeatherSourceDaoTest.java - Oct 19, 2011 9:19:30 PM
+ * IbatisPriceSourceDaoTest.java - Oct 19, 2011 9:19:30 PM
  * 
  * Copyright 2007-2011 SolarNetwork.net Dev Team
  * 
@@ -26,39 +26,39 @@ package net.solarnetwork.central.dao.ibatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import net.solarnetwork.central.dao.WeatherSourceDao;
-import net.solarnetwork.central.dao.ibatis.IbatisWeatherSourceDao;
-import net.solarnetwork.central.domain.WeatherSource;
+import net.solarnetwork.central.dao.PriceSourceDao;
+import net.solarnetwork.central.dao.ibatis.IbatisPriceSourceDao;
+import net.solarnetwork.central.domain.PriceSource;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Test case for the {@link IbatisWeatherSourceDao} class.
+ * Test case for the {@link IbatisPriceSourceDao} class.
  * 
  * @author matt
  * @version $Revision$
  */
-public class IbatisWeatherSourceDaoTest extends AbstractIbatisDaoTestSupport {
+public class IbatisPriceSourceDaoTest extends AbstractIbatisDaoTestSupport {
 
-	@Autowired private WeatherSourceDao dao;
+	@Autowired private PriceSourceDao dao;
 	
-	private WeatherSource weatherSource = null;
+	private PriceSource priceSource = null;
 
 	@Test
 	public void storeNew() {
-		WeatherSource d = new WeatherSource();
+		PriceSource d = new PriceSource();
 		d.setCreated(new DateTime());
 		d.setName("Test name");
 		Long id = dao.store(d);
 		assertNotNull(id);
 		d.setId(id);
-		weatherSource = d;
+		priceSource = d;
 	}
 
-	private void validate(WeatherSource src, WeatherSource entity) {
-		assertNotNull("WeatherSource should exist", entity);
+	private void validate(PriceSource src, PriceSource entity) {
+		assertNotNull("PriceSource should exist", entity);
 		assertNotNull("Created date should be set", entity.getCreated());
 		assertEquals(src.getId(), entity.getId());
 		assertEquals(src.getName(), entity.getName());
@@ -67,27 +67,27 @@ public class IbatisWeatherSourceDaoTest extends AbstractIbatisDaoTestSupport {
     @Test
 	public void getByPrimaryKey() {
     	storeNew();
-    	WeatherSource d = dao.get(weatherSource.getId());
-    	validate(weatherSource, d);
+    	PriceSource d = dao.get(priceSource.getId());
+    	validate(priceSource, d);
 	}
     
 	@Test
 	public void update() {
 		storeNew();
-		WeatherSource d = dao.get(weatherSource.getId());
+		PriceSource d = dao.get(priceSource.getId());
 		d.setName("new name");
 		Long newId = dao.store(d);
 		assertEquals(d.getId(), newId);
-		WeatherSource d2 = dao.get(weatherSource.getId());
+		PriceSource d2 = dao.get(priceSource.getId());
 		validate(d, d2);
 	}
 	
 	@Test
 	public void findByName() {
 		storeNew();
-		WeatherSource s = dao.getWeatherSourceForName("Test name");
+		PriceSource s = dao.getPriceSourceForName("Test name");
 		assertNotNull(s);
-		validate(weatherSource, s);
+		validate(priceSource, s);
 	}
 	
 }

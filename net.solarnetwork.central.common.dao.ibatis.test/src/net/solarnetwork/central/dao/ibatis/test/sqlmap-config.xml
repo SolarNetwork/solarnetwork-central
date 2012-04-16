@@ -7,6 +7,7 @@
 	<typeAlias alias="Hardware" type="net.solarnetwork.central.domain.Hardware"/>
 	<typeAlias alias="HardwareControl" type="net.solarnetwork.central.domain.HardwareControl"/>
 	<typeAlias alias="PriceLocation" type="net.solarnetwork.central.domain.PriceLocation"/>
+	<typeAlias alias="PriceSource" type="net.solarnetwork.central.domain.PriceSource"/>
 	<typeAlias alias="SolarLocation" type="net.solarnetwork.central.domain.SolarLocation"/>
 	<typeAlias alias="SolarNode" type="net.solarnetwork.central.domain.SolarNode"/>
 	<typeAlias alias="User" type="net.solarnetwork.central.user.domain.User"/>

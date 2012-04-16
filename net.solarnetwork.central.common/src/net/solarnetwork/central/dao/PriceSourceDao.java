@@ -1,7 +1,7 @@
 /* ==================================================================
- * PriceLocationDao.java - Feb 20, 2011 3:01:08 PM
+ * PriceSourceDao.java - Apr 16, 2012 1:20:20 PM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -24,25 +24,22 @@
 
 package net.solarnetwork.central.dao;
 
-import net.solarnetwork.central.domain.PriceLocation;
-import net.solarnetwork.central.domain.SourceLocation;
-import net.solarnetwork.central.domain.SourceLocationMatch;
+import net.solarnetwork.central.domain.PriceSource;
 
 /**
- * DAO API for PriceLocation.
+ * DAO API for PriceSource.
  * 
  * @author matt
  * @version $Revision$
  */
-public interface PriceLocationDao extends GenericDao<PriceLocation, Long>,
-FilterableDao<SourceLocationMatch, Long, SourceLocation> {
+public interface PriceSourceDao extends GenericDao<PriceSource, Long> {
 
 	/**
-	 * Find a unique PriceLocation for a given PriceSource name and location name.
+	 * Find a unique PriceSource for a given name.
 	 * 
-	 * @param sourceName the PriceSource name
-	 * @param locationName the location name
-	 * @return the PriceLocation, or <em>null</em> if not found
+	 * @param name the PriceSource name
+	 * @return the PriceSource, or <em>null</em> if not found
 	 */
-	PriceLocation getPriceLocationForName(String sourceName, String locationName);
+	PriceSource getPriceSourceForName(String sourceName);
+
 }

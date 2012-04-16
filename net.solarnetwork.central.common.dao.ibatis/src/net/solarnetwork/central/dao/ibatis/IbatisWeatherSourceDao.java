@@ -24,6 +24,8 @@
 
 package net.solarnetwork.central.dao.ibatis;
 
+import java.util.List;
+
 import net.solarnetwork.central.dao.WeatherSourceDao;
 import net.solarnetwork.central.domain.WeatherSource;
 
@@ -36,6 +38,9 @@ import net.solarnetwork.central.domain.WeatherSource;
 public class IbatisWeatherSourceDao extends IbatisGenericDaoSupport<WeatherSource>
 implements WeatherSourceDao {
 
+	/** The query name used for {@link #getWeatherSourceForName(String)}. */
+	public static final String QUERY_FOR_NAME = "get-WeatherSource-for-name";
+
 	/**
 	 * Default constructor.
 	 */
@@ -45,7 +50,12 @@ implements WeatherSourceDao {
 
 	@Override
 	public WeatherSource getWeatherSourceForName(String sourceName) {
-		// TODO Auto-generated method stub
+		@SuppressWarnings("unchecked")
+		List<WeatherSource> results = getSqlMapClientTemplate().queryForList(
+				QUERY_FOR_NAME, sourceName, 0, 1);
+		if ( results.size() > 0 ) {
+			return results.get(0);
+		}
 		return null;
 	}
 	

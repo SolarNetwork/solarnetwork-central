@@ -32,15 +32,16 @@ import java.io.Serializable;
  * @author matt
  * @version $Revision$
  */
-public class PriceLocation extends BaseEntity implements Cloneable, Serializable {
+public class PriceLocation extends BaseEntity implements Cloneable, Serializable, SourceLocationMatch {
 
-	private static final long serialVersionUID = -6212145474510843847L;
+	private static final long serialVersionUID = 851170317202125774L;
 
 	private String name;
 	private String currency;
 	private String unit;
 	private PriceSource source;
 	private String sourceData;
+	private String timeZoneId;
 	
 	@Override
 	public String toString() {
@@ -48,74 +49,67 @@ public class PriceLocation extends BaseEntity implements Cloneable, Serializable
 			+this.currency +",unit=" +this.unit +'}';
 	}
 
-	/**
-	 * @return the name
-	 */
+	@Override
+	public String getSourceName() {
+		return (source == null ? null : source.getName());
+	}
+
+	@Override
+	public Long getLocationId() {
+		return getId();
+	}
+
+	@Override
+	public String getLocationName() {
+		return getName();
+	}
+
 	public String getName() {
 		return name;
 	}
 	
-	/**
-	 * @param name the name to set
-	 */
 	public void setName(String name) {
 		this.name = name;
 	}
 	
-	/**
-	 * @return the currency
-	 */
 	public String getCurrency() {
 		return currency;
 	}
 	
-	/**
-	 * @param currency the currency to set
-	 */
 	public void setCurrency(String currency) {
 		this.currency = currency;
 	}
 	
-	/**
-	 * @return the unit
-	 */
 	public String getUnit() {
 		return unit;
 	}
 	
-	/**
-	 * @param unit the unit to set
-	 */
 	public void setUnit(String unit) {
 		this.unit = unit;
 	}
 	
-	/**
-	 * @return the source
-	 */
 	public PriceSource getSource() {
 		return source;
 	}
 	
-	/**
-	 * @param source the source to set
-	 */
 	public void setSource(PriceSource source) {
 		this.source = source;
 	}
 	
-	/**
-	 * @return the sourceData
-	 */
 	public String getSourceData() {
 		return sourceData;
 	}
 	
-	/**
-	 * @param sourceData the sourceData to set
-	 */
 	public void setSourceData(String sourceData) {
 		this.sourceData = sourceData;
+	}
+
+	public String getTimeZoneId() {
+		return timeZoneId;
+	}
+
+	public void setTimeZoneId(String timeZoneId) {
+		this.timeZoneId = timeZoneId;
 	}
 
 }

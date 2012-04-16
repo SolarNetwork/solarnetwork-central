@@ -1,7 +1,7 @@
 /* ==================================================================
- * PriceLocationDao.java - Feb 20, 2011 3:01:08 PM
+ * IbatisPriceSourceDao.java - Apr 16, 2012 1:19:48 PM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,27 +22,40 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dao;
+package net.solarnetwork.central.dao.ibatis;
 
-import net.solarnetwork.central.domain.PriceLocation;
-import net.solarnetwork.central.domain.SourceLocation;
-import net.solarnetwork.central.domain.SourceLocationMatch;
+import java.util.List;
+
+import net.solarnetwork.central.dao.PriceSourceDao;
+import net.solarnetwork.central.domain.PriceSource;
 
 /**
- * DAO API for PriceLocation.
+ * Ibatis implementation of {@link PriceSourceDao}.
  * 
  * @author matt
  * @version $Revision$
  */
-public interface PriceLocationDao extends GenericDao<PriceLocation, Long>,
-FilterableDao<SourceLocationMatch, Long, SourceLocation> {
+public class IbatisPriceSourceDao extends IbatisGenericDaoSupport<PriceSource> implements PriceSourceDao {
+
+	/** The query name used for {@link #getPriceSourceForName(String)}. */
+	public static final String QUERY_FOR_NAME = "get-PriceSource-for-name";
 
 	/**
-	 * Find a unique PriceLocation for a given PriceSource name and location name.
-	 * 
-	 * @param sourceName the PriceSource name
-	 * @param locationName the location name
-	 * @return the PriceLocation, or <em>null</em> if not found
+	 * Default constructor.
 	 */
-	PriceLocation getPriceLocationForName(String sourceName, String locationName);
+	public IbatisPriceSourceDao() {
+		super(PriceSource.class);
+	}
+	
+	@Override
+	public PriceSource getPriceSourceForName(String sourceName) {
+		@SuppressWarnings("unchecked")
+		List<PriceSource> results = getSqlMapClientTemplate().queryForList(
+				QUERY_FOR_NAME, sourceName, 0, 1);
+		if ( results.size() > 0 ) {
+			return results.get(0);
+		}
+		return null;
+	}
+
 }

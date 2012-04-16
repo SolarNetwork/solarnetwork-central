@@ -83,6 +83,27 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 		return filter;
 	}
 	
+	@SerializeIgnore
+	public String getLocationName() {
+		return (this.location == null ? null : this.location.getName());
+	}
+	
+	public void setLocationName(String locationName) {
+		if ( this.location == null ) {
+			this.location = new SolarLocation();
+		}
+		this.location.setName(locationName);
+	}
+	
+	@SerializeIgnore
+	public String getSourceName() {
+		return getSource();
+	}
+	
+	public void setSourceName(String sourceName) {
+		setSource(sourceName);
+	}
+
 	public String getSource() {
 		return source;
 	}

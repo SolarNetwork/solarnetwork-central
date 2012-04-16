@@ -29,6 +29,8 @@ import java.util.Map;
 
 import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.domain.PriceLocation;
+import net.solarnetwork.central.domain.SourceLocation;
+import net.solarnetwork.central.domain.SourceLocationMatch;
 
 /**
  * iBATIS implementation of {@link PriceLocationDao}.
@@ -36,7 +38,8 @@ import net.solarnetwork.central.domain.PriceLocation;
  * @author matt
  * @version $Revision$
  */
-public class IbatisPriceLocationDao extends IbatisGenericDaoSupport<PriceLocation>
+public class IbatisPriceLocationDao 
+extends IbatisFilterableDaoSupport<PriceLocation, SourceLocationMatch, SourceLocation>
 implements PriceLocationDao {
 
 	/** The query name used for {@link #getPriceLocationForName(String,String)}. */
@@ -46,7 +49,7 @@ implements PriceLocationDao {
 	 * Default constructor.
 	 */
 	public IbatisPriceLocationDao() {
-		super(PriceLocation.class);
+		super(PriceLocation.class, SourceLocationMatch.class);
 	}
 
 	@Override

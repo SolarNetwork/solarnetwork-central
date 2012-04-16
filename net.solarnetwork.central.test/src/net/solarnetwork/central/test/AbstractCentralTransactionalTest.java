@@ -56,6 +56,12 @@ extends AbstractTransactionalJUnit4SpringContextTests {
 	/** A test Weather Source name. */
 	public static final String TEST_WEATHER_SOURCE_NAME = "Test weather source";
 	
+	/** A test Price Source ID. */
+	public static final Long TEST_PRICE_SOURCE_ID = -1L;
+	
+	/** A test Price Source name. */
+	public static final String TEST_PRICE_SOURCE_NAME = "Test price source";
+	
 	/** A test Location ID. */
 	public static final Long TEST_LOC_ID = -1L;
 	
@@ -155,6 +161,30 @@ extends AbstractTransactionalJUnit4SpringContextTests {
 		simpleJdbcTemplate.update(
 				"insert into solarnet.sn_weather_loc (id,loc_id,source_id) values (?,?,?)", 
 				weatherLocId, id, TEST_WEATHER_SOURCE_ID);
+	}
+	
+	/**
+	 * Insert a default test price source and location into the database.
+	 */
+	protected void setupTestPriceLocation() {
+		setupTestPriceLocation(TEST_LOC_ID, TEST_LOC_NAME, TEST_PRICE_SOURCE_ID, TEST_PRICE_SOURCE_NAME);
+	}
+	
+	/**
+	 * Insert a test price source location into the sn_price_source and sn_price_loc tables.
+	 * 
+	 * @param id the location ID
+	 * @param name the location name
+	 * @param sourceId the source ID
+	 * @param sourceName the source name
+	 */
+	protected void setupTestPriceLocation(Long id, String name, Long sourceId, String sourceName) {
+		simpleJdbcTemplate.update(
+				"insert into solarnet.sn_price_source (id,sname) values (?,?)", 
+				sourceId, sourceName);
+		simpleJdbcTemplate.update(
+				"insert into solarnet.sn_price_loc (id,loc_name,source_id,currency,unit,time_zone) values (?,?,?,?,?,?)", 
+				id, name, sourceId, "NZD", "MWh", "Pacific/Auckland");
 	}
 
 	/**
