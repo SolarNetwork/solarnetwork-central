@@ -29,7 +29,6 @@ package net.solarnetwork.central.in.biz;
 import java.util.List;
 
 import net.solarnetwork.central.datum.domain.Datum;
-import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 
@@ -66,7 +65,7 @@ public interface DataCollectorBiz {
 	 * @param criteria the the search criteria
 	 * @return the matching location, or <em>null</em> if not found
 	 */
-	PriceLocation findPriceLocation(PriceLocationCriteria criteria);
+	List<SourceLocationMatch> findPriceLocation(SourceLocation criteria);
 	
 	/**
 	 * Look up WeatherLocation based on a source name and location.

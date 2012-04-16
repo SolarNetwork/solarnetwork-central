@@ -1,5 +1,5 @@
 /* ==================================================================
- * PriceLocationLookup.java - Feb 20, 2011 7:54:21 PM
+ * LocationLookupController.java - Feb 20, 2011 7:54:21 PM
  * 
  * Copyright 2007-2011 SolarNetwork.net Dev Team
  * 
@@ -24,10 +24,12 @@
 
 package net.solarnetwork.central.in.web;
 
+import java.util.List;
+
 import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.domain.PriceLocation;
+import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
-import net.solarnetwork.central.in.biz.PriceLocationCriteria;
+import net.solarnetwork.central.support.SourceLocationFilter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -44,8 +46,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
  * @version $Revision$
  */
 @Controller
-@RequestMapping({"/priceLocationLookup.do", "/u/priceLocationLookup.do"})
-public class PriceLocationLookup {
+public class LocationLookupController {
 
 	/** The default value for the {@code viewName} property. */
 	public static final String DEFAULT_VIEW_NAME = "xml";
@@ -60,13 +61,10 @@ public class PriceLocationLookup {
 	private DataCollectorBiz dataCollectorBiz;
 	private String viewName = DEFAULT_VIEW_NAME;
 
-	///** A class-level logger. */
-	//private final org.slf4j.Logger log = LoggerFactory.getLogger(getClass());
-	
 	/**
 	 * Default constructor.
 	 */
-	public PriceLocationLookup() {
+	public LocationLookupController() {
 		super();
 	}
 	
@@ -77,7 +75,7 @@ public class PriceLocationLookup {
 	 * @param solarNodeDao the {@link SolarNodeDao} to use
 	 */
 	@Autowired
-	public PriceLocationLookup(DataCollectorBiz dataCollectorBiz) {
+	public LocationLookupController(DataCollectorBiz dataCollectorBiz) {
 		setDataCollectorBiz(dataCollectorBiz);
 	}
 
@@ -92,6 +90,17 @@ public class PriceLocationLookup {
 		binder.setIgnoreInvalidFields(true);
 	}
 	
+	@RequestMapping(method = RequestMethod.GET, 
+			value = {"/weatherLocationLookup.do", "/u/weatherLocationLookup.do"})
+	public String findWeatherLocation(SourceLocationFilter criteria, Model model) {
+		List<SourceLocationMatch> matches = getDataCollectorBiz().findWeatherLocation(criteria);
+		if ( matches != null ) {
+			model.asMap().clear();
+			model.addAttribute(MODEL_KEY_RESULT, matches);
+		}
+		return getViewName();
+	}
+	
 	/**
 	 * Query for a PriceLocation.
 	 * 
@@ -100,13 +109,32 @@ public class PriceLocationLookup {
 	 * @param criteriaModelKey the model key the criteria is stored on
 	 * @return the result model name
 	 */
-	@RequestMapping(method = RequestMethod.GET)
-	public String findPriceLocation(PriceLocationCriteria criteria, Model model, 
-			String criteriaModelKey) {
-		PriceLocation location = getDataCollectorBiz().findPriceLocation(criteria);
-		if ( location != null ) {
+	@RequestMapping(method = RequestMethod.GET, 
+			value = {"/priceLocationLookup.do", "/u/priceLocationLookup.do"})
+	public String findPriceLocation(SourceLocationFilter criteria, Model model) {
+		List<SourceLocationMatch> matches = getDataCollectorBiz().findPriceLocation(criteria);
+		if ( matches != null && matches.size() > 0 ) {
 			model.asMap().clear();
-			model.addAttribute(MODEL_KEY_RESULT, location);
+			model.addAttribute(MODEL_KEY_RESULT, matches.get(0));
+		}
+		return getViewName();
+	}
+	
+	/**
+	 * Query for a PriceLocation.
+	 * 
+	 * @param criteria the search criteria
+	 * @param model the model
+	 * @param criteriaModelKey the model key the criteria is stored on
+	 * @return the result model name
+	 */
+	@RequestMapping(method = RequestMethod.GET, 
+			value = {"/priceLocationSearch.*", "/u/priceLocationSearch.*"})
+	public String searchForPriceLocation(SourceLocationFilter criteria, Model model) {
+		List<SourceLocationMatch> matches = getDataCollectorBiz().findPriceLocation(criteria);
+		if ( matches != null && matches.size() > 0 ) {
+			model.asMap().clear();
+			model.addAttribute(MODEL_KEY_RESULT, matches.get(0));
 		}
 		return getViewName();
 	}

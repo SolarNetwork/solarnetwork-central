@@ -47,12 +47,10 @@ import net.solarnetwork.central.datum.domain.PowerDatum;
 import net.solarnetwork.central.datum.domain.PriceDatum;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
-import net.solarnetwork.central.in.biz.PriceLocationCriteria;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.util.ClassUtils;
@@ -192,11 +190,17 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	@Override
-	public PriceLocation findPriceLocation(PriceLocationCriteria criteria) {
-		return priceLocationDao.getPriceLocationForName(
-				criteria.getSourceName(), criteria.getLocationName());
+	public List<SourceLocationMatch> findPriceLocation(final SourceLocation criteria) {
+		FilterResults<SourceLocationMatch> matches = priceLocationDao.findFiltered(
+				criteria, null, null, null);
+		List<SourceLocationMatch> resultList = new ArrayList<SourceLocationMatch>(
+				matches.getReturnedResultCount());
+		for ( SourceLocationMatch m : matches.getResults() ) {
+			resultList.add(m);
+		}
+		return resultList;
 	}
-	
+
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	@Override
 	public List<SourceLocationMatch> findWeatherLocation(SourceLocation criteria) {

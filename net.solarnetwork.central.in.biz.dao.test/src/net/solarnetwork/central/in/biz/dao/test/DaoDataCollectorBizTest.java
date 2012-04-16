@@ -59,6 +59,7 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 	@Before
 	public void setup() {
 		setupTestNode();
+		setupTestPriceLocation();
 	}
 	
 	private DayDatum newDayDatumInstance() {
@@ -90,6 +91,22 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 		assertNotNull(result);
 		assertEquals(lastDatum.getId(), result.getId());
 	}
+	
+	@Test
+	public void findPriceLocation() {
+		SourceLocationFilter filter = new SourceLocationFilter(
+				TEST_PRICE_SOURCE_NAME, TEST_LOC_NAME);
+		List<SourceLocationMatch> results = biz.findPriceLocation(filter);
+		assertNotNull(results);
+		assertEquals(1, results.size());
+
+		SourceLocationMatch loc = results.get(0);
+		assertNotNull(loc);
+		assertEquals(TEST_PRICE_SOURCE_ID, loc.getId());
+		assertEquals(TEST_LOC_ID, loc.getLocationId());
+		assertEquals(TEST_LOC_NAME, loc.getLocationName());
+		assertEquals(TEST_PRICE_SOURCE_NAME, loc.getSourceName());
+}
 	
 	@Test
 	public void findWeatherLocation() {
