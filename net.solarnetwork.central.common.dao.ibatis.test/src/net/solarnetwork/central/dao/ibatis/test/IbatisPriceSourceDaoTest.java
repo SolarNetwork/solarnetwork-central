@@ -28,7 +28,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import net.solarnetwork.central.dao.PriceSourceDao;
 import net.solarnetwork.central.dao.ibatis.IbatisPriceSourceDao;
+import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.PriceSource;
+import net.solarnetwork.central.support.SourceLocationFilter;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -90,4 +93,16 @@ public class IbatisPriceSourceDaoTest extends AbstractIbatisDaoTestSupport {
 		validate(priceSource, s);
 	}
 	
+	@Test
+	public void searchByName() {
+		storeNew();
+		SourceLocationFilter filter = new SourceLocationFilter("Test name", null);
+		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		assertNotNull(matches);
+		assertEquals(Integer.valueOf(1), matches.getReturnedResultCount());
+		assertNotNull(matches.getResults());
+		EntityMatch m = matches.getResults().iterator().next();
+		assertEquals(priceSource.getId(), m.getId());
+	}
+
 }

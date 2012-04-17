@@ -32,9 +32,9 @@ import java.io.Serializable;
  * @author matt
  * @version $Revision$
  */
-public class PriceSource extends BaseEntity implements Cloneable, Serializable {
+public class PriceSource extends BaseEntity implements Cloneable, Serializable, EntityMatch {
 
-	private static final long serialVersionUID = 2096063626679336472L;
+	private static final long serialVersionUID = -583332500383425478L;
 
 	private String name;
 

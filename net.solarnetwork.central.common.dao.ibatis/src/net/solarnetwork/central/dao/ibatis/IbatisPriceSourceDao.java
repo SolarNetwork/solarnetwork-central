@@ -25,9 +25,12 @@
 package net.solarnetwork.central.dao.ibatis;
 
 import java.util.List;
+import java.util.Map;
 
 import net.solarnetwork.central.dao.PriceSourceDao;
+import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.PriceSource;
+import net.solarnetwork.central.domain.SourceLocation;
 
 /**
  * Ibatis implementation of {@link PriceSourceDao}.
@@ -35,7 +38,9 @@ import net.solarnetwork.central.domain.PriceSource;
  * @author matt
  * @version $Revision$
  */
-public class IbatisPriceSourceDao extends IbatisGenericDaoSupport<PriceSource> implements PriceSourceDao {
+public class IbatisPriceSourceDao 
+extends IbatisFilterableDaoSupport<PriceSource, EntityMatch, SourceLocation>
+implements PriceSourceDao {
 
 	/** The query name used for {@link #getPriceSourceForName(String)}. */
 	public static final String QUERY_FOR_NAME = "get-PriceSource-for-name";
@@ -44,7 +49,7 @@ public class IbatisPriceSourceDao extends IbatisGenericDaoSupport<PriceSource> i
 	 * Default constructor.
 	 */
 	public IbatisPriceSourceDao() {
-		super(PriceSource.class);
+		super(PriceSource.class, EntityMatch.class);
 	}
 	
 	@Override
@@ -56,6 +61,20 @@ public class IbatisPriceSourceDao extends IbatisGenericDaoSupport<PriceSource> i
 			return results.get(0);
 		}
 		return null;
+	}
+
+	@Override
+	protected void postProcessFilterProperties(SourceLocation filter,
+			Map<String, Object> sqlProps) {
+		// add flags to the query processor for dynamic logic
+		StringBuilder fts = new StringBuilder();
+		spaceAppend(filter.getSource(), fts);
+		if ( filter.getLocation() != null ) {
+			spaceAppend(filter.getLocation().getName(), fts);
+		}
+		if ( fts.length() > 0 ) {
+			sqlProps.put("fts", fts.toString());
+		}
 	}
 
 }

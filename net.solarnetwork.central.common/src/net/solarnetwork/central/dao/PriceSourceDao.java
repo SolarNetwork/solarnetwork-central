@@ -24,7 +24,9 @@
 
 package net.solarnetwork.central.dao;
 
+import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.PriceSource;
+import net.solarnetwork.central.domain.SourceLocation;
 
 /**
  * DAO API for PriceSource.
@@ -32,7 +34,8 @@ import net.solarnetwork.central.domain.PriceSource;
  * @author matt
  * @version $Revision$
  */
-public interface PriceSourceDao extends GenericDao<PriceSource, Long> {
+public interface PriceSourceDao extends GenericDao<PriceSource, Long>,
+FilterableDao<EntityMatch, Long, SourceLocation> {
 
 	/**
 	 * Find a unique PriceSource for a given name.

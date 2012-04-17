@@ -57,4 +57,27 @@
 			psource.sname = #name#
 	</select>
 
+	<!--  Filter search -->
+	
+	<select id="findall-PriceSource-EntityMatch" resultMap="PriceSourceFullResult" parameterClass="map">
+		SELECT
+			<include refid="fragment-PriceSource-full-result"/>
+			<isPropertyAvailable property="fts" prepend=",">
+			ts_rank_cd(fts_default, plainto_tsquery(#fts#)) AS rank
+			</isPropertyAvailable>
+		FROM
+			solarnet.sn_price_source psource
+		<dynamic prepend="WHERE">
+			<isPropertyAvailable prepend="AND" property="fts">
+				psource.fts_default @@ plainto_tsquery(#fts#)
+			</isPropertyAvailable>
+		</dynamic>
+		ORDER BY
+		<isPropertyAvailable property="fts">
+			rank DESC,
+		</isPropertyAvailable>
+			psource.sname ASC,
+			psource.id ASC
+	</select>
+
 </sqlMap>
