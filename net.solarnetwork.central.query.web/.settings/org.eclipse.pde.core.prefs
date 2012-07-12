@@ -1,5 +1,7 @@
 #Mon May 10 14:43:43 NZST 2010
+BUNDLE_ROOT_PATH=web
 eclipse.preferences.version=1
+manifest.launchShortcuts=org.eclipse.pde.ui.EquinoxLaunchShortcut,org.eclipse.wst.server.launchShortcut
 pluginProject.equinox=false
 pluginProject.extensions=false
 resolve.requirebundle=false
