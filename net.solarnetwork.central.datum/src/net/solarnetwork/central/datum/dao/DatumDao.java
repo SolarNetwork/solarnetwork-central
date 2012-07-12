@@ -27,11 +27,13 @@
 package net.solarnetwork.central.datum.dao;
 
 import java.util.List;
+import java.util.Set;
 
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 
+import org.joda.time.LocalDate;
 import org.joda.time.ReadableDateTime;
 import org.joda.time.ReadableInterval;
 
@@ -118,4 +120,15 @@ public interface DatumDao<T extends Datum> extends GenericDao<T, Long>{
 	 * @return interval, or <em>null</em> if no data available
 	 */
 	ReadableInterval getReportableInterval();
+	
+	/**
+	 * Get the available sources for a given node, optionally limited to a date range.
+	 * 
+	 * @param nodeId the node ID to search for
+	 * @param start an optional start date (inclusive) to filter on
+	 * @param end an optional end date (inclusive) to filter on
+	 * @return the distinct source IDs available (never <em>null</em>)
+	 */
+	Set<String> getAvailableSources(Long nodeId, LocalDate start, LocalDate end);
+	
 }

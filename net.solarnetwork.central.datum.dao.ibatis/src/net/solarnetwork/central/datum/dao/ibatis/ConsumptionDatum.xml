@@ -309,5 +309,17 @@
 		
 		ORDER BY created_date, source
 	</select>
-	
+
+	<select id="find-ConsumptionDatum-distinct-sources" resultClass="java.lang.String">
+		SELECT DISTINCT source_id
+		FROM solarrep.rep_consum_datum_daily
+		WHERE node_id = #node#
+		<isPropertyAvailable property="start">
+			AND created_day &gt;= #start#::date
+		</isPropertyAvailable>
+		<isPropertyAvailable property="end">
+			AND created_day &lt;= #end#::date
+		</isPropertyAvailable>
+	</select>
+
 </sqlMap>

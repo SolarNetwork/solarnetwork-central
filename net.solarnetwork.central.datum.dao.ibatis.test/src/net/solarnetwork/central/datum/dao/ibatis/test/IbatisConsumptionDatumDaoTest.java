@@ -37,6 +37,7 @@ import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class IbatisConsumptionDatumDaoTest extends AbstractIbatisDaoTestSupport {
 
+	private static final String TEST_2ND_SOURCE = "2nd source";
+
 	@Autowired private IbatisConsumptionDatumDao dao;
 	
 	private ConsumptionDatum lastDatum;
@@ -57,9 +60,8 @@ public class IbatisConsumptionDatumDaoTest extends AbstractIbatisDaoTestSupport 
 	public void setUp() throws Exception {
 		lastDatum = null;
 	}
-
-	@Test
-	public void storeNew() {
+	
+	private ConsumptionDatum getTestInstance() {
 		ConsumptionDatum datum = new ConsumptionDatum();
 		datum.setCreated(new DateTime());
 		datum.setLocationId(TEST_PRICE_LOC_ID);
@@ -67,11 +69,17 @@ public class IbatisConsumptionDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		datum.setPosted(new DateTime());
 		datum.setSourceId("test.source");
 
-		// note we are setting legacy amps/volts values here
+		// note we are setting legacy amps/volts values here, not watts
 		datum.setAmps(1.0F);
 		datum.setVolts(1.0F);
 		
 		datum.setWattHourReading(2L);
+		return datum;
+	}
+
+	@Test
+	public void storeNew() {
+		ConsumptionDatum datum = getTestInstance();
 		Long id = dao.store(datum);
 		assertNotNull(id);
 		datum.setId(id);
@@ -135,6 +143,80 @@ public class IbatisConsumptionDatumDaoTest extends AbstractIbatisDaoTestSupport 
     	}
     	assertTrue(ids.contains(id2));
     	assertTrue(ids.contains(id3));
+    }
+    
+    @Test
+    public void getAllAvailableSourcesNoneAvailable() {
+    	Set<String> sources = dao.getAvailableSources(1L, null, null);
+    	assertNotNull(sources);
+    }
+
+    @Test
+    public void getAllAvailableSourcesForNode() {
+		storeNew();
+		Set<String> sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
+		assertEquals("Sources set size", 0, sources.size());
+		
+		// we are querying the reporting table, which requires two rows minimum	so add 2nd datum
+		// of same source to trigger data population there
+		ConsumptionDatum d2 = getTestInstance();
+		d2.setCreated(d2.getCreated().plus(1000));
+		d2.setWattHourReading(d2.getWattHourReading()+1L);
+		d2 = dao.get(dao.store(d2));
+		
+		sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
+		assertEquals("Sources set size", 1, sources.size());
+		assertTrue("Source ID returned", sources.contains(d2.getSourceId()));
+		
+		// add a 2nd source (two more datum to get into reporting table).
+		// we also make this on another day, to support getAllAvailableSourcesForNodeAndDateRange() test
+		ConsumptionDatum d3 = getTestInstance();
+		d3.setSourceId(TEST_2ND_SOURCE);
+		d3.setCreated(d2.getCreated().plusDays(1));
+		d3.setWattHourReading(d2.getWattHourReading()+1L);
+		d3 = dao.get(dao.store(d3));
+		
+		ConsumptionDatum d4 = getTestInstance();
+		d4.setSourceId(d3.getSourceId());
+		d4.setCreated(d3.getCreated().plus(1000));
+		d4.setWattHourReading(d3.getWattHourReading()+1L);
+		d4 = dao.get(dao.store(d4));
+		
+		sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
+		assertEquals("Sources set size", 2, sources.size());
+		assertTrue("Source ID returned", sources.contains(d2.getSourceId()));
+		assertTrue("Source ID returned", sources.contains(d3.getSourceId()));
+    }
+
+    @Test
+    public void getAllAvailableSourcesForNodeAndDateRange() {
+		getAllAvailableSourcesForNode();
+		final LocalDate start = lastDatum.getCreated().toLocalDate();
+		final LocalDate end = start.plusDays(1);
+		
+		// search for range BEFORE data
+		Set<String> sources = dao.getAvailableSources(lastDatum.getNodeId(), start.minusDays(1), start.minusDays(1));
+		assertEquals("Sources set size", 0, sources.size());
+		
+		// search for range AFTER data
+		sources = dao.getAvailableSources(lastDatum.getNodeId(), start.plusDays(2), start.plusDays(2));
+		assertEquals("Sources set size", 0, sources.size());
+		
+		// search for range UP TO first data
+		sources = dao.getAvailableSources(lastDatum.getNodeId(), start, start);
+		assertEquals("Sources set size", 1, sources.size());
+		assertTrue("Source ID returned", sources.contains(lastDatum.getSourceId()));
+		
+		// search for range STARTING FROM last data
+		sources = dao.getAvailableSources(lastDatum.getNodeId(), end, end);
+		assertEquals("Sources set size", 1, sources.size());
+		assertTrue("Source ID returned", sources.contains(TEST_2ND_SOURCE));
+		
+		
+		sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
+		assertEquals("Sources set size", 2, sources.size());
+		assertTrue("Source ID returned", sources.contains(lastDatum.getSourceId()));
+		assertTrue("Source ID returned", sources.contains(TEST_2ND_SOURCE));
     }
 
 }

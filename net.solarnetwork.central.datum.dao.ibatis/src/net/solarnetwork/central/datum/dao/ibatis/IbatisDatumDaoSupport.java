@@ -30,8 +30,10 @@ import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.solarnetwork.central.dao.ibatis.IbatisGenericDaoSupport;
 import net.solarnetwork.central.datum.dao.DatumDao;
@@ -39,6 +41,7 @@ import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 
+import org.joda.time.LocalDate;
 import org.joda.time.MutableInterval;
 import org.joda.time.ReadableDateTime;
 import org.joda.time.ReadableInterval;
@@ -78,6 +81,9 @@ extends IbatisGenericDaoSupport<T> implements DatumDao<T> {
 	/** The query name used for {@link #getDatum(Long)}. */
 	public static final String QUERY_FOR_REPORTABLE_INTERVAL = "find-reportable-interval";
 	
+	/** The query name used for {@link #getAvailableSources(Long, LocalDate, LocalDate)}. */
+	public static final String QUERY_FOR_DISTINCT_SOURCES = "find-%s-distinct-sources";
+	
 	/** The query name used for {@link #getMostRecentDatum(DatumQueryCommand)}. */
 	public static final String QUERY_FOR_MOST_RECENT = "find-%s-most-recent";
 	
@@ -108,6 +114,7 @@ extends IbatisGenericDaoSupport<T> implements DatumDao<T> {
 	private String queryForNodeAndDate;
 	private String queryForReportableInterval;
 	private String queryForMostRecent;
+	private String queryForDistinctSources;
 	
 	/**
 	 * Constructor.
@@ -120,19 +127,20 @@ extends IbatisGenericDaoSupport<T> implements DatumDao<T> {
 				domainClass.getSimpleName());
 		this.queryForReportableInterval = QUERY_FOR_REPORTABLE_INTERVAL;
 		this.queryForMostRecent = String.format(QUERY_FOR_MOST_RECENT, domainClass.getSimpleName());
+		this.queryForDistinctSources = String.format(QUERY_FOR_DISTINCT_SOURCES, domainClass.getSimpleName());
 	}
 
 	public Class<? extends T> getDatumType() {
 		return getObjectType();
 	}
 
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public T getDatum(Long id) {
 		return get(id);
 	}
 
 	@SuppressWarnings("unchecked")
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public T getDatumForDate(Long id, ReadableDateTime date) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put(PARAM_ID, id);
@@ -157,7 +165,7 @@ extends IbatisGenericDaoSupport<T> implements DatumDao<T> {
 
 	@SuppressWarnings("deprecation")
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<T> getAggregatedDatum(DatumQueryCommand criteria) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		if ( criteria.getNodeId() != null ) {
@@ -185,7 +193,7 @@ extends IbatisGenericDaoSupport<T> implements DatumDao<T> {
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<T> getMostRecentDatum(DatumQueryCommand criteria) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		if ( criteria.getNodeId() != null ) {
@@ -246,7 +254,7 @@ extends IbatisGenericDaoSupport<T> implements DatumDao<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReadableInterval getReportableInterval(Long nodeId) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		if ( nodeId != null ) {
@@ -267,37 +275,61 @@ extends IbatisGenericDaoSupport<T> implements DatumDao<T> {
 		return interval;
 	}
 
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReadableInterval getReportableInterval() {
 		return getReportableInterval(null);
 	}
 
-	/**
-	 * @return the queryForNodeAndDate
-	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<String> getAvailableSources(Long nodeId, LocalDate start,
+			LocalDate end) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		if ( nodeId != null ) {
+			params.put(PARAM_NODE_ID, nodeId);
+		}
+		if ( start != null ) {
+			params.put(PARAM_START_DATE, start);
+		}
+		if ( end != null ) {
+			params.put(PARAM_END_DATE, end);
+		}
+		@SuppressWarnings("unchecked")
+		List<String> results = getSqlMapClientTemplate().queryForList(
+				this.queryForDistinctSources, params);
+		return new LinkedHashSet<String>(results);
+	}
+
 	public String getQueryForNodeAndDate() {
 		return queryForNodeAndDate;
 	}
 	
-	/**
-	 * @param queryForNodeAndDate the queryForNodeAndDate to set
-	 */
 	public void setQueryForNodeAndDate(String queryForNodeAndDate) {
 		this.queryForNodeAndDate = queryForNodeAndDate;
 	}
 	
-	/**
-	 * @return the queryForReportableInterval
-	 */
 	public String getQueryForReportableInterval() {
 		return queryForReportableInterval;
 	}
 	
-	/**
-	 * @param queryForReportableInterval the queryForReportableInterval to set
-	 */
 	public void setQueryForReportableInterval(String queryForReportableInterval) {
 		this.queryForReportableInterval = queryForReportableInterval;
+	}
+
+	public String getQueryForMostRecent() {
+		return queryForMostRecent;
+	}
+
+	public void setQueryForMostRecent(String queryForMostRecent) {
+		this.queryForMostRecent = queryForMostRecent;
+	}
+
+	public String getQueryForDistinctSources() {
+		return queryForDistinctSources;
+	}
+
+	public void setQueryForDistinctSources(String queryForDistinctSources) {
+		this.queryForDistinctSources = queryForDistinctSources;
 	}
 
 }
