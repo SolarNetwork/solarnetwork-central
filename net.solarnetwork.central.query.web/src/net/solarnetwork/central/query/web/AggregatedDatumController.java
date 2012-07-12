@@ -41,7 +41,6 @@ import net.solarnetwork.central.web.AbstractNodeController;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -71,7 +70,6 @@ import org.springframework.web.servlet.ModelAndView;
  * @author matt
  * @version $Revision$ $Date$
  */
-@Controller
 public class AggregatedDatumController extends AbstractNodeController {
 	
 	/** The model key for the {@code List&lt;NodeDatum&gt;} results. */
@@ -91,7 +89,7 @@ public class AggregatedDatumController extends AbstractNodeController {
 	 * @param request the servlet request
 	 * @return model and view
 	 */
-	@RequestMapping(method = {RequestMethod.POST, RequestMethod.GET})
+	@RequestMapping(method = RequestMethod.GET)
 	public ModelAndView getData(DatumQueryCommand cmd, HttpServletRequest request) {
 		ModelAndView mv = resolveViewFromUrlExtension(request);
 

@@ -27,7 +27,9 @@
 package net.solarnetwork.central.query.web;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 
 import javax.servlet.http.HttpServletRequest;
@@ -41,6 +43,7 @@ import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.AbstractNodeController;
 
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
@@ -50,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
@@ -62,7 +66,6 @@ import org.springframework.web.servlet.ModelAndView;
  * @version $Revision$ $Date$
  */
 @Controller
-@RequestMapping("/reportableInterval.*")
 public class ReportableIntervalController extends AbstractNodeController {
 	
 	private QueryBiz queryBiz;
@@ -88,7 +91,7 @@ public class ReportableIntervalController extends AbstractNodeController {
 	 * @return the model and view
 	 */
 	@SuppressWarnings("unchecked")
-	@RequestMapping(method = {RequestMethod.POST, RequestMethod.GET})
+	@RequestMapping(value = "/reportableInterval.*", method = {RequestMethod.POST, RequestMethod.GET})
 	public ModelAndView getReportableInterval(Command cmd, HttpServletRequest request) {
 		ModelAndView mv = resolveViewFromUrlExtension(request);
 		
@@ -114,6 +117,23 @@ public class ReportableIntervalController extends AbstractNodeController {
 			setupViewPropertyEditorRegistrar(request, DEFAULT_DATE_FORMAT, node);
 		}
 		return mv;
+	}
+	
+	/**
+	 * Get the set of available source IDs for a given node and data type, 
+	 * optionally filtered by a date range.
+	 * 
+	 * @param cmd the command
+	 * @return the set of source IDs
+	 */
+	@RequestMapping(value = "/availableSources.*", method = RequestMethod.GET)
+	@ResponseBody
+	public Set<String> getAvailableSources(Command cmd) {
+		if ( cmd.types == null || cmd.types.length < 1 ) {
+			return Collections.emptySet();
+		}
+		Class<? extends NodeDatum> type = cmd.types[0].getDatumTypeClass();
+		return queryBiz.getAvailableSources(cmd.nodeId, type, cmd.getStart(), cmd.getEnd());
 	}
 	
 	/**
@@ -148,44 +168,48 @@ public class ReportableIntervalController extends AbstractNodeController {
 	
 	/**
 	 * Command object.
-	 * 
-	 * <p>The {@code types} array should be a list of {@link NodeDatum} "simple" class names, 
-	 * e.g. {@code PowerDatum} or {@code ConsumptionDatum}.</p>
-	 *
-	 * @author matt
-	 * @version $Revision$ $Date$
 	 */
 	public static final class Command {
 		
 		private Long nodeId;
 		private IntervalType[] types;
+		private LocalDate start;
+		private LocalDate end;
 
-		/**
-		 * @return the types
-		 */
 		public IntervalType[] getTypes() {
 			return types;
 		}
 		
-		/**
-		 * @param types the types to set
-		 */
 		public void setTypes(IntervalType[] types) {
 			this.types = types;
 		}
 		
-		/**
-		 * @return the nodeId
-		 */
+		public void setType(IntervalType type) {
+			this.types = new IntervalType[] {type};
+		}
+		
 		public Long getNodeId() {
 			return nodeId;
 		}
 
-		/**
-		 * @param nodeId the nodeId to set
-		 */
 		public void setNodeId(Long nodeId) {
 			this.nodeId = nodeId;
+		}
+
+		public LocalDate getStart() {
+			return start;
+		}
+
+		public void setStart(LocalDate start) {
+			this.start = start;
+		}
+
+		public LocalDate getEnd() {
+			return end;
+		}
+
+		public void setEnd(LocalDate end) {
+			this.end = end;
 		}
 		
 	}

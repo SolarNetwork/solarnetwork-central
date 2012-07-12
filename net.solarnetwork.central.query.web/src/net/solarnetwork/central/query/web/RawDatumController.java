@@ -73,7 +73,6 @@ import net.solarnetwork.central.web.AbstractNodeController;
  * @version $Revision$
  */
 @Controller
-@RequestMapping("/rawData.*")
 public class RawDatumController extends AbstractNodeController {
 
 	/** The model key for the {@code List&lt;NodeDatum&gt;} results. */
@@ -93,7 +92,7 @@ public class RawDatumController extends AbstractNodeController {
 	 * @param request the servlet request
 	 * @return model and view
 	 */
-	@RequestMapping(method = {RequestMethod.POST, RequestMethod.GET})
+	@RequestMapping(value = "/rawData.*", method = RequestMethod.GET)
 	public ModelAndView getData(DatumQueryCommand cmd, HttpServletRequest request) {
 		ModelAndView mv = resolveViewFromUrlExtension(request);
 

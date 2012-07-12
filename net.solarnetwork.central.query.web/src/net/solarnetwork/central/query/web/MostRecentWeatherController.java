@@ -54,7 +54,6 @@ import org.springframework.web.servlet.ModelAndView;
  * @version $Revision$ $Date$
  */
 @Controller
-@RequestMapping("/currentWeather.*")
 public class MostRecentWeatherController extends AbstractNodeController {
 
 	private WeatherDatumDao weatherDatumDao;
@@ -83,7 +82,7 @@ public class MostRecentWeatherController extends AbstractNodeController {
 	 * @param request the servlet request
 	 * @return model and view
 	 */
-	@RequestMapping(method = {RequestMethod.POST, RequestMethod.GET})
+	@RequestMapping(value = "/currentWeather.*", method = RequestMethod.GET)
 	public ModelAndView getMostRecentWeather(@RequestParam(value="nodeId") Long nodeId, 
 			HttpServletRequest request) {
 		ModelAndView mv = resolveViewFromUrlExtension(request);
