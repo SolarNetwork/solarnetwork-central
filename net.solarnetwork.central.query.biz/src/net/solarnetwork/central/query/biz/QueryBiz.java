@@ -27,10 +27,12 @@
 package net.solarnetwork.central.query.biz;
 
 import java.util.List;
+import java.util.Set;
 
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 
+import org.joda.time.LocalDate;
 import org.joda.time.ReadableInterval;
 
 /**
@@ -74,6 +76,18 @@ public interface QueryBiz {
 	 * @return ReadableInterval instance, or <em>null</em> if no data available
 	 */
 	ReadableInterval getNetworkReportableInterval(Class<? extends NodeDatum>[] types);
+	
+	/**
+	 * Get the available source IDs for a given node, optionally limited to a date range.
+	 * 
+	 * @param nodeId the node ID to search for
+	 * @param type the NodeDatum type to look for
+	 * @param start an optional start date (inclusive) to filter on
+	 * @param end an optional end date (inclusive) to filter on
+	 * @return the distinct source IDs available (never <em>null</em>)
+	 */
+	Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type, 
+			LocalDate start, LocalDate end);
 	
 	/**
 	 * Query for a list of aggregated datum objects.

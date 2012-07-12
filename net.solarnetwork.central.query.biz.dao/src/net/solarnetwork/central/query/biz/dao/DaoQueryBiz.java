@@ -26,9 +26,11 @@
 
 package net.solarnetwork.central.query.biz.dao;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
 import net.solarnetwork.central.datum.dao.DatumDao;
@@ -41,9 +43,12 @@ import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.query.biz.QueryBiz;
 
+import org.joda.time.LocalDate;
 import org.joda.time.MutableInterval;
 import org.joda.time.ReadableInterval;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of {@link QueryBiz}.
@@ -67,6 +72,7 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 	
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReadableInterval getReportableInterval(Long nodeId,
 			Class<? extends NodeDatum>[] types) {
 		MutableInterval interval = new MutableInterval(0, 0);
@@ -95,12 +101,29 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 	
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type, 
+			LocalDate start, LocalDate end) {
+		final Set<String> result;
+		if ( consumptionDatumDao.getDatumType().isAssignableFrom(type) ) {
+			result = consumptionDatumDao.getAvailableSources(nodeId, start, end);
+		} else if ( powerDatumDao.getDatumType().isAssignableFrom(type) ) {
+			result = powerDatumDao.getAvailableSources(nodeId, start, end);
+		} else {
+			result = Collections.emptySet();
+		}
+		return result;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReadableInterval getNetworkReportableInterval(
 			Class<? extends NodeDatum>[] types) {
 		return getReportableInterval(null, types);
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<? extends NodeDatum> getAggregatedDatum(
 			Class<? extends NodeDatum> datumClass, DatumQueryCommand criteria) {
 		DatumDao<? extends NodeDatum> dao = daoMapping.get(datumClass);
