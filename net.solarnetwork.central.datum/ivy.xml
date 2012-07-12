@@ -3,5 +3,6 @@
     <dependencies>
     	<dependency org="org.apache.commons" name="com.springsource.org.apache.commons.codec" rev="1.4.0" />
 		<dependency org="org.joda" name="com.springsource.org.joda.time" rev="1.6.0" />
+    	<dependency org="org.slf4j" name="com.springsource.slf4j.api" rev="1.5.10" />
     </dependencies>
 </ivy-module>
