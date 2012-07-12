@@ -2,28 +2,27 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:osgi="http://www.springframework.org/schema/osgi"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
-						http://www.springframework.org/schema/osgi http://www.springframework.org/schema/osgi/spring-osgi.xsd">
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/osgi
+		http://www.springframework.org/schema/osgi/spring-osgi.xsd">
 
 	<!-- Service References -->
 	
-	<osgi:reference id="consumptionDatumDao"
-		interface="net.solarnetwork.central.datum.dao.ConsumptionDatumDao"/>
+	<osgi:reference id="consumptionDatumDao" interface="net.solarnetwork.central.datum.dao.ConsumptionDatumDao"/>
 	
-	<osgi:reference id="dayDatumDao"
-		interface="net.solarnetwork.central.datum.dao.DayDatumDao"/>
+	<osgi:reference id="dayDatumDao" interface="net.solarnetwork.central.datum.dao.DayDatumDao"/>
 	
-	<osgi:reference id="hardwareControlDatumDao"
-		interface="net.solarnetwork.central.datum.dao.HardwareControlDatumDao"/>
+	<osgi:reference id="hardwareControlDatumDao" interface="net.solarnetwork.central.datum.dao.HardwareControlDatumDao"/>
 	
-	<osgi:reference id="priceDatumDao"
-		interface="net.solarnetwork.central.datum.dao.PriceDatumDao"/>
+	<osgi:reference id="priceDatumDao" interface="net.solarnetwork.central.datum.dao.PriceDatumDao"/>
 	
-	<osgi:reference id="powerDatumDao"
-		interface="net.solarnetwork.central.datum.dao.PowerDatumDao"/>
+	<osgi:reference id="powerDatumDao" interface="net.solarnetwork.central.datum.dao.PowerDatumDao"/>
 	
-	<osgi:reference id="weatherDatumDao"
-		interface="net.solarnetwork.central.datum.dao.WeatherDatumDao"/>
+	<osgi:reference id="weatherDatumDao" interface="net.solarnetwork.central.datum.dao.WeatherDatumDao"/>
+
+	<osgi:reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager"/>
 
 	<!-- Published Services -->
 	
