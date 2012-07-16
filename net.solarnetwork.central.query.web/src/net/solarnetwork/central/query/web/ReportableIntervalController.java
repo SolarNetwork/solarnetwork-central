@@ -41,6 +41,8 @@ import net.solarnetwork.central.datum.domain.PowerDatum;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.AbstractNodeController;
+import net.solarnetwork.util.JodaDateFormatEditor;
+import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
 
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -51,6 +53,8 @@ import org.joda.time.ReadableInstant;
 import org.joda.time.ReadableInterval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -83,6 +87,16 @@ public class ReportableIntervalController extends AbstractNodeController {
 		this.queryBiz = queryBiz;
 	}
 	
+	/**
+	 * Web binder initialization.
+	 * 
+	 * @param binder the binder to initialize
+	 */
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		binder.registerCustomEditor(LocalDate.class, new JodaDateFormatEditor(DEFAULT_DATE_FORMAT, ParseMode.LocalDate));
+	}
+
 	/**
 	 * Get a reportable interval for a node and list of NodeDatum types.
 	 * 
