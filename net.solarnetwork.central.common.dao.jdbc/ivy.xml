@@ -1,7 +1,9 @@
 <ivy-module version="2.0">
     <info organisation="SolarNetwork" module="${bundle.name}" />
     <dependencies>
-    	<dependency org="org.apache.tomcat" name="com.springsource.org.apache.tomcat.jdbc" rev="1.0.9.3" />
+    	<dependency org="org.apache.tomcat" name="tomcat-jdbc" rev="7.0.29">
+    		<artifact name="tomcat-jdbc" type="jar" />
+		</dependency>
 		<dependency org="org.springframework" name="org.springframework.beans" rev="3.0.5.RELEASE"/>
 		<dependency org="org.springframework" name="org.springframework.core" rev="3.0.5.RELEASE"/>
 		<dependency org="org.springframework" name="org.springframework.jdbc" rev="3.0.5.RELEASE"/>
