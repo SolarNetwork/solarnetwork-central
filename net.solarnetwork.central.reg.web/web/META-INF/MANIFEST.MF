@@ -6,7 +6,7 @@ Bundle-Version: 1.0.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: WEB-INF/classes/
-Web-ContextPath: solarreg
+Web-ContextPath: /solarreg
 Import-Package: 
  javax.activation,
  javax.el;version="[1.0,3.0)",

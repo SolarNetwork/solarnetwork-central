@@ -4,12 +4,14 @@
 	"http://tiles.apache.org/dtds/tiles-config_2_0.dtd">
 <tiles-definitions>
 	
-	<definition name="registration/confirm/confirmed" extends="defaultLayout">
+	<definition name="registration/confirm/confirmed" extends="default">
+		<put-attribute name="navloc" type="string" value="login"/>
 		<put-attribute name="head" value="/WEB-INF/flows/register/head.jsp" />
 		<put-attribute name="body" value="/WEB-INF/flows/register/confirm/confirmed.jsp" />
 	</definition>
 	
-	<definition name="registration/confirm/error" extends="defaultLayout">
+	<definition name="registration/confirm/error" extends="default">
+		<put-attribute name="navloc" type="string" value="login"/>
 		<put-attribute name="head" value="/WEB-INF/flows/register/head.jsp" />
 		<put-attribute name="body" value="/WEB-INF/flows/register/confirm/error.jsp" />
 	</definition>

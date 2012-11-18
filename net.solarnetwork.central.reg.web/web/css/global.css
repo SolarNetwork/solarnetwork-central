@@ -1,0 +1,8 @@
+.navbar .brand {
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+fieldset.review .uneditable-input {
+	color: black;
+}

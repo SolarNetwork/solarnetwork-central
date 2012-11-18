@@ -7,7 +7,9 @@
 	<definition name="defaultLayout" template="/WEB-INF/layouts/default.jsp" />
 	
 	<definition name="default" extends="defaultLayout">
+		<put-attribute name="navloc" value="home" type="string"/>
 		<put-attribute name="head" value="/WEB-INF/jsp/default-head.jsp" />
+		<put-attribute name="header" value="/WEB-INF/jsp/default-header.jsp"/>
 	</definition>
 	
 </tiles-definitions>

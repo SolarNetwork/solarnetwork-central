@@ -1,8 +1,3 @@
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
-<%@ taglib prefix="tiles" uri="http://tiles.apache.org/tags-tiles" %>
-
 <c:if test="${not empty rootCauseException}">
 	<div class="global-error">
 		<c:choose>
@@ -22,14 +17,8 @@
 
 <tiles:insertAttribute name="intro" />
 
-<form:form modelAttribute="user" cssClass="registration-form">
-	
+<form:form modelAttribute="user" cssClass="form-horizontal registration-form">
 	<tiles:insertAttribute name="detail" />
-	
-	<div class="button-group">
-	 <tiles:insertAttribute name="actions" />
-	</div>
-
 </form:form>
 
 <tiles:insertAttribute name="conclusion" />

@@ -115,7 +115,9 @@
 		<url-pattern>/u/*</url-pattern>
 	</servlet-mapping>
 	
+	<!-- pack:tag servlet for packed, cached resources -->
 	<servlet>
+		<description>This is the servlet needed for cache.type servlet, returns the packed resources</description>
 		<display-name>PackServlet</display-name>
 		<servlet-name>PackServlet</servlet-name>
 		<servlet-class>net.sf.packtag.servlet.PackServlet</servlet-class>
@@ -130,20 +132,11 @@
 		<welcome-file>index.do</welcome-file>
 	</welcome-file-list>
 
-	<resource-ref>
-		<description>SolarNetwork JDBC DataSource</description>
-		<res-ref-name>jdbc/solarnet</res-ref-name>
-		<res-type>javax.sql.DataSource</res-type>
-		<res-auth>Container</res-auth>
-		<res-sharing-scope>Shareable</res-sharing-scope>
-	</resource-ref>
-
-	<resource-ref>
-		<description>SolarNetwork JavaMail Session</description>
-		<res-ref-name>mail/solarnet</res-ref-name>
-		<res-type>javax.mail.Session</res-type>
-		<res-auth>Container</res-auth>
-		<res-sharing-scope>Shareable</res-sharing-scope>
-	</resource-ref>
+	<jsp-config>
+		<jsp-property-group>
+			<url-pattern>*.jsp</url-pattern>
+			<include-prelude>/WEB-INF/jsp/prelude.jsp</include-prelude>
+		</jsp-property-group>
+	</jsp-config>
 	
 </web-app>

@@ -9,7 +9,7 @@
 	</definition>
 	
 	<definition name="login" extends="default">
-		<put-attribute name="head" value="/WEB-INF/jsp/login-head.jsp"/>
+		<put-attribute name="navloc" type="string" value="login"/>
 		<put-attribute name="body" value="/WEB-INF/jsp/login.jsp" />
 	</definition>
 	
