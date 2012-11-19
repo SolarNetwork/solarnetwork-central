@@ -19,7 +19,7 @@
 		<intercept-url pattern="/css/**" filters="none"/>
 		<intercept-url pattern="/*.do*" access="ROLE_ANONYMOUS,ROLE_USER"/>
 	    <intercept-url pattern="/u/**" access="ROLE_USER" />
-		<form-login login-page="/login.do" default-target-url="/u/home"
+		<form-login login-page="/login.do" default-target-url="/u/home.do"
 			authentication-failure-url="/login.do?login_error=1"/>
 		<logout logout-success-url="/logoutSuccess.do"/>
 	</http>
