@@ -2,13 +2,14 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Security
 Bundle-SymbolicName: net.solarnetwork.central.common.security
-Bundle-Version: 1.1.1
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: net.solarnetwork.central.security;version="1.1.0",
- net.solarnetwork.central.security.jdbc;version="1.0.0",
- net.solarnetwork.central.security.web;version="1.0.0"
-Import-Package: net.solarnetwork.central.domain;version="1.0.0",
+Export-Package: 
+ net.solarnetwork.central.security;version="1.2.0",
+ net.solarnetwork.central.security.jdbc;version="1.0.0"
+Import-Package: 
+ net.solarnetwork.central.domain;version="1.0.0",
  net.solarnetwork.central.user.domain;version="1.0.0",
  org.springframework.beans.factory;version="[3.0,4.0)",
  org.springframework.binding.collection;version="[2.0.8,3.0)",

@@ -31,13 +31,14 @@ import org.springframework.security.core.userdetails.User;
  * attributes.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.1
  */
 public class AuthenticatedUser extends User {
 	
-	private static final long serialVersionUID = -7203040645298972753L;
+	private static final long serialVersionUID = -536562318395003903L;
 
 	private Long userId;
+	private String name;
 
 	/**
 	 * Construct from existing {@link User} and 
@@ -51,13 +52,15 @@ public class AuthenticatedUser extends User {
 				user.isAccountNonExpired(), user.isCredentialsNonExpired(),
 				user.isAccountNonLocked(), user.getAuthorities());
 		this.userId = domainUser.getId();
+		this.name = domainUser.getName();
 	}
 
-	/**
-	 * @return the userId
-	 */
 	public Long getUserId() {
 		return userId;
+	}
+
+	public String getName() {
+		return name;
 	}
 	
 }

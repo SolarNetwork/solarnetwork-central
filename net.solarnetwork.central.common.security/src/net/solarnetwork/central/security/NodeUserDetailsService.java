@@ -30,7 +30,7 @@ import java.util.Collections;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -47,7 +47,7 @@ public class NodeUserDetailsService implements UserDetailsService {
 
 	private static Collection<GrantedAuthority> getAuthorities() {
 		Collection<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>(1);
-		authorities.add(new GrantedAuthorityImpl("ROLE_NODE"));
+		authorities.add(new SimpleGrantedAuthority("ROLE_NODE"));
 		return Collections.unmodifiableCollection(authorities);
 	}
 	
