@@ -30,6 +30,6 @@
 
 	<!-- Installs a listener to apply Spring Security authorities -->
 	<bean id="securityFlowExecutionListener"
-		class="net.solarnetwork.central.security.web.SecurityFlowExecutionListener" />
+		class="org.springframework.webflow.security.SecurityFlowExecutionListener" />
 	
 </beans>
