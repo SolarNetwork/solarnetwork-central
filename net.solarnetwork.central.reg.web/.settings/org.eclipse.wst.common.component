@@ -3,7 +3,7 @@
     <wb-module deploy-name="net.solarnetwork.central.dras.web">
         <wb-resource deploy-path="/" source-path="/web"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src"/>
-        <property name="context-root" value="net.solarnetwork.central.dras.web"/>
         <property name="java-output-path" value="/net.solarnetwork.central.dras.web/build/eclipse"/>
+        <property name="context-root" value="/solarreg"/>
     </wb-module>
 </project-modules>
