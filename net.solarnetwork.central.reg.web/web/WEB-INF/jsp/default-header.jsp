@@ -11,13 +11,27 @@
 					<a href="<c:url value='/login.do'/>"><fmt:message key="link.login"/></a>
 				</li>
 			</sec:authorize>
-		</ul>
+			<sec:authorize ifAnyGranted="ROLE_USER">
+				<li  ${navloc == 'my-nodes' ? 'class="active"' : ''}>
+					<a href="<c:url value='/u/sec/my-nodes'/>"><fmt:message key="link.my-nodes"/></a>
+				</li>
+			</sec:authorize>
+ 		</ul>
+        
 		<sec:authorize ifAnyGranted="ROLE_USER">
-			<p class="pull-right navbar-text">
-				<fmt:message key='nav.label.principal'>
-					<fmt:param><sec:authentication property="principal.username" /></fmt:param>
-				</fmt:message>
-			</p>
+			<ul class="nav pull-right">
+				<li class="dropdown pull-right">
+					<a data-toggle="dropdown" class="dropdown-toggle" href="#">
+						<fmt:message key='nav.label.principal'>
+							<fmt:param><sec:authentication property="principal.username" /></fmt:param>
+						</fmt:message>
+						<b class="caret"></b>
+					</a>
+					<ul class="dropdown-menu">
+						<li><a href="<c:url value='/j_spring_security_logout'/>"><fmt:message key='link.logout'/></a></li>
+					</ul>
+				</li>
+			</ul>
 		</sec:authorize>
 	</div>
 </div>

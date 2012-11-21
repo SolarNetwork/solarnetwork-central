@@ -1,14 +1,12 @@
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
-<%@ taglib prefix="joda" uri="http://www.joda.org/joda/time/tags" %>
-<div class="intro">
-	Hi there. You have ${fn:length(userNodesList)} nodes.
-</div>
-<div id="nodes">
+<p class="intro">
+	<fmt:message key='my-nodes.intro'>
+		<fmt:param value="${fn:length(userNodesList)}"/>
+	</fmt:message>
+</p>
+<section id="nodes">
+	<h2><fmt:message key='my-nodes.nodelist.header'/></h2>
 	<c:if test="${fn:length(userNodesList) > 0}">
-		<table>
+		<table class="table">
 			<thead>
 				<tr>
 					<th><fmt:message key="user.node.id.label"/></th>
@@ -34,18 +32,22 @@
 			</tbody>
 		</table>
 	</c:if>
-	<div class="button-group">
-		<form:form>
-			<input type="submit" name="_eventId_inviteNode" value="<fmt:message key='my-nodes.inviteNode'/>" />
-		</form:form>
-	</div>
-</div>
+	<a class="btn btn-primary" href="<c:url value='/u/sec/invite-node'/>">
+		<i class="icon-plus icon-white"></i> <fmt:message key='my-nodes.inviteNode'/>
+	</a>
+</section>
 <div class="intro">
-	You have ${fn:length(pendingUserNodeConfirmationsList)} pending invitations.
+	
 </div>
 <c:if test="${fn:length(pendingUserNodeConfirmationsList) > 0}">
-	<div id="pending">
-		<table>
+	<section id="pending">
+		<h2><fmt:message key='my-nodes.pending-invite.header'/></h2>
+		<p>
+			<fmt:message key='my-nodes.pending-invite.intro'>
+				<fmt:param>${fn:length(pendingUserNodeConfirmationsList)}</fmt:param>
+			</fmt:message>
+		</p>
+		<table class="table">
 			<thead>
 				<tr>
 					<th><fmt:message key="user.nodeconf.nodeId.label"/></th>
@@ -66,6 +68,6 @@
 				</c:forEach>
 			</tbody>
 		</table>
-	</div>
+	</section>
 </c:if>
 

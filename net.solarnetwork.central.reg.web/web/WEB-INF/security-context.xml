@@ -15,9 +15,11 @@
 
 	<http security="none" pattern="/js/**"/>
 	<http security="none" pattern="/css/**"/>
+	
+	<http security="none" pattern="/v1/pub/**"/>
 
 	<!-- Stateless BASIC authentication realm for web services. -->
-	<http pattern="/v1/u/**" create-session="stateless">
+	<http pattern="/v1/sec/**" create-session="stateless">
 		<!--  should require HTTPS for BASIC auth: requires-channel="https" -->
 		<intercept-url pattern='/**' access='ROLE_USER'  />
 		<http-basic/>
@@ -26,8 +28,9 @@
 	<!-- Configure Spring Security -->
 	<http auto-config="true">
 		<intercept-url pattern="/*.do*" access="ROLE_ANONYMOUS,ROLE_USER"/>
-	    <intercept-url pattern="/u/**" access="ROLE_USER" />
-		<form-login login-page="/login.do" default-target-url="/u/home.do"
+	    <intercept-url pattern="/u/sec/**" access="ROLE_USER" />
+	    <intercept-url pattern="/u/**" access="ROLE_ANONYMOUS,ROLE_USER" />
+		<form-login login-page="/login.do" default-target-url="/u/sec/home"
 			authentication-failure-url="/login.do?login_error=1"/>
 		<logout logout-success-url="/logoutSuccess.do"/>
 	</http>

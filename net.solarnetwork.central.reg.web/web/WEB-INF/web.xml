@@ -68,6 +68,10 @@
 		<filter-name>Compression Filter</filter-name>
 		<url-pattern>/u/*</url-pattern>
 	</filter-mapping>
+	<filter-mapping>
+		<filter-name>Compression Filter</filter-name>
+		<url-pattern>/api/*</url-pattern>
+	</filter-mapping>
 	
 	<!-- Character encoding filter -->
 	<filter>
@@ -113,6 +117,10 @@
 	<servlet-mapping>
 		<servlet-name>solarreg</servlet-name>
 		<url-pattern>/u/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>solarreg</servlet-name>
+		<url-pattern>/api/*</url-pattern>
 	</servlet-mapping>
 	
 	<!-- pack:tag servlet for packed, cached resources -->

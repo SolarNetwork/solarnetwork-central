@@ -72,7 +72,7 @@ public interface UserBiz {
 	 * @param user the user to get the nodes for
 	 * @return list of UserNode objects, or an empty list if none found
 	 */
-	public List<UserNode> getUserNodes(User user);
+	public List<UserNode> getUserNodes(Long userId);
 	
 	/**
 	 * Get a list of pending node confirmations belonging to a specific user.
@@ -80,6 +80,6 @@ public interface UserBiz {
 	 * @param user the user to get the nodes for
 	 * @return list of UserNodeConfirmation objects, or an empty list if none found
 	 */
-	public List<UserNodeConfirmation> getPendingUserNodeConfirmations(User user);
+	public List<UserNodeConfirmation> getPendingUserNodeConfirmations(Long userId);
 	
 }

@@ -5,6 +5,7 @@
 <tiles-definitions>
 	
 	<definition name="myNodesLayout" extends="default">
+		<put-attribute name="navloc" type="string" value="my-nodes"/>
 		<put-attribute name="head" value="/WEB-INF/flows/my-nodes/head.jsp" />
 	</definition>
 	
