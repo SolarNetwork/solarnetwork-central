@@ -33,12 +33,12 @@ import org.springframework.security.core.userdetails.User;
  * @author matt
  * @version 1.1
  */
-public class AuthenticatedUser extends User {
+public class AuthenticatedUser extends User implements SecurityUser {
 	
 	private static final long serialVersionUID = -536562318395003903L;
 
-	private Long userId;
-	private String name;
+	private final Long userId;
+	private final String name;
 
 	/**
 	 * Construct from existing {@link User} and 
@@ -55,12 +55,23 @@ public class AuthenticatedUser extends User {
 		this.name = domainUser.getName();
 	}
 
+	@Override
 	public Long getUserId() {
 		return userId;
 	}
 
 	public String getName() {
 		return name;
+	}
+
+	@Override
+	public String getDisplayName() {
+		return name;
+	}
+
+	@Override
+	public String getEmail() {
+		return getUsername();
 	}
 	
 }
