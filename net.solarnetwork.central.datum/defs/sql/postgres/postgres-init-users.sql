@@ -39,6 +39,7 @@ CREATE VIEW solaruser.user_login AS
 		substring(user_user.password from 6) AS password, 
 		enabled AS enabled,
 		id AS user_id
+		disp_name AS display_name
 	FROM solaruser.user_user;
 
 /**
