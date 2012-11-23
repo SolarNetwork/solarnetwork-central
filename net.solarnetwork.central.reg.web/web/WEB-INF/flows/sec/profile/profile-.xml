@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/webflow
+		http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd">
+	
+	<on-start>
+		<evaluate expression="userBiz.getUser(currentUser.principal.userId)" result="flowScope.user"/>
+		<set name="user.password" value="T(net.solarnetwork.central.user.biz.RegistrationBiz).DO_NOT_CHANGE_VALUE"/>
+	</on-start>
+	
+	<view-state id="start" view="profile/view">
+		<transition on="edit" to="editProfileForm" validate="false"/>
+	</view-state>
+	
+	<view-state id="editProfileForm" view="profile/form" model="user">
+		<transition on="next" to="editProfileReview" validate="false"/>
+		<transition on="cancel" to="cancel" bind="false" validate="false"/>
+	</view-state>
+
+	<view-state id="editProfileReview" view="profile/review" model="user">
+		<transition on="prev" to="editProfileForm" validate="false"/>
+		<transition on="next" to="editProfileSave" validate="false"/>
+	</view-state>
+	
+	<action-state id="editProfileSave">
+		<evaluate expression="userBiz.updateUser(user)" />
+		<transition on="success" to="done">
+		</transition>
+	</action-state>
+	
+	<end-state id="cancel" view="profile/view"/>
+	<end-state id="done" view="profile/view" />
+	
+	<global-transitions>
+		<transition on-exception="net.solarnetwork.central.user.biz.AuthorizationException" to="start"/>
+	</global-transitions>
+	
+</flow>

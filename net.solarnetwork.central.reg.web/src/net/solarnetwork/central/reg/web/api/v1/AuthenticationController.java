@@ -26,16 +26,21 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import javax.annotation.Resource;
-
+import javax.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.reg.web.api.domain.Response;
-
+import net.solarnetwork.central.security.SecurityUser;
+import net.solarnetwork.central.user.biz.AuthorizationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
@@ -47,16 +52,29 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class AuthenticationController {
 
+	private final Logger log = LoggerFactory.getLogger(getClass());
+
 	@Resource
 	private AuthenticationManager authenticationManager;
 	
+	@ExceptionHandler(AuthorizationException.class)
 	@ResponseBody
-	@RequestMapping("/api/v1/pub/authenticate")
-	public Response authenticate(String username, String password) {
+	public Response handleException(AuthorizationException e, HttpServletResponse response) {
+		log.debug("AuthorizationException in survey controller: {}", e.getMessage());
+		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+		return new Response(Boolean.FALSE, null, e.getMessage(), null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/v1/pub/authenticate", method = RequestMethod.GET)
+	public Response authenticate(@RequestParam String username, @RequestParam String password) {
 		UsernamePasswordAuthenticationToken tok = new UsernamePasswordAuthenticationToken(username, password);
 		Authentication auth = authenticationManager.authenticate(tok);
 		Map<String, Object> data = new LinkedHashMap<String, Object>(3);
-		data.put("principal", auth.getPrincipal());
+		SecurityUser user = (SecurityUser) auth.getPrincipal();
+		data.put("username", user.getEmail());
+		data.put("userId", user.getUserId());
+		data.put("name", user.getDisplayName());
 		return new Response(data);
 	}
 	

@@ -27,10 +27,8 @@ package net.solarnetwork.central.security.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.user.domain.User;
-
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -44,11 +42,14 @@ import org.springframework.transaction.annotation.Transactional;
  * Extension of {@link JdbcDaoImpl} that returns {@link AuthenticatedUser}
  * objects.
  * 
- * <p>The SQL required by this implementation adds the following additional
- * column requirements to the base {@link JdbcDaoImpl} requirements:</p>
+ * <p>
+ * The SQL required by this implementation adds the following additional column
+ * requirements to the base {@link JdbcDaoImpl} requirements:
+ * </p>
  * 
  * <ol>
- *   <li>User ID (Long) - the User primary key</li>
+ * <li>User ID (Long) - the User primary key</li>
+ * <li>Display Name (String) - the User's display name</li>
  * </ol>
  * 
  * @author matt
@@ -66,28 +67,32 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 		AuthenticatedUser authUser = (AuthenticatedUser)userFromUserQuery;
 		User domainUser = new User();
 		domainUser.setId(authUser.getUserId());
+		domainUser.setName(authUser.getName());
 		return new AuthenticatedUser(user, domainUser);
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	protected List<UserDetails> loadUsersByUsername(String username) {
-        return getJdbcTemplate().query(getUsersByUsernameQuery(), new String[] {username}, 
-        		new RowMapper<UserDetails>() {
-            public UserDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
-                String username = rs.getString(1);
-                String password = rs.getString(2);
-                boolean enabled = rs.getBoolean(3);
-                Long id = rs.getLong(4);
-                User user = new User();
-                user.setId(id);
-                return new AuthenticatedUser(
-                		new org.springframework.security.core.userdetails.User(
-                				username, password, enabled, true, true, true, 
-                				AuthorityUtils.NO_AUTHORITIES),
-                		user);
-            }
-        });
+		return getJdbcTemplate().query(getUsersByUsernameQuery(), new String[] { username },
+				new RowMapper<UserDetails>() {
+
+					@Override
+					public UserDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
+						String username = rs.getString(1);
+						String password = rs.getString(2);
+						boolean enabled = rs.getBoolean(3);
+						Long id = rs.getLong(4);
+						String name = rs.getString(5);
+						User user = new User();
+						user.setId(id);
+						user.setName(name);
+						return new AuthenticatedUser(
+								new org.springframework.security.core.userdetails.User(username,
+										password, enabled, true, true, true,
+										AuthorityUtils.NO_AUTHORITIES), user);
+					}
+				});
 	}
 
 }

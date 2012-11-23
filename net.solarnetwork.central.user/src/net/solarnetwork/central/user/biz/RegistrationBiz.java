@@ -129,4 +129,19 @@ public interface RegistrationBiz {
 	RegistrationReceipt confirmNodeAssociation(User user, Long nodeId, 
 			String confirmationKey) throws AuthorizationException;
 	
+	/**
+	 * Update the details of a user entity.
+	 * 
+	 * <p>
+	 * The {@link User#getId()} value must be populated with the ID of the user
+	 * to update, and then any modifiable fields that are not <em>null</em> will
+	 * be updated with the provided value.
+	 * </p>
+	 * 
+	 * @param userEntry
+	 *        the input data
+	 * @return the updated user entity
+	 */
+	User updateUser(User userEntry);
+
 }

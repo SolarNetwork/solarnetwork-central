@@ -7,11 +7,15 @@ Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
  net.solarnetwork.central.security;version="1.2.0",
- net.solarnetwork.central.security.jdbc;version="1.0.0"
+ net.solarnetwork.central.security.jdbc;version="1.1.0"
 Import-Package: 
  net.solarnetwork.central.domain;version="1.0.0",
  net.solarnetwork.central.security;version="1.1.0",
  net.solarnetwork.central.user.domain;version="1.0.0",
+ org.apache.commons.codec.binary;version="[1.4,2.0)",
+ org.apache.commons.codec.digest;version="[1.4,2.0)",
+ org.joda.time;version="[1.6,3.0)",
+ org.joda.time.base;version="[1.6,3.0)",
  org.slf4j;version="[1.5.0,2.0.0)",
  org.springframework.beans.factory;version="[3.1,4.0)",
  org.springframework.binding.collection;version="[2.0.8,3.0)",

@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.zip.GZIPOutputStream;
-
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
@@ -41,6 +40,7 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.central.user.biz.AuthorizationException;
+import net.solarnetwork.central.user.biz.AuthorizationException.Reason;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -54,7 +54,6 @@ import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.NetworkIdentity;
 import net.solarnetwork.domain.RegistrationReceipt;
 import net.solarnetwork.util.JavaBeanXmlSerializer;
-
 import org.apache.commons.codec.binary.Base64OutputStream;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
@@ -67,6 +66,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
@@ -108,12 +108,12 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 	private Set<String> confirmedUserRoles = DEFAULT_CONFIRMED_USER_ROLES; 
 	
 	@Autowired(required = false)
-	private JavaBeanXmlSerializer xmlSerializer = new JavaBeanXmlSerializer();
+	private final JavaBeanXmlSerializer xmlSerializer = new JavaBeanXmlSerializer();
 	
 	private Period invitationExpirationPeriod = new Period(0, 0, 1, 0, 0, 0, 0, 0); // 1 week
 	private String defaultSolarLocationName = "Unknown";
 	
-	private Logger log = LoggerFactory.getLogger(DaoRegistrationBiz.class);
+	private final Logger log = LoggerFactory.getLogger(DaoRegistrationBiz.class);
 	
 	private User getCurrentUser() {
 		String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -252,13 +252,13 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 	}
 	
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public User getUser(Long id) {
 		return userDao.get(id);
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public User getUser(String email) {
 		return userDao.getUserByEmail(email);
 	}
@@ -480,6 +480,42 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		userNodeConfirmationDao.store(conf);
 		
 		return new BasicRegistrationReceipt(conf.getUser().getEmail(), code);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public User updateUser(User userEntry) {
+		assert userEntry != null;
+		assert userEntry.getId() != null;
+
+		User entity = userDao.get(userEntry.getId());
+		if ( entity == null ) {
+			throw new AuthorizationException(userEntry.getEmail(), Reason.UNKNOWN_EMAIL);
+		}
+
+		if ( StringUtils.hasText(userEntry.getEmail()) ) {
+			entity.setEmail(userEntry.getEmail());
+		}
+		if ( StringUtils.hasText(userEntry.getName()) ) {
+			entity.setName(userEntry.getName());
+		}
+		if ( StringUtils.hasText(userEntry.getPassword())
+				&& !DO_NOT_CHANGE_VALUE.equals(userEntry.getPassword()) ) {
+			entity.setPassword(userEntry.getPassword());
+		}
+
+		prepareUserForStorage(entity);
+
+		try {
+			entity = userDao.get(userDao.store(entity));
+		} catch ( DataIntegrityViolationException e ) {
+			if ( log.isWarnEnabled() ) {
+				log.warn("Duplicate user registration: " + entity.getEmail());
+			}
+			throw new AuthorizationException(entity.getEmail(),
+					AuthorizationException.Reason.DUPLICATE_EMAIL);
+		}
+		return entity;
 	}
 
 	public Set<String> getConfirmedUserRoles() {

@@ -92,4 +92,5 @@ public class SecurityUtils {
 		}
 		throw new SecurityException("User not available");
 	}
+	
 }
