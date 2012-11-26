@@ -33,9 +33,4 @@ Import-Package:
  org.springframework.security.core.context;version="[3.1,4.0)",
  org.springframework.security.core.userdetails;version="[3.1,4.0)",
  org.springframework.security.core.userdetails.jdbc;version="[3.1,4.0)",
- org.springframework.transaction.annotation;version="[3.1,4.0)",
- org.springframework.webflow.core;version="[2.0.8,3.0)",
- org.springframework.webflow.core.collection;version="[2.0.8,3.0)",
- org.springframework.webflow.definition;version="[2.0.8,3.0)",
- org.springframework.webflow.execution;version="[2.0.8,3.0)",
- org.springframework.webflow.security;version="[2.0.8,3.0)"
+ org.springframework.transaction.annotation;version="[3.1,4.0)"

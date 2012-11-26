@@ -16,13 +16,12 @@
 	<http security="none" pattern="/js/**"/>
 	<http security="none" pattern="/css/**"/>
 	
-	<http security="none" pattern="/v1/pub/**"/>
+	<http security="none" pattern="/api/v1/pub/**"/>
 
 	<!-- Stateless BASIC authentication realm for web services. -->
-	<http pattern="/v1/sec/**" create-session="stateless">
-		<!--  should require HTTPS for BASIC auth: requires-channel="https" -->
+	<http pattern="/api/v1/sec/**" create-session="stateless" entry-point-ref="authTokenEntryPoint">
 		<intercept-url pattern='/**' access='ROLE_USER'  />
-		<http-basic/>
+		<custom-filter position="PRE_AUTH_FILTER" ref="authTokenFilter" />
 	</http>
 	
 	<!-- Configure Spring Security -->
@@ -51,6 +50,20 @@
 				value="SELECT username, authority
 						FROM solaruser.user_login_role
 						WHERE username = ?"/>
+	</beans:bean>
+
+	<beans:bean id="authTokenEntryPoint" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint"/>
+
+	<beans:bean id="authTokenFilter" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter">
+		<beans:property name="userDetailsService">
+			<beans:bean parent="jdbcUserService">
+				<beans:property name="usersByUsernameQuery" 
+						value="SELECT username, password, enabled, user_id, display_name
+								FROM solaruser.user_auth_token_login 
+								WHERE auth_token = ?"/>
+			</beans:bean>
+		</beans:property>
+		<beans:property name="authenticationEntryPoint" ref="authTokenEntryPoint"/>
 	</beans:bean>
 
 </beans:beans>

@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * @author matt
  * @version $Revision$
  */
-@Controller
+@Controller("v1authenticationController")
 public class AuthenticationController {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());

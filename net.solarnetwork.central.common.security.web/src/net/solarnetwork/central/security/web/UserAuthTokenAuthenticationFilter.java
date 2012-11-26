@@ -43,10 +43,12 @@ import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.util.Assert;
 import org.springframework.web.filter.GenericFilterBean;
 
 /**
@@ -79,6 +81,10 @@ import org.springframework.web.filter.GenericFilterBean;
  * {@code X-SN-Date}) header value with the current time as reported by the
  * system. If this difference is exceeded, authorization fails.</dd>
  * 
+ * <dt>entryPoint</dt>
+ * <dd>The {@link UserAuthTokenAuthenticationEntryPoint} to use as the entry
+ * point.</dd>
+ * 
  * </dl>
  * 
  * @author matt
@@ -86,13 +92,23 @@ import org.springframework.web.filter.GenericFilterBean;
  */
 public class UserAuthTokenAuthenticationFilter extends GenericFilterBean implements Filter {
 
-	private static final String AUTH_HEADER_PREFIX = "SolarNetworkWS ";
+	/** The HTTP Authorization scheme used by this filter. */
+	public static final String AUTHORIZATION_SCHEME = "SolarNetworkWS";
+
+	private static final String AUTH_HEADER_PREFIX = AUTHORIZATION_SCHEME + " ";
 	
 	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
+	private UserAuthTokenAuthenticationEntryPoint authenticationEntryPoint;
 	private UserDetailsService userDetailsService;
-	private long maxDateSkew = 15 * 60 * 60 * 1000; // 15 minutes default
+	private long maxDateSkew = 15 * 60 * 1000; // 15 minutes default
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
+
+	@Override
+	public void afterPropertiesSet() {
+		Assert.notNull(userDetailsService, "A UserDetailsService is required");
+		Assert.notNull(authenticationEntryPoint, "A UserAuthTokenAuthenticationEntryPoint is required");
+	}
 
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException,
@@ -109,19 +125,27 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 
 		log.debug("Digest Authorization header received from user agent: {}", header);
 		
-		AuthData data = new AuthData(request, header.substring(AUTH_HEADER_PREFIX.length()));
+		AuthData data;
+		try {
+			data = new AuthData(request, header.substring(AUTH_HEADER_PREFIX.length()));
+		} catch ( AuthenticationException e ) {
+			fail(request, response, e);
+			return;
+		}
 
 		UserDetails user = userDetailsService.loadUserByUsername(data.authToken);
 		final String computedDigest = computeDigest(data, user.getPassword());
-		if ( computedDigest.equals(data.signatureDigest) ) {
+		if ( !computedDigest.equals(data.signatureDigest) ) {
 			log.debug("Expected response: '{}' but received: '{}'", computedDigest, data.signatureDigest);
 			SecurityContextHolder.getContext().setAuthentication(null);
-			throw new BadCredentialsException("Bad credentials.");
+			fail(request, response, new BadCredentialsException("Bad credentials."));
+			return;
 		}
 
 		if ( !data.isDateValid() ) {
 			log.debug("Request date '{}' diff too large: {}", data.date, data.dateSkew);
-			throw new BadCredentialsException("Date skew too large.");
+			fail(request, response, new BadCredentialsException("Date skew too large."));
+			return;
 		}
 
 		log.debug("Authentication success for user: '{}'", user.getUsername());
@@ -138,6 +162,12 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		authRequest.eraseCredentials();
 		authRequest.setDetails(authenticationDetailsSource.buildDetails(request));
 		return authRequest;
+	}
+
+	private void fail(HttpServletRequest request, HttpServletResponse response,
+			AuthenticationException failed) throws IOException, ServletException {
+		SecurityContextHolder.getContext().setAuthentication(null);
+		authenticationEntryPoint.commence(request, response, failed);
 	}
 
 	final String computeDigest(final AuthData data, final String password) {
@@ -215,6 +245,10 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 
 	public void setMaxDateSkew(long maxDateSkew) {
 		this.maxDateSkew = maxDateSkew;
+	}
+
+	public void setAuthenticationEntryPoint(UserAuthTokenAuthenticationEntryPoint entryPoint) {
+		this.authenticationEntryPoint = entryPoint;
 	}
 
 }

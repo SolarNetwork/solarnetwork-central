@@ -8,3 +8,15 @@ CREATE TABLE solaruser.user_auth_token (
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+CREATE VIEW solaruser.user_auth_token_login  AS
+	SELECT
+		u.email AS username,
+		t.auth_token AS auth_token,
+		t.auth_secret AS password, 
+		u.enabled AS enabled,
+		u.id AS user_id,
+		u.disp_name AS display_name
+	FROM solaruser.user_auth_token t
+	INNER JOIN solaruser.user_user u ON u.id = t.user_id
+	WHERE t.status = 'a'::bpchar;
