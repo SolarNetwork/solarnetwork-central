@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.central.reg.web.api.domain.Response.response;
 import java.util.List;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.reg.web.api.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,15 +49,15 @@ public class NodeInstructionController {
 
 	@RequestMapping("/viewActive")
 	@ResponseBody
-	public List<Instruction> activeInstructions(@RequestParam("nodeId") Long nodeId) {
+	public Response<List<Instruction>> activeInstructions(@RequestParam("nodeId") Long nodeId) {
 		List<Instruction> instructions = instructorBiz.getActiveInstructionsForNode(nodeId);
-		return instructions;
+		return response(instructions);
 	}
 
 	@RequestMapping("/view")
 	@ResponseBody
-	public Instruction viewInstruction(@RequestParam("id") Long instructionId) {
+	public Response<Instruction> viewInstruction(@RequestParam("id") Long instructionId) {
 		Instruction instruction = instructorBiz.getInstruction(instructionId);
-		return instruction;
+		return response(instruction);
 	}
 }

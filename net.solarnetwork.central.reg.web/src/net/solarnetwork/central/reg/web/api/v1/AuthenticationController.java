@@ -59,15 +59,15 @@ public class AuthenticationController {
 	
 	@ExceptionHandler(AuthorizationException.class)
 	@ResponseBody
-	public Response handleException(AuthorizationException e, HttpServletResponse response) {
+	public Response<?> handleException(AuthorizationException e, HttpServletResponse response) {
 		log.debug("AuthorizationException in survey controller: {}", e.getMessage());
 		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-		return new Response(Boolean.FALSE, null, e.getMessage(), null);
+		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/v1/pub/authenticate", method = RequestMethod.GET)
-	public Response authenticate(@RequestParam String username, @RequestParam String password) {
+	public Response<?> authenticate(@RequestParam String username, @RequestParam String password) {
 		UsernamePasswordAuthenticationToken tok = new UsernamePasswordAuthenticationToken(username, password);
 		Authentication auth = authenticationManager.authenticate(tok);
 		Map<String, Object> data = new LinkedHashMap<String, Object>(3);
@@ -75,7 +75,7 @@ public class AuthenticationController {
 		data.put("username", user.getEmail());
 		data.put("userId", user.getUserId());
 		data.put("name", user.getDisplayName());
-		return new Response(data);
+		return new Response<Object>(data);
 	}
 	
 }

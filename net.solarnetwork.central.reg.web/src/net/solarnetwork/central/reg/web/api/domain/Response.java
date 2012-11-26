@@ -24,27 +24,28 @@
 
 package net.solarnetwork.central.reg.web.api.domain;
 
-import java.util.Map;
 
 /**
  * A simple service response envelope object.
  * 
  * @author matt
  * @version 1.0
+ * @param <T>
+ *        the objec type
  */
-public class Response {
+public class Response<T> {
 
 	private final Boolean success;
 	private final String code;
 	private final String message;
-	private final Map<String, Object> data;
+	private final T data;
 	
 	/**
 	 * Construct a successful response with just data.
 	 * 
 	 * @param data the data
 	 */
-	public Response(Map<String, Object>data) {
+	public Response(T data) {
 		this(Boolean.TRUE, null, null, data);
 	}
 	
@@ -56,12 +57,29 @@ public class Response {
 	 * @param message optional descriptive message
 	 * @param data optional data in the response
 	 */
-	public Response(Boolean success, String code, String message, Map<String, Object> data) {
+	public Response(Boolean success, String code, String message, T data) {
 		super();
 		this.success = success;
 		this.code = code;
 		this.message = message;
 		this.data = data;
+	}
+
+	/**
+	 * Helper method to construct instance using generic return type inference.
+	 * 
+	 * <p>
+	 * If you import this static method, then in your code you can write
+	 * {@code return response(myData)} instead of
+	 * {@code new Response&lt;Object&gt;(myData)}.
+	 * </p>
+	 * 
+	 * @param data
+	 *        the data
+	 * @return the response
+	 */
+	public static <V> Response<V> response(V data) {
+		return new Response<V>(data);
 	}
 
 	public Boolean getSuccess() {
@@ -76,7 +94,7 @@ public class Response {
 		return message;
 	}
 
-	public Map<String, Object> getData() {
+	public T getData() {
 		return data;
 	}
 	
