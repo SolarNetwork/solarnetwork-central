@@ -47,6 +47,13 @@ public class NodeInstructionController {
 	@Autowired
 	private InstructorBiz instructorBiz;
 
+	/**
+	 * Get a list of all active instructions for a specific node.
+	 * 
+	 * @param nodeId
+	 *        the ID of the node to get instructions for
+	 * @return the active instructions for the node
+	 */
 	@RequestMapping("/viewActive")
 	@ResponseBody
 	public Response<List<Instruction>> activeInstructions(@RequestParam("nodeId") Long nodeId) {
@@ -54,6 +61,13 @@ public class NodeInstructionController {
 		return response(instructions);
 	}
 
+	/**
+	 * View a single instruction, based on its primary key.
+	 * 
+	 * @param instructionId
+	 *        the ID of the instruction to view
+	 * @return the instruction
+	 */
 	@RequestMapping("/view")
 	@ResponseBody
 	public Response<Instruction> viewInstruction(@RequestParam("id") Long instructionId) {
