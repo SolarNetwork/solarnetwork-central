@@ -77,6 +77,10 @@ public class InstructorSecurityAspect {
 	public void instructionsForNode(Long nodeId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.queueInstruction(..)) && args(nodeId,..)")
+	public void queueInstruction(Long nodeId) {
+	}
+
 	/**
 	 * Allow the current user access to a report if they are a member of the
 	 * report team, including guests.
@@ -84,7 +88,7 @@ public class InstructorSecurityAspect {
 	 * @param reportId
 	 *        the ID of the report to verify
 	 */
-	@Before("instructionsForNode(nodeId)")
+	@Before("instructionsForNode(nodeId) || queueInstruction(nodeId)")
 	public void userNodeAccessCheck(Long nodeId) {
 		if ( nodeId == null ) {
 			return;
