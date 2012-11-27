@@ -33,8 +33,6 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * Security aspect for {@link InstructorBiz}.
@@ -52,16 +50,31 @@ import org.springframework.stereotype.Component;
  * @version 1.0
  */
 @Aspect
-@Component
 public class InstructorSecurityAspect {
 
-	@Autowired
-	private UserNodeDao userNodeDao;
+	private final UserNodeDao userNodeDao;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.InstructorBiz.getActiveInstructionsForNode(Long))")
-	public void instructionsForNode() {
+	/**
+	 * Constructor.
+	 * 
+	 * @param userNodeDao
+	 *        the UserNodeDao to use
+	 */
+	public InstructorSecurityAspect(UserNodeDao userNodeDao) {
+		super();
+		this.userNodeDao = userNodeDao;
+	}
+
+	// Hmm, can't use execution(* net.solarnetwork.central.instructor.biz.InstructorBiz.getActiveInstructionsForNode(..))
+	// because end up with AspectJ exception "can't determine superclass of missing type 
+	// net.solarnetwork.central.instructor.aop.InstructorSecurityAspect" which is being thrown because the OSGi
+	// base ClassLoader is somehow being used after trying to inspect the osgi:service exporting the
+	// advised bean. All very strange, and I've given up trying to figure it out, after finding tweaking
+	// the execution() expression lets the whole thing work.
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.get*ForNode(..)) && args(nodeId)")
+	public void instructionsForNode(Long nodeId) {
 	}
 
 	/**
@@ -71,8 +84,8 @@ public class InstructorSecurityAspect {
 	 * @param reportId
 	 *        the ID of the report to verify
 	 */
-	@Before("((instructionsForNode()) && args(nodeId))")
-	public void reportTeamMemberAccessCheck(Long nodeId) {
+	@Before("instructionsForNode(nodeId)")
+	public void userNodeAccessCheck(Long nodeId) {
 		if ( nodeId == null ) {
 			return;
 		}
@@ -92,10 +105,6 @@ public class InstructorSecurityAspect {
 			throw new AuthorizationException(actor.getEmail(),
 					AuthorizationException.Reason.ACCESS_DENIED);
 		}
-	}
-
-	public void setUserNodeDao(UserNodeDao userNodeDao) {
-		this.userNodeDao = userNodeDao;
 	}
 
 }

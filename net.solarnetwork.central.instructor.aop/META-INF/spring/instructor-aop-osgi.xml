@@ -14,12 +14,13 @@
 
 	<osgi:reference id="instructorBiz"
 		interface="net.solarnetwork.central.instructor.biz.InstructorBiz"
-		cardinality="0..1" 
+		cardinality="1..1" 
 		filter="(!(aop=true))"/>
 	
 	<!-- Published Services -->
 
-	<osgi:service ref="instructorBiz" interface="net.solarnetwork.central.instructor.biz.InstructorBiz" ranking="10">
+	<osgi:service ref="aopInstructorBiz" 
+			interface="net.solarnetwork.central.instructor.biz.InstructorBiz" ranking="10">
 		<osgi:service-properties>
 			<entry key="aop" value="true"/>
 		</osgi:service-properties>

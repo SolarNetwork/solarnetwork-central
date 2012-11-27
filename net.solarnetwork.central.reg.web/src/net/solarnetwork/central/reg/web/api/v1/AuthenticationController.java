@@ -28,14 +28,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import net.solarnetwork.central.reg.web.api.ControllerSupport;
 import net.solarnetwork.central.reg.web.api.domain.Response;
 import net.solarnetwork.central.security.SecurityUser;
-import net.solarnetwork.central.user.biz.AuthorizationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,17 +49,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * @version $Revision$
  */
 @Controller("v1authenticationController")
-public class AuthenticationController {
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
+public class AuthenticationController extends ControllerSupport {
 
 	@Resource
 	private AuthenticationManager authenticationManager;
-	
-	@ExceptionHandler(AuthorizationException.class)
+
+	@ExceptionHandler(AuthenticationException.class)
 	@ResponseBody
-	public Response<?> handleException(AuthorizationException e, HttpServletResponse response) {
-		log.debug("AuthorizationException in survey controller: {}", e.getMessage());
+	public Response<?> handleException(AuthenticationException e, HttpServletResponse response) {
+		log.debug("AuthenticationException in {} controller: {}", getClass().getSimpleName(),
+				e.getMessage());
 		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
@@ -68,7 +66,8 @@ public class AuthenticationController {
 	@ResponseBody
 	@RequestMapping(value = "/v1/pub/authenticate", method = RequestMethod.GET)
 	public Response<?> authenticate(@RequestParam String username, @RequestParam String password) {
-		UsernamePasswordAuthenticationToken tok = new UsernamePasswordAuthenticationToken(username, password);
+		UsernamePasswordAuthenticationToken tok = new UsernamePasswordAuthenticationToken(username,
+				password);
 		Authentication auth = authenticationManager.authenticate(tok);
 		Map<String, Object> data = new LinkedHashMap<String, Object>(3);
 		SecurityUser user = (SecurityUser) auth.getPrincipal();
@@ -77,5 +76,9 @@ public class AuthenticationController {
 		data.put("name", user.getDisplayName());
 		return new Response<Object>(data);
 	}
-	
+
+	public void setAuthenticationManager(AuthenticationManager authenticationManager) {
+		this.authenticationManager = authenticationManager;
+	}
+
 }

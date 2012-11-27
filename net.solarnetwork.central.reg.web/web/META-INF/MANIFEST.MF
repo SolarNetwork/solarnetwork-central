@@ -20,6 +20,7 @@ Import-Package:
  net.solarnetwork.central.user.biz;version="[1.0.0,2.0.0)",
  net.solarnetwork.central.user.dao;version="[1.0.0,2.0.0)",
  net.solarnetwork.central.user.domain;version="[1.0.0,2.0.0)",
+ net.solarnetwork.central.web;version="[1.2.0,2.0.0)",
  net.solarnetwork.central.web.support;version="[1.0.0,2.0.0)",
  net.solarnetwork.domain;version="[1.0.0,2.0.0)",
  net.solarnetwork.util;version="[1.0.0,2.0.0)",

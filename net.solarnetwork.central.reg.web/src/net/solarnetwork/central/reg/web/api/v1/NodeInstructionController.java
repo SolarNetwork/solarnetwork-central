@@ -26,6 +26,7 @@ import static net.solarnetwork.central.reg.web.api.domain.Response.response;
 import java.util.List;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.reg.web.api.ControllerSupport;
 import net.solarnetwork.central.reg.web.api.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -42,7 +43,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  */
 @Controller("v1nodeInstructionController")
 @RequestMapping(value = "/v1/sec/instr", method = RequestMethod.GET)
-public class NodeInstructionController {
+public class NodeInstructionController extends ControllerSupport {
 
 	@Autowired
 	private InstructorBiz instructorBiz;

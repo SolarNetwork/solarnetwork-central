@@ -2,21 +2,19 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:aop="http://www.springframework.org/schema/aop"
-	xmlns:ctx="http://www.springframework.org/schema/context"
 	xsi:schemaLocation="
 		http://www.springframework.org/schema/aop
 		http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
 		http://www.springframework.org/schema/beans
-		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
-		http://www.springframework.org/schema/context
-		http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
 
 	<aop:aspectj-autoproxy/>
-	<ctx:annotation-config/>
-	<ctx:component-scan base-package="net.solarnetwork.central.instructor.aop" use-default-filters="true"/>
+
+	<bean id="instructorSecurityAspect" class="net.solarnetwork.central.instructor.aop.InstructorSecurityAspect">
+		<constructor-arg ref="userNodeDao"/>
+	</bean>
 	
-	<bean id="aopInstructorBiz"
-		class="net.solarnetwork.central.instructor.support.DelegatingInstructorBiz">
+	<bean id="aopInstructorBiz" class="net.solarnetwork.central.instructor.support.DelegatingInstructorBiz">
 		<constructor-arg ref="instructorBiz"/>
 	</bean>
 	

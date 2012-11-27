@@ -26,6 +26,7 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import net.solarnetwork.central.web.WebConstants;
 import org.springframework.core.Ordered;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -49,6 +50,7 @@ public class UserAuthTokenAuthenticationEntryPoint implements AuthenticationEntr
 	public void commence(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException authException) throws IOException, ServletException {
 		response.addHeader("WWW-Authenticate", UserAuthTokenAuthenticationFilter.AUTHORIZATION_SCHEME);
+		response.addHeader(WebConstants.HEADER_ERROR_MESSAGE, authException.getMessage());
 		response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
 	}
 
