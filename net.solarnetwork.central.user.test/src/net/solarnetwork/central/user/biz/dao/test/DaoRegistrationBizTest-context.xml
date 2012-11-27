@@ -6,15 +6,18 @@
 	xmlns:util="http://www.springframework.org/schema/util"
 	xsi:schemaLocation="
 			http://www.springframework.org/schema/beans
-			http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 			http://www.springframework.org/schema/util
-			http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+			http://www.springframework.org/schema/util/spring-util-3.1.xsd">
 
 	<bean id="daoRegistrationBiz" class="net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz">
 		<property name="defaultSolarLocationName">
 			<util:constant static-field="net.solarnetwork.central.test.AbstractCentralTransactionalTest.TEST_LOC_NAME"/>
 		</property>
 	</bean>
+	
+	<bean id="networkIdentityBiz" class="net.solarnetwork.central.in.biz.impl.SimpleNetworkIdentityBiz"
+		p:networkIdentityKey="Test Key" p:termsOfService="Test terms of service."/>
 
 	<bean id="sqlMapClient"
 		class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">

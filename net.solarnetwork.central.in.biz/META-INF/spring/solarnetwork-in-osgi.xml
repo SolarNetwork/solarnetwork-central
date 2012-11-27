@@ -16,6 +16,9 @@
 	<osgix:cm-properties id="central.in.cfg" persistent-id="net.solarnetwork.central.in">
 		<prop key="SimpleNetworkIdentityBiz.networkIdentityKey">replace:identity:here</prop>
 		<prop key="SimpleNetworkIdentityBiz.termsOfService">replace:tos:here</prop>
+		<prop key="SimpleNetworkIdentityBiz.host">localhost</prop>
+		<prop key="SimpleNetworkIdentityBiz.port">8080</prop>
+		<prop key="SimpleNetworkIdentityBiz.forceTLS">false</prop>
 	</osgix:cm-properties>
 
 	<!-- Published Services -->

@@ -6,15 +6,11 @@
 	
 	<definition name="myNodesLayout" extends="default">
 		<put-attribute name="navloc" type="string" value="my-nodes"/>
-		<put-attribute name="head" value="/WEB-INF/flows/my-nodes/head.jsp" />
+		<put-attribute name="head" value="/WEB-INF/jsp/sec/my-nodes/head.jsp" />
 	</definition>
 	
-	<definition name="my-nodes/start" extends="myNodesLayout">
-		<put-attribute name="body" value="/WEB-INF/flows/my-nodes/start.jsp" />
-	</definition>
-	
-	<definition name="my-nodes/invite-node" extends="myNodesLayout">
-		<put-attribute name="body" value="/WEB-INF/flows/my-nodes/invite-node.jsp" />
+	<definition name="my-nodes/*" extends="myNodesLayout">
+		<put-attribute name="body" value="/WEB-INF/jsp/sec/my-nodes/{1}.jsp" />
 	</definition>
 	
 </tiles-definitions>

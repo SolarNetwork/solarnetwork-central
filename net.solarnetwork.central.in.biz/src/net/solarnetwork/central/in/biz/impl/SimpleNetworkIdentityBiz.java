@@ -32,23 +32,39 @@ import net.solarnetwork.domain.NetworkIdentity;
  * Simple implementation of {@link NetworkIdentityBiz}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public class SimpleNetworkIdentityBiz implements NetworkIdentityBiz {
 
 	private String networkIdentityKey;
 	private String termsOfService;
-	
+	private String host;
+	private Integer port;
+	private boolean forceTLS;
+
 	@Override
 	public NetworkIdentity getNetworkIdentity() {
-		return new BasicNetworkIdentity(networkIdentityKey, termsOfService);
+		return new BasicNetworkIdentity(networkIdentityKey, termsOfService, host, port, forceTLS);
 	}
 
 	public void setNetworkIdentityKey(String networkIdentityKey) {
 		this.networkIdentityKey = networkIdentityKey;
 	}
+
 	public void setTermsOfService(String termsOfService) {
 		this.termsOfService = termsOfService;
+	}
+
+	public void setHost(String host) {
+		this.host = host;
+	}
+
+	public void setPort(Integer port) {
+		this.port = port;
+	}
+
+	public void setForceTLS(boolean forceTLS) {
+		this.forceTLS = forceTLS;
 	}
 
 }

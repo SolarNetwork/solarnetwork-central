@@ -28,19 +28,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
-
 import net.solarnetwork.central.ValidationException;
-import net.solarnetwork.central.user.biz.AuthorizationException;
-import net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.user.biz.AuthorizationException;
+import net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
@@ -49,7 +47,6 @@ import net.solarnetwork.domain.BasicRegistrationReceipt;
 import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.RegistrationReceipt;
 import net.solarnetwork.util.JavaBeanXmlSerializer;
-
 import org.apache.commons.codec.binary.Base64InputStream;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -68,18 +65,25 @@ import org.springframework.validation.FieldError;
 @ContextConfiguration
 public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 
-	/** The tables to delete from at the start of the tests (within a transaction). */
-	private static final String[] DELETE_TABLES = new String[] {"solaruser.user_user"};
-	
+	/**
+	 * The tables to delete from at the start of the tests (within a
+	 * transaction).
+	 */
+	private static final String[] DELETE_TABLES = new String[] { "solaruser.user_user" };
+
 	private static final String TEST_PASSWORD = "password";
 	private static final String TEST_NAME = "Foo Bar";
 	private static final String TEST_EMAIL = "foo@localhost.localdomain";
 
-	@Autowired private DaoRegistrationBiz daoRegistrationBiz;
-	@Autowired private UserDao userDao;
-	@Autowired private UserNodeDao userNodeDao;
-	@Autowired private SolarNodeDao solarNodeDao;
-	
+	@Autowired
+	private DaoRegistrationBiz daoRegistrationBiz;
+	@Autowired
+	private UserDao userDao;
+	@Autowired
+	private UserNodeDao userNodeDao;
+	@Autowired
+	private SolarNodeDao solarNodeDao;
+
 	@Before
 	public void setUp() throws Exception {
 		deleteFromTables(DELETE_TABLES);
@@ -96,14 +100,14 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		RegistrationReceipt receipt = daoRegistrationBiz.registerUser(newUser);
-		logger.debug("Got receipt: " +receipt);
+		logger.debug("Got receipt: " + receipt);
 		assertNotNull(receipt);
 		assertNotNull(receipt.getUsername());
 		assertNotNull(receipt.getConfirmationCode());
-		assertEquals("The receipt email should equal user email",
-				newUser.getEmail(), receipt.getUsername());
+		assertEquals("The receipt email should equal user email", newUser.getEmail(),
+				receipt.getUsername());
 	}
-	
+
 	/**
 	 * Test able to register and confirm a new user.
 	 */
@@ -115,30 +119,30 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		RegistrationReceipt receipt = daoRegistrationBiz.registerUser(newUser);
-		logger.debug("Got receipt: " +receipt);
+		logger.debug("Got receipt: " + receipt);
 		assertNotNull(receipt);
 		assertNotNull(receipt.getConfirmationCode());
-		
+
 		// now confirm registered user
 		User confirmedUser = daoRegistrationBiz.confirmRegisteredUser(receipt);
-		logger.debug("Got confirmed user: " +confirmedUser);
+		logger.debug("Got confirmed user: " + confirmedUser);
 		assertNotNull(confirmedUser);
 		assertEquals("The confirmed user's email should match the registered email.",
 				newUser.getEmail(), confirmedUser.getEmail());
-		assertEquals("The confirmed user's name should match the registered name.",
-				newUser.getName(), confirmedUser.getName());
+		assertEquals("The confirmed user's name should match the registered name.", newUser.getName(),
+				confirmedUser.getName());
 		assertNotNull(confirmedUser.getId());
 		assertNotNull(confirmedUser.getPassword());
-		logger.debug("Confirmed user password: " +confirmedUser.getPassword());
+		logger.debug("Confirmed user password: " + confirmedUser.getPassword());
 		assertEquals("The confirmed user's password should be encrypted",
 				"{SHA}5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
 				confirmedUser.getPassword());
-		
+
 		assertNotNull(confirmedUser.getRoles());
 		assertEquals(1, confirmedUser.getRoles().size());
 		assertEquals("ROLE_USER", confirmedUser.getRoles().iterator().next());
 	}
-	
+
 	/**
 	 * Test duplicate emails are not allowed to be registered.
 	 */
@@ -150,15 +154,15 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		RegistrationReceipt receipt = daoRegistrationBiz.registerUser(newUser);
-		logger.debug("Got receipt: " +receipt);
+		logger.debug("Got receipt: " + receipt);
 		assertNotNull(receipt);
-		
+
 		User dupUser = new User();
 		dupUser.setCreated(new DateTime());
 		dupUser.setEmail(newUser.getEmail());
 		dupUser.setName(newUser.getName());
 		newUser.setPassword("other.password");
-		
+
 		try {
 			receipt = daoRegistrationBiz.registerUser(newUser);
 			fail("Should have thrown AuthorizationException");
@@ -167,14 +171,14 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertEquals(newUser.getEmail(), e.getEmail());
 		}
 	}
-	
+
 	/**
 	 * Test attempting to confirm a non-existing email fails.
 	 */
 	@Test
 	public void testAttemptConfirmNonExistingEmail() {
-		BasicRegistrationReceipt receipt = new BasicRegistrationReceipt(
-				"does.not.exist@localhost", "not a code");
+		BasicRegistrationReceipt receipt = new BasicRegistrationReceipt("does.not.exist@localhost",
+				"not a code");
 		try {
 			daoRegistrationBiz.confirmRegisteredUser(receipt);
 			fail("Should have thrown AuthorizationException");
@@ -183,10 +187,10 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertEquals(receipt.getUsername(), e.getEmail());
 		}
 	}
-	
+
 	/**
-	 * Test attempting to confirm a valid email with the wrong
-	 * confirmation code.
+	 * Test attempting to confirm a valid email with the wrong confirmation
+	 * code.
 	 */
 	@Test
 	public void testAttemptConfirmBadCode() {
@@ -196,25 +200,23 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		RegistrationReceipt receipt = daoRegistrationBiz.registerUser(newUser);
-		logger.debug("Got receipt: " +receipt);
+		logger.debug("Got receipt: " + receipt);
 		assertNotNull(receipt);
 		assertNotNull(receipt.getConfirmationCode());
-		
+
 		// now confirm with bad code
-		BasicRegistrationReceipt badReceipt = new BasicRegistrationReceipt(
-				newUser.getEmail(), "not a code");
-		assertTrue(!badReceipt.getConfirmationCode().equals(
-				receipt.getConfirmationCode()));
+		BasicRegistrationReceipt badReceipt = new BasicRegistrationReceipt(newUser.getEmail(),
+				"not a code");
+		assertTrue(!badReceipt.getConfirmationCode().equals(receipt.getConfirmationCode()));
 		try {
 			daoRegistrationBiz.confirmRegisteredUser(badReceipt);
 			fail("Should have thrown AuthorizationException");
 		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED, 
-					e.getReason());
+			assertEquals(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED, e.getReason());
 			assertEquals(receipt.getUsername(), e.getEmail());
 		}
 	}
-	
+
 	/**
 	 * Test attempting to confirm a user that has already been confirmed.
 	 */
@@ -226,23 +228,22 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		RegistrationReceipt receipt = daoRegistrationBiz.registerUser(newUser);
-		logger.debug("Got receipt: " +receipt);
+		logger.debug("Got receipt: " + receipt);
 		assertNotNull(receipt);
 		assertNotNull(receipt.getConfirmationCode());
-		
+
 		User confirmedUser = daoRegistrationBiz.confirmRegisteredUser(receipt);
 		assertNotNull(confirmedUser);
-		
+
 		try {
 			daoRegistrationBiz.confirmRegisteredUser(receipt);
 			fail("Should have thrown AuthorizationException");
 		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED,
-					e.getReason());
+			assertEquals(AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED, e.getReason());
 			assertEquals(receipt.getUsername(), e.getEmail());
 		}
 	}
-	
+
 	/**
 	 * Test not able to register an empty email.
 	 */
@@ -253,7 +254,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setEmail("");
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
-		
+
 		try {
 			daoRegistrationBiz.registerUser(newUser);
 			fail("Should have thrown ValidationException");
@@ -264,7 +265,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertNotNull(emailError);
 		}
 	}
-	
+
 	/**
 	 * Test not able to register a null email.
 	 */
@@ -275,7 +276,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setEmail(null);
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
-		
+
 		try {
 			daoRegistrationBiz.registerUser(newUser);
 			fail("Should have thrown ValidationException");
@@ -286,7 +287,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertNotNull(emailError);
 		}
 	}
-	
+
 	/**
 	 * Test not able to register an empty password.
 	 */
@@ -297,7 +298,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setEmail(TEST_EMAIL);
 		newUser.setName(TEST_NAME);
 		newUser.setPassword("");
-		
+
 		try {
 			daoRegistrationBiz.registerUser(newUser);
 			fail("Should have thrown ValidationException");
@@ -308,7 +309,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertNotNull(emailError);
 		}
 	}
-	
+
 	/**
 	 * Test not able to register a null password.
 	 */
@@ -319,7 +320,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setEmail(TEST_EMAIL);
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(null);
-		
+
 		try {
 			daoRegistrationBiz.registerUser(newUser);
 			fail("Should have thrown ValidationException");
@@ -330,7 +331,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertNotNull(emailError);
 		}
 	}
-	
+
 	/**
 	 * Test not able to register an empty email and password.
 	 */
@@ -341,7 +342,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setEmail("");
 		newUser.setName(TEST_NAME);
 		newUser.setPassword("");
-		
+
 		try {
 			daoRegistrationBiz.registerUser(newUser);
 			fail("Should have thrown ValidationException");
@@ -352,7 +353,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertNotNull(errors.getFieldError("password"));
 		}
 	}
-	
+
 	/**
 	 * Test not able to register an empty name.
 	 */
@@ -363,7 +364,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setEmail(TEST_EMAIL);
 		newUser.setName("");
 		newUser.setPassword(TEST_PASSWORD);
-		
+
 		try {
 			daoRegistrationBiz.registerUser(newUser);
 			fail("Should have thrown ValidationException");
@@ -374,7 +375,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertNotNull(emailError);
 		}
 	}
-	
+
 	/**
 	 * Test not able to register a null name.
 	 */
@@ -385,7 +386,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		newUser.setEmail(TEST_EMAIL);
 		newUser.setName(null);
 		newUser.setPassword(TEST_PASSWORD);
-		
+
 		try {
 			daoRegistrationBiz.registerUser(newUser);
 			fail("Should have thrown ValidationException");
@@ -396,7 +397,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertNotNull(emailError);
 		}
 	}
-	
+
 	/**
 	 * Test not able to register a too-long name.
 	 */
@@ -411,7 +412,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		}
 		newUser.setName(buf.toString());
 		newUser.setPassword(TEST_PASSWORD);
-		
+
 		try {
 			daoRegistrationBiz.registerUser(newUser);
 			fail("Should have thrown ValidationException");
@@ -422,7 +423,7 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertNotNull(emailError);
 		}
 	}
-	
+
 	/**
 	 * Test able to logon a user successfully.
 	 */
@@ -430,14 +431,14 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 	public void testLogonUser() {
 		// register and confirm a user
 		testRegisterAndConfirmUser();
-		
+
 		User user = daoRegistrationBiz.logonUser(TEST_EMAIL, TEST_PASSWORD);
 		assertNotNull(user);
 		assertNotNull(user.getId());
 		assertEquals(TEST_EMAIL, user.getEmail());
 		assertEquals(TEST_NAME, user.getName());
 	}
-	
+
 	/**
 	 * Test attempting to logon an unconfirmed user fails.
 	 */
@@ -445,8 +446,8 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 	public void testAttemptLogonUnconfirmedUser() {
 		// register user
 		testRegisterUser();
-		
-		try{
+
+		try {
 			daoRegistrationBiz.logonUser(TEST_EMAIL, TEST_PASSWORD);
 			fail("Should have thrown AuthorizationException");
 		} catch ( AuthorizationException e ) {
@@ -454,14 +455,14 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertEquals(TEST_EMAIL, e.getEmail());
 		}
 	}
-	
+
 	/**
 	 * Test attempting to logon a non-existing email fails.
 	 */
 	@Test
 	public void testAttemptLogonNonExistingEmail() {
 		final String badEmail = "does@not.exist";
-		try{
+		try {
 			daoRegistrationBiz.logonUser(badEmail, "");
 			fail("Should have thrown AuthorizationException");
 		} catch ( AuthorizationException e ) {
@@ -469,13 +470,13 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertEquals(badEmail, e.getEmail());
 		}
 	}
-	
+
 	/**
 	 * Test attempting to logon a null email fails.
 	 */
 	@Test
 	public void testAttemptLogonNullEmail() {
-		try{
+		try {
 			daoRegistrationBiz.logonUser(null, "");
 			fail("Should have thrown AuthorizationException");
 		} catch ( AuthorizationException e ) {
@@ -483,14 +484,14 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertEquals(null, e.getEmail());
 		}
 	}
-	
+
 	/**
 	 * Test attempting to logon a bad password fails.
 	 */
 	@Test
 	public void testAttemptLogonBadPassword() {
 		testRegisterAndConfirmUser();
-		try{
+		try {
 			daoRegistrationBiz.logonUser(TEST_EMAIL, "not a password");
 			fail("Should have thrown AuthorizationException");
 		} catch ( AuthorizationException e ) {
@@ -498,14 +499,14 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertEquals(TEST_EMAIL, e.getEmail());
 		}
 	}
-	
+
 	/**
 	 * Test attempting to logon an empty password fails.
 	 */
 	@Test
 	public void testAttemptLogonEmptyPassword() {
 		testRegisterAndConfirmUser();
-		try{
+		try {
 			daoRegistrationBiz.logonUser(TEST_EMAIL, "");
 			fail("Should have thrown AuthorizationException");
 		} catch ( AuthorizationException e ) {
@@ -513,14 +514,14 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertEquals(TEST_EMAIL, e.getEmail());
 		}
 	}
-	
+
 	/**
 	 * Test attempting to logon a null password fails.
 	 */
 	@Test
 	public void testAttemptLogonNullPassword() {
 		testRegisterAndConfirmUser();
-		try{
+		try {
 			daoRegistrationBiz.logonUser(TEST_EMAIL, null);
 			fail("Should have thrown AuthorizationException");
 		} catch ( AuthorizationException e ) {
@@ -528,33 +529,32 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 			assertEquals(TEST_EMAIL, e.getEmail());
 		}
 	}
-	
+
 	@Test
 	public void createNodeAssociation() {
 		testRegisterAndConfirmUser();
 		User user = userDao.getUserByEmail(TEST_EMAIL);
 		assertNotNull(user);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user);
+		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId());
 		assertNotNull(details);
 		assertNotNull(details.getConfirmationKey());
 		assertNotNull(details.getNodeId());
 		assertNotNull(details.getUsername());
 		assertNotNull(details.getExpiration());
 	}
-	
+
 	private Map<String, Object> decodeAssociationDetails(String code) throws IOException {
 		JavaBeanXmlSerializer xmlHelper = new JavaBeanXmlSerializer();
 		InputStream in = null;
 		Map<String, Object> associationData = null;
 		try {
-			in = new GZIPInputStream(
-					new Base64InputStream(new ByteArrayInputStream(code.getBytes())));
+			in = new GZIPInputStream(new Base64InputStream(new ByteArrayInputStream(code.getBytes())));
 			associationData = xmlHelper.parseXml(in);
 		} finally {
 			if ( in != null ) {
 				try {
 					in.close();
-				} catch (IOException e) {
+				} catch ( IOException e ) {
 					// ignore this
 				}
 			}
@@ -569,24 +569,23 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		setupTestLocation();
 		User user = userDao.getUserByEmail(TEST_EMAIL);
 		assertNotNull(user);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user);
+		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId());
 		assertNotNull(details);
-		
+
 		// decode receipt
-		Map<String, Object> associationData = decodeAssociationDetails(
-				details.getConfirmationKey());
+		Map<String, Object> associationData = decodeAssociationDetails(details.getConfirmationKey());
 		assertTrue(associationData.get("confirmationKey") instanceof String);
-		
-		RegistrationReceipt receipt = daoRegistrationBiz.confirmNodeAssociation(
-				user, details.getNodeId(), (String)associationData.get("confirmationKey"));
+
+		RegistrationReceipt receipt = daoRegistrationBiz.confirmNodeAssociation(user.getId(),
+				details.getNodeId(), (String) associationData.get("confirmationKey"));
 		assertNotNull(receipt);
 		assertNotNull(receipt.getConfirmationCode());
 		assertEquals(user.getEmail(), receipt.getUsername());
-		
+
 		// verify node was created
 		SolarNode node = solarNodeDao.get(details.getNodeId());
 		assertNotNull(node);
-		
+
 		// verify UserNode was craeted as well
 		UserNode userNode = userNodeDao.get(details.getNodeId());
 		assertNotNull(userNode);
@@ -598,11 +597,11 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		testRegisterAndConfirmUser();
 		User user = userDao.getUserByEmail(TEST_EMAIL);
 		assertNotNull(user);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user);
+		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId());
 		assertNotNull(details);
 		try {
-			daoRegistrationBiz.confirmNodeAssociation(
-				user, details.getNodeId() + 1L, details.getConfirmationKey());
+			daoRegistrationBiz.confirmNodeAssociation(user.getId(), details.getNodeId() + 1L,
+					details.getConfirmationKey());
 			fail("Expected AuthorizationException for bad node ID");
 		} catch ( AuthorizationException e ) {
 			assertEquals(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED, e.getReason());
@@ -614,19 +613,18 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		testRegisterAndConfirmUser();
 		setupTestLocation();
 		User user = userDao.getUserByEmail(TEST_EMAIL);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user);
+		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId());
 
 		// decode receipt
-		Map<String, Object> associationData = decodeAssociationDetails(
-				details.getConfirmationKey());
+		Map<String, Object> associationData = decodeAssociationDetails(details.getConfirmationKey());
 		assertTrue(associationData.get("confirmationKey") instanceof String);
 
-		RegistrationReceipt receipt = daoRegistrationBiz.confirmNodeAssociation(
-				user, details.getNodeId(), (String)associationData.get("confirmationKey"));
+		RegistrationReceipt receipt = daoRegistrationBiz.confirmNodeAssociation(user.getId(),
+				details.getNodeId(), (String) associationData.get("confirmationKey"));
 		assertNotNull(receipt);
 		try {
-			daoRegistrationBiz.confirmNodeAssociation(
-				user, details.getNodeId(), (String)associationData.get("confirmationKey"));
+			daoRegistrationBiz.confirmNodeAssociation(user.getId(), details.getNodeId(),
+					(String) associationData.get("confirmationKey"));
 			fail("Expected AuthorizationException for already confirmed");
 		} catch ( AuthorizationException e ) {
 			assertEquals(AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED, e.getReason());

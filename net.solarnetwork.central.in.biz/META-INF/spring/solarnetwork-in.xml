@@ -11,9 +11,11 @@
 
 	<ctx:property-placeholder properties-ref="central.in.cfg"/>
 
-	<bean id="networkIdentityBiz" class="net.solarnetwork.central.in.biz.impl.SimpleNetworkIdentityBiz">
-		<property name="networkIdentityKey" value="${SimpleNetworkIdentityBiz.networkIdentityKey}"/>
-		<property name="termsOfService" value="${SimpleNetworkIdentityBiz.termsOfService}"/>
-	</bean>
+	<bean id="networkIdentityBiz" class="net.solarnetwork.central.in.biz.impl.SimpleNetworkIdentityBiz"
+		p:networkIdentityKey="${SimpleNetworkIdentityBiz.networkIdentityKey}"
+		p:termsOfService="${SimpleNetworkIdentityBiz.termsOfService}"
+		p:host="${SimpleNetworkIdentityBiz.host}"
+		p:port="${SimpleNetworkIdentityBiz.port}"
+		p:forceTLS="${SimpleNetworkIdentityBiz.forceTLS}"/>
 
 </beans>

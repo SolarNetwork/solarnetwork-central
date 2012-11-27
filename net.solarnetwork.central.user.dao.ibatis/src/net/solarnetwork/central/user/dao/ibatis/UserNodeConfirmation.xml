@@ -33,6 +33,12 @@
 			id = #id#
 	</update>
 
+	<update id="delete-UserNodeConfirmation" parameterClass="long">
+		DELETE FROM solaruser.user_node_conf
+		WHERE
+			id = #id#
+	</update>
+
 	<sql id="fragment-UserNodeConfirmation-full-result">
 		unc.id AS unc_id,
 		unc.created AS unc_created,

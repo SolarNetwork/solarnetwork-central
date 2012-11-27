@@ -32,7 +32,7 @@
 			</tbody>
 		</table>
 	</c:if>
-	<a class="btn btn-primary" href="<c:url value='/u/sec/invite-node'/>">
+	<a class="btn btn-primary" href="<c:url value='/u/sec/my-nodes/new'/>">
 		<i class="icon-plus icon-white"></i> <fmt:message key='my-nodes.inviteNode'/>
 	</a>
 </section>
@@ -52,6 +52,7 @@
 				<tr>
 					<th><fmt:message key="user.nodeconf.nodeId.label"/></th>
 					<th><fmt:message key="user.nodeconf.created.label"/></th>
+					<th></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -63,6 +64,14 @@
 								<joda:format value="${userNodeConf.created}"
 									 pattern="dd MMM yyyy"/> GMT
 							</joda:dateTimeZone>
+						</td>
+						<td>
+							<a class="btn" href="<c:url value='/u/sec/my-nodes/invitation'/>?id=${userNodeConf.id}">
+								<fmt:message key='my-nodes.view-invitation.link'/>
+							</a>
+							<a class="btn btn-danger" href="<c:url value='/u/sec/my-nodes/cancelInvitation'/>?id=${userNodeConf.id}">
+								<i class="icon-trash icon-white"></i> <fmt:message key='my-nodes.cancel-invitation.link'/>
+							</a>
 						</td>
 					</tr>
 				</c:forEach>
