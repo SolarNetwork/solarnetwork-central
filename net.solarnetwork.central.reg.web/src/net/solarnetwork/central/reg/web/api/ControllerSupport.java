@@ -33,15 +33,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 /**
  * Support class for web API controllers.
  * 
- * <p>
- * The configurable properties of this class are:
- * </p>
- * 
- * <dl class="class-properties">
- * <dt></dt>
- * <dd></dd>
- * </dl>
- * 
  * @author matt
  * @version 1.0
  */
