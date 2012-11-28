@@ -27,15 +27,12 @@ package net.solarnetwork.central.user.dao.ibatis.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-
 import java.util.List;
-
 import net.solarnetwork.central.dao.ibatis.IbatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.dao.ibatis.IbatisUserNodeConfirmationDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
-
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,17 +44,21 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author matt
  * @version $Revision$
  */
-public class IbatisUserNodeConfirmationDaoTest
-extends AbstractIbatisUserDaoTestSupport {
+public class IbatisUserNodeConfirmationDaoTest extends AbstractIbatisUserDaoTestSupport {
 
-	/** The tables to delete from at the start of the tests (within a transaction). */
-	private static final String[] DELETE_TABLES 
-		= new String[] {"solaruser.user_node_conf", "solaruser.user_node", "solaruser.user_user"};
+	/**
+	 * The tables to delete from at the start of the tests (within a
+	 * transaction).
+	 */
+	private static final String[] DELETE_TABLES = new String[] { "solaruser.user_node_conf",
+			"solaruser.user_node", "solaruser.user_user" };
 
 	private static final Long TEST_ID_2 = -2L;
 
-	@Autowired private IbatisUserNodeConfirmationDao userNodeConfirmationDao;
-	@Autowired private IbatisSolarNodeDao solarNodeDao;
+	@Autowired
+	private IbatisUserNodeConfirmationDao userNodeConfirmationDao;
+	@Autowired
+	private IbatisSolarNodeDao solarNodeDao;
 
 	private User user = null;
 	private SolarNode node = null;
@@ -83,6 +84,7 @@ extends AbstractIbatisUserDaoTestSupport {
 		newUserNodeConf.setNodeId(testNodeId);
 		newUserNodeConf.setUser(this.user);
 		newUserNodeConf.setConfirmationKey(String.valueOf(testNodeId));
+		newUserNodeConf.setSecurityPhrase("test phrase");
 		Long id = userNodeConfirmationDao.store(newUserNodeConf);
 		assertNotNull(id);
 		this.userNodeConf = userNodeConfirmationDao.get(id);
@@ -94,32 +96,33 @@ extends AbstractIbatisUserDaoTestSupport {
 		assertEquals(conf.getConfirmationDate(), entity.getConfirmationDate());
 		assertEquals(conf.getConfirmationKey(), entity.getConfirmationKey());
 		assertEquals(conf.getConfirmationValue(), entity.getConfirmationValue());
+		assertEquals(conf.getSecurityPhrase(), entity.getSecurityPhrase());
 		assertEquals(conf.getId(), entity.getId());
 		assertEquals(conf.getNodeId(), entity.getNodeId());
 		assertEquals(conf.getUser(), entity.getUser());
 	}
 
-    @Test
+	@Test
 	public void getByPrimaryKey() {
-    	storeNew();
-    	UserNodeConfirmation conf = userNodeConfirmationDao.get(userNodeConf.getId());
-    	validate(this.userNodeConf, conf);
+		storeNew();
+		UserNodeConfirmation conf = userNodeConfirmationDao.get(userNodeConf.getId());
+		validate(this.userNodeConf, conf);
 	}
-    
+
 	@Test
 	public void update() {
 		storeNew();
 		setupTestNode(TEST_ID_2);
-    	UserNodeConfirmation conf = userNodeConfirmationDao.get(userNodeConf.getId());
-    	assertNull(conf.getConfirmationValue());
-    	conf.setConfirmationValue("test.conf.value");
+		UserNodeConfirmation conf = userNodeConfirmationDao.get(userNodeConf.getId());
+		assertNull(conf.getConfirmationValue());
+		conf.setConfirmationValue("test.conf.value");
 		Long id = userNodeConfirmationDao.store(conf);
 		assertNotNull(id);
 		assertEquals(userNodeConf.getId(), id);
 		UserNodeConfirmation updated = userNodeConfirmationDao.get(userNodeConf.getId());
 		validate(conf, updated);
 	}
-	
+
 	@Test
 	public void getConfirmationForKey() {
 		storeNew();
@@ -127,7 +130,7 @@ extends AbstractIbatisUserDaoTestSupport {
 				userNodeConf.getNodeId(), userNodeConf.getConfirmationKey());
 		validate(userNodeConf, conf);
 	}
-	
+
 	@Test
 	public void findPendingConfirmationsForUserEmpty() {
 		List<UserNodeConfirmation> results = userNodeConfirmationDao
@@ -135,7 +138,7 @@ extends AbstractIbatisUserDaoTestSupport {
 		assertNotNull(results);
 		assertEquals(0, results.size());
 	}
-	
+
 	@Test
 	public void findPendingConfirmationsForUserSingle() {
 		storeNew();
@@ -146,7 +149,7 @@ extends AbstractIbatisUserDaoTestSupport {
 		UserNodeConfirmation conf = results.get(0);
 		validate(userNodeConf, conf);
 	}
-	
+
 	@Test
 	public void findPendingConfirmationsForUserMultiple() {
 		storeNew();
@@ -160,17 +163,17 @@ extends AbstractIbatisUserDaoTestSupport {
 		validate(conf0, results.get(0));
 		validate(userNodeConf, results.get(1));
 	}
-	
+
 	@Test
 	public void findPendingConfirmationsForUserMultipleMixed() {
 		storeNew();
-		
+
 		// make the confirmation no longer pending
 		UserNodeConfirmation conf0 = this.userNodeConf;
 		conf0.setConfirmationValue("confirmed");
 		conf0.setConfirmationDate(new DateTime());
 		userNodeConfirmationDao.store(conf0);
-		
+
 		// now add a 2nd confirmation that is still pending
 		testNodeId = TEST_ID_2;
 		storeNew();
@@ -180,5 +183,5 @@ extends AbstractIbatisUserDaoTestSupport {
 		assertEquals(1, results.size());
 		validate(userNodeConf, results.get(0));
 	}
-	
+
 }

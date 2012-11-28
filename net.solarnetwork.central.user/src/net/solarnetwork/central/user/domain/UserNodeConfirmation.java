@@ -24,57 +24,74 @@
 
 package net.solarnetwork.central.user.domain;
 
+import net.solarnetwork.central.domain.BaseEntity;
 import org.joda.time.DateTime;
 
-import net.solarnetwork.central.domain.BaseEntity;
-
 /**
- * The "pending confirmation" entity for after a user generates
- * a node "invitation" to join SolarNet. The user must
- * confirm the invitation before a UserNode entity is created.
+ * The "pending confirmation" entity for after a user generates a node
+ * "invitation" to join SolarNet. The user must confirm the invitation before a
+ * UserNode entity is created.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public class UserNodeConfirmation extends BaseEntity {
 
-	private static final long serialVersionUID = 1218333274310447124L;
+	private static final long serialVersionUID = 405526878177177622L;
 
 	private User user;
 	private Long nodeId;
 	private String confirmationKey;
 	private String confirmationValue;
 	private DateTime confirmationDate;
-	
+	private String securityPhrase;
+
 	public User getUser() {
 		return user;
 	}
+
 	public void setUser(User user) {
 		this.user = user;
 	}
+
 	public Long getNodeId() {
 		return nodeId;
 	}
+
 	public void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
 	}
+
 	public String getConfirmationKey() {
 		return confirmationKey;
 	}
+
 	public void setConfirmationKey(String confirmationKey) {
 		this.confirmationKey = confirmationKey;
 	}
+
 	public String getConfirmationValue() {
 		return confirmationValue;
 	}
+
 	public void setConfirmationValue(String confirmationValue) {
 		this.confirmationValue = confirmationValue;
 	}
+
 	public DateTime getConfirmationDate() {
 		return confirmationDate;
 	}
+
 	public void setConfirmationDate(DateTime confirmationDate) {
 		this.confirmationDate = confirmationDate;
 	}
-	
+
+	public String getSecurityPhrase() {
+		return securityPhrase;
+	}
+
+	public void setSecurityPhrase(String securityPhrase) {
+		this.securityPhrase = securityPhrase;
+	}
+
 }

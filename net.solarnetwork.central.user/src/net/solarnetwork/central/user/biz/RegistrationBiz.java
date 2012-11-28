@@ -119,9 +119,12 @@ public interface RegistrationBiz {
 	 * 
 	 * @param userId
 	 *        the user ID to associate a new node with
+	 * @param securityPhrase
+	 *        a user-defined phrase to use during the node association process
+	 * 
 	 * @return new NodeAssociationDetails entity
 	 */
-	NetworkAssociationDetails createNodeAssociation(Long userId);
+	NetworkAssociationDetails createNodeAssociation(Long userId, String securityPhrase);
 
 	/**
 	 * Get a {@link NetworkAssociationDetails} previously created via

@@ -20,3 +20,8 @@ CREATE VIEW solaruser.user_auth_token_login  AS
 	FROM solaruser.user_auth_token t
 	INNER JOIN solaruser.user_user u ON u.id = t.user_id
 	WHERE t.status = 'a'::bpchar;
+
+ALTER TABLE solaruser.user_node_conf 
+ADD COLUMN sec_phrase CHARACTER VARYING(128);
+ALTER TABLE solaruser.user_node_conf
+ALTER COLUMN sec_phrase SET NOT NULL;

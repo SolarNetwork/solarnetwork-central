@@ -86,15 +86,21 @@ public class MyNodesController {
 	 * Generate a new node confirmation code.
 	 * 
 	 * @param userId
-	 *        the user ID to generate the code for
+	 *        the optional user ID to generate the code for; defaults to the
+	 *        acting user
+	 * @param securityPhrase
+	 *        a security phrase to associate with the invitation
 	 * @return model and view
 	 */
 	@RequestMapping("/new")
-	public ModelAndView newNodeAssociation(@RequestParam(value = "userId", required = false) Long userId) {
+	public ModelAndView newNodeAssociation(
+			@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam("phrase") String securityPhrase) {
 		if ( userId == null ) {
 			userId = SecurityUtils.getCurrentUser().getUserId();
 		}
-		NetworkAssociationDetails details = registrationBiz.createNodeAssociation(userId);
+		NetworkAssociationDetails details = registrationBiz
+				.createNodeAssociation(userId, securityPhrase);
 		return new ModelAndView("my-nodes/invitation", "details", details);
 	}
 

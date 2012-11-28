@@ -530,17 +530,22 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		}
 	}
 
+	private static final String TEST_SECURITY_PHRASE = "test phrase";
+
 	@Test
 	public void createNodeAssociation() {
 		testRegisterAndConfirmUser();
 		User user = userDao.getUserByEmail(TEST_EMAIL);
 		assertNotNull(user);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId());
+		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId(),
+				TEST_SECURITY_PHRASE);
 		assertNotNull(details);
 		assertNotNull(details.getConfirmationKey());
 		assertNotNull(details.getNodeId());
 		assertNotNull(details.getUsername());
 		assertNotNull(details.getExpiration());
+		assertEquals(user.getEmail(), details.getUsername());
+		assertEquals(TEST_SECURITY_PHRASE, details.getSecurityPhrase());
 	}
 
 	private Map<String, Object> decodeAssociationDetails(String code) throws IOException {
@@ -569,7 +574,8 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		setupTestLocation();
 		User user = userDao.getUserByEmail(TEST_EMAIL);
 		assertNotNull(user);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId());
+		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId(),
+				TEST_SECURITY_PHRASE);
 		assertNotNull(details);
 
 		// decode receipt
@@ -597,7 +603,8 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		testRegisterAndConfirmUser();
 		User user = userDao.getUserByEmail(TEST_EMAIL);
 		assertNotNull(user);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId());
+		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId(),
+				TEST_SECURITY_PHRASE);
 		assertNotNull(details);
 		try {
 			daoRegistrationBiz.confirmNodeAssociation(user.getId(), details.getNodeId() + 1L,
@@ -613,7 +620,8 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		testRegisterAndConfirmUser();
 		setupTestLocation();
 		User user = userDao.getUserByEmail(TEST_EMAIL);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId());
+		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId(),
+				TEST_SECURITY_PHRASE);
 
 		// decode receipt
 		Map<String, Object> associationData = decodeAssociationDetails(details.getConfirmationKey());

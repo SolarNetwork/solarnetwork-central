@@ -32,13 +32,30 @@
 			</tbody>
 		</table>
 	</c:if>
-	<a class="btn btn-primary" href="<c:url value='/u/sec/my-nodes/new'/>">
+	<a class="btn btn-primary" href="#invite-modal" role="button" data-toggle="modal">
 		<i class="icon-plus icon-white"></i> <fmt:message key='my-nodes.inviteNode'/>
 	</a>
+	<form id="invite-modal" class="modal hide fade" action="<c:url value='/u/sec/my-nodes/new'/>">
+	 	<div class="modal-header">
+	 		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	 		<h3><fmt:message key='my-nodes.inviteNode'/></h3>
+	 	</div>
+	 	<div class="modal-body">
+	 		<div>
+		 		<p><fmt:message key='my-nodes-invitation.create.intro'/></p>
+	 			<label class="control-label" for="secret-phrase"><fmt:message key='my-nodes.invitation.securityPhrase.label'/></label>
+	 			<input type="text" class="span6" name="phrase" 
+	 				placeholder="<fmt:message key='my-nodes.invitation.securityPhrase.label'/>"
+	 				maxlength="128"/>
+	 			<span class="help-block"><fmt:message key='my-nodes.invitation.securityPhrase.caption'/></span>
+	 		</div>
+	 	</div>
+	 	<div class="modal-footer">
+	 		<a href="#" class="btn" data-dismiss="modal" aria-hidden="true"><fmt:message key='close.label'/></a>
+	 		<button type="submit" class="btn btn-primary"><fmt:message key='my-nodes.inviteNode'/></button>
+	 	</div>
+	 </form>
 </section>
-<div class="intro">
-	
-</div>
 <c:if test="${fn:length(pendingUserNodeConfirmationsList) > 0}">
 	<section id="pending">
 		<h2><fmt:message key='my-nodes.pending-invite.header'/></h2>

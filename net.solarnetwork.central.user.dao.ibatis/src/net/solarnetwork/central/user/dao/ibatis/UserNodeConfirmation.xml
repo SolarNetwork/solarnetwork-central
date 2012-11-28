@@ -14,6 +14,7 @@
 			, user_id, node_id, conf_key
 			<isNotNull prepend="," property="confirmationValue">conf_val</isNotNull>
 			<isNotNull prepend="," property="confirmationDate">conf_date</isNotNull>
+			, sec_phrase
 			)
 		VALUES
 			(#id#
@@ -21,6 +22,7 @@
 			, #user.id#, #nodeId#, #confirmationKey#
 			<isNotNull prepend="," property="confirmationValue">#confirmationValue#</isNotNull>
 			<isNotNull prepend="," property="confirmationDate">#confirmationDate#</isNotNull>
+			, #securityPhrase#
 			)
 	</insert>
 
@@ -28,7 +30,8 @@
 		UPDATE solaruser.user_node_conf SET
 			node_id = #nodeId#,
 			conf_val = #confirmationValue#,
-			conf_date = #confirmationDate#
+			conf_date = #confirmationDate#,
+			sec_phrase = #securityPhrase#
 		WHERE
 			id = #id#
 	</update>
@@ -45,7 +48,8 @@
 		unc.node_id AS unc_node_id,
 		unc.conf_key AS unc_conf_key,
 		unc.conf_val AS unc_conf_val,
-		unc.conf_date AS unc_conf_date
+		unc.conf_date AS unc_conf_date,
+		unc.sec_phrase AS unc_sec_phrase
 	</sql>
 
 	<resultMap id="UserNodeConfirmationFullResult" class="UserNodeConfirmation">
@@ -56,6 +60,7 @@
 		<result column="unc_conf_key" property="confirmationKey"/>
 		<result column="unc_conf_val" property="confirmationValue"/>
 		<result column="unc_conf_date" property="confirmationDate"/>
+		<result column="unc_sec_phrase" property="securityPhrase"/>
 	</resultMap>
 	
 	<select id="get-UserNodeConfirmation-for-id" resultMap="UserNodeConfirmationFullResult">

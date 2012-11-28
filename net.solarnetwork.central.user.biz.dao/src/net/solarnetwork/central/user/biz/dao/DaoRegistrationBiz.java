@@ -365,7 +365,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public NetworkAssociationDetails createNodeAssociation(Long userId) {
+	public NetworkAssociationDetails createNodeAssociation(final Long userId, final String securityPhrase) {
 		User user = null;
 		if ( userId == null ) {
 			user = getCurrentUser();
@@ -387,9 +387,10 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		details.setTermsOfService(ident.getTermsOfService());
 		details.setUsername(user.getEmail());
 		details.setExpiration(now.plus(invitationExpirationPeriod).toDate());
+		details.setSecurityPhrase(securityPhrase);
 		String confKey = DigestUtils.sha256Hex(String.valueOf(now.getMillis()) + nodeId
 				+ details.getIdentityKey() + details.getTermsOfService() + details.getUsername()
-				+ details.getExpiration());
+				+ details.getExpiration() + securityPhrase);
 		details.setConfirmationKey(confKey);
 		String xml = encodeNetworkAssociationDetails(details);
 		details.setConfirmationKey(xml);
@@ -400,6 +401,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		conf.setUser(user);
 		conf.setConfirmationKey(confKey);
 		conf.setNodeId(nodeId);
+		conf.setSecurityPhrase(securityPhrase);
 		userNodeConfirmationDao.store(conf);
 
 		return details;
@@ -430,6 +432,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		details.setUsername(conf.getUser().getEmail());
 		details.setExpiration(conf.getCreated().plus(invitationExpirationPeriod).toDate());
 		details.setConfirmationKey(conf.getConfirmationKey());
+		details.setSecurityPhrase(conf.getSecurityPhrase());
 		String xml = encodeNetworkAssociationDetails(details);
 		details.setConfirmationKey(xml);
 		return details;
@@ -447,7 +450,8 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public RegistrationReceipt confirmNodeAssociation(Long userId, Long nodeId, String confirmationKey) {
+	public RegistrationReceipt confirmNodeAssociation(final Long userId, final Long nodeId,
+			final String confirmationKey) {
 		assert userId != null;
 		assert nodeId != null;
 		assert confirmationKey != null;
