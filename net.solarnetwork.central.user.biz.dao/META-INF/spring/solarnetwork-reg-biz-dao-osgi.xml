@@ -14,6 +14,8 @@
 	
 	<osgi:reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 	
+	<osgi:reference id="userNodeCertificateDao" interface="net.solarnetwork.central.user.dao.UserNodeCertificateDao"/>
+	
 	<osgi:reference id="userNodeConfirmationDao" interface="net.solarnetwork.central.user.dao.UserNodeConfirmationDao"/>
 	
 	<osgi:reference id="userValidator" interface="org.springframework.validation.Validator"
