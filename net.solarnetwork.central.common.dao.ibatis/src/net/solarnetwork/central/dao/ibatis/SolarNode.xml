@@ -5,7 +5,7 @@
 <sqlMap namespace="SolarNode">
 
 	<select id="get-next-node-id" resultClass="long">
-		SELECT nextval('solarnet.solarnet_seq') AS id 
+		SELECT nextval('solarnet.node_seq') AS id 
 	</select>
 
 	<insert id="insert-SolarNode" parameterClass="SolarNode">
