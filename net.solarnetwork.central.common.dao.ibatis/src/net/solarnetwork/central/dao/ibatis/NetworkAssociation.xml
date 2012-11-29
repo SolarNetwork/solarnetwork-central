@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="NetworkAssociation">
+
+	<sql id="fragment-NetworkAssociation-full-result">
+		na.conf_key AS na_confirmation_key, 
+		na.sec_phrase AS na_security_phrase
+	</sql>
+
+	<resultMap id="NetworkAssociationFullResult" class="NetworkAssociation">
+		<result column="na_confirmation_key" property="confirmationKey"/>
+		<result column="na_security_phrase" property="securityPhrase"/>
+	</resultMap>
+	
+	<select id="get-NetworkAssociation-for-code" resultMap="NetworkAssociationFullResult">
+		SELECT
+			<include  refid="fragment-NetworkAssociation-full-result"/>
+		FROM
+			solaruser.network_association na
+		WHERE
+			na.username = #username#
+			AND na.conf_key = #key#
+	</select>
+	
+</sqlMap>

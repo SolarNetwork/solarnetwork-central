@@ -387,13 +387,13 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		details.setTermsOfService(ident.getTermsOfService());
 		details.setUsername(user.getEmail());
 		details.setExpiration(now.plus(invitationExpirationPeriod).toDate());
-		details.setSecurityPhrase(securityPhrase);
 		String confKey = DigestUtils.sha256Hex(String.valueOf(now.getMillis()) + nodeId
 				+ details.getIdentityKey() + details.getTermsOfService() + details.getUsername()
 				+ details.getExpiration() + securityPhrase);
 		details.setConfirmationKey(confKey);
 		String xml = encodeNetworkAssociationDetails(details);
 		details.setConfirmationKey(xml);
+		details.setSecurityPhrase(securityPhrase); // this must not be part of the encoded XML
 
 		// create UserNodeConfirmation now
 		UserNodeConfirmation conf = new UserNodeConfirmation();

@@ -25,3 +25,10 @@ ALTER TABLE solaruser.user_node_conf
 ADD COLUMN sec_phrase CHARACTER VARYING(128);
 ALTER TABLE solaruser.user_node_conf
 ALTER COLUMN sec_phrase SET NOT NULL;
+
+CREATE VIEW solaruser.network_association  AS
+	SELECT
+		unc.conf_key AS conf_key,
+		unc.sec_phrase AS sec_phrase
+	FROM solaruser.user_node_conf unc
+	INNER JOIN solaruser.user_user u ON u.id = unc.user_id;

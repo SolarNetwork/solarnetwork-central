@@ -14,6 +14,7 @@
 			<list>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/Hardware.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/HardwareControl.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/ibatis/NetworkAssociation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/PriceSource.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/PriceLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/SolarLocation.xml</value>
@@ -30,6 +31,10 @@
 	</bean>
 	
 	<bean id="hardwareControlDao" class="net.solarnetwork.central.dao.ibatis.IbatisHardwareControlDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+	</bean>
+	
+	<bean id="networkAssociationDao" class="net.solarnetwork.central.dao.ibatis.IbatisNetworkAssociationDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
 	</bean>
 	

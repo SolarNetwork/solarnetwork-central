@@ -18,6 +18,8 @@
 	
 	<osgi:service ref="hardwareControlDao" interface="net.solarnetwork.central.dao.HardwareControlDao"/>
 	
+	<osgi:service ref="networkAssociationDao" interface="net.solarnetwork.central.dao.NetworkAssociationDao"/>
+
 	<osgi:service ref="solarLocationDao" interface="net.solarnetwork.central.dao.SolarLocationDao"/>
 	
 	<osgi:service ref="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>

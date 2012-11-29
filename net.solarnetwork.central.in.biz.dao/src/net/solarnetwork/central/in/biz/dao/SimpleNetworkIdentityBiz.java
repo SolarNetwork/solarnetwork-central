@@ -22,11 +22,15 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.biz.impl;
+package net.solarnetwork.central.in.biz.dao;
 
+import net.solarnetwork.central.dao.NetworkAssociationDao;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.domain.BasicNetworkIdentity;
+import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkIdentity;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Simple implementation of {@link NetworkIdentityBiz}.
@@ -42,9 +46,17 @@ public class SimpleNetworkIdentityBiz implements NetworkIdentityBiz {
 	private Integer port;
 	private boolean forceTLS;
 
+	private NetworkAssociationDao networkAssociationDao;
+
 	@Override
 	public NetworkIdentity getNetworkIdentity() {
 		return new BasicNetworkIdentity(networkIdentityKey, termsOfService, host, port, forceTLS);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	public NetworkAssociation getNetworkAssociation(String username, String confirmationKey) {
+		return networkAssociationDao.getNetworkAssociationForConfirmationKey(username, confirmationKey);
 	}
 
 	public void setNetworkIdentityKey(String networkIdentityKey) {
@@ -65,6 +77,10 @@ public class SimpleNetworkIdentityBiz implements NetworkIdentityBiz {
 
 	public void setForceTLS(boolean forceTLS) {
 		this.forceTLS = forceTLS;
+	}
+
+	public void setNetworkAssociationDao(NetworkAssociationDao networkAssociationDao) {
+		this.networkAssociationDao = networkAssociationDao;
 	}
 
 }

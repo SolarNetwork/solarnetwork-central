@@ -2,13 +2,28 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:osgi="http://www.springframework.org/schema/osgi"
+	xmlns:osgix="http://www.springframework.org/schema/osgi-compendium"
 	xsi:schemaLocation="
 		http://www.springframework.org/schema/beans
-		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 		http://www.springframework.org/schema/osgi
-		http://www.springframework.org/schema/osgi/spring-osgi.xsd">
+		http://www.springframework.org/schema/osgi/spring-osgi-1.2.xsd
+		http://www.springframework.org/schema/osgi-compendium
+		http://www.springframework.org/schema/osgi-compendium/spring-osgi-compendium-1.2.xsd">
+
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="central.in.cfg" persistent-id="net.solarnetwork.central.in">
+		<prop key="SimpleNetworkIdentityBiz.networkIdentityKey">replace:identity:here</prop>
+		<prop key="SimpleNetworkIdentityBiz.termsOfService">replace:tos:here</prop>
+		<prop key="SimpleNetworkIdentityBiz.host">localhost</prop>
+		<prop key="SimpleNetworkIdentityBiz.port">8080</prop>
+		<prop key="SimpleNetworkIdentityBiz.forceTLS">false</prop>
+	</osgix:cm-properties>
 
 	<!-- Service References -->
+
+	<osgi:reference id="networkAssociationDao" interface="net.solarnetwork.central.dao.NetworkAssociationDao"/>
 	
 	<osgi:reference id="priceLocationDao" interface="net.solarnetwork.central.dao.PriceLocationDao"/>
 	<osgi:reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
@@ -24,6 +39,10 @@
 	<osgi:reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager"/>
 	
 	<!-- Published Services -->
+	
+	<osgi:service ref="networkIdentityBiz" 
+		interface="net.solarnetwork.central.in.biz.NetworkIdentityBiz"
+		ranking="1"/>
 	
 	<osgi:service ref="daoDataCollectorBiz" 
 		interface="net.solarnetwork.central.in.biz.DataCollectorBiz"
