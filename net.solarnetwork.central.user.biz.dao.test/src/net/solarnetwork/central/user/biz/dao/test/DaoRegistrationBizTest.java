@@ -29,6 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +40,7 @@ import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
+import net.solarnetwork.central.user.biz.AuthorizationException;
 import net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
@@ -205,6 +207,45 @@ public class DaoRegistrationBizTest {
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
 		assertNotNull(conf.getConfirmationDate());
 		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+	}
+
+	@Test
+	public void confirmNodeAssociationBadConfirmationKey() {
+		final String BAD_CONF_KEY = "bad conf key";
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, BAD_CONF_KEY))
+				.andReturn(null);
+
+		replay(userDao, userNodeConfirmationDao);
+		try {
+			registrationBiz.confirmNodeAssociation(TEST_USER_ID, BAD_CONF_KEY);
+			fail("Expected AuthorizationException for bad node ID");
+		} catch ( AuthorizationException e ) {
+			assertEquals(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED, e.getReason());
+		}
+		verify(userDao, userNodeConfirmationDao);
+	}
+
+	@Test
+	public void confirmNodeAssociationAlreadyConfirmed() throws IOException {
+		final UserNodeConfirmation conf = new UserNodeConfirmation();
+		conf.setUser(testUser);
+		conf.setNodeId(TEST_NODE_ID);
+		conf.setCreated(new DateTime());
+		conf.setConfirmationDate(new DateTime()); // mark as confirmed
+
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
+				conf);
+		replay(userDao, userNodeConfirmationDao);
+		try {
+			registrationBiz.confirmNodeAssociation(TEST_USER_ID, TEST_CONF_KEY);
+			fail("Expected AuthorizationException for already confirmed");
+		} catch ( AuthorizationException e ) {
+			assertEquals(AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED, e.getReason());
+		}
+
+		verify(userDao, userNodeConfirmationDao);
 	}
 
 	private Map<String, Object> decodeAssociationDetails(String code) throws IOException {

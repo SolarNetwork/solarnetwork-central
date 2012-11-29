@@ -28,26 +28,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-import java.util.zip.GZIPInputStream;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import net.solarnetwork.central.user.biz.AuthorizationException;
 import net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.domain.BasicRegistrationReceipt;
-import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.RegistrationReceipt;
-import net.solarnetwork.util.JavaBeanXmlSerializer;
-import org.apache.commons.codec.binary.Base64InputStream;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -530,112 +520,4 @@ public class DaoRegistrationBizTest extends AbstractCentralTransactionalTest {
 		}
 	}
 
-	private static final String TEST_SECURITY_PHRASE = "test phrase";
-
-	@Test
-	public void createNodeAssociation() {
-		testRegisterAndConfirmUser();
-		User user = userDao.getUserByEmail(TEST_EMAIL);
-		assertNotNull(user);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId(),
-				TEST_SECURITY_PHRASE);
-		assertNotNull(details);
-		assertNotNull(details.getConfirmationKey());
-		assertNotNull(details.getNodeId());
-		assertNotNull(details.getUsername());
-		assertNotNull(details.getExpiration());
-		assertEquals(user.getEmail(), details.getUsername());
-		assertEquals(TEST_SECURITY_PHRASE, details.getSecurityPhrase());
-	}
-
-	private Map<String, Object> decodeAssociationDetails(String code) throws IOException {
-		JavaBeanXmlSerializer xmlHelper = new JavaBeanXmlSerializer();
-		InputStream in = null;
-		Map<String, Object> associationData = null;
-		try {
-			in = new GZIPInputStream(new Base64InputStream(new ByteArrayInputStream(code.getBytes())));
-			associationData = xmlHelper.parseXml(in);
-		} finally {
-			if ( in != null ) {
-				try {
-					in.close();
-				} catch ( IOException e ) {
-					// ignore this
-				}
-			}
-		}
-		assertNotNull(associationData);
-		return associationData;
-	}
-
-	@Test
-	public void confirmNodeAssociation() throws IOException {
-		testRegisterAndConfirmUser();
-		setupTestLocation();
-		User user = userDao.getUserByEmail(TEST_EMAIL);
-		assertNotNull(user);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId(),
-				TEST_SECURITY_PHRASE);
-		assertNotNull(details);
-
-		// decode receipt
-		Map<String, Object> associationData = decodeAssociationDetails(details.getConfirmationKey());
-		assertTrue(associationData.get("confirmationKey") instanceof String);
-
-		RegistrationReceipt receipt = daoRegistrationBiz.confirmNodeAssociation(user.getId(),
-				details.getNodeId(), (String) associationData.get("confirmationKey"));
-		assertNotNull(receipt);
-		assertNotNull(receipt.getConfirmationCode());
-		assertEquals(user.getEmail(), receipt.getUsername());
-
-		// verify node was created
-		SolarNode node = solarNodeDao.get(details.getNodeId());
-		assertNotNull(node);
-
-		// verify UserNode was craeted as well
-		UserNode userNode = userNodeDao.get(details.getNodeId());
-		assertNotNull(userNode);
-		assertEquals(user, userNode.getUser());
-	}
-
-	@Test
-	public void confirmNodeAssociationBadNodeId() {
-		testRegisterAndConfirmUser();
-		User user = userDao.getUserByEmail(TEST_EMAIL);
-		assertNotNull(user);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId(),
-				TEST_SECURITY_PHRASE);
-		assertNotNull(details);
-		try {
-			daoRegistrationBiz.confirmNodeAssociation(user.getId(), details.getNodeId() + 1L,
-					details.getConfirmationKey());
-			fail("Expected AuthorizationException for bad node ID");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED, e.getReason());
-		}
-	}
-
-	@Test
-	public void confirmNodeAssociationAlreadyConfirmed() throws IOException {
-		testRegisterAndConfirmUser();
-		setupTestLocation();
-		User user = userDao.getUserByEmail(TEST_EMAIL);
-		NetworkAssociationDetails details = daoRegistrationBiz.createNodeAssociation(user.getId(),
-				TEST_SECURITY_PHRASE);
-
-		// decode receipt
-		Map<String, Object> associationData = decodeAssociationDetails(details.getConfirmationKey());
-		assertTrue(associationData.get("confirmationKey") instanceof String);
-
-		RegistrationReceipt receipt = daoRegistrationBiz.confirmNodeAssociation(user.getId(),
-				details.getNodeId(), (String) associationData.get("confirmationKey"));
-		assertNotNull(receipt);
-		try {
-			daoRegistrationBiz.confirmNodeAssociation(user.getId(), details.getNodeId(),
-					(String) associationData.get("confirmationKey"));
-			fail("Expected AuthorizationException for already confirmed");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED, e.getReason());
-		}
-	}
 }
