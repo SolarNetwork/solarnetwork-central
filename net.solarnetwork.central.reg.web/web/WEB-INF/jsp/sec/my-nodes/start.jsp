@@ -67,7 +67,6 @@
 		<table class="table">
 			<thead>
 				<tr>
-					<th><fmt:message key="user.nodeconf.nodeId.label"/></th>
 					<th><fmt:message key="user.nodeconf.created.label"/></th>
 					<th></th>
 				</tr>
@@ -75,7 +74,6 @@
 			<tbody>
 				<c:forEach items="${pendingUserNodeConfirmationsList}" var="userNodeConf">
 					<tr>
-						<td>${userNodeConf.nodeId}</td>
 						<td>
 							<joda:dateTimeZone value="GMT">
 								<joda:format value="${userNodeConf.created}"
