@@ -96,4 +96,18 @@ public class DaoRegistrationBizTest {
 		assertEquals(TEST_EMAIL, result.getUsername());
 		assertNull(result.getNodeId());
 	}
+
+	@Test
+	public void cancelNodeAssociation() {
+		final Long testConfId = -1L;
+		final UserNodeConfirmation conf = new UserNodeConfirmation();
+		conf.setId(testConfId);
+		expect(userNodeConfirmationDao.get(testConfId)).andReturn(conf);
+		userNodeConfirmationDao.delete(conf);
+		replay(userNodeConfirmationDao);
+
+		registrationBiz.cancelNodeAssociation(testConfId);
+
+		verify(userNodeConfirmationDao);
+	}
 }
