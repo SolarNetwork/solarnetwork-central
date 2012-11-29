@@ -377,17 +377,15 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		DateTime now = new DateTime();
 		NetworkIdentity ident = networkIdentityBiz.getNetworkIdentity();
 
-		Long nodeId = solarNodeDao.getUnusedNodeId();
 		NetworkAssociationDetails details = new NetworkAssociationDetails();
 		details.setHost(ident.getHost());
 		details.setPort(ident.getPort());
 		details.setForceTLS(ident.isForceTLS());
-		details.setNodeId(nodeId);
 		details.setIdentityKey(ident.getIdentityKey());
 		details.setTermsOfService(ident.getTermsOfService());
 		details.setUsername(user.getEmail());
 		details.setExpiration(now.plus(invitationExpirationPeriod).toDate());
-		String confKey = DigestUtils.sha256Hex(String.valueOf(now.getMillis()) + nodeId
+		String confKey = DigestUtils.sha256Hex(String.valueOf(now.getMillis())
 				+ details.getIdentityKey() + details.getTermsOfService() + details.getUsername()
 				+ details.getExpiration() + securityPhrase);
 		details.setConfirmationKey(confKey);
@@ -400,7 +398,6 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		conf.setCreated(now);
 		conf.setUser(user);
 		conf.setConfirmationKey(confKey);
-		conf.setNodeId(nodeId);
 		conf.setSecurityPhrase(securityPhrase);
 		userNodeConfirmationDao.store(conf);
 
@@ -589,6 +586,34 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 
 	public void setDefaultSolarLocationName(String defaultSolarLocationName) {
 		this.defaultSolarLocationName = defaultSolarLocationName;
+	}
+
+	public void setUserDao(UserDao userDao) {
+		this.userDao = userDao;
+	}
+
+	public void setUserNodeDao(UserNodeDao userNodeDao) {
+		this.userNodeDao = userNodeDao;
+	}
+
+	public void setUserNodeConfirmationDao(UserNodeConfirmationDao userNodeConfirmationDao) {
+		this.userNodeConfirmationDao = userNodeConfirmationDao;
+	}
+
+	public void setUserValidator(Validator userValidator) {
+		this.userValidator = userValidator;
+	}
+
+	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
+		this.solarNodeDao = solarNodeDao;
+	}
+
+	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
+		this.solarLocationDao = solarLocationDao;
+	}
+
+	public void setNetworkIdentityBiz(NetworkIdentityBiz networkIdentityBiz) {
+		this.networkIdentityBiz = networkIdentityBiz;
 	}
 
 }
