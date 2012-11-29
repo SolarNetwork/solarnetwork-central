@@ -30,7 +30,7 @@ import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
-import net.solarnetwork.domain.NetworkAssociationDetails;
+import net.solarnetwork.domain.NetworkAssociation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -99,14 +99,13 @@ public class MyNodesController {
 		if ( userId == null ) {
 			userId = SecurityUtils.getCurrentUser().getUserId();
 		}
-		NetworkAssociationDetails details = registrationBiz
-				.createNodeAssociation(userId, securityPhrase);
+		NetworkAssociation details = registrationBiz.createNodeAssociation(userId, securityPhrase);
 		return new ModelAndView("my-nodes/invitation", "details", details);
 	}
 
 	@RequestMapping("/invitation")
 	public ModelAndView viewConfirmation(@RequestParam(value = "id") Long userNodeConfirmationId) {
-		NetworkAssociationDetails details = registrationBiz.getNodeAssociation(userNodeConfirmationId);
+		NetworkAssociation details = registrationBiz.getNodeAssociation(userNodeConfirmationId);
 		return new ModelAndView("my-nodes/invitation", "details", details);
 	}
 

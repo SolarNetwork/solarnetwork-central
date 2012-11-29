@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.user.biz.AuthorizationException;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
-import net.solarnetwork.domain.RegistrationReceipt;
+import net.solarnetwork.domain.NetworkCertificate;
 import net.solarnetwork.web.support.WebUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,9 +101,8 @@ public class NewNodeController {
 	// FIXME: remove GET support, only for testing
 	@RequestMapping(method = { RequestMethod.GET, RequestMethod.POST }, value = "/associate.*")
 	public String confirmNodeAssociation(HttpServletRequest request,
-			@RequestParam("userId") Long userId, @RequestParam("nodeId") Long nodeId,
-			@RequestParam("key") String key, Model model) {
-		RegistrationReceipt receipt = registrationBiz.confirmNodeAssociation(userId, nodeId, key);
+			@RequestParam("userId") Long userId, @RequestParam("key") String key, Model model) {
+		NetworkCertificate receipt = registrationBiz.confirmNodeAssociation(userId, key);
 		model.asMap().clear();
 		model.addAttribute(MODEL_KEY_RESULT, receipt);
 		return WebUtils.resolveViewFromUrlExtension(request, null);
