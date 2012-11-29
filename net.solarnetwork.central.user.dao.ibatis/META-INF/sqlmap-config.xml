@@ -11,6 +11,7 @@
 
 	<typeAlias alias="User" type="net.solarnetwork.central.user.domain.User"/>
 	<typeAlias alias="UserNode" type="net.solarnetwork.central.user.domain.UserNode"/>
+	<typeAlias alias="UserNodeCertificate" type="net.solarnetwork.central.user.domain.UserNodeCertificate"/>
 	<typeAlias alias="UserNodeConfirmation" type="net.solarnetwork.central.user.domain.UserNodeConfirmation"/>
 	<typeAlias alias="UserNodeHardwareControl" type="net.solarnetwork.central.user.domain.UserNodeHardwareControl"/>
 	

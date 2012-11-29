@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="UserNodeCertificate">
+
+	<insert id="insert-UserNodeCertificate" parameterClass="UserNodeCertificate">
+		<selectKey resultClass="long" keyProperty="id"> 
+              SELECT nextval('solaruser.solaruser_seq') AS id 
+		</selectKey>
+		INSERT INTO solaruser.user_node_cert 
+			(id
+			<isNotNull prepend="," property="created">created</isNotNull>
+			, user_id, node_id, cert, status
+			)
+		VALUES
+			(#id#
+			<isNotNull prepend="," property="created">#created#</isNotNull>
+			, #user.id#, #node.id#, #certificate#, #status#
+			)
+	</insert>
+
+	<update id="update-UserNodeCertificate" parameterClass="UserNodeCertificate">
+		UPDATE solaruser.user_node_cert SET
+			node_id = #node.id#,
+			user_id = #user.id#,
+			cert = #certificate#,
+			status = #status#
+		WHERE
+			id = #id#
+	</update>
+
+	<update id="delete-UserNodeCertificate" parameterClass="long">
+		DELETE FROM solaruser.user_node_cert
+		WHERE
+			id = #id#
+	</update>
+
+	<sql id="fragment-UserNodeCertificate-full-result">
+		uncert.id AS uncert_id,
+		uncert.created AS uncert_created,
+		uncert.cert AS uncert_cert,
+		uncert.status AS uncert_status
+	</sql>
+
+	<resultMap id="UserNodeCertificateFullResult" class="UserNodeCertificate">
+		<result column="uncert_id" property="id"/>
+		<result column="uncert_created" property="created"/>
+		<result column="uncert_cert" property="certificate"/>
+		<result column="uncert_status" property="status"/>
+		<result property="user" resultMap="User.UserFullResult"/>
+		<result property="node" resultMap="SolarNode.SolarNodeFullResult"/>
+	</resultMap>
+	
+	<select id="get-UserNodeCertificate-for-id" resultMap="UserNodeCertificateFullResult">
+		SELECT
+			<include refid="fragment-UserNodeCertificate-full-result"/>,
+			<include refid="fragment-SolarNode-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>,
+			<include refid="fragment-User-full-result"/>
+		FROM
+			solaruser.user_node_cert uncert
+		INNER JOIN
+			solarnet.sn_node n ON n.node_id = uncert.node_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		INNER JOIN
+			solaruser.user_user u ON u.id = uncert.user_id
+		WHERE
+			uncert.id = #id#
+	</select>
+	
+	<select id="get-UserNodeCertificate-for-active-node" resultMap="UserNodeCertificateFullResult">
+		SELECT
+			<include refid="fragment-UserNodeCertificate-full-result"/>,
+			<include refid="fragment-SolarNode-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>,
+			<include refid="fragment-User-full-result"/>
+		FROM
+			solaruser.user_node_cert uncert
+		INNER JOIN
+			solarnet.sn_node n ON n.node_id = uncert.node_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		INNER JOIN
+			solaruser.user_user u ON u.id = uncert.user_id
+		WHERE
+			uncert.node_id = #id#
+			AND uncert.status = 'a'::bpchar
+	</select>
+	
+</sqlMap>

@@ -90,11 +90,12 @@ CREATE TABLE solaruser.user_node (
 CREATE TABLE solaruser.user_node_conf (
 	id				BIGINT NOT NULL DEFAULT nextval('solaruser.solaruser_seq'),
 	user_id			BIGINT NOT NULL,
-	node_id			BIGINT NOT NULL,
+	node_id			BIGINT,
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	conf_key		CHARACTER VARYING(1024) NOT NULL,
 	conf_val		CHARACTER VARYING(2048),
 	conf_date		TIMESTAMP WITH TIME ZONE,
+	sec_phrase 		CHARACTER VARYING(128) NOT NULL,
 	CONSTRAINT user_node_conf_pkey PRIMARY KEY (id),
 	CONSTRAINT user_node_conf_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
