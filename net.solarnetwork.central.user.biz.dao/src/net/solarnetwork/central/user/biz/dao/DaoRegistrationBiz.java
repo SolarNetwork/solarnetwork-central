@@ -44,13 +44,18 @@ import net.solarnetwork.central.user.biz.AuthorizationException.Reason;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.domain.BasicRegistrationReceipt;
+import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;
+import net.solarnetwork.domain.NetworkCertificate;
 import net.solarnetwork.domain.NetworkIdentity;
 import net.solarnetwork.domain.RegistrationReceipt;
 import net.solarnetwork.util.JavaBeanXmlSerializer;
@@ -103,6 +108,10 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 	private UserNodeDao userNodeDao;
 	@Autowired
 	private UserNodeConfirmationDao userNodeConfirmationDao;
+
+	@Autowired
+	private UserNodeCertificateDao userNodeCertificateDao;
+
 	@Autowired
 	private Validator userValidator;
 	@Autowired
@@ -365,7 +374,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public NetworkAssociationDetails createNodeAssociation(final Long userId, final String securityPhrase) {
+	public NetworkAssociation createNodeAssociation(final Long userId, final String securityPhrase) {
 		User user = null;
 		if ( userId == null ) {
 			user = getCurrentUser();
@@ -412,7 +421,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public NetworkAssociationDetails getNodeAssociation(final Long userNodeConfirmationId)
+	public NetworkAssociation getNodeAssociation(final Long userNodeConfirmationId)
 			throws AuthorizationException {
 		final UserNodeConfirmation conf = userNodeConfirmationDao.get(userNodeConfirmationId);
 		if ( conf == null ) {
@@ -423,7 +432,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		details.setHost(ident.getHost());
 		details.setPort(ident.getPort());
 		details.setForceTLS(ident.isForceTLS());
-		details.setNodeId(conf.getNodeId());
+		details.setNetworkId(conf.getNodeId());
 		details.setIdentityKey(ident.getIdentityKey());
 		details.setTermsOfService(ident.getTermsOfService());
 		details.setUsername(conf.getUser().getEmail());
@@ -445,12 +454,14 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		userNodeConfirmationDao.delete(conf);
 	}
 
+	private String calculateCertificateConfirmationCode(DateTime date, Long nodeId) {
+		return DigestUtils.sha256Hex(String.valueOf(date.getMillis()) + String.valueOf(nodeId));
+	}
+
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public RegistrationReceipt confirmNodeAssociation(final Long userId, final Long nodeId,
-			final String confirmationKey) {
+	public NetworkCertificate confirmNodeAssociation(final Long userId, final String confirmationKey) {
 		assert userId != null;
-		assert nodeId != null;
 		assert confirmationKey != null;
 
 		final User user = userDao.get(userId);
@@ -458,13 +469,13 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 			throw new AuthorizationException(null, Reason.UNKNOWN_EMAIL);
 		}
 
-		UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(nodeId,
+		UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(userId,
 				confirmationKey);
 		if ( conf == null ) {
 			log.info(
-					"Node association failed: UserNodeConfirmation not found for nodeId {} confirmationKey {}",
-					nodeId, confirmationKey);
-			throw new AuthorizationException(String.valueOf(nodeId),
+					"Node association failed: UserNodeConfirmation not found for userId {} confirmationKey {}",
+					userId, confirmationKey);
+			throw new AuthorizationException(String.valueOf(userId),
 					AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED);
 		}
 
@@ -472,7 +483,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		if ( !user.equals(conf.getUser()) ) {
 			log.info("Node association failed: UserNodeConfirmation user {} != confirming user {}", conf
 					.getUser().getId(), user.getId());
-			throw new AuthorizationException(String.valueOf(nodeId),
+			throw new AuthorizationException(String.valueOf(userId),
 					AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED);
 		}
 
@@ -480,7 +491,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		DateTime expiry = conf.getCreated().plus(invitationExpirationPeriod);
 		if ( expiry.isBeforeNow() ) {
 			log.info("Node association failed: confirmation expired on {}", expiry);
-			throw new AuthorizationException(String.valueOf(nodeId),
+			throw new AuthorizationException(String.valueOf(userId),
 					AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED);
 		}
 
@@ -488,25 +499,17 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		if ( conf.getConfirmationDate() != null ) {
 			log.info("Node association failed: confirmation already confirmed on {}",
 					conf.getConfirmationDate());
-			throw new AuthorizationException(String.valueOf(nodeId),
+			throw new AuthorizationException(String.valueOf(userId),
 					AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED);
 		}
-
-		// security check: node should not exist
-		SolarNode node = solarNodeDao.get(nodeId);
-		if ( node != null ) {
-			log.info("Node association failed: node {} already exists", conf.getConfirmationDate());
-			throw new AuthorizationException(String.valueOf(nodeId),
-					AuthorizationException.Reason.ACCESS_DENIED);
-		}
-
-		// confirmed! set up details as such
 
 		// create SolarNode now
 		SolarLocation loc = solarLocationDao.getSolarLocationForName(defaultSolarLocationName);
 		assert loc != null;
 
-		node = new SolarNode();
+		final Long nodeId = solarNodeDao.getUnusedNodeId();
+
+		SolarNode node = new SolarNode();
 		node.setId(nodeId);
 		node.setLocation(loc);
 		solarNodeDao.store(node);
@@ -517,15 +520,25 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		userNode.setUser(user);
 		userNodeDao.store(userNode);
 
+		// TODO: the confirmation code here should be added to UserNodeCertificte
 		conf.setConfirmationDate(new DateTime());
-		// TODO: generate confirmation code some how... not just this way?
-		String code = String.valueOf(conf.getConfirmationDate().getMillis())
-				+ String.valueOf(user.getId()) + String.valueOf(nodeId);
-		conf.setConfirmationValue(code);
-
 		userNodeConfirmationDao.store(conf);
 
-		return new BasicRegistrationReceipt(conf.getUser().getEmail(), code);
+		UserNodeCertificate cert = new UserNodeCertificate();
+		cert.setCreated(conf.getConfirmationDate());
+		cert.setNode(node);
+		cert.setUser(user);
+		cert.setStatus(UserNodeCertificateStatus.r);
+		cert.setConfirmationKey(calculateCertificateConfirmationCode(cert.getCreated(), nodeId));
+
+		// here we might generate the certificate on the fly...
+		userNodeCertificateDao.store(cert);
+
+		NetworkAssociationDetails details = new NetworkAssociationDetails();
+		details.setNetworkId(nodeId);
+		details.setConfirmationKey(cert.getConfirmationKey());
+		details.setNetworkCertificateStatus(cert.getStatus().getValue());
+		return details;
 	}
 
 	@Override
@@ -614,6 +627,10 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 
 	public void setNetworkIdentityBiz(NetworkIdentityBiz networkIdentityBiz) {
 		this.networkIdentityBiz = networkIdentityBiz;
+	}
+
+	public void setUserNodeCertificateDao(UserNodeCertificateDao userNodeCertificateDao) {
+		this.userNodeCertificateDao = userNodeCertificateDao;
 	}
 
 }

@@ -27,7 +27,6 @@ package net.solarnetwork.central.user.dao.ibatis;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import net.solarnetwork.central.dao.ibatis.IbatisGenericDaoSupport;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.domain.User;
@@ -39,16 +38,14 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * @author matt
  * @version $Revision$
  */
-public class IbatisUserNodeConfirmationDao
-extends IbatisGenericDaoSupport<UserNodeConfirmation>
-implements UserNodeConfirmationDao {
+public class IbatisUserNodeConfirmationDao extends IbatisGenericDaoSupport<UserNodeConfirmation>
+		implements UserNodeConfirmationDao {
 
 	/** The query name used for {@link #getConfirmationForKey(String, String)}. */
 	public static final String QUERY_FOR_KEY = "get-UserNodeConfirmation-for-key";
 
 	/** The query name used for {@link #findUserNodesForUser(User)}. */
 	public static final String QUERY_FOR_USER = "find-UserNodeConfirmation-for-User";
-	
 
 	/**
 	 * Default constructor.
@@ -58,12 +55,12 @@ implements UserNodeConfirmationDao {
 	}
 
 	@Override
-	public UserNodeConfirmation getConfirmationForKey(Long nodeId, String key) {
+	public UserNodeConfirmation getConfirmationForKey(Long userId, String key) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
-		params.put("nodeId", nodeId);
+		params.put("userId", userId);
 		params.put("key", key);
-		UserNodeConfirmation result = (UserNodeConfirmation)getSqlMapClientTemplate()
-				.queryForObject(QUERY_FOR_KEY, params);
+		UserNodeConfirmation result = (UserNodeConfirmation) getSqlMapClientTemplate().queryForObject(
+				QUERY_FOR_KEY, params);
 		return result;
 	}
 
@@ -72,12 +69,12 @@ implements UserNodeConfirmationDao {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("user", user);
 		params.put("pending", Boolean.TRUE);
-		
+
 		@SuppressWarnings("unchecked")
-		List<UserNodeConfirmation> results = getSqlMapClientTemplate().queryForList(
-				QUERY_FOR_USER, params);
-		
+		List<UserNodeConfirmation> results = getSqlMapClientTemplate().queryForList(QUERY_FOR_USER,
+				params);
+
 		return results;
 	}
-	
+
 }

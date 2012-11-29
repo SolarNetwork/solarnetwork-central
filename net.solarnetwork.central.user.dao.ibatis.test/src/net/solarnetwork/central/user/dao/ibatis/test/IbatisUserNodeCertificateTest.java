@@ -31,6 +31,7 @@ import net.solarnetwork.central.user.dao.ibatis.IbatisUserNodeCertificateDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,6 +53,7 @@ public class IbatisUserNodeCertificateTest extends AbstractIbatisUserDaoTestSupp
 			"solaruser.user_node", "solaruser.user_user" };
 
 	private static final byte[] TEST_CERT = "test cert".getBytes();
+	private static final String TEST_CONF_KEY = DigestUtils.sha256Hex("test conf key");
 
 	@Autowired
 	private IbatisUserNodeCertificateDao userNodeCertificateDao;
@@ -80,6 +82,7 @@ public class IbatisUserNodeCertificateTest extends AbstractIbatisUserDaoTestSupp
 		newUserNodeCert.setCreated(new DateTime());
 		newUserNodeCert.setNode(this.node);
 		newUserNodeCert.setUser(this.user);
+		newUserNodeCert.setConfirmationKey(TEST_CONF_KEY);
 		newUserNodeCert.setCertificate(TEST_CERT);
 		newUserNodeCert.setStatus(UserNodeCertificateStatus.a);
 		Long id = userNodeCertificateDao.store(newUserNodeCert);

@@ -22,10 +22,11 @@
 
 package net.solarnetwork.central.user.dao.ibatis;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.solarnetwork.central.dao.ibatis.IbatisGenericDaoSupport;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
-import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 
 /**
@@ -37,8 +38,11 @@ import net.solarnetwork.central.user.domain.UserNodeCertificate;
 public class IbatisUserNodeCertificateDao extends IbatisGenericDaoSupport<UserNodeCertificate> implements
 		UserNodeCertificateDao {
 
-	/** The query name used for {@link #findUserNodesForUser(User)}. */
+	/** The query name used for {@link #getActiveCertificateForNode(Long)}. */
 	public static final String QUERY_ACTIVE_FOR_NODE = "get-UserNodeCertificate-for-active-node";
+
+	/** The query name used for {@link #getCertificateForKey(Long, String)}. */
+	public static final String QUERY_FOR_KEY = "get-UserNodeCertificate-for-key";
 
 	/**
 	 * Default constructor.
@@ -52,6 +56,20 @@ public class IbatisUserNodeCertificateDao extends IbatisGenericDaoSupport<UserNo
 		@SuppressWarnings("unchecked")
 		List<UserNodeCertificate> results = getSqlMapClientTemplate().queryForList(
 				QUERY_ACTIVE_FOR_NODE, nodeId);
+		if ( results.size() > 0 ) {
+			return results.get(0);
+		}
+		return null;
+	}
+
+	@Override
+	public UserNodeCertificate getCertificateForKey(Long userId, String key) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("userId", userId);
+		params.put("key", key);
+		@SuppressWarnings("unchecked")
+		List<UserNodeCertificate> results = getSqlMapClientTemplate()
+				.queryForList(QUERY_FOR_KEY, params);
 		if ( results.size() > 0 ) {
 			return results.get(0);
 		}

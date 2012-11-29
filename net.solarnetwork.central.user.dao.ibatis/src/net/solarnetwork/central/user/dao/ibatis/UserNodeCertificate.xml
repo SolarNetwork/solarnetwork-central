@@ -11,21 +11,26 @@
 		INSERT INTO solaruser.user_node_cert 
 			(id
 			<isNotNull prepend="," property="created">created</isNotNull>
-			, user_id, node_id, cert, status
+			, user_id, conf_key
+			<isNotNull prepend="," property="node">node_id</isNotNull>
+			, cert, status
 			)
 		VALUES
 			(#id#
 			<isNotNull prepend="," property="created">#created#</isNotNull>
-			, #user.id#, #node.id#, #certificate#, #status#
+			, #user.id#, #confirmationKey#
+			<isNotNull prepend="," property="node">#node.id#</isNotNull>
+			, #certificate#, #status#
 			)
 	</insert>
 
 	<update id="update-UserNodeCertificate" parameterClass="UserNodeCertificate">
 		UPDATE solaruser.user_node_cert SET
-			node_id = #node.id#,
-			user_id = #user.id#,
-			cert = #certificate#,
-			status = #status#
+			user_id = #user.id#
+			, conf_key = #confirmationKey#
+			<isNotNull prepend="," property="node">node_id = #node.id#</isNotNull>
+			, cert = #certificate#
+			, status = #status#
 		WHERE
 			id = #id#
 	</update>
@@ -39,6 +44,7 @@
 	<sql id="fragment-UserNodeCertificate-full-result">
 		uncert.id AS uncert_id,
 		uncert.created AS uncert_created,
+		uncert.conf_key AS uncert_conf_key,
 		uncert.cert AS uncert_cert,
 		uncert.status AS uncert_status
 	</sql>
@@ -46,6 +52,7 @@
 	<resultMap id="UserNodeCertificateFullResult" class="UserNodeCertificate">
 		<result column="uncert_id" property="id"/>
 		<result column="uncert_created" property="created"/>
+		<result column="uncert_conf_key" property="confirmationKey"/>
 		<result column="uncert_cert" property="certificate"/>
 		<result column="uncert_status" property="status"/>
 		<result property="user" resultMap="User.UserFullResult"/>
@@ -68,6 +75,25 @@
 			solaruser.user_user u ON u.id = uncert.user_id
 		WHERE
 			uncert.id = #id#
+	</select>
+	
+	<select id="get-UserNodeCertificate-for-key" resultMap="UserNodeCertificateFullResult">
+		SELECT
+			<include refid="fragment-UserNodeCertificate-full-result"/>,
+			<include refid="fragment-SolarNode-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>,
+			<include refid="fragment-User-full-result"/>
+		FROM
+			solaruser.user_node_cert uncert
+		INNER JOIN
+			solarnet.sn_node n ON n.node_id = uncert.node_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		INNER JOIN
+			solaruser.user_user u ON u.id = uncert.user_id
+		WHERE
+			uncert.user_id = #userId#
+			AND uncert.conf_key = #key#
 	</select>
 	
 	<select id="get-UserNodeCertificate-for-active-node" resultMap="UserNodeCertificateFullResult">

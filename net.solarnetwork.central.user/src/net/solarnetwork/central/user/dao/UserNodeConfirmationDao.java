@@ -25,7 +25,6 @@
 package net.solarnetwork.central.user.dao;
 
 import java.util.List;
-
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
@@ -39,21 +38,25 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 public interface UserNodeConfirmationDao extends GenericDao<UserNodeConfirmation, Long> {
 
 	/**
-	 * Find a list of all pending UserNodeConfirmation objects for a particular user.
+	 * Find a list of all pending UserNodeConfirmation objects for a particular
+	 * user.
 	 * 
-	 * @param user the user to get all pending confirmations for
-	 * @return list of {@link UserNodeConfirmation} objects, or an empty list
-	 * if none found
+	 * @param user
+	 *        the user to get all pending confirmations for
+	 * @return list of {@link UserNodeConfirmation} objects, or an empty list if
+	 *         none found
 	 */
 	List<UserNodeConfirmation> findPendingConfirmationsForUser(User user);
-	
+
 	/**
-	 * Get a confirmation object for a given node ID and key.
+	 * Get a confirmation object for a given user ID and key.
 	 * 
-	 * @param nodeId the node ID
-	 * @param key the confirmation key
+	 * @param userId
+	 *        the user ID
+	 * @param key
+	 *        the confirmation key
 	 * @return the found UserNodeConfirmation, or <em>null</em> if not found
 	 */
-	UserNodeConfirmation getConfirmationForKey(Long nodeId, String key);
+	UserNodeConfirmation getConfirmationForKey(Long userId, String key);
 
 }

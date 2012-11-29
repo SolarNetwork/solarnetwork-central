@@ -81,7 +81,6 @@ public class IbatisUserNodeConfirmationDaoTest extends AbstractIbatisUserDaoTest
 	public void storeNew() {
 		UserNodeConfirmation newUserNodeConf = new UserNodeConfirmation();
 		newUserNodeConf.setCreated(new DateTime());
-		newUserNodeConf.setNodeId(testNodeId);
 		newUserNodeConf.setUser(this.user);
 		newUserNodeConf.setConfirmationKey(String.valueOf(testNodeId));
 		newUserNodeConf.setSecurityPhrase("test phrase");
@@ -95,7 +94,6 @@ public class IbatisUserNodeConfirmationDaoTest extends AbstractIbatisUserDaoTest
 		assertNotNull("Created date should be set", entity.getCreated());
 		assertEquals(conf.getConfirmationDate(), entity.getConfirmationDate());
 		assertEquals(conf.getConfirmationKey(), entity.getConfirmationKey());
-		assertEquals(conf.getConfirmationValue(), entity.getConfirmationValue());
 		assertEquals(conf.getSecurityPhrase(), entity.getSecurityPhrase());
 		assertEquals(conf.getId(), entity.getId());
 		assertEquals(conf.getNodeId(), entity.getNodeId());
@@ -114,8 +112,8 @@ public class IbatisUserNodeConfirmationDaoTest extends AbstractIbatisUserDaoTest
 		storeNew();
 		setupTestNode(TEST_ID_2);
 		UserNodeConfirmation conf = userNodeConfirmationDao.get(userNodeConf.getId());
-		assertNull(conf.getConfirmationValue());
-		conf.setConfirmationValue("test.conf.value");
+		assertNull(conf.getNodeId());
+		conf.setNodeId(testNodeId);
 		Long id = userNodeConfirmationDao.store(conf);
 		assertNotNull(id);
 		assertEquals(userNodeConf.getId(), id);
@@ -126,8 +124,8 @@ public class IbatisUserNodeConfirmationDaoTest extends AbstractIbatisUserDaoTest
 	@Test
 	public void getConfirmationForKey() {
 		storeNew();
-		UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(
-				userNodeConf.getNodeId(), userNodeConf.getConfirmationKey());
+		UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(userNodeConf.getUser()
+				.getId(), userNodeConf.getConfirmationKey());
 		validate(userNodeConf, conf);
 	}
 
@@ -170,7 +168,6 @@ public class IbatisUserNodeConfirmationDaoTest extends AbstractIbatisUserDaoTest
 
 		// make the confirmation no longer pending
 		UserNodeConfirmation conf0 = this.userNodeConf;
-		conf0.setConfirmationValue("confirmed");
 		conf0.setConfirmationDate(new DateTime());
 		userNodeConfirmationDao.store(conf0);
 

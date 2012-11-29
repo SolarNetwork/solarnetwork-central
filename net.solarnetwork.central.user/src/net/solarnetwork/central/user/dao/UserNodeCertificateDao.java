@@ -42,4 +42,15 @@ public interface UserNodeCertificateDao extends GenericDao<UserNodeCertificate, 
 	 */
 	UserNodeCertificate getActiveCertificateForNode(Long nodeId);
 
+	/**
+	 * Get a certificate object for a given user ID and key.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param key
+	 *        the confirmation key
+	 * @return the found UserNodeCertificate, or <em>null</em> if not found
+	 */
+	UserNodeCertificate getCertificateForKey(Long userId, String key);
+
 }

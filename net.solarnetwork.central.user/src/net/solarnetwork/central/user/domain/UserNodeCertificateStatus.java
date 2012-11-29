@@ -30,6 +30,9 @@ package net.solarnetwork.central.user.domain;
  */
 public enum UserNodeCertificateStatus {
 
+	/** The certificate has been requested, but has not been generated yet. */
+	r("Requested"),
+
 	/** The certificate is active. */
 	a("Active"),
 

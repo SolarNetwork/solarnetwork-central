@@ -12,7 +12,6 @@
 			(id
 			<isNotNull prepend="," property="created">created</isNotNull>
 			, user_id, node_id, conf_key
-			<isNotNull prepend="," property="confirmationValue">conf_val</isNotNull>
 			<isNotNull prepend="," property="confirmationDate">conf_date</isNotNull>
 			, sec_phrase
 			)
@@ -20,7 +19,6 @@
 			(#id#
 			<isNotNull prepend="," property="created">#created#</isNotNull>
 			, #user.id#, #nodeId#, #confirmationKey#
-			<isNotNull prepend="," property="confirmationValue">#confirmationValue#</isNotNull>
 			<isNotNull prepend="," property="confirmationDate">#confirmationDate#</isNotNull>
 			, #securityPhrase#
 			)
@@ -29,7 +27,6 @@
 	<update id="update-UserNodeConfirmation" parameterClass="UserNodeConfirmation">
 		UPDATE solaruser.user_node_conf SET
 			node_id = #nodeId#,
-			conf_val = #confirmationValue#,
 			conf_date = #confirmationDate#,
 			sec_phrase = #securityPhrase#
 		WHERE
@@ -47,7 +44,6 @@
 		unc.created AS unc_created,
 		unc.node_id AS unc_node_id,
 		unc.conf_key AS unc_conf_key,
-		unc.conf_val AS unc_conf_val,
 		unc.conf_date AS unc_conf_date,
 		unc.sec_phrase AS unc_sec_phrase
 	</sql>
@@ -58,7 +54,6 @@
 		<result property="user" resultMap="User.UserFullResult"/>
 		<result column="unc_node_id" property="nodeId"/>
 		<result column="unc_conf_key" property="confirmationKey"/>
-		<result column="unc_conf_val" property="confirmationValue"/>
 		<result column="unc_conf_date" property="confirmationDate"/>
 		<result column="unc_sec_phrase" property="securityPhrase"/>
 	</resultMap>
@@ -84,7 +79,7 @@
 		INNER JOIN
 			solaruser.user_user u ON u.id = unc.user_id
 		WHERE
-			unc.node_id = #nodeId#
+			unc.user_id = #userId#
 			AND unc.conf_key = #key#
 	</select>
 	
@@ -97,7 +92,7 @@
 		INNER JOIN
 			solaruser.user_user u ON u.id = unc.user_id
 		WHERE
-			u.id = #user.id#
+			unc.user_id = #user.id#
 			<isNotNull property="pending">AND unc.conf_date IS NULL</isNotNull>
 		ORDER BY
 			unc.created

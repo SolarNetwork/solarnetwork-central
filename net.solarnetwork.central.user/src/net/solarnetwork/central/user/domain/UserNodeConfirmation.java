@@ -37,12 +37,11 @@ import org.joda.time.DateTime;
  */
 public class UserNodeConfirmation extends BaseEntity {
 
-	private static final long serialVersionUID = 405526878177177622L;
+	private static final long serialVersionUID = 4083649254837814397L;
 
 	private User user;
 	private Long nodeId;
 	private String confirmationKey;
-	private String confirmationValue;
 	private DateTime confirmationDate;
 	private String securityPhrase;
 
@@ -68,14 +67,6 @@ public class UserNodeConfirmation extends BaseEntity {
 
 	public void setConfirmationKey(String confirmationKey) {
 		this.confirmationKey = confirmationKey;
-	}
-
-	public String getConfirmationValue() {
-		return confirmationValue;
-	}
-
-	public void setConfirmationValue(String confirmationValue) {
-		this.confirmationValue = confirmationValue;
 	}
 
 	public DateTime getConfirmationDate() {

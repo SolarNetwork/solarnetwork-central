@@ -25,7 +25,9 @@
 package net.solarnetwork.central.user.biz;
 
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;
+import net.solarnetwork.domain.NetworkCertificate;
 import net.solarnetwork.domain.RegistrationReceipt;
 
 /**
@@ -124,7 +126,7 @@ public interface RegistrationBiz {
 	 * 
 	 * @return new NodeAssociationDetails entity
 	 */
-	NetworkAssociationDetails createNodeAssociation(Long userId, String securityPhrase);
+	NetworkAssociation createNodeAssociation(Long userId, String securityPhrase);
 
 	/**
 	 * Get a {@link NetworkAssociationDetails} previously created via
@@ -138,8 +140,7 @@ public interface RegistrationBiz {
 	 *         confirmation then
 	 *         {@link AuthorizationException.Reason#ACCESS_DENIED}
 	 */
-	NetworkAssociationDetails getNodeAssociation(Long userNodeConfirmationId)
-			throws AuthorizationException;
+	NetworkAssociation getNodeAssociation(Long userNodeConfirmationId) throws AuthorizationException;
 
 	/**
 	 * Cancel a {@link NetworkAssociationDetails} previously created via
@@ -160,16 +161,15 @@ public interface RegistrationBiz {
 	 * 
 	 * <p>
 	 * This method must be called after a call to
-	 * {@link #createNodeAssociation(User)} to confirm the node association.
+	 * {@link #createNodeAssociation(Long, String)} to confirm the node
+	 * association.
 	 * </p>
 	 * 
 	 * @param userId
 	 *        the userID to associate the node with
-	 * @param nodeId
-	 *        the node ID from {@link NetworkAssociationDetails#getNodeId()}
 	 * @param confirmationKey
 	 *        the confirmation code from
-	 *        {@link NetworkAssociationDetails#getConfirmationKey()}
+	 *        {@link NetworkAssociation#getConfirmationKey()}
 	 * @return new RegistrationReceipt object
 	 * @throws AuthorizationException
 	 *         if the details do not match those returned from a previous call
@@ -179,7 +179,7 @@ public interface RegistrationBiz {
 	 *         if the node has already been confirmed then
 	 *         {@link AuthorizationException.Reason#REGISTRATION_ALREADY_CONFIRMED}
 	 */
-	RegistrationReceipt confirmNodeAssociation(Long userId, Long nodeId, String confirmationKey)
+	NetworkCertificate confirmNodeAssociation(Long userId, String confirmationKey)
 			throws AuthorizationException;
 
 	/**

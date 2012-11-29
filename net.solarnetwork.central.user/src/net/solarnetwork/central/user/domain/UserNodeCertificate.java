@@ -33,13 +33,22 @@ import net.solarnetwork.central.domain.SolarNode;
  */
 public class UserNodeCertificate extends BaseEntity {
 
-	private static final long serialVersionUID = -4169844309969371159L;
+	private static final long serialVersionUID = -3864939148883320107L;
 
 	private byte[] certificate;
+	private String confirmationKey;
 	private UserNodeCertificateStatus status;
 
 	private User user;
 	private SolarNode node;
+
+	public String getConfirmationKey() {
+		return confirmationKey;
+	}
+
+	public void setConfirmationKey(String confirmationKey) {
+		this.confirmationKey = confirmationKey;
+	}
 
 	public byte[] getCertificate() {
 		return certificate;

@@ -29,6 +29,9 @@ ALTER COLUMN sec_phrase SET NOT NULL;
 ALTER TABLE solaruser.user_node_conf
 ALTER COLUMN node_id DROP NOT NULL;
 
+ALTER TABLE solaruser.user_node_conf
+DROP COLUMN conf_val;
+
 CREATE VIEW solaruser.network_association  AS
 	SELECT
 		unc.conf_key AS conf_key,
@@ -40,11 +43,13 @@ CREATE TABLE solaruser.user_node_cert (
 	id				BIGINT NOT NULL DEFAULT nextval('solaruser.solaruser_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id			BIGINT NOT NULL,
+	conf_key		CHARACTER(64) NOT NULL,
 	node_id			BIGINT NOT NULL,
 	cert			bytea NOT NULL,
 	status			CHAR(1) NOT NULL,
 	CONSTRAINT user_node_cert_pkey PRIMARY KEY (id),
 	CONSTRAINT user_cert_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION
+		ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT user_node_conf_unq UNIQUE (user_id, conf_key)
 );
