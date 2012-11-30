@@ -189,7 +189,7 @@ public class IbatisUserNodeDaoTest extends AbstractIbatisUserDaoTestSupport {
 	public void findForUserWithCertificates() {
 		final UserNodeCertificate cert1 = storeNewCert(TEST_CONF_KEY, UserNodeCertificateStatus.v);
 
-		List<UserNode> results = userNodeDao.findNodesAndCertificatesForUser(user.getId());
+		List<UserNode> results = userNodeDao.findUserNodesAndCertificatesForUser(user.getId());
 		assertNotNull(results);
 		assertEquals(1, results.size());
 		assertEquals(cert1, results.get(0).getCertificate());
@@ -207,7 +207,7 @@ public class IbatisUserNodeDaoTest extends AbstractIbatisUserDaoTestSupport {
 
 		final UserNodeCertificate cert2 = userNodeCertificateDao.get(id);
 
-		results = userNodeDao.findNodesAndCertificatesForUser(user.getId());
+		results = userNodeDao.findUserNodesAndCertificatesForUser(user.getId());
 		assertNotNull(results);
 		assertEquals(1, results.size());
 		assertEquals(cert2, results.get(0).getCertificate());

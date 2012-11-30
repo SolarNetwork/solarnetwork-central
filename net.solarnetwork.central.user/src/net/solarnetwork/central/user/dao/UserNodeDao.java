@@ -60,6 +60,6 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 	 *        the user ID
 	 * @return the nodes
 	 */
-	List<UserNode> findNodesAndCertificatesForUser(Long userId);
+	List<UserNode> findUserNodesAndCertificatesForUser(Long userId);
 
 }

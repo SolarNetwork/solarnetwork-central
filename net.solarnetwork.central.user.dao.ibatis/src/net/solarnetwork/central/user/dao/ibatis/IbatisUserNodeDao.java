@@ -41,7 +41,7 @@ public class IbatisUserNodeDao extends IbatisGenericDaoSupport<UserNode> impleme
 	/** The query name used for {@link #findUserNodesForUser(User)}. */
 	public static final String QUERY_FOR_USER = "find-UserNode-for-User";
 
-	/** The query name used for {@link #findNodesAndCertificatesForUser(Long)}. */
+	/** The query name used for {@link #findUserNodesAndCertificatesForUser(Long)}. */
 	public static final String QUERY_FOR_USER_WITH_CERT = "find-UserNode-for-user-with-certs";
 
 	/**
@@ -70,7 +70,7 @@ public class IbatisUserNodeDao extends IbatisGenericDaoSupport<UserNode> impleme
 	}
 
 	@Override
-	public List<UserNode> findNodesAndCertificatesForUser(Long userId) {
+	public List<UserNode> findUserNodesAndCertificatesForUser(Long userId) {
 		@SuppressWarnings("unchecked")
 		List<UserNode> results = getSqlMapClientTemplate()
 				.queryForList(QUERY_FOR_USER_WITH_CERT, userId);
