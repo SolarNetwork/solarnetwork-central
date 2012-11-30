@@ -45,11 +45,11 @@ CREATE TABLE solaruser.user_node_cert (
 	user_id			BIGINT NOT NULL,
 	conf_key		CHARACTER(64) NOT NULL,
 	node_id			BIGINT NOT NULL,
-	cert			bytea NOT NULL,
 	status			CHAR(1) NOT NULL,
+	cert			bytea,
 	CONSTRAINT user_node_cert_pkey PRIMARY KEY (id),
 	CONSTRAINT user_cert_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT user_node_conf_unq UNIQUE (user_id, conf_key)
+	CONSTRAINT user_node_cert_unq UNIQUE (user_id, conf_key)
 );

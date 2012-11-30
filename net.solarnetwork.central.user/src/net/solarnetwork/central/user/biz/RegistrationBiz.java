@@ -165,8 +165,8 @@ public interface RegistrationBiz {
 	 * association.
 	 * </p>
 	 * 
-	 * @param userId
-	 *        the userID to associate the node with
+	 * @param username
+	 *        the username to associate the node with
 	 * @param confirmationKey
 	 *        the confirmation code from
 	 *        {@link NetworkAssociation#getConfirmationKey()}
@@ -179,7 +179,7 @@ public interface RegistrationBiz {
 	 *         if the node has already been confirmed then
 	 *         {@link AuthorizationException.Reason#REGISTRATION_ALREADY_CONFIRMED}
 	 */
-	NetworkCertificate confirmNodeAssociation(Long userId, String confirmationKey)
+	NetworkCertificate confirmNodeAssociation(String username, String confirmationKey)
 			throws AuthorizationException;
 
 	/**

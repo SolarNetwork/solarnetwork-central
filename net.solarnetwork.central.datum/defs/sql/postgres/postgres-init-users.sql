@@ -81,7 +81,7 @@ CREATE TABLE solaruser.user_node (
 );
 
 
-/* === USER NODE CONF ====================================================== 
+/* === USER NODE CONF ======================================================
  * Note the node_id is NOT a foreign key to the node table, because the ID
  * is assigned before the node is created (and may never be created if not
  * confirmed by the user).
@@ -100,4 +100,36 @@ CREATE TABLE solaruser.user_node_conf (
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT user_node_conf_unq UNIQUE (user_id, conf_key)
+);
+
+
+/* === NETWORK ASSOCIATION VIEW ============================================
+ * Supporting view for the network association process.
+ */
+
+CREATE VIEW solaruser.network_association  AS
+	SELECT
+		unc.conf_key AS conf_key,
+		unc.sec_phrase AS sec_phrase
+	FROM solaruser.user_node_conf unc
+	INNER JOIN solaruser.user_user u ON u.id = unc.user_id;
+
+
+/* === USER NODE CERT ======================================================
+ * Holds user node certificates.
+ */
+
+CREATE TABLE solaruser.user_node_cert (
+	id				BIGINT NOT NULL DEFAULT nextval('solaruser.solaruser_seq'),
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	user_id			BIGINT NOT NULL,
+	conf_key		CHARACTER(64) NOT NULL,
+	node_id			BIGINT NOT NULL,
+	status			CHAR(1) NOT NULL,
+	cert			bytea,
+	CONSTRAINT user_node_cert_pkey PRIMARY KEY (id),
+	CONSTRAINT user_cert_user_fk FOREIGN KEY (user_id)
+		REFERENCES solaruser.user_user (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT user_node_cert_unq UNIQUE (user_id, conf_key)
 );

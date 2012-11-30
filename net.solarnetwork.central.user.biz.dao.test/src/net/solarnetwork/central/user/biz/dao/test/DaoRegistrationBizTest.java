@@ -167,7 +167,6 @@ public class DaoRegistrationBizTest {
 	public void confirmNodeAssociation() throws IOException {
 		final UserNodeConfirmation conf = new UserNodeConfirmation();
 		conf.setUser(testUser);
-		conf.setNodeId(TEST_NODE_ID);
 		conf.setCreated(new DateTime());
 		final SolarLocation loc = new SolarLocation();
 		loc.setId(TEST_LOC_ID);
@@ -181,7 +180,7 @@ public class DaoRegistrationBizTest {
 		// a new UserNode and UserNodeCertificate. The original UserNodeConfirmation should
 		// have its 
 
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
 				conf);
 		expect(solarLocationDao.getSolarLocationForName(EasyMock.anyObject(String.class)))
@@ -196,7 +195,7 @@ public class DaoRegistrationBizTest {
 		replay(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
 				userNodeCertificateDao);
 
-		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_USER_ID, TEST_CONF_KEY);
+		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
 
 		verify(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
 				userNodeCertificateDao);
@@ -206,19 +205,20 @@ public class DaoRegistrationBizTest {
 		assertEquals(UserNodeCertificateStatus.r.getValue(), cert.getNetworkCertificateStatus());
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
 		assertNotNull(conf.getConfirmationDate());
+		assertNotNull(conf.getNodeId());
 		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
 	}
 
 	@Test
 	public void confirmNodeAssociationBadConfirmationKey() {
 		final String BAD_CONF_KEY = "bad conf key";
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, BAD_CONF_KEY))
 				.andReturn(null);
 
 		replay(userDao, userNodeConfirmationDao);
 		try {
-			registrationBiz.confirmNodeAssociation(TEST_USER_ID, BAD_CONF_KEY);
+			registrationBiz.confirmNodeAssociation(TEST_EMAIL, BAD_CONF_KEY);
 			fail("Expected AuthorizationException for bad node ID");
 		} catch ( AuthorizationException e ) {
 			assertEquals(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED, e.getReason());
@@ -234,12 +234,12 @@ public class DaoRegistrationBizTest {
 		conf.setCreated(new DateTime());
 		conf.setConfirmationDate(new DateTime()); // mark as confirmed
 
-		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
 				conf);
 		replay(userDao, userNodeConfirmationDao);
 		try {
-			registrationBiz.confirmNodeAssociation(TEST_USER_ID, TEST_CONF_KEY);
+			registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
 			fail("Expected AuthorizationException for already confirmed");
 		} catch ( AuthorizationException e ) {
 			assertEquals(AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED, e.getReason());

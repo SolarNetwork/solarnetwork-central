@@ -460,46 +460,45 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public NetworkCertificate confirmNodeAssociation(final Long userId, final String confirmationKey) {
-		assert userId != null;
+	public NetworkCertificate confirmNodeAssociation(final String username, final String confirmationKey) {
+		assert username != null;
 		assert confirmationKey != null;
 
-		final User user = userDao.get(userId);
+		final User user = userDao.getUserByEmail(username);
 		if ( user == null ) {
 			throw new AuthorizationException(null, Reason.UNKNOWN_EMAIL);
 		}
 
-		UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(userId,
+		UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(user.getId(),
 				confirmationKey);
 		if ( conf == null ) {
-			log.info(
-					"Node association failed: UserNodeConfirmation not found for userId {} confirmationKey {}",
-					userId, confirmationKey);
-			throw new AuthorizationException(String.valueOf(userId),
+			log.info("Association failed: confirmation not found for username {} key {}", username,
+					confirmationKey);
+			throw new AuthorizationException(username,
 					AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED);
 		}
 
 		// security check: user must be the same that invited node
 		if ( !user.equals(conf.getUser()) ) {
-			log.info("Node association failed: UserNodeConfirmation user {} != confirming user {}", conf
-					.getUser().getId(), user.getId());
-			throw new AuthorizationException(String.valueOf(userId),
+			log.info("Association failed: confirmation user {} != confirming user {}", conf.getUser()
+					.getId(), user.getId());
+			throw new AuthorizationException(username,
 					AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED);
 		}
 
 		// security check: must not be expired
 		DateTime expiry = conf.getCreated().plus(invitationExpirationPeriod);
 		if ( expiry.isBeforeNow() ) {
-			log.info("Node association failed: confirmation expired on {}", expiry);
-			throw new AuthorizationException(String.valueOf(userId),
+			log.info("Association failed: confirmation expired on {}", expiry);
+			throw new AuthorizationException(username,
 					AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED);
 		}
 
 		// security check: already confirmed?
 		if ( conf.getConfirmationDate() != null ) {
-			log.info("Node association failed: confirmation already confirmed on {}",
+			log.info("Association failed: confirmation already confirmed on {}",
 					conf.getConfirmationDate());
-			throw new AuthorizationException(String.valueOf(userId),
+			throw new AuthorizationException(username,
 					AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED);
 		}
 
@@ -520,8 +519,8 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		userNode.setUser(user);
 		userNodeDao.store(userNode);
 
-		// TODO: the confirmation code here should be added to UserNodeCertificte
 		conf.setConfirmationDate(new DateTime());
+		conf.setNodeId(nodeId);
 		userNodeConfirmationDao.store(conf);
 
 		UserNodeCertificate cert = new UserNodeCertificate();

@@ -101,8 +101,8 @@ public class NewNodeController {
 	// FIXME: remove GET support, only for testing
 	@RequestMapping(method = { RequestMethod.GET, RequestMethod.POST }, value = "/associate.*")
 	public String confirmNodeAssociation(HttpServletRequest request,
-			@RequestParam("userId") Long userId, @RequestParam("key") String key, Model model) {
-		NetworkCertificate receipt = registrationBiz.confirmNodeAssociation(userId, key);
+			@RequestParam("username") String username, @RequestParam("key") String key, Model model) {
+		NetworkCertificate receipt = registrationBiz.confirmNodeAssociation(username, key);
 		model.asMap().clear();
 		model.addAttribute(MODEL_KEY_RESULT, receipt);
 		return WebUtils.resolveViewFromUrlExtension(request, null);
