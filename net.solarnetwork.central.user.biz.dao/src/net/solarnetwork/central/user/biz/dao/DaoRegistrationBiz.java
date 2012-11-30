@@ -527,7 +527,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		cert.setCreated(conf.getConfirmationDate());
 		cert.setNode(node);
 		cert.setUser(user);
-		cert.setStatus(UserNodeCertificateStatus.r);
+		cert.setStatus(UserNodeCertificateStatus.a);
 		cert.setConfirmationKey(calculateCertificateConfirmationCode(cert.getCreated(), nodeId));
 
 		// here we might generate the certificate on the fly...

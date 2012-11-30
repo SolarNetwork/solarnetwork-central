@@ -25,26 +25,41 @@
 package net.solarnetwork.central.user.dao;
 
 import java.util.List;
-
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.user.domain.UserNodeCertificate;
 
 /**
  * DAO API for UserNode objects.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.1
  */
 public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
 	/**
 	 * Find a list of all UserNode objects for a particular user.
 	 * 
-	 * @param user the user to get all nodes for
-	 * @return list of {@link UserNode} objects, or an empty list
-	 * if none found
+	 * @param user
+	 *        the user to get all nodes for
+	 * @return list of {@link UserNode} objects, or an empty list if none found
 	 */
 	List<UserNode> findUserNodesForUser(User user);
-	
+
+	/**
+	 * Find all UserNodes for a given user.
+	 * 
+	 * <p>
+	 * The returned nodes will have {@link UserNodeCertificate} values populated
+	 * in {@link UserNode#getCertificate()}, with the priority being requested,
+	 * active, disabled.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @return the nodes
+	 */
+	List<UserNode> findNodesAndCertificatesForUser(Long userId);
+
 }

@@ -202,7 +202,7 @@ public class DaoRegistrationBizTest {
 
 		assertNotNull(cert);
 		assertNotNull(cert.getConfirmationKey());
-		assertEquals(UserNodeCertificateStatus.r.getValue(), cert.getNetworkCertificateStatus());
+		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
 		assertNotNull(conf.getConfirmationDate());
 		assertNotNull(conf.getNodeId());

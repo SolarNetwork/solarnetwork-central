@@ -18,8 +18,8 @@
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/SolarNode.xml</value>
 				
 				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/User.xml</value>
-				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/UserNode.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/UserNodeCertificate.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/UserNode.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/UserNodeConfirmation.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/UserNodeHardwareControl.xml</value>
 			</list>

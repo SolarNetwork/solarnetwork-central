@@ -31,13 +31,13 @@ package net.solarnetwork.central.user.domain;
 public enum UserNodeCertificateStatus {
 
 	/** The certificate has been requested, but has not been generated yet. */
-	r("Requested"),
+	a("Requested"),
 
 	/** The certificate is active. */
-	a("Active"),
+	v("Active"),
 
 	/** The certificate is disabled and should not be used. */
-	d("Disabled");
+	z("Disabled");
 
 	private final String value;
 

@@ -30,77 +30,69 @@ import net.solarnetwork.central.domain.SolarNode;
 /**
  * A solar node with user details.
  * 
- * <p>This object augments a {@link SolarNode} with additional
- * information that nodes themselves are not concerned with, but users
- * are. This allows the {@link SolarNode} object to remain lightweight.</p>
+ * <p>
+ * This object augments a {@link SolarNode} with additional information that
+ * nodes themselves are not concerned with, but users are. This allows the
+ * {@link SolarNode} object to remain lightweight.
+ * </p>
  * 
  * @author matt
  * @version $Id$
  */
 public class UserNode extends BaseEntity {
 
-	private static final long serialVersionUID = -2623340433468823234L;
+	private static final long serialVersionUID = 3322586732441170734L;
 
 	private String description;
 	private String name;
-	
+
 	private User user;
 	private SolarNode node;
-	
+
+	// transient
+	private UserNodeCertificate certificate;
+
 	/**
 	 * @return the description
 	 */
 	public String getDescription() {
 		return description;
 	}
-	
-	/**
-	 * @param description the description to set
-	 */
+
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	
-	/**
-	 * @return the name
-	 */
+
 	public String getName() {
 		return name;
 	}
-	
-	/**
-	 * @param name the name to set
-	 */
+
 	public void setName(String name) {
 		this.name = name;
 	}
-	
-	/**
-	 * @return the user
-	 */
+
 	public User getUser() {
 		return user;
 	}
-	
-	/**
-	 * @param user the user to set
-	 */
+
 	public void setUser(User user) {
 		this.user = user;
 	}
-	
-	/**
-	 * @return the node
-	 */
+
 	public SolarNode getNode() {
 		return node;
 	}
-	
-	/**
-	 * @param node the node to set
-	 */
+
 	public void setNode(SolarNode node) {
 		this.node = node;
+	}
+
+	public UserNodeCertificate getCertificate() {
+		return certificate;
+	}
+
+	public void setCertificate(UserNodeCertificate certificate) {
+		this.certificate = certificate;
 	}
 
 }

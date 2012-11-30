@@ -25,7 +25,6 @@
 package net.solarnetwork.central.user.dao.ibatis;
 
 import java.util.List;
-
 import net.solarnetwork.central.dao.ibatis.IbatisGenericDaoSupport;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
@@ -37,12 +36,14 @@ import net.solarnetwork.central.user.domain.UserNode;
  * @author matt
  * @version $Id$
  */
-public class IbatisUserNodeDao extends IbatisGenericDaoSupport<UserNode>
-implements UserNodeDao {
+public class IbatisUserNodeDao extends IbatisGenericDaoSupport<UserNode> implements UserNodeDao {
 
 	/** The query name used for {@link #findUserNodesForUser(User)}. */
 	public static final String QUERY_FOR_USER = "find-UserNode-for-User";
-	
+
+	/** The query name used for {@link #findNodesAndCertificatesForUser(Long)}. */
+	public static final String QUERY_FOR_USER_WITH_CERT = "find-UserNode-for-user-with-certs";
+
 	/**
 	 * Default constructor.
 	 */
@@ -65,6 +66,14 @@ implements UserNodeDao {
 		for ( UserNode userNode : results ) {
 			userNode.setUser(user);
 		}
+		return results;
+	}
+
+	@Override
+	public List<UserNode> findNodesAndCertificatesForUser(Long userId) {
+		@SuppressWarnings("unchecked")
+		List<UserNode> results = getSqlMapClientTemplate()
+				.queryForList(QUERY_FOR_USER_WITH_CERT, userId);
 		return results;
 	}
 

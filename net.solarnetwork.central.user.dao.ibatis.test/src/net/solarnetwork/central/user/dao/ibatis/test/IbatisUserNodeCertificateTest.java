@@ -28,6 +28,7 @@ import static org.junit.Assert.assertNotNull;
 import net.solarnetwork.central.dao.ibatis.IbatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.dao.ibatis.IbatisUserNodeCertificateDao;
+import net.solarnetwork.central.user.dao.ibatis.IbatisUserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
@@ -59,6 +60,9 @@ public class IbatisUserNodeCertificateTest extends AbstractIbatisUserDaoTestSupp
 	private IbatisUserNodeCertificateDao userNodeCertificateDao;
 
 	@Autowired
+	private IbatisUserNodeDao userNodeDao;
+
+	@Autowired
 	private IbatisSolarNodeDao solarNodeDao;
 
 	private User user = null;
@@ -84,7 +88,7 @@ public class IbatisUserNodeCertificateTest extends AbstractIbatisUserDaoTestSupp
 		newUserNodeCert.setUser(this.user);
 		newUserNodeCert.setConfirmationKey(TEST_CONF_KEY);
 		newUserNodeCert.setCertificate(TEST_CERT);
-		newUserNodeCert.setStatus(UserNodeCertificateStatus.a);
+		newUserNodeCert.setStatus(UserNodeCertificateStatus.v);
 		Long id = userNodeCertificateDao.store(newUserNodeCert);
 		assertNotNull(id);
 		this.userNodeCert = userNodeCertificateDao.get(id);

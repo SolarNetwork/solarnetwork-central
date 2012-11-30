@@ -26,15 +26,16 @@ package net.solarnetwork.central.user.dao.ibatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
 import java.util.List;
-
 import net.solarnetwork.central.dao.ibatis.IbatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.user.dao.ibatis.IbatisUserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.ibatis.IbatisUserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
-
+import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,16 +49,27 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class IbatisUserNodeDaoTest extends AbstractIbatisUserDaoTestSupport {
 
-	/** The tables to delete from at the start of the tests (within a transaction). */
-	private static final String[] DELETE_TABLES 
-		= new String[] {"solaruser.user_node", "solaruser.user_user"};
+	/**
+	 * The tables to delete from at the start of the tests (within a
+	 * transaction).
+	 */
+	private static final String[] DELETE_TABLES = new String[] { "solaruser.user_node",
+			"solaruser.user_user" };
 
 	private static final String TEST_EMAIL_2 = "foo2@localhost.localdomain";
 	private static final String TEST_DESC = "Test description";
 	private static final Long TEST_ID_2 = -2L;
+	private static final byte[] TEST_CERT = "test cert".getBytes();
+	private static final String TEST_CONF_KEY = DigestUtils.sha256Hex("test conf key");
 
-	@Autowired private IbatisUserNodeDao userNodeDao;
-	@Autowired private IbatisSolarNodeDao solarNodeDao;
+	@Autowired
+	private IbatisUserNodeDao userNodeDao;
+
+	@Autowired
+	private IbatisSolarNodeDao solarNodeDao;
+
+	@Autowired
+	private IbatisUserNodeCertificateDao userNodeCertificateDao;
 
 	private User user = null;
 	private SolarNode node = null;
@@ -94,10 +106,10 @@ public class IbatisUserNodeDaoTest extends AbstractIbatisUserDaoTestSupport {
 	/**
 	 * Test able to get a user node.
 	 */
-    @Test
+	@Test
 	public void getByPrimaryKey() {
-    	storeNewUserNode();
-    	UserNode userNode = userNodeDao.get(this.userNodeId);
+		storeNewUserNode();
+		UserNode userNode = userNodeDao.get(this.userNodeId);
 		assertNotNull(userNode);
 		assertEquals(this.userNodeId, userNode.getId());
 		assertEquals(TEST_NAME, userNode.getName());
@@ -106,7 +118,7 @@ public class IbatisUserNodeDaoTest extends AbstractIbatisUserDaoTestSupport {
 		assertEquals(TEST_NODE_ID, userNode.getNode().getId());
 		assertNotNull(userNode.getUser());
 	}
-    
+
 	/**
 	 * Test able to update an existing UserNode.
 	 */
@@ -130,12 +142,12 @@ public class IbatisUserNodeDaoTest extends AbstractIbatisUserDaoTestSupport {
 	/**
 	 * Test able to find for a user with multiple results.
 	 */
-    @Test
+	@Test
 	public void findForUserMultipleResults() {
-    	storeNewUserNode();
-    	
-    	// create 2nd node for user
-    	setupTestNode(TEST_ID_2);
+		storeNewUserNode();
+
+		// create 2nd node for user
+		setupTestNode(TEST_ID_2);
 		UserNode newUserNode = new UserNode();
 		newUserNode.setCreated(new DateTime());
 		newUserNode.setDescription(TEST_DESC);
@@ -145,20 +157,60 @@ public class IbatisUserNodeDaoTest extends AbstractIbatisUserDaoTestSupport {
 		Long userNode2 = userNodeDao.store(newUserNode);
 		assertNotNull(userNode2);
 
-    	List<UserNode> results = userNodeDao.findUserNodesForUser(this.user);
-    	assertNotNull(results);
-    	assertEquals(2, results.size());
-    	
-    	UserNode n1 = results.get(0);
-    	assertNotNull(n1);
-    	assertEquals(this.userNodeId, n1.getId());
-    	assertEquals(this.node, n1.getNode());
-    	assertEquals(this.user, n1.getUser());
+		List<UserNode> results = userNodeDao.findUserNodesForUser(this.user);
+		assertNotNull(results);
+		assertEquals(2, results.size());
+
+		UserNode n1 = results.get(0);
+		assertNotNull(n1);
+		assertEquals(this.userNodeId, n1.getId());
+		assertEquals(this.node, n1.getNode());
+		assertEquals(this.user, n1.getUser());
 	}
-    
+
 	private void storeNewUser() {
 		this.user = createNewUser(TEST_EMAIL);
 	}
-	
+
+	private UserNodeCertificate storeNewCert(String key, UserNodeCertificateStatus status) {
+		UserNodeCertificate newUserNodeCert = new UserNodeCertificate();
+		newUserNodeCert.setCreated(new DateTime());
+		newUserNodeCert.setNode(this.node);
+		newUserNodeCert.setUser(this.user);
+		newUserNodeCert.setConfirmationKey(key);
+		newUserNodeCert.setCertificate(TEST_CERT);
+		newUserNodeCert.setStatus(status);
+		Long id = userNodeCertificateDao.store(newUserNodeCert);
+		assertNotNull(id);
+		return userNodeCertificateDao.get(id);
+	}
+
+	@Test
+	public void findForUserWithCertificates() {
+		final UserNodeCertificate cert1 = storeNewCert(TEST_CONF_KEY, UserNodeCertificateStatus.v);
+
+		List<UserNode> results = userNodeDao.findNodesAndCertificatesForUser(user.getId());
+		assertNotNull(results);
+		assertEquals(1, results.size());
+		assertEquals(cert1, results.get(0).getCertificate());
+
+		// add a second cert for the same user, with higher status
+		UserNodeCertificate newUserNodeCert = new UserNodeCertificate();
+		newUserNodeCert.setCreated(new DateTime());
+		newUserNodeCert.setNode(this.node);
+		newUserNodeCert.setUser(this.user);
+		newUserNodeCert.setConfirmationKey(DigestUtils.sha256Hex(TEST_CONF_KEY));
+		newUserNodeCert.setCertificate(TEST_CERT);
+		newUserNodeCert.setStatus(UserNodeCertificateStatus.a);
+		Long id = userNodeCertificateDao.store(newUserNodeCert);
+		assertNotNull(id);
+
+		final UserNodeCertificate cert2 = userNodeCertificateDao.get(id);
+
+		results = userNodeDao.findNodesAndCertificatesForUser(user.getId());
+		assertNotNull(results);
+		assertEquals(1, results.size());
+		assertEquals(cert2, results.get(0).getCertificate());
+	}
 
 }

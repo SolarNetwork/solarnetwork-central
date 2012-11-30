@@ -82,4 +82,37 @@
 			un.created
 	</select>
 	
+	<resultMap id="UserNodeWithCertificates" class="UserNode" extends="UserNodeFullResult">
+		<!--result column="user_node_node_id" property="id"/>
+		<result column="user_node_created" property="created"/>
+		<result column="user_node_disp_name" property="name"/>
+		<result column="user_node_description" property="description"/>
+		<result property="node" resultMap="SolarNode.SolarNodeFullResult"/>
+		<result property="user" resultMap="User.UserFullResult"/-->
+		<result property="certificate" resultMap="UserNodeCertificate.UserNodeCertificateFullResult"/>
+	</resultMap>
+	
+	<select id="find-UserNode-for-user-with-certs" resultMap="UserNodeWithCertificates" parameterClass="long">
+		SELECT DISTINCT ON (uncert.node_id)
+			<include refid="fragment-UserNode-full-result"/>,
+			<include refid="fragment-UserNodeCertificate-full-result"/>,
+			<include refid="fragment-SolarNode-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>,
+			<include refid="fragment-User-full-result"/>
+		FROM
+			solaruser.user_node_cert uncert
+		INNER JOIN 
+			solaruser.user_node un ON un.user_id = uncert.user_id AND un.node_id = uncert.node_id
+		INNER JOIN
+			solarnet.sn_node n ON n.node_id = uncert.node_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		INNER JOIN
+			solaruser.user_user u ON u.id = uncert.user_id
+		WHERE
+			uncert.user_id = #id#
+		ORDER BY
+			uncert.node_id ASC, uncert.status ASC
+	</select>
+	
 </sqlMap>
