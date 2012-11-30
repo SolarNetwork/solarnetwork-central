@@ -76,7 +76,7 @@ public class MyNodesController {
 		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentUser().getUserId());
 		List<UserNodeConfirmation> pendingConfirmationList = userBiz
 				.getPendingUserNodeConfirmations(SecurityUtils.getCurrentUser().getUserId());
-		ModelAndView mv = new ModelAndView("my-nodes/start");
+		ModelAndView mv = new ModelAndView("my-nodes/my-nodes");
 		mv.addObject("userNodesList", nodes);
 		mv.addObject("pendingUserNodeConfirmationsList", pendingConfirmationList);
 		return mv;

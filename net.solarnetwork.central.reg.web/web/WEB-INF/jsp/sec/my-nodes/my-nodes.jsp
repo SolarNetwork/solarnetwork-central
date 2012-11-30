@@ -13,6 +13,7 @@
 					<th><fmt:message key="user.node.created.label"/></th>
 					<th><fmt:message key="user.node.name.label"/></th>
 					<th><fmt:message key="user.node.description.label"/></th>
+					<th><fmt:message key="user.node.certificate.label"/></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -27,6 +28,20 @@
 						</td>
 						<td>${userNode.name}</td>
 						<td>${userNode.description}</td>
+						<td>
+							<c:if test="${not empty userNode.certificate}">
+								<span class="label${userNode.certificate.status.value eq 'Active' 
+									? ' label-success' : userNode.certificate.status.value eq 'Disabled' 
+									? ' label-important' : ''}">
+									<fmt:message key="user.node.certificate.status.${userNode.certificate.status.value}"/>
+								</span>
+								<c:if test="${userNode.certificate.status.value eq 'Active'}">
+									<button type="button" class="btn btn-small">
+										<fmt:message key="user.node.certificate.action.view"/>
+									</button>
+								</c:if>
+							</c:if>
+						</td>
 					</tr>
 				</c:forEach>
 			</tbody>

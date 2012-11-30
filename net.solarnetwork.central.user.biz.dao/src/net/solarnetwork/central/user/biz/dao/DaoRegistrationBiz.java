@@ -278,7 +278,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNode> getUserNodes(Long userId) {
-		return userNodeDao.findUserNodesForUser(userDao.get(userId));
+		return userNodeDao.findUserNodesAndCertificatesForUser(userId);
 	}
 
 	@Override
