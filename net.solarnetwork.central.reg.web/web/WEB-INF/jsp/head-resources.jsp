@@ -11,4 +11,5 @@
 	/js/global.js
 	/js/login.js
 	/js/register.js
+	/js/my-nodes.js
 </pack:script>

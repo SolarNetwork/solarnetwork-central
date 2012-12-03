@@ -576,6 +576,13 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		return entity;
 	}
 
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public UserNodeCertificate getUserNodeCertificate(Long certId) {
+		assert certId != null;
+		return userNodeCertificateDao.get(certId);
+	}
+
 	public Set<String> getConfirmedUserRoles() {
 		return confirmedUserRoles;
 	}

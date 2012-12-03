@@ -27,6 +27,7 @@ package net.solarnetwork.central.user.biz;
 import java.util.List;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 
 /**
@@ -95,5 +96,14 @@ public interface UserBiz {
 	 * @return the pending confirmation, or <em>null</em> if not found
 	 */
 	public UserNodeConfirmation getPendingUserNodeConfirmation(Long userNodeConfirmationId);
+
+	/**
+	 * Get a specific UserNodeCertificate object.
+	 * 
+	 * @param certId
+	 *        the cert ID
+	 * @return the certificate, or <em>null</em> if not available
+	 */
+	public UserNodeCertificate getUserNodeCertificate(Long certId);
 
 }

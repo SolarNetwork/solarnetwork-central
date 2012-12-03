@@ -22,11 +22,17 @@
 
 package net.solarnetwork.central.user.domain;
 
+import java.io.UnsupportedEncodingException;
 import net.solarnetwork.central.domain.BaseEntity;
 import net.solarnetwork.central.domain.SolarNode;
+import org.apache.commons.codec.binary.Base64;
 
 /**
  * A user node certificate.
+ * 
+ * <p>
+ * The certificate is expected to be in X.509 format.
+ * </p>
  * 
  * @author matt
  * @version 1.0
@@ -41,6 +47,26 @@ public class UserNodeCertificate extends BaseEntity {
 
 	private User user;
 	private SolarNode node;
+
+	/**
+	 * Get the value of the certificate, in Base64 encoded X.509 certificate
+	 * string format.
+	 * 
+	 * @return the certificate, in Base64 DER format
+	 */
+	public String getPEMValue() {
+		StringBuilder buf = new StringBuilder("-----BEGIN CERTIFICATE-----\n");
+		if ( certificate != null ) {
+			try {
+				buf.append(new String(Base64.encodeBase64(certificate, true), "US-ASCII"));
+			} catch ( UnsupportedEncodingException e ) {
+				// should never get here
+				throw new RuntimeException(e);
+			}
+		}
+		buf.append("-----END CERTIFICATE-----\n");
+		return buf.toString();
+	}
 
 	public String getConfirmationKey() {
 		return confirmationKey;

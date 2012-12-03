@@ -36,9 +36,9 @@
 									<fmt:message key="user.node.certificate.status.${userNode.certificate.status.value}"/>
 								</span>
 								<c:if test="${userNode.certificate.status.value eq 'Active'}">
-									<button type="button" class="btn btn-small">
+									<a href="<c:url value='/u/sec/my-nodes/cert'/>?id=${userNode.certificate.id}" class="btn btn-small view-cert">
 										<fmt:message key="user.node.certificate.action.view"/>
-									</button>
+									</a>
 								</c:if>
 							</c:if>
 						</td>
@@ -70,6 +70,22 @@
 	 		<button type="submit" class="btn btn-primary"><fmt:message key='my-nodes.inviteNode'/></button>
 	 	</div>
 	 </form>
+	<div id="view-cert-modal" class="modal hide fade">
+	 	<div class="modal-header">
+	 		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	 		<h3><fmt:message key='my-nodes.cert.view.title'/></h3>
+	 	</div>
+	 	<div class="modal-body">
+	 		<p><fmt:message key='my-nodes-cert.view.intro'/></p>
+	 		<pre class="cert" id="modal-cert-container"></pre>
+	 	</div>
+	 	<div class="modal-footer">
+	 		<a href="#" class="btn" data-dismiss="modal" aria-hidden="true"><fmt:message key='close.label'/></a>
+	 		<a href="<c:url value='/u/sec/my-nodes/cert'/>?download=true&id=0" id="modal-cert-download" class="btn btn-primary">
+	 			<fmt:message key='my-nodes.cert.action.download'/>
+	 		</a>
+	 	</div>
+	 </div>
 </section>
 <c:if test="${fn:length(pendingUserNodeConfirmationsList) > 0}">
 	<section id="pending">

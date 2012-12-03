@@ -26,16 +26,23 @@ package net.solarnetwork.central.reg.web;
 
 import java.util.List;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.biz.AuthorizationException;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.domain.NetworkAssociation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
@@ -113,6 +120,44 @@ public class MyNodesController {
 	public String cancelConfirmation(@RequestParam(value = "id") Long userNodeConfirmationId) {
 		registrationBiz.cancelNodeAssociation(userNodeConfirmationId);
 		return "redirect:/u/sec/my-nodes";
+	}
+
+	/**
+	 * Get a certificate, either as a {@link UserNodeCertificate} object or the
+	 * PEM encoded value file attachment.
+	 * 
+	 * @param certId
+	 *        the ID of the certificate to get
+	 * @param download
+	 *        if TRUE, then download the certificate as a PEM file
+	 * @return the response data
+	 */
+	@RequestMapping("/cert")
+	@ResponseBody
+	public Object viewCert(@RequestParam("id") Long certId,
+			@RequestParam(value = "download", required = false) Boolean download) {
+		UserNodeCertificate cert = userBiz.getUserNodeCertificate(certId);
+		if ( cert == null ) {
+			throw new AuthorizationException(null, AuthorizationException.Reason.ACCESS_DENIED);
+		}
+		if ( !Boolean.TRUE.equals(download) ) {
+			return cert;
+		}
+
+		String pem = cert.getPEMValue();
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentLength(pem.length());
+		headers.setContentType(MediaType.parseMediaType("application/x-pem-file"));
+		headers.setLastModified(System.currentTimeMillis());
+		headers.setCacheControl("no-cache");
+
+		// TODO: i18n report file name, create WebUtilities method to encode file name properly
+		headers.set("Content-Disposition", "attachment; filename=solarnode-" + cert.getNode().getId()
+				+ ".pem");
+
+		return new ResponseEntity<String>(pem, headers, HttpStatus.OK);
+
 	}
 
 }

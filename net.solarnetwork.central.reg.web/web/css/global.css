@@ -6,3 +6,8 @@
 fieldset.review .uneditable-input {
 	color: black;
 }
+
+pre.cert {
+	font-size: 9px;
+	line-height: 11px;
+}
