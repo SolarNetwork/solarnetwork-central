@@ -152,7 +152,6 @@ public class MyNodesController {
 		headers.setLastModified(System.currentTimeMillis());
 		headers.setCacheControl("no-cache");
 
-		// TODO: i18n report file name, create WebUtilities method to encode file name properly
 		headers.set("Content-Disposition", "attachment; filename=solarnode-" + cert.getNode().getId()
 				+ ".pem");
 
