@@ -283,6 +283,41 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public UserNode getUserNode(Long userId, Long nodeId) throws AuthorizationException {
+		assert userId != null;
+		assert nodeId != null;
+		UserNode result = userNodeDao.get(nodeId);
+		if ( result == null ) {
+			throw new AuthorizationException(nodeId.toString(), Reason.UNKNOWN_OBJECT);
+		}
+		return result;
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public UserNode saveUserNode(UserNode entry) throws AuthorizationException {
+		assert entry != null;
+		assert entry.getNode() != null;
+		assert entry.getUser() != null;
+		if ( entry.getNode().getId() == null ) {
+			throw new AuthorizationException(null, Reason.UNKNOWN_OBJECT);
+		}
+		if ( entry.getUser().getId() == null ) {
+			throw new AuthorizationException(null, Reason.UNKNOWN_OBJECT);
+		}
+		UserNode entity = userNodeDao.get(entry.getNode().getId());
+		if ( entry.getName() != null ) {
+			entity.setName(entry.getName());
+		}
+		if ( entry.getDescription() != null ) {
+			entity.setDescription(entry.getDescription());
+		}
+		userNodeDao.store(entity);
+		return entity;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNodeConfirmation> getPendingUserNodeConfirmations(Long userId) {
 		User user = userDao.get(userId);
 		return userNodeConfirmationDao.findPendingConfirmationsForUser(user);

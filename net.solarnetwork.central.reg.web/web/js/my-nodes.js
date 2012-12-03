@@ -10,4 +10,14 @@ $(document).ready(function() {
 			$('#view-cert-modal').modal('show');
 		});
 	});
+	
+	$('#edit-node-modal').ajaxForm({
+		dataType: 'json',
+		success: function(json, status, xhr, form) {
+			form.modal('hide');
+		},
+		error: function(xhr, status, statusText) {
+			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-error', statusText);
+		}
+	});
 });

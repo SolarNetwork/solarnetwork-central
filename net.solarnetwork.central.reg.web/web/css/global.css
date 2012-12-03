@@ -11,3 +11,19 @@ pre.cert {
 	font-size: 9px;
 	line-height: 11px;
 }
+
+label {
+	font-weight: 700;
+}
+
+@media (min-width: 768px) {
+	#edit-node-modal {
+		width: 600px;
+	}
+	#edit-node-modal .form-horizontal .control-label {
+		width: 90px;
+	}
+	#edit-node-modal .form-horizontal .controls {
+		margin-left: 110px;
+	}
+}

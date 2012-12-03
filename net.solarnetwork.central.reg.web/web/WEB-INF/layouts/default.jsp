@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<%@page contentType="text/html" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <tiles:useAttribute name="navloc" scope="request"/>
 <html lang="en">
 	<tiles:insertAttribute name="head" />

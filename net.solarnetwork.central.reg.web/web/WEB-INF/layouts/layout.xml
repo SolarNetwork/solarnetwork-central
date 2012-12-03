@@ -13,4 +13,6 @@
 		<put-attribute name="footer" value="/WEB-INF/jsp/default-footer.jsp"/>
 	</definition>
 	
+	<definition name="ajaxLayout" template="/WEB-INF/layouts/ajax.jsp"/>
+	
 </tiles-definitions>

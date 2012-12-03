@@ -36,39 +36,45 @@ public class AuthorizationException extends RuntimeException {
 
 	/** Authorization exception reason. */
 	public enum Reason {
-		
+
 		/** Bad password. */
 		BAD_PASSWORD,
-		
+
 		/** Unknown email. */
 		UNKNOWN_EMAIL,
-		
+
 		/** Duplicate email. */
 		DUPLICATE_EMAIL,
-		
+
 		/** Registration not confirmed. */
 		REGISTRATION_NOT_CONFIRMED,
-		
+
 		/** Registration already confirmed. */
 		REGISTRATION_ALREADY_CONFIRMED,
-		
+
 		/** Forgotten password not confirmed. */
 		FORGOTTEN_PASSWORD_NOT_CONFIRMED,
-		
+
 		/** Access denied to something. */
 		ACCESS_DENIED,
-		
+
 		/** Access for anonymous users denied. */
 		ANONYMOUS_ACCESS_DENIED,
+
+		/** Access was requested to an unknown object. */
+		UNKNOWN_OBJECT,
 	}
-		
-	private Reason reason;
-	private String email;
-	
+
+	private final Reason reason;
+	private final String email;
+
 	/**
 	 * Construct authorization exception.
-	 * @param email the attempted login
-	 * @param reason the reason for the exception
+	 * 
+	 * @param email
+	 *        the attempted login
+	 * @param reason
+	 *        the reason for the exception
 	 */
 	public AuthorizationException(String email, Reason reason) {
 		this.reason = reason;
@@ -77,14 +83,16 @@ public class AuthorizationException extends RuntimeException {
 
 	/**
 	 * Get the attempted login.
+	 * 
 	 * @return login value
 	 */
 	public String getEmail() {
 		return email;
 	}
-	
+
 	/**
 	 * Get the authorization exception reason.
+	 * 
 	 * @return reason
 	 */
 	public Reason getReason() {
@@ -93,7 +101,7 @@ public class AuthorizationException extends RuntimeException {
 
 	@Override
 	public String getMessage() {
-		return (reason == null ? null : reason.toString() + " [" +email +"]");
+		return (reason == null ? null : reason.toString() + " [" + email + "]");
 	}
 
 }

@@ -39,6 +39,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -53,7 +55,7 @@ import org.springframework.web.servlet.ModelAndView;
  */
 @Controller
 @RequestMapping("/sec/my-nodes")
-public class MyNodesController {
+public class MyNodesController extends ControllerSupport {
 
 	public final UserBiz userBiz;
 	public final RegistrationBiz registrationBiz;
@@ -156,7 +158,19 @@ public class MyNodesController {
 				+ ".pem");
 
 		return new ResponseEntity<String>(pem, headers, HttpStatus.OK);
+	}
 
+	@RequestMapping(value = "/editNode", method = RequestMethod.GET)
+	public String editNodeView(@RequestParam("userId") Long userId, @RequestParam("nodeId") Long nodeId,
+			Model model) {
+		model.addAttribute("userNode", userBiz.getUserNode(userId, nodeId));
+		return "my-nodes/edit-node";
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/updateNode", method = RequestMethod.POST)
+	public UserNode editNodeSave(UserNode userNode, Errors userNodeErrors, Model model) {
+		return userBiz.saveUserNode(userNode);
 	}
 
 }

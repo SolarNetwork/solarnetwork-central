@@ -9,6 +9,10 @@
 		<put-attribute name="head" value="/WEB-INF/jsp/sec/my-nodes/head.jsp" />
 	</definition>
 	
+	<definition name="my-nodes/edit-node" extends="ajaxLayout">
+		<put-attribute name="body" value="/WEB-INF/jsp/sec/my-nodes/edit-node.jsp" />
+	</definition>
+	
 	<definition name="my-nodes/*" extends="myNodesLayout">
 		<put-attribute name="body" value="/WEB-INF/jsp/sec/my-nodes/{1}.jsp" />
 	</definition>

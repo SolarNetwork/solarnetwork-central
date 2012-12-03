@@ -14,6 +14,7 @@
 					<th><fmt:message key="user.node.name.label"/></th>
 					<th><fmt:message key="user.node.description.label"/></th>
 					<th><fmt:message key="user.node.certificate.label"/></th>
+					<th></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -42,17 +43,22 @@
 								</c:if>
 							</c:if>
 						</td>
+						<td>
+							<a data-toggle="modal" class="btn btn-small" 
+								href="<c:url value='/u/sec/my-nodes/editNode'/>?userId=${userNode.user.id}&nodeId=${userNode.node.id}"
+								data-target="#edit-node-modal"><fmt:message key='my-nodes.action.edit'/></a>
+						</td>
 					</tr>
 				</c:forEach>
 			</tbody>
 		</table>
 	</c:if>
-	<a class="btn btn-primary" href="#invite-modal" role="button" data-toggle="modal">
+	<a class="btn btn-primary" href="#invite-modal" data-toggle="modal">
 		<i class="icon-plus icon-white"></i> <fmt:message key='my-nodes.inviteNode'/>
 	</a>
 	<form id="invite-modal" class="modal hide fade" action="<c:url value='/u/sec/my-nodes/new'/>" method="post">
 	 	<div class="modal-header">
-	 		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 	 		<h3><fmt:message key='my-nodes.inviteNode'/></h3>
 	 	</div>
 	 	<div class="modal-body">
@@ -66,13 +72,13 @@
 	 		</div>
 	 	</div>
 	 	<div class="modal-footer">
-	 		<a href="#" class="btn" data-dismiss="modal" aria-hidden="true"><fmt:message key='close.label'/></a>
+	 		<a href="#" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></a>
 	 		<button type="submit" class="btn btn-primary"><fmt:message key='my-nodes.inviteNode'/></button>
 	 	</div>
-	 </form>
+	</form>
 	<div id="view-cert-modal" class="modal hide fade">
 	 	<div class="modal-header">
-	 		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 	 		<h3><fmt:message key='my-nodes.cert.view.title'/></h3>
 	 	</div>
 	 	<div class="modal-body">
@@ -80,12 +86,24 @@
 	 		<pre class="cert" id="modal-cert-container"></pre>
 	 	</div>
 	 	<div class="modal-footer">
-	 		<a href="#" class="btn" data-dismiss="modal" aria-hidden="true"><fmt:message key='close.label'/></a>
+	 		<a href="#" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></a>
 	 		<a href="<c:url value='/u/sec/my-nodes/cert'/>?download=true&id=0" id="modal-cert-download" class="btn btn-primary">
 	 			<fmt:message key='my-nodes.cert.action.download'/>
 	 		</a>
 	 	</div>
-	 </div>
+	</div>
+	<form id="edit-node-modal" class="modal dynamic hide fade" action="<c:url value='/u/sec/my-nodes/updateNode'/>" method="post">
+	 	<div class="modal-header">
+	 		<button type="button" class="close" data-dismiss="modal">&times;</button>
+	 		<h3><fmt:message key='my-nodes.edit-node.title'/></h3>
+	 	</div>
+	 	<div class="modal-body form-horizontal">
+	 	</div>
+	 	<div class="modal-footer">
+	 		<a href="#" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></a>
+	 		<button type="submit" class="btn btn-primary"><fmt:message key='save.label'/></button>
+	 	</div>
+	 </form>
 </section>
 <c:if test="${fn:length(pendingUserNodeConfirmationsList) > 0}">
 	<section id="pending">

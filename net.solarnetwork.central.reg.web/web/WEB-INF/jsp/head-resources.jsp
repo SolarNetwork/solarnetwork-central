@@ -6,6 +6,7 @@
 </pack:style>
 <pack:script> 
 	/js-lib/jquery-1.7.1.js
+	/js-lib/jquery.form.js
 	/js-lib/bootstrap.js
 	/js-lib/pbkdf2.js
 	/js/global.js

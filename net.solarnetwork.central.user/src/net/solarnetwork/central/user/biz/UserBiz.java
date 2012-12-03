@@ -25,6 +25,7 @@
 package net.solarnetwork.central.user.biz;
 
 import java.util.List;
+import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
@@ -49,7 +50,7 @@ public interface UserBiz {
 	 * @throws AuthorizationException
 	 *         if user not found or password does not match
 	 */
-	public User logonUser(String email, String password) throws AuthorizationException;
+	User logonUser(String email, String password) throws AuthorizationException;
 
 	/**
 	 * Get a User object by its ID.
@@ -58,7 +59,7 @@ public interface UserBiz {
 	 *        the ID of the User to get
 	 * @return the User, or <em>null</em> if not found
 	 */
-	public User getUser(Long id);
+	User getUser(Long id);
 
 	/**
 	 * Get a User object by its email.
@@ -67,16 +68,45 @@ public interface UserBiz {
 	 *        the email of the User to get
 	 * @return the User, or <em>null</em> if not found
 	 */
-	public User getUser(String email);
+	User getUser(String email);
 
 	/**
 	 * Get a list of nodes belonging to a specific user.
 	 * 
-	 * @param user
-	 *        the user to get the nodes for
+	 * @param userId
+	 *        the ID of the user to get the nodes for
 	 * @return list of UserNode objects, or an empty list if none found
 	 */
-	public List<UserNode> getUserNodes(Long userId);
+	List<UserNode> getUserNodes(Long userId);
+
+	/**
+	 * Get a specific node belonging to a specific user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the node for
+	 * @param nodeId
+	 *        the ID of the node to get
+	 * @return the matching UserNode object
+	 * @throws AuthorizationException
+	 *         if the user is not authorized to access the given node
+	 */
+	UserNode getUserNode(Long userId, Long nodeId) throws AuthorizationException;
+
+	/**
+	 * Update a specific node belonging to a specific user.
+	 * 
+	 * <p>
+	 * The {@link SolarNode#getId()} and {@link User#getId()} values are
+	 * expected to be set on the entry object.
+	 * </p>
+	 * 
+	 * @param userNodeEntry
+	 *        the UserNode data to save
+	 * @return the updated UserNode object
+	 * @throws AuthorizationException
+	 *         if the user is not authorized to access the given node
+	 */
+	UserNode saveUserNode(UserNode userNodeEntry) throws AuthorizationException;
 
 	/**
 	 * Get a list of pending node confirmations belonging to a specific user.
@@ -86,7 +116,7 @@ public interface UserBiz {
 	 * @return list of UserNodeConfirmation objects, or an empty list if none
 	 *         found
 	 */
-	public List<UserNodeConfirmation> getPendingUserNodeConfirmations(Long userId);
+	List<UserNodeConfirmation> getPendingUserNodeConfirmations(Long userId);
 
 	/**
 	 * Get a specific pending confirmation.
@@ -95,7 +125,7 @@ public interface UserBiz {
 	 *        the ID of the pending confirmation
 	 * @return the pending confirmation, or <em>null</em> if not found
 	 */
-	public UserNodeConfirmation getPendingUserNodeConfirmation(Long userNodeConfirmationId);
+	UserNodeConfirmation getPendingUserNodeConfirmation(Long userNodeConfirmationId);
 
 	/**
 	 * Get a specific UserNodeCertificate object.
@@ -104,6 +134,6 @@ public interface UserBiz {
 	 *        the cert ID
 	 * @return the certificate, or <em>null</em> if not available
 	 */
-	public UserNodeCertificate getUserNodeCertificate(Long certId);
+	UserNodeCertificate getUserNodeCertificate(Long certId);
 
 }
