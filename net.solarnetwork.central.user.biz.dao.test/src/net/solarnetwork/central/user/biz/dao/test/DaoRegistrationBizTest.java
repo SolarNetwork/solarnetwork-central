@@ -70,14 +70,15 @@ import org.junit.Test;
  */
 public class DaoRegistrationBizTest {
 
-	private final Long TEST_USER_ID = -1L;
-	private final Long TEST_CONF_ID = -2L;
-	private final Long TEST_NODE_ID = -3L;
-	private final Long TEST_LOC_ID = -4L;
-	private final Long TEST_CERT_ID = -5L;
-	private final String TEST_EMAIL = "test@localhost";
-	private final String TEST_SECURITY_PHRASE = "test phrase";
-	private final String TEST_CONF_KEY = "test conf key";
+	private static final Long TEST_USER_ID = -1L;
+	private static final Long TEST_CONF_ID = -2L;
+	private static final Long TEST_NODE_ID = -3L;
+	private static final Long TEST_LOC_ID = -4L;
+	private static final Long TEST_CERT_ID = -5L;
+	private static final String TEST_EMAIL = "test@localhost";
+	private static final String TEST_SECURITY_PHRASE = "test phrase";
+	private static final String TEST_CONF_KEY = "test conf key";
+	private static final String TEST_DN_FORMAT = "UID=%s, OU=Unit Test, O=SolarNetwork";
 
 	private SolarLocationDao solarLocationDao;
 	private SolarNodeDao nodeDao;
@@ -111,6 +112,7 @@ public class DaoRegistrationBizTest {
 		registrationBiz.setSolarLocationDao(solarLocationDao);
 		registrationBiz.setUserNodeCertificateDao(userNodeCertificateDao);
 		registrationBiz.setUserNodeDao(userNodeDao);
+		registrationBiz.setNetworkCertificateSubjectDNFormat(TEST_DN_FORMAT);
 	}
 
 	@Test
@@ -202,6 +204,8 @@ public class DaoRegistrationBizTest {
 
 		assertNotNull(cert);
 		assertNotNull(cert.getConfirmationKey());
+		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
+				cert.getNetworkCertificateSubjectDN());
 		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
 		assertNotNull(conf.getConfirmationDate());

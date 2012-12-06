@@ -130,6 +130,8 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 	private Period invitationExpirationPeriod = new Period(0, 0, 1, 0, 0, 0, 0, 0); // 1 week
 	private String defaultSolarLocationName = "Unknown";
 
+	private String networkCertificateSubjectDNFormat = "UID=%s,O=SolarNetwork";
+
 	private final Logger log = LoggerFactory.getLogger(DaoRegistrationBiz.class);
 
 	private User getCurrentUser() {
@@ -572,6 +574,8 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		details.setNetworkId(nodeId);
 		details.setConfirmationKey(cert.getConfirmationKey());
 		details.setNetworkCertificateStatus(cert.getStatus().getValue());
+		details.setNetworkCertificateSubjectDN(String.format(networkCertificateSubjectDNFormat,
+				nodeId.toString()));
 		return details;
 	}
 
@@ -672,6 +676,10 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 
 	public void setUserNodeCertificateDao(UserNodeCertificateDao userNodeCertificateDao) {
 		this.userNodeCertificateDao = userNodeCertificateDao;
+	}
+
+	public void setNetworkCertificateSubjectDNFormat(String networkCertificateSubjectDNFormat) {
+		this.networkCertificateSubjectDNFormat = networkCertificateSubjectDNFormat;
 	}
 
 }
