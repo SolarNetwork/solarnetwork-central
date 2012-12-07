@@ -2,12 +2,21 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:osgi="http://www.springframework.org/schema/osgi"
+	xmlns:osgix="http://www.springframework.org/schema/osgi-compendium"
 	xsi:schemaLocation="
 		http://www.springframework.org/schema/beans
 		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 		http://www.springframework.org/schema/osgi
-		http://www.springframework.org/schema/osgi/spring-osgi-1.2.xsd">
+		http://www.springframework.org/schema/osgi/spring-osgi-1.2.xsd
+		http://www.springframework.org/schema/osgi-compendium
+		http://www.springframework.org/schema/osgi-compendium/spring-osgi-compendium-1.2.xsd">
 
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.biz">
+		<prop key="RegistrationBiz.networkCertificateSubjectDNFormat">UID=%s,O=SolarNetwork</prop>
+	</osgix:cm-properties>
+	
 	<!-- Service References -->
 	
 	<osgi:reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
