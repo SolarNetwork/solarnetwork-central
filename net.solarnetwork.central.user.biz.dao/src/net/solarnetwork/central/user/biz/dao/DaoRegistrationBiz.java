@@ -430,7 +430,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		details.setPort(ident.getPort());
 		details.setForceTLS(ident.isForceTLS());
 		details.setIdentityKey(ident.getIdentityKey());
-		details.setTermsOfService(ident.getTermsOfService());
+		//details.setTermsOfService(ident.getTermsOfService());
 		details.setUsername(user.getEmail());
 		details.setExpiration(now.plus(invitationExpirationPeriod).toDate());
 		String confKey = DigestUtils.sha256Hex(String.valueOf(now.getMillis())
