@@ -32,7 +32,6 @@ import net.solarnetwork.central.instructor.dao.ibatis.IbatisNodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
-
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,10 +45,11 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class IbatisNodeInstructionDaoTest extends AbstractIbatisDaoTestSupport {
 
-	@Autowired private IbatisNodeInstructionDao dao;
-	
+	@Autowired
+	private IbatisNodeInstructionDao dao;
+
 	private NodeInstruction lastDatum;
-	
+
 	@Before
 	public void setUp() throws Exception {
 		lastDatum = null;
@@ -63,7 +63,7 @@ public class IbatisNodeInstructionDaoTest extends AbstractIbatisDaoTestSupport {
 		datum.setNodeId(TEST_NODE_ID);
 		datum.setState(InstructionState.Queued);
 		datum.setTopic("Test Topic");
-		
+
 		datum.addParameter("Test param 1", "Test value 1");
 		datum.addParameter("Test param 2", "Test value 2");
 
@@ -82,11 +82,11 @@ public class IbatisNodeInstructionDaoTest extends AbstractIbatisDaoTestSupport {
 		assertEquals(src.getTopic(), entity.getTopic());
 	}
 
-    @Test
+	@Test
 	public void getByPrimaryKey() {
-    	storeNew();
-    	NodeInstruction datum = dao.get(lastDatum.getId());
-    	validate(lastDatum, datum);
+		storeNew();
+		NodeInstruction datum = dao.get(lastDatum.getId());
+		validate(lastDatum, datum);
 	}
 
 	@Test
@@ -99,16 +99,31 @@ public class IbatisNodeInstructionDaoTest extends AbstractIbatisDaoTestSupport {
 		NodeInstruction datum2 = dao.get(datum.getId());
 		validate(datum, datum2);
 	}
-	
+
 	@Test
-	public void findByName() {
+	public void findByNodeId() {
+		final Long node2Id = TEST_NODE_ID - 1L;
+		setupTestNode(node2Id);
+
 		storeNew();
+
+		// store a second for a different node ID, to make sure filter working
+		final NodeInstruction datum = new NodeInstruction();
+		datum.setCreated(new DateTime());
+		datum.setInstructionDate(new DateTime());
+		datum.setNodeId(node2Id);
+		datum.setState(InstructionState.Queued);
+		datum.setTopic("Test Topic");
+		final Long instr2Id = dao.store(datum);
+		assertNotNull(instr2Id);
+		datum.setId(instr2Id);
+
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeId(TEST_NODE_ID);
 		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
 		assertNotNull(matches);
 		assertEquals(Long.valueOf(1L), matches.getTotalResults());
-		assertEquals(Long.valueOf(1L), matches.getReturnedResultCount());
+		assertEquals(Integer.valueOf(1), matches.getReturnedResultCount());
 		assertNotNull(matches.getResults());
 		int count = 0;
 		EntityMatch m = null;
@@ -119,4 +134,5 @@ public class IbatisNodeInstructionDaoTest extends AbstractIbatisDaoTestSupport {
 		assertEquals(1, count);
 		assertEquals(lastDatum.getId(), m.getId());
 	}
+
 }

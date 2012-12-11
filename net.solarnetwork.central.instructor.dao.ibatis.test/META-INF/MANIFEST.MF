@@ -12,7 +12,7 @@ Import-Package:
  net.solarnetwork.central.dao.ibatis;version="[1.4,2.0)",
  net.solarnetwork.central.domain;version="[1.8,2.0)",
  net.solarnetwork.central.instructor.dao;version="[1.0,2.0)",
- net.solarnetwork.central.instructor.dao.ibatis;version="[1.0,2.0)",
+ net.solarnetwork.central.instructor.dao.ibatis;version="[1.0.1,2.0)",
  net.solarnetwork.central.instructor.domain;version="[1.0,2.0)",
  net.solarnetwork.central.instructor.support;version="[1.0,2.0)",
  net.solarnetwork.central.test;version="[1.0,2.0)",

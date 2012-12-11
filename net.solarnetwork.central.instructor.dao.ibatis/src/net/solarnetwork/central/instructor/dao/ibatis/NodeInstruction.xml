@@ -82,9 +82,9 @@
 		LEFT OUTER JOIN 
 			solarnet.sn_node_instruction_param nip ON nip.instr_id = ni.id
 		<dynamic prepend="WHERE">
-			<isPropertyAvailable prepend="AND" property="filter.nodeId">
+			<isNotNull prepend="AND" property="filter.nodeId">
 				ni.node_id = #filter.nodeId#
-			</isPropertyAvailable>
+			</isNotNull>
 			<isNotNull prepend="AND" property="filter.state">
 				ni.deliver_state = CAST(#filter.state# AS solarnet.instruction_delivery_state)
 			</isNotNull>
