@@ -8,9 +8,11 @@
 		http://www.springframework.org/schema/security
 		http://www.springframework.org/schema/security/spring-security-3.1.xsd">
 
+	<http security="none" pattern="/identity.do"/>
+	
 	<!-- Configure Spring Security -->
 	<http auto-config="false" create-session="never">
-	    <intercept-url pattern="/u/**" access="ROLE_NODE" requires-channel="https"/>
+	    <intercept-url pattern="/**" access="ROLE_NODE" requires-channel="https"/>
 		<x509 subject-principal-regex="UID=(.*?)," user-service-ref="nodeUserService"/>
 	</http>
 

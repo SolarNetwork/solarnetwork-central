@@ -19,10 +19,10 @@
 
   $Id: web.xml,v 1.58 2007/08/27 04:04:21 matt Exp $
 -->
-<web-app xmlns="http://java.sun.com/xml/ns/j2ee"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
-    version="2.4">
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	version="2.5">
 
 	<display-name>SolarNetwork Web Data Collection</display-name>
     <description>SolarNetwork Web Data Collection Server</description>
@@ -72,7 +72,7 @@
 	
 	<filter-mapping>
 		<filter-name>Compression Filter</filter-name>
-		<url-pattern>*.do</url-pattern>
+		<url-pattern>/*</url-pattern>
 	</filter-mapping>
 	
 	<!-- Character encoding mappings -->
@@ -96,31 +96,17 @@
 	</servlet>
 	
 	<servlet-mapping>
-		<servlet-name>solarin</servlet-name>
-		<url-pattern>*.do</url-pattern>
+		<servlet-name>jsp</servlet-name>
+		<url-pattern>/WEB-INF/jsp/*</url-pattern>
 	</servlet-mapping>
-	
-	<mime-mapping>
-		<extension>xsd</extension>
-		<mime-type>text/xml</mime-type>
-	</mime-mapping>
-	<mime-mapping>
-		<extension>wsdl</extension>
-		<mime-type>text/xml</mime-type>
-	</mime-mapping>
+
+	<servlet-mapping>
+		<servlet-name>solarin</servlet-name>
+		<url-pattern>/*</url-pattern>
+	</servlet-mapping>
 	
 	<welcome-file-list>
 		<welcome-file>index.jsp</welcome-file>
 	</welcome-file-list>
 
-	<security-constraint>
-		<web-resource-collection>
-			<web-resource-name>SolarIn</web-resource-name>
-			<url-pattern>/u/*</url-pattern>
-		</web-resource-collection>
-		<user-data-constraint>
-			<transport-guarantee>CONFIDENTIAL</transport-guarantee>
-		</user-data-constraint>
-	</security-constraint>
-	
 </web-app>
