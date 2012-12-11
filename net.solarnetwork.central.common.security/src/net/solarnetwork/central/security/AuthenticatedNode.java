@@ -36,18 +36,20 @@ import org.springframework.security.core.userdetails.UserDetails;
  * @author matt
  * @version $Revision$
  */
-public class AuthenticatedNode implements UserDetails {
+public class AuthenticatedNode implements UserDetails, SecurityNode {
 
-	private static final long serialVersionUID = -7727481811519239906L;
+	private static final long serialVersionUID = -7909158037651579050L;
 
-	private Long nodeId;
-	private Collection<GrantedAuthority> authorities;
+	private final Long nodeId;
+	private final Collection<GrantedAuthority> authorities;
 
 	/**
 	 * Construct from existing {@link User} and a node ID.
 	 * 
-	 * @param user the user
-	 * @param nodeId the node ID
+	 * @param user
+	 *        the user
+	 * @param nodeId
+	 *        the node ID
 	 */
 	public AuthenticatedNode(Long nodeId, Collection<GrantedAuthority> auths) {
 		this.nodeId = nodeId;
@@ -57,6 +59,7 @@ public class AuthenticatedNode implements UserDetails {
 	/**
 	 * @return the nodeId
 	 */
+	@Override
 	public Long getNodeId() {
 		return nodeId;
 	}

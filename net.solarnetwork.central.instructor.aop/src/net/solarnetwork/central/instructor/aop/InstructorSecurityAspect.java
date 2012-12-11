@@ -23,6 +23,8 @@
 package net.solarnetwork.central.instructor.aop;
 
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
+import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.AuthorizationException;
@@ -82,16 +84,26 @@ public class InstructorSecurityAspect {
 	}
 
 	/**
-	 * Allow the current user access to a report if they are a member of the
-	 * report team, including guests.
+	 * Allow the current user (or current node) access to node instructions.
 	 * 
-	 * @param reportId
-	 *        the ID of the report to verify
+	 * @param nodeId
+	 *        the ID of the node to verify
 	 */
 	@Before("instructionsForNode(nodeId) || queueInstruction(nodeId)")
 	public void userNodeAccessCheck(Long nodeId) {
 		if ( nodeId == null ) {
 			return;
+		}
+		try {
+			SecurityNode node = SecurityUtils.getCurrentNode();
+			if ( !nodeId.equals(node.getNodeId()) ) {
+				log.warn("Access DENIED to node {} for node {}; wrong node", nodeId, node.getNodeId());
+				throw new AuthorizationException(node.getNodeId().toString(),
+						AuthorizationException.Reason.ACCESS_DENIED);
+			}
+			return;
+		} catch ( SecurityException e ) {
+			// not a node... continue
 		}
 		final SecurityUser actor = SecurityUtils.getCurrentUser();
 		if ( actor == null ) {

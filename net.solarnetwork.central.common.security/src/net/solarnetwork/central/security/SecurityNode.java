@@ -1,5 +1,5 @@
 /* ==================================================================
- * SecurityUser.java - Nov 22, 2012 8:57:58 AM
+ * SecurityNode.java - Dec 11, 2012 1:34:43 PM
  * 
  * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
@@ -23,32 +23,18 @@
 package net.solarnetwork.central.security;
 
 /**
- * API for user details.
+ * API for an authenticated node security details.
  * 
  * @author matt
  * @version 1.0
  */
-public interface SecurityUser extends SecurityActor {
+public interface SecurityNode extends SecurityActor {
 
 	/**
-	 * Get a friendly display name.
+	 * Get the node's ID.
 	 * 
-	 * @return display name
+	 * @return the ID
 	 */
-	String getDisplayName();
-
-	/**
-	 * Get the email used to authenticate the user with.
-	 * 
-	 * @return email
-	 */
-	String getEmail();
-
-	/**
-	 * Get a unique user ID.
-	 * 
-	 * @return the user ID
-	 */
-	Long getUserId();
+	Long getNodeId();
 
 }

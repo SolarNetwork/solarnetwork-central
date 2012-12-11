@@ -1,5 +1,5 @@
 /* ==================================================================
- * SecurityUser.java - Nov 22, 2012 8:57:58 AM
+ * SecurityActor.java - Dec 11, 2012 1:36:04 PM
  * 
  * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
@@ -23,32 +23,11 @@
 package net.solarnetwork.central.security;
 
 /**
- * API for user details.
+ * Marker interface for other authenticated detail interfaces to extend.
  * 
  * @author matt
  * @version 1.0
  */
-public interface SecurityUser extends SecurityActor {
-
-	/**
-	 * Get a friendly display name.
-	 * 
-	 * @return display name
-	 */
-	String getDisplayName();
-
-	/**
-	 * Get the email used to authenticate the user with.
-	 * 
-	 * @return email
-	 */
-	String getEmail();
-
-	/**
-	 * Get a unique user ID.
-	 * 
-	 * @return the user ID
-	 */
-	Long getUserId();
+public interface SecurityActor {
 
 }

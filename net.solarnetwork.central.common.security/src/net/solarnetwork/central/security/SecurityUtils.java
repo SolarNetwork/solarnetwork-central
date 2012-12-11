@@ -50,7 +50,8 @@ public class SecurityUtils {
 	 * @param user
 	 *        the user to authenticate
 	 */
-	public static void authenticate(AuthenticationManager authenticationManager, Object username, Object password) {
+	public static void authenticate(AuthenticationManager authenticationManager, Object username,
+			Object password) {
 		try {
 			UsernamePasswordAuthenticationToken usernameAndPassword = new UsernamePasswordAuthenticationToken(
 					username, password);
@@ -83,7 +84,7 @@ public class SecurityUtils {
 	 * @throws SecurityException
 	 *         if the user is not available
 	 */
-	public static SecurityUser getCurrentUser() {
+	public static SecurityUser getCurrentUser() throws SecurityException {
 		Authentication auth = getCurrentAuthentication();
 		if ( auth != null && auth.getPrincipal() instanceof SecurityUser ) {
 			return (SecurityUser) auth.getPrincipal();
@@ -92,5 +93,22 @@ public class SecurityUtils {
 		}
 		throw new SecurityException("User not available");
 	}
-	
+
+	/**
+	 * Get the current {@link SecurityNode}.
+	 * 
+	 * @return the current node, never <em>null</em>
+	 * @throws SecurityException
+	 *         if the node is not available
+	 */
+	public static SecurityNode getCurrentNode() throws SecurityException {
+		Authentication auth = getCurrentAuthentication();
+		if ( auth != null && auth.getPrincipal() instanceof SecurityNode ) {
+			return (SecurityNode) auth.getPrincipal();
+		} else if ( auth != null && auth.getDetails() instanceof SecurityNode ) {
+			return (SecurityNode) auth.getDetails();
+		}
+		throw new SecurityException("Node not available");
+	}
+
 }
