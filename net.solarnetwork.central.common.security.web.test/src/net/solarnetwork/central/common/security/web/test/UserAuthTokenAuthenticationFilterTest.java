@@ -236,6 +236,22 @@ public class UserAuthTokenAuthenticationFilterTest {
 	}
 
 	@Test
+	public void simplePathWithXDate() throws ServletException, IOException {
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		final Date now = new Date();
+		request.addHeader("X-SN-Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderValue(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		filterChain.doFilter(same(request), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+		verify(filterChain, userDetailsService);
+		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		validateAuthentication();
+	}
+
+	@Test
 	public void pathWithQueryParams() throws ServletException, IOException {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
 		Map<String, String> params = new HashMap<String, String>();
