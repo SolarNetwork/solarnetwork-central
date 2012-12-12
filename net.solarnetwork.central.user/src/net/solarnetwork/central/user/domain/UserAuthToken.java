@@ -33,9 +33,8 @@ import org.joda.time.DateTime;
  */
 public class UserAuthToken extends BaseStringEntity {
 
-	private static final long serialVersionUID = -4377078190708328898L;
+	private static final long serialVersionUID = -2934706203308437032L;
 
-	private String authToken;
 	private Long userId;
 	private String authSecret;
 	private UserAuthTokenStatus status;
@@ -59,7 +58,7 @@ public class UserAuthToken extends BaseStringEntity {
 	 */
 	public UserAuthToken(String token, Long userId, String secret) {
 		super();
-		setAuthToken(token);
+		setId(token);
 		setUserId(userId);
 		setAuthSecret(secret);
 		setStatus(UserAuthTokenStatus.v);
@@ -67,11 +66,11 @@ public class UserAuthToken extends BaseStringEntity {
 	}
 
 	public String getAuthToken() {
-		return authToken;
+		return getId();
 	}
 
 	public void setAuthToken(String authToken) {
-		this.authToken = authToken;
+		setId(authToken);
 	}
 
 	public Long getUserId() {

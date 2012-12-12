@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserAuthTokenDao.java - Dec 12, 2012 2:05:11 PM
+ * IbatisUserAuthTokenDao.java - Dec 12, 2012 4:10:06 PM
  * 
  * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
@@ -20,28 +20,37 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dao;
+package net.solarnetwork.central.user.dao.ibatis;
 
 import java.util.List;
-import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.dao.ibatis.IbatisBaseGenericDaoSupport;
+import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 
 /**
- * DAO API for {@link UserAuthToken} entities.
+ * iBATIS implementation of {@link UserAuthTokenDao}.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserAuthTokenDao extends GenericDao<UserAuthToken, String> {
+public class IbatisUserAuthTokenDao extends IbatisBaseGenericDaoSupport<UserAuthToken, String> implements
+		UserAuthTokenDao {
+
+	/** The query name used for {@link #findUserAuthTokensForUser(Long)}. */
+	public static final String QUERY_FOR_USER_ID = "find-UserAuthToken-for-UserID";
 
 	/**
-	 * Find a list of all UserNode objects for a particular user.
-	 * 
-	 * @param user
-	 *        the user ID to get all tokens for
-	 * @return list of {@link UserAuthToken} objects, or an empty list if none
-	 *         found
+	 * Default constructor.
 	 */
-	List<UserAuthToken> findUserAuthTokensForUser(Long userId);
+	public IbatisUserAuthTokenDao() {
+		super(UserAuthToken.class, String.class);
+	}
+
+	@Override
+	public List<UserAuthToken> findUserAuthTokensForUser(Long userId) {
+		@SuppressWarnings("unchecked")
+		List<UserAuthToken> results = getSqlMapClientTemplate().queryForList(QUERY_FOR_USER_ID, userId);
+		return results;
+	}
 
 }

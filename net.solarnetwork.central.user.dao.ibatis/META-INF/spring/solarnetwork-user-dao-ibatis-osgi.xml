@@ -17,6 +17,8 @@
 	
 	<osgi:service ref="userDao" interface="net.solarnetwork.central.user.dao.UserDao" ranking="1"/>
 
+	<osgi:service ref="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao" ranking="1"/>
+
 	<osgi:service ref="userNodeCertificateDao" interface="net.solarnetwork.central.user.dao.UserNodeCertificateDao" ranking="1"/>
 
 	<osgi:service ref="userNodeConfirmationDao" interface="net.solarnetwork.central.user.dao.UserNodeConfirmationDao" ranking="1"/>
