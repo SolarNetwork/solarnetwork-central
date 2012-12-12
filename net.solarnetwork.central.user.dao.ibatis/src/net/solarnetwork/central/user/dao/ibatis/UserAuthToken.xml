@@ -17,11 +17,16 @@
 			)
 	</insert>
 
+	<!-- Notice we include the user_id in the update clause, because application
+	     logic attempts to update first, then insert, and we don't want two 
+	     random auth_token values that collide from two different users to 
+	     write over each other! -->
 	<update id="update-UserAuthToken" parameterClass="UserAuthToken">
 		UPDATE solaruser.user_auth_token SET
 			status = #status#
 		WHERE
 			auth_token = #id#
+			AND user_id = #userId#
 	</update>
 
 	<update id="delete-UserAuthToken" parameterClass="string">

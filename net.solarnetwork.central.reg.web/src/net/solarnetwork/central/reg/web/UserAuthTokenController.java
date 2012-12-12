@@ -22,8 +22,17 @@
 
 package net.solarnetwork.central.reg.web;
 
+import java.util.List;
+import net.solarnetwork.central.security.SecurityUser;
+import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.biz.UserBiz;
+import net.solarnetwork.central.user.domain.UserAuthToken;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * Controller for user authorization ticket management.
@@ -34,5 +43,28 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/sec/auth-tokens")
 public class UserAuthTokenController extends ControllerSupport {
+
+	private final UserBiz userBiz;
+
+	@Autowired
+	public UserAuthTokenController(UserBiz userBiz) {
+		super();
+		this.userBiz = userBiz;
+	}
+
+	@RequestMapping(value = "", method = RequestMethod.GET)
+	public String view(Model model) {
+		final SecurityUser user = SecurityUtils.getCurrentUser();
+		List<UserAuthToken> tokens = userBiz.getAllUserAuthTokens(user.getUserId());
+		model.addAttribute("userAuthTokens", tokens);
+		return "auth-tokens/view";
+	}
+
+	@RequestMapping(value = "/generateUser", method = RequestMethod.POST)
+	@ResponseBody
+	public UserAuthToken generateUserToken() {
+		final SecurityUser user = SecurityUtils.getCurrentUser();
+		return userBiz.generateUserAuthToken(user.getUserId());
+	}
 
 }

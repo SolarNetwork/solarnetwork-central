@@ -205,28 +205,35 @@ public class DaoUserBiz implements UserBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public UserAuthToken generateUserAuthToken(Long userId) {
 		assert userId != null;
-		String tok = generateRandomAuthToken();
 		SecureRandom rnd;
 		try {
 			rnd = SecureRandom.getInstance("SHA1PRNG");
 		} catch ( NoSuchAlgorithmException e ) {
 			throw new RuntimeException("Unable to generate auth token", e);
 		}
-		int randomLength = 16 + rnd.nextInt(16);
+		int randomLength = 8 + rnd.nextInt(8);
 		byte[] secret = new byte[randomLength];
 		rnd.nextBytes(secret);
 		String secretString = new String(Hex.encodeHex(secret));
-		UserAuthToken authToken = new UserAuthToken(tok, userId, secretString);
-		userAuthTokenDao.store(authToken);
-		return authToken;
+		final int maxAttempts = 50;
+		for ( int i = maxAttempts; i > 0; i-- ) {
+			String tok = generateRandomAuthToken();
+			// verify token doesn't already exist
+			if ( userAuthTokenDao.get(tok) == null ) {
+				UserAuthToken authToken = new UserAuthToken(tok, userId, secretString);
+				userAuthTokenDao.store(authToken);
+				return authToken;
+			}
+		}
+		log.error("Failed to generate unique token after {} attempts", maxAttempts);
+		throw new RuntimeException("Failed to generate unique token");
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserAuthToken> getAllUserAuthTokens(Long userId) {
 		assert userId != null;
-		// TODO Auto-generated method stub
-		return null;
+		return userAuthTokenDao.findUserAuthTokensForUser(userId);
 	}
 
 	public void setUserDao(UserDao userDao) {

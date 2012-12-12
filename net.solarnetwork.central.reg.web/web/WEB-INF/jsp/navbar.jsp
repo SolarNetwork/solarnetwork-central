@@ -15,6 +15,9 @@
 				<li  ${navloc == 'my-nodes' ? 'class="active"' : ''}>
 					<a href="<c:url value='/u/sec/my-nodes'/>"><fmt:message key="link.my-nodes"/></a>
 				</li>
+				<li  ${navloc == 'auth-tokens' ? 'class="active"' : ''}>
+					<a href="<c:url value='/u/sec/auth-tokens'/>"><fmt:message key="link.auth-tokens"/></a>
+				</li>
 			</sec:authorize>
  		</ul>
         
