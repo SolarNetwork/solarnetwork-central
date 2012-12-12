@@ -24,127 +24,30 @@
 
 package net.solarnetwork.central.dao.ibatis;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import net.solarnetwork.central.dao.FilterableDao;
-import net.solarnetwork.central.dao.SortDescriptor;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.support.BasicFilterResults;
 
 /**
- * Abstract base Ibatis FilterableDao for DRAS support.
+ * Abstract base iBATIS FilterableDao for the common case of Long primary keys.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
-public abstract class IbatisFilterableDaoSupport<T 
-extends Entity<Long>, M extends FilterMatch<Long>, F extends Filter> 
-extends IbatisGenericDaoSupport<T> implements FilterableDao<M, Long, F> {
+public abstract class IbatisFilterableDaoSupport<T extends Entity<Long>, M extends FilterMatch<Long>, F extends Filter>
+		extends IbatisBaseFilterableDaoSupport<T, M, F, Long> {
 
-	/** A query property for a general Filter object value. */
-	public static final String FILTER_PROPERTY = "filter";
-	
-	private final Class<? extends M> filterResultClass;
-	
 	/**
 	 * Constructor.
 	 * 
-	 * @param domainClass the domain class
+	 * @param domainClass
+	 *        the domain class
+	 * @param filterResultClass
+	 *        the filter result class
 	 */
-	public IbatisFilterableDaoSupport(Class<? extends T> domainClass, 
+	public IbatisFilterableDaoSupport(Class<? extends T> domainClass,
 			Class<? extends M> filterResultClass) {
-		super(domainClass);
-		this.filterResultClass = filterResultClass;
-	}
-	
-	/**
-	 * Append to a space-delimited string buffer.
-	 * 
-	 * <p>This is designed with full-text search in mind, for building
-	 * up a query string.</p>
-	 * 
-	 * @param value the value to append if not empty
-	 * @param buf the buffer to append to
-	 * @return <em>true</em> if {@code value} was appended to {@code buf}
-	 */
-	protected boolean spaceAppend(String value, StringBuilder buf) {
-		if ( value == null ) {
-			return false;
-		}
-		value = value.trim();
-		if ( value.length() < 1 ) {
-			return false;
-		}
-		if ( buf.length() > 0 ) {
-			buf.append(' ');
-		}
-		buf.append(value);
-		return true;
+		super(domainClass, Long.class, filterResultClass);
 	}
 
-	/**
-	 * Get the filter query name for a given domain.
-	 * 
-	 * @param filterDomain the domain
-	 * @return query name
-	 */
-	protected String getFilteredQuery(String filterDomain, F filter) {
-		return getQueryForAll()+"-"+filterDomain;
-	}
-	
-	/**
-	 * Callback to alter the default SQL properties set up by 
-	 * {@link #findFiltered(Filter, List, Integer, Integer)}.
-	 * 
-	 * @param filter the current filter
-	 * @param sqlProps the properties
-	 */
-	protected void postProcessFilterProperties(F filter, Map<String, Object> sqlProps) {
-		// nothing here, extending classes can implement
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public FilterResults<M> findFiltered(F filter, List<SortDescriptor> sortDescriptors, 
-			Integer offset, Integer max) {
-		final String filterDomain = getMemberDomainKey(filterResultClass);
-		final String query = getFilteredQuery(filterDomain, filter);
-		Map<String, Object> sqlProps = new HashMap<String, Object>(1);
-		sqlProps.put(FILTER_PROPERTY, filter);
-		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
-			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
-		}
-		postProcessFilterProperties(filter, sqlProps);
-		
-		// attempt count first, if max specified as -1
-		Long totalCount = null;
-		if ( max != null && max.intValue() == -1 ) {
-			final String countQuery = query+"-count";
-			Number n = null;
-			n = (Number)getSqlMapClientTemplate().queryForObject(
-					countQuery, sqlProps, Number.class);
-			if ( n != null ) {
-				totalCount = n.longValue();
-			}
-		}
-		
-		List<M> rows = null;
-		if ( offset != null && offset >= 0 && max != null && max > 0 ) {
-			rows = getSqlMapClientTemplate().queryForList(query, sqlProps, offset, max);
-		} else {
-			rows = getSqlMapClientTemplate().queryForList(query, sqlProps);
-		}
-		
-		BasicFilterResults<M> results = new BasicFilterResults<M>(rows, 
-				(totalCount != null ? totalCount : Long.valueOf(rows.size())),
-				offset, rows.size());
-		
-		return results;
-	}
-	
 }
