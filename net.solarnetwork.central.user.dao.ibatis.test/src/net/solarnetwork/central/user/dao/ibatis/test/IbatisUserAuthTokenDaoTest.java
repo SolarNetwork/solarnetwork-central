@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.dao.ibatis.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import java.util.List;
 import net.solarnetwork.central.dao.ibatis.IbatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.dao.ibatis.IbatisUserAuthTokenDao;
@@ -49,6 +50,8 @@ public class IbatisUserAuthTokenDaoTest extends AbstractIbatisUserDaoTestSupport
 
 	private static final String TEST_TOKEN = "public.token12345678";
 	private static final String TEST_SECRET = "secret.token12345678";
+	private static final String TEST_TOKEN2 = "public.token12345679";
+	private static final String TEST_TOKEN3 = "public.token12345677";
 
 	@Autowired
 	private IbatisSolarNodeDao solarNodeDao;
@@ -116,6 +119,27 @@ public class IbatisUserAuthTokenDaoTest extends AbstractIbatisUserDaoTestSupport
 		userAuthTokenDao.delete(token);
 		token = userAuthTokenDao.get(token.getId());
 		assertNull(token);
+	}
+
+	@Test
+	public void findForUser() {
+		storeNew();
+		UserAuthToken authToken2 = new UserAuthToken(TEST_TOKEN2, this.user.getId(), TEST_SECRET);
+		userAuthTokenDao.store(authToken2);
+		User user2 = createNewUser(TEST_EMAIL + "2");
+		UserAuthToken authToken3 = new UserAuthToken(TEST_TOKEN3, user2.getId(), TEST_SECRET);
+		userAuthTokenDao.store(authToken3);
+
+		List<UserAuthToken> results = userAuthTokenDao.findUserAuthTokensForUser(this.user.getId());
+		assertNotNull(results);
+		assertEquals(2, results.size());
+		assertEquals(this.userAuthToken, results.get(0));
+		assertEquals(authToken2, results.get(1));
+
+		results = userAuthTokenDao.findUserAuthTokensForUser(user2.getId());
+		assertNotNull(results);
+		assertEquals(1, results.size());
+		assertEquals(authToken3, results.get(0));
 	}
 
 }
