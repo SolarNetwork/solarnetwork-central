@@ -24,7 +24,7 @@
 			auth_token = #id#
 	</update>
 
-	<update id="delete-UserAuthToken" parameterClass="long">
+	<update id="delete-UserAuthToken" parameterClass="string">
 		DELETE FROM solaruser.user_auth_token
 		WHERE
 			auth_token = #id#

@@ -58,11 +58,7 @@ public class IbatisUserAuthTokenDao extends IbatisBaseGenericDaoSupport<UserAuth
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public String store(UserAuthToken datum) {
-		// try update, then insert if that fails
-		if ( getSqlMapClientTemplate().update(getUpdate(), datum) == 0 ) {
-			preprocessInsert(datum);
-			getSqlMapClientTemplate().insert(getInsert(), datum);
-		}
-		return datum.getId();
+		return handleAssignedPrimaryKeyStore(datum);
 	}
+
 }

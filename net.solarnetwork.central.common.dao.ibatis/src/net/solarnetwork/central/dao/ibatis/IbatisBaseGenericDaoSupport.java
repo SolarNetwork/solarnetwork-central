@@ -265,6 +265,31 @@ public abstract class IbatisBaseGenericDaoSupport<T extends Entity<PK>, PK exten
 	}
 
 	/**
+	 * Supporting method for handling the {@link #store(Entity)} method for
+	 * entities that use assigned primary keys, where the default logic of
+	 * handling insert versus update will not work.
+	 * 
+	 * <p>
+	 * This implementation attempts to update the given entity first. If that
+	 * does not actually update any rows, {@link #preprocessInsert(Entity)} is
+	 * called, followed by an insert.
+	 * </p>
+	 * 
+	 * @param datum
+	 *        the datum to store
+	 * @return the primary key
+	 */
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	protected PK handleAssignedPrimaryKeyStore(T datum) {
+		// try update, then insert if that fails
+		if ( getSqlMapClientTemplate().update(getUpdate(), datum) == 0 ) {
+			preprocessInsert(datum);
+			getSqlMapClientTemplate().insert(getInsert(), datum);
+		}
+		return datum.getId();
+	}
+
+	/**
 	 * Process a new unsaved entity for persisting.
 	 * 
 	 * <p>

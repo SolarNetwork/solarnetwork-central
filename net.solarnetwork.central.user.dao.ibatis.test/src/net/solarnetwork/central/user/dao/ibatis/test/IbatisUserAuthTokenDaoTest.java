@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao.ibatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import net.solarnetwork.central.dao.ibatis.IbatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.dao.ibatis.IbatisUserAuthTokenDao;
@@ -97,6 +98,24 @@ public class IbatisUserAuthTokenDaoTest extends AbstractIbatisUserDaoTestSupport
 		storeNew();
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
 		validate(this.userAuthToken, token);
+	}
+
+	@Test
+	public void update() {
+		storeNew();
+		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
+		token.setStatus(UserAuthTokenStatus.z);
+		UserAuthToken updated = userAuthTokenDao.get(userAuthTokenDao.store(token));
+		validate(token, updated);
+	}
+
+	@Test
+	public void delete() {
+		storeNew();
+		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
+		userAuthTokenDao.delete(token);
+		token = userAuthTokenDao.get(token.getId());
+		assertNull(token);
 	}
 
 }
