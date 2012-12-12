@@ -26,7 +26,11 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Set;
+import java.util.TimeZone;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.Filter;
@@ -59,7 +63,12 @@ import org.springframework.web.filter.GenericFilterBean;
  * This authentication method has been modeled after the Amazon Web Service
  * authentication scheme used by the S3 service
  * (http://docs.amazonwebservices.com
- * /AmazonS3/latest/dev/S3_Authentication2.html)
+ * /AmazonS3/latest/dev/S3_Authentication2.html). The auth token is fixed at
+ * {@link #AUTH_TOKEN_LENGTH} characters. All query parameters (GET or POST) are
+ * added to the request path in the message; parameters are sorted
+ * lexicographically and then their keys and <em>first</em> value is appended to
+ * the path following a {@code ?} character and separated by a {@code &}
+ * character.
  * </p>
  * 
  * <p>
@@ -96,6 +105,9 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 	/** The HTTP Authorization scheme used by this filter. */
 	public static final String AUTHORIZATION_SCHEME = "SolarNetworkWS";
 
+	/** The fixed length of the auth token. */
+	public static final int AUTH_TOKEN_LENGTH = 20;
+
 	private static final String AUTH_HEADER_PREFIX = AUTHORIZATION_SCHEME + " ";
 
 	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
@@ -120,6 +132,7 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		final String header = request.getHeader("Authorization");
 
 		if ( header == null || !header.startsWith(AUTH_HEADER_PREFIX) ) {
+			log.trace("Missing Authorization header or unsupported scheme");
 			chain.doFilter(request, response);
 			return;
 		}
@@ -139,13 +152,13 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		if ( !computedDigest.equals(data.signatureDigest) ) {
 			log.debug("Expected response: '{}' but received: '{}'", computedDigest, data.signatureDigest);
 			SecurityContextHolder.getContext().setAuthentication(null);
-			fail(request, response, new BadCredentialsException("Bad credentials."));
+			fail(request, response, new BadCredentialsException("Bad credentials"));
 			return;
 		}
 
 		if ( !data.isDateValid() ) {
 			log.debug("Request date '{}' diff too large: {}", data.date, data.dateSkew);
-			fail(request, response, new BadCredentialsException("Date skew too large."));
+			fail(request, response, new BadCredentialsException("Date skew too large"));
 			return;
 		}
 
@@ -195,6 +208,32 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		private final Date date;
 		private final long dateSkew;
 
+		private String httpDate(Date date) {
+			SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+			sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+			return sdf.format(date);
+		}
+
+		private void appendQueryParameters(HttpServletRequest request, StringBuilder buf) {
+			@SuppressWarnings("unchecked")
+			Set<String> paramKeys = request.getParameterMap().keySet();
+			if ( paramKeys.size() < 1 ) {
+				return;
+			}
+			String[] keys = paramKeys.toArray(new String[paramKeys.size()]);
+			Arrays.sort(keys);
+			boolean first = true;
+			for ( String key : keys ) {
+				if ( first ) {
+					buf.append('?');
+					first = false;
+				} else {
+					buf.append('&');
+				}
+				buf.append(key).append('=').append(request.getParameter(key));
+			}
+		}
+
 		private AuthData(HttpServletRequest request, String headerValue) {
 			String dateHeader = WebConstants.HEADER_DATE;
 			long dateValue = request.getDateHeader(dateHeader);
@@ -206,19 +245,20 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 				}
 			}
 			date = new Date(dateValue);
-			int colonIdx = headerValue.indexOf(':');
-			if ( colonIdx < 0 || colonIdx >= headerValue.length() ) {
-				throw new BadCredentialsException("Invalid Authorization header value.");
+			if ( AUTH_TOKEN_LENGTH + 2 >= headerValue.length() ) {
+				throw new BadCredentialsException("Invalid Authorization header value");
 			}
-			authToken = headerValue.substring(0, colonIdx);
-			signatureDigest = headerValue.substring(colonIdx + 1);
+			authToken = headerValue.substring(0, AUTH_TOKEN_LENGTH);
+			signatureDigest = headerValue.substring(AUTH_TOKEN_LENGTH + 1);
 
 			StringBuilder buf = new StringBuilder(request.getMethod());
 			buf.append("\n");
 			buf.append(nullSafeHeaderValue(request, "Content-MD5")).append("\n");
 			buf.append(nullSafeHeaderValue(request, "Content-Type")).append("\n");
-			buf.append(nullSafeHeaderValue(request, dateHeader)).append("\n");
+			buf.append(httpDate(date)).append("\n");
 			buf.append(request.getRequestURI());
+			appendQueryParameters(request, buf);
+
 			signature = buf.toString();
 
 			dateSkew = Math.abs(System.currentTimeMillis() - date.getTime());
