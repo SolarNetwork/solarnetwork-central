@@ -6,7 +6,7 @@
 
 	<insert id="insert-UserAuthToken" parameterClass="UserAuthToken">
 		INSERT INTO solaruser.user_auth_token 
-			(auth_token, 
+			(auth_token
 			<isNotNull prepend="," property="created">created</isNotNull>
 			, user_id, auth_secret, status
 			)

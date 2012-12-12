@@ -26,6 +26,8 @@ import java.util.List;
 import net.solarnetwork.central.dao.ibatis.IbatisBaseGenericDaoSupport;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.domain.UserAuthToken;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * iBATIS implementation of {@link UserAuthTokenDao}.
@@ -53,4 +55,14 @@ public class IbatisUserAuthTokenDao extends IbatisBaseGenericDaoSupport<UserAuth
 		return results;
 	}
 
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public String store(UserAuthToken datum) {
+		// try update, then insert if that fails
+		if ( getSqlMapClientTemplate().update(getUpdate(), datum) == 0 ) {
+			preprocessInsert(datum);
+			getSqlMapClientTemplate().insert(getInsert(), datum);
+		}
+		return datum.getId();
+	}
 }
