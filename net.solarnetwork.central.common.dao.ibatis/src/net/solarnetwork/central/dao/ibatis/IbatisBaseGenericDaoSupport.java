@@ -199,6 +199,9 @@ public abstract class IbatisBaseGenericDaoSupport<T extends Entity<PK>, PK exten
 	 * Constructor.
 	 * 
 	 * @param domainClass
+	 *        the domain class
+	 * @param pkClass
+	 *        the primary key class
 	 */
 	public IbatisBaseGenericDaoSupport(Class<? extends T> domainClass, Class<? extends PK> pkClass) {
 		super();
