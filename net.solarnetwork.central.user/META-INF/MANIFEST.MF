@@ -10,8 +10,8 @@ Export-Package:
  net.solarnetwork.central.user.dao;version="1.1.0",
  net.solarnetwork.central.user.domain;version="1.1.0"
 Import-Package: 
- net.solarnetwork.central.dao;version="[1.0.0,2.0.0)",
- net.solarnetwork.central.domain;version="1.0.0",
- net.solarnetwork.domain;version="[1.0,2.0)",
+ net.solarnetwork.central.dao;version="1.0.0",
+ net.solarnetwork.central.domain;version="1.9.0",
+ net.solarnetwork.domain;version="1.0",
  org.apache.commons.codec.binary;version="[1.4,2.0)",
  org.joda.time;version="[1.6,3.0)"

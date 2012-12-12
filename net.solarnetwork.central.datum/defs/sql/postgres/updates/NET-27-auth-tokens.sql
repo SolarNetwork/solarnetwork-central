@@ -1,9 +1,10 @@
 CREATE TABLE solaruser.user_auth_token (
-	user_id			BIGINT NOT NULL,
 	auth_token		CHARACTER(20) NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	user_id			BIGINT NOT NULL,
 	auth_secret		CHARACTER VARYING(64) NOT NULL,
 	status			CHAR(1) NOT NULL,
-	CONSTRAINT user_auth_token_pkey PRIMARY KEY (auth_token, user_id),
+	CONSTRAINT user_auth_token_pkey PRIMARY KEY (auth_token),
 	CONSTRAINT user_auth_token_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
@@ -19,7 +20,7 @@ CREATE VIEW solaruser.user_auth_token_login  AS
 		u.disp_name AS display_name
 	FROM solaruser.user_auth_token t
 	INNER JOIN solaruser.user_user u ON u.id = t.user_id
-	WHERE t.status = 'a'::bpchar;
+	WHERE t.status = 'v'::bpchar;
 
 ALTER TABLE solaruser.user_node_conf 
 ADD COLUMN sec_phrase CHARACTER VARYING(128);

@@ -26,6 +26,7 @@ import static net.solarnetwork.central.reg.web.api.domain.Response.response;
 import java.util.List;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.reg.web.api.ControllerSupport;
 import net.solarnetwork.central.reg.web.api.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,5 +75,19 @@ public class NodeInstructionController extends ControllerSupport {
 	public Response<Instruction> viewInstruction(@RequestParam("id") Long instructionId) {
 		Instruction instruction = instructorBiz.getInstruction(instructionId);
 		return response(instruction);
+	}
+
+	/**
+	 * Queue a new instruction.
+	 * 
+	 * @param input
+	 *        the instruction data to add to the queue
+	 * @return the node instruction
+	 */
+	@RequestMapping(value = "/add", method = RequestMethod.POST)
+	@ResponseBody
+	public Response<NodeInstruction> queueInstruction(NodeInstruction input) {
+		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(), input);
+		return response(instr);
 	}
 }

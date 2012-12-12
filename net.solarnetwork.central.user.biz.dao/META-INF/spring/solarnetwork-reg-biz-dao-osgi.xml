@@ -18,6 +18,8 @@
 	</osgix:cm-properties>
 	
 	<!-- Service References -->
+
+	<osgi:reference id="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao"/>
 	
 	<osgi:reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
 	
@@ -48,6 +50,12 @@
 		ranking="1">
 		<osgi:interfaces>
 			<value>net.solarnetwork.central.user.biz.RegistrationBiz</value>
+		</osgi:interfaces>
+	</osgi:service>
+	
+	<osgi:service ref="daoUserBiz" 
+		ranking="1">
+		<osgi:interfaces>
 			<value>net.solarnetwork.central.user.biz.UserBiz</value>
 		</osgi:interfaces>
 	</osgi:service>

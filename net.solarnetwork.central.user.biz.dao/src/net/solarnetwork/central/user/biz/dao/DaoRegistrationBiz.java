@@ -24,11 +24,12 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
+import static net.solarnetwork.central.user.biz.dao.UserBizConstants.encryptPassword;
+import static net.solarnetwork.central.user.biz.dao.UserBizConstants.getUnconfirmedEmail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -42,7 +43,6 @@ import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.central.user.biz.AuthorizationException;
 import net.solarnetwork.central.user.biz.AuthorizationException.Reason;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
-import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
@@ -95,18 +95,18 @@ import org.springframework.validation.Validator;
  * @author matt
  * @version $Id$
  */
-@Service
-public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
+@Service("daoRegistrationBiz")
+public class DaoRegistrationBiz implements RegistrationBiz {
 
 	public static final SortedSet<String> DEFAULT_CONFIRMED_USER_ROLES = Collections
 			.unmodifiableSortedSet(new TreeSet<String>(Arrays.asList("ROLE_USER")));
 
-	private static final String UNCONFIRMED_EMAIL_PREFIX = "UNCONFIRMED@";
-
 	@Autowired
 	private UserDao userDao;
+
 	@Autowired
 	private UserNodeDao userNodeDao;
+
 	@Autowired
 	private UserNodeConfirmationDao userNodeConfirmationDao;
 
@@ -115,10 +115,13 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 
 	@Autowired
 	private Validator userValidator;
+
 	@Autowired
 	private SolarNodeDao solarNodeDao;
+
 	@Autowired
 	private SolarLocationDao solarLocationDao;
+
 	@Autowired
 	private NetworkIdentityBiz networkIdentityBiz;
 
@@ -134,7 +137,7 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 	@Value("${RegistrationBiz.networkCertificateSubjectDNFormat}")
 	private String networkCertificateSubjectDNFormat = "UID=%s,O=SolarNetwork";
 
-	private final Logger log = LoggerFactory.getLogger(DaoRegistrationBiz.class);
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private User getCurrentUser() {
 		String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -228,118 +231,6 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		return entity;
 	}
 
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
-	public User logonUser(String email, String password) throws AuthorizationException {
-		if ( log.isInfoEnabled() ) {
-			log.info("Login attempt: " + email);
-		}
-
-		// do not allow logon attempt of unconfirmed email
-		if ( isUnconfirmedEmail(email) ) {
-			throw new AuthorizationException(email, AuthorizationException.Reason.UNKNOWN_EMAIL);
-		}
-
-		User entity = userDao.getUserByEmail(email);
-		if ( entity == null ) {
-			// first check if user waiting confirmation still
-			String unconfirmedEmail = getUnconfirmedEmail(email);
-			entity = userDao.getUserByEmail(unconfirmedEmail);
-			if ( entity != null ) {
-				throw new AuthorizationException(email,
-						AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED);
-			}
-			throw new AuthorizationException(email, AuthorizationException.Reason.UNKNOWN_EMAIL);
-		}
-
-		String encPassword = encryptPassword(password);
-		if ( !entity.getPassword().equals(encPassword) ) {
-			throw new AuthorizationException(email, AuthorizationException.Reason.BAD_PASSWORD);
-		}
-
-		if ( log.isInfoEnabled() ) {
-			log.info("Login successful: " + email);
-		}
-
-		// populate roles
-		entity.setRoles(userDao.getUserRoles(entity));
-
-		return entity;
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public User getUser(Long id) {
-		return userDao.get(id);
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public User getUser(String email) {
-		return userDao.getUserByEmail(email);
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<UserNode> getUserNodes(Long userId) {
-		return userNodeDao.findUserNodesAndCertificatesForUser(userId);
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public UserNode getUserNode(Long userId, Long nodeId) throws AuthorizationException {
-		assert userId != null;
-		assert nodeId != null;
-		UserNode result = userNodeDao.get(nodeId);
-		if ( result == null ) {
-			throw new AuthorizationException(nodeId.toString(), Reason.UNKNOWN_OBJECT);
-		}
-		return result;
-	}
-
-	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public UserNode saveUserNode(UserNode entry) throws AuthorizationException {
-		assert entry != null;
-		assert entry.getNode() != null;
-		assert entry.getUser() != null;
-		if ( entry.getNode().getId() == null ) {
-			throw new AuthorizationException(null, Reason.UNKNOWN_OBJECT);
-		}
-		if ( entry.getUser().getId() == null ) {
-			throw new AuthorizationException(null, Reason.UNKNOWN_OBJECT);
-		}
-		UserNode entity = userNodeDao.get(entry.getNode().getId());
-		if ( entry.getName() != null ) {
-			entity.setName(entry.getName());
-		}
-		if ( entry.getDescription() != null ) {
-			entity.setDescription(entry.getDescription());
-		}
-		userNodeDao.store(entity);
-		return entity;
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<UserNodeConfirmation> getPendingUserNodeConfirmations(Long userId) {
-		User user = userDao.get(userId);
-		return userNodeConfirmationDao.findPendingConfirmationsForUser(user);
-	}
-
-	private boolean isUnconfirmedEmail(String email) {
-		// validate email starts with unconfirmed key and also contains
-		// another @ character, in case somebody does have an email name
-		// the same as our unconfirmed key
-		return email != null && email.startsWith(UNCONFIRMED_EMAIL_PREFIX)
-				&& email.length() > UNCONFIRMED_EMAIL_PREFIX.length()
-				&& email.indexOf('@', UNCONFIRMED_EMAIL_PREFIX.length()) != -1;
-	}
-
-	private String getUnconfirmedEmail(String email) {
-		return UNCONFIRMED_EMAIL_PREFIX + email;
-	}
-
 	private String calculateConfirmationCode(User user) {
 		return DigestUtils.sha256Hex(user.getCreated().getMillis() + user.getId() + user.getEmail()
 				+ user.getPassword());
@@ -375,10 +266,6 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		if ( user.getEnabled() == null ) {
 			user.setEnabled(Boolean.TRUE);
 		}
-	}
-
-	private String encryptPassword(String password) {
-		return password == null ? null : "{SHA}" + DigestUtils.sha256Hex(password);
 	}
 
 	private String encodeNetworkAssociationDetails(NetworkAssociationDetails details) {
@@ -450,12 +337,6 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 		userNodeConfirmationDao.store(conf);
 
 		return details;
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public UserNodeConfirmation getPendingUserNodeConfirmation(final Long userNodeConfirmationId) {
-		return userNodeConfirmationDao.get(userNodeConfirmationId);
 	}
 
 	@Override
@@ -615,13 +496,6 @@ public class DaoRegistrationBiz implements RegistrationBiz, UserBiz {
 					AuthorizationException.Reason.DUPLICATE_EMAIL);
 		}
 		return entity;
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public UserNodeCertificate getUserNodeCertificate(Long certId) {
-		assert certId != null;
-		return userNodeCertificateDao.get(certId);
 	}
 
 	public Set<String> getConfirmedUserRoles() {

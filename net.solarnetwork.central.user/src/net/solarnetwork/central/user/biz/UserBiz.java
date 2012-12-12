@@ -27,6 +27,7 @@ package net.solarnetwork.central.user.biz;
 import java.util.List;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
@@ -136,4 +137,21 @@ public interface UserBiz {
 	 */
 	UserNodeCertificate getUserNodeCertificate(Long certId);
 
+	/**
+	 * Generate a new, unique {@link UserAuthToken} entity and return it.
+	 * 
+	 * @param userId
+	 *        the user ID to generate the token for
+	 * @return the generated token
+	 */
+	UserAuthToken generateUserAuthToken(Long userId);
+
+	/**
+	 * Get all {@link UserAuthToken} entities for a given user.
+	 * 
+	 * @param userId
+	 *        the ID to get the tokens for
+	 * @return the tokens, or an empty list if none available
+	 */
+	List<UserAuthToken> getAllUserAuthTokens(Long userId);
 }
