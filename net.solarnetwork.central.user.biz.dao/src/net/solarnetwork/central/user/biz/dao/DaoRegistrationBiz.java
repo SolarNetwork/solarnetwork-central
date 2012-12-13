@@ -386,7 +386,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		final User user = userDao.getUserByEmail(username);
 		if ( user == null ) {
-			throw new AuthorizationException(null, Reason.UNKNOWN_EMAIL);
+			throw new AuthorizationException(Reason.UNKNOWN_EMAIL, null);
 		}
 
 		UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(user.getId(),

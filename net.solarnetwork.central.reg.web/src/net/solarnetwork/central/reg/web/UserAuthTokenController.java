@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web;
 
 import java.util.List;
+import net.solarnetwork.central.reg.web.api.domain.Response;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserBiz;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
@@ -62,9 +64,18 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	@RequestMapping(value = "/generateUser", method = RequestMethod.POST)
 	@ResponseBody
-	public UserAuthToken generateUserToken() {
+	public Response<UserAuthToken> generateUserToken() {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
-		return userBiz.generateUserAuthToken(user.getUserId());
+		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId());
+		return new Response<UserAuthToken>(token);
+	}
+
+	@RequestMapping(value = "/deleteUser", method = RequestMethod.POST)
+	@ResponseBody
+	public Response<Object> deleteUserToken(@RequestParam("id") String tokenId) {
+		final SecurityUser user = SecurityUtils.getCurrentUser();
+		userBiz.deleteUserAuthToken(user.getUserId(), tokenId);
+		return new Response<Object>();
 	}
 
 }

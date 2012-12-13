@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.user.biz.dao.test;
 
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.same;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -33,8 +35,11 @@ import java.util.Set;
 import net.solarnetwork.central.user.biz.AuthorizationException;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
 import net.solarnetwork.central.user.biz.dao.UserBizConstants;
+import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserAuthToken;
+import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,11 +57,14 @@ public class DaoUserBizTest {
 	private static final String TEST_PASSWORD = "changeit";
 	private static final String TEST_NAME = "Test User";
 	private static final String TEST_ROLE = "ROLE_TEST";
+	private static final String TEST_AUTH_TOKEN = "12345678901234567890";
+	private static final String TEST_AUTH_SECRET = "123";
 
 	private User testUser;
 	private Set<String> testUserRoles;
 
 	private UserDao userDao;
+	private UserAuthTokenDao userAuthTokenDao;
 
 	private DaoUserBiz userBiz;
 
@@ -72,15 +80,18 @@ public class DaoUserBizTest {
 		testUserRoles.add(TEST_ROLE);
 
 		userDao = EasyMock.createMock(UserDao.class);
+		userAuthTokenDao = EasyMock.createMock(UserAuthTokenDao.class);
+
 		userBiz = new DaoUserBiz();
 		userBiz.setUserDao(userDao);
+		userBiz.setUserAuthTokenDao(userAuthTokenDao);
 	}
 
 	/**
 	 * Test able to logon a user successfully.
 	 */
 	@Test
-	public void testLogonUser() {
+	public void logonUser() {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userDao.getUserRoles(testUser)).andReturn(testUserRoles);
 		replay(userDao);
@@ -99,7 +110,7 @@ public class DaoUserBizTest {
 	 * Test attempting to logon an unconfirmed user fails.
 	 */
 	@Test
-	public void testAttemptLogonUnconfirmedUser() {
+	public void attemptLogonUnconfirmedUser() {
 		// make user's email "unconfirmed"
 		testUser.setEmail(UserBizConstants.getUnconfirmedEmail(TEST_EMAIL));
 
@@ -122,7 +133,7 @@ public class DaoUserBizTest {
 	 * Test attempting to logon a non-existing email fails.
 	 */
 	@Test
-	public void testAttemptLogonNonExistingEmail() {
+	public void attemptLogonNonExistingEmail() {
 		final String badEmail = "does@not.exist";
 		expect(userDao.getUserByEmail(badEmail)).andReturn(null);
 		expect(userDao.getUserByEmail(UserBizConstants.getUnconfirmedEmail(badEmail))).andReturn(null);
@@ -141,7 +152,7 @@ public class DaoUserBizTest {
 	 * Test attempting to logon a null email fails.
 	 */
 	@Test
-	public void testAttemptLogonNullEmail() {
+	public void attemptLogonNullEmail() {
 		replay(userDao);
 
 		try {
@@ -158,7 +169,7 @@ public class DaoUserBizTest {
 	 * Test attempting to logon a bad password fails.
 	 */
 	@Test
-	public void testAttemptLogonBadPassword() {
+	public void attemptLogonBadPassword() {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		replay(userDao);
 
@@ -177,7 +188,7 @@ public class DaoUserBizTest {
 	 * Test attempting to logon an empty password fails.
 	 */
 	@Test
-	public void testAttemptLogonEmptyPassword() {
+	public void attemptLogonEmptyPassword() {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		replay(userDao);
 
@@ -196,7 +207,7 @@ public class DaoUserBizTest {
 	 * Test attempting to logon an empty password fails.
 	 */
 	@Test
-	public void testAttemptLogonNullPassword() {
+	public void attemptLogonNullPassword() {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		replay(userDao);
 
@@ -209,6 +220,62 @@ public class DaoUserBizTest {
 		}
 
 		verify(userDao);
+	}
+
+	private void replayProperties() {
+		replay(userAuthTokenDao, userDao);
+	}
+
+	private void verifyProperties() {
+		verify(userAuthTokenDao, userDao);
+	}
+
+	@Test
+	public void generateUserAuthToken() {
+		expect(userAuthTokenDao.get(anyObject(String.class))).andReturn(null);
+		expect(userAuthTokenDao.store(anyObject(UserAuthToken.class))).andReturn(TEST_AUTH_TOKEN);
+		replayProperties();
+		UserAuthToken generated = userBiz.generateUserAuthToken(TEST_USER_ID);
+		assertNotNull(generated);
+		assertNotNull(generated.getAuthToken());
+		assertEquals("Auth token should be exactly 20 characters", 20, generated.getAuthToken().length());
+		assertNotNull(generated.getAuthSecret());
+		assertEquals(TEST_USER_ID, generated.getUserId());
+		assertEquals(UserAuthTokenStatus.v, generated.getStatus());
+		verifyProperties();
+	}
+
+	@Test
+	public void deleteUserAuthToken() {
+		final UserAuthToken token = new UserAuthToken(TEST_AUTH_TOKEN, TEST_USER_ID, TEST_AUTH_SECRET);
+		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(token);
+		userAuthTokenDao.delete(same(token));
+		replayProperties();
+		userBiz.deleteUserAuthToken(TEST_USER_ID, TEST_AUTH_TOKEN);
+		verifyProperties();
+	}
+
+	@Test
+	public void deleteUserAuthTokenNotFound() {
+		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(null);
+		replayProperties();
+		userBiz.deleteUserAuthToken(TEST_USER_ID, TEST_AUTH_TOKEN);
+		verifyProperties();
+	}
+
+	@Test
+	public void deleteUserAuthTokenWrongUser() {
+		final UserAuthToken token = new UserAuthToken(TEST_AUTH_TOKEN, TEST_USER_ID, TEST_AUTH_SECRET);
+		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(token);
+		replayProperties();
+		try {
+			userBiz.deleteUserAuthToken(TEST_USER_ID - 1L, TEST_AUTH_TOKEN);
+			fail("Should have thrown AuthorizationException");
+		} catch ( AuthorizationException e ) {
+			assertEquals(AuthorizationException.Reason.ACCESS_DENIED, e.getReason());
+			assertEquals(TEST_AUTH_TOKEN, e.getId());
+		}
+		verifyProperties();
 	}
 
 }

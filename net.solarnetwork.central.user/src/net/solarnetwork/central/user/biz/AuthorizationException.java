@@ -25,14 +25,14 @@
 package net.solarnetwork.central.user.biz;
 
 /**
- * Exception thrown when authorization fails.
+ * Exception thrown when authorization to some resource fails.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 public class AuthorizationException extends RuntimeException {
 
-	private static final long serialVersionUID = 1080471473820259038L;
+	private static final long serialVersionUID = -8648122165857058984L;
 
 	/** Authorization exception reason. */
 	public enum Reason {
@@ -67,6 +67,7 @@ public class AuthorizationException extends RuntimeException {
 
 	private final Reason reason;
 	private final String email;
+	private final Object id;
 
 	/**
 	 * Construct authorization exception.
@@ -77,17 +78,43 @@ public class AuthorizationException extends RuntimeException {
 	 *        the reason for the exception
 	 */
 	public AuthorizationException(String email, Reason reason) {
+		super();
 		this.reason = reason;
 		this.email = email;
+		this.id = null;
+	}
+
+	/**
+	 * Construct authorization exception related to some primary key
+	 * 
+	 * @param reason
+	 *        the reason for the exception
+	 * @param id
+	 *        the object ID
+	 */
+	public AuthorizationException(Reason reason, Object id) {
+		super();
+		this.reason = reason;
+		this.email = null;
+		this.id = id;
 	}
 
 	/**
 	 * Get the attempted login.
 	 * 
-	 * @return login value
+	 * @return login value (or <em>null</em> if not available)
 	 */
 	public String getEmail() {
 		return email;
+	}
+
+	/**
+	 * Get the primary key.
+	 * 
+	 * @return the primary key (or <em>null</em> if not available)
+	 */
+	public Object getId() {
+		return id;
 	}
 
 	/**
@@ -101,7 +128,7 @@ public class AuthorizationException extends RuntimeException {
 
 	@Override
 	public String getMessage() {
-		return (reason == null ? null : reason.toString() + " [" + email + "]");
+		return (reason == null ? null : reason.toString() + " [" + (email == null ? id : email) + "]");
 	}
 
 }

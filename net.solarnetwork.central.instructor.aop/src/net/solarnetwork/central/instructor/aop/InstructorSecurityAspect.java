@@ -108,7 +108,7 @@ public class InstructorSecurityAspect {
 		final SecurityUser actor = SecurityUtils.getCurrentUser();
 		if ( actor == null ) {
 			log.warn("Access DENIED to node {} for non-authenticated user", nodeId);
-			throw new AuthorizationException(null, AuthorizationException.Reason.ACCESS_DENIED);
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
 		}
 		UserNode userNode = userNodeDao.get(nodeId);
 		if ( userNode == null ) {

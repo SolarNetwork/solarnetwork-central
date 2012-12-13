@@ -154,4 +154,14 @@ public interface UserBiz {
 	 * @return the tokens, or an empty list if none available
 	 */
 	List<UserAuthToken> getAllUserAuthTokens(Long userId);
+
+	/**
+	 * Delete a user auth token.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param tokenId
+	 *        the UserAuthToken ID to delete
+	 */
+	void deleteUserAuthToken(Long userId, String tokenId);
 }

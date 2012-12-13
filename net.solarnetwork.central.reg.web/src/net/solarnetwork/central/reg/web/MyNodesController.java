@@ -140,7 +140,7 @@ public class MyNodesController extends ControllerSupport {
 			@RequestParam(value = "download", required = false) Boolean download) {
 		UserNodeCertificate cert = userBiz.getUserNodeCertificate(certId);
 		if ( cert == null ) {
-			throw new AuthorizationException(null, AuthorizationException.Reason.ACCESS_DENIED);
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, certId);
 		}
 		if ( !Boolean.TRUE.equals(download) ) {
 			return cert;

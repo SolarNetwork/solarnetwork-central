@@ -165,10 +165,10 @@ public class DaoUserBiz implements UserBiz {
 		assert entry.getNode() != null;
 		assert entry.getUser() != null;
 		if ( entry.getNode().getId() == null ) {
-			throw new AuthorizationException(null, Reason.UNKNOWN_OBJECT);
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, null);
 		}
 		if ( entry.getUser().getId() == null ) {
-			throw new AuthorizationException(null, Reason.UNKNOWN_OBJECT);
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, null);
 		}
 		UserNode entity = userNodeDao.get(entry.getNode().getId());
 		if ( entry.getName() != null ) {
@@ -234,6 +234,20 @@ public class DaoUserBiz implements UserBiz {
 	public List<UserAuthToken> getAllUserAuthTokens(Long userId) {
 		assert userId != null;
 		return userAuthTokenDao.findUserAuthTokensForUser(userId);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void deleteUserAuthToken(Long userId, String tokenId) {
+		assert userId != null;
+		UserAuthToken token = userAuthTokenDao.get(tokenId);
+		if ( token == null ) {
+			return;
+		}
+		if ( !userId.equals(token.getUserId()) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
+		}
+		userAuthTokenDao.delete(token);
 	}
 
 	public void setUserDao(UserDao userDao) {

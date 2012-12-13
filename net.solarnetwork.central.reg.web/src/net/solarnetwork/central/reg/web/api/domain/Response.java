@@ -24,7 +24,6 @@
 
 package net.solarnetwork.central.reg.web.api.domain;
 
-
 /**
  * A simple service response envelope object.
  * 
@@ -39,23 +38,35 @@ public class Response<T> {
 	private final String code;
 	private final String message;
 	private final T data;
-	
+
+	/**
+	 * Construct a successful response with no data.
+	 */
+	public Response() {
+		this(Boolean.TRUE, null, null, null);
+	}
+
 	/**
 	 * Construct a successful response with just data.
 	 * 
-	 * @param data the data
+	 * @param data
+	 *        the data
 	 */
 	public Response(T data) {
 		this(Boolean.TRUE, null, null, data);
 	}
-	
+
 	/**
 	 * Constructor.
 	 * 
-	 * @param success flag of success
-	 * @param code optional code, e.g. error code
-	 * @param message optional descriptive message
-	 * @param data optional data in the response
+	 * @param success
+	 *        flag of success
+	 * @param code
+	 *        optional code, e.g. error code
+	 * @param message
+	 *        optional descriptive message
+	 * @param data
+	 *        optional data in the response
 	 */
 	public Response(Boolean success, String code, String message, T data) {
 		super();
@@ -97,5 +108,5 @@ public class Response<T> {
 	public T getData() {
 		return data;
 	}
-	
+
 }
