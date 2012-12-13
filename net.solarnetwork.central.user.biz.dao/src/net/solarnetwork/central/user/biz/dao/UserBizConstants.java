@@ -27,7 +27,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.UUID;
-import net.solarnetwork.io.ASCII85OutputStream;
+import net.solarnetwork.io.Base91;
 import org.apache.commons.codec.digest.DigestUtils;
 
 /**
@@ -90,7 +90,7 @@ public final class UserBizConstants {
 	 * @return the random token
 	 */
 	public static String generateRandomAuthToken() {
-		UUID uuid = UUID.randomUUID();//.toString().replace("-", "");
+		UUID uuid = UUID.randomUUID();
 		ByteArrayOutputStream byos = new ByteArrayOutputStream(16);
 		DataOutputStream dos = new DataOutputStream(byos);
 		try {
@@ -99,12 +99,8 @@ public final class UserBizConstants {
 			dos.flush();
 			dos.close();
 			byte[] uuidBytes = byos.toByteArray();
-			byos.reset();
-			ASCII85OutputStream aos = new ASCII85OutputStream(byos);
-			aos.write(uuidBytes);
-			aos.flush();
-			aos.close();
-			return byos.toString("US-ASCII");
+			byte[] base91 = Base91.encode(uuidBytes);
+			return new String(base91, "US-ASCII");
 		} catch ( UnsupportedEncodingException e ) {
 			throw new RuntimeException(e);
 		} catch ( IOException e ) {
