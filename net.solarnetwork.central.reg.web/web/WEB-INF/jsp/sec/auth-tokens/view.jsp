@@ -48,7 +48,9 @@
 					<td>
 						<form class="action-user-token">
 							<input type="hidden" name="id" value="${token.authToken}"/>
-							<button type="button" class="btn btn-small user-token-change-status">
+							<button type="button" class="btn btn-small user-token-change-status" 
+								data-status="${token.status}"
+								data-action="<c:url value='/u/sec/auth-tokens/changeStatusUser'/>">
 								<fmt:message key="auth-tokens.action.${token.status.value eq 'Active' ? 'disable' : 'enable'}"/>
 							</button>
 							<button type="button" class="btn btn-small user-token-delete" title="<fmt:message key='auth-tokens.action.delete'/>">

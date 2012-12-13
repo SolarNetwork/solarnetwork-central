@@ -28,6 +28,7 @@ import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.UserAuthToken;
+import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -75,6 +76,15 @@ public class UserAuthTokenController extends ControllerSupport {
 	public Response<Object> deleteUserToken(@RequestParam("id") String tokenId) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		userBiz.deleteUserAuthToken(user.getUserId(), tokenId);
+		return new Response<Object>();
+	}
+
+	@RequestMapping(value = "/changeStatusUser", method = RequestMethod.POST)
+	@ResponseBody
+	public Response<Object> changeStatus(@RequestParam("id") String tokenId,
+			@RequestParam("status") UserAuthTokenStatus status) {
+		final SecurityUser user = SecurityUtils.getCurrentUser();
+		userBiz.updateUserAuthTokenStatus(user.getUserId(), tokenId, status);
 		return new Response<Object>();
 	}
 

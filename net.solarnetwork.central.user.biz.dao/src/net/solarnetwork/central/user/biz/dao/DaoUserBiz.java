@@ -39,6 +39,7 @@ import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
+import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
@@ -248,6 +249,25 @@ public class DaoUserBiz implements UserBiz {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
 		}
 		userAuthTokenDao.delete(token);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public UserAuthToken updateUserAuthTokenStatus(Long userId, String tokenId,
+			UserAuthTokenStatus newStatus) {
+		assert userId != null;
+		UserAuthToken token = userAuthTokenDao.get(tokenId);
+		if ( token == null ) {
+			return null;
+		}
+		if ( !userId.equals(token.getUserId()) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
+		}
+		if ( token.getStatus() != newStatus ) {
+			token.setStatus(newStatus);
+			userAuthTokenDao.store(token);
+		}
+		return token;
 	}
 
 	public void setUserDao(UserDao userDao) {

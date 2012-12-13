@@ -28,6 +28,7 @@ import java.util.List;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
+import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
@@ -164,4 +165,17 @@ public interface UserBiz {
 	 *        the UserAuthToken ID to delete
 	 */
 	void deleteUserAuthToken(Long userId, String tokenId);
+
+	/**
+	 * Update the status of a UserAuthToken.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param tokenId
+	 *        the UserAuthToken ID to delete
+	 * @param newStatus
+	 *        the desired status
+	 * @return the updated token
+	 */
+	UserAuthToken updateUserAuthTokenStatus(Long userId, String tokenId, UserAuthTokenStatus newStatus);
 }

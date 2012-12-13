@@ -33,7 +33,10 @@ $(document).ready(function() {
 			form.find('.container-token').text(tokenId);
 			form.modal('show');
 		} else if ( button.hasClass('user-token-change-status') ) {
-			// TODO
+			var newStatus = (button.data('status') === 'v' ? 'z' : 'v');
+			$.post(button.data('action'), {id:tokenId, status:newStatus}, function(data) {
+				document.location.reload(true);
+			}, 'json');
 		}
 	});
 	
