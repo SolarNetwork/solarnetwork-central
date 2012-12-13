@@ -18,7 +18,33 @@ $(document).ready(function() {
 			document.location.reload(true);
 		},
 		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-error', statusText);
+			SolarReg.showAlertBefore('#create-user-auth-token .modal-body > *:first-child', 'alert-error', statusText);
+		}
+	});
+	
+	$('.action-user-token').find('button').click(function(event) {
+		//.user-token-change-status or .user-token-delete
+		event.preventDefault();
+		var button = $(this);
+		var tokenId = button[0].form.elements['id'].value;
+		if ( button.hasClass('user-token-delete') ) {
+			var form = $('#delete-user-auth-token');
+			form[0].elements['id'].value = tokenId;
+			form.find('.container-token').text(tokenId);
+			form.modal('show');
+		} else if ( button.hasClass('user-token-change-status') ) {
+			// TODO
+		}
+	});
+	
+	$('#delete-user-auth-token').ajaxForm({
+		dataType: 'json',
+		success: function(json, status, xhr, form) {
+			form.modal('hide');
+			document.location.reload(true);
+		},
+		error: function(xhr, status, statusText) {
+			SolarReg.showAlertBefore('#delete-user-auth-token .modal-body > *:first-child', 'alert-error', statusText);
 		}
 	});
 });
