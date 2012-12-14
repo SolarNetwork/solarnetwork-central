@@ -6,7 +6,7 @@ Bundle-Version: 1.0.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: WEB-INF/classes/
-Web-ContextPath: /solarreg
+Web-ContextPath: /solaruser
 Import-Package: 
  net.solarnetwork.central.dao;version="[1.7.1,2.0.0)",
  net.solarnetwork.central.domain;version="[1.0.0,2.0.0)",
