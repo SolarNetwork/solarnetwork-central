@@ -28,6 +28,38 @@ SNDemo.generateAuthorizationHeaderValue = function(params) {
 	return authHeader;
 };
 
+SNDemo.getJSON = function(url, callback) {
+	$.ajax({
+		type: 'GET',
+		url: url,
+		dataType: 'json',
+		beforeSend: function(xhr) {
+			var date = new Date().toUTCString();
+			var a = document.createElement('a');
+			a.href = url;
+			var path = a.pathname;
+			
+			// TODO: we need to parse and sort query params here...
+			var queryParamsIndex = a.href.indexOf('?');
+			if ( queryParamsIndex >= 0 ) {
+				path = path + a.href.substring(queryParamsIndex);
+			}
+			
+			xhr.setRequestHeader('X-SN-Date', date);
+			var auth = SNDemo.generateAuthorizationHeaderValue({
+				method: 'GET',
+				date: date,
+				path: path,
+				token: SNDemo.ajaxCredentials.token,
+				secret: SNDemo.ajaxCredentials.secret
+			});
+			xhr.setRequestHeader('Authorization', 'SolarNetworkWS ' +auth);
+		}
+	}).done(callback).fail(function(status) {
+		alert('fail: ' +status);
+	});
+};
+
 $(document).ready(function() {
 	$('#generic-path').submit(function(event) {
 		event.preventDefault();
@@ -35,10 +67,14 @@ $(document).ready(function() {
 		var params = SNDemo.getCredentials();
 		params.method = $(form).find('input[name=method]:checked').val();
 		params.path = form.elements['path'].value;
+		SNDemo.ajaxCredentials = params;
 		var authHeader = SNDemo.generateAuthorizationHeaderValue(params);
  	   	SNDemo.showResult('Date: ' +params.date 
 	   		+'\nAuthorization: ' +authHeader
 	   		+'\nCurl: ' +'curl -H "X-SN-Date: '+params.date +'" -H "Authorization: SolarNetworkWS ' 
 	   			+authHeader +'" http://localhost:8680' +params.path);
+ 	   	SNDemo.getJSON('http://localhost:8680'+params.path, function(data) {
+ 	   		SNDemo.showResult(JSON.stringify(data));
+ 	   	});
 	});
 });
