@@ -13,7 +13,7 @@
 
 	<!-- Configuration -->
 
-	<osgix:cm-properties id="reg.web.cfg" persistent-id="net.solarnetwork.central.reg.web">
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.web">
 		<prop key="mail.sender">nobody@localhost.localdomain</prop>
 		<prop key="JSONView.indentAmount">0</prop>
 	</osgix:cm-properties>

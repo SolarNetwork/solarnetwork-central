@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: SolarNetwork Registration Web
-Bundle-SymbolicName: net.solarnetwork.central.reg.web
+Bundle-Name: SolarNetwork User Web
+Bundle-SymbolicName: net.solarnetwork.central.user.web
 Bundle-Version: 1.0.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
