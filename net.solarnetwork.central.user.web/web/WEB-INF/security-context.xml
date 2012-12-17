@@ -19,8 +19,9 @@
 	<http security="none" pattern="/api/v1/pub/**"/>
 
 	<!-- Stateless BASIC authentication realm for web services. -->
-	<http pattern="/api/v1/sec/**" create-session="stateless" entry-point-ref="authTokenEntryPoint">
-		<intercept-url pattern='/**' access='ROLE_USER'  />
+	<http pattern="/api/v1/sec/**" create-session="stateless" entry-point-ref="authTokenEntryPoint" use-expressions="true">
+		<intercept-url pattern='/**' method="OPTIONS" access="permitAll" />
+		<intercept-url pattern='/**' access="hasRole('ROLE_USER')" />
 		<custom-filter position="PRE_AUTH_FILTER" ref="authTokenFilter" />
 	</http>
 	
