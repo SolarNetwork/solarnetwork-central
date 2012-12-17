@@ -95,8 +95,8 @@ SNDemo.getJSON = function(url, callback) {
 			});
 			xhr.setRequestHeader('Authorization', 'SolarNetworkWS ' +auth);
 		}
-	}).done(callback).fail(function(status) {
-		alert('fail: ' +status);
+	}).done(callback).fail(function(xhr, status, reason) {
+		alert(reason + ': ' +status +' (' +xhr.status +')');
 	});
 };
 
