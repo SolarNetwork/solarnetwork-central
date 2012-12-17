@@ -44,7 +44,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * @version 1.0
  */
 @Controller("v1nodeInstructionController")
-@RequestMapping(value = "/v1/sec/instr", method = RequestMethod.GET)
+@RequestMapping(value = "/v1/sec/instr")
 public class NodeInstructionController extends ControllerSupport {
 
 	@Autowired
