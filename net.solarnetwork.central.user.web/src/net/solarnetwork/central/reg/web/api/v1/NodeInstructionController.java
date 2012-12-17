@@ -56,7 +56,7 @@ public class NodeInstructionController extends ControllerSupport {
 	 *        the ID of the node to get instructions for
 	 * @return the active instructions for the node
 	 */
-	@RequestMapping("/viewActive")
+	@RequestMapping(value = "/viewActive", method = RequestMethod.GET)
 	@ResponseBody
 	public Response<List<Instruction>> activeInstructions(@RequestParam("nodeId") Long nodeId) {
 		List<Instruction> instructions = instructorBiz.getActiveInstructionsForNode(nodeId);
@@ -70,7 +70,7 @@ public class NodeInstructionController extends ControllerSupport {
 	 *        the ID of the instruction to view
 	 * @return the instruction
 	 */
-	@RequestMapping("/view")
+	@RequestMapping(value = "/view", method = RequestMethod.GET)
 	@ResponseBody
 	public Response<Instruction> viewInstruction(@RequestParam("id") Long instructionId) {
 		Instruction instruction = instructorBiz.getInstruction(instructionId);
