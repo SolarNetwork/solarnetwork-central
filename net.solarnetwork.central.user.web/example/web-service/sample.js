@@ -28,6 +28,54 @@ SNDemo.generateAuthorizationHeaderValue = function(params) {
 	return authHeader;
 };
 
+SNDemo.parseURLQueryTerms = function(search) {
+	var params = {};
+	var pairs;
+	var pair;
+	var i, len;
+	if ( search !== undefined && search.length > 1 ) { // > 1 because includes '?' character
+		search = search.substring(1);
+		pairs = search.split('&');
+		for ( i = 0, len = pairs.length; i < len; i++ ) {
+			pair = pairs[i].split('=', 2);
+			if ( pair.length === 2 ) {
+				params[pair[0]] = pair[1];
+			}
+		}
+	}
+	return params;
+};
+
+SNDemo.authURLPath = function(url) {
+	var a = document.createElement('a');
+	a.href = url;
+	var path = a.pathname;
+	
+	var params = SNDemo.parseURLQueryTerms(a.search);
+	var sortedKeys = [], key = undefined;
+	var i, len;
+	var first = true;
+
+	for ( key in params ) {
+		sortedKeys.push(key);
+	}
+	sortedKeys.sort();
+	if ( sortedKeys.length > 0 ) {
+		path += '?';
+		for ( i = 0, len = sortedKeys.length; i < len; i++ ) {
+			if ( first ) {
+				first = false;
+			} else {
+				path += '&';
+			}
+			path +=  sortedKeys[i];
+			path += '=';
+			path += params[sortedKeys[i]];
+		}
+	}
+	return path;
+};
+
 SNDemo.getJSON = function(url, callback) {
 	$.ajax({
 		type: 'GET',
@@ -35,15 +83,7 @@ SNDemo.getJSON = function(url, callback) {
 		dataType: 'json',
 		beforeSend: function(xhr) {
 			var date = new Date().toUTCString();
-			var a = document.createElement('a');
-			a.href = url;
-			var path = a.pathname;
-			
-			// TODO: we need to parse and sort query params here...
-			var queryParamsIndex = a.href.indexOf('?');
-			if ( queryParamsIndex >= 0 ) {
-				path = path + a.href.substring(queryParamsIndex);
-			}
+			var path = SNDemo.authURLPath(url);
 			
 			xhr.setRequestHeader('X-SN-Date', date);
 			var auth = SNDemo.generateAuthorizationHeaderValue({
