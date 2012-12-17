@@ -100,6 +100,10 @@
 			<param-name>Access-Control-Allow-Headers</param-name>
 			<param-value>Authorization, X-SN-Date</param-value>
 		</init-param>
+		<init-param>
+			<param-name>Access-Control-Max-Age</param-name>
+			<param-value>86400</param-value><!--  24 hours -->
+		</init-param>
 	</filter>
 	
 	<filter-mapping>
