@@ -22,14 +22,14 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.central.reg.web.api.domain.Response.response;
+import static net.solarnetwork.central.web.domain.Response.response;
 import java.util.List;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.central.reg.web.api.ControllerSupport;
-import net.solarnetwork.central.reg.web.api.domain.Response;
+import net.solarnetwork.central.web.domain.Response;
+import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,7 +45,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  */
 @Controller("v1nodeInstructionController")
 @RequestMapping(value = "/v1/sec/instr")
-public class NodeInstructionController extends ControllerSupport {
+public class NodeInstructionController extends WebServiceControllerSupport {
 
 	@Autowired
 	private InstructorBiz instructorBiz;

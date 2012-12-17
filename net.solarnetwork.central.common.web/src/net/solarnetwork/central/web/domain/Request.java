@@ -22,7 +22,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.web.api.domain;
+package net.solarnetwork.central.web.domain;
 
 import java.util.Map;
 

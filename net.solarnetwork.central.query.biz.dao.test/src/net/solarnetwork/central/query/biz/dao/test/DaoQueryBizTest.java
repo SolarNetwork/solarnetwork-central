@@ -28,20 +28,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
 import java.util.Set;
-
 import javax.annotation.Resource;
-
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
 import net.solarnetwork.central.datum.dao.PowerDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.PowerDatum;
 import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
+import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
-
 import org.joda.time.DateTime;
-import org.joda.time.ReadableInterval;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,13 +54,13 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 
 	private final String TEST_SOURCE_ID = "test.source";
 	private final String TEST_SOURCE_ID2 = "test.source.2";
-	
+
 	@Resource
 	private DaoQueryBiz daoQueryBiz;
-	
+
 	@Autowired
 	private PowerDatumDao powerDatumDao;
-	
+
 	@Autowired
 	private ConsumptionDatumDao consumptionDatumDao;
 
@@ -83,11 +79,11 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		datum.setNodeId(TEST_NODE_ID);
 		datum.setSourceId(TEST_SOURCE_ID);
 		datum.setPosted(new DateTime());
-		
+
 		// note we are setting legacy amp/volt properties here
 		datum.setPvAmps(1.8F);
 		datum.setPvVolts(1.9F);
-		
+
 		datum.setWattHourReading(2L);
 		return datum;
 	}
@@ -102,7 +98,7 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		// note we are setting legacy amps/volts values here, not watts
 		datum.setAmps(1.0F);
 		datum.setVolts(1.0F);
-		
+
 		datum.setWattHourReading(2L);
 		return datum;
 	}
@@ -110,7 +106,8 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 	@Test
 	public void getReportableIntervalNoData() {
 		@SuppressWarnings("unchecked")
-		ReadableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, new Class[] {PowerDatum.class});
+		ReportableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID,
+				new Class[] { PowerDatum.class });
 		assertNull(result);
 	}
 
@@ -118,56 +115,60 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 	public void getReportableIntervalSingleDatum() {
 		PowerDatum d = getTestPowerDatumInstance();
 		powerDatumDao.store(d);
-		
+
 		@SuppressWarnings("unchecked")
-		ReadableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, new Class[] {PowerDatum.class});
+		ReportableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID,
+				new Class[] { PowerDatum.class });
 		assertNotNull(result);
-		assertEquals(d.getCreated(), result.getStart());
-		assertEquals(d.getCreated(), result.getEnd());
+		assertEquals(d.getCreated(), result.getInterval().getStart());
+		assertEquals(d.getCreated(), result.getInterval().getEnd());
 	}
-	
+
 	@Test
 	public void getReportableIntervalRangeDatum() {
 		PowerDatum d = getTestPowerDatumInstance();
 		powerDatumDao.store(d);
-		
+
 		PowerDatum d2 = getTestPowerDatumInstance();
 		d2.setCreated(d2.getCreated().plusDays(5));
 		powerDatumDao.store(d2);
-		
+
 		@SuppressWarnings("unchecked")
-		ReadableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, new Class[] {PowerDatum.class});
+		ReportableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID,
+				new Class[] { PowerDatum.class });
 		assertNotNull(result);
-		assertEquals(d.getCreated(), result.getStart());
-		assertEquals(d2.getCreated(), result.getEnd());
+		assertEquals(d.getCreated(), result.getInterval().getStart());
+		assertEquals(d2.getCreated(), result.getInterval().getEnd());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void getReportableIntervalRangeMultipleDatumTypes() {
 		PowerDatum d = getTestPowerDatumInstance();
 		powerDatumDao.store(d);
-		
+
 		ConsumptionDatum c = getTestConsumptionDatumInstance();
 		c.setCreated(c.getCreated().plusDays(3));
 		consumptionDatumDao.store(c);
-		
+
 		// searches on single datum types should result in only the range for that type
-		ReadableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, new Class[] {PowerDatum.class});
+		ReportableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID,
+				new Class[] { PowerDatum.class });
 		assertNotNull(result);
-		assertEquals(d.getCreated(), result.getStart());
-		assertEquals(d.getCreated(), result.getEnd());
-		
-		result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, new Class[] {ConsumptionDatum.class});
+		assertEquals(d.getCreated(), result.getInterval().getStart());
+		assertEquals(d.getCreated(), result.getInterval().getEnd());
+
+		result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, new Class[] { ConsumptionDatum.class });
 		assertNotNull(result);
-		assertEquals(c.getCreated(), result.getStart());
-		assertEquals(c.getCreated(), result.getEnd());
-		
+		assertEquals(c.getCreated(), result.getInterval().getStart());
+		assertEquals(c.getCreated(), result.getInterval().getEnd());
+
 		// now search for multiple types, and the range should span both
-		result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, new Class[] {ConsumptionDatum.class, PowerDatum.class});
+		result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, new Class[] { ConsumptionDatum.class,
+				PowerDatum.class });
 		assertNotNull(result);
-		assertEquals(d.getCreated(), result.getStart());
-		assertEquals(c.getCreated(), result.getEnd());
+		assertEquals(d.getCreated(), result.getInterval().getStart());
+		assertEquals(c.getCreated(), result.getInterval().getEnd());
 	}
 
 	@Test
@@ -180,7 +181,7 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		d2.setCreated(d.getCreated().plusMinutes(1));
 		d2.setSourceId(TEST_SOURCE_ID);
 		powerDatumDao.store(d2);
-		
+
 		ConsumptionDatum c = getTestConsumptionDatumInstance();
 		c.setCreated(c.getCreated().plusDays(3));
 		c.setSourceId(TEST_SOURCE_ID2);
@@ -189,19 +190,18 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		c2.setCreated(c.getCreated().plusMinutes(1));
 		c2.setSourceId(TEST_SOURCE_ID2);
 		consumptionDatumDao.store(c2);
-		
-		
+
 		Set<String> result;
-		
+
 		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, PowerDatum.class, null, null);
 		assertNotNull(result);
 		assertEquals(1, result.size());
 		assertTrue(result.contains(TEST_SOURCE_ID));
-		
+
 		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, ConsumptionDatum.class, null, null);
 		assertNotNull(result);
 		assertEquals(1, result.size());
 		assertTrue(result.contains(TEST_SOURCE_ID2));
 	}
-	
+
 }

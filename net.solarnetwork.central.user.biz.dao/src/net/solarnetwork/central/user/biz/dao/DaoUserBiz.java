@@ -29,8 +29,8 @@ import static net.solarnetwork.central.user.biz.dao.UserBizConstants.isUnconfirm
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.List;
-import net.solarnetwork.central.user.biz.AuthorizationException;
-import net.solarnetwork.central.user.biz.AuthorizationException.Reason;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;

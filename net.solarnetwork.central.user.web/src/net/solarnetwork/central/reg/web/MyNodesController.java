@@ -25,8 +25,8 @@
 package net.solarnetwork.central.reg.web;
 
 import java.util.List;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.biz.AuthorizationException;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.UserNode;

@@ -32,7 +32,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import java.util.HashSet;
 import java.util.Set;
-import net.solarnetwork.central.user.biz.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
 import net.solarnetwork.central.user.biz.dao.UserBizConstants;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;

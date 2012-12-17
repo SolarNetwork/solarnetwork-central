@@ -26,34 +26,55 @@ package net.solarnetwork.central.security;
 
 import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
 /**
- * Extension of Spring Security's {@link User} object to add SolarNetwork
- * attributes.
+ * Implementation of Spring Security's {@link UserDetails} object for
+ * authenticated nodes.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public class AuthenticatedNode implements UserDetails, SecurityNode {
 
-	private static final long serialVersionUID = -7909158037651579050L;
+	private static final long serialVersionUID = -3196310376474763843L;
 
 	private final Long nodeId;
 	private final Collection<GrantedAuthority> authorities;
+	private final String username;
+	private final String password;
 
 	/**
-	 * Construct from existing {@link User} and a node ID.
+	 * Construct from and a node ID.
 	 * 
-	 * @param user
-	 *        the user
 	 * @param nodeId
 	 *        the node ID
+	 * @param auths
+	 *        the granted authorities
 	 */
 	public AuthenticatedNode(Long nodeId, Collection<GrantedAuthority> auths) {
+		this(nodeId, nodeId.toString(), "", auths);
+	}
+
+	/**
+	 * Construct from a node ID, username, and password.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param username
+	 *        the username, e.g. auth token
+	 * @param password
+	 *        the password, e.g. auth secret
+	 * @param auths
+	 *        the granted authorities
+	 */
+	public AuthenticatedNode(Long nodeId, String username, String password,
+			Collection<GrantedAuthority> auths) {
+		super();
+		this.username = username;
+		this.password = password;
 		this.nodeId = nodeId;
-		authorities = auths;
+		this.authorities = auths;
 	}
 
 	/**
@@ -71,12 +92,12 @@ public class AuthenticatedNode implements UserDetails, SecurityNode {
 
 	@Override
 	public String getPassword() {
-		return "";
+		return password;
 	}
 
 	@Override
 	public String getUsername() {
-		return nodeId.toString();
+		return username;
 	}
 
 	@Override

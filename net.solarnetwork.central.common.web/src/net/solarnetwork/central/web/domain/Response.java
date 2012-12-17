@@ -22,7 +22,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.web.api.domain;
+package net.solarnetwork.central.web.domain;
 
 /**
  * A simple service response envelope object.

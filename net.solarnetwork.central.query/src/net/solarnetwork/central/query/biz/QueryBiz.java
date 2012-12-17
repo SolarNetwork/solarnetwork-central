@@ -28,16 +28,14 @@ package net.solarnetwork.central.query.biz;
 
 import java.util.List;
 import java.util.Set;
-
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
-
+import net.solarnetwork.central.query.domain.ReportableInterval;
 import org.joda.time.LocalDate;
-import org.joda.time.ReadableInterval;
 
 /**
  * API for querying business logic.
- *
+ * 
  * @author matt
  * @version $Revision$ $Date$
  */
@@ -46,60 +44,76 @@ public interface QueryBiz {
 	/**
 	 * Get a date interval of available data for a type of NodeDatum.
 	 * 
-	 * <p>This method can be used to find the earliest and latest dates
-	 * data is available for a set of given {@link NodeDatum} types. When
-	 * more than one NodeDatum are provided, the returned interval will be the
-	 * union of all ranges, that is the earliest date of all specified 
-	 * NodeDatum values and the maximum date of all specified NodeDatum values. This
-	 * could be useful for reporting UIs that want to display a view of
-	 * the complete range of data available.</p>
+	 * <p>
+	 * This method can be used to find the earliest and latest dates data is
+	 * available for a set of given {@link NodeDatum} types. When more than one
+	 * NodeDatum are provided, the returned interval will be the union of all
+	 * ranges, that is the earliest date of all specified NodeDatum values and
+	 * the maximum date of all specified NodeDatum values. This could be useful
+	 * for reporting UIs that want to display a view of the complete range of
+	 * data available.
+	 * </p>
 	 * 
-	 * @param nodeId the ID of the node to look for
-	 * @param types the set of NodeDatum types to look for
+	 * @param nodeId
+	 *        the ID of the node to look for
+	 * @param types
+	 *        the set of NodeDatum types to look for
 	 * @return ReadableInterval instance, or <em>null</em> if no data available
 	 */
-	ReadableInterval getReportableInterval(Long nodeId, Class<? extends NodeDatum>[] types);
-	
+	ReportableInterval getReportableInterval(Long nodeId, Class<? extends NodeDatum>[] types);
+
 	/**
-	 * Get a date interval of available data for a type of NodeDatum, across
-	 * all nodes in the system.
+	 * Get a date interval of available data for a type of NodeDatum, across all
+	 * nodes in the system.
 	 * 
-	 * <p>This method can be used to find the earliest and latest dates
-	 * data is available for a set of given {@link NodeDatum} types. When
-	 * more than one NodeDatum are provided, the returned interval will be the
-	 * union of all ranges, that is the earliest date of all specified 
-	 * NodeDatum values and the maximum date of all specified NodeDatum values. This
-	 * could be useful for reporting UIs that want to display a view of
-	 * the complete range of data available.</p>
+	 * <p>
+	 * This method can be used to find the earliest and latest dates data is
+	 * available for a set of given {@link NodeDatum} types. When more than one
+	 * NodeDatum are provided, the returned interval will be the union of all
+	 * ranges, that is the earliest date of all specified NodeDatum values and
+	 * the maximum date of all specified NodeDatum values. This could be useful
+	 * for reporting UIs that want to display a view of the complete range of
+	 * data available.
+	 * </p>
 	 * 
-	 * @param types the set of NodeDatum types to look for
+	 * @param types
+	 *        the set of NodeDatum types to look for
 	 * @return ReadableInterval instance, or <em>null</em> if no data available
 	 */
-	ReadableInterval getNetworkReportableInterval(Class<? extends NodeDatum>[] types);
-	
+	ReportableInterval getNetworkReportableInterval(Class<? extends NodeDatum>[] types);
+
 	/**
-	 * Get the available source IDs for a given node, optionally limited to a date range.
+	 * Get the available source IDs for a given node, optionally limited to a
+	 * date range.
 	 * 
-	 * @param nodeId the node ID to search for
-	 * @param type the NodeDatum type to look for
-	 * @param start an optional start date (inclusive) to filter on
-	 * @param end an optional end date (inclusive) to filter on
+	 * @param nodeId
+	 *        the node ID to search for
+	 * @param type
+	 *        the NodeDatum type to look for
+	 * @param start
+	 *        an optional start date (inclusive) to filter on
+	 * @param end
+	 *        an optional end date (inclusive) to filter on
 	 * @return the distinct source IDs available (never <em>null</em>)
 	 */
-	Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type, 
-			LocalDate start, LocalDate end);
-	
+	Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type, LocalDate start,
+			LocalDate end);
+
 	/**
 	 * Query for a list of aggregated datum objects.
 	 * 
-	 * <p>The returned domain objects are not generally persisted objects,
-	 * they represent aggregated results, most likely aggregated over time.</p>
+	 * <p>
+	 * The returned domain objects are not generally persisted objects, they
+	 * represent aggregated results, most likely aggregated over time.
+	 * </p>
 	 * 
-	 * @param datumClass the type of NodeDatum to query for
-	 * @param criteria the query criteria
+	 * @param datumClass
+	 *        the type of NodeDatum to query for
+	 * @param criteria
+	 *        the query criteria
 	 * @return the query results
 	 */
-	List<? extends NodeDatum> getAggregatedDatum(Class<? extends NodeDatum> datumClass, 
+	List<? extends NodeDatum> getAggregatedDatum(Class<? extends NodeDatum> datumClass,
 			DatumQueryCommand criteria);
 
 }

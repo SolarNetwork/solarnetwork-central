@@ -2,7 +2,7 @@ CREATE TABLE solaruser.user_auth_token (
 	auth_token		CHARACTER(20) NOT NULL,
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id			BIGINT NOT NULL,
-	auth_secret		CHARACTER VARYING(64) NOT NULL,
+	auth_secret		CHARACTER VARYING(32) NOT NULL,
 	status			CHAR(1) NOT NULL,
 	CONSTRAINT user_auth_token_pkey PRIMARY KEY (auth_token),
 	CONSTRAINT user_auth_token_user_fk FOREIGN KEY (user_id)

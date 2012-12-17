@@ -34,25 +34,26 @@ import org.springframework.security.core.userdetails.User;
  * @version 1.1
  */
 public class AuthenticatedUser extends User implements SecurityUser {
-	
+
 	private static final long serialVersionUID = -536562318395003903L;
 
 	private final Long userId;
 	private final String name;
 
 	/**
-	 * Construct from existing {@link User} and 
+	 * Construct from existing {@link User} and
 	 * {@link net.solarnetwork.central.user.domain.User} objects.
 	 * 
-	 * @param user the user
-	 * @param domainUser the domain User
+	 * @param user
+	 *        the user
+	 * @param domainUser
+	 *        the domain User
 	 */
-	public AuthenticatedUser(User user, net.solarnetwork.central.user.domain.User domainUser) {
-		super(user.getUsername(), user.getPassword(), user.isEnabled(), 
-				user.isAccountNonExpired(), user.isCredentialsNonExpired(),
-				user.isAccountNonLocked(), user.getAuthorities());
-		this.userId = domainUser.getId();
-		this.name = domainUser.getName();
+	public AuthenticatedUser(User user, Long userId, String name) {
+		super(user.getUsername(), user.getPassword(), user.isEnabled(), user.isAccountNonExpired(), user
+				.isCredentialsNonExpired(), user.isAccountNonLocked(), user.getAuthorities());
+		this.userId = userId;
+		this.name = name;
 	}
 
 	@Override
@@ -73,5 +74,5 @@ public class AuthenticatedUser extends User implements SecurityUser {
 	public String getEmail() {
 		return getUsername();
 	}
-	
+
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * ControllerSupport.java - Nov 27, 2012 2:06:15 PM
+ * WebServiceControllerSupport.java - Dec 18, 2012 7:29:54 AM
  * 
  * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
@@ -20,30 +20,40 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.web.api;
+package net.solarnetwork.central.web.support;
 
 import javax.servlet.http.HttpServletResponse;
-import net.solarnetwork.central.reg.web.api.domain.Response;
-import net.solarnetwork.central.user.biz.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.web.domain.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
- * Support class for web API controllers.
+ * A base class to support web service style controllers.
  * 
  * @author matt
  * @version 1.0
  */
-public class ControllerSupport {
+public abstract class WebServiceControllerSupport {
 
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
+	/**
+	 * Handle an {@link AuthorizationException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 */
 	@ExceptionHandler(AuthorizationException.class)
 	@ResponseBody
-	public Response<?> handleException(AuthorizationException e, HttpServletResponse response) {
+	public Response<?> handleAuthorizationException(AuthorizationException e,
+			HttpServletResponse response) {
 		log.debug("AuthorizationException in {} controller: {}", getClass().getSimpleName(),
 				e.getMessage());
 		response.setStatus(HttpServletResponse.SC_FORBIDDEN);

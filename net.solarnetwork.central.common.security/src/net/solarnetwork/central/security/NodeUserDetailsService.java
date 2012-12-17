@@ -41,18 +41,19 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
  * @version $Revision$
  */
 public class NodeUserDetailsService implements UserDetailsService {
-	
-	private static final Collection<GrantedAuthority> AUTHORITIES = getAuthorities();
+
+	/** The default authorities to grant. */
+	protected static final Collection<GrantedAuthority> AUTHORITIES = getAuthorities();
 
 	private static Collection<GrantedAuthority> getAuthorities() {
 		Collection<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>(1);
 		authorities.add(new SimpleGrantedAuthority("ROLE_NODE"));
 		return Collections.unmodifiableCollection(authorities);
 	}
-	
+
 	@Override
-	public UserDetails loadUserByUsername(String username)
-			throws UsernameNotFoundException, DataAccessException {
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException,
+			DataAccessException {
 		Long id = Long.valueOf(username);
 		return new AuthenticatedNode(id, AUTHORITIES);
 	}

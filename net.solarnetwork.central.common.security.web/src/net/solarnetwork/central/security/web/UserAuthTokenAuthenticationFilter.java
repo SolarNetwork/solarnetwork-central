@@ -148,6 +148,11 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		}
 
 		UserDetails user = userDetailsService.loadUserByUsername(data.authToken);
+		if ( user == null ) {
+			log.debug("Unknown auth token {}", data.authToken);
+			fail(request, response, new BadCredentialsException("Bad credentials"));
+			return;
+		}
 		final String computedDigest = computeDigest(data, user.getPassword());
 		if ( !computedDigest.equals(data.signatureDigest) ) {
 			log.debug("Expected response: '{}' but received: '{}'", computedDigest, data.signatureDigest);

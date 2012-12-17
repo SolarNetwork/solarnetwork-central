@@ -22,7 +22,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.biz;
+package net.solarnetwork.central.security;
 
 /**
  * Exception thrown when authorization to some resource fails.
@@ -30,9 +30,9 @@ package net.solarnetwork.central.user.biz;
  * @author matt
  * @version 1.0
  */
-public class AuthorizationException extends RuntimeException {
+public class AuthorizationException extends SecurityException {
 
-	private static final long serialVersionUID = -8648122165857058984L;
+	private static final long serialVersionUID = -7269908721527606492L;
 
 	/** Authorization exception reason. */
 	public enum Reason {
@@ -77,10 +77,10 @@ public class AuthorizationException extends RuntimeException {
 	 * @param reason
 	 *        the reason for the exception
 	 */
-	public AuthorizationException(String email, Reason reason) {
+	public AuthorizationException(String username, Reason reason) {
 		super();
 		this.reason = reason;
-		this.email = email;
+		this.email = username;
 		this.id = null;
 	}
 

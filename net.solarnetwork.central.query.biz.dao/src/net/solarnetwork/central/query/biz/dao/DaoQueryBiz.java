@@ -31,7 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
+import java.util.TimeZone;
+import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
 import net.solarnetwork.central.datum.dao.DatumDao;
 import net.solarnetwork.central.datum.dao.DayDatumDao;
@@ -41,8 +42,9 @@ import net.solarnetwork.central.datum.dao.PriceDatumDao;
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.query.biz.QueryBiz;
-
+import net.solarnetwork.central.query.domain.ReportableInterval;
 import org.joda.time.LocalDate;
 import org.joda.time.MutableInterval;
 import org.joda.time.ReadableInterval;
@@ -52,7 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of {@link QueryBiz}.
- *
+ * 
  * @author matt
  * @version $Revision$ $Date$
  */
@@ -60,8 +62,9 @@ public class DaoQueryBiz implements QueryBiz {
 
 	private ConsumptionDatumDao consumptionDatumDao;
 	private PowerDatumDao powerDatumDao;
-	
-	private Map<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>> daoMapping;
+	private SolarNodeDao solarNodeDao;
+
+	private final Map<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>> daoMapping;
 
 	/**
 	 * Default constructor.
@@ -70,16 +73,15 @@ public class DaoQueryBiz implements QueryBiz {
 		super();
 		daoMapping = new HashMap<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>>(4);
 	}
-	
+
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public ReadableInterval getReportableInterval(Long nodeId,
-			Class<? extends NodeDatum>[] types) {
+	public ReportableInterval getReportableInterval(Long nodeId, Class<? extends NodeDatum>[] types) {
 		MutableInterval interval = new MutableInterval(0, 0);
 		for ( Class<? extends NodeDatum> clazz : types ) {
 			ReadableInterval oneInterval = null;
 			if ( consumptionDatumDao.getDatumType().isAssignableFrom(clazz) ) {
-				oneInterval = consumptionDatumDao.getReportableInterval(nodeId); 
+				oneInterval = consumptionDatumDao.getReportableInterval(nodeId);
 			} else if ( powerDatumDao.getDatumType().isAssignableFrom(clazz) ) {
 				oneInterval = powerDatumDao.getReportableInterval(nodeId);
 			}
@@ -88,7 +90,7 @@ public class DaoQueryBiz implements QueryBiz {
 						|| oneInterval.getEndMillis() > interval.getEndMillis() ) {
 					interval.setEndMillis(oneInterval.getEndMillis());
 				}
-				if ( interval.getStartMillis() == 0 
+				if ( interval.getStartMillis() == 0
 						|| oneInterval.getStartMillis() < interval.getStartMillis() ) {
 					interval.setStartMillis(oneInterval.getStartMillis());
 				}
@@ -97,12 +99,19 @@ public class DaoQueryBiz implements QueryBiz {
 		if ( interval.getStartMillis() == 0 ) {
 			return null;
 		}
-		return interval;
+		TimeZone tz = null;
+		if ( nodeId != null ) {
+			SolarNode node = solarNodeDao.get(nodeId);
+			if ( node != null ) {
+				tz = node.getTimeZone();
+			}
+		}
+		return new ReportableInterval(interval, tz);
 	}
-	
+
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type, 
+	public Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type,
 			LocalDate start, LocalDate end) {
 		final Set<String> result;
 		if ( consumptionDatumDao.getDatumType().isAssignableFrom(type) ) {
@@ -117,20 +126,18 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public ReadableInterval getNetworkReportableInterval(
-			Class<? extends NodeDatum>[] types) {
+	public ReportableInterval getNetworkReportableInterval(Class<? extends NodeDatum>[] types) {
 		return getReportableInterval(null, types);
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<? extends NodeDatum> getAggregatedDatum(
-			Class<? extends NodeDatum> datumClass, DatumQueryCommand criteria) {
+	public List<? extends NodeDatum> getAggregatedDatum(Class<? extends NodeDatum> datumClass,
+			DatumQueryCommand criteria) {
 		DatumDao<? extends NodeDatum> dao = daoMapping.get(datumClass);
 		if ( dao == null ) {
-			throw new IllegalArgumentException("Datum type " 
-					+(datumClass == null ? "(null)" : datumClass.getSimpleName())
-					+" not supported");
+			throw new IllegalArgumentException("Datum type "
+					+ (datumClass == null ? "(null)" : datumClass.getSimpleName()) + " not supported");
 		}
 		if ( criteria.isMostRecent() ) {
 			return dao.getMostRecentDatum(criteria);
@@ -142,22 +149,23 @@ public class DaoQueryBiz implements QueryBiz {
 	public void setDayDatumDao(DayDatumDao dayDatumDao) {
 		daoMapping.put(dayDatumDao.getDatumType().asSubclass(NodeDatum.class), dayDatumDao);
 	}
-	
+
 	@Autowired
 	public void setPowerDatumDao(PowerDatumDao powerDatumDao) {
 		this.powerDatumDao = powerDatumDao;
 		daoMapping.put(powerDatumDao.getDatumType().asSubclass(NodeDatum.class), powerDatumDao);
 	}
-	
+
 	@Autowired
 	public void setWeatherDatumDao(WeatherDatumDao weatherDatumDao) {
 		daoMapping.put(weatherDatumDao.getDatumType().asSubclass(NodeDatum.class), weatherDatumDao);
 	}
-	
+
 	@Autowired
 	public void setConsumptionDatumDao(ConsumptionDatumDao consumptionDatumDao) {
 		this.consumptionDatumDao = consumptionDatumDao;
-		daoMapping.put(consumptionDatumDao.getDatumType().asSubclass(NodeDatum.class), consumptionDatumDao);
+		daoMapping.put(consumptionDatumDao.getDatumType().asSubclass(NodeDatum.class),
+				consumptionDatumDao);
 	}
 
 	@Autowired
@@ -167,8 +175,13 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Autowired
 	public void setHardwareControlDatumDao(HardwareControlDatumDao hardwareControlDatumDao) {
-		daoMapping.put(hardwareControlDatumDao.getDatumType().asSubclass(NodeDatum.class), 
+		daoMapping.put(hardwareControlDatumDao.getDatumType().asSubclass(NodeDatum.class),
 				hardwareControlDatumDao);
+	}
+
+	@Autowired
+	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
+		this.solarNodeDao = solarNodeDao;
 	}
 
 }

@@ -26,6 +26,7 @@ package net.solarnetwork.central.user.biz;
 
 import java.util.List;
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;

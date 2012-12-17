@@ -28,9 +28,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import net.solarnetwork.central.reg.web.api.ControllerSupport;
-import net.solarnetwork.central.reg.web.api.domain.Response;
 import net.solarnetwork.central.security.SecurityUser;
+import net.solarnetwork.central.web.domain.Response;
+import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * @version $Revision$
  */
 @Controller("v1authenticationController")
-public class AuthenticationController extends ControllerSupport {
+public class AuthenticationController extends WebServiceControllerSupport {
 
 	@Resource
 	private AuthenticationManager authenticationManager;

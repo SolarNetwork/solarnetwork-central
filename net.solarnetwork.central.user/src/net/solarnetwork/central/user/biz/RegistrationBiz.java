@@ -24,6 +24,7 @@
 
 package net.solarnetwork.central.user.biz;
 
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;

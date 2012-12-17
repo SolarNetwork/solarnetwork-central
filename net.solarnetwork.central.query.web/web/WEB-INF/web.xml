@@ -19,10 +19,10 @@
 
   $Id: web.xml,v 1.58 2007/08/27 04:04:21 matt Exp $
 -->
-<web-app xmlns="http://java.sun.com/xml/ns/j2ee"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
-    version="2.4">
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	version="2.5">
 
 	<display-name>SolarNetwork Web Query Server</display-name>
     <description>SolarNetwork Web Query Server</description>
@@ -38,6 +38,17 @@
 			/WEB-INF/*-context.xml
 		</param-value>
 	</context-param>
+	
+	<!-- Security Filter -->
+	<filter>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+	</filter>
+	
+	<filter-mapping>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
 	
 	<!-- Compression filter -->
 	<filter>
@@ -60,6 +71,10 @@
 	<filter-mapping>
 		<filter-name>Compression Filter</filter-name>
 		<url-pattern>*.xml</url-pattern>
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>Compression Filter</filter-name>
+		<url-pattern>/api/*</url-pattern>
 	</filter-mapping>
 	
 	<!-- Character encoding filter -->
@@ -85,11 +100,23 @@
 			<param-name>Access-Control-Allow-Origin</param-name>
 			<param-value>*</param-value>
 		</init-param>
+		<init-param>
+			<param-name>Access-Control-Allow-Headers</param-name>
+			<param-value>Authorization, X-SN-Date</param-value>
+		</init-param>
+		<init-param>
+			<param-name>Access-Control-Max-Age</param-name>
+			<param-value>86400</param-value><!--  24 hours -->
+		</init-param>
 	</filter>
 	
 	<filter-mapping>
 		<filter-name>xhrFilter</filter-name>
 		<url-pattern>*.json</url-pattern>
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>xhrFilter</filter-name>
+		<url-pattern>/api/*</url-pattern>
 	</filter-mapping>
 
 	<listener>
@@ -108,15 +135,7 @@
 	
 	<servlet-mapping>
 		<servlet-name>solarquery</servlet-name>
-		<url-pattern>*.do</url-pattern>
-	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>solarquery</servlet-name>
-		<url-pattern>*.json</url-pattern>
-	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>solarquery</servlet-name>
-		<url-pattern>*.xml</url-pattern>
+		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
 
 	<welcome-file-list>
