@@ -26,7 +26,6 @@ package net.solarnetwork.central.instructor.biz.dao;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
@@ -36,7 +35,6 @@ import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
-
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -52,20 +50,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DaoInstructorBiz implements InstructorBiz {
 
-	@Autowired private NodeInstructionDao nodeInstructionDao;
-	
+	@Autowired
+	private NodeInstructionDao nodeInstructionDao;
+
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public List<Instruction> getActiveInstructionsForNode(Long nodeId) {
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeId(nodeId);
 		filter.setState(InstructionState.Queued);
-		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(
-				filter, null, null, null);
+		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null, null);
 		List<Instruction> results = new ArrayList<Instruction>(matches.getReturnedResultCount());
 		for ( EntityMatch match : matches.getResults() ) {
 			if ( match instanceof Instruction ) {
-				results.add((Instruction)match);
+				results.add((Instruction) match);
 			} else {
 				results.add(nodeInstructionDao.get(match.getId()));
 			}
@@ -93,8 +91,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public void updateInstructionState(Long instructionId,
-			InstructionState state) {
+	public void updateInstructionState(Long instructionId, InstructionState state) {
 		NodeInstruction instr = nodeInstructionDao.get(instructionId);
 		if ( instr != null ) {
 			if ( !state.equals(instr.getState()) ) {
@@ -106,7 +103,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
-	public Instruction getInstruction(Long instructionId) {
+	public NodeInstruction getInstruction(Long instructionId) {
 		return nodeInstructionDao.get(instructionId);
 	}
 

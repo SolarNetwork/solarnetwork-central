@@ -60,7 +60,7 @@ public class DelegatingInstructorBiz implements InstructorBiz {
 	}
 
 	@Override
-	public Instruction getInstruction(Long instructionId) {
+	public NodeInstruction getInstruction(Long instructionId) {
 		return delegate.getInstruction(instructionId);
 	}
 

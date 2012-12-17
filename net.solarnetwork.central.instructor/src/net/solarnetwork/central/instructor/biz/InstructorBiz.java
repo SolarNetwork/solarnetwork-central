@@ -25,7 +25,6 @@
 package net.solarnetwork.central.instructor.biz;
 
 import java.util.List;
-
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -41,37 +40,45 @@ public interface InstructorBiz {
 	/**
 	 * Return any active instructions for a specific node.
 	 * 
-	 * @param node the node to get instructions for
+	 * @param node
+	 *        the node to get instructions for
 	 * @return the instructions
 	 */
 	List<Instruction> getActiveInstructionsForNode(Long nodeId);
-	
+
 	/**
 	 * Queue an instruction for a specific node.
 	 * 
-	 * @param nodeId the node ID
-	 * @param instruction the instruction
+	 * @param nodeId
+	 *        the node ID
+	 * @param instruction
+	 *        the instruction
 	 * @return the persisted instruction
 	 */
 	NodeInstruction queueInstruction(Long nodeId, Instruction instruction);
-	
+
 	/**
 	 * Get a specific instruction.
 	 * 
-	 * @param instructionId the instruction ID
+	 * @param instructionId
+	 *        the instruction ID
 	 * @return the found instruction, or <em>null</em> if not found
 	 */
-	Instruction getInstruction(Long instructionId);
-	
+	NodeInstruction getInstruction(Long instructionId);
+
 	/**
 	 * Update the state of a specific instruction.
 	 * 
-	 * <p>As an instruction is processed, for example by a node, the
-	 * state should be updated by that processor.</p>
+	 * <p>
+	 * As an instruction is processed, for example by a node, the state should
+	 * be updated by that processor.
+	 * </p>
 	 * 
-	 * @param instructionId the instruction ID
-	 * @param state the new state
+	 * @param instructionId
+	 *        the instruction ID
+	 * @param state
+	 *        the new state
 	 */
 	void updateInstructionState(Long instructionId, InstructionState state);
-	
+
 }

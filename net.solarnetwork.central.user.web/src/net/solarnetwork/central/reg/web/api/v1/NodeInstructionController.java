@@ -26,6 +26,7 @@ import static net.solarnetwork.central.reg.web.api.domain.Response.response;
 import java.util.List;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.reg.web.api.ControllerSupport;
 import net.solarnetwork.central.reg.web.api.domain.Response;
@@ -89,5 +90,21 @@ public class NodeInstructionController extends ControllerSupport {
 	public Response<NodeInstruction> queueInstruction(NodeInstruction input) {
 		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(), input);
 		return response(instr);
+	}
+
+	/**
+	 * Update the state of an existing instruction.
+	 * 
+	 * @param instructionId
+	 *        the ID of the instruction to view
+	 * @param state
+	 *        the desired state
+	 */
+	@RequestMapping(value = "/updateState", method = RequestMethod.POST)
+	@ResponseBody
+	public Response<NodeInstruction> updateInstructionState(@RequestParam("id") Long instructionId,
+			@RequestParam("state") InstructionState state) {
+		instructorBiz.updateInstructionState(instructionId, state);
+		return response(null);
 	}
 }

@@ -12,6 +12,7 @@
 
 	<bean id="instructorSecurityAspect" class="net.solarnetwork.central.instructor.aop.InstructorSecurityAspect">
 		<constructor-arg ref="userNodeDao"/>
+		<constructor-arg ref="nodeInstructionDao"/>
 	</bean>
 	
 	<bean id="aopInstructorBiz" class="net.solarnetwork.central.instructor.support.DelegatingInstructorBiz">

@@ -12,6 +12,8 @@
 
 	<osgi:reference id="userNodeDao" cardinality="1..1" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 
+	<osgi:reference id="nodeInstructionDao" cardinality="1..1" interface="net.solarnetwork.central.instructor.dao.NodeInstructionDao"/>
+	
 	<osgi:reference id="instructorBiz"
 		interface="net.solarnetwork.central.instructor.biz.InstructorBiz"
 		cardinality="1..1" 

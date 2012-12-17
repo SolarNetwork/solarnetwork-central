@@ -23,6 +23,8 @@
 package net.solarnetwork.central.instructor.aop;
 
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
+import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityUser;
@@ -30,6 +32,7 @@ import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.AuthorizationException;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
+import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
@@ -55,6 +58,7 @@ import org.slf4j.LoggerFactory;
 public class InstructorSecurityAspect {
 
 	private final UserNodeDao userNodeDao;
+	private final NodeInstructionDao nodeInstructionDao;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -64,9 +68,10 @@ public class InstructorSecurityAspect {
 	 * @param userNodeDao
 	 *        the UserNodeDao to use
 	 */
-	public InstructorSecurityAspect(UserNodeDao userNodeDao) {
+	public InstructorSecurityAspect(UserNodeDao userNodeDao, NodeInstructionDao nodeInstructionDao) {
 		super();
 		this.userNodeDao = userNodeDao;
+		this.nodeInstructionDao = nodeInstructionDao;
 	}
 
 	// Hmm, can't use execution(* net.solarnetwork.central.instructor.biz.InstructorBiz.getActiveInstructionsForNode(..))
@@ -81,6 +86,14 @@ public class InstructorSecurityAspect {
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.queueInstruction(..)) && args(nodeId,..)")
 	public void queueInstruction(Long nodeId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.getInstruction(..)) && args(instructionId,..)")
+	public void viewInstruction(Long instructionId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.updateInstruction*(..)) && args(instructionId,..)")
+	public void updateInstruction(Long instructionId) {
 	}
 
 	/**
@@ -123,4 +136,94 @@ public class InstructorSecurityAspect {
 		}
 	}
 
+	/**
+	 * Allow the current user (or current node) access to viewing instructions
+	 * by ID.
+	 * 
+	 * @param instructionId
+	 *        the instruction ID
+	 * @param instruction
+	 *        the instruction
+	 */
+	@AfterReturning(pointcut = "viewInstruction(instructionId)", returning = "instruction")
+	public void viewInstructionAccessCheck(Long instructionId, NodeInstruction instruction) {
+		if ( instructionId == null ) {
+			return;
+		}
+		try {
+			SecurityNode node = SecurityUtils.getCurrentNode();
+			if ( !instruction.getNodeId().equals(node.getNodeId()) ) {
+				log.warn("Access DENIED to instruction {} for node {}; wrong node", instructionId,
+						node.getNodeId());
+				throw new AuthorizationException(node.getNodeId().toString(),
+						AuthorizationException.Reason.ACCESS_DENIED);
+			}
+			return;
+		} catch ( SecurityException e ) {
+			// not a node... continue
+		}
+		final SecurityUser actor = SecurityUtils.getCurrentUser();
+		if ( actor == null ) {
+			log.warn("Access DENIED to instruction {} for non-authenticated user", instructionId);
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, instructionId);
+		}
+		UserNode userNode = userNodeDao.get(instruction.getNodeId());
+		if ( userNode == null ) {
+			log.warn("Access DENIED to instruction {} for user {}; not found", instructionId,
+					actor.getEmail());
+			throw new AuthorizationException(actor.getEmail(),
+					AuthorizationException.Reason.ACCESS_DENIED);
+		}
+		if ( !actor.getUserId().equals(userNode.getUser().getId()) ) {
+			log.warn("Access DENIED to instruction {} for user {}; wrong user", instructionId,
+					actor.getEmail());
+			throw new AuthorizationException(actor.getEmail(),
+					AuthorizationException.Reason.ACCESS_DENIED);
+		}
+	}
+
+	/**
+	 * Allow the current user (or current node) access to updating instructions
+	 * by ID.
+	 * 
+	 * @param instructionId
+	 *        the ID of the instruction being updated
+	 */
+	@Before("updateInstruction(instructionId)")
+	public void updateInstructionAccessCheck(Long instructionId) {
+		if ( instructionId == null ) {
+			return;
+		}
+		NodeInstruction instruction = nodeInstructionDao.get(instructionId);
+		try {
+			SecurityNode node = SecurityUtils.getCurrentNode();
+			if ( !instruction.getNodeId().equals(node.getNodeId()) ) {
+				log.warn("Access DENIED to instruction {} for node {}; wrong node", instructionId,
+						node.getNodeId());
+				throw new AuthorizationException(node.getNodeId().toString(),
+						AuthorizationException.Reason.ACCESS_DENIED);
+			}
+			return;
+		} catch ( SecurityException e ) {
+			// not a node... continue
+		}
+		final SecurityUser actor = SecurityUtils.getCurrentUser();
+		if ( actor == null ) {
+			log.warn("Access DENIED to instruction {} for non-authenticated user", instructionId);
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, instructionId);
+		}
+		UserNode userNode = userNodeDao.get(instruction.getNodeId());
+		if ( userNode == null ) {
+			log.warn("Access DENIED to instruction {} for user {}; not found", instructionId,
+					actor.getEmail());
+			throw new AuthorizationException(actor.getEmail(),
+					AuthorizationException.Reason.ACCESS_DENIED);
+		}
+		if ( !actor.getUserId().equals(userNode.getUser().getId()) ) {
+			log.warn("Access DENIED to instruction {} for user {}; wrong user", instructionId,
+					actor.getEmail());
+			throw new AuthorizationException(actor.getEmail(),
+					AuthorizationException.Reason.ACCESS_DENIED);
+		}
+	}
 }
