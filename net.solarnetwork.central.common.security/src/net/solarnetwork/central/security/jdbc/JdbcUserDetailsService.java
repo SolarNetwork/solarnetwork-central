@@ -64,9 +64,11 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 	@Override
 	protected UserDetails createUserDetails(String username, UserDetails userFromUserQuery,
 			List<GrantedAuthority> combinedAuthorities) {
-		User user = (User) super.createUserDetails(username, userFromUserQuery, combinedAuthorities);
+		AuthenticatedUser user = (AuthenticatedUser) super.createUserDetails(username,
+				userFromUserQuery, combinedAuthorities);
 		AuthenticatedUser authUser = (AuthenticatedUser) userFromUserQuery;
-		return new AuthenticatedUser(user, authUser.getUserId(), authUser.getName());
+		return new AuthenticatedUser(user, authUser.getUserId(), authUser.getName(),
+				user.isAuthenticatedWithToken());
 	}
 
 	@Override
@@ -82,8 +84,9 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 						boolean enabled = rs.getBoolean(3);
 						Long id = rs.getLong(4);
 						String name = rs.getString(5);
+						boolean authWithToken = rs.getBoolean(6);
 						return new AuthenticatedUser(new User(username, password, enabled, true, true,
-								true, AuthorityUtils.NO_AUTHORITIES), id, name);
+								true, AuthorityUtils.NO_AUTHORITIES), id, name, authWithToken);
 					}
 				});
 	}

@@ -55,7 +55,7 @@ public class NodeUserDetailsService implements UserDetailsService {
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException,
 			DataAccessException {
 		Long id = Long.valueOf(username);
-		return new AuthenticatedNode(id, AUTHORITIES);
+		return new AuthenticatedNode(id, AUTHORITIES, false);
 	}
 
 }

@@ -35,10 +35,11 @@ import org.springframework.security.core.userdetails.User;
  */
 public class AuthenticatedUser extends User implements SecurityUser {
 
-	private static final long serialVersionUID = -536562318395003903L;
+	private static final long serialVersionUID = 4517031455367343502L;
 
 	private final Long userId;
 	private final String name;
+	private final boolean authenticatedWithToken;
 
 	/**
 	 * Construct from existing {@link User} and
@@ -48,12 +49,15 @@ public class AuthenticatedUser extends User implements SecurityUser {
 	 *        the user
 	 * @param domainUser
 	 *        the domain User
+	 * @param authenticatedWithToken
+	 *        the authenticated with token flag
 	 */
-	public AuthenticatedUser(User user, Long userId, String name) {
+	public AuthenticatedUser(User user, Long userId, String name, boolean authenticatedWithToken) {
 		super(user.getUsername(), user.getPassword(), user.isEnabled(), user.isAccountNonExpired(), user
 				.isCredentialsNonExpired(), user.isAccountNonLocked(), user.getAuthorities());
 		this.userId = userId;
 		this.name = name;
+		this.authenticatedWithToken = authenticatedWithToken;
 	}
 
 	@Override
@@ -73,6 +77,11 @@ public class AuthenticatedUser extends User implements SecurityUser {
 	@Override
 	public String getEmail() {
 		return getUsername();
+	}
+
+	@Override
+	public boolean isAuthenticatedWithToken() {
+		return authenticatedWithToken;
 	}
 
 }
