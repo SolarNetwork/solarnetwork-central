@@ -61,8 +61,12 @@
 				<beans:property name="usersByUsernameQuery" 
 						value="SELECT username, password, enabled, user_id, display_name
 								FROM solaruser.user_auth_token_login 
-								WHERE auth_token = ?"/>
-			</beans:bean>
+								WHERE username = ?"/>
+				<beans:property name="authoritiesByUsernameQuery" 
+						value="SELECT username, authority
+								FROM solaruser.user_auth_token_role
+								WHERE username = ?"/>
+				</beans:bean>
 		</beans:property>
 		<beans:property name="authenticationEntryPoint" ref="authTokenEntryPoint"/>
 	</beans:bean>

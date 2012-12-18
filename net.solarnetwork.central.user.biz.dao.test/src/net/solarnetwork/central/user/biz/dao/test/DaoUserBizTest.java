@@ -40,6 +40,7 @@ import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
+import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -241,13 +242,14 @@ public class DaoUserBizTest {
 		assertEquals("Auth token should be exactly 20 characters", 20, generated.getAuthToken().length());
 		assertNotNull(generated.getAuthSecret());
 		assertEquals(TEST_USER_ID, generated.getUserId());
-		assertEquals(UserAuthTokenStatus.v, generated.getStatus());
+		assertEquals(UserAuthTokenStatus.Active, generated.getStatus());
 		verifyProperties();
 	}
 
 	@Test
 	public void deleteUserAuthToken() {
-		final UserAuthToken token = new UserAuthToken(TEST_AUTH_TOKEN, TEST_USER_ID, TEST_AUTH_SECRET);
+		final UserAuthToken token = new UserAuthToken(TEST_AUTH_TOKEN, TEST_USER_ID, TEST_AUTH_SECRET,
+				UserAuthTokenType.User);
 		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(token);
 		userAuthTokenDao.delete(same(token));
 		replayProperties();
@@ -265,7 +267,8 @@ public class DaoUserBizTest {
 
 	@Test
 	public void deleteUserAuthTokenWrongUser() {
-		final UserAuthToken token = new UserAuthToken(TEST_AUTH_TOKEN, TEST_USER_ID, TEST_AUTH_SECRET);
+		final UserAuthToken token = new UserAuthToken(TEST_AUTH_TOKEN, TEST_USER_ID, TEST_AUTH_SECRET,
+				UserAuthTokenType.User);
 		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(token);
 		replayProperties();
 		try {

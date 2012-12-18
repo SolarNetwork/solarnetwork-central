@@ -28,8 +28,6 @@
 
 	<osgi:service ref="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao" ranking="1"/>
 	
-	<osgi:service ref="userNodeAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserNodeAuthTokenDao" ranking="1"/>
-	
 	<osgi:service ref="userNodeHardwareControlDao" interface="net.solarnetwork.central.user.dao.UserNodeHardwareControlDao" ranking="1"/>
 	
 	<osgi:service ref="sqlMapClient" interface="com.ibatis.sqlmap.client.SqlMapClient">

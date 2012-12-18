@@ -15,13 +15,20 @@ CREATE VIEW solaruser.node_auth_token_login  AS
 	SELECT
 		n.node_id AS node_id,
 		t.auth_token AS auth_token,
-		t.auth_secret AS password
-	FROM solaruser.user_node_auth_token t
-	INNER JOIN solaruser.user_node n ON n.node_id = t.node_id
+		t.auth_secret AS password,
+		n.user_id AS user_id,
+		u.email AS username,
+		u.disp_name AS display_name,
+		ut.auth_token AS user_auth_token,
+		ut.auth_secret AS user_auth_secret
+	FROM solaruser.user_node n
 	INNER JOIN solaruser.user_user u ON u.id = n.user_id
+	LEFT OUTER JOIN solaruser.user_node_auth_token t 
+		ON t.node_id = n.node_id AND t.status = 'v'::bpchar
+	LEFT OUTER JOIN solaruser.user_auth_token ut 
+		ON ut.user_id = n.user_id AND t.status = 'v'::bpchar
 	WHERE 
-		t.status = 'v'::bpchar
-		AND u.enabled = TRUE
+		u.enabled = TRUE
 
 ALTER TABLE solaruser.user_node
    ADD COLUMN private boolean NOT NULL DEFAULT FALSE;

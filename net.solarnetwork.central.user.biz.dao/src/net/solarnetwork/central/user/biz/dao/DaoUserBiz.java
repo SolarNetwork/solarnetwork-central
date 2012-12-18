@@ -40,6 +40,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
+import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
@@ -221,7 +222,8 @@ public class DaoUserBiz implements UserBiz {
 			String tok = generateRandomAuthToken();
 			// verify token doesn't already exist
 			if ( userAuthTokenDao.get(tok) == null ) {
-				UserAuthToken authToken = new UserAuthToken(tok, userId, secretString);
+				UserAuthToken authToken = new UserAuthToken(tok, userId, secretString,
+						UserAuthTokenType.User);
 				userAuthTokenDao.store(authToken);
 				return authToken;
 			}

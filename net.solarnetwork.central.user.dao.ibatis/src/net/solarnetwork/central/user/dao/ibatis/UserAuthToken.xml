@@ -8,12 +8,14 @@
 		INSERT INTO solaruser.user_auth_token 
 			(auth_token
 			<isNotNull prepend="," property="created">created</isNotNull>
-			, user_id, auth_secret, status
+			, user_id, auth_secret, status, token_type
 			)
 		VALUES
 			(#id#
 			<isNotNull prepend="," property="created">#created#</isNotNull>
-			, #userId#, #authSecret#, #status#
+			, #userId#, #authSecret#
+			, CAST(#status# AS solaruser.user_auth_token_status)
+			, CAST(#type# AS solaruser.user_auth_token_type)
 			)
 	</insert>
 
@@ -23,7 +25,7 @@
 	     write over each other! -->
 	<update id="update-UserAuthToken" parameterClass="UserAuthToken">
 		UPDATE solaruser.user_auth_token SET
-			status = #status#
+			status = CAST(#status# AS solaruser.user_auth_token_status)
 		WHERE
 			auth_token = #id#
 			AND user_id = #userId#
@@ -40,7 +42,8 @@
 		uat.created AS uat_created,
 		uat.user_id AS uat_user_id,
 		uat.auth_secret AS uat_auth_secret,
-		uat.status AS uat_status
+		uat.status AS uat_status,
+		uat.token_type AS uat_token_type
 	</sql>
 
 	<resultMap id="UserAuthTokenFullResult" class="UserAuthToken">
@@ -49,6 +52,7 @@
 		<result column="uat_user_id" property="userId"/>
 		<result column="uat_auth_secret" property="authSecret"/>
 		<result column="uat_status" property="status"/>
+		<result column="uat_token_type" property="type"/>
 	</resultMap>
 	
 	<select id="get-UserAuthToken-for-id" resultMap="UserAuthTokenFullResult">

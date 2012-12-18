@@ -156,7 +156,6 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		final String computedDigest = computeDigest(data, user.getPassword());
 		if ( !computedDigest.equals(data.signatureDigest) ) {
 			log.debug("Expected response: '{}' but received: '{}'", computedDigest, data.signatureDigest);
-			SecurityContextHolder.getContext().setAuthentication(null);
 			fail(request, response, new BadCredentialsException("Bad credentials"));
 			return;
 		}

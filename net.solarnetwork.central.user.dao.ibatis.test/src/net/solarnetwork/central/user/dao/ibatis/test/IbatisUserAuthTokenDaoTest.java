@@ -32,6 +32,7 @@ import net.solarnetwork.central.user.dao.ibatis.IbatisUserAuthTokenDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
+import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -81,7 +82,8 @@ public class IbatisUserAuthTokenDaoTest extends AbstractIbatisUserDaoTestSupport
 		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setAuthToken(TEST_TOKEN);
-		authToken.setStatus(UserAuthTokenStatus.v);
+		authToken.setStatus(UserAuthTokenStatus.Active);
+		authToken.setType(UserAuthTokenType.User);
 		String id = userAuthTokenDao.store(authToken);
 		assertNotNull(id);
 		this.userAuthToken = authToken;
@@ -107,7 +109,7 @@ public class IbatisUserAuthTokenDaoTest extends AbstractIbatisUserDaoTestSupport
 	public void update() {
 		storeNew();
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
-		token.setStatus(UserAuthTokenStatus.z);
+		token.setStatus(UserAuthTokenStatus.Disabled);
 		UserAuthToken updated = userAuthTokenDao.get(userAuthTokenDao.store(token));
 		validate(token, updated);
 	}
@@ -124,10 +126,12 @@ public class IbatisUserAuthTokenDaoTest extends AbstractIbatisUserDaoTestSupport
 	@Test
 	public void findForUser() {
 		storeNew();
-		UserAuthToken authToken2 = new UserAuthToken(TEST_TOKEN2, this.user.getId(), TEST_SECRET);
+		UserAuthToken authToken2 = new UserAuthToken(TEST_TOKEN2, this.user.getId(), TEST_SECRET,
+				UserAuthTokenType.User);
 		userAuthTokenDao.store(authToken2);
 		User user2 = createNewUser(TEST_EMAIL + "2");
-		UserAuthToken authToken3 = new UserAuthToken(TEST_TOKEN3, user2.getId(), TEST_SECRET);
+		UserAuthToken authToken3 = new UserAuthToken(TEST_TOKEN3, user2.getId(), TEST_SECRET,
+				UserAuthTokenType.User);
 		userAuthTokenDao.store(authToken3);
 
 		List<UserAuthToken> results = userAuthTokenDao.findUserAuthTokensForUser(this.user.getId());

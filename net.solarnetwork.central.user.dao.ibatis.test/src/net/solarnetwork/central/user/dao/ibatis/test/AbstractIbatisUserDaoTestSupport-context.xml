@@ -21,7 +21,6 @@
 				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/UserAuthToken.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/UserNodeCertificate.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/UserNode.xml</value>
-				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/UserNodeAuthToken.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/UserNodeConfirmation.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/ibatis/UserNodeHardwareControl.xml</value>
 			</list>
@@ -54,10 +53,6 @@
 	</bean>
 	
 	<bean id="userNodeDao" class="net.solarnetwork.central.user.dao.ibatis.IbatisUserNodeDao">
-		<property name="sqlMapClient" ref="sqlMapClient"/>
-	</bean>
-	
-	<bean id="userNodeAuthTokenDao" class="net.solarnetwork.central.user.dao.ibatis.IbatisUserNodeAuthTokenDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
 	</bean>
 	

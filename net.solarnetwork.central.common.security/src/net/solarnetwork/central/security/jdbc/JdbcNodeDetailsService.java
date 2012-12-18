@@ -64,17 +64,17 @@ public class JdbcNodeDetailsService extends NodeUserDetailsService {
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException,
 			DataAccessException {
-		List<UserDetails> results = jdbcTemplate.query(nodesByUsernameQuery, new String[] { username },
-				new RowMapper<UserDetails>() {
+		List<UserDetails> results = jdbcTemplate.query(nodesByUsernameQuery, new String[] { username,
+				username }, new RowMapper<UserDetails>() {
 
-					@Override
-					public UserDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
-						Long id = rs.getLong(1);
-						String authToken = rs.getString(2);
-						String authSecret = rs.getString(3);
-						return new AuthenticatedNode(id, authToken, authSecret, AUTHORITIES);
-					}
-				});
+			@Override
+			public UserDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
+				Long id = rs.getLong(1);
+				String authToken = rs.getString(2);
+				String authSecret = rs.getString(3);
+				return new AuthenticatedNode(id, authToken, authSecret, AUTHORITIES);
+			}
+		});
 		if ( results.size() > 0 ) {
 			return results.get(0);
 		}

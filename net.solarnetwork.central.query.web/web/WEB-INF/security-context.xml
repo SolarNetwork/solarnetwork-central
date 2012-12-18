@@ -32,9 +32,10 @@
 	<beans:bean id="nodeDetailsService" class="net.solarnetwork.central.security.jdbc.JdbcNodeDetailsService">
 		<beans:property name="dataSource" ref="dataSource"/>
 		<beans:property name="nodesByUsernameQuery" 
-				value="SELECT node_id, auth_token, password
+				value="SELECT node_id, auth_token, password, user_id, 
+							username, display_name, user_auth_token, user_auth_secret
 						FROM solaruser.node_auth_token_login
-						WHERE auth_token = ?"/>
+						WHERE (auth_token = ? OR user_auth_token = ?)"/>
 	</beans:bean>
 	
 	<beans:bean id="authTokenEntryPoint" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint"/>

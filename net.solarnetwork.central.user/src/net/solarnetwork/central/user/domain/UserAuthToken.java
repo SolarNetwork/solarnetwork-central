@@ -22,17 +22,22 @@
 
 package net.solarnetwork.central.user.domain;
 
+import net.solarnetwork.central.domain.BaseStringEntity;
+
 /**
  * A user authorization token.
  * 
  * @author matt
  * @version 1.0
  */
-public class UserAuthToken extends BaseAuthToken {
+public class UserAuthToken extends BaseStringEntity {
 
-	private static final long serialVersionUID = -9090292527805258083L;
+	private static final long serialVersionUID = 5807593975317069069L;
 
 	private Long userId;
+	private String authSecret;
+	private UserAuthTokenStatus status;
+	private UserAuthTokenType type;
 
 	/**
 	 * Default constructor.
@@ -50,10 +55,16 @@ public class UserAuthToken extends BaseAuthToken {
 	 *        the user ID
 	 * @param secret
 	 *        the secret
+	 * @param type
+	 *        the type
 	 */
-	public UserAuthToken(String token, Long userId, String secret) {
-		super(token, secret);
+	public UserAuthToken(String token, Long userId, String secret, UserAuthTokenType type) {
+		super();
+		setId(token);
 		setUserId(userId);
+		setAuthSecret(secret);
+		setStatus(UserAuthTokenStatus.Active);
+		setType(type);
 	}
 
 	public Long getUserId() {
@@ -62,6 +73,57 @@ public class UserAuthToken extends BaseAuthToken {
 
 	public void setUserId(Long userId) {
 		this.userId = userId;
+	}
+
+	/**
+	 * Get the ID value.
+	 * 
+	 * <p>
+	 * This is just an alias for {@link BaseStringEntity#getId()}.
+	 * </p>
+	 * 
+	 * @return the auth token
+	 */
+	public String getAuthToken() {
+		return getId();
+	}
+
+	/**
+	 * Set the ID value.
+	 * 
+	 * <p>
+	 * This is just an alias for {@link BaseStringEntity#setId(String)}.
+	 * </p>
+	 * 
+	 * @param authToken
+	 *        the auth token
+	 */
+	public void setAuthToken(String authToken) {
+		setId(authToken);
+	}
+
+	public String getAuthSecret() {
+		return authSecret;
+	}
+
+	public void setAuthSecret(String authSecret) {
+		this.authSecret = authSecret;
+	}
+
+	public UserAuthTokenStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(UserAuthTokenStatus status) {
+		this.status = status;
+	}
+
+	public UserAuthTokenType getType() {
+		return type;
+	}
+
+	public void setType(UserAuthTokenType type) {
+		this.type = type;
 	}
 
 }
