@@ -1,10 +1,9 @@
 <ivy-module version="2.0">
     <info organisation="SolarNetwork" module="${bundle.name}" />
-    <dependencies>
-    	<dependency org="org.slf4j" name="com.springsource.slf4j.org.apache.commons.logging" rev="1.5.0" />
-		<dependency org="org.springframework" name="org.springframework.beans" rev="3.0.5.RELEASE"/>
-		<dependency org="org.springframework" name="org.springframework.context" rev="3.0.5.RELEASE"/>
-		<dependency org="org.springframework" name="org.springframework.context.support" rev="3.0.5.RELEASE"/>
-		<dependency org="org.springframework" name="org.springframework.core" rev="3.0.5.RELEASE"/>
+	<configurations defaultconf="runtime">
+		<conf name="compile" visibility="public" description="Build dependencies"/>
+		<conf name="runtime" visibility="public" description="Runtime dependencies"/>
+	</configurations>
+	<dependencies defaultconfmapping="runtime->runtime(default);compile->compile(default)">
     </dependencies>
 </ivy-module>

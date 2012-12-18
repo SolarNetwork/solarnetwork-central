@@ -3,6 +3,7 @@
 	<property name="bundle.deps" value="true"/>
 	<dirset id="bundle.deps" dir="${basedir}/../..">
 		<include name="solarnetwork-central/net.solarnetwork.central.common"/>
+		<include name="solarnetwork-central/net.solarnetwork.central.common.security"/>
 		<include name="solarnetwork-common/net.solarnetwork.common"/>
 		<include name="solarnetwork-common/net.solarnetwork.common.web"/>
 	</dirset>
