@@ -31,6 +31,8 @@ import net.solarnetwork.central.dao.ibatis.IbatisGenericDaoSupport;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * iBATIS implementation of {@link UserNodeConfirmationDao}.
@@ -55,6 +57,7 @@ public class IbatisUserNodeConfirmationDao extends IbatisGenericDaoSupport<UserN
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public UserNodeConfirmation getConfirmationForKey(Long userId, String key) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("userId", userId);
@@ -65,6 +68,7 @@ public class IbatisUserNodeConfirmationDao extends IbatisGenericDaoSupport<UserN
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNodeConfirmation> findPendingConfirmationsForUser(User user) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("user", user);

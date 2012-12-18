@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserAuthTokenDao.java - Dec 12, 2012 2:05:11 PM
+ * UserNodeAuthTokenDao.java - Dec 18, 2012 3:05:38 PM
  * 
  * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
@@ -24,24 +24,24 @@ package net.solarnetwork.central.user.dao;
 
 import java.util.List;
 import net.solarnetwork.central.dao.GenericDao;
-import net.solarnetwork.central.user.domain.UserAuthToken;
+import net.solarnetwork.central.user.domain.UserNodeAuthToken;
 
 /**
- * DAO API for {@link UserAuthToken} entities.
+ * DAO API for {@link UserNodeAuthToken} entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserAuthTokenDao extends GenericDao<UserAuthToken, String> {
+public interface UserNodeAuthTokenDao extends GenericDao<UserNodeAuthToken, String> {
 
 	/**
-	 * Find a list of all UserNodeAuthToken objects for a particular user.
+	 * Find a list of all UserNodeAuthToken objects for a particular node.
 	 * 
-	 * @param user
-	 *        the user ID to get all tokens for
-	 * @return list of {@link UserAuthToken} objects, or an empty list if none
-	 *         found
+	 * @param nodeId
+	 *        the node ID to get all tokens for
+	 * @return list of {@link UserNodeAuthToken} objects, or an empty list if
+	 *         none found
 	 */
-	List<UserAuthToken> findUserAuthTokensForUser(Long userId);
+	List<UserNodeAuthToken> findUserNodeAuthTokensForNode(Long nodeId);
 
 }

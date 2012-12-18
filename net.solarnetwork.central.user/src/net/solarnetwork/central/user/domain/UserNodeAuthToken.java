@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserAuthTokenDao.java - Dec 12, 2012 2:05:11 PM
+ * UserNodeAuthToken.java - Dec 18, 2012 2:57:11 PM
  * 
  * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
@@ -20,28 +20,48 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dao;
-
-import java.util.List;
-import net.solarnetwork.central.dao.GenericDao;
-import net.solarnetwork.central.user.domain.UserAuthToken;
+package net.solarnetwork.central.user.domain;
 
 /**
- * DAO API for {@link UserAuthToken} entities.
+ * A node authorization token.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserAuthTokenDao extends GenericDao<UserAuthToken, String> {
+public class UserNodeAuthToken extends BaseAuthToken {
+
+	private static final long serialVersionUID = 2367702119162997221L;
+
+	private Long nodeId;
 
 	/**
-	 * Find a list of all UserNodeAuthToken objects for a particular user.
-	 * 
-	 * @param user
-	 *        the user ID to get all tokens for
-	 * @return list of {@link UserAuthToken} objects, or an empty list if none
-	 *         found
+	 * Default constructor.
 	 */
-	List<UserAuthToken> findUserAuthTokensForUser(Long userId);
+	public UserNodeAuthToken() {
+		super();
+	}
+
+	/**
+	 * Create a new, active token.
+	 * 
+	 * @param token
+	 *        the token value
+	 * @param nodeId
+	 *        the node ID
+	 * @param secret
+	 *        the secret
+	 */
+	public UserNodeAuthToken(String token, Long nodeId, String secret) {
+		super(token, secret);
+		setNodeId(nodeId);
+	}
+
+	public Long getNodeId() {
+		return nodeId;
+	}
+
+	public void setNodeId(Long nodeId) {
+		this.nodeId = nodeId;
+	}
 
 }

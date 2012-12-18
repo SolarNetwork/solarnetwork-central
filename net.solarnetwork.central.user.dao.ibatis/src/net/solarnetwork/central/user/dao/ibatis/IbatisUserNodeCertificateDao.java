@@ -28,6 +28,8 @@ import java.util.Map;
 import net.solarnetwork.central.dao.ibatis.IbatisGenericDaoSupport;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * iBATIS implementation of {@link UserNodeCertificateDao}.
@@ -52,6 +54,7 @@ public class IbatisUserNodeCertificateDao extends IbatisGenericDaoSupport<UserNo
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public UserNodeCertificate getActiveCertificateForNode(Long nodeId) {
 		@SuppressWarnings("unchecked")
 		List<UserNodeCertificate> results = getSqlMapClientTemplate().queryForList(
@@ -63,6 +66,7 @@ public class IbatisUserNodeCertificateDao extends IbatisGenericDaoSupport<UserNo
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public UserNodeCertificate getCertificateForKey(Long userId, String key) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("userId", userId);

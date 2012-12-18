@@ -53,8 +53,26 @@ public class UserNode extends BaseEntity {
 	private UserNodeCertificate certificate;
 
 	/**
-	 * @return the description
+	 * Default constructor.
 	 */
+	public UserNode() {
+		super();
+	}
+
+	/**
+	 * Construct for a user and node.
+	 * 
+	 * @param user
+	 *        the user
+	 * @param node
+	 *        the node
+	 */
+	public UserNode(User user, SolarNode node) {
+		super();
+		setUser(user);
+		setNode(node);
+	}
+
 	public String getDescription() {
 		return description;
 	}

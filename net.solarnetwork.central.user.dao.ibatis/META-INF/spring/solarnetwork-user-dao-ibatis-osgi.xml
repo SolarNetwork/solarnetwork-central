@@ -2,8 +2,11 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:osgi="http://www.springframework.org/schema/osgi"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
-						http://www.springframework.org/schema/osgi http://www.springframework.org/schema/osgi/spring-osgi.xsd">
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		http://www.springframework.org/schema/osgi
+		http://www.springframework.org/schema/osgi/spring-osgi-1.2.xsd">
 
 	<!-- Service References -->
 	
@@ -24,6 +27,8 @@
 	<osgi:service ref="userNodeConfirmationDao" interface="net.solarnetwork.central.user.dao.UserNodeConfirmationDao" ranking="1"/>
 
 	<osgi:service ref="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao" ranking="1"/>
+	
+	<osgi:service ref="userNodeAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserNodeAuthTokenDao" ranking="1"/>
 	
 	<osgi:service ref="userNodeHardwareControlDao" interface="net.solarnetwork.central.user.dao.UserNodeHardwareControlDao" ranking="1"/>
 	

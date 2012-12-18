@@ -29,6 +29,8 @@ import net.solarnetwork.central.dao.ibatis.IbatisGenericDaoSupport;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * iBATIS implementation of {@link UserNodeDao}.
@@ -41,7 +43,10 @@ public class IbatisUserNodeDao extends IbatisGenericDaoSupport<UserNode> impleme
 	/** The query name used for {@link #findUserNodesForUser(User)}. */
 	public static final String QUERY_FOR_USER = "find-UserNode-for-User";
 
-	/** The query name used for {@link #findUserNodesAndCertificatesForUser(Long)}. */
+	/**
+	 * The query name used for
+	 * {@link #findUserNodesAndCertificatesForUser(Long)}.
+	 */
 	public static final String QUERY_FOR_USER_WITH_CERT = "find-UserNode-for-user-with-certs";
 
 	/**
@@ -61,6 +66,7 @@ public class IbatisUserNodeDao extends IbatisGenericDaoSupport<UserNode> impleme
 
 	@SuppressWarnings("unchecked")
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNode> findUserNodesForUser(User user) {
 		List<UserNode> results = getSqlMapClientTemplate().queryForList(QUERY_FOR_USER, user.getId());
 		for ( UserNode userNode : results ) {
@@ -70,6 +76,7 @@ public class IbatisUserNodeDao extends IbatisGenericDaoSupport<UserNode> impleme
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNode> findUserNodesAndCertificatesForUser(Long userId) {
 		@SuppressWarnings("unchecked")
 		List<UserNode> results = getSqlMapClientTemplate()

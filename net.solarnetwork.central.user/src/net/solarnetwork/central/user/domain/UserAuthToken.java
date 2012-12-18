@@ -22,22 +22,17 @@
 
 package net.solarnetwork.central.user.domain;
 
-import net.solarnetwork.central.domain.BaseStringEntity;
-import org.joda.time.DateTime;
-
 /**
  * A user authorization token.
  * 
  * @author matt
  * @version 1.0
  */
-public class UserAuthToken extends BaseStringEntity {
+public class UserAuthToken extends BaseAuthToken {
 
-	private static final long serialVersionUID = -2934706203308437032L;
+	private static final long serialVersionUID = -9090292527805258083L;
 
 	private Long userId;
-	private String authSecret;
-	private UserAuthTokenStatus status;
 
 	/**
 	 * Default constructor.
@@ -57,20 +52,8 @@ public class UserAuthToken extends BaseStringEntity {
 	 *        the secret
 	 */
 	public UserAuthToken(String token, Long userId, String secret) {
-		super();
-		setId(token);
+		super(token, secret);
 		setUserId(userId);
-		setAuthSecret(secret);
-		setStatus(UserAuthTokenStatus.v);
-		setCreated(new DateTime());
-	}
-
-	public String getAuthToken() {
-		return getId();
-	}
-
-	public void setAuthToken(String authToken) {
-		setId(authToken);
 	}
 
 	public Long getUserId() {
@@ -79,22 +62,6 @@ public class UserAuthToken extends BaseStringEntity {
 
 	public void setUserId(Long userId) {
 		this.userId = userId;
-	}
-
-	public String getAuthSecret() {
-		return authSecret;
-	}
-
-	public void setAuthSecret(String authSecret) {
-		this.authSecret = authSecret;
-	}
-
-	public UserAuthTokenStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(UserAuthTokenStatus status) {
-		this.status = status;
 	}
 
 }
