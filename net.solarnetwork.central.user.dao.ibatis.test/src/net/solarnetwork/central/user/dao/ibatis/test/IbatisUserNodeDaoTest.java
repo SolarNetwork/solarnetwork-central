@@ -187,6 +187,7 @@ public class IbatisUserNodeDaoTest extends AbstractIbatisUserDaoTestSupport {
 
 	@Test
 	public void findForUserWithCertificates() {
+		storeNewUserNode();
 		final UserNodeCertificate cert1 = storeNewCert(TEST_CONF_KEY, UserNodeCertificateStatus.v);
 
 		List<UserNode> results = userNodeDao.findUserNodesAndCertificatesForUser(user.getId());

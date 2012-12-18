@@ -8,11 +8,11 @@
 		INSERT INTO solaruser.user_node 
 			(node_id
 			<isNotNull prepend="," property="created">created</isNotNull>
-			, user_id, disp_name, description)
+			, user_id, disp_name, description, private)
 		VALUES
 			(#node.id#
 			<isNotNull prepend="," property="created">#created#</isNotNull>
-			, #user.id#, #name#, #description#)
+			, #user.id#, #name#, #description#, #requiresAuthorization#)
 	</insert>
 
 	<update id="update-UserNode" parameterClass="UserNode">
@@ -21,7 +21,8 @@
 		SET
 			disp_name = #name#, 
 			user_id = #user.id#,
-			description = #description#
+			description = #description#,
+			private = #requiresAuthorization#
 		WHERE
 			node_id = #node.id#
 	</update>
@@ -31,7 +32,8 @@
 		un.created AS user_node_created,
 		un.disp_name AS user_node_disp_name,
 		un.user_id AS user_node_user_id,
-		un.description AS user_node_description
+		un.description AS user_node_description,
+		un.private AS user_node_private
 	</sql>
 
 	<resultMap id="UserNodeFullResult" class="UserNode">
@@ -39,6 +41,7 @@
 		<result column="user_node_created" property="created"/>
 		<result column="user_node_disp_name" property="name"/>
 		<result column="user_node_description" property="description"/>
+		<result column="user_node_private" property="requiresAuthorization"/>
 		<result property="node" resultMap="SolarNode.SolarNodeFullResult"/>
 		<result property="user" resultMap="User.UserFullResult"/>
 	</resultMap>
@@ -83,12 +86,6 @@
 	</select>
 	
 	<resultMap id="UserNodeWithCertificates" class="UserNode" extends="UserNodeFullResult">
-		<!--result column="user_node_node_id" property="id"/>
-		<result column="user_node_created" property="created"/>
-		<result column="user_node_disp_name" property="name"/>
-		<result column="user_node_description" property="description"/>
-		<result property="node" resultMap="SolarNode.SolarNodeFullResult"/>
-		<result property="user" resultMap="User.UserFullResult"/-->
 		<result property="certificate" resultMap="UserNodeCertificate.UserNodeCertificateFullResult"/>
 	</resultMap>
 	

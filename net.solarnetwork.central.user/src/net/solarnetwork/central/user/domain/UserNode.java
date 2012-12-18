@@ -41,10 +41,11 @@ import net.solarnetwork.central.domain.SolarNode;
  */
 public class UserNode extends BaseEntity {
 
-	private static final long serialVersionUID = 3322586732441170734L;
+	private static final long serialVersionUID = -3247965742224565205L;
 
 	private String description;
 	private String name;
+	private boolean requiresAuthorization = false;
 
 	private User user;
 	private SolarNode node;
@@ -111,6 +112,14 @@ public class UserNode extends BaseEntity {
 
 	public void setCertificate(UserNodeCertificate certificate) {
 		this.certificate = certificate;
+	}
+
+	public boolean isRequiresAuthorization() {
+		return requiresAuthorization;
+	}
+
+	public void setRequiresAuthorization(boolean requiresAuthorization) {
+		this.requiresAuthorization = requiresAuthorization;
 	}
 
 }

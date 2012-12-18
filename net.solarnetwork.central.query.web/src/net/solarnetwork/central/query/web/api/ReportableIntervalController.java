@@ -51,7 +51,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * @version 1.0
  */
 @Controller("v1ReportableIntervalController")
-@RequestMapping("/api/v1/sec/range")
+@RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
 public class ReportableIntervalController extends WebServiceControllerSupport {
 
 	private final QueryBiz queryBiz;
