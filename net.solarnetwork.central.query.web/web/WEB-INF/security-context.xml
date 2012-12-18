@@ -21,27 +21,30 @@
 	<!-- Stateless BASIC authentication realm for web services. -->
 	<http pattern="/api/v1/sec/**" create-session="stateless" entry-point-ref="authTokenEntryPoint" use-expressions="true">
 		<intercept-url pattern='/**' method="OPTIONS" access="permitAll" />
-		<intercept-url pattern='/**' access="hasRole('ROLE_NODE')" />
+		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_READNODEDATA')" />
 		<custom-filter position="PRE_AUTH_FILTER" ref="authTokenFilter" />
 	</http>
 	
 	<authentication-manager>
-		<authentication-provider user-service-ref="nodeDetailsService"/>
+		<authentication-provider user-service-ref="jdbcUserService"/>
 	</authentication-manager>
 	
-	<beans:bean id="nodeDetailsService" class="net.solarnetwork.central.security.jdbc.JdbcNodeDetailsService">
+	<beans:bean id="jdbcUserService" class="net.solarnetwork.central.security.jdbc.JdbcUserDetailsService">
 		<beans:property name="dataSource" ref="dataSource"/>
-		<beans:property name="nodesByUsernameQuery" 
-				value="SELECT node_id, auth_token, password, user_id, 
-							username, display_name, user_auth_token, user_auth_secret
-						FROM solaruser.node_auth_token_login
-						WHERE (auth_token = ? OR user_auth_token = ?)"/>
+		<beans:property name="usersByUsernameQuery" 
+				value="SELECT username, password, enabled, user_id, display_name, TRUE AS is_token
+						FROM solaruser.user_auth_token_login 
+						WHERE username = ?"/>
+		<beans:property name="authoritiesByUsernameQuery" 
+				value="SELECT username, authority
+						FROM solaruser.user_auth_token_role
+						WHERE username = ?"/>
 	</beans:bean>
 	
 	<beans:bean id="authTokenEntryPoint" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint"/>
 
 	<beans:bean id="authTokenFilter" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter">
-		<beans:property name="userDetailsService" ref="nodeDetailsService"/>
+		<beans:property name="userDetailsService" ref="jdbcUserService"/>
 		<beans:property name="authenticationEntryPoint" ref="authTokenEntryPoint"/>
 	</beans:bean>
 
