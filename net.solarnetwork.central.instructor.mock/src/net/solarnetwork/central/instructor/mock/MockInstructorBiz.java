@@ -27,14 +27,12 @@ package net.solarnetwork.central.instructor.mock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.joda.time.DateTime;
-
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import org.joda.time.DateTime;
 
 /**
  * Mock implementation of {@link InstructorBiz}.
@@ -45,13 +43,10 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
 public class MockInstructorBiz implements InstructorBiz {
 
 	private final AtomicLong counter = new AtomicLong(0);
-	
+
 	@Override
 	public List<Instruction> getActiveInstructionsForNode(Long nodeId) {
-		NodeInstruction instr = new NodeInstruction(
-				"Mock/Topic", 
-				new DateTime(),
-				nodeId);
+		NodeInstruction instr = new NodeInstruction("Mock/Topic", new DateTime(), nodeId);
 		instr.setId(counter.incrementAndGet());
 		instr.addParameter("test.param.1", "One");
 		instr.addParameter("test.param.2", String.valueOf(55));
@@ -62,7 +57,7 @@ public class MockInstructorBiz implements InstructorBiz {
 
 	@Override
 	public NodeInstruction queueInstruction(Long nodeId, Instruction instruction) {
-		NodeInstruction instr = new NodeInstruction(instruction.getTopic(), 
+		NodeInstruction instr = new NodeInstruction(instruction.getTopic(),
 				instruction.getInstructionDate(), nodeId);
 		if ( instruction.getParameters() != null ) {
 			for ( InstructionParameter param : instruction.getParameters() ) {
@@ -74,13 +69,12 @@ public class MockInstructorBiz implements InstructorBiz {
 	}
 
 	@Override
-	public void updateInstructionState(Long instructionId,
-			InstructionState state) {
+	public void updateInstructionState(Long instructionId, InstructionState state) {
 		// nothing to do here
 	}
 
 	@Override
-	public Instruction getInstruction(Long instructionId) {
+	public NodeInstruction getInstruction(Long instructionId) {
 		return null;
 	}
 
