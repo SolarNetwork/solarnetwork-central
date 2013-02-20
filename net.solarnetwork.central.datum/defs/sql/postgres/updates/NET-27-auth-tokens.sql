@@ -37,10 +37,9 @@ CREATE VIEW solaruser.user_auth_token_role AS
 		'ROLE_' || upper(CAST(t.token_type AS character varying)) AS authority
 	FROM solaruser.user_auth_token t;
 		
-ALTER TABLE solaruser.user_node_conf 
-ADD COLUMN sec_phrase CHARACTER VARYING(128);
-ALTER TABLE solaruser.user_node_conf
-ALTER COLUMN sec_phrase SET NOT NULL;
+ALTER TABLE solaruser.user_node_conf ADD COLUMN sec_phrase CHARACTER VARYING(128);
+UPDATE solaruser.user_node_conf SET sec_phrase = 'changeit';
+ALTER TABLE solaruser.user_node_conf ALTER COLUMN sec_phrase SET NOT NULL;
 
 ALTER TABLE solaruser.user_node_conf
 ALTER COLUMN node_id DROP NOT NULL;

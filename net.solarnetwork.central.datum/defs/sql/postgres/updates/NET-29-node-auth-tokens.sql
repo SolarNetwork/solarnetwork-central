@@ -10,7 +10,7 @@ CREATE TABLE solaruser.user_node_auth_token (
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-DROP VIEW solaruser.node_auth_token_login;
+DROP VIEW IF EXISTS solaruser.node_auth_token_login;
 CREATE VIEW solaruser.node_auth_token_login  AS
 	SELECT
 		n.node_id AS node_id,
@@ -28,7 +28,7 @@ CREATE VIEW solaruser.node_auth_token_login  AS
 	LEFT OUTER JOIN solaruser.user_auth_token ut 
 		ON ut.user_id = n.user_id AND t.status = 'v'::bpchar
 	WHERE 
-		u.enabled = TRUE
+		u.enabled = TRUE;
 
 ALTER TABLE solaruser.user_node
    ADD COLUMN private boolean NOT NULL DEFAULT FALSE;
