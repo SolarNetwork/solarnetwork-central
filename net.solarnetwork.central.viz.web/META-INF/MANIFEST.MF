@@ -127,4 +127,4 @@ Import-Package:
  org.springframework.webflow.mvc.builder;version="[2.0.8,3.0.0)",
  org.springframework.webflow.mvc.servlet;version="[2.0.8,3.0.0)",
  org.springframework.webflow.mvc.view;version="[2.0.8,3.0.0)",
- org.tuckey.web.filters.urlrewrite;version="[3.1,4.0)"
+ org.tuckey.web.filters.urlrewrite;version="[3.0,4.0)"
