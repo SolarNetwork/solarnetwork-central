@@ -41,7 +41,7 @@
 						</joda:dateTimeZone>
 					</td>
 					<td>
-						<span class="label label-${token.status.value eq 'Active' ? 'success' : 'warning'}">
+						<span class="label label-${token.status eq 'Active' ? 'success' : 'warning'}">
 							<fmt:message key='auth-tokens.label.status.${token.status}'/>
 						</span>
 					</td>
@@ -51,7 +51,7 @@
 							<button type="button" class="btn btn-small user-token-change-status" 
 								data-status="${token.status}"
 								data-action="<c:url value='/u/sec/auth-tokens/changeStatusUser'/>">
-								<fmt:message key="auth-tokens.action.${token.status.value eq 'Active' ? 'disable' : 'enable'}"/>
+								<fmt:message key="auth-tokens.action.${token.status eq 'Active' ? 'disable' : 'enable'}"/>
 							</button>
 							<button type="button" class="btn btn-small user-token-delete" title="<fmt:message key='auth-tokens.action.delete'/>">
 								<i class="icon-trash"></i>
