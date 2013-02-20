@@ -30,7 +30,7 @@ DROP TRIGGER IF EXISTS maintain_fts ON solarnet.sn_weather_loc;
 CREATE TRIGGER maintain_fts
   BEFORE INSERT OR UPDATE ON solarnet.sn_weather_loc
   FOR EACH ROW EXECUTE PROCEDURE 
-  tsvector_update_trigger(fts_default, 'pg_catalog.english', sname);
+  tsvector_update_trigger(fts_default, 'pg_catalog.english', source_data);
 
 UPDATE solarnet.sn_weather_loc SET id = id;
 CREATE INDEX sn_weather_loc_fts_default_idx ON solarnet.sn_weather_loc USING gin(fts_default);
