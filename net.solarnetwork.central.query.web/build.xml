@@ -5,7 +5,7 @@
 		<include name="net.solarnetwork.central.common"/>
 		<include name="net.solarnetwork.central.common.web"/>
 		<include name="net.solarnetwork.central.datum"/>
-		<include name="net.solarnetwork.central.query.biz"/>
+		<include name="net.solarnetwork.central.query"/>
 		<include name="net.solarnetwork.common"/>
 		<include name="net.solarnetwork.common.web"/>
 	</dirset>
