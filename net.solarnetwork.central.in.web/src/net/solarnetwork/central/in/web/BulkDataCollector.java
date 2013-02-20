@@ -74,6 +74,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
  * @version $Revision$
  */
 @Controller
+@RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" })
 public class BulkDataCollector extends AbstractDataCollector {
 
 	/** The InstructionStatus element name. */
@@ -122,7 +123,7 @@ public class BulkDataCollector extends AbstractDataCollector {
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
-	@RequestMapping(value = "/bulkCollector.do", method = RequestMethod.POST)
+	@RequestMapping(method = RequestMethod.POST)
 	public String postData(@RequestHeader("Content-Encoding") String encoding, InputStream in,
 			Model model) throws IOException {
 		AuthenticatedNode authNode = getAuthenticatedNode(false);
