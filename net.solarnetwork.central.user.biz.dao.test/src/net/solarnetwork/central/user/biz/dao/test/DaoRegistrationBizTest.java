@@ -132,7 +132,6 @@ public class DaoRegistrationBizTest {
 		assertEquals(networkIdentity.getPort(), result.getPort());
 		assertEquals(networkIdentity.getIdentityKey(), result.getIdentityKey());
 		assertEquals(networkIdentity.getPort(), result.getPort());
-		assertEquals(networkIdentity.getTermsOfService(), result.getTermsOfService());
 		assertEquals(TEST_SECURITY_PHRASE, result.getSecurityPhrase());
 		assertEquals(TEST_EMAIL, result.getUsername());
 		assertEquals(Boolean.FALSE, Boolean.valueOf(result.isForceTLS()));
@@ -140,14 +139,13 @@ public class DaoRegistrationBizTest {
 		assertNull(((NetworkAssociationDetails) result).getNetworkId());
 
 		Map<String, Object> detailMap = decodeAssociationDetails(result.getConfirmationKey());
-		assertEquals(8, detailMap.size());
+		assertEquals(7, detailMap.size());
 		assertNotNull("Confirmation key must be present", detailMap.get("confirmationKey"));
 		assertNotNull("Expiration date must be present", detailMap.get("expiration"));
 		assertEquals("false", detailMap.get("forceTLS"));
 		assertEquals("host", detailMap.get("host"));
 		assertEquals("key", detailMap.get("identityKey"));
 		assertEquals("80", detailMap.get("port"));
-		assertEquals("tos", detailMap.get("termsOfService"));
 		assertEquals(TEST_EMAIL, detailMap.get("username"));
 	}
 
@@ -210,6 +208,54 @@ public class DaoRegistrationBizTest {
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
 		assertNotNull(conf.getConfirmationDate());
 		assertNotNull(conf.getNodeId());
+		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+	}
+
+	@Test
+	public void confirmNodeAssociationPreassignedNodeId() throws IOException {
+		final UserNodeConfirmation conf = new UserNodeConfirmation();
+		conf.setUser(testUser);
+		conf.setCreated(new DateTime());
+		conf.setNodeId(TEST_NODE_ID); // pre-assign node ID
+		final SolarLocation loc = new SolarLocation();
+		loc.setId(TEST_LOC_ID);
+		final UserNode userNode = new UserNode();
+		userNode.setId(TEST_NODE_ID);
+
+		final DateTime now = new DateTime();
+
+		// to confirm a node, we must look up the UserNodeConfirmation by userId+key, then
+		// create the new SolarNode using a default SolarLocation, followed by
+		// a new UserNode and UserNodeCertificate. The original UserNodeConfirmation should
+		// have its 
+
+		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
+		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
+				conf);
+		expect(solarLocationDao.getSolarLocationForName(EasyMock.anyObject(String.class)))
+				.andReturn(loc);
+		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
+		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
+				TEST_CERT_ID);
+
+		replay(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao);
+
+		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
+
+		verify(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao);
+
+		assertNotNull(cert);
+		assertNotNull(cert.getConfirmationKey());
+		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
+				cert.getNetworkCertificateSubjectDN());
+		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
+		assertEquals(TEST_NODE_ID, cert.getNetworkId());
+		assertNotNull(conf.getConfirmationDate());
+		assertEquals(TEST_NODE_ID, conf.getNodeId());
 		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
 	}
 

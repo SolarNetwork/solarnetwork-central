@@ -426,7 +426,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		SolarLocation loc = solarLocationDao.getSolarLocationForName(defaultSolarLocationName);
 		assert loc != null;
 
-		final Long nodeId = solarNodeDao.getUnusedNodeId();
+		// allow using a pre-populated node ID
+		final Long nodeId = (conf.getNodeId() == null ? solarNodeDao.getUnusedNodeId() : conf
+				.getNodeId());
 
 		SolarNode node = new SolarNode();
 		node.setId(nodeId);
