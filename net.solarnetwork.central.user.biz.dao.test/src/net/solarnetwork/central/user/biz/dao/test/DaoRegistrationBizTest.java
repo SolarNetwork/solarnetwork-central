@@ -186,7 +186,9 @@ public class DaoRegistrationBizTest {
 		expect(solarLocationDao.getSolarLocationForName(EasyMock.anyObject(String.class)))
 				.andReturn(loc);
 		expect(nodeDao.getUnusedNodeId()).andReturn(TEST_NODE_ID);
+		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
 		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
 		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
 		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
 		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
@@ -234,8 +236,111 @@ public class DaoRegistrationBizTest {
 				conf);
 		expect(solarLocationDao.getSolarLocationForName(EasyMock.anyObject(String.class)))
 				.andReturn(loc);
+		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
 		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
 		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
+		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
+				TEST_CERT_ID);
+
+		replay(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao);
+
+		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
+
+		verify(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao);
+
+		assertNotNull(cert);
+		assertNotNull(cert.getConfirmationKey());
+		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
+				cert.getNetworkCertificateSubjectDN());
+		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
+		assertEquals(TEST_NODE_ID, cert.getNetworkId());
+		assertNotNull(conf.getConfirmationDate());
+		assertEquals(TEST_NODE_ID, conf.getNodeId());
+		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+	}
+
+	@Test
+	public void confirmNodeAssociationPrepopulatedNode() throws IOException {
+		final UserNodeConfirmation conf = new UserNodeConfirmation();
+		conf.setUser(testUser);
+		conf.setCreated(new DateTime());
+		conf.setNodeId(TEST_NODE_ID); // pre-assign node ID
+		final SolarNode node = new SolarNode();
+		node.setId(TEST_NODE_ID);
+		final SolarLocation loc = new SolarLocation();
+		loc.setId(TEST_LOC_ID);
+		final UserNode userNode = new UserNode();
+		userNode.setId(TEST_NODE_ID);
+
+		final DateTime now = new DateTime();
+
+		// to confirm a node, we must look up the UserNodeConfirmation by userId+key, then
+		// create the new SolarNode using a default SolarLocation, followed by
+		// a new UserNode and UserNodeCertificate. The original UserNodeConfirmation should
+		// have its 
+
+		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
+		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
+				conf);
+		expect(solarLocationDao.getSolarLocationForName(EasyMock.anyObject(String.class)))
+				.andReturn(loc);
+		expect(nodeDao.get(TEST_NODE_ID)).andReturn(node);
+		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
+		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
+		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
+				TEST_CERT_ID);
+
+		replay(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao);
+
+		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
+
+		verify(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao);
+
+		assertNotNull(cert);
+		assertNotNull(cert.getConfirmationKey());
+		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
+				cert.getNetworkCertificateSubjectDN());
+		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
+		assertEquals(TEST_NODE_ID, cert.getNetworkId());
+		assertNotNull(conf.getConfirmationDate());
+		assertEquals(TEST_NODE_ID, conf.getNodeId());
+		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+	}
+
+	@Test
+	public void confirmNodeAssociationPrepopulatedNodeAndUserNode() throws IOException {
+		final UserNodeConfirmation conf = new UserNodeConfirmation();
+		conf.setUser(testUser);
+		conf.setCreated(new DateTime());
+		conf.setNodeId(TEST_NODE_ID); // pre-assign node ID
+		final SolarNode node = new SolarNode();
+		node.setId(TEST_NODE_ID);
+		final SolarLocation loc = new SolarLocation();
+		loc.setId(TEST_LOC_ID);
+		final UserNode userNode = new UserNode();
+		userNode.setId(TEST_NODE_ID);
+
+		final DateTime now = new DateTime();
+
+		// to confirm a node, we must look up the UserNodeConfirmation by userId+key, then
+		// create the new SolarNode using a default SolarLocation, followed by
+		// a new UserNode and UserNodeCertificate. The original UserNodeConfirmation should
+		// have its 
+
+		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
+		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
+				conf);
+		expect(solarLocationDao.getSolarLocationForName(EasyMock.anyObject(String.class)))
+				.andReturn(loc);
+		expect(nodeDao.get(TEST_NODE_ID)).andReturn(node);
+		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(userNode);
 		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
 		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
 				TEST_CERT_ID);

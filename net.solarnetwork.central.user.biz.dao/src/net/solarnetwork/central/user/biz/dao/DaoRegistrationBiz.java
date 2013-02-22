@@ -426,20 +426,25 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		SolarLocation loc = solarLocationDao.getSolarLocationForName(defaultSolarLocationName);
 		assert loc != null;
 
-		// allow using a pre-populated node ID
+		// allow using a pre-populated node ID, and possibly pre-existing
 		final Long nodeId = (conf.getNodeId() == null ? solarNodeDao.getUnusedNodeId() : conf
 				.getNodeId());
+		SolarNode node = solarNodeDao.get(nodeId);
+		if ( node == null ) {
+			node = new SolarNode();
+			node.setId(nodeId);
+			node.setLocation(loc);
+			solarNodeDao.store(node);
+		}
 
-		SolarNode node = new SolarNode();
-		node.setId(nodeId);
-		node.setLocation(loc);
-		solarNodeDao.store(node);
-
-		// create UserNode now
-		UserNode userNode = new UserNode();
-		userNode.setNode(node);
-		userNode.setUser(user);
-		userNodeDao.store(userNode);
+		// create UserNode now if it doesn't already exist
+		UserNode userNode = userNodeDao.get(nodeId);
+		if ( userNode == null ) {
+			userNode = new UserNode();
+			userNode.setNode(node);
+			userNode.setUser(user);
+			userNodeDao.store(userNode);
+		}
 
 		conf.setConfirmationDate(new DateTime());
 		conf.setNodeId(nodeId);
