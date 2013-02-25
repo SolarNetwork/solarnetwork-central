@@ -47,8 +47,9 @@ ALTER COLUMN node_id DROP NOT NULL;
 ALTER TABLE solaruser.user_node_conf
 DROP COLUMN conf_val;
 
-CREATE VIEW solaruser.network_association  AS
+CREATE OR REPLACE VIEW solaruser.network_association  AS
 	SELECT
+		u.email AS username,
 		unc.conf_key AS conf_key,
 		unc.sec_phrase AS sec_phrase
 	FROM solaruser.user_node_conf unc
