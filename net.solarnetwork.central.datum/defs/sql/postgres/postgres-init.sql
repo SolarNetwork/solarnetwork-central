@@ -1,6 +1,6 @@
 /* ============================================================================
  * psql script to execute all initialization SQL scripts, except for
- * populating any initial data (see postgres-ini-data.sql for that).
+ * populating any initial data (see postgres-init-data.sql for that).
  * ============================================================================
  */
 
