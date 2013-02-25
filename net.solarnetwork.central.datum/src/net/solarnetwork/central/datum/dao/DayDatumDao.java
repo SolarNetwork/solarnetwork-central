@@ -26,9 +26,8 @@
 
 package net.solarnetwork.central.datum.dao;
 
-import org.joda.time.LocalDate;
-
 import net.solarnetwork.central.datum.domain.DayDatum;
+import org.joda.time.LocalDate;
 
 /**
  * DAO API for {@link DayDatum} data.

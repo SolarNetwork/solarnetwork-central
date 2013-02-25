@@ -27,7 +27,6 @@
 package net.solarnetwork.central.datum.dao;
 
 import net.solarnetwork.central.datum.domain.WeatherDatum;
-
 import org.joda.time.ReadableDateTime;
 
 /**

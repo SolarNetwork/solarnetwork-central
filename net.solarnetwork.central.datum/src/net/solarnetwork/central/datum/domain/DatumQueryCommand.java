@@ -29,9 +29,7 @@ package net.solarnetwork.central.datum.domain;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import net.solarnetwork.util.Cachable;
-
 import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
 

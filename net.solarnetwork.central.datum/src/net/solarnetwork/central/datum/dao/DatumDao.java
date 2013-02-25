@@ -28,11 +28,9 @@ package net.solarnetwork.central.datum.dao;
 
 import java.util.List;
 import java.util.Set;
-
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
-
 import org.joda.time.LocalDate;
 import org.joda.time.ReadableDateTime;
 import org.joda.time.ReadableInterval;

@@ -27,7 +27,6 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
-
 import net.solarnetwork.central.domain.BaseEntity;
 
 /**

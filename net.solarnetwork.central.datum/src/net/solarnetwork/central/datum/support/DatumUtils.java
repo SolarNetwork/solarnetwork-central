@@ -24,11 +24,10 @@
 
 package net.solarnetwork.central.datum.support;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.util.ClassUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utilities for Datum domain classes.

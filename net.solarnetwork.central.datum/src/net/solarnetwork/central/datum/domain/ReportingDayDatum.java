@@ -27,7 +27,6 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.util.TimeZone;
-
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
