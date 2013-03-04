@@ -30,10 +30,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Non-threaded implementation of {@link ExecutorService} to help with unit testing.
+ * Non-threaded implementation of {@link ExecutorService} to help with unit
+ * testing.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public class CallingThreadExecutorService extends AbstractExecutorService {
 
@@ -58,8 +59,7 @@ public class CallingThreadExecutorService extends AbstractExecutorService {
 	}
 
 	@Override
-	public boolean awaitTermination(long timeout, TimeUnit unit)
-			throws InterruptedException {
+	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
 		return false;
 	}
 
