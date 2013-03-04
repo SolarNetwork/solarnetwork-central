@@ -5,21 +5,5 @@
 		<conf name="runtime" visibility="public" description="Runtime dependencies"/>
 	</configurations>
 	<dependencies defaultconfmapping="runtime->runtime(default);compile->compile(default)">
-    	<dependency org="org.apache.tomcat" name="tomcat-jdbc" rev="7.0.29">
-    		<artifact name="tomcat-jdbc" type="jar" />
-		</dependency>
-		<dependency org="org.springframework" name="org.springframework.beans" rev="3.0.5.RELEASE"/>
-		<dependency org="org.springframework" name="org.springframework.core" rev="3.0.5.RELEASE"/>
-		<dependency org="org.springframework" name="org.springframework.jdbc" rev="3.0.5.RELEASE"/>
-		<dependency org="org.springframework" name="org.springframework.transaction" rev="3.0.5.RELEASE"/>
-    	<dependency org="org.osgi" name="org.osgi.compendium" rev="4.2.0" >
-    		<artifact name="org.osgi.compendium" type="jar"/>
-    	</dependency>
-		<dependency org="org.osgi" name="org.osgi.core" rev="4.2.0">
-			<artifact name="org.osgi.core" type="jar"/>
-		</dependency>
-		<dependency org="org.osgi" name="org.osgi.enterprise" rev="4.2.0">
-			<artifact name="org.osgi.enterprise" type="jar"/>
-		</dependency>
     </dependencies>
 </ivy-module>
