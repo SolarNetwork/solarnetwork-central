@@ -26,85 +26,89 @@ package net.solarnetwork.central.datum.domain;
  * A standardized enumeration of weather sky conditions.
  * 
  * @author matt.magoffin
- * @version $Revision$ $Date$
+ * @version 1.0
  */
 public enum SkyCondition {
-	
+
 	/** Clear night. */
 	ClearNight,
-	
+
 	/** Clear day. */
 	Clear,
-	
+
 	/** Few clouds night. */
 	FewCloudsNight,
-	
+
 	/** Few couds day. */
 	FewClouds,
-	
+
 	/** Fog. */
 	Fog,
-	
+
 	/** Overcast. */
 	Overcast,
-	
+
 	/** Severe alert. */
 	SevereAlert,
-	
+
 	/** Showers scattered. */
 	ShowersScattered,
-	
+
 	/** Showers. */
 	Showers,
-	
+
 	/** Snow. */
 	Snow,
-	
+
 	/** Storm. */
 	Storm;
-	
+
 	/**
 	 * Get a night-time equivalent value for a given SkyCondition.
 	 * 
-	 * <p>Some conditions have day and night counterparts. If this object
-	 * is a day condition and has a night equivalent, the night equivalent
-	 * will be returned. Otherwise {@code this} will be returned.</p>
+	 * <p>
+	 * Some conditions have day and night counterparts. If this object is a day
+	 * condition and has a night equivalent, the night equivalent will be
+	 * returned. Otherwise {@code this} will be returned.
+	 * </p>
 	 * 
 	 * @return the night time equivalent SkyCondition
 	 */
 	public SkyCondition getNightEquivalent() {
-		switch ( this ) {
+		switch (this) {
 			case Clear:
 				return ClearNight;
-				
+
 			case FewClouds:
 				return FewCloudsNight;
-				
+
 			default:
 				return this;
 		}
 	}
-	
+
 	/**
 	 * Get a day-time equivalent value for a given SkyCondition.
 	 * 
-	 * <p>Some conditions have day and night counterparts. If this object
-	 * is a night condition and has a day equivalent, the day equivalent
-	 * will be returned. Otherwise {@code this} will be returned.</p>
+	 * <p>
+	 * Some conditions have day and night counterparts. If this object is a
+	 * night condition and has a day equivalent, the day equivalent will be
+	 * returned. Otherwise {@code this} will be returned.
+	 * </p>
 	 * 
 	 * @return the day time equivalent SkyCondition
 	 */
 	public SkyCondition getDayEquivalent() {
-		switch ( this ) {
+		switch (this) {
 			case ClearNight:
 				return Clear;
-				
+
 			case FewCloudsNight:
 				return FewClouds;
-				
+
 			default:
 				return this;
 		}
 	}
-	
+
 }
