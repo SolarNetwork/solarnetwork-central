@@ -29,6 +29,7 @@
 		<beans:prop key="jdbc.pool.maxWait">20000</beans:prop>
 		<beans:prop key="jdbc.pool.timeBetweenEvictionRunsMillis">120000</beans:prop>
 		<beans:prop key="jdbc.pool.minEvictableIdleTimeMillis">300000</beans:prop>
+		<beans:prop key="jdbc.pool.validationQuery">SELECT CURRENT_DATE</beans:prop>
 	</osgix:cm-properties>
 
 	<!-- Service References -->
@@ -64,22 +65,22 @@
 	<bean id="dataSource" class="net.solarnetwork.dao.jdbc.TomcatJdbcPoolDataSourceFactoryBean">
 		<property name="poolProperties">
 			<bean class="org.apache.tomcat.jdbc.pool.PoolProperties">
-				<property name="jmxEnabled" value="jmxEnabled"/>
-				<property name="testWhileIdle" value="testWhileIdle"/>
-				<property name="testOnBorrow" value="testOnBorrow"/>
-				<property name="validationQuery" value="validationQuery"/>
-				<property name="testOnReturn" value="testOnReturn"/>
-				<property name="validationInterval" value="validationInterval"/>
-				<property name="timeBetweenEvictionRunsMillis" value="timeBetweenEvictionRunsMillis"/>
-				<property name="maxActive" value="maxActive"/>
-				<property name="initialSize" value="initialSize"/>
-				<property name="maxWait" value="maxWait"/>
-				<property name="removeAbandonedTimeout" value="removeAbandonedTimeout"/>
-				<property name="minEvictableIdleTimeMillis" value="minEvictableIdleTimeMillis"/>
-				<property name="minIdle" value="minIdle"/>
-				<property name="maxIdle" value="maxIdle"/>
-				<property name="logAbandoned" value="logAbandoned"/>
-				<property name="jdbcInterceptors" value="jdbcInterceptors"/>
+				<property name="jmxEnabled" value="true"/>
+				<property name="testWhileIdle" value="false"/>
+				<property name="testOnBorrow" value="true"/>
+				<property name="validationQuery" value="${jdbc.pool.validationQuery}"/>
+				<property name="testOnReturn" value="false"/>
+				<property name="validationInterval" value="30000"/>
+				<property name="timeBetweenEvictionRunsMillis" value="${jdbc.pool.timeBetweenEvictionRunsMillis}"/>
+				<property name="maxActive" value="${jdbc.pool.maxActive}"/>
+				<property name="initialSize" value="0"/>
+				<property name="maxWait" value="${jdbc.pool.maxWait}"/>
+				<property name="removeAbandonedTimeout" value="60"/>
+				<property name="minEvictableIdleTimeMillis" value="${jdbc.pool.minEvictableIdleTimeMillis}"/>
+				<property name="minIdle" value="0"/>
+				<property name="maxIdle" value="${jdbc.pool.maxActive}"/>
+				<property name="logAbandoned" value="true"/>
+				<property name="jdbcInterceptors" value="org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer"/>
 			</bean>
 		</property>
 		<property name="dataSourceFactory" ref="dataSourceFactory"/>
