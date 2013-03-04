@@ -1,7 +1,7 @@
 /* ==================================================================
- * AbstractIbatisDaoTestSupport.java - Feb 2, 2010 2:18:25 PM
+ * AllTests.java - March 5, 2013 2:18:25 PM
  * 
- * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * Copyright 2007-2013 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,16 +22,15 @@
 
 package net.solarnetwork.central.dao.ibatis.test;
 
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
-import org.springframework.test.context.ContextConfiguration;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
-/**
- * Base test class for Ibatis Common DAO tests.
- * 
- * @author matt
- * @version 1.0
- */
-@ContextConfiguration
-public class AbstractIbatisDaoTestSupport extends AbstractCentralTransactionalTest {
+@RunWith(Suite.class)
+@SuiteClasses({ IbatisHardwareControlDaoTest.class, IbatisHardwareDaoTest.class,
+		IbatisNetworkAssociationDaoTest.class, IbatisPriceLocationDaoTest.class,
+		IbatisPriceSourceDaoTest.class, IbatisSolarLocationDaoTest.class, IbatisSolarNodeDaoTest.class,
+		IbatisWeatherLocationDaoTest.class, IbatisWeatherSourceDaoTest.class })
+public class AllTests {
 
 }

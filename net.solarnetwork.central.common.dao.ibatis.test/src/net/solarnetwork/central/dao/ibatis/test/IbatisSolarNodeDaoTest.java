@@ -27,35 +27,33 @@ package net.solarnetwork.central.dao.ibatis.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.dao.ibatis.IbatisSolarNodeDao;
+import net.solarnetwork.central.domain.SolarNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.central.dao.ibatis.IbatisSolarNodeDao;
 
 /**
  * Test case for the {@link IbatisSolarNodeDao} class.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 public class IbatisSolarNodeDaoTest extends AbstractIbatisDaoTestSupport {
 
-	@Autowired private SolarNodeDao solarNodeDao;
-	
+	@Autowired
+	private SolarNodeDao solarNodeDao;
+
 	@Before
-	public void setupInTransaction() {		
+	public void setupInTransaction() {
 		setupTestLocation();
 	}
-	
+
 	@Test
 	public void getSolarNodeById() throws Exception {
-		simpleJdbcTemplate.update(
-				"insert into solarnet.sn_node (node_id, loc_id) values (?,?)", 
-				TEST_NODE_ID, TEST_LOC_ID);
+		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id) values (?,?)", TEST_NODE_ID,
+				TEST_LOC_ID);
 
 		SolarNode node = solarNodeDao.get(TEST_NODE_ID);
 		assertNotNull(node);
@@ -65,27 +63,27 @@ public class IbatisSolarNodeDaoTest extends AbstractIbatisDaoTestSupport {
 		assertNotNull(node.getTimeZone());
 		assertEquals(TEST_TZ, node.getTimeZone().getID());
 	}
-	
+
 	@Test
 	public void getNonExistingSolarNodeById() throws Exception {
 		SolarNode node = solarNodeDao.get(-99L);
 		assertNull(node);
 	}
-	
+
 	@Test
 	public void insertSolarNode() throws Exception {
 		SolarNode node = new SolarNode();
 		node.setLocationId(TEST_LOC_ID);
-		
+
 		Long id = solarNodeDao.store(node);
 		assertNotNull(id);
 	}
-	
+
 	@Test
 	public void updateSolarNode() throws Exception {
 		SolarNode node = new SolarNode();
 		node.setLocationId(TEST_LOC_ID);
-		
+
 		Long id = solarNodeDao.store(node);
 		assertNotNull(id);
 		node = solarNodeDao.get(id);
