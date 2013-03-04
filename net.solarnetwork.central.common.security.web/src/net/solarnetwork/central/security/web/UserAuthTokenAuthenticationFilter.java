@@ -219,7 +219,6 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		}
 
 		private void appendQueryParameters(HttpServletRequest request, StringBuilder buf) {
-			@SuppressWarnings("unchecked")
 			Set<String> paramKeys = request.getParameterMap().keySet();
 			if ( paramKeys.size() < 1 ) {
 				return;
