@@ -34,7 +34,7 @@
 	<end-state id="done" view="registration/submitted" />
 	
 	<global-transitions>
-		<transition on-exception="net.solarnetwork.central.user.biz.AuthorizationException" to="start"/>
+		<transition on-exception="net.solarnetwork.central.security.AuthorizationException" to="start"/>
 	</global-transitions>
 	
 </flow>
