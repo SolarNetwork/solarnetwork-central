@@ -25,7 +25,6 @@ Import-Package:
  org.springframework.dao;version="[3.1,4.0)",
  org.springframework.expression;version="[3.1,4.0)",
  org.springframework.jdbc.core;version="[3.1,4.0)",
- org.springframework.jdbc.core.simple;version="[3.1,4.0)",
  org.springframework.jdbc.datasource;version="[3.1,4.0)",
  org.springframework.test.annotation;version="[3.1,4.0)",
  org.springframework.test.context;version="[3.1,4.0)",
