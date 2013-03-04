@@ -2,13 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Common Web
 Bundle-SymbolicName: net.solarnetwork.central.common.web
-Bundle-Version: 1.3.0
+Bundle-Version: 1.4.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
  net.solarnetwork.central.web;version="1.2.0",
  net.solarnetwork.central.web.domain;version="1.0.0",
- net.solarnetwork.central.web.support;version="1.1.0"
+ net.solarnetwork.central.web.support;version="1.2.0"
 Import-Package: 
  net.solarnetwork.central.dao;version="[1.0.0,2.0.0)",
  net.solarnetwork.central.domain;version="[1.0.0,2.0.0)",
@@ -33,20 +33,20 @@ Import-Package:
  org.codehaus.jackson;version="[1.0.0,2.0.0)",
  org.joda.time;version="[1.6,3.0)",
  org.slf4j;version="[1.5.0,2.0.0)",
- org.springframework.beans;version="[3.0,4.0)",
- org.springframework.beans.factory;version="[3.0,4.0)";resolution:=optional,
- org.springframework.beans.factory.annotation;version="[3.0,4.0)";resolution:=optional,
- org.springframework.core;version="[3.0,4.0)",
- org.springframework.context;version="[3.0,4.0)",
- org.springframework.context.support;version="[3.0,4.0)",
- org.springframework.validation;version="[3.0,4.0)",
- org.springframework.stereotype;version="[3.0,4.0)",
- org.springframework.web.bind;version="[3.0,4.0)",
- org.springframework.web.bind.annotation;version="[3.0,4.0)";resolution:=optional,
- org.springframework.web.context;version="[3.0,4.0)";resolution:=optional,
- org.springframework.web.context.support;version="[3.0,4.0)",
- org.springframework.web.servlet;version="[3.0,4.0)",
- org.springframework.web.servlet.view;version="[3.0,4.0)",
- org.springframework.web.servlet.view.tiles2;version="[3.0,4.0)";resolution:=optional,
- org.springframework.ui;version="[3.0,4.0)",
- org.springframework.util;version="[3.0,4.0)"
+ org.springframework.beans;version="[3.1,4.0)",
+ org.springframework.beans.factory;version="[3.1,4.0)";resolution:=optional,
+ org.springframework.beans.factory.annotation;version="[3.1,4.0)";resolution:=optional,
+ org.springframework.core;version="[3.1,4.0)",
+ org.springframework.context;version="[3.1,4.0)",
+ org.springframework.context.support;version="[3.1,4.0)",
+ org.springframework.validation;version="[3.1,4.0)",
+ org.springframework.stereotype;version="[3.1,4.0)",
+ org.springframework.web.bind;version="[3.1,4.0)",
+ org.springframework.web.bind.annotation;version="[3.1,4.0)";resolution:=optional,
+ org.springframework.web.context;version="[3.1,4.0)";resolution:=optional,
+ org.springframework.web.context.support;version="[3.1,4.0)",
+ org.springframework.web.servlet;version="[3.1,4.0)",
+ org.springframework.web.servlet.view;version="[3.1,4.0)",
+ org.springframework.web.servlet.view.tiles2;version="[3.1,4.0)";resolution:=optional,
+ org.springframework.ui;version="[3.1,4.0)",
+ org.springframework.util;version="[3.1,4.0)"
