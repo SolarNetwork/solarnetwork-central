@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:osgix="http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+		http://www.osgi.org/xmlns/blueprint/v1.0.0
+		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-3.0.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="scheduler.cfg" persistent-id="net.solarnetwork.central.scheduler">
+		<beans:prop key="scheduler.startupDelay">60</beans:prop>
+		<beans:prop key="scheduler.jobStore.driverDelegateClass">org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</beans:prop>
+		<beans:prop key="scheduler.jobStore.tablePrefix">quartz.</beans:prop>
+		<beans:prop key="scheduler.threadPool.threadCount">5</beans:prop>
+	</osgix:cm-properties>
+
+	<!-- Service References -->
+	
+	<reference id="dataSource" interface="javax.sql.DataSource" filter="(db=central)"/>
+	
+	<reference id="txManager" interface="org.springframework.transaction.PlatformTransactionManager"
+		filter="(db=central)"/>
+		
+	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
+	
+	<!-- Published Services -->
+	
+	<service ref="scheduler" interface="org.quartz.Scheduler">
+		<service-properties>
+			<entry key="function" value="central"/>
+		</service-properties>
+	</service>
+
+	<service ref="notificationJobScheduler" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>net/solarnetwork/central/scheduler/JOB_REQUEST</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+	
+	<service ref="schedulerManager" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>net/solarnetwork/central/scheduler/*</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+	
+	<!-- Supporting Services -->
+	
+	<ctx:property-placeholder properties-ref="scheduler.cfg"/>
+
+	<bean id="schedulerManager" class="net.solarnetwork.central.scheduler.internal.SchedulerManager">
+		<argument ref="scheduler"/>
+		<argument ref="eventAdmin"/>
+	</bean>
+
+	<bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<!--property name="applicationContextSchedulerContextKey" value="applicationContext"/-->
+		<property name="schedulerContextAsMap">
+			<map>
+				<entry key="EventAdmin" value-ref="eventAdmin"/>
+			</map>
+		</property>
+		<property name="waitForJobsToCompleteOnShutdown" value="true"/>
+		<property name="startupDelay" value="${scheduler.startupDelay}"/>
+		<property name="schedulerName" value="SolarNet"/>
+		<property name="dataSource" ref="dataSource"/>
+		<property name="quartzProperties">
+			<props>
+				<prop key="org.quartz.jobStore.tablePrefix">${scheduler.jobStore.tablePrefix}</prop>
+				<prop key="org.quartz.threadPool.threadCount">${scheduler.threadPool.threadCount}</prop>
+				<prop key="org.quartz.jobStore.driverDelegateClass">${scheduler.jobStore.driverDelegateClass}</prop>
+			</props>
+		</property>
+		<property name="jobFactory">
+			<bean class="org.springframework.scheduling.quartz.SpringBeanJobFactory"/>
+		</property>
+	</bean>
+	
+	<bean id="notificationJobScheduler" class="net.solarnetwork.central.scheduler.internal.NotificationScheduler">
+		<argument ref="scheduler"/>
+	</bean>
+	
+</blueprint>

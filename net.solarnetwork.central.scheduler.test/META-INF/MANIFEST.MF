@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: DRAS Scheduler Unit Test
+Bundle-Name: SolarNet Scheduler Unit Test
 Bundle-SymbolicName: net.solarnetwork.central.scheduler.quartz.test
 Bundle-Version: 1.0.0
 Bundle-Vendor: SolarNetwork
