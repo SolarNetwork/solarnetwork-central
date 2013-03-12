@@ -46,7 +46,7 @@ public class DelegatingQueryBiz implements QueryBiz {
 	 * @param delegate
 	 *        the delegate
 	 */
-	private DelegatingQueryBiz(QueryBiz delegate) {
+	public DelegatingQueryBiz(QueryBiz delegate) {
 		super();
 		this.delegate = delegate;
 	}

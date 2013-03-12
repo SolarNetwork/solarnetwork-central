@@ -11,3 +11,4 @@
 \i postgres-init-most-recent.sql
 \i postgres-init-reporting-tables.sql
 \i postgres-init-reporting-triggers.sql
+\i postgres-init-quartz.sql

@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.scheduler.internal;
@@ -28,11 +26,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import net.solarnetwork.central.scheduler.EventHandlerSupport;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.central.scheduler.SchedulerUtils;
-
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventHandler;
@@ -47,46 +43,47 @@ import org.springframework.context.event.ContextRefreshedEvent;
  * Manage the lifecycle of the Quartz Scheduler.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
-public class SchedulerManager extends EventHandlerSupport
-implements ApplicationListener<ContextRefreshedEvent>, EventHandler {
-	
+public class SchedulerManager extends EventHandlerSupport implements
+		ApplicationListener<ContextRefreshedEvent>, EventHandler {
+
 	private static final String TEST_TOPIC = "net/solarnetwork/central/scheduler/TEST";
-	
-	private Scheduler scheduler;
-	private EventAdmin eventAdmin;
-	
+
+	private final Scheduler scheduler;
+	private final EventAdmin eventAdmin;
+
 	/**
 	 * Constructor.
 	 * 
-	 * @param scheduler the Scheduler
+	 * @param scheduler
+	 *        the Scheduler
 	 */
 	public SchedulerManager(Scheduler scheduler, EventAdmin eventAdmin) {
 		this.scheduler = scheduler;
 		this.eventAdmin = eventAdmin;
 	}
-	
+
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		try {
-	        for ( String triggerGroup : scheduler.getTriggerGroupNames() ) {
-	           for ( String triggerName : scheduler.getTriggerNames(triggerGroup) ) {
-	              Trigger t = scheduler.getTrigger(triggerName, triggerGroup);
-	              log.debug("Found trigger: " +t);
-	           }
-	        }
-	        
-	        // fire off test Trigger to verify scheduler operational
-        	Map<String, Object> props = new HashMap<String, Object>(5);
-        	props.put(SchedulerConstants.JOB_ID, "SchedulerManager.Startup");
-        	props.put(SchedulerConstants.JOB_DATE, new Date().getTime() + 5000);
-        	props.put(SchedulerConstants.JOB_GROUP, "Test");
-        	props.put(SchedulerConstants.JOB_TOPIC, TEST_TOPIC);
-        	
-        	Event e = new Event(SchedulerConstants.TOPIC_JOB_REQUEST, props);
-        	eventAdmin.postEvent(e);
-	        
+			for ( String triggerGroup : scheduler.getTriggerGroupNames() ) {
+				for ( String triggerName : scheduler.getTriggerNames(triggerGroup) ) {
+					Trigger t = scheduler.getTrigger(triggerName, triggerGroup);
+					log.debug("Found trigger: " + t);
+				}
+			}
+
+			// fire off test Trigger to verify scheduler operational
+			Map<String, Object> props = new HashMap<String, Object>(5);
+			props.put(SchedulerConstants.JOB_ID, "SchedulerManager.Startup");
+			props.put(SchedulerConstants.JOB_DATE, new Date().getTime() + 5000);
+			props.put(SchedulerConstants.JOB_GROUP, "Test");
+			props.put(SchedulerConstants.JOB_TOPIC, TEST_TOPIC);
+
+			Event e = new Event(SchedulerConstants.TOPIC_JOB_REQUEST, props);
+			eventAdmin.postEvent(e);
+
 		} catch ( SchedulerException e ) {
 			log.error("Exception finding triggers", e);
 		}
@@ -106,19 +103,20 @@ implements ApplicationListener<ContextRefreshedEvent>, EventHandler {
 			eventAdmin.postEvent(ack);
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private NotificationJob getRunningJob(Event event) throws SchedulerException {
-		final String jobId = (String)event.getProperty(SchedulerConstants.JOB_ID);
+		final String jobId = (String) event.getProperty(SchedulerConstants.JOB_ID);
 		if ( jobId == null ) {
 			log.debug("Can't find running job for event because JOB_ID missing");
 			return null;
 		}
-		final String jobGroup = (String)event.getProperty(SchedulerConstants.JOB_GROUP);
-		for ( JobExecutionContext jec : (List<JobExecutionContext>)scheduler.getCurrentlyExecutingJobs() ) {
+		final String jobGroup = (String) event.getProperty(SchedulerConstants.JOB_GROUP);
+		for ( JobExecutionContext jec : (List<JobExecutionContext>) scheduler
+				.getCurrentlyExecutingJobs() ) {
 			Trigger t = jec.getTrigger();
 			if ( jobId.equals(t.getName()) && (jobGroup == null || jobGroup.equals(t.getGroup())) ) {
-				return (NotificationJob)jec.getJobInstance();
+				return (NotificationJob) jec.getJobInstance();
 			}
 		}
 		log.debug("Running job {} in group {} not found", jobId, jobGroup);

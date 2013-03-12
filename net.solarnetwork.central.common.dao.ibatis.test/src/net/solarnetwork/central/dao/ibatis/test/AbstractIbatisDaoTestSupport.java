@@ -1,8 +1,3 @@
-package net.solarnetwork.central.dao.ibatis.test;
-import org.springframework.test.context.ContextConfiguration;
-
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
-
 /* ==================================================================
  * AbstractIbatisDaoTestSupport.java - Feb 2, 2010 2:18:25 PM
  * 
@@ -23,18 +18,20 @@ import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
+
+package net.solarnetwork.central.dao.ibatis.test;
+
+import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Base test class for Ibatis Common DAO tests.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 @ContextConfiguration
-public class AbstractIbatisDaoTestSupport
-extends AbstractCentralTransactionalTest {
+public class AbstractIbatisDaoTestSupport extends AbstractCentralTransactionalTest {
 
 }

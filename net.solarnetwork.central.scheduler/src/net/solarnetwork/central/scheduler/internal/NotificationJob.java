@@ -18,14 +18,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.scheduler.internal;
 
 import net.solarnetwork.central.scheduler.SchedulerConstants;
-
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.quartz.Job;
@@ -36,53 +33,52 @@ import org.quartz.SchedulerContext;
 import org.quartz.SchedulerException;
 
 /**
- * Quartz Job that sends out an OSGi Event notification based on the
- * data in the job.
+ * Quartz Job that sends out an OSGi Event notification based on the data in the
+ * job.
  * 
- * <p>Expects {@link #finish(Event)} to be called from a different thread
- * to signal the completion of the job.</p>
+ * <p>
+ * Expects {@link #finish(Event)} to be called from a different thread to signal
+ * the completion of the job.
+ * </p>
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public class NotificationJob implements Job {
-	
+
 	/** The {@link org.quartz.SchedulerContext} key for the {@link EventAdmin}. */
 	public static final String EVENT_ADMIN_CONTEXT_KEY = "EventAdmin";
-	
+
 	/** The default amount of time to wait for a job to complete or fail. */
 	public static final long DEFAULT_MAX_JOB_WAIT = 120000;
-	
+
 	private boolean complete = false;
 	private boolean success = true;
 	private Throwable throwable = null;
 
 	@Override
-	public void execute(JobExecutionContext jobContext)
-			throws JobExecutionException {
+	public void execute(JobExecutionContext jobContext) throws JobExecutionException {
 		SchedulerContext context;
 		try {
 			context = jobContext.getScheduler().getContext();
-		} catch (SchedulerException e) {
-			throw new JobExecutionException(
-					"Error getting EventAdmin from SchedulerContext", e);
+		} catch ( SchedulerException e ) {
+			throw new JobExecutionException("Error getting EventAdmin from SchedulerContext", e);
 		}
-		final EventAdmin eventAdmin = (EventAdmin)context.get(EVENT_ADMIN_CONTEXT_KEY);
+		final EventAdmin eventAdmin = (EventAdmin) context.get(EVENT_ADMIN_CONTEXT_KEY);
 		if ( eventAdmin == null ) {
 			throw new JobExecutionException("EventAdmin not found on SchedulerContext");
 		}
-		
+
 		final JobDataMap jobDataMap = jobContext.getMergedJobDataMap();
 		final String jobTopic = jobDataMap.getString(SchedulerConstants.JOB_TOPIC);
-		
+
 		final Event event = new Event(jobTopic, jobContext.getMergedJobDataMap());
-		
+
 		final long start = System.currentTimeMillis();
-		final long maxWait = (jobDataMap.containsKey(SchedulerConstants.JOB_MAX_WAIT)
-				? (Long)jobDataMap.get(SchedulerConstants.JOB_MAX_WAIT)
-				: DEFAULT_MAX_JOB_WAIT);
+		final long maxWait = (jobDataMap.containsKey(SchedulerConstants.JOB_MAX_WAIT) ? (Long) jobDataMap
+				.get(SchedulerConstants.JOB_MAX_WAIT) : DEFAULT_MAX_JOB_WAIT);
 		try {
-			synchronized (this) {
+			synchronized ( this ) {
 				// post the job event now, waiting for our acknowledgment event
 				// within maxWait milliseconds
 				eventAdmin.postEvent(event);
@@ -90,14 +86,14 @@ public class NotificationJob implements Job {
 					this.wait(maxWait); // TODO: make this configurable
 					if ( !complete && (System.currentTimeMillis() - start) > maxWait ) {
 						throw new JobExecutionException("Timeout waiting for job to complete ("
-								+maxWait +"ms)");
+								+ maxWait + "ms)");
 					}
 				}
 			}
 		} catch ( InterruptedException e ) {
 			throw new JobExecutionException(e);
 		}
-		
+
 		if ( !success ) {
 			throw new JobExecutionException("Job did not complete successfully", throwable);
 		}
@@ -106,9 +102,11 @@ public class NotificationJob implements Job {
 	/**
 	 * Call to signal to this job that the job is finished.
 	 * 
-	 * <p>It is assumed that another thread has called {@link #execute(JobExecutionContext)}
-	 * and is waiting for a different thread to call this method and signal the completion
-	 * of the job.</p>
+	 * <p>
+	 * It is assumed that another thread has called
+	 * {@link #execute(JobExecutionContext)} and is waiting for a different
+	 * thread to call this method and signal the completion of the job.
+	 * </p>
 	 * 
 	 * @param event
 	 */
@@ -117,8 +115,8 @@ public class NotificationJob implements Job {
 		if ( SchedulerConstants.TOPIC_JOB_FAILURE.equals(event.getTopic()) ) {
 			success = false;
 		}
-		throwable = (Throwable)event.getProperty(SchedulerConstants.JOB_EXCEPTION);
+		throwable = (Throwable) event.getProperty(SchedulerConstants.JOB_EXCEPTION);
 		this.notifyAll();
 	}
-	
+
 }

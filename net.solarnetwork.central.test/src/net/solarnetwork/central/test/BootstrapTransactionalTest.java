@@ -25,37 +25,36 @@
 package net.solarnetwork.central.test;
 
 import static org.junit.Assert.assertNotNull;
-
 import java.util.Date;
-
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 
 /**
  * Test case to validate unit test can connect to transactional datastore.
  * 
- * <p>The configurable properties of this class are:</p>
+ * <p>
+ * The configurable properties of this class are:
+ * </p>
  * 
  * <dl class="class-properties">
- *   <dt></dt>
- *   <dd></dd>
+ * <dt></dt>
+ * <dd></dd>
  * </dl>
  * 
  * @author matt
  * @version $Id$
  */
-public class BootstrapTransactionalTest
-extends AbstractCentralTransactionalTest {
+public class BootstrapTransactionalTest extends AbstractCentralTransactionalTest {
 
 	/**
 	 * Test able to connect to the configured database.
 	 */
-    @Test
+	@Test
 	public void testConnectToDatabase() throws DataAccessException {
-		Date now = simpleJdbcTemplate.queryForObject("select CURRENT_TIMESTAMP", 
-				java.util.Date.class, (Object[])null);
+		Date now = jdbcTemplate.queryForObject("select CURRENT_TIMESTAMP", java.util.Date.class,
+				(Object[]) null);
 		assertNotNull(now);
-		log.debug("Got timestamp: " +now);
+		log.debug("Got timestamp: " + now);
 	}
-	
+
 }
