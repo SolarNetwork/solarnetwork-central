@@ -39,6 +39,7 @@ Import-Package:
  org.springframework.context.support;version="[3.1,4.0)",
  org.springframework.core;version="[3.1,4.0)",
  org.springframework.security.authentication;version="[3.1,4.0)",
+ org.springframework.security.config;version="[3.1,4.0)",
  org.springframework.security.core;version="[3.1,4.0)",
  org.springframework.security.core.authority;version="[3.1,4.0)",
  org.springframework.security.core.context;version="[3.1,4.0)",
