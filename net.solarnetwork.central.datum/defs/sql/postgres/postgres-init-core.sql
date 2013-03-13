@@ -50,6 +50,8 @@ CREATE TRIGGER maintain_fts
    =========================================================================
    ========================================================================= */
 
+CREATE SEQUENCE solarnet.weather_seq;
+  	
 CREATE TABLE solarnet.sn_weather_source (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -93,7 +95,7 @@ CREATE INDEX sn_weather_loc_fts_default_idx ON solarnet.sn_weather_loc USING gin
 /* --- sn_day_datum */
 
 CREATE TABLE solarnet.sn_day_datum (
-	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
+	id				BIGINT NOT NULL DEFAULT nextval('solarnet.weather_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	loc_id 			BIGINT NOT NULL,
 	day		 		DATE NOT NULL,
@@ -116,7 +118,7 @@ CLUSTER solarnet.sn_day_datum USING sn_day_datum_loc_unq;
 /* --- sn_weather_datum */
 
 CREATE TABLE solarnet.sn_weather_datum (
-	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
+	id				BIGINT NOT NULL DEFAULT nextval('solarnet.weather_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	loc_id 			BIGINT NOT NULL,
 	info_date		TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -313,6 +315,8 @@ $BODY$
    =========================================================================
    ========================================================================= */
 
+CREATE SEQUENCE solarnet.price_seq;
+
 CREATE TABLE solarnet.sn_price_source (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -352,7 +356,7 @@ CREATE TRIGGER maintain_fts
 CREATE INDEX sn_price_loc_fts_default_idx ON solarnet.sn_price_loc USING gin(fts_default);
 
 CREATE TABLE solarnet.sn_price_datum (
-	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
+	id				BIGINT NOT NULL DEFAULT nextval('solarnet.price_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	posted			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	loc_id 			BIGINT NOT NULL,
@@ -422,8 +426,10 @@ LANGUAGE 'sql' IMMUTABLE;
    =========================================================================
    ========================================================================= */
 
+CREATE SEQUENCE solarnet.power_seq;
+
 CREATE TABLE solarnet.sn_power_datum (
-	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
+	id				BIGINT NOT NULL DEFAULT nextval('solarnet.power_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	posted			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	node_id 		BIGINT NOT NULL,
@@ -544,8 +550,10 @@ $BODY$
    =========================================================================
    ========================================================================= */
 
+CREATE SEQUENCE solarnet.consum_seq;
+
 CREATE TABLE solarnet.sn_consum_datum (
-	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
+	id				BIGINT NOT NULL DEFAULT nextval('solarnet.consum_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	posted			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	node_id 		BIGINT NOT NULL,

@@ -6,7 +6,7 @@
 
 	<insert id="insert-HardwareControlDatum" parameterClass="HardwareControlDatum">
 		<selectKey resultClass="long" keyProperty="id"> 
-              SELECT nextval('solarnet.solarnet_seq') AS id 
+              SELECT nextval('solarnet.hardware_control_seq') AS id 
 		</selectKey>
 		INSERT INTO solarnet.sn_hardware_control_datum 
 			(id

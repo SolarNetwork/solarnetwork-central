@@ -6,7 +6,7 @@
 
 	<insert id="insert-PriceDatum" parameterClass="PriceDatum">
 		<selectKey resultClass="long" keyProperty="id"> 
-              SELECT nextval('solarnet.solarnet_seq') AS id 
+              SELECT nextval('solarnet.price_seq') AS id 
 		</selectKey>
 		INSERT INTO solarnet.sn_price_datum 
 			(id

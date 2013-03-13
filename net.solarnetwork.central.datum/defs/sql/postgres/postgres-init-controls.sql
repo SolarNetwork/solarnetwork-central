@@ -1,3 +1,5 @@
+CREATE SEQUENCE solarnet.hardware_control_seq;
+
 CREATE TABLE solarnet.sn_hardware (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -31,7 +33,7 @@ CREATE TABLE solarnet.sn_hardware_control (
 );
 
 CREATE TABLE solarnet.sn_hardware_control_datum (
-	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
+	id				BIGINT NOT NULL DEFAULT nextval('solarnet.hardware_control_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	node_id			BIGINT NOT NULL,
 	source_id		CHARACTER VARYING(128) NOT NULL,
