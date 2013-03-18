@@ -18,21 +18,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.user.domain;
 
 import java.util.Set;
-
 import net.solarnetwork.central.domain.BaseEntity;
 
 /**
  * A user domain object.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 public class User extends BaseEntity {
 
@@ -42,12 +39,12 @@ public class User extends BaseEntity {
 	private String email;
 	private String password;
 	private Boolean enabled;
-	
+
 	private Set<String> roles;
-	
+
 	@Override
 	public String toString() {
-		return "User{email=" +email +'}';
+		return "User{email=" + email + '}';
 	}
 
 	/**
@@ -58,7 +55,8 @@ public class User extends BaseEntity {
 	}
 
 	/**
-	 * @param name the name to set
+	 * @param name
+	 *        the name to set
 	 */
 	public void setName(String name) {
 		this.name = name;
@@ -70,28 +68,30 @@ public class User extends BaseEntity {
 	public String getEmail() {
 		return email;
 	}
-	
+
 	/**
-	 * @param email the email to set
+	 * @param email
+	 *        the email to set
 	 */
 	public void setEmail(String email) {
 		this.email = email;
 	}
-	
+
 	/**
 	 * @return the password
 	 */
 	public String getPassword() {
 		return password;
 	}
-	
+
 	/**
-	 * @param password the password to set
+	 * @param password
+	 *        the password to set
 	 */
 	public void setPassword(String password) {
 		this.password = password;
 	}
-	
+
 	/**
 	 * @return the enabled
 	 */
@@ -100,7 +100,8 @@ public class User extends BaseEntity {
 	}
 
 	/**
-	 * @param enabled the enabled to set
+	 * @param enabled
+	 *        the enabled to set
 	 */
 	public void setEnabled(Boolean enabled) {
 		this.enabled = enabled;
@@ -114,10 +115,11 @@ public class User extends BaseEntity {
 	}
 
 	/**
-	 * @param roles the roles to set
+	 * @param roles
+	 *        the roles to set
 	 */
 	public void setRoles(Set<String> roles) {
 		this.roles = roles;
 	}
-	
+
 }
