@@ -36,7 +36,7 @@ CREATE TABLE solaruser.user_role (
 CREATE VIEW solaruser.user_login AS
 	SELECT
 		email AS username, 
-		substring(user_user.password from 6) AS password, 
+		password AS password, 
 		enabled AS enabled,
 		id AS user_id,
 		disp_name AS display_name
