@@ -45,7 +45,8 @@ import java.util.Map;
  * @author matt
  * @version 1.0
  */
-public class DelegatingPasswordEncoder implements PasswordEncoder {
+public class DelegatingPasswordEncoder implements PasswordEncoder,
+		org.springframework.security.crypto.password.PasswordEncoder {
 
 	private Map<String, org.springframework.security.crypto.password.PasswordEncoder> encoders;
 

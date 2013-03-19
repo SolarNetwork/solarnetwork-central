@@ -7,24 +7,28 @@
 	
 	<!-- Published Services -->
 	
-	<service ref="passwordEncoder" interface="net.solarnetwork.central.security.PasswordEncoder"
-		ranking="1"/>
+	<service ref="passwordEncoder" ranking="1">
+		<interfaces>
+			<value>net.solarnetwork.central.security.PasswordEncoder</value>
+			<value>org.springframework.security.crypto.password.PasswordEncoder</value>
+		</interfaces>
+	</service>
 	
 	<!-- Supporting Services -->
 	
 	<bean id="passwordEncoder" class="net.solarnetwork.central.security.DelegatingPasswordEncoder">
 		<property name="encoders">
 			<map>
-				<entry key="SHA">
-					<bean class="net.solarnetwork.central.security.LegacyPasswordEncoder"/>
-				</entry>
-				<entry key="BC10">
+				<entry key="$2a$">
 					<bean class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder">
-						<argument value="10"/>
+						<argument value="12"/>
 						<argument>
 							<bean class="java.security.SecureRandom"/>
 						</argument>
 					</bean>
+				</entry>
+				<entry key="{SHA}">
+					<bean class="net.solarnetwork.central.security.LegacyPasswordEncoder"/>
 				</entry>
 			</map>
 		</property>
