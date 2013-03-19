@@ -6,6 +6,7 @@
 	<property name="bundle.deps" value="true"/>
 	<dirset id="bundle.deps" dir="${basedir}/..">
 		<include name="net.solarnetwork.central.common"/>
+		<include name="net.solarnetwork.central.common.mail"/>
 		<include name="net.solarnetwork.central.common.security"/>
 		<include name="net.solarnetwork.central.common.web"/>
 		<include name="net.solarnetwork.central.instructor"/>
