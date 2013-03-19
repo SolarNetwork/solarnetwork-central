@@ -18,13 +18,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.mail.mock;
-
-import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,13 +31,15 @@ import org.springframework.mail.SimpleMailMessage;
 /**
  * Mock implementation of Spring's {@link MailSender}.
  * 
- * <p>This implementation will log sending of messages only.</p>
+ * <p>
+ * This implementation will log sending of messages only.
+ * </p>
  * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 public class MockMailSender implements MailSender {
-	
+
 	private final Logger log = LoggerFactory.getLogger(MockMailSender.class);
 
 	@Override
@@ -49,9 +47,9 @@ public class MockMailSender implements MailSender {
 		if ( msg == null ) {
 			return;
 		}
-		
-		log.info(String.format("MOCK: sending mail to %s with text: %s\n", 
-				Arrays.toString(msg.getTo()), msg.getText()));
+
+		log.info("MOCK: sending mail from {} to {} with text:\n{}\n", msg.getFrom(), msg.getTo(),
+				msg.getText());
 	}
 
 	@Override
