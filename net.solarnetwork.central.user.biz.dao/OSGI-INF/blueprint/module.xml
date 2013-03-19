@@ -84,4 +84,17 @@
 	<ctx:annotation-config/>
 	<ctx:component-scan base-package="net.solarnetwork.central.user.biz.dao"/>
 	
+	<bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+		<property name="configLocation" value="classpath:/net/solarnetwork/central/user/biz/dao/ehcache.xml"/>
+	</bean>
+	
+	<!-- Throttle email requests to at most once every 5 minutes. -->
+	<bean id="emailThrottleCache" class="org.springframework.cache.ehcache.EhCacheFactoryBean"> 
+		<property name="cacheManager" ref="cacheManager"/> 
+		<property name="cacheName" value="emailThrottleCache"/>
+		<property name="timeToIdle" value="300"/>
+		<property name="timeToLive" value="300"/>
+		<property name="overflowToDisk" value="true"/>
+	</bean>
+	
 </blueprint>

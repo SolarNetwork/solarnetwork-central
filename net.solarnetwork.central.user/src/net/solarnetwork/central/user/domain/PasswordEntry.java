@@ -30,6 +30,8 @@ package net.solarnetwork.central.user.domain;
  */
 public class PasswordEntry {
 
+	private String username;
+	private String confirmationCode;
 	private String password;
 	private String passwordConfirm;
 
@@ -66,6 +68,22 @@ public class PasswordEntry {
 
 	public void setPasswordConfirm(String passwordConfirm) {
 		this.passwordConfirm = passwordConfirm;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getConfirmationCode() {
+		return confirmationCode;
+	}
+
+	public void setConfirmationCode(String confirmationCode) {
+		this.confirmationCode = confirmationCode;
 	}
 
 }

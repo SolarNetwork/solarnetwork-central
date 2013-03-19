@@ -7,6 +7,7 @@
 <p class="intro">
 	<fmt:message key="login.intro">
 		<fmt:param><c:url value="/register.do"/></fmt:param>
+		<fmt:param><c:url value="/u/resetPassword"/></fmt:param>
 	</fmt:message>
 </p>
 

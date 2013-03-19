@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.zip.GZIPOutputStream;
+import net.sf.ehcache.Ehcache;
+import net.sf.ehcache.Element;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
@@ -68,6 +70,7 @@ import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -137,7 +140,11 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	private Set<String> confirmedUserRoles = DEFAULT_CONFIRMED_USER_ROLES;
 
 	@Autowired(required = false)
-	private final JavaBeanXmlSerializer xmlSerializer = new JavaBeanXmlSerializer();
+	private JavaBeanXmlSerializer xmlSerializer = new JavaBeanXmlSerializer();
+
+	@Autowired(required = false)
+	@Qualifier("emailThrottleCache")
+	private Ehcache emailThrottleCache;
 
 	private Period invitationExpirationPeriod = new Period(0, 0, 1, 0, 0, 0, 0, 0); // 1 week
 	private String defaultSolarLocationName = "Unknown";
@@ -517,9 +524,17 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public RegistrationReceipt generateResetPasswordReceipt(final String email)
 			throws AuthorizationException {
+		if ( emailThrottleCache != null && emailThrottleCache.isKeyInCache(email) ) {
+			log.debug("Email {} in throttle cache; not generating reset password receipt", email);
+			throw new AuthorizationException(email, Reason.ACCESS_DENIED);
+		}
 		final User entity = userDao.getUserByEmail(email);
 		if ( entity == null ) {
 			throw new AuthorizationException(email, Reason.UNKNOWN_EMAIL);
+		}
+
+		if ( emailThrottleCache != null ) {
+			emailThrottleCache.put(new Element(email, Boolean.TRUE));
 		}
 
 		final String conf = calculateResetPasswordConfirmationCode(entity, null);
@@ -531,8 +546,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		if ( salt == null ) {
 			// generate 8-byte salt
 			final SecureRandom random = new SecureRandom();
-			final int start = 32;
-			final int end = 126;
+			final int start = 97;
+			final int end = 122;
 			final int range = end - start;
 			for ( int i = 0; i < 8; i++ ) {
 				buf.append((char) (random.nextInt(range) + start));
@@ -638,6 +653,14 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
 		this.passwordEncoder = passwordEncoder;
+	}
+
+	public void setXmlSerializer(JavaBeanXmlSerializer xmlSerializer) {
+		this.xmlSerializer = xmlSerializer;
+	}
+
+	public void setEmailThrottleCache(Ehcache emailThrottleCache) {
+		this.emailThrottleCache = emailThrottleCache;
 	}
 
 }
