@@ -10,15 +10,6 @@
 
 	<ctx:property-placeholder properties-ref="cfg"/>
 
-	<bean id="mailService" class="net.solarnetwork.central.mail.support.DefaultMailService">
-		<constructor-arg ref="mailSender"/>
-		<property name="templateMessage">
-			<bean class="org.springframework.mail.SimpleMailMessage">
-				<property name="from" value="${mail.sender}"/>
-			</bean>
-		</property>
-	</bean>
-	
 	<bean id="tzGMT" class="java.util.TimeZone" factory-method="getTimeZone">
 		<constructor-arg value="GMT"/>
 	</bean>

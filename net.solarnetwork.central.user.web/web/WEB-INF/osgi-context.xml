@@ -14,7 +14,6 @@
 	<!-- Configuration -->
 
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.web">
-		<prop key="mail.sender">nobody@localhost.localdomain</prop>
 		<prop key="JSONView.indentAmount">0</prop>
 	</osgix:cm-properties>
 	
@@ -50,5 +49,18 @@
 			<entry key="mode" value="Registration"/>
 		</osgi:service-properties>
 	</osgi:service>
+	
+	<!-- Supporting Services -->
+	
+	<bean id="mailService" class="net.solarnetwork.central.mail.support.DefaultMailService">
+		<constructor-arg ref="mailSender"/>
+		<osgix:managed-properties 
+			persistent-id="net.solarnetwork.central.user.web" 
+			update-method="container-managed"/>
+		<property name="templateMessage">
+			<bean class="org.springframework.mail.SimpleMailMessage"/>
+		</property>
+	</bean>
+	
 	
 </beans>
