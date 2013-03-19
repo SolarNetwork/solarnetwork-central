@@ -18,13 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.user.biz;
 
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.user.domain.PasswordEntry;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;
@@ -104,7 +103,7 @@ public interface RegistrationBiz {
 	 *         will be set to
 	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED};
 	 *         if the login is not found then
-	 *         {@link AuthorizationException.Reason#UNKNOWN_LOGIN}; if the
+	 *         {@link AuthorizationException.Reason#UNKNOWN_EMAIL}; if the
 	 *         account has already been confirmed then
 	 *         {@link AuthorizationException.Reason#REGISTRATION_ALREADY_CONFIRMED}
 	 */
@@ -197,5 +196,34 @@ public interface RegistrationBiz {
 	 * @return the updated user entity
 	 */
 	User updateUser(User userEntry);
+
+	/**
+	 * Generate a password reset receipt for a given username.
+	 * 
+	 * @param email
+	 *        the email to generate the receipt for
+	 * @return the receipt
+	 * @throws AuthorizationException
+	 *         if the username is not found, then
+	 *         {@link AuthorizationException.Reason#UNKNOWN_EMAIL}
+	 */
+	RegistrationReceipt generateResetPasswordReceipt(String email) throws AuthorizationException;
+
+	/**
+	 * Reset a user's password.
+	 * 
+	 * @param receipt
+	 *        the receipt obtained previously via a call to
+	 *        {@link #generateResetPasswordReceipt(String)}
+	 * @param password
+	 *        the new password to set
+	 * @throws AuthorizationException
+	 *         if the user cannot be found, or the details do not match those
+	 *         returned from a previous call to
+	 *         {@link #generateResetPasswordReceipt(String)} then the reason
+	 *         code will be set to
+	 *         {@link AuthorizationException.Reason#FORGOTTEN_PASSWORD_NOT_CONFIRMED}
+	 */
+	void resetPassword(RegistrationReceipt receipt, PasswordEntry password);
 
 }

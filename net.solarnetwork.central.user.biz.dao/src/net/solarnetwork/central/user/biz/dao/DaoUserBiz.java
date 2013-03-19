@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
-import static net.solarnetwork.central.user.biz.dao.UserBizConstants.encryptPassword;
 import static net.solarnetwork.central.user.biz.dao.UserBizConstants.generateRandomAuthToken;
 import static net.solarnetwork.central.user.biz.dao.UserBizConstants.getUnconfirmedEmail;
 import static net.solarnetwork.central.user.biz.dao.UserBizConstants.isUnconfirmedEmail;
@@ -31,6 +30,7 @@ import java.security.SecureRandom;
 import java.util.List;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.security.PasswordEncoder;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -87,6 +87,9 @@ public class DaoUserBiz implements UserBiz {
 	@Autowired
 	private UserAuthTokenDao userAuthTokenDao;
 
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public User logonUser(String email, String password) throws AuthorizationException {
@@ -115,8 +118,7 @@ public class DaoUserBiz implements UserBiz {
 			throw new AuthorizationException(email, AuthorizationException.Reason.UNKNOWN_EMAIL);
 		}
 
-		String encPassword = encryptPassword(password);
-		if ( !entity.getPassword().equals(encPassword) ) {
+		if ( !passwordEncoder.matches(password, entity.getPassword()) ) {
 			throw new AuthorizationException(email, AuthorizationException.Reason.BAD_PASSWORD);
 		}
 
@@ -290,6 +292,10 @@ public class DaoUserBiz implements UserBiz {
 
 	public void setUserAuthTokenDao(UserAuthTokenDao userAuthTokenDao) {
 		this.userAuthTokenDao = userAuthTokenDao;
+	}
+
+	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+		this.passwordEncoder = passwordEncoder;
 	}
 
 }

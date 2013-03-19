@@ -24,10 +24,10 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
-import static net.solarnetwork.central.user.biz.dao.UserBizConstants.encryptPassword;
 import static net.solarnetwork.central.user.biz.dao.UserBizConstants.getUnconfirmedEmail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -42,11 +42,13 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.security.PasswordEncoder;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.PasswordEntry;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
@@ -90,6 +92,9 @@ import org.springframework.validation.Validator;
  * 
  * <dt>userValidator</dt>
  * <dd>A {@link Validator} to use for validating user objects.</dd>
+ * 
+ * <dt>passwordEncoder</dt>
+ * <dd>The {@link PasswordEncoder} to use for encrypting passwords.</dd>
  * </dl>
  * 
  * @author matt
@@ -124,6 +129,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	@Autowired
 	private NetworkIdentityBiz networkIdentityBiz;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
 	@Autowired(required = false)
 	private Set<String> confirmedUserRoles = DEFAULT_CONFIRMED_USER_ROLES;
@@ -246,9 +254,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 
 		// check password is encrypted
-		if ( user.getPassword() != null && !user.getPassword().startsWith("{SHA}") ) {
+		if ( !passwordEncoder.isPasswordEncrypted(user.getPassword()) ) {
 			// encrypt the password now
-			String encryptedPass = encryptPassword(user.getPassword());
+			String encryptedPass = passwordEncoder.encode(user.getPassword());
 			user.setPassword(encryptedPass);
 		}
 		if ( user.getCreated() == null ) {
@@ -505,6 +513,69 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		return entity;
 	}
 
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public RegistrationReceipt generateResetPasswordReceipt(final String email)
+			throws AuthorizationException {
+		final User entity = userDao.getUserByEmail(email);
+		if ( entity == null ) {
+			throw new AuthorizationException(email, Reason.UNKNOWN_EMAIL);
+		}
+
+		final String conf = calculateResetPasswordConfirmationCode(entity, null);
+		return new BasicRegistrationReceipt(email, conf);
+	}
+
+	private String calculateResetPasswordConfirmationCode(User entity, String salt) {
+		StringBuilder buf = new StringBuilder();
+		if ( salt == null ) {
+			// generate 8-byte salt
+			final SecureRandom random = new SecureRandom();
+			final int start = 32;
+			final int end = 126;
+			final int range = end - start;
+			for ( int i = 0; i < 8; i++ ) {
+				buf.append((char) (random.nextInt(range) + start));
+			}
+			salt = buf.toString();
+		} else {
+			buf.append(salt);
+		}
+
+		// use data from the existing user to create the confirmation hash
+		buf.append(entity.getId()).append(entity.getCreated().getMillis()).append(entity.getPassword());
+
+		return salt + DigestUtils.sha256Hex(buf.toString());
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void resetPassword(RegistrationReceipt receipt, PasswordEntry password) {
+		if ( receipt == null || receipt.getUsername() == null || receipt.getConfirmationCode() == null
+				|| receipt.getConfirmationCode().length() != 72 || password.getPassword() == null
+				|| !password.getPassword().equals(password.getPasswordConfirm()) ) {
+			throw new AuthorizationException(receipt.getUsername(),
+					Reason.FORGOTTEN_PASSWORD_NOT_CONFIRMED);
+		}
+
+		final User entity = userDao.getUserByEmail(receipt.getUsername());
+		if ( entity == null ) {
+			throw new AuthorizationException(receipt.getUsername(), Reason.UNKNOWN_EMAIL);
+		}
+
+		final String salt = receipt.getConfirmationCode().substring(0, 8);
+		final String expectedCode = calculateResetPasswordConfirmationCode(entity, salt);
+		if ( !expectedCode.equals(receipt.getConfirmationCode()) ) {
+			throw new AuthorizationException(receipt.getUsername(),
+					Reason.FORGOTTEN_PASSWORD_NOT_CONFIRMED);
+		}
+
+		// ok, the conf code matches, let's reset the password
+		final String encryptedPass = passwordEncoder.encode(password.getPassword());
+		entity.setPassword(encryptedPass);
+		userDao.store(entity);
+	}
+
 	public Set<String> getConfirmedUserRoles() {
 		return confirmedUserRoles;
 	}
@@ -563,6 +634,10 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	public void setNetworkCertificateSubjectDNFormat(String networkCertificateSubjectDNFormat) {
 		this.networkCertificateSubjectDNFormat = networkCertificateSubjectDNFormat;
+	}
+
+	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+		this.passwordEncoder = passwordEncoder;
 	}
 
 }

@@ -33,6 +33,7 @@ import static org.junit.Assert.fail;
 import java.util.HashSet;
 import java.util.Set;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.PasswordEncoder;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
 import net.solarnetwork.central.user.biz.dao.UserBizConstants;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
@@ -56,6 +57,7 @@ public class DaoUserBizTest {
 	private static final Long TEST_USER_ID = -1L;
 	private static final String TEST_EMAIL = "test@localhost";
 	private static final String TEST_PASSWORD = "changeit";
+	private static final String TEST_ENC_PASSWORD = "encrypted.password";
 	private static final String TEST_NAME = "Test User";
 	private static final String TEST_ROLE = "ROLE_TEST";
 	private static final String TEST_AUTH_TOKEN = "12345678901234567890";
@@ -66,16 +68,19 @@ public class DaoUserBizTest {
 
 	private UserDao userDao;
 	private UserAuthTokenDao userAuthTokenDao;
+	private PasswordEncoder passwordEncoder;
 
 	private DaoUserBiz userBiz;
 
 	@Before
 	public void setup() {
+		passwordEncoder = EasyMock.createMock(PasswordEncoder.class);
+
 		testUser = new User();
 		testUser.setEmail(TEST_EMAIL);
 		testUser.setId(TEST_USER_ID);
 		testUser.setName(TEST_NAME);
-		testUser.setPassword(UserBizConstants.encryptPassword(TEST_PASSWORD));
+		testUser.setPassword(TEST_ENC_PASSWORD);
 
 		testUserRoles = new HashSet<String>();
 		testUserRoles.add(TEST_ROLE);
@@ -86,6 +91,7 @@ public class DaoUserBizTest {
 		userBiz = new DaoUserBiz();
 		userBiz.setUserDao(userDao);
 		userBiz.setUserAuthTokenDao(userAuthTokenDao);
+		userBiz.setPasswordEncoder(passwordEncoder);
 	}
 
 	/**
@@ -95,11 +101,11 @@ public class DaoUserBizTest {
 	public void logonUser() {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userDao.getUserRoles(testUser)).andReturn(testUserRoles);
-		replay(userDao);
+		replay(userDao, passwordEncoder);
 
 		final User user = userBiz.logonUser(TEST_EMAIL, TEST_PASSWORD);
 
-		verify(userDao);
+		verify(userDao, passwordEncoder);
 
 		assertNotNull(user);
 		assertNotNull(user.getId());
@@ -117,7 +123,7 @@ public class DaoUserBizTest {
 
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(null);
 		expect(userDao.getUserByEmail(testUser.getEmail())).andReturn(testUser);
-		replay(userDao);
+		replay(userDao, passwordEncoder);
 
 		try {
 			userBiz.logonUser(TEST_EMAIL, TEST_PASSWORD);
@@ -127,7 +133,7 @@ public class DaoUserBizTest {
 			assertEquals(TEST_EMAIL, e.getEmail());
 		}
 
-		verify(userDao);
+		verify(userDao, passwordEncoder);
 	}
 
 	/**

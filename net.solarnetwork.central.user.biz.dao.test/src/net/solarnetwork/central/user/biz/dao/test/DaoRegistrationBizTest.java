@@ -41,11 +41,13 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.PasswordEncoder;
 import net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.PasswordEntry;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
@@ -55,6 +57,7 @@ import net.solarnetwork.domain.BasicNetworkIdentity;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.NetworkCertificate;
+import net.solarnetwork.domain.RegistrationReceipt;
 import net.solarnetwork.util.JavaBeanXmlSerializer;
 import org.apache.commons.codec.binary.Base64InputStream;
 import org.easymock.EasyMock;
@@ -75,6 +78,7 @@ public class DaoRegistrationBizTest {
 	private static final Long TEST_NODE_ID = -3L;
 	private static final Long TEST_LOC_ID = -4L;
 	private static final Long TEST_CERT_ID = -5L;
+	private static final String TEST_ENC_PASSWORD = "encoded.password";
 	private static final String TEST_EMAIL = "test@localhost";
 	private static final String TEST_SECURITY_PHRASE = "test phrase";
 	private static final String TEST_CONF_KEY = "test conf key";
@@ -90,6 +94,7 @@ public class DaoRegistrationBizTest {
 	private NetworkIdentityBiz networkIdentityBiz;
 	private DaoRegistrationBiz registrationBiz;
 	private BasicNetworkIdentity networkIdentity;
+	private PasswordEncoder passwordEncoder;
 
 	@Before
 	public void setup() {
@@ -98,12 +103,15 @@ public class DaoRegistrationBizTest {
 		testUser = new User();
 		testUser.setEmail(TEST_EMAIL);
 		testUser.setId(TEST_USER_ID);
+		testUser.setCreated(new DateTime());
+		testUser.setPassword(TEST_ENC_PASSWORD);
 		userDao = EasyMock.createMock(UserDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
 		userNodeConfirmationDao = EasyMock.createMock(UserNodeConfirmationDao.class);
 		userNodeCertificateDao = EasyMock.createMock(UserNodeCertificateDao.class);
 		nodeDao = EasyMock.createMock(SolarNodeDao.class);
 		solarLocationDao = EasyMock.createMock(SolarLocationDao.class);
+		passwordEncoder = EasyMock.createMock(PasswordEncoder.class);
 		registrationBiz = new DaoRegistrationBiz();
 		registrationBiz.setNetworkIdentityBiz(networkIdentityBiz);
 		registrationBiz.setUserDao(userDao);
@@ -113,6 +121,7 @@ public class DaoRegistrationBizTest {
 		registrationBiz.setUserNodeCertificateDao(userNodeCertificateDao);
 		registrationBiz.setUserNodeDao(userNodeDao);
 		registrationBiz.setNetworkCertificateSubjectDNFormat(TEST_DN_FORMAT);
+		registrationBiz.setPasswordEncoder(passwordEncoder);
 	}
 
 	@Test
@@ -421,5 +430,42 @@ public class DaoRegistrationBizTest {
 		}
 		assertNotNull(associationData);
 		return associationData;
+	}
+
+	@Test
+	public void generateResetPasswordReceipt() {
+		// must get the existing user to generate the conf code
+		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
+
+		replay(userDao);
+
+		//BasicRegistrationReceipt receipt = new BasicRegistrationReceipt(TEST_EMAIL, TEST_CONF_KEY);
+		RegistrationReceipt receipt = registrationBiz.generateResetPasswordReceipt(TEST_EMAIL);
+		assertNotNull("Receipt must not be null", receipt);
+		assertEquals("The username should be the email", TEST_EMAIL, receipt.getUsername());
+
+		verify(userDao);
+	}
+
+	@Test
+	public void resetPassword() {
+		final PasswordEntry pass = new PasswordEntry("new.test.password");
+		final String encodedPass = "new.encoded.password";
+
+		// first generate receipt, then must get the existing user to generate the conf code
+		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser).times(2);
+		expect(passwordEncoder.encode(pass.getPassword())).andReturn(encodedPass);
+
+		// then must save the updated user
+		expect(userDao.store(testUser)).andReturn(testUser.getId());
+
+		replay(userDao, passwordEncoder);
+
+		RegistrationReceipt receipt = registrationBiz.generateResetPasswordReceipt(TEST_EMAIL);
+		registrationBiz.resetPassword(receipt, pass);
+
+		verify(userDao, passwordEncoder);
+
+		assertEquals("The user's password should be changed", encodedPass, testUser.getPassword());
 	}
 }

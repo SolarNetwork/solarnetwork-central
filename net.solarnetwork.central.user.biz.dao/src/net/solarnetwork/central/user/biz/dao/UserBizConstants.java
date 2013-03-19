@@ -28,34 +28,17 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.UUID;
 import net.solarnetwork.io.Base91;
-import org.apache.commons.codec.digest.DigestUtils;
 
 /**
  * Constants for common user items.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UserBizConstants {
 
 	/** The unconfirmed user email prefix. */
 	public static final String UNCONFIRMED_EMAIL_PREFIX = "UNCONFIRMED@";
-
-	/**
-	 * Encrypt a user's password.
-	 * 
-	 * <p>
-	 * This method encrypts the password using the SHA-256 hash and returns the
-	 * result encoded as a hex string.
-	 * </p>
-	 * 
-	 * @param password
-	 *        the password to hash
-	 * @return the hex-encoded hashed password
-	 */
-	public static String encryptPassword(String password) {
-		return password == null ? null : "{SHA}" + DigestUtils.sha256Hex(password);
-	}
 
 	/**
 	 * Get an "unconfirmed" value for a given email address.

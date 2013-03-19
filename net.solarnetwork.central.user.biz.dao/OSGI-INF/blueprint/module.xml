@@ -53,6 +53,8 @@
 	<reference id="networkIdentityBiz" 
 		interface="net.solarnetwork.central.in.biz.NetworkIdentityBiz"/>
 	
+	<reference id="passwordEncoder" interface="net.solarnetwork.central.security.PasswordEncoder"/>
+	
 	<!-- Published Services -->
 	
 	<service ref="daoRegistrationBiz" 

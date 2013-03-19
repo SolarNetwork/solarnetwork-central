@@ -37,6 +37,9 @@
 	
 	<osgi:reference id="mailSender" interface="org.springframework.mail.MailSender"/>
 	
+	<osgi:reference id="passwordEncoder" 
+		interface="org.springframework.security.crypto.password.PasswordEncoder"/>
+	
 	<!-- Published Services -->
 	
 	<osgi:service ref="userValidator" 
