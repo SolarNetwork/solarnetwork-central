@@ -60,4 +60,20 @@ public abstract class WebServiceControllerSupport {
 		return new Response<Object>(Boolean.FALSE, null, e.getReason().toString(), null);
 	}
 
+	/**
+	 * Handle an {@link RuntimeException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 */
+	@ExceptionHandler(RuntimeException.class)
+	@ResponseBody
+	public Response<?> handleRuntimeException(RuntimeException e, HttpServletResponse response) {
+		log.error("RuntimeException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
+	}
+
 }
