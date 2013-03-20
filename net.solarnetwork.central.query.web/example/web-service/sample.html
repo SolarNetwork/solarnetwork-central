@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<script src="../../../net.solarnetwork.central.user.web/web/js-lib/jquery-1.7.1.js"></script>
+	<script src="../../../net.solarnetwork.central.user.web/web/js-lib/jquery.form.js"></script>
+	<script src="../../../net.solarnetwork.central.user.web/web/js-lib/bootstrap.js"></script>
+	<script src="js-lib/prettify.js"></script>
+	<script src="js-lib/hmac-sha1.js"></script>
+	<script src="js-lib/enc-base64.js"></script>
+	<script src="sample.js"></script>
+	<link rel="stylesheet" type="text/css" href="../../../net.solarnetwork.central.user.web/web/css/bootstrap.css" />
+	<link rel="stylesheet" type="text/css" href="../../../net.solarnetwork.central.user.web/web/css/bootstrap-responsive.css" />
+	<link rel="stylesheet" type="text/css" href="css/prettify.css" />
+	<title>SolarNetwork SolarQuery Web Services Sampler</title>
+</head>
+<body>
+
+<div class="container">
+	<div class="row">
+		<div class="span3 sidebar">			
+			<form class="form" id="credentials">
+				<fieldset>
+					<h4>Credentials</h4>
+					<label class="control-label">Token</label>
+						<input class="span3" type="text" name="token" value="a09sjds09wu9wjsd9uy2"/>
+					<label class="control-label">Secret</label>
+						<input class="span3" type="text" name="secret" value=""/>
+					<label class="control-label">Host</label>
+						<input class="span3" type="text" name="host" value="http://localhost:8680"/>
+					<label class="control-label">Date</label>
+						<input class="span3" type="text" name="date" value="" placeholder="Leave blank for current date"/>
+				</fieldset>
+				<fieldset>
+				</fieldset>
+			</form>
+		</div>
+		<div class="span9">
+			<section>
+			<h2>Generic Path</h2>
+			<form class="form-horizontal" id="generic-path">
+				<div class="control-group">
+					<label class="control-label">Path</label>
+					<div class="controls">
+						<input type="text" name="path" class="span6" placeholder="Enter URL path here"/>
+						
+						<label style="margin-top: 1em;">Shortcut: <select id="shortcuts">
+							<option></option>
+							<optgroup label="Range">
+								<option value="/solarquery/api/v1/sec/range/interval?nodeId={nodeId}&types=Consumption,Power">Interval</option>
+								<option value="/solarquery/api/v1/sec/range/sources?nodeId={nodeId}&type=Consumption">Sources</option>
+							</optgroup>
+						</select></label>
+						
+					</div>
+				</div>
+				<div class="control-group">
+					<label class="control-label">Method</label>
+					<div class="controls">
+					    <label class="radio inline">
+   							<input type="radio" name="method" value="GET" checked="checked"> GET
+   						</label>
+					    <label class="radio inline">
+   							<input type="radio" name="method" value="POST"> POST
+   						</label>
+					</div>
+				</div>
+				<div class="control-group">
+					<div class="controls">
+						<button type="submit" class="btn btn-primary">Encode</button>
+					</div>
+				</div>
+			</form>
+			</section>
+		</div>
+	</div>
+	<div class="row">
+		<div class="span12">
+			<h4>Result</h4>
+			<pre id="result" class="span12 prettyprint linenums"></pre>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>
