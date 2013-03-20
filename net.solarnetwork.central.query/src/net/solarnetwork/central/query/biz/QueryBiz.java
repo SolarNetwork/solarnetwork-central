@@ -31,6 +31,7 @@ import java.util.Set;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.query.domain.ReportableInterval;
+import net.solarnetwork.central.query.domain.WeatherConditions;
 import org.joda.time.LocalDate;
 
 /**
@@ -115,5 +116,14 @@ public interface QueryBiz {
 	 */
 	List<? extends NodeDatum> getAggregatedDatum(Class<? extends NodeDatum> datumClass,
 			DatumQueryCommand criteria);
+
+	/**
+	 * Get the most recently available weather conditions for a particular node.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @return the conditions, or <em>null</em> if none available
+	 */
+	WeatherConditions getMostRecentWeatherConditions(Long nodeId);
 
 }

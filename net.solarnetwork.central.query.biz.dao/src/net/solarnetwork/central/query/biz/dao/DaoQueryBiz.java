@@ -41,11 +41,18 @@ import net.solarnetwork.central.datum.dao.PowerDatumDao;
 import net.solarnetwork.central.datum.dao.PriceDatumDao;
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
+import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.datum.domain.ReportingDatum;
+import net.solarnetwork.central.datum.domain.WeatherDatum;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
+import net.solarnetwork.central.query.domain.WeatherConditions;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 import org.joda.time.MutableInterval;
 import org.joda.time.ReadableInterval;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +70,8 @@ public class DaoQueryBiz implements QueryBiz {
 	private ConsumptionDatumDao consumptionDatumDao;
 	private PowerDatumDao powerDatumDao;
 	private SolarNodeDao solarNodeDao;
+	private WeatherDatumDao weatherDatumDao;
+	private DayDatumDao dayDatumDao;
 
 	private final Map<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>> daoMapping;
 
@@ -145,8 +154,43 @@ public class DaoQueryBiz implements QueryBiz {
 		return dao.getAggregatedDatum(criteria);
 	}
 
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public WeatherConditions getMostRecentWeatherConditions(Long nodeId) {
+		// get the SolarNode for the specified node, for the appropriate time zone
+		SolarNode node = solarNodeDao.get(nodeId);
+
+		WeatherDatum weather = weatherDatumDao.getMostRecentWeatherDatum(nodeId, new DateTime());
+		DayDatum day = null;
+		LocalTime infoTime = null;
+		if ( weather instanceof ReportingDatum ) {
+			ReportingDatum repWeather = (ReportingDatum) weather;
+			day = dayDatumDao.getDatumForDate(nodeId, repWeather.getLocalDate());
+			infoTime = repWeather.getLocalTime();
+		} else if ( weather != null && weather.getInfoDate() != null ) {
+			day = dayDatumDao.getDatumForDate(nodeId, weather.getInfoDate());
+			infoTime = weather.getInfoDate().toDateTime(DateTimeZone.forTimeZone(node.getTimeZone()))
+					.toLocalTime();
+		}
+		if ( weather != null && day != null && infoTime != null
+				&& (weather.getCondition() != null || day.getCondition() != null) ) {
+			// check for night-time, this assumes all conditions set to day values from DAO
+			if ( infoTime.isBefore(day.getSunrise()) || infoTime.isAfter(day.getSunset()) ) {
+				// change to night-time
+				if ( weather.getCondition() != null ) {
+					weather.setCondition(weather.getCondition().getNightEquivalent());
+				}
+				if ( day.getCondition() != null ) {
+					day.setCondition(weather.getCondition().getNightEquivalent());
+				}
+			}
+		}
+		return new WeatherConditions(weather, day, node.getTimeZone());
+	}
+
 	@Autowired
 	public void setDayDatumDao(DayDatumDao dayDatumDao) {
+		this.dayDatumDao = dayDatumDao;
 		daoMapping.put(dayDatumDao.getDatumType().asSubclass(NodeDatum.class), dayDatumDao);
 	}
 
@@ -158,6 +202,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Autowired
 	public void setWeatherDatumDao(WeatherDatumDao weatherDatumDao) {
+		this.weatherDatumDao = weatherDatumDao;
 		daoMapping.put(weatherDatumDao.getDatumType().asSubclass(NodeDatum.class), weatherDatumDao);
 	}
 

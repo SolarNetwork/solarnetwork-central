@@ -28,13 +28,14 @@ import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
+import net.solarnetwork.central.query.domain.WeatherConditions;
 import org.joda.time.LocalDate;
 
 /**
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelegatingQueryBiz implements QueryBiz {
 
@@ -71,6 +72,11 @@ public class DelegatingQueryBiz implements QueryBiz {
 	public List<? extends NodeDatum> getAggregatedDatum(Class<? extends NodeDatum> datumClass,
 			DatumQueryCommand criteria) {
 		return delegate.getAggregatedDatum(datumClass, criteria);
+	}
+
+	@Override
+	public WeatherConditions getMostRecentWeatherConditions(Long nodeId) {
+		return delegate.getMostRecentWeatherConditions(nodeId);
 	}
 
 }
