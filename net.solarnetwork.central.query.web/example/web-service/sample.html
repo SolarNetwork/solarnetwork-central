@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<script src="../../../net.solarnetwork.central.user.web/web/js-lib/jquery-1.7.1.js"></script>
-	<script src="../../../net.solarnetwork.central.user.web/web/js-lib/jquery.form.js"></script>
-	<script src="../../../net.solarnetwork.central.user.web/web/js-lib/bootstrap.js"></script>
+	<script src="js-lib/jquery-1.7.1.js"></script>
+	<script src="js-lib/jquery.form.js"></script>
+	<script src="js-lib/bootstrap.js"></script>
 	<script src="js-lib/prettify.js"></script>
 	<script src="js-lib/hmac-sha1.js"></script>
 	<script src="js-lib/enc-base64.js"></script>
 	<script src="sample.js"></script>
-	<link rel="stylesheet" type="text/css" href="../../../net.solarnetwork.central.user.web/web/css/bootstrap.css" />
-	<link rel="stylesheet" type="text/css" href="../../../net.solarnetwork.central.user.web/web/css/bootstrap-responsive.css" />
+	<link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+	<link rel="stylesheet" type="text/css" href="css/bootstrap-responsive.css" />
 	<link rel="stylesheet" type="text/css" href="css/prettify.css" />
-	<title>SolarNetwork SolarQuery Web Services Sampler</title>
+	<title>SolarQuery Web Service Sampler</title>
 </head>
 <body>
 
@@ -37,14 +37,20 @@
 		</div>
 		<div class="span9">
 			<section>
-			<h2>Generic Path</h2>
+			<h2>SolarQuery Web Service Sampler</h2>
+			<p>This page demonstrates how to call the SolarNetwork web services using jQuery.
+			Fill in your SolarNetwork authorization token and server details on the left,
+			then use the service templates to fill in a service URL to call. Replace any
+			template parameters (for example, replace <code>{nodeId}</code> with your node's ID).
+			Then click the <b>Execute</b> button to submit the query and display the results at the 
+			bottom.</p>
 			<form class="form-horizontal" id="generic-path">
 				<div class="control-group">
-					<label class="control-label">Path</label>
+					<label class="control-label">Service</label>
 					<div class="controls">
 						<input type="text" name="path" class="span6" placeholder="Enter URL path here"/>
 						
-						<label style="margin-top: 1em;">Shortcut: <select id="shortcuts">
+						<label style="margin-top: 1em;">Templates: <select id="shortcuts">
 							<option></option>
 							<optgroup label="Range">
 								<option value="/solarquery/api/v1/sec/range/interval?nodeId={nodeId}&types=Consumption,Power">Interval</option>
@@ -70,7 +76,7 @@
 				</div>
 				<div class="control-group">
 					<div class="controls">
-						<button type="submit" class="btn btn-primary">Encode</button>
+						<button type="submit" class="btn btn-primary">Execute</button>
 					</div>
 				</div>
 			</form>
