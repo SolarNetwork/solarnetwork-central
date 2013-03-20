@@ -17,7 +17,7 @@ CREATE TABLE solaruser.user_auth_token (
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-CREATE VIEW solaruser.user_auth_token_login  AS
+CREATE OR REPLACE VIEW solaruser.user_auth_token_login  AS
 	SELECT
 		t.auth_token AS username,
 		t.auth_secret AS password, 
@@ -28,8 +28,7 @@ CREATE VIEW solaruser.user_auth_token_login  AS
 	FROM solaruser.user_auth_token t
 	INNER JOIN solaruser.user_user u ON u.id = t.user_id
 	WHERE 
-		t.status = CAST('Active' AS solaruser.user_auth_token_status)
-		AND t.token_type = CAST('User' AS solaruser.user_auth_token_type);
+		t.status = CAST('Active' AS solaruser.user_auth_token_status);
 
 CREATE VIEW solaruser.user_auth_token_role AS
 	SELECT

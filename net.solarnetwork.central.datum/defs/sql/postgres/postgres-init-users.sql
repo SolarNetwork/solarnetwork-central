@@ -82,8 +82,7 @@ CREATE VIEW solaruser.user_auth_token_login  AS
 	FROM solaruser.user_auth_token t
 	INNER JOIN solaruser.user_user u ON u.id = t.user_id
 	WHERE 
-		t.status = CAST('Active' AS solaruser.user_auth_token_status)
-		AND t.token_type = CAST('User' AS solaruser.user_auth_token_type);
+		t.status = CAST('Active' AS solaruser.user_auth_token_status);
 
 CREATE VIEW solaruser.user_auth_token_role AS
 	SELECT
@@ -99,6 +98,7 @@ CREATE TABLE solaruser.user_node (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	disp_name		CHARACTER VARYING(128),
 	description		CHARACTER VARYING(512),
+	private 		BOOLEAN NOT NULL DEFAULT FALSE,
 	CONSTRAINT user_node_pkey PRIMARY KEY (node_id),
 	CONSTRAINT user_node_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
