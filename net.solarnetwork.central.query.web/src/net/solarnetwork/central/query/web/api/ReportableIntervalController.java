@@ -68,6 +68,48 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 		this.queryBiz = queryBiz;
 	}
 
+	/**
+	 * Get the reportable date range for a node and set of data types.
+	 * 
+	 * <p>
+	 * This method returns a start/end date range
+	 * 
+	 * <p>
+	 * Example URL:
+	 * <code>/api/v1/sec/range/interval?nodeId=1&types=Consumption,Power</code>
+	 * </p>
+	 * 
+	 * <p>
+	 * Example JSON response:
+	 * 
+	 * <pre>
+	 * {
+	 *   "success": true,
+	 *   "data": {
+	 *     "interval": {
+	 *       "end": 1363750146944,
+	 *       "endMillis": 1363750146944,
+	 *       "startMillis": 1218428040046,
+	 *       "start": 1218428040046,
+	 *       "afterNow": false,
+	 *       "beforeNow": true
+	 *     },
+	 *     "timeZone": "Pacific/Auckland",
+	 *     "endDate": [2013,3,20,16,29,6,944],
+	 *     "startDate": [2008,8,11,16,14,0,46],
+	 *     "dayCount": 1683,
+	 *     "monthCount": 56,
+	 *     "yearCount": 6
+	 *   }
+	 * }
+	 * </pre>
+	 * 
+	 * </p>
+	 * 
+	 * @param cmd
+	 *        the input command
+	 * @return the {@link ReportableInterval}
+	 */
 	@ResponseBody
 	@RequestMapping(value = "/interval", method = RequestMethod.GET)
 	public Response<ReportableInterval> getReportableInterval(ReportableIntervalCommand cmd) {
@@ -81,6 +123,39 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 		return new Response<ReportableInterval>(data);
 	}
 
+	/**
+	 * Get the set of source IDs available for a reportable interval for a
+	 * single node.
+	 * 
+	 * <p>
+	 * This method only supports returning the soruce ID set for a <b>single</b>
+	 * data type ({@link ReportableIntervalCommand#getTypes()}. If more than one
+	 * data type value is provided, only the first type will be used.
+	 * </p>
+	 * 
+	 * <p>
+	 * Example URL:
+	 * <code>/api/v1/sec/range/sources?nodeId=1&type=Consumption</code>
+	 * </p>
+	 * 
+	 * <p>
+	 * Example JSON response:
+	 * 
+	 * <pre>
+	 * {
+	 *   "success": true,
+	 *   "data": [
+	 *     "Main"
+	 *   ]
+	 * }
+	 * </pre>
+	 * 
+	 * </p>
+	 * 
+	 * @param cmd
+	 *        the input command
+	 * @return the set of sources for the given type and node
+	 */
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET)
 	public Response<Set<String>> getAvailableSources(ReportableIntervalCommand cmd) {
