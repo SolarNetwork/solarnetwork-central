@@ -8,6 +8,8 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
  net.solarnetwork.central.security.web;version="1.0.0"
 Import-Package: 
+ javax.crypto,
+ javax.crypto.spec,
  javax.servlet;version="2.5.0",
  javax.servlet.http;version="2.4.0",
  net.solarnetwork.central.domain;version="1.0.0",
