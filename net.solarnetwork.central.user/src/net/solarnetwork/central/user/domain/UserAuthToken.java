@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.domain;
 
+import java.util.HashSet;
+import java.util.Set;
 import net.solarnetwork.central.domain.BaseStringEntity;
 
 /**
@@ -32,12 +34,13 @@ import net.solarnetwork.central.domain.BaseStringEntity;
  */
 public class UserAuthToken extends BaseStringEntity {
 
-	private static final long serialVersionUID = 5807593975317069069L;
+	private static final long serialVersionUID = 899722294031488962L;
 
 	private Long userId;
 	private String authSecret;
 	private UserAuthTokenStatus status;
 	private UserAuthTokenType type;
+	private Set<Long> nodeIds = new HashSet<Long>(5);
 
 	/**
 	 * Default constructor.
@@ -124,6 +127,14 @@ public class UserAuthToken extends BaseStringEntity {
 
 	public void setType(UserAuthTokenType type) {
 		this.type = type;
+	}
+
+	public Set<Long> getNodeIds() {
+		return nodeIds;
+	}
+
+	public void setNodeIds(Set<Long> nodeIds) {
+		this.nodeIds = nodeIds;
 	}
 
 }

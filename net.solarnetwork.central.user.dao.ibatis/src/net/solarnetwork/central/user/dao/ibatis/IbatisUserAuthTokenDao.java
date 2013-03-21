@@ -22,12 +22,17 @@
 
 package net.solarnetwork.central.user.dao.ibatis;
 
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.solarnetwork.central.dao.ibatis.IbatisBaseGenericDaoSupport;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.domain.UserAuthToken;
+import org.springframework.orm.ibatis.SqlMapClientCallback;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import com.ibatis.sqlmap.client.SqlMapExecutor;
 
 /**
  * iBATIS implementation of {@link UserAuthTokenDao}.
@@ -40,6 +45,18 @@ public class IbatisUserAuthTokenDao extends IbatisBaseGenericDaoSupport<UserAuth
 
 	/** The query name used for {@link #findUserAuthTokensForUser(Long)}. */
 	public static final String QUERY_FOR_USER_ID = "find-UserAuthToken-for-UserID";
+
+	/**
+	 * The delete statement name used by to delete all node IDs for a given
+	 * token during {@link #store(Long)}.
+	 */
+	public static final String DELETE_NODES_FOR_TOKEN = "delete-UserAuthToken-nodes";
+
+	/**
+	 * The insert statement name used by to insert a single node ID for a given
+	 * token during {@link #store(Long)}.
+	 */
+	public static final String INSERT_NODE_ID_FOR_TOKEN = "insert-UserAuthToken-node";
 
 	/**
 	 * Default constructor.
@@ -57,8 +74,26 @@ public class IbatisUserAuthTokenDao extends IbatisBaseGenericDaoSupport<UserAuth
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public String store(UserAuthToken datum) {
-		return handleAssignedPrimaryKeyStore(datum);
-	}
+	public String store(final UserAuthToken datum) {
+		final String pk = handleAssignedPrimaryKeyStore(datum);
+		getSqlMapClientTemplate().execute(new SqlMapClientCallback<Object>() {
 
+			@Override
+			public Object doInSqlMapClient(SqlMapExecutor executor) throws SQLException {
+				executor.startBatch();
+				executor.delete(DELETE_NODES_FOR_TOKEN, pk);
+				if ( datum.getNodeIds() != null ) {
+					Map<String, Object> params = new HashMap<String, Object>(2);
+					params.put("id", pk);
+					for ( Long nodeId : datum.getNodeIds() ) {
+						params.put("nodeId", nodeId);
+						executor.insert(INSERT_NODE_ID_FOR_TOKEN, params);
+					}
+				}
+				executor.executeBatch();
+				return null;
+			}
+		});
+		return pk;
+	}
 }

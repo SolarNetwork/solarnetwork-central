@@ -25,6 +25,8 @@ package net.solarnetwork.central.user.dao.ibatis.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import net.solarnetwork.central.dao.ibatis.IbatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
@@ -89,6 +91,38 @@ public class IbatisUserAuthTokenDaoTest extends AbstractIbatisUserDaoTestSupport
 		this.userAuthToken = authToken;
 	}
 
+	@Test
+	public void storeNewWithNodeId() {
+		UserAuthToken authToken = new UserAuthToken();
+		authToken.setCreated(new DateTime());
+		authToken.setUserId(this.user.getId());
+		authToken.setAuthSecret(TEST_SECRET);
+		authToken.setAuthToken(TEST_TOKEN);
+		authToken.setStatus(UserAuthTokenStatus.Active);
+		authToken.setType(UserAuthTokenType.ReadNodeData);
+		authToken.setNodeIds(new HashSet<Long>(Arrays.asList(Long.valueOf(node.getId()))));
+		String id = userAuthTokenDao.store(authToken);
+		assertNotNull(id);
+		this.userAuthToken = authToken;
+	}
+
+	@Test
+	public void storeNewWithNodeIds() {
+		final Long nodeId2 = -2L;
+		setupTestNode(nodeId2);
+		UserAuthToken authToken = new UserAuthToken();
+		authToken.setCreated(new DateTime());
+		authToken.setUserId(this.user.getId());
+		authToken.setAuthSecret(TEST_SECRET);
+		authToken.setAuthToken(TEST_TOKEN);
+		authToken.setStatus(UserAuthTokenStatus.Active);
+		authToken.setType(UserAuthTokenType.ReadNodeData);
+		authToken.setNodeIds(new HashSet<Long>(Arrays.asList(Long.valueOf(node.getId()), nodeId2)));
+		String id = userAuthTokenDao.store(authToken);
+		assertNotNull(id);
+		this.userAuthToken = authToken;
+	}
+
 	private void validate(UserAuthToken token, UserAuthToken entity) {
 		assertNotNull("UserAuthToken should exist", entity);
 		assertNotNull("Created date should be set", entity.getCreated());
@@ -96,11 +130,26 @@ public class IbatisUserAuthTokenDaoTest extends AbstractIbatisUserDaoTestSupport
 		assertEquals(token.getStatus(), entity.getStatus());
 		assertEquals(token.getAuthToken(), entity.getAuthToken());
 		assertEquals(token.getAuthSecret(), entity.getAuthSecret());
+		assertEquals(token.getNodeIds(), entity.getNodeIds());
 	}
 
 	@Test
 	public void getByPrimaryKey() {
 		storeNew();
+		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
+		validate(this.userAuthToken, token);
+	}
+
+	@Test
+	public void getByPrimaryKeyWithNodeId() {
+		storeNewWithNodeId();
+		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
+		validate(this.userAuthToken, token);
+	}
+
+	@Test
+	public void getByPrimaryKeyWithNodeIds() {
+		storeNewWithNodeIds();
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
 		validate(this.userAuthToken, token);
 	}

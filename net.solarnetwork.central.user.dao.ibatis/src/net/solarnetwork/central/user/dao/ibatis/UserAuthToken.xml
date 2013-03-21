@@ -36,6 +36,19 @@
 		WHERE
 			auth_token = #id#
 	</update>
+	
+	<insert id="insert-UserAuthToken-node" parameterClass="map">
+		INSERT INTO solaruser.user_auth_token_node
+			(auth_token, node_id)
+		VALUES
+			(#id#, #nodeId#)
+	</insert>
+
+	<update id="delete-UserAuthToken-nodes" parameterClass="string">
+		DELETE FROM solaruser.user_auth_token_node
+		WHERE
+			auth_token = #id#
+	</update>
 
 	<sql id="fragment-UserAuthToken-full-result">
 		uat.auth_token AS uat_auth_token,
@@ -43,23 +56,31 @@
 		uat.user_id AS uat_user_id,
 		uat.auth_secret AS uat_auth_secret,
 		uat.status AS uat_status,
-		uat.token_type AS uat_token_type
+		uat.token_type AS uat_token_type,
+		uatn.node_id AS uatn_node_id
 	</sql>
 
-	<resultMap id="UserAuthTokenFullResult" class="UserAuthToken">
+	<resultMap id="UserAuthTokenFullResult" class="UserAuthToken" groupBy="id">
 		<result column="uat_auth_token" property="id"/>
 		<result column="uat_created" property="created"/>
 		<result column="uat_user_id" property="userId"/>
 		<result column="uat_auth_secret" property="authSecret"/>
 		<result column="uat_status" property="status"/>
 		<result column="uat_token_type" property="type"/>
+		<result resultMap="UserAuthToken.UserAuthTokenNodeResult" property="nodeIds"/>
 	</resultMap>
 	
+	<resultMap id="UserAuthTokenNodeResult" class="long">
+		<result column="uatn_node_id" property="nodeIds"/> 
+	</resultMap>
+
 	<select id="get-UserAuthToken-for-id" resultMap="UserAuthTokenFullResult">
 		SELECT
 			<include refid="fragment-UserAuthToken-full-result"/>
 		FROM
 			solaruser.user_auth_token uat
+		LEFT OUTER JOIN
+			solaruser.user_auth_token_node uatn ON uatn.auth_token = uat.auth_token
 		WHERE
 			uat.auth_token = #id#
 	</select>
@@ -69,6 +90,8 @@
 			<include refid="fragment-UserAuthToken-full-result"/>
 		FROM
 			solaruser.user_auth_token uat
+		LEFT OUTER JOIN
+			solaruser.user_auth_token_node uatn ON uatn.auth_token = uat.auth_token
 		WHERE
 			uat.user_id = #id#
 		ORDER BY
