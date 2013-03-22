@@ -18,16 +18,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.security.jdbc;
 
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.security.core.GrantedAuthority;
@@ -52,10 +54,15 @@ import org.springframework.transaction.annotation.Transactional;
  * <ol>
  * <li>User ID (Long) - the User primary key</li>
  * <li>Display Name (String) - the User's display name</li>
+ * <li>Token (Boolean) - <em>true</em> if this represents a token</li>
+ * <li>Token type (String) - if Token is <em>true</em>, this should be the token
+ * type</li>
+ * <li>Token IDs (String) - if Token is <em>true</em>, this is an optional set
+ * of IDs</li>
  * </ol>
  * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsService {
 
@@ -65,6 +72,11 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 	protected UserDetails createUserDetails(String username, UserDetails userFromUserQuery,
 			List<GrantedAuthority> combinedAuthorities) {
 		User user = (User) super.createUserDetails(username, userFromUserQuery, combinedAuthorities);
+		if ( userFromUserQuery instanceof AuthenticatedToken ) {
+			AuthenticatedToken token = (AuthenticatedToken) userFromUserQuery;
+			return new AuthenticatedToken(user, token.getTokenType(), token.getUserId(),
+					token.getTokenIds());
+		}
 		AuthenticatedUser authUser = (AuthenticatedUser) userFromUserQuery;
 		return new AuthenticatedUser(user, authUser.getUserId(), authUser.getName(),
 				authUser.isAuthenticatedWithToken());
@@ -84,8 +96,27 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 						Long id = rs.getLong(4);
 						String name = rs.getString(5);
 						boolean authWithToken = rs.getBoolean(6);
+						if ( authWithToken ) {
+							String tokenType = rs.getString(7);
+							Array ids = rs.getArray(8);
+							Set<Object> idSet = null;
+							if ( !rs.wasNull() ) {
+								ResultSet idsRs = ids.getResultSet();
+								try {
+									idSet = new HashSet<Object>();
+									while ( idsRs.next() ) {
+										// column 1 is the array index, 2 is the value
+										idSet.add(idsRs.getObject(2));
+									}
+								} finally {
+									idsRs.close();
+								}
+							}
+							return new AuthenticatedToken(new User(username, password, enabled, true,
+									true, true, AuthorityUtils.NO_AUTHORITIES), tokenType, id, idSet);
+						}
 						return new AuthenticatedUser(new User(username, password, enabled, true, true,
-								true, AuthorityUtils.NO_AUTHORITIES), id, name, authWithToken);
+								true, AuthorityUtils.NO_AUTHORITIES), id, name, false);
 					}
 				});
 	}

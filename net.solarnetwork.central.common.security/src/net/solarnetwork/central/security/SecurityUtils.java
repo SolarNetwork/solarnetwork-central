@@ -78,6 +78,40 @@ public class SecurityUtils {
 	}
 
 	/**
+	 * Get the current {@link SecurityActor}.
+	 * 
+	 * @return the current actor, never <em>null</em>
+	 * @throws SecurityException
+	 *         if the actor is not available
+	 */
+	public static SecurityActor getCurrentActor() throws SecurityException {
+		Authentication auth = getCurrentAuthentication();
+		if ( auth != null && auth.getPrincipal() instanceof SecurityActor ) {
+			return (SecurityActor) auth.getPrincipal();
+		} else if ( auth != null && auth.getDetails() instanceof SecurityActor ) {
+			return (SecurityActor) auth.getDetails();
+		}
+		throw new SecurityException("Actor not available");
+	}
+
+	/**
+	 * Get the current {@link SecurityToken}.
+	 * 
+	 * @return the current actor, never <em>null</em>
+	 * @throws SecurityException
+	 *         if the actor is not available
+	 */
+	public static SecurityToken getCurrentToken() throws SecurityException {
+		Authentication auth = getCurrentAuthentication();
+		if ( auth != null && auth.getPrincipal() instanceof SecurityToken ) {
+			return (SecurityToken) auth.getPrincipal();
+		} else if ( auth != null && auth.getDetails() instanceof SecurityToken ) {
+			return (SecurityToken) auth.getDetails();
+		}
+		throw new SecurityException("Token not available");
+	}
+
+	/**
 	 * Get the current {@link SecurityUser}.
 	 * 
 	 * @return the current user, never <em>null</em>
