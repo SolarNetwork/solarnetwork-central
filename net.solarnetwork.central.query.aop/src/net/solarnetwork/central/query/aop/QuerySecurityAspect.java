@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.aop;
 
+import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
@@ -66,13 +67,40 @@ public class QuerySecurityAspect {
 	public void nodeReportableInterval(Long nodeId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(nodeId,..)")
+	public void nodeReportableSources(Long nodeId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getMostRecentWeatherConditions(..)) && args(nodeId,..)")
+	public void nodeMostRecentWeatherConditions(Long nodeId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAggregatedDatum(..)) && args(*,criteria)")
+	public void nodeDatumQuery(DatumQueryCommand criteria) {
+	}
+
+	/**
+	 * Allow the current actor access to aggregated datum data.
+	 * 
+	 * @param criteria
+	 */
+	@Before("nodeDatumQuery(criteria)")
+	public void userNodeDatumAccessCheck(DatumQueryCommand criteria) {
+		if ( criteria.getNodeIds() == null ) {
+			return;
+		}
+		for ( Long nodeId : criteria.getNodeIds() ) {
+			userNodeAccessCheck(nodeId);
+		}
+	}
+
 	/**
 	 * Allow the current user (or current node) access to node data.
 	 * 
 	 * @param nodeId
 	 *        the ID of the node to verify
 	 */
-	@Before("nodeReportableInterval(nodeId)")
+	@Before("nodeReportableInterval(nodeId) || nodeReportableSources(nodeId) || nodeMostRecentWeatherConditions(nodeId)")
 	public void userNodeAccessCheck(Long nodeId) {
 		if ( nodeId == null ) {
 			return;
