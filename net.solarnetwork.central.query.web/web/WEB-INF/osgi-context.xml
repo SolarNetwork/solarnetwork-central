@@ -3,9 +3,13 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:osgi="http://www.springframework.org/schema/osgi"
 	xmlns:osgix="http://www.springframework.org/schema/osgi-compendium"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
-						http://www.springframework.org/schema/osgi http://www.springframework.org/schema/osgi/spring-osgi.xsd
-						http://www.springframework.org/schema/osgi-compendium http://www.springframework.org/schema/osgi-compendium/spring-osgi-compendium.xsd">
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/osgi
+		http://www.springframework.org/schema/osgi/spring-osgi.xsd
+		http://www.springframework.org/schema/osgi-compendium
+		http://www.springframework.org/schema/osgi-compendium/spring-osgi-compendium.xsd">
 
 	<!-- Configuration -->
 
@@ -42,7 +46,7 @@
 	<osgi:reference id="weatherDatumDao"
 		interface="net.solarnetwork.central.datum.dao.WeatherDatumDao"/>
 
-	<osgi:reference id="queryBiz" 
-		interface="net.solarnetwork.central.query.biz.QueryBiz"/>
+	<osgi:reference id="queryBiz" sticky="false"
+		interface="net.solarnetwork.central.query.biz.QueryBiz" />
 
 </beans>
