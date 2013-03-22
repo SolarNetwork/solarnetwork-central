@@ -59,7 +59,8 @@
 		<beans:property name="userDetailsService">
 			<beans:bean parent="jdbcUserService">
 				<beans:property name="usersByUsernameQuery" 
-						value="SELECT username, password, enabled, user_id, display_name, TRUE AS is_token
+						value="SELECT username, password, enabled, user_id, display_name, TRUE AS is_token,
+									token_type, node_ids
 								FROM solaruser.user_auth_token_login 
 								WHERE username = ?"/>
 				<beans:property name="authoritiesByUsernameQuery" 

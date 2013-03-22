@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.reg.web;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
+import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.web.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -59,7 +62,24 @@ public class UserAuthTokenController extends ControllerSupport {
 	public String view(Model model) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		List<UserAuthToken> tokens = userBiz.getAllUserAuthTokens(user.getUserId());
-		model.addAttribute("userAuthTokens", tokens);
+		if ( tokens != null ) {
+			List<UserAuthToken> userTokens = new ArrayList<UserAuthToken>(tokens.size());
+			List<UserAuthToken> dataTokens = new ArrayList<UserAuthToken>(tokens.size());
+			for ( UserAuthToken token : tokens ) {
+				switch (token.getType()) {
+					case User:
+						userTokens.add(token);
+						break;
+
+					case ReadNodeData:
+						dataTokens.add(token);
+						break;
+				}
+			}
+			model.addAttribute("userAuthTokens", userTokens);
+			model.addAttribute("dataAuthTokens", dataTokens);
+		}
+		model.addAttribute("userNodes", userBiz.getUserNodes(user.getUserId()));
 		return "auth-tokens/view";
 	}
 
@@ -67,11 +87,12 @@ public class UserAuthTokenController extends ControllerSupport {
 	@ResponseBody
 	public Response<UserAuthToken> generateUserToken() {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
-		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId());
+		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId(), UserAuthTokenType.User,
+				null);
 		return new Response<UserAuthToken>(token);
 	}
 
-	@RequestMapping(value = "/deleteUser", method = RequestMethod.POST)
+	@RequestMapping(value = "/delete", method = RequestMethod.POST)
 	@ResponseBody
 	public Response<Object> deleteUserToken(@RequestParam("id") String tokenId) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
@@ -79,13 +100,23 @@ public class UserAuthTokenController extends ControllerSupport {
 		return new Response<Object>();
 	}
 
-	@RequestMapping(value = "/changeStatusUser", method = RequestMethod.POST)
+	@RequestMapping(value = "/changeStatus", method = RequestMethod.POST)
 	@ResponseBody
 	public Response<Object> changeStatus(@RequestParam("id") String tokenId,
 			@RequestParam("status") UserAuthTokenStatus status) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		userBiz.updateUserAuthTokenStatus(user.getUserId(), tokenId, status);
 		return new Response<Object>();
+	}
+
+	@RequestMapping(value = "/generateData", method = RequestMethod.POST)
+	@ResponseBody
+	public Response<UserAuthToken> generateDataToken(
+			@RequestParam(value = "nodeId", required = false) Set<Long> nodeIds) {
+		final SecurityUser user = SecurityUtils.getCurrentUser();
+		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId(),
+				UserAuthTokenType.ReadNodeData, nodeIds);
+		return new Response<UserAuthToken>(token);
 	}
 
 }

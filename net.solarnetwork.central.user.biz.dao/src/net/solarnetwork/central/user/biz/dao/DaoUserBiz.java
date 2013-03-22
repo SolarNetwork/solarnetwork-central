@@ -28,6 +28,7 @@ import static net.solarnetwork.central.user.biz.dao.UserBizConstants.isUnconfirm
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.Set;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.PasswordEncoder;
@@ -54,15 +55,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * DAO-based implementation of {@link UserBiz}.
- * 
- * <p>
- * The configurable properties of this class are:
- * </p>
- * 
- * <dl class="class-properties">
- * <dt></dt>
- * <dd></dd>
- * </dl>
  * 
  * @author matt
  * @version 1.0
@@ -207,8 +199,9 @@ public class DaoUserBiz implements UserBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public UserAuthToken generateUserAuthToken(Long userId) {
+	public UserAuthToken generateUserAuthToken(Long userId, UserAuthTokenType type, Set<Long> nodeIds) {
 		assert userId != null;
+		assert type != null;
 		SecureRandom rnd;
 		try {
 			rnd = SecureRandom.getInstance("SHA1PRNG");
@@ -224,8 +217,10 @@ public class DaoUserBiz implements UserBiz {
 			String tok = generateRandomAuthToken();
 			// verify token doesn't already exist
 			if ( userAuthTokenDao.get(tok) == null ) {
-				UserAuthToken authToken = new UserAuthToken(tok, userId, secretString,
-						UserAuthTokenType.User);
+				UserAuthToken authToken = new UserAuthToken(tok, userId, secretString, type);
+				if ( nodeIds != null ) {
+					authToken.setNodeIds(nodeIds);
+				}
 				userAuthTokenDao.store(authToken);
 				return authToken;
 			}

@@ -25,11 +25,13 @@
 package net.solarnetwork.central.user.biz;
 
 import java.util.List;
+import java.util.Set;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
+import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
@@ -144,9 +146,13 @@ public interface UserBiz {
 	 * 
 	 * @param userId
 	 *        the user ID to generate the token for
+	 * @param type
+	 *        the type of token to create
+	 * @param nodeIds
+	 *        an optional set of node IDs to include with the token
 	 * @return the generated token
 	 */
-	UserAuthToken generateUserAuthToken(Long userId);
+	UserAuthToken generateUserAuthToken(Long userId, UserAuthTokenType type, Set<Long> nodeIds);
 
 	/**
 	 * Get all {@link UserAuthToken} entities for a given user.

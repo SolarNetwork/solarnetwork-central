@@ -101,6 +101,7 @@ public class DaoUserBizTest {
 	public void logonUser() {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userDao.getUserRoles(testUser)).andReturn(testUserRoles);
+		expect(passwordEncoder.matches(TEST_PASSWORD, TEST_ENC_PASSWORD)).andReturn(Boolean.TRUE);
 		replay(userDao, passwordEncoder);
 
 		final User user = userBiz.logonUser(TEST_EMAIL, TEST_PASSWORD);
@@ -242,7 +243,8 @@ public class DaoUserBizTest {
 		expect(userAuthTokenDao.get(anyObject(String.class))).andReturn(null);
 		expect(userAuthTokenDao.store(anyObject(UserAuthToken.class))).andReturn(TEST_AUTH_TOKEN);
 		replayProperties();
-		UserAuthToken generated = userBiz.generateUserAuthToken(TEST_USER_ID);
+		UserAuthToken generated = userBiz.generateUserAuthToken(TEST_USER_ID, UserAuthTokenType.User,
+				null);
 		assertNotNull(generated);
 		assertNotNull(generated.getAuthToken());
 		assertEquals("Auth token should be exactly 20 characters", 20, generated.getAuthToken().length());
