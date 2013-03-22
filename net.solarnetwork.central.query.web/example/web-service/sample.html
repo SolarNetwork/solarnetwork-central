@@ -59,6 +59,12 @@
 							<optgroup label="Weather">
 								<option value="/solarquery/api/v1/sec/weather/recent?nodeId={nodeId}">Most recent</option>
 							</optgroup>
+							<optgroup label="Datum">
+								<option value="/solarquery/api/v1/sec/datum/mostRecent?nodeId={nodeId}&type=Consumption">Most recent consumption</option>
+								<option value="/solarquery/api/v1/sec/datum/mostRecent?nodeId={nodeId}&type=Power">Most recent power</option>
+								<option value="/solarquery/api/v1/sec/datum/query?nodeId={nodeId}&startDate=2013-01-01&endDate=2013-02-01&type=Consumption">Consumption</option>
+								<option value="/solarquery/api/v1/sec/datum/query?nodeId={nodeId}&startDate=2013-01-01&endDate=2013-02-01&type=Power">Power</option>
+							</optgroup>
 						</select></label>
 						
 					</div>
