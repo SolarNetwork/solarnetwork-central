@@ -12,3 +12,20 @@ CREATE TABLE solaruser.user_auth_token_node (
 		REFERENCES solarnet.sn_node (node_id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+CREATE OR REPLACE VIEW solaruser.user_auth_token_login  AS
+	SELECT
+		t.auth_token AS username,
+		t.auth_secret AS password, 
+		u.enabled AS enabled,
+		u.id AS user_id,
+		u.disp_name AS display_name,
+		CAST(t.token_type AS character varying) AS token_type,
+		ARRAY(SELECT n.node_id 
+			FROM solaruser.user_auth_token_node n 
+			WHERE n.auth_token = t.auth_token) AS node_ids
+	FROM solaruser.user_auth_token t
+	INNER JOIN solaruser.user_user u ON u.id = t.user_id
+	WHERE 
+		t.status = CAST('Active' AS solaruser.user_auth_token_status);
+
