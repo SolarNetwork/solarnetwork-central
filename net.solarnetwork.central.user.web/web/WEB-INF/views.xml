@@ -18,4 +18,8 @@
 		<put-attribute name="body" value="/WEB-INF/jsp/loggedout.jsp"/>
 	</definition>
 	
+	<definition name="tzpicker-500" extends="ajaxLayout">
+		<put-attribute name="body" value="/WEB-INF/jsp/tzpicker-500.jsp"/>
+	</definition>
+	
 </tiles-definitions>

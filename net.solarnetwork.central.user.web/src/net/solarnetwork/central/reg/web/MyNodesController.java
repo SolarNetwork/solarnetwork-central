@@ -25,10 +25,13 @@
 package net.solarnetwork.central.reg.web;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
+import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
@@ -99,17 +102,36 @@ public class MyNodesController extends ControllerSupport {
 	 *        acting user
 	 * @param securityPhrase
 	 *        a security phrase to associate with the invitation
+	 * @param timeZoneName
+	 *        the time zone to associate the node with
+	 * @param country
+	 *        the country to associate the node with
 	 * @return model and view
 	 */
 	@RequestMapping("/new")
 	public ModelAndView newNodeAssociation(
 			@RequestParam(value = "userId", required = false) Long userId,
-			@RequestParam("phrase") String securityPhrase) {
+			@RequestParam("phrase") String securityPhrase,
+			@RequestParam("timeZone") String timeZoneName, @RequestParam("country") String countryCode) {
 		if ( userId == null ) {
 			userId = SecurityUtils.getCurrentUser().getUserId();
 		}
-		NetworkAssociation details = registrationBiz.createNodeAssociation(userId, securityPhrase);
+		final TimeZone timeZone = TimeZone.getTimeZone(timeZoneName);
+		String lang = "en";
+		for ( Locale locale : Locale.getAvailableLocales() ) {
+			if ( locale.getCountry().equals(countryCode) ) {
+				lang = locale.getLanguage();
+			}
+		}
+		final Locale locale = new Locale(lang, countryCode);
+		final NetworkAssociation details = registrationBiz.createNodeAssociation(new NewNodeRequest(
+				userId, securityPhrase, timeZone, locale));
 		return new ModelAndView("my-nodes/invitation", "details", details);
+	}
+
+	@RequestMapping("/tzpicker.html")
+	public String tzpicker() {
+		return "tzpicker-500";
 	}
 
 	@RequestMapping("/invitation")

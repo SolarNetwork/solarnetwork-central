@@ -7,6 +7,8 @@
 <pack:script> 
 	/js-lib/jquery-1.7.1.js
 	/js-lib/jquery.form.js
+	/js-lib/jquery.maphilight.js
+	/js-lib/jquery.timezone-picker.js
 	/js-lib/bootstrap.js
 	/js/global.js
 	/js/login.js

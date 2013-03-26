@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.biz;
 
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.PasswordEntry;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.domain.NetworkAssociation;
@@ -113,20 +114,17 @@ public interface RegistrationBiz {
 	 * Generate a new {@link NetworkAssociationDetails} entity.
 	 * 
 	 * <p>
-	 * This will return a new {@link NetworkAssociationDetails} with a new,
-	 * unique node ID and the system details associated with specified User. The
-	 * node will still need to associate with the system before it will be
-	 * recognized.
+	 * This will return a new {@link NetworkAssociationDetails} and the system
+	 * details associated with specified User. The node will still need to
+	 * associate with the system before it will be recognized.
 	 * </p>
 	 * 
-	 * @param userId
-	 *        the user ID to associate a new node with
-	 * @param securityPhrase
-	 *        a user-defined phrase to use during the node association process
+	 * @param request
+	 *        the node request details
 	 * 
 	 * @return new NodeAssociationDetails entity
 	 */
-	NetworkAssociation createNodeAssociation(Long userId, String securityPhrase);
+	NetworkAssociation createNodeAssociation(NewNodeRequest request);
 
 	/**
 	 * Get a {@link NetworkAssociationDetails} previously created via

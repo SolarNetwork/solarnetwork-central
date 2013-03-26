@@ -20,4 +20,23 @@ $(document).ready(function() {
 			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-error', statusText);
 		}
 	});
+	
+	$('#invite-modal').on('show', function() {
+		var form = $(this);
+		var url = form.attr('action').replace(/\/[^\/]+$/, '/tzpicker.html');
+		var tzcontainer = $('#tz-picker-container');
+		if ( tzcontainer.children().length == 0 ) {
+			tzcontainer.load(url, function() {
+				var picker = $('#timezone-image');
+				picker.timezonePicker({
+					target : '#invite-tz',
+					countryTarget : '#invite-country',
+					change : function() {
+						$('#invite-tz-country').text($('#invite-country').val());
+					}
+				});
+				picker.timezonePicker('detectTimezone');
+			});
+		}
+	});
 });

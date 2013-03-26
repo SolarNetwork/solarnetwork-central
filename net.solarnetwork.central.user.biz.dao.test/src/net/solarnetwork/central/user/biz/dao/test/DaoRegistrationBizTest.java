@@ -33,7 +33,9 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
@@ -47,6 +49,7 @@ import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.PasswordEntry;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
@@ -132,8 +135,8 @@ public class DaoRegistrationBizTest {
 				TEST_CONF_ID);
 		replay(networkIdentityBiz, userDao, userNodeConfirmationDao);
 
-		final NetworkAssociation result = registrationBiz.createNodeAssociation(TEST_USER_ID,
-				TEST_SECURITY_PHRASE);
+		final NetworkAssociation result = registrationBiz.createNodeAssociation(new NewNodeRequest(
+				TEST_USER_ID, TEST_SECURITY_PHRASE, TimeZone.getDefault(), Locale.getDefault()));
 
 		verify(networkIdentityBiz, userDao, userNodeConfirmationDao);
 
@@ -177,6 +180,8 @@ public class DaoRegistrationBizTest {
 		final UserNodeConfirmation conf = new UserNodeConfirmation();
 		conf.setUser(testUser);
 		conf.setCreated(new DateTime());
+		conf.setCountry("NZ");
+		conf.setTimeZoneId("Pacific/Auckland");
 		final SolarLocation loc = new SolarLocation();
 		loc.setId(TEST_LOC_ID);
 		final UserNode userNode = new UserNode();
@@ -192,8 +197,67 @@ public class DaoRegistrationBizTest {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
 				conf);
-		expect(solarLocationDao.getSolarLocationForName(EasyMock.anyObject(String.class)))
+		expect(solarLocationDao.getSolarLocationForTimeZone(conf.getCountry(), conf.getTimeZoneId()))
 				.andReturn(loc);
+		expect(nodeDao.getUnusedNodeId()).andReturn(TEST_NODE_ID);
+		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
+		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
+		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
+		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
+				TEST_CERT_ID);
+
+		replay(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao);
+
+		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
+
+		verify(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao);
+
+		assertNotNull(cert);
+		assertNotNull(cert.getConfirmationKey());
+		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
+				cert.getNetworkCertificateSubjectDN());
+		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
+		assertEquals(TEST_NODE_ID, cert.getNetworkId());
+		assertNotNull(conf.getConfirmationDate());
+		assertNotNull(conf.getNodeId());
+		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+	}
+
+	@Test
+	public void confirmNodeAssociationForNewSolarLocation() throws IOException {
+		final UserNodeConfirmation conf = new UserNodeConfirmation();
+		conf.setUser(testUser);
+		conf.setCreated(new DateTime());
+		conf.setCountry("NZ");
+		conf.setTimeZoneId("Pacific/Auckland");
+		final SolarLocation loc = new SolarLocation();
+		loc.setId(TEST_LOC_ID);
+		loc.setCountry(conf.getCountry());
+		loc.setTimeZoneId(conf.getTimeZoneId());
+		final UserNode userNode = new UserNode();
+		userNode.setId(TEST_NODE_ID);
+
+		final DateTime now = new DateTime();
+
+		// to confirm a node, we must look up the UserNodeConfirmation by userId+key, then
+		// create the new SolarNode using a default SolarLocation, followed by
+		// a new UserNode and UserNodeCertificate. The original UserNodeConfirmation should
+		// have its 
+
+		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
+		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
+				conf);
+
+		// here SolarLocation doesn't exist for the requested country+time zone, so we create it now
+		expect(solarLocationDao.getSolarLocationForTimeZone(conf.getCountry(), conf.getTimeZoneId()))
+				.andReturn(null);
+		expect(solarLocationDao.store(EasyMock.anyObject(SolarLocation.class))).andReturn(TEST_LOC_ID);
+		expect(solarLocationDao.get(TEST_LOC_ID)).andReturn(loc);
+
 		expect(nodeDao.getUnusedNodeId()).andReturn(TEST_NODE_ID);
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
 		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
@@ -227,6 +291,8 @@ public class DaoRegistrationBizTest {
 		final UserNodeConfirmation conf = new UserNodeConfirmation();
 		conf.setUser(testUser);
 		conf.setCreated(new DateTime());
+		conf.setCountry("NZ");
+		conf.setTimeZoneId("Pacific/Auckland");
 		conf.setNodeId(TEST_NODE_ID); // pre-assign node ID
 		final SolarLocation loc = new SolarLocation();
 		loc.setId(TEST_LOC_ID);
@@ -243,7 +309,7 @@ public class DaoRegistrationBizTest {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
 				conf);
-		expect(solarLocationDao.getSolarLocationForName(EasyMock.anyObject(String.class)))
+		expect(solarLocationDao.getSolarLocationForTimeZone(conf.getCountry(), conf.getTimeZoneId()))
 				.andReturn(loc);
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
 		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
@@ -277,6 +343,8 @@ public class DaoRegistrationBizTest {
 		final UserNodeConfirmation conf = new UserNodeConfirmation();
 		conf.setUser(testUser);
 		conf.setCreated(new DateTime());
+		conf.setCountry("NZ");
+		conf.setTimeZoneId("Pacific/Auckland");
 		conf.setNodeId(TEST_NODE_ID); // pre-assign node ID
 		final SolarNode node = new SolarNode();
 		node.setId(TEST_NODE_ID);
@@ -295,7 +363,7 @@ public class DaoRegistrationBizTest {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
 				conf);
-		expect(solarLocationDao.getSolarLocationForName(EasyMock.anyObject(String.class)))
+		expect(solarLocationDao.getSolarLocationForTimeZone(conf.getCountry(), conf.getTimeZoneId()))
 				.andReturn(loc);
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(node);
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
@@ -328,6 +396,8 @@ public class DaoRegistrationBizTest {
 		final UserNodeConfirmation conf = new UserNodeConfirmation();
 		conf.setUser(testUser);
 		conf.setCreated(new DateTime());
+		conf.setCountry("NZ");
+		conf.setTimeZoneId("Pacific/Auckland");
 		conf.setNodeId(TEST_NODE_ID); // pre-assign node ID
 		final SolarNode node = new SolarNode();
 		node.setId(TEST_NODE_ID);
@@ -346,7 +416,7 @@ public class DaoRegistrationBizTest {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
 				conf);
-		expect(solarLocationDao.getSolarLocationForName(EasyMock.anyObject(String.class)))
+		expect(solarLocationDao.getSolarLocationForTimeZone(conf.getCountry(), conf.getTimeZoneId()))
 				.andReturn(loc);
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(node);
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(userNode);

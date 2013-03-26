@@ -13,14 +13,14 @@
 			<isNotNull prepend="," property="created">created</isNotNull>
 			, user_id, node_id, conf_key
 			<isNotNull prepend="," property="confirmationDate">conf_date</isNotNull>
-			, sec_phrase
+			, sec_phrase, country, time_zone
 			)
 		VALUES
 			(#id#
 			<isNotNull prepend="," property="created">#created#</isNotNull>
 			, #user.id#, #nodeId#, #confirmationKey#
 			<isNotNull prepend="," property="confirmationDate">#confirmationDate#</isNotNull>
-			, #securityPhrase#
+			, #securityPhrase#, #country#, #timeZoneId#
 			)
 	</insert>
 
@@ -28,7 +28,9 @@
 		UPDATE solaruser.user_node_conf SET
 			node_id = #nodeId#,
 			conf_date = #confirmationDate#,
-			sec_phrase = #securityPhrase#
+			sec_phrase = #securityPhrase#,
+			country = #country#,
+			time_zone = #timeZoneId#
 		WHERE
 			id = #id#
 	</update>
@@ -45,7 +47,9 @@
 		unc.node_id AS unc_node_id,
 		unc.conf_key AS unc_conf_key,
 		unc.conf_date AS unc_conf_date,
-		unc.sec_phrase AS unc_sec_phrase
+		unc.sec_phrase AS unc_sec_phrase,
+		unc.country AS unc_country,
+		unc.time_zone AS unc_time_zone
 	</sql>
 
 	<resultMap id="UserNodeConfirmationFullResult" class="UserNodeConfirmation">
@@ -56,6 +60,8 @@
 		<result column="unc_conf_key" property="confirmationKey"/>
 		<result column="unc_conf_date" property="confirmationDate"/>
 		<result column="unc_sec_phrase" property="securityPhrase"/>
+		<result column="unc_country" property="country"/>
+		<result column="unc_time_zone" property="timeZoneId"/>
 	</resultMap>
 	
 	<select id="get-UserNodeConfirmation-for-id" resultMap="UserNodeConfirmationFullResult">

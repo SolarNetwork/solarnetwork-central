@@ -18,19 +18,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.dao.ibatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.dao.ibatis.IbatisSolarLocationDao;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
-
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,13 +39,15 @@ import org.springframework.beans.factory.annotation.Autowired;
  * Test case for the {@link IbatisSolarLocationDao} class.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public class IbatisSolarLocationDaoTest extends AbstractIbatisDaoTestSupport {
 
-	@Autowired private SolarLocationDao solarLocationDao;
-	@Autowired private SolarNodeDao solarNodeDao;
-	
+	@Autowired
+	private SolarLocationDao solarLocationDao;
+	@Autowired
+	private SolarNodeDao solarNodeDao;
+
 	private SolarNode node = null;
 	private SolarLocation location = null;
 
@@ -92,13 +93,13 @@ public class IbatisSolarLocationDaoTest extends AbstractIbatisDaoTestSupport {
 		assertEquals(src.getTimeZoneId(), entity.getTimeZoneId());
 	}
 
-    @Test
+	@Test
 	public void getByPrimaryKey() {
-    	storeNew();
-    	SolarLocation loc = solarLocationDao.get(location.getId());
-    	validate(location, loc);
+		storeNew();
+		SolarLocation loc = solarLocationDao.get(location.getId());
+		validate(location, loc);
 	}
-    
+
 	@Test
 	public void update() {
 		storeNew();
@@ -109,7 +110,7 @@ public class IbatisSolarLocationDaoTest extends AbstractIbatisDaoTestSupport {
 		SolarLocation loc2 = solarLocationDao.get(location.getId());
 		validate(loc, loc2);
 	}
-	
+
 	@Test
 	public void findByName() {
 		storeNew();
@@ -117,5 +118,31 @@ public class IbatisSolarLocationDaoTest extends AbstractIbatisDaoTestSupport {
 		assertNotNull(loc);
 		validate(location, loc);
 	}
-	
+
+	@Test
+	public void findByTimeZoneNoResults() {
+		storeNew();
+		// should not find this location, because properties other than country and time zone are set
+		SolarLocation loc = solarLocationDao.getSolarLocationForTimeZone(location.getCountry(),
+				location.getTimeZoneId());
+		assertNull(loc);
+	}
+
+	@Test
+	public void findByTimeZone() {
+		SolarLocation loc = new SolarLocation();
+		loc.setCreated(new DateTime());
+		loc.setName("NZ - Pacific/Auckland");
+		loc.setCountry("NZ");
+		loc.setTimeZoneId("Pacific/Auckland");
+		Long id = solarLocationDao.store(loc);
+		assertNotNull(id);
+		loc.setId(id);
+		// should not find this location, because properties other than country and time zone are set
+		SolarLocation found = solarLocationDao.getSolarLocationForTimeZone(loc.getCountry(),
+				loc.getTimeZoneId());
+		assertNotNull(loc);
+		validate(loc, found);
+	}
+
 }

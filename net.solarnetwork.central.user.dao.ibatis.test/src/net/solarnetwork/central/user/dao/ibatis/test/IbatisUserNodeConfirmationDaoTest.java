@@ -84,6 +84,8 @@ public class IbatisUserNodeConfirmationDaoTest extends AbstractIbatisUserDaoTest
 		newUserNodeConf.setUser(this.user);
 		newUserNodeConf.setConfirmationKey(String.valueOf(testNodeId));
 		newUserNodeConf.setSecurityPhrase("test phrase");
+		newUserNodeConf.setCountry("NZ");
+		newUserNodeConf.setTimeZoneId("Pacific/Auckland");
 		Long id = userNodeConfirmationDao.store(newUserNodeConf);
 		assertNotNull(id);
 		this.userNodeConf = userNodeConfirmationDao.get(id);
@@ -95,6 +97,8 @@ public class IbatisUserNodeConfirmationDaoTest extends AbstractIbatisUserDaoTest
 		assertEquals(conf.getConfirmationDate(), entity.getConfirmationDate());
 		assertEquals(conf.getConfirmationKey(), entity.getConfirmationKey());
 		assertEquals(conf.getSecurityPhrase(), entity.getSecurityPhrase());
+		assertEquals(conf.getCountry(), entity.getCountry());
+		assertEquals(conf.getTimeZoneId(), entity.getTimeZoneId());
 		assertEquals(conf.getId(), entity.getId());
 		assertEquals(conf.getNodeId(), entity.getNodeId());
 		assertEquals(conf.getUser(), entity.getUser());

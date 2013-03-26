@@ -89,4 +89,23 @@
 			l.id
 	</select>
 	
+	<select id="find-SolarLocation-for-country-timezone" resultMap="SolarLocationFullResult" parameterClass="map">
+		SELECT
+			<include refid="fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_loc l
+		WHERE
+			l.country = #country#
+			AND l.time_zone = #timeZoneId#
+			AND l.region IS NULL
+			AND l.state_prov IS NULL
+			AND l.locality IS NULL
+			AND l.postal_code IS NULL
+			AND l.address IS NULL
+			AND l.latitude IS NULL
+			AND l.longitude IS NULL
+		ORDER BY
+			l.id
+	</select>
+	
 </sqlMap>

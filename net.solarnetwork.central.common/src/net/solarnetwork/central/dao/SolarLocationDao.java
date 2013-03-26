@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.dao;
@@ -30,19 +28,33 @@ import net.solarnetwork.central.domain.SolarLocation;
  * DAO API for Location.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public interface SolarLocationDao extends GenericDao<SolarLocation, Long> {
 
 	/**
 	 * Find the first SolarLocation for a given location name.
 	 * 
-	 * <p>Note that as location names are not unique, this merely returns
-	 * the first name that matches exactly.</p>
+	 * <p>
+	 * Note that as location names are not unique, this merely returns the first
+	 * name that matches exactly.
+	 * </p>
 	 * 
-	 * @param locationName the location name
+	 * @param locationName
+	 *        the location name
 	 * @return the SolarLocation, or <em>null</em> if not found
 	 */
 	SolarLocation getSolarLocationForName(String locationName);
+
+	/**
+	 * Find a SolarLocation for just a country and time zone.
+	 * 
+	 * @param country
+	 *        the country
+	 * @param timeZoneId
+	 *        the time zone ID
+	 * @return the SolarLocation, or <em>null</em> if none found
+	 */
+	SolarLocation getSolarLocationForTimeZone(String country, String timeZoneId);
 
 }

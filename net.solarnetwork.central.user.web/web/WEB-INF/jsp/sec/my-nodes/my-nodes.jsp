@@ -61,18 +61,33 @@
 	 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 	 		<h3><fmt:message key='my-nodes.inviteNode'/></h3>
 	 	</div>
-	 	<div class="modal-body">
+	 	<div class="modal-body form-inline">
 	 		<div>
 		 		<p><fmt:message key='my-nodes-invitation.create.intro'/></p>
-	 			<label class="control-label" for="secret-phrase"><fmt:message key='my-nodes.invitation.securityPhrase.label'/></label>
-	 			<input type="text" class="span6" name="phrase" 
-	 				placeholder="<fmt:message key='my-nodes.invitation.securityPhrase.label'/>"
-	 				maxlength="128" required="required"/>
-	 			<span class="help-block"><fmt:message key='my-nodes.invitation.securityPhrase.caption'/></span>
+	 			<label>
+	 				<fmt:message key='my-nodes.invitation.securityPhrase.label'/>
+	 				${' '}
+	 				<input type="text" class="span4" name="phrase" 
+	 					placeholder="<fmt:message key='my-nodes.invitation.securityPhrase.label'/>"
+	 					maxlength="128" required="required"/>
+	 			</label> 			
+	 			<span class="help-block"><small><fmt:message key='my-nodes.invitation.securityPhrase.caption'/></small></span>
+	 		</div>
+	 		<div>
+	 			<label class="control-label">
+	 				<fmt:message key='my-nodes.invitation.tz.label'/>
+	 				${' '}
+	 				<input type="text" class="span4" name="timeZone" id="invite-tz"
+	 					placeholder="<fmt:message key='my-nodes.invitation.tz.placeholder'/>"
+	 					maxlength="128" required="required"/>
+	 				<span class="help" id="invite-tz-country"></span>
+	 			</label>
+	 			<div id="tz-picker-container" class="tz-picker-container"></div>
 	 		</div>
 	 	</div>
 	 	<div class="modal-footer">
 	 		<a href="#" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></a>
+	 		<input type="hidden" name="country" id="invite-country"/>
 	 		<button type="submit" class="btn btn-primary"><fmt:message key='my-nodes.inviteNode'/></button>
 	 	</div>
 	</form>

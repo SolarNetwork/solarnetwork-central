@@ -50,6 +50,7 @@ import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.PasswordEntry;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
@@ -315,12 +316,12 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public NetworkAssociation createNodeAssociation(final Long userId, final String securityPhrase) {
+	public NetworkAssociation createNodeAssociation(final NewNodeRequest request) {
 		User user = null;
-		if ( userId == null ) {
+		if ( request.getUserId() == null ) {
 			user = getCurrentUser();
 		} else {
-			user = userDao.get(userId);
+			user = userDao.get(request.getUserId());
 		}
 		assert user != null;
 
@@ -337,18 +338,20 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		details.setExpiration(now.plus(invitationExpirationPeriod).toDate());
 		String confKey = DigestUtils.sha256Hex(String.valueOf(now.getMillis())
 				+ details.getIdentityKey() + details.getTermsOfService() + details.getUsername()
-				+ details.getExpiration() + securityPhrase);
+				+ details.getExpiration() + request.getSecurityPhrase());
 		details.setConfirmationKey(confKey);
 		String xml = encodeNetworkAssociationDetails(details);
 		details.setConfirmationKey(xml);
-		details.setSecurityPhrase(securityPhrase); // this must not be part of the encoded XML
+		details.setSecurityPhrase(request.getSecurityPhrase()); // this must not be part of the encoded XML
 
 		// create UserNodeConfirmation now
 		UserNodeConfirmation conf = new UserNodeConfirmation();
 		conf.setCreated(now);
 		conf.setUser(user);
 		conf.setConfirmationKey(confKey);
-		conf.setSecurityPhrase(securityPhrase);
+		conf.setSecurityPhrase(request.getSecurityPhrase());
+		conf.setCountry(request.getLocale().getCountry());
+		conf.setTimeZoneId(request.getTimeZone().getID());
 		userNodeConfirmationDao.store(conf);
 
 		return details;
@@ -437,11 +440,20 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 					AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED);
 		}
 
-		// create SolarNode now
-		SolarLocation loc = solarLocationDao.getSolarLocationForName(defaultSolarLocationName);
+		// find or create SolarLocation now, for country + time zone
+		SolarLocation loc = solarLocationDao.getSolarLocationForTimeZone(conf.getCountry(),
+				conf.getTimeZoneId());
+		if ( loc == null ) {
+			// create location now
+			loc = new SolarLocation();
+			loc.setName(conf.getCountry() + " - " + conf.getTimeZoneId());
+			loc.setCountry(conf.getCountry());
+			loc.setTimeZoneId(conf.getTimeZoneId());
+			loc = solarLocationDao.get(solarLocationDao.store(loc));
+		}
 		assert loc != null;
 
-		// allow using a pre-populated node ID, and possibly pre-existing
+		// create SolarNode now, and allow using a pre-populated node ID, and possibly pre-existing
 		final Long nodeId = (conf.getNodeId() == null ? solarNodeDao.getUnusedNodeId() : conf
 				.getNodeId());
 		SolarNode node = solarNodeDao.get(nodeId);

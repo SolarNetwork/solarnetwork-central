@@ -18,14 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.dao.ibatis;
 
+import java.util.HashMap;
 import java.util.List;
-
+import java.util.Map;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.domain.SolarLocation;
 
@@ -33,14 +32,19 @@ import net.solarnetwork.central.domain.SolarLocation;
  * Ibatis implementation of {@link SolarLocationDao}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
-public class IbatisSolarLocationDao
-extends IbatisGenericDaoSupport<SolarLocation>
-implements SolarLocationDao {
+public class IbatisSolarLocationDao extends IbatisGenericDaoSupport<SolarLocation> implements
+		SolarLocationDao {
 
 	/** The query name used for {@link #getSolarLocationForName(String)}. */
 	public static final String QUERY_FOR_NAME = "find-SolarLocation-for-name";
+
+	/**
+	 * The query name used for
+	 * {@link #getSolarLocationForTimeZone(String, String)}.
+	 */
+	public static final String QUERY_FOR_COUNTRY_TIME_ZONE = "find-SolarLocation-for-country-timezone";
 
 	/**
 	 * Default constructor.
@@ -48,12 +52,26 @@ implements SolarLocationDao {
 	public IbatisSolarLocationDao() {
 		super(SolarLocation.class);
 	}
-	
+
 	@Override
 	public SolarLocation getSolarLocationForName(String locationName) {
 		@SuppressWarnings("unchecked")
+		List<SolarLocation> results = getSqlMapClientTemplate().queryForList(QUERY_FOR_NAME,
+				locationName, 0, 1);
+		if ( results.size() > 0 ) {
+			return results.get(0);
+		}
+		return null;
+	}
+
+	@Override
+	public SolarLocation getSolarLocationForTimeZone(String country, String timeZoneId) {
+		Map<String, String> params = new HashMap<String, String>(2);
+		params.put("country", country);
+		params.put("timeZoneId", timeZoneId);
+		@SuppressWarnings("unchecked")
 		List<SolarLocation> results = getSqlMapClientTemplate().queryForList(
-				QUERY_FOR_NAME, locationName, 0, 1);
+				QUERY_FOR_COUNTRY_TIME_ZONE, params, 0, 1);
 		if ( results.size() > 0 ) {
 			return results.get(0);
 		}

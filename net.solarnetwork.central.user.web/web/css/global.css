@@ -16,6 +16,19 @@ label {
 	font-weight: 700;
 }
 
+.timezone-pin {
+	display: none;
+}
+
+.tz-picker-container {
+	text-align: center;
+}
+
+.tz-picker-container div, 
+.tz-picker-container map {
+    margin: auto;
+}
+
 @media (min-width: 768px) {
 	#edit-node-modal {
 		width: 600px;

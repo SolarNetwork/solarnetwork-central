@@ -33,17 +33,19 @@ import org.joda.time.DateTime;
  * UserNode entity is created.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UserNodeConfirmation extends BaseEntity {
 
-	private static final long serialVersionUID = 4083649254837814397L;
+	private static final long serialVersionUID = -598611218946751443L;
 
 	private User user;
 	private Long nodeId;
 	private String confirmationKey;
 	private DateTime confirmationDate;
 	private String securityPhrase;
+	private String country;
+	private String timeZoneId;
 
 	public User getUser() {
 		return user;
@@ -83,6 +85,22 @@ public class UserNodeConfirmation extends BaseEntity {
 
 	public void setSecurityPhrase(String securityPhrase) {
 		this.securityPhrase = securityPhrase;
+	}
+
+	public String getCountry() {
+		return country;
+	}
+
+	public void setCountry(String countryCode) {
+		this.country = countryCode;
+	}
+
+	public String getTimeZoneId() {
+		return timeZoneId;
+	}
+
+	public void setTimeZoneId(String timeZoneName) {
+		this.timeZoneId = timeZoneName;
 	}
 
 }

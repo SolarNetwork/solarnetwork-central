@@ -12,7 +12,7 @@ Import-Package:
  org.junit.runners;version="[4.5,5.0)",
  net.solarnetwork.central;version="[1.0,2.0)",
  net.solarnetwork.central.dao;version="[1.6,2.0)",
- net.solarnetwork.central.dao.ibatis;version="[1.9,2.0)",
+ net.solarnetwork.central.dao.ibatis;version="1.10",
  net.solarnetwork.central.domain;version="[1.8,2.0)",
  net.solarnetwork.central.support;version="[1.4,2.0)",
  net.solarnetwork.central.test;version="[1.0,2.0)",
