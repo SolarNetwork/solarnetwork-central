@@ -79,7 +79,7 @@ public class WeatherController extends WebServiceControllerSupport {
 	 *   "data": {
 	 *     "weather": {
 	 *       "locationId": 4298974,
-	 *       "infoDate": "2013-02-24 18:10:00.000+0000",
+	 *       "infoDate": "2013-02-24 18:10:00.000Z",
 	 *       "skyConditions": "Partly cloudy",
 	 *       "temperatureCelcius": 13.5,
 	 *       "humidity": 79,

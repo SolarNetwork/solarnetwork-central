@@ -86,17 +86,9 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	 * {
 	 *   "success": true,
 	 *   "data": {
-	 *     "interval": {
-	 *       "end": 1363750146944,
-	 *       "endMillis": 1363750146944,
-	 *       "startMillis": 1218428040046,
-	 *       "start": 1218428040046,
-	 *       "afterNow": false,
-	 *       "beforeNow": true
-	 *     },
 	 *     "timeZone": "Pacific/Auckland",
-	 *     "endDate": [2013,3,20,16,29,6,944],
-	 *     "startDate": [2008,8,11,16,14,0,46],
+	 *     "endDate": "2012-12-11 01:49",
+	 *     "startDate": "2012-12-11 00:30",
 	 *     "dayCount": 1683,
 	 *     "monthCount": 56,
 	 *     "yearCount": 6

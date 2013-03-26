@@ -23,6 +23,7 @@
 package net.solarnetwork.central.query.domain;
 
 import java.util.TimeZone;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
@@ -146,6 +147,7 @@ public final class ReportableInterval {
 				.toDateTime(DateTimeZone.forTimeZone(tz)).toLocalDateTime();
 	}
 
+	@JsonIgnore
 	public ReadableInterval getInterval() {
 		return this.interval;
 	}
