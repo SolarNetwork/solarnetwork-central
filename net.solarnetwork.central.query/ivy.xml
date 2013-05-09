@@ -6,5 +6,8 @@
 	</configurations>
 	<dependencies defaultconfmapping="runtime->runtime(default);compile->compile(default)">
 		<dependency org="org.joda" name="com.springsource.org.joda.time" rev="1.6.0" />
+		<dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="1.9.5">
+			<artifact name="jackson-core-asl" type="jar" />
+		</dependency>
     </dependencies>
 </ivy-module>
