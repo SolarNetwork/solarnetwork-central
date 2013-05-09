@@ -26,11 +26,14 @@ import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityNode;
+import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
@@ -107,33 +110,89 @@ public class InstructorSecurityAspect {
 		if ( nodeId == null ) {
 			return;
 		}
-		try {
-			SecurityNode node = SecurityUtils.getCurrentNode();
+		UserNode userNode = userNodeDao.get(nodeId);
+		if ( userNode == null ) {
+			log.warn("Access DENIED to node {}; not found", nodeId);
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, nodeId);
+		}
+
+		final SecurityActor actor = SecurityUtils.getCurrentActor();
+		if ( actor == null ) {
+			log.warn("Access DENIED to node {} for non-authenticated user", nodeId);
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+		}
+
+		// node requires authentication
+		if ( actor instanceof SecurityNode ) {
+			SecurityNode node = (SecurityNode) actor;
 			if ( !nodeId.equals(node.getNodeId()) ) {
 				log.warn("Access DENIED to node {} for node {}; wrong node", nodeId, node.getNodeId());
 				throw new AuthorizationException(node.getNodeId().toString(),
 						AuthorizationException.Reason.ACCESS_DENIED);
 			}
 			return;
-		} catch ( SecurityException e ) {
-			// not a node... continue
 		}
-		final SecurityUser actor = SecurityUtils.getCurrentUser();
-		if ( actor == null ) {
-			log.warn("Access DENIED to node {} for non-authenticated user", nodeId);
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+
+		if ( actor instanceof SecurityUser ) {
+			SecurityUser user = (SecurityUser) actor;
+			if ( !user.getUserId().equals(userNode.getUser().getId()) ) {
+				log.warn("Access DENIED to node {} for user {}; wrong user", nodeId, user.getEmail());
+				throw new AuthorizationException(user.getEmail(),
+						AuthorizationException.Reason.ACCESS_DENIED);
+			}
+			return;
 		}
-		UserNode userNode = userNodeDao.get(nodeId);
-		if ( userNode == null ) {
-			log.warn("Access DENIED to node {} for user {}; not found", nodeId, actor.getEmail());
-			throw new AuthorizationException(actor.getEmail(),
-					AuthorizationException.Reason.ACCESS_DENIED);
+
+		if ( actor instanceof SecurityToken ) {
+			SecurityToken token = (SecurityToken) actor;
+			if ( UserAuthTokenType.User.toString().equals(token.getTokenType()) ) {
+				// user token, so user ID must match node user's ID
+				if ( !token.getUserId().equals(userNode.getUser().getId()) ) {
+					log.warn("Access DENIED to node {} for token {}; wrong user", nodeId,
+							token.getToken());
+					throw new AuthorizationException(token.getToken(),
+							AuthorizationException.Reason.ACCESS_DENIED);
+				}
+				return;
+			}
+			if ( UserAuthTokenType.ReadNodeData.toString().equals(token.getTokenType()) ) {
+				// data token, so token must include the requested node ID
+				if ( token.getTokenIds() == null || !token.getTokenIds().contains(nodeId) ) {
+					log.warn("Access DENIED to node {} for token {}; node not included", nodeId,
+							token.getToken());
+					throw new AuthorizationException(token.getToken(),
+							AuthorizationException.Reason.ACCESS_DENIED);
+				}
+				return;
+			}
 		}
-		if ( !actor.getUserId().equals(userNode.getUser().getId()) ) {
-			log.warn("Access DENIED to node {} for user {}; wrong user", nodeId, actor.getEmail());
-			throw new AuthorizationException(actor.getEmail(),
-					AuthorizationException.Reason.ACCESS_DENIED);
-		}
+
+		log.warn("Access DENIED to node {} for actor {}", nodeId, actor);
+		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+
+		/*
+		 * try { SecurityNode node = SecurityUtils.getCurrentNode(); if (
+		 * !nodeId.equals(node.getNodeId()) ) {
+		 * log.warn("Access DENIED to node {} for node {}; wrong node", nodeId,
+		 * node.getNodeId()); throw new
+		 * AuthorizationException(node.getNodeId().toString(),
+		 * AuthorizationException.Reason.ACCESS_DENIED); } return; } catch (
+		 * SecurityException e ) { // not a node... continue } final
+		 * SecurityUser actor = SecurityUtils.getCurrentUser(); if ( actor ==
+		 * null ) {
+		 * log.warn("Access DENIED to node {} for non-authenticated user",
+		 * nodeId); throw new
+		 * AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
+		 * nodeId); } UserNode userNode = userNodeDao.get(nodeId); if ( userNode
+		 * == null ) {
+		 * log.warn("Access DENIED to node {} for user {}; not found", nodeId,
+		 * actor.getEmail()); throw new AuthorizationException(actor.getEmail(),
+		 * AuthorizationException.Reason.ACCESS_DENIED); } if (
+		 * !actor.getUserId().equals(userNode.getUser().getId()) ) {
+		 * log.warn("Access DENIED to node {} for user {}; wrong user", nodeId,
+		 * actor.getEmail()); throw new AuthorizationException(actor.getEmail(),
+		 * AuthorizationException.Reason.ACCESS_DENIED); }
+		 */
 	}
 
 	/**
