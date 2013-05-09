@@ -145,7 +145,7 @@ public class QuerySecurityAspect {
 			SecurityToken token = (SecurityToken) actor;
 			if ( UserAuthTokenType.User.toString().equals(token.getTokenType()) ) {
 				// user token, so user ID must match node user's ID
-				if ( token.getUserId().equals(userNode.getUser().getId()) ) {
+				if ( !token.getUserId().equals(userNode.getUser().getId()) ) {
 					log.warn("Access DENIED to node {} for token {}; wrong user", nodeId,
 							token.getToken());
 					throw new AuthorizationException(token.getToken(),
