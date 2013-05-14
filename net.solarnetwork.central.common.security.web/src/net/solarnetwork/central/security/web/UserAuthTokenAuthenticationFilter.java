@@ -147,9 +147,11 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 			return;
 		}
 
-		UserDetails user = userDetailsService.loadUserByUsername(data.authToken);
-		if ( user == null ) {
-			log.debug("Unknown auth token {}", data.authToken);
+		final UserDetails user;
+		try {
+			user = userDetailsService.loadUserByUsername(data.authToken);
+		} catch ( AuthenticationException e ) {
+			log.debug("Auth token {} exception: {}", data.authToken, e.getMessage());
 			fail(request, response, new BadCredentialsException("Bad credentials"));
 			return;
 		}
