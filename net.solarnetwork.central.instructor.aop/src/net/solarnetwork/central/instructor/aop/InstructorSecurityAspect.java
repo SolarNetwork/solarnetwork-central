@@ -27,7 +27,6 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
-import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUser;
@@ -99,17 +98,7 @@ public class InstructorSecurityAspect {
 	public void updateInstruction(Long instructionId) {
 	}
 
-	/**
-	 * Allow the current user (or current node) access to node instructions.
-	 * 
-	 * @param nodeId
-	 *        the ID of the node to verify
-	 */
-	@Before("instructionsForNode(nodeId) || queueInstruction(nodeId)")
-	public void userNodeAccessCheck(Long nodeId) {
-		if ( nodeId == null ) {
-			return;
-		}
+	private void performSecurityCheck(Long nodeId) {
 		UserNode userNode = userNodeDao.get(nodeId);
 		if ( userNode == null ) {
 			log.warn("Access DENIED to node {}; not found", nodeId);
@@ -155,44 +144,24 @@ public class InstructorSecurityAspect {
 				}
 				return;
 			}
-			if ( UserAuthTokenType.ReadNodeData.toString().equals(token.getTokenType()) ) {
-				// data token, so token must include the requested node ID
-				if ( token.getTokenIds() == null || !token.getTokenIds().contains(nodeId) ) {
-					log.warn("Access DENIED to node {} for token {}; node not included", nodeId,
-							token.getToken());
-					throw new AuthorizationException(token.getToken(),
-							AuthorizationException.Reason.ACCESS_DENIED);
-				}
-				return;
-			}
 		}
 
 		log.warn("Access DENIED to node {} for actor {}", nodeId, actor);
 		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+	}
 
-		/*
-		 * try { SecurityNode node = SecurityUtils.getCurrentNode(); if (
-		 * !nodeId.equals(node.getNodeId()) ) {
-		 * log.warn("Access DENIED to node {} for node {}; wrong node", nodeId,
-		 * node.getNodeId()); throw new
-		 * AuthorizationException(node.getNodeId().toString(),
-		 * AuthorizationException.Reason.ACCESS_DENIED); } return; } catch (
-		 * SecurityException e ) { // not a node... continue } final
-		 * SecurityUser actor = SecurityUtils.getCurrentUser(); if ( actor ==
-		 * null ) {
-		 * log.warn("Access DENIED to node {} for non-authenticated user",
-		 * nodeId); throw new
-		 * AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
-		 * nodeId); } UserNode userNode = userNodeDao.get(nodeId); if ( userNode
-		 * == null ) {
-		 * log.warn("Access DENIED to node {} for user {}; not found", nodeId,
-		 * actor.getEmail()); throw new AuthorizationException(actor.getEmail(),
-		 * AuthorizationException.Reason.ACCESS_DENIED); } if (
-		 * !actor.getUserId().equals(userNode.getUser().getId()) ) {
-		 * log.warn("Access DENIED to node {} for user {}; wrong user", nodeId,
-		 * actor.getEmail()); throw new AuthorizationException(actor.getEmail(),
-		 * AuthorizationException.Reason.ACCESS_DENIED); }
-		 */
+	/**
+	 * Allow the current user (or current node) access to node instructions.
+	 * 
+	 * @param nodeId
+	 *        the ID of the node to verify
+	 */
+	@Before("instructionsForNode(nodeId) || queueInstruction(nodeId)")
+	public void instructionsForNodeCheck(Long nodeId) {
+		if ( nodeId == null ) {
+			return;
+		}
+		performSecurityCheck(nodeId);
 	}
 
 	/**
@@ -209,36 +178,11 @@ public class InstructorSecurityAspect {
 		if ( instructionId == null ) {
 			return;
 		}
-		try {
-			SecurityNode node = SecurityUtils.getCurrentNode();
-			if ( !instruction.getNodeId().equals(node.getNodeId()) ) {
-				log.warn("Access DENIED to instruction {} for node {}; wrong node", instructionId,
-						node.getNodeId());
-				throw new AuthorizationException(node.getNodeId().toString(),
-						AuthorizationException.Reason.ACCESS_DENIED);
-			}
+		final Long nodeId = instruction.getNodeId();
+		if ( nodeId == null ) {
 			return;
-		} catch ( SecurityException e ) {
-			// not a node... continue
 		}
-		final SecurityUser actor = SecurityUtils.getCurrentUser();
-		if ( actor == null ) {
-			log.warn("Access DENIED to instruction {} for non-authenticated user", instructionId);
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, instructionId);
-		}
-		UserNode userNode = userNodeDao.get(instruction.getNodeId());
-		if ( userNode == null ) {
-			log.warn("Access DENIED to instruction {} for user {}; not found", instructionId,
-					actor.getEmail());
-			throw new AuthorizationException(actor.getEmail(),
-					AuthorizationException.Reason.ACCESS_DENIED);
-		}
-		if ( !actor.getUserId().equals(userNode.getUser().getId()) ) {
-			log.warn("Access DENIED to instruction {} for user {}; wrong user", instructionId,
-					actor.getEmail());
-			throw new AuthorizationException(actor.getEmail(),
-					AuthorizationException.Reason.ACCESS_DENIED);
-		}
+		performSecurityCheck(nodeId);
 	}
 
 	/**
@@ -253,36 +197,14 @@ public class InstructorSecurityAspect {
 		if ( instructionId == null ) {
 			return;
 		}
-		NodeInstruction instruction = nodeInstructionDao.get(instructionId);
-		try {
-			SecurityNode node = SecurityUtils.getCurrentNode();
-			if ( !instruction.getNodeId().equals(node.getNodeId()) ) {
-				log.warn("Access DENIED to instruction {} for node {}; wrong node", instructionId,
-						node.getNodeId());
-				throw new AuthorizationException(node.getNodeId().toString(),
-						AuthorizationException.Reason.ACCESS_DENIED);
-			}
+		final NodeInstruction instruction = nodeInstructionDao.get(instructionId);
+		if ( instruction == null ) {
 			return;
-		} catch ( SecurityException e ) {
-			// not a node... continue
 		}
-		final SecurityUser actor = SecurityUtils.getCurrentUser();
-		if ( actor == null ) {
-			log.warn("Access DENIED to instruction {} for non-authenticated user", instructionId);
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, instructionId);
+		final Long nodeId = instruction.getNodeId();
+		if ( nodeId == null ) {
+			return;
 		}
-		UserNode userNode = userNodeDao.get(instruction.getNodeId());
-		if ( userNode == null ) {
-			log.warn("Access DENIED to instruction {} for user {}; not found", instructionId,
-					actor.getEmail());
-			throw new AuthorizationException(actor.getEmail(),
-					AuthorizationException.Reason.ACCESS_DENIED);
-		}
-		if ( !actor.getUserId().equals(userNode.getUser().getId()) ) {
-			log.warn("Access DENIED to instruction {} for user {}; wrong user", instructionId,
-					actor.getEmail());
-			throw new AuthorizationException(actor.getEmail(),
-					AuthorizationException.Reason.ACCESS_DENIED);
-		}
+		performSecurityCheck(nodeId);
 	}
 }
