@@ -66,6 +66,7 @@
 	
 	<util:map id="datumControllerTypeMap" value-type="java.lang.Class">
 		<entry key="consumption" value="#{T(net.solarnetwork.central.datum.domain.ConsumptionDatum)}"/>
+		<entry key="hardwarecontrol" value="#{T(net.solarnetwork.central.datum.domain.HardwareControlDatum)}"/>
 		<entry key="power" value="#{T(net.solarnetwork.central.datum.domain.PowerDatum)}"/>
 	</util:map>
 	
