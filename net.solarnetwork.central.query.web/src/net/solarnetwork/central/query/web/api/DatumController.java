@@ -24,7 +24,6 @@ package net.solarnetwork.central.query.web.api;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Resource;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.query.biz.QueryBiz;
@@ -33,6 +32,7 @@ import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.JodaDateFormatEditor;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -58,7 +58,6 @@ public class DatumController extends WebServiceControllerSupport {
 
 	private final QueryBiz queryBiz;
 
-	@Resource(name = "datumControllerTypeMap")
 	private Map<String, Class<? extends NodeDatum>> typeMap;
 
 	private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT };
@@ -94,6 +93,7 @@ public class DatumController extends WebServiceControllerSupport {
 				.toLowerCase());
 		final Class<? extends NodeDatum> datumClass = typeMap.get(datumType);
 		if ( datumClass == null ) {
+			log.info("Datum type {} not found in {}", datumType, typeMap);
 			return new Response<List<? extends NodeDatum>>(false, "unsupported.type",
 					"Unsupported datum type", null);
 		}
@@ -108,8 +108,13 @@ public class DatumController extends WebServiceControllerSupport {
 		return getDatumData(cmd);
 	}
 
-	public void setTypeMap(Map<String, Class<? extends NodeDatum>> typeMap) {
-		this.typeMap = typeMap;
+	// this awful mess is because in OpenJDK on BSD, Spring could not wire up the util:map properly!
+	// no amount of tinkering would work, other than this nastiness
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Autowired(required = true)
+	@Qualifier("datumControllerTypeMap")
+	public void setTypeMap(Object typeMap) {
+		this.typeMap = (Map) typeMap;
 	}
 
 	public void setRequestDateFormats(String[] requestDateFormats) {
