@@ -27,7 +27,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.UUID;
-import net.solarnetwork.io.Base91;
+import net.solarnetwork.io.RFC1924OutputStream;
+import org.springframework.util.FileCopyUtils;
 
 /**
  * Constants for common user items.
@@ -82,8 +83,9 @@ public final class UserBizConstants {
 			dos.flush();
 			dos.close();
 			byte[] uuidBytes = byos.toByteArray();
-			byte[] base91 = Base91.encode(uuidBytes);
-			return new String(base91, "US-ASCII");
+			byos.reset();
+			FileCopyUtils.copy(uuidBytes, new RFC1924OutputStream(byos));
+			return byos.toString("US-ASCII");
 		} catch ( UnsupportedEncodingException e ) {
 			throw new RuntimeException(e);
 		} catch ( IOException e ) {
