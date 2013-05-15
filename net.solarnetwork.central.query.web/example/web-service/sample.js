@@ -1,4 +1,4 @@
-var SNDemo = {};
+var SNAPI = {};
 
 /**
  * Generate the authorization header value for a set of request parameters.
@@ -21,9 +21,10 @@ var SNDemo = {};
  * @param {String} params.secret the authentication token secret
  * @return {String} the authorization header value
  */
-SNDemo.generateAuthorizationHeaderValue = function(params) {
+SNAPI.generateAuthorizationHeaderValue = function(params) {
 	var msg = 
-		(params.method === undefined ? 'GET' : params.method.toUpperCase()) + '\n\n\n'
+		(params.method === undefined ? 'GET' : params.method.toUpperCase()) + '\n\n'
+		+(params.contentType === undefined ? '' : params.contentType) + '\n'
 		+params.date +'\n'
 		+params.path;
 	var hash = CryptoJS.HmacSHA1(msg, params.secret);
@@ -41,7 +42,7 @@ SNDemo.generateAuthorizationHeaderValue = function(params) {
  *                        the leading '?' character
  * @return {Object} the parsed query parameters, as a parameter object
  */
-SNDemo.parseURLQueryTerms = function(search) {
+SNAPI.parseURLQueryTerms = function(search) {
 	var params = {};
 	var pairs;
 	var pair;
@@ -55,7 +56,7 @@ SNDemo.parseURLQueryTerms = function(search) {
 		for ( i = 0, len = pairs.length; i < len; i++ ) {
 			pair = pairs[i].split('=', 2);
 			if ( pair.length === 2 ) {
-				params[pair[0]] = pair[1];
+				params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
 			}
 		}
 	}
@@ -72,13 +73,13 @@ SNDemo.parseURLQueryTerms = function(search) {
  * @return {String} path the canonicalized path value to use in the SolarNetworkWS 
  *                       authorization header value
  */
-SNDemo.authURLPath = function(url) {
+SNAPI.authURLPath = function(url, data) {
 	var a = document.createElement('a');
 	a.href = url;
 	var path = a.pathname;
 	
 	// handle query params, which must be sorted
-	var params = SNDemo.parseURLQueryTerms(a.search);
+	var params = SNAPI.parseURLQueryTerms(data === undefined ? a.search : data);
 	var sortedKeys = [], key = undefined;
 	var i, len;
 	var first = true;
@@ -108,43 +109,52 @@ SNDemo.authURLPath = function(url) {
  * headers to the request.
  * 
  * <p>This method will construct the <code>X-SN-Date</code> and <code>Authorization</code>
- * header values needed to invoke the web service, the invoke it and call the provided
- * callback function on success. The callback function is passed to the jQuery 
- * <code>done()</code> function, so accepts the same parameters as that function.</p> 
+ * header values needed to invoke the web service. It returns a jQuery AJAX object,
+ * so you can call <code>.done()</code> or <code>.fail()</code> on that to handle
+ * the response.</p> 
  * 
  * @param {String} url the web service URL to invoke
- * @param {Function} callback the function to call on success
+ * @param {String} method the HTTP method to use; e.g. GET or POST
+ * @param {String} data the HTTP data to send, e.g. for POST
+ * @param {String} contentType the HTTP content type; defaults to 
+                               <code>application/x-www-form-urlencoded; charset=UTF-8</code>
+ * @return {Object} jQuery AJAX object
  */
-SNDemo.requestJSON = function(url, callback, method) {
-	method = (method === undefined ? 'GET' : method);
-	$.ajax({
+SNAPI.requestJSON = function(url, method, data, contentType) {
+	method = (method === undefined ? 'GET' : method.toUpperCase());
+	var cType = (method === 'POST' && contentType === undefined 
+			? 'application/x-www-form-urlencoded; charset=UTF-8' : contentType);
+	var ajax = $.ajax({
 		type: method,
 		url: url,
 		dataType: 'json',
+		data: data,
+		contentType: cType,
 		beforeSend: function(xhr) {
 			// get a date, which we must include as a header as well as include in the 
 			// generated authorization hash
-			var date = new Date().toUTCString();
+			var date = new Date().toUTCString();		
 			
 			// construct our canonicalized path value from our URL
-			var path = SNDemo.authURLPath(url);
+			var path = SNAPI.authURLPath(url, data);
 			
 			// generate the authorization hash value now (cryptographically signing our request)
-			var auth = SNDemo.generateAuthorizationHeaderValue({
+			var auth = SNAPI.generateAuthorizationHeaderValue({
 				method: method,
 				date: date,
 				path: path,
-				token: SNDemo.ajaxCredentials.token,
-				secret: SNDemo.ajaxCredentials.secret
+				token: SNAPI.ajaxCredentials.token,
+				secret: SNAPI.ajaxCredentials.secret,
+				data: data,
+				contentType: cType
 			});
 			
 			// set the headers on our request
 			xhr.setRequestHeader('X-SN-Date', date);
 			xhr.setRequestHeader('Authorization', 'SolarNetworkWS ' +auth);
 		}
-	}).done(callback).fail(function(xhr, status, reason) {
-		alert(reason + ': ' +status +' (' +xhr.status +')');
 	});
+	return ajax;
 };
 
 $(document).ready(function() {
@@ -181,14 +191,27 @@ $(document).ready(function() {
 		var params = getCredentials();
 		params.method = $(form).find('input[name=method]:checked').val();
 		params.path = form.elements['path'].value;
-		SNDemo.ajaxCredentials = params;
-		var authHeader = SNDemo.generateAuthorizationHeaderValue(params);
+		if ( params.method == 'POST' ) {
+			// move any parameters into post body
+			var a = document.createElement('a');
+			a.href = params.path;
+			params.path = a.pathname;
+			params.data = a.search;
+			if ( params.data.indexOf('?') === 0 ) {
+				params.data = params.data.substring(1);
+			}
+			params.contentType = 'application/x-www-form-urlencoded; charset=UTF-8';
+		}
+		SNAPI.ajaxCredentials = params;
+		var authHeader = SNAPI.generateAuthorizationHeaderValue(params);
  	   	showResult('Date: ' +params.date 
 	   		+'\nAuthorization: ' +authHeader
 	   		+'\nCurl: ' +'curl -H \'X-SN-Date: '+params.date +'\' -H \'Authorization: SolarNetworkWS ' 
 	   			+authHeader +'\' \'' +params.host +params.path +'\'');
- 	   	SNDemo.requestJSON(params.host +params.path, function(data) {
+ 	   	SNAPI.requestJSON(params.host +params.path, params.method, params.data).done(function (data) {
  	   		showResult(JSON.stringify(data, null, 2));
- 	   	}, params.method);
+ 	   	}).fail(function(xhr, status, reason) {
+			alert(reason + ': ' +status +' (' +xhr.status +')');
+		});
 	});
 });

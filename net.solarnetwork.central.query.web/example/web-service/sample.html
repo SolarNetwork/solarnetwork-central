@@ -65,6 +65,9 @@
 								<option value="/solarquery/api/v1/sec/datum/query?nodeId={nodeId}&startDate=2013-01-01&endDate=2013-02-01&type=Consumption">Consumption</option>
 								<option value="/solarquery/api/v1/sec/datum/query?nodeId={nodeId}&startDate=2013-01-01&endDate=2013-02-01&type=Power">Power</option>
 							</optgroup>
+							<optgroup label="Instructions">
+								<option value="/solaruser/api/v1/sec/instr/add?nodeId={nodeId}&topic=SetControlParameter&parameters%5B0%5D.name=/power/switch/1&parameters%5B0%5D.value=1">Set control parameter</option>
+							</optgroup>
 						</select></label>
 						
 					</div>
