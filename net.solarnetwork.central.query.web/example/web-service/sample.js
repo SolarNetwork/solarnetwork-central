@@ -1,6 +1,28 @@
 var SNAPI = {};
 
 /**
+ * Generate the raw authorization message value.
+ * 
+ * This value produces the data that must be hashed to form the HTTP
+ * authorization data value.
+ * 
+ * @param {Object} params the request parameters
+ * @param {String} params.method the HTTP request method, or 'GET' if not defined
+ * @param {String} params.contentType the HTTP content type, for HTTP POST requests
+ * @param {String} params.date the formatted HTTP request date
+ * @param {String} params.path the SolarNetworkWS canonicalized path value
+ * @return {String} the authorization message value
+ */
+SNAPI.generateAuthorizationMessage = function(params) {
+	var msg = 
+		(params.method === undefined ? 'GET' : params.method.toUpperCase()) + '\n\n'
+		+(params.contentType === undefined ? '' : params.contentType) + '\n'
+		+params.date +'\n'
+		+params.path;
+	return msg;
+};
+
+/**
  * Generate the authorization header value for a set of request parameters.
  * 
  * <p>This returns just the authorization header value, without the scheme. For 
@@ -14,19 +36,13 @@ var SNAPI = {};
  * supported.</p>
  * 
  * @param {Object} params the request parameters
- * @param {String} params.method the HTTP request method
- * @param {String} params.date the formatted HTTP request date
- * @param {String} params.path the SolarNetworkWS canonicalized path value
  * @param {String} params.token the authentication token
  * @param {String} params.secret the authentication token secret
  * @return {String} the authorization header value
+ * @see SNAPI.generateAuthorizationMessage()
  */
 SNAPI.generateAuthorizationHeaderValue = function(params) {
-	var msg = 
-		(params.method === undefined ? 'GET' : params.method.toUpperCase()) + '\n\n'
-		+(params.contentType === undefined ? '' : params.contentType) + '\n'
-		+params.date +'\n'
-		+params.path;
+	var msg = SNAPI.generateAuthorizationMessage(params);
 	var hash = CryptoJS.HmacSHA1(msg, params.secret);
 	var authHeader = params.token +':' +CryptoJS.enc.Base64.stringify(hash);
 	return authHeader;
@@ -179,6 +195,13 @@ $(document).ready(function() {
 		resultEl.html(window.prettyPrintOne(resultEl.text()));
 	};
 	
+	var showAuthSupport = function(params, authHeader) {
+		$('#auth-header').text('Authorization: SolarNetworkWS ' +authHeader);
+		$('#auth-message').text(SNAPI.generateAuthorizationMessage(params));
+		$('#curl-command').text('curl -H \'X-SN-Date: '+params.date +'\' -H \'Authorization: SolarNetworkWS ' 
+	   			+authHeader +'\' \'' +params.host +params.path +'\'');
+	};
+	
 	$('#shortcuts').change(function(event) {
 		event.preventDefault();
 		var form = this.form;
@@ -203,14 +226,16 @@ $(document).ready(function() {
 			params.contentType = 'application/x-www-form-urlencoded; charset=UTF-8';
 		}
 		SNAPI.ajaxCredentials = params;
+
 		var authHeader = SNAPI.generateAuthorizationHeaderValue(params);
- 	   	showResult('Date: ' +params.date 
-	   		+'\nAuthorization: ' +authHeader
-	   		+'\nCurl: ' +'curl -H \'X-SN-Date: '+params.date +'\' -H \'Authorization: SolarNetworkWS ' 
-	   			+authHeader +'\' \'' +params.host +params.path +'\'');
- 	   	SNAPI.requestJSON(params.host +params.path, params.method, params.data).done(function (data) {
- 	   		showResult(JSON.stringify(data, null, 2));
- 	   	}).fail(function(xhr, status, reason) {
+				
+		// show some developer info in the auth-message area
+		showAuthSupport(params, authHeader);
+		
+		// make HTTP request and show the results
+		SNAPI.requestJSON(params.host +params.path, params.method, params.data).done(function (data) {
+			showResult(JSON.stringify(data, null, 2));
+		}).fail(function(xhr, status, reason) {
 			alert(reason + ': ' +status +' (' +xhr.status +')');
 		});
 	});
