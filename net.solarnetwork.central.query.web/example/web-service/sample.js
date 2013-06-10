@@ -195,11 +195,29 @@ $(document).ready(function() {
 		resultEl.html(window.prettyPrintOne(resultEl.text()));
 	};
 	
-	var showAuthSupport = function(params, authHeader) {
+	var showAuthSupport = function(params) {
+		var url = params.host +params.path;
+		var path = SNAPI.authURLPath(url, params.data);
+		var cType = (params.method === 'POST' && params.contentType === undefined 
+				? 'application/x-www-form-urlencoded; charset=UTF-8' : params.contentType);
+		var submitParams = {
+			method: params.method,
+			date: params.date,
+			path: path,
+			token: params.token,
+			secret: params.secret,
+			data: params.data,
+			contentType: cType
+		};
+		var authHeader = SNAPI.generateAuthorizationHeaderValue(submitParams);
+				
 		$('#auth-header').text('Authorization: SolarNetworkWS ' +authHeader);
-		$('#auth-message').text(SNAPI.generateAuthorizationMessage(params));
+		$('#auth-message').text(SNAPI.generateAuthorizationMessage(submitParams));
 		$('#curl-command').text('curl -H \'X-SN-Date: '+params.date +'\' -H \'Authorization: SolarNetworkWS ' 
-	   			+authHeader +'\' \'' +params.host +params.path +'\'');
+	   			+authHeader +'\' \'' +params.host +params.path +'\''
+	   			+(params.data !== undefined && params.method === 'POST' 
+	   				? ' -H \'Content-Type: ' + cType +'\' -d \'' +params.data +'\'' 
+	   				: ''));
 	};
 	
 	$('#shortcuts').change(function(event) {
@@ -227,10 +245,8 @@ $(document).ready(function() {
 		}
 		SNAPI.ajaxCredentials = params;
 
-		var authHeader = SNAPI.generateAuthorizationHeaderValue(params);
-				
 		// show some developer info in the auth-message area
-		showAuthSupport(params, authHeader);
+		showAuthSupport(params);
 		
 		// make HTTP request and show the results
 		SNAPI.requestJSON(params.host +params.path, params.method, params.data).done(function (data) {
