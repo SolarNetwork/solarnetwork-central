@@ -90,14 +90,6 @@ $BODY$BEGIN
 END;$BODY$
   LANGUAGE 'plpgsql' VOLATILE;
 
-CREATE OR REPLACE FUNCTION solarrep.trigger_rep_stale_datum()
-  RETURNS "trigger" AS
-$BODY$BEGIN
-	PERFORM solarrep.populate_rep_stale_datum(NEW.created, NULL, TG_TABLE_NAME::text);
-	RETURN NEW;
-END;$BODY$
-  LANGUAGE 'plpgsql' VOLATILE;
-
 DROP TRIGGER IF EXISTS populate_rep_stale_datum ON solarnet.sn_consum_datum;
 CREATE TRIGGER populate_rep_stale_datum
   AFTER INSERT OR UPDATE
@@ -144,7 +136,9 @@ CREATE OR REPLACE FUNCTION solarrep.process_one_rep_stale_node_datum()
 $BODY$
 DECLARE
 	stale solarrep.rep_stale_node_datum;
-	curs CURSOR FOR SELECT * FROM solarrep.rep_stale_node_datum ORDER BY ts FOR UPDATE;
+	curs CURSOR FOR SELECT * FROM solarrep.rep_stale_node_datum 
+					ORDER BY agg_kind DESC, ts ASC, node_id ASC, datum_kind ASC
+					FOR UPDATE;
 	func_name text;
 	func_agg text;
 	trunc_kind text;
@@ -209,93 +203,6 @@ DECLARE
 BEGIN
 	LOOP
 		SELECT * INTO result_count FROM solarrep.process_one_rep_stale_node_datum();
-		IF result_count < 1 THEN
-			RETURN;
-		END IF;
-	END LOOP;
-END;$BODY$
-LANGUAGE 'plpgsql' VOLATILE;
-
- /**************************************************************************************************
- * FUNCTION solarrep.process_one_rep_stale_datum()
- * 
- * Process a single row from the rep_stale_datum table, calling the appropriate aggregation
- * query based on the row data. This function works by naming conventions. 
- * The rep_stale_datum.datum_kind values are assumed to be named 'sn_X', referring to table
- * names in the solarnet schema. A corresponding 'populate_rep_X_Y' function will be called, 
- * where Y is derived from rep_stal_datum.agg_kind:
- * 
- *   d -> 'daily'
- *   h -> 'hourly'
- *
- * The function is expected to accept a RECORD type of the table 'solarnet.X'.
- * 
- * For example, a datum_kind value of 'sn_price_datum' and agg_kind 'd' would result in a function
- * named 'populate_rep_price_datum_daily', which will be passed rows from the 
- * 'solarnet.sn_power_datum' table.
- * 
- * @return count of rows processed (i.e. 0 or 1)
- */
-CREATE OR REPLACE FUNCTION solarrep.process_one_rep_stale_datum()
-  RETURNS INTEGER AS
-$BODY$
-DECLARE
-	stale solarrep.rep_stale_node_datum;
-	curs CURSOR FOR SELECT * FROM solarrep.rep_stale_node_datum ORDER BY ts FOR UPDATE;
-	func_name text;
-	func_agg text;
-	trunc_kind text;
-	sql_call text;
-	max_date timestamp with time zone;
-	result integer := 0;
-BEGIN
-	OPEN curs;
-	FETCH NEXT FROM curs INTO stale;
-	
-	IF FOUND THEN
-		CASE stale.agg_kind
-			WHEN 'h' THEN
-				func_agg := '_hourly';
-				trunc_kind := 'hour';
-				max_date := stale.ts + INTERVAL '1 hour';
-			ELSE
-				func_agg := '_daily';
-				trunc_kind := 'day';
-				max_date := stale.ts + INTERVAL '1 day';
-		END CASE;
-		func_name := 'populate_rep_' || substring(stale.datum_kind FROM 4) || func_agg;
-		-- find all records in aggregate range, grouped by source, to run with
-		sql_call := 'SELECT solarrep.' || func_name || '(c) FROM solarnet.' ||stale.datum_kind || ' c'
-			|| ' where c.id in (select max(id) from solarnet.' || stale.datum_kind 
-			|| ' where node_id = $1 and created >= $2 and created < $3 and prev_datum IS NOT NULL'
-			|| ' group by date_trunc(''' || trunc_kind || ''', created), loc_id, source_id)';
-	
-		--RAISE NOTICE 'Calling aggregate SQL %; %, %, %', sql_call, stale.node_id, stale.ts, max_date;
-		EXECUTE sql_call USING stale.node_id, stale.ts, max_date;
-	
-		DELETE FROM solarrep.rep_stale_node_datum WHERE CURRENT OF curs;
-		result := 1;
-	END IF;
-	
-	CLOSE curs;
-	RETURN result;
-END;$BODY$
-LANGUAGE 'plpgsql' VOLATILE;
-
-/**************************************************************************************************
- * FUNCTION solarrep.process_rep_stale_datum()
- * 
- * Process all rows in rep_stale_datum by repeatedly calling 
- * solarrep.process_one_rep_stale_datum() until no rows remain.
- */
-CREATE OR REPLACE FUNCTION solarrep.process_rep_stale_datum()
-  RETURNS void AS
-$BODY$
-DECLARE
-	result_count INTEGER;
-BEGIN
-	LOOP
-		SELECT * INTO result_count FROM solarrep.process_one_rep_stale_datum();
 		IF result_count < 1 THEN
 			RETURN;
 		END IF;
