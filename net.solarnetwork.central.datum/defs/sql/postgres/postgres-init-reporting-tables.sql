@@ -2,6 +2,27 @@ CREATE SCHEMA solarrep;
 
 /* =========================================================================
    =========================================================================
+   STALE DATA
+   =========================================================================
+   ========================================================================= */
+
+CREATE TABLE solarrep.rep_stale_node_datum (
+	ts			TIMESTAMP WITH TIME ZONE NOT NULL,
+	node_id 	BIGINT NOT NULL,
+	agg_kind 	CHARACTER(1) NOT NULL,
+	datum_kind 	CHARACTER VARYING(64) NOT NULL,
+	PRIMARY KEY (ts, node_id, agg_kind, datum_kind)
+);
+
+CREATE TABLE solarrep.rep_stale_datum (
+	ts			TIMESTAMP WITH TIME ZONE NOT NULL,
+	agg_kind 	CHARACTER(1) NOT NULL,
+	datum_kind 	CHARACTER VARYING(64) NOT NULL,
+	PRIMARY KEY (ts, agg_kind, datum_kind)
+);
+
+/* =========================================================================
+   =========================================================================
    CONSUMPTION REPORTING
    =========================================================================
    ========================================================================= */

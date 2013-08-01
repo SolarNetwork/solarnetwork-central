@@ -309,6 +309,24 @@ $BODY$
 $BODY$
   LANGUAGE 'sql' STABLE;
 
+/**************************************************************************************************
+ * FUNCTION solarnet.get_node_timezone(bigint)
+ * 
+ * Return a node's time zone.
+ * 
+ * @param bigint the node ID
+ * @return time zone name, e.g. 'Pacific/Auckland'
+ */
+CREATE OR REPLACE FUNCTION solarnet.get_node_timezone(bigint)
+  RETURNS text AS
+$BODY$
+	SELECT l.time_zone 
+	FROM solarnet.sn_node n
+	INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	WHERE n.node_id = $1
+$BODY$
+  LANGUAGE 'sql' STABLE;
+
 /* =========================================================================
    =========================================================================
    PRICE

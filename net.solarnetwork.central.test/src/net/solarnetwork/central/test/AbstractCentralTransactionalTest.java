@@ -24,13 +24,20 @@
 
 package net.solarnetwork.central.test;
 
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.List;
 import java.util.TimeZone;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.transaction.BeforeTransaction;
@@ -246,6 +253,17 @@ public abstract class AbstractCentralTransactionalTest extends
 		jdbcTemplate.update(
 				"insert into solarnet.sn_hardware_control (id,hw_id,ctl_name,unit) values (?,?,?,?)",
 				controlId, hardwareId, "Test Hardware Control", "W");
+	}
+
+	protected void processReportingStaleData() {
+		List<SqlParameter> params = Collections.emptyList();
+		jdbcTemplate.call(new CallableStatementCreator() {
+
+			@Override
+			public CallableStatement createCallableStatement(Connection con) throws SQLException {
+				return con.prepareCall("{call solarrep.process_rep_stale_node_datum()}");
+			}
+		}, params);
 	}
 
 }
