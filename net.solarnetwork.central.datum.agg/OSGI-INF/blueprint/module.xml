@@ -20,7 +20,8 @@
 	<!-- Configuration -->
 	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.agg">
-		<beans:prop key="staleNodeDatumProcessor.maximumRowCount">6</beans:prop>
+		<beans:prop key="staleNodeDatumProcessor.maximumRowCount">50</beans:prop>
+		<beans:prop key="staleNodeDatumProcessor.jobCron">0 0/1 * * * ?</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -38,6 +39,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="jobCron" value="${staleNodeDatumProcessor.jobCron}"/>
 		<property name="jdbcCall" value="{? = call solarrep.process_one_rep_stale_node_datum()}"/>
 		<property name="jobId" value="StaleNodeDatumProcessor"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleNodeDatumProcessor"/>
