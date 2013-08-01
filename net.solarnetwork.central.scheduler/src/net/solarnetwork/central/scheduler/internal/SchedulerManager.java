@@ -101,6 +101,11 @@ public class SchedulerManager extends EventHandlerSupport implements
 		} else if ( TEST_TOPIC.equals(event.getTopic()) ) {
 			Event ack = SchedulerUtils.createJobCompleteEvent(event);
 			eventAdmin.postEvent(ack);
+
+			// post "we're ready" event
+			Map<String, Object> props = new HashMap<String, Object>(1);
+			Event e = new Event(SchedulerConstants.TOPIC_SCHEDULER_READY, props);
+			eventAdmin.postEvent(e);
 		}
 	}
 

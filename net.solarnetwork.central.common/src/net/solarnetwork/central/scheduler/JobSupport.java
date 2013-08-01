@@ -34,9 +34,9 @@ import org.osgi.service.event.EventAdmin;
  * @version $Revision$
  */
 public abstract class JobSupport extends EventHandlerSupport {
-	
-	private EventAdmin eventAdmin;
-	
+
+	private final EventAdmin eventAdmin;
+
 	/**
 	 * Constructor.
 	 * 
@@ -51,6 +51,10 @@ public abstract class JobSupport extends EventHandlerSupport {
 	protected final void handleEventInternal(Event event) throws Exception {
 		Event ack = null;
 		try {
+			if ( event.getTopic().equals(SchedulerConstants.TOPIC_SCHEDULER_READY) ) {
+				schedulerReady(event);
+				return;
+			}
 			if ( handleJob(event) ) {
 				ack = SchedulerUtils.createJobCompleteEvent(event);
 			} else {
@@ -67,12 +71,36 @@ public abstract class JobSupport extends EventHandlerSupport {
 	}
 
 	/**
+	 * Handle the "scheduler ready" event, to give class a chance to perform
+	 * startup tasks.
+	 * 
+	 * @param event
+	 *        the event
+	 * @throws Exception
+	 *         if any error occurs
+	 */
+	protected void schedulerReady(Event event) throws Exception {
+		// subclasses can override
+	}
+
+	/**
 	 * Handle the job.
 	 * 
-	 * @param job the job details
-	 * @return <em>true</em> if job completed successfully, <em>false</em> otherwise
-	 * @throws Exception if any error occurs
+	 * @param job
+	 *        the job details
+	 * @return <em>true</em> if job completed successfully, <em>false</em>
+	 *         otherwise
+	 * @throws Exception
+	 *         if any error occurs
 	 */
 	protected abstract boolean handleJob(Event job) throws Exception;
-	
+
+	/**
+	 * Get the EventAdmin.
+	 * 
+	 * @return the EventAdmin
+	 */
+	protected EventAdmin getEventAdmin() {
+		return eventAdmin;
+	}
 }
