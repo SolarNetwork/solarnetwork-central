@@ -137,8 +137,6 @@ CREATE TABLE solarnet.sn_weather_datum (
 	CONSTRAINT sn_weather_datum_loc_unq UNIQUE (info_date, loc_id)
 );
 
-CREATE INDEX weather_datum_created_idx ON solarnet.sn_weather_datum (created);
-
 CLUSTER solarnet.sn_weather_datum USING sn_weather_datum_loc_unq;
 
 /* --- Weather stored procedures / triggers */
