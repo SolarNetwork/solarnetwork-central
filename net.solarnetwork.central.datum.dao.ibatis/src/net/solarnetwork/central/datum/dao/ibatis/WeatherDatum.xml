@@ -16,7 +16,7 @@
 		VALUES
 			(#id#
 			<isNotNull prepend="," property="created">#created#</isNotNull>
-			, #locationId#, #infoDate#, #temperatureCelcius#,
+			, #locationId#, #infoDate#, #temperatureCelsius#,
 			#skyConditions#, #humidity#, #barometricPressure#, 
 			#barometerDelta#, #visibility#, #uvIndex#, #dewPoint#)
 	</insert>
@@ -26,7 +26,7 @@
 			created = #created#,
 			loc_id = #locationId#, 
 			info_date = #infoDate#,
-			temperature = #temperatureCelcius#,
+			temperature = #temperatureCelsius#,
 			sky = #skyConditions#,
 			humidity = #humidity#,
 			bar = #barometricPressure#,
@@ -58,7 +58,7 @@
 		<result column="sn_weather_datum_created" property="created"/>
 		<result column="sn_weather_datum_loc_id" property="locationId"/>
 		<result column="sn_weather_datum_info_date" property="infoDate"/>
-		<result column="sn_weather_datum_temperature" property="temperatureCelcius"/>
+		<result column="sn_weather_datum_temperature" property="temperatureCelsius"/>
 		<result column="sn_weather_datum_sky" property="skyConditions"/>
 		<result column="sn_weather_datum_humidity" property="humidity"/>
 		<result column="sn_weather_datum_bar" property="barometricPressure"/>
@@ -91,7 +91,7 @@
 		<result column="created" property="localDateTime"/>
 		<result column="loc_id" property="locationId"/>
 		<result column="info_date" property="infoDate"/>
-		<result column="temperature" property="temperatureCelcius"/>
+		<result column="temperature" property="temperatureCelsius"/>
 		<result column="sky" property="skyConditions"/>
 		<result column="humidity" property="humidity"/>
 		<result column="bar" property="barometricPressure"/>

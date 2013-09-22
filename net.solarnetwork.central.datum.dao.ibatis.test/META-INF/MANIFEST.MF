@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Datum DAO Test
 Bundle-SymbolicName: net.solarnetwork.central.datum.dao.ibatis.test
-Bundle-Version: 1.2.0
+Bundle-Version: 1.2.1
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
@@ -14,8 +14,8 @@ Import-Package:
  net.solarnetwork.central.dao.ibatis;version="[1.4,2.0)",
  net.solarnetwork.central.domain;version="[1.0,2.0)",
  net.solarnetwork.central.datum.dao;version="[1.0,2.0)",
- net.solarnetwork.central.datum.dao.ibatis;version="[1.1,2.0)",
- net.solarnetwork.central.datum.domain;version="[1.5,2.0)",
+ net.solarnetwork.central.datum.dao.ibatis;version="1.7.1",
+ net.solarnetwork.central.datum.domain;version="1.6.2",
  net.solarnetwork.central.test;version="[1.0,2.0)",
  org.apache.commons.codec.digest;version="[1.4,2.0)",
  org.apache.commons.logging;version="[1.1,1.2)",

@@ -67,7 +67,7 @@ public class IbatisWeatherDatumDaoTest extends AbstractIbatisDaoTestSupport {
 		datum.setPosted(new DateTime());
 		datum.setSkyConditions("clear");
 		datum.setSourceId("test.source");
-		datum.setTemperatureCelcius(1.5F);
+		datum.setTemperatureCelsius(1.5F);
 		datum.setUvIndex(1);
 		datum.setVisibility(1.2F);
 		Long id = dao.store(datum);
@@ -87,7 +87,7 @@ public class IbatisWeatherDatumDaoTest extends AbstractIbatisDaoTestSupport {
 		assertEquals(src.getInfoDate(), entity.getInfoDate());
 		assertEquals(src.getLocationId(), entity.getLocationId());
 		assertEquals(src.getSkyConditions(), entity.getSkyConditions());
-		assertEquals(src.getTemperatureCelcius(), entity.getTemperatureCelcius());
+		assertEquals(src.getTemperatureCelsius(), entity.getTemperatureCelsius());
 		assertEquals(src.getUvIndex(), entity.getUvIndex());
 		assertEquals(src.getVisibility(), entity.getVisibility());
 	}

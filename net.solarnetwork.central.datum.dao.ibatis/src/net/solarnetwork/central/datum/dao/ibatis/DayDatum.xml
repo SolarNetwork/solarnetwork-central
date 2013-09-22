@@ -47,8 +47,8 @@
 		<result column="sn_day_datum_day" property="day"/>
 		<result column="sn_day_datum_sunrise" property="sunrise"/>
 		<result column="sn_day_datum_sunset" property="sunset"/>
-		<result column="sn_day_datum_temperature_h" property="temperatureHighCelcius"/>
-		<result column="sn_day_datum_temperature_l" property="temperatureLowCelcius"/>
+		<result column="sn_day_datum_temperature_h" property="temperatureHighCelsius"/>
+		<result column="sn_day_datum_temperature_l" property="temperatureLowCelsius"/>
 		<result column="sn_day_datum_sky" property="skyConditions"/>
 	</resultMap>
 	
@@ -80,10 +80,10 @@
 		<result column="sunset" property="sunset"/>
 		<result column="latitude" property="latitude"/>
 		<result column="longitude" property="longitude"/>
-		<result column="temperature_h" property="temperatureHighCelcius"/>
-		<result column="temperature_l" property="temperatureLowCelcius"/>
-		<result column="temperature_s" property="temperatureStartCelcius"/>
-		<result column="temperature_e" property="temperatureEndCelcius"/>
+		<result column="temperature_h" property="temperatureHighCelsius"/>
+		<result column="temperature_l" property="temperatureLowCelsius"/>
+		<result column="temperature_s" property="temperatureStartCelsius"/>
+		<result column="temperature_e" property="temperatureEndCelsius"/>
 		<result column="sky" property="skyConditions"/>
 	</resultMap>
 	
@@ -147,8 +147,8 @@
 	
 	<resultMap id="DayDatumAggResult" class="DayDatum">
 		<result column="day" property="day"/>
-		<result column="temperature_h" property="temperatureHighCelcius"/>
-		<result column="temperature_l" property="temperatureLowCelcius"/>
+		<result column="temperature_h" property="temperatureHighCelsius"/>
+		<result column="temperature_l" property="temperatureLowCelsius"/>
 	</resultMap>
 	
 	<select id="find-DayDatum-for-agg-month" resultMap="DayDatumAggResult">
