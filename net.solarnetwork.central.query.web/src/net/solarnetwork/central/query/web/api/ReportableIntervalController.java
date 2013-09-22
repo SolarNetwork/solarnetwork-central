@@ -120,7 +120,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	 * single node.
 	 * 
 	 * <p>
-	 * This method only supports returning the soruce ID set for a <b>single</b>
+	 * This method only supports returning the source ID set for a <b>single</b>
 	 * data type ({@link ReportableIntervalCommand#getTypes()}. If more than one
 	 * data type value is provided, only the first type will be used.
 	 * </p>
