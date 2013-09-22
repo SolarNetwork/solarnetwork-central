@@ -147,6 +147,24 @@ public final class ReportableInterval {
 				.toDateTime(DateTimeZone.forTimeZone(tz)).toLocalDateTime();
 	}
 
+	/**
+	 * Get the end date, in milliseconds since the epoch.
+	 * 
+	 * @return the end date in milliseconds
+	 */
+	public Long getEndDateMillis() {
+		return interval.getEndMillis();
+	}
+
+	/**
+	 * Get the start date, in milliseconds since the epoch.
+	 * 
+	 * @return the start date in milliseconds
+	 */
+	public Long getStartDateMillis() {
+		return interval.getStartMillis();
+	}
+
 	@JsonIgnore
 	public ReadableInterval getInterval() {
 		return this.interval;
