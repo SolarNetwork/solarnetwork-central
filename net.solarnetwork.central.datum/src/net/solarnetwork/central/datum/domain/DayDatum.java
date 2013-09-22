@@ -20,6 +20,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 
@@ -126,6 +127,7 @@ public class DayDatum extends BaseNodeDatum implements LocationDatum {
 	}
 
 	@Deprecated
+	@JsonIgnore
 	public Float getTemperatureHighCelcius() {
 		return temperatureHighCelsius;
 	}
@@ -139,6 +141,7 @@ public class DayDatum extends BaseNodeDatum implements LocationDatum {
 	}
 
 	@Deprecated
+	@JsonIgnore
 	public Float getTemperatureLowCelcius() {
 		return temperatureLowCelsius;
 	}
@@ -168,6 +171,7 @@ public class DayDatum extends BaseNodeDatum implements LocationDatum {
 	}
 
 	@Deprecated
+	@JsonIgnore
 	public Float getTemperatureStartCelcius() {
 		return temperatureStartCelsius;
 	}
@@ -181,6 +185,7 @@ public class DayDatum extends BaseNodeDatum implements LocationDatum {
 	}
 
 	@Deprecated
+	@JsonIgnore
 	public Float getTemperatureEndCelcius() {
 		return temperatureEndCelsius;
 	}

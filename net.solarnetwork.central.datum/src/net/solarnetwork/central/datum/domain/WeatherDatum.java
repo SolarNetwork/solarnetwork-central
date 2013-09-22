@@ -20,6 +20,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.joda.time.DateTime;
 
 /**
@@ -102,6 +103,7 @@ public class WeatherDatum extends BaseNodeDatum implements LocationDatum {
 	}
 
 	@Deprecated
+	@JsonIgnore
 	public Float getTemperatureCelcius() {
 		return temperatureCelsius;
 	}
