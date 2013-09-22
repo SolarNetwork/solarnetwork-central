@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.web;
+package net.solarnetwork.central.security.web;
 
 /**
  * Global web constants for the central SolarNetwork applications.
