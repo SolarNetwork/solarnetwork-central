@@ -25,9 +25,15 @@ package net.solarnetwork.central.web.support;
 import javax.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.web.domain.Response;
+import net.solarnetwork.util.JodaDateFormatEditor;
+import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
@@ -37,6 +43,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * @version 1.0
  */
 public abstract class WebServiceControllerSupport {
+
+	/** The default value for the {@code requestDateFormat} property. */
+	public static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
+
+	/** The default value for the {@code requestDateFormat} property. */
+	public static final String DEFAULT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
 
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -76,4 +88,22 @@ public abstract class WebServiceControllerSupport {
 		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
 	}
 
+	/**
+	 * Web binder initialization.
+	 * 
+	 * <p>
+	 * Registers a {@link LocalDate} property editor using the
+	 * {@link #DEFAULT_DATE_FORMAT} pattern.
+	 * </p>
+	 * 
+	 * @param binder
+	 *        the binder to initialize
+	 */
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		binder.registerCustomEditor(LocalDate.class, new JodaDateFormatEditor(DEFAULT_DATE_FORMAT,
+				ParseMode.LocalDate));
+		binder.registerCustomEditor(DateTime.class, new JodaDateFormatEditor(DEFAULT_DATE_TIME_FORMAT,
+				ParseMode.DateTime));
+	}
 }
