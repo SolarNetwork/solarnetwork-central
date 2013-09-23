@@ -33,8 +33,13 @@ import net.solarnetwork.central.query.domain.ReportableIntervalType;
 import net.solarnetwork.central.query.web.domain.ReportableIntervalCommand;
 import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.util.JodaDateFormatEditor;
+import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
+import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -66,6 +71,23 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	public ReportableIntervalController(QueryBiz queryBiz) {
 		super();
 		this.queryBiz = queryBiz;
+	}
+
+	/**
+	 * Web binder initialization.
+	 * 
+	 * <p>
+	 * Registers a {@link LocalDate} property editor using the
+	 * {@link #DEFAULT_DATE_FORMAT} pattern.
+	 * </p>
+	 * 
+	 * @param binder
+	 *        the binder to initialize
+	 */
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		binder.registerCustomEditor(LocalDate.class, new JodaDateFormatEditor(DEFAULT_DATE_FORMAT,
+				ParseMode.LocalDate));
 	}
 
 	/**

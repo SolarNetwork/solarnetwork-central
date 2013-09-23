@@ -50,12 +50,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
 public class DatumController extends WebServiceControllerSupport {
 
-	/** The default value for the {@code requestDateFormat} property. */
-	public static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
-
-	/** The default value for the {@code requestDateFormat} property. */
-	public static final String DEFAULT_DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm";
-
 	private final QueryBiz queryBiz;
 
 	private Map<String, Class<? extends NodeDatum>> typeMap;
