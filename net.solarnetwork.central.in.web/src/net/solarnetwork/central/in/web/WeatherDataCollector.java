@@ -20,8 +20,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ===================================================================
- * $Id$
- * ===================================================================
  */
 
 package net.solarnetwork.central.in.web;
@@ -29,7 +27,6 @@ package net.solarnetwork.central.in.web;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -42,15 +39,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
  * Controller for accepting weather data from a node.
  * 
  * @author matt.magoffin
- * @version $Revision$ $Date$
+ * @version 1.1
  */
 @Controller
 @RequestMapping("/weatherCollector.do")
 public class WeatherDataCollector extends AbstractDataCollector {
 
-	private static final String[] REQUIRED_POST_FIELDS = new String[] {
-		"nodeId", "infoDate", "temperatureCelcius",
-	};
+	private static final String[] REQUIRED_POST_FIELDS = new String[] { "nodeId", "infoDate" };
 
 	/**
 	 * Default constructor.
@@ -58,16 +53,17 @@ public class WeatherDataCollector extends AbstractDataCollector {
 	public WeatherDataCollector() {
 		super();
 	}
-	
+
 	/**
 	 * Constructor.
 	 * 
-	 * @param dataCollectorBiz the {@link DataCollectorBiz} to use
-	 * @param solarNodeDao the {@link SolarNodeDao} to use
+	 * @param dataCollectorBiz
+	 *        the {@link DataCollectorBiz} to use
+	 * @param solarNodeDao
+	 *        the {@link SolarNodeDao} to use
 	 */
 	@Autowired
-	public WeatherDataCollector(DataCollectorBiz dataCollectorBiz, 
-			SolarNodeDao solarNodeDao) {
+	public WeatherDataCollector(DataCollectorBiz dataCollectorBiz, SolarNodeDao solarNodeDao) {
 		setDataCollectorBiz(dataCollectorBiz);
 		setSolarNodeDao(solarNodeDao);
 	}
@@ -75,19 +71,22 @@ public class WeatherDataCollector extends AbstractDataCollector {
 	/**
 	 * Post new weather data.
 	 * 
-	 * @param weatherDatum the WeatherDatum to post
-	 * @param model the model
+	 * @param weatherDatum
+	 *        the WeatherDatum to post
+	 * @param model
+	 *        the model
 	 * @return the result model
 	 */
 	@RequestMapping(method = RequestMethod.POST)
 	public String postWeatherData(WeatherDatum datum, Model model) {
 		return defaultHandlePostDatum(datum, model, "weatherDatum");
 	}
-	
+
 	/**
 	 * Web binder initialization.
 	 * 
-	 * @param binder the binder to initialize
+	 * @param binder
+	 *        the binder to initialize
 	 */
 	@InitBinder
 	@Override
@@ -95,5 +94,5 @@ public class WeatherDataCollector extends AbstractDataCollector {
 		super.initBinder(binder);
 		binder.setRequiredFields(REQUIRED_POST_FIELDS);
 	}
-	
+
 }
