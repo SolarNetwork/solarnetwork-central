@@ -105,7 +105,12 @@ public class WeatherDatum extends BaseNodeDatum implements LocationDatum {
 	@Deprecated
 	@JsonIgnore
 	public Float getTemperatureCelcius() {
-		return temperatureCelsius;
+		return getTemperatureCelsius();
+	}
+
+	@Deprecated
+	public void setTemperatureCelcius(Float temperatureCelcius) {
+		setTemperatureCelsius(temperatureCelcius);
 	}
 
 	public Float getTemperatureCelsius() {
