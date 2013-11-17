@@ -46,7 +46,7 @@ public final class UserBizConstants {
 	 * 
 	 * @param email
 	 *        the email
-	 * @return the encoded "unconfirmed" value
+	 * @return the encoded "unconfirmed" value
 	 */
 	public static String getUnconfirmedEmail(String email) {
 		return UNCONFIRMED_EMAIL_PREFIX + email;
