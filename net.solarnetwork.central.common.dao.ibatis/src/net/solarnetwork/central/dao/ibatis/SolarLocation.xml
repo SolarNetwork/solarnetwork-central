@@ -39,7 +39,7 @@
 			id = #id#
 	</update>
 
-	<sql id="fragment-SolarLocation-full-result">
+	<sql id="fragment-SolarLocation-public-result">
 		l.id AS sn_loc_id, 
 		l.created AS sn_loc_created,
 		l.loc_name AS sn_loc_loc_name,
@@ -48,13 +48,17 @@
 		l.region AS sn_loc_region,
 		l.state_prov AS sn_loc_state_prov,
 		l.locality AS sn_loc_locality,
-		l.postal_code AS sn_loc_postal_code,
+		l.postal_code AS sn_loc_postal_code
+	</sql>
+	
+	<sql id="fragment-SolarLocation-full-result">
+		<include refid="fragment-SolarLocation-public-result"/>,
 		l.address AS sn_loc_address,
 		l.latitude AS sn_loc_latitude,
 		l.longitude AS sn_loc_longitude
 	</sql>
 
-	<resultMap id="SolarLocationFullResult" class="SolarLocation">
+	<resultMap id="SolarLocationPublicResult" class="SolarLocation">
 		<result column="sn_loc_id" property="id"/>
 		<result column="sn_loc_created" property="created"/>
 		<result column="sn_loc_loc_name" property="name"/>
@@ -64,6 +68,9 @@
 		<result column="sn_loc_state_prov" property="stateOrProvince"/>
 		<result column="sn_loc_locality" property="locality"/>
 		<result column="sn_loc_postal_code" property="postalCode"/>
+	</resultMap>
+	
+	<resultMap id="SolarLocationFullResult" class="SolarLocation" extends="SolarLocation.SolarLocationPublicResult">
 		<result column="sn_loc_address" property="street"/>
 		<result column="sn_loc_latitude" property="latitude"/>
 		<result column="sn_loc_longitude" property="longitude"/>
@@ -78,9 +85,9 @@
 			l.id = #id#
 	</select>
 	
-	<select id="find-SolarLocation-for-name" resultMap="SolarLocationFullResult" parameterClass="string">
+	<select id="find-SolarLocation-for-name" resultMap="SolarLocationPublicResult" parameterClass="string">
 		SELECT
-			<include refid="fragment-SolarLocation-full-result"/>
+			<include refid="fragment-SolarLocation-public-result"/>
 		FROM
 			solarnet.sn_loc l
 		WHERE
@@ -108,4 +115,35 @@
 			l.id
 	</select>
 	
+	<select id="findall-SolarLocation-LocationMatch" resultMap="SolarLocationPublicResult">
+		SELECT
+			<include refid="fragment-SolarLocation-public-result"/>
+		FROM
+			solarnet.sn_loc l
+		<dynamic prepend="WHERE">
+		<!--  TODO: use FTS to allow partial matches -->
+			<isNotNull prepend="AND" property="filter.name">
+				l.loc_name = #filter.name#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.country">
+				l.country = #filter.country#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.region">
+				l.region = #filter.region#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.stateOrProvince">
+				l.state_prov = #filter.stateOrProvince#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.locality">
+				l.locality = #filter.locality#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.postalCode">
+				l.postal_code = #filter.postalCode#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.timeZoneId">
+				l.time_zone = #filter.timeZoneId#
+			</isNotNull>
+		</dynamic>
+	</select>
+
 </sqlMap>

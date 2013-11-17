@@ -22,15 +22,18 @@
 
 package net.solarnetwork.central.dao;
 
+import net.solarnetwork.central.domain.Location;
+import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
 
 /**
  * DAO API for Location.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public interface SolarLocationDao extends GenericDao<SolarLocation, Long> {
+public interface SolarLocationDao extends GenericDao<SolarLocation, Long>,
+		FilterableDao<LocationMatch, Long, Location> {
 
 	/**
 	 * Find the first SolarLocation for a given location name.

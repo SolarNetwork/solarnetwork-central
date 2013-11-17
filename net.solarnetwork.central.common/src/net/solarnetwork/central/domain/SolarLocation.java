@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
@@ -27,16 +25,16 @@ package net.solarnetwork.central.domain;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import net.solarnetwork.util.SerializeIgnore;
 
 /**
  * A location entity.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
-public class SolarLocation extends BaseEntity implements Cloneable, Serializable, Location {
+public class SolarLocation extends BaseEntity implements Cloneable, Serializable, Location,
+		LocationMatch {
 
 	private static final long serialVersionUID = 5597249684004944213L;
 
@@ -50,7 +48,7 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 	private Double latitude;
 	private Double longitude;
 	private String timeZoneId;
-	
+
 	@Override
 	@SerializeIgnore
 	public Map<String, ?> getFilter() {
@@ -76,7 +74,7 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 		if ( street != null ) {
 			filter.put("street", street);
 		}
-		if ( latitude != null  ) {
+		if ( latitude != null ) {
 			filter.put("latitude", latitude);
 		}
 		if ( longitude != null ) {
@@ -87,133 +85,100 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 		}
 		return filter;
 	}
-	
+
 	@Override
 	public String toString() {
-		return "SolarLocation{id=" +(getId() == null ? "" : getId())
-				+",name=" +(name == null ? "" : name)
-				+'}';
+		return "SolarLocation{id=" + (getId() == null ? "" : getId()) + ",name="
+				+ (name == null ? "" : name) + '}';
 	}
-	
-	/**
-	 * @return the name
-	 */
+
+	@Override
 	public String getName() {
 		return name;
 	}
-	/**
-	 * @param name the name to set
-	 */
+
 	public void setName(String name) {
 		this.name = name;
 	}
-	/**
-	 * @return the country
-	 */
+
+	@Override
 	public String getCountry() {
 		return country;
 	}
-	/**
-	 * @param country the country to set
-	 */
+
 	public void setCountry(String country) {
 		this.country = country;
 	}
-	/**
-	 * @return the region
-	 */
+
+	@Override
 	public String getRegion() {
 		return region;
 	}
-	/**
-	 * @param region the region to set
-	 */
+
 	public void setRegion(String region) {
 		this.region = region;
 	}
-	/**
-	 * @return the stateOrProvince
-	 */
+
+	@Override
 	public String getStateOrProvince() {
 		return stateOrProvince;
 	}
-	/**
-	 * @param stateOrProvince the stateOrProvince to set
-	 */
+
 	public void setStateOrProvince(String stateOrProvince) {
 		this.stateOrProvince = stateOrProvince;
 	}
-	/**
-	 * @return the locality
-	 */
+
+	@Override
 	public String getLocality() {
 		return locality;
 	}
-	/**
-	 * @param locality the locality to set
-	 */
+
 	public void setLocality(String locality) {
 		this.locality = locality;
 	}
-	/**
-	 * @return the postalCode
-	 */
+
+	@Override
 	public String getPostalCode() {
 		return postalCode;
 	}
-	/**
-	 * @param postalCode the postalCode to set
-	 */
+
 	public void setPostalCode(String postalCode) {
 		this.postalCode = postalCode;
 	}
-	/**
-	 * @return the street
-	 */
+
+	@Override
 	public String getStreet() {
 		return street;
 	}
-	/**
-	 * @param street the street to set
-	 */
+
 	public void setStreet(String street) {
 		this.street = street;
 	}
-	/**
-	 * @return the latitude
-	 */
+
+	@Override
 	public Double getLatitude() {
 		return latitude;
 	}
-	/**
-	 * @param latitude the latitude to set
-	 */
+
 	public void setLatitude(Double latitude) {
 		this.latitude = latitude;
 	}
-	/**
-	 * @return the longitude
-	 */
+
+	@Override
 	public Double getLongitude() {
 		return longitude;
 	}
-	/**
-	 * @param longitude the longitude to set
-	 */
+
 	public void setLongitude(Double longitude) {
 		this.longitude = longitude;
 	}
-	/**
-	 * @return the timeZoneId
-	 */
+
 	public String getTimeZoneId() {
 		return timeZoneId;
 	}
-	/**
-	 * @param timeZoneId the timeZoneId to set
-	 */
+
 	public void setTimeZoneId(String timeZoneId) {
 		this.timeZoneId = timeZoneId;
 	}
-	
+
 }

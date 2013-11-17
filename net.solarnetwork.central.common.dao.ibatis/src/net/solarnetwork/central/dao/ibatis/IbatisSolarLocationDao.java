@@ -26,16 +26,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.SolarLocationDao;
+import net.solarnetwork.central.domain.Location;
+import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
 
 /**
  * Ibatis implementation of {@link SolarLocationDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class IbatisSolarLocationDao extends IbatisGenericDaoSupport<SolarLocation> implements
-		SolarLocationDao {
+public class IbatisSolarLocationDao extends
+		IbatisFilterableDaoSupport<SolarLocation, LocationMatch, Location> implements SolarLocationDao {
 
 	/** The query name used for {@link #getSolarLocationForName(String)}. */
 	public static final String QUERY_FOR_NAME = "find-SolarLocation-for-name";
@@ -50,7 +52,7 @@ public class IbatisSolarLocationDao extends IbatisGenericDaoSupport<SolarLocatio
 	 * Default constructor.
 	 */
 	public IbatisSolarLocationDao() {
-		super(SolarLocation.class);
+		super(SolarLocation.class, LocationMatch.class);
 	}
 
 	@Override

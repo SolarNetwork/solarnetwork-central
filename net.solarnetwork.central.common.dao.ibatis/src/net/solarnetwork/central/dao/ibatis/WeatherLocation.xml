@@ -33,6 +33,14 @@
 		wloc.source_data AS sn_weather_loc_source_data
 	</sql>
 
+	<resultMap id="WeatherLocationPublicResult" class="WeatherLocation">
+		<result column="sn_weather_loc_id" property="id"/>
+		<result column="sn_weather_loc_created" property="created"/>
+		<result column="sn_weather_loc_source_data" property="sourceData"/>
+		<result property="source" resultMap="WeatherSource.WeatherSourceFullResult"/>
+		<result property="location" resultMap="SolarLocation.SolarLocationPublicResult"/>
+	</resultMap>
+	
 	<resultMap id="WeatherLocationFullResult" class="WeatherLocation">
 		<result column="sn_weather_loc_id" property="id"/>
 		<result column="sn_weather_loc_created" property="created"/>
@@ -56,11 +64,11 @@
 			wloc.id = #id#
 	</select>
 	
-	<select id="get-WeatherLocation-for-name" resultMap="WeatherLocationFullResult">
+	<select id="get-WeatherLocation-for-name" resultMap="WeatherLocationPublicResult">
 		SELECT
 			<include refid="fragment-WeatherLocation-full-result"/>,
 			<include refid="fragment-WeatherSource-full-result"/>,
-			<include refid="fragment-SolarLocation-full-result"/>
+			<include refid="fragment-SolarLocation-public-result"/>
 		FROM
 			solarnet.sn_weather_loc wloc
 		INNER JOIN 
@@ -87,11 +95,11 @@
 		</dynamic>
 	</select>
 
-	<select id="findall-WeatherLocation-SourceLocationMatch" resultMap="WeatherLocationFullResult">
+	<select id="findall-WeatherLocation-SourceLocationMatch" resultMap="WeatherLocationPublicResult">
 		SELECT
 			<include refid="fragment-WeatherLocation-full-result"/>,
 			<include refid="fragment-WeatherSource-full-result"/>,
-			<include refid="fragment-SolarLocation-full-result"/>
+			<include refid="fragment-SolarLocation-public-result"/>
 		FROM
 			solarnet.sn_weather_loc wloc
 		INNER JOIN 
