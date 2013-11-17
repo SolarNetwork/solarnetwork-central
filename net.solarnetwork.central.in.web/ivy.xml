@@ -6,6 +6,7 @@
 	</configurations>
 	<dependencies defaultconfmapping="runtime->runtime(default);compile->compile(default)">
 		<dependency org="javax.servlet" name="com.springsource.javax.servlet" rev="2.5.0" />
+		<dependency org="javax.validation" name="validation-api" rev="1.1.0.Final" />
 		<dependency org="org.joda" name="com.springsource.org.joda.time" rev="1.6.0" />
     	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.2">
     		<artifact name="slf4j-api" type="jar"/>

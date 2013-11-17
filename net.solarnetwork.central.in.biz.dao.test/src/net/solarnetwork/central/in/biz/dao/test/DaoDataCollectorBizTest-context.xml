@@ -20,6 +20,7 @@
 
 	<bean id="daoDataCollectorBiz" class="net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz">
 		<property name="priceLocationDao" ref="priceLocationDao"/>
+		<property name="solarLocationDao" ref="solarLocationDao"/>
 		<property name="solarNodeDao" ref="solarNodeDao"/>
 		<property name="weatherLocationDao" ref="weatherLocationDao"/>
 		<property name="daoMapping">

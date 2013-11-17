@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.solarnetwork.central.dao.PriceLocationDao;
+import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.dao.DatumDao;
@@ -46,6 +47,8 @@ import net.solarnetwork.central.datum.domain.PowerDatum;
 import net.solarnetwork.central.datum.domain.PriceDatum;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.Location;
+import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
@@ -112,6 +115,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private SolarNodeDao solarNodeDao = null;
 	private PriceLocationDao priceLocationDao = null;
 	private WeatherLocationDao weatherLocationDao = null;
+	private SolarLocationDao solarLocationDao = null;
 
 	/** A class-level logger. */
 	private final org.slf4j.Logger log = LoggerFactory.getLogger(getClass());
@@ -189,9 +193,9 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		return results;
 	}
 
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public List<SourceLocationMatch> findPriceLocation(final SourceLocation criteria) {
+	public List<SourceLocationMatch> findPriceLocations(final SourceLocation criteria) {
 		FilterResults<SourceLocationMatch> matches = priceLocationDao.findFiltered(criteria, null, null,
 				null);
 		List<SourceLocationMatch> resultList = new ArrayList<SourceLocationMatch>(
@@ -202,14 +206,25 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		return resultList;
 	}
 
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public List<SourceLocationMatch> findWeatherLocation(SourceLocation criteria) {
+	public List<SourceLocationMatch> findWeatherLocations(SourceLocation criteria) {
 		FilterResults<SourceLocationMatch> matches = weatherLocationDao.findFiltered(criteria, null,
 				null, null);
 		List<SourceLocationMatch> resultList = new ArrayList<SourceLocationMatch>(
 				matches.getReturnedResultCount());
 		for ( SourceLocationMatch m : matches.getResults() ) {
+			resultList.add(m);
+		}
+		return resultList;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public List<LocationMatch> findLocations(Location criteria) {
+		FilterResults<LocationMatch> matches = solarLocationDao.findFiltered(criteria, null, null, null);
+		List<LocationMatch> resultList = new ArrayList<LocationMatch>(matches.getReturnedResultCount());
+		for ( LocationMatch m : matches.getResults() ) {
 			resultList.add(m);
 		}
 		return resultList;
@@ -349,6 +364,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	public void setWeatherLocationDao(WeatherLocationDao weatherLocationDao) {
 		this.weatherLocationDao = weatherLocationDao;
+	}
+
+	public SolarLocationDao getSolarLocationDao() {
+		return solarLocationDao;
+	}
+
+	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
+		this.solarLocationDao = solarLocationDao;
 	}
 
 }

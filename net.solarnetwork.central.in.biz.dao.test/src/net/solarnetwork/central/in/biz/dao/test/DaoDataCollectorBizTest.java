@@ -26,16 +26,15 @@ package net.solarnetwork.central.in.biz.dao.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
 import java.util.List;
-
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.domain.LocationMatch;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
-
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.junit.Before;
@@ -52,26 +51,27 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration
 public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 
-	@Autowired DaoDataCollectorBiz biz;
-	
+	@Autowired
+	DaoDataCollectorBiz biz;
+
 	private Datum lastDatum;
-	
+
 	@Before
 	public void setup() {
 		setupTestNode();
 		setupTestPriceLocation();
 	}
-	
+
 	private DayDatum newDayDatumInstance() {
 		DayDatum d = new DayDatum();
 		d.setSkyConditions("Sunny");
 		d.setDay(new LocalDate(2011, 10, 21));
 		d.setNodeId(TEST_NODE_ID);
 		d.setSunrise(new LocalTime(6, 40));
-		d.setSunset(new LocalTime(18,56));
+		d.setSunset(new LocalTime(18, 56));
 		return d;
 	}
-	
+
 	@Test
 	public void collectDay() {
 		DayDatum d = newDayDatumInstance();
@@ -82,7 +82,7 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 		assertNotNull(d.getLocationId());
 		lastDatum = d;
 	}
-	
+
 	@Test
 	public void collectSameDay() {
 		collectDay();
@@ -91,12 +91,11 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 		assertNotNull(result);
 		assertEquals(lastDatum.getId(), result.getId());
 	}
-	
+
 	@Test
 	public void findPriceLocation() {
-		SourceLocationFilter filter = new SourceLocationFilter(
-				TEST_PRICE_SOURCE_NAME, TEST_LOC_NAME);
-		List<SourceLocationMatch> results = biz.findPriceLocation(filter);
+		SourceLocationFilter filter = new SourceLocationFilter(TEST_PRICE_SOURCE_NAME, TEST_LOC_NAME);
+		List<SourceLocationMatch> results = biz.findPriceLocations(filter);
 		assertNotNull(results);
 		assertEquals(1, results.size());
 
@@ -106,16 +105,15 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 		assertEquals(TEST_LOC_ID, loc.getLocationId());
 		assertEquals(TEST_LOC_NAME, loc.getLocationName());
 		assertEquals(TEST_PRICE_SOURCE_NAME, loc.getSourceName());
-}
-	
+	}
+
 	@Test
 	public void findWeatherLocation() {
-		SourceLocationFilter filter = new SourceLocationFilter(
-				TEST_WEATHER_SOURCE_NAME, TEST_LOC_NAME);
-		List<SourceLocationMatch> results = biz.findWeatherLocation(filter);
+		SourceLocationFilter filter = new SourceLocationFilter(TEST_WEATHER_SOURCE_NAME, TEST_LOC_NAME);
+		List<SourceLocationMatch> results = biz.findWeatherLocations(filter);
 		assertNotNull(results);
 		assertEquals(1, results.size());
-		
+
 		SourceLocationMatch loc = results.get(0);
 		assertNotNull(loc);
 		assertEquals(TEST_WEATHER_LOC_ID, loc.getId());
@@ -123,5 +121,21 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 		assertEquals(TEST_LOC_NAME, loc.getLocationName());
 		assertEquals(TEST_WEATHER_SOURCE_NAME, loc.getSourceName());
 	}
-	
+
+	@Test
+	public void findLocation() {
+		SolarLocation filter = new SolarLocation();
+		filter.setCountry(TEST_LOC_COUNTRY);
+		filter.setPostalCode(TEST_LOC_POSTAL_CODE);
+		List<LocationMatch> results = biz.findLocations(filter);
+		assertNotNull(results);
+		assertEquals(1, results.size());
+
+		LocationMatch loc = results.get(0);
+		assertNotNull(loc);
+		assertEquals(TEST_LOC_ID, loc.getId());
+		assertEquals(TEST_LOC_COUNTRY, loc.getCountry());
+		assertEquals(TEST_LOC_POSTAL_CODE, loc.getPostalCode());
+	}
+
 }
