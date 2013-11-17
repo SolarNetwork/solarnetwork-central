@@ -5,6 +5,12 @@
 		<conf name="runtime" visibility="public" description="Runtime dependencies"/>
 	</configurations>
 	<dependencies defaultconfmapping="runtime->runtime(default);compile->compile(default)">
+		<dependency org="javax.validation" name="validation-api" rev="1.1.0.Final">
+			<artifact name="validation-api" type="jar"/>
+		</dependency>
+		<dependency org="org.hibernate" name="hibernate-validator" rev="5.0.1.Final">
+			<artifact name="hibernate-validator" type="jar" />
+		</dependency>
 		<dependency org="org.joda" name="com.springsource.org.joda.time" rev="1.6.0" />
 		<dependency org="org.osgi" name="org.osgi.enterprise" rev="4.2.0">
 			<artifact name="org.osgi.enterprise" type="jar"/>
