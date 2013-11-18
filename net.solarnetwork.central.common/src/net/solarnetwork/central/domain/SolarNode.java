@@ -28,14 +28,13 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
 import java.util.TimeZone;
-
 import net.solarnetwork.util.SerializeIgnore;
-
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.joda.time.DateTime;
 
 /**
  * Domain object for node related info.
- *
+ * 
  * @author matt
  * @version $Revision$ $Date$
  */
@@ -44,24 +43,29 @@ public class SolarNode extends BaseEntity implements Cloneable, Serializable, No
 	private static final long serialVersionUID = -1478837853706836739L;
 
 	private String name = null;
-	private Long locationId = null;			// the location ID
-	private Long weatherLocationId = null;	// the weather location ID
+	private Long locationId = null; // the location ID
+	private Long weatherLocationId = null; // the weather location ID
 
-	@SerializeIgnore private SolarLocation location;
-	
+	@SerializeIgnore
+	@JsonIgnore
+	private SolarLocation location;
+
 	/**
 	 * Default constructor.
 	 */
 	public SolarNode() {
 		super();
 	}
-	
+
 	/**
 	 * Construct with values.
 	 * 
-	 * @param id the ID
-	 * @param locationId the location ID
-	 * @param timeZoneId the time zone ID
+	 * @param id
+	 *        the ID
+	 * @param locationId
+	 *        the location ID
+	 * @param timeZoneId
+	 *        the time zone ID
 	 */
 	public SolarNode(Long id, Long locationId) {
 		super();
@@ -69,48 +73,55 @@ public class SolarNode extends BaseEntity implements Cloneable, Serializable, No
 		setCreated(new DateTime());
 		setLocationId(locationId);
 	}
-	
+
 	@Override
 	public String toString() {
-		return "SolarNode{id=" +getId()
-			+",locationId=" +this.locationId
-			+'}';
+		return "SolarNode{id=" + getId() + ",locationId=" + this.locationId + '}';
 	}
 
 	/**
-	 * Get a {@link TimeZone} instance for this node's {@link SolarLocation#getTimeZoneId()}.
+	 * Get a {@link TimeZone} instance for this node's
+	 * {@link SolarLocation#getTimeZoneId()}.
 	 * 
 	 * @return the TimeZone
 	 */
 	public TimeZone getTimeZone() {
-		return (this.location != null && this.location.getTimeZoneId() != null 
-				? TimeZone.getTimeZone(this.location.getTimeZoneId()) : null);
+		return (this.location != null && this.location.getTimeZoneId() != null ? TimeZone
+				.getTimeZone(this.location.getTimeZoneId()) : null);
 	}
 
 	public Long getLocationId() {
 		return locationId;
 	}
+
 	public void setLocationId(Long locationId) {
 		this.locationId = locationId;
 	}
+
 	public Long getWeatherLocationId() {
 		return weatherLocationId;
 	}
+
 	public void setWeatherLocationId(Long weatherLocationId) {
 		this.weatherLocationId = weatherLocationId;
 	}
+
+	@JsonIgnore
 	public SolarLocation getLocation() {
 		return location;
 	}
+
 	public void setLocation(SolarLocation location) {
 		this.location = location;
 		if ( location != null && location.getId() != null ) {
 			this.locationId = location.getId();
 		}
 	}
+
 	public String getName() {
 		return name;
 	}
+
 	public void setName(String name) {
 		this.name = name;
 	}

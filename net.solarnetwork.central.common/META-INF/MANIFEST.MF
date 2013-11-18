@@ -2,15 +2,15 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Common Central
 Bundle-SymbolicName: net.solarnetwork.central.common
-Bundle-Version: 1.15.0
+Bundle-Version: 1.16.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
  net.solarnetwork.central;version="1.1.0",
  net.solarnetwork.central.dao;version="1.10.0",
- net.solarnetwork.central.domain;version="1.10.0",
+ net.solarnetwork.central.domain;version="1.10.1",
  net.solarnetwork.central.scheduler;version="1.1.0",
- net.solarnetwork.central.support;version="1.7.0"
+ net.solarnetwork.central.support;version="1.8.0"
 Import-Package: 
  javax.validation;version="[1.1.0,2.0.0)";resolution:=optional,
  javax.validation.bootstrap;version="[1.1.0,2.0.0)";resolution:=optional,
@@ -18,6 +18,7 @@ Import-Package:
  javax.validation.spi;version="[1.1.0,2.0.0)";resolution:=optional,
  net.solarnetwork.domain;version="1.2.0",
  net.solarnetwork.util;version="1.4.0",
+ org.codehaus.jackson.annotate;version="[1.9,2.0)",
  org.hibernate.validator;version="[5.0,6.0)";resolution:=optional,
  org.joda.time;version="[1.6,3.0)",
  org.osgi.service.event;version="[1.2,2.0)",

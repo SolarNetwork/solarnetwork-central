@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.support;
@@ -30,13 +28,33 @@ import net.solarnetwork.central.dao.SortDescriptor;
  * Implementation of {@link SortDescriptor}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public class SimpleSortDescriptor implements SortDescriptor {
 
-	private String sortKey;
-	private boolean ascending = true;
-	
+	private final String sortKey;
+	private final boolean ascending;
+
+	/**
+	 * Construct with a sort key.
+	 * 
+	 * <p>
+	 * Ascending order will be used.
+	 * </p>
+	 * 
+	 * @param sortKey
+	 *        the sort key
+	 */
+	public SimpleSortDescriptor(String sortKey) {
+		this(sortKey, true);
+	}
+
+	public SimpleSortDescriptor(String sortKey, boolean ascending) {
+		super();
+		this.sortKey = sortKey;
+		this.ascending = ascending;
+	}
+
 	@Override
 	public String getSortKey() {
 		return sortKey;
@@ -45,13 +63,6 @@ public class SimpleSortDescriptor implements SortDescriptor {
 	@Override
 	public boolean isAscending() {
 		return ascending;
-	}
-
-	public void setSortKey(String sortKey) {
-		this.sortKey = sortKey;
-	}
-	public void setAscending(boolean ascending) {
-		this.ascending = ascending;
 	}
 
 }

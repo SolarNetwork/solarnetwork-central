@@ -13,7 +13,32 @@
 
 	<ctx:annotation-config/>
 	<ctx:component-scan base-package="net.solarnetwork.central.in.web"/>
-	<mvc:annotation-driven/>
+
+	<mvc:annotation-driven>
+		<mvc:message-converters register-defaults="true">
+			<bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+				<property name="prefixJson" value="false" />
+				<property name="supportedMediaTypes" value="application/json" />
+				<property name="objectMapper">
+					<bean class="net.solarnetwork.util.ObjectMapperFactoryBean">
+						<property name="mapper">
+							<bean class="org.codehaus.jackson.map.ObjectMapper">
+								<property name="serializationInclusion" value="NON_NULL"/>
+							</bean>
+						</property>
+						<property name="serializers">
+							<list>
+								<bean class="net.solarnetwork.util.JodaDateTimeSerializer"/>
+								<bean class="net.solarnetwork.util.JodaLocalDateSerializer"/>
+								<bean class="net.solarnetwork.util.JodaLocalDateTimeSerializer"/>
+								<bean class="net.solarnetwork.util.JodaLocalTimeSerializer"/>
+							</list>
+						</property>
+					</bean>
+				</property>
+		    </bean>
+		</mvc:message-converters>
+	</mvc:annotation-driven>
 
 	<bean id="mappedViewResolver"
 		class="org.springframework.web.servlet.view.XmlViewResolver">

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central In Web
 Bundle-SymbolicName: net.solarnetwork.central.in.web
-Bundle-Version: 1.10.0
+Bundle-Version: 1.11.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: WEB-INF/classes/
@@ -10,13 +10,13 @@ Web-ContextPath: /solarin
 Import-Package: 
  net.solarnetwork.central;version="1.1.0",
  net.solarnetwork.central.dao;version="1.10.0",
- net.solarnetwork.central.domain;version="1.5.0",
+ net.solarnetwork.central.domain;version="1.10.0",
  net.solarnetwork.central.datum.domain;version="1.1.0",
- net.solarnetwork.central.in.biz;version="1.6.0",
+ net.solarnetwork.central.in.biz;version="1.7.0",
  net.solarnetwork.central.instructor.biz;version="1.0.0",
  net.solarnetwork.central.instructor.domain;version="1.0.0",
  net.solarnetwork.central.security;version="1.1.0",
- net.solarnetwork.central.support;version="1.7.0",
+ net.solarnetwork.central.support;version="1.8.0",
  net.solarnetwork.central.web.domain;version="1.0.0",
  net.solarnetwork.central.web.support;version="1.0.0",
  net.solarnetwork.domain;version="1.1.0",
@@ -31,6 +31,8 @@ Import-Package:
  javax.xml.stream,
  javax.validation;version="[1.1.0,2.0.0)",
  org.apache.taglibs.response;version="1.0.1",
+ org.codehaus.jackson;version="[1.9.0,2.0.0)",
+ org.codehaus.jackson.map;version="[1.9.0,2.0.0)",
  org.eclipse.virgo.web.dm;version="[3.6,4.0)",
  org.joda.time;version="[1.6,3.0)",
  org.mortbay.servlet;version="[6.1,7.0)",
@@ -40,6 +42,8 @@ Import-Package:
  org.springframework.context;version="[3.1,4.0)",
  org.springframework.context.support;version="[3.1,4.0)",
  org.springframework.core;version="[3.1,4.0)",
+ org.springframework.http;version="[3.1,4.0)",
+ org.springframework.http.converter.json;version="[3.1,4.0)",
  org.springframework.security.authentication;version="[3.1,4.0)",
  org.springframework.security.config;version="[3.1,4.0)",
  org.springframework.security.core;version="[3.1,4.0)",

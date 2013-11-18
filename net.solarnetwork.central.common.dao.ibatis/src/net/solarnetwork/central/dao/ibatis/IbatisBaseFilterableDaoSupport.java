@@ -128,9 +128,9 @@ public abstract class IbatisBaseFilterableDaoSupport<T extends Entity<PK>, M ext
 		}
 		postProcessFilterProperties(filter, sqlProps);
 
-		// attempt count first, if max specified as -1
+		// attempt count first, if max NOT specified as -1
 		Long totalCount = null;
-		if ( max != null && max.intValue() == -1 ) {
+		if ( max != null && max.intValue() != -1 ) {
 			final String countQuery = query + "-count";
 			Number n = null;
 			n = (Number) getSqlMapClientTemplate().queryForObject(countQuery, sqlProps, Number.class);

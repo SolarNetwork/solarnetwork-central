@@ -26,12 +26,13 @@ import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.solarnetwork.util.SerializeIgnore;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
  * A location entity.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SolarLocation extends BaseEntity implements Cloneable, Serializable, Location,
 		LocationMatch {
@@ -49,8 +50,35 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 	private Double longitude;
 	private String timeZoneId;
 
+	/**
+	 * Default constructor.
+	 */
+	public SolarLocation() {
+		super();
+	}
+
+	/**
+	 * Copy constructor for {@link Location} objects.
+	 * 
+	 * @param loc
+	 *        the location to copy
+	 */
+	public SolarLocation(Location loc) {
+		super();
+		setName(loc.getName());
+		setCountry(loc.getCountry());
+		setRegion(loc.getRegion());
+		setStateOrProvince(loc.getStateOrProvince());
+		setLocality(loc.getLocality());
+		setPostalCode(loc.getPostalCode());
+		setStreet(loc.getStreet());
+		setLatitude(loc.getLatitude());
+		setLongitude(loc.getLongitude());
+	}
+
 	@Override
 	@SerializeIgnore
+	@JsonIgnore
 	public Map<String, ?> getFilter() {
 		Map<String, Object> filter = new LinkedHashMap<String, Object>();
 		if ( name != null ) {

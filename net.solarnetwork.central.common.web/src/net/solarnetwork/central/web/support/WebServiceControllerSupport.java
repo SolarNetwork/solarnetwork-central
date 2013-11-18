@@ -22,11 +22,18 @@
 
 package net.solarnetwork.central.web.support;
 
+import java.util.Locale;
 import javax.servlet.http.HttpServletResponse;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.web.domain.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -34,7 +41,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class WebServiceControllerSupport {
 
@@ -46,6 +53,9 @@ public abstract class WebServiceControllerSupport {
 
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
+
+	@Autowired
+	private MessageSource messageSource;
 
 	/**
 	 * Handle an {@link AuthorizationException}.
@@ -80,6 +90,67 @@ public abstract class WebServiceControllerSupport {
 	public Response<?> handleRuntimeException(RuntimeException e, HttpServletResponse response) {
 		log.error("RuntimeException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
+	}
+
+	/**
+	 * Handle an {@link BindException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 */
+	@ExceptionHandler(BindException.class)
+	@ResponseBody
+	public Response<?> handleBindException(BindException e, HttpServletResponse response, Locale locale) {
+		log.error("BindException in {} controller", getClass().getSimpleName(), e);
+		response.setStatus(422);
+		String msg = generateErrorsMessage(e, locale);
+		return new Response<Object>(Boolean.FALSE, null, msg, null);
+	}
+
+	private String generateErrorsMessage(Errors e, Locale locale) {
+		String msg = (messageSource == null ? "Validation error" : messageSource.getMessage(
+				"error.validation", null, "Validation error", locale));
+		if ( messageSource != null && e.hasErrors() ) {
+			StringBuilder buf = new StringBuilder();
+			for ( ObjectError error : e.getAllErrors() ) {
+				if ( buf.length() > 0 ) {
+					buf.append(" ");
+				}
+				buf.append(messageSource.getMessage(error, locale));
+			}
+			msg = buf.toString();
+		}
+		return msg;
+	}
+
+	/**
+	 * Handle an {@link ValidationException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 */
+	@ExceptionHandler(ValidationException.class)
+	@ResponseBody
+	public Response<?> handleValidationException(ValidationException e, HttpServletResponse response,
+			Locale locale) {
+		log.error("ValidationException in {} controller", getClass().getSimpleName(), e);
+		response.setStatus(422);
+		String msg = generateErrorsMessage(e.getErrors(), locale);
+		return new Response<Object>(Boolean.FALSE, null, msg, null);
+	}
+
+	public MessageSource getMessageSource() {
+		return messageSource;
+	}
+
+	public void setMessageSource(MessageSource messageSource) {
+		this.messageSource = messageSource;
 	}
 
 }

@@ -25,9 +25,12 @@
 package net.solarnetwork.central.support;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-
+import net.solarnetwork.central.dao.SortDescriptor;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.util.SerializeIgnore;
@@ -36,14 +39,17 @@ import net.solarnetwork.util.SerializeIgnore;
  * Criteria for location data tied to a source.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public class SourceLocationFilter implements Serializable, SourceLocation {
 
-	private static final long serialVersionUID = 2772807008317510048L;
+	private static final long serialVersionUID = -494329296598980619L;
 
 	private String source;
 	private SolarLocation location;
+	private List<SimpleSortDescriptor> sorts;
+	private Integer offset;
+	private Integer max;
 
 	/**
 	 * Default constructor.
@@ -51,23 +57,24 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 	public SourceLocationFilter() {
 		this(null, null);
 	}
-	
+
 	/**
 	 * Construct with criteria parameters.
 	 * 
-	 * @param source the source name
-	 * @param locationName the location name
+	 * @param source
+	 *        the source name
+	 * @param locationName
+	 *        the location name
 	 */
 	public SourceLocationFilter(String source, String locationName) {
 		this.source = source;
 		this.location = new SolarLocation();
 		this.location.setName(locationName);
 	}
-	
+
 	@Override
 	public String toString() {
-		return "SourceLocationFilter{source=" +source
-				+",location=" +location + "}";
+		return "SourceLocationFilter{source=" + source + ",location=" + location + "}";
 	}
 
 	@Override
@@ -82,39 +89,75 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 		}
 		return filter;
 	}
-	
+
 	@SerializeIgnore
 	public String getLocationName() {
 		return (this.location == null ? null : this.location.getName());
 	}
-	
+
 	public void setLocationName(String locationName) {
 		if ( this.location == null ) {
 			this.location = new SolarLocation();
 		}
 		this.location.setName(locationName);
 	}
-	
+
 	@SerializeIgnore
 	public String getSourceName() {
 		return getSource();
 	}
-	
+
 	public void setSourceName(String sourceName) {
 		setSource(sourceName);
 	}
 
+	@Override
 	public String getSource() {
 		return source;
 	}
+
 	public void setSource(String source) {
 		this.source = source;
 	}
+
+	@Override
 	public SolarLocation getLocation() {
 		return location;
 	}
+
 	public void setLocation(SolarLocation location) {
 		this.location = location;
+	}
+
+	public List<SortDescriptor> getSortDescriptors() {
+		if ( sorts == null ) {
+			return Collections.emptyList();
+		}
+		return new ArrayList<SortDescriptor>(sorts);
+	}
+
+	public List<SimpleSortDescriptor> getSorts() {
+		return sorts;
+	}
+
+	public void setSorts(List<SimpleSortDescriptor> sorts) {
+		this.sorts = sorts;
+	}
+
+	public Integer getOffset() {
+		return offset;
+	}
+
+	public void setOffset(Integer offset) {
+		this.offset = offset;
+	}
+
+	public Integer getMax() {
+		return max;
+	}
+
+	public void setMax(Integer max) {
+		this.max = max;
 	}
 
 }

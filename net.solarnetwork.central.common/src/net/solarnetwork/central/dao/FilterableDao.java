@@ -18,15 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.dao;
 
 import java.io.Serializable;
 import java.util.List;
-
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
@@ -34,24 +31,31 @@ import net.solarnetwork.central.domain.FilterResults;
 /**
  * API for DAOs that support filtered queries.
  * 
- * @param <T> the domain object type
- * @param <PK> the primary key type
- * @param <F> the filter type
+ * @param <T>
+ *        the domain object type
+ * @param <PK>
+ *        the primary key type
+ * @param <F>
+ *        the filter type
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public interface FilterableDao<M extends FilterMatch<PK>, PK extends Serializable, F extends Filter> {
 
 	/**
 	 * API for querying for a filtered set of results from all possible results.
 	 * 
-	 * @param filter the query filter
-	 * @param sortDescriptors the optional sort descriptors
-	 * @param offset an optional result offset
-	 * @param max an optional maximum number of returned results
-	 * @return list of matching results, or empty list if none found
+	 * @param filter
+	 *        the query filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
 	 */
-	FilterResults<M> findFiltered(F filter, List<SortDescriptor> sortDescriptors, 
-			Integer offset, Integer max);
+	FilterResults<M> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max);
 
 }

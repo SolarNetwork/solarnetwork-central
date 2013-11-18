@@ -25,7 +25,9 @@
 package net.solarnetwork.central.in.biz;
 
 import java.util.List;
+import net.solarnetwork.central.dao.SortDescriptor;
 import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SourceLocation;
@@ -74,6 +76,21 @@ public interface DataCollectorBiz {
 	List<SourceLocationMatch> findPriceLocations(SourceLocation criteria);
 
 	/**
+	 * Look up price location objects based on a location search filter and sort
+	 * options.
+	 * 
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 */
+	FilterResults<SourceLocationMatch> findPriceLocations(SourceLocation criteria,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+
+	/**
 	 * Look up WeatherLocation objects based on a source name and location.
 	 * 
 	 * <p>
@@ -88,7 +105,22 @@ public interface DataCollectorBiz {
 	List<SourceLocationMatch> findWeatherLocations(SourceLocation criteria);
 
 	/**
-	 * Look up Location objects based on a location search filter.
+	 * Look up weather location objects based on a location search filter and
+	 * sort options.
+	 * 
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 */
+	FilterResults<SourceLocationMatch> findWeatherLocations(SourceLocation criteria,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+
+	/**
+	 * Look up location objects based on a location search filter.
 	 * 
 	 * @param criteria
 	 *        the search criteria

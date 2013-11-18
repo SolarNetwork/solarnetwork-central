@@ -93,13 +93,10 @@
 				l.postal_code = #filter.postalCode#
 			</isNotNull>
 		</dynamic>
+		ORDER BY lower(wsource.sname), lower(l.loc_name)
 	</select>
-
-	<select id="findall-WeatherLocation-SourceLocationMatch" resultMap="WeatherLocationPublicResult">
-		SELECT
-			<include refid="fragment-WeatherLocation-full-result"/>,
-			<include refid="fragment-WeatherSource-full-result"/>,
-			<include refid="fragment-SolarLocation-public-result"/>
+	
+	<sql id="fragment-findall-WeatherLocation-SourceLocationMatch">
 		FROM
 			solarnet.sn_weather_loc wloc
 		INNER JOIN 
@@ -127,6 +124,20 @@
 				l.postal_code = #filter.location.postalCode#
 			</isNotNull>
 		</dynamic>
+	</sql>
+
+	<select id="findall-WeatherLocation-SourceLocationMatch" resultMap="WeatherLocationPublicResult">
+		SELECT
+			<include refid="fragment-WeatherLocation-full-result"/>,
+			<include refid="fragment-WeatherSource-full-result"/>,
+			<include refid="fragment-SolarLocation-public-result"/>
+		<include refid="fragment-findall-WeatherLocation-SourceLocationMatch"/>
+		ORDER BY lower(wsource.sname), lower(l.loc_name), wloc.id
+	</select>
+
+	<select id="findall-WeatherLocation-SourceLocationMatch-count" resultClass="long">
+		SELECT count(wloc.id)
+		<include refid="fragment-findall-WeatherLocation-SourceLocationMatch"/>
 	</select>
 
 </sqlMap>

@@ -18,21 +18,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
-
 import net.solarnetwork.util.SerializeIgnore;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
  * Information about a specific weather location.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public class WeatherLocation extends BaseEntity implements Cloneable, Serializable, SourceLocationMatch {
 
@@ -44,24 +42,27 @@ public class WeatherLocation extends BaseEntity implements Cloneable, Serializab
 
 	@Override
 	public String toString() {
-		return "WeatherLocation{id="+getId() +",source=" +this.source +",location=" 
-			+this.location +'}';
+		return "WeatherLocation{id=" + getId() + ",source=" + this.source + ",location=" + this.location
+				+ '}';
 	}
 
 	@Override
 	@SerializeIgnore
+	@JsonIgnore
 	public String getSourceName() {
 		return source == null ? null : source.getName();
 	}
 
 	@Override
 	@SerializeIgnore
+	@JsonIgnore
 	public Long getLocationId() {
 		return location == null ? null : location.getId();
 	}
 
 	@Override
 	@SerializeIgnore
+	@JsonIgnore
 	public String getLocationName() {
 		return location == null ? null : location.getName();
 	}
@@ -69,18 +70,23 @@ public class WeatherLocation extends BaseEntity implements Cloneable, Serializab
 	public SolarLocation getLocation() {
 		return location;
 	}
+
 	public void setLocation(SolarLocation location) {
 		this.location = location;
 	}
+
 	public WeatherSource getSource() {
 		return source;
 	}
+
 	public void setSource(WeatherSource source) {
 		this.source = source;
 	}
+
 	public String getSourceData() {
 		return sourceData;
 	}
+
 	public void setSourceData(String sourceData) {
 		this.sourceData = sourceData;
 	}

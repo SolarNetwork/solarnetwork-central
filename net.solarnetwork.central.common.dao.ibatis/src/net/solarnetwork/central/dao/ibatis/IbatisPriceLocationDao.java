@@ -18,33 +18,31 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.dao.ibatis;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
+import net.solarnetwork.central.support.PriceLocationFilter;
 
 /**
  * iBATIS implementation of {@link PriceLocationDao}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
-public class IbatisPriceLocationDao 
-extends IbatisFilterableDaoSupport<PriceLocation, SourceLocationMatch, SourceLocation>
-implements PriceLocationDao {
+public class IbatisPriceLocationDao extends
+		IbatisFilterableDaoSupport<PriceLocation, SourceLocationMatch, SourceLocation> implements
+		PriceLocationDao {
 
 	/** The query name used for {@link #getPriceLocationForName(String,String)}. */
 	public static final String QUERY_FOR_NAME = "get-PriceLocation-for-name";
-	
+
 	/**
 	 * Default constructor.
 	 */
@@ -53,13 +51,19 @@ implements PriceLocationDao {
 	}
 
 	@Override
-	public PriceLocation getPriceLocationForName(String sourceName,
-			String locationName) {
+	public PriceLocation getPriceLocationForName(String sourceName, String locationName) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("locationName", locationName);
 		params.put("sourceName", sourceName);
-		return (PriceLocation)getSqlMapClientTemplate().queryForObject(
-				QUERY_FOR_NAME, params);
+		return (PriceLocation) getSqlMapClientTemplate().queryForObject(QUERY_FOR_NAME, params);
+	}
+
+	@Override
+	protected void postProcessFilterProperties(SourceLocation filter, Map<String, Object> sqlProps) {
+		if ( !(filter instanceof PriceLocationFilter) ) {
+			// mapping expects a PriceLocationFilter, so replace the input with one of those
+			sqlProps.put(FILTER_PROPERTY, new PriceLocationFilter(filter));
+		}
 	}
 
 }

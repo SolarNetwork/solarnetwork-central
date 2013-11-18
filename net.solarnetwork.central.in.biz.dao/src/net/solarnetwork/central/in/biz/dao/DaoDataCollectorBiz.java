@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.in.biz.dao;
@@ -34,6 +32,7 @@ import java.util.Set;
 import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.dao.SortDescriptor;
 import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.dao.DatumDao;
 import net.solarnetwork.central.datum.dao.DayDatumDao;
@@ -95,7 +94,7 @@ import org.springframework.transaction.annotation.Transactional;
  * </dl>
  * 
  * @author matt
- * @version $Id$
+ * @version 1.1
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -116,9 +115,17 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private PriceLocationDao priceLocationDao = null;
 	private WeatherLocationDao weatherLocationDao = null;
 	private SolarLocationDao solarLocationDao = null;
+	private int filteredResultsLimit = 250;
 
 	/** A class-level logger. */
 	private final org.slf4j.Logger log = LoggerFactory.getLogger(getClass());
+
+	private Integer limitFilterMaximum(Integer requestedMaximum) {
+		if ( requestedMaximum == null || requestedMaximum.intValue() > filteredResultsLimit ) {
+			return filteredResultsLimit;
+		}
+		return requestedMaximum;
+	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
@@ -196,21 +203,26 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public List<SourceLocationMatch> findPriceLocations(final SourceLocation criteria) {
-		FilterResults<SourceLocationMatch> matches = priceLocationDao.findFiltered(criteria, null, null,
-				null);
+		FilterResults<SourceLocationMatch> matches = findPriceLocations(criteria, null, null, null);
 		List<SourceLocationMatch> resultList = new ArrayList<SourceLocationMatch>(
 				matches.getReturnedResultCount());
 		for ( SourceLocationMatch m : matches.getResults() ) {
 			resultList.add(m);
 		}
 		return resultList;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<SourceLocationMatch> findPriceLocations(SourceLocation criteria,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		return priceLocationDao.findFiltered(criteria, sortDescriptors, offset, limitFilterMaximum(max));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public List<SourceLocationMatch> findWeatherLocations(SourceLocation criteria) {
-		FilterResults<SourceLocationMatch> matches = weatherLocationDao.findFiltered(criteria, null,
-				null, null);
+		FilterResults<SourceLocationMatch> matches = findWeatherLocations(criteria, null, null, null);
 		List<SourceLocationMatch> resultList = new ArrayList<SourceLocationMatch>(
 				matches.getReturnedResultCount());
 		for ( SourceLocationMatch m : matches.getResults() ) {
@@ -221,8 +233,17 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
+	public FilterResults<SourceLocationMatch> findWeatherLocations(SourceLocation criteria,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		return weatherLocationDao.findFiltered(criteria, sortDescriptors, offset,
+				limitFilterMaximum(max));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
 	public List<LocationMatch> findLocations(Location criteria) {
-		FilterResults<LocationMatch> matches = solarLocationDao.findFiltered(criteria, null, null, null);
+		FilterResults<LocationMatch> matches = solarLocationDao.findFiltered(criteria, null, null,
+				limitFilterMaximum(null));
 		List<LocationMatch> resultList = new ArrayList<LocationMatch>(matches.getReturnedResultCount());
 		for ( LocationMatch m : matches.getResults() ) {
 			resultList.add(m);
@@ -372,6 +393,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
 		this.solarLocationDao = solarLocationDao;
+	}
+
+	public int getFilteredResultsLimit() {
+		return filteredResultsLimit;
+	}
+
+	public void setFilteredResultsLimit(int filteredResultsLimit) {
+		this.filteredResultsLimit = filteredResultsLimit;
 	}
 
 }

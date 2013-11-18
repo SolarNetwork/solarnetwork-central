@@ -107,6 +107,9 @@ public abstract class AbstractCentralTransactionalTest extends
 	/** A date + time format. */
 	public final DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
+	/** A test currency. */
+	public static final String TEST_CURRENCY = "NZD";
+
 	/** A class-level logger. */
 	protected final Logger log = Logger.getLogger(getClass());
 
@@ -209,7 +212,7 @@ public abstract class AbstractCentralTransactionalTest extends
 				sourceName);
 		jdbcTemplate
 				.update("insert into solarnet.sn_price_loc (id,loc_name,source_id,currency,unit,time_zone) values (?,?,?,?,?,?)",
-						id, name, sourceId, "NZD", "MWh", "Pacific/Auckland");
+						id, name, sourceId, TEST_CURRENCY, "MWh", "Pacific/Auckland");
 	}
 
 	/**

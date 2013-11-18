@@ -70,10 +70,7 @@
 			AND psource.sname = #sourceName#
 	</select>
 
-	<select id="findall-PriceLocation-SourceLocationMatch" resultMap="PriceLocationFullResult">
-		SELECT
-			<include refid="fragment-PriceLocation-full-result"/>,
-			<include refid="fragment-PriceSource-full-result"/>
+	<sql id="fragment-findall-PriceLocation-SourceLocationMatch">
 		FROM
 			solarnet.sn_price_loc ploc
 		INNER JOIN 
@@ -85,7 +82,35 @@
 			<isNotNull prepend="AND" property="filter.location.name">
 				ploc.loc_name = #filter.location.name#
 			</isNotNull>
+			<isNotNull prepend="AND" property="filter.currency">
+				ploc.currency = #filter.currency#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.timeZoneId">
+				ploc.time_zone = #filter.timeZoneId#
+			</isNotNull>
+		</dynamic>
+	</sql>
+	
+	<select id="findall-PriceLocation-SourceLocationMatch" resultMap="PriceLocationFullResult">
+		SELECT
+			<include refid="fragment-PriceLocation-full-result"/>,
+			<include refid="fragment-PriceSource-full-result"/>
+		<include refid="fragment-findall-PriceLocation-SourceLocationMatch"/>
+		<dynamic prepend="ORDER BY">
+			<isEmpty property="SortDescriptors">
+				lower(psource.sname), lower(ploc.loc_name), ploc.id
+			</isEmpty>
+			<isNotEmpty property="SortDescriptors">
+				<iterate property="SortDescriptors" conjunction=",">
+					ploc.$SortDescriptors[].sortKey$ <isEqual property="SortDescriptors[].ascending" compareValue="false">DESC</isEqual>
+				</iterate>
+			</isNotEmpty>
 		</dynamic>
 	</select>
 
+	<select id="findall-PriceLocation-SourceLocationMatch-count" resultClass="long">
+		SELECT count(ploc.id) as total
+		<include refid="fragment-findall-PriceLocation-SourceLocationMatch"/>
+	</select>
+	
 </sqlMap>
