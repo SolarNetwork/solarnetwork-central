@@ -36,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.springframework.web.bind.WebDataBinder;
@@ -89,25 +90,27 @@ public class LocationLookupController {
 
 		@Override
 		public boolean supports(Class<?> clazz) {
-			return SourceLocationFilter.class.isAssignableFrom(clazz);
+			return true;
 		}
 
 		@Override
 		public void validate(Object target, Errors errors) {
-			boolean sourceRequired = true;
-			SourceLocationFilter filter = (SourceLocationFilter) target;
-			if ( target instanceof GenericSourceLocationFilter
-					&& ((GenericSourceLocationFilter) target).getType() == GenericSourceLocationFilter.LocationType.Basic ) {
-				sourceRequired = false;
-			}
-			if ( sourceRequired ) {
-				if ( !StringUtils.hasText(filter.getSourceName()) ) {
-					errors.rejectValue("sourceName", "error.field.required",
-							new Object[] { "sourceName" }, "Field is required.");
+			if ( target instanceof SourceLocationFilter ) {
+				boolean sourceRequired = true;
+				SourceLocationFilter filter = (SourceLocationFilter) target;
+				if ( target instanceof GenericSourceLocationFilter
+						&& ((GenericSourceLocationFilter) target).getType() == GenericSourceLocationFilter.LocationType.Basic ) {
+					sourceRequired = false;
 				}
-				if ( !StringUtils.hasText(filter.getLocationName()) ) {
-					errors.rejectValue("locationName", "error.field.required",
-							new Object[] { "locationName" }, "Field is required.");
+				if ( sourceRequired ) {
+					if ( !StringUtils.hasText(filter.getSourceName()) ) {
+						errors.rejectValue("sourceName", "error.field.required",
+								new Object[] { "sourceName" }, "Field is required.");
+					}
+					if ( !StringUtils.hasText(filter.getLocationName()) ) {
+						errors.rejectValue("locationName", "error.field.required",
+								new Object[] { "locationName" }, "Field is required.");
+					}
 				}
 			}
 		}
@@ -134,8 +137,8 @@ public class LocationLookupController {
 	 *        the response
 	 * @return an error response object
 	 */
-	@ExceptionHandler(RuntimeException.class)
-	public ModelAndView handleRuntimeException(RuntimeException e) {
+	@ExceptionHandler({ BindException.class, RuntimeException.class })
+	public ModelAndView handleRuntimeException(Exception e) {
 		log.error("BindException in {} controller", getClass().getSimpleName(), e);
 		ModelAndView mv = new ModelAndView(getViewName(), MODEL_KEY_RESULT, new Response<Object>(false,
 				null, e.getMessage(), null));
