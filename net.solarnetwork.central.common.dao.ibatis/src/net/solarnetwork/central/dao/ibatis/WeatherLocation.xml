@@ -105,6 +105,9 @@
 			solarnet.sn_loc l ON l.id = wloc.loc_id
 		<dynamic prepend="WHERE">
 			<!--  TODO: FTS on name -->
+			<isNotNull prepend="AND" property="filter.id">
+				wloc.id = #filter.id#
+			</isNotNull>
 			<isNotNull prepend="AND" property="filter.source">
 				wsource.sname = #filter.source#
 			</isNotNull>

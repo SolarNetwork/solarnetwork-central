@@ -98,8 +98,9 @@ public class LocationLookupController {
 			if ( target instanceof SourceLocationFilter ) {
 				boolean sourceRequired = true;
 				SourceLocationFilter filter = (SourceLocationFilter) target;
-				if ( target instanceof GenericSourceLocationFilter
-						&& ((GenericSourceLocationFilter) target).getType() == GenericSourceLocationFilter.LocationType.Basic ) {
+				if ( filter.getId() != null
+						|| (target instanceof GenericSourceLocationFilter && ((GenericSourceLocationFilter) target)
+								.getType() == GenericSourceLocationFilter.LocationType.Basic) ) {
 					sourceRequired = false;
 				}
 				if ( sourceRequired ) {

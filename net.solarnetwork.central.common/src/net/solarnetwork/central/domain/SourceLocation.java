@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
@@ -28,10 +26,17 @@ package net.solarnetwork.central.domain;
  * A filter for locations based on a specific source.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public interface SourceLocation extends Filter {
-	
+
+	/**
+	 * Get a specific ID to find.
+	 * 
+	 * @return the ID
+	 */
+	Long getId();
+
 	/**
 	 * Get the source name.
 	 * 
@@ -45,5 +50,5 @@ public interface SourceLocation extends Filter {
 	 * @return the location filter
 	 */
 	Location getLocation();
-	
+
 }

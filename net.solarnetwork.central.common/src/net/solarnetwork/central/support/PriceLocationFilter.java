@@ -69,6 +69,7 @@ public class PriceLocationFilter extends SourceLocationFilter {
 	 */
 	public PriceLocationFilter(SourceLocation sourceLocation) {
 		super();
+		setId(sourceLocation.getId());
 		setSource(sourceLocation.getSource());
 		Location loc = sourceLocation.getLocation();
 		if ( loc instanceof SolarLocation ) {

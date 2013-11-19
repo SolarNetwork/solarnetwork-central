@@ -47,8 +47,6 @@ public class WeatherLocation extends BaseEntity implements Cloneable, Serializab
 	}
 
 	@Override
-	@SerializeIgnore
-	@JsonIgnore
 	public String getSourceName() {
 		return source == null ? null : source.getName();
 	}
@@ -61,8 +59,6 @@ public class WeatherLocation extends BaseEntity implements Cloneable, Serializab
 	}
 
 	@Override
-	@SerializeIgnore
-	@JsonIgnore
 	public String getLocationName() {
 		return location == null ? null : location.getName();
 	}
@@ -75,6 +71,8 @@ public class WeatherLocation extends BaseEntity implements Cloneable, Serializab
 		this.location = location;
 	}
 
+	@SerializeIgnore
+	@JsonIgnore
 	public WeatherSource getSource() {
 		return source;
 	}

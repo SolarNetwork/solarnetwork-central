@@ -43,8 +43,9 @@ import net.solarnetwork.util.SerializeIgnore;
  */
 public class SourceLocationFilter implements Serializable, SourceLocation {
 
-	private static final long serialVersionUID = -494329296598980619L;
+	private static final long serialVersionUID = -2058990705039572215L;
 
+	private Long id;
 	private String source;
 	private SolarLocation location;
 	private List<SimpleSortDescriptor> sorts;
@@ -158,6 +159,15 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 
 	public void setMax(Integer max) {
 		this.max = max;
+	}
+
+	@Override
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 }

@@ -25,6 +25,8 @@
 package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
+import net.solarnetwork.util.SerializeIgnore;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
  * Information about a specific price location.
@@ -42,11 +44,11 @@ public class PriceLocation extends BaseEntity implements Cloneable, Serializable
 	private PriceSource source;
 	private String sourceData;
 	private String timeZoneId;
-	
+
 	@Override
 	public String toString() {
-		return "PriceLocation{id="+getId() +",name=" +this.name +",currency=" 
-			+this.currency +",unit=" +this.unit +'}';
+		return "PriceLocation{id=" + getId() + ",name=" + this.name + ",currency=" + this.currency
+				+ ",unit=" + this.unit + '}';
 	}
 
 	@Override
@@ -55,6 +57,8 @@ public class PriceLocation extends BaseEntity implements Cloneable, Serializable
 	}
 
 	@Override
+	@SerializeIgnore
+	@JsonIgnore
 	public Long getLocationId() {
 		return getId();
 	}
@@ -67,39 +71,41 @@ public class PriceLocation extends BaseEntity implements Cloneable, Serializable
 	public String getName() {
 		return name;
 	}
-	
+
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 	public String getCurrency() {
 		return currency;
 	}
-	
+
 	public void setCurrency(String currency) {
 		this.currency = currency;
 	}
-	
+
 	public String getUnit() {
 		return unit;
 	}
-	
+
 	public void setUnit(String unit) {
 		this.unit = unit;
 	}
-	
+
+	@SerializeIgnore
+	@JsonIgnore
 	public PriceSource getSource() {
 		return source;
 	}
-	
+
 	public void setSource(PriceSource source) {
 		this.source = source;
 	}
-	
+
 	public String getSourceData() {
 		return sourceData;
 	}
-	
+
 	public void setSourceData(String sourceData) {
 		this.sourceData = sourceData;
 	}
