@@ -22,18 +22,22 @@
 
 package net.solarnetwork.central.in.web.api;
 
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
+import net.solarnetwork.central.in.web.GenericSourceLocationFilter.LocationType;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
@@ -63,6 +67,27 @@ public class LocationLookupController extends WebServiceControllerSupport {
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
 		binder.setIgnoreInvalidFields(true);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = { "", "/", "/query" }, method = RequestMethod.GET)
+	public Response<FilterResults<SourceLocationMatch>> findLocations(SourceLocationFilter criteria,
+			@RequestParam("type") String locationType) {
+		LocationType type = null;
+		try {
+			type = LocationType.valueOf(locationType);
+		} catch ( IllegalArgumentException e ) {
+			// ignore
+		}
+		if ( type == LocationType.Price ) {
+			return findPriceLocations(criteria);
+		} else if ( type == LocationType.Weather ) {
+			return findWeatherLocations(criteria);
+		} else {
+			BindException errors = new BindException(criteria, "criteria");
+			errors.reject("error.field.invalid", new Object[] { "locationType" }, "Invalid value.");
+			throw new ValidationException(errors);
+		}
 	}
 
 	@ResponseBody
