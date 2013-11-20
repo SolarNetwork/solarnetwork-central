@@ -28,6 +28,7 @@ import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SourceLocation;
+import org.springframework.util.StringUtils;
 
 /**
  * Filter for {@link PriceLocation}.
@@ -76,6 +77,25 @@ public class PriceLocationFilter extends SourceLocationFilter {
 			setLocation((SolarLocation) loc);
 		} else {
 			setLocation(new SolarLocation(sourceLocation.getLocation()));
+		}
+	}
+
+	/**
+	 * Change values that are non-null but empty to null.
+	 * 
+	 * <p>
+	 * This method is helpful for web form submission, to remove filter values
+	 * that are empty and would otherwise try to match on empty string values.
+	 * </p>
+	 */
+	@Override
+	public void removeEmptyValues() {
+		super.removeEmptyValues();
+		if ( !StringUtils.hasText(currency) ) {
+			currency = null;
+		}
+		if ( !StringUtils.hasText(timeZoneId) ) {
+			timeZoneId = null;
 		}
 	}
 

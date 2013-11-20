@@ -27,6 +27,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.web.GenericSourceLocationFilter.LocationType;
+import net.solarnetwork.central.support.PriceLocationFilter;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -79,8 +80,9 @@ public class LocationLookupController extends WebServiceControllerSupport {
 		} catch ( IllegalArgumentException e ) {
 			// ignore
 		}
+
 		if ( type == LocationType.Price ) {
-			return findPriceLocations(criteria);
+			return findPriceLocations(new PriceLocationFilter(criteria));
 		} else if ( type == LocationType.Weather ) {
 			return findWeatherLocations(criteria);
 		} else {
@@ -92,7 +94,10 @@ public class LocationLookupController extends WebServiceControllerSupport {
 
 	@ResponseBody
 	@RequestMapping(value = "/price", method = RequestMethod.GET)
-	public Response<FilterResults<SourceLocationMatch>> findPriceLocations(SourceLocationFilter criteria) {
+	public Response<FilterResults<SourceLocationMatch>> findPriceLocations(PriceLocationFilter criteria) {
+		// convert empty strings to null
+		criteria.removeEmptyValues();
+
 		FilterResults<SourceLocationMatch> matches = dataCollectorBiz.findPriceLocations(criteria,
 				criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 		return new Response<FilterResults<SourceLocationMatch>>(matches);
@@ -102,6 +107,9 @@ public class LocationLookupController extends WebServiceControllerSupport {
 	@RequestMapping(value = "/weather", method = RequestMethod.GET)
 	public Response<FilterResults<SourceLocationMatch>> findWeatherLocations(
 			SourceLocationFilter criteria) {
+		// convert empty strings to null
+		criteria.removeEmptyValues();
+
 		FilterResults<SourceLocationMatch> matches = dataCollectorBiz.findWeatherLocations(criteria,
 				criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 		return new Response<FilterResults<SourceLocationMatch>>(matches);

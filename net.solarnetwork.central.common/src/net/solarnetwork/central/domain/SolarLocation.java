@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import net.solarnetwork.util.SerializeIgnore;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.springframework.util.StringUtils;
 
 /**
  * A location entity.
@@ -74,6 +75,41 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 		setStreet(loc.getStreet());
 		setLatitude(loc.getLatitude());
 		setLongitude(loc.getLongitude());
+	}
+
+	/**
+	 * Change values that are non-null but empty to null.
+	 * 
+	 * <p>
+	 * This method is helpful for web form submission, to remove filter values
+	 * that are empty and would otherwise try to match on empty string values.
+	 * </p>
+	 */
+	public void removeEmptyValues() {
+		if ( !StringUtils.hasText(country) ) {
+			country = null;
+		}
+		if ( !StringUtils.hasText(locality) ) {
+			locality = null;
+		}
+		if ( !StringUtils.hasText(name) ) {
+			name = null;
+		}
+		if ( !StringUtils.hasText(postalCode) ) {
+			postalCode = null;
+		}
+		if ( !StringUtils.hasText(region) ) {
+			region = null;
+		}
+		if ( !StringUtils.hasText(stateOrProvince) ) {
+			stateOrProvince = null;
+		}
+		if ( !StringUtils.hasText(street) ) {
+			street = null;
+		}
+		if ( !StringUtils.hasText(timeZoneId) ) {
+			timeZoneId = null;
+		}
 	}
 
 	@Override

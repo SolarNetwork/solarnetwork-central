@@ -34,6 +34,7 @@ import net.solarnetwork.central.dao.SortDescriptor;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.util.SerializeIgnore;
+import org.springframework.util.StringUtils;
 
 /**
  * Criteria for location data tied to a source.
@@ -76,6 +77,23 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 	@Override
 	public String toString() {
 		return "SourceLocationFilter{source=" + source + ",location=" + location + "}";
+	}
+
+	/**
+	 * Change values that are non-null but empty to null.
+	 * 
+	 * <p>
+	 * This method is helpful for web form submission, to remove filter values
+	 * that are empty and would otherwise try to match on empty string values.
+	 * </p>
+	 */
+	public void removeEmptyValues() {
+		if ( !StringUtils.hasText(source) ) {
+			source = null;
+		}
+		if ( location != null ) {
+			location.removeEmptyValues();
+		}
 	}
 
 	@Override
