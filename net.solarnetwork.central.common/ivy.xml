@@ -8,6 +8,9 @@
 		<dependency org="javax.validation" name="validation-api" rev="1.1.0.Final">
 			<artifact name="validation-api" type="jar"/>
 		</dependency>
+		<dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.5">
+    		<artifact name="jackson-mapper-asl" type="jar" />
+		</dependency>
 		<dependency org="org.hibernate" name="hibernate-validator" rev="5.0.1.Final">
 			<artifact name="hibernate-validator" type="jar" />
 		</dependency>
