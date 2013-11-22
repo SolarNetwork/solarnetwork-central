@@ -1,5 +1,5 @@
 /* ==================================================================
- * MigratorConfig.java - Nov 22, 2013 2:19:16 PM
+ * CassandraConfig.java - Nov 22, 2013 3:26:42 PM
  * 
  * Copyright 2007-2013 SolarNetwork.net Dev Team
  * 
@@ -22,33 +22,28 @@
 
 package net.solarnetwork.central.cassandra;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.context.annotation.ImportResource;
+import com.datastax.driver.core.Cluster;
 
 /**
- * Configuration for {@link Migrator} app.
+ * Configuration for Cassandra.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-@Import({ JdbcConfig.class, CassandraConfig.class })
-public class MigratorConfig {
+@ImportResource("classpath:env.xml")
+public class CassandraConfig {
 
-	@Autowired
-	private JdbcConfig jdbcConfig;
-
-	@Autowired
-	private CassandraConfig cassandraConfig;
+	@Value("${cassandra.host}")
+	private String cassandraHost;
 
 	@Bean
-	public Migrator migrator() throws ClassNotFoundException, InstantiationException,
-			IllegalAccessException {
-		Migrator m = new Migrator(new JdbcTemplate(jdbcConfig.dataSource()),
-				cassandraConfig.cassandraCluster());
-		return m;
+	public Cluster cassandraCluster() {
+		return Cluster.builder().addContactPoint(cassandraHost).build();
 	}
+
 }

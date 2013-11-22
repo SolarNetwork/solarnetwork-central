@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.jdbc.core.JdbcOperations;
+import com.datastax.driver.core.Cluster;
 
 /**
  * Application class to migrate data from existing DAO to Cassandra.
@@ -39,23 +40,34 @@ public class Migrator {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	public JdbcOperations jdbcOperations;
+	private final Cluster cassandra;
 
 	/**
 	 * Construct with deps.
 	 * 
 	 * @param jdbcOperations
+	 *        the JDBC ops
+	 * @param cluster
+	 *        the Cassandra cluster
 	 */
-	public Migrator(JdbcOperations jdbcOperations) {
+	public Migrator(JdbcOperations jdbcOperations, Cluster cluster) {
 		super();
 		this.jdbcOperations = jdbcOperations;
+		this.cassandra = cluster;
 	}
 
 	public void go() {
-		// TODO
-		log.info("Howdy there, I'm ready to go with JDBC connection to {}", jdbcOperations);
-		MigrateConsumptionDatum mc = new MigrateConsumptionDatum();
-		mc.migrate(jdbcOperations);
-		log.info("Alrighty then, I'm all done. I hope that went as well as expected!", jdbcOperations);
+		try {
+			log.info(
+					"Howdy there, I'm ready to go with JDBC connection to {} and Cassandra connection to {}",
+					jdbcOperations, cassandra.getMetadata().getClusterName());
+			MigrateConsumptionDatum mc = new MigrateConsumptionDatum();
+			mc.migrate(jdbcOperations, cassandra);
+			log.info("Alrighty then, I'm all done. I hope that went as well as expected!",
+					jdbcOperations);
+		} finally {
+			cassandra.shutdown();
+		}
 	}
 
 	/**

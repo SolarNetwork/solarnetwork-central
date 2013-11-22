@@ -35,6 +35,7 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
+import com.datastax.driver.core.Cluster;
 
 /**
  * Migrate the ConsumptionDatum table.
@@ -51,7 +52,7 @@ public class MigrateConsumptionDatum {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	public void migrate(JdbcOperations ops) {
+	public void migrate(JdbcOperations ops, Cluster cluster) {
 		// execute SQL
 		ops.execute(new PreparedStatementCreator() {
 

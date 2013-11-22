@@ -13,6 +13,9 @@
 		<dependency org="com.datastax.cassandra" name="cassandra-driver-core" rev="2.0.0-rc1" conf="compile,runtime">
 			<artifact name="cassandra-driver-core" type="jar"/>
 		</dependency>
+		<dependency org="net.jpountz.lz4" name="lz4" rev="1.2.0" conf="runtime">
+			<artifact name="lz4" type="jar"/>
+		</dependency>
 		<dependency org="org.apache.tomcat" name="tomcat-jdbc" rev="7.0.29" conf="compile,runtime">
     		<artifact name="tomcat-jdbc" type="jar" />
 		</dependency>
