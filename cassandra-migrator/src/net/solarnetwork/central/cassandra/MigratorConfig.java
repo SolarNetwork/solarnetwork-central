@@ -51,17 +51,30 @@ public class MigratorConfig {
 	@Value("${task.threads}")
 	private Integer taskThreads;
 
-	private MigrateConsumptionDatum migrateConsumptionDatum() {
-		MigrateConsumptionDatum t = new MigrateConsumptionDatum();
+	@Value("${datum.maxProcess}")
+	private Integer maxProcess;
+
+	private void setupMigrateDatumSupport(MigrateDatumSupport t) {
 		t.setCluster(cassandraConfig.cassandraCluster());
 		t.setJdbcOperations(jdbcConfig.jdbcOperations());
+		t.setMaxResults(maxProcess);
+	}
+
+	private MigrateConsumptionDatum migrateConsumptionDatum() {
+		MigrateConsumptionDatum t = new MigrateConsumptionDatum();
+		setupMigrateDatumSupport(t);
 		return t;
 	}
 
 	private MigratePowerDatum migratePowerDatum() {
 		MigratePowerDatum t = new MigratePowerDatum();
-		t.setCluster(cassandraConfig.cassandraCluster());
-		t.setJdbcOperations(jdbcConfig.jdbcOperations());
+		setupMigrateDatumSupport(t);
+		return t;
+	}
+
+	private MigratePriceDatum migratePriceDatum() {
+		MigratePriceDatum t = new MigratePriceDatum();
+		setupMigrateDatumSupport(t);
 		return t;
 	}
 
@@ -71,6 +84,7 @@ public class MigratorConfig {
 		List<MigrationTask> tasks = new ArrayList<MigrationTask>();
 		tasks.add(migrateConsumptionDatum());
 		tasks.add(migratePowerDatum());
+		tasks.add(migratePriceDatum());
 		Migrator m = new Migrator(cassandraConfig.cassandraCluster(), executorService(), tasks);
 		return m;
 	}

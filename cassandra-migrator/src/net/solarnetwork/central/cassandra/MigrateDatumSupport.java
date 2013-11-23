@@ -52,7 +52,7 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 	public static final String DEFAULT_CQL = "INSERT INTO solardata.node_datum (node_id, dtype, source_id, year, ts, data_num) "
 			+ "VALUES (?, ?, ?, ?, ?, ?)";
 
-	private Integer maxResults = 1;
+	private Integer maxResults = 250;
 	private Integer fetchSize = 1000;
 	private String cassandraKeyspace = "solardata";
 	private JdbcOperations jdbcOperations;
