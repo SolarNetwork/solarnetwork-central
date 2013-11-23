@@ -92,7 +92,11 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 					PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 							ResultSet.CONCUR_READ_ONLY);
 					if ( getMaxResults() != null ) {
-						stmt.setMaxRows(getMaxResults());
+						int max = getMaxResults();
+						if ( offset != null ) {
+							max += offset;
+						}
+						stmt.setMaxRows(max);
 					}
 					if ( getFetchSize() != null ) {
 						stmt.setFetchSize(getFetchSize());
