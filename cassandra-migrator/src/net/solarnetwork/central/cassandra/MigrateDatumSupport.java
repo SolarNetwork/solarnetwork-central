@@ -126,7 +126,6 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 		long count = 0;
 		try {
 			int currRow = 1;
-			int maxRow = (getMaxResults() == null ? -1 : getMaxResults().intValue());
 			if ( offset != null ) {
 				currRow = offset.intValue();
 				if ( currRow > 0 ) {
