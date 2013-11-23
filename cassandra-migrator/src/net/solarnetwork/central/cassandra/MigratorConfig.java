@@ -58,11 +58,19 @@ public class MigratorConfig {
 		return t;
 	}
 
+	private MigratePowerDatum migratePowerDatum() {
+		MigratePowerDatum t = new MigratePowerDatum();
+		t.setCluster(cassandraConfig.cassandraCluster());
+		t.setJdbcOperations(jdbcConfig.jdbcOperations());
+		return t;
+	}
+
 	@Bean
 	public Migrator migrator() throws ClassNotFoundException, InstantiationException,
 			IllegalAccessException {
 		List<MigrationTask> tasks = new ArrayList<MigrationTask>();
 		tasks.add(migrateConsumptionDatum());
+		tasks.add(migratePowerDatum());
 		Migrator m = new Migrator(cassandraConfig.cassandraCluster(), executorService(), tasks);
 		return m;
 	}

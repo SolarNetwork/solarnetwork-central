@@ -38,25 +38,25 @@ import com.datastax.driver.core.Session;
  * @author matt
  * @version 1.0
  */
-public class MigrateConsumptionDatum extends MigrateDatumSupport {
+public class MigratePowerDatum extends MigrateDatumSupport {
 
 	private static final String SQL = "SELECT id, created, posted, node_id, source_id, "
-			+ "price_loc_id, watts, watt_hour, prev_datum FROM solarnet.sn_consum_datum "
+			+ "price_loc_id, watts, watt_hour, bat_volts, bat_amp_hrs FROM solarnet.sn_power_datum "
 			+ "ORDER BY id ASC";
 
-	public MigrateConsumptionDatum() {
+	public MigratePowerDatum() {
 		super();
 		setSql(SQL);
 	}
 
 	@Override
 	protected int getDatumType() {
-		return 1;
+		return 2;
 	}
 
 	@Override
 	protected String getDatumTypeDescription() {
-		return "ConsumptionDatum";
+		return "PowerDatum";
 	}
 
 	@Override
@@ -87,6 +87,14 @@ public class MigrateConsumptionDatum extends MigrateDatumSupport {
 		l = rs.getLong(8);
 		if ( !rs.wasNull() ) {
 			rowData.put("watt_hour", new BigDecimal(l));
+		}
+		float f = rs.getFloat(9);
+		if ( !rs.wasNull() ) {
+			rowData.put("bat_volts", new BigDecimal(f));
+		}
+		f = rs.getFloat(10);
+		if ( !rs.wasNull() ) {
+			rowData.put("bat_amp_hrs", new BigDecimal(f));
 		}
 		bs.setMap(5, rowData);
 		cSession.execute(bs);

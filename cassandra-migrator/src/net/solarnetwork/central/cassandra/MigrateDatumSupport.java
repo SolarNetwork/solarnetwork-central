@@ -49,13 +49,16 @@ import com.datastax.driver.core.Session;
  */
 public abstract class MigrateDatumSupport implements MigrationTask {
 
+	public static final String DEFAULT_CQL = "INSERT INTO solardata.node_datum (node_id, dtype, source_id, year, ts, data_num) "
+			+ "VALUES (?, ?, ?, ?, ?, ?)";
+
 	private Integer maxResults = 250;
 	private Integer fetchSize = 1000;
 	private String cassandraKeyspace = "solardata";
 	private JdbcOperations jdbcOperations;
 	private Cluster cluster;
 	private String sql;
-	private String cql;
+	private String cql = DEFAULT_CQL;
 	private Integer startingOffset = null;
 
 	protected final Calendar gmtCalendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
@@ -70,7 +73,7 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 	protected MigrationResult migrate(final Integer offset) {
 		final Session cSession = cluster.connect(getCassandraKeyspace());
 		final com.datastax.driver.core.PreparedStatement cStmt = cSession.prepare(cql);
-		final MigrationResult result = new MigrationResult(getDatumType());
+		final MigrationResult result = new MigrationResult(getDatumTypeDescription());
 		result.setProcessedCount(0L);
 		result.setSuccess(false);
 		try {
@@ -147,7 +150,7 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 				count++;
 				if ( (count % 200) == 0 && log.isInfoEnabled() ) {
 					if ( log.isInfoEnabled() ) {
-						log.info("Processing {} {}: {}", count, getDatumType(),
+						log.info("Processing {} {}: {}", count, getDatumTypeDescription(),
 								rowMapper.mapRow(rs, currRow++));
 					}
 				}
@@ -160,11 +163,13 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 				rs.close();
 			}
 			result.setProcessedCount(count);
-			log.info("Processed {} {} rows", count, getDatumType());
+			log.info("Processed {} {} rows", count, getDatumTypeDescription());
 		}
 	}
 
-	protected abstract String getDatumType();
+	protected abstract int getDatumType();
+
+	protected abstract String getDatumTypeDescription();
 
 	protected abstract void handleInputResultRow(ResultSet rs, Session cSession,
 			com.datastax.driver.core.PreparedStatement cStmt) throws SQLException;
