@@ -58,6 +58,7 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 	private JdbcOperations jdbcOperations;
 	private Cluster cluster;
 	private String sql;
+	private String countSql;
 	private String cql = DEFAULT_CQL;
 	private Integer startingOffset = null;
 
@@ -77,6 +78,10 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 		result.setProcessedCount(0L);
 		result.setSuccess(false);
 		try {
+			if ( countSql != null ) {
+				long count = jdbcOperations.queryForLong(countSql);
+				log.info("Found {} {} rows to process", count, getDatumTypeDescription());
+			}
 			// execute SQL
 			jdbcOperations.execute(new PreparedStatementCreator() {
 
@@ -236,6 +241,14 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 
 	public void setStartingOffset(Integer startingOffset) {
 		this.startingOffset = startingOffset;
+	}
+
+	public String getCountSql() {
+		return countSql;
+	}
+
+	public void setCountSql(String countSql) {
+		this.countSql = countSql;
 	}
 
 }

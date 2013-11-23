@@ -44,9 +44,12 @@ public class MigrateConsumptionDatum extends MigrateDatumSupport {
 			+ "price_loc_id, watts, watt_hour, prev_datum FROM solarnet.sn_consum_datum "
 			+ "ORDER BY id ASC";
 
+	private static final String COUNT_SQL = "SELECT count(id) FROM solarnet.sn_consum_datum";
+
 	public MigrateConsumptionDatum() {
 		super();
 		setSql(SQL);
+		setCountSql(COUNT_SQL);
 	}
 
 	@Override
