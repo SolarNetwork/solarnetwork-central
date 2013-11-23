@@ -78,6 +78,12 @@ public class MigratorConfig {
 		return t;
 	}
 
+	private MigrateWeatherDatum migrateWeatherDatum() {
+		MigrateWeatherDatum t = new MigrateWeatherDatum();
+		setupMigrateDatumSupport(t);
+		return t;
+	}
+
 	@Bean
 	public Migrator migrator() throws ClassNotFoundException, InstantiationException,
 			IllegalAccessException {
@@ -85,6 +91,7 @@ public class MigratorConfig {
 		tasks.add(migrateConsumptionDatum());
 		tasks.add(migratePowerDatum());
 		tasks.add(migratePriceDatum());
+		tasks.add(migrateWeatherDatum());
 		Migrator m = new Migrator(cassandraConfig.cassandraCluster(), executorService(), tasks);
 		return m;
 	}
