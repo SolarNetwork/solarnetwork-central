@@ -22,11 +22,17 @@
 
 package net.solarnetwork.central.cassandra;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.jdbc.core.JdbcOperations;
 import com.datastax.driver.core.Cluster;
 
 /**
@@ -39,8 +45,9 @@ public class Migrator {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	public JdbcOperations jdbcOperations;
 	private final Cluster cassandra;
+	private final ExecutorService executorService;
+	private final Collection<MigrationTask> tasks;
 
 	/**
 	 * Construct with deps.
@@ -49,22 +56,43 @@ public class Migrator {
 	 *        the JDBC ops
 	 * @param cluster
 	 *        the Cassandra cluster
+	 * @param executorService
+	 *        the ExecutorService
+	 * @param tasks
+	 *        the tasks to execute
 	 */
-	public Migrator(JdbcOperations jdbcOperations, Cluster cluster) {
+	public Migrator(Cluster cluster, ExecutorService executorService, Collection<MigrationTask> tasks) {
 		super();
-		this.jdbcOperations = jdbcOperations;
 		this.cassandra = cluster;
+		this.executorService = executorService;
+		this.tasks = tasks;
 	}
 
 	public void go() {
 		try {
+			log.info("Howdy there, I'm ready to go with Cassandra connection to {}", cassandra
+					.getMetadata().getClusterName());
+			List<Future<MigrationResult>> results = new ArrayList<Future<MigrationResult>>(tasks.size());
+			for ( MigrationTask t : tasks ) {
+				log.info("Submitting task {}", t.getClass().getName());
+				results.add(executorService.submit(t));
+			}
+			executorService.shutdown();
+			executorService.awaitTermination(365, TimeUnit.DAYS);
+			StringBuilder buf = new StringBuilder();
+			for ( Future<MigrationResult> f : results ) {
+				if ( f.isDone() ) {
+					MigrationResult r = f.get();
+					buf.append(r.getStatusMessage()).append("\n");
+				}
+			}
 			log.info(
-					"Howdy there, I'm ready to go with JDBC connection to {} and Cassandra connection to {}",
-					jdbcOperations, cassandra.getMetadata().getClusterName());
-			MigrateConsumptionDatum mc = new MigrateConsumptionDatum();
-			mc.migrate(jdbcOperations, cassandra);
-			log.info("Alrighty then, I'm all done. I hope that went as well as expected!",
-					jdbcOperations);
+					"Alrighty then, I'm all done. I hope that went as well as expected! Here are your results: \n{}",
+					buf);
+		} catch ( InterruptedException e ) {
+			log.warn("Interrupted while waiting for tasks to complete: " + e.getMessage());
+		} catch ( ExecutionException e ) {
+			log.warn("ExecutionException processing results: " + e.getMessage());
 		} finally {
 			cassandra.shutdown();
 		}

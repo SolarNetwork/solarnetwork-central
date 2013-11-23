@@ -22,20 +22,15 @@
 
 package net.solarnetwork.central.cassandra;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.ColumnMapRowMapper;
-import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.PreparedStatementCallback;
-import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.core.RowMapper;
-import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.Session;
 
 /**
  * Migrate the ConsumptionDatum table.
@@ -43,75 +38,56 @@ import com.datastax.driver.core.Cluster;
  * @author matt
  * @version 1.0
  */
-public class MigrateConsumptionDatum {
+public class MigrateConsumptionDatum extends MigrateDatumSupport {
 
-	private final String sql = "SELECT id, created, posted, node_id, source_id, "
-			+ "price_loc_id, watts, watt_hour, prev_datum FROM solarnet.sn_consum_datum";
-	private final Integer maxResults = 25;
-	private final Integer fetchSize = 250;
+	private static final String SQL = "SELECT id, created, posted, node_id, source_id, "
+			+ "price_loc_id, watts, watt_hour, prev_datum FROM solarnet.sn_consum_datum "
+			+ "ORDER BY id ASC";
+	private static final String CQL = "INSERT INTO solardata.node_datum (node_id, source_id, year, ts, data_num) "
+			+ "VALUES (?, ?, ?, ?, ?)";
 
-	private final Logger log = LoggerFactory.getLogger(getClass());
-
-	public void migrate(JdbcOperations ops, Cluster cluster) {
-		// execute SQL
-		ops.execute(new PreparedStatementCreator() {
-
-			@Override
-			public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-				PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
-						ResultSet.CONCUR_READ_ONLY);
-				if ( maxResults != null ) {
-					stmt.setMaxRows(maxResults);
-				}
-				if ( fetchSize != null ) {
-					stmt.setFetchSize(fetchSize);
-				}
-				return stmt;
-			}
-		}, new PreparedStatementCallback<Object>() {
-
-			@Override
-			public Object doInPreparedStatement(PreparedStatement ps) throws SQLException,
-					DataAccessException {
-				boolean haveResults = ps.execute();
-				if ( haveResults ) {
-					handleResults(ps, null);
-				}
-				return null;
-			}
-		});
+	public MigrateConsumptionDatum() {
+		super();
+		setSql(SQL);
+		setCql(CQL);
 	}
 
-	private void handleResults(PreparedStatement ps, Integer offset) throws SQLException {
-		ResultSet rs = ps.getResultSet();
-		try {
-			int currRow = 1;
-			int maxRow = (maxResults == null ? -1 : maxResults.intValue());
-			if ( offset != null ) {
-				currRow = offset.intValue();
-				if ( currRow > 0 ) {
-					try {
-						rs.relative(currRow);
-					} catch ( Exception e ) {
-						if ( log.isWarnEnabled() ) {
-							log.warn("Unable to call ResultSet.relative(" + currRow
-									+ "), reverting to inefficient rs.next() " + currRow + " times");
-						}
-						for ( int i = 0; i < currRow; i++ ) {
-							rs.next();
-						}
-					}
-				}
-			}
+	@Override
+	protected String getDatumType() {
+		return "ConsumptionDatum";
+	}
 
-			RowMapper<Map<String, Object>> rowMapper = new ColumnMapRowMapper();
-			while ( rs.next() && (maxRow-- != 0) ) {
-				log.debug("Got row: {}", rowMapper.mapRow(rs, currRow++));
-			}
-		} finally {
-			if ( rs != null ) {
-				rs.close();
-			}
+	@Override
+	protected void handleInputResultRow(ResultSet rs, Session cSession,
+			com.datastax.driver.core.PreparedStatement cStmt) throws SQLException {
+		// input: id, created, posted, node_id, source_id, price_loc_id, watts, watt_hour, prev_datum
+		// output: node_id, source_id, year, ts, data_num
+
+		BoundStatement bs = new BoundStatement(cStmt);
+		bs.setString(0, rs.getObject(4).toString());
+		bs.setString(1, rs.getString(5));
+
+		Timestamp created = rs.getTimestamp(2);
+		gmtCalendar.setTimeInMillis(created.getTime());
+		bs.setInt(2, gmtCalendar.get(Calendar.YEAR));
+
+		bs.setDate(3, created);
+
+		Map<String, BigDecimal> rowData = new LinkedHashMap<String, BigDecimal>(3);
+		long l = rs.getLong(6);
+		if ( !rs.wasNull() ) {
+			rowData.put("priceLocationId", new BigDecimal(l));
 		}
+		int i = rs.getInt(7);
+		if ( !rs.wasNull() ) {
+			rowData.put("watts", new BigDecimal(i));
+		}
+		l = rs.getLong(8);
+		if ( !rs.wasNull() ) {
+			rowData.put("watt_hour", new BigDecimal(l));
+		}
+		bs.setMap(4, rowData);
+		cSession.execute(bs);
 	}
+
 }

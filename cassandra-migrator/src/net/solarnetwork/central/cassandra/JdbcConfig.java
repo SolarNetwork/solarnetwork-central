@@ -29,6 +29,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 
 /**
@@ -116,6 +118,19 @@ public class JdbcConfig {
 	public DataSource dataSource() throws ClassNotFoundException, InstantiationException,
 			IllegalAccessException {
 		return new org.apache.tomcat.jdbc.pool.DataSource(poolProperties());
+	}
+
+	@Bean
+	public JdbcOperations jdbcOperations() {
+		try {
+			return new JdbcTemplate(dataSource());
+		} catch ( ClassNotFoundException e ) {
+			throw new RuntimeException(e);
+		} catch ( InstantiationException e ) {
+			throw new RuntimeException(e);
+		} catch ( IllegalAccessException e ) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }

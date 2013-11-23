@@ -22,11 +22,15 @@
 
 package net.solarnetwork.central.cassandra;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Configuration for {@link Migrator} app.
@@ -44,11 +48,27 @@ public class MigratorConfig {
 	@Autowired
 	private CassandraConfig cassandraConfig;
 
+	@Value("${task.threads}")
+	private Integer taskThreads;
+
+	private MigrateConsumptionDatum migrateConsumptionDatum() {
+		MigrateConsumptionDatum t = new MigrateConsumptionDatum();
+		t.setCluster(cassandraConfig.cassandraCluster());
+		t.setJdbcOperations(jdbcConfig.jdbcOperations());
+		return t;
+	}
+
 	@Bean
 	public Migrator migrator() throws ClassNotFoundException, InstantiationException,
 			IllegalAccessException {
-		Migrator m = new Migrator(new JdbcTemplate(jdbcConfig.dataSource()),
-				cassandraConfig.cassandraCluster());
+		List<MigrationTask> tasks = new ArrayList<MigrationTask>();
+		tasks.add(migrateConsumptionDatum());
+		Migrator m = new Migrator(cassandraConfig.cassandraCluster(), executorService(), tasks);
 		return m;
+	}
+
+	@Bean
+	public ExecutorService executorService() {
+		return Executors.newFixedThreadPool(taskThreads);
 	}
 }
