@@ -98,6 +98,9 @@ public class MigrationResult {
 			recordsPerSecond = (totalSpeed / subtasks.size());
 		}
 		buf.append("Task ").append(getTaskName()).append(" ");
+		if ( subtasks.size() > 0 ) {
+			buf.append("(with ").append(subtasks.size()).append(" subtasks) ");
+		}
 		if ( taskProperties != null && taskProperties.size() > 0 ) {
 			buf.append("(").append(StringUtils.delimitedStringFromMap(taskProperties)).append(") ");
 		}
