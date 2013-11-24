@@ -40,6 +40,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.QueryTimeoutException;
 
 /**
  * Abstract supporting class for migrating Datum.
@@ -61,6 +62,8 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 	private String countSql;
 	private String cql = DEFAULT_CQL;
 	private Integer startingOffset = null;
+	private Integer maxWriteTries = 25;
+	private Integer writeRetryDelaySeconds = 30;
 
 	protected final Calendar gmtCalendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 
@@ -115,12 +118,14 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 					return null;
 				}
 			});
+		} catch ( RuntimeException e ) {
+			log.error("Migrate task {} failed: {}", getDatumTypeDescription(), e.getCause().getMessage());
 		} finally {
+			result.finished();
 			if ( cSession != null ) {
 				cSession.shutdown();
 			}
 		}
-		result.finished();
 		return result;
 	}
 
@@ -150,14 +155,41 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 			RowMapper<Map<String, Object>> rowMapper = new ColumnMapRowMapper();
 			while ( rs.next() ) {
 				count++;
+				currRow++;
 				if ( (count % 200) == 0 && log.isInfoEnabled() ) {
 					if ( log.isInfoEnabled() ) {
 						log.info("Processing {} {}: {}", count, getDatumTypeDescription(),
-								rowMapper.mapRow(rs, currRow++));
+								rowMapper.mapRow(rs, currRow));
 					}
 				}
-
-				handleInputResultRow(rs, cSession, cStmt);
+				int tries = (maxWriteTries == null || maxWriteTries.intValue() < 1 ? 1 : maxWriteTries
+						.intValue());
+				while ( tries > 0 ) {
+					try {
+						handleInputResultRow(rs, cSession, cStmt);
+						break;
+					} catch ( QueryTimeoutException e ) {
+						// pause for just a tad, then retry
+						tries--;
+						if ( tries > 0 ) {
+							long sleepMs = ((long) (Math.random() * writeRetryDelaySeconds)) * 1000L;
+							log.warn(
+									"Timeout writing {} row {}, sleeping for {}ms to retry ({} retries remaining)",
+									getDatumTypeDescription(), rowMapper.mapRow(rs, currRow), sleepMs,
+									tries);
+							try {
+								Thread.sleep(sleepMs);
+							} catch ( InterruptedException e1 ) {
+								log.warn("Interrupted sleeping for retry on row {}",
+										rowMapper.mapRow(rs, currRow));
+							}
+						} else {
+							log.error("Timeout writing {} row {}, giving up", getDatumTypeDescription(),
+									rowMapper.mapRow(rs, currRow));
+							throw e;
+						}
+					}
+				}
 			}
 			result.setSuccess(true);
 		} catch ( SQLException e ) {
@@ -252,6 +284,22 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 
 	public void setCountSql(String countSql) {
 		this.countSql = countSql;
+	}
+
+	public Integer getMaxWriteTries() {
+		return maxWriteTries;
+	}
+
+	public void setMaxWriteTries(Integer timeoutMaxRetries) {
+		this.maxWriteTries = timeoutMaxRetries;
+	}
+
+	public Integer getWriteRetryDelaySeconds() {
+		return writeRetryDelaySeconds;
+	}
+
+	public void setWriteRetryDelaySeconds(Integer writeRetryDelaySeconds) {
+		this.writeRetryDelaySeconds = writeRetryDelaySeconds;
 	}
 
 }
