@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.cassandra;
+package net.solarnetwork.central.cassandra.config;
 
 import java.sql.Driver;
 import javax.sql.DataSource;

@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.cassandra;
+package net.solarnetwork.central.cassandra.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

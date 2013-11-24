@@ -1,5 +1,5 @@
 /* ==================================================================
- * MigratorConfig.java - Nov 22, 2013 2:19:16 PM
+ * MigrationTaskConfig.java - Nov 25, 2013 9:29:07 AM
  * 
  * Copyright 2007-2013 SolarNetwork.net Dev Team
  * 
@@ -20,12 +20,13 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.cassandra;
+package net.solarnetwork.central.cassandra.config;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import net.solarnetwork.central.cassandra.MigrateConsumptionDatum;
+import net.solarnetwork.central.cassandra.MigrateDatumSupport;
+import net.solarnetwork.central.cassandra.MigratePowerDatum;
+import net.solarnetwork.central.cassandra.MigratePriceDatum;
+import net.solarnetwork.central.cassandra.MigrateWeatherDatum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -33,23 +34,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Configuration for {@link Migrator} app.
+ * Bean configuration for MigrationTask objects.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
 @Import({ JdbcConfig.class, CassandraConfig.class })
-public class MigratorConfig {
+public class MigrationTaskConfig {
 
 	@Autowired
 	private JdbcConfig jdbcConfig;
 
 	@Autowired
 	private CassandraConfig cassandraConfig;
-
-	@Value("${task.threads}")
-	private Integer taskThreads;
 
 	@Value("${datum.maxProcess}")
 	private Integer maxProcess;
@@ -60,44 +58,32 @@ public class MigratorConfig {
 		t.setMaxResults(maxProcess);
 	}
 
-	private MigrateConsumptionDatum migrateConsumptionDatum() {
+	@Bean
+	public MigrateConsumptionDatum migrateConsumptionDatum() {
 		MigrateConsumptionDatum t = new MigrateConsumptionDatum();
 		setupMigrateDatumSupport(t);
 		return t;
 	}
 
-	private MigratePowerDatum migratePowerDatum() {
+	@Bean
+	public MigratePowerDatum migratePowerDatum() {
 		MigratePowerDatum t = new MigratePowerDatum();
 		setupMigrateDatumSupport(t);
 		return t;
 	}
 
-	private MigratePriceDatum migratePriceDatum() {
+	@Bean
+	public MigratePriceDatum migratePriceDatum() {
 		MigratePriceDatum t = new MigratePriceDatum();
 		setupMigrateDatumSupport(t);
 		return t;
 	}
 
-	private MigrateWeatherDatum migrateWeatherDatum() {
+	@Bean
+	public MigrateWeatherDatum migrateWeatherDatum() {
 		MigrateWeatherDatum t = new MigrateWeatherDatum();
 		setupMigrateDatumSupport(t);
 		return t;
 	}
 
-	@Bean
-	public Migrator migrator() throws ClassNotFoundException, InstantiationException,
-			IllegalAccessException {
-		List<MigrationTask> tasks = new ArrayList<MigrationTask>();
-		tasks.add(migrateConsumptionDatum());
-		tasks.add(migratePowerDatum());
-		tasks.add(migratePriceDatum());
-		tasks.add(migrateWeatherDatum());
-		Migrator m = new Migrator(cassandraConfig.cassandraCluster(), executorService(), tasks);
-		return m;
-	}
-
-	@Bean
-	public ExecutorService executorService() {
-		return Executors.newFixedThreadPool(taskThreads);
-	}
 }
