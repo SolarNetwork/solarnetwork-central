@@ -25,8 +25,6 @@ package net.solarnetwork.central.cassandra.config;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import net.solarnetwork.central.cassandra.MigrationTask;
 import net.solarnetwork.central.cassandra.Migrator;
 import org.slf4j.Logger;
@@ -57,10 +55,10 @@ public class MigratorConfig {
 	private CassandraConfig cassandraConfig;
 
 	@Autowired
-	private ApplicationContext applicationContext;
+	private MigrationTaskConfig migrationTaskConfig;
 
-	@Value("${task.threads}")
-	private Integer taskThreads;
+	@Autowired
+	private ApplicationContext applicationContext;
 
 	@Value("${task.names}")
 	private String[] taskNames = new String[] { "all" };
@@ -90,13 +88,9 @@ public class MigratorConfig {
 				}
 			}
 		}
-		Migrator m = new Migrator(cassandraConfig.cassandraCluster(), executorService(), tasks);
+		Migrator m = new Migrator(cassandraConfig.cassandraCluster(),
+				migrationTaskConfig.executorService(), tasks);
 		return m;
-	}
-
-	@Bean
-	public ExecutorService executorService() {
-		return Executors.newFixedThreadPool(taskThreads);
 	}
 
 	public String[] getTaskNames() {

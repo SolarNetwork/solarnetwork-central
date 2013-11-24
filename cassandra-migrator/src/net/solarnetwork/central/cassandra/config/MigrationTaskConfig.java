@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.cassandra.config;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import net.solarnetwork.central.cassandra.MigrateConsumptionDatum;
 import net.solarnetwork.central.cassandra.MigrateDatumSupport;
 import net.solarnetwork.central.cassandra.MigratePowerDatum;
@@ -43,6 +45,9 @@ import org.springframework.context.annotation.Import;
 @Import({ JdbcConfig.class, CassandraConfig.class })
 public class MigrationTaskConfig {
 
+	@Value("${task.threads}")
+	private Integer taskThreads;
+
 	@Autowired
 	private JdbcConfig jdbcConfig;
 
@@ -52,10 +57,16 @@ public class MigrationTaskConfig {
 	@Value("${datum.maxProcess}")
 	private Integer maxProcess;
 
+	@Bean
+	public ExecutorService executorService() {
+		return Executors.newFixedThreadPool(taskThreads);
+	}
+
 	private void setupMigrateDatumSupport(MigrateDatumSupport t) {
 		t.setCluster(cassandraConfig.cassandraCluster());
 		t.setJdbcOperations(jdbcConfig.jdbcOperations());
 		t.setMaxResults(maxProcess);
+		t.setExecutorService(executorService());
 	}
 
 	@Bean

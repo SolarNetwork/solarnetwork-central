@@ -22,14 +22,22 @@
 
 package net.solarnetwork.central.cassandra;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
+import net.solarnetwork.util.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -53,25 +61,105 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 	public static final String DEFAULT_CQL = "INSERT INTO solardata.node_datum (node_id, dtype, source_id, year, ts, data_num) "
 			+ "VALUES (?, ?, ?, ?, ?, ?)";
 
+	public static final String DATE_RANGE_SQL_TEMPLATE = "SELECT "
+			+ "%1$s as pk, min(%2$s) as start, max(%2$s) as end FROM %3$s GROUP BY %1$s "
+			+ "ORDER BY pk";
+
+	private JdbcOperations jdbcOperations;
+	private Cluster cluster;
+	private ExecutorService executorService;
 	private Integer maxResults = 250;
 	private Integer fetchSize = 1000;
 	private String cassandraKeyspace = "solardata";
-	private JdbcOperations jdbcOperations;
-	private Cluster cluster;
+	private String dateRangeSql; // query must return pk, min date, max date
 	private String sql;
 	private String countSql;
 	private String cql = DEFAULT_CQL;
 	private Integer startingOffset = null;
 	private Integer maxWriteTries = 25;
 	private Integer writeRetryDelaySeconds = 30;
+	private List<Object> sqlParameters;
+	private Map<String, ?> resultProperties;
 
 	protected final Calendar gmtCalendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
+	protected void setupGroupedDateRangeSql(String tableName, String pkColumnName, String dateColumnName) {
+		dateRangeSql = String.format(DATE_RANGE_SQL_TEMPLATE, pkColumnName, dateColumnName, tableName);
+	}
+
+	public MigrateDatumSupport() {
+		super();
+	}
+
+	public MigrateDatumSupport(MigrateDatumSupport other) {
+		super();
+		ClassUtils.copyBeanProperties(other, this, null);
+	}
+
 	@Override
 	public MigrationResult call() throws Exception {
 		return migrate(startingOffset);
+	}
+
+	protected void handleDateRangeSql(final MigrationResult result, String sql) {
+		final List<Map<String, Object>> ranges = jdbcOperations.queryForList(dateRangeSql);
+		final Calendar cal = (Calendar) gmtCalendar.clone();
+		for ( Map<String, Object> range : ranges ) {
+			final Long pk = (Long) range.get("pk");
+			final Timestamp start = (Timestamp) range.get("start");
+			final Timestamp end = (Timestamp) range.get("end");
+			cal.setTime(start);
+			int yearStart = cal.get(Calendar.YEAR);
+			cal.setTime(end);
+			final int yearEnd = cal.get(Calendar.YEAR);
+			log.info("Breaking up {} into subtasks for pk {} years {}-{}", getDatumTypeDescription(),
+					pk, yearStart, yearEnd);
+			cal.setTime(start);
+			cal.set(Calendar.MONTH, 1);
+			cal.set(Calendar.DAY_OF_MONTH, 1);
+			cal.set(Calendar.HOUR_OF_DAY, 0);
+			cal.set(Calendar.MINUTE, 0);
+			cal.set(Calendar.SECOND, 0);
+			cal.set(Calendar.MILLISECOND, 0);
+			while ( yearStart <= yearEnd ) {
+				Class<? extends MigrateDatumSupport> clazz = getClass();
+				try {
+					Constructor<? extends MigrateDatumSupport> cstr = clazz
+							.getConstructor(MigrateDatumSupport.class);
+					MigrateDatumSupport subtask = cstr.newInstance(this);
+					subtask.setDateRangeSql(null);
+					subtask.setCountSql(null);
+					List<Object> params = new ArrayList<Object>(3);
+					params.add(pk);
+					params.add(new Timestamp(cal.getTimeInMillis()));
+					cal.add(Calendar.YEAR, 1);
+					params.add(new Timestamp(cal.getTimeInMillis()));
+					subtask.setSqlParameters(params);
+					Map<String, Object> resultProps = new LinkedHashMap<String, Object>(3);
+					resultProps.put("pk", pk);
+					resultProps.put("year", yearStart);
+					subtask.resultProperties = resultProps;
+					result.addSubtask(executorService.submit(subtask));
+					yearStart++;
+				} catch ( SecurityException e ) {
+					throw new RuntimeException(e);
+				} catch ( NoSuchMethodException e ) {
+					throw new RuntimeException(e);
+				} catch ( IllegalArgumentException e ) {
+					throw new RuntimeException(e);
+				} catch ( InstantiationException e ) {
+					throw new RuntimeException(e);
+				} catch ( IllegalAccessException e ) {
+					throw new RuntimeException(e);
+				} catch ( InvocationTargetException e ) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+		result.finished();
+		result.setSuccess(true);
 	}
 
 	protected MigrationResult migrate(final Integer offset) {
@@ -80,44 +168,56 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 		final MigrationResult result = new MigrationResult(getDatumTypeDescription());
 		result.setProcessedCount(0L);
 		result.setSuccess(false);
+		if ( resultProperties != null ) {
+			result.getTaskProperties().putAll(resultProperties);
+		}
 		try {
 			if ( countSql != null ) {
 				long count = jdbcOperations.queryForLong(countSql);
 				log.info("Found {} {} rows to process", count, getDatumTypeDescription());
 			}
-			// execute SQL
-			jdbcOperations.execute(new PreparedStatementCreator() {
+			if ( dateRangeSql != null ) {
+				handleDateRangeSql(result, dateRangeSql);
+			} else {
+				// execute SQL
+				jdbcOperations.execute(new PreparedStatementCreator() {
 
-				@Override
-				public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-					con.setAutoCommit(false);
-					log.info("Task SQL: {}", sql);
-					PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
-							ResultSet.CONCUR_READ_ONLY);
-					if ( getMaxResults() != null ) {
-						int max = getMaxResults();
-						if ( offset != null ) {
-							max += offset;
+					@Override
+					public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+						con.setAutoCommit(false);
+						log.info("Task SQL: {}; params {}", sql, sqlParameters);
+						PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
+								ResultSet.CONCUR_READ_ONLY);
+						if ( getMaxResults() != null ) {
+							int max = getMaxResults();
+							if ( offset != null ) {
+								max += offset;
+							}
+							stmt.setMaxRows(max);
 						}
-						stmt.setMaxRows(max);
+						if ( getFetchSize() != null ) {
+							stmt.setFetchSize(getFetchSize());
+						}
+						return stmt;
 					}
-					if ( getFetchSize() != null ) {
-						stmt.setFetchSize(getFetchSize());
-					}
-					return stmt;
-				}
-			}, new PreparedStatementCallback<Object>() {
+				}, new PreparedStatementCallback<Object>() {
 
-				@Override
-				public MigrationResult doInPreparedStatement(PreparedStatement ps) throws SQLException,
-						DataAccessException {
-					boolean haveResults = ps.execute();
-					if ( haveResults ) {
-						handleResults(result, ps, offset, cSession, cStmt);
+					@Override
+					public MigrationResult doInPreparedStatement(PreparedStatement ps)
+							throws SQLException, DataAccessException {
+						if ( sqlParameters != null ) {
+							for ( int i = 0; i < sqlParameters.size(); i++ ) {
+								ps.setObject(i + 1, sqlParameters.get(i));
+							}
+						}
+						boolean haveResults = ps.execute();
+						if ( haveResults ) {
+							handleResults(result, ps, offset, cSession, cStmt);
+						}
+						return null;
 					}
-					return null;
-				}
-			});
+				});
+			}
 		} catch ( RuntimeException e ) {
 			log.error("Migrate task {} failed: {}", getDatumTypeDescription(), e.getCause().getMessage());
 		} finally {
@@ -300,6 +400,30 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 
 	public void setWriteRetryDelaySeconds(Integer writeRetryDelaySeconds) {
 		this.writeRetryDelaySeconds = writeRetryDelaySeconds;
+	}
+
+	public ExecutorService getExecutorService() {
+		return executorService;
+	}
+
+	public void setExecutorService(ExecutorService executorService) {
+		this.executorService = executorService;
+	}
+
+	public String getDateRangeSql() {
+		return dateRangeSql;
+	}
+
+	public void setDateRangeSql(String dateRangeSql) {
+		this.dateRangeSql = dateRangeSql;
+	}
+
+	public List<Object> getSqlParameters() {
+		return sqlParameters;
+	}
+
+	public void setSqlParameters(List<Object> sqlParameters) {
+		this.sqlParameters = sqlParameters;
 	}
 
 }

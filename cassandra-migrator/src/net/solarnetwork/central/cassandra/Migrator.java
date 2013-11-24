@@ -73,19 +73,36 @@ public class Migrator {
 		try {
 			log.info("Howdy there, I'm ready to go with Cassandra connection to {}", cassandra
 					.getMetadata().getClusterName());
-			List<Future<MigrationResult>> results = new ArrayList<Future<MigrationResult>>(tasks.size());
+			List<MigrationResult> results = new ArrayList<MigrationResult>(tasks.size());
+			List<Future<MigrationResult>> running = new ArrayList<Future<MigrationResult>>(tasks.size());
 			for ( MigrationTask t : tasks ) {
 				log.info("Submitting task {}", t.getClass().getName());
-				results.add(executorService.submit(t));
+				running.add(executorService.submit(t));
 			}
+
+			// loop until all tasks, and their subtasks, are complete
+			while ( running.size() > 0 ) {
+				Future<MigrationResult> someResult = running.iterator().next();
+				MigrationResult result = null;
+				try {
+					result = someResult.get();
+				} catch ( InterruptedException e ) {
+					log.warn("Interrupted waiting for subtask to complete: " + e.getMessage());
+				}
+				if ( someResult.isDone() ) {
+					running.remove(someResult);
+					if ( result != null ) {
+						results.add(result);
+						running.addAll(result.getSubtasks());
+					}
+				}
+			}
+
 			executorService.shutdown();
 			executorService.awaitTermination(365, TimeUnit.DAYS);
 			StringBuilder buf = new StringBuilder();
-			for ( Future<MigrationResult> f : results ) {
-				if ( f.isDone() ) {
-					MigrationResult r = f.get();
-					buf.append(r.getStatusMessage()).append("\n");
-				}
+			for ( MigrationResult r : results ) { // TODO: sort
+				buf.append(r.getStatusMessage()).append("\n");
 			}
 			log.info(
 					"Alrighty then, I'm all done. I hope that went as well as expected! Here are your results: \n{}",

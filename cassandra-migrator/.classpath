@@ -7,5 +7,6 @@
 	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?project=cassandra-migrator&amp;ivyXmlPath=ivy.xml&amp;confs=runtime"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/net.solarnetwork.central.common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/net.solarnetwork.central.datum"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/net.solarnetwork.common"/>
 	<classpathentry kind="output" path="build/eclipse"/>
 </classpath>

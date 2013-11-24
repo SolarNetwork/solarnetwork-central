@@ -22,6 +22,12 @@
 
 package net.solarnetwork.central.cassandra;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Future;
+import net.solarnetwork.util.StringUtils;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -40,19 +46,26 @@ public class MigrationResult {
 			.toFormatter();
 
 	private final String taskName;
+	private final Map<String, Object> taskProperties;
 	private boolean success;
 	private Long processedCount;
 	private final long start;
 	private long duration = 0;
+	private final List<Future<MigrationResult>> subtasks = new ArrayList<Future<MigrationResult>>(5);
 
 	public MigrationResult(String taskName) {
 		super();
 		this.taskName = taskName;
 		start = System.currentTimeMillis();
+		taskProperties = new LinkedHashMap<String, Object>(5);
 	}
 
 	public void finished() {
 		duration = System.currentTimeMillis() - start;
+	}
+
+	public void addSubtask(Future<MigrationResult> subtask) {
+		subtasks.add(subtask);
 	}
 
 	public String getStatusMessage() {
@@ -60,8 +73,11 @@ public class MigrationResult {
 		StringBuilder buf = new StringBuilder();
 		final double recordsPerSecond = (processedCount == null || duration == 0 ? 0 : processedCount
 				.doubleValue() / (duration / 1000.0));
-		buf.append("Task ").append(getTaskName()).append(" ")
-				.append(isSuccess() ? "succeeded" : "failed").append(", processing ")
+		buf.append("Task ").append(getTaskName()).append(" ");
+		if ( taskProperties != null && taskProperties.size() > 0 ) {
+			buf.append("(").append(StringUtils.delimitedStringFromMap(taskProperties)).append(") ");
+		}
+		buf.append(isSuccess() ? "succeeded" : "failed").append(", processing ")
 				.append(getProcessedCount()).append(" records in ").append(PERIOD_FORMATTER.print(p))
 				.append(" (").append(String.format("%.1f", recordsPerSecond)).append("/s)");
 		return buf.toString();
@@ -90,6 +106,14 @@ public class MigrationResult {
 
 	public long getStart() {
 		return start;
+	}
+
+	public Map<String, Object> getTaskProperties() {
+		return taskProperties;
+	}
+
+	public List<Future<MigrationResult>> getSubtasks() {
+		return subtasks;
 	}
 
 }
