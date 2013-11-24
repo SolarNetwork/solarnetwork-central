@@ -42,7 +42,7 @@ public class MigratePowerDatum extends MigrateDatumSupport {
 
 	private static final String SQL = "SELECT id, created, posted, node_id, source_id, "
 			+ "price_loc_id, watts, watt_hour, bat_volts, bat_amp_hrs FROM solarnet.sn_power_datum "
-			+ "ORDER BY id ASC";
+			+ "WHERE node_id = ? AND created >= ? AND created < ? ORDER BY id ASC";
 
 	private static final String COUNT_SQL = "SELECT count(id) FROM solarnet.sn_power_datum";
 
@@ -50,6 +50,11 @@ public class MigratePowerDatum extends MigrateDatumSupport {
 		super();
 		setSql(SQL);
 		setCountSql(COUNT_SQL);
+		setupGroupedDateRangeSql("solarnet.sn_power_datum", "node_id", "created");
+	}
+
+	public MigratePowerDatum(MigrateDatumSupport other) {
+		super(other);
 	}
 
 	@Override

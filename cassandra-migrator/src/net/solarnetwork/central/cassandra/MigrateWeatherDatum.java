@@ -43,7 +43,8 @@ import com.datastax.driver.core.Session;
 public class MigrateWeatherDatum extends MigrateLocationDatumSupport {
 
 	private static final String SQL = "SELECT id, info_date, loc_id, temperature, sky, humidity, bar, bar_dir, visibility, dew "
-			+ "FROM solarnet.sn_weather_datum ORDER BY id ASC";
+			+ "FROM solarnet.sn_weather_datum "
+			+ "WHERE loc_id = ? AND info_date >= ? AND info_date < ? ORDER BY id ASC";
 
 	private static final String COUNT_SQL = "SELECT count(id) FROM solarnet.sn_weather_datum";
 
@@ -53,6 +54,11 @@ public class MigrateWeatherDatum extends MigrateLocationDatumSupport {
 		super();
 		setSql(SQL);
 		setCountSql(COUNT_SQL);
+		setupGroupedDateRangeSql("solarnet.sn_weather_datum", "loc_id", "info_date");
+	}
+
+	public MigrateWeatherDatum(MigrateDatumSupport other) {
+		super(other);
 	}
 
 	private Map<String, Integer> getDefaultBarDirectionMapping() {

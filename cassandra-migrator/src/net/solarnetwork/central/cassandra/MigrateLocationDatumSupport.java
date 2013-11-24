@@ -38,4 +38,8 @@ public abstract class MigrateLocationDatumSupport extends MigrateDatumSupport {
 		setCql(DEFAULT_CQL);
 	}
 
+	public MigrateLocationDatumSupport(MigrateDatumSupport other) {
+		super(other);
+	}
+
 }

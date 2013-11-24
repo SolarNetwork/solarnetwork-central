@@ -42,7 +42,8 @@ import com.datastax.driver.core.Session;
 public class MigratePriceDatum extends MigrateLocationDatumSupport {
 
 	private static final String SQL = "SELECT id, created, loc_id, price "
-			+ "FROM solarnet.sn_price_datum ORDER BY id ASC";
+			+ "FROM solarnet.sn_price_datum "
+			+ "WHERE loc_id = ? AND created >= ? AND created < ? ORDER BY id ASC";
 
 	private static final String COUNT_SQL = "SELECT count(id) FROM solarnet.sn_price_datum";
 
@@ -50,6 +51,11 @@ public class MigratePriceDatum extends MigrateLocationDatumSupport {
 		super();
 		setSql(SQL);
 		setCountSql(COUNT_SQL);
+		setupGroupedDateRangeSql("solarnet.sn_price_datum", "loc_id", "created");
+	}
+
+	public MigratePriceDatum(MigrateDatumSupport other) {
+		super(other);
 	}
 
 	@Override
