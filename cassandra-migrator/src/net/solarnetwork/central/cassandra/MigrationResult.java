@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import net.solarnetwork.util.StringUtils;
 import org.joda.time.Period;
@@ -68,18 +69,44 @@ public class MigrationResult {
 		subtasks.add(subtask);
 	}
 
+	private double processSpeed() {
+		return (processedCount == null || duration == 0 ? 0 : processedCount.doubleValue()
+				/ (duration / 1000.0));
+	}
+
 	public String getStatusMessage() {
 		Period p = new Period(duration);
 		StringBuilder buf = new StringBuilder();
-		final double recordsPerSecond = (processedCount == null || duration == 0 ? 0 : processedCount
-				.doubleValue() / (duration / 1000.0));
+		final double recordsPerSecond;
+		long totalProcessedCount = processedCount;
+		if ( subtasks.size() == 0 ) {
+			recordsPerSecond = processSpeed();
+		} else {
+			double totalSpeed = 0;
+			for ( Future<MigrationResult> subtaskFuture : subtasks ) {
+				if ( subtaskFuture.isDone() ) {
+					try {
+						totalProcessedCount += subtaskFuture.get().getProcessedCount();
+						totalSpeed += subtaskFuture.get().processSpeed();
+					} catch ( InterruptedException e ) {
+						// ignore
+					} catch ( ExecutionException e ) {
+						// ignore
+					}
+				}
+			}
+			recordsPerSecond = (totalSpeed / subtasks.size());
+		}
 		buf.append("Task ").append(getTaskName()).append(" ");
 		if ( taskProperties != null && taskProperties.size() > 0 ) {
 			buf.append("(").append(StringUtils.delimitedStringFromMap(taskProperties)).append(") ");
 		}
 		buf.append(isSuccess() ? "succeeded" : "failed").append(", processing ")
-				.append(getProcessedCount()).append(" records in ").append(PERIOD_FORMATTER.print(p))
-				.append(" (").append(String.format("%.1f", recordsPerSecond)).append("/s)");
+				.append(totalProcessedCount).append(" records");
+		if ( subtasks.size() == 0 ) {
+			buf.append(" in ").append(PERIOD_FORMATTER.print(p));
+		}
+		buf.append(" (").append(String.format("%.1f", recordsPerSecond)).append("/s)");
 		return buf.toString();
 
 	}
