@@ -58,9 +58,12 @@ public class MigrationResult {
 	public String getStatusMessage() {
 		Period p = new Period(duration);
 		StringBuilder buf = new StringBuilder();
+		final double recordsPerSecond = (processedCount == null || duration == 0 ? 0 : processedCount
+				.doubleValue() / (duration / 1000.0));
 		buf.append("Task ").append(getTaskName()).append(" ")
 				.append(isSuccess() ? "succeeded" : "failed").append(", processing ")
-				.append(getProcessedCount()).append(" records in ").append(PERIOD_FORMATTER.print(p));
+				.append(getProcessedCount()).append(" records in ").append(PERIOD_FORMATTER.print(p))
+				.append(" (").append(String.format("%.1f", recordsPerSecond)).append("/s)");
 		return buf.toString();
 
 	}
