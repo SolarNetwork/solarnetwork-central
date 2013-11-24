@@ -160,6 +160,12 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 				handleInputResultRow(rs, cSession, cStmt);
 			}
 			result.setSuccess(true);
+		} catch ( SQLException e ) {
+			log.error("SQL error", e);
+			throw e;
+		} catch ( RuntimeException e ) {
+			log.error("Exception: " + e.getMessage(), e);
+			throw e;
 		} finally {
 			if ( rs != null ) {
 				rs.close();
