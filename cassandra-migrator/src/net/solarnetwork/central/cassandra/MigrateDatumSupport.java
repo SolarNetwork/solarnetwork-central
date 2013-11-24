@@ -272,13 +272,14 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 						// pause for just a tad, then retry
 						tries--;
 						if ( tries > 0 ) {
-							long sleepMs = ((long) (Math.random() * writeRetryDelaySeconds)) * 1000L;
+							long sleepSeconds = (long) Math
+									.ceil((Math.random() * writeRetryDelaySeconds));
 							log.warn(
-									"Timeout writing {} row {}, sleeping for {}ms to retry ({} retries remaining)",
-									getDatumTypeDescription(), rowMapper.mapRow(rs, currRow), sleepMs,
-									tries);
+									"Timeout writing {} row {}, sleeping for {}s to retry ({} retries remaining)",
+									getDatumTypeDescription(), rowMapper.mapRow(rs, currRow),
+									sleepSeconds, tries);
 							try {
-								Thread.sleep(sleepMs);
+								Thread.sleep(sleepSeconds * 1000L);
 							} catch ( InterruptedException e1 ) {
 								log.warn("Interrupted sleeping for retry on row {}",
 										rowMapper.mapRow(rs, currRow));
