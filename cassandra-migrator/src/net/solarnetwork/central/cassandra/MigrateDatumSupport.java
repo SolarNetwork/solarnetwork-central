@@ -68,7 +68,7 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 	private JdbcOperations jdbcOperations;
 	private Cluster cluster;
 	private ExecutorService executorService;
-	private Integer maxResults = 250;
+	private Integer maxResults = null;
 	private Integer fetchSize = 1000;
 	private String cassandraKeyspace = "solardata";
 	private String dateRangeSql; // query must return pk, min date, max date
