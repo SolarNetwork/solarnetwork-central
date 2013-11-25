@@ -39,6 +39,8 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import net.solarnetwork.util.ClassUtils;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -177,13 +179,24 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 		return new BigDecimal(str);
 	}
 
+	protected Timestamp getTimestamp(String key, Map<String, Object> map) {
+		Object o = map.get(key);
+		if ( o instanceof Timestamp ) {
+			return (Timestamp) o;
+		} else if ( o instanceof java.sql.Date || o instanceof java.util.Date ) {
+			final LocalDate d = new LocalDate(o);
+			return new Timestamp(d.toDateTimeAtStartOfDay(DateTimeZone.UTC).getMillis());
+		}
+		return null;
+	}
+
 	protected void handleDateRangeSql(final MigrationResult result, String sql) {
 		final List<Map<String, Object>> ranges = jdbcOperations.queryForList(dateRangeSql);
 		final Calendar cal = (Calendar) gmtCalendar.clone();
 		for ( Map<String, Object> range : ranges ) {
 			final Long pk = (Long) range.get("pk");
-			final Timestamp start = (Timestamp) range.get("start");
-			final Timestamp end = (Timestamp) range.get("end");
+			final Timestamp start = getTimestamp("start", range);
+			final Timestamp end = getTimestamp("end", range);
 			cal.setTime(start);
 			int yearStart = cal.get(Calendar.YEAR);
 			cal.setTime(end);
@@ -293,7 +306,7 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 				});
 			}
 		} catch ( RuntimeException e ) {
-			log.error("Migrate task {} failed: {}", getDatumTypeDescription(), e.getCause().getMessage());
+			log.error("Migrate task {} failed: {}", getDatumTypeDescription(), e.getMessage());
 		} finally {
 			result.finished();
 			if ( cSession != null ) {

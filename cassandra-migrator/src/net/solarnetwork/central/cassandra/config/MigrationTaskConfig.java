@@ -29,6 +29,7 @@ import net.solarnetwork.central.cassandra.MigrateDatumSupport;
 import net.solarnetwork.central.cassandra.MigrateHardwareControlDatum;
 import net.solarnetwork.central.cassandra.MigratePowerDatum;
 import net.solarnetwork.central.cassandra.MigratePriceDatum;
+import net.solarnetwork.central.cassandra.MigratePriceDatumAggregateDaily;
 import net.solarnetwork.central.cassandra.MigratePriceDatumAggregateHourly;
 import net.solarnetwork.central.cassandra.MigrateWeatherDatum;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,6 +106,13 @@ public class MigrationTaskConfig {
 	@Bean
 	public MigratePriceDatumAggregateHourly migratePriceDatumHourly() {
 		MigratePriceDatumAggregateHourly t = new MigratePriceDatumAggregateHourly();
+		setupMigrateDatumSupport(t);
+		return t;
+	}
+
+	@Bean
+	public MigratePriceDatumAggregateDaily migratePriceDatumDaily() {
+		MigratePriceDatumAggregateDaily t = new MigratePriceDatumAggregateDaily();
 		setupMigrateDatumSupport(t);
 		return t;
 	}
