@@ -22,46 +22,73 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.util.Map;
+import java.util.regex.Pattern;
+
 /**
  * A standardized enumeration of weather sky conditions.
  * 
  * @author matt.magoffin
- * @version 1.0
+ * @version 1.1
  */
 public enum SkyCondition {
 
 	/** Clear night. */
-	ClearNight,
+	ClearNight(-1),
 
 	/** Clear day. */
-	Clear,
+	Clear(1),
 
 	/** Few clouds night. */
-	FewCloudsNight,
+	FewCloudsNight(-2),
 
 	/** Few couds day. */
-	FewClouds,
+	FewClouds(2),
 
 	/** Fog. */
-	Fog,
+	Fog(3),
 
 	/** Overcast. */
-	Overcast,
+	Overcast(4),
 
 	/** Severe alert. */
-	SevereAlert,
+	SevereAlert(5),
 
 	/** Showers scattered. */
-	ShowersScattered,
+	ShowersScattered(6),
 
 	/** Showers. */
-	Showers,
+	Showers(7),
+
+	/** Rain. */
+	Rain(8),
 
 	/** Snow. */
-	Snow,
+	Snow(9),
 
 	/** Storm. */
-	Storm;
+	Storm(10),
+
+	/** Thunder. */
+	Thunder(11),
+
+	/** Windy */
+	Windy(12),
+
+	/** Hail. */
+	Hail(13),
+
+	/** Haze. */
+	Haze(14),
+
+	/** Rain and snow. */
+	RainAndSnow(15);
+
+	final private int code;
+
+	private SkyCondition(int code) {
+		this.code = code;
+	}
 
 	/**
 	 * Get a night-time equivalent value for a given SkyCondition.
@@ -109,6 +136,31 @@ public enum SkyCondition {
 			default:
 				return this;
 		}
+	}
+
+	/**
+	 * Map a string to a SkyCondition using a mapping of regular expressions.
+	 * 
+	 * @param condition
+	 *        the string to map
+	 * @param mapping
+	 *        the mapping of expressions to SkyCondition objects
+	 * @return the first matching result, or <em>null</em> if no match is found
+	 */
+	public static SkyCondition mapStringValue(String condition, Map<Pattern, SkyCondition> mapping) {
+		if ( condition == null || condition.length() < 1 ) {
+			return null;
+		}
+		for ( Map.Entry<Pattern, SkyCondition> me : mapping.entrySet() ) {
+			if ( me.getKey().matcher(condition).find() ) {
+				return me.getValue();
+			}
+		}
+		return null;
+	}
+
+	public int getCode() {
+		return code;
 	}
 
 }

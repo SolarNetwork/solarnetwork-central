@@ -22,6 +22,12 @@
 
 package net.solarnetwork.central.cassandra;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Calendar;
+import com.datastax.driver.core.BoundStatement;
+
 /**
  * Base class for migrating location datum.
  * 
@@ -42,4 +48,42 @@ public abstract class MigrateLocationDatumSupport extends MigrateDatumSupport {
 		super(other);
 	}
 
+	/**
+	 * Get a BoundStatement with the primary key values bound.
+	 * 
+	 * <p>
+	 * The ResultSet must provide the following result columns, in this order:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li>loc_id</li>
+	 * <li>created timestamp</li>
+	 * </ol>
+	 * 
+	 * @param rs
+	 *        the ResultSet
+	 * @param cStmt
+	 *        the PreparedStatement
+	 * @return a new BoundStatement
+	 * @throws SQLException
+	 */
+	@Override
+	protected BoundStatement getBoundStatementForResultRowMapping(ResultSet rs,
+			com.datastax.driver.core.PreparedStatement cStmt) throws SQLException {
+		BoundStatement bs = new BoundStatement(cStmt);
+		bs.setString(0, rs.getObject(1).toString());
+		bs.setInt(1, getDatumType());
+
+		Timestamp created = rs.getTimestamp(2);
+		gmtCalendar.setTimeInMillis(created.getTime());
+		bs.setInt(2, gmtCalendar.get(Calendar.YEAR));
+
+		bs.setDate(3, created);
+		return bs;
+	}
+
+	@Override
+	protected int getBoundStatementMapParameterIndex() {
+		return 4;
+	}
 }

@@ -25,8 +25,6 @@ package net.solarnetwork.central.cassandra;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.datastax.driver.core.BoundStatement;
@@ -40,7 +38,7 @@ import com.datastax.driver.core.Session;
  */
 public class MigrateConsumptionDatum extends MigrateDatumSupport {
 
-	private static final String SQL = "SELECT id, created, posted, node_id, source_id, "
+	private static final String SQL = "SELECT node_id, source_id, created, "
 			+ "price_loc_id, watts, watt_hour, prev_datum FROM solarnet.sn_consum_datum "
 			+ "WHERE node_id = ? AND created >= ? AND created < ? ORDER BY id ASC";
 
@@ -70,33 +68,21 @@ public class MigrateConsumptionDatum extends MigrateDatumSupport {
 	@Override
 	protected void handleInputResultRow(ResultSet rs, Session cSession,
 			com.datastax.driver.core.PreparedStatement cStmt) throws SQLException {
-		// output: node_id, dtype, source_id, year, ts, data_num
-
-		BoundStatement bs = new BoundStatement(cStmt);
-		bs.setString(0, rs.getObject(4).toString());
-		bs.setInt(1, getDatumType());
-		bs.setString(2, rs.getString(5));
-
-		Timestamp created = rs.getTimestamp(2);
-		gmtCalendar.setTimeInMillis(created.getTime());
-		bs.setInt(3, gmtCalendar.get(Calendar.YEAR));
-
-		bs.setDate(4, created);
-
+		BoundStatement bs = getBoundStatementForResultRowMapping(rs, cStmt);
 		Map<String, BigDecimal> rowData = new LinkedHashMap<String, BigDecimal>(3);
-		long l = rs.getLong(6);
+		long l = rs.getLong(4);
 		if ( !rs.wasNull() ) {
 			rowData.put("priceLocationId", new BigDecimal(l));
 		}
-		int i = rs.getInt(7);
+		int i = rs.getInt(5);
 		if ( !rs.wasNull() ) {
 			rowData.put("watts", new BigDecimal(i));
 		}
-		l = rs.getLong(8);
+		l = rs.getLong(6);
 		if ( !rs.wasNull() ) {
 			rowData.put("watt_hour", new BigDecimal(l));
 		}
-		bs.setMap(5, rowData);
+		bs.setMap(getBoundStatementMapParameterIndex(), rowData);
 		cSession.execute(bs);
 	}
 

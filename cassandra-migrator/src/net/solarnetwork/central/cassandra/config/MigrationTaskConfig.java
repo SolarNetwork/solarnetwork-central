@@ -43,7 +43,7 @@ import org.springframework.context.annotation.Import;
  * @version 1.0
  */
 @Configuration
-@Import({ JdbcConfig.class, CassandraConfig.class })
+@Import({ EnvironmentConfig.class, JdbcConfig.class, CassandraConfig.class })
 public class MigrationTaskConfig {
 
 	@Value("${task.threads}")
@@ -54,6 +54,9 @@ public class MigrationTaskConfig {
 
 	@Autowired
 	private CassandraConfig cassandraConfig;
+
+	@Autowired
+	private EnvironmentConfig environmentConfig;
 
 	@Value("${datum.maxProcess}")
 	private Integer maxProcess;
@@ -102,6 +105,7 @@ public class MigrationTaskConfig {
 	public MigrateWeatherDatum migrateWeatherDatum() {
 		MigrateWeatherDatum t = new MigrateWeatherDatum();
 		setupMigrateDatumSupport(t);
+		t.setSkyConditionMapping(environmentConfig.skyConditionMapping());
 		return t;
 	}
 

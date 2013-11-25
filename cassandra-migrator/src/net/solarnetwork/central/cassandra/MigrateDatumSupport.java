@@ -24,6 +24,7 @@ package net.solarnetwork.central.cassandra;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -65,9 +66,6 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 	public static final String DATE_RANGE_SQL_TEMPLATE = "SELECT "
 			+ "%1$s as pk, min(%2$s) as start, max(%2$s) as end FROM %3$s GROUP BY %1$s "
 			+ "ORDER BY pk";
-
-	/** The {@link BoundStatement} paraemter index for the Map parameter. */
-	public static final int DEFAULT_CQL_DATA_NUM_PARAMETER = 5;
 
 	private JdbcOperations jdbcOperations;
 	private Cluster cluster;
@@ -140,6 +138,43 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 
 		bs.setDate(4, created);
 		return bs;
+	}
+
+	/**
+	 * Get the {@link BoundStatement} parameter index for the Map collection.
+	 * 
+	 * @return the parameter index
+	 */
+	protected int getBoundStatementMapParameterIndex() {
+		return 5;
+	}
+
+	/**
+	 * Get a BigDecimal from a float using a provided precision.
+	 * 
+	 * @param f
+	 *        the float
+	 * @param precision
+	 *        the desired precision
+	 * @return the BigDecimal
+	 */
+	protected final BigDecimal getBigDecimal(float f, int precision) {
+		String str = String.format("%." + precision + "f", f);
+		return new BigDecimal(str);
+	}
+
+	/**
+	 * Get a BigDecimal from a double using a provided precision.
+	 * 
+	 * @param d
+	 *        the double
+	 * @param precision
+	 *        the desired precision
+	 * @return the BigDecimal
+	 */
+	protected final BigDecimal getBigDecimal(double d, int precision) {
+		String str = String.format("%." + precision + "f", d);
+		return new BigDecimal(str);
 	}
 
 	protected void handleDateRangeSql(final MigrationResult result, String sql) {

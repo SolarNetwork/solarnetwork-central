@@ -25,11 +25,11 @@ package net.solarnetwork.central.cassandra;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
+import net.solarnetwork.central.datum.domain.SkyCondition;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
@@ -42,13 +42,14 @@ import com.datastax.driver.core.Session;
  */
 public class MigrateWeatherDatum extends MigrateLocationDatumSupport {
 
-	private static final String SQL = "SELECT id, info_date, loc_id, temperature, sky, humidity, bar, bar_dir, visibility, dew "
+	private static final String SQL = "SELECT loc_id, info_date, temperature, sky, humidity, bar, bar_dir, visibility, dew "
 			+ "FROM solarnet.sn_weather_datum "
 			+ "WHERE loc_id = ? AND info_date >= ? AND info_date < ? ORDER BY id ASC";
 
 	private static final String COUNT_SQL = "SELECT count(id) FROM solarnet.sn_weather_datum";
 
 	private final Map<String, Integer> barDirationMapping = getDefaultBarDirectionMapping();
+	private Map<Pattern, SkyCondition> skyConditionMapping;
 
 	public MigrateWeatherDatum() {
 		super();
@@ -82,45 +83,75 @@ public class MigrateWeatherDatum extends MigrateLocationDatumSupport {
 	@Override
 	protected void handleInputResultRow(ResultSet rs, Session cSession, PreparedStatement cStmt)
 			throws SQLException {
-		// input: id, info_date, loc_id, temperature, sky, humidity, bar, bar_dir, visibility, dew
-		// output: loc_id, ltype, year, ts, data_num
-
-		BoundStatement bs = new BoundStatement(cStmt);
-		bs.setString(0, rs.getObject(3).toString());
-		bs.setInt(1, getDatumType());
-
-		Timestamp created = rs.getTimestamp(2);
-		gmtCalendar.setTimeInMillis(created.getTime());
-		bs.setInt(2, gmtCalendar.get(Calendar.YEAR));
-
-		bs.setDate(3, created);
-
+		// input: loc_id, info_date, temperature, sky, humidity, bar, bar_dir, visibility, dew
+		BoundStatement bs = getBoundStatementForResultRowMapping(rs, cStmt);
 		Map<String, BigDecimal> rowData = new LinkedHashMap<String, BigDecimal>(3);
-		float f = rs.getFloat(4);
+		float f = rs.getFloat(3);
 		if ( !rs.wasNull() ) {
-			rowData.put("temp", new BigDecimal(f));
+			rowData.put("temp", getBigDecimal(f, 1));
+		}
+		String s = rs.getString(4);
+		BigDecimal sky = getSkyConditionValue(s);
+		if ( sky != null ) {
+			rowData.put("sky", sky);
+		}
+		f = rs.getFloat(5);
+		if ( !rs.wasNull() ) {
+			rowData.put("humi", getBigDecimal(f, 0));
 		}
 		f = rs.getFloat(6);
 		if ( !rs.wasNull() ) {
-			rowData.put("humi", new BigDecimal(f));
+			rowData.put("bar", getBigDecimal(f, 1));
 		}
-		f = rs.getFloat(7);
-		if ( !rs.wasNull() ) {
-			rowData.put("bar", new BigDecimal(f));
-		}
-		String s = rs.getString(8);
+		s = rs.getString(7);
 		if ( !rs.wasNull() ) {
 			Integer val = barDirationMapping.get(s);
 			if ( val != null ) {
 				rowData.put("bard", new BigDecimal(val));
 			}
 		}
-		f = rs.getFloat(10);
-		if ( !rs.wasNull() ) {
-			rowData.put("dew", new BigDecimal(f));
+		s = rs.getString(8);
+		if ( s != null && s.length() > 0 ) {
+			try {
+				// convert to meters; trying to be sensible with numbers like 
+				// 2.3999999999999999 => 2400; 0.20000000000000001 => 200
+				double d = Double.parseDouble(s);
+				if ( d > Float.MAX_VALUE ) {
+					d = java.lang.Double.POSITIVE_INFINITY;
+				} else {
+					d = Math.round((((long) (d * 10000L)) / 10.0));
+				}
+				rowData.put("vis", new BigDecimal((long) d));
+			} catch ( NumberFormatException e ) {
+				log.warn("Unable to parse visibility string [{}]", s);
+			}
 		}
-		bs.setMap(4, rowData);
+		f = rs.getFloat(9);
+		if ( !rs.wasNull() ) {
+			rowData.put("dew", getBigDecimal(f, 0));
+		}
+		bs.setMap(getBoundStatementMapParameterIndex(), rowData);
 		cSession.execute(bs);
+	}
+
+	private BigDecimal getSkyConditionValue(String condition) {
+		if ( condition == null || condition.length() < 1 ) {
+			return null;
+		}
+		SkyCondition sky = SkyCondition.mapStringValue(condition, this.skyConditionMapping);
+		if ( sky != null ) {
+			return new BigDecimal(sky.getCode());
+		}
+		log.warn("Unsupported sky condition value [" + condition + "]");
+		return null;
+	}
+
+	public Map<Pattern, SkyCondition> getSkyConditionMapping() {
+		return skyConditionMapping;
+	}
+
+	public void setSkyConditionMapping(Map<Pattern, SkyCondition> conditionMapping) {
+		this.skyConditionMapping = conditionMapping;
 	}
 
 }

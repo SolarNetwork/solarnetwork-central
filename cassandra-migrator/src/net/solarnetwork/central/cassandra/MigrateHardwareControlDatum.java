@@ -78,7 +78,7 @@ public class MigrateHardwareControlDatum extends MigrateDatumSupport {
 		if ( !rs.wasNull() ) {
 			rowData.put("float_val", new BigDecimal(f));
 		}
-		bs.setMap(DEFAULT_CQL_DATA_NUM_PARAMETER, rowData);
+		bs.setMap(getBoundStatementMapParameterIndex(), rowData);
 		cSession.execute(bs);
 	}
 

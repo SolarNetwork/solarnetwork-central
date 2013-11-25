@@ -25,8 +25,6 @@ package net.solarnetwork.central.cassandra;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import com.datastax.driver.core.BoundStatement;
@@ -41,8 +39,7 @@ import com.datastax.driver.core.Session;
  */
 public class MigratePriceDatum extends MigrateLocationDatumSupport {
 
-	private static final String SQL = "SELECT id, created, loc_id, price "
-			+ "FROM solarnet.sn_price_datum "
+	private static final String SQL = "SELECT loc_id, created, price FROM solarnet.sn_price_datum "
 			+ "WHERE loc_id = ? AND created >= ? AND created < ? ORDER BY id ASC";
 
 	private static final String COUNT_SQL = "SELECT count(id) FROM solarnet.sn_price_datum";
@@ -71,24 +68,13 @@ public class MigratePriceDatum extends MigrateLocationDatumSupport {
 	@Override
 	protected void handleInputResultRow(ResultSet rs, Session cSession, PreparedStatement cStmt)
 			throws SQLException {
-		// output: loc_id, ltype, year, ts, data_num
-
-		BoundStatement bs = new BoundStatement(cStmt);
-		bs.setString(0, rs.getObject(3).toString());
-		bs.setInt(1, getDatumType());
-
-		Timestamp created = rs.getTimestamp(2);
-		gmtCalendar.setTimeInMillis(created.getTime());
-		bs.setInt(2, gmtCalendar.get(Calendar.YEAR));
-
-		bs.setDate(3, created);
-
+		BoundStatement bs = getBoundStatementForResultRowMapping(rs, cStmt);
 		Map<String, BigDecimal> rowData = new LinkedHashMap<String, BigDecimal>(3);
-		float f = rs.getFloat(4);
+		float f = rs.getFloat(3);
 		if ( !rs.wasNull() ) {
-			rowData.put("price", new BigDecimal(f));
+			rowData.put("price", getBigDecimal(f, 5));
 		}
-		bs.setMap(4, rowData);
+		bs.setMap(getBoundStatementMapParameterIndex(), rowData);
 		cSession.execute(bs);
 	}
 
