@@ -117,12 +117,12 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 			log.info("Breaking up {} into subtasks for pk {} years {}-{}", getDatumTypeDescription(),
 					pk, yearStart, yearEnd);
 			cal.setTime(start);
-			cal.set(Calendar.MONTH, 1);
-			cal.set(Calendar.DAY_OF_MONTH, 1);
-			cal.set(Calendar.HOUR_OF_DAY, 0);
-			cal.set(Calendar.MINUTE, 0);
-			cal.set(Calendar.SECOND, 0);
-			cal.set(Calendar.MILLISECOND, 0);
+			cal.set(Calendar.MONTH, cal.getMinimum(Calendar.MONTH));
+			cal.set(Calendar.DAY_OF_MONTH, cal.getMinimum(Calendar.DAY_OF_MONTH));
+			cal.set(Calendar.HOUR_OF_DAY, cal.getMinimum(Calendar.HOUR_OF_DAY));
+			cal.set(Calendar.MINUTE, cal.getMinimum(Calendar.MINUTE));
+			cal.set(Calendar.SECOND, cal.getMinimum(Calendar.SECOND));
+			cal.set(Calendar.MILLISECOND, cal.getMinimum(Calendar.MILLISECOND));
 			while ( yearStart <= yearEnd ) {
 				Class<? extends MigrateDatumSupport> clazz = getClass();
 				try {
