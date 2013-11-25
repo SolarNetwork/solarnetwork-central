@@ -71,7 +71,7 @@ public class MigratePriceDatumAggregateHourly extends MigrateLocationDatumAggreg
 
 	@Override
 	protected String getDatumTypeDescription() {
-		return "PriceDatum";
+		return "PriceDatumHourly";
 	}
 
 	@Override

@@ -71,7 +71,7 @@ public class MigratePowerDatumAggregateDaily extends MigrateDatumAggregateSuppor
 
 	@Override
 	protected String getDatumTypeDescription() {
-		return "PowerDatum";
+		return "PowerDatumDaily";
 	}
 
 	@Override

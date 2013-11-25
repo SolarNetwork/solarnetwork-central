@@ -71,7 +71,7 @@ public class MigratePowerDatumAggregateHourly extends MigrateDatumAggregateSuppo
 
 	@Override
 	protected String getDatumTypeDescription() {
-		return "PowerDatum";
+		return "PowerDatumHourly";
 	}
 
 	@Override
