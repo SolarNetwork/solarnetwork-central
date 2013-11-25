@@ -46,6 +46,7 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
+import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.QueryTimeoutException;
@@ -64,6 +65,9 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 	public static final String DATE_RANGE_SQL_TEMPLATE = "SELECT "
 			+ "%1$s as pk, min(%2$s) as start, max(%2$s) as end FROM %3$s GROUP BY %1$s "
 			+ "ORDER BY pk";
+
+	/** The {@link BoundStatement} paraemter index for the Map parameter. */
+	public static final int DEFAULT_CQL_DATA_NUM_PARAMETER = 5;
 
 	private JdbcOperations jdbcOperations;
 	private Cluster cluster;
@@ -101,6 +105,41 @@ public abstract class MigrateDatumSupport implements MigrationTask {
 	@Override
 	public MigrationResult call() throws Exception {
 		return migrate(startingOffset);
+	}
+
+	/**
+	 * Get a BoundStatement with the primary key values bound.
+	 * 
+	 * <p>
+	 * The ResultSet must provide the following result columns, in this order:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li>primary key (node_id, loc_id, etc)</li>
+	 * <li>source_id string</li>
+	 * <li>created timestamp</li>
+	 * </ol>
+	 * 
+	 * @param rs
+	 *        the ResultSet
+	 * @param cStmt
+	 *        the PreparedStatement
+	 * @return a new BoundStatement
+	 * @throws SQLException
+	 */
+	protected BoundStatement getBoundStatementForResultRowMapping(ResultSet rs,
+			com.datastax.driver.core.PreparedStatement cStmt) throws SQLException {
+		BoundStatement bs = new BoundStatement(cStmt);
+		bs.setString(0, rs.getObject(1).toString());
+		bs.setInt(1, getDatumType());
+		bs.setString(2, rs.getString(2));
+
+		Timestamp created = rs.getTimestamp(3);
+		gmtCalendar.setTimeInMillis(created.getTime());
+		bs.setInt(3, gmtCalendar.get(Calendar.YEAR));
+
+		bs.setDate(4, created);
+		return bs;
 	}
 
 	protected void handleDateRangeSql(final MigrationResult result, String sql) {

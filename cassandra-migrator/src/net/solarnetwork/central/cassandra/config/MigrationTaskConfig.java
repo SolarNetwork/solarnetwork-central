@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import net.solarnetwork.central.cassandra.MigrateConsumptionDatum;
 import net.solarnetwork.central.cassandra.MigrateDatumSupport;
+import net.solarnetwork.central.cassandra.MigrateHardwareControlDatum;
 import net.solarnetwork.central.cassandra.MigratePowerDatum;
 import net.solarnetwork.central.cassandra.MigratePriceDatum;
 import net.solarnetwork.central.cassandra.MigrateWeatherDatum;
@@ -67,6 +68,13 @@ public class MigrationTaskConfig {
 		t.setJdbcOperations(jdbcConfig.jdbcOperations());
 		t.setMaxResults(maxProcess);
 		t.setExecutorService(executorService());
+	}
+
+	@Bean
+	public MigrateHardwareControlDatum migrateHardwareControlDatum() {
+		MigrateHardwareControlDatum t = new MigrateHardwareControlDatum();
+		setupMigrateDatumSupport(t);
+		return t;
 	}
 
 	@Bean
