@@ -41,45 +41,6 @@ import org.joda.time.DateTime;
  */
 public class DatumQueryCommand implements Cachable {
 
-	/**
-	 * An aggregation level enumeration.
-	 */
-	public enum Aggregation {
-
-		/** Minute level aggregation. */
-		Minute(1),
-
-		/** Hour level aggregation. */
-		Hour(2),
-
-		/** Day level aggregation. */
-		Day(3),
-
-		/** Week level aggregation. */
-		Week(4),
-
-		/** Month level aggregation. */
-		Month(5);
-
-		private final Integer level;
-
-		private Aggregation(int level) {
-			this.level = level;
-		}
-
-		/**
-		 * Compare the level of this to another.
-		 * 
-		 * @param other
-		 *        the other
-		 * @return -1 if this level less than other level, 0 if levels are
-		 *         equal, or 1 if this level is greater than other level
-		 */
-		public int compareLevel(Aggregation other) {
-			return this.level.compareTo(other.level);
-		}
-	}
-
 	private Long[] nodeIds;
 	private String[] sourceIds;
 	private Long[] locationIds;
