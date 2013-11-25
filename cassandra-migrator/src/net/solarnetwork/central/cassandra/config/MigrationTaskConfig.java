@@ -28,6 +28,8 @@ import net.solarnetwork.central.cassandra.MigrateConsumptionDatum;
 import net.solarnetwork.central.cassandra.MigrateDatumSupport;
 import net.solarnetwork.central.cassandra.MigrateHardwareControlDatum;
 import net.solarnetwork.central.cassandra.MigratePowerDatum;
+import net.solarnetwork.central.cassandra.MigratePowerDatumAggregateDaily;
+import net.solarnetwork.central.cassandra.MigratePowerDatumAggregateHourly;
 import net.solarnetwork.central.cassandra.MigratePriceDatum;
 import net.solarnetwork.central.cassandra.MigratePriceDatumAggregateDaily;
 import net.solarnetwork.central.cassandra.MigratePriceDatumAggregateHourly;
@@ -113,6 +115,20 @@ public class MigrationTaskConfig {
 	@Bean
 	public MigratePriceDatumAggregateDaily migratePriceDatumDaily() {
 		MigratePriceDatumAggregateDaily t = new MigratePriceDatumAggregateDaily();
+		setupMigrateDatumSupport(t);
+		return t;
+	}
+
+	@Bean
+	public MigratePowerDatumAggregateDaily migratePowerDatumDaily() {
+		MigratePowerDatumAggregateDaily t = new MigratePowerDatumAggregateDaily();
+		setupMigrateDatumSupport(t);
+		return t;
+	}
+
+	@Bean
+	public MigratePowerDatumAggregateHourly migratePowerDatumHourly() {
+		MigratePowerDatumAggregateHourly t = new MigratePowerDatumAggregateHourly();
 		setupMigrateDatumSupport(t);
 		return t;
 	}
