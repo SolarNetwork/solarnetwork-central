@@ -59,7 +59,7 @@ public class MigratePowerDatum extends MigrateDatumSupport {
 
 	@Override
 	protected int getDatumType() {
-		return 2;
+		return DatumType.PowerDatum.getCode();
 	}
 
 	@Override

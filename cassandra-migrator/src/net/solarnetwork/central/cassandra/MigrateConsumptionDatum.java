@@ -59,7 +59,7 @@ public class MigrateConsumptionDatum extends MigrateDatumSupport {
 
 	@Override
 	protected int getDatumType() {
-		return 1;
+		return DatumType.ConsumptionDatum.getCode();
 	}
 
 	@Override

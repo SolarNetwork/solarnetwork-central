@@ -60,7 +60,7 @@ public class MigratePriceDatum extends MigrateLocationDatumSupport {
 
 	@Override
 	protected int getDatumType() {
-		return 3;
+		return DatumType.PriceDatum.getCode();
 	}
 
 	@Override

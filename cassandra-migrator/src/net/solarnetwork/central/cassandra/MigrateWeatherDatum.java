@@ -71,7 +71,7 @@ public class MigrateWeatherDatum extends MigrateLocationDatumSupport {
 
 	@Override
 	protected int getDatumType() {
-		return 4;
+		return DatumType.WeatherDatum.getCode();
 	}
 
 	@Override
