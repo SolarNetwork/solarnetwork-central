@@ -78,19 +78,23 @@ public class IbatisSolarLocationDaoTest extends AbstractIbatisDaoTestSupport {
 		location = loc;
 	}
 
-	private void validate(SolarLocation src, SolarLocation entity) {
-		assertNotNull("UserNodeConfirmation should exist", entity);
+	private void validatePublic(SolarLocation src, SolarLocation entity) {
+		assertNotNull("SolarLocation should exist", entity);
 		assertNotNull("Created date should be set", entity.getCreated());
 		assertEquals(src.getCountry(), entity.getCountry());
-		assertEquals(src.getLatitude(), entity.getLatitude());
 		assertEquals(src.getLocality(), entity.getLocality());
-		assertEquals(src.getLongitude(), entity.getLongitude());
 		assertEquals(src.getName(), entity.getName());
 		assertEquals(src.getPostalCode(), entity.getPostalCode());
 		assertEquals(src.getRegion(), entity.getRegion());
 		assertEquals(src.getStateOrProvince(), entity.getStateOrProvince());
-		assertEquals(src.getStreet(), entity.getStreet());
 		assertEquals(src.getTimeZoneId(), entity.getTimeZoneId());
+	}
+
+	private void validate(SolarLocation src, SolarLocation entity) {
+		validatePublic(src, entity);
+		assertEquals(src.getLatitude(), entity.getLatitude());
+		assertEquals(src.getLongitude(), entity.getLongitude());
+		assertEquals(src.getStreet(), entity.getStreet());
 	}
 
 	@Test
@@ -116,7 +120,7 @@ public class IbatisSolarLocationDaoTest extends AbstractIbatisDaoTestSupport {
 		storeNew();
 		SolarLocation loc = solarLocationDao.getSolarLocationForName(location.getName());
 		assertNotNull(loc);
-		validate(location, loc);
+		validatePublic(location, loc);
 	}
 
 	@Test

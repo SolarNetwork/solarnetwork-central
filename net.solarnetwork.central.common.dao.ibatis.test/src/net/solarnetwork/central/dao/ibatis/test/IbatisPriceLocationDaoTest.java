@@ -189,14 +189,21 @@ public class IbatisPriceLocationDaoTest extends AbstractIbatisDaoTestSupport {
 		source.setName(getClass().getSimpleName() + " test source");
 		source = priceSourceDao.get(priceSourceDao.store(source));
 
+		try {
+			Thread.sleep(100);
+		} catch ( InterruptedException e ) {
+			// ignore
+		}
+
 		PriceLocation loc = newPriceLocationInstance();
+		loc.setCreated(new DateTime());
 		loc.setSource(source);
 		loc = dao.get(dao.store(loc));
 
 		PriceLocationFilter filter = new PriceLocationFilter();
 		filter.setCurrency(TEST_CURRENCY);
 		List<SortDescriptor> sorts = new ArrayList<SortDescriptor>(1);
-		sorts.add(new SimpleSortDescriptor("created", true));
+		sorts.add(new SimpleSortDescriptor("created", false));
 		FilterResults<SourceLocationMatch> results = dao.findFiltered(filter, sorts, null, null);
 		assertNotNull(results);
 		assertEquals(Integer.valueOf(2), results.getReturnedResultCount());
@@ -224,16 +231,22 @@ public class IbatisPriceLocationDaoTest extends AbstractIbatisDaoTestSupport {
 		source.setName(getClass().getSimpleName() + " test source");
 		source = priceSourceDao.get(priceSourceDao.store(source));
 
+		try {
+			Thread.sleep(100);
+		} catch ( InterruptedException e ) {
+			// ignore
+		}
+
 		PriceLocation loc = newPriceLocationInstance();
+		loc.setCreated(new DateTime());
 		loc.setSource(source);
 		loc = dao.get(dao.store(loc));
 
 		PriceLocationFilter filter = new PriceLocationFilter();
 		filter.setCurrency(TEST_CURRENCY);
 		List<SortDescriptor> sorts = new ArrayList<SortDescriptor>(1);
-		sorts.add(new SimpleSortDescriptor("currency", true));
-		sorts.add(new SimpleSortDescriptor("created", false));
-		sorts.add(new SimpleSortDescriptor("id", false));
+		sorts.add(new SimpleSortDescriptor("currency", false));
+		sorts.add(new SimpleSortDescriptor("created", true));
 		FilterResults<SourceLocationMatch> results = dao.findFiltered(filter, sorts, null, null);
 		assertNotNull(results);
 		assertEquals(Integer.valueOf(2), results.getReturnedResultCount());
