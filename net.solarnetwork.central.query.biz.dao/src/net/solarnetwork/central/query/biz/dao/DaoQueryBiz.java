@@ -76,6 +76,7 @@ public class DaoQueryBiz implements QueryBiz {
 	private SolarNodeDao solarNodeDao;
 	private WeatherDatumDao weatherDatumDao;
 	private DayDatumDao dayDatumDao;
+	private int filteredResultsLimit = 250;
 
 	private final Map<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>> daoMapping;
 	private final Map<Class<? extends Datum>, FilterableDao<? extends EntityMatch, Long, ? extends DatumFilter>> filterDaoMapping;
@@ -196,6 +197,7 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
 			Class<? extends Datum> datumClass, F filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
@@ -206,7 +208,23 @@ public class DaoQueryBiz implements QueryBiz {
 			throw new IllegalArgumentException("Datum type "
 					+ (datumClass == null ? "(null)" : datumClass.getSimpleName()) + " not supported");
 		}
-		return dao.findFiltered(filter, sortDescriptors, offset, max);
+		return dao.findFiltered(filter, sortDescriptors, limitFilterOffset(offset),
+				limitFilterMaximum(max));
+	}
+
+	private Integer limitFilterMaximum(Integer requestedMaximum) {
+		if ( requestedMaximum == null || requestedMaximum.intValue() > filteredResultsLimit
+				|| requestedMaximum.intValue() < 1 ) {
+			return filteredResultsLimit;
+		}
+		return requestedMaximum;
+	}
+
+	private Integer limitFilterOffset(Integer requestedOffset) {
+		if ( requestedOffset == null || requestedOffset.intValue() < 0 ) {
+			return 0;
+		}
+		return requestedOffset;
 	}
 
 	@Autowired
@@ -249,6 +267,14 @@ public class DaoQueryBiz implements QueryBiz {
 	@Autowired
 	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
 		this.solarNodeDao = solarNodeDao;
+	}
+
+	public int getFilteredResultsLimit() {
+		return filteredResultsLimit;
+	}
+
+	public void setFilteredResultsLimit(int filteredResultsLimit) {
+		this.filteredResultsLimit = filteredResultsLimit;
 	}
 
 }
