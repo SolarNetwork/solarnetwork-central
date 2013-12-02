@@ -30,8 +30,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import net.solarnetwork.central.dao.SortDescriptor;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.util.SerializeIgnore;
 import org.springframework.util.StringUtils;
@@ -40,7 +40,7 @@ import org.springframework.util.StringUtils;
  * Criteria for location data tied to a source.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SourceLocationFilter implements Serializable, SourceLocation {
 
@@ -49,7 +49,7 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 	private Long id;
 	private String source;
 	private SolarLocation location;
-	private List<SimpleSortDescriptor> sorts;
+	private List<MutableSortDescriptor> sorts;
 	private Integer offset;
 	private Integer max;
 
@@ -155,11 +155,11 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 		return new ArrayList<SortDescriptor>(sorts);
 	}
 
-	public List<SimpleSortDescriptor> getSorts() {
+	public List<MutableSortDescriptor> getSorts() {
 		return sorts;
 	}
 
-	public void setSorts(List<SimpleSortDescriptor> sorts) {
+	public void setSorts(List<MutableSortDescriptor> sorts) {
 		this.sorts = sorts;
 	}
 

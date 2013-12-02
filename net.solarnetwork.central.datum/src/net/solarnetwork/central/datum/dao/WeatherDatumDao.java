@@ -26,23 +26,29 @@
 
 package net.solarnetwork.central.datum.dao;
 
+import net.solarnetwork.central.dao.FilterableDao;
+import net.solarnetwork.central.datum.domain.LocationDatumFilter;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
+import net.solarnetwork.central.domain.EntityMatch;
 import org.joda.time.ReadableDateTime;
 
 /**
  * DAO API for {@link WeatherDatum} data.
- *
+ * 
  * @author matt.magoffin
  * @version $Revision$ $Date$
  */
-public interface WeatherDatumDao extends DatumDao<WeatherDatum> {
+public interface WeatherDatumDao extends DatumDao<WeatherDatum>,
+		FilterableDao<EntityMatch, Long, LocationDatumFilter> {
 
 	/**
-	 * Get the most-recently created WeatherDatum up to (and including) 
-	 * a specific {@link WeatherDatum#getInfoDate()} value.
+	 * Get the most-recently created WeatherDatum up to (and including) a
+	 * specific {@link WeatherDatum#getInfoDate()} value.
 	 * 
-	 * @param nodeId the node ID
-	 * @param upToDate the maximum date (inclusive) to search for
+	 * @param nodeId
+	 *        the node ID
+	 * @param upToDate
+	 *        the maximum date (inclusive) to search for
 	 * @return the WeatherDatum, or <em>null</em> if not found
 	 */
 	WeatherDatum getMostRecentWeatherDatum(Long nodeId, ReadableDateTime upToDate);

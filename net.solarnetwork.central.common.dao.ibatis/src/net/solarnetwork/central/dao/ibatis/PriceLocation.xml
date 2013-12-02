@@ -105,8 +105,13 @@
 			</isEmpty>
 			<isNotEmpty property="SortDescriptors">
 				<iterate property="SortDescriptors" conjunction=",">
-					ploc.$SortDescriptors[].sortKey$ <isEqual property="SortDescriptors[].ascending" compareValue="false">DESC</isEqual>
+					<isEqual property="SortDescriptors[].sortKey" compareValue="source">lower(psource.sname)</isEqual>
+					<isEqual property="SortDescriptors[].sortKey" compareValue="location.name">lower(ploc.loc_name)</isEqual>
+					<isEqual property="SortDescriptors[].sortKey" compareValue="currency">ploc.currency</isEqual>
+					<isEqual property="SortDescriptors[].sortKey" compareValue="timeZoneId">ploc.time_zone</isEqual>
+					<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
 				</iterate>
+				, ploc.id
 			</isNotEmpty>
 		</dynamic>
 	</select>

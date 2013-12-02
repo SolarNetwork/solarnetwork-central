@@ -1,5 +1,5 @@
 /* ==================================================================
- * SimpleSortDescriptor.java - Jun 10, 2011 7:09:23 PM
+ * SortDescriptors.java - Apr 29, 2011 3:40:16 PM
  * 
  * Copyright 2007-2011 SolarNetwork.net Dev Team
  * 
@@ -20,49 +20,33 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.support;
-
-import net.solarnetwork.central.domain.SortDescriptor;
+package net.solarnetwork.central.domain;
 
 /**
- * Implementation of {@link SortDescriptor}.
+ * An API for specifying a collection ordering.
  * 
  * @author matt
  * @version 1.1
  */
-public class SimpleSortDescriptor implements SortDescriptor {
-
-	private final String sortKey;
-	private final boolean descending;
+public interface SortDescriptor {
 
 	/**
-	 * Construct with a sort key.
+	 * Get the name of the value to sort by.
 	 * 
 	 * <p>
-	 * Ascending order will be used.
+	 * How this value is interpreted is implementation dependent.
 	 * </p>
 	 * 
-	 * @param sortKey
-	 *        the sort key
+	 * @return the sort key
 	 */
-	public SimpleSortDescriptor(String sortKey) {
-		this(sortKey, true);
-	}
+	String getSortKey();
 
-	public SimpleSortDescriptor(String sortKey, boolean descending) {
-		super();
-		this.sortKey = sortKey;
-		this.descending = descending;
-	}
-
-	@Override
-	public String getSortKey() {
-		return sortKey;
-	}
-
-	@Override
-	public boolean isDescending() {
-		return descending;
-	}
+	/**
+	 * Return <em>true</em> if the sort should be in descending order, otherwise
+	 * the short should be in ascending order.
+	 * 
+	 * @return <em>true</em> if the sort should be in descending order
+	 */
+	boolean isDescending();
 
 }

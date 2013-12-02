@@ -1,7 +1,7 @@
 /* ==================================================================
- * SimpleSortDescriptor.java - Jun 10, 2011 7:09:23 PM
+ * MutableSortDescriptor.java - Dec 3, 2013 6:58:21 AM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2007-2013 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -25,44 +25,36 @@ package net.solarnetwork.central.support;
 import net.solarnetwork.central.domain.SortDescriptor;
 
 /**
- * Implementation of {@link SortDescriptor}.
+ * Mutable implementation of {@link SortDescriptor}.
+ * 
+ * <p>
+ * The {@code descending} property defaults to <em>false</em>.
+ * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class SimpleSortDescriptor implements SortDescriptor {
+public class MutableSortDescriptor implements SortDescriptor {
 
-	private final String sortKey;
-	private final boolean descending;
-
-	/**
-	 * Construct with a sort key.
-	 * 
-	 * <p>
-	 * Ascending order will be used.
-	 * </p>
-	 * 
-	 * @param sortKey
-	 *        the sort key
-	 */
-	public SimpleSortDescriptor(String sortKey) {
-		this(sortKey, true);
-	}
-
-	public SimpleSortDescriptor(String sortKey, boolean descending) {
-		super();
-		this.sortKey = sortKey;
-		this.descending = descending;
-	}
+	private String sortKey;
+	private boolean descending = false;
 
 	@Override
 	public String getSortKey() {
 		return sortKey;
 	}
 
+	public void setSortKey(String sortKey) {
+		this.sortKey = sortKey;
+	}
+
 	@Override
 	public boolean isDescending() {
 		return descending;
+	}
+
+	public void setDescending(boolean descending) {
+		this.descending = descending;
 	}
 
 }

@@ -68,6 +68,12 @@
 		<entry key="consumption" value="#{T(net.solarnetwork.central.datum.domain.ConsumptionDatum)}"/>
 		<entry key="hardwarecontrol" value="#{T(net.solarnetwork.central.datum.domain.HardwareControlDatum)}"/>
 		<entry key="power" value="#{T(net.solarnetwork.central.datum.domain.PowerDatum)}"/>
+		<entry key="day" value="#{T(net.solarnetwork.central.datum.domain.DayDatum)}"/>
+		<entry key="weather" value="#{T(net.solarnetwork.central.datum.domain.WeatherDatum)}"/>
+	</util:map>
+	
+	<util:map id="datumControllerFilterTypeMap" value-type="java.lang.Class">
+		<entry key="weather" value="#{T(net.solarnetwork.central.datum.domain.WeatherDatum)}"/>
 	</util:map>
 	
 	<bean id="beanNameViewResolver" class="org.springframework.web.servlet.view.BeanNameViewResolver ">

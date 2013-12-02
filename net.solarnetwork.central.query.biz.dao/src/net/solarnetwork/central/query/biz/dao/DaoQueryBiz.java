@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
 import net.solarnetwork.central.datum.dao.DatumDao;
@@ -40,12 +41,17 @@ import net.solarnetwork.central.datum.dao.HardwareControlDatumDao;
 import net.solarnetwork.central.datum.dao.PowerDatumDao;
 import net.solarnetwork.central.datum.dao.PriceDatumDao;
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
+import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.ReportingDatum;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
+import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.domain.WeatherConditions;
@@ -74,6 +80,7 @@ public class DaoQueryBiz implements QueryBiz {
 	private DayDatumDao dayDatumDao;
 
 	private final Map<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>> daoMapping;
+	private final Map<Class<? extends Datum>, FilterableDao<? extends EntityMatch, Long, ? extends DatumFilter>> filterDaoMapping;
 
 	/**
 	 * Default constructor.
@@ -81,6 +88,8 @@ public class DaoQueryBiz implements QueryBiz {
 	public DaoQueryBiz() {
 		super();
 		daoMapping = new HashMap<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>>(4);
+		filterDaoMapping = new HashMap<Class<? extends Datum>, FilterableDao<? extends EntityMatch, Long, ? extends DatumFilter>>(
+				4);
 	}
 
 	@Override
@@ -188,6 +197,20 @@ public class DaoQueryBiz implements QueryBiz {
 		return new WeatherConditions(weather, day, node.getTimeZone());
 	}
 
+	@Override
+	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
+			Class<? extends Datum> datumClass, F filter, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
+		@SuppressWarnings("unchecked")
+		FilterableDao<? extends EntityMatch, Long, F> dao = (FilterableDao<? extends EntityMatch, Long, F>) filterDaoMapping
+				.get(datumClass);
+		if ( dao == null ) {
+			throw new IllegalArgumentException("Datum type "
+					+ (datumClass == null ? "(null)" : datumClass.getSimpleName()) + " not supported");
+		}
+		return dao.findFiltered(filter, sortDescriptors, offset, max);
+	}
+
 	@Autowired
 	public void setDayDatumDao(DayDatumDao dayDatumDao) {
 		this.dayDatumDao = dayDatumDao;
@@ -204,6 +227,7 @@ public class DaoQueryBiz implements QueryBiz {
 	public void setWeatherDatumDao(WeatherDatumDao weatherDatumDao) {
 		this.weatherDatumDao = weatherDatumDao;
 		daoMapping.put(weatherDatumDao.getDatumType().asSubclass(NodeDatum.class), weatherDatumDao);
+		filterDaoMapping.put(weatherDatumDao.getDatumType().asSubclass(Datum.class), weatherDatumDao);
 	}
 
 	@Autowired

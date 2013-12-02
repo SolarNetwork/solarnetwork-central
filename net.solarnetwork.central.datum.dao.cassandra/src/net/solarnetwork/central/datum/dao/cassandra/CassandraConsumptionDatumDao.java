@@ -24,10 +24,10 @@ package net.solarnetwork.central.datum.dao.cassandra;
 
 import java.util.List;
 import java.util.Set;
-import net.solarnetwork.central.dao.SortDescriptor;
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
+import net.solarnetwork.central.domain.SortDescriptor;
 import org.joda.time.LocalDate;
 import org.joda.time.ReadableDateTime;
 import org.joda.time.ReadableInterval;

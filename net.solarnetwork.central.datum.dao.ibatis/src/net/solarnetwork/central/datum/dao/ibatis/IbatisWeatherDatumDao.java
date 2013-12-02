@@ -31,12 +31,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
+import net.solarnetwork.central.datum.domain.LocationDatumFilter;
 import net.solarnetwork.central.datum.domain.SkyCondition;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
-
+import net.solarnetwork.central.domain.EntityMatch;
 import org.joda.time.ReadableDateTime;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,22 +47,25 @@ import org.springframework.transaction.annotation.Transactional;
  * @author matt.magoffin
  * @version $Revision$ $Date$
  */
-public class IbatisWeatherDatumDao extends IbatisDatumDaoSupport<WeatherDatum> 
-implements WeatherDatumDao {
+public class IbatisWeatherDatumDao extends
+		IbatisFilterableDatumDatoSupport<WeatherDatum, EntityMatch, LocationDatumFilter> implements
+		WeatherDatumDao {
 
-	/** The query name used for {@link #getMostRecentWeatherDatum(Long, ReadableDateTime)}. */
-	public static final String QUERY_WEATHER_DATUM_FOR_MOST_RECENT 
-		= "find-WeatherDatum-for-most-recent";
-	
+	/**
+	 * The query name used for
+	 * {@link #getMostRecentWeatherDatum(Long, ReadableDateTime)}.
+	 */
+	public static final String QUERY_WEATHER_DATUM_FOR_MOST_RECENT = "find-WeatherDatum-for-most-recent";
+
 	private Map<Pattern, SkyCondition> conditionMapping;
-	
+
 	/**
 	 * Default constructor.
 	 */
 	public IbatisWeatherDatumDao() {
-		super(WeatherDatum.class);
+		super(WeatherDatum.class, EntityMatch.class);
 	}
-	
+
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	@Override
 	public WeatherDatum getDatum(Long id) {
@@ -77,14 +80,14 @@ implements WeatherDatumDao {
 		populateCondition(result);
 		return result;
 	}
-	
+
 	@Override
-	protected String setupAggregatedDatumQuery(DatumQueryCommand criteria,
-			Map<String, Object> params) {
+	protected String setupAggregatedDatumQuery(DatumQueryCommand criteria, Map<String, Object> params) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public WeatherDatum getMostRecentWeatherDatum(Long nodeId, ReadableDateTime upToDate) {
@@ -99,15 +102,18 @@ implements WeatherDatumDao {
 		}
 		return null;
 	}
-	
+
 	/**
-	 * Populate the {@link WeatherDatum#getCondition()} value for each datum 
-	 * in the given list.
+	 * Populate the {@link WeatherDatum#getCondition()} value for each datum in
+	 * the given list.
 	 * 
-	 * <p>This calls {@link #populateCondition(WeatherDatum)} on each datum
-	 * in the given list.</p>
+	 * <p>
+	 * This calls {@link #populateCondition(WeatherDatum)} on each datum in the
+	 * given list.
+	 * </p>
 	 * 
-	 * @param list datums to set
+	 * @param list
+	 *        datums to set
 	 * @see #populateCondition(WeatherDatum)
 	 */
 	private void populateCondition(List<WeatherDatum> list) {
@@ -122,8 +128,7 @@ implements WeatherDatumDao {
 			if ( sky == null ) {
 				continue;
 			}
-			for ( Map.Entry<Pattern, SkyCondition> me 
-					: this.conditionMapping.entrySet() ) {
+			for ( Map.Entry<Pattern, SkyCondition> me : this.conditionMapping.entrySet() ) {
 				if ( me.getKey().matcher(sky).find() ) {
 					datum.setCondition(me.getValue());
 					break;
@@ -131,18 +136,21 @@ implements WeatherDatumDao {
 			}
 		}
 	}
-	
+
 	/**
 	 * Populate the {@link WeatherDatum#getCondition()} value for a datum.
 	 * 
-	 * <p>This uses the configured {@link #getConditionMapping()} to compare
+	 * <p>
+	 * This uses the configured {@link #getConditionMapping()} to compare
 	 * regular expressions against the {@link WeatherDatum#getSkyConditions()}
-	 * value. The {@link SkyCondition} for the first pattern that matches in 
+	 * value. The {@link SkyCondition} for the first pattern that matches in
 	 * {@link #getConditionMapping()} iteration order will be used. If a datum
-	 * already has a {@link WeatherDatum#getCondition()} value set, it will
-	 * not be changed.</p>
+	 * already has a {@link WeatherDatum#getCondition()} value set, it will not
+	 * be changed.
+	 * </p>
 	 * 
-	 * @param list datums to set
+	 * @param list
+	 *        datums to set
 	 */
 	private void populateCondition(WeatherDatum datum) {
 		if ( datum == null || this.conditionMapping == null ) {
@@ -155,24 +163,26 @@ implements WeatherDatumDao {
 		if ( sky == null ) {
 			return;
 		}
-		for ( Map.Entry<Pattern, SkyCondition> me 
-				: this.conditionMapping.entrySet() ) {
+		for ( Map.Entry<Pattern, SkyCondition> me : this.conditionMapping.entrySet() ) {
 			if ( me.getKey().matcher(sky).find() ) {
 				datum.setCondition(me.getValue());
 				return;
 			}
 		}
 	}
-	
+
 	/**
 	 * Set the {@link #setConditionMapping(Map)} via String keys.
 	 * 
-	 * <p>This method is a convenience method for setting the {@code conditionMapping} 
-	 * property via String keys instead of compiled {@link Pattern} objects. The 
-	 * regular expressions are compiled with {@link Pattern#CASE_INSENSITIVE} and
-	 * {@link Pattern#DOTALL} flags.</p>
+	 * <p>
+	 * This method is a convenience method for setting the
+	 * {@code conditionMapping} property via String keys instead of compiled
+	 * {@link Pattern} objects. The regular expressions are compiled with
+	 * {@link Pattern#CASE_INSENSITIVE} and {@link Pattern#DOTALL} flags.
+	 * </p>
 	 * 
-	 * @param conditionMapping the mapping of regular expressions to SkyCondition instances
+	 * @param conditionMapping
+	 *        the mapping of regular expressions to SkyCondition instances
 	 */
 	public void setConditionMap(Map<String, SkyCondition> conditionMapping) {
 		Map<Pattern, SkyCondition> map = new LinkedHashMap<Pattern, SkyCondition>();
@@ -182,19 +192,19 @@ implements WeatherDatumDao {
 		}
 		setConditionMapping(map);
 	}
-	
+
 	/**
 	 * @return the conditionMapping
 	 */
 	public Map<Pattern, SkyCondition> getConditionMapping() {
 		return conditionMapping;
 	}
-	
+
 	/**
-	 * @param conditionMapping the conditionMapping to set
+	 * @param conditionMapping
+	 *        the conditionMapping to set
 	 */
-	public void setConditionMapping(
-			Map<Pattern, SkyCondition> conditionMapping) {
+	public void setConditionMapping(Map<Pattern, SkyCondition> conditionMapping) {
 		this.conditionMapping = conditionMapping;
 	}
 

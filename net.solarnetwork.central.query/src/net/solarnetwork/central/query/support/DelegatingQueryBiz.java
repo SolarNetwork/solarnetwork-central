@@ -24,8 +24,13 @@ package net.solarnetwork.central.query.support;
 
 import java.util.List;
 import java.util.Set;
+import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.domain.WeatherConditions;
@@ -35,7 +40,7 @@ import org.joda.time.LocalDate;
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DelegatingQueryBiz implements QueryBiz {
 
@@ -77,6 +82,13 @@ public class DelegatingQueryBiz implements QueryBiz {
 	@Override
 	public WeatherConditions getMostRecentWeatherConditions(Long nodeId) {
 		return delegate.getMostRecentWeatherConditions(nodeId);
+	}
+
+	@Override
+	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
+			Class<? extends Datum> datumClass, F filter, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
+		return delegate.findFilteredDatum(datumClass, filter, sortDescriptors, offset, max);
 	}
 
 }

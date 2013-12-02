@@ -25,11 +25,11 @@
 package net.solarnetwork.central.in.biz;
 
 import java.util.List;
-import net.solarnetwork.central.dao.SortDescriptor;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 

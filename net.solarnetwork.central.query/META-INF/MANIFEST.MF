@@ -2,16 +2,16 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Query
 Bundle-SymbolicName: net.solarnetwork.central.query
-Bundle-Version: 1.4.2
+Bundle-Version: 1.5.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
- net.solarnetwork.central.query.biz;version="1.4.0",
+ net.solarnetwork.central.query.biz;version="1.5.0",
  net.solarnetwork.central.query.domain;version="1.1.1",
- net.solarnetwork.central.query.support;version="1.0.0"
+ net.solarnetwork.central.query.support;version="1.1.0"
 Import-Package: 
- net.solarnetwork.central.datum.domain;version="[1.0.0,2.0.0)",
- net.solarnetwork.central.domain;version="[1.0.0,2.0.0)",
+ net.solarnetwork.central.datum.domain;version="1.8.0",
+ net.solarnetwork.central.domain;version="1.11.0",
  org.codehaus.jackson.annotate;version="[1.9,2.0)",
  org.joda.time;version="[1.6,3.0)",
  org.joda.time.base;version="[1.6,3.0)",

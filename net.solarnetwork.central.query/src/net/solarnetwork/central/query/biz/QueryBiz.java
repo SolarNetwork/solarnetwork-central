@@ -28,8 +28,13 @@ package net.solarnetwork.central.query.biz;
 
 import java.util.List;
 import java.util.Set;
+import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.domain.WeatherConditions;
 import org.joda.time.LocalDate;
@@ -125,5 +130,24 @@ public interface QueryBiz {
 	 * @return the conditions, or <em>null</em> if none available
 	 */
 	WeatherConditions getMostRecentWeatherConditions(Long nodeId);
+
+	/**
+	 * API for querying for a filtered set of results from all possible results.
+	 * 
+	 * @param datumClass
+	 *        the type of NodeDatum to query for
+	 * @param filter
+	 *        the query filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 */
+	<F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
+			Class<? extends Datum> datumClass, F filter, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max);
 
 }

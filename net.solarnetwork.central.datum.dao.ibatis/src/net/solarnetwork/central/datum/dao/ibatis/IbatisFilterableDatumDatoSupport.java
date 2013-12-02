@@ -1,7 +1,7 @@
 /* ==================================================================
- * IbatisBaseFilterableDaoSupport.java - Dec 12, 2012 4:25:29 PM
+ * IbatisFilterableDatumDatoSupport.java - Dec 2, 2013 4:46:59 PM
  * 
- * Copyright 2007-2012 SolarNetwork.net Dev Team
+ * Copyright 2007-2013 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,14 +20,13 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dao.ibatis;
+package net.solarnetwork.central.datum.dao.ibatis;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.FilterableDao;
-import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
@@ -35,30 +34,22 @@ import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
 
 /**
- * Base iBATIS FilterableDao implementation.
+ * Base class for filterable datum DAO implementations.
  * 
  * @author matt
  * @version 1.0
  */
-public abstract class IbatisBaseFilterableDaoSupport<T extends Entity<PK>, M extends FilterMatch<PK>, F extends Filter, PK extends Serializable>
-		extends IbatisBaseGenericDaoSupport<T, PK> implements FilterableDao<M, PK, F> {
+public abstract class IbatisFilterableDatumDatoSupport<T extends Datum, M extends FilterMatch<Long>, F extends Filter>
+		extends IbatisDatumDaoSupport<T> implements FilterableDao<M, Long, F> {
 
 	/** A query property for a general Filter object value. */
 	public static final String FILTER_PROPERTY = "filter";
 
 	private final Class<? extends M> filterResultClass;
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param domainClass
-	 *        the domain class
-	 * @param pkClass
-	 *        the primary key class
-	 */
-	public IbatisBaseFilterableDaoSupport(Class<? extends T> domainClass, Class<? extends PK> pkClass,
+	public IbatisFilterableDatumDatoSupport(Class<? extends T> domainClass,
 			Class<? extends M> filterResultClass) {
-		super(domainClass, pkClass);
+		super(domainClass);
 		this.filterResultClass = filterResultClass;
 	}
 

@@ -127,4 +127,67 @@
 		]]>
 	</select>
 	
+	<sql id="fragment-findall-WeatherDatum-EntityMatch">
+		FROM
+			solarnet.sn_weather_datum wdatum
+		<isEqual property="filter.hasLocationCriteria" compareValue="true">
+		INNER JOIN solarnet.sn_loc l ON l.id = wdatum.loc_id
+		</isEqual>
+		<dynamic prepend="WHERE">
+			<isNotNull prepend="AND" property="filter.locationId">
+				wdatum.loc_id = #filter.locationId#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.startDate">
+				wdatum.info_date &gt;= #filter.startDate#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.endDate">
+				wdatum.info_date &lt; #filter.endDate#
+			</isNotNull>
+			<isEqual property="filter.hasLocationCriteria" compareValue="true">
+				<isNotNull prepend="AND" property="filter.location.name">
+					l.loc_name = #filter.location.name#
+				</isNotNull>
+				<isNotNull prepend="AND" property="filter.location.country">
+					l.country = #filter.location.country#
+				</isNotNull>
+				<isNotNull prepend="AND" property="filter.location.region">
+					l.region = #filter.location.region#
+				</isNotNull>
+				<isNotNull prepend="AND" property="filter.location.stateOrProvince">
+					l.state_prov = #filter.location.stateOrProvince#
+				</isNotNull>
+				<isNotNull prepend="AND" property="filter.location.postalCode">
+					l.postal_code = #filter.location.postalCode#
+				</isNotNull>
+			</isEqual>
+		</dynamic>
+	</sql>
+
+	<select id="findall-WeatherDatum-EntityMatch" resultMap="WeatherDatumFullResult">
+		SELECT
+			<include refid="fragment-WeatherDatum-full-result"/>
+		<include refid="fragment-findall-WeatherDatum-EntityMatch"/>
+		<isNotEmpty property="SortDescriptors" prepend="ORDER BY">
+			<iterate property="SortDescriptors" conjunction="," close=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="locationId">wdatum.loc_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">wdatum.info_date</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="infoDate">wdatum.info_date</isEqual>
+				<isEqual property="filter.hasLocationCriteria" compareValue="true">
+					<isEqual property="SortDescriptors[].sortKey" compareValue="location.name">lower(l.loc_name)</isEqual>
+					<isEqual property="SortDescriptors[].sortKey" compareValue="location.country">l.country</isEqual>
+					<isEqual property="SortDescriptors[].sortKey" compareValue="location.region">l.region</isEqual>
+					<isEqual property="SortDescriptors[].sortKey" compareValue="location.stateOrProvince">l.state_prov</isEqual>
+					<isEqual property="SortDescriptors[].sortKey" compareValue="location.postalCode">l.postal_code</isEqual>
+				</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+			wdatum.id
+		</isNotEmpty>
+	</select>
+
+	<select id="findall-WeatherDatum-EntityMatch-count" resultClass="long">
+		SELECT count(wdatum.id)
+		<include refid="fragment-findall-WeatherDatum-EntityMatch"/>
+	</select>
+
 </sqlMap>

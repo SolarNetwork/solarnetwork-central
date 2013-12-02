@@ -1,7 +1,7 @@
 /* ==================================================================
- * SimpleSortDescriptor.java - Jun 10, 2011 7:09:23 PM
+ * LocationDatumFilter.java - Dec 2, 2013 5:10:30 PM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2007-2013 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,49 +20,30 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.support;
+package net.solarnetwork.central.datum.domain;
 
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.domain.Location;
 
 /**
- * Implementation of {@link SortDescriptor}.
+ * Extension of {@link DatumFilter} for location-based entities.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class SimpleSortDescriptor implements SortDescriptor {
-
-	private final String sortKey;
-	private final boolean descending;
+public interface LocationDatumFilter extends DatumFilter {
 
 	/**
-	 * Construct with a sort key.
+	 * Get a specific location ID.
 	 * 
-	 * <p>
-	 * Ascending order will be used.
-	 * </p>
-	 * 
-	 * @param sortKey
-	 *        the sort key
+	 * @return the location ID
 	 */
-	public SimpleSortDescriptor(String sortKey) {
-		this(sortKey, true);
-	}
+	Long getLocationId();
 
-	public SimpleSortDescriptor(String sortKey, boolean descending) {
-		super();
-		this.sortKey = sortKey;
-		this.descending = descending;
-	}
-
-	@Override
-	public String getSortKey() {
-		return sortKey;
-	}
-
-	@Override
-	public boolean isDescending() {
-		return descending;
-	}
+	/**
+	 * A location filter.
+	 * 
+	 * @return the location filter
+	 */
+	Location getLocation();
 
 }

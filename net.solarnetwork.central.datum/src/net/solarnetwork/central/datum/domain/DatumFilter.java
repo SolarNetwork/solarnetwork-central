@@ -1,7 +1,7 @@
 /* ==================================================================
- * SortDescriptors.java - Apr 29, 2011 3:40:16 PM
+ * DatumFilter.java - Dec 2, 2013 5:08:29 PM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2007-2013 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -18,35 +18,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
-package net.solarnetwork.central.dao;
+package net.solarnetwork.central.datum.domain;
+
+import net.solarnetwork.central.domain.Filter;
+import org.joda.time.DateTime;
 
 /**
- * An API for specifying a collection ordering.
+ * Filter for Datum entities.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
-public interface SortDescriptor {
+public interface DatumFilter extends Filter {
 
 	/**
-	 * Get the name of the value to sort by.
+	 * Get a start date.
 	 * 
-	 * <p>How this value is interpreted is implementation dependent.</p>
-	 * 
-	 * @return the sort key
+	 * @return the start date
 	 */
-	String getSortKey();
-	
+	public DateTime getStartDate();
+
 	/**
-	 * Return <em>true</em> if the sort should be in ascending order,
-	 * otherwise the short should be in descending order.
+	 * Get an end date.
 	 * 
-	 * @return <em>true</em> if the sort should be in ascending order
+	 * @return the end date
 	 */
-	boolean isAscending();
-	
+	public DateTime getEndDate();
+
 }
