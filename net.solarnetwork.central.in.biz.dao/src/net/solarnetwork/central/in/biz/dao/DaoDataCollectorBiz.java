@@ -128,6 +128,13 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		return requestedMaximum;
 	}
 
+	private Integer limitFilterOffset(Integer requestedOffset) {
+		if ( requestedOffset == null || requestedOffset.intValue() < 0 ) {
+			return 0;
+		}
+		return requestedOffset;
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public <D extends Datum> D postDatum(D datum) {
@@ -217,7 +224,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	@Override
 	public FilterResults<SourceLocationMatch> findPriceLocations(SourceLocation criteria,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		return priceLocationDao.findFiltered(criteria, sortDescriptors, offset, limitFilterMaximum(max));
+		return priceLocationDao.findFiltered(criteria, sortDescriptors, limitFilterOffset(offset),
+				limitFilterMaximum(max));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -236,15 +244,15 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	@Override
 	public FilterResults<SourceLocationMatch> findWeatherLocations(SourceLocation criteria,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		return weatherLocationDao.findFiltered(criteria, sortDescriptors, offset,
+		return weatherLocationDao.findFiltered(criteria, sortDescriptors, limitFilterOffset(offset),
 				limitFilterMaximum(max));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public List<LocationMatch> findLocations(Location criteria) {
-		FilterResults<LocationMatch> matches = solarLocationDao.findFiltered(criteria, null, null,
-				limitFilterMaximum(null));
+		FilterResults<LocationMatch> matches = solarLocationDao.findFiltered(criteria, null,
+				limitFilterOffset(null), limitFilterMaximum(null));
 		List<LocationMatch> resultList = new ArrayList<LocationMatch>(matches.getReturnedResultCount());
 		for ( LocationMatch m : matches.getResults() ) {
 			resultList.add(m);
