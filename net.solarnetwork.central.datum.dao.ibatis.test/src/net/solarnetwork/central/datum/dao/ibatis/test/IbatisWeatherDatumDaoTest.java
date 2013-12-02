@@ -26,10 +26,14 @@ package net.solarnetwork.central.datum.dao.ibatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import java.util.Iterator;
 import net.solarnetwork.central.datum.dao.ibatis.IbatisWeatherDatumDao;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.SkyCondition;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
-
+import net.solarnetwork.central.datum.domain.WeatherDatumMatch;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SolarLocation;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,10 +47,11 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class IbatisWeatherDatumDaoTest extends AbstractIbatisDaoTestSupport {
 
-	@Autowired private IbatisWeatherDatumDao dao;
-	
+	@Autowired
+	private IbatisWeatherDatumDao dao;
+
 	private WeatherDatum lastDatum;
-	
+
 	@Before
 	public void setUp() throws Exception {
 		lastDatum = null;
@@ -92,11 +97,30 @@ public class IbatisWeatherDatumDaoTest extends AbstractIbatisDaoTestSupport {
 		assertEquals(src.getVisibility(), entity.getVisibility());
 	}
 
-    @Test
+	@Test
 	public void getByPrimaryKey() {
-    	storeNew();
-    	WeatherDatum datum = dao.get(lastDatum.getId());
-    	validate(lastDatum, datum);
+		storeNew();
+		WeatherDatum datum = dao.get(lastDatum.getId());
+		validate(lastDatum, datum);
 	}
-    
+
+	@Test
+	public void findByPostalCode() {
+		storeNew();
+		SolarLocation locFilter = new SolarLocation();
+		locFilter.setPostalCode(TEST_LOC_POSTAL_CODE);
+		DatumFilterCommand filter = new DatumFilterCommand(locFilter);
+
+		FilterResults<WeatherDatumMatch> results = dao.findFiltered(filter, filter.getSortDescriptors(),
+				null, null);
+
+		assertNotNull(results);
+		assertEquals(Integer.valueOf(1), results.getReturnedResultCount());
+		assertNotNull(results.getResults());
+		Iterator<WeatherDatumMatch> itr = results.getResults().iterator();
+
+		WeatherDatumMatch match = itr.next();
+		assertEquals(lastDatum.getId(), match.getId());
+	}
+
 }

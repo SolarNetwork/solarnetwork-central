@@ -36,7 +36,7 @@ import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.LocationDatumFilter;
 import net.solarnetwork.central.datum.domain.SkyCondition;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
-import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.datum.domain.WeatherDatumMatch;
 import org.joda.time.ReadableDateTime;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @version $Revision$ $Date$
  */
 public class IbatisWeatherDatumDao extends
-		IbatisFilterableDatumDatoSupport<WeatherDatum, EntityMatch, LocationDatumFilter> implements
+		IbatisFilterableDatumDatoSupport<WeatherDatum, WeatherDatumMatch, LocationDatumFilter> implements
 		WeatherDatumDao {
 
 	/**
@@ -63,7 +63,7 @@ public class IbatisWeatherDatumDao extends
 	 * Default constructor.
 	 */
 	public IbatisWeatherDatumDao() {
-		super(WeatherDatum.class, EntityMatch.class);
+		super(WeatherDatum.class, WeatherDatumMatch.class);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
@@ -103,6 +103,20 @@ public class IbatisWeatherDatumDao extends
 		return null;
 	}
 
+	@Override
+	protected List<WeatherDatumMatch> postProcessFilterQuery(LocationDatumFilter filter,
+			List<WeatherDatumMatch> rows) {
+		populateCondition(rows);
+		return rows;
+	}
+
+	@Override
+	protected List<WeatherDatum> postProcessDatumQuery(DatumQueryCommand criteria,
+			Map<String, Object> params, List<WeatherDatum> results) {
+		populateCondition(results);
+		return results;
+	}
+
 	/**
 	 * Populate the {@link WeatherDatum#getCondition()} value for each datum in
 	 * the given list.
@@ -116,7 +130,7 @@ public class IbatisWeatherDatumDao extends
 	 *        datums to set
 	 * @see #populateCondition(WeatherDatum)
 	 */
-	private void populateCondition(List<WeatherDatum> list) {
+	private void populateCondition(List<? extends WeatherDatum> list) {
 		if ( list == null || this.conditionMapping == null ) {
 			return;
 		}

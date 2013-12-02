@@ -41,13 +41,36 @@ import org.joda.time.DateTime;
  */
 public class DatumFilterCommand implements LocationDatumFilter {
 
-	private final SolarLocation location = new SolarLocation();
+	private final SolarLocation location;
 	private DateTime startDate;
 	private DateTime endDate;
 	private String datumType; // e.g. Power, Consumption, etc.
 	private List<MutableSortDescriptor> sorts;
 	private Integer offset = 0;
 	private Integer max;
+
+	/**
+	 * Default constructor.
+	 */
+	public DatumFilterCommand() {
+		super();
+		location = new SolarLocation();
+	}
+
+	/**
+	 * Construct from a Location filter.
+	 * 
+	 * @param loc
+	 *        the location
+	 */
+	public DatumFilterCommand(Location loc) {
+		super();
+		if ( loc instanceof SolarLocation ) {
+			location = (SolarLocation) loc;
+		} else {
+			location = new SolarLocation(loc);
+		}
+	}
 
 	@Override
 	public Map<String, ?> getFilter() {

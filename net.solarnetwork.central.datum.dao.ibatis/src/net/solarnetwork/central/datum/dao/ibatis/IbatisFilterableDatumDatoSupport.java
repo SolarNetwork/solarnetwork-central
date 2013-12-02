@@ -137,10 +137,31 @@ public abstract class IbatisFilterableDatumDatoSupport<T extends Datum, M extend
 			rows = getSqlMapClientTemplate().queryForList(query, sqlProps);
 		}
 
+		rows = postProcessFilterQuery(filter, rows);
+
 		BasicFilterResults<M> results = new BasicFilterResults<M>(rows, (totalCount != null ? totalCount
 				: Long.valueOf(rows.size())), offset, rows.size());
 
 		return results;
+	}
+
+	/**
+	 * Post-process filter query results.
+	 * 
+	 * <p>
+	 * This implementation simply returns the passed on {@code rows}; subclasses
+	 * can override this to process the filter results as needed.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param rows
+	 *        the result rows (never <em>null</em>)
+	 * @return the processed rows
+	 */
+	protected List<M> postProcessFilterQuery(F filter, List<M> rows) {
+		// subclasses can override
+		return rows;
 	}
 
 }

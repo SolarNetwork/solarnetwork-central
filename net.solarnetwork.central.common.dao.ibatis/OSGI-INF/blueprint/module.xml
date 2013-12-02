@@ -90,8 +90,7 @@
 		<property name="sqlMapClient" ref="sqlMapClient"/>
 	</bean>
 	
-	<bean id="sqlMapClient"
-		class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+	<bean id="sqlMapClient" class="net.solarnetwork.central.dao.ibatis.SqlMapClientFactoryBean">
 		<property name="configLocation" value="/META-INF/sqlmap-config.xml"/>
 		<property name="mappingLocations">
 			<list>

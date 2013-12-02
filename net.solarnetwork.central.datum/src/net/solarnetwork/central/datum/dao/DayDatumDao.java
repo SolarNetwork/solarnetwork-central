@@ -20,28 +20,32 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ===================================================================
- * $Id$
- * ===================================================================
  */
 
 package net.solarnetwork.central.datum.dao;
 
+import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.datum.domain.DayDatumMatch;
+import net.solarnetwork.central.datum.domain.LocationDatumFilter;
 import org.joda.time.LocalDate;
 
 /**
  * DAO API for {@link DayDatum} data.
- *
+ * 
  * @author matt.magoffin
- * @version $Revision$ $Date$
+ * @version 1.1
  */
-public interface DayDatumDao extends DatumDao<DayDatum> {
+public interface DayDatumDao extends DatumDao<DayDatum>,
+		FilterableDao<DayDatumMatch, Long, LocationDatumFilter> {
 
 	/**
 	 * Get a datum by a node ID and specific day.
 	 * 
-	 * @param nodeId the node ID
-	 * @param day the day
+	 * @param nodeId
+	 *        the node ID
+	 * @param day
+	 *        the day
 	 * @return the PowerDatum, or <em>null</em> if not found
 	 */
 	DayDatum getDatumForDate(Long nodeId, LocalDate day);

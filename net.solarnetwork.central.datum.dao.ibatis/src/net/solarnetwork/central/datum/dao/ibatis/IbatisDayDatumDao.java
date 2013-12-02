@@ -32,6 +32,8 @@ import net.solarnetwork.central.datum.dao.DayDatumDao;
 import net.solarnetwork.central.datum.domain.Aggregation;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.datum.domain.DayDatumMatch;
+import net.solarnetwork.central.datum.domain.LocationDatumFilter;
 import net.solarnetwork.central.datum.domain.SkyCondition;
 import org.joda.time.LocalDate;
 import org.joda.time.ReadableDateTime;
@@ -42,7 +44,9 @@ import org.joda.time.ReadableDateTime;
  * @author matt.magoffin
  * @version 1.1
  */
-public class IbatisDayDatumDao extends IbatisDatumDaoSupport<DayDatum> implements DayDatumDao {
+public class IbatisDayDatumDao extends
+		IbatisFilterableDatumDatoSupport<DayDatum, DayDatumMatch, LocationDatumFilter> implements
+		DayDatumDao {
 
 	/**
 	 * The query name used in
@@ -64,7 +68,7 @@ public class IbatisDayDatumDao extends IbatisDatumDaoSupport<DayDatum> implement
 	 * Default constructor.
 	 */
 	public IbatisDayDatumDao() {
-		super(DayDatum.class);
+		super(DayDatum.class, DayDatumMatch.class);
 	}
 
 	@Override
@@ -101,6 +105,13 @@ public class IbatisDayDatumDao extends IbatisDatumDaoSupport<DayDatum> implement
 		return results;
 	}
 
+	@Override
+	protected List<DayDatumMatch> postProcessFilterQuery(LocationDatumFilter filter,
+			List<DayDatumMatch> rows) {
+		populateCondition(rows);
+		return rows;
+	}
+
 	/**
 	 * Populate the {@link DayDatum#getCondition()} value for each datum in the
 	 * given list.
@@ -114,7 +125,7 @@ public class IbatisDayDatumDao extends IbatisDatumDaoSupport<DayDatum> implement
 	 *        datums to set
 	 * @see #populateCondition(DayDatum)
 	 */
-	private void populateCondition(List<DayDatum> list) {
+	private void populateCondition(List<? extends DayDatum> list) {
 		if ( list == null || this.conditionMapping == null ) {
 			return;
 		}
@@ -191,17 +202,10 @@ public class IbatisDayDatumDao extends IbatisDatumDaoSupport<DayDatum> implement
 		setConditionMapping(map);
 	}
 
-	/**
-	 * @return the conditionMapping
-	 */
 	public Map<Pattern, SkyCondition> getConditionMapping() {
 		return conditionMapping;
 	}
 
-	/**
-	 * @param conditionMapping
-	 *        the conditionMapping to set
-	 */
 	public void setConditionMapping(Map<Pattern, SkyCondition> conditionMapping) {
 		this.conditionMapping = conditionMapping;
 	}

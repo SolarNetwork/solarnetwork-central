@@ -73,6 +73,7 @@
 	</util:map>
 	
 	<util:map id="datumControllerFilterTypeMap" value-type="java.lang.Class">
+		<entry key="day" value="#{T(net.solarnetwork.central.datum.domain.DayDatum)}"/>
 		<entry key="weather" value="#{T(net.solarnetwork.central.datum.domain.WeatherDatum)}"/>
 	</util:map>
 	

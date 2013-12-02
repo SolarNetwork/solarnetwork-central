@@ -26,16 +26,19 @@ package net.solarnetwork.central.datum.dao.ibatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
+import java.util.Iterator;
+import net.solarnetwork.central.datum.dao.ibatis.IbatisDayDatumDao;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.datum.domain.DayDatumMatch;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SolarLocation;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import net.solarnetwork.central.datum.dao.ibatis.IbatisDayDatumDao;
-import net.solarnetwork.central.datum.domain.DayDatum;
 
 /**
  * Unit test for the {@link IbatisDayDatumDao} class.
@@ -45,10 +48,11 @@ import net.solarnetwork.central.datum.domain.DayDatum;
  */
 public class IbatisDayDatumDaoTest extends AbstractIbatisDaoTestSupport {
 
-	@Autowired private IbatisDayDatumDao dao;
-	
+	@Autowired
+	private IbatisDayDatumDao dao;
+
 	private DayDatum lastDatum;
-	
+
 	@Before
 	public void setUp() throws Exception {
 		lastDatum = null;
@@ -77,18 +81,37 @@ public class IbatisDayDatumDaoTest extends AbstractIbatisDaoTestSupport {
 		assertEquals(src.getSunset(), entity.getSunset());
 	}
 
-    @Test
+	@Test
 	public void getByPrimaryKey() {
-    	storeNew();
-    	DayDatum datum = dao.get(lastDatum.getId());
-    	validate(lastDatum, datum);
+		storeNew();
+		DayDatum datum = dao.get(lastDatum.getId());
+		validate(lastDatum, datum);
 	}
 
-    @Test
+	@Test
 	public void getByDate() {
-    	storeNew();
-    	DayDatum datum = dao.getDatumForDate(TEST_NODE_ID, lastDatum.getDay());
-    	validate(lastDatum, datum);
+		storeNew();
+		DayDatum datum = dao.getDatumForDate(TEST_NODE_ID, lastDatum.getDay());
+		validate(lastDatum, datum);
+	}
+
+	@Test
+	public void findByPostalCode() {
+		storeNew();
+		SolarLocation locFilter = new SolarLocation();
+		locFilter.setPostalCode(TEST_LOC_POSTAL_CODE);
+		DatumFilterCommand filter = new DatumFilterCommand(locFilter);
+
+		FilterResults<DayDatumMatch> results = dao.findFiltered(filter, filter.getSortDescriptors(),
+				null, null);
+
+		assertNotNull(results);
+		assertEquals(Integer.valueOf(1), results.getReturnedResultCount());
+		assertNotNull(results.getResults());
+		Iterator<DayDatumMatch> itr = results.getResults().iterator();
+
+		DayDatumMatch match = itr.next();
+		assertEquals(lastDatum.getId(), match.getId());
 	}
 
 }

@@ -20,8 +20,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ===================================================================
- * $Id$
- * ===================================================================
  */
 
 package net.solarnetwork.central.datum.dao;
@@ -29,17 +27,17 @@ package net.solarnetwork.central.datum.dao;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.datum.domain.LocationDatumFilter;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
-import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.datum.domain.WeatherDatumMatch;
 import org.joda.time.ReadableDateTime;
 
 /**
  * DAO API for {@link WeatherDatum} data.
  * 
  * @author matt.magoffin
- * @version $Revision$ $Date$
+ * @version 1.1
  */
 public interface WeatherDatumDao extends DatumDao<WeatherDatum>,
-		FilterableDao<EntityMatch, Long, LocationDatumFilter> {
+		FilterableDao<WeatherDatumMatch, Long, LocationDatumFilter> {
 
 	/**
 	 * Get the most-recently created WeatherDatum up to (and including) a

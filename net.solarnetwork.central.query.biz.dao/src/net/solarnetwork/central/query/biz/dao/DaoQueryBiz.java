@@ -231,6 +231,7 @@ public class DaoQueryBiz implements QueryBiz {
 	public void setDayDatumDao(DayDatumDao dayDatumDao) {
 		this.dayDatumDao = dayDatumDao;
 		daoMapping.put(dayDatumDao.getDatumType().asSubclass(NodeDatum.class), dayDatumDao);
+		filterDaoMapping.put(dayDatumDao.getDatumType().asSubclass(Datum.class), dayDatumDao);
 	}
 
 	@Autowired

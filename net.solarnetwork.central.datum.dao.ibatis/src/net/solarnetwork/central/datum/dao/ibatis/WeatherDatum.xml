@@ -68,6 +68,8 @@
 		<result column="sn_weather_datum_dew" property="dewPoint"/>
 	</resultMap>
 	
+	<resultMap id="WeatherDatumMatchResult" class="WeatherDatumMatch" extends="WeatherDatum.WeatherDatumFullResult"/>
+	
 	<select id="get-WeatherDatum-for-id" resultMap="WeatherDatumFullResult">
 		SELECT
 			<include refid="fragment-WeatherDatum-full-result"/>
@@ -127,7 +129,7 @@
 		]]>
 	</select>
 	
-	<sql id="fragment-findall-WeatherDatum-EntityMatch">
+	<sql id="fragment-findall-WeatherDatum-WeatherDatumMatch">
 		FROM
 			solarnet.sn_weather_datum wdatum
 		<isEqual property="filter.hasLocationCriteria" compareValue="true">
@@ -163,11 +165,12 @@
 		</dynamic>
 	</sql>
 
-	<select id="findall-WeatherDatum-EntityMatch" resultMap="WeatherDatumFullResult">
+	<select id="findall-WeatherDatum-WeatherDatumMatch" resultMap="WeatherDatumMatchResult" fetchSize="250">
 		SELECT
 			<include refid="fragment-WeatherDatum-full-result"/>
-		<include refid="fragment-findall-WeatherDatum-EntityMatch"/>
-		<isNotEmpty property="SortDescriptors" prepend="ORDER BY">
+		<include refid="fragment-findall-WeatherDatum-WeatherDatumMatch"/>
+		ORDER BY
+		<isNotEmpty property="SortDescriptors">
 			<iterate property="SortDescriptors" conjunction="," close=",">
 				<isEqual property="SortDescriptors[].sortKey" compareValue="locationId">wdatum.loc_id</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="created">wdatum.info_date</isEqual>
@@ -181,13 +184,13 @@
 				</isEqual>
 				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
 			</iterate>
-			wdatum.id
 		</isNotEmpty>
+		wdatum.id
 	</select>
 
-	<select id="findall-WeatherDatum-EntityMatch-count" resultClass="long">
+	<select id="findall-WeatherDatum-WeatherDatumMatch-count" resultClass="long">
 		SELECT count(wdatum.id)
-		<include refid="fragment-findall-WeatherDatum-EntityMatch"/>
+		<include refid="fragment-findall-WeatherDatum-WeatherDatumMatch"/>
 	</select>
 
 </sqlMap>
