@@ -9,9 +9,13 @@
               SELECT nextval('solarnet.solarnet_seq') AS id 
 		</selectKey>
 		INSERT INTO solarnet.sn_price_loc 
-			(id, loc_name, currency, unit, source_id, source_data, time_zone)
+			(id
+			<isNotNull property="created">, created</isNotNull>
+			, loc_name, currency, unit, source_id, source_data, time_zone)
 		VALUES
-			(#id#, #name#, #currency#, #unit#, #source.id#, #sourceData#, #timeZoneId#)
+			(#id#
+			<isNotNull property="created">, #created#</isNotNull>
+			, #name#, #currency#, #unit#, #source.id#, #sourceData#, #timeZoneId#)
 	</insert>
 
 	<update id="update-PriceLocation" parameterClass="PriceLocation">
@@ -105,6 +109,7 @@
 			</isEmpty>
 			<isNotEmpty property="SortDescriptors">
 				<iterate property="SortDescriptors" conjunction=",">
+					<isEqual property="SortDescriptors[].sortKey" compareValue="created">ploc.created</isEqual>
 					<isEqual property="SortDescriptors[].sortKey" compareValue="source">lower(psource.sname)</isEqual>
 					<isEqual property="SortDescriptors[].sortKey" compareValue="location.name">lower(ploc.loc_name)</isEqual>
 					<isEqual property="SortDescriptors[].sortKey" compareValue="currency">ploc.currency</isEqual>
