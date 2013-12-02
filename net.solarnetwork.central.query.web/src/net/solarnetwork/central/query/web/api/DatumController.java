@@ -101,9 +101,9 @@ public class DatumController extends WebServiceControllerSupport {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/filter", method = RequestMethod.GET)
+	@RequestMapping(value = "/list", method = RequestMethod.GET)
 	public Response<FilterResults<? extends EntityMatch>> filterDatumData(final DatumFilterCommand cmd) {
-		final String datumType = (cmd == null || cmd.getDatumType() == null ? null : cmd.getDatumType()
+		final String datumType = (cmd == null || cmd.getType() == null ? null : cmd.getType()
 				.toLowerCase());
 		final Class<? extends Datum> datumClass = filterTypeMap.get(datumType);
 		if ( datumClass == null ) {

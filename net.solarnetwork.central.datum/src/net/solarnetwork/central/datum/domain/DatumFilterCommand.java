@@ -44,7 +44,7 @@ public class DatumFilterCommand implements LocationDatumFilter {
 	private final SolarLocation location;
 	private DateTime startDate;
 	private DateTime endDate;
-	private String datumType; // e.g. Power, Consumption, etc.
+	private String type; // e.g. Power, Consumption, etc.
 	private List<MutableSortDescriptor> sorts;
 	private Integer offset = 0;
 	private Integer max;
@@ -126,12 +126,12 @@ public class DatumFilterCommand implements LocationDatumFilter {
 		this.endDate = endDate;
 	}
 
-	public String getDatumType() {
-		return datumType;
+	public String getType() {
+		return type;
 	}
 
-	public void setDatumType(String datumType) {
-		this.datumType = datumType;
+	public void setType(String datumType) {
+		this.type = datumType;
 	}
 
 	public List<MutableSortDescriptor> getSorts() {
