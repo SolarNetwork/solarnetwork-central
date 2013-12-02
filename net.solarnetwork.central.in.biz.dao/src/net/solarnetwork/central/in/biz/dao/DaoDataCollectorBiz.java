@@ -121,7 +121,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private final org.slf4j.Logger log = LoggerFactory.getLogger(getClass());
 
 	private Integer limitFilterMaximum(Integer requestedMaximum) {
-		if ( requestedMaximum == null || requestedMaximum.intValue() > filteredResultsLimit ) {
+		if ( requestedMaximum == null || requestedMaximum.intValue() > filteredResultsLimit
+				|| requestedMaximum.intValue() < 1 ) {
 			return filteredResultsLimit;
 		}
 		return requestedMaximum;
