@@ -20,8 +20,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ===================================================================
- * $Id$
- * ===================================================================
  */
 
 package net.solarnetwork.central.query.biz.dao;
@@ -69,7 +67,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.1
  */
 public class DaoQueryBiz implements QueryBiz {
 
