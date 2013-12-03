@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.web.api;
 
+import java.util.TimeZone;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
@@ -70,7 +71,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 	public void initBinder(WebDataBinder binder) {
 		binder.setIgnoreInvalidFields(true);
 		binder.registerCustomEditor(DateTime.class, new JodaDateFormatEditor(this.requestDateFormats,
-				null));
+				TimeZone.getTimeZone("UTC")));
 	}
 
 	@ResponseBody

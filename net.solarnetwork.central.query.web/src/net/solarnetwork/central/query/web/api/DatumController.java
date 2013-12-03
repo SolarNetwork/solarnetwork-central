@@ -24,6 +24,7 @@ package net.solarnetwork.central.query.web.api;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
@@ -82,7 +83,7 @@ public class DatumController extends WebServiceControllerSupport {
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
 		binder.registerCustomEditor(DateTime.class, new JodaDateFormatEditor(this.requestDateFormats,
-				null));
+				TimeZone.getTimeZone("UTC")));
 	}
 
 	@ResponseBody
