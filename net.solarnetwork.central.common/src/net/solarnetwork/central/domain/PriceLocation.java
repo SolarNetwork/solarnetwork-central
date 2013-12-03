@@ -68,6 +68,8 @@ public class PriceLocation extends BaseEntity implements Cloneable, Serializable
 		return getName();
 	}
 
+	@SerializeIgnore
+	@JsonIgnore
 	public String getName() {
 		return name;
 	}
