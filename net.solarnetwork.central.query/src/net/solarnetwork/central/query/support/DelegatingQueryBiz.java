@@ -28,9 +28,12 @@ import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.domain.SourceLocation;
+import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.domain.WeatherConditions;
@@ -89,6 +92,13 @@ public class DelegatingQueryBiz implements QueryBiz {
 			Class<? extends Datum> datumClass, F filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
 		return delegate.findFilteredDatum(datumClass, filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public FilterResults<SourceLocationMatch> findFilteredLocations(
+			Class<? extends Entity<?>> locationClass, SourceLocation filter,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		return delegate.findFilteredLocations(locationClass, filter, sortDescriptors, offset, max);
 	}
 
 }

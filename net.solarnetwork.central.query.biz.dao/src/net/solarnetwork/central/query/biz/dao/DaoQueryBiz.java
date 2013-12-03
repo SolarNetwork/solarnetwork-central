@@ -31,7 +31,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import net.solarnetwork.central.dao.FilterableDao;
+import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
 import net.solarnetwork.central.datum.dao.DatumDao;
 import net.solarnetwork.central.datum.dao.DayDatumDao;
@@ -46,10 +48,15 @@ import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.ReportingDatum;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
+import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.domain.SourceLocation;
+import net.solarnetwork.central.domain.SourceLocationMatch;
+import net.solarnetwork.central.domain.WeatherLocation;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.domain.WeatherConditions;
@@ -80,6 +87,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	private final Map<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>> daoMapping;
 	private final Map<Class<? extends Datum>, FilterableDao<? extends EntityMatch, Long, ? extends DatumFilter>> filterDaoMapping;
+	private final Map<Class<? extends Entity<?>>, FilterableDao<SourceLocationMatch, Long, SourceLocation>> filterLocationDaoMapping;
 
 	/**
 	 * Default constructor.
@@ -88,6 +96,8 @@ public class DaoQueryBiz implements QueryBiz {
 		super();
 		daoMapping = new HashMap<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>>(4);
 		filterDaoMapping = new HashMap<Class<? extends Datum>, FilterableDao<? extends EntityMatch, Long, ? extends DatumFilter>>(
+				4);
+		filterLocationDaoMapping = new HashMap<Class<? extends Entity<?>>, FilterableDao<SourceLocationMatch, Long, SourceLocation>>(
 				4);
 	}
 
@@ -212,6 +222,22 @@ public class DaoQueryBiz implements QueryBiz {
 				limitFilterMaximum(max));
 	}
 
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<SourceLocationMatch> findFilteredLocations(
+			Class<? extends Entity<?>> locationClass, SourceLocation filter,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		FilterableDao<SourceLocationMatch, Long, SourceLocation> dao = filterLocationDaoMapping
+				.get(locationClass);
+		if ( dao == null ) {
+			throw new IllegalArgumentException("Entity type "
+					+ (locationClass == null ? "(null)" : locationClass.getSimpleName())
+					+ " not supported");
+		}
+		return dao.findFiltered(filter, sortDescriptors, limitFilterOffset(offset),
+				limitFilterMaximum(max));
+	}
+
 	private Integer limitFilterMaximum(Integer requestedMaximum) {
 		if ( requestedMaximum == null || requestedMaximum.intValue() > filteredResultsLimit
 				|| requestedMaximum.intValue() < 1 ) {
@@ -276,6 +302,16 @@ public class DaoQueryBiz implements QueryBiz {
 
 	public void setFilteredResultsLimit(int filteredResultsLimit) {
 		this.filteredResultsLimit = filteredResultsLimit;
+	}
+
+	@Autowired
+	public void setPriceLocationDao(PriceLocationDao priceLocationDao) {
+		filterLocationDaoMapping.put(PriceLocation.class, priceLocationDao);
+	}
+
+	@Autowired
+	public void setWeatherLocationDao(WeatherLocationDao weatherLocationDao) {
+		filterLocationDaoMapping.put(WeatherLocation.class, weatherLocationDao);
 	}
 
 }

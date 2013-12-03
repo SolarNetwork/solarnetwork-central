@@ -32,9 +32,12 @@ import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.domain.SourceLocation;
+import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.domain.WeatherConditions;
 import org.joda.time.LocalDate;
@@ -135,7 +138,7 @@ public interface QueryBiz {
 	 * API for querying for a filtered set of results from all possible results.
 	 * 
 	 * @param datumClass
-	 *        the type of NodeDatum to query for
+	 *        the type of Datum to query for
 	 * @param filter
 	 *        the query filter
 	 * @param sortDescriptors
@@ -150,4 +153,22 @@ public interface QueryBiz {
 			Class<? extends Datum> datumClass, F filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
 
+	/**
+	 * API for querying for a filtered set of locations from all possible
+	 * results.
+	 * 
+	 * @param locationClass
+	 *        the type of Location to query for
+	 * @param filter
+	 *        the query filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 */
+	FilterResults<SourceLocationMatch> findFilteredLocations(Class<? extends Entity<?>> locationClass,
+			SourceLocation filter, List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
 }
