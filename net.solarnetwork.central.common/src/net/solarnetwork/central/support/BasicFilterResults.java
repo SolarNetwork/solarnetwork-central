@@ -24,12 +24,16 @@
 
 package net.solarnetwork.central.support;
 
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
 import net.solarnetwork.central.domain.FilterResults;
 
 /**
  * Basic implementation of {@link FilterResults}.
  * 
- * @param T the result type
+ * @param T
+ *        the result type
  * @author matt
  * @version $Revision$
  */
@@ -39,20 +43,29 @@ public class BasicFilterResults<T> implements FilterResults<T> {
 	private Long totalResults;
 	private Integer startingOffset;
 	private Integer returnedResultCount;
-	
-	public BasicFilterResults(Iterable<T> results, Long totalResults, 
-			Integer startingOffset, Integer returnedResultCount) {
+
+	public BasicFilterResults(Iterable<T> results, Long totalResults, Integer startingOffset,
+			Integer returnedResultCount) {
 		super();
 		this.results = results;
 		this.totalResults = totalResults;
 		this.startingOffset = startingOffset;
 		this.returnedResultCount = returnedResultCount;
 	}
-	
+
 	public BasicFilterResults(Iterable<T> results) {
 		this(results, null, null, null);
 	}
-	
+
+	@Override
+	public Iterator<T> iterator() {
+		if ( results == null ) {
+			Set<T> emptyResult = Collections.emptySet();
+			return emptyResult.iterator();
+		}
+		return results.iterator();
+	}
+
 	@Override
 	public Iterable<T> getResults() {
 		return results;
