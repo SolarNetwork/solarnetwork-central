@@ -50,6 +50,9 @@
 					</set>
 				</property>
 			</bean>
+			<bean class="net.solarnetwork.web.support.SimpleCsvHttpMessageConverter">
+		    	<property name="propertySerializerRegistrar" ref="xmlPropertySerializerRegistrar"/>
+			</bean>
 		</mvc:message-converters>
 	</mvc:annotation-driven>
 
