@@ -28,7 +28,6 @@ import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.domain.WeatherLocation;
 import net.solarnetwork.central.query.biz.QueryBiz;
-import net.solarnetwork.central.support.PriceLocationFilter;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -76,7 +75,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 
 	@ResponseBody
 	@RequestMapping(value = "/price", method = RequestMethod.GET)
-	public Response<FilterResults<SourceLocationMatch>> findPriceLocations(PriceLocationFilter cmd) {
+	public Response<FilterResults<SourceLocationMatch>> findPriceLocations(SourceLocationFilter cmd) {
 		// convert empty strings to null
 		cmd.removeEmptyValues();
 

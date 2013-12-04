@@ -94,7 +94,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 
 	@ResponseBody
 	@RequestMapping(value = "/price", method = RequestMethod.GET)
-	public Response<FilterResults<SourceLocationMatch>> findPriceLocations(PriceLocationFilter criteria) {
+	public Response<FilterResults<SourceLocationMatch>> findPriceLocations(SourceLocationFilter criteria) {
 		// convert empty strings to null
 		criteria.removeEmptyValues();
 

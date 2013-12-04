@@ -83,16 +83,16 @@
 			<isNotNull prepend="AND" property="filter.id">
 				ploc.id = #filter.id#
 			</isNotNull>
+			<isNotNull prepend="AND" property="filter.currency">
+				ploc.currency = #filter.currency#
+			</isNotNull>
 			<isNotNull prepend="AND" property="filter.source">
 				psource.sname = #filter.source#
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.location.name">
 				ploc.loc_name = #filter.location.name#
 			</isNotNull>
-			<isNotNull prepend="AND" property="filter.currency">
-				ploc.currency = #filter.currency#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.timeZoneId">
+			<isNotNull prepend="AND" property="filter.location.timeZoneId">
 				ploc.time_zone = #filter.timeZoneId#
 			</isNotNull>
 		</dynamic>
@@ -103,22 +103,24 @@
 			<include refid="fragment-PriceLocation-full-result"/>,
 			<include refid="fragment-PriceSource-full-result"/>
 		<include refid="fragment-findall-PriceLocation-SourceLocationMatch"/>
-		<dynamic prepend="ORDER BY">
-			<isEmpty property="SortDescriptors">
-				lower(psource.sname), lower(ploc.loc_name), ploc.id
-			</isEmpty>
-			<isNotEmpty property="SortDescriptors">
-				<iterate property="SortDescriptors" conjunction=",">
-					<isEqual property="SortDescriptors[].sortKey" compareValue="created">ploc.created</isEqual>
-					<isEqual property="SortDescriptors[].sortKey" compareValue="source">lower(psource.sname)</isEqual>
-					<isEqual property="SortDescriptors[].sortKey" compareValue="location.name">lower(ploc.loc_name)</isEqual>
-					<isEqual property="SortDescriptors[].sortKey" compareValue="currency">ploc.currency</isEqual>
-					<isEqual property="SortDescriptors[].sortKey" compareValue="timeZoneId">ploc.time_zone</isEqual>
-					<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
-				</iterate>
-				, ploc.id
-			</isNotEmpty>
-		</dynamic>
+		ORDER BY
+		<isEmpty property="SortDescriptors">
+			lower(psource.sname), lower(ploc.loc_name)
+		</isEmpty>
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction="," close=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">ploc.created</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">lower(psource.sname)</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="sourceName">lower(psource.sname)</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="location.name">lower(ploc.loc_name)</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="locationName">lower(ploc.loc_name)</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="currency">ploc.currency</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="timeZoneId">ploc.time_zone</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="location.timeZoneId">ploc.time_zone</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		ploc.id
 	</select>
 
 	<select id="findall-PriceLocation-SourceLocationMatch-count" resultClass="long">

@@ -34,14 +34,13 @@ import org.springframework.util.StringUtils;
  * Filter for {@link PriceLocation}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class PriceLocationFilter extends SourceLocationFilter {
 
-	private static final long serialVersionUID = -7774575665777266529L;
+	private static final long serialVersionUID = 8489957378330089844L;
 
 	private String currency;
-	private String timeZoneId;
 
 	/**
 	 * Default constructor.
@@ -94,21 +93,15 @@ public class PriceLocationFilter extends SourceLocationFilter {
 		if ( !StringUtils.hasText(currency) ) {
 			currency = null;
 		}
-		if ( !StringUtils.hasText(timeZoneId) ) {
-			timeZoneId = null;
-		}
 	}
 
 	@Override
 	public Map<String, ?> getFilter() {
 		Map<String, ?> filter = super.getFilter();
-		if ( currency != null || timeZoneId != null ) {
+		if ( currency != null ) {
 			Map<String, Object> f = new LinkedHashMap<String, Object>(filter);
 			if ( currency != null ) {
 				f.put("currency", currency);
-			}
-			if ( timeZoneId != null ) {
-				f.put("tz", timeZoneId);
 			}
 			filter = f;
 		}
@@ -121,14 +114,6 @@ public class PriceLocationFilter extends SourceLocationFilter {
 
 	public void setCurrency(String currency) {
 		this.currency = currency;
-	}
-
-	public String getTimeZoneId() {
-		return timeZoneId;
-	}
-
-	public void setTimeZoneId(String timeZoneId) {
-		this.timeZoneId = timeZoneId;
 	}
 
 }

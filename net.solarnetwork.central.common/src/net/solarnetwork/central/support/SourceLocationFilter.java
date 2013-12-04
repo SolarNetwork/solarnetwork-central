@@ -44,7 +44,7 @@ import org.springframework.util.StringUtils;
  */
 public class SourceLocationFilter implements Serializable, SourceLocation {
 
-	private static final long serialVersionUID = -2058990705039572215L;
+	private static final long serialVersionUID = 5979398734497676907L;
 
 	private Long id;
 	private String source;
@@ -153,6 +153,17 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 			return Collections.emptyList();
 		}
 		return new ArrayList<SortDescriptor>(sorts);
+	}
+
+	public String getTimeZoneId() {
+		return (location == null ? null : location.getTimeZoneId());
+	}
+
+	public void setTimeZoneId(String timeZoneId) {
+		if ( location == null ) {
+			location = new SolarLocation();
+		}
+		location.setTimeZoneId(timeZoneId);
 	}
 
 	public List<MutableSortDescriptor> getSorts() {

@@ -75,6 +75,7 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 		setStreet(loc.getStreet());
 		setLatitude(loc.getLatitude());
 		setLongitude(loc.getLongitude());
+		setTimeZoneId(loc.getTimeZoneId());
 	}
 
 	/**
@@ -237,6 +238,7 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 		this.longitude = longitude;
 	}
 
+	@Override
 	public String getTimeZoneId() {
 		return timeZoneId;
 	}

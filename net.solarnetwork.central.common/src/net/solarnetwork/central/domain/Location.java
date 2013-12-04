@@ -18,21 +18,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Revision$
- * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
-
 
 /**
  * Information describing the physical location of an object.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public interface Location extends Filter {
-	
+
 	/**
 	 * A generalized name, can be used for "virtual" locations.
 	 * 
@@ -46,53 +43,61 @@ public interface Location extends Filter {
 	 * @return 2-character country code
 	 */
 	String getCountry();
-	
+
 	/**
 	 * A country-specific regional identifier.
 	 * 
 	 * @return region identifier
 	 */
 	String getRegion();
-	
+
 	/**
 	 * Get a country-specific state or province identifier.
 	 * 
 	 * @return state or province identifier
 	 */
 	String getStateOrProvince();
-	
+
 	/**
 	 * Get a country-specific postal code.
 	 * 
 	 * @return postal code
 	 */
 	String getPostalCode();
-	
+
 	/**
 	 * Get the locality (city, town, etc.).
 	 * 
 	 * @return locality
 	 */
 	String getLocality();
-	
+
 	/**
 	 * Get the street address.
+	 * 
 	 * @return street
 	 */
 	String getStreet();
-	
+
 	/**
 	 * Get the decimal latitude.
 	 * 
 	 * @return latitude
 	 */
 	Double getLatitude();
-	
+
 	/**
 	 * Get the decimal longitude.
 	 * 
 	 * @return longitude
 	 */
 	Double getLongitude();
-	
+
+	/**
+	 * Get a time zone ID, e.g. {@code Pacific/Auckland}.
+	 * 
+	 * @return a time zone ID
+	 */
+	String getTimeZoneId();
+
 }

@@ -111,6 +111,9 @@
 			<isNotNull prepend="AND" property="filter.source">
 				wsource.sname = #filter.source#
 			</isNotNull>
+			<isNotNull prepend="AND" property="filter.timeZoneId">
+				l.time_zone = #filter.timeZoneId#
+			</isNotNull>
 			<isNotNull prepend="AND" property="filter.location.name">
 				l.loc_name = #filter.location.name#
 			</isNotNull>
@@ -126,6 +129,9 @@
 			<isNotNull prepend="AND" property="filter.location.postalCode">
 				l.postal_code = #filter.location.postalCode#
 			</isNotNull>
+			<isNotNull prepend="AND" property="filter.location.timeZoneId">
+				l.time_zone = #filter.location.timeZoneId#
+			</isNotNull>
 		</dynamic>
 	</sql>
 
@@ -135,7 +141,24 @@
 			<include refid="fragment-WeatherSource-full-result"/>,
 			<include refid="fragment-SolarLocation-public-result"/>
 		<include refid="fragment-findall-WeatherLocation-SourceLocationMatch"/>
-		ORDER BY lower(wsource.sname), lower(l.loc_name), wloc.id
+		ORDER BY
+		<isEmpty property="SortDescriptors">
+			lower(wsource.sname), lower(l.loc_name),
+		</isEmpty>
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction="," close=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">ploc.created</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="sourceName">lower(psource.sname)</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="location.name">lower(l.loc_name)</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="location.country">l.country</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="location.region">l.region</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="location.stateOrProvince">l.state_prov</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="location.postalCode">l.postal_code</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="location.timeZoneId">l.time_zone</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		wloc.id
 	</select>
 
 	<select id="findall-WeatherLocation-SourceLocationMatch-count" resultClass="long">
