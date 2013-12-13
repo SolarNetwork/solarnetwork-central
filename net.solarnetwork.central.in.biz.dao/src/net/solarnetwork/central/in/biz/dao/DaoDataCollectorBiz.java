@@ -288,11 +288,11 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		return (D) result;
 	}
 
-	public Datum preprocessConsumptionDatum(ConsumptionDatum datum, DatumDao<? extends Datum> dao) {
+	private Datum preprocessConsumptionDatum(ConsumptionDatum datum, DatumDao<? extends Datum> dao) {
 		return checkForNodeDatumByDate(datum, dao, CONSUMPTION_DATUM_IGNORE_ENTITY_COPY);
 	}
 
-	public Datum preprocessDayDatum(DayDatum datum, DayDatumDao dao) {
+	private Datum preprocessDayDatum(DayDatum datum, DayDatumDao dao) {
 		// fill in location ID if not provided
 		if ( datum.getLocationId() == null ) {
 			SolarNode node = solarNodeDao.get(datum.getNodeId());
@@ -301,22 +301,25 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			}
 		}
 		// see if exists already for given day
-		DayDatum entity = dao.getDatumForDate(datum.getNodeId(), datum.getDay());
-		if ( entity == null || !entity.isSameDay(datum) ) {
-			return datum;
+		DayDatum entity = null;
+		if ( datum.getLocationId() != null ) {
+			entity = dao.getDatumForDate(datum.getLocationId(), datum.getDay());
+			if ( entity == null || !entity.isSameDay(datum) ) {
+				return datum;
+			}
 		}
 		return entity;
 	}
 
-	public Datum preprocessPriceDatum(PriceDatum datum, DatumDao<? extends Datum> dao) {
+	private Datum preprocessPriceDatum(PriceDatum datum, DatumDao<? extends Datum> dao) {
 		return checkForLocationDatumByDate(datum, dao, PRICE_DATUM_IGNORE_ENTITY_COPY);
 	}
 
-	public Datum preprocessPowerDatum(PowerDatum datum, DatumDao<? extends Datum> dao) {
+	private Datum preprocessPowerDatum(PowerDatum datum, DatumDao<? extends Datum> dao) {
 		return checkForNodeDatumByDate(datum, dao, POWER_DATUM_IGNORE_ENTITY_COPY);
 	}
 
-	public Datum preprocessWeatherDatum(WeatherDatum datum, WeatherDatumDao dao) {
+	private Datum preprocessWeatherDatum(WeatherDatum datum, WeatherDatumDao dao) {
 		// fill in location ID if not provided
 		if ( datum.getLocationId() == null ) {
 			SolarNode node = solarNodeDao.get(datum.getNodeId());

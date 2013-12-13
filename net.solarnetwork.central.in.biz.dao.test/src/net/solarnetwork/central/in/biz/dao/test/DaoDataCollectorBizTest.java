@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.in.biz.dao.test;
@@ -46,7 +44,7 @@ import org.springframework.test.context.ContextConfiguration;
  * Test case for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 @ContextConfiguration
 public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {

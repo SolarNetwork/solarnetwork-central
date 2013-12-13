@@ -68,9 +68,8 @@
 			<include refid="fragment-DayDatum-full-result"/>
 		FROM
 			solarnet.sn_day_datum ddatum
-		INNER JOIN solarnet.sn_node n ON n.wloc_id = ddatum.loc_id
 		WHERE
-			n.node_id = #id#
+			ddatum.loc_id = #id#
 			AND ddatum.day = #date#
 	</select>
 	

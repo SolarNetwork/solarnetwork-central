@@ -24,10 +24,12 @@
 
 	<typeAlias alias="ConsumptionDatum" type="net.solarnetwork.central.datum.domain.ConsumptionDatum"/>
 	<typeAlias alias="DayDatum" type="net.solarnetwork.central.datum.domain.DayDatum"/>
+	<typeAlias alias="DayDatumMatch" type="net.solarnetwork.central.datum.domain.DayDatumMatch"/>
 	<typeAlias alias="HardwareControlDatum" type="net.solarnetwork.central.datum.domain.HardwareControlDatum"/>
 	<typeAlias alias="PriceDatum" type="net.solarnetwork.central.datum.domain.PriceDatum"/>
 	<typeAlias alias="PowerDatum" type="net.solarnetwork.central.datum.domain.PowerDatum"/>
 	<typeAlias alias="WeatherDatum" type="net.solarnetwork.central.datum.domain.WeatherDatum"/>
+	<typeAlias alias="WeatherDatumMatch" type="net.solarnetwork.central.datum.domain.WeatherDatumMatch"/>
 	
 	<typeAlias alias="ReportingConsumptionDatum" type="net.solarnetwork.central.datum.domain.ReportingConsumptionDatum"/>
 	<typeAlias alias="ReportingDayDatum" type="net.solarnetwork.central.datum.domain.ReportingDayDatum"/>

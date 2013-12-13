@@ -86,8 +86,8 @@ public class IbatisDayDatumDao extends
 	}
 
 	@Override
-	public DayDatum getDatumForDate(Long nodeId, LocalDate day) {
-		return getDatumForDate(nodeId, day.toDateTimeAtStartOfDay());
+	public DayDatum getDatumForDate(Long locationId, LocalDate day) {
+		return getDatumForDate(locationId, day.toDateTimeAtStartOfDay());
 	}
 
 	@Override

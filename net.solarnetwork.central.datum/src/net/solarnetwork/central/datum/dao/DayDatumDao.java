@@ -34,20 +34,20 @@ import org.joda.time.LocalDate;
  * DAO API for {@link DayDatum} data.
  * 
  * @author matt.magoffin
- * @version 1.1
+ * @version 1.2
  */
 public interface DayDatumDao extends DatumDao<DayDatum>,
 		FilterableDao<DayDatumMatch, Long, LocationDatumFilter> {
 
 	/**
-	 * Get a datum by a node ID and specific day.
+	 * Get a datum by a location ID and specific day.
 	 * 
-	 * @param nodeId
-	 *        the node ID
+	 * @param locationId
+	 *        the location ID
 	 * @param day
 	 *        the day
-	 * @return the PowerDatum, or <em>null</em> if not found
+	 * @return the DayDatum, or <em>null</em> if not found
 	 */
-	DayDatum getDatumForDate(Long nodeId, LocalDate day);
+	DayDatum getDatumForDate(Long locationId, LocalDate day);
 
 }

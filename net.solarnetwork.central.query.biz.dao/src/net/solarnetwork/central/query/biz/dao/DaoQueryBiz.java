@@ -186,7 +186,7 @@ public class DaoQueryBiz implements QueryBiz {
 			day = dayDatumDao.getDatumForDate(nodeId, repWeather.getLocalDate());
 			infoTime = repWeather.getLocalTime();
 		} else if ( weather != null && weather.getInfoDate() != null ) {
-			day = dayDatumDao.getDatumForDate(nodeId, weather.getInfoDate());
+			day = dayDatumDao.getDatumForDate(weather.getLocationId(), weather.getInfoDate());
 			infoTime = weather.getInfoDate().toDateTime(DateTimeZone.forTimeZone(node.getTimeZone()))
 					.toLocalTime();
 		}
