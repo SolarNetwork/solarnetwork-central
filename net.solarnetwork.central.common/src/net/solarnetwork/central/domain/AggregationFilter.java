@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.domain;
 
+import org.joda.time.DateTime;
+
 /**
  * Extension of {@link Filter} specific to aggregated results. This API designed
  * to support DAOs that want to implement both "raw" filter results and
@@ -30,7 +32,7 @@ package net.solarnetwork.central.domain;
  * @author matt
  * @version 1.0
  */
-public interface AggregationFilter extends Filter {
+public interface AggregationFilter {
 
 	/**
 	 * Get an aggregation to apply to the query.
@@ -38,5 +40,19 @@ public interface AggregationFilter extends Filter {
 	 * @return the aggregation, or <em>null</em> for default
 	 */
 	Aggregation getAggregation();
+
+	/**
+	 * Get a start date.
+	 * 
+	 * @return the start date
+	 */
+	public DateTime getStartDate();
+
+	/**
+	 * Get an end date.
+	 * 
+	 * @return the end date
+	 */
+	public DateTime getEndDate();
 
 }

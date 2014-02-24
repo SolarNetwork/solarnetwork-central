@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import net.solarnetwork.central.dao.AggregationFilterableDao;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
@@ -48,6 +49,7 @@ import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.ReportingDatum;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
+import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
@@ -74,7 +76,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -87,6 +89,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	private final Map<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>> daoMapping;
 	private final Map<Class<? extends Datum>, FilterableDao<? extends EntityMatch, Long, ? extends DatumFilter>> filterDaoMapping;
+	private final Map<Class<? extends Datum>, AggregationFilterableDao<?, ? extends AggregationFilter>> aggregationFilterDaoMapping;
 	private final Map<Class<? extends Entity<?>>, FilterableDao<SourceLocationMatch, Long, SourceLocation>> filterLocationDaoMapping;
 
 	/**
@@ -96,6 +99,8 @@ public class DaoQueryBiz implements QueryBiz {
 		super();
 		daoMapping = new HashMap<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>>(4);
 		filterDaoMapping = new HashMap<Class<? extends Datum>, FilterableDao<? extends EntityMatch, Long, ? extends DatumFilter>>(
+				4);
+		aggregationFilterDaoMapping = new HashMap<Class<? extends Datum>, AggregationFilterableDao<?, ? extends AggregationFilter>>(
 				4);
 		filterLocationDaoMapping = new HashMap<Class<? extends Entity<?>>, FilterableDao<SourceLocationMatch, Long, SourceLocation>>(
 				4);
@@ -223,6 +228,20 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 
 	@Override
+	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(
+			Class<? extends Datum> datumClass, A filter, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
+		@SuppressWarnings("unchecked")
+		AggregationFilterableDao<?, A> dao = (AggregationFilterableDao<?, A>) aggregationFilterDaoMapping
+				.get(datumClass);
+		if ( dao == null ) {
+			throw new IllegalArgumentException("Datum type "
+					+ (datumClass == null ? "(null)" : datumClass.getSimpleName()) + " not supported");
+		}
+		return dao.findAggregationFiltered(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public FilterResults<SourceLocationMatch> findFilteredLocations(
 			Class<? extends Entity<?>> locationClass, SourceLocation filter,
@@ -279,6 +298,8 @@ public class DaoQueryBiz implements QueryBiz {
 		daoMapping.put(consumptionDatumDao.getDatumType().asSubclass(NodeDatum.class),
 				consumptionDatumDao);
 		filterDaoMapping.put(consumptionDatumDao.getDatumType().asSubclass(Datum.class),
+				consumptionDatumDao);
+		aggregationFilterDaoMapping.put(consumptionDatumDao.getDatumType().asSubclass(Datum.class),
 				consumptionDatumDao);
 	}
 

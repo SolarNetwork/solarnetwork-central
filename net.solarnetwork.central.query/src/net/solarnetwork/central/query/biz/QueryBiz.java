@@ -32,6 +32,7 @@ import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
@@ -46,7 +47,7 @@ import org.joda.time.LocalDate;
  * API for querying business logic.
  * 
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.3
  */
 public interface QueryBiz {
 
@@ -151,6 +152,25 @@ public interface QueryBiz {
 	 */
 	<F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
 			Class<? extends Datum> datumClass, F filter, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max);
+
+	/**
+	 * API for querying for a filtered set of aggregated results.
+	 * 
+	 * @param datumClass
+	 *        the type of Datum to query for
+	 * @param filter
+	 *        the query filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 */
+	<A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(
+			Class<? extends Datum> datumClass, A filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
 
 	/**

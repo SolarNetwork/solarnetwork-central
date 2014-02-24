@@ -333,12 +333,12 @@
 			solarnet.sn_consum_datum cdatum
 		<dynamic prepend="WHERE">
 			<isNotEmpty prepend="AND" property="filter.sourceIds">
-					cdatum.source_id IN
-					<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+				cdatum.source_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
 			</isNotEmpty>
 			<isNotNull prepend="AND" property="filter.nodeIds">
-					cdatum.node_id IN
-					<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+				cdatum.node_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.startDate">
 				cdatum.created &gt;= #filter.startDate#
@@ -370,5 +370,118 @@
 		<include refid="fragment-findall-ConsumptionDatum-ConsumptionDatumMatch"/>
 	</select>
 
+	<!-- 
+		AggregationFilterableDao support
+	-->
+	
+	<resultMap id="ReportingConsumptionDatumMatchResult" class="ReportingConsumptionDatum">
+		<result column="r_consum_datum_created_date" property="localDateTime"/>
+		<result column="r_consum_datum_node_id" property="nodeId"/>
+		<result column="r_consum_datum_source_id" property="sourceId"/>
+		<result column="r_consum_datum_watts" property="watts"/>
+		<result column="r_consum_datum_watt_hours" property="wattHours"/>
+		<result column="r_consum_datum_cost_amt" property="cost"/>
+		<result column="r_consum_datum_cost_currency" property="currency"/>
+	</resultMap>
+
+	<!--  Note: r_consum_datum_created_date is not provided by this base fragment, because that column name varies -->
+	<sql id="fragment-ConsumptionDatum-aggregation-result">
+		rcdatum.node_id AS r_consum_datum_node_id,
+		rcdatum.source_id AS r_consum_datum_source_id,
+		rcdatum.watts AS r_consum_datum_watts,
+		rcdatum.watt_hours AS r_consum_datum_watt_hours,
+		rcdatum.cost_amt AS r_consum_datum_cost_amt,
+		rcdatum.cost_currency AS r_consum_datum_cost_currency
+	</sql>
+
+	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Hour">
+		FROM
+			solarrep.rep_consum_datum_hourly rcdatum
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="filter.sourceIds">
+				rcdatum.source_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+			</isNotEmpty>
+			<isNotNull prepend="AND" property="filter.nodeIds">
+				rcdatum.node_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.startDate">
+				rcdatum.created_hour &gt;= #filter.startDate#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.endDate">
+				rcdatum.created_hour &lt; #filter.endDate#
+			</isNotNull>
+		</dynamic>
+	</sql>
+
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-Hour-count" resultClass="long">
+		SELECT count(rcdatum.created_hour)
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Hour"/>
+	</select>
+	
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-Hour" resultMap="ReportingConsumptionDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			rcdatum.created_hour AS r_consum_datum_created_date,
+			<include refid="fragment-ConsumptionDatum-aggregation-result"/>
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Hour"/>
+		ORDER BY
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">rcdatum.created_hour</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">rcdatum.node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">rcdatum.source_id</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		<isEmpty property="SortDescriptors">
+			rcdatum.created_hour, rcdatum.node_id, rcdatum.source_id
+		</isEmpty>
+	</select>
+
+	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Day">
+		FROM
+			solarrep.rep_consum_datum_daily rcdatum
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="filter.sourceIds">
+				rcdatum.source_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+			</isNotEmpty>
+			<isNotNull prepend="AND" property="filter.nodeIds">
+				rcdatum.node_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.startDate">
+				rcdatum.created_day &gt;= #filter.startDate#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.endDate">
+				rcdatum.created_day &lt; #filter.endDate#
+			</isNotNull>
+		</dynamic>
+	</sql>
+
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-Day-count" resultClass="long">
+		SELECT count(rcdatum.created_day)
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Day"/>
+	</select>
+	
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-Day" resultMap="ReportingConsumptionDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			rcdatum.created_day AS r_consum_datum_created_date,
+			<include refid="fragment-ConsumptionDatum-aggregation-result"/>
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Day"/>
+		ORDER BY
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">rcdatum.created_day</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">rcdatum.node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">rcdatum.source_id</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		<isEmpty property="SortDescriptors">
+			rcdatum.created_day, rcdatum.node_id, rcdatum.source_id
+		</isEmpty>
+	</select>
 
 </sqlMap>

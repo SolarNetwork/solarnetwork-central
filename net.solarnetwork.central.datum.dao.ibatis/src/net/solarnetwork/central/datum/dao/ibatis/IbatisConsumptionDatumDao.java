@@ -26,7 +26,6 @@
 
 package net.solarnetwork.central.datum.dao.ibatis;
 
-import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateNodeDatumFilter;
@@ -35,8 +34,6 @@ import net.solarnetwork.central.datum.domain.ConsumptionDatumMatch;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.datum.domain.ReportingConsumptionDatum;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.SortDescriptor;
 
 /**
  * iBATIS implementation of {@link ConsumptionDatumDao}.
@@ -44,8 +41,9 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * @author matt
  * @version 1.1
  */
-public class IbatisConsumptionDatumDao extends
-		IbatisFilterableDatumDatoSupport<ConsumptionDatum, ConsumptionDatumMatch, NodeDatumFilter>
+public class IbatisConsumptionDatumDao
+		extends
+		IbatisAggregationFilterableDatumDaoSupport<ConsumptionDatum, ConsumptionDatumMatch, NodeDatumFilter, ReportingConsumptionDatum, AggregateNodeDatumFilter>
 		implements ConsumptionDatumDao {
 
 	/**
@@ -90,7 +88,7 @@ public class IbatisConsumptionDatumDao extends
 	 * Default constructor.
 	 */
 	public IbatisConsumptionDatumDao() {
-		super(ConsumptionDatum.class, ConsumptionDatumMatch.class);
+		super(ConsumptionDatum.class, ConsumptionDatumMatch.class, ReportingConsumptionDatum.class);
 	}
 
 	@Override
@@ -129,14 +127,6 @@ public class IbatisConsumptionDatumDao extends
 			params.put("precision", criteria.getPrecision());
 		}
 		return queryName;
-	}
-
-	@Override
-	public FilterResults<ReportingConsumptionDatum> findAggregationFiltered(
-			AggregateNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
-			Integer max) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }

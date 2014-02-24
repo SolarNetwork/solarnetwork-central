@@ -29,7 +29,6 @@ import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
-import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.domain.Response;
@@ -112,8 +111,15 @@ public class DatumController extends WebServiceControllerSupport {
 			return new Response<FilterResults<?>>(false, "unsupported.type", "Unsupported datum type",
 					null);
 		}
-		FilterResults<? extends EntityMatch> results = queryBiz.findFilteredDatum(datumClass, cmd,
-				cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
+		FilterResults<?> results;
+		if ( cmd.getAggregation() != null ) {
+			// return aggregated results
+			results = queryBiz.findFilteredAggregateDatum(datumClass, cmd, cmd.getSortDescriptors(),
+					cmd.getOffset(), cmd.getMax());
+		} else {
+			results = queryBiz.findFilteredDatum(datumClass, cmd, cmd.getSortDescriptors(),
+					cmd.getOffset(), cmd.getMax());
+		}
 		return new Response<FilterResults<?>>(results);
 	}
 

@@ -10,7 +10,7 @@ Import-Package:
  net.solarnetwork.central.domain;version="1.12",
  net.solarnetwork.central.datum.dao;version="1.4",
  net.solarnetwork.central.datum.domain;version="1.9",
- net.solarnetwork.central.query.biz;version="1.5",
+ net.solarnetwork.central.query.biz;version="1.6",
  net.solarnetwork.central.query.domain;version="1.1",
  org.aopalliance.aop;version="1.0.0",
  org.joda.time;version="[1.6,3.0)",
