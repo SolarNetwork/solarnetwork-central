@@ -29,12 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import net.solarnetwork.central.datum.dao.DayDatumDao;
-import net.solarnetwork.central.datum.domain.Aggregation;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.DayDatumMatch;
 import net.solarnetwork.central.datum.domain.LocationDatumFilter;
 import net.solarnetwork.central.datum.domain.SkyCondition;
+import net.solarnetwork.central.domain.Aggregation;
 import org.joda.time.LocalDate;
 import org.joda.time.ReadableDateTime;
 

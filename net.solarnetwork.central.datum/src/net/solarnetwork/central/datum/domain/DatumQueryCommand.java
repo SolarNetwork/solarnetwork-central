@@ -29,6 +29,7 @@ package net.solarnetwork.central.datum.domain;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.util.Cachable;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
@@ -37,9 +38,9 @@ import org.joda.time.DateTime;
  * Command object for specifying datum query criteria.
  * 
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.1
  */
-public class DatumQueryCommand implements Cachable {
+public class DatumQueryCommand implements Cachable, AggregateNodeDatumFilter {
 
 	private Long[] nodeIds;
 	private String[] sourceIds;
@@ -70,6 +71,27 @@ public class DatumQueryCommand implements Cachable {
 	@Override
 	public Long getTtl() {
 		return null;
+	}
+
+	@Override
+	public Map<String, ?> getFilter() {
+		Map<String, Object> filter = new LinkedHashMap<String, Object>();
+		if ( nodeIds != null ) {
+			filter.put("nodeIds", nodeIds);
+		}
+		if ( sourceIds != null ) {
+			filter.put("sourceIds", sourceIds);
+		}
+		if ( startDate != null ) {
+			filter.put("start", startDate);
+		}
+		if ( endDate != null ) {
+			filter.put("end", endDate);
+		}
+		if ( aggregate != null ) {
+			filter.put("aggregate", aggregate.toString());
+		}
+		return filter;
 	}
 
 	/**
@@ -116,6 +138,7 @@ public class DatumQueryCommand implements Cachable {
 	 * 
 	 * @return the first node ID
 	 */
+	@Override
 	public Long getNodeId() {
 		return this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0];
 	}
@@ -180,6 +203,7 @@ public class DatumQueryCommand implements Cachable {
 	 * 
 	 * @return the first node ID
 	 */
+	@Override
 	public String getSourceId() {
 		return this.sourceIds == null || this.sourceIds.length < 1 ? null : this.sourceIds[0];
 	}
@@ -225,10 +249,12 @@ public class DatumQueryCommand implements Cachable {
 		this.properties = properties;
 	}
 
+	@Override
 	public Long[] getNodeIds() {
 		return nodeIds;
 	}
 
+	@Override
 	public String[] getSourceIds() {
 		return sourceIds;
 	}
@@ -241,6 +267,7 @@ public class DatumQueryCommand implements Cachable {
 		this.nodeIds = nodeIds;
 	}
 
+	@Override
 	public DateTime getStartDate() {
 		return startDate;
 	}
@@ -249,6 +276,7 @@ public class DatumQueryCommand implements Cachable {
 		this.startDate = startDate;
 	}
 
+	@Override
 	public DateTime getEndDate() {
 		return endDate;
 	}
@@ -263,6 +291,11 @@ public class DatumQueryCommand implements Cachable {
 
 	public void setPrecision(Integer precision) {
 		this.precision = precision;
+	}
+
+	@Override
+	public Aggregation getAggregation() {
+		return aggregate;
 	}
 
 	public Aggregation getAggregate() {

@@ -278,6 +278,8 @@ public class DaoQueryBiz implements QueryBiz {
 		this.consumptionDatumDao = consumptionDatumDao;
 		daoMapping.put(consumptionDatumDao.getDatumType().asSubclass(NodeDatum.class),
 				consumptionDatumDao);
+		filterDaoMapping.put(consumptionDatumDao.getDatumType().asSubclass(Datum.class),
+				consumptionDatumDao);
 	}
 
 	@Autowired

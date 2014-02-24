@@ -26,90 +26,96 @@
 
 package net.solarnetwork.central.datum.dao.ibatis;
 
+import java.util.List;
 import java.util.Map;
-
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
+import net.solarnetwork.central.datum.domain.AggregateNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
+import net.solarnetwork.central.datum.domain.ConsumptionDatumMatch;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
+import net.solarnetwork.central.datum.domain.NodeDatumFilter;
+import net.solarnetwork.central.datum.domain.ReportingConsumptionDatum;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
 
 /**
  * iBATIS implementation of {@link ConsumptionDatumDao}.
- *
+ * 
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.1
  */
-public class IbatisConsumptionDatumDao extends IbatisDatumDaoSupport<ConsumptionDatum> 
-implements ConsumptionDatumDao {
+public class IbatisConsumptionDatumDao extends
+		IbatisFilterableDatumDatoSupport<ConsumptionDatum, ConsumptionDatumMatch, NodeDatumFilter>
+		implements ConsumptionDatumDao {
 
 	/**
-	 * The query name used in {@link #setupAggregatedDatumQuery(DatumQueryCommand, Map)}
-	 * for minute-precise results.
+	 * The query name used in
+	 * {@link #setupAggregatedDatumQuery(DatumQueryCommand, Map)} for
+	 * minute-precise results.
 	 */
-	public static final String QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_MINUTE 
-		= "find-ConsumptionDatum-for-agg-minute";
-	
-	/** 
-	 * The query name used in {@link #setupAggregatedDatumQuery(DatumQueryCommand, Map)}
-	 * for hour-precise results.
+	public static final String QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_MINUTE = "find-ConsumptionDatum-for-agg-minute";
+
+	/**
+	 * The query name used in
+	 * {@link #setupAggregatedDatumQuery(DatumQueryCommand, Map)} for
+	 * hour-precise results.
 	 */
-	public static final String QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_HOUR 
-		= "find-ConsumptionDatum-for-agg-hour";
-	
-	/** 
-	 * The query name used in {@link #setupAggregatedDatumQuery(DatumQueryCommand, Map)}
-	 * for day-precise results.
+	public static final String QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_HOUR = "find-ConsumptionDatum-for-agg-hour";
+
+	/**
+	 * The query name used in
+	 * {@link #setupAggregatedDatumQuery(DatumQueryCommand, Map)} for
+	 * day-precise results.
 	 */
-	public static final String QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_DAY 
-		= "find-ConsumptionDatum-for-agg-day";
-	
-	/** 
-	 * The query name used in {@link #setupAggregatedDatumQuery(DatumQueryCommand, Map)}
-	 * for week-precise results.
+	public static final String QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_DAY = "find-ConsumptionDatum-for-agg-day";
+
+	/**
+	 * The query name used in
+	 * {@link #setupAggregatedDatumQuery(DatumQueryCommand, Map)} for
+	 * week-precise results.
 	 */
-	public static final String QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_WEEK 
-		= "find-ConsumptionDatum-for-agg-week";
-	
-	/** 
-	 * The query name used in {@link #setupAggregatedDatumQuery(DatumQueryCommand, Map)}
-	 * for month-precise results.
+	public static final String QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_WEEK = "find-ConsumptionDatum-for-agg-week";
+
+	/**
+	 * The query name used in
+	 * {@link #setupAggregatedDatumQuery(DatumQueryCommand, Map)} for
+	 * month-precise results.
 	 */
-	public static final String QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_MONTH 
-		= "find-ConsumptionDatum-for-agg-month";
-	
+	public static final String QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_MONTH = "find-ConsumptionDatum-for-agg-month";
+
 	private static final long MS_PER_WEEK = 1000L * 60L * 60L * 24L * 7L;
 	private static final long MS_PER_8WEEKS = MS_PER_WEEK * 8L;
-	
+
 	/**
 	 * Default constructor.
 	 */
 	public IbatisConsumptionDatumDao() {
-		super(ConsumptionDatum.class);
+		super(ConsumptionDatum.class, ConsumptionDatumMatch.class);
 	}
 
 	@Override
-	protected String setupAggregatedDatumQuery(DatumQueryCommand criteria, 
-			Map<String, Object> params) {
+	protected String setupAggregatedDatumQuery(DatumQueryCommand criteria, Map<String, Object> params) {
 		long timeDiff = criteria.getEndDate().getMillis() - criteria.getStartDate().getMillis();
 		String queryName = QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_MINUTE;
 		if ( criteria.getAggregate() != null ) {
 			// if criteria specifies aggregate, use that
-			switch ( criteria.getAggregate() ) {
+			switch (criteria.getAggregate()) {
 				case Month:
 					queryName = QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_MONTH;
 					break;
-					
+
 				case Week:
 					queryName = QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_WEEK;
 					break;
-					
+
 				case Day:
 					queryName = QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_DAY;
 					break;
-					
+
 				case Hour:
 					queryName = QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_HOUR;
 					break;
-				
+
 				default:
 					// default back to MINUTE level
 			}
@@ -124,5 +130,13 @@ implements ConsumptionDatumDao {
 		}
 		return queryName;
 	}
-	
+
+	@Override
+	public FilterResults<ReportingConsumptionDatum> findAggregationFiltered(
+			AggregateNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

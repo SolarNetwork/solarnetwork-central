@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -34,12 +35,14 @@ import net.solarnetwork.central.support.MutableSortDescriptor;
 import org.joda.time.DateTime;
 
 /**
- * Basic implementation of {@link LocationDatumFilter}.
+ * Implementation of {@link LocationDatumFilter}, {@link NodeDatumFilter}, and
+ * {@link AggregateNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class DatumFilterCommand implements LocationDatumFilter {
+public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
+		AggregateNodeDatumFilter {
 
 	private final SolarLocation location;
 	private DateTime startDate;
@@ -48,6 +51,10 @@ public class DatumFilterCommand implements LocationDatumFilter {
 	private List<MutableSortDescriptor> sorts;
 	private Integer offset = 0;
 	private Integer max;
+
+	private Long[] nodeIds;
+	private String[] sourceIds;
+	private Aggregation aggregation;
 
 	/**
 	 * Default constructor.
@@ -86,6 +93,21 @@ public class DatumFilterCommand implements LocationDatumFilter {
 		}
 		if ( location != null ) {
 			filter.putAll(location.getFilter());
+		}
+		if ( nodeIds != null ) {
+			filter.put("nodeIds", nodeIds);
+		}
+		if ( sourceIds != null ) {
+			filter.put("sourceIds", sourceIds);
+		}
+		if ( startDate != null ) {
+			filter.put("start", startDate);
+		}
+		if ( endDate != null ) {
+			filter.put("end", endDate);
+		}
+		if ( aggregation != null ) {
+			filter.put("aggregation", aggregation.toString());
 		}
 		return filter;
 	}
@@ -163,6 +185,110 @@ public class DatumFilterCommand implements LocationDatumFilter {
 
 	public void setMax(Integer max) {
 		this.max = max;
+	}
+
+	/**
+	 * Set a single node ID.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single node ID at a
+	 * time. The node ID is still stored on the {@code nodeIds} array, just as
+	 * the first value. Calling this method replaces any existing
+	 * {@code nodeIds} value with a new array containing just the ID passed into
+	 * this method.
+	 * </p>
+	 * 
+	 * @param nodeId
+	 *        the ID of the node
+	 */
+	public void setNodeId(Long nodeId) {
+		this.nodeIds = new Long[] { nodeId };
+	}
+
+	/**
+	 * Get the first node ID.
+	 * 
+	 * <p>
+	 * This returns the first available node ID from the {@code nodeIds} array,
+	 * or <em>null</em> if not available.
+	 * </p>
+	 * 
+	 * @return the first node ID
+	 */
+	@Override
+	public Long getNodeId() {
+		return this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0];
+	}
+
+	/**
+	 * Set a single source ID.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single source ID at
+	 * a time. The source ID is still stored on the {@code sourceIds} array,
+	 * just as the first value. Calling this method replaces any existing
+	 * {@code sourceIds} value with a new array containing just the ID passed
+	 * into this method.
+	 * </p>
+	 * 
+	 * @param nodeId
+	 *        the ID of the node
+	 */
+	public void setSourceId(String sourceId) {
+		this.sourceIds = new String[] { sourceId };
+	}
+
+	/**
+	 * Get the first source ID.
+	 * 
+	 * <p>
+	 * This returns the first available source ID from the {@code sourceIds}
+	 * array, or <em>null</em> if not available.
+	 * </p>
+	 * 
+	 * @return the first node ID
+	 */
+	@Override
+	public String getSourceId() {
+		return this.sourceIds == null || this.sourceIds.length < 1 ? null : this.sourceIds[0];
+	}
+
+	@Override
+	public Long[] getNodeIds() {
+		return nodeIds;
+	}
+
+	public void setNodeIds(Long[] nodeIds) {
+		this.nodeIds = nodeIds;
+	}
+
+	@Override
+	public String[] getSourceIds() {
+		return sourceIds;
+	}
+
+	public void setSourceIds(String[] sourceIds) {
+		this.sourceIds = sourceIds;
+	}
+
+	@Override
+	public Aggregation getAggregation() {
+		return aggregation;
+	}
+
+	public void setAggregation(Aggregation aggregation) {
+		this.aggregation = aggregation;
+	}
+
+	/**
+	 * Calls {@link #setAggregation(Aggregation)} for backwards API
+	 * compatibility.
+	 * 
+	 * @param aggregate
+	 *        the aggregation to set
+	 */
+	public void setAggregate(Aggregation aggregate) {
+		setAggregation(aggregate);
 	}
 
 }

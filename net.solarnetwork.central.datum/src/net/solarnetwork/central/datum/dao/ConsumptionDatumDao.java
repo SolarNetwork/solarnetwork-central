@@ -26,16 +26,24 @@
 
 package net.solarnetwork.central.datum.dao;
 
+import net.solarnetwork.central.dao.AggregationFilterableDao;
+import net.solarnetwork.central.dao.FilterableDao;
+import net.solarnetwork.central.datum.domain.AggregateNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
+import net.solarnetwork.central.datum.domain.ConsumptionDatumMatch;
+import net.solarnetwork.central.datum.domain.NodeDatumFilter;
+import net.solarnetwork.central.datum.domain.ReportingConsumptionDatum;
 
 /**
  * DAO API for ConsumptionDatum data.
- *
+ * 
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.1
  */
-public interface ConsumptionDatumDao extends DatumDao<ConsumptionDatum> {
+public interface ConsumptionDatumDao extends DatumDao<ConsumptionDatum>,
+		AggregationFilterableDao<ReportingConsumptionDatum, AggregateNodeDatumFilter>,
+		FilterableDao<ConsumptionDatumMatch, Long, NodeDatumFilter> {
 
 	// nothing to add here
-	
+
 }

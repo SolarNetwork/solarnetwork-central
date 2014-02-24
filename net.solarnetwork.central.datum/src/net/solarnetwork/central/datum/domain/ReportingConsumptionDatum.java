@@ -26,39 +26,36 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import net.solarnetwork.central.domain.EntityMatch;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
 
 /**
- * Extension of {@link ConsumptionDatum} with some additional properties
- * geared towards reporting.
- *
+ * Extension of {@link ConsumptionDatum} with some additional properties geared
+ * towards reporting.
+ * 
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.1
  */
-public class ReportingConsumptionDatum extends ConsumptionDatum implements WattHourDatum, ReportingDatum {
+public class ReportingConsumptionDatum extends ConsumptionDatum implements WattHourDatum,
+		ReportingDatum, EntityMatch {
 
-	private static final long serialVersionUID = 4663373431471373770L;
+	private static final long serialVersionUID = -6376812878462350574L;
 
 	private Double wattHours;
 	private Double cost;
 	private String currency;
 	private LocalDateTime localDateTime;
-	
+
 	@Override
 	public String toString() {
-		return "ReportingConsumptionDatum{sourceId=" +getSourceId()
-		+",watts=" +getWatts()
-		+",wattHours=" +getWattHours()
-		+",cost=" +getCost()
-		+",currency=" +getCurrency()
-		+'}';
+		return "ReportingConsumptionDatum{sourceId=" + getSourceId() + ",watts=" + getWatts()
+				+ ",wattHours=" + getWattHours() + ",cost=" + getCost() + ",currency=" + getCurrency()
+				+ '}';
 	}
 
-	/* (non-Javadoc)
-	 * @see net.sf.solarnetwork.central.domain.ReportingDatum#getLocalDate()
-	 */
+	@Override
 	public LocalDate getLocalDate() {
 		if ( localDateTime == null ) {
 			return null;
@@ -66,63 +63,43 @@ public class ReportingConsumptionDatum extends ConsumptionDatum implements WattH
 		return localDateTime.toLocalDate();
 	}
 
-	/* (non-Javadoc)
-	 * @see net.sf.solarnetwork.central.domain.ReportingDatum#getLocalTime()
-	 */
+	@Override
 	public LocalTime getLocalTime() {
 		if ( localDateTime == null ) {
 			return null;
 		}
 		return localDateTime.toLocalTime();
 	}
-	
-	/**
-	 * @param localDateTime the localDateTime to set
-	 */
+
 	public void setLocalDateTime(LocalDateTime localDateTime) {
 		this.localDateTime = localDateTime;
 	}
 
-	/**
-	 * @return the wattHours
-	 */
+	@Override
 	public Double getWattHours() {
 		return wattHours;
 	}
-	
-	/**
-	 * @param wattHours the wattHours to set
-	 */
+
 	public void setWattHours(Double wattHours) {
 		this.wattHours = wattHours;
 	}
-	
-	/**
-	 * @return the cost
-	 */
+
+	@Override
 	public Double getCost() {
 		return cost;
 	}
-	
-	/**
-	 * @param cost the cost to set
-	 */
+
 	public void setCost(Double cost) {
 		this.cost = cost;
 	}
-	
-	/**
-	 * @return the currency
-	 */
+
+	@Override
 	public String getCurrency() {
 		return currency;
 	}
-	
-	/**
-	 * @param currency the currency to set
-	 */
+
 	public void setCurrency(String currency) {
 		this.currency = currency;
 	}
-	
+
 }

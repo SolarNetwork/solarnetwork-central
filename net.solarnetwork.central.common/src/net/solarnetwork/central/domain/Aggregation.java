@@ -22,7 +22,7 @@
  * ===================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.domain;
 
 /**
  * An aggregation level enumeration.

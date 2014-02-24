@@ -103,18 +103,18 @@ public class DatumController extends WebServiceControllerSupport {
 
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
-	public Response<FilterResults<? extends EntityMatch>> filterDatumData(final DatumFilterCommand cmd) {
+	public Response<FilterResults<?>> filterDatumData(final DatumFilterCommand cmd) {
 		final String datumType = (cmd == null || cmd.getType() == null ? null : cmd.getType()
 				.toLowerCase());
 		final Class<? extends Datum> datumClass = filterTypeMap.get(datumType);
 		if ( datumClass == null ) {
 			log.info("Datum type {} not found in {}", datumType, filterTypeMap);
-			return new Response<FilterResults<? extends EntityMatch>>(false, "unsupported.type",
-					"Unsupported datum type", null);
+			return new Response<FilterResults<?>>(false, "unsupported.type", "Unsupported datum type",
+					null);
 		}
 		FilterResults<? extends EntityMatch> results = queryBiz.findFilteredDatum(datumClass, cmd,
 				cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
-		return new Response<FilterResults<? extends EntityMatch>>(results);
+		return new Response<FilterResults<?>>(results);
 	}
 
 	@ResponseBody

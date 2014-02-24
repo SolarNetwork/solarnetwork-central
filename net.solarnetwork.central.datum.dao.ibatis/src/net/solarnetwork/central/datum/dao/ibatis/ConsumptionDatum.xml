@@ -321,5 +321,54 @@
 			AND created_day &lt;= #end#::date
 		</isPropertyAvailable>
 	</select>
+	
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="ConsumptionDatumMatchResult" class="ConsumptionDatumMatch" extends="ConsumptionDatum.ConsumptionDatumFullResult"/>
+
+	<sql id="fragment-findall-ConsumptionDatum-ConsumptionDatumMatch">
+		FROM
+			solarnet.sn_consum_datum cdatum
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="filter.sourceIds">
+					cdatum.source_id IN
+					<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+			</isNotEmpty>
+			<isNotNull prepend="AND" property="filter.nodeIds">
+					cdatum.node_id IN
+					<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.startDate">
+				cdatum.created &gt;= #filter.startDate#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.endDate">
+				cdatum.created &lt; #filter.endDate#
+			</isNotNull>
+		</dynamic>
+	</sql>
+
+	<select id="findall-ConsumptionDatum-ConsumptionDatumMatch" resultMap="ConsumptionDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-ConsumptionDatum-full-result"/>
+		<include refid="fragment-findall-ConsumptionDatum-ConsumptionDatumMatch"/>
+		ORDER BY
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction="," close=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">cdatum.created</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">cdatum.node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">cdatum.source_id</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		cdatum.id
+	</select>
+
+	<select id="findall-ConsumptionDatum-ConsumptionDatumMatch-count" resultClass="long">
+		SELECT count(cdatum.id)
+		<include refid="fragment-findall-ConsumptionDatum-ConsumptionDatumMatch"/>
+	</select>
+
 
 </sqlMap>
