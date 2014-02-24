@@ -32,7 +32,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
 /**
  * API for DAOs that support filtered queries.
  * 
- * @param <T>
+ * @param <M>
  *        the domain object type
  * @param <PK>
  *        the primary key type
