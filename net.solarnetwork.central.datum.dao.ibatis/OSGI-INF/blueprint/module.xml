@@ -12,13 +12,13 @@
 		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
 		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
 		http://www.springframework.org/schema/beans
-		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 		http://www.springframework.org/schema/context
-		http://www.springframework.org/schema/context/spring-context-3.0.xsd
+		http://www.springframework.org/schema/context/spring-context-3.1.xsd
 		http://www.springframework.org/schema/tx
-		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+		http://www.springframework.org/schema/tx/spring-tx-3.1.xsd
 		http://www.springframework.org/schema/util
-		http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+		http://www.springframework.org/schema/util/spring-util-3.1.xsd">
 
 	<!-- Service References -->
 	
@@ -59,30 +59,40 @@
 		<beans:entry key="fog" value="Fog"/>
 		<beans:entry key="snow" value="Snow"/>
 	</util:map>
+
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basenames" value="net.solarnetwork.central.datum.dao.ibatis.messages"/>
+	</bean>
 	
 	<bean id="consumptionDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisConsumptionDatumDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
+		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
 	<bean id="dayDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisDayDatumDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
 		<property name="conditionMap" ref="skyConditionMap"/>
+		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
 	<bean id="hardwareControlDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisHardwareControlDatumDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
+		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
 	<bean id="priceDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisPriceDatumDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
+		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
 	<bean id="powerDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisPowerDatumDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
+		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
 	<bean id="weatherDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisWeatherDatumDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
+		<property name="messageSource" ref="messageSource"/>
 		<property name="conditionMap" ref="skyConditionMap"/>
 	</bean>
 	

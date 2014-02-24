@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.Identity;
@@ -36,10 +37,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.context.MessageSource;
 import org.springframework.orm.ibatis.SqlMapClientTemplate;
 import org.springframework.orm.ibatis.support.SqlMapClientDaoSupport;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.Errors;
+import com.ibatis.sqlmap.client.SqlMapException;
 
 /**
  * Base implementation of {@link GenericDao} using iBATIS via Spring's
@@ -131,10 +135,13 @@ import org.springframework.transaction.annotation.Transactional;
  * </dl>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class IbatisBaseGenericDaoSupport<T extends Entity<PK>, PK extends Serializable> extends
 		SqlMapClientDaoSupport implements GenericDao<T, PK> {
+
+	/** Error code to report that a named query was not found. */
+	public static final int ERROR_CODE_INVALID_QUERY = 1101;
 
 	/** The query name used for {@link #get(Long)}. */
 	public static final String QUERY_FOR_ID = "get-%s-for-id";
@@ -194,6 +201,8 @@ public abstract class IbatisBaseGenericDaoSupport<T extends Entity<PK>, PK exten
 	private String childInsert;
 	private String childUpdate;
 	private String childDelete;
+
+	private MessageSource messageSource;
 
 	/**
 	 * Constructor.
@@ -610,6 +619,50 @@ public abstract class IbatisBaseGenericDaoSupport<T extends Entity<PK>, PK exten
 	}
 
 	/**
+	 * Execute a task with a {@link SqlTemplateCallback}, providing standardized
+	 * error message handling. This method will catch {@link SqlMapException}
+	 * exceptions and attempt to map those to message codes. If the exception
+	 * can be mapped, a new {@link ValidationException} will be thrown instead.
+	 * 
+	 * @param callback
+	 *        the callback
+	 * @param errorObject
+	 *        the root validation error object
+	 * @return the result of
+	 *         {@link SqlTemplateCallback#doWithSqlTemplate(SqlMapClientTemplate)}
+	 * @see #mapSqlMapException(SqlMapException, Object)
+	 */
+	protected <R> R execute(final SqlTemplateCallback<R> callback, final Object errorObject) {
+		try {
+			return callback.doWithSqlTemplate(getSqlMapClientTemplate());
+		} catch ( SqlMapException e ) {
+			throw mapSqlMapException(e, errorObject);
+		}
+	}
+
+	/**
+	 * Attempt to map a {@link SqlMapException} to some friendlier exception.
+	 * 
+	 * @param e
+	 *        the original exception
+	 * @param errorObject
+	 *        a validation error object
+	 * @return an exception, never <em>null</em> and might be the exception
+	 *         instance passed in
+	 */
+	protected RuntimeException mapSqlMapException(final SqlMapException e, final Object errorObject) {
+		RuntimeException result = e;
+		Errors errors = new org.springframework.validation.BindException(errorObject, "filter");
+		if ( e.getMessage().contains("no statement named") ) {
+			errors.reject("error.unknown.query", "Unknown query");
+		}
+		if ( errors.hasErrors() ) {
+			result = new ValidationException(errors, getMessageSource(), e);
+		}
+		return result;
+	}
+
+	/**
 	 * Get a "domain" for member queries.
 	 * 
 	 * <p>
@@ -732,4 +785,13 @@ public abstract class IbatisBaseGenericDaoSupport<T extends Entity<PK>, PK exten
 	public void setChildDelete(String childDelete) {
 		this.childDelete = childDelete;
 	}
+
+	public MessageSource getMessageSource() {
+		return messageSource;
+	}
+
+	public void setMessageSource(MessageSource messageSource) {
+		this.messageSource = messageSource;
+	}
+
 }

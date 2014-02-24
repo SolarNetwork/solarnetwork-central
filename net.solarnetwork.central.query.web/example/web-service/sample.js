@@ -252,6 +252,9 @@ $(document).ready(function() {
 		SNAPI.requestJSON(params.host +params.path, params.method, params.data).done(function (data) {
 			showResult(JSON.stringify(data, null, 2));
 		}).fail(function(xhr, status, reason) {
+			if ( xhr.responseText ) {
+				showResult(JSON.stringify(JSON.parse(xhr.responseText), null, 2));
+			}
 			alert(reason + ': ' +status +' (' +xhr.status +')');
 		});
 	});

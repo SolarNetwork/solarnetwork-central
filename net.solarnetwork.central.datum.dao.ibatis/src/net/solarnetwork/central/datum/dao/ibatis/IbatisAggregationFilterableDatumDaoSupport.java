@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.AggregationFilterableDao;
+import net.solarnetwork.central.dao.ibatis.SqlTemplateCallback;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
@@ -34,6 +35,7 @@ import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
+import org.springframework.orm.ibatis.SqlMapClientTemplate;
 
 /**
  * Base class for filterable and aggregation-filterable DAOs.
@@ -83,11 +85,11 @@ public abstract class IbatisAggregationFilterableDatumDaoSupport<T extends Datum
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FilterResults<AM> findAggregationFiltered(AF filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+	public FilterResults<AM> findAggregationFiltered(final AF filter,
+			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max) {
 		final String filterDomain = getMemberDomainKey(aggregationFilterResultClass);
 		final String query = getAggregationFilteredQuery(filterDomain, filter);
-		Map<String, Object> sqlProps = new HashMap<String, Object>(1);
+		final Map<String, Object> sqlProps = new HashMap<String, Object>(1);
 		sqlProps.put(FILTER_PROPERTY, filter);
 		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
 			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
@@ -98,19 +100,32 @@ public abstract class IbatisAggregationFilterableDatumDaoSupport<T extends Datum
 		Long totalCount = null;
 		if ( max != null && max.intValue() != -1 ) {
 			final String countQuery = query + "-count";
-			Number n = null;
-			n = (Number) getSqlMapClientTemplate().queryForObject(countQuery, sqlProps, Number.class);
+			Number n = execute(new SqlTemplateCallback<Number>() {
+
+				@Override
+				public Number doWithSqlTemplate(SqlMapClientTemplate template) {
+					return (Number) getSqlMapClientTemplate().queryForObject(countQuery, sqlProps,
+							Number.class);
+				}
+			}, filter);
 			if ( n != null ) {
 				totalCount = n.longValue();
 			}
 		}
 
-		List<AM> rows = null;
-		if ( offset != null && offset >= 0 && max != null && max > 0 ) {
-			rows = getSqlMapClientTemplate().queryForList(query, sqlProps, offset, max);
-		} else {
-			rows = getSqlMapClientTemplate().queryForList(query, sqlProps);
-		}
+		List<AM> rows = execute(new SqlTemplateCallback<List<AM>>() {
+
+			@Override
+			public List<AM> doWithSqlTemplate(SqlMapClientTemplate template) {
+				List<AM> rows = null;
+				if ( offset != null && offset >= 0 && max != null && max > 0 ) {
+					rows = getSqlMapClientTemplate().queryForList(query, sqlProps, offset, max);
+				} else {
+					rows = getSqlMapClientTemplate().queryForList(query, sqlProps);
+				}
+				return rows;
+			}
+		}, filter);
 
 		rows = postProcessAggregationFilterQuery(filter, rows);
 

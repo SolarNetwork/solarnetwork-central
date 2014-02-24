@@ -104,22 +104,22 @@ public abstract class WebServiceControllerSupport {
 	@ExceptionHandler(BindException.class)
 	@ResponseBody
 	public Response<?> handleBindException(BindException e, HttpServletResponse response, Locale locale) {
-		log.error("BindException in {} controller", getClass().getSimpleName(), e);
+		log.debug("BindException in {} controller", getClass().getSimpleName(), e);
 		response.setStatus(422);
-		String msg = generateErrorsMessage(e, locale);
+		String msg = generateErrorsMessage(e, locale, messageSource);
 		return new Response<Object>(Boolean.FALSE, null, msg, null);
 	}
 
-	private String generateErrorsMessage(Errors e, Locale locale) {
-		String msg = (messageSource == null ? "Validation error" : messageSource.getMessage(
-				"error.validation", null, "Validation error", locale));
-		if ( messageSource != null && e.hasErrors() ) {
+	private String generateErrorsMessage(Errors e, Locale locale, MessageSource msgSrc) {
+		String msg = (msgSrc == null ? "Validation error" : msgSrc.getMessage("error.validation", null,
+				"Validation error", locale));
+		if ( msgSrc != null && e.hasErrors() ) {
 			StringBuilder buf = new StringBuilder();
 			for ( ObjectError error : e.getAllErrors() ) {
 				if ( buf.length() > 0 ) {
 					buf.append(" ");
 				}
-				buf.append(messageSource.getMessage(error, locale));
+				buf.append(msgSrc.getMessage(error, locale));
 			}
 			msg = buf.toString();
 		}
@@ -139,9 +139,10 @@ public abstract class WebServiceControllerSupport {
 	@ResponseBody
 	public Response<?> handleValidationException(ValidationException e, HttpServletResponse response,
 			Locale locale) {
-		log.error("ValidationException in {} controller", getClass().getSimpleName(), e);
+		log.debug("ValidationException in {} controller", getClass().getSimpleName(), e);
 		response.setStatus(422);
-		String msg = generateErrorsMessage(e.getErrors(), locale);
+		String msg = generateErrorsMessage(e.getErrors(), locale,
+				e.getMessageSource() != null ? e.getMessageSource() : messageSource);
 		return new Response<Object>(Boolean.FALSE, null, msg, null);
 	}
 
