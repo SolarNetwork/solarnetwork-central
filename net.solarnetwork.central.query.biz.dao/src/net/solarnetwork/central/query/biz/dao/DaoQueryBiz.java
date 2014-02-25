@@ -238,7 +238,8 @@ public class DaoQueryBiz implements QueryBiz {
 			throw new IllegalArgumentException("Datum type "
 					+ (datumClass == null ? "(null)" : datumClass.getSimpleName()) + " not supported");
 		}
-		return dao.findAggregationFiltered(filter, sortDescriptors, offset, max);
+		return dao.findAggregationFiltered(filter, sortDescriptors, limitFilterOffset(offset),
+				limitFilterMaximum(max));
 	}
 
 	@Override
