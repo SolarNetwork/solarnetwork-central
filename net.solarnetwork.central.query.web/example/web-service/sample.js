@@ -133,17 +133,51 @@ SNAPI.authURLPath = function(url, data) {
  * @param {String} method the HTTP method to use; e.g. GET or POST
  * @param {String} data the HTTP data to send, e.g. for POST
  * @param {String} contentType the HTTP content type; defaults to 
-                               <code>application/x-www-form-urlencoded; charset=UTF-8</code>
+ *                             <code>application/x-www-form-urlencoded; charset=UTF-8</code>
  * @return {Object} jQuery AJAX object
  */
 SNAPI.requestJSON = function(url, method, data, contentType) {
+	return SNAPI.request(url, 'json', method, data, contentType);
+};
+
+/**
+ * Invoke the web service URL, adding the required SolarNetworkWS authorization
+ * headers to the request.
+ * 
+ * <p>This method will construct the <code>X-SN-Date</code> and <code>Authorization</code>
+ * header values needed to invoke the web service. It returns a jQuery AJAX object,
+ * so you can call <code>.done()</code> or <code>.fail()</code> on that to handle
+ * the response.</p> 
+ * 
+ * @param {String} url the web service URL to invoke
+ * @param {String} dataType one of 'json', 'xml', or 'csv'
+ * @param {String} method the HTTP method to use; e.g. GET or POST
+ * @param {String} data the HTTP data to send, e.g. for POST
+ * @param {String} contentType the HTTP content type; defaults to 
+ *                             <code>application/x-www-form-urlencoded; charset=UTF-8</code>
+ * @return {Object} jQuery AJAX object
+ */
+SNAPI.request  = function(url, dataType, method, data, contentType) {
 	method = (method === undefined ? 'GET' : method.toUpperCase());
 	var cType = (method === 'POST' && contentType === undefined 
 			? 'application/x-www-form-urlencoded; charset=UTF-8' : contentType);
+	var accepts;
+	var dType;
+	if ( dataType === 'csv' ) {
+		accepts = {text: 'text/csv'};
+		dType = 'text';
+	} else if ( dataType === 'xml' ) {
+		accepts = {text: 'text/xml'};
+		dType = 'text';
+	} else {
+		accepts = {json: 'application/json'};
+		dType = 'json';
+	}
 	var ajax = $.ajax({
 		type: method,
 		url: url,
-		dataType: 'json',
+		accepts: accepts,
+		dataType: dType,
 		data: data,
 		contentType: cType,
 		beforeSend: function(xhr) {
@@ -225,12 +259,56 @@ $(document).ready(function() {
 		var form = this.form;
 		form.elements['path'].value = this.value;
 	});
+	
+	var formatXml = function(xml) {
+		var formatted = '';
+		var reg = /(>)(<)(\/*)/g;
+		xml = xml.replace(reg, '$1\r\n$2$3');
+		var pad = 0;
+		jQuery.each(xml.split('\r\n'), function(index, node) {
+			var indent = 0;
+			if (node.match( /.+<\/\w[^>]*>$/ )) {
+				indent = 0;
+			} else if (node.match( /^<\/\w/ )) {
+				if (pad != 0) {
+					pad -= 1;
+				}
+			} else if (node.match( /^<\w[^>]*[^\/]>.*$/ )) {
+				indent = 1;
+			} else {
+				indent = 0;
+			}
+
+			var padding = '';
+			for (var i = 0; i < pad; i++) {
+				padding += '  ';
+			}
+
+			formatted += padding + node + '\r\n';
+			pad += indent;
+		});
+
+		return formatted;
+	};
+	
+	var textForDisplay = function(xhr, output) {
+		if ( xhr.responseXML !== undefined ) {
+			return $('<div/>').text(formatXml(xhr.responseText)).html();
+		} else if ( xhr.responseText ) {
+			if ( output === 'json' ) {
+				return JSON.stringify(JSON.parse(xhr.responseText), null, 2);
+			}
+			return xhr.responseText;
+		}
+		return '';
+	};
 
 	$('#generic-path').submit(function(event) {
 		event.preventDefault();
 		var form = this;
 		var params = getCredentials();
 		params.method = $(form).find('input[name=method]:checked').val();
+		params.output = $(form).find('input[name=output]:checked').val();
 		params.path = form.elements['path'].value;
 		if ( params.method == 'POST' ) {
 			// move any parameters into post body
@@ -249,12 +327,10 @@ $(document).ready(function() {
 		showAuthSupport(params);
 		
 		// make HTTP request and show the results
-		SNAPI.requestJSON(params.host +params.path, params.method, params.data).done(function (data) {
-			showResult(JSON.stringify(data, null, 2));
+		SNAPI.request(params.host +params.path, params.output, params.method, params.data).done(function (data, status, xhr) {
+			showResult(textForDisplay(xhr, params.output));
 		}).fail(function(xhr, status, reason) {
-			if ( xhr.responseText ) {
-				showResult(JSON.stringify(JSON.parse(xhr.responseText), null, 2));
-			}
+			showResult(textForDisplay(xhr, params.output));
 			alert(reason + ': ' +status +' (' +xhr.status +')');
 		});
 	});

@@ -12,6 +12,11 @@
 	<link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
 	<link rel="stylesheet" type="text/css" href="css/bootstrap-responsive.css" />
 	<link rel="stylesheet" type="text/css" href="css/prettify.css" />
+	<style type="text/css">
+		.control-label {
+			font-weight: bold;
+		}
+	</style>
 	<title>SolarQuery Web Service Sampler</title>
 </head>
 <body>
@@ -90,6 +95,20 @@
    						</label>
 					    <label class="radio inline">
    							<input type="radio" name="method" value="POST"> POST
+   						</label>
+					</div>
+				</div>
+				<div class="control-group">
+					<label class="control-label">Output</label>
+					<div class="controls">
+					    <label class="radio inline">
+   							<input type="radio" name="output" value="json" checked="checked"> JSON
+   						</label>
+					    <label class="radio inline">
+   							<input type="radio" name="output" value="csv"> CSV
+   						</label>
+					    <label class="radio inline">
+   							<input type="radio" name="output" value="xml"> XML
    						</label>
 					</div>
 				</div>
