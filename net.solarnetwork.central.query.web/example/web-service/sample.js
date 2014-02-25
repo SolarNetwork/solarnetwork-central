@@ -247,7 +247,10 @@ $(document).ready(function() {
 				
 		$('#auth-header').text('Authorization: SolarNetworkWS ' +authHeader);
 		$('#auth-message').text(SNAPI.generateAuthorizationMessage(submitParams));
-		$('#curl-command').text('curl -H \'X-SN-Date: '+params.date +'\' -H \'Authorization: SolarNetworkWS ' 
+		$('#curl-command').text('curl '
+				+'-H \'Accept: ' +(params.output === 'xml' ? 'text/xml' 
+						: params.output === 'csv' ? 'text/csv' : 'application/json') +'\' '
+				+'-H \'X-SN-Date: '+params.date +'\' -H \'Authorization: SolarNetworkWS ' 
 	   			+authHeader +'\' \'' +params.host +params.path +'\''
 	   			+(params.data !== undefined && params.method === 'POST' 
 	   				? ' -H \'Content-Type: ' + cType +'\' -d \'' +params.data +'\'' 
