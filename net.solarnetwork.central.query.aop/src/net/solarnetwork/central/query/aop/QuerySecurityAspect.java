@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.query.aop;
 
+import java.util.Map;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
+import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
@@ -43,10 +46,13 @@ import org.slf4j.LoggerFactory;
  * Security enforcing AOP aspect for {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 public class QuerySecurityAspect {
+
+	public static final String FILTER_KEY_NODE_ID = "nodeId";
+	public static final String FILTER_KEY_NODE_IDS = "nodeIds";
 
 	private final UserNodeDao userNodeDao;
 
@@ -79,6 +85,10 @@ public class QuerySecurityAspect {
 	public void nodeDatumQuery(DatumQueryCommand criteria) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.findFiltered*(..)) && args(*,filter,..)")
+	public void nodeDatumFilter(Filter filter) {
+	}
+
 	/**
 	 * Allow the current actor access to aggregated datum data.
 	 * 
@@ -92,6 +102,41 @@ public class QuerySecurityAspect {
 		for ( Long nodeId : criteria.getNodeIds() ) {
 			userNodeAccessCheck(nodeId);
 		}
+	}
+
+	@Before("nodeDatumFilter(filter)")
+	public void userNodeFilterAccessCheck(Filter filter) {
+		Long[] nodeIds = null;
+		if ( filter instanceof DatumFilterCommand ) {
+			nodeIds = ((DatumFilterCommand) filter).getNodeIds();
+		} else {
+			Map<String, ?> f = filter.getFilter();
+			if ( f.containsKey(FILTER_KEY_NODE_IDS) ) {
+				nodeIds = getLongArrayParameter(f, FILTER_KEY_NODE_IDS);
+			} else if ( f.containsKey(FILTER_KEY_NODE_ID) ) {
+				nodeIds = getLongArrayParameter(f, FILTER_KEY_NODE_ID);
+			}
+		}
+		if ( nodeIds == null || nodeIds.length < 1 ) {
+			log.warn("Access DENIED; no node ID provided");
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		}
+		for ( Long nodeId : nodeIds ) {
+			userNodeAccessCheck(nodeId);
+		}
+	}
+
+	private Long[] getLongArrayParameter(final Map<String, ?> map, final String key) {
+		Long[] result = null;
+		if ( map.containsKey(key) ) {
+			Object o = map.get(key);
+			if ( o instanceof Long[] ) {
+				result = (Long[]) o;
+			} else if ( o instanceof Long ) {
+				result = new Long[] { (Long) o };
+			}
+		}
+		return result;
 	}
 
 	/**
