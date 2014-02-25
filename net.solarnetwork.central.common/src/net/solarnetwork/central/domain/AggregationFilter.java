@@ -32,7 +32,7 @@ import org.joda.time.DateTime;
  * @author matt
  * @version 1.0
  */
-public interface AggregationFilter {
+public interface AggregationFilter extends Filter {
 
 	/**
 	 * Get an aggregation to apply to the query.
