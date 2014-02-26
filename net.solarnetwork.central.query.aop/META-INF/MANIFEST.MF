@@ -17,6 +17,7 @@ Import-Package:
  net.solarnetwork.central.user.biz;version="1.0.0",
  net.solarnetwork.central.user.dao;version="1.0.0",
  net.solarnetwork.central.user.domain;version="1.0.0",
+ net.solarnetwork.util;version="1.13.0",
  org.aopalliance.aop;version="1.0.0",
  org.aspectj.lang;version="[1.6.8, 2.0)",
  org.aspectj.lang.annotation;version="[1.6.8, 2.0)",

@@ -346,4 +346,9 @@ public class DatumQueryCommand implements Cachable, AggregateNodeDatumFilter {
 		this.datumType = datumType;
 	}
 
+	@Override
+	public String getType() {
+		return getDatumType();
+	}
+
 }

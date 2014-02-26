@@ -23,8 +23,10 @@
 package net.solarnetwork.central.query.aop;
 
 import java.util.Map;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import java.util.Set;
+import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
+import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -55,6 +57,7 @@ public class QuerySecurityAspect {
 	public static final String FILTER_KEY_NODE_IDS = "nodeIds";
 
 	private final UserNodeDao userNodeDao;
+	private Set<String> nodeIdNotRequiredSet;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -96,19 +99,23 @@ public class QuerySecurityAspect {
 	 */
 	@Before("nodeDatumQuery(criteria)")
 	public void userNodeDatumAccessCheck(DatumQueryCommand criteria) {
-		if ( criteria.getNodeIds() == null ) {
-			return;
-		}
-		for ( Long nodeId : criteria.getNodeIds() ) {
-			userNodeAccessCheck(nodeId);
-		}
+		userNodeAccessCheck(criteria);
 	}
 
 	@Before("nodeDatumFilter(filter)")
 	public void userNodeFilterAccessCheck(Filter filter) {
+		userNodeAccessCheck(filter);
+	}
+
+	private void userNodeAccessCheck(Filter filter) {
 		Long[] nodeIds = null;
-		if ( filter instanceof DatumFilterCommand ) {
-			nodeIds = ((DatumFilterCommand) filter).getNodeIds();
+		boolean nodeIdRequired = true;
+		if ( filter instanceof NodeDatumFilter ) {
+			NodeDatumFilter cmd = (NodeDatumFilter) filter;
+			nodeIdRequired = isNodeIdRequired(cmd);
+			if ( nodeIdRequired ) {
+				nodeIds = cmd.getNodeIds();
+			}
 		} else {
 			Map<String, ?> f = filter.getFilter();
 			if ( f.containsKey(FILTER_KEY_NODE_IDS) ) {
@@ -117,6 +124,9 @@ public class QuerySecurityAspect {
 				nodeIds = getLongArrayParameter(f, FILTER_KEY_NODE_ID);
 			}
 		}
+		if ( !nodeIdRequired ) {
+			return;
+		}
 		if ( nodeIds == null || nodeIds.length < 1 ) {
 			log.warn("Access DENIED; no node ID provided");
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
@@ -124,6 +134,20 @@ public class QuerySecurityAspect {
 		for ( Long nodeId : nodeIds ) {
 			userNodeAccessCheck(nodeId);
 		}
+	}
+
+	/**
+	 * Check if a node ID is required of a filter instance. This will return
+	 * <em>true</em> unless the {@link #getNodeIdNotRequiredSet()} set contains
+	 * the value returned by {@link DatumFilter#getType()}.
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @return <em>true</em> if a node ID is required for the given filter
+	 */
+	private boolean isNodeIdRequired(DatumFilter filter) {
+		final String type = (filter == null ? null : filter.getType().toLowerCase());
+		return (nodeIdNotRequiredSet == null || !nodeIdNotRequiredSet.contains(type));
 	}
 
 	private Long[] getLongArrayParameter(final Map<String, ?> map, final String key) {
@@ -212,6 +236,14 @@ public class QuerySecurityAspect {
 
 		log.warn("Access DENIED to node {} for actor {}", nodeId, actor);
 		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+	}
+
+	public Set<String> getNodeIdNotRequiredSet() {
+		return nodeIdNotRequiredSet;
+	}
+
+	public void setNodeIdNotRequiredSet(Set<String> nodeIdNotRequiredSet) {
+		this.nodeIdNotRequiredSet = nodeIdNotRequiredSet;
 	}
 
 }
