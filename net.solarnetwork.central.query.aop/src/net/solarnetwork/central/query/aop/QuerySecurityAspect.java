@@ -146,7 +146,8 @@ public class QuerySecurityAspect {
 	 * @return <em>true</em> if a node ID is required for the given filter
 	 */
 	private boolean isNodeIdRequired(DatumFilter filter) {
-		final String type = (filter == null ? null : filter.getType().toLowerCase());
+		final String type = (filter == null || filter.getType() == null ? null : filter.getType()
+				.toLowerCase());
 		return (nodeIdNotRequiredSet == null || !nodeIdNotRequiredSet.contains(type));
 	}
 
