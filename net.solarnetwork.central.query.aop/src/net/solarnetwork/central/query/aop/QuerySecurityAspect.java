@@ -117,6 +117,7 @@ public class QuerySecurityAspect {
 				nodeIds = cmd.getNodeIds();
 			}
 		} else {
+			nodeIdRequired = false;
 			Map<String, ?> f = filter.getFilter();
 			if ( f.containsKey(FILTER_KEY_NODE_IDS) ) {
 				nodeIds = getLongArrayParameter(f, FILTER_KEY_NODE_IDS);
