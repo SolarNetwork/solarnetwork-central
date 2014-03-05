@@ -31,6 +31,7 @@ import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
+import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUser;
@@ -185,8 +186,10 @@ public class QuerySecurityAspect {
 			return;
 		}
 
-		final SecurityActor actor = SecurityUtils.getCurrentActor();
-		if ( actor == null ) {
+		final SecurityActor actor;
+		try {
+			actor = SecurityUtils.getCurrentActor();
+		} catch ( SecurityException e ) {
 			log.warn("Access DENIED to node {} for non-authenticated user", nodeId);
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
 		}
