@@ -29,7 +29,7 @@ import net.solarnetwork.central.domain.BaseEntity;
  * A user domain object.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class User extends BaseEntity {
 
@@ -41,6 +41,27 @@ public class User extends BaseEntity {
 	private Boolean enabled;
 
 	private Set<String> roles;
+
+	/**
+	 * Default constructor.
+	 */
+	public User() {
+		super();
+	}
+
+	/**
+	 * Construct with values.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param email
+	 *        the email
+	 */
+	public User(Long userId, String email) {
+		super();
+		setId(userId);
+		setEmail(email);
+	}
 
 	@Override
 	public String toString() {
