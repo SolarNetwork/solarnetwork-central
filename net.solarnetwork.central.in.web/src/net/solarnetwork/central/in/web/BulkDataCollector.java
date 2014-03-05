@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.in.web;
@@ -71,7 +69,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
  * </p>
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 @Controller
 @RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" })
@@ -107,7 +105,7 @@ public class BulkDataCollector extends AbstractDataCollector {
 	}
 
 	/**
-	 * Post new generation data.
+	 * Post new data.
 	 * 
 	 * <p>
 	 * If {@code encoding} contains {@code gzip} the InputStream itself is
@@ -115,17 +113,17 @@ public class BulkDataCollector extends AbstractDataCollector {
 	 * InputStream is assumed to be regular text (not compressed).
 	 * </p>
 	 * 
-	 * @param datum
-	 *        the ConsumptionDatum to post
-	 * @param model
-	 *        the model
+	 * @param encoding
+	 *        an optional encoding value
+	 * @param in
+	 *        the request input stream
 	 * @return the result model
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
 	@RequestMapping(method = RequestMethod.POST)
-	public String postData(@RequestHeader("Content-Encoding") String encoding, InputStream in,
-			Model model) throws IOException {
+	public String postData(@RequestHeader(value = "Content-Encoding", required = false) String encoding,
+			InputStream in, Model model) throws IOException {
 		AuthenticatedNode authNode = getAuthenticatedNode(false);
 
 		InputStream input = in;
