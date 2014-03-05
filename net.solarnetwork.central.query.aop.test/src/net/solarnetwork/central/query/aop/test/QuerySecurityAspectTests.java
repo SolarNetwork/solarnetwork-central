@@ -28,11 +28,14 @@ import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.query.aop.QuerySecurityAspect;
 import net.solarnetwork.central.security.AuthenticatedNode;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import org.easymock.EasyMock;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
@@ -60,17 +63,23 @@ public class QuerySecurityAspectTests {
 	@After
 	public void teardown() {
 		EasyMock.verify(userNodeDao);
+		SecurityContextHolder.getContext().setAuthentication(null);
 	}
 
 	private void setUser(Authentication auth) {
 		SecurityContextHolder.getContext().setAuthentication(auth);
 	}
 
-	@Test
-	public void datumQueryPublicNodeAsAuthenticatedNode() {
-		AuthenticatedNode node = new AuthenticatedNode(-1L, null, false);
+	private AuthenticatedNode setAuthenticatedNode(final Long nodeId) {
+		AuthenticatedNode node = new AuthenticatedNode(nodeId, null, false);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(node, "foobar", "ROLE_NODE");
 		setUser(auth);
+		return node;
+	}
+
+	@Test
+	public void datumQueryPublicNodeAsAuthenticatedNode() {
+		AuthenticatedNode node = setAuthenticatedNode(-1L);
 		UserNode userNode = new UserNode(new User(), new SolarNode(node.getNodeId(), null));
 
 		EasyMock.expect(userNodeDao.get(node.getNodeId())).andReturn(userNode);
@@ -81,4 +90,86 @@ public class QuerySecurityAspectTests {
 		criteria.setNodeId(node.getNodeId());
 		service.userNodeDatumAccessCheck(criteria);
 	}
+
+	@Test
+	public void datumQueryPublicNodeAsAnonymous() {
+		UserNode userNode = new UserNode(new User(), new SolarNode(-1L, null));
+
+		EasyMock.expect(userNodeDao.get(userNode.getNode().getId())).andReturn(userNode);
+		EasyMock.replay(userNodeDao);
+
+		DatumQueryCommand criteria = new DatumQueryCommand();
+		criteria.setDatumType("Consumption");
+		criteria.setNodeId(userNode.getNode().getId());
+		service.userNodeDatumAccessCheck(criteria);
+	}
+
+	@Test
+	public void datumQueryPublicNodeAsSomeOtherNode() {
+		setAuthenticatedNode(-2L);
+		UserNode userNode = new UserNode(new User(), new SolarNode(-1L, null));
+
+		EasyMock.expect(userNodeDao.get(userNode.getNode().getId())).andReturn(userNode);
+		EasyMock.replay(userNodeDao);
+
+		DatumQueryCommand criteria = new DatumQueryCommand();
+		criteria.setDatumType("Consumption");
+		criteria.setNodeId(userNode.getNode().getId());
+		service.userNodeDatumAccessCheck(criteria);
+	}
+
+	@Test
+	public void datumQueryPrivateNodeAsAuthenticatedNode() {
+		AuthenticatedNode node = setAuthenticatedNode(-1L);
+		UserNode userNode = new UserNode(new User(), new SolarNode(node.getNodeId(), null));
+		userNode.setRequiresAuthorization(true);
+
+		EasyMock.expect(userNodeDao.get(node.getNodeId())).andReturn(userNode);
+		EasyMock.replay(userNodeDao);
+
+		DatumQueryCommand criteria = new DatumQueryCommand();
+		criteria.setDatumType("Consumption");
+		criteria.setNodeId(node.getNodeId());
+		service.userNodeDatumAccessCheck(criteria);
+	}
+
+	@Test
+	public void datumQueryPrivateNodeAsAnonymous() {
+		UserNode userNode = new UserNode(new User(), new SolarNode(-1L, null));
+		userNode.setRequiresAuthorization(true);
+
+		EasyMock.expect(userNodeDao.get(userNode.getNode().getId())).andReturn(userNode);
+		EasyMock.replay(userNodeDao);
+
+		DatumQueryCommand criteria = new DatumQueryCommand();
+		criteria.setDatumType("Consumption");
+		criteria.setNodeId(userNode.getNode().getId());
+		try {
+			service.userNodeDatumAccessCheck(criteria);
+			Assert.fail("Should have thrown SecurityException for anonymous user");
+		} catch ( AuthorizationException e ) {
+			Assert.assertEquals(Reason.ACCESS_DENIED, e.getReason());
+		}
+	}
+
+	@Test
+	public void datumQueryPrivateNodeAsSomeOtherNode() {
+		setAuthenticatedNode(-2L);
+		UserNode userNode = new UserNode(new User(), new SolarNode(-1L, null));
+		userNode.setRequiresAuthorization(true);
+
+		EasyMock.expect(userNodeDao.get(userNode.getNode().getId())).andReturn(userNode);
+		EasyMock.replay(userNodeDao);
+
+		DatumQueryCommand criteria = new DatumQueryCommand();
+		criteria.setDatumType("Consumption");
+		criteria.setNodeId(userNode.getNode().getId());
+		try {
+			service.userNodeDatumAccessCheck(criteria);
+			Assert.fail("Should have thrown SecurityException for anonymous user");
+		} catch ( AuthorizationException e ) {
+			Assert.assertEquals(Reason.ACCESS_DENIED, e.getReason());
+		}
+	}
+
 }
