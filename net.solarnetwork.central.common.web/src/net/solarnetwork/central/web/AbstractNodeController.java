@@ -20,30 +20,41 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ===================================================================
- * $Id: AbstractNodeController.java 369 2009-09-24 06:24:47Z msqr $
- * ===================================================================
  */
 
 package net.solarnetwork.central.web;
 
+import java.util.Locale;
 import java.util.TimeZone;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.util.CloningPropertyEditorRegistrar;
 import net.solarnetwork.util.JodaDateFormatEditor;
 import net.solarnetwork.web.support.WebUtils;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
  * Abstract base class to support node-related controllers.
  * 
  * @author matt
- * @version $Revision: 369 $ $Date: 2009-09-24 18:24:47 +1200 (Thu, 24 Sep 2009)
- *          $
+ * @version 1.1
  */
 public abstract class AbstractNodeController {
 
@@ -52,6 +63,12 @@ public abstract class AbstractNodeController {
 
 	/** The default value for the {@code requestDateFormat} property. */
 	public static final String DEFAULT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
+
+	/** A class-level logger. */
+	protected final Logger log = LoggerFactory.getLogger(getClass());
+
+	@Autowired
+	private MessageSource messageSource;
 
 	private SolarNodeDao solarNodeDao;
 	private String viewName;
@@ -158,6 +175,95 @@ public abstract class AbstractNodeController {
 	}
 
 	/**
+	 * Handle an {@link AuthorizationException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 */
+	@ExceptionHandler(AuthorizationException.class)
+	@ResponseBody
+	public Response<?> handleAuthorizationException(AuthorizationException e,
+			HttpServletResponse response) {
+		log.debug("AuthorizationException in {} controller: {}", getClass().getSimpleName(),
+				e.getMessage());
+		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+		return new Response<Object>(Boolean.FALSE, null, e.getReason().toString(), null);
+	}
+
+	/**
+	 * Handle an {@link RuntimeException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 */
+	@ExceptionHandler(RuntimeException.class)
+	@ResponseBody
+	public Response<?> handleRuntimeException(RuntimeException e, HttpServletResponse response) {
+		log.error("RuntimeException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
+	}
+
+	/**
+	 * Handle an {@link BindException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 */
+	@ExceptionHandler(BindException.class)
+	@ResponseBody
+	public Response<?> handleBindException(BindException e, HttpServletResponse response, Locale locale) {
+		log.debug("BindException in {} controller", getClass().getSimpleName(), e);
+		response.setStatus(422);
+		String msg = generateErrorsMessage(e, locale, messageSource);
+		return new Response<Object>(Boolean.FALSE, null, msg, null);
+	}
+
+	/**
+	 * Handle an {@link ValidationException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 */
+	@ExceptionHandler(ValidationException.class)
+	@ResponseBody
+	public Response<?> handleValidationException(ValidationException e, HttpServletResponse response,
+			Locale locale) {
+		log.debug("ValidationException in {} controller", getClass().getSimpleName(), e);
+		response.setStatus(422);
+		String msg = generateErrorsMessage(e.getErrors(), locale,
+				e.getMessageSource() != null ? e.getMessageSource() : messageSource);
+		return new Response<Object>(Boolean.FALSE, null, msg, null);
+	}
+
+	private String generateErrorsMessage(Errors e, Locale locale, MessageSource msgSrc) {
+		String msg = (msgSrc == null ? "Validation error" : msgSrc.getMessage("error.validation", null,
+				"Validation error", locale));
+		if ( msgSrc != null && e.hasErrors() ) {
+			StringBuilder buf = new StringBuilder();
+			for ( ObjectError error : e.getAllErrors() ) {
+				if ( buf.length() > 0 ) {
+					buf.append(" ");
+				}
+				buf.append(msgSrc.getMessage(error, locale));
+			}
+			msg = buf.toString();
+		}
+		return msg;
+	}
+
+	/**
 	 * Get the first request date format.
 	 * 
 	 * @return the requestDateFormat
@@ -179,49 +285,36 @@ public abstract class AbstractNodeController {
 		this.requestDateFormats = new String[] { requestDateFormat };
 	}
 
-	/**
-	 * @return the solarNodeDao
-	 */
 	public SolarNodeDao getSolarNodeDao() {
 		return solarNodeDao;
 	}
 
-	/**
-	 * @param solarNodeDao
-	 *        the solarNodeDao to set
-	 */
 	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
 		this.solarNodeDao = solarNodeDao;
 	}
 
-	/**
-	 * @return the viewName
-	 */
 	public String getViewName() {
 		return viewName;
 	}
 
-	/**
-	 * @param viewName
-	 *        the viewName to set
-	 */
 	public void setViewName(String viewName) {
 		this.viewName = viewName;
 	}
 
-	/**
-	 * @return the requestDateFormats
-	 */
 	public String[] getRequestDateFormats() {
 		return requestDateFormats;
 	}
 
-	/**
-	 * @param requestDateFormats
-	 *        the requestDateFormats to set
-	 */
 	public void setRequestDateFormats(String[] requestDateFormats) {
 		this.requestDateFormats = requestDateFormats;
+	}
+
+	public MessageSource getMessageSource() {
+		return messageSource;
+	}
+
+	public void setMessageSource(MessageSource messageSource) {
+		this.messageSource = messageSource;
 	}
 
 }
