@@ -25,6 +25,7 @@
 	<typeAlias alias="HardwareControlDatum" type="net.solarnetwork.central.datum.domain.HardwareControlDatum"/>
 	<typeAlias alias="PriceDatum" type="net.solarnetwork.central.datum.domain.PriceDatum"/>
 	<typeAlias alias="PowerDatum" type="net.solarnetwork.central.datum.domain.PowerDatum"/>
+	<typeAlias alias="PowerDatumMatch" type="net.solarnetwork.central.datum.domain.PowerDatumMatch"/>
 	<typeAlias alias="WeatherDatum" type="net.solarnetwork.central.datum.domain.WeatherDatum"/>
 	<typeAlias alias="WeatherDatumMatch" type="net.solarnetwork.central.datum.domain.WeatherDatumMatch"/>
 	

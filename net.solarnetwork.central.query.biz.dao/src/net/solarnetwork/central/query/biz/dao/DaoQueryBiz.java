@@ -284,6 +284,9 @@ public class DaoQueryBiz implements QueryBiz {
 	public void setPowerDatumDao(PowerDatumDao powerDatumDao) {
 		this.powerDatumDao = powerDatumDao;
 		daoMapping.put(powerDatumDao.getDatumType().asSubclass(NodeDatum.class), powerDatumDao);
+		filterDaoMapping.put(powerDatumDao.getDatumType().asSubclass(Datum.class), powerDatumDao);
+		aggregationFilterDaoMapping.put(powerDatumDao.getDatumType().asSubclass(Datum.class),
+				powerDatumDao);
 	}
 
 	@Autowired

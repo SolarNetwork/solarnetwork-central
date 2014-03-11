@@ -72,11 +72,14 @@
 							</optgroup>
 							<optgroup label="Raw Datum list">
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&startDate=2011-01-01&endDate=2011-01-02&type=Consumption&sorts[0].sortKey=created&sorts[1].sortKey=source&offset=0&max=50">Consumption, sorted by source, date</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&startDate=2011-01-01&endDate=2011-01-02&type=Power&sorts[0].sortKey=created&sorts[1].sortKey=source&offset=0&max=50">Power, sorted by source, date</option>
 								<option value="/solarquery/api/v1/sec/datum/list?locationId={locationId}&startDate=2010-01-01&endDate=2010-02-01&type=Weather&sorts[0].sortKey=created&offset=0&max=50">Weather, sorted by date</option>
 							</optgroup>
 							<optgroup label="Aggregation Datum list">
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Hour&startDate=2011-01-01&endDate=2011-01-02&type=Consumption&offset=0&max=50">Consumption, by hour</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Day&startDate=2011-01-01&endDate=2011-01-02&type=Consumption&offset=0&max=50">Consumption, by day</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Hour&startDate=2011-01-01&endDate=2011-01-02&type=Power&offset=0&max=50">Power, by hour</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Day&startDate=2011-01-01&endDate=2011-01-02&type=Power&offset=0&max=50">Power, by day</option>
 							</optgroup>
 							<optgroup label="Instructions">
 								<option value="/solaruser/api/v1/sec/instr/add?nodeId={nodeId}&topic=SetControlParameter&parameters%5B0%5D.name=/power/switch/1&parameters%5B0%5D.value=1">Set control parameter</option>

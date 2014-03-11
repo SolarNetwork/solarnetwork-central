@@ -414,4 +414,166 @@
 		</isPropertyAvailable>
 	</select>
 
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="PowerDatumMatchResult" class="PowerDatumMatch" extends="PowerDatum.PowerDatumFullResult"/>
+
+	<sql id="fragment-findall-PowerDatum-PowerDatumMatch">
+		FROM
+			solarnet.sn_power_datum pdatum
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="filter.sourceIds">
+				pdatum.source_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+			</isNotEmpty>
+			<isNotNull prepend="AND" property="filter.nodeIds">
+				pdatum.node_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.startDate">
+				pdatum.created &gt;= #filter.startDate#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.endDate">
+				pdatum.created &lt; #filter.endDate#
+			</isNotNull>
+		</dynamic>
+	</sql>
+
+	<select id="findall-PowerDatum-PowerDatumMatch" resultMap="PowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-PowerDatum-full-result"/>
+		<include refid="fragment-findall-PowerDatum-PowerDatumMatch"/>
+		ORDER BY
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction="," close=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">pdatum.created</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">pdatum.node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">pdatum.source_id</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		pdatum.id
+	</select>
+
+	<select id="findall-PowerDatum-PowerDatumMatch-count" resultClass="long">
+		SELECT count(pdatum.id)
+		<include refid="fragment-findall-PowerDatum-PowerDatumMatch"/>
+	</select>
+
+	<!-- 
+		AggregationFilterableDao support
+	-->
+	
+	<resultMap id="ReportingPowerDatumMatchResult" class="ReportingPowerDatum">
+		<result column="r_power_datum_created_date" property="localDateTime"/>
+		<result column="r_power_datum_node_id" property="nodeId"/>
+		<result column="r_power_datum_source_id" property="sourceId"/>
+		<result column="r_power_datum_watts" property="watts"/>
+		<result column="r_power_datum_watt_hours" property="wattHours"/>
+		<result column="r_power_datum_cost_amt" property="cost"/>
+		<result column="r_power_datum_cost_currency" property="currency"/>
+	</resultMap>
+
+	<!--  Note: r_power_datum_created_date is not provided by this base fragment, because that column name varies -->
+	<sql id="fragment-PowerDatum-aggregation-result">
+		rpdatum.node_id AS r_power_datum_node_id,
+		rpdatum.source_id AS r_power_datum_source_id,
+		rpdatum.watts AS r_power_datum_watts,
+		rpdatum.watt_hours AS r_power_datum_watt_hours,
+		rpdatum.cost_amt AS r_power_datum_cost_amt,
+		rpdatum.cost_currency AS r_power_datum_cost_currency
+	</sql>
+
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-Hour">
+		FROM
+			solarrep.rep_power_datum_hourly rpdatum
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="filter.sourceIds">
+				rpdatum.source_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+			</isNotEmpty>
+			<isNotNull prepend="AND" property="filter.nodeIds">
+				rpdatum.node_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.startDate">
+				rpdatum.created_hour &gt;= #filter.startDate#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.endDate">
+				rpdatum.created_hour &lt; #filter.endDate#
+			</isNotNull>
+		</dynamic>
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-Hour-count" resultClass="long">
+		SELECT count(rpdatum.created_hour)
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Hour"/>
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-Hour" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			rpdatum.created_hour AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-aggregation-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Hour"/>
+		ORDER BY
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">rpdatum.created_hour</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">rpdatum.node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">rpdatum.source_id</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		<isEmpty property="SortDescriptors">
+			rpdatum.created_hour, rpdatum.node_id, rpdatum.source_id
+		</isEmpty>
+	</select>
+
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-Day">
+		FROM
+			solarrep.rep_power_datum_daily rpdatum
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="filter.sourceIds">
+				rpdatum.source_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+			</isNotEmpty>
+			<isNotNull prepend="AND" property="filter.nodeIds">
+				rpdatum.node_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.startDate">
+				rpdatum.created_day &gt;= #filter.startDate#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.endDate">
+				rpdatum.created_day &lt; #filter.endDate#
+			</isNotNull>
+		</dynamic>
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-Day-count" resultClass="long">
+		SELECT count(rpdatum.created_day)
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Day"/>
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-Day" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			rpdatum.created_day AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-aggregation-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Day"/>
+		ORDER BY
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">rpdatum.created_day</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">rpdatum.node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">rpdatum.source_id</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		<isEmpty property="SortDescriptors">
+			rpdatum.created_day, rpdatum.node_id, rpdatum.source_id
+		</isEmpty>
+	</select>
+
 </sqlMap>

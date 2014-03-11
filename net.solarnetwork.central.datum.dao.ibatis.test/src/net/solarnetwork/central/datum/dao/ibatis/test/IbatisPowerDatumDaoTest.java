@@ -27,12 +27,17 @@ package net.solarnetwork.central.datum.dao.ibatis.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import net.solarnetwork.central.datum.dao.ibatis.IbatisPowerDatumDao;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.PowerDatum;
+import net.solarnetwork.central.datum.domain.PowerDatumMatch;
+import net.solarnetwork.central.domain.FilterResults;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.junit.Before;
@@ -225,4 +230,46 @@ public class IbatisPowerDatumDaoTest extends AbstractIbatisDaoTestSupport {
 		assertTrue("Source ID returned", sources.contains(lastDatum.getSourceId()));
 		assertTrue("Source ID returned", sources.contains(TEST_2ND_SOURCE));
 	}
+
+	@Test
+	public void getFilteredDefaultSort() {
+		storeNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+
+		FilterResults<PowerDatumMatch> results = dao.findFiltered(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals(1L, (long) results.getTotalResults());
+		assertEquals(1, (int) results.getReturnedResultCount());
+
+		PowerDatum datum2 = new PowerDatum();
+		datum2.setCreated(new DateTime().plusHours(1));
+		datum2.setNodeId(TEST_NODE_ID);
+		datum2.setSourceId(lastDatum.getSourceId());
+		datum2.setPvAmps(1.2F);
+		Long id2 = dao.store(datum2);
+
+		results = dao.findFiltered(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals(2L, (long) results.getTotalResults());
+		assertEquals(2, (int) results.getReturnedResultCount());
+
+		PowerDatum datum3 = new PowerDatum();
+		datum3.setNodeId(TEST_NODE_ID);
+		datum3.setSourceId("/test/source/2");
+		datum3.setPvAmps(1.3F);
+		Long id3 = dao.store(datum3);
+
+		results = dao.findFiltered(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals(3L, (long) results.getTotalResults());
+		assertEquals(3, (int) results.getReturnedResultCount());
+		List<Long> ids = new ArrayList<Long>();
+		for ( PowerDatum d : results ) {
+			ids.add(d.getId());
+		}
+		assertEquals("Result order", Arrays.asList(lastDatum.getId(), id2, id3), ids);
+	}
+
 }

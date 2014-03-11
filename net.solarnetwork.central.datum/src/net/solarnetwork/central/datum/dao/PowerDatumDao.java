@@ -20,22 +20,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ===================================================================
- * $Id$
- * ===================================================================
  */
 
 package net.solarnetwork.central.datum.dao;
 
+import net.solarnetwork.central.dao.AggregationFilterableDao;
+import net.solarnetwork.central.dao.FilterableDao;
+import net.solarnetwork.central.datum.domain.AggregateNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.datum.domain.PowerDatum;
+import net.solarnetwork.central.datum.domain.PowerDatumMatch;
+import net.solarnetwork.central.datum.domain.ReportingPowerDatum;
 
 /**
  * DAO API for PowerDatum data.
- *
+ * 
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.1
  */
-public interface PowerDatumDao extends DatumDao<PowerDatum> {
-	
+public interface PowerDatumDao extends DatumDao<PowerDatum>,
+		AggregationFilterableDao<ReportingPowerDatum, AggregateNodeDatumFilter>,
+		FilterableDao<PowerDatumMatch, Long, NodeDatumFilter> {
+
 	// nothing to add here
 
 }
