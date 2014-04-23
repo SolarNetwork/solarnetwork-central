@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.web.domain;
@@ -28,22 +26,19 @@ package net.solarnetwork.central.web.domain;
  * A simple service response envelope object.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @param <T>
- *        the objec type
+ *        the object type
+ * @deprecated use the net.solarnetwork.web.domain.Response class directly
  */
-public class Response<T> {
-
-	private final Boolean success;
-	private final String code;
-	private final String message;
-	private final T data;
+@Deprecated
+public class Response<T> extends net.solarnetwork.web.domain.Response<T> {
 
 	/**
 	 * Construct a successful response with no data.
 	 */
 	public Response() {
-		this(Boolean.TRUE, null, null, null);
+		super();
 	}
 
 	/**
@@ -53,7 +48,7 @@ public class Response<T> {
 	 *        the data
 	 */
 	public Response(T data) {
-		this(Boolean.TRUE, null, null, data);
+		super(data);
 	}
 
 	/**
@@ -69,11 +64,7 @@ public class Response<T> {
 	 *        optional data in the response
 	 */
 	public Response(Boolean success, String code, String message, T data) {
-		super();
-		this.success = success;
-		this.code = code;
-		this.message = message;
-		this.data = data;
+		super(success, code, message, data);
 	}
 
 	/**
@@ -91,22 +82,6 @@ public class Response<T> {
 	 */
 	public static <V> Response<V> response(V data) {
 		return new Response<V>(data);
-	}
-
-	public Boolean getSuccess() {
-		return success;
-	}
-
-	public String getCode() {
-		return code;
-	}
-
-	public String getMessage() {
-		return message;
-	}
-
-	public T getData() {
-		return data;
 	}
 
 }

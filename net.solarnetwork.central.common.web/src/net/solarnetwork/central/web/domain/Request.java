@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.web.domain;
@@ -30,31 +28,14 @@ import java.util.Map;
  * A request envelope object.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
+ * @deprecated use the net.solarnetwork.web.domain.Request class directly
  */
-public class Request {
-	
-	private final String username;
-	private final String password;
-	private final Map<String, Object> data;
-	
+@Deprecated
+public class Request extends net.solarnetwork.web.domain.Request {
+
 	public Request(String username, String password, Map<String, Object> data) {
-		super();
-		this.username = username;
-		this.password = password;
-		this.data = data;
+		super(username, password, data);
 	}
 
-	public String getUsername() {
-		return username;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public Map<String, Object> getData() {
-		return data;
-	}
-	
 }
