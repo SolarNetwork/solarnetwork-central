@@ -26,6 +26,8 @@ package net.solarnetwork.central.domain;
 
 /**
  * An aggregation level enumeration.
+ * 
+ * @version 1.2
  */
 public enum Aggregation {
 
@@ -35,11 +37,32 @@ public enum Aggregation {
 	/** Hour level aggregation. */
 	Hour(3600),
 
+	/** Aggregate by hour of the day, e.g. compare 12-1pm across multiple days. */
+	HourOfDay(3600),
+
+	/** Aggregate by hour of the day per season. */
+	SeasonalHourOfDay(3600),
+
 	/** Day level aggregation. */
 	Day(86400),
 
+	/**
+	 * Aggregate by day of the week, e.g. compare Mondays against Tuesdays
+	 * across multiple weeks.
+	 */
+	DayOfWeek(86400),
+
+	/** Aggregate by day of the week per season. */
+	SeasonalDayOfWeek(86400),
+
 	/** Week level aggregation. */
 	Week(604800),
+
+	/**
+	 * Aggregate by week of the year, e.g. compare Week 1's against Week 2's
+	 * across multiple years.
+	 */
+	WeekOfYear(604800),
 
 	/** Month level aggregation. */
 	Month(2419200);
