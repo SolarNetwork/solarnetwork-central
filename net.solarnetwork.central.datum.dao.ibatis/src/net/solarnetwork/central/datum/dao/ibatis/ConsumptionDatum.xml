@@ -394,6 +394,16 @@
 		rcdatum.cost_currency AS r_consum_datum_cost_currency
 	</sql>
 
+	<!--  Note: r_consum_datum_created_date is not provided by this base fragment, because that column name varies -->
+	<sql id="fragment-ConsumptionDatum-average-result">
+		rcdatum.node_id AS r_consum_datum_node_id,
+		rcdatum.source_id AS r_consum_datum_source_id,
+		AVG(rcdatum.watts) AS r_consum_datum_watts,
+		AVG(rcdatum.watt_hours) AS r_consum_datum_watt_hours,
+		AVG(rcdatum.cost_amt) AS r_consum_datum_cost_amt,
+		MIN(rcdatum.cost_currency) AS r_consum_datum_cost_currency
+	</sql>
+
 	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Hour">
 		FROM
 			solarrep.rep_consum_datum_hourly rcdatum
@@ -439,6 +449,58 @@
 		</isEmpty>
 	</select>
 
+	<!-- HourOfDay aggregation: grouped by hour. 
+		The "creation date" is returned as an offset from solarnet.get_season_monday_start().  -->
+		
+	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-HourOfDay">
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Hour"/>
+		GROUP BY EXTRACT(hour FROM rcdatum.created_hour), rcdatum.node_id, rcdatum.source_id
+	</sql>
+
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-HourOfDay-count" resultClass="long">
+		SELECT count(sub.h) FROM (SELECT EXTRACT(hour FROM rcdatum.created_hour) AS h
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-HourOfDay"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-HourOfDay" resultMap="ReportingConsumptionDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM rcdatum.created_hour), '00') || ':00' AS TIMESTAMP) AS r_consum_datum_created_date,
+			<include refid="fragment-ConsumptionDatum-average-result"/>
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-HourOfDay"/>
+		ORDER BY EXTRACT(hour FROM rcdatum.created_hour), rcdatum.node_id, rcdatum.source_id
+	</select>
+
+	<!-- SeasonalHourOfDay aggregation: grouped by "season" and by hour. 
+		The "creation date" is returned as an offset from midnight 2001-01-01.  -->
+		
+	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-SeasonalHourOfDay">
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Hour"/>
+		GROUP BY 
+			solarnet.get_season_monday_start(CAST(rcdatum.created_hour AS DATE)), 
+			EXTRACT(hour FROM rcdatum.created_hour), 
+			rcdatum.node_id, 
+			rcdatum.source_id
+	</sql>
+
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-SeasonalHourOfDay-count" resultClass="long">
+		SELECT count(sub.h) FROM (SELECT EXTRACT(hour FROM rcdatum.created_hour) AS h
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-SeasonalHourOfDay"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-SeasonalHourOfDay" resultMap="ReportingConsumptionDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			solarnet.get_season_monday_start(CAST(rcdatum.created_hour AS DATE)) + CAST(EXTRACT(hour FROM rcdatum.created_hour) || ' hour' AS INTERVAL) AS r_consum_datum_created_date,
+			<include refid="fragment-ConsumptionDatum-average-result"/>
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-SeasonalHourOfDay"/>
+		ORDER BY 
+			solarnet.get_season_monday_start(CAST(rcdatum.created_hour AS DATE)),
+			EXTRACT(hour FROM rcdatum.created_hour), 
+			rcdatum.node_id, 
+			rcdatum.source_id
+	</select>
+
 	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Day">
 		FROM
 			solarrep.rep_consum_datum_daily rcdatum
@@ -482,6 +544,58 @@
 		<isEmpty property="SortDescriptors">
 			rcdatum.created_day, rcdatum.node_id, rcdatum.source_id
 		</isEmpty>
+	</select>
+
+	<!-- DayOfWeek aggregation: grouped by ISODOW so Monday == 1, Sunday == 7. 
+		The "creation date" is returned as an offset from 2001-01-01 (a Monday).  -->
+		
+	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-DayOfWeek">
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Day"/>
+		GROUP BY EXTRACT(isodow FROM rcdatum.created_day), rcdatum.node_id, rcdatum.source_id
+	</sql>
+
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-DayOfWeek-count" resultClass="long">
+		SELECT count(sub.d) FROM (SELECT EXTRACT(isodow FROM rcdatum.created_day) AS d
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-DayOfWeek"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-DayOfWeek" resultMap="ReportingConsumptionDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			DATE '2001-01-01' + CAST((EXTRACT(isodow FROM rcdatum.created_day) - 1) || ' day' AS INTERVAL) AS r_consum_datum_created_date,
+			<include refid="fragment-ConsumptionDatum-average-result"/>
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-DayOfWeek"/>
+		ORDER BY EXTRACT(isodow FROM rcdatum.created_day), rcdatum.node_id, rcdatum.source_id
+	</select>
+
+	<!-- SeasonalDayOfWeek aggregation: grouped by "season" and ISODOW so Monday == 1, Sunday == 7. 
+		The "creation date" is returned as an offset from solarnet.get_season_monday_start().  -->
+		
+	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-SeasonalDayOfWeek">
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Day"/>
+		GROUP BY 
+			solarnet.get_season_monday_start(rcdatum.created_day), 
+			EXTRACT(isodow FROM rcdatum.created_day), 
+			rcdatum.node_id, 
+			rcdatum.source_id
+	</sql>
+
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-SeasonalDayOfWeek-count" resultClass="long">
+		SELECT count(sub.d) FROM (SELECT EXTRACT(isodow FROM rcdatum.created_day) AS d
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-SeasonalDayOfWeek"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-SeasonalDayOfWeek" resultMap="ReportingConsumptionDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			solarnet.get_season_monday_start(rcdatum.created_day) + CAST((EXTRACT(isodow FROM rcdatum.created_day) - 1) || ' day' AS INTERVAL) AS r_consum_datum_created_date,
+			<include refid="fragment-ConsumptionDatum-average-result"/>
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-SeasonalDayOfWeek"/>
+		ORDER BY 
+			solarnet.get_season_monday_start(rcdatum.created_day), 
+			EXTRACT(isodow FROM rcdatum.created_day), 
+			rcdatum.node_id, 
+			rcdatum.source_id
 	</select>
 
 </sqlMap>
