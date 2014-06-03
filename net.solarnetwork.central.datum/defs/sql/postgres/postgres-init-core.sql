@@ -325,6 +325,66 @@ $BODY$
 $BODY$
   LANGUAGE 'sql' STABLE;
 
+/**************************************************************************************************
+ * FUNCTION solarnet.get_season(date)
+ * 
+ * Assign a "season" number to a date. Seasons are defined as: 
+ * 
+ * Dec,Jan,Feb = 0
+ * Mar,Apr,May = 1
+ * Jun,Jul,Aug = 2
+ * Sep,Oct,Nov = 3
+ * 
+ * @param date the date to calcualte the season for
+ * @returns integer season constant
+ */
+CREATE OR REPLACE FUNCTION solarnet.get_season(date)
+RETURNS INTEGER AS
+$BODY$
+	SELECT
+	CASE EXTRACT(MONTH FROM $1) 
+		WHEN 12 THEN 0
+		WHEN 1 THEN 0
+		WHEN 2 THEN 0
+		WHEN 3 THEN 1
+		WHEN 4 THEN 1
+		WHEN 5 THEN 1
+		WHEN 6 THEN 2
+		WHEN 7 THEN 2
+		WHEN 8 THEN 2
+		WHEN 9 THEN 3
+		WHEN 10 THEN 3
+		WHEN 11 THEN 3
+	END AS season
+$BODY$
+  LANGUAGE 'sql' IMMUTABLE;
+
+
+/**************************************************************************************************
+ * FUNCTION solarnet.get_season_monday_start(date)
+ * 
+ * Returns a date representing the first Monday within the provide date's season, where season
+ * is defined by the solarnet.get_season(date) function. The actual returned date is meaningless 
+ * other than it will be a Monday and will be within the appropriate season.
+ * 
+ * @param date the date to calcualte the Monday season date for
+ * @returns date representing the first Monday within the season
+ * @see solarnet.get_season(date)
+ */
+CREATE OR REPLACE FUNCTION solarnet.get_season_monday_start(date)
+RETURNS DATE AS
+$BODY$
+	SELECT
+	CASE solarnet.get_season($1)
+		WHEN 0 THEN DATE '2000-12-04'
+		WHEN 1 THEN DATE '2001-03-05'
+		WHEN 2 THEN DATE '2001-06-04'
+		ELSE DATE '2001-09-03'
+  END AS season_monday
+$BODY$
+  LANGUAGE 'sql' IMMUTABLE;
+
+
 /* =========================================================================
    =========================================================================
    PRICE
