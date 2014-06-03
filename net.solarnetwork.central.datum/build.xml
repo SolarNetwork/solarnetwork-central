@@ -3,7 +3,6 @@
 	<property name="bundle.deps" value="true"/>
 	<dirset id="bundle.deps" dir="${basedir}/..">
 		<include name="net.solarnetwork.central.common"/>
-		<include name="net.solarnetwork.common"/>
 	</dirset>
 
 	<property name="dir.osgi.base" value="${basedir}/../../solarnetwork-build/solarnetwork-osgi-lib"/>	
