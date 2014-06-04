@@ -85,7 +85,7 @@ public class DaoQueryBiz implements QueryBiz {
 	private SolarNodeDao solarNodeDao;
 	private WeatherDatumDao weatherDatumDao;
 	private DayDatumDao dayDatumDao;
-	private int filteredResultsLimit = 250;
+	private int filteredResultsLimit = 1000;
 
 	private final Map<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>> daoMapping;
 	private final Map<Class<? extends Datum>, FilterableDao<? extends EntityMatch, Long, ? extends DatumFilter>> filterDaoMapping;
