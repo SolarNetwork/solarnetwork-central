@@ -83,7 +83,11 @@
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=DayOfWeek&startDate=2010-12-01&endDate=2011-12-01&type=Consumption">Consumption, by day of week</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=SeasonalDayOfWeek&startDate=2010-12-01&endDate=2011-12-01&type=Consumption">Consumption, seasonal by day of week</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Hour&startDate=2011-01-01&endDate=2011-01-02&type=Power&offset=0&max=50">Power, by hour</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=HourOfDay&startDate=2010-12-01&endDate=2011-12-01&type=Power">Power, by hour of day</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=SeasonalHourOfDay&startDate=2010-12-01&endDate=2011-12-01&type=Power">Power, seasonal by hour of day</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Day&startDate=2011-01-01&endDate=2011-01-02&type=Power&offset=0&max=50">Power, by day</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=DayOfWeek&startDate=2010-12-01&endDate=2011-12-01&type=Power">Power, by day of week</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=SeasonalDayOfWeek&startDate=2010-12-01&endDate=2011-12-01&type=Power">Power, seasonal by day of week</option>
 							</optgroup>
 							<optgroup label="Instructions">
 								<option value="/solaruser/api/v1/sec/instr/add?nodeId={nodeId}&topic=SetControlParameter&parameters%5B0%5D.name=/power/switch/1&parameters%5B0%5D.value=1">Set control parameter</option>

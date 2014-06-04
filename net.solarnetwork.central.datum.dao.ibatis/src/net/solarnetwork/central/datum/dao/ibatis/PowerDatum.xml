@@ -486,6 +486,16 @@
 		rpdatum.cost_currency AS r_power_datum_cost_currency
 	</sql>
 
+	<!--  Note: r_power_datum_created_date is not provided by this base fragment, because that column name varies -->
+	<sql id="fragment-PowerDatum-average-result">
+		rpdatum.node_id AS r_power_datum_node_id,
+		rpdatum.source_id AS r_power_datum_source_id,
+		AVG(rpdatum.watts) AS r_power_datum_watts,
+		AVG(rpdatum.watt_hours) AS r_power_datum_watt_hours,
+		AVG(rpdatum.cost_amt) AS r_power_datum_cost_amt,
+		MIN(rpdatum.cost_currency) AS r_power_datum_cost_currency
+	</sql>
+
 	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-Hour">
 		FROM
 			solarrep.rep_power_datum_hourly rpdatum
@@ -531,6 +541,58 @@
 		</isEmpty>
 	</select>
 
+	<!-- HourOfDay aggregation: grouped by hour. 
+		The "creation date" is returned as an offset from solarnet.get_season_monday_start().  -->
+		
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-HourOfDay">
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Hour"/>
+		GROUP BY EXTRACT(hour FROM rpdatum.created_hour), rpdatum.node_id, rpdatum.source_id
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-HourOfDay-count" resultClass="long">
+		SELECT count(sub.h) FROM (SELECT EXTRACT(hour FROM rpdatum.created_hour) AS h
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-HourOfDay"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-HourOfDay" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM rpdatum.created_hour), '00') || ':00' AS TIMESTAMP) AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-average-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-HourOfDay"/>
+		ORDER BY EXTRACT(hour FROM rpdatum.created_hour), rpdatum.node_id, rpdatum.source_id
+	</select>
+
+	<!-- SeasonalHourOfDay aggregation: grouped by "season" and by hour. 
+		The "creation date" is returned as an offset from midnight 2001-01-01.  -->
+		
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalHourOfDay">
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Hour"/>
+		GROUP BY 
+			solarnet.get_season_monday_start(CAST(rpdatum.created_hour AS DATE)), 
+			EXTRACT(hour FROM rpdatum.created_hour), 
+			rpdatum.node_id, 
+			rpdatum.source_id
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-SeasonalHourOfDay-count" resultClass="long">
+		SELECT count(sub.h) FROM (SELECT EXTRACT(hour FROM rpdatum.created_hour) AS h
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalHourOfDay"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-SeasonalHourOfDay" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			solarnet.get_season_monday_start(CAST(rpdatum.created_hour AS DATE)) + CAST(EXTRACT(hour FROM rpdatum.created_hour) || ' hour' AS INTERVAL) AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-average-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalHourOfDay"/>
+		ORDER BY 
+			solarnet.get_season_monday_start(CAST(rpdatum.created_hour AS DATE)),
+			EXTRACT(hour FROM rpdatum.created_hour), 
+			rpdatum.node_id, 
+			rpdatum.source_id
+	</select>
+
 	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-Day">
 		FROM
 			solarrep.rep_power_datum_daily rpdatum
@@ -574,6 +636,58 @@
 		<isEmpty property="SortDescriptors">
 			rpdatum.created_day, rpdatum.node_id, rpdatum.source_id
 		</isEmpty>
+	</select>
+
+	<!-- DayOfWeek aggregation: grouped by ISODOW so Monday == 1, Sunday == 7. 
+		The "creation date" is returned as an offset from 2001-01-01 (a Monday).  -->
+		
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-DayOfWeek">
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Day"/>
+		GROUP BY EXTRACT(isodow FROM rpdatum.created_day), rpdatum.node_id, rpdatum.source_id
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-DayOfWeek-count" resultClass="long">
+		SELECT count(sub.d) FROM (SELECT EXTRACT(isodow FROM rpdatum.created_day) AS d
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-DayOfWeek"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-DayOfWeek" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			DATE '2001-01-01' + CAST((EXTRACT(isodow FROM rpdatum.created_day) - 1) || ' day' AS INTERVAL) AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-average-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-DayOfWeek"/>
+		ORDER BY EXTRACT(isodow FROM rpdatum.created_day), rpdatum.node_id, rpdatum.source_id
+	</select>
+
+	<!-- SeasonalDayOfWeek aggregation: grouped by "season" and ISODOW so Monday == 1, Sunday == 7. 
+		The "creation date" is returned as an offset from solarnet.get_season_monday_start().  -->
+		
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalDayOfWeek">
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Day"/>
+		GROUP BY 
+			solarnet.get_season_monday_start(rpdatum.created_day), 
+			EXTRACT(isodow FROM rpdatum.created_day), 
+			rpdatum.node_id, 
+			rpdatum.source_id
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-SeasonalDayOfWeek-count" resultClass="long">
+		SELECT count(sub.d) FROM (SELECT EXTRACT(isodow FROM rpdatum.created_day) AS d
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalDayOfWeek"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-SeasonalDayOfWeek" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			solarnet.get_season_monday_start(rpdatum.created_day) + CAST((EXTRACT(isodow FROM rpdatum.created_day) - 1) || ' day' AS INTERVAL) AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-average-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalDayOfWeek"/>
+		ORDER BY 
+			solarnet.get_season_monday_start(rpdatum.created_day), 
+			EXTRACT(isodow FROM rpdatum.created_day), 
+			rpdatum.node_id, 
+			rpdatum.source_id
 	</select>
 
 </sqlMap>
