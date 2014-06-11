@@ -7,7 +7,9 @@
 /**************************************************************************************************
  * FUNCTION solarrep.populate_rep_stale_datum(timestamp with time zone, bigint, varchar)
  * 
- * Insert records into the rep_stale_datum table for asynchronously aggregating updated data later.
+ * Insert records into either the rep_stale_datum or rep_stale_node_datum table for asynchronously
+ * aggregating updated data later. Note that 'node_id' actually refers to any datum BIGINT key,
+ * such as a loc_id value.
  * 
  * @param ts the date of the changed data
  * @param node_id the node ID (or NULL if not node-specific)
@@ -101,6 +103,11 @@ CREATE TRIGGER populate_rep_stale_datum
  * For example, a datum_kind value of 'sn_power_datum' and agg_kind 'd' would result in a function
  * named 'populate_rep_power_datum_daily', which will be passed rows from the 
  * 'solarnet.sn_power_datum' table.
+ * 
+ * Also note that the 'node_id' column is actually also used to hold location ID values.
+ * Where appropriate, those values are mapped to 'loc_id' columns in the source datum table.
+ * For example, if the 'datum_kind' is 'sn_price_datum' then the rep_stale_node_datum.node_id
+ * column is assumed to contain sn_price_datum.loc_id values.
  * 
  * @return count of rows processed (i.e. 0 or 1)
  */

@@ -6,6 +6,12 @@ CREATE SCHEMA solarrep;
    =========================================================================
    ========================================================================= */
 
+/**************************************************************************************************
+ * TABLE solarrep.rep_stale_node_datum
+ * 
+ * A table to hold references to "stale" aggregate data that is associated with a particular
+ * BIGINT key such as a 'node_id' or 'loc_id' value.
+ */
 CREATE TABLE solarrep.rep_stale_node_datum (
 	ts			TIMESTAMP WITH TIME ZONE NOT NULL,
 	node_id 	BIGINT NOT NULL,
@@ -13,6 +19,9 @@ CREATE TABLE solarrep.rep_stale_node_datum (
 	datum_kind 	CHARACTER VARYING(64) NOT NULL,
 	PRIMARY KEY (ts, node_id, agg_kind, datum_kind)
 );
+COMMENT ON TABLE solarrep.rep_stale_node_datum IS 
+'The node_id column in this table is inappropriately named. Really it holds any datum table
+BIGINT key value, for example a loc_id value from sn_price_datum.';
 
 CREATE TABLE solarrep.rep_stale_datum (
 	ts			TIMESTAMP WITH TIME ZONE NOT NULL,
