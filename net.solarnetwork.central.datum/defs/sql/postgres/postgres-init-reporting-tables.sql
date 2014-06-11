@@ -10,7 +10,13 @@ CREATE SCHEMA solarrep;
  * TABLE solarrep.rep_stale_node_datum
  * 
  * A table to hold references to "stale" aggregate data that is associated with a particular
- * BIGINT key such as a 'node_id' or 'loc_id' value.
+ * BIGINT key such as a 'node_id' or 'loc_id' value. This table is populated by trigger functions
+ * on raw datum tables when rows are inserted, updated, or deleted, with the assumption that 
+ * inserting into this table should be quick. Later on some other process is expected to query 
+ * this table and perform some aggregate calculations based on the details of each row. The 
+ * results of the calculation are stored in some associated reporting table, and then the row
+ * in this table can be deleted. In essence the reporting table is like a materialized view
+ * of aggregate data on some raw source table.
  */
 CREATE TABLE solarrep.rep_stale_node_datum (
 	ts			TIMESTAMP WITH TIME ZONE NOT NULL,
