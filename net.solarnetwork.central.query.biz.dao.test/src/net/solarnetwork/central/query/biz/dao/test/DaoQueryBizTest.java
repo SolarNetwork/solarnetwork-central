@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.query.biz.dao.test;
@@ -28,14 +26,26 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Resource;
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
+import net.solarnetwork.central.datum.dao.HardwareControlDatumDao;
 import net.solarnetwork.central.datum.dao.PowerDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.HardwareControlDatum;
+import net.solarnetwork.central.datum.domain.HardwareControlDatumMatch;
 import net.solarnetwork.central.datum.domain.PowerDatum;
+import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
+import net.solarnetwork.central.support.SimpleSortDescriptor;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -47,7 +57,7 @@ import org.springframework.test.context.ContextConfiguration;
  * Unit test for the {@link DaoQueryBiz} class.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 @ContextConfiguration
 public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
@@ -63,6 +73,9 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 
 	@Autowired
 	private ConsumptionDatumDao consumptionDatumDao;
+
+	@Autowired
+	private HardwareControlDatumDao hardwareControlDatumDao;
 
 	@Before
 	public void setup() {
@@ -191,6 +204,9 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		c2.setSourceId(TEST_SOURCE_ID2);
 		consumptionDatumDao.store(c2);
 
+		// immediately process reporting data, which the DAO relies on
+		processReportingStaleData();
+
 		Set<String> result;
 
 		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, PowerDatum.class, null, null);
@@ -202,6 +218,51 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		assertNotNull(result);
 		assertEquals(1, result.size());
 		assertTrue(result.contains(TEST_SOURCE_ID2));
+	}
+
+	private HardwareControlDatum createHardwareControlDatum(Long nodeId, String sourceId,
+			Integer integerValue, Float floatValue) {
+		HardwareControlDatum datum = new HardwareControlDatum();
+		datum.setCreated(new DateTime());
+		datum.setIntegerValue(integerValue);
+		datum.setFloatValue(floatValue);
+		datum.setNodeId(nodeId);
+		datum.setSourceId(sourceId);
+		return datum;
+	}
+
+	@Test
+	public void testIterateHardwareControlDatum() {
+		List<Long> ids = new ArrayList<Long>(10);
+		// make sure created dates are different and ascending
+		final int numDatum = 10;
+		final long created = System.currentTimeMillis() - (1000 * numDatum);
+		for ( int i = 0; i < numDatum; i++ ) {
+			HardwareControlDatum d = createHardwareControlDatum(TEST_NODE_ID, TEST_SOURCE_ID,
+					(int) Math.round(Math.random() * 100), (float) (Math.random() * 10));
+			d.setCreated(new DateTime(created + (i * 1000)));
+			ids.add(hardwareControlDatumDao.store(d));
+		}
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		List<SortDescriptor> sorts = Collections
+				.singletonList((SortDescriptor) new SimpleSortDescriptor("created", true));
+		int offset = 0;
+		final int maxResults = 2;
+		while ( offset < 8 ) {
+			FilterResults<? extends EntityMatch> matches = daoQueryBiz.findFilteredDatum(
+					HardwareControlDatum.class, filter, sorts, offset, maxResults);
+			assertNotNull(matches);
+			assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
+			Iterator<? extends EntityMatch> itr = matches.getResults().iterator();
+			for ( int i = 0; i < maxResults; i++, offset++ ) {
+				EntityMatch match = itr.next();
+				assertEquals(HardwareControlDatumMatch.class, match.getClass());
+				assertEquals(created + ((numDatum - offset - 1) * 1000),
+						((HardwareControlDatumMatch) match).getCreated().getMillis());
+			}
+		}
+
 	}
 
 }

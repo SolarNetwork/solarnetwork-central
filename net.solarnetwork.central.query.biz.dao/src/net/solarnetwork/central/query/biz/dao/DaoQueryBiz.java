@@ -76,7 +76,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -283,39 +283,35 @@ public class DaoQueryBiz implements QueryBiz {
 	@Autowired
 	public void setPowerDatumDao(PowerDatumDao powerDatumDao) {
 		this.powerDatumDao = powerDatumDao;
-		daoMapping.put(powerDatumDao.getDatumType().asSubclass(NodeDatum.class), powerDatumDao);
-		filterDaoMapping.put(powerDatumDao.getDatumType().asSubclass(Datum.class), powerDatumDao);
-		aggregationFilterDaoMapping.put(powerDatumDao.getDatumType().asSubclass(Datum.class),
-				powerDatumDao);
+		daoMapping.put(powerDatumDao.getDatumType(), powerDatumDao);
+		filterDaoMapping.put(powerDatumDao.getDatumType(), powerDatumDao);
+		aggregationFilterDaoMapping.put(powerDatumDao.getDatumType(), powerDatumDao);
 	}
 
 	@Autowired
 	public void setWeatherDatumDao(WeatherDatumDao weatherDatumDao) {
 		this.weatherDatumDao = weatherDatumDao;
-		daoMapping.put(weatherDatumDao.getDatumType().asSubclass(NodeDatum.class), weatherDatumDao);
-		filterDaoMapping.put(weatherDatumDao.getDatumType().asSubclass(Datum.class), weatherDatumDao);
+		daoMapping.put(weatherDatumDao.getDatumType(), weatherDatumDao);
+		filterDaoMapping.put(weatherDatumDao.getDatumType(), weatherDatumDao);
 	}
 
 	@Autowired
 	public void setConsumptionDatumDao(ConsumptionDatumDao consumptionDatumDao) {
 		this.consumptionDatumDao = consumptionDatumDao;
-		daoMapping.put(consumptionDatumDao.getDatumType().asSubclass(NodeDatum.class),
-				consumptionDatumDao);
-		filterDaoMapping.put(consumptionDatumDao.getDatumType().asSubclass(Datum.class),
-				consumptionDatumDao);
-		aggregationFilterDaoMapping.put(consumptionDatumDao.getDatumType().asSubclass(Datum.class),
-				consumptionDatumDao);
+		daoMapping.put(consumptionDatumDao.getDatumType(), consumptionDatumDao);
+		filterDaoMapping.put(consumptionDatumDao.getDatumType(), consumptionDatumDao);
+		aggregationFilterDaoMapping.put(consumptionDatumDao.getDatumType(), consumptionDatumDao);
 	}
 
 	@Autowired
 	public void setPriceDatumDao(PriceDatumDao priceDatumDao) {
-		daoMapping.put(priceDatumDao.getDatumType().asSubclass(NodeDatum.class), priceDatumDao);
+		daoMapping.put(priceDatumDao.getDatumType(), priceDatumDao);
 	}
 
 	@Autowired
 	public void setHardwareControlDatumDao(HardwareControlDatumDao hardwareControlDatumDao) {
-		daoMapping.put(hardwareControlDatumDao.getDatumType().asSubclass(NodeDatum.class),
-				hardwareControlDatumDao);
+		daoMapping.put(hardwareControlDatumDao.getDatumType(), hardwareControlDatumDao);
+		filterDaoMapping.put(hardwareControlDatumDao.getDatumType(), hardwareControlDatumDao);
 	}
 
 	@Autowired
