@@ -1,7 +1,7 @@
 /* ==================================================================
- * HardwareControlDatumDao.java - Sep 29, 2011 3:31:46 PM
+ * HardwareControlDatumMatch.java - Jun 27, 2014 3:46:05 PM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,20 +20,18 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.dao;
+package net.solarnetwork.central.datum.domain;
 
-import net.solarnetwork.central.dao.FilterableDao;
-import net.solarnetwork.central.datum.domain.HardwareControlDatum;
-import net.solarnetwork.central.datum.domain.HardwareControlDatumMatch;
-import net.solarnetwork.central.datum.domain.NodeDatumFilter;
+import net.solarnetwork.central.domain.EntityMatch;
 
 /**
- * DAO API for {@link HardwareControlDatum}.
+ * {@link EntityMatch} for {@link HardwareControlDatum}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface HardwareControlDatumDao extends DatumDao<HardwareControlDatum>,
-		FilterableDao<HardwareControlDatumMatch, Long, NodeDatumFilter> {
+public class HardwareControlDatumMatch extends HardwareControlDatum implements EntityMatch {
+
+	private static final long serialVersionUID = -6066234278156767410L;
 
 }

@@ -18,38 +18,37 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.datum.dao.ibatis;
 
 import java.util.Map;
-
 import net.solarnetwork.central.datum.dao.HardwareControlDatumDao;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.HardwareControlDatum;
+import net.solarnetwork.central.datum.domain.HardwareControlDatumMatch;
+import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 
 /**
  * Ibatis implementation of {@link HardwareControlDatumDao}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public class IbatisHardwareControlDatumDao
-extends IbatisDatumDaoSupport<HardwareControlDatum>
-implements HardwareControlDatumDao {
+		extends
+		IbatisFilterableDatumDatoSupport<HardwareControlDatum, HardwareControlDatumMatch, NodeDatumFilter>
+		implements HardwareControlDatumDao {
 
 	/**
 	 * Default constructor.
 	 */
 	public IbatisHardwareControlDatumDao() {
-		super(HardwareControlDatum.class);
+		super(HardwareControlDatum.class, HardwareControlDatumMatch.class);
 	}
-	
+
 	@Override
-	protected String setupAggregatedDatumQuery(DatumQueryCommand criteria,
-			Map<String, Object> params) {
+	protected String setupAggregatedDatumQuery(DatumQueryCommand criteria, Map<String, Object> params) {
 		throw new UnsupportedOperationException();
 	}
 
