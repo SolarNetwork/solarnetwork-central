@@ -496,6 +496,16 @@
 		MIN(rpdatum.cost_currency) AS r_power_datum_cost_currency
 	</sql>
 
+	<!--  Note: r_power_datum_created_date is not provided by this base fragment, because that column name varies -->
+	<sql id="fragment-PowerDatum-sum-result">
+		rpdatum.node_id AS r_power_datum_node_id,
+		rpdatum.source_id AS r_power_datum_source_id,
+		AVG(rpdatum.watts) AS r_power_datum_watts,
+		SUM(rpdatum.watt_hours) AS r_power_datum_watt_hours,
+		SUM(rpdatum.cost_amt) AS r_power_datum_cost_amt,
+		MIN(rpdatum.cost_currency) AS r_power_datum_cost_currency
+	</sql>
+
 	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-Hour">
 		FROM
 			solarrep.rep_power_datum_hourly rpdatum
@@ -636,6 +646,33 @@
 		<isEmpty property="SortDescriptors">
 			rpdatum.created_day, rpdatum.node_id, rpdatum.source_id
 		</isEmpty>
+	</select>
+
+	<!-- Month aggregation -->
+		
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-Month">
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Day"/>
+		GROUP BY 
+			date_trunc('month', rpdatum.created_day), 
+			rpdatum.node_id, 
+			rpdatum.source_id
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-Month-count" resultClass="long">
+		SELECT count(sub.d) FROM (SELECT date_trunc('month', rpdatum.created_day) AS d
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Month"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-Month" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			date_trunc('month', rpdatum.created_day) AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-sum-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Month"/>
+		ORDER BY 
+			date_trunc('month', rpdatum.created_day), 
+			rpdatum.node_id, 
+			rpdatum.source_id
 	</select>
 
 	<!-- DayOfWeek aggregation: grouped by ISODOW so Monday == 1, Sunday == 7. 

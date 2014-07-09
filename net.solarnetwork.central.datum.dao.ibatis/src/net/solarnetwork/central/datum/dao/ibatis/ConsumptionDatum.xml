@@ -404,6 +404,16 @@
 		MIN(rcdatum.cost_currency) AS r_consum_datum_cost_currency
 	</sql>
 
+	<!--  Note: r_consum_datum_created_date is not provided by this base fragment, because that column name varies -->
+	<sql id="fragment-ConsumptionDatum-sum-result">
+		rcdatum.node_id AS r_consum_datum_node_id,
+		rcdatum.source_id AS r_consum_datum_source_id,
+		AVG(rcdatum.watts) AS r_consum_datum_watts,
+		SUM(rcdatum.watt_hours) AS r_consum_datum_watt_hours,
+		SUM(rcdatum.cost_amt) AS r_consum_datum_cost_amt,
+		MIN(rcdatum.cost_currency) AS r_consum_datum_cost_currency
+	</sql>
+
 	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Hour">
 		FROM
 			solarrep.rep_consum_datum_hourly rcdatum
@@ -544,6 +554,33 @@
 		<isEmpty property="SortDescriptors">
 			rcdatum.created_day, rcdatum.node_id, rcdatum.source_id
 		</isEmpty>
+	</select>
+
+	<!-- Month aggregation -->
+		
+	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Month">
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Day"/>
+		GROUP BY 
+			date_trunc('month', rcdatum.created_day), 
+			rcdatum.node_id, 
+			rcdatum.source_id
+	</sql>
+
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-Month-count" resultClass="long">
+		SELECT count(sub.d) FROM (SELECT date_trunc('month', rcdatum.created_day) AS d
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Month"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-Month" resultMap="ReportingConsumptionDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			date_trunc('month', rcdatum.created_day) AS r_consum_datum_created_date,
+			<include refid="fragment-ConsumptionDatum-sum-result"/>
+		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Month"/>
+		ORDER BY 
+			date_trunc('month', rcdatum.created_day), 
+			rcdatum.node_id, 
+			rcdatum.source_id
 	</select>
 
 	<!-- DayOfWeek aggregation: grouped by ISODOW so Monday == 1, Sunday == 7. 
