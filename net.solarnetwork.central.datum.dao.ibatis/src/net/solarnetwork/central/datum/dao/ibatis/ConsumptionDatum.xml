@@ -427,10 +427,20 @@
 				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.startDate">
-				rcdatum.created_hour &gt;= #filter.startDate#
+				<isNotNull property="filter.nodeId">
+					rcdatum.created_hour &gt;= solarnet.get_node_local_timestamp(#filter.startDate#, #filter.nodeId#)
+				</isNotNull>
+				<isNull property="filter.nodeId">
+					rcdatum.created_hour &gt;= #filter.startDate#
+				</isNull>
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.endDate">
-				rcdatum.created_hour &lt; #filter.endDate#
+				<isNotNull property="filter.nodeId">
+					rcdatum.created_hour &lt;= solarnet.get_node_local_timestamp(#filter.endDate#, #filter.nodeId#)
+				</isNotNull>
+				<isNull property="filter.nodeId">
+					rcdatum.created_hour &lt; #filter.endDate#
+				</isNull>
 			</isNotNull>
 		</dynamic>
 	</sql>
@@ -524,10 +534,20 @@
 				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.startDate">
-				rcdatum.created_day &gt;= #filter.startDate#
+				<isNotNull property="filter.nodeId">
+					rcdatum.created_day &gt;= solarnet.get_node_local_timestamp(#filter.startDate#, #filter.nodeId#)
+				</isNotNull>
+				<isNull property="filter.nodeId">
+					rcdatum.created_day &gt;= #filter.startDate#
+				</isNull>
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.endDate">
-				rcdatum.created_day &lt; #filter.endDate#
+				<isNotNull property="filter.nodeId">
+					rcdatum.created_day &lt;= solarnet.get_node_local_timestamp(#filter.endDate#, #filter.nodeId#)
+				</isNotNull>
+				<isNull property="filter.nodeId">
+					rcdatum.created_day &lt; #filter.endDate#
+				</isNull>
 			</isNotNull>
 		</dynamic>
 	</sql>
