@@ -433,7 +433,7 @@ LANGUAGE 'plpgsql' VOLATILE;
  * 
  * @param timestamp		the starting date
  * @param interval		an interval to calculate the end date from the starting date
- */
+ *
 CREATE OR REPLACE FUNCTION solarrep.find_rep_net_power_datum(IN timestamp without time zone, IN interval)
   RETURNS TABLE(created timestamp without time zone, watt_hours double precision) AS
 $BODY$
@@ -451,6 +451,7 @@ $BODY$
 	ORDER BY c.created, c.node_id
 $BODY$
 LANGUAGE 'sql' STABLE;
+*/
 
 /**************************************************************************************************
  * FUNCTION solarrep.find_rep_power_datum(bigint, text, timestamp, text, interval)
@@ -601,7 +602,7 @@ LANGUAGE 'plpgsql' VOLATILE;
  * (the sn_power_datum.prev_datum ID).
  * 
  * @param datum	the solarnet.sn_power_datum row to update aggregated data for
- */
+ *
 CREATE OR REPLACE FUNCTION solarrep.populate_rep_net_power_datum_hourly(datum solarnet.sn_power_datum)
   RETURNS void AS
 $BODY$
@@ -652,6 +653,7 @@ BEGIN
 	END LOOP insert_update;
 END;$BODY$
 LANGUAGE 'plpgsql' VOLATILE;
+*/
 
 /**************************************************************************************************
  * FUNCTION solarrep.populate_rep_power_datum_daily(solarnet.sn_power_datum)
@@ -744,7 +746,7 @@ LANGUAGE 'plpgsql' VOLATILE;
  * (the sn_power_datum.prev_datum ID).
  * 
  * @param datum	the solarnet.sn_power_datum row to update aggregated data for
- */
+ *
 CREATE OR REPLACE FUNCTION solarrep.populate_rep_net_power_datum_daily(datum solarnet.sn_power_datum)
   RETURNS void AS
 $BODY$
@@ -808,7 +810,8 @@ CREATE TRIGGER populate_rep_net_power_daily
 
 -- NET-20: disable trigger until different implementation can be done
 ALTER TABLE solarnet.sn_power_datum DISABLE TRIGGER populate_rep_net_power_daily;
-  
+*/
+
 /* =========================================================================
    =========================================================================
    PRICE REPORTING TRIGGERS

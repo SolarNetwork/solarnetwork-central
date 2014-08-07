@@ -528,7 +528,6 @@ CREATE TABLE solarnet.sn_power_datum (
 );
 
 CREATE INDEX power_datum_prev_datum_idx ON solarnet.sn_power_datum (prev_datum);
-CREATE INDEX power_datum_local_created_idx ON solarnet.sn_power_datum (local_created);
 
 -- this index is used for foreign key validation in other tables
 CREATE INDEX power_datum_node_idx ON solarnet.sn_power_datum (node_id,created);
@@ -570,6 +569,7 @@ CREATE TRIGGER populate_prev_power_datum
   FOR EACH ROW
   EXECUTE PROCEDURE solarnet.populate_prev_power_datum();
 
+/*
 CREATE OR REPLACE FUNCTION solarnet.populate_local_created()
   RETURNS trigger AS
 $BODY$
@@ -583,6 +583,7 @@ CREATE TRIGGER populate_local_created
    BEFORE INSERT OR UPDATE
    ON solarnet.sn_power_datum FOR EACH ROW
    EXECUTE PROCEDURE solarnet.populate_local_created();
+*/
    
 /**************************************************************************************************
  * FUNCTION solarnet.calc_avg_watt_hours(integer, integer, double precision, 
