@@ -40,14 +40,11 @@ CREATE TABLE solarnet.sn_hardware_control_datum (
 	int_val			INTEGER,
 	float_val		REAL,
 	CONSTRAINT sn_hardware_control_datum_pkey PRIMARY KEY (id),
-	CONSTRAINT sn_hardware_control_datum_node_unq UNIQUE (created,node_id,source_id),
+	CONSTRAINT sn_hardware_control_datum_node_unq UNIQUE (node_id,created,source_id),
 	CONSTRAINT sn_hardware_control_datum_node_fk
 		FOREIGN KEY (node_id) REFERENCES solarnet.sn_node (node_id)
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX sn_hardware_control_datum_node_idx ON solarnet.sn_hardware_control_datum (node_id,created);
 
 CLUSTER solarnet.sn_hardware_control_datum USING sn_hardware_control_datum_node_unq;
 

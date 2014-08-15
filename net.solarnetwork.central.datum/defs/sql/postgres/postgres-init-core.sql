@@ -108,7 +108,7 @@ CREATE TABLE solarnet.sn_day_datum (
 	CONSTRAINT sn_day_datum_weather_loc_fk
 		FOREIGN KEY (loc_id) REFERENCES solarnet.sn_weather_loc (id) 
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT sn_day_datum_loc_unq UNIQUE (day, loc_id)
+	CONSTRAINT sn_day_datum_loc_unq UNIQUE (loc_id, day)
 );
 
 CREATE INDEX day_datum_created_idx ON solarnet.sn_day_datum (created);
@@ -134,7 +134,7 @@ CREATE TABLE solarnet.sn_weather_datum (
 	CONSTRAINT sn_weather_datum_weather_loc_fk
 		FOREIGN KEY (loc_id) REFERENCES solarnet.sn_weather_loc (id) 
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT sn_weather_datum_loc_unq UNIQUE (info_date, loc_id)
+	CONSTRAINT sn_weather_datum_loc_unq UNIQUE (loc_id, info_date)
 );
 
 CLUSTER solarnet.sn_weather_datum USING sn_weather_datum_loc_unq;
@@ -439,16 +439,13 @@ CREATE TABLE solarnet.sn_price_datum (
 	price			REAL,
 	prev_datum		BIGINT,
 	PRIMARY KEY (id),
-    CONSTRAINT price_datum_unq UNIQUE (created, loc_id),
+    CONSTRAINT price_datum_unq UNIQUE (loc_id, created),
 	CONSTRAINT sn_price_datum_price_loc_fk FOREIGN KEY (loc_id)
 		REFERENCES solarnet.sn_price_loc (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
 CREATE INDEX price_datum_prev_datum_idx ON solarnet.sn_price_datum (prev_datum);
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX price_datum_loc_idx ON solarnet.sn_price_datum (loc_id,created);
 
 CLUSTER solarnet.sn_price_datum USING price_datum_unq;
 
@@ -524,13 +521,10 @@ CREATE TABLE solarnet.sn_power_datum (
 	CONSTRAINT sn_power_datum_price_loc_fk
 		FOREIGN KEY (price_loc_id) REFERENCES solarnet.sn_price_loc (id)
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT power_datum_node_unq UNIQUE (created, node_id, source_id)
+	CONSTRAINT power_datum_node_unq UNIQUE (node_id, created, source_id)
 );
 
 CREATE INDEX power_datum_prev_datum_idx ON solarnet.sn_power_datum (prev_datum);
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX power_datum_node_idx ON solarnet.sn_power_datum (node_id,created);
 
 CLUSTER solarnet.sn_power_datum USING power_datum_node_unq;
 
@@ -646,13 +640,10 @@ CREATE TABLE solarnet.sn_consum_datum (
 	CONSTRAINT sn_consum_datum_price_loc_fk
 		FOREIGN KEY (price_loc_id) REFERENCES solarnet.sn_price_loc (id)
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT consum_datum_node_unq UNIQUE (created,node_id,source_id)
+	CONSTRAINT consum_datum_node_unq UNIQUE (node_id,created,source_id)
 );
 
 CREATE INDEX consum_datum_prev_datum_idx ON solarnet.sn_consum_datum (prev_datum);
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX consum_datum_node_idx ON solarnet.sn_consum_datum (node_id,created);
 
 CLUSTER solarnet.sn_consum_datum USING consum_datum_node_unq;
 

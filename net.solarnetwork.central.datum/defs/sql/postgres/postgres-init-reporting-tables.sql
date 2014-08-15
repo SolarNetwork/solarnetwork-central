@@ -50,7 +50,7 @@ CREATE TABLE solarrep.rep_consum_datum_hourly (
   watt_hours 	double precision,
   cost_amt 		real,
   cost_currency	character varying(10),
-  PRIMARY KEY (created_hour, node_id, source_id)
+  CONSTRAINT rep_consum_datum_hourly_pkey PRIMARY KEY (node_id, created_hour, source_id)
 );
 
 COMMENT ON TABLE solarrep.rep_consum_datum_hourly IS 'To refresh this table, call something like this:
@@ -60,9 +60,6 @@ where c.id in (
 	select max(id) from solarnet.sn_consum_datum
 	group by date_trunc(''hour'', created), node_id, source_id
 )';
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_consum_datum_hourly_node_idx ON solarrep.rep_consum_datum_hourly (node_id,created_hour);
 
 CLUSTER solarrep.rep_consum_datum_hourly USING rep_consum_datum_hourly_pkey;
 
@@ -74,7 +71,7 @@ CREATE TABLE solarrep.rep_consum_datum_daily (
   watt_hours 	double precision,
   cost_amt 		double precision,
   cost_currency	character varying(10),
-  PRIMARY KEY (created_day, node_id, source_id)
+  CONSTRAINT rep_consum_datum_daily_pkey PRIMARY KEY (node_id, created_day, source_id)
 );
 
 COMMENT ON TABLE solarrep.rep_consum_datum_daily IS 'To refresh this table, call something like this:
@@ -84,9 +81,6 @@ where c.id in (
 	select max(id) from solarnet.sn_consum_datum
 	group by date_trunc(''day'', created), node_id, source_id
 )';
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_consum_datum_daily_node_idx ON solarrep.rep_consum_datum_daily (node_id,created_day);
 
 CLUSTER solarrep.rep_consum_datum_daily USING rep_consum_datum_daily_pkey;
 
@@ -105,7 +99,7 @@ CREATE TABLE solarrep.rep_power_datum_hourly (
   watt_hours 	DOUBLE PRECISION,
   cost_amt 		REAL,
   cost_currency	CHARACTER VARYING(10),
-  PRIMARY KEY (created_hour, node_id, source_id)
+  CONSTRAINT rep_power_datum_hourly_pkey PRIMARY KEY (node_id, created_hour, source_id)
 );
 
 COMMENT ON TABLE solarrep.rep_power_datum_hourly IS 
@@ -116,9 +110,6 @@ where c.id in (
 	select max(id) from solarnet.sn_power_datum
 	group by date_trunc(''hour'', created), node_id, source_id
 )';
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_power_datum_hourly_node_idx ON solarrep.rep_power_datum_hourly (node_id,created_hour);
 
 CLUSTER solarrep.rep_power_datum_hourly USING rep_power_datum_hourly_pkey;
 
@@ -139,7 +130,7 @@ CREATE TABLE solarrep.rep_power_datum_daily (
   watt_hours 	DOUBLE PRECISION,
   cost_amt 		REAL,
   cost_currency	CHARACTER VARYING(10),
-  PRIMARY KEY (created_day, node_id, source_id)
+  CONSTRAINT rep_power_datum_daily_pkey PRIMARY KEY (node_id, created_day, source_id)
 );
 
 COMMENT ON TABLE solarrep.rep_power_datum_daily IS 
@@ -150,9 +141,6 @@ where c.id in (
 	select max(id) from solarnet.sn_power_datum
 	group by date_trunc(''day'', created), node_id, source_id
 )';
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_power_datum_daily_node_idx ON solarrep.rep_power_datum_daily (node_id,created_day);
 
 CLUSTER solarrep.rep_power_datum_daily USING rep_power_datum_daily_pkey;
 
@@ -174,7 +162,7 @@ CREATE TABLE solarrep.rep_price_datum_hourly (
   created_hour 	TIMESTAMP WITHOUT TIME ZONE NOT NULL,
   loc_id		BIGINT NOT NULL,
   price			REAL,
-  CONSTRAINT rep_price_datum_hourly_pkey PRIMARY KEY (created_hour, loc_id)
+  CONSTRAINT rep_price_datum_hourly_pkey PRIMARY KEY (loc_id, created_hour)
 );
 
 COMMENT ON TABLE solarrep.rep_price_datum_hourly IS 'To refresh this table, call something like this:
@@ -185,16 +173,13 @@ where c.id in (
 	group by date_trunc(''hour'', created), loc_id
 )';
 
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_price_datum_hourly_node_idx ON solarrep.rep_price_datum_hourly (loc_id,created_hour);
-
 CLUSTER solarrep.rep_price_datum_hourly USING rep_price_datum_hourly_pkey;
 
 CREATE TABLE solarrep.rep_price_datum_daily (
   created_day 	DATE NOT NULL,
   loc_id		BIGINT NOT NULL,
   price			REAL,
-  CONSTRAINT rep_price_datum_daily_pkey PRIMARY KEY (created_day, loc_id)
+  CONSTRAINT rep_price_datum_daily_pkey PRIMARY KEY (loc_id, created_day)
 );
 
 COMMENT ON TABLE solarrep.rep_price_datum_daily IS 'To refresh this table, call something like this:
@@ -204,8 +189,5 @@ where c.id in (
 	select max(id) from solarnet.sn_price_datum
 	group by date_trunc(''hour'', created), loc_id
 )';
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_price_datum_daily_node_idx ON solarrep.rep_price_datum_daily (loc_id,created_day);
 
 CLUSTER solarrep.rep_price_datum_daily USING rep_price_datum_daily_pkey;
