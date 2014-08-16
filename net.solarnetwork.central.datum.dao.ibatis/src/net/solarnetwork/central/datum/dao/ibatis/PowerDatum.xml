@@ -120,24 +120,20 @@
 			COALESCE(data.watts, -1) AS watts,
 			COALESCE(data.bat_volts, -1) AS bat_volts
 		FROM ( 
-			SELECT #start#::timestamp + (series.d * interval '1 minute') AS d 
-			FROM generate_series(0, floor(extract('epoch' from #end#::timestamp - #start#::timestamp))::integer / 60 - #precision#, #precision#) AS series(d)
+			SELECT #start#::timestamptz + (series.d * interval '1 minute') AS d 
+			FROM generate_series(0, floor(extract('epoch' from #end#::timestamptz - #start#::timestamptz))::integer / 60 - #precision#, #precision#) AS series(d)
 		) AS dates
 		
 		LEFT OUTER JOIN (
 			SELECT 
 				to_timestamp(
-					extract('epoch' from date_trunc('minute', p.created at time zone l.time_zone))
+					extract('epoch' from date_trunc('minute', p.created))
 					- ((cast(extract('minute' from p.created) as integer) % #precision#) * 60)
 				) as created_date,
 				p.source_id as source,
 				avg(p.watts) as watts,
 				avg(p.bat_volts) as bat_volts
-		
 			FROM solarnet.sn_power_datum p
-			INNER JOIN solarnet.sn_node n ON n.node_id = #node#
-			INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-		
 			WHERE 
 				p.node_id = #node#
 				<isPropertyAvailable property="source">
@@ -147,9 +143,7 @@
 					AND p.source_id IN
 					<iterate open="(" close=")" conjunction="," property="sources">#sources[]#</iterate>					
 				</isPropertyAvailable>
-				AND p.created BETWEEN (#start#::timestamp at time zone l.time_zone) 
-					AND (#end#::timestamp at time zone l.time_zone)
-				
+				AND p.created BETWEEN #start#::timestamptz AND #end#::timestamptz
 			GROUP BY created_date, p.source_id
 		) AS data ON data.created_date = dates.d
 		

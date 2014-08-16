@@ -108,24 +108,20 @@
 			<include refid="fragment-ReportingPriceDatum-agg-result"/>
 			
 		FROM ( 
-			SELECT #start#::timestamp + (series.d * interval '1 minute') AS d 
-			FROM generate_series(0, floor(extract('epoch' from #end#::timestamp - #start#::timestamp))::integer / 60 - #precision#, #precision#) AS series(d)
+			SELECT #start#::timestamptz + (series.d * interval '1 minute') AS d 
+			FROM generate_series(0, floor(extract('epoch' from #end#::timestamptz - #start#::timestamptz))::integer / 60 - #precision#, #precision#) AS series(d)
 		) AS dates
 		LEFT OUTER JOIN (
 			SELECT 
 				to_timestamp(
-					extract('epoch' from date_trunc('minute', p.created at time zone l.time_zone))
+					extract('epoch' from date_trunc('minute', p.created))
 					- ((cast(extract('minute' from p.created) as integer) % #precision#) * 60)
 				) as created_date,
 				avg(p.price) as price
-		
 			FROM solarnet.sn_price_datum p
-			INNER JOIN solarnet.sn_price_loc l ON l.id = #location#
 			WHERE 
 				p.loc_id = #location#
-				AND p.created BETWEEN (#start#::timestamp at time zone l.time_zone) 
-					AND (#end#::timestamp at time zone l.time_zone)
-				
+				AND p.created BETWEEN #start#::timestamptz AND #end#::timestamptz
 			GROUP BY created_date
 		) AS data ON data.created_date = dates.d
 		INNER JOIN solarnet.sn_price_loc loc ON loc.id = #location#
@@ -164,7 +160,6 @@
 			SELECT date(#start#) + series.d AS d 
 			FROM generate_series(0, date(#end#) - date(#start#)) AS series(d)
 		) AS dates
-		
 		LEFT OUTER JOIN (
 			SELECT 
 				c.created_day as created_date,
@@ -175,12 +170,11 @@
 			WHERE 
 				c.loc_id = #location#
 				AND c.created_day BETWEEN #start#::date AND #end#::date
-				
 			GROUP BY created_date
 			ORDER BY created_date
 		) AS data ON data.created_date = dates.d
 		INNER JOIN solarnet.sn_price_loc loc ON loc.id = #location#
-		ORDER BY created_date
+		ORDER BY dates.d
 	</select>
 	
 	<select id="find-PriceDatum-for-agg-week" resultMap="ReportingPriceDatumAggResult">
