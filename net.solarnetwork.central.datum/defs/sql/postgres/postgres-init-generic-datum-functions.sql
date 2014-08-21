@@ -297,7 +297,6 @@ BEGIN
 	RETURN result;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
-ALTER FUNCTION solaragg.process_one_agg_stale_datum(char) OWNER TO solarnet;
 
 
 CREATE OR REPLACE FUNCTION solaragg.process_agg_stale_datum(kind char, max integer)
