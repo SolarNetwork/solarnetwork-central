@@ -297,3 +297,22 @@ BEGIN
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 ALTER FUNCTION solaragg.process_one_agg_stale_datum(char) OWNER TO solarnet;
+
+
+CREATE OR REPLACE FUNCTION solaragg.process_agg_stale_datum(kind char, max integer)
+  RETURNS INTEGER AS
+$BODY$
+DECLARE
+	one_result INTEGER := 1;
+	total_result INTEGER := 0;
+BEGIN
+	LOOP
+		IF one_result < 1 OR (max > -1 AND total_result >= max) THEN
+			EXIT;
+		END IF;
+		SELECT solaragg.process_one_agg_stale_datum(kind) INTO one_result;
+		total_result := total_result + one_result;
+	END LOOP;
+	RETURN total_result;
+END;$BODY$
+  LANGUAGE plpgsql VOLATILE;
