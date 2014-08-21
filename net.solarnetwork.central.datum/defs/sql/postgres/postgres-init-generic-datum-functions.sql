@@ -285,7 +285,7 @@ BEGIN
 			WHEN 'h' THEN
 				BEGIN
 					INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
-					VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone 'UTC', stale.node_id, stale.source_id, 'd');
+					VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'd');
 				EXCEPTION WHEN unique_violation THEN
 					-- Nothing to do, just continue
 				END;
