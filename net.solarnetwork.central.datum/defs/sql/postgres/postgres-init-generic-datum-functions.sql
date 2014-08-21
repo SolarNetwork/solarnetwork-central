@@ -289,7 +289,8 @@ BEGIN
 				EXCEPTION WHEN unique_violation THEN
 					-- Nothing to do, just continue
 				END;
-
+			ELSE
+				-- nothing
 		END CASE;
 	END IF;
 	CLOSE curs;
