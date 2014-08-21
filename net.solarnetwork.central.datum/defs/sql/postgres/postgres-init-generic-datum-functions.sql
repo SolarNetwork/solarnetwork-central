@@ -179,3 +179,121 @@ stmt.free();
 return merge(calculateAverages(iobj, iobjCounts), aobj);
 $BODY$
   LANGUAGE plv8 VOLATILE;
+
+
+CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
+  RETURNS integer AS
+$BODY$
+DECLARE
+	stale record;
+	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum 
+			WHERE agg_kind = kind
+			--ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
+			LIMIT 1
+			FOR UPDATE;
+	agg_span interval;
+	agg_json json := NULL;
+	node_tz text := 'UTC';
+	result integer := 0;
+BEGIN
+	CASE kind
+		WHEN 'h' THEN
+			agg_span := interval '1 hour';
+		ELSE
+			agg_span := interval '1 day';
+	END CASE;
+	
+	OPEN curs;
+	FETCH NEXT FROM curs INTO stale;
+	
+	IF FOUND THEN
+		-- get the node TZ for local date/time
+		SELECT l.time_zone  FROM solarnet.sn_node n
+		INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE n.node_id = stale.node_id
+		INTO node_tz;
+
+		SELECT solaragg.calc_datum_time_slot(stale.node_id, stale.source_id, stale.ts_start, agg_span, interval '20 minutes')
+		INTO agg_json;
+		IF agg_json IS NULL THEN
+			CASE kind
+				WHEN 'h' THEN
+					DELETE FROM solaragg.agg_datum_hourly
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start = stale.ts_start;
+				ELSE
+					DELETE FROM solaragg.agg_datum_daily
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start = stale.ts_start;
+			END CASE;
+		ELSE
+			CASE kind
+				WHEN 'h' THEN
+					<<update_hourly>>
+					LOOP
+						UPDATE solaragg.agg_datum_hourly SET jdata = agg_json
+						WHERE 
+							node_id = stale.node_id
+							AND source_id = stale.source_id
+							AND ts_start = stale.ts_start;
+
+						EXIT update_hourly WHEN FOUND;
+
+						INSERT INTO solaragg.agg_datum_hourly (
+							ts_start, local_date, local_time, node_id, source_id, jdata)
+						VALUES (
+							stale.ts_start, 
+							CAST(stale.ts_start at time zone node_tz AS DATE),
+							CAST(stale.ts_start at time zone node_tz AS TIME WITHOUT TIME ZONE),
+							stale.node_id,
+							stale.source_id,
+							agg_json
+						);
+						EXIT update_hourly;
+					END LOOP update_hourly;
+				ELSE
+					<<update_daily>>
+					LOOP
+						UPDATE solaragg.agg_datum_daily SET jdata = agg_json
+						WHERE 
+							node_id = stale.node_id
+							AND source_id = stale.source_id
+							AND ts_start = stale.ts_start;
+
+						EXIT update_daily WHEN FOUND;
+
+						INSERT INTO solaragg.agg_datum_daily (
+							ts_start, local_date, node_id, source_id, jdata)
+						VALUES (
+							stale.ts_start, 
+							CAST(stale.ts_start at time zone node_tz AS DATE),
+							stale.node_id,
+							stale.source_id,
+							agg_json
+						);
+						EXIT update_daily;
+					END LOOP update_daily;
+			END CASE;
+		END IF;
+		DELETE FROM solaragg.agg_stale_datum WHERE CURRENT OF curs;
+		result := 1;
+
+		-- now make sure we recalculate the next aggregate level by submitting a stale record for the next level
+		CASE kind
+			WHEN 'h' THEN
+				BEGIN
+					INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+					VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone 'UTC', stale.node_id, stale.source_id, 'd');
+				EXCEPTION WHEN unique_violation THEN
+					-- Nothing to do, just continue
+				END;
+
+		END CASE;
+	END IF;
+	CLOSE curs;
+	RETURN result;
+END;$BODY$
+  LANGUAGE plpgsql VOLATILE;
+ALTER FUNCTION solaragg.process_one_agg_stale_datum(char) OWNER TO solarnet;
