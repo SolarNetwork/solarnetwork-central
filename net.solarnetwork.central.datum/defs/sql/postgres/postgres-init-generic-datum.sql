@@ -16,7 +16,8 @@ CREATE TABLE solaragg.agg_stale_datum (
   node_id solarcommon.node_id,
   source_id solarcommon.source_id,
   agg_kind char(1) NOT NULL,
-  CONSTRAINT agg_stale_datum_pkey PRIMARY KEY (node_id, ts_start, source_id, agg_kind)
+  created timestamp NOT NULL DEFAULT now(),
+  CONSTRAINT agg_stale_datum_pkey PRIMARY KEY (agg_kind, node_id, ts_start, source_id)
 );
 
 CREATE TABLE solaragg.agg_datum_hourly (
