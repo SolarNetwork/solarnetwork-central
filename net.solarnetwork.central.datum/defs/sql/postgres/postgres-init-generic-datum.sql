@@ -2,7 +2,7 @@ CREATE SCHEMA solardatum;
 
 CREATE SCHEMA solaragg;
 
-CREATE TABLE solardatum.sn_datum (
+CREATE TABLE solardatum.da_datum (
   ts solarcommon.ts,
   node_id solarcommon.node_id,
   source_id solarcommon.source_id,
@@ -65,6 +65,6 @@ END;$BODY$
 
 CREATE TRIGGER populate_agg_stale_datum
   AFTER INSERT OR UPDATE OR DELETE
-  ON solardatum.sn_datum
+  ON solardatum.da_datum
   FOR EACH ROW
   EXECUTE PROCEDURE solardatum.trigger_agg_stale_datum();

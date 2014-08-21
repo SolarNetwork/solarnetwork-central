@@ -10,7 +10,7 @@ WITH prevd AS (
 	SELECT d.ts, 
 		ABS(EXTRACT('epoch' FROM (d.ts - start_ts))) as dt, 
 		CASE WHEN d.ts < start_ts THEN 0 ELSE 1 END as earlier
-	FROM solardatum.sn_datum d
+	FROM solardatum.da_datum d
 	WHERE 
 		d.node_id = node
 		and d.source_id = source
@@ -27,7 +27,7 @@ nextd AS (
 	SELECT d.ts, 
 		ABS(EXTRACT('epoch' FROM (d.ts - (start_ts + span)))) as dt, 
 		CASE WHEN d.ts < (start_ts + span) THEN 0 ELSE 1 END as earlier
-	FROM solardatum.sn_datum d
+	FROM solardatum.da_datum d
 	WHERE 
 		d.node_id = node
 		and d.source_id = source
@@ -49,7 +49,7 @@ SELECT
 		END AS percent,
 	COALESCE(CAST(EXTRACT(EPOCH FROM d.ts - lag(d.ts) over win) * 1000 AS INTEGER), 0) as tdiff,
 	d.jdata as jdata
-FROM solardatum.sn_datum d
+FROM solardatum.da_datum d
 WHERE d.node_id = node
 	AND d.source_id = source
 	AND d.ts >= (select ts FROM prevd)

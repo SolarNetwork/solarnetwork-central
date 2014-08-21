@@ -24,7 +24,7 @@ BEGIN
 
 	<<insert_update>>
 	LOOP
-		UPDATE solardatum.sn_datum SET
+		UPDATE solardatum.da_datum SET
 			jdata = jtext::json
 		WHERE 
 			node_id = datum.node_id
@@ -33,7 +33,7 @@ BEGIN
 		
 		EXIT insert_update WHEN FOUND;
 
-		INSERT INTO solardatum.sn_datum (
+		INSERT INTO solardatum.da_datum (
 			ts, node_id, source_id, posted, jdata)
 		VALUES (
 			datum.created, 
@@ -87,7 +87,7 @@ BEGIN
 
 	<<insert_update>>
 	LOOP
-		UPDATE solardatum.sn_datum SET
+		UPDATE solardatum.da_datum SET
 			jdata = jtext::json
 		WHERE 
 			node_id = datum.node_id
@@ -96,7 +96,7 @@ BEGIN
 		
 		EXIT insert_update WHEN FOUND;
 
-		INSERT INTO solardatum.sn_datum(
+		INSERT INTO solardatum.da_datum(
 			ts, node_id, source_id, posted, jdata)
 		VALUES (
 			datum.created, 
