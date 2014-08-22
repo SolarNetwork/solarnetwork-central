@@ -83,6 +83,28 @@ public class GeneralNodeDatumPK implements Serializable, Cloneable, Comparable<G
 	}
 
 	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("GeneralNodeDatumPK{");
+		if ( nodeId != null ) {
+			builder.append("nodeId=");
+			builder.append(nodeId);
+			builder.append(", ");
+		}
+		if ( created != null ) {
+			builder.append("created=");
+			builder.append(created);
+			builder.append(", ");
+		}
+		if ( sourceId != null ) {
+			builder.append("sourceId=");
+			builder.append(sourceId);
+		}
+		builder.append("}");
+		return builder.toString();
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
