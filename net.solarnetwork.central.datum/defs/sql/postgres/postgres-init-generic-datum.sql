@@ -10,7 +10,7 @@ CREATE TABLE solardatum.da_datum (
   jdata json NOT NULL,
   CONSTRAINT sn_consum_datum_pkey PRIMARY KEY (node_id, ts, source_id) DEFERRABLE INITIALLY IMMEDIATE
 );
-  
+
 CREATE TABLE solaragg.agg_stale_datum (
   ts_start timestamp with time zone NOT NULL,
   node_id solarcommon.node_id,
@@ -97,3 +97,33 @@ BEGIN
 	END;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
+
+CREATE OR REPLACE FUNCTION solardatum.find_available_sources(
+	IN node solarcommon.node_id, 
+	IN st solarcommon.ts DEFAULT NULL, 
+	IN en solarcommon.ts DEFAULT NULL)
+  RETURNS TABLE(source_id solarcommon.source_id) AS
+$BODY$
+BEGIN
+	CASE
+		WHEN st IS NULL AND en IS NULL THEN
+			RETURN QUERY SELECT DISTINCT d.source_id
+			FROM solaragg.agg_datum_daily d
+			WHERE d.node_id = node;
+		
+		WHEN st IS NULL THEN
+			RETURN QUERY SELECT DISTINCT d.source_id
+			FROM solaragg.agg_datum_daily d
+			WHERE d.node_id = node
+				AND d.ts_start >= st;
+				
+		ELSE
+			RETURN QUERY SELECT DISTINCT d.source_id
+			FROM solaragg.agg_datum_daily d
+			WHERE d.node_id = node
+				AND d.ts_start >= st
+				AND d.ts_end <= en;
+	END CASE;	
+END;$BODY$
+  LANGUAGE plpgsql STABLE;
+
