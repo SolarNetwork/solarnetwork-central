@@ -11,5 +11,4 @@ CREATE DOMAIN solarcommon.source_id
 
 CREATE DOMAIN solarcommon.ts
   AS timestamp with time zone
-  DEFAULT now()
-  NOT NULL;
+  DEFAULT now();

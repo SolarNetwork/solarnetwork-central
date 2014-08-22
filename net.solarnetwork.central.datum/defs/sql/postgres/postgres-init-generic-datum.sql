@@ -3,14 +3,14 @@ CREATE SCHEMA solardatum;
 CREATE SCHEMA solaragg;
 
 CREATE TABLE solardatum.da_datum (
-  ts solarcommon.ts,
+  ts solarcommon.ts NOT NULL,
   node_id solarcommon.node_id,
   source_id solarcommon.source_id,
-  posted solarcommon.ts,
+  posted solarcommon.ts NOT NULL,
   jdata json NOT NULL,
   CONSTRAINT sn_consum_datum_pkey PRIMARY KEY (node_id, ts, source_id) DEFERRABLE INITIALLY IMMEDIATE
 );
-
+  
 CREATE TABLE solaragg.agg_stale_datum (
   ts_start timestamp with time zone NOT NULL,
   node_id solarcommon.node_id,
@@ -68,3 +68,32 @@ CREATE TRIGGER populate_agg_stale_datum
   ON solardatum.da_datum
   FOR EACH ROW
   EXECUTE PROCEDURE solardatum.trigger_agg_stale_datum();
+
+
+CREATE OR REPLACE FUNCTION solardatum.store_datum(
+	ts solarcommon.ts, 
+	node_id solarcommon.node_id, 
+	source_id solarcommon.source_id, 
+	posted solarcommon.ts, 
+	jdata text)
+  RETURNS void AS
+$BODY$
+DECLARE
+	ts_post solarcommon.ts := (CASE WHEN posted IS NULL THEN now() ELSE posted END);
+	jdata_json json := jdata::json;
+BEGIN
+	BEGIN
+		INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata)
+		VALUES (ts, node_id, source_id, ts_post, jdata_json);
+	EXCEPTION WHEN unique_violation THEN
+		-- We mostly expect inserts, but we allow updates
+		UPDATE solardatum.da_datum SET 
+			jdata = jdata_json, 
+			posted = ts_post
+		WHERE
+			node_id = node_id
+			AND ts = ts
+			AND source_id = source_id;
+	END;
+END;$BODY$
+  LANGUAGE plpgsql VOLATILE;
