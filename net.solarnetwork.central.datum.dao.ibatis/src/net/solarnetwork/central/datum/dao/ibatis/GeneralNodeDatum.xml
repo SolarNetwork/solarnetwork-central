@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="GeneralNodeDatum">
+
+	<parameterMap class="GeneralNodeDatum" id="pmap-GeneralNodeDatum">
+		<parameter property="created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="nodeId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="sourceId" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="posted" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="sampleJson" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+	<procedure id="insert-GeneralNodeDatum" parameterMap="pmap-GeneralNodeDatum">
+		{call solardatum.store_datum(?, ?, ?, ?, ?)}
+	</procedure>
+	
+	<procedure id="update-GeneralNodeDatum" parameterMap="pmap-GeneralNodeDatum">
+		{call solardatum.store_datum(?, ?, ?, ?, ?)}
+	</procedure>
+	
+	<sql id="fragment-GeneralNodeDatum-full-result">
+		datum.node_id AS datum_node_id,
+		datum.ts AS datum_ts,
+		datum.source_id AS datum_source_id,
+		datum.posted AS datum_posted,
+		datum.jdata AS datum_jdata
+	</sql>
+	
+	<resultMap id="GeneralNodeDatumFullResult" class="GeneralNodeDatum">
+		<result column="datum_node_id" property="nodeId"/>
+		<result column="datum_ts" property="created"/>
+		<result column="datum_source_id" property="sourceId"/>
+		<result column="datum_posted" property="posted"/>
+		<result column="datum_jdata" property="sampleJson"/>
+	</resultMap>
+	
+	<select id="get-GeneralNodeDatum-for-id" resultMap="GeneralNodeDatumFullResult">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-full-result"/>
+		FROM
+			solardatum.da_datum datum
+		WHERE
+			datum.node_id = #nodeId#
+			AND datum.ts = #created#
+			AND datum.source_id = #sourceId#
+	</select>
+
+</sqlMap>
