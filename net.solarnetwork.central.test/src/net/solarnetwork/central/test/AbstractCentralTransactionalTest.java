@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.test;
@@ -35,6 +33,8 @@ import java.util.TimeZone;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
@@ -48,7 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Base test class for transactional unit tests.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.1
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml" })
 @TransactionConfiguration(transactionManager = "txManager", defaultRollback = true)
@@ -267,6 +267,38 @@ public abstract class AbstractCentralTransactionalTest extends
 				return con.prepareCall("{call solarrep.process_rep_stale_node_datum()}");
 			}
 		}, params);
+	}
+
+	/**
+	 * Call the {@code solaragg.process_agg_stale_datum} procedure to populate
+	 * reporting data.
+	 * 
+	 * @since 1.1
+	 */
+	protected void processAggregateStaleData() {
+		jdbcTemplate.execute(new CallableStatementCreator() {
+
+			@Override
+			public CallableStatement createCallableStatement(Connection con) throws SQLException {
+				CallableStatement stmt = con
+						.prepareCall("{call solaragg.process_agg_stale_datum(?, ?)}");
+				stmt.setString(1, "h");
+				stmt.setInt(2, -1);
+				return stmt;
+			}
+		}, new CallableStatementCallback<Object>() {
+
+			@Override
+			public Object doInCallableStatement(CallableStatement cs) throws SQLException,
+					DataAccessException {
+				cs.setString(1, "h");
+				cs.setInt(2, -1);
+				cs.execute();
+				cs.setString(1, "d");
+				cs.execute();
+				return null;
+			}
+		});
 	}
 
 }
