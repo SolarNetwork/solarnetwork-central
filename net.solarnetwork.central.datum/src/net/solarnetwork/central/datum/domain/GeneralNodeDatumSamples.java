@@ -23,9 +23,11 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import net.solarnetwork.util.SerializeIgnore;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
 
 /**
  * A collection of different types of sample data, grouped by logical sample
@@ -34,6 +36,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
  * @author matt
  * @version 1.0
  */
+@JsonPropertyOrder({ "i", "a", "s" })
 public class GeneralNodeDatumSamples implements Serializable {
 
 	private static final long serialVersionUID = -4820458070622781600L;
@@ -41,6 +44,29 @@ public class GeneralNodeDatumSamples implements Serializable {
 	private Map<String, Number> instantaneous;
 	private Map<String, Number> accumulating;
 	private Map<String, String> status;
+
+	/**
+	 * Get a merged map of all sample data.
+	 * 
+	 * @return a map with all sample data combined
+	 */
+	@JsonIgnore
+	public Map<String, ?> getSampleData() {
+		if ( instantaneous == null && accumulating == null && status == null ) {
+			return null;
+		}
+		Map<String, Object> results = new LinkedHashMap<String, Object>(4);
+		if ( instantaneous != null ) {
+			results.putAll(instantaneous);
+		}
+		if ( accumulating != null ) {
+			results.putAll(accumulating);
+		}
+		if ( status != null ) {
+			results.putAll(status);
+		}
+		return results;
+	}
 
 	@Override
 	public int hashCode() {

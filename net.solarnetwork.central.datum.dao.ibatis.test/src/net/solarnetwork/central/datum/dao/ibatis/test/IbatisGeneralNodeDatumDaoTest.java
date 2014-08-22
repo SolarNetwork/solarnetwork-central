@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.dao.ibatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralNodeDatumDao;
@@ -63,7 +65,12 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		samples.setInstantaneous(instants);
 
 		Map<String, Number> accum = new HashMap<String, Number>(2);
-		accum.put("watt_hours", 4123L);
+		accum.put("watt_hours", 4123);
+		samples.setAccumulating(accum);
+
+		Map<String, String> msgs = new HashMap<String, String>(2);
+		msgs.put("foo", "bar");
+		samples.setStatus(msgs);
 
 		return datum;
 	}
@@ -89,6 +96,21 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		storeNew();
 		GeneralNodeDatum datum = dao.get(lastDatum.getId());
 		validate(lastDatum, datum);
+	}
+
+	@Test
+	public void storeVeryBigValues() {
+		GeneralNodeDatum datum = getTestInstance();
+		datum.getSamples().getAccumulating().put("watt_hours", 39309570293789380L);
+		datum.getSamples().getAccumulating()
+				.put("very_big", new BigInteger("93475092039478209375027350293523957"));
+		datum.getSamples().getInstantaneous().put("watts", 498475890235787897L);
+		datum.getSamples().getInstantaneous()
+				.put("floating", new BigDecimal("293487590845639845728947589237.49087"));
+		dao.store(datum);
+
+		GeneralNodeDatum entity = dao.get(datum.getId());
+		validate(datum, entity);
 	}
 
 }

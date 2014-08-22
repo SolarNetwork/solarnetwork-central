@@ -23,9 +23,15 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Map;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.util.SerializeIgnore;
+import org.codehaus.jackson.annotate.JsonAnyGetter;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
+import org.codehaus.jackson.annotate.JsonUnwrapped;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.joda.time.DateTime;
@@ -35,9 +41,17 @@ import org.slf4j.LoggerFactory;
 /**
  * Generalized node-based datum.
  * 
+ * <p>
+ * <b>Note</b> that an internal {@link ObjectMapper} is used to manage the JSON
+ * value passed to {@link #setSampleJson(String)}. All floating point values
+ * will be converted to {@link BigDecimal} when parsed, to faithfully represent
+ * the data.
+ * </p>
+ * 
  * @author matt
  * @version 1.0
  */
+@JsonPropertyOrder({ "created", "nodeId", "sourceId" })
 public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable {
 
 	private static final long serialVersionUID = 9030100020202210123L;
@@ -47,6 +61,8 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 
 	static {
 		OBJECT_MAPPER.setSerializationInclusion(Inclusion.NON_NULL);
+		OBJECT_MAPPER.setDeserializationConfig(OBJECT_MAPPER.getDeserializationConfig().with(
+				DeserializationConfig.Feature.USE_BIG_DECIMAL_FOR_FLOATS));
 	}
 
 	private GeneralNodeDatumPK id = new GeneralNodeDatumPK();
@@ -112,15 +128,27 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	}
 
 	@Override
+	public DateTime getCreated() {
+		return (id == null ? null : id.getCreated());
+	}
+
+	@Override
 	@JsonIgnore
 	@SerializeIgnore
 	public GeneralNodeDatumPK getId() {
 		return id;
 	}
 
-	@Override
-	public DateTime getCreated() {
-		return (id == null ? null : id.getCreated());
+	/**
+	 * Convenience method for {@link GeneralNodeDatumSamples#getSampleData()}.
+	 * 
+	 * @return the sample data, or <em>null</em> if none available
+	 */
+	@JsonUnwrapped
+	@JsonAnyGetter
+	public Map<String, ?> getSampleData() {
+		GeneralNodeDatumSamples s = getSamples();
+		return (s == null ? null : s.getSampleData());
 	}
 
 	@Override
@@ -177,6 +205,17 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 		return true;
 	}
 
+	/**
+	 * Get the {@link GeneralNodeDatumSamples} object as a JSON string.
+	 * 
+	 * <p>
+	 * This method will ignore <em>null</em> values.
+	 * </p>
+	 * 
+	 * @return a JSON encoded string, never <em>null</em>
+	 */
+	@SerializeIgnore
+	@JsonIgnore
 	public String getSampleJson() {
 		if ( sampleJson == null ) {
 			try {
@@ -189,10 +228,24 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 		return sampleJson;
 	}
 
+	/**
+	 * Set the {@link GeneralNodeDatumSamples} object via a JSON string.
+	 * 
+	 * <p>
+	 * This method will remove any previously created GeneralNodeDatumSamples
+	 * and replace it with the values parsed from the JSON. All floating point
+	 * values will be converted to {@link BigDecimal} instances.
+	 * </p>
+	 * 
+	 * @param json
+	 */
 	public void setSampleJson(String json) {
 		sampleJson = json;
+		samples = null;
 	}
 
+	@SerializeIgnore
+	@JsonIgnore
 	public DateTime getPosted() {
 		return posted;
 	}
@@ -201,6 +254,8 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 		this.posted = posted;
 	}
 
+	@SerializeIgnore
+	@JsonIgnore
 	public GeneralNodeDatumSamples getSamples() {
 		if ( samples == null && sampleJson != null ) {
 			try {
@@ -212,8 +267,20 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 		return samples;
 	}
 
+	/**
+	 * Set the {@link GeneralNodeDatumSamples} instance to use.
+	 * 
+	 * <p>
+	 * This will replace any value set previously via
+	 * {@link #setSampleJson(String)} as well.
+	 * </p>
+	 * 
+	 * @param samples
+	 *        the samples instance to set
+	 */
 	public void setSamples(GeneralNodeDatumSamples samples) {
 		this.samples = samples;
+		sampleJson = null;
 	}
 
 }
