@@ -96,6 +96,7 @@ public class IbatisGeneralNodeDatumDao extends
 	public IbatisGeneralNodeDatumDao() {
 		super(GeneralNodeDatum.class, GeneralNodeDatumPK.class);
 		this.queryForReportableInterval = QUERY_FOR_REPORTABLE_INTERVAL;
+		this.queryForDistinctSources = QUERY_FOR_DISTINCT_SOURCES;
 	}
 
 	/**

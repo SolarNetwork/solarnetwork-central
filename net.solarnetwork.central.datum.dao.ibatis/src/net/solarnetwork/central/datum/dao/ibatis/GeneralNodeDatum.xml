@@ -47,6 +47,10 @@
 			AND datum.source_id = #sourceId#
 	</select>
 
+	<procedure id="find-general-distinct-sources" resultClass="java.lang.String">
+		{call solardatum.find_available_sources(#node:BIGINT#, #start:TIMESTAMP#, #end:TIMESTAMP#)}
+	</procedure>
+
 	<!-- 
 		FilterableDao support 
 	-->

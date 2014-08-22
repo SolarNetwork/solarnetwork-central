@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.dao.ibatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -51,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport {
 
 	private static final String TEST_SOURCE_ID = "test.source";
+	private static final String TEST_2ND_SOURCE = "2nd source";
 
 	@Autowired
 	private IbatisGeneralNodeDatumDao dao;
@@ -164,4 +167,45 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		assertEquals("Result order", Arrays.asList(datum3.getId(), lastDatum.getId(), datum2.getId()),
 				ids);
 	}
+
+	@Test
+	public void getAllAvailableSourcesForNode() {
+		storeNew();
+		Set<String> sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
+		assertEquals("Sources set size", 0, sources.size());
+
+		// we are querying the reporting table, which requires two rows minimum	so add 2nd datum
+		// of same source to trigger data population there
+		GeneralNodeDatum d2 = getTestInstance();
+		d2.setCreated(d2.getCreated().plus(1000));
+		dao.store(d2);
+
+		// immediately process reporting data
+		processAggregateStaleData();
+
+		sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
+		assertEquals("Sources set size", 1, sources.size());
+		assertTrue("Source ID returned", sources.contains(d2.getSourceId()));
+
+		// add a 2nd source (two more datum to get into reporting table).
+		// we also make this on another day, to support getAllAvailableSourcesForNodeAndDateRange() test
+		GeneralNodeDatum d3 = getTestInstance();
+		d3.setSourceId(TEST_2ND_SOURCE);
+		d3.setCreated(d2.getCreated().plusDays(1));
+		dao.store(d3);
+
+		GeneralNodeDatum d4 = getTestInstance();
+		d4.setSourceId(d3.getSourceId());
+		d4.setCreated(d3.getCreated().plus(1000));
+		dao.store(d4);
+
+		// immediately process reporting data
+		processAggregateStaleData();
+
+		sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
+		assertEquals("Sources set size", 2, sources.size());
+		assertTrue("Source ID returned", sources.contains(d2.getSourceId()));
+		assertTrue("Source ID returned", sources.contains(d3.getSourceId()));
+	}
+
 }
