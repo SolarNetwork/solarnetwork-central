@@ -47,4 +47,56 @@
 			AND datum.source_id = #sourceId#
 	</select>
 
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="GeneralNodeDatumMatchResult" class="GeneralNodeDatumMatch" extends="GeneralNodeDatum.GeneralNodeDatumFullResult"/>
+
+	<sql id="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch">
+		FROM
+			solardatum.da_datum datum
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="filter.sourceIds">
+				datum.source_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+			</isNotEmpty>
+			<isNotNull prepend="AND" property="filter.nodeIds">
+				datum.node_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.startDate">
+				datum.ts &gt;= #filter.startDate#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.endDate">
+				datum.ts &lt; #filter.endDate#
+			</isNotNull>
+		</dynamic>
+	</sql>
+
+	<select id="findall-GeneralNodeDatum-GeneralNodeDatumMatch" resultMap="GeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-full-result"/>
+		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch"/>
+		ORDER BY
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction="," close=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">datum.ts</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">cdatum.node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">cdatum.source_id</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		<isEmpty property="SortDescriptors">
+			datum.node_id,
+			datum.ts,
+			datum.source_id
+		</isEmpty>
+	</select>
+
+	<select id="findall-GeneralNodeDatum-GeneralNodeDatumMatch-count" resultClass="long">
+		SELECT count(cdatum.id)
+		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch"/>
+	</select>
+
 </sqlMap>

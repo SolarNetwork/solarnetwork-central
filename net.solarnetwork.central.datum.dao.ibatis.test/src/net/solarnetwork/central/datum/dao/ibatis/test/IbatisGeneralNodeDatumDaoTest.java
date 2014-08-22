@@ -26,12 +26,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralNodeDatumDao;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.central.domain.FilterResults;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +50,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport {
 
+	private static final String TEST_SOURCE_ID = "test.source";
+
 	@Autowired
 	private IbatisGeneralNodeDatumDao dao;
 
@@ -54,7 +62,7 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		datum.setCreated(new DateTime());
 		datum.setNodeId(TEST_NODE_ID);
 		datum.setPosted(new DateTime());
-		datum.setSourceId("test.source");
+		datum.setSourceId(TEST_SOURCE_ID);
 
 		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
 		datum.setSamples(samples);
@@ -113,4 +121,47 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		validate(datum, entity);
 	}
 
+	@Test
+	public void getFilteredDefaultSort() {
+		storeNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+
+		FilterResults<GeneralNodeDatumMatch> results = dao.findFiltered(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals(1L, (long) results.getTotalResults());
+		assertEquals(1, (int) results.getReturnedResultCount());
+
+		GeneralNodeDatum datum2 = new GeneralNodeDatum();
+		datum2.setCreated(new DateTime().plusHours(1));
+		datum2.setNodeId(TEST_NODE_ID);
+		datum2.setSourceId(TEST_SOURCE_ID);
+		datum2.setSampleJson("{\"i\":{\"watts\":123}}");
+		dao.store(datum2);
+
+		results = dao.findFiltered(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals(2L, (long) results.getTotalResults());
+		assertEquals(2, (int) results.getReturnedResultCount());
+
+		GeneralNodeDatum datum3 = new GeneralNodeDatum();
+		datum3.setCreated(lastDatum.getCreated());
+		datum3.setNodeId(TEST_NODE_ID);
+		datum3.setSourceId("/test/source/2");
+		datum3.setSampleJson("{\"a\":{\"watt_hours\":789}}");
+		dao.store(datum3);
+
+		results = dao.findFiltered(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals(3L, (long) results.getTotalResults());
+		assertEquals(3, (int) results.getReturnedResultCount());
+		List<GeneralNodeDatumPK> ids = new ArrayList<GeneralNodeDatumPK>();
+		for ( GeneralNodeDatum d : results ) {
+			ids.add(d.getId());
+		}
+		// expect d3, d1, d2 because sorted by nodeId,created,sourceId
+		assertEquals("Result order", Arrays.asList(datum3.getId(), lastDatum.getId(), datum2.getId()),
+				ids);
+	}
 }
