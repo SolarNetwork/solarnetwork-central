@@ -46,6 +46,31 @@ public class GeneralNodeDatumSamples implements Serializable {
 	private Map<String, String> status;
 
 	/**
+	 * Default constructor.
+	 */
+	public GeneralNodeDatumSamples() {
+		super();
+	}
+
+	/**
+	 * Construct with values.
+	 * 
+	 * @param instantaneous
+	 *        the instantaneous data
+	 * @param accumulating
+	 *        the accumulating data
+	 * @param status
+	 *        the status data
+	 */
+	public GeneralNodeDatumSamples(Map<String, Number> instantaneous, Map<String, Number> accumulating,
+			Map<String, String> status) {
+		super();
+		this.instantaneous = instantaneous;
+		this.accumulating = accumulating;
+		this.status = status;
+	}
+
+	/**
 	 * Get a merged map of all sample data.
 	 * 
 	 * @return a map with all sample data combined
