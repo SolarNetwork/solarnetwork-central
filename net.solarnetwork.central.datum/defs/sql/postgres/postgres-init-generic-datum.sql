@@ -4,8 +4,8 @@ CREATE SCHEMA solaragg;
 
 CREATE TABLE solardatum.da_datum (
   ts solarcommon.ts NOT NULL,
-  node_id solarcommon.node_id,
-  source_id solarcommon.source_id,
+  node_id solarcommon.node_id NOT NULL,
+  source_id solarcommon.source_id NOT NULL,
   posted solarcommon.ts NOT NULL,
   jdata json NOT NULL,
   CONSTRAINT sn_consum_datum_pkey PRIMARY KEY (node_id, ts, source_id) DEFERRABLE INITIALLY IMMEDIATE
@@ -13,8 +13,8 @@ CREATE TABLE solardatum.da_datum (
 
 CREATE TABLE solaragg.agg_stale_datum (
   ts_start timestamp with time zone NOT NULL,
-  node_id solarcommon.node_id,
-  source_id solarcommon.source_id,
+  node_id solarcommon.node_id NOT NULL,
+  source_id solarcommon.source_id NOT NULL,
   agg_kind char(1) NOT NULL,
   created timestamp NOT NULL DEFAULT now(),
   CONSTRAINT agg_stale_datum_pkey PRIMARY KEY (agg_kind, node_id, ts_start, source_id)
@@ -24,8 +24,8 @@ CREATE TABLE solaragg.agg_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
   local_time time without time zone NOT NULL,
-  node_id solarcommon.node_id,
-  source_id solarcommon.source_id,
+  node_id solarcommon.node_id NOT NULL,
+  source_id solarcommon.source_id NOT NULL,
   jdata json NOT NULL,
  CONSTRAINT agg_datum_hourly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
@@ -33,8 +33,8 @@ CREATE TABLE solaragg.agg_datum_hourly (
 CREATE TABLE solaragg.agg_datum_daily (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
-  node_id solarcommon.node_id,
-  source_id solarcommon.source_id,
+  node_id solarcommon.node_id NOT NULL,
+  source_id solarcommon.source_id NOT NULL,
   jdata json NOT NULL,
  CONSTRAINT agg_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
@@ -124,6 +124,34 @@ BEGIN
 				AND d.ts_start >= st
 				AND d.ts_end <= en;
 	END CASE;	
+END;$BODY$
+  LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION solardatum.find_reportable_interval(
+	IN node solarcommon.node_id, 
+	IN src solarcommon.source_id DEFAULT NULL,
+	OUT ts_start solarcommon.ts, 
+	OUT ts_end solarcommon.ts)
+  RETURNS RECORD AS
+$BODY$
+BEGIN
+	CASE
+		WHEN src IS NULL THEN
+			SELECT min(ts) FROM solardatum.da_datum WHERE node_id = node
+			INTO ts_start;
+		ELSE
+			SELECT min(ts) FROM solardatum.da_datum WHERE node_id = node AND source_id = src
+			INTO ts_start;
+	END CASE;
+	
+	CASE
+		WHEN src IS NULL THEN
+			SELECT max(ts) FROM solardatum.da_datum WHERE node_id = node
+			INTO ts_end;
+		ELSE
+			SELECT max(ts) FROM solardatum.da_datum WHERE node_id = node AND source_id = src
+			INTO ts_end;
+	END CASE;
 END;$BODY$
   LANGUAGE plpgsql STABLE;
 
