@@ -178,7 +178,7 @@ stmt.free();
 
 return merge(calculateAverages(iobj, iobjCounts), aobj);
 $BODY$
-  LANGUAGE plv8 VOLATILE;
+  LANGUAGE plv8 STABLE;
 
 
 CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
