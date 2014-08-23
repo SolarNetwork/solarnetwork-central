@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.datum.dao.ibatis;
 
-import java.util.Date;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -39,7 +39,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
 import org.joda.time.DateTime;
-import org.joda.time.MutableInterval;
+import org.joda.time.Interval;
 import org.joda.time.ReadableInterval;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -162,20 +162,21 @@ public class IbatisGeneralNodeDatumDao extends
 		if ( nodeId != null ) {
 			params.put(PARAM_NODE_ID, nodeId);
 		}
-		params.put(PARAM_CLASS_NAME, getDomainClass().getSimpleName());
-		@SuppressWarnings("unchecked")
-		List<? extends Date> results = getSqlMapClientTemplate().queryForList(
-				this.queryForReportableInterval, params);
-		if ( results.size() < 2 || results.get(0) == null ) {
+		getSqlMapClientTemplate().queryForObject(this.queryForReportableInterval, params);
+		Timestamp start = (Timestamp) params.get("ts_start");
+		Timestamp end = (Timestamp) params.get("ts_end");
+		if ( start == null || end == null ) {
 			return null;
 		}
-		long d1 = results.get(0).getTime();
-		long d2 = results.get(1).getTime();
-		MutableInterval interval = new MutableInterval(d1 < d2 ? d1 : d2, d2 > d1 ? d2 : d1);
+		long d1 = start.getTime();
+		long d2 = end.getTime();
+		Interval interval = new Interval(d1 < d2 ? d1 : d2, d2 > d1 ? d2 : d1);
 		return interval;
+
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		if ( nodeId != null ) {

@@ -41,6 +41,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.central.domain.FilterResults;
 import org.joda.time.DateTime;
+import org.joda.time.ReadableInterval;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -206,6 +208,35 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		assertEquals("Sources set size", 2, sources.size());
 		assertTrue("Source ID returned", sources.contains(d2.getSourceId()));
 		assertTrue("Source ID returned", sources.contains(d3.getSourceId()));
+	}
+
+	@Test
+	public void getReportableIntervalNoDatum() {
+		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID);
+		Assert.assertNull(result);
+	}
+
+	@Test
+	public void getReportableIntervalOneDatum() {
+		storeNew();
+		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID);
+		assertNotNull(result);
+		assertEquals(lastDatum.getCreated(), result.getStart());
+		assertEquals(lastDatum.getCreated(), result.getEnd());
+	}
+
+	@Test
+	public void getReportableIntervalTwoDatum() {
+		storeNew();
+
+		GeneralNodeDatum d2 = getTestInstance();
+		d2.setCreated(d2.getCreated().plus(1000));
+		dao.store(d2);
+
+		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID);
+		assertNotNull(result);
+		assertEquals(lastDatum.getCreated(), result.getStart());
+		assertEquals(d2.getCreated(), result.getEnd());
 	}
 
 }

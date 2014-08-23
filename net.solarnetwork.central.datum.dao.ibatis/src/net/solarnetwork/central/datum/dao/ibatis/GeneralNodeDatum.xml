@@ -50,6 +50,17 @@
 	<procedure id="find-general-distinct-sources" resultClass="java.lang.String">
 		{call solardatum.find_available_sources(#node:BIGINT#, #start:TIMESTAMP#, #end:TIMESTAMP#)}
 	</procedure>
+	
+	<parameterMap class="map" id="pmap-reportable-interval">
+		<parameter property="node" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="source" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="ts_start" jdbcType="TIMESTAMP" mode="OUT"/>
+		<parameter property="ts_end" jdbcType="TIMESTAMP" mode="OUT"/>
+	</parameterMap>
+
+	<procedure id="find-general-reportable-interval" parameterMap="pmap-reportable-interval" resultClass="map">
+		{call solardatum.find_reportable_interval(?, ?, ?, ?)}
+	</procedure>
 
 	<!-- 
 		FilterableDao support 
