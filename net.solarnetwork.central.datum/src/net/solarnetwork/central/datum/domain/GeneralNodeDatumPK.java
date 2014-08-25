@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
 
 /**
@@ -38,6 +39,30 @@ public class GeneralNodeDatumPK implements Serializable, Cloneable, Comparable<G
 	private Long nodeId;
 	private DateTime created;
 	private String sourceId;
+
+	/**
+	 * Get a computed string ID value for this primary key. Note this value is
+	 * derived from the properties of this class, and not assigned by the
+	 * system.
+	 * 
+	 * @return computed ID string
+	 */
+	public String getId() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("n=");
+		if ( nodeId != null ) {
+			builder.append(nodeId);
+		}
+		builder.append(";c=");
+		if ( created != null ) {
+			builder.append(created);
+		}
+		builder.append(";s=");
+		if ( sourceId != null ) {
+			builder.append(sourceId);
+		}
+		return DigestUtils.shaHex(builder.toString());
+	}
 
 	/**
 	 * Compare two {@code GeneralNodeDautumPK} objects. Keys are ordered based
