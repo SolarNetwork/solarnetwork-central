@@ -32,6 +32,8 @@ CREATE TABLE solaragg.agg_datum_hourly (
  CONSTRAINT agg_datum_hourly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
+CLUSTER solaragg.agg_datum_hourly USING agg_datum_hourly_pkey;
+
 CREATE TABLE solaragg.agg_datum_daily (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
@@ -40,6 +42,8 @@ CREATE TABLE solaragg.agg_datum_daily (
   jdata json NOT NULL,
  CONSTRAINT agg_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
+
+CLUSTER solaragg.agg_datum_daily USING agg_datum_daily_pkey;
 
 CREATE OR REPLACE FUNCTION solardatum.trigger_agg_stale_datum()
   RETURNS trigger AS
@@ -71,7 +75,6 @@ CREATE TRIGGER aa_agg_stale_datum
   ON solardatum.da_datum
   FOR EACH ROW
   EXECUTE PROCEDURE solardatum.trigger_agg_stale_datum();
-
 
 CREATE OR REPLACE FUNCTION solardatum.store_datum(
 	ts solarcommon.ts, 
