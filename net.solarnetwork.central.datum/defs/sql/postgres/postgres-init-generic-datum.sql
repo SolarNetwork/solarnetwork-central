@@ -8,8 +8,10 @@ CREATE TABLE solardatum.da_datum (
   source_id solarcommon.source_id NOT NULL,
   posted solarcommon.ts NOT NULL,
   jdata json NOT NULL,
-  CONSTRAINT sn_consum_datum_pkey PRIMARY KEY (node_id, ts, source_id) DEFERRABLE INITIALLY IMMEDIATE
+  CONSTRAINT da_datum_pkey PRIMARY KEY (node_id, ts, source_id) DEFERRABLE INITIALLY IMMEDIATE
 );
+
+CLUSTER solardatum.da_datum USING da_datum_pkey;
 
 CREATE TABLE solaragg.agg_stale_datum (
   ts_start timestamp with time zone NOT NULL,
@@ -63,8 +65,9 @@ $BODY$BEGIN
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
-CREATE TRIGGER populate_agg_stale_datum
-  AFTER INSERT OR UPDATE OR DELETE
+-- NOTE the trigger name has aa_ prefix so sorts before pg_partman trigger name
+CREATE TRIGGER aa_agg_stale_datum
+  BEFORE INSERT OR UPDATE OR DELETE
   ON solardatum.da_datum
   FOR EACH ROW
   EXECUTE PROCEDURE solardatum.trigger_agg_stale_datum();
