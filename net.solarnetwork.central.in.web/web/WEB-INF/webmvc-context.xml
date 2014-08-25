@@ -13,29 +13,39 @@
 
 	<ctx:annotation-config/>
 	<ctx:component-scan base-package="net.solarnetwork.central.in.web"/>
+	
+	<bean id="objectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
+		<property name="mapper" ref="jacksonObjectMapper"/>
+		<property name="serializers">
+			<list>
+				<bean class="net.solarnetwork.util.JodaDateTimeSerializer"/>
+				<bean class="net.solarnetwork.util.JodaLocalDateSerializer"/>
+				<bean class="net.solarnetwork.util.JodaLocalDateTimeSerializer"/>
+				<bean class="net.solarnetwork.util.JodaLocalTimeSerializer"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="jacksonObjectMapper" class="org.codehaus.jackson.map.ObjectMapper">
+		<property name="serializationInclusion" value="NON_NULL"/>
+	</bean>
+	<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+	    <property name="targetObject" ref="jacksonObjectMapper" />
+	    <property name="targetMethod" value="configure" />
+	    <property name="arguments">
+	        <list>
+	            <value type="org.codehaus.jackson.map.DeserializationConfig.Feature">FAIL_ON_UNKNOWN_PROPERTIES</value>
+	            <value>false</value>
+	        </list>
+	    </property>
+	</bean>
 
 	<mvc:annotation-driven>
 		<mvc:message-converters register-defaults="true">
 			<bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
 				<property name="prefixJson" value="false" />
 				<property name="supportedMediaTypes" value="application/json" />
-				<property name="objectMapper">
-					<bean class="net.solarnetwork.util.ObjectMapperFactoryBean">
-						<property name="mapper">
-							<bean class="org.codehaus.jackson.map.ObjectMapper">
-								<property name="serializationInclusion" value="NON_NULL"/>
-							</bean>
-						</property>
-						<property name="serializers">
-							<list>
-								<bean class="net.solarnetwork.util.JodaDateTimeSerializer"/>
-								<bean class="net.solarnetwork.util.JodaLocalDateSerializer"/>
-								<bean class="net.solarnetwork.util.JodaLocalDateTimeSerializer"/>
-								<bean class="net.solarnetwork.util.JodaLocalTimeSerializer"/>
-							</list>
-						</property>
-					</bean>
-				</property>
+				<property name="objectMapper" ref="objectMapper"/>
 		    </bean>
 		</mvc:message-converters>
 	</mvc:annotation-driven>
