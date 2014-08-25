@@ -26,6 +26,7 @@ package net.solarnetwork.central.in.biz;
 
 import java.util.List;
 import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
@@ -41,7 +42,7 @@ import net.solarnetwork.central.domain.SourceLocationMatch;
  * </p>
  * 
  * @author matt.magoffin
- * @version 1.1
+ * @version 1.2
  */
 public interface DataCollectorBiz {
 
@@ -65,6 +66,14 @@ public interface DataCollectorBiz {
 	 *         {@code datums}
 	 */
 	List<Datum> postDatum(Iterable<Datum> datums);
+
+	/**
+	 * Post a collection of {@link GeneralNodeDatum} in a single transaction.
+	 * 
+	 * @param datums
+	 *        the collection of datums
+	 */
+	void postGeneralNodeDatum(Iterable<GeneralNodeDatum> datums);
 
 	/**
 	 * Look up PriceLocation objects based on a source name and location name.
