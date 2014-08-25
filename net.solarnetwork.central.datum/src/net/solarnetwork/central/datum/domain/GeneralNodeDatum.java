@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Map;
 import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.SerializeIgnore;
 import org.codehaus.jackson.annotate.JsonAnyGetter;
 import org.codehaus.jackson.annotate.JsonIgnore;

@@ -25,7 +25,7 @@ package net.solarnetwork.central.datum.test;
 import java.util.HashMap;
 import java.util.Map;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.joda.time.DateTime;
