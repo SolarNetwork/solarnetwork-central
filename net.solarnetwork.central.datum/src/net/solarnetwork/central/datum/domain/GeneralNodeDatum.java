@@ -30,6 +30,7 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.SerializeIgnore;
 import org.codehaus.jackson.annotate.JsonAnyGetter;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.annotate.JsonUnwrapped;
 import org.codehaus.jackson.map.DeserializationConfig;
@@ -240,6 +241,8 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	 * 
 	 * @param json
 	 */
+	@JsonProperty
+	// @JsonProperty needed because of @JsonIgnore on getter
 	public void setSampleJson(String json) {
 		sampleJson = json;
 		samples = null;
@@ -279,6 +282,8 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	 * @param samples
 	 *        the samples instance to set
 	 */
+	@JsonProperty
+	// @JsonProperty needed because of @JsonIgnore on getter
 	public void setSamples(GeneralNodeDatumSamples samples) {
 		this.samples = samples;
 		sampleJson = null;

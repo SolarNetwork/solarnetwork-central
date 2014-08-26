@@ -22,14 +22,17 @@
 
 package net.solarnetwork.central.datum.test;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.joda.time.DateTime;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -43,10 +46,15 @@ public class GeneralNodeDatumTests {
 	private static final Long TEST_NODE_ID = -1L;
 	private static final String TEST_SOURCE_ID = "test.source";
 
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+	private ObjectMapper objectMapper;
 
-	static {
-		OBJECT_MAPPER.setSerializationInclusion(Inclusion.NON_NULL);
+	@Before
+	public void setup() {
+		objectMapper = new ObjectMapper();
+		objectMapper.setSerializationInclusion(Inclusion.NON_NULL);
+		objectMapper.setDeserializationConfig(objectMapper.getDeserializationConfig().with(
+				DeserializationConfig.Feature.USE_BIG_DECIMAL_FOR_FLOATS));
+
 	}
 
 	private GeneralNodeDatum getTestInstance() {
@@ -73,9 +81,25 @@ public class GeneralNodeDatumTests {
 
 	@Test
 	public void serializeJson() throws Exception {
-		String json = OBJECT_MAPPER.writeValueAsString(getTestInstance());
+		String json = objectMapper.writeValueAsString(getTestInstance());
 		Assert.assertEquals("{\"created\":1408665600000,\"nodeId\":-1,\"sourceId\":\"test.source\","
 				+ "\"watts\":231,\"watt_hours\":4123}", json);
+	}
+
+	@Test
+	public void deserializeJson() throws Exception {
+		String json = "{\"created\":1408665600000,\"sourceId\":\"Main\",\"samples\":{\"i\":{\"watts\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
+		GeneralNodeDatum datum = objectMapper.readValue(json, GeneralNodeDatum.class);
+		Assert.assertNotNull(datum);
+		Assert.assertNotNull(datum.getCreated());
+		Assert.assertEquals(1408665600000L, datum.getCreated().getMillis());
+		Assert.assertEquals("Main", datum.getSourceId());
+		Assert.assertNotNull(datum.getSamples());
+		Assert.assertEquals(Integer.valueOf(89),
+				datum.getSamples().getInstantaneousSampleInteger("watts"));
+		Assert.assertEquals(Long.valueOf(2502287), datum.getSamples().getStatusSampleLong("ploc"));
+		Assert.assertEquals(new BigDecimal("21.2"),
+				datum.getSamples().getInstantaneousSampleBigDecimal("temp"));
 	}
 
 }
