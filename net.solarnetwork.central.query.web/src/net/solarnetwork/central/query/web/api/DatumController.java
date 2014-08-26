@@ -31,9 +31,9 @@ import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
-import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.JodaDateFormatEditor;
+import net.solarnetwork.web.domain.Response;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -48,7 +48,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })

@@ -29,9 +29,9 @@ import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.domain.WeatherLocation;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
-import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.JodaDateFormatEditor;
+import net.solarnetwork.web.domain.Response;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -45,7 +45,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * Controller for querying location data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/api/v1/pub/location", "/api/v1/sec/location" })

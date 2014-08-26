@@ -31,10 +31,10 @@ import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.domain.ReportableIntervalType;
 import net.solarnetwork.central.query.web.domain.ReportableIntervalCommand;
-import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.JodaDateFormatEditor;
 import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
+import net.solarnetwork.web.domain.Response;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -53,7 +53,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })

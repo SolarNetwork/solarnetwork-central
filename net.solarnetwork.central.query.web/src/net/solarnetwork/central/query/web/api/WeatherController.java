@@ -24,8 +24,8 @@ package net.solarnetwork.central.query.web.api;
 
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.WeatherConditions;
-import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.web.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * Controller for querying weather related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller("v1WeatherController")
 @RequestMapping({ "/api/v1/sec/weather", "/api/v1/pub/weather" })
