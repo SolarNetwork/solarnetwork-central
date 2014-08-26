@@ -18,24 +18,52 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.scheduler;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 
 /**
  * Base helper class for a scheduled job.
  * 
+ * <p>
+ * The configurable properties of this class are:
+ * </p>
+ * 
+ * <dl class="class-properties">
+ * <dt>maximumWaitMs</dt>
+ * <dd>The maximum time, in milliseconds, to allow for the job to execute before
+ * it is considered a failed job. Defaults to <b>10 minutes</b>.</dd>
+ * 
+ * <dt>jobId</dt>
+ * <dd>The unique ID of the job to schedule.</dd>
+ * 
+ * <dt>jobTopic</dt>
+ * <dd>The {@link Event} topic to use for this job.</dd>
+ * 
+ * <dt>jobGroup</dt>
+ * <dd>The job group to use. Defaults to <b>Datum</b>.</dd>
+ * 
+ * <dt>jobCron</dt>
+ * <dd>The job cron expression to use for scheduling this job. Defaults to
+ * <code>0 0/1 * * * ?</code> (once per minute)</dd>.
+ * </dl>
+ * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public abstract class JobSupport extends EventHandlerSupport {
 
 	private final EventAdmin eventAdmin;
+	private long maximumWaitMs = 10L * 60L * 1000L;
+	private String jobId;
+	private String jobTopic;
+	private String jobGroup;
+	public String jobCron = "0 0/1 * * * ?";
 
 	/**
 	 * Constructor.
@@ -49,12 +77,16 @@ public abstract class JobSupport extends EventHandlerSupport {
 
 	@Override
 	protected final void handleEventInternal(Event event) throws Exception {
+		if ( event.getTopic().equals(SchedulerConstants.TOPIC_SCHEDULER_READY) ) {
+			schedulerReady(event);
+			return;
+		}
+		if ( jobId != null && !jobId.equals(event.getProperty(SchedulerConstants.JOB_ID)) ) {
+			// same topic, wrong job
+			return;
+		}
 		Event ack = null;
 		try {
-			if ( event.getTopic().equals(SchedulerConstants.TOPIC_SCHEDULER_READY) ) {
-				schedulerReady(event);
-				return;
-			}
 			if ( handleJob(event) ) {
 				ack = SchedulerUtils.createJobCompleteEvent(event);
 			} else {
@@ -72,7 +104,9 @@ public abstract class JobSupport extends EventHandlerSupport {
 
 	/**
 	 * Handle the "scheduler ready" event, to give class a chance to perform
-	 * startup tasks.
+	 * startup tasks. This implementation generates a {@code TOPIC_JOB_REQUEST}
+	 * event using the configured job properties and cron schedule on this
+	 * class.
 	 * 
 	 * @param event
 	 *        the event
@@ -80,7 +114,15 @@ public abstract class JobSupport extends EventHandlerSupport {
 	 *         if any error occurs
 	 */
 	protected void schedulerReady(Event event) throws Exception {
-		// subclasses can override
+		Map<String, Object> props = new HashMap<String, Object>(5);
+		props.put(SchedulerConstants.JOB_ID, jobId);
+		props.put(SchedulerConstants.JOB_CRON_EXPRESSION, jobCron);
+		props.put(SchedulerConstants.JOB_GROUP, jobGroup);
+		props.put(SchedulerConstants.JOB_MAX_WAIT, maximumWaitMs);
+		props.put(SchedulerConstants.JOB_TOPIC, jobTopic);
+
+		Event e = new Event(SchedulerConstants.TOPIC_JOB_REQUEST, props);
+		getEventAdmin().postEvent(e);
 	}
 
 	/**
@@ -102,5 +144,45 @@ public abstract class JobSupport extends EventHandlerSupport {
 	 */
 	protected EventAdmin getEventAdmin() {
 		return eventAdmin;
+	}
+
+	public long getMaximumWaitMs() {
+		return maximumWaitMs;
+	}
+
+	public String getJobId() {
+		return jobId;
+	}
+
+	public String getJobTopic() {
+		return jobTopic;
+	}
+
+	public String getJobGroup() {
+		return jobGroup;
+	}
+
+	public String getJobCron() {
+		return jobCron;
+	}
+
+	public void setJobId(String jobId) {
+		this.jobId = jobId;
+	}
+
+	public void setJobTopic(String jobTopic) {
+		this.jobTopic = jobTopic;
+	}
+
+	public void setMaximumWaitMs(long maximumWaitMs) {
+		this.maximumWaitMs = maximumWaitMs;
+	}
+
+	public void setJobCron(String jobCron) {
+		this.jobCron = jobCron;
+	}
+
+	public void setJobGroup(String jobGroup) {
+		this.jobGroup = jobGroup;
 	}
 }
