@@ -81,7 +81,7 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		accum.put("watt_hours", 4123);
 		samples.setAccumulating(accum);
 
-		Map<String, String> msgs = new HashMap<String, String>(2);
+		Map<String, Object> msgs = new HashMap<String, Object>(2);
 		msgs.put("foo", "bar");
 		samples.setStatus(msgs);
 
