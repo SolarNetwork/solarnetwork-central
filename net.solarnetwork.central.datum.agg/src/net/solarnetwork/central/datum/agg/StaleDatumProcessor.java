@@ -91,10 +91,12 @@ public class StaleDatumProcessor extends JobSupport {
 	private String jobCron = "0 0/1 * * * ?";
 
 	/**
-	 * Construct with EventAdmin.
+	 * Construct with properties.
 	 * 
 	 * @param eventAdmin
 	 *        the EventAdmin
+	 * @param jdbcOps
+	 *        the JdbcOperations to use
 	 */
 	public StaleDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
 		super(eventAdmin);
