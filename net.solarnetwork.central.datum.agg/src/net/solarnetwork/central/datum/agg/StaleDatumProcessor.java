@@ -26,10 +26,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.HashMap;
-import java.util.Map;
 import net.solarnetwork.central.scheduler.JobSupport;
-import net.solarnetwork.central.scheduler.SchedulerConstants;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
@@ -55,40 +52,19 @@ import org.springframework.jdbc.core.JdbcOperations;
  * <dd>The maximum number of rows to process, as returned by the stored
  * procedure. Defaults to <b>5</b>.</dd>
  * 
- * <dt>maximumWaitMs</dt>
- * <dd>The maximum time, in milliseconds, to allow for the job to execute before
- * it is considered a failed job. Defaults to <b>10 minutes</b>.</dd>
- * 
  * <dt>jdbcCall</dt>
  * <dd>The stored procedure to call. It must return a single integer result.</dd>
  * 
- * <dt>jobId</dt>
- * <dd>The unique ID of the job to schedule.</dd>
- * 
- * <dt>jobTopic</dt>
- * <dd>The {@link Event} topic to use for this job.</dd>
- * 
- * <dt>jobGroup</dt>
- * <dd>The job group to use. Defaults to <b>Datum</b>.</dd>
- * 
- * <dt>jobCron</dt>
- * <dd>The job cron expression to use for scheduling this job. Defaults to
- * <code>0 0/1 * * * ?</code> (once per minute)</dd>.
  * </dl>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class StaleDatumProcessor extends JobSupport {
 
 	private final JdbcOperations jdbcOps;
 	private int maximumRowCount = 5;
-	private long maximumWaitMs = 10L * 60L * 1000L;
 	private String jdbcCall;
-	private String jobId;
-	private String jobTopic;
-	private String jobGroup = "Datum";
-	private String jobCron = "0 0/1 * * * ?";
 
 	/**
 	 * Construct with properties.
@@ -101,6 +77,7 @@ public class StaleDatumProcessor extends JobSupport {
 	public StaleDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
 		super(eventAdmin);
 		this.jdbcOps = jdbcOps;
+		setJobGroup("Datum");
 	}
 
 	@Override
@@ -130,18 +107,16 @@ public class StaleDatumProcessor extends JobSupport {
 		return true;
 	}
 
-	@Override
-	protected void schedulerReady(Event event) throws Exception {
-		// schedule our job to run!
-		Map<String, Object> props = new HashMap<String, Object>(5);
-		props.put(SchedulerConstants.JOB_ID, jobId);
-		props.put(SchedulerConstants.JOB_CRON_EXPRESSION, jobCron);
-		props.put(SchedulerConstants.JOB_GROUP, jobGroup);
-		props.put(SchedulerConstants.JOB_MAX_WAIT, maximumWaitMs);
-		props.put(SchedulerConstants.JOB_TOPIC, jobTopic);
+	public JdbcOperations getJdbcOps() {
+		return jdbcOps;
+	}
 
-		Event e = new Event(SchedulerConstants.TOPIC_JOB_REQUEST, props);
-		getEventAdmin().postEvent(e);
+	public int getMaximumRowCount() {
+		return maximumRowCount;
+	}
+
+	public String getJdbcCall() {
+		return jdbcCall;
 	}
 
 	public void setMaximumRowCount(int maximumRowCount) {
@@ -150,26 +125,6 @@ public class StaleDatumProcessor extends JobSupport {
 
 	public void setJdbcCall(String jdbcCall) {
 		this.jdbcCall = jdbcCall;
-	}
-
-	public void setJobId(String jobId) {
-		this.jobId = jobId;
-	}
-
-	public void setJobTopic(String jobTopic) {
-		this.jobTopic = jobTopic;
-	}
-
-	public void setMaximumWaitMs(long maximumWaitMs) {
-		this.maximumWaitMs = maximumWaitMs;
-	}
-
-	public void setJobCron(String jobCron) {
-		this.jobCron = jobCron;
-	}
-
-	public void setJobGroup(String jobGroup) {
-		this.jobGroup = jobGroup;
 	}
 
 }
