@@ -213,6 +213,11 @@ BEGIN
 		WHERE n.node_id = stale.node_id
 		INTO node_tz;
 
+		IF NOT FOUND THEN
+			RAISE NOTICE 'Node % has no time zone, will use UTC.', stale.node_id;
+			node_tz := 'UTC';
+		END IF;
+
 		SELECT solaragg.calc_datum_time_slot(stale.node_id, stale.source_id, stale.ts_start, agg_span, interval '20 minutes')
 		INTO agg_json;
 		IF agg_json IS NULL THEN
