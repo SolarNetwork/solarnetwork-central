@@ -77,29 +77,29 @@ CREATE TRIGGER aa_agg_stale_datum
   EXECUTE PROCEDURE solardatum.trigger_agg_stale_datum();
 
 CREATE OR REPLACE FUNCTION solardatum.store_datum(
-	ts solarcommon.ts, 
-	node_id solarcommon.node_id, 
-	source_id solarcommon.source_id, 
-	posted solarcommon.ts, 
+	cdate solarcommon.ts, 
+	node solarcommon.node_id, 
+	src solarcommon.source_id, 
+	pdate solarcommon.ts, 
 	jdata text)
   RETURNS void AS
 $BODY$
 DECLARE
-	ts_post solarcommon.ts := (CASE WHEN posted IS NULL THEN now() ELSE posted END);
+	ts_post solarcommon.ts := (CASE WHEN pdate IS NULL THEN now() ELSE pdate END);
 	jdata_json json := jdata::json;
 BEGIN
 	BEGIN
 		INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata)
-		VALUES (ts, node_id, source_id, ts_post, jdata_json);
+		VALUES (cdate, node, src, ts_post, jdata_json);
 	EXCEPTION WHEN unique_violation THEN
 		-- We mostly expect inserts, but we allow updates
 		UPDATE solardatum.da_datum SET 
 			jdata = jdata_json, 
 			posted = ts_post
 		WHERE
-			node_id = node_id
-			AND ts = ts
-			AND source_id = source_id;
+			node_id = node
+			AND ts = cdate
+			AND source_id = src;
 	END;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
