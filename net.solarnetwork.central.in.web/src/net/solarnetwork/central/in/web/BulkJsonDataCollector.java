@@ -184,9 +184,6 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	}
 
 	private Object handleNode(JsonNode node) {
-		if ( !node.has(OBJECT_TYPE_FIELD) ) {
-			return null;
-		}
 		String nodeType = getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
 		if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) ) {
 			return handleGeneralNodeDatum(node);

@@ -12,13 +12,13 @@
 		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
 		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
 		http://www.springframework.org/schema/beans
-		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 		http://www.springframework.org/schema/context
-		http://www.springframework.org/schema/context/spring-context-3.0.xsd
+		http://www.springframework.org/schema/context/spring-context-3.1.xsd
 		http://www.springframework.org/schema/tx
-		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+		http://www.springframework.org/schema/tx/spring-tx-3.1.xsd
 		http://www.springframework.org/schema/util
-		http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+		http://www.springframework.org/schema/util/spring-util-3.1.xsd">
 
 	<!-- Configuration -->
 	
@@ -41,6 +41,7 @@
 	
 	<reference id="consumptionDatumDao" interface="net.solarnetwork.central.datum.dao.ConsumptionDatumDao"/>
 	<reference id="dayDatumDao" interface="net.solarnetwork.central.datum.dao.DayDatumDao"/>
+	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 	<reference id="hardwareControlDatumDao" interface="net.solarnetwork.central.datum.dao.HardwareControlDatumDao"/>
 	<reference id="powerDatumDao" interface="net.solarnetwork.central.datum.dao.PowerDatumDao"/>
 	<reference id="priceDatumDao" interface="net.solarnetwork.central.datum.dao.PriceDatumDao"/>
@@ -66,6 +67,7 @@
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 	
 	<bean id="daoDataCollectorBiz" class="net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz">
+		<property name="generalNodeDatumDao" ref="generalNodeDatumDao"/>
 		<property name="priceLocationDao" ref="priceLocationDao"/>
 		<property name="solarLocationDao" ref="solarLocationDao"/>
 		<property name="solarNodeDao" ref="solarNodeDao"/>
