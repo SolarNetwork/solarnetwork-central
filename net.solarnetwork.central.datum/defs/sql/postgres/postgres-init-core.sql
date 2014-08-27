@@ -513,7 +513,6 @@ CREATE TABLE solarnet.sn_power_datum (
 	bat_amp_hrs		REAL,
 	watt_hour		BIGINT,
 	prev_datum		BIGINT,
-	local_created	TIMESTAMP WITHOUT TIME ZONE NOT NULL,
 	PRIMARY KEY (id),
 	CONSTRAINT sn_power_datum_node_fk
 		FOREIGN KEY (node_id) REFERENCES solarnet.sn_node (node_id)
