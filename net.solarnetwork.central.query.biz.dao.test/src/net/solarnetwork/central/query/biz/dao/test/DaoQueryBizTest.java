@@ -330,4 +330,57 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		assertEquals(d2.getCreated(), result.getInterval().getEnd());
 	}
 
+	@Test
+	public void getAvailableSourcesGeneralNodeDatum() {
+		GeneralNodeDatum d = getTestGeneralNodeDatumInstance();
+		generalNodeDatumDao.store(d);
+
+		GeneralNodeDatum d2 = getTestGeneralNodeDatumInstance();
+		d2.setCreated(d2.getCreated().plusDays(5));
+		d2.setSourceId(TEST_SOURCE_ID2);
+		generalNodeDatumDao.store(d2);
+
+		// immediately process reporting data, which the DAO relies on
+		processAggregateStaleData();
+
+		Set<String> result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, null, null);
+		assertNotNull(result);
+		assertEquals(2, result.size());
+		assertTrue(result.contains(TEST_SOURCE_ID));
+		assertTrue(result.contains(TEST_SOURCE_ID2));
+	}
+
+	@Test
+	public void getAvailableSourcesGeneralNodeDatumWithDateRange() {
+		GeneralNodeDatum d = getTestGeneralNodeDatumInstance();
+		generalNodeDatumDao.store(d);
+
+		GeneralNodeDatum d2 = getTestGeneralNodeDatumInstance();
+		d2.setCreated(d2.getCreated().plusDays(5));
+		d2.setSourceId(TEST_SOURCE_ID2);
+		generalNodeDatumDao.store(d2);
+
+		// immediately process reporting data, which the DAO relies on
+		processAggregateStaleData();
+
+		Set<String> result;
+
+		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, d.getCreated(), d.getCreated()
+				.plusDays(1));
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertTrue("1st result inclusive start date", result.contains(TEST_SOURCE_ID));
+
+		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, d.getCreated().plusDays(1), d
+				.getCreated().plusDays(2));
+		assertNotNull(result);
+		assertEquals("No results within date range", 0, result.size());
+
+		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, d.getCreated().plusDays(4),
+				d2.getCreated());
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertTrue("2nd result inclusive end date", result.contains(TEST_SOURCE_ID2));
+	}
+
 }
