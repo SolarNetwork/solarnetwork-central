@@ -36,13 +36,13 @@ import org.joda.time.DateTime;
 
 /**
  * Implementation of {@link LocationDatumFilter}, {@link NodeDatumFilter}, and
- * {@link AggregateNodeDatumFilter}.
+ * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
-		AggregateNodeDatumFilter {
+		AggregateNodeDatumFilter, GeneralNodeDatumFilter {
 
 	private final SolarLocation location;
 	private DateTime startDate;
@@ -148,6 +148,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		this.endDate = endDate;
 	}
 
+	@Override
 	public String getType() {
 		return type;
 	}

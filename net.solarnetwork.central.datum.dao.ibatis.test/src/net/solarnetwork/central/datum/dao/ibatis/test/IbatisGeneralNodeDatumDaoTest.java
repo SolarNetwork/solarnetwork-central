@@ -36,7 +36,7 @@ import java.util.Set;
 import net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
@@ -133,7 +133,8 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(TEST_NODE_ID);
 
-		FilterResults<GeneralNodeDatumMatch> results = dao.findFiltered(criteria, null, null, null);
+		FilterResults<GeneralNodeDatumFilterMatch> results = dao
+				.findFiltered(criteria, null, null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
 		assertEquals(1, (int) results.getReturnedResultCount());
@@ -162,7 +163,7 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		assertEquals(3L, (long) results.getTotalResults());
 		assertEquals(3, (int) results.getReturnedResultCount());
 		List<GeneralNodeDatumPK> ids = new ArrayList<GeneralNodeDatumPK>();
-		for ( GeneralNodeDatum d : results ) {
+		for ( GeneralNodeDatumFilterMatch d : results ) {
 			ids.add(d.getId());
 		}
 		// expect d3, d1, d2 because sorted by nodeId,created,sourceId

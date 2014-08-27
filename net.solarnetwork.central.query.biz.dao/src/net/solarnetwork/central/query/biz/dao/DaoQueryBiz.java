@@ -47,6 +47,8 @@ import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.ReportingDatum;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
@@ -250,6 +252,15 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
+			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		return generalNodeDatumDao.findFiltered(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(
 			Class<? extends Datum> datumClass, A filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {

@@ -97,10 +97,10 @@
 		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch"/>
 		ORDER BY
 		<isNotEmpty property="SortDescriptors">
-			<iterate property="SortDescriptors" conjunction="," close=",">
+			<iterate property="SortDescriptors" conjunction=",">
 				<isEqual property="SortDescriptors[].sortKey" compareValue="created">datum.ts</isEqual>
-				<isEqual property="SortDescriptors[].sortKey" compareValue="node">cdatum.node_id</isEqual>
-				<isEqual property="SortDescriptors[].sortKey" compareValue="source">cdatum.source_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">datum.node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">datum.source_id</isEqual>
 				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
 			</iterate>
 		</isNotEmpty>
@@ -112,7 +112,7 @@
 	</select>
 
 	<select id="findall-GeneralNodeDatum-GeneralNodeDatumMatch-count" resultClass="long">
-		SELECT count(cdatum.id)
+		SELECT count(datum.ts)
 		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch"/>
 	</select>
 

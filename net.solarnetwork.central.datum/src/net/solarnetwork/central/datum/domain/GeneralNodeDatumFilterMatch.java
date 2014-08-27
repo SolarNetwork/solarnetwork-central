@@ -1,5 +1,5 @@
 /* ==================================================================
- * GeneralNodeDatumMatch.java - Aug 22, 2014 7:04:33 AM
+ * GeneralNodeDatumFilterMatch.java - Aug 27, 2014 7:08:17 PM
  * 
  * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
@@ -22,21 +22,14 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import net.solarnetwork.central.domain.FilterMatch;
 
 /**
- * A "match" to a {@link GeneralNodeDatum}.
- * 
- * <p>
- * Although this class extends {@link GeneralNodeDatum} that is merely an
- * implementation detail. Often instances of this class represent aggregated
- * data values and not actual datum entities.
- * </p>
+ * API for a GeneralNodeDatum search or filter match result.
  * 
  * @author matt
  * @version 1.0
  */
-public class GeneralNodeDatumMatch extends GeneralNodeDatum implements GeneralNodeDatumFilterMatch {
-
-	private static final long serialVersionUID = 6894637498151159318L;
+public interface GeneralNodeDatumFilterMatch extends FilterMatch<GeneralNodeDatumPK> {
 
 }

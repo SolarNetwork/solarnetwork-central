@@ -41,6 +41,9 @@ import net.solarnetwork.central.datum.dao.PowerDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.HardwareControlDatum;
 import net.solarnetwork.central.datum.domain.HardwareControlDatumMatch;
 import net.solarnetwork.central.datum.domain.PowerDatum;
@@ -125,28 +128,7 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 	}
 
 	private GeneralNodeDatum getTestGeneralNodeDatumInstance() {
-		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(new DateTime());
-		datum.setNodeId(TEST_NODE_ID);
-		datum.setPosted(new DateTime());
-		datum.setSourceId(TEST_SOURCE_ID);
-
-		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
-		datum.setSamples(samples);
-
-		// some sample data
-		Map<String, Number> instants = new HashMap<String, Number>(2);
-		instants.put("watts", 231);
-		samples.setInstantaneous(instants);
-
-		Map<String, Number> accum = new HashMap<String, Number>(2);
-		accum.put("watt_hours", 4123);
-		samples.setAccumulating(accum);
-
-		Map<String, Object> msgs = new HashMap<String, Object>(2);
-		msgs.put("foo", "bar");
-		samples.setStatus(msgs);
-		return datum;
+		return createGeneralNodeDatum(TEST_NODE_ID, TEST_SOURCE_ID);
 	}
 
 	@Test
@@ -261,6 +243,31 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		datum.setFloatValue(floatValue);
 		datum.setNodeId(nodeId);
 		datum.setSourceId(sourceId);
+		return datum;
+	}
+
+	private GeneralNodeDatum createGeneralNodeDatum(Long nodeId, String sourceId) {
+		GeneralNodeDatum datum = new GeneralNodeDatum();
+		datum.setCreated(new DateTime());
+		datum.setNodeId(nodeId);
+		datum.setPosted(new DateTime());
+		datum.setSourceId(sourceId);
+
+		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
+		datum.setSamples(samples);
+
+		// some sample data
+		Map<String, Number> instants = new HashMap<String, Number>(2);
+		instants.put("watts", 231);
+		samples.setInstantaneous(instants);
+
+		Map<String, Number> accum = new HashMap<String, Number>(2);
+		accum.put("watt_hours", 4123);
+		samples.setAccumulating(accum);
+
+		Map<String, Object> msgs = new HashMap<String, Object>(2);
+		msgs.put("foo", "bar");
+		samples.setStatus(msgs);
 		return datum;
 	}
 
@@ -381,6 +388,40 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		assertNotNull(result);
 		assertEquals(1, result.size());
 		assertTrue("2nd result inclusive end date", result.contains(TEST_SOURCE_ID2));
+	}
+
+	@Test
+	public void testIterateGeneralNodeDatum() {
+		List<GeneralNodeDatumPK> ids = new ArrayList<GeneralNodeDatumPK>(10);
+		// make sure created dates are different and ascending
+		final int numDatum = 10;
+		final long created = System.currentTimeMillis() - (1000 * numDatum);
+		for ( int i = 0; i < numDatum; i++ ) {
+			GeneralNodeDatum d = createGeneralNodeDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+			d.setCreated(new DateTime(created + (i * 1000)));
+			generalNodeDatumDao.store(d);
+			ids.add(d.getId());
+		}
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		List<SortDescriptor> sorts = Collections
+				.singletonList((SortDescriptor) new SimpleSortDescriptor("created", true));
+		int offset = 0;
+		final int maxResults = 2;
+		while ( offset < 8 ) {
+			FilterResults<GeneralNodeDatumFilterMatch> matches = daoQueryBiz
+					.findFilteredGeneralNodeDatum(filter, sorts, offset, maxResults);
+			assertNotNull(matches);
+			assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
+			Iterator<GeneralNodeDatumFilterMatch> itr = matches.getResults().iterator();
+			for ( int i = 0; i < maxResults; i++, offset++ ) {
+				GeneralNodeDatumFilterMatch match = itr.next();
+				assertEquals(GeneralNodeDatumMatch.class, match.getClass());
+				assertEquals(created + ((numDatum - offset - 1) * 1000), ((GeneralNodeDatumMatch) match)
+						.getCreated().getMillis());
+			}
+		}
+
 	}
 
 }

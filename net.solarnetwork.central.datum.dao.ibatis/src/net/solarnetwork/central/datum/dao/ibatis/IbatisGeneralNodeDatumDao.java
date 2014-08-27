@@ -32,9 +32,9 @@ import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.ibatis.IbatisBaseGenericDaoSupport;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
-import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
@@ -53,7 +53,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 public class IbatisGeneralNodeDatumDao extends
 		IbatisBaseGenericDaoSupport<GeneralNodeDatum, GeneralNodeDatumPK> implements
-		FilterableDao<GeneralNodeDatumMatch, GeneralNodeDatumPK, NodeDatumFilter>, GeneralNodeDatumDao {
+		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
+		GeneralNodeDatumDao {
 
 	/** The query parameter for a class name value. */
 	public static final String PARAM_CLASS_NAME = "class";
@@ -113,7 +114,7 @@ public class IbatisGeneralNodeDatumDao extends
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<GeneralNodeDatumMatch> findFiltered(NodeDatumFilter filter,
+	public FilterResults<GeneralNodeDatumFilterMatch> findFiltered(GeneralNodeDatumFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		final String query = getQueryForFilter();
 		Map<String, Object> sqlProps = new HashMap<String, Object>(1);
@@ -134,11 +135,11 @@ public class IbatisGeneralNodeDatumDao extends
 			}
 		}
 
-		List<GeneralNodeDatumMatch> rows = executeQueryForList(query, sqlProps, offset, max);
+		List<GeneralNodeDatumFilterMatch> rows = executeQueryForList(query, sqlProps, offset, max);
 
 		//rows = postProcessFilterQuery(filter, rows);
 
-		BasicFilterResults<GeneralNodeDatumMatch> results = new BasicFilterResults<GeneralNodeDatumMatch>(
+		BasicFilterResults<GeneralNodeDatumFilterMatch> results = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
 				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
 
 		return results;

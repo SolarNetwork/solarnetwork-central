@@ -32,6 +32,8 @@ import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
@@ -173,6 +175,24 @@ public interface QueryBiz {
 	 * @return the conditions, or <em>null</em> if none available
 	 */
 	WeatherConditions getMostRecentWeatherConditions(Long nodeId);
+
+	/**
+	 * API for querying for a filtered set of GeneralNodeDatum results from all
+	 * possible results.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 */
+	FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
+			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max);
 
 	/**
 	 * API for querying for a filtered set of results from all possible results.
