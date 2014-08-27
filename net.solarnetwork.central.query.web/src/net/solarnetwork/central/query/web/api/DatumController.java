@@ -103,22 +103,32 @@ public class DatumController extends WebServiceControllerSupport {
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
 	public Response<FilterResults<?>> filterDatumData(final DatumFilterCommand cmd) {
+		FilterResults<?> results;
 		final String datumType = (cmd == null || cmd.getType() == null ? null : cmd.getType()
 				.toLowerCase());
-		final Class<? extends Datum> datumClass = filterTypeMap.get(datumType);
-		if ( datumClass == null ) {
-			log.info("Datum type {} not found in {}", datumType, filterTypeMap);
-			return new Response<FilterResults<?>>(false, "unsupported.type", "Unsupported datum type",
-					null);
-		}
-		FilterResults<?> results;
-		if ( cmd.getAggregation() != null ) {
-			// return aggregated results
-			results = queryBiz.findFilteredAggregateDatum(datumClass, cmd, cmd.getSortDescriptors(),
-					cmd.getOffset(), cmd.getMax());
+		if ( datumType == null ) {
+			if ( cmd.getAggregation() != null ) {
+				// TODO
+				results = null;
+			} else {
+				results = queryBiz.findFilteredGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
+						cmd.getOffset(), cmd.getMax());
+			}
 		} else {
-			results = queryBiz.findFilteredDatum(datumClass, cmd, cmd.getSortDescriptors(),
-					cmd.getOffset(), cmd.getMax());
+			final Class<? extends Datum> datumClass = filterTypeMap.get(datumType);
+			if ( datumClass == null ) {
+				log.info("Datum type {} not found in {}", datumType, filterTypeMap);
+				return new Response<FilterResults<?>>(false, "unsupported.type",
+						"Unsupported datum type", null);
+			}
+			if ( cmd.getAggregation() != null ) {
+				// return aggregated results
+				results = queryBiz.findFilteredAggregateDatum(datumClass, cmd, cmd.getSortDescriptors(),
+						cmd.getOffset(), cmd.getMax());
+			} else {
+				results = queryBiz.findFilteredDatum(datumClass, cmd, cmd.getSortDescriptors(),
+						cmd.getOffset(), cmd.getMax());
+			}
 		}
 		return new Response<FilterResults<?>>(results);
 	}
