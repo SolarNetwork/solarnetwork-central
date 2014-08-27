@@ -212,14 +212,14 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 
 	@Test
 	public void getReportableIntervalNoDatum() {
-		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID);
+		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID, null);
 		Assert.assertNull(result);
 	}
 
 	@Test
 	public void getReportableIntervalOneDatum() {
 		storeNew();
-		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID);
+		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID, null);
 		assertNotNull(result);
 		assertEquals(lastDatum.getCreated(), result.getStart());
 		assertEquals(lastDatum.getCreated(), result.getEnd());
@@ -233,9 +233,60 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		d2.setCreated(d2.getCreated().plus(1000));
 		dao.store(d2);
 
-		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID);
+		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID, null);
 		assertNotNull(result);
 		assertEquals(lastDatum.getCreated(), result.getStart());
+		assertEquals(d2.getCreated(), result.getEnd());
+	}
+
+	@Test
+	public void getReportableIntervalTwoDatumDifferentSources() {
+		storeNew();
+
+		GeneralNodeDatum d2 = getTestInstance();
+		d2.setCreated(d2.getCreated().plus(1000));
+		d2.setSourceId(TEST_2ND_SOURCE);
+		dao.store(d2);
+
+		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID, null);
+		assertNotNull(result);
+		assertEquals(lastDatum.getCreated(), result.getStart());
+		assertEquals(d2.getCreated(), result.getEnd());
+	}
+
+	@Test
+	public void getReportableIntervalForSourceNoMatch() {
+		storeNew();
+		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID, TEST_2ND_SOURCE);
+		Assert.assertNull(result);
+	}
+
+	@Test
+	public void getReportableIntervalForSourceOneMatch() {
+		storeNew();
+		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID, TEST_SOURCE_ID);
+		assertNotNull(result);
+		assertEquals(lastDatum.getCreated(), result.getStart());
+		assertEquals(lastDatum.getCreated(), result.getEnd());
+	}
+
+	@Test
+	public void getReportableIntervalForSourceTwoDatumDifferentSources() {
+		storeNew();
+
+		GeneralNodeDatum d2 = getTestInstance();
+		d2.setCreated(d2.getCreated().plus(1000));
+		d2.setSourceId(TEST_2ND_SOURCE);
+		dao.store(d2);
+
+		ReadableInterval result = dao.getReportableInterval(TEST_NODE_ID, TEST_SOURCE_ID);
+		assertNotNull(result);
+		assertEquals(lastDatum.getCreated(), result.getStart());
+		assertEquals(lastDatum.getCreated(), result.getEnd());
+
+		result = dao.getReportableInterval(TEST_NODE_ID, TEST_2ND_SOURCE);
+		assertNotNull(result);
+		assertEquals(d2.getCreated(), result.getStart());
 		assertEquals(d2.getCreated(), result.getEnd());
 	}
 

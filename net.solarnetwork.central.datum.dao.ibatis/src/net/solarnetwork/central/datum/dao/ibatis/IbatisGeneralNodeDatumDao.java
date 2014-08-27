@@ -157,10 +157,13 @@ public class IbatisGeneralNodeDatumDao extends
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public ReadableInterval getReportableInterval(Long nodeId) {
+	public ReadableInterval getReportableInterval(Long nodeId, String sourceId) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		if ( nodeId != null ) {
 			params.put(PARAM_NODE_ID, nodeId);
+		}
+		if ( sourceId != null ) {
+			params.put(PARAM_SOURCE_ID, sourceId);
 		}
 		getSqlMapClientTemplate().queryForObject(this.queryForReportableInterval, params);
 		Timestamp start = (Timestamp) params.get("ts_start");

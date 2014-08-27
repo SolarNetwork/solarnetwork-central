@@ -46,9 +46,12 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * 
 	 * @param nodeId
 	 *        the node ID to search for
+	 * @param sourceId
+	 *        an optional source ID to limit the results to, or <em>null</em>
+	 *        for all sources
 	 * @return interval, or <em>null</em> if no data available
 	 */
-	ReadableInterval getReportableInterval(Long nodeId);
+	ReadableInterval getReportableInterval(Long nodeId, String sourceId);
 
 	/**
 	 * Get the available sources for a given node, optionally limited to a date
