@@ -22,18 +22,8 @@ BEGIN
 	END IF;
 	jtext := jtext || '}';
 
-	<<insert_update>>
-	LOOP
-		UPDATE solardatum.da_datum SET
-			jdata = jtext::json
-		WHERE 
-			node_id = datum.node_id
-			AND source_id = src
-			AND ts = datum.created;
-		
-		EXIT insert_update WHEN FOUND;
-
-		INSERT INTO solardatum.da_datum (
+	BEGIN
+		INSERT INTO solardatum.da_datum(
 			ts, node_id, source_id, posted, jdata)
 		VALUES (
 			datum.created, 
@@ -42,8 +32,14 @@ BEGIN
 			datum.posted,
 			jtext::json
 		);
-		EXIT insert_update;
-	END LOOP insert_update;
+	EXCEPTION WHEN unique_violation THEN
+		UPDATE solardatum.da_datum SET
+			jdata = jtext::json
+		WHERE 
+			node_id = datum.node_id
+			AND source_id = src
+			AND ts = datum.created;
+	END;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
@@ -85,17 +81,7 @@ BEGIN
 	END IF;
 	jtext := jtext || '}';
 
-	<<insert_update>>
-	LOOP
-		UPDATE solardatum.da_datum SET
-			jdata = jtext::json
-		WHERE 
-			node_id = datum.node_id
-			AND source_id = src
-			AND ts = datum.created;
-		
-		EXIT insert_update WHEN FOUND;
-
+	BEGIN
 		INSERT INTO solardatum.da_datum(
 			ts, node_id, source_id, posted, jdata)
 		VALUES (
@@ -105,8 +91,14 @@ BEGIN
 			datum.posted,
 			jtext::json
 		);
-		EXIT insert_update;
-	END LOOP insert_update;
+	EXCEPTION WHEN unique_violation THEN
+		UPDATE solardatum.da_datum SET
+			jdata = jtext::json
+		WHERE 
+			node_id = datum.node_id
+			AND source_id = src
+			AND ts = datum.created;
+	END;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
@@ -123,4 +115,3 @@ CREATE TRIGGER mig_power_datum
   ON solarnet.sn_power_datum
   FOR EACH ROW
   EXECUTE PROCEDURE solardatum.mig_power_datum();
-
