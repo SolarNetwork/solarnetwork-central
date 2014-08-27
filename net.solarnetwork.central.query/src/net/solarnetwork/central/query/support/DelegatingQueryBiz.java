@@ -28,7 +28,7 @@ import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
@@ -123,7 +123,7 @@ public class DelegatingQueryBiz implements QueryBiz {
 	}
 
 	@Override
-	public FilterResults<GeneralNodeDatumMatch> findFilteredGeneralNodeDatum(
+	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
 			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
 		return delegate.findFilteredGeneralNodeDatum(filter, sortDescriptors, offset, max);
