@@ -39,6 +39,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.ReadableInterval;
 import org.springframework.transaction.annotation.Propagation;
@@ -173,7 +174,11 @@ public class IbatisGeneralNodeDatumDao extends
 		}
 		long d1 = start.getTime();
 		long d2 = end.getTime();
-		Interval interval = new Interval(d1 < d2 ? d1 : d2, d2 > d1 ? d2 : d1);
+		DateTimeZone tz = null;
+		if ( params.containsKey("node_tz") ) {
+			tz = DateTimeZone.forID(params.get("node_tz").toString());
+		}
+		Interval interval = new Interval(d1 < d2 ? d1 : d2, d2 > d1 ? d2 : d1, tz);
 		return interval;
 
 	}

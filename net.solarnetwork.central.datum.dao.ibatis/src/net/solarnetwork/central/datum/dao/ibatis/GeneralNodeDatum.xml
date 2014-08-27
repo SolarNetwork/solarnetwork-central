@@ -56,10 +56,12 @@
 		<parameter property="source" jdbcType="VARCHAR" mode="IN"/>
 		<parameter property="ts_start" jdbcType="TIMESTAMP" mode="OUT"/>
 		<parameter property="ts_end" jdbcType="TIMESTAMP" mode="OUT"/>
+		<parameter property="node_tz" jdbcType="VARCHAR" mode="OUT"/>
+		<parameter property="node_tz_offset" jdbcType="INTEGER" mode="OUT"/>
 	</parameterMap>
 
 	<procedure id="find-general-reportable-interval" parameterMap="pmap-reportable-interval" resultClass="map">
-		{call solardatum.find_reportable_interval(?, ?, ?, ?)}
+		{call solardatum.find_reportable_interval(?, ?, ?, ?, ?, ?)}
 	</procedure>
 
 	<!-- 

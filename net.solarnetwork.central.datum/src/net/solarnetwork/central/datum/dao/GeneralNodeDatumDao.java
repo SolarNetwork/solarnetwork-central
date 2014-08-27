@@ -42,7 +42,9 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 		FilterableDao<GeneralNodeDatumMatch, GeneralNodeDatumPK, NodeDatumFilter> {
 
 	/**
-	 * Get the interval of available data in the system.
+	 * Get the interval of available data in the system. Note the returned
+	 * interval will be configured with the node's local time zone, if
+	 * available.
 	 * 
 	 * @param nodeId
 	 *        the node ID to search for

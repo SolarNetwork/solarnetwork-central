@@ -137,7 +137,9 @@ CREATE OR REPLACE FUNCTION solardatum.find_reportable_interval(
 	IN node solarcommon.node_id, 
 	IN src solarcommon.source_id DEFAULT NULL,
 	OUT ts_start solarcommon.ts, 
-	OUT ts_end solarcommon.ts)
+	OUT ts_end solarcommon.ts,
+	OUT node_tz TEXT,
+	OUT node_tz_offset INTEGER)
   RETURNS RECORD AS
 $BODY$
 BEGIN
@@ -158,6 +160,21 @@ BEGIN
 			SELECT max(ts) FROM solardatum.da_datum WHERE node_id = node AND source_id = src
 			INTO ts_end;
 	END CASE;
+	
+	SELECT 
+		l.time_zone, 
+		CAST(EXTRACT(epoch FROM z.utc_offset) / 60 AS INTEGER)
+	FROM solarnet.sn_node n
+	INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	INNER JOIN pg_timezone_names z ON z.name = l.time_zone
+	WHERE n.node_id = node
+	INTO node_tz, node_tz_offset;
+	
+	IF NOT FOUND THEN
+		node_tz := 'UTC';
+		node_tz_offset := 0;
+	END IF;
+
 END;$BODY$
   LANGUAGE plpgsql STABLE;
 
