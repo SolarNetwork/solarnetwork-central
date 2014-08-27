@@ -92,7 +92,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 		binder.registerCustomEditor(LocalDate.class, new JodaDateFormatEditor(DEFAULT_DATE_FORMAT,
 				ParseMode.LocalDate));
 		binder.registerCustomEditor(DateTime.class, new JodaDateFormatEditor(new String[] {
-				DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT }, TimeZone.getTimeZone("GMT")));
+				DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT }, TimeZone.getTimeZone("UTC")));
 	}
 
 	/**
