@@ -28,15 +28,19 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Resource;
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
+import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.dao.HardwareControlDatumDao;
 import net.solarnetwork.central.datum.dao.PowerDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.HardwareControlDatum;
 import net.solarnetwork.central.datum.domain.HardwareControlDatumMatch;
 import net.solarnetwork.central.datum.domain.PowerDatum;
@@ -47,6 +51,7 @@ import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.support.SimpleSortDescriptor;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,6 +81,9 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 
 	@Autowired
 	private HardwareControlDatumDao hardwareControlDatumDao;
+
+	@Autowired
+	private GeneralNodeDatumDao generalNodeDatumDao;
 
 	@Before
 	public void setup() {
@@ -113,6 +121,31 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		datum.setVolts(1.0F);
 
 		datum.setWattHourReading(2L);
+		return datum;
+	}
+
+	private GeneralNodeDatum getTestGeneralNodeDatumInstance() {
+		GeneralNodeDatum datum = new GeneralNodeDatum();
+		datum.setCreated(new DateTime());
+		datum.setNodeId(TEST_NODE_ID);
+		datum.setPosted(new DateTime());
+		datum.setSourceId(TEST_SOURCE_ID);
+
+		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
+		datum.setSamples(samples);
+
+		// some sample data
+		Map<String, Number> instants = new HashMap<String, Number>(2);
+		instants.put("watts", 231);
+		samples.setInstantaneous(instants);
+
+		Map<String, Number> accum = new HashMap<String, Number>(2);
+		accum.put("watt_hours", 4123);
+		samples.setAccumulating(accum);
+
+		Map<String, Object> msgs = new HashMap<String, Object>(2);
+		msgs.put("foo", "bar");
+		samples.setStatus(msgs);
 		return datum;
 	}
 
@@ -263,6 +296,38 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 			}
 		}
 
+	}
+
+	@Test
+	public void getReportableIntervalGeneralNodeNoData() {
+		ReportableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, (String) null);
+		assertNull(result);
+	}
+
+	@Test
+	public void getReportableIntervalSingleGeneralNodeDatum() {
+		GeneralNodeDatum d = getTestGeneralNodeDatumInstance();
+		generalNodeDatumDao.store(d);
+
+		ReportableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, (String) null);
+		assertNotNull(result);
+		assertEquals(d.getCreated(), result.getInterval().getStart());
+		assertEquals(d.getCreated(), result.getInterval().getEnd());
+	}
+
+	@Test
+	public void getReportableIntervalRangeGeneralNodeDatum() {
+		GeneralNodeDatum d = getTestGeneralNodeDatumInstance();
+		generalNodeDatumDao.store(d);
+
+		GeneralNodeDatum d2 = getTestGeneralNodeDatumInstance();
+		d2.setCreated(d2.getCreated().plusDays(5));
+		generalNodeDatumDao.store(d2);
+
+		ReportableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, (String) null);
+		assertNotNull(result);
+		assertEquals(d.getCreated(), result.getInterval().getStart());
+		assertEquals(d2.getCreated(), result.getInterval().getEnd());
 	}
 
 }

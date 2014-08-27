@@ -38,6 +38,7 @@ import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.domain.WeatherConditions;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 /**
@@ -107,6 +108,16 @@ public class DelegatingQueryBiz implements QueryBiz {
 			Class<? extends Datum> datumClass, A filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
 		return delegate.findFilteredAggregateDatum(datumClass, filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public ReportableInterval getReportableInterval(Long nodeId, String sourceId) {
+		return delegate.getReportableInterval(nodeId, sourceId);
+	}
+
+	@Override
+	public Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end) {
+		return delegate.getAvailableSources(nodeId, start, end);
 	}
 
 }

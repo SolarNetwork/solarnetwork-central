@@ -31,6 +31,7 @@ import java.util.Set;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
@@ -41,6 +42,7 @@ import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.domain.WeatherConditions;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 /**
@@ -71,6 +73,29 @@ public interface QueryBiz {
 	 * @return ReadableInterval instance, or <em>null</em> if no data available
 	 */
 	ReportableInterval getReportableInterval(Long nodeId, Class<? extends NodeDatum>[] types);
+
+	/**
+	 * Get a date interval of available data for a node, optionally limited to a
+	 * source ID.
+	 * 
+	 * <p>
+	 * This method can be used to find the earliest and latest dates data is
+	 * available for a set of given {@link GeneralNodeDatum}. This could be
+	 * useful for reporting UIs that want to display a view of the complete
+	 * range of data available.
+	 * </p>
+	 * <p>
+	 * If the {@code sourceId} parameter is <em>null</em> then the returned
+	 * interval will be for the node as a whole, for any sources.
+	 * </p>
+	 * 
+	 * @param nodeId
+	 *        the ID of the node to look for
+	 * @param sourceId
+	 *        an optional source ID to find the available interval for
+	 * @return ReadableInterval instance, or <em>null</em> if no data available
+	 */
+	ReportableInterval getReportableInterval(Long nodeId, String sourceId);
 
 	/**
 	 * Get a date interval of available data for a type of NodeDatum, across all
@@ -108,6 +133,20 @@ public interface QueryBiz {
 	 */
 	Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type, LocalDate start,
 			LocalDate end);
+
+	/**
+	 * Get the available source IDs for a given node, optionally limited to a
+	 * date range.
+	 * 
+	 * @param nodeId
+	 *        the node ID to search for
+	 * @param start
+	 *        an optional start date (inclusive) to filter on
+	 * @param end
+	 *        an optional end date (inclusive) to filter on
+	 * @return the distinct source IDs available (never <em>null</em>)
+	 */
+	Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end);
 
 	/**
 	 * Query for a list of aggregated datum objects.

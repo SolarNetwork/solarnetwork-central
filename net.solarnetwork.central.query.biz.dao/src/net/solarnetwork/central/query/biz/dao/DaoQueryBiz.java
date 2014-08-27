@@ -38,6 +38,7 @@ import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
 import net.solarnetwork.central.datum.dao.DatumDao;
 import net.solarnetwork.central.datum.dao.DayDatumDao;
+import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.dao.HardwareControlDatumDao;
 import net.solarnetwork.central.datum.dao.PowerDatumDao;
 import net.solarnetwork.central.datum.dao.PriceDatumDao;
@@ -76,7 +77,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -85,6 +86,7 @@ public class DaoQueryBiz implements QueryBiz {
 	private SolarNodeDao solarNodeDao;
 	private WeatherDatumDao weatherDatumDao;
 	private DayDatumDao dayDatumDao;
+	private GeneralNodeDatumDao generalNodeDatumDao;
 	private int filteredResultsLimit = 1000;
 
 	private final Map<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>> daoMapping;
@@ -143,6 +145,20 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public ReportableInterval getReportableInterval(Long nodeId, String sourceId) {
+		ReadableInterval interval = generalNodeDatumDao.getReportableInterval(nodeId, sourceId);
+		if ( interval == null ) {
+			return null;
+		}
+		DateTimeZone tz = null;
+		if ( interval.getChronology() != null ) {
+			tz = interval.getChronology().getZone();
+		}
+		return new ReportableInterval(interval, (tz == null ? null : tz.toTimeZone()));
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type,
 			LocalDate start, LocalDate end) {
 		final Set<String> result;
@@ -154,6 +170,12 @@ public class DaoQueryBiz implements QueryBiz {
 			result = Collections.emptySet();
 		}
 		return result;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end) {
+		return generalNodeDatumDao.getAvailableSources(nodeId, start, end);
 	}
 
 	@Override
@@ -335,6 +357,15 @@ public class DaoQueryBiz implements QueryBiz {
 	@Autowired
 	public void setWeatherLocationDao(WeatherLocationDao weatherLocationDao) {
 		filterLocationDaoMapping.put(WeatherLocation.class, weatherLocationDao);
+	}
+
+	public GeneralNodeDatumDao getGeneralNodeDatumDao() {
+		return generalNodeDatumDao;
+	}
+
+	@Autowired
+	public void setGeneralNodeDatumDao(GeneralNodeDatumDao generalNodeDatumDao) {
+		this.generalNodeDatumDao = generalNodeDatumDao;
 	}
 
 }
