@@ -110,7 +110,22 @@ CREATE OR REPLACE FUNCTION solardatum.find_available_sources(
 	IN en solarcommon.ts DEFAULT NULL)
   RETURNS TABLE(source_id solarcommon.source_id) AS
 $BODY$
+DECLARE
+	node_tz text;
 BEGIN
+	IF st IS NOT NULL OR en IS NOT NULL THEN
+		-- get the node TZ for local date/time
+		SELECT l.time_zone  FROM solarnet.sn_node n
+		INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE n.node_id = node
+		INTO node_tz;
+
+		IF NOT FOUND THEN
+			RAISE NOTICE 'Node % has no time zone, will use UTC.', node;
+			node_tz := 'UTC';
+		END IF;
+	END IF;
+	
 	CASE
 		WHEN st IS NULL AND en IS NULL THEN
 			RETURN QUERY SELECT DISTINCT d.source_id
@@ -121,14 +136,14 @@ BEGIN
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_datum_daily d
 			WHERE d.node_id = node
-				AND d.ts_start >= st;
+				AND d.ts_start >= CAST(st at time zone node_tz AS DATE);
 				
 		ELSE
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_datum_daily d
 			WHERE d.node_id = node
-				AND d.ts_start >= st
-				AND d.ts_end <= en;
+				AND d.ts_start >= CAST(st at time zone node_tz AS DATE)
+				AND d.ts_start <= CAST(en at time zone node_tz AS DATE);
 	END CASE;	
 END;$BODY$
   LANGUAGE plpgsql STABLE;
