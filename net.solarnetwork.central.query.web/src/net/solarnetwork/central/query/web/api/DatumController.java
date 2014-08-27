@@ -96,39 +96,44 @@ public class DatumController extends WebServiceControllerSupport {
 			return new Response<List<? extends NodeDatum>>(false, "unsupported.type",
 					"Unsupported datum type", null);
 		}
-		final List<? extends NodeDatum> results = queryBiz.getAggregatedDatum(datumClass, cmd);
+		final List<? extends NodeDatum> results = queryBiz.getAggregatedDatum(cmd, datumClass);
 		return new Response<List<? extends NodeDatum>>(results);
 	}
 
+	@Deprecated
 	@ResponseBody
-	@RequestMapping(value = "/list", method = RequestMethod.GET)
+	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "type")
 	public Response<FilterResults<?>> filterDatumData(final DatumFilterCommand cmd) {
 		FilterResults<?> results;
 		final String datumType = (cmd == null || cmd.getType() == null ? null : cmd.getType()
 				.toLowerCase());
-		if ( datumType == null ) {
-			if ( cmd.getAggregation() != null ) {
-				// TODO
-				results = null;
-			} else {
-				results = queryBiz.findFilteredGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
-						cmd.getOffset(), cmd.getMax());
-			}
+		final Class<? extends Datum> datumClass = filterTypeMap.get(datumType);
+		if ( datumClass == null ) {
+			log.info("Datum type {} not found in {}", datumType, filterTypeMap);
+			return new Response<FilterResults<?>>(false, "unsupported.type", "Unsupported datum type",
+					null);
+		}
+		if ( cmd.getAggregation() != null ) {
+			// return aggregated results
+			results = queryBiz.findFilteredAggregateDatum(cmd, datumClass, cmd.getSortDescriptors(),
+					cmd.getOffset(), cmd.getMax());
 		} else {
-			final Class<? extends Datum> datumClass = filterTypeMap.get(datumType);
-			if ( datumClass == null ) {
-				log.info("Datum type {} not found in {}", datumType, filterTypeMap);
-				return new Response<FilterResults<?>>(false, "unsupported.type",
-						"Unsupported datum type", null);
-			}
-			if ( cmd.getAggregation() != null ) {
-				// return aggregated results
-				results = queryBiz.findFilteredAggregateDatum(datumClass, cmd, cmd.getSortDescriptors(),
-						cmd.getOffset(), cmd.getMax());
-			} else {
-				results = queryBiz.findFilteredDatum(datumClass, cmd, cmd.getSortDescriptors(),
-						cmd.getOffset(), cmd.getMax());
-			}
+			results = queryBiz.findFilteredDatum(cmd, datumClass, cmd.getSortDescriptors(),
+					cmd.getOffset(), cmd.getMax());
+		}
+		return new Response<FilterResults<?>>(results);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
+	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd) {
+		FilterResults<?> results;
+		if ( cmd.getAggregation() != null ) {
+			// TODO
+			results = null;
+		} else {
+			results = queryBiz.findFilteredGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
+					cmd.getOffset(), cmd.getMax());
 		}
 		return new Response<FilterResults<?>>(results);
 	}

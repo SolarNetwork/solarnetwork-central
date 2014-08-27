@@ -81,9 +81,9 @@ public class DelegatingQueryBiz implements QueryBiz {
 	}
 
 	@Override
-	public List<? extends NodeDatum> getAggregatedDatum(Class<? extends NodeDatum> datumClass,
-			DatumQueryCommand criteria) {
-		return delegate.getAggregatedDatum(datumClass, criteria);
+	public List<? extends NodeDatum> getAggregatedDatum(DatumQueryCommand criteria,
+			Class<? extends NodeDatum> datumClass) {
+		return delegate.getAggregatedDatum(criteria, datumClass);
 	}
 
 	@Override
@@ -93,23 +93,23 @@ public class DelegatingQueryBiz implements QueryBiz {
 
 	@Override
 	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
-			Class<? extends Datum> datumClass, F filter, List<SortDescriptor> sortDescriptors,
+			F filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
-		return delegate.findFilteredDatum(datumClass, filter, sortDescriptors, offset, max);
+		return delegate.findFilteredDatum(filter, datumClass, sortDescriptors, offset, max);
 	}
 
 	@Override
 	public FilterResults<SourceLocationMatch> findFilteredLocations(
-			Class<? extends Entity<?>> locationClass, SourceLocation filter,
+			SourceLocation filter, Class<? extends Entity<?>> locationClass,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		return delegate.findFilteredLocations(locationClass, filter, sortDescriptors, offset, max);
+		return delegate.findFilteredLocations(filter, locationClass, sortDescriptors, offset, max);
 	}
 
 	@Override
 	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(
-			Class<? extends Datum> datumClass, A filter, List<SortDescriptor> sortDescriptors,
+			A filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
-		return delegate.findFilteredAggregateDatum(datumClass, filter, sortDescriptors, offset, max);
+		return delegate.findFilteredAggregateDatum(filter, datumClass, sortDescriptors, offset, max);
 	}
 
 	@Override

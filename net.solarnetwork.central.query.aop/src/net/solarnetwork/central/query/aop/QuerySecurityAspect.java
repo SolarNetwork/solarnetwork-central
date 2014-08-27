@@ -85,11 +85,11 @@ public class QuerySecurityAspect {
 	public void nodeMostRecentWeatherConditions(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAggregatedDatum(..)) && args(*,criteria)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAggregatedDatum(..)) && args(criteria,..)")
 	public void nodeDatumQuery(DatumQueryCommand criteria) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.findFiltered*(..)) && args(*,filter,..)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.findFiltered*(..)) && args(filter,..)")
 	public void nodeDatumFilter(Filter filter) {
 	}
 

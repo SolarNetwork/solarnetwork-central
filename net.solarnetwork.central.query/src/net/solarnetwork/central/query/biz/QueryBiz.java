@@ -157,15 +157,15 @@ public interface QueryBiz {
 	 * The returned domain objects are not generally persisted objects, they
 	 * represent aggregated results, most likely aggregated over time.
 	 * </p>
-	 * 
-	 * @param datumClass
-	 *        the type of NodeDatum to query for
 	 * @param criteria
 	 *        the query criteria
+	 * @param datumClass
+	 *        the type of NodeDatum to query for
+	 * 
 	 * @return the query results
 	 */
-	List<? extends NodeDatum> getAggregatedDatum(Class<? extends NodeDatum> datumClass,
-			DatumQueryCommand criteria);
+	List<? extends NodeDatum> getAggregatedDatum(DatumQueryCommand criteria,
+			Class<? extends NodeDatum> datumClass);
 
 	/**
 	 * Get the most recently available weather conditions for a particular node.
@@ -196,58 +196,58 @@ public interface QueryBiz {
 
 	/**
 	 * API for querying for a filtered set of results from all possible results.
-	 * 
-	 * @param datumClass
-	 *        the type of Datum to query for
 	 * @param filter
 	 *        the query filter
+	 * @param datumClass
+	 *        the type of Datum to query for
 	 * @param sortDescriptors
 	 *        the optional sort descriptors
 	 * @param offset
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
+	 * 
 	 * @return the results, never <em>null</em>
 	 */
 	<F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
-			Class<? extends Datum> datumClass, F filter, List<SortDescriptor> sortDescriptors,
+			F filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
 
 	/**
 	 * API for querying for a filtered set of aggregated results.
-	 * 
-	 * @param datumClass
-	 *        the type of Datum to query for
 	 * @param filter
 	 *        the query filter
+	 * @param datumClass
+	 *        the type of Datum to query for
 	 * @param sortDescriptors
 	 *        the optional sort descriptors
 	 * @param offset
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
+	 * 
 	 * @return the results, never <em>null</em>
 	 */
 	<A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(
-			Class<? extends Datum> datumClass, A filter, List<SortDescriptor> sortDescriptors,
+			A filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
 
 	/**
 	 * API for querying for a filtered set of locations from all possible
 	 * results.
-	 * 
-	 * @param locationClass
-	 *        the type of Location to query for
 	 * @param filter
 	 *        the query filter
+	 * @param locationClass
+	 *        the type of Location to query for
 	 * @param sortDescriptors
 	 *        the optional sort descriptors
 	 * @param offset
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
+	 * 
 	 * @return the results, never <em>null</em>
 	 */
-	FilterResults<SourceLocationMatch> findFilteredLocations(Class<? extends Entity<?>> locationClass,
-			SourceLocation filter, List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+	FilterResults<SourceLocationMatch> findFilteredLocations(SourceLocation filter,
+			Class<? extends Entity<?>> locationClass, List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
 }

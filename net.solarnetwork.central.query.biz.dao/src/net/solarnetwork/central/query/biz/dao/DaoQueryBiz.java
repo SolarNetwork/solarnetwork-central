@@ -188,8 +188,8 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<? extends NodeDatum> getAggregatedDatum(Class<? extends NodeDatum> datumClass,
-			DatumQueryCommand criteria) {
+	public List<? extends NodeDatum> getAggregatedDatum(DatumQueryCommand criteria,
+			Class<? extends NodeDatum> datumClass) {
 		DatumDao<? extends NodeDatum> dao = daoMapping.get(datumClass);
 		if ( dao == null ) {
 			throw new IllegalArgumentException("Datum type "
@@ -238,7 +238,7 @@ public class DaoQueryBiz implements QueryBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
-			Class<? extends Datum> datumClass, F filter, List<SortDescriptor> sortDescriptors,
+			F filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
 		@SuppressWarnings("unchecked")
 		FilterableDao<? extends EntityMatch, Long, F> dao = (FilterableDao<? extends EntityMatch, Long, F>) filterDaoMapping
@@ -262,7 +262,7 @@ public class DaoQueryBiz implements QueryBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(
-			Class<? extends Datum> datumClass, A filter, List<SortDescriptor> sortDescriptors,
+			A filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
 		@SuppressWarnings("unchecked")
 		AggregationFilterableDao<?, A> dao = (AggregationFilterableDao<?, A>) aggregationFilterDaoMapping
@@ -278,7 +278,7 @@ public class DaoQueryBiz implements QueryBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public FilterResults<SourceLocationMatch> findFilteredLocations(
-			Class<? extends Entity<?>> locationClass, SourceLocation filter,
+			SourceLocation filter, Class<? extends Entity<?>> locationClass,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		FilterableDao<SourceLocationMatch, Long, SourceLocation> dao = filterLocationDaoMapping
 				.get(locationClass);

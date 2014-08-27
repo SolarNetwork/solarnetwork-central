@@ -79,8 +79,8 @@ public class LocationLookupController extends WebServiceControllerSupport {
 		// convert empty strings to null
 		cmd.removeEmptyValues();
 
-		FilterResults<SourceLocationMatch> results = queryBiz.findFilteredLocations(PriceLocation.class,
-				cmd, cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
+		FilterResults<SourceLocationMatch> results = queryBiz.findFilteredLocations(cmd,
+				PriceLocation.class, cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
 		return new Response<FilterResults<SourceLocationMatch>>(results);
 	}
 
@@ -91,7 +91,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 		cmd.removeEmptyValues();
 
 		FilterResults<SourceLocationMatch> matches = queryBiz.findFilteredLocations(
-				WeatherLocation.class, cmd, cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
+				cmd, WeatherLocation.class, cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
 		return new Response<FilterResults<SourceLocationMatch>>(matches);
 	}
 

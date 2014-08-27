@@ -291,7 +291,7 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		final int maxResults = 2;
 		while ( offset < 8 ) {
 			FilterResults<? extends EntityMatch> matches = daoQueryBiz.findFilteredDatum(
-					HardwareControlDatum.class, filter, sorts, offset, maxResults);
+					filter, HardwareControlDatum.class, sorts, offset, maxResults);
 			assertNotNull(matches);
 			assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
 			Iterator<? extends EntityMatch> itr = matches.getResults().iterator();
