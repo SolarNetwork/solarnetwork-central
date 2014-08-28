@@ -82,64 +82,6 @@ var stmt = plv8.prepare('SELECT tsms, percent, tdiffms, jdata FROM solaragg.find
 	propHour,
 	val,
 	hourFill = {'watts' : 'watt_hours'};
-
-function addto(k, v, o, p, c) {
-	if ( o[k] === undefined ) {
-		o[k] = (v * p);
-	} else {
-		o[k] += (v * p);
-	}
-	if ( c ) {
-		if ( c[k] === undefined ) {
-			c[k] = 1;
-		} else {
-			c[k] += 1;
-		}
-	}
-}
-
-function calculateAverageOverHours(w, prevW, milli) {
-	return (Math.abs((w + prevW) / 2) * (milli / 3600000));
-}
-
-function fixPrecision(val) {
-	if ( typeof val !== 'number' ) {
-		return val;
-	}
-	return (Math.round(val* 1000) / 1000);
-}
-
-function calculateAverages(obj, counts) {
-	var prop, count, result = {};
-	if ( !obj ) {
-		return result;
-	}
-	if ( !counts ) {
-		return obj;
-	}
-	for ( prop in obj ) {
-		if ( obj.hasOwnProperty(prop) ) {
-			count = counts[prop];
-			if ( count > 0 ) {
-				result[prop] = fixPrecision(obj[prop] / count);
-			}
-		}
-	}
-	return result;
-}
-
-function merge(result, obj) {
-	var prop;
-	if ( obj ) {	
-		for ( prop in obj ) {
-			if ( obj.hasOwnProperty(prop) ) {
-				result[prop] = fixPrecision(obj[prop]);
-			}
-		}
-	}
-
-	return result;
-}
 	
 while ( rec = cur.fetch() ) {
 	if ( !rec.jdata ) {
@@ -150,7 +92,7 @@ while ( rec = cur.fetch() ) {
 		// accumulating data
 		for ( prop in acc ) {
 			if ( acc.hasOwnProperty(prop) && prevAcc && prevAcc[prop] !== undefined ) {
-				addto(prop, (acc[prop] - prevAcc[prop]), aobj, rec.percent);
+				sn.math.util.addto(prop, (acc[prop] - prevAcc[prop]), aobj, rec.percent);
 			}
 		}
 	}
@@ -161,12 +103,12 @@ while ( rec = cur.fetch() ) {
 			if ( !inst.hasOwnProperty(prop) ) {
 				continue;
 			}
-			addto(prop, inst[prop], iobj, rec.percent, iobjCounts);
+			sn.math.util.addto(prop, inst[prop], iobj, rec.percent, iobjCounts);
 			if ( prevRec && hourFill[prop] ) {
 				// calculate hour value, if not already defined for given property
 				propHour = hourFill[prop];
 				if ( !(acc && acc[propHour]) && prevInst && prevInst[prop] !== undefined ) {
-					addto(propHour, calculateAverageOverHours(inst[prop], prevInst[prop], rec.tdiffms), aobj, rec.percent);
+					sn.math.util.addto(propHour, sn.math.util.calculateAverageOverHours(inst[prop], prevInst[prop], rec.tdiffms), aobj, rec.percent);
 				}
 			}
 		}
@@ -178,11 +120,11 @@ while ( rec = cur.fetch() ) {
 cur.close();
 stmt.free();
 
-robj = merge(calculateAverages(iobj, iobjCounts), aobj);
+robj = sn.util.merge(sn.math.util.calculateAverages(iobj, iobjCounts), aobj);
 
 // merge last record s obj into results, but not overwriting any existing properties
 if ( prevRec && prevRec.percent > 0 && prevRec.jdata.s ) {
-	robj = merge(prevRec.jdata.s, robj);
+	robj = sn.util.merge(prevRec.jdata.s, robj);
 }
 
 return robj;

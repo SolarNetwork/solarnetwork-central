@@ -14,5 +14,6 @@
 \i postgres-init-quartz.sql
 \i postgres-init-common.sql
 \i postgres-init-generic-datum.sql
+\i postgres-init-generic-datum-plv8.sql
 \i postgres-init-generic-datum-functions.sql
 \i postgres-init-generic-datum-migration.sql
