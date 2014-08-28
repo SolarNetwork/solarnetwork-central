@@ -147,7 +147,7 @@ while ( rec = cur.fetch() ) {
 	if ( prevRec && acc ) {
 		// accumulating data
 		for ( prop in acc ) {
-			if ( acc.hasOwnProperty(prop) && prevAcc && prevAcc[prop] ) {
+			if ( acc.hasOwnProperty(prop) && prevAcc && prevAcc[prop] !== undefined ) {
 				addto(prop, (acc[prop] - prevAcc[prop]), aobj, rec.percent);
 			}
 		}
@@ -163,7 +163,7 @@ while ( rec = cur.fetch() ) {
 			if ( prevRec && hourFill[prop] ) {
 				// calculate hour value, if not already defined for given property
 				propHour = hourFill[prop];
-				if ( !(acc && acc[propHour]) && prevInst && prevInst[prop] ) {
+				if ( !(acc && acc[propHour]) && prevInst && prevInst[prop] !== undefined ) {
 					addto(propHour, calculateAverageOverHours(inst[prop], prevInst[prop], rec.tdiffms), aobj, rec.percent);
 				}
 			}
