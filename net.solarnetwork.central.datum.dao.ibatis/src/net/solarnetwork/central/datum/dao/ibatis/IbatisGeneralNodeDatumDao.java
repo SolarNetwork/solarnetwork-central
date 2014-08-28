@@ -89,8 +89,17 @@ public class IbatisGeneralNodeDatumDao extends
 	 */
 	public static final String QUERY_FOR_DISTINCT_SOURCES = "find-general-distinct-sources";
 
+	/**
+	 * The default query name used for
+	 * {@link #findFiltered(GeneralNodeDatumFilter, List, Integer, Integer)}
+	 * where {@link GeneralNodeDatumFilter#isMostRecent()} is set to
+	 * <em>true</em>.
+	 */
+	public static final String QUERY_FOR_MOST_RECENT = "find-general-most-recent";
+
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
+	private String queryForMostRecent;
 
 	/**
 	 * Default constructor.
@@ -99,16 +108,20 @@ public class IbatisGeneralNodeDatumDao extends
 		super(GeneralNodeDatum.class, GeneralNodeDatumPK.class);
 		this.queryForReportableInterval = QUERY_FOR_REPORTABLE_INTERVAL;
 		this.queryForDistinctSources = QUERY_FOR_DISTINCT_SOURCES;
+		this.queryForMostRecent = QUERY_FOR_MOST_RECENT;
 	}
 
 	/**
 	 * Get the filter query name for a given domain.
 	 * 
-	 * @param filterDomain
-	 *        the domain
+	 * @param filter
+	 *        the filter
 	 * @return query name
 	 */
-	protected String getQueryForFilter() {
+	protected String getQueryForFilter(GeneralNodeDatumFilter filter) {
+		if ( filter.isMostRecent() ) {
+			return queryForMostRecent;
+		}
 		return getQueryForAll() + "-GeneralNodeDatumMatch";
 	}
 
@@ -116,7 +129,7 @@ public class IbatisGeneralNodeDatumDao extends
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public FilterResults<GeneralNodeDatumFilterMatch> findFiltered(GeneralNodeDatumFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		final String query = getQueryForFilter();
+		final String query = getQueryForFilter(filter);
 		Map<String, Object> sqlProps = new HashMap<String, Object>(1);
 		sqlProps.put(PARAM_FILTER, filter);
 		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
@@ -217,6 +230,14 @@ public class IbatisGeneralNodeDatumDao extends
 
 	public void setQueryForDistinctSources(String queryForDistinctSources) {
 		this.queryForDistinctSources = queryForDistinctSources;
+	}
+
+	public String getQueryForMostRecent() {
+		return queryForMostRecent;
+	}
+
+	public void setQueryForMostRecent(String queryForMostRecent) {
+		this.queryForMostRecent = queryForMostRecent;
 	}
 
 }

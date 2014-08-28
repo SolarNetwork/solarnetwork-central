@@ -16,6 +16,8 @@
 	<typeAlias alias="WeatherLocation" type="net.solarnetwork.central.domain.WeatherLocation"/>
 	<typeAlias alias="WeatherSource" type="net.solarnetwork.central.domain.WeatherSource"/>
 	
+	<typeHandler javaType="[Ljava.lang.String;" jdbcType="ARRAY" 
+		callback="net.solarnetwork.central.dao.ibatis.ArrayTypeHandler$TextArrayTypeHandler"/>
 	<typeHandler javaType="org.joda.time.DateTime" 
 		callback="net.solarnetwork.central.dao.ibatis.JodaDateTimeTypeHandlerCallback" />
 	<typeHandler javaType="org.joda.time.LocalDateTime" 

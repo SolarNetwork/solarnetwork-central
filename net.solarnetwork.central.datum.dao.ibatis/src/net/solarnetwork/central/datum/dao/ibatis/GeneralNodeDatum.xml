@@ -36,6 +36,14 @@
 		<result column="datum_jdata" property="sampleJson"/>
 	</resultMap>
 	
+	<resultMap id="GeneralNodeDatumDirectResult" class="GeneralNodeDatum">
+		<result column="node_id" property="nodeId"/>
+		<result column="ts" property="created"/>
+		<result column="source_id" property="sourceId"/>
+		<result column="posted" property="posted"/>
+		<result column="jdata" property="sampleJson"/>
+	</resultMap>
+	
 	<select id="get-GeneralNodeDatum-for-id" resultMap="GeneralNodeDatumFullResult">
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-full-result"/>
@@ -69,6 +77,16 @@
 	-->
 
 	<resultMap id="GeneralNodeDatumMatchResult" class="GeneralNodeDatumMatch" extends="GeneralNodeDatum.GeneralNodeDatumFullResult"/>
+	<resultMap id="GeneralNodeDatumDirectMatchResult" class="GeneralNodeDatumMatch" extends="GeneralNodeDatum.GeneralNodeDatumDirectResult"/>
+
+	<parameterMap class="map" id="pmap-most-recent">
+		<parameter property="filter.nodeId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="filter.sourceIds" jdbcType="ARRAY" mode="IN"/>
+	</parameterMap>
+
+	<procedure id="find-general-most-recent" parameterMap="pmap-most-recent" resultMap="GeneralNodeDatumDirectMatchResult">
+		{call solardatum.find_most_recent(?, ?)}
+	</procedure>
 
 	<sql id="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch">
 		FROM

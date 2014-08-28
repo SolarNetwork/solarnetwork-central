@@ -34,6 +34,14 @@ import org.joda.time.DateTime;
 public interface GeneralNodeDatumFilter extends Filter {
 
 	/**
+	 * Flag to indicate that only the most recently available data should be
+	 * returned.
+	 * 
+	 * @return the most recent only
+	 */
+	public boolean isMostRecent();
+
+	/**
 	 * Get a start date.
 	 * 
 	 * @return the start date

@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -127,7 +128,7 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 	}
 
 	@Test
-	public void getFilteredDefaultSort() {
+	public void findFilteredDefaultSort() {
 		storeNew();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
@@ -289,6 +290,84 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		assertNotNull(result);
 		assertEquals(d2.getCreated(), result.getStart());
 		assertEquals(d2.getCreated(), result.getEnd());
+	}
+
+	@Test
+	public void findMostRecentAllSources() {
+		storeNew();
+
+		GeneralNodeDatum d2 = getTestInstance();
+		d2.setCreated(d2.getCreated().plus(1000));
+		d2.setSourceId(TEST_2ND_SOURCE);
+		dao.store(d2);
+
+		// most recent sorted ascending by source ID
+		List<GeneralNodeDatumPK> pks = Arrays.asList(d2.getId(), lastDatum.getId());
+
+		// immediately process reporting data as getting all sources scans daily table
+		processAggregateStaleData();
+
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setMostRecent(true);
+		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(filter, null, null, null);
+		assertNotNull(results);
+		assertEquals(Long.valueOf(2), results.getTotalResults());
+		Iterator<GeneralNodeDatumPK> pkIterator = pks.iterator();
+		for ( GeneralNodeDatumFilterMatch match : results.getResults() ) {
+			assertEquals(pkIterator.next(), match.getId());
+		}
+	}
+
+	@Test
+	public void findMostRecentOneSource() {
+		storeNew();
+
+		// immediately process reporting data as getting all sources scans daily table
+		processAggregateStaleData();
+
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setMostRecent(true);
+		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(filter, null, null, null);
+		assertNotNull(results);
+		assertEquals(Long.valueOf(1), results.getTotalResults());
+		GeneralNodeDatumFilterMatch match = results.getResults().iterator().next();
+		assertEquals(lastDatum.getId(), match.getId());
+	}
+
+	@Test
+	public void findMostRecentTwoSources() {
+		storeNew();
+
+		GeneralNodeDatum d2 = getTestInstance();
+		d2.setCreated(d2.getCreated().plus(1000));
+		d2.setSourceId(TEST_2ND_SOURCE);
+		dao.store(d2);
+
+		GeneralNodeDatum d3 = getTestInstance();
+		d3.setCreated(d2.getCreated().plus(1000));
+		d3.setSourceId("3rd source");
+		dao.store(d3);
+
+		// most recent sorted ascending by source ID
+		List<GeneralNodeDatumPK> pks = Arrays.asList(d3.getId(), lastDatum.getId());
+
+		// immediately process reporting data as getting all sources scans daily table
+		processAggregateStaleData();
+
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceIds(new String[] { TEST_SOURCE_ID, "3rd source" });
+		filter.setMostRecent(true);
+		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(filter, null, null, null);
+		assertNotNull(results);
+		assertEquals(Long.valueOf(2), results.getTotalResults());
+		Iterator<GeneralNodeDatumPK> pkIterator = pks.iterator();
+		for ( GeneralNodeDatumFilterMatch match : results.getResults() ) {
+			assertEquals(pkIterator.next(), match.getId());
+		}
 	}
 
 }

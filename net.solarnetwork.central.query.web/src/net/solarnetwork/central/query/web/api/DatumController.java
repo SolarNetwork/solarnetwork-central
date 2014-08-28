@@ -86,7 +86,7 @@ public class DatumController extends WebServiceControllerSupport {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/query", method = RequestMethod.GET)
+	@RequestMapping(value = "/query", method = RequestMethod.GET, params = "type")
 	public Response<List<? extends NodeDatum>> getDatumData(final DatumQueryCommand cmd) {
 		final String datumType = (cmd == null || cmd.getDatumType() == null ? null : cmd.getDatumType()
 				.toLowerCase());
@@ -139,10 +139,17 @@ public class DatumController extends WebServiceControllerSupport {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET)
+	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "type")
 	public Response<List<? extends NodeDatum>> getMostRecentDatumData(final DatumQueryCommand cmd) {
 		cmd.setMostRecent(true);
 		return getDatumData(cmd);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "!type")
+	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final DatumFilterCommand cmd) {
+		cmd.setMostRecent(true);
+		return filterGeneralDatumData(cmd);
 	}
 
 	// this awful mess is because in OpenJDK on BSD, Spring could not wire up the util:map properly!

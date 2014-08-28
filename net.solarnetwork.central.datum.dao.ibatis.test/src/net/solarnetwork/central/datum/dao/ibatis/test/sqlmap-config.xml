@@ -4,6 +4,8 @@
     "http://ibatis.apache.org/dtd/sql-map-config-2.dtd"> 
 <sqlMapConfig>
 
+	<typeHandler javaType="[Ljava.lang.String;" jdbcType="ARRAY" 
+		callback="net.solarnetwork.central.dao.ibatis.ArrayTypeHandler$TextArrayTypeHandler"/>
 	<typeHandler javaType="org.joda.time.DateTime" 
 		callback="net.solarnetwork.central.dao.ibatis.JodaDateTimeTypeHandlerCallback" />
 	<typeHandler javaType="org.joda.time.LocalDateTime" 
