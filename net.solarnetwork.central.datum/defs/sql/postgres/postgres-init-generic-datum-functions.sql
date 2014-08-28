@@ -69,6 +69,8 @@ var stmt = plv8.prepare('SELECT tsms, percent, tdiffms, jdata FROM solaragg.find
 	iobj = {},
 	iobjCounts = {},
 	aobj = {},
+	sobj = {},
+	robj,
 	acc,
 	prevAcc,
 	inst,
@@ -176,7 +178,14 @@ while ( rec = cur.fetch() ) {
 cur.close();
 stmt.free();
 
-return merge(calculateAverages(iobj, iobjCounts), aobj);
+robj = merge(calculateAverages(iobj, iobjCounts), aobj);
+
+// merge last record s obj into results, but not overwriting any existing properties
+if ( prevRec && prevRec.percent > 0 && prevRec.jdata.s ) {
+	robj = merge(prevRec.jdata.s, robj);
+}
+
+return robj;
 $BODY$
   LANGUAGE plv8 STABLE;
 
