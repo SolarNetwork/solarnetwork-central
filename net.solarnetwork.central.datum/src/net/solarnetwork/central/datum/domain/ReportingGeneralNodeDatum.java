@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.SerializeIgnore;
@@ -87,12 +88,40 @@ public class ReportingGeneralNodeDatum extends GeneralNodeDatum implements
 	public Map<String, ?> getSampleData() {
 		if ( sampleData == null && getSampleJson() != null ) {
 			try {
-				sampleData = OBJECT_MAPPER.readValue(getSampleJson(), Map.class);
+				sampleData = new JSONLinkedHashMap<String, Object>(OBJECT_MAPPER.readValue(
+						getSampleJson(), Map.class));
 			} catch ( Exception e ) {
 				LOG.error("Exception unmarshalling sampleJson {}", getSampleJson(), e);
 			}
 		}
 		return sampleData;
+	}
+
+	/**
+	 * A little helper Map whose {@link Object#toString()} method returns the
+	 * map data as a JSON string.
+	 */
+	public final class JSONLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
+
+		private static final long serialVersionUID = -4412011885993726827L;
+
+		public JSONLinkedHashMap() {
+			super();
+		}
+
+		public JSONLinkedHashMap(Map<? extends K, ? extends V> m) {
+			super(m);
+		}
+
+		@Override
+		public String toString() {
+			try {
+				return OBJECT_MAPPER.writeValueAsString(this);
+			} catch ( Exception e ) {
+				LOG.error("Exception unmarshalling sampleJson {}", getSampleJson(), e);
+			}
+			return "";
+		}
 	}
 
 }
