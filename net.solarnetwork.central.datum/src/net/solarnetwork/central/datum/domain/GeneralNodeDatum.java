@@ -58,8 +58,8 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 
 	private static final long serialVersionUID = 9030100020202210123L;
 
-	private static final Logger LOG = LoggerFactory.getLogger(GeneralNodeDatum.class);
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+	protected static final Logger LOG = LoggerFactory.getLogger(GeneralNodeDatum.class);
+	protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	static {
 		OBJECT_MAPPER.setSerializationInclusion(Inclusion.NON_NULL);

@@ -42,7 +42,7 @@ import org.joda.time.DateTime;
  * @version 1.3
  */
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
-		AggregateNodeDatumFilter, GeneralNodeDatumFilter {
+		AggregateNodeDatumFilter, GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter {
 
 	private final SolarLocation location;
 	private DateTime startDate;
@@ -293,6 +293,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		setAggregation(aggregate);
 	}
 
+	@Override
 	public boolean isMostRecent() {
 		return mostRecent;
 	}

@@ -31,10 +31,14 @@ import java.util.Set;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.ibatis.IbatisBaseGenericDaoSupport;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
+import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
@@ -122,7 +126,14 @@ public class IbatisGeneralNodeDatumDao extends
 		if ( filter.isMostRecent() ) {
 			return queryForMostRecent;
 		}
-		return getQueryForAll() + "-GeneralNodeDatumMatch";
+		Aggregation aggregation = null;
+		if ( filter instanceof AggregationFilter ) {
+			aggregation = ((AggregationFilter) filter).getAggregation();
+		}
+		if ( aggregation == null || aggregation.compareLevel(Aggregation.Hour) < 0 ) {
+			return getQueryForAll() + "-GeneralNodeDatumMatch";
+		}
+		return getQueryForAll() + "-ReportingGeneralNodeDatum-" + aggregation.toString();
 	}
 
 	@Override
@@ -140,12 +151,7 @@ public class IbatisGeneralNodeDatumDao extends
 		// attempt count first, if max NOT specified as -1
 		Long totalCount = null;
 		if ( max != null && max.intValue() != -1 ) {
-			final String countQuery = query + "-count";
-			Number n = null;
-			n = (Number) getSqlMapClientTemplate().queryForObject(countQuery, sqlProps, Number.class);
-			if ( n != null ) {
-				totalCount = n.longValue();
-			}
+			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
 
 		List<GeneralNodeDatumFilterMatch> rows = executeQueryForList(query, sqlProps, offset, max);
@@ -156,6 +162,44 @@ public class IbatisGeneralNodeDatumDao extends
 				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
 
 		return results;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatum> findAggregationFiltered(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
+		final String query = getQueryForFilter(filter);
+		final Map<String, Object> sqlProps = new HashMap<String, Object>(1);
+		sqlProps.put(PARAM_FILTER, filter);
+		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
+			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
+		}
+		//postProcessAggregationFilterProperties(filter, sqlProps);
+
+		// attempt count first, if max NOT specified as -1
+		Long totalCount = null;
+		if ( max != null && max.intValue() != -1 ) {
+			totalCount = executeCountQuery(query + "-count", sqlProps);
+		}
+
+		List<ReportingGeneralNodeDatum> rows = executeQueryForList(query, sqlProps, offset, max);
+
+		// rows = postProcessAggregationFilterQuery(filter, rows);
+
+		BasicFilterResults<ReportingGeneralNodeDatum> results = new BasicFilterResults<ReportingGeneralNodeDatum>(
+				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
+
+		return results;
+	}
+
+	private Long executeCountQuery(final String countQueryName, final Map<String, ?> sqlProps) {
+		Number n = (Number) getSqlMapClientTemplate().queryForObject(countQueryName, sqlProps,
+				Number.class);
+		if ( n != null ) {
+			return n.longValue();
+		}
+		return null;
 	}
 
 	@SuppressWarnings("unchecked")

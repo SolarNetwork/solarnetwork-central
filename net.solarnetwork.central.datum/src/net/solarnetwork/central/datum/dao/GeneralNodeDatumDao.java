@@ -23,12 +23,15 @@
 package net.solarnetwork.central.datum.dao;
 
 import java.util.Set;
+import net.solarnetwork.central.dao.AggregationFilterableDao;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import org.joda.time.DateTime;
 import org.joda.time.ReadableInterval;
 
@@ -39,7 +42,8 @@ import org.joda.time.ReadableInterval;
  * @version 1.0
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
-		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter> {
+		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
+		AggregationFilterableDao<ReportingGeneralNodeDatum, AggregateGeneralNodeDatumFilter> {
 
 	/**
 	 * Get the interval of available data in the system. Note the returned

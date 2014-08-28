@@ -39,9 +39,12 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.ReadableInterval;
 import org.junit.Assert;
 import org.junit.Test;
@@ -370,4 +373,48 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		}
 	}
 
+	@Test
+	public void findFilteredAggregateHourly() {
+		GeneralNodeDatum datum1 = new GeneralNodeDatum();
+		datum1.setCreated(new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC));
+		datum1.setNodeId(TEST_NODE_ID);
+		datum1.setSourceId(TEST_SOURCE_ID);
+		datum1.setSampleJson("{\"a\":{\"watt_hours\":0}}");
+		dao.store(datum1);
+
+		GeneralNodeDatum datum2 = new GeneralNodeDatum();
+		datum2.setCreated(datum1.getCreated().plusMinutes(30));
+		datum2.setNodeId(TEST_NODE_ID);
+		datum2.setSourceId(TEST_SOURCE_ID);
+		datum2.setSampleJson("{\"a\":{\"watt_hours\":5}}");
+		dao.store(datum2);
+
+		GeneralNodeDatum datum3 = new GeneralNodeDatum();
+		datum3.setCreated(datum2.getCreated().plusMinutes(30));
+		datum3.setNodeId(TEST_NODE_ID);
+		datum3.setSourceId(TEST_SOURCE_ID);
+		datum3.setSampleJson("{\"a\":{\"watt_hours\":10}}");
+		dao.store(datum3);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(datum1.getCreated());
+		criteria.setEndDate(datum3.getCreated());
+		criteria.setAggregate(Aggregation.Hour);
+
+		processAggregateStaleData();
+
+		FilterResults<ReportingGeneralNodeDatum> results = dao.findAggregationFiltered(criteria, null,
+				null, null);
+
+		assertNotNull(results);
+		assertEquals(1L, (long) results.getTotalResults());
+		assertEquals(1, (int) results.getReturnedResultCount());
+
+		Map<String, ?> data = results.getResults().iterator().next().getSampleData();
+		assertNotNull("Aggregate sample data", data);
+		assertNotNull("Aggregate Wh", data.get("watt_hours"));
+		assertEquals("Aggregate Wh", Integer.valueOf(10), data.get("watt_hours"));
+	}
 }

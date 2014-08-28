@@ -22,9 +22,13 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.util.Map;
 import net.solarnetwork.central.domain.FilterMatch;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.SerializeIgnore;
+import org.codehaus.jackson.annotate.JsonAnyGetter;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonUnwrapped;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
@@ -42,6 +46,7 @@ public class ReportingGeneralNodeDatum extends GeneralNodeDatum implements Repor
 	private static final long serialVersionUID = 7232170887492262841L;
 
 	private LocalDateTime localDateTime;
+	private Map<String, Object> sampleData;
 
 	@Override
 	public LocalDate getLocalDate() {
@@ -67,6 +72,28 @@ public class ReportingGeneralNodeDatum extends GeneralNodeDatum implements Repor
 
 	public void setLocalDateTime(LocalDateTime localDateTime) {
 		this.localDateTime = localDateTime;
+	}
+
+	/**
+	 * Returns the value of {link {@link #getSampleJson()} directly as a Map.
+	 * For reporting data, the JSON is flattened so we don't have an actual
+	 * {@link GeneralNodeDatumSamples} object to work with.
+	 * 
+	 * @return the sample data, or <em>null</em> if none available
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	@JsonUnwrapped
+	@JsonAnyGetter
+	public Map<String, ?> getSampleData() {
+		if ( sampleData == null && getSampleJson() != null ) {
+			try {
+				sampleData = OBJECT_MAPPER.readValue(getSampleJson(), Map.class);
+			} catch ( Exception e ) {
+				LOG.error("Exception unmarshalling sampleJson {}", getSampleJson(), e);
+			}
+		}
+		return sampleData;
 	}
 
 }
