@@ -22,8 +22,7 @@ CREATE TABLE solaragg.agg_stale_datum (
 
 CREATE TABLE solaragg.agg_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
-  local_date date NOT NULL,
-  local_time time without time zone NOT NULL,
+  local_date timestamp without time zone NOT NULL,
   node_id solarcommon.node_id NOT NULL,
   source_id solarcommon.source_id NOT NULL,
   jdata json NOT NULL,

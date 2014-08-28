@@ -247,11 +247,10 @@ BEGIN
 						EXIT update_hourly WHEN FOUND;
 
 						INSERT INTO solaragg.agg_datum_hourly (
-							ts_start, local_date, local_time, node_id, source_id, jdata)
+							ts_start, local_date, node_id, source_id, jdata)
 						VALUES (
 							stale.ts_start, 
-							CAST(stale.ts_start at time zone node_tz AS DATE),
-							CAST(stale.ts_start at time zone node_tz AS TIME WITHOUT TIME ZONE),
+							stale.ts_start at time zone node_tz,
 							stale.node_id,
 							stale.source_id,
 							agg_json
