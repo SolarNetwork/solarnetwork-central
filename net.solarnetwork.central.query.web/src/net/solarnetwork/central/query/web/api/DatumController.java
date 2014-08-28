@@ -129,8 +129,8 @@ public class DatumController extends WebServiceControllerSupport {
 	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd) {
 		FilterResults<?> results;
 		if ( cmd.getAggregation() != null ) {
-			// TODO
-			results = null;
+			results = queryBiz.findFilteredAggregateGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
+					cmd.getOffset(), cmd.getMax());
 		} else {
 			results = queryBiz.findFilteredGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
 					cmd.getOffset(), cmd.getMax());
