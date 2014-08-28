@@ -152,7 +152,7 @@
 		datum.jdata AS r_datum_jdata
 	</sql>
 
-	<sql id="fragment-findall-ReportingGeneralNodeDatum">
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-where">
 		<dynamic prepend="WHERE">
 			<isNotEmpty prepend="AND" property="filter.sourceIds">
 				datum.source_id IN
@@ -170,22 +170,8 @@
 			</isNotNull>
 		</dynamic>
 	</sql>
-
-	<!-- Aggregated query: hour -->
-
-	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour-count" resultClass="long">
-		SELECT count(datum.ts_start)
-		FROM
-			solaragg.agg_datum_hourly datum
-		<include refid="fragment-findall-ReportingGeneralNodeDatum"/>
-	</select>
 	
-	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
-		SELECT
-			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
-		FROM
-			solaragg.agg_datum_hourly datum
-		<include refid="fragment-findall-ReportingGeneralNodeDatum"/>
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-order">
 		ORDER BY
 		<isNotEmpty property="SortDescriptors">
 			<iterate property="SortDescriptors" conjunction=",">
@@ -198,6 +184,42 @@
 		<isEmpty property="SortDescriptors">
 			datum.ts_start, datum.node_id, datum.source_id
 		</isEmpty>
+	</sql>
+
+	<!-- Aggregated query: hour -->
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour-count" resultClass="long">
+		SELECT count(datum.ts_start)
+		FROM
+			solaragg.agg_datum_hourly datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+	</select>
+	
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
+		FROM
+			solaragg.agg_datum_hourly datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
+	<!-- Aggregated query: day -->
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day-count" resultClass="long">
+		SELECT count(datum.ts_start)
+		FROM
+			solaragg.agg_datum_daily datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+	</select>
+	
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
+		FROM
+			solaragg.agg_datum_daily datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
 
 </sqlMap>

@@ -381,6 +381,7 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		datum1.setSourceId(TEST_SOURCE_ID);
 		datum1.setSampleJson("{\"a\":{\"watt_hours\":0}}");
 		dao.store(datum1);
+		lastDatum = datum1;
 
 		GeneralNodeDatum datum2 = new GeneralNodeDatum();
 		datum2.setCreated(datum1.getCreated().plusMinutes(30));
@@ -396,14 +397,14 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		datum3.setSampleJson("{\"a\":{\"watt_hours\":10}}");
 		dao.store(datum3);
 
+		processAggregateStaleData();
+
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(TEST_NODE_ID);
 		criteria.setSourceId(TEST_SOURCE_ID);
 		criteria.setStartDate(datum1.getCreated());
 		criteria.setEndDate(datum3.getCreated());
 		criteria.setAggregate(Aggregation.Hour);
-
-		processAggregateStaleData();
 
 		FilterResults<ReportingGeneralNodeDatum> results = dao.findAggregationFiltered(criteria, null,
 				null, null);
@@ -416,5 +417,52 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		assertNotNull("Aggregate sample data", data);
 		assertNotNull("Aggregate Wh", data.get("watt_hours"));
 		assertEquals("Aggregate Wh", Integer.valueOf(10), data.get("watt_hours"));
+	}
+
+	@Test
+	public void findFilteredAggregateDaily() {
+		// populate 1 hour of data
+		findFilteredAggregateHourly();
+
+		// first, verify that the the day is also at 10 Wh
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(lastDatum.getCreated().withTime(0, 0, 0, 0));
+		criteria.setEndDate(lastDatum.getCreated().plusDays(1));
+		criteria.setAggregate(Aggregation.Day);
+
+		FilterResults<ReportingGeneralNodeDatum> results = dao.findAggregationFiltered(criteria, null,
+				null, null);
+
+		assertNotNull(results);
+		assertEquals("Daily query results", 1L, (long) results.getTotalResults());
+		assertEquals("Daily query results", 1, (int) results.getReturnedResultCount());
+
+		Map<String, ?> data = results.getResults().iterator().next().getSampleData();
+		assertNotNull("Aggregate sample data", data);
+		assertNotNull("Aggregate Wh", data.get("watt_hours"));
+		assertEquals("Aggregate Wh", Integer.valueOf(10), data.get("watt_hours"));
+
+		// ok, add another sample and now check for whole day, we should have 15 Wh
+		GeneralNodeDatum datum4 = new GeneralNodeDatum();
+		datum4.setCreated(lastDatum.getCreated().plusMinutes(90)); // move to a different hour
+		datum4.setNodeId(TEST_NODE_ID);
+		datum4.setSourceId(TEST_SOURCE_ID);
+		datum4.setSampleJson("{\"a\":{\"watt_hours\":15}}");
+		dao.store(datum4);
+
+		processAggregateStaleData();
+
+		criteria.setAggregate(Aggregation.Day);
+		results = dao.findAggregationFiltered(criteria, null, null, null);
+
+		assertNotNull(results);
+		assertEquals("Daily query results", 1L, (long) results.getTotalResults());
+		assertEquals("Daily query results", 1, (int) results.getReturnedResultCount());
+		data = results.getResults().iterator().next().getSampleData();
+		assertNotNull("Aggregate sample data", data);
+		assertNotNull("Aggregate Wh", data.get("watt_hours"));
+		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
 	}
 }
