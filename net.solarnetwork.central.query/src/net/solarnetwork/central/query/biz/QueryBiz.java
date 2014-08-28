@@ -28,6 +28,7 @@ package net.solarnetwork.central.query.biz;
 
 import java.util.List;
 import java.util.Set;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
@@ -35,6 +36,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
@@ -157,6 +159,7 @@ public interface QueryBiz {
 	 * The returned domain objects are not generally persisted objects, they
 	 * represent aggregated results, most likely aggregated over time.
 	 * </p>
+	 * 
 	 * @param criteria
 	 *        the query criteria
 	 * @param datumClass
@@ -195,26 +198,26 @@ public interface QueryBiz {
 			Integer max);
 
 	/**
-	 * API for querying for a filtered set of results from all possible results.
+	 * API for querying for a filtered set of aggregated GeneralNodeDatum
+	 * results from all possible results.
+	 * 
 	 * @param filter
 	 *        the query filter
-	 * @param datumClass
-	 *        the type of Datum to query for
 	 * @param sortDescriptors
 	 *        the optional sort descriptors
 	 * @param offset
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * 
 	 * @return the results, never <em>null</em>
 	 */
-	<F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
-			F filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
+	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
 
 	/**
-	 * API for querying for a filtered set of aggregated results.
+	 * API for querying for a filtered set of results from all possible results.
+	 * 
 	 * @param filter
 	 *        the query filter
 	 * @param datumClass
@@ -228,13 +231,34 @@ public interface QueryBiz {
 	 * 
 	 * @return the results, never <em>null</em>
 	 */
-	<A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(
-			A filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+	<F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(F filter,
+			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max);
+
+	/**
+	 * API for querying for a filtered set of aggregated results.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param datumClass
+	 *        the type of Datum to query for
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * 
+	 * @return the results, never <em>null</em>
+	 */
+	<A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(A filter,
+			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max);
 
 	/**
 	 * API for querying for a filtered set of locations from all possible
 	 * results.
+	 * 
 	 * @param filter
 	 *        the query filter
 	 * @param locationClass
@@ -249,5 +273,6 @@ public interface QueryBiz {
 	 * @return the results, never <em>null</em>
 	 */
 	FilterResults<SourceLocationMatch> findFilteredLocations(SourceLocation filter,
-			Class<? extends Entity<?>> locationClass, List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+			Class<? extends Entity<?>> locationClass, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max);
 }

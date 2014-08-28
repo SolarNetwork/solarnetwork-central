@@ -39,7 +39,7 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
-import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
@@ -406,8 +406,8 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		criteria.setEndDate(datum3.getCreated());
 		criteria.setAggregate(Aggregation.Hour);
 
-		FilterResults<ReportingGeneralNodeDatum> results = dao.findAggregationFiltered(criteria, null,
-				null, null);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
 
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
@@ -432,8 +432,8 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		criteria.setEndDate(lastDatum.getCreated().plusDays(1));
 		criteria.setAggregate(Aggregation.Day);
 
-		FilterResults<ReportingGeneralNodeDatum> results = dao.findAggregationFiltered(criteria, null,
-				null, null);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
 
 		assertNotNull(results);
 		assertEquals("Daily query results", 1L, (long) results.getTotalResults());

@@ -24,12 +24,14 @@ package net.solarnetwork.central.query.support;
 
 import java.util.List;
 import java.util.Set;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
@@ -92,23 +94,23 @@ public class DelegatingQueryBiz implements QueryBiz {
 	}
 
 	@Override
-	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
-			F filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(F filter,
+			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
 		return delegate.findFilteredDatum(filter, datumClass, sortDescriptors, offset, max);
 	}
 
 	@Override
-	public FilterResults<SourceLocationMatch> findFilteredLocations(
-			SourceLocation filter, Class<? extends Entity<?>> locationClass,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+	public FilterResults<SourceLocationMatch> findFilteredLocations(SourceLocation filter,
+			Class<? extends Entity<?>> locationClass, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
 		return delegate.findFilteredLocations(filter, locationClass, sortDescriptors, offset, max);
 	}
 
 	@Override
-	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(
-			A filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(A filter,
+			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
 		return delegate.findFilteredAggregateDatum(filter, datumClass, sortDescriptors, offset, max);
 	}
 
@@ -127,6 +129,13 @@ public class DelegatingQueryBiz implements QueryBiz {
 			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
 		return delegate.findFilteredGeneralNodeDatum(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
+		return delegate.findFilteredAggregateGeneralNodeDatum(filter, sortDescriptors, offset, max);
 	}
 
 }

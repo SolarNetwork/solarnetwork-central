@@ -36,7 +36,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
-import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.FilterResults;
@@ -166,7 +166,7 @@ public class IbatisGeneralNodeDatumDao extends
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<ReportingGeneralNodeDatum> findAggregationFiltered(
+	public FilterResults<ReportingGeneralNodeDatumMatch> findAggregationFiltered(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
 		final String query = getQueryForFilter(filter);
@@ -183,11 +183,11 @@ public class IbatisGeneralNodeDatumDao extends
 			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
 
-		List<ReportingGeneralNodeDatum> rows = executeQueryForList(query, sqlProps, offset, max);
+		List<ReportingGeneralNodeDatumMatch> rows = executeQueryForList(query, sqlProps, offset, max);
 
 		// rows = postProcessAggregationFilterQuery(filter, rows);
 
-		BasicFilterResults<ReportingGeneralNodeDatum> results = new BasicFilterResults<ReportingGeneralNodeDatum>(
+		BasicFilterResults<ReportingGeneralNodeDatumMatch> results = new BasicFilterResults<ReportingGeneralNodeDatumMatch>(
 				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
 
 		return results;

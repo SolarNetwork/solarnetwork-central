@@ -43,6 +43,7 @@ import net.solarnetwork.central.datum.dao.HardwareControlDatumDao;
 import net.solarnetwork.central.datum.dao.PowerDatumDao;
 import net.solarnetwork.central.datum.dao.PriceDatumDao;
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
@@ -51,6 +52,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.ReportingDatum;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
@@ -237,9 +239,9 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
-			F filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(F filter,
+			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
 		@SuppressWarnings("unchecked")
 		FilterableDao<? extends EntityMatch, Long, F> dao = (FilterableDao<? extends EntityMatch, Long, F>) filterDaoMapping
 				.get(datumClass);
@@ -261,9 +263,17 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(
-			A filter, Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors,
+	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
+		return generalNodeDatumDao.findAggregationFiltered(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(A filter,
+			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
 		@SuppressWarnings("unchecked")
 		AggregationFilterableDao<?, A> dao = (AggregationFilterableDao<?, A>) aggregationFilterDaoMapping
 				.get(datumClass);
@@ -277,9 +287,9 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<SourceLocationMatch> findFilteredLocations(
-			SourceLocation filter, Class<? extends Entity<?>> locationClass,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+	public FilterResults<SourceLocationMatch> findFilteredLocations(SourceLocation filter,
+			Class<? extends Entity<?>> locationClass, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
 		FilterableDao<SourceLocationMatch, Long, SourceLocation> dao = filterLocationDaoMapping
 				.get(locationClass);
 		if ( dao == null ) {

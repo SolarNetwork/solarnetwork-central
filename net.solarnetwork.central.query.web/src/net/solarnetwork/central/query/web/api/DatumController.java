@@ -138,6 +138,7 @@ public class DatumController extends WebServiceControllerSupport {
 		return new Response<FilterResults<?>>(results);
 	}
 
+	@Deprecated
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "type")
 	public Response<List<? extends NodeDatum>> getMostRecentDatumData(final DatumQueryCommand cmd) {

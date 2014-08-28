@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.util.Map;
-import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.SerializeIgnore;
 import org.codehaus.jackson.annotate.JsonAnyGetter;
@@ -40,8 +39,8 @@ import org.joda.time.LocalTime;
  * @author matt
  * @version 1.0
  */
-public class ReportingGeneralNodeDatum extends GeneralNodeDatum implements ReportingDatum,
-		FilterMatch<GeneralNodeDatumPK> {
+public class ReportingGeneralNodeDatum extends GeneralNodeDatum implements
+		ReportingGeneralNodeDatumMatch {
 
 	private static final long serialVersionUID = 7232170887492262841L;
 
