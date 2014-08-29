@@ -60,8 +60,8 @@ $BODY$
   LANGUAGE sql STABLE;
 
 CREATE OR REPLACE FUNCTION solaragg.calc_datum_time_slot(IN node bigint, IN source text, IN start_ts timestamp with time zone, IN span interval, IN spill interval)
-  RETURNS json AS
-$BODY$
+  RETURNS json  LANGUAGE plv8 AS
+$$
 'use strict';
 var stmt = plv8.prepare('SELECT tsms, percent, tdiffms, jdata FROM solaragg.find_datum_samples_for_time_slot($1, $2, $3, $4, $5)', 
 				['bigint', 'text', 'timestamp with time zone', 'interval', 'interval']),
@@ -128,8 +128,7 @@ if ( prevRec && prevRec.percent > 0 && prevRec.jdata.s ) {
 }
 
 return robj;
-$BODY$
-  LANGUAGE plv8 STABLE;
+$$ STABLE;
 
 
 CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
@@ -150,8 +149,10 @@ BEGIN
 	CASE kind
 		WHEN 'h' THEN
 			agg_span := interval '1 hour';
-		ELSE
+		WHEN 'd' THEN
 			agg_span := interval '1 day';
+		ELSE
+			agg_span := interval '1 month';
 	END CASE;
 	
 	OPEN curs;
@@ -178,8 +179,13 @@ BEGIN
 					WHERE node_id = stale.node_id
 						AND source_id = stale.source_id
 						AND ts_start = stale.ts_start;
-				ELSE
+				WHEN 'd' THEN
 					DELETE FROM solaragg.agg_datum_daily
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start = stale.ts_start;
+				ELSE
+					DELETE FROM solaragg.agg_datum_monthly
 					WHERE node_id = stale.node_id
 						AND source_id = stale.source_id
 						AND ts_start = stale.ts_start;
@@ -208,7 +214,7 @@ BEGIN
 						);
 						EXIT update_hourly;
 					END LOOP update_hourly;
-				ELSE
+				WHEN 'd' THEN
 					<<update_daily>>
 					LOOP
 						UPDATE solaragg.agg_datum_daily SET jdata = agg_json
@@ -230,6 +236,28 @@ BEGIN
 						);
 						EXIT update_daily;
 					END LOOP update_daily;
+				ELSE
+					<<update_monthly>>
+					LOOP
+						UPDATE solaragg.agg_datum_monthly SET jdata = agg_json
+						WHERE 
+							node_id = stale.node_id
+							AND source_id = stale.source_id
+							AND ts_start = stale.ts_start;
+
+						EXIT update_monthly WHEN FOUND;
+
+						INSERT INTO solaragg.agg_datum_monthly (
+							ts_start, local_date, node_id, source_id, jdata)
+						VALUES (
+							stale.ts_start, 
+							CAST(stale.ts_start at time zone node_tz AS DATE),
+							stale.node_id,
+							stale.source_id,
+							agg_json
+						);
+						EXIT update_monthly;
+					END LOOP update_monthly;
 			END CASE;
 		END IF;
 		DELETE FROM solaragg.agg_stale_datum WHERE CURRENT OF curs;
@@ -241,6 +269,13 @@ BEGIN
 				BEGIN
 					INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
 					VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'd');
+				EXCEPTION WHEN unique_violation THEN
+					-- Nothing to do, just continue
+				END;
+			WHEN 'd' THEN
+				BEGIN
+					INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+					VALUES (date_trunc('month', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'm');
 				EXCEPTION WHEN unique_violation THEN
 					-- Nothing to do, just continue
 				END;
