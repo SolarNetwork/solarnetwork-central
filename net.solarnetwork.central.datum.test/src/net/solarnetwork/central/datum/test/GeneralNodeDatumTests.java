@@ -87,6 +87,15 @@ public class GeneralNodeDatumTests {
 	}
 
 	@Test
+	public void serializeJsonWithTags() throws Exception {
+		GeneralNodeDatum datum = getTestInstance();
+		datum.getSamples().addTag("test");
+		String json = objectMapper.writeValueAsString(datum);
+		Assert.assertEquals("{\"created\":1408665600000,\"nodeId\":-1,\"sourceId\":\"test.source\","
+				+ "\"watts\":231,\"watt_hours\":4123,\"tags\":[\"test\"]}", json);
+	}
+
+	@Test
 	public void deserializeJson() throws Exception {
 		String json = "{\"created\":1408665600000,\"sourceId\":\"Main\",\"samples\":{\"i\":{\"watts\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
 		GeneralNodeDatum datum = objectMapper.readValue(json, GeneralNodeDatum.class);
