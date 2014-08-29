@@ -205,7 +205,7 @@ $BODY$
 BEGIN
 	IF sources IS NULL OR array_length(sources, 1) < 1 THEN
 		RETURN QUERY
-		SELECT * FROM solardatum.da_datum dd
+		SELECT dd.* FROM solardatum.da_datum dd
 		INNER JOIN (
 			SELECT max(d.ts) as ts, d.source_id FROM solardatum.da_datum d 
 			INNER JOIN (SELECT solardatum.find_available_sources(node) AS source_id) AS s ON s.source_id = d.source_id
@@ -215,7 +215,7 @@ BEGIN
 		ORDER BY dd.source_id ASC;
 	ELSE
 		RETURN QUERY
-		SELECT * FROM solardatum.da_datum dd
+		SELECT dd.* FROM solardatum.da_datum dd
 		INNER JOIN (
 			SELECT max(d.ts) as ts, d.source_id FROM solardatum.da_datum d 
 			INNER JOIN (SELECT unnest(sources) AS source_id) AS s ON s.source_id = d.source_id
