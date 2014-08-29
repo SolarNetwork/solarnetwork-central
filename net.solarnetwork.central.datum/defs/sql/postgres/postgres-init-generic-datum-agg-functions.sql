@@ -1,3 +1,27 @@
+CREATE OR REPLACE FUNCTION solardatum.trigger_agg_stale_datum()
+  RETURNS trigger AS
+$BODY$BEGIN
+	CASE TG_OP
+		WHEN 'INSERT', 'UPDATE' THEN
+			BEGIN
+				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+				VALUES (date_trunc('hour', NEW.ts), NEW.node_id, NEW.source_id, 'h');
+			EXCEPTION WHEN unique_violation THEN
+				-- Nothing to do, just continue
+			END;
+			RETURN NEW;
+		ELSE
+			BEGIN
+				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+				VALUES (date_trunc('hour', OLD.ts), OLD.node_id, OLD.source_id, 'h');
+			EXCEPTION WHEN unique_violation THEN
+				-- Nothing to do, just continue
+			END;
+			RETURN OLD;
+	END CASE;
+END;$BODY$
+  LANGUAGE plpgsql VOLATILE;
+
 CREATE OR REPLACE FUNCTION solaragg.find_datum_samples_for_time_slot(IN node bigint, IN source text, IN start_ts timestamp with time zone, IN span interval, IN spill interval)
   RETURNS TABLE(ts timestamp with time zone, tsms bigint, percent real, tdiffms integer, jdata json) AS
 $BODY$
@@ -287,7 +311,6 @@ BEGIN
 	RETURN result;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
-
 
 CREATE OR REPLACE FUNCTION solaragg.process_agg_stale_datum(kind char, max integer)
   RETURNS INTEGER AS

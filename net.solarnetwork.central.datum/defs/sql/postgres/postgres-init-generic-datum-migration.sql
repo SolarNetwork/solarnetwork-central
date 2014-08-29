@@ -20,7 +20,10 @@ BEGIN
 		END IF;
 		jtext := jtext || '"a":{"watt_hours":' || datum.watt_hour || '}';
 	END IF;
-	jtext := jtext || '}';
+	IF length(jtext) > 1 THEN
+		jtext := jtext || ',';
+	END IF;
+	jtext := jtext || '"t":["consumption"]}';
 
 	BEGIN
 		INSERT INTO solardatum.da_datum(
@@ -51,12 +54,6 @@ $BODY$BEGIN
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
-CREATE TRIGGER mig_consum_datum
-  BEFORE INSERT OR UPDATE
-  ON solarnet.sn_consum_datum
-  FOR EACH ROW
-  EXECUTE PROCEDURE solardatum.mig_consum_datum();
-
 CREATE OR REPLACE FUNCTION solardatum.mig_power_datum(datum solarnet.sn_power_datum)
   RETURNS void AS
 $BODY$
@@ -79,7 +76,10 @@ BEGIN
 		END IF;
 		jtext := jtext || '"a":{"watt_hours":' || datum.watt_hour || '}';
 	END IF;
-	jtext := jtext || '}';
+	IF length(jtext) > 1 THEN
+		jtext := jtext || ',';
+	END IF;
+	jtext := jtext || '"t":["power"]}';
 
 	BEGIN
 		INSERT INTO solardatum.da_datum(
@@ -109,12 +109,6 @@ $BODY$BEGIN
 	RETURN NEW;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
-
-CREATE TRIGGER mig_power_datum
-  BEFORE INSERT OR UPDATE
-  ON solarnet.sn_power_datum
-  FOR EACH ROW
-  EXECUTE PROCEDURE solardatum.mig_power_datum();
 
 CREATE OR REPLACE FUNCTION solardatum.mig_hardware_control_datum(datum solarnet.sn_hardware_control_datum)
   RETURNS void AS
@@ -149,7 +143,10 @@ BEGIN
 		END IF;
 		jtext := jtext || '}';
 	END IF;
-	jtext := jtext || '}';
+	IF length(jtext) > 1 THEN
+		jtext := jtext || ',';
+	END IF;
+	jtext := jtext || '"t":["control"]}';
 
 	BEGIN
 		INSERT INTO solardatum.da_datum(
@@ -179,9 +176,3 @@ $BODY$BEGIN
 	RETURN NEW;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
-
-CREATE TRIGGER mig_hardware_control_datum
-  BEFORE INSERT OR UPDATE
-  ON solarnet.sn_hardware_control_datum
-  FOR EACH ROW
-  EXECUTE PROCEDURE solardatum.mig_hardware_control_datum();

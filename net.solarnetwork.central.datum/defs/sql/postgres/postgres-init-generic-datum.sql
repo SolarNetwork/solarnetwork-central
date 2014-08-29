@@ -1,6 +1,6 @@
-CREATE SCHEMA solardatum;
+CREATE SCHEMA IF NOT EXISTS solardatum;
 
-CREATE SCHEMA solaragg;
+CREATE SCHEMA IF NOT EXISTS solaragg;
 
 CREATE TABLE solardatum.da_datum (
   ts solarcommon.ts NOT NULL,
@@ -79,37 +79,6 @@ SELECT date_trunc('month', d.ts at time zone nodetz.tz) at time zone nodetz.tz A
 FROM solardatum.da_datum d
 INNER JOIN nodetz ON nodetz.node_id = d.node_id
 GROUP BY date_trunc('month', d.ts at time zone nodetz.tz) at time zone nodetz.tz, d.node_id, d.source_id;
-
-CREATE OR REPLACE FUNCTION solardatum.trigger_agg_stale_datum()
-  RETURNS trigger AS
-$BODY$BEGIN
-	CASE TG_OP
-		WHEN 'INSERT', 'UPDATE' THEN
-			BEGIN
-				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
-				VALUES (date_trunc('hour', NEW.ts), NEW.node_id, NEW.source_id, 'h');
-			EXCEPTION WHEN unique_violation THEN
-				-- Nothing to do, just continue
-			END;
-			RETURN NEW;
-		ELSE
-			BEGIN
-				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
-				VALUES (date_trunc('hour', OLD.ts), OLD.node_id, OLD.source_id, 'h');
-			EXCEPTION WHEN unique_violation THEN
-				-- Nothing to do, just continue
-			END;
-			RETURN OLD;
-	END CASE;
-END;$BODY$
-  LANGUAGE plpgsql VOLATILE;
-
--- NOTE the trigger name has aa_ prefix so sorts before pg_partman trigger name
-CREATE TRIGGER aa_agg_stale_datum
-  BEFORE INSERT OR UPDATE OR DELETE
-  ON solardatum.da_datum
-  FOR EACH ROW
-  EXECUTE PROCEDURE solardatum.trigger_agg_stale_datum();
 
 CREATE OR REPLACE FUNCTION solardatum.store_datum(
 	cdate solarcommon.ts, 
