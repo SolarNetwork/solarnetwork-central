@@ -144,11 +144,28 @@ while ( rec = cur.fetch() ) {
 cur.close();
 stmt.free();
 
-robj = sn.util.merge(sn.math.util.calculateAverages(iobj, iobjCounts), aobj);
+robj = {};
 
-// merge last record s obj into results, but not overwriting any existing properties
-if ( prevRec && prevRec.percent > 0 && prevRec.jdata.s ) {
-	robj = sn.util.merge(prevRec.jdata.s, robj);
+iobj = sn.math.util.calculateAverages(iobj, iobjCounts);
+for ( prop in iobj ) {
+	robj['i'] = iobj;
+	break;
+}
+for ( prop in aobj ) {
+	robj['a'] = sn.util.merge({}, aobj); // call merge() to pick up sn.math.util.fixPrecision
+	break;
+}
+
+if ( prevRec && prevRec.percent > 0 ) {
+	// merge last record s obj into results, but not overwriting any existing properties
+	if ( prevRec.jdata.s ) {
+		for ( prop in prevRec.jdata.s ) {
+			robj['s'] = prevRec.jdata.s;
+		}
+	}
+	if ( Array.isArray(prevRec.jdata.t) && prevRec.jdata.t.length > 0 ) {
+		robj['t'] = prevRec.jdata.t;
+	}
 }
 
 return robj;
