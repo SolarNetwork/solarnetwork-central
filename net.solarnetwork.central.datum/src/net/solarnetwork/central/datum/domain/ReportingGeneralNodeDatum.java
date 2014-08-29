@@ -22,13 +22,8 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.SerializeIgnore;
-import org.codehaus.jackson.annotate.JsonAnyGetter;
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonUnwrapped;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
@@ -43,10 +38,9 @@ import org.joda.time.LocalTime;
 public class ReportingGeneralNodeDatum extends GeneralNodeDatum implements
 		ReportingGeneralNodeDatumMatch {
 
-	private static final long serialVersionUID = 7232170887492262841L;
+	private static final long serialVersionUID = -6844746894977879054L;
 
 	private LocalDateTime localDateTime;
-	private Map<String, Object> sampleData;
 
 	@Override
 	public LocalDate getLocalDate() {
@@ -72,56 +66,6 @@ public class ReportingGeneralNodeDatum extends GeneralNodeDatum implements
 
 	public void setLocalDateTime(LocalDateTime localDateTime) {
 		this.localDateTime = localDateTime;
-	}
-
-	/**
-	 * Returns the value of {link {@link #getSampleJson()} directly as a Map.
-	 * For reporting data, the JSON is flattened so we don't have an actual
-	 * {@link GeneralNodeDatumSamples} object to work with.
-	 * 
-	 * @return the sample data, or <em>null</em> if none available
-	 */
-	@Override
-	@SuppressWarnings("unchecked")
-	@JsonUnwrapped
-	@JsonAnyGetter
-	public Map<String, ?> getSampleData() {
-		if ( sampleData == null && getSampleJson() != null ) {
-			try {
-				sampleData = new JSONLinkedHashMap<String, Object>(OBJECT_MAPPER.readValue(
-						getSampleJson(), Map.class));
-			} catch ( Exception e ) {
-				LOG.error("Exception unmarshalling sampleJson {}", getSampleJson(), e);
-			}
-		}
-		return sampleData;
-	}
-
-	/**
-	 * A little helper Map whose {@link Object#toString()} method returns the
-	 * map data as a JSON string.
-	 */
-	public final class JSONLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
-
-		private static final long serialVersionUID = -4412011885993726827L;
-
-		public JSONLinkedHashMap() {
-			super();
-		}
-
-		public JSONLinkedHashMap(Map<? extends K, ? extends V> m) {
-			super(m);
-		}
-
-		@Override
-		public String toString() {
-			try {
-				return OBJECT_MAPPER.writeValueAsString(this);
-			} catch ( Exception e ) {
-				LOG.error("Exception unmarshalling sampleJson {}", getSampleJson(), e);
-			}
-			return "";
-		}
 	}
 
 }
