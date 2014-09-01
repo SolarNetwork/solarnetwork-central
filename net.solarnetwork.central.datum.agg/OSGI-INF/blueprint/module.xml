@@ -20,10 +20,11 @@
 	<!-- Configuration -->
 	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.agg">
-		<beans:prop key="staleNodeDatumProcessor.maximumRowCount">50</beans:prop>
+		<beans:prop key="staleNodeDatumProcessor.maximumRowCount">200</beans:prop>
 		<beans:prop key="staleNodeDatumProcessor.jobCron">0 0/1 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.hourly.jobCron">15 0/1 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.daily.jobCron">30 0/5 * * * ?</beans:prop>
+		<beans:prop key="staleGeneralNodeDatumProcessor.monthly.jobCron">45 0/20 * * * ?</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -67,6 +68,16 @@
 		<property name="aggregateProcessType" value="d"/>
 	</bean>
 	
+	<bean id="staleGeneralNodeDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor">
+		<argument ref="eventAdmin"/>
+		<argument ref="jdbcOps"/>
+		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.monthly.jobCron}"/>
+		<property name="jobId" value="StaleGeneralNodeDatumProcessorMonthly"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
+		<property name="aggregateProcessType" value="m"/>
+	</bean>
+	
 	<!-- Published Services -->
 
 	<service ref="staleNodeDatumProcessor" interface="org.osgi.service.event.EventHandler">
@@ -97,6 +108,17 @@
 				<array value-type="java.lang.String">
 					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
 					<value>#{staleGeneralNodeDatumProcessorDaily.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<service ref="staleGeneralNodeDatumProcessorMonthly" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{staleGeneralNodeDatumProcessorMonthly.jobTopic}</value>
 				</array>
 			</entry>
 		</service-properties>
