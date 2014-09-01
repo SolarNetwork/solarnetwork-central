@@ -258,7 +258,8 @@ public class DaoQueryBiz implements QueryBiz {
 	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
 			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
-		return generalNodeDatumDao.findFiltered(filter, sortDescriptors, offset, max);
+		return generalNodeDatumDao.findFiltered(filter, sortDescriptors, limitFilterOffset(offset),
+				limitFilterMaximum(max));
 	}
 
 	@Override
@@ -266,7 +267,8 @@ public class DaoQueryBiz implements QueryBiz {
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
-		return generalNodeDatumDao.findAggregationFiltered(filter, sortDescriptors, offset, max);
+		return generalNodeDatumDao.findAggregationFiltered(filter, sortDescriptors,
+				limitFilterOffset(offset), limitFilterMaximum(max));
 	}
 
 	@Override
