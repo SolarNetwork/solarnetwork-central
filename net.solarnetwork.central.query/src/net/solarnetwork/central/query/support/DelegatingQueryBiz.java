@@ -24,10 +24,14 @@ package net.solarnetwork.central.query.support;
 
 import java.util.List;
 import java.util.Set;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
@@ -38,6 +42,7 @@ import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.domain.WeatherConditions;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 /**
@@ -78,9 +83,9 @@ public class DelegatingQueryBiz implements QueryBiz {
 	}
 
 	@Override
-	public List<? extends NodeDatum> getAggregatedDatum(Class<? extends NodeDatum> datumClass,
-			DatumQueryCommand criteria) {
-		return delegate.getAggregatedDatum(datumClass, criteria);
+	public List<? extends NodeDatum> getAggregatedDatum(DatumQueryCommand criteria,
+			Class<? extends NodeDatum> datumClass) {
+		return delegate.getAggregatedDatum(criteria, datumClass);
 	}
 
 	@Override
@@ -89,24 +94,48 @@ public class DelegatingQueryBiz implements QueryBiz {
 	}
 
 	@Override
-	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(
-			Class<? extends Datum> datumClass, F filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
-		return delegate.findFilteredDatum(datumClass, filter, sortDescriptors, offset, max);
+	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(F filter,
+			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		return delegate.findFilteredDatum(filter, datumClass, sortDescriptors, offset, max);
 	}
 
 	@Override
-	public FilterResults<SourceLocationMatch> findFilteredLocations(
-			Class<? extends Entity<?>> locationClass, SourceLocation filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		return delegate.findFilteredLocations(locationClass, filter, sortDescriptors, offset, max);
+	public FilterResults<SourceLocationMatch> findFilteredLocations(SourceLocation filter,
+			Class<? extends Entity<?>> locationClass, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
+		return delegate.findFilteredLocations(filter, locationClass, sortDescriptors, offset, max);
 	}
 
 	@Override
-	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(
-			Class<? extends Datum> datumClass, A filter, List<SortDescriptor> sortDescriptors,
+	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(A filter,
+			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		return delegate.findFilteredAggregateDatum(filter, datumClass, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public ReportableInterval getReportableInterval(Long nodeId, String sourceId) {
+		return delegate.getReportableInterval(nodeId, sourceId);
+	}
+
+	@Override
+	public Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end) {
+		return delegate.getAvailableSources(nodeId, start, end);
+	}
+
+	@Override
+	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
+			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		return delegate.findFilteredGeneralNodeDatum(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
-		return delegate.findFilteredAggregateDatum(datumClass, filter, sortDescriptors, offset, max);
+		return delegate.findFilteredAggregateGeneralNodeDatum(filter, sortDescriptors, offset, max);
 	}
 
 }

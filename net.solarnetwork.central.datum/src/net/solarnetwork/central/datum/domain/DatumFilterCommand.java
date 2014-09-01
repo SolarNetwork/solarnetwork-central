@@ -36,17 +36,18 @@ import org.joda.time.DateTime;
 
 /**
  * Implementation of {@link LocationDatumFilter}, {@link NodeDatumFilter}, and
- * {@link AggregateNodeDatumFilter}.
+ * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
-		AggregateNodeDatumFilter {
+		AggregateNodeDatumFilter, GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter {
 
 	private final SolarLocation location;
 	private DateTime startDate;
 	private DateTime endDate;
+	private boolean mostRecent = false;
 	private String type; // e.g. Power, Consumption, etc.
 	private List<MutableSortDescriptor> sorts;
 	private Integer offset = 0;
@@ -148,6 +149,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		this.endDate = endDate;
 	}
 
+	@Override
 	public String getType() {
 		return type;
 	}
@@ -289,6 +291,15 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 */
 	public void setAggregate(Aggregation aggregate) {
 		setAggregation(aggregate);
+	}
+
+	@Override
+	public boolean isMostRecent() {
+		return mostRecent;
+	}
+
+	public void setMostRecent(boolean mostRecent) {
+		this.mostRecent = mostRecent;
 	}
 
 }

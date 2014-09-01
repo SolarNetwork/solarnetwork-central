@@ -2,12 +2,12 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Datum Aggregation
 Bundle-SymbolicName: net.solarnetwork.central.datum.agg
-Bundle-Version: 1.0.0
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
  javax.sql,
- net.solarnetwork.central.scheduler;version="1.0.1",
+ net.solarnetwork.central.scheduler;version="1.2.0",
  org.eclipse.gemini.blueprint.compendium.cm;version="[1.0,2.0)",
  org.osgi.service.event;version="[1.2,2.0)",
  org.osgi.framework;version="[1.7,2.0)",

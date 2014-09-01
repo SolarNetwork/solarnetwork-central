@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="GeneralNodeDatum">
+
+	<parameterMap class="GeneralNodeDatum" id="pmap-GeneralNodeDatum">
+		<parameter property="created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="nodeId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="sourceId" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="posted" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="sampleJson" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+	<procedure id="insert-GeneralNodeDatum" parameterMap="pmap-GeneralNodeDatum">
+		{call solardatum.store_datum(?, ?, ?, ?, ?)}
+	</procedure>
+	
+	<procedure id="update-GeneralNodeDatum" parameterMap="pmap-GeneralNodeDatum">
+		{call solardatum.store_datum(?, ?, ?, ?, ?)}
+	</procedure>
+	
+	<sql id="fragment-GeneralNodeDatum-full-result">
+		datum.node_id AS datum_node_id,
+		datum.ts AS datum_ts,
+		datum.source_id AS datum_source_id,
+		datum.posted AS datum_posted,
+		datum.jdata AS datum_jdata
+	</sql>
+	
+	<resultMap id="GeneralNodeDatumFullResult" class="GeneralNodeDatum">
+		<result column="datum_node_id" property="nodeId"/>
+		<result column="datum_ts" property="created"/>
+		<result column="datum_source_id" property="sourceId"/>
+		<result column="datum_posted" property="posted"/>
+		<result column="datum_jdata" property="sampleJson"/>
+	</resultMap>
+	
+	<resultMap id="GeneralNodeDatumDirectResult" class="GeneralNodeDatum">
+		<result column="node_id" property="nodeId"/>
+		<result column="ts" property="created"/>
+		<result column="source_id" property="sourceId"/>
+		<result column="posted" property="posted"/>
+		<result column="jdata" property="sampleJson"/>
+	</resultMap>
+	
+	<select id="get-GeneralNodeDatum-for-id" resultMap="GeneralNodeDatumFullResult">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-full-result"/>
+		FROM
+			solardatum.da_datum datum
+		WHERE
+			datum.node_id = #nodeId#
+			AND datum.ts = #created#
+			AND datum.source_id = #sourceId#
+	</select>
+
+	<procedure id="find-general-distinct-sources" resultClass="java.lang.String">
+		{call solardatum.find_available_sources(#node:BIGINT#, #start:TIMESTAMP#, #end:TIMESTAMP#)}
+	</procedure>
+	
+	<parameterMap class="map" id="pmap-reportable-interval">
+		<parameter property="node" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="source" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="ts_start" jdbcType="TIMESTAMP" mode="OUT"/>
+		<parameter property="ts_end" jdbcType="TIMESTAMP" mode="OUT"/>
+		<parameter property="node_tz" jdbcType="VARCHAR" mode="OUT"/>
+		<parameter property="node_tz_offset" jdbcType="INTEGER" mode="OUT"/>
+	</parameterMap>
+
+	<procedure id="find-general-reportable-interval" parameterMap="pmap-reportable-interval" resultClass="map">
+		{call solardatum.find_reportable_interval(?, ?, ?, ?, ?, ?)}
+	</procedure>
+
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="GeneralNodeDatumMatchResult" class="GeneralNodeDatumMatch" extends="GeneralNodeDatum.GeneralNodeDatumFullResult"/>
+	<resultMap id="GeneralNodeDatumDirectMatchResult" class="GeneralNodeDatumMatch" extends="GeneralNodeDatum.GeneralNodeDatumDirectResult"/>
+
+	<parameterMap class="map" id="pmap-most-recent">
+		<parameter property="filter.nodeId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="filter.sourceIds" jdbcType="ARRAY" mode="IN"/>
+	</parameterMap>
+
+	<procedure id="find-general-most-recent" parameterMap="pmap-most-recent" resultMap="GeneralNodeDatumDirectMatchResult">
+		{call solardatum.find_most_recent(?, ?)}
+	</procedure>
+
+	<sql id="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch">
+		FROM
+			solardatum.da_datum datum
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="filter.sourceIds">
+				datum.source_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+			</isNotEmpty>
+			<isNotNull prepend="AND" property="filter.nodeIds">
+				datum.node_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.startDate">
+				datum.ts &gt;= #filter.startDate#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.endDate">
+				datum.ts &lt; #filter.endDate#
+			</isNotNull>
+		</dynamic>
+	</sql>
+
+	<select id="findall-GeneralNodeDatum-GeneralNodeDatumMatch" resultMap="GeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-full-result"/>
+		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch"/>
+		ORDER BY
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">datum.ts</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">datum.node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">datum.source_id</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		<isEmpty property="SortDescriptors">
+			datum.node_id,
+			datum.ts,
+			datum.source_id
+		</isEmpty>
+	</select>
+
+	<select id="findall-GeneralNodeDatum-GeneralNodeDatumMatch-count" resultClass="long">
+		SELECT count(datum.ts)
+		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch"/>
+	</select>
+
+	<!-- Aggregated query support -->
+
+	<resultMap id="ReportingGeneralNodeDatumMatchResult" class="ReportingGeneralNodeDatum">
+		<result column="r_datum_node_id" property="nodeId"/>
+		<result column="r_datum_ts_start" property="created"/>
+		<result column="r_datum_local_date" property="localDateTime"/>
+		<result column="r_datum_source_id" property="sourceId"/>
+		<result column="r_datum_jdata" property="sampleJson"/>
+	</resultMap>
+
+	<sql id="fragment-GeneralNodeDatum-aggregation-result">
+		datum.node_id AS r_datum_node_id,
+		datum.ts_start AS r_datum_ts_start,
+		datum.local_date AS r_datum_local_date,
+		datum.source_id AS r_datum_source_id,
+		datum.jdata AS r_datum_jdata
+	</sql>
+
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-where">
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="filter.sourceIds">
+				datum.source_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+			</isNotEmpty>
+			<isNotNull prepend="AND" property="filter.nodeIds">
+				datum.node_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.startDate">
+				datum.ts_start &gt;= #filter.startDate#
+			</isNotNull>
+			<isNotNull prepend="AND" property="filter.endDate">
+				datum.ts_start &lt; #filter.endDate#
+			</isNotNull>
+		</dynamic>
+	</sql>
+	
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-order">
+		ORDER BY
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">datum.ts_start</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">datum.node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">datum.source_id</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		<isEmpty property="SortDescriptors">
+			datum.ts_start, datum.node_id, datum.source_id
+		</isEmpty>
+	</sql>
+
+	<!-- Aggregated query: hour -->
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour-count" resultClass="long">
+		SELECT count(datum.ts_start)
+		FROM
+			solaragg.agg_datum_hourly datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+	</select>
+	
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
+		FROM
+			solaragg.agg_datum_hourly datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
+	<!-- Aggregated query: day -->
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day-count" resultClass="long">
+		SELECT count(datum.ts_start)
+		FROM
+			solaragg.agg_datum_daily datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+	</select>
+	
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
+		FROM
+			solaragg.agg_datum_daily datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
+</sqlMap>

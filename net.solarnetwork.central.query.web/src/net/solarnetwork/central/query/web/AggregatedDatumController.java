@@ -115,7 +115,7 @@ public class AggregatedDatumController extends AbstractNodeController {
 		}
 		
 		// execute query, and return results
-		List<? extends NodeDatum> results = queryBiz.getAggregatedDatum(datumClass, cmd);
+		List<? extends NodeDatum> results = queryBiz.getAggregatedDatum(cmd, datumClass);
 		mv.addObject(MODEL_KEY_DATA_LIST, results);
         mv.addObject(MODEL_KEY_TZ, tz);
         

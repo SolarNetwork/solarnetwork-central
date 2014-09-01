@@ -35,10 +35,12 @@ import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.dao.DatumDao;
 import net.solarnetwork.central.datum.dao.DayDatumDao;
+import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.LocationDatum;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.PowerDatum;
@@ -53,6 +55,8 @@ import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthenticatedNode;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.util.ClassUtils;
 import org.slf4j.LoggerFactory;
@@ -91,10 +95,14 @@ import org.springframework.transaction.annotation.Transactional;
  * <dd>The {@link SolarNodeDao} so location information can be added to
  * {@link DayDatum} and {@link WeatherDatum} objects if they are missing that
  * information when passed to {@link #postDatum(Datum)}.</dd>
+ * 
+ * <dt></dt>
+ * 
+ * <dd></dd>
  * </dl>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -115,6 +123,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private PriceLocationDao priceLocationDao = null;
 	private WeatherLocationDao weatherLocationDao = null;
 	private SolarLocationDao solarLocationDao = null;
+	private GeneralNodeDatumDao generalNodeDatumDao = null;
 	private int filteredResultsLimit = 250;
 
 	/** A class-level logger. */
@@ -144,7 +153,10 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 		// verify node ID with security
 		AuthenticatedNode authNode = getAuthenticatedNode();
-		if ( authNode != null && datum instanceof NodeDatum ) {
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		if ( datum instanceof NodeDatum ) {
 			NodeDatum nd = (NodeDatum) datum;
 			if ( nd.getNodeId() == null ) {
 				if ( log.isDebugEnabled() ) {
@@ -158,7 +170,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 					log.warn("Illegal datum post by node " + authNode.getNodeId() + " as node "
 							+ nd.getNodeId());
 				}
-				throw new SecurityException("Illegal data access");
+				throw new AuthorizationException(Reason.ACCESS_DENIED, nd.getNodeId());
 			}
 		}
 
@@ -206,6 +218,31 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			results.add(entity);
 		}
 		return results;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void postGeneralNodeDatum(Iterable<GeneralNodeDatum> datums) {
+		if ( datums == null ) {
+			return;
+		}
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		for ( GeneralNodeDatum d : datums ) {
+			if ( d.getNodeId() == null ) {
+				d.setNodeId(authNode.getNodeId());
+			} else if ( !d.getNodeId().equals(authNode.getNodeId()) ) {
+				if ( log.isWarnEnabled() ) {
+					log.warn("Illegal datum post by node " + authNode.getNodeId() + " as node "
+							+ d.getNodeId());
+				}
+				throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
+			}
+			generalNodeDatumDao.store(d);
+		}
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -413,6 +450,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	public void setFilteredResultsLimit(int filteredResultsLimit) {
 		this.filteredResultsLimit = filteredResultsLimit;
+	}
+
+	public GeneralNodeDatumDao getGeneralNodeDatumDao() {
+		return generalNodeDatumDao;
+	}
+
+	public void setGeneralNodeDatumDao(GeneralNodeDatumDao generalNodeDatumDao) {
+		this.generalNodeDatumDao = generalNodeDatumDao;
 	}
 
 }
