@@ -145,6 +145,13 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 		return new Response<ReportableInterval>(data);
 	}
 
+	@Deprecated
+	@ResponseBody
+	@RequestMapping(value = "/interval", method = RequestMethod.GET, params = { "type", "!types" })
+	public Response<ReportableInterval> getReportableIntervalForType(ReportableIntervalCommand cmd) {
+		return getReportableInterval(cmd);
+	}
+
 	/**
 	 * Get a date range of available GeneralNodeData for a node and an optional
 	 * source ID.
@@ -232,6 +239,13 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 		Set<String> data = queryBiz.getAvailableSources(cmd.getNodeId(), type, cmd.getStart(),
 				cmd.getEnd());
 		return new Response<Set<String>>(data);
+	}
+
+	@Deprecated
+	@ResponseBody
+	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "type", "!types" })
+	public Response<Set<String>> getAvailableSourcesForType(ReportableIntervalCommand cmd) {
+		return getAvailableSources(cmd);
 	}
 
 	/**
