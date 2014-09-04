@@ -97,6 +97,7 @@ var stmt = plv8.prepare('SELECT tsms, percent, tdiffms, jdata FROM solaragg.find
 	robj,
 	acc,
 	prevAcc,
+	accAvg = {},
 	inst,
 	prevInst,
 	rec,
@@ -105,18 +106,73 @@ var stmt = plv8.prepare('SELECT tsms, percent, tdiffms, jdata FROM solaragg.find
 	prop,
 	propHour,
 	val,
+	runningAvgDiff,
+	runningAvgMax = 5,
+	toleranceMs,
 	hourFill = {'watts' : 'watt_hours'};
-	
+
+toleranceMs = (function() {
+	// calculate the number of milliseconds in the spill interval, which plv8 gives us as a string which we look for HH:MM:SS format
+	var hms = spill.match(/(\d{2}):(\d{2}):(\d{2})$/);
+	if ( hms && hms.length === 4 ) {
+		return ((hms[1] * 60 * 60 * 1000) + (hms[2] * 60 * 1000) + (hms[3] * 1000));
+	}
+	return 0;
+}());
+
+function calculateAccumulatingValue(val, prevVal, prop, ms) {
+	var diff = (val - prevVal),
+		diffT = Math.abs(diff / (ms / 60000)),
+		offsetT = 0,
+		avgObj = accAvg[prop];
+	if ( avgObj && avgObj.average > 0 ) {
+		offsetT = (diffT / avgObj.average) * Math.pow(avgObj.samples.length / runningAvgMax, 2) 
+			* (ms > 60000 ? 1 : Math.pow(ms/60000, 2));
+	}
+	if ( offsetT > 100 ) {
+		plv8.elog(NOTICE, 'Rejecting node', node, 'source', source, '@', new Date(rec.tsms), 'diff', diff, 'offset', offsetT.toFixed(1), '>100');
+		plv8.elog(NOTICE, 'Diff', diffT.toFixed(2), '; running average', avgObj.average, JSON.stringify(avgObj.samples));
+		return 0;
+	}
+	maintainAccumulatingRunningAverageDifference(prop, diffT)
+	return diff;
+}
+
+function maintainAccumulatingRunningAverageDifference(prop, diff) {
+	var i = 0,
+		avg = 0,
+		avgObj = accAvg[prop];
+	if ( diff === 0 ) {
+		return;
+	}
+	if ( avgObj === undefined ) {
+		avgObj = { samples : [diff], average : diff };
+		accAvg[prop] = avgObj;
+		avg = diff;
+	} else {
+		if ( avgObj.samples.length >= runningAvgMax ) {
+			avgObj.samples.shift();
+		}
+		avgObj.samples.push(diff);
+		while ( i < avgObj.samples.length ) {
+			avg += avgObj.samples[i];
+			i += 1;
+		}
+		avg /= avgObj.samples.length;
+		avgObj.average = avg;
+	}
+}
+
 while ( rec = cur.fetch() ) {
 	if ( !rec.jdata ) {
 		continue;
 	}
 	acc = rec.jdata.a;
-	if ( prevRec && acc ) {
+	if ( acc && prevAcc && rec.tdiffms <= toleranceMs ) {
 		// accumulating data
 		for ( prop in acc ) {
-			if ( acc.hasOwnProperty(prop) && prevAcc && prevAcc[prop] !== undefined ) {
-				sn.math.util.addto(prop, (acc[prop] - prevAcc[prop]), aobj, rec.percent);
+			if ( prevAcc[prop] !== undefined ) {				
+				sn.math.util.addto(prop, calculateAccumulatingValue(acc[prop], prevAcc[prop], prop, rec.tdiffms), aobj, rec.percent);
 			}
 		}
 	}
@@ -124,7 +180,7 @@ while ( rec = cur.fetch() ) {
 	if ( inst ) {
 		// instant data
 		for ( prop in inst ) {
-			if ( !inst.hasOwnProperty(prop) ) {
+			if ( rec.tdiffms > toleranceMs ) {
 				continue;
 			}
 			sn.math.util.addto(prop, inst[prop], iobj, rec.percent, iobjCounts);
