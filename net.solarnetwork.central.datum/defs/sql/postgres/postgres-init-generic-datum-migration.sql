@@ -18,7 +18,7 @@ BEGIN
 		IF length(jtext) > 1 THEN
 			jtext := jtext || ',';
 		END IF;
-		jtext := jtext || '"a":{"watt_hours":' || datum.watt_hour || '}';
+		jtext := jtext || '"a":{"wattHours":' || datum.watt_hour || '}';
 	END IF;
 	IF length(jtext) > 1 THEN
 		jtext := jtext || ',';
@@ -74,7 +74,7 @@ BEGIN
 		IF length(jtext) > 1 THEN
 			jtext := jtext || ',';
 		END IF;
-		jtext := jtext || '"a":{"watt_hours":' || datum.watt_hour || '}';
+		jtext := jtext || '"a":{"wattHours":' || datum.watt_hour || '}';
 	END IF;
 	IF length(jtext) > 1 THEN
 		jtext := jtext || ',';

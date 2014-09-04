@@ -109,7 +109,7 @@ var stmt = plv8.prepare('SELECT tsms, percent, tdiffms, jdata FROM solaragg.find
 	runningAvgDiff,
 	runningAvgMax = 5,
 	toleranceMs,
-	hourFill = {'watts' : 'watt_hours'};
+	hourFill = {'watts' : 'wattHours'};
 
 toleranceMs = (function() {
 	// calculate the number of milliseconds in the spill interval, which plv8 gives us as a string which we look for HH:MM:SS format
