@@ -35,9 +35,7 @@
 		</property>
 	</bean>
 	
-	<bean id="jsonPropertySerializer" class="net.solarnetwork.util.JSONStringPropertySerializer">
-		<property name="objectMapper" ref="objectMapper"/>
-	</bean>
+	<bean id="generalNodeDatumSerializer" class="net.solarnetwork.central.datum.support.GeneralNodeDatumMapPropertySerializer"/>
 
 	<bean id="propertySerializerRegistrar"
 		class="net.solarnetwork.util.PropertySerializerRegistrar">
@@ -45,7 +43,8 @@
 			<map>
 				<entry key="org.joda.time.DateTime">
 					<bean class="net.solarnetwork.util.JodaDatePropertySerializer">
-						<constructor-arg value="yyyy-MM-dd HH:mm:ss.SSSZ"/>
+						<constructor-arg value="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"/>
+						<constructor-arg ref="UTC"/>
 					</bean>
 				</entry>
 				<entry key="org.joda.time.LocalDateTime">
@@ -69,8 +68,9 @@
 				<entry key="org.springframework.validation.BeanPropertyBindingResult">
 					<bean class="net.solarnetwork.util.BindingResultSerializer"/>
 				</entry>
-				<entry key="java.util.HashMap" value-ref="jsonPropertySerializer"/>
-				<entry key="java.util.LinkedHashMap" value-ref="jsonPropertySerializer"/>
+				<entry key="net.solarnetwork.central.datum.domain.GeneralNodeDatum" value-ref="generalNodeDatumSerializer"/>
+				<entry key="net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch" value-ref="generalNodeDatumSerializer"/>
+				<entry key="net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum" value-ref="generalNodeDatumSerializer"/>
 			</map>
 		</property>
 	</bean>
