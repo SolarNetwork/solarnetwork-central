@@ -22,7 +22,12 @@ $BODY$BEGIN
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
-CREATE OR REPLACE FUNCTION solaragg.find_datum_samples_for_time_slot(IN node bigint, IN source text, IN start_ts timestamp with time zone, IN span interval, IN spill interval)
+CREATE OR REPLACE FUNCTION solaragg.find_datum_samples_for_time_slot(
+	IN node bigint, 
+	IN source text, 
+	IN start_ts timestamp with time zone, 
+	IN span interval, 
+	IN spill interval DEFAULT interval '20 minutes')
   RETURNS TABLE(ts timestamp with time zone, tsms bigint, percent real, tdiffms integer, jdata json) AS
 $BODY$
 WITH prevd AS (
@@ -83,9 +88,14 @@ ORDER BY d.ts
 $BODY$
   LANGUAGE sql STABLE;
 
-CREATE OR REPLACE FUNCTION solaragg.calc_datum_time_slot(IN node bigint, IN source text, IN start_ts timestamp with time zone, IN span interval, IN spill interval)
+CREATE OR REPLACE FUNCTION solaragg.calc_datum_time_slot(
+	IN node bigint, 
+	IN source text, 
+	IN start_ts timestamp with time zone, 
+	IN span interval, 
+	IN spill interval DEFAULT interval '20 minutes')
   RETURNS json  LANGUAGE plv8 AS
-$$
+$BODY$
 'use strict';
 var stmt = plv8.prepare('SELECT tsms, percent, tdiffms, jdata FROM solaragg.find_datum_samples_for_time_slot($1, $2, $3, $4, $5)', 
 				['bigint', 'text', 'timestamp with time zone', 'interval', 'interval']),
@@ -225,7 +235,7 @@ if ( prevRec && prevRec.percent > 0 ) {
 }
 
 return robj;
-$$ STABLE;
+$BODY$ STABLE;
 
 
 CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
