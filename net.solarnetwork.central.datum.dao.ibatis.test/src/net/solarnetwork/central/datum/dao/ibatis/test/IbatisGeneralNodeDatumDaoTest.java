@@ -384,14 +384,14 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		lastDatum = datum1;
 
 		GeneralNodeDatum datum2 = new GeneralNodeDatum();
-		datum2.setCreated(datum1.getCreated().plusMinutes(30));
+		datum2.setCreated(datum1.getCreated().plusMinutes(20));
 		datum2.setNodeId(TEST_NODE_ID);
 		datum2.setSourceId(TEST_SOURCE_ID);
 		datum2.setSampleJson("{\"a\":{\"watt_hours\":5}}");
 		dao.store(datum2);
 
 		GeneralNodeDatum datum3 = new GeneralNodeDatum();
-		datum3.setCreated(datum2.getCreated().plusMinutes(30));
+		datum3.setCreated(datum2.getCreated().plusMinutes(20));
 		datum3.setNodeId(TEST_NODE_ID);
 		datum3.setSourceId(TEST_SOURCE_ID);
 		datum3.setSampleJson("{\"a\":{\"watt_hours\":10}}");
@@ -446,7 +446,7 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 
 		// ok, add another sample and now check for whole day, we should have 15 Wh
 		GeneralNodeDatum datum4 = new GeneralNodeDatum();
-		datum4.setCreated(lastDatum.getCreated().plusMinutes(90)); // move to a different hour
+		datum4.setCreated(lastDatum.getCreated().plusMinutes(60)); // move to a different hour
 		datum4.setNodeId(TEST_NODE_ID);
 		datum4.setSourceId(TEST_SOURCE_ID);
 		datum4.setSampleJson("{\"a\":{\"watt_hours\":15}}");
