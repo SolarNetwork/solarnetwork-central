@@ -282,8 +282,6 @@ public abstract class AbstractCentralTransactionalTest extends
 			public CallableStatement createCallableStatement(Connection con) throws SQLException {
 				CallableStatement stmt = con
 						.prepareCall("{call solaragg.process_agg_stale_datum(?, ?)}");
-				stmt.setString(1, "h");
-				stmt.setInt(2, -1);
 				return stmt;
 			}
 		}, new CallableStatementCallback<Object>() {
@@ -295,6 +293,8 @@ public abstract class AbstractCentralTransactionalTest extends
 				cs.setInt(2, -1);
 				cs.execute();
 				cs.setString(1, "d");
+				cs.execute();
+				cs.setString(1, "m");
 				cs.execute();
 				return null;
 			}
