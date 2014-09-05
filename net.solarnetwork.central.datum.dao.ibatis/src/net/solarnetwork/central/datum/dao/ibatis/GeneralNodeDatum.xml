@@ -237,7 +237,7 @@
 	<!-- Aggregated query: Minute -->
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Minute-count" resultClass="long">
-		SELECT count(datum.ts_start)
+		SELECT count(datum.r_datum_ts_start)
 		FROM (
 			<include refid="fragment-findall-ReportingGeneralNodeDatum-minuteagg-where"/>
 		) AS datum
