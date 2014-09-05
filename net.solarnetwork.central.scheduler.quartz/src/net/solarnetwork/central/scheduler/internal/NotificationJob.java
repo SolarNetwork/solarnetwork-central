@@ -72,6 +72,7 @@ public class NotificationJob implements Job {
 		final JobDataMap jobDataMap = jobContext.getMergedJobDataMap();
 		final String jobTopic = jobDataMap.getString(SchedulerConstants.JOB_TOPIC);
 
+		@SuppressWarnings("unchecked")
 		final Event event = new Event(jobTopic, jobContext.getMergedJobDataMap());
 
 		final long start = System.currentTimeMillis();
