@@ -148,9 +148,9 @@ public class IbatisGeneralNodeDatumDao extends
 		}
 		//postProcessFilterProperties(filter, sqlProps);
 
-		// attempt count first, if max NOT specified as -1
+		// attempt count first, if max NOT specified as -1 and NOT a mostRecent query
 		Long totalCount = null;
-		if ( max != null && max.intValue() != -1 ) {
+		if ( max != null && max.intValue() != -1 && filter.isMostRecent() == false ) {
 			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
 
