@@ -130,10 +130,13 @@ public class IbatisGeneralNodeDatumDao extends
 		if ( filter instanceof AggregationFilter ) {
 			aggregation = ((AggregationFilter) filter).getAggregation();
 		}
-		if ( aggregation == null || aggregation.compareLevel(Aggregation.Hour) < 0 ) {
+		if ( aggregation == null ) {
 			return getQueryForAll() + "-GeneralNodeDatumMatch";
+		} else if ( aggregation.compareTo(Aggregation.Hour) < 0 ) {
+			// all *Minute aggregates are mapped to the Minute query name
+			aggregation = Aggregation.Minute;
 		}
-		return getQueryForAll() + "-ReportingGeneralNodeDatum-" + aggregation.toString();
+		return (getQueryForAll() + "-ReportingGeneralNodeDatum-" + aggregation.toString());
 	}
 
 	@Override

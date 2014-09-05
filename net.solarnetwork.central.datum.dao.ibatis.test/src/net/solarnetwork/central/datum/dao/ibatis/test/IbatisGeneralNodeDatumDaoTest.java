@@ -465,4 +465,116 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 		assertNotNull("Aggregate Wh", data.get("watt_hours"));
 		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
 	}
+
+	@Test
+	public void findFilteredAggregateFiveMinute() {
+		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
+		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
+		for ( int i = 0; i < 12; i++ ) {
+			GeneralNodeDatum datum1 = new GeneralNodeDatum();
+			datum1.setCreated(startDate.plusMinutes(i * 5));
+			datum1.setNodeId(TEST_NODE_ID);
+			datum1.setSourceId(TEST_SOURCE_ID);
+			datum1.setSampleJson("{\"a\":{\"watt_hours\":" + (i * 10) + "}}");
+			dao.store(datum1);
+			lastDatum = datum1;
+		}
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(1));
+		criteria.setAggregate(Aggregation.FiveMinute);
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertNotNull(results);
+		// this query fills in empty slots, so we have :05, :10, :15, ... :50, :55
+		assertEquals("Minute query results", 12L, (long) results.getTotalResults());
+		assertEquals("Minute query results", 12, (int) results.getReturnedResultCount());
+
+		int i = 0;
+		for ( ReportingGeneralNodeDatumMatch match : results ) {
+			assertEquals("Wh for minute slot", Integer.valueOf(i < 11 ? 10 : 0), match.getSampleData()
+					.get("watt_hours"));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFilteredAggregateTenMinute() {
+		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
+		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
+		for ( int i = 0; i < 12; i++ ) {
+			GeneralNodeDatum datum1 = new GeneralNodeDatum();
+			datum1.setCreated(startDate.plusMinutes(i * 5));
+			datum1.setNodeId(TEST_NODE_ID);
+			datum1.setSourceId(TEST_SOURCE_ID);
+			datum1.setSampleJson("{\"a\":{\"watt_hours\":" + (i * 10) + "}}");
+			dao.store(datum1);
+			lastDatum = datum1;
+		}
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(1));
+		criteria.setAggregate(Aggregation.TenMinute);
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertNotNull(results);
+		// this query fills in empty slots, so we have :00, :10, :20, :30, :40, and :50
+		assertEquals("Minute query results", 6L, (long) results.getTotalResults());
+		assertEquals("Minute query results", 6, (int) results.getReturnedResultCount());
+
+		int i = 0;
+		for ( ReportingGeneralNodeDatumMatch match : results ) {
+			assertEquals("Wh for minute slot", Integer.valueOf(i < 5 ? 20 : 10), match.getSampleData()
+					.get("watt_hours"));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFilteredAggregateFifteenMinute() {
+		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
+		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
+		for ( int i = 0; i < 12; i++ ) {
+			GeneralNodeDatum datum1 = new GeneralNodeDatum();
+			datum1.setCreated(startDate.plusMinutes(i * 5));
+			datum1.setNodeId(TEST_NODE_ID);
+			datum1.setSourceId(TEST_SOURCE_ID);
+			datum1.setSampleJson("{\"a\":{\"watt_hours\":" + (i * 10) + "}}");
+			dao.store(datum1);
+			lastDatum = datum1;
+		}
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(1));
+		criteria.setAggregate(Aggregation.FifteenMinute);
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertNotNull(results);
+		// this query fills in empty slots, so we have :00, :15, :30, :45
+		assertEquals("Minute query results", 4L, (long) results.getTotalResults());
+		assertEquals("Minute query results", 4, (int) results.getReturnedResultCount());
+
+		int i = 0;
+		for ( ReportingGeneralNodeDatumMatch match : results ) {
+			assertEquals("Wh for minute slot", Integer.valueOf(i < 3 ? 30 : 20), match.getSampleData()
+					.get("watt_hours"));
+			i++;
+		}
+	}
+
 }
