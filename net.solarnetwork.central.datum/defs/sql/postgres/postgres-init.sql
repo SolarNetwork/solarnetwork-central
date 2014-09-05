@@ -1,6 +1,8 @@
 /* ============================================================================
  * psql script to execute all initialization SQL scripts, except for
  * populating any initial data (see postgres-init-data.sql for that).
+ * 
+ * The postgres-init-plv8.sql script should be run PRIOR to running this.
  * ============================================================================
  */
 
