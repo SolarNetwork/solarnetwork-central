@@ -259,8 +259,31 @@ $(document).ready(function() {
 	
 	$('#shortcuts').change(function(event) {
 		event.preventDefault();
-		var form = this.form;
-		form.elements['path'].value = this.value;
+		var form = this.form,
+			val = this.value;
+		if ( $(form).find('input[name=useAuth]:checked').val() === 'false' ) {
+			val = val.replace(/\/sec\//, '/pub/');
+		}
+		form.elements['path'].value = val;
+	});
+	
+	$('input[name=useAuth]').change(function(event) {
+		event.preventDefault();
+		var form = this.form,
+			val = form.elements['path'].value,
+			credForm = $('#credentials')[0];
+		if ( $(this).val() === 'true' ) {
+			val = val.replace(/\/pub\//, '/sec/');
+			$(credForm.elements['token']).removeAttr('disabled');
+			$(credForm.elements['secret']).removeAttr('disabled');
+			$('#auth-result').show();
+		} else {
+			val = val.replace(/\/sec\//, '/pub/');
+			$(credForm.elements['token']).attr('disabled', 'disabled');
+			$(credForm.elements['secret']).attr('disabled', 'disabled');
+			$('#auth-result').hide();
+		}
+		form.elements['path'].value = val;
 	});
 	
 	var formatXml = function(xml) {
@@ -328,6 +351,8 @@ $(document).ready(function() {
 
 		// show some developer info in the auth-message area
 		showAuthSupport(params);
+		
+		$('#result').empty();
 		
 		// make HTTP request and show the results
 		SNAPI.request(params.host +params.path, params.output, params.method, params.data).done(function (data, status, xhr) {

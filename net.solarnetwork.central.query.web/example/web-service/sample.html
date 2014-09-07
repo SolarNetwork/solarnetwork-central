@@ -53,30 +53,47 @@
 				<div class="control-group">
 					<label class="control-label">Service</label>
 					<div class="controls">
-						<input type="text" name="path" class="span6" placeholder="Enter URL path here"/>
+						<textarea name="path" class="span6" rows="3" placeholder="Enter URL path here"></textarea>
 						
 						<label style="margin-top: 1em;">Templates: <select id="shortcuts">
 							<option></option>
 							<optgroup label="Range">
+								<option value="/solarquery/api/v1/sec/range/interval?nodeId={nodeId}">Interval</option>
+								<option value="/solarquery/api/v1/sec/range/sources?nodeId={nodeId}">Sources</option>
+							</optgroup>
+							<optgroup label="Legacy range">
 								<option value="/solarquery/api/v1/sec/range/interval?nodeId={nodeId}&types=Consumption,Power">Interval</option>
 								<option value="/solarquery/api/v1/sec/range/sources?nodeId={nodeId}&type=Consumption">Sources</option>
 							</optgroup>
 							<optgroup label="Weather">
-								<option value="/solarquery/api/v1/sec/weather/recent?nodeId={nodeId}">Most recent</option>
+								<option value="/solarquery/api/v1/sec/weather/recent?nodeId={nodeId}">Most recent weather</option>
+								<option value="/solarquery/api/v1/sec/datum/list?locationId={locationId}&startDate=2010-01-01T12%3A00%3A00&endDate=2010-02-01T12%3A00%3A00&type=Weather&sorts%5B0%5D.sortKey=created&offset=0&max=50">Weather, sorted by date</option>
 							</optgroup>
 							<optgroup label="Datum query">
+								<option value="/solarquery/api/v1/sec/datum/mostRecent?nodeId={nodeId}&sourceIds={sourceId}">Most recent datum</option>
+								<option value="/solarquery/api/v1/sec/datum/query?nodeId={nodeId}&startDate=2013-01-01&endDate=2013-02-01&sourceIds={sourceId}">Datum</option>
+							</optgroup>
+							<optgroup label="Legacy datum query">
 								<option value="/solarquery/api/v1/sec/datum/mostRecent?nodeId={nodeId}&type=Consumption">Most recent consumption</option>
 								<option value="/solarquery/api/v1/sec/datum/mostRecent?nodeId={nodeId}&type=Power">Most recent power</option>
-								<option value="/solarquery/api/v1/sec/datum/query?nodeId={nodeId}&startDate=2013-01-01&endDate=2013-02-01&type=Consumption">Consumption</option>
-								<option value="/solarquery/api/v1/sec/datum/query?nodeId={nodeId}&startDate=2013-01-01&endDate=2013-02-01&type=Power">Power</option>
+								<option value="/solarquery/api/v1/sec/datum/query?nodeId={nodeId}&startDate=2013-01-01T12%3A00%3A00&endDate=2013-02-01T12%3A00%3A00&type=Consumption">Consumption</option>
+								<option value="/solarquery/api/v1/sec/datum/query?nodeId={nodeId}&startDate=2013-01-01T12%3A00%3A00&endDate=2013-02-01T12%3A00%3A00&type=Power">Power</option>
 							</optgroup>
-							<optgroup label="Raw Datum list">
+							<optgroup label="Raw datum list">
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&startDate=2013-01-01T12%3A00%3A00&endDate=2011-01-02&sourceIds={sourceId}&offset=0&max=50">Datum, default sort</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&startDate=2013-01-01T12%3A00%3A00&endDate=2011-01-02&sourceIds={sourceId}&sorts%5B0%5D.sortKey=created&sorts%5B1%5D.sortKey=source&offset=0&max=50">Datum, sorted by date, source</option>
+							</optgroup>
+							<optgroup label="Legacy raw datum list">
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&startDate=2011-01-01&endDate=2011-01-02&type=Consumption&sorts%5B0%5D.sortKey=created&sorts%5B1%5D.sortKey=source&offset=0&max=50">Consumption, sorted by source, date</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&startDate=2011-01-01&endDate=2011-01-02&type=HardwareControl&sorts%5B0%5D.sortKey=created&sorts%5B1%5D.sortKey=source&offset=0&max=50">Controls, sorted by source, date</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&startDate=2011-01-01&endDate=2011-01-02&type=Power&sorts%5B0%5D.sortKey=created&sorts%5B1%5D.sortKey=source&offset=0&max=50">Power, sorted by source, date</option>
-								<option value="/solarquery/api/v1/sec/datum/list?locationId={locationId}&startDate=2010-01-01&endDate=2010-02-01&type=Weather&sorts%5B0%5D.sortKey=created&offset=0&max=50">Weather, sorted by date</option>
 							</optgroup>
-							<optgroup label="Aggregation Datum list">
+							<optgroup label="Aggregation datum list">
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Hour&startDate=2011-01-01T12%3A00%3A00&endDate=2011-01-02T12%3A00%3A00&sourceIds={sourceId}&offset=0&max=50">List by hour</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Day&startDate=2011-01-01T12%3A00%3A00&endDate=2011-01-02T12%3A00%3A00&sourceIds={sourceId}&offset=0&max=50">List by day</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Month&startDate=2011-01-01T12%3A00%3A00&endDate=2011-01-02T12%3A00%3A00&sourceIds={sourceId}&offset=0&max=50">List by month</option>
+							</optgroup>
+							<optgroup label="Legacy aggregation datum list">
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Hour&startDate=2011-01-01&endDate=2011-01-02&type=Consumption&offset=0&max=50">Consumption, by hour</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=HourOfDay&startDate=2010-12-01&endDate=2011-12-01&type=Consumption">Consumption, by hour of day</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=SeasonalHourOfDay&startDate=2010-12-01&endDate=2011-12-01&type=Consumption">Consumption, seasonal by hour of day</option>
@@ -91,13 +108,24 @@
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=SeasonalDayOfWeek&startDate=2010-12-01&endDate=2011-12-01&type=Power">Power, seasonal by day of week</option>
 							</optgroup>
 							<optgroup label="Instructions">
-								<option value="/solaruser/api/v1/sec/instr/add?nodeId={nodeId}&topic=SetControlParameter&parameters%5B0%5D.name=/power/switch/1&parameters%5B0%5D.value=1">Set control parameter</option>
+								<option value="/solaruser/api/v1/sec/instr/add?nodeId={nodeId}&topic=SetControlParameter&parameters%5B0%5D.name={controlId}&parameters%5B0%5D.value={controlValue}">Set control parameter</option>
 								<option value="/solaruser/api/v1/sec/instr/viewActive?nodeId={nodeId}">View active instructions</option>
 								<option value="/solaruser/api/v1/sec/instr/view?id={instructionId}">View instruction</option>
 								<option value="/solaruser/api/v1/sec/instr/updateState?id={instructionId}&state={instructionState:(Received|Executing|Declined|Completed)}">Update instruction state</option>
 							</optgroup>
 						</select></label>
 						
+					</div>
+				</div>
+				<div class="control-group">
+					<label class="control-label">Auth</label>
+					<div class="controls">
+					    <label class="radio inline">
+   							<input type="radio" name="useAuth" value="true" checked="checked"> Token
+   						</label>
+					    <label class="radio inline">
+   							<input type="radio" name="useAuth" value="false"> None
+   						</label>
 					</div>
 				</div>
 				<div class="control-group">
@@ -134,7 +162,7 @@
 			</section>
 		</div>
 	</div>
-	<div class="row">
+	<div class="row" id="auth-result">
 		<div class="span12">
 			<h4>Auth Support</h4>
 			<p>This shows the the computed SolarNetworkWS HTTP authorization header.</p>
