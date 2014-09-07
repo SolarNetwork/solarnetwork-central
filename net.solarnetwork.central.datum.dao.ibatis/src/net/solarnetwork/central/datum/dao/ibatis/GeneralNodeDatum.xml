@@ -76,7 +76,9 @@
 		FilterableDao support 
 	-->
 
-	<resultMap id="GeneralNodeDatumMatchResult" class="GeneralNodeDatumMatch" extends="GeneralNodeDatum.GeneralNodeDatumFullResult"/>
+	<resultMap id="GeneralNodeDatumMatchResult" class="ReportingGeneralNodeDatum" extends="GeneralNodeDatum.GeneralNodeDatumFullResult">
+		<result column="datum_local_date" property="localDateTime"/>
+	</resultMap>
 	<resultMap id="GeneralNodeDatumDirectMatchResult" class="GeneralNodeDatumMatch" extends="GeneralNodeDatum.GeneralNodeDatumDirectResult"/>
 
 	<parameterMap class="map" id="pmap-most-recent">
@@ -88,9 +90,7 @@
 		{call solardatum.find_most_recent(?, ?)}
 	</procedure>
 
-	<sql id="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch">
-		FROM
-			solardatum.da_datum datum
+	<sql id="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where">
 		<dynamic prepend="WHERE">
 			<isNotEmpty prepend="AND" property="filter.sourceIds">
 				datum.source_id IN
@@ -109,10 +109,16 @@
 		</dynamic>
 	</sql>
 
+
 	<select id="findall-GeneralNodeDatum-GeneralNodeDatumMatch" resultMap="GeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-full-result"/>
-		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch"/>
+			, datum.ts AT TIME ZONE COALESCE(loc.time_zone, 'UTC') AS datum_local_date
+		FROM
+			solardatum.da_datum datum
+		LEFT OUTER JOIN solarnet.sn_node node ON node.node_id = datum.node_id
+		LEFT OUTER JOIN solarnet.sn_loc loc ON loc.id = node.loc_id
+		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where"/>
 		ORDER BY
 		<isNotEmpty property="SortDescriptors">
 			<iterate property="SortDescriptors" conjunction=",">
@@ -131,7 +137,9 @@
 
 	<select id="findall-GeneralNodeDatum-GeneralNodeDatumMatch-count" resultClass="long">
 		SELECT count(datum.ts)
-		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch"/>
+		FROM
+			solardatum.da_datum datum
+		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where"/>
 	</select>
 
 	<!-- Aggregated query support -->

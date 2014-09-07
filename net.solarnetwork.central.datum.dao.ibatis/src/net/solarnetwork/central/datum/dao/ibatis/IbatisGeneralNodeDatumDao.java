@@ -209,8 +209,9 @@ public class IbatisGeneralNodeDatumDao extends
 	private <T> List<T> executeQueryForList(final String query, Map<String, Object> sqlProps,
 			Integer offset, Integer max) {
 		List<T> rows = null;
-		if ( offset != null && offset >= 0 && max != null && max > 0 ) {
-			rows = getSqlMapClientTemplate().queryForList(query, sqlProps, offset, max);
+		if ( max != null && max > 0 ) {
+			rows = getSqlMapClientTemplate().queryForList(query, sqlProps,
+					(offset == null || offset.intValue() < 0 ? 0 : offset.intValue()), max);
 		} else {
 			rows = getSqlMapClientTemplate().queryForList(query, sqlProps);
 		}

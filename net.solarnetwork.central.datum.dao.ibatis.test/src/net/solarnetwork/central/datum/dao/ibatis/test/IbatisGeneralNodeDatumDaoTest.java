@@ -176,6 +176,32 @@ public class IbatisGeneralNodeDatumDaoTest extends AbstractIbatisDaoTestSupport 
 	}
 
 	@Test
+	public void findFilteredWithMax() {
+		storeNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+
+		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(criteria, null, 0, 1);
+		assertNotNull(results);
+		assertEquals(1L, (long) results.getTotalResults());
+		assertEquals(1, (int) results.getReturnedResultCount());
+
+		GeneralNodeDatum datum2 = new GeneralNodeDatum();
+		datum2.setCreated(new DateTime().plusHours(1));
+		datum2.setNodeId(TEST_NODE_ID);
+		datum2.setSourceId(TEST_SOURCE_ID);
+		datum2.setSampleJson("{\"i\":{\"watts\":123}}");
+		dao.store(datum2);
+
+		results = dao.findFiltered(criteria, null, 0, 1);
+		assertNotNull(results);
+		assertEquals("Returned results", 2L, (long) results.getTotalResults());
+		assertEquals("Returned result count", 1, (int) results.getReturnedResultCount());
+		assertEquals("Datum ID", lastDatum.getId(), results.iterator().next().getId());
+	}
+
+	@Test
 	public void getAllAvailableSourcesForNode() {
 		storeNew();
 		Set<String> sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
