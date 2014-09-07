@@ -207,9 +207,19 @@ BEGIN
 		RETURN QUERY
 		SELECT dd.* FROM solardatum.da_datum dd
 		INNER JOIN (
+			-- to speed up query for sources (which can be very slow when queried directly on da_datum), 
+			-- we find the most recent hour time slot in agg_datum_hourly, and then join to da_datum with that narrow time range
+			WITH days AS (
+				SELECT max(d.ts_start) as ts_start, d.source_id FROM solaragg.agg_datum_hourly d 
+				INNER JOIN (SELECT solardatum.find_available_sources(node) AS source_id) AS s ON s.source_id = d.source_id
+				WHERE d. node_id = node
+				GROUP BY d.source_id
+			)
 			SELECT max(d.ts) as ts, d.source_id FROM solardatum.da_datum d 
-			INNER JOIN (SELECT solardatum.find_available_sources(node) AS source_id) AS s ON s.source_id = d.source_id
-			WHERE d. node_id = node
+			INNER JOIN days ON days.source_id = d.source_id 
+			WHERE d.node_id = node
+				AND d.ts >= days.ts_start
+				AND d.ts < days.ts_start + interval '1 hour'
 			GROUP BY d.source_id
 		) AS r ON r.ts = dd.ts AND r.source_id = dd.source_id AND dd.node_id = node
 		ORDER BY dd.source_id ASC;
@@ -217,9 +227,17 @@ BEGIN
 		RETURN QUERY
 		SELECT dd.* FROM solardatum.da_datum dd
 		INNER JOIN (
+			WITH days AS (
+				SELECT max(d.ts_start) as ts_start, d.source_id FROM solaragg.agg_datum_hourly d 
+				INNER JOIN (SELECT unnest(sources) AS source_id) AS s ON s.source_id = d.source_id
+				WHERE d. node_id = node
+				GROUP BY d.source_id
+			)
 			SELECT max(d.ts) as ts, d.source_id FROM solardatum.da_datum d 
-			INNER JOIN (SELECT unnest(sources) AS source_id) AS s ON s.source_id = d.source_id
-			WHERE d. node_id = node
+			INNER JOIN days ON days.source_id = d.source_id 
+			WHERE d.node_id = node
+				AND d.ts >= days.ts_start
+				AND d.ts < days.ts_start + interval '1 hour'
 			GROUP BY d.source_id
 		) AS r ON r.ts = dd.ts AND r.source_id = dd.source_id AND dd.node_id = node
 		ORDER BY dd.source_id ASC;
