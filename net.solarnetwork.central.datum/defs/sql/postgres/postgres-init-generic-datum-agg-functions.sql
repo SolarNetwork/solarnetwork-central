@@ -32,9 +32,8 @@ CREATE OR REPLACE FUNCTION solaragg.find_datum_samples_for_time_slot(
 $BODY$
 WITH prevd AS (
 	/*
-	find the previous datum, but only look up to 1 hour prior
-	this query also handles the situation where there is no data earlier than the start of the specified time span,
-	e.g. at the very start of the data
+	Find the previous datum, but only look up to 'spill' interval prior. This query also handles the situation 
+	where there is no data earlier than the start of the specified time span, e.g. at the very start of the data.
 	*/
 	SELECT d.ts, 
 		ABS(EXTRACT('epoch' FROM (d.ts - start_ts))) as dt, 
@@ -49,9 +48,8 @@ WITH prevd AS (
 		LIMIT 1),
 nextd AS (
 	/*
-	find the next datum, but only look up to 1 hour after
-	this query also handles the situation where there is no data later than the end of the specified time span,
-	e.g. at the very end of the data
+	Find the next datum, but only look up to 'spill' interval after this query also handles the situation
+	where there is no data later than the end of the specified time span, e.g. at the very end of the data.
 	*/
 	SELECT d.ts, 
 		ABS(EXTRACT('epoch' FROM (d.ts - (start_ts + span)))) as dt, 
