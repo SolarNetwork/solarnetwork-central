@@ -208,6 +208,11 @@ SNAPI.request  = function(url, dataType, method, data, contentType) {
 };
 
 $(document).ready(function() {
+	if ( window !== undefined && window.location.protocol !== undefined && window.location.protocol.toLowerCase().indexOf('http') === 0 ) {
+		$('#credentials input[name=host]').val(window.location.protocol +'//' 
+			+window.location.host +(window.location.port && (Number(window.location.port) !== 80 || Number(window.location.port) !== 443) ? ':' +window.location.port : ''));
+	}
+
 	var getCredentials = function() {
 		var form = $('#credentials')[0];
 		var params = {
