@@ -12,9 +12,18 @@
 	<link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
 	<link rel="stylesheet" type="text/css" href="css/bootstrap-responsive.css" />
 	<link rel="stylesheet" type="text/css" href="css/prettify.css" />
+	<link rel="stylesheet" type="text/css" href="css/font-awesome.min.css" />
 	<style type="text/css">
 		.control-label {
 			font-weight: bold;
+		}
+		.clickable {
+			cursor: pointer;
+		}
+		#auth-result-toggle {
+			font-weight: 12px;
+			margin-left: -10px;
+			margin-right: 8px;
 		}
 	</style>
 	<title>SolarQuery Web Service Sampler</title>
@@ -157,17 +166,20 @@
 			</section>
 		</div>
 	</div>
+	
 	<div class="row" id="auth-result">
 		<div class="span12">
-			<h4>Auth Support</h4>
-			<p>This shows the the computed SolarNetworkWS HTTP authorization header.</p>
-			<pre id="auth-header"></pre>
-			<h5>Authorization message</h5>
-			<p>This shows the raw data that is hashed to form the authorization header value.</p>
-			<pre id="auth-message"></pre>
-			<h5>Curl command</h5>
-			<p>This is a <code>curl</code> command to make the same HTTP request.</p>
-			<pre id="curl-command"></pre>
+			<h4><i class="fa fa-caret-right clickable" id="auth-result-toggle"></i>Auth Support</h4>
+			<div id="auth-result-container" style="display: none;">
+				<p>This shows the the computed SolarNetworkWS HTTP authorization header.</p>
+				<pre id="auth-header"></pre>
+				<h5>Authorization message</h5>
+				<p>This shows the raw data that is hashed to form the authorization header value.</p>
+				<pre id="auth-message"></pre>
+				<h5>Curl command</h5>
+				<p>This is a <code>curl</code> command to make the same HTTP request.</p>
+				<pre id="curl-command"></pre>
+			</div>
 		</div>
 	</div>
 	<div class="row">

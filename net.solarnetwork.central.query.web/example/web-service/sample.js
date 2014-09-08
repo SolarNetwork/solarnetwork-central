@@ -272,6 +272,19 @@ $(document).ready(function() {
 		form.elements['path'].value = val;
 	});
 	
+	$('#auth-result-toggle').click(function(event) {
+		var btn = $(this);
+		if ( btn.hasClass('fa-caret-down') ) {
+			btn.addClass('fa-caret-right');
+			btn.removeClass('fa-caret-down');
+			$('#auth-result-container').hide();
+		} else {
+			btn.addClass('fa-caret-down');
+			btn.removeClass('fa-caret-right');
+			$('#auth-result-container').show();
+		}
+	});
+		
 	$('input[name=useAuth]').change(function(event) {
 		event.preventDefault();
 		var form = this.form,
@@ -323,15 +336,19 @@ $(document).ready(function() {
 	};
 	
 	var textForDisplay = function(xhr, output) {
-		if ( xhr.responseXML !== undefined ) {
-			return $('<div/>').text(formatXml(xhr.responseText)).html();
+		var result = '';
+		if ( xhr.status >= 400 && xhr.status < 500 ) {
+			result = 'Unauthorized.';
+		} else if ( xhr.responseXML !== undefined ) {
+			result = $('<div/>').text(formatXml(xhr.responseText)).html();
 		} else if ( xhr.responseText ) {
 			if ( output === 'json' ) {
-				return JSON.stringify(JSON.parse(xhr.responseText), null, 2);
+				result = JSON.stringify(JSON.parse(xhr.responseText), null, 2);
+			} else {
+				result = xhr.responseText;
 			}
-			return xhr.responseText;
 		}
-		return '';
+		return result;
 	};
 
 	$('#generic-path').submit(function(event) {
