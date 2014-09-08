@@ -76,7 +76,9 @@
 		FilterableDao support 
 	-->
 
-	<resultMap id="GeneralNodeDatumMatchResult" class="GeneralNodeDatumMatch" extends="GeneralNodeDatum.GeneralNodeDatumFullResult"/>
+	<resultMap id="GeneralNodeDatumMatchResult" class="ReportingGeneralNodeDatum" extends="GeneralNodeDatum.GeneralNodeDatumFullResult">
+		<result column="datum_local_date" property="localDateTime"/>
+	</resultMap>
 	<resultMap id="GeneralNodeDatumDirectMatchResult" class="GeneralNodeDatumMatch" extends="GeneralNodeDatum.GeneralNodeDatumDirectResult"/>
 
 	<parameterMap class="map" id="pmap-most-recent">
@@ -88,9 +90,7 @@
 		{call solardatum.find_most_recent(?, ?)}
 	</procedure>
 
-	<sql id="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch">
-		FROM
-			solardatum.da_datum datum
+	<sql id="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where">
 		<dynamic prepend="WHERE">
 			<isNotEmpty prepend="AND" property="filter.sourceIds">
 				datum.source_id IN
@@ -109,10 +109,16 @@
 		</dynamic>
 	</sql>
 
+
 	<select id="findall-GeneralNodeDatum-GeneralNodeDatumMatch" resultMap="GeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-full-result"/>
-		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch"/>
+			, datum.ts AT TIME ZONE COALESCE(loc.time_zone, 'UTC') AS datum_local_date
+		FROM
+			solardatum.da_datum datum
+		LEFT OUTER JOIN solarnet.sn_node node ON node.node_id = datum.node_id
+		LEFT OUTER JOIN solarnet.sn_loc loc ON loc.id = node.loc_id
+		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where"/>
 		ORDER BY
 		<isNotEmpty property="SortDescriptors">
 			<iterate property="SortDescriptors" conjunction=",">
@@ -131,7 +137,9 @@
 
 	<select id="findall-GeneralNodeDatum-GeneralNodeDatumMatch-count" resultClass="long">
 		SELECT count(datum.ts)
-		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch"/>
+		FROM
+			solardatum.da_datum datum
+		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where"/>
 	</select>
 
 	<!-- Aggregated query support -->
@@ -175,16 +183,78 @@
 		ORDER BY
 		<isNotEmpty property="SortDescriptors">
 			<iterate property="SortDescriptors" conjunction=",">
-				<isEqual property="SortDescriptors[].sortKey" compareValue="created">datum.ts_start</isEqual>
-				<isEqual property="SortDescriptors[].sortKey" compareValue="node">datum.node_id</isEqual>
-				<isEqual property="SortDescriptors[].sortKey" compareValue="source">datum.source_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">r_datum_ts_start</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">r_datum_node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">r_datum_source_id</isEqual>
 				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
 			</iterate>
 		</isNotEmpty>
 		<isEmpty property="SortDescriptors">
-			datum.ts_start, datum.node_id, datum.source_id
+			r_datum_ts_start, r_datum_node_id, r_datum_source_id
 		</isEmpty>
 	</sql>
+
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-minuteagg-where">
+		WITH node AS (
+			SELECT n.node_id, l.time_zone  FROM solarnet.sn_node n
+			INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+			WHERE node_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+		),
+		source AS (
+			<isNotEmpty property="filter.sourceIds">
+				SELECT CAST(unnest(#filter.sourceIds,jdbcType=ARRAY#) AS solarcommon.source_id) AS source_id
+			</isNotEmpty>
+			<isEmpty property="filter.sourceIds">
+				SELECT DISTINCT CAST(source_id AS solarcommon.source_id) AS source_id
+				FROM solardatum.da_datum
+				WHERE node_id IN
+					<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+					AND ts &gt;= #filter.startDate#
+					AND ts &lt; #filter.endDate#
+			</isEmpty>
+		),
+		slots AS (
+			SELECT CAST(#filter.startDate#::timestamptz + (series.d * interval '1 minute') AS solarcommon.ts) AS ts_start 
+			FROM generate_series(0, floor(extract('epoch' from 
+				#filter.endDate#::timestamptz - #filter.startDate#::timestamptz))::integer / 60 - (#filter.aggregation.level# / 60), 
+					(#filter.aggregation.level# / 60)) AS series(d)
+		)
+		SELECT 
+			node.node_id AS r_datum_node_id,
+			slots.ts_start AS r_datum_ts_start,
+			slots.ts_start AT TIME ZONE COALESCE(node.time_zone, 'UTC') AS r_datum_local_date, 
+			source.source_id AS r_datum_source_id, 
+			solaragg.calc_datum_time_slot(
+			    node.node_id,
+			    source.source_id,
+			    slots.ts_start,
+			    <isLessThan property="filter.aggregation.level" compareValue="600">
+			    	interval '5 minutes'
+			    </isLessThan>
+			    <isEqual property="filter.aggregation.level" compareValue="600">
+			    	interval '10 minutes'
+			    </isEqual>
+			    <isGreaterThan property="filter.aggregation.level" compareValue="600">
+			    	interval '15 minutes'
+			    </isGreaterThan>
+			) AS r_datum_jdata
+		FROM slots, node, source
+	</sql>
+
+	<!-- Aggregated query: Minute -->
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Minute-count" resultClass="long">
+		SELECT count(datum.r_datum_ts_start)
+		FROM (
+			<include refid="fragment-findall-ReportingGeneralNodeDatum-minuteagg-where"/>
+		) AS datum
+	</select>
+	
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Minute" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-minuteagg-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
 
 	<!-- Aggregated query: hour -->
 

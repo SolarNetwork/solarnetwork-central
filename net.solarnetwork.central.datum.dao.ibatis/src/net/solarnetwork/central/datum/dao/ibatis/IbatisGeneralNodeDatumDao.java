@@ -130,10 +130,13 @@ public class IbatisGeneralNodeDatumDao extends
 		if ( filter instanceof AggregationFilter ) {
 			aggregation = ((AggregationFilter) filter).getAggregation();
 		}
-		if ( aggregation == null || aggregation.compareLevel(Aggregation.Hour) < 0 ) {
+		if ( aggregation == null ) {
 			return getQueryForAll() + "-GeneralNodeDatumMatch";
+		} else if ( aggregation.compareTo(Aggregation.Hour) < 0 ) {
+			// all *Minute aggregates are mapped to the Minute query name
+			aggregation = Aggregation.Minute;
 		}
-		return getQueryForAll() + "-ReportingGeneralNodeDatum-" + aggregation.toString();
+		return (getQueryForAll() + "-ReportingGeneralNodeDatum-" + aggregation.toString());
 	}
 
 	@Override
@@ -206,8 +209,9 @@ public class IbatisGeneralNodeDatumDao extends
 	private <T> List<T> executeQueryForList(final String query, Map<String, Object> sqlProps,
 			Integer offset, Integer max) {
 		List<T> rows = null;
-		if ( offset != null && offset >= 0 && max != null && max > 0 ) {
-			rows = getSqlMapClientTemplate().queryForList(query, sqlProps, offset, max);
+		if ( max != null && max > 0 ) {
+			rows = getSqlMapClientTemplate().queryForList(query, sqlProps,
+					(offset == null || offset.intValue() < 0 ? 0 : offset.intValue()), max);
 		} else {
 			rows = getSqlMapClientTemplate().queryForList(query, sqlProps);
 		}
