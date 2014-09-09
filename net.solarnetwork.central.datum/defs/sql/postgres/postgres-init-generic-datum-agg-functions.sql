@@ -149,9 +149,9 @@ $BODY$
 SELECT * FROM (
 	SELECT 
 		d.ts,
-		solaragg.minute_time_slot(d.ts) as ts_start,
+		solaragg.minute_time_slot(d.ts, slotsecs) as ts_start,
 		d.source_id,
-		CAST(EXTRACT(EPOCH FROM solaragg.minute_time_slot(d.ts)) * 1000 AS BIGINT) as tsms,
+		CAST(EXTRACT(EPOCH FROM solaragg.minute_time_slot(d.ts, slotsecs)) * 1000 AS BIGINT) as tsms,
 		CASE 
 			WHEN lead(d.ts) over win < start_ts OR d.ts > (start_ts + span)
 				THEN -1::real
@@ -159,8 +159,8 @@ SELECT * FROM (
 				THEN 0::real
 			WHEN d.ts > (start_ts + span) AND lag(d.ts) over win IS NULL
 				THEN 0::real
-			WHEN solaragg.minute_time_slot(lag(d.ts) over win) < solaragg.minute_time_slot(d.ts)
-				THEN (1::real - EXTRACT('epoch' FROM solaragg.minute_time_slot(d.ts) - lag(d.ts) over win) / EXTRACT('epoch' FROM d.ts - lag(d.ts) over win))::real
+			WHEN solaragg.minute_time_slot(lag(d.ts) over win, slotsecs) < solaragg.minute_time_slot(d.ts, slotsecs)
+				THEN (1::real - EXTRACT('epoch' FROM solaragg.minute_time_slot(d.ts, slotsecs) - lag(d.ts) over win) / EXTRACT('epoch' FROM d.ts - lag(d.ts) over win))::real
 			ELSE 1::real
 		END AS percent,
 		COALESCE(CAST(EXTRACT(EPOCH FROM d.ts - lag(d.ts) over win) * 1000 AS INTEGER), 0) as tdiff,
