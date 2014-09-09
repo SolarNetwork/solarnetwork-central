@@ -170,7 +170,7 @@ function calculateAccumulatingValue(r, val, prevVal, prop, ms) {
 			* (ms > 60000 ? 1 : Math.pow(ms/60000, 2));
 	}
 	if ( offsetT > 100 ) {
-		plv8.elog(NOTICE, 'Rejecting node', node, 'source', source, '@', new Date(rec.tsms), 'diff', diff, 'offset', offsetT.toFixed(1), '>100');
+		plv8.elog(NOTICE, 'Rejecting node', node, 'source', r.source_id, '@', new Date(r.tsms), 'diff', diff, 'offset', offsetT.toFixed(1), '>100');
 		plv8.elog(NOTICE, 'Diff', diffT.toFixed(2), '; running average', avgObj.average, JSON.stringify(avgObj.samples));
 		return 0;
 	}
