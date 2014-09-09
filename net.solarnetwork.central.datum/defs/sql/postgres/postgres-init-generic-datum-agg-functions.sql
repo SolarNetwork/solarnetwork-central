@@ -1,3 +1,13 @@
+CREATE OR REPLACE FUNCTION solaragg.minute_time_slot(ts timestamp with time zone, sec integer default 600)
+  RETURNS timestamp with time zone AS
+$BODY$
+	SELECT date_trunc('hour', ts) + (
+		ceil(extract('epoch' from ts) - extract('epoch' from date_trunc('hour', ts))) 
+		- ceil(extract('epoch' from ts))::bigint % sec
+	) * interval '1 second'
+$BODY$
+  LANGUAGE sql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION solardatum.trigger_agg_stale_datum()
   RETURNS trigger AS
 $BODY$BEGIN
