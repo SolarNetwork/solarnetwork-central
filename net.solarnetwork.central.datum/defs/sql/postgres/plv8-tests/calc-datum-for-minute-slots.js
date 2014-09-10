@@ -22,18 +22,24 @@ toleranceMs = (function() {
 }());
 
 function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
-	var diff = (val - prevVal),
-		diffT = Math.abs(diff / (ms / 60000)),
+	var avgObj = r.accAvg[prop],
 		offsetT = 0,
-		avgObj = r.accAvg[prop];
+		diff,
+		diffT;
+	if ( prevVal > 0 && (!avgObj || avgObj.average < 1) && val < (prevVal * 0.015)  ) {
+		// the running average is 0, the previous value > 0, and the current val <= 1.5% of previous value (i.e. close to 0);
+		// don't treat this as a negative accumulation in this case if diff non trivial;
+		// pretend the previous value was 0;
+		// example of this is inverters that report daily kWh that resets each night
+		//offsetT = Math.abs(diff * 10);
+		plv8.elog(NOTICE, 'Forcing node', node, r.source_id, '@', new Date(rec.tsms), 'prevVal', prevVal, 'to 0, val =', val);
+		prevVal = 0;
+	}
+	diff = (val - prevVal);
+	diffT = Math.abs(diff / (ms / 60000));
 	if ( avgObj && avgObj.average > 0 ) {
 		offsetT = (diffT / avgObj.average) * Math.pow(avgObj.samples.length / runningAvgMax, 2) 
 			* (ms > 60000 ? 1 : Math.pow(ms/60000, 2));
-	} else if ( val < 1 && prevVal > 0 && (!avgObj || avgObj.average < 1) ) {
-		// the running average is 0, the previous value > 0, but the current val === 0;
-		// don't treat this as a negative accumulation in this case if diff non trivial;
-		// example of this is inverters that report daily kWh that resets each night
-		offsetT = Math.abs(diff * 10);
 	}
 	if ( offsetT > 100 ) {
 		plv8.elog(NOTICE, 'Rejecting node', node, r.source_id, '@', new Date(rec.tsms), diff, 'offset(t)', offsetT.toFixed(1));
