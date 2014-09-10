@@ -25,21 +25,29 @@ function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
 	var avgObj = r.accAvg[prop],
 		offsetT = 0,
 		diff,
-		diffT;
-	if ( prevVal > 0 && (!avgObj || avgObj.average < 1) && val < (prevVal * 0.015)  ) {
+		diffT,
+		minutes;
+	if ( 
+		// disallow negative values for records tagged 'power', e.g. inverters that reset each night their reported accumulated energy
+		(val < prevVal * 0.5 && rec.jdata.t && Array.isArray(rec.jdata.t) && rec.jdata.t.indexOf('power') >= 0)
+		||
 		// the running average is 0, the previous value > 0, and the current val <= 1.5% of previous value (i.e. close to 0);
 		// don't treat this as a negative accumulation in this case if diff non trivial;
-		// pretend the previous value was 0;
-		// example of this is inverters that report daily kWh that resets each night
-		//offsetT = Math.abs(diff * 10);
+		(prevVal > 0 && (!avgObj || avgObj.average < 1) && val < (prevVal * 0.015))
+		) {
 		plv8.elog(NOTICE, 'Forcing node', node, r.source_id, '@', new Date(rec.tsms), 'prevVal', prevVal, 'to 0, val =', val);
 		prevVal = 0;
 	}
 	diff = (val - prevVal);
-	diffT = Math.abs(diff / (ms / 60000));
-	if ( avgObj && avgObj.average > 0 ) {
-		offsetT = (diffT / avgObj.average) * Math.pow(avgObj.samples.length / runningAvgMax, 2) 
-			* (ms > 60000 ? 1 : Math.pow(ms/60000, 2));
+	minutes = ms / 60000;
+	diffT = Math.abs(diff / minutes);
+	if ( avgObj ) {
+		if ( avgObj.average > 0 ) {
+			offsetT = (diffT / avgObj.average) * Math.pow(avgObj.samples.length / runningAvgMax, 2) 
+				* (minutes > 2 ? 4 : Math.pow(minutes, 2));
+		} else {
+			offsetT = (diffT * (minutes > 5 ? 25 : Math.pow(minutes, 2)));
+		}
 	}
 	if ( offsetT > 100 ) {
 		plv8.elog(NOTICE, 'Rejecting node', node, r.source_id, '@', new Date(rec.tsms), diff, 'offset(t)', offsetT.toFixed(1));
@@ -53,23 +61,34 @@ function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
 }
 
 function maintainAccumulatingRunningAverageDifference(accAvg, prop, diff) {
-	var i = 0,
+	var i,
 		avg = 0,
-		avgObj = accAvg[prop];
+		avgObj = accAvg[prop],
+		val,
+		samples;
 	if ( avgObj === undefined ) {
-		avgObj = { samples : [diff], average : diff };
+		avgObj = { samples : new Array(runningAvgMax), average : diff, next : 1 }; // wanted Float32Array, but not available in plv8
+		avgObj.samples[0] = diff;
+		for ( i = 1; i < runningAvgMax; i += 1 ) {
+			avgObj.samples[i] = 0x7FC00000;
+		}
 		accAvg[prop] = avgObj;
 		avg = diff;
 	} else {
-		if ( avgObj.samples.length >= runningAvgMax ) {
-			avgObj.samples.shift();
+		samples = avgObj.samples;
+		samples[avgObj.next] = diff;
+		avgObj.next += 1;
+		if ( avgObj.next >= runningAvgMax ) {
+			avgObj.next = 0;
 		}
-		avgObj.samples.push(diff);
-		while ( i < avgObj.samples.length ) {
-			avg += avgObj.samples[i];
-			i += 1;
+		for ( i = 0; i < runningAvgMax; i += 1 ) {
+			val = samples[i];
+			if ( val === 0x7FC00000 ) {
+				break;
+			}
+			avg += val;
 		}
-		avg /= avgObj.samples.length;
+		avg /= i;
 		avgObj.average = avg;
 	}
 }
