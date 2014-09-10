@@ -160,7 +160,7 @@ toleranceMs = (function() {
 	return 0;
 }());
 
-function calculateAccumulatingValue(r, val, prevVal, prop, ms) {
+function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
 	var diff = (val - prevVal),
 		diffT = Math.abs(diff / (ms / 60000)),
 		offsetT = 0,
@@ -170,7 +170,7 @@ function calculateAccumulatingValue(r, val, prevVal, prop, ms) {
 			* (ms > 60000 ? 1 : Math.pow(ms/60000, 2));
 	}
 	if ( offsetT > 100 ) {
-		plv8.elog(NOTICE, 'Rejecting node', node, 'source', r.source_id, '@', new Date(r.tsms), 'diff', diff, 'offset', offsetT.toFixed(1), '>100');
+		plv8.elog(NOTICE, 'Rejecting node', node, 'source', r.source_id, '@', new Date(rec.tsms), 'diff', diff, 'offset', offsetT.toFixed(1), '>100');
 		plv8.elog(NOTICE, 'Diff', diffT.toFixed(2), '; running average', avgObj.average, JSON.stringify(avgObj.samples));
 		return 0;
 	}
@@ -253,7 +253,7 @@ function handleAccumulatingResult(rec, result) {
 		// accumulating data
 		for ( prop in acc ) {
 			if ( prevAcc[prop] !== undefined ) {				
-				sn.math.util.addto(prop, calculateAccumulatingValue(result, acc[prop], prevAcc[prop], prop, rec.tdiffms), aobj, rec.percent);
+				sn.math.util.addto(prop, calculateAccumulatingValue(rec, result, acc[prop], prevAcc[prop], prop, rec.tdiffms), aobj, rec.percent);
 			}
 		}
 	}
