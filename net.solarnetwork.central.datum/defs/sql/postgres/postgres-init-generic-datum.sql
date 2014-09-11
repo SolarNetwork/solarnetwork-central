@@ -20,6 +20,16 @@ CREATE TABLE solaragg.agg_stale_datum (
   CONSTRAINT agg_stale_datum_pkey PRIMARY KEY (agg_kind, node_id, ts_start, source_id)
 );
 
+CREATE TABLE solaragg.agg_messages (
+  created timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  node_id solarcommon.node_id NOT NULL,
+  source_id solarcommon.source_id NOT NULL,
+  ts solarcommon.ts NOT NULL,
+  msg text NOT NULL
+);
+
+CREATE INDEX agg_messages_ts_node_idx ON solaragg.agg_messages (ts, node_id);
+
 CREATE TABLE solaragg.agg_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
   local_date timestamp without time zone NOT NULL,
