@@ -1,14 +1,3 @@
-CREATE OR REPLACE FUNCTION solaragg.minute_time_slot(ts timestamp with time zone, sec integer default 600)
-  RETURNS timestamp with time zone 
-  LANGUAGE sql 
-  IMMUTABLE AS
-$BODY$
-	SELECT date_trunc('hour', ts) + (
-		ceil(extract('epoch' from ts) - extract('epoch' from date_trunc('hour', ts))) 
-		- ceil(extract('epoch' from ts))::bigint % sec
-	) * interval '1 second'
-$BODY$;
-
 /**
  * Return a valid minute-level time slot seconds value for an arbitrary input value.
  * This function is meant to validate and correct inappropriate input for minute level
@@ -28,6 +17,28 @@ $BODY$
 	ELSE
 		secs
 	END
+$BODY$;
+
+/**
+ * Return a normalized minute time-slot timestamp for a given timestamp and slot interval.
+ * This function returns the appropriate minute-level time aggregate <code>ts_start</code> 
+ * value for a given timestamp. For example passing <b>600</b> for <code>sec</code> will
+ * return a timestamp who is truncated to <code>:00</code>, <code>:10</code>, <code>:20</code>, 
+ * <code>:30</code>, <code>:40</code>, or <code>:50</code>.
+ * 
+ * @param ts the timestamp to normalize
+ * @param sec the slot seconds
+ * @returns normalized timestamp
+ */
+CREATE OR REPLACE FUNCTION solaragg.minute_time_slot(ts timestamp with time zone, sec integer default 600)
+  RETURNS timestamp with time zone 
+  LANGUAGE sql 
+  IMMUTABLE AS
+$BODY$
+	SELECT date_trunc('hour', ts) + (
+		ceil(extract('epoch' from ts) - extract('epoch' from date_trunc('hour', ts))) 
+		- ceil(extract('epoch' from ts))::bigint % sec
+	) * interval '1 second'
 $BODY$;
 
 CREATE OR REPLACE FUNCTION solardatum.trigger_agg_stale_datum()
