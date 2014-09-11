@@ -41,6 +41,14 @@ $BODY$
 	) * interval '1 second'
 $BODY$;
 
+/**
+ * Trigger that inserts a row into the <b>solaragg.agg_stale_datum<b> table based on
+ * a change to a <b>solardatum.da_datum</b> type row. The <b>agg_kind</b> column is 
+ * set to <code>h</code> and the <b>ts_start</b> column to the changed row's <b>ts</b>
+ * timestamp, truncated to the <b>hour</b>. The changed row's <b>node_id</b> and 
+ * <b>source_id</b> columns are copied as-is. The trigger ignores any 
+ * a <code>unique_violation</code> exception thrown by the <code>INSERT</code>.
+ */
 CREATE OR REPLACE FUNCTION solardatum.trigger_agg_stale_datum()
   RETURNS trigger AS
 $BODY$BEGIN
@@ -65,9 +73,33 @@ $BODY$BEGIN
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
+/**
+ * Find rows in the <b>solardatum.da_datum</b> table necessary to calculate an aggregate set
+ * of data for a specific duration of time, node, and set of sources. This function will return
+ * all available rows within the specified duration, possibly with some rows <em>before</em> or
+ * <em>after</em> the duration to enable calculating the actual aggregate over the duration.
+ * Each returned row contains a <b>percent</b> value of 0 - 1 that represents the percentage 
+ * of time that row falls within the specified duration.
+ * 
+ * @param node The ID of the node to search for.
+ * @param sources An array of one or more source IDs to search for, any of which may match.
+ * @param start_ts The start time of the desired time duration.
+ * @param span The interval of the time duration, which starts from <b>start_ts</b>.
+ * @param tolerance An interval representing the maximum amount of time before between, and after
+ *                  rows with the same source ID are allowed to be considered <em>consecutive</em>
+ *                  for the purposes of calculating the overall aggregate of the time duration.
+ * @out ts The <b>solardatum.da_datum.ts</b> value.
+ * @out source_id The <b>solardatum.da_datum.source_id</b> value.
+ * @out tsms The <b>solardatum.da_datum.ts</b> value represented as milliseconds since the Unix epoch.
+ * @out percent The percent of time this row falls within the specified time duration, from 0 to 1.
+ * @out tdiffms The number of milliseconds between this row and the next earliest consecutive row 
+ *              (i.e. with a matching <b>source_id</b>).
+ * @out jdata The <b>solardatum.da_datum.jdata</b> value.
+ * @returns one or more rows of aggregated data
+ */
 CREATE OR REPLACE FUNCTION solaragg.find_datum_for_time_slot(
 	IN node bigint, 
-	IN source text[], 
+	IN sources text[], 
 	IN start_ts timestamp with time zone, 
 	IN span interval, 
 	IN tolerance interval DEFAULT interval '1 hour')
@@ -95,7 +127,7 @@ SELECT * FROM (
 		d.jdata as jdata
 	FROM solardatum.da_datum d
 	WHERE d.node_id = node
-		AND d.source_id = ANY(source)
+		AND d.source_id = ANY(sources)
 		AND d.ts >= start_ts - tolerance
 		AND d.ts <= start_ts + span + tolerance
 	WINDOW win AS (PARTITION BY d.source_id ORDER BY d.ts)
