@@ -59,7 +59,7 @@ CREATE OR REPLACE FUNCTION solaragg.find_datum_for_time_slot(
 	IN source text[], 
 	IN start_ts timestamp with time zone, 
 	IN span interval, 
-	IN tolerance interval DEFAULT interval '20 minutes')
+	IN tolerance interval DEFAULT interval '1 hour')
   RETURNS TABLE(ts timestamp with time zone, source_id text, tsms bigint, percent real, tdiffms integer, jdata json) AS
 $BODY$
 SELECT * FROM (
@@ -387,7 +387,7 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_minute(
 	IN start_ts timestamp with time zone, 
 	IN end_ts timestamp with time zone, 
 	IN slotsecs integer DEFAULT 600,
-	IN tolerance interval DEFAULT '00:20:00'::interval)
+	IN tolerance interval DEFAULT interval '1 hour')
   RETURNS TABLE(
 	node_id solarcommon.node_id, 
 	ts_start timestamp with time zone, 
@@ -455,7 +455,7 @@ BEGIN
 		END IF;
 
 		SELECT jdata FROM solaragg.calc_datum_time_slots(stale.node_id, ARRAY[stale.source_id::text], 
-			stale.ts_start, agg_span, 0, interval '20 minutes')
+			stale.ts_start, agg_span, 0, interval '1 hour')
 		INTO agg_json;
 		IF agg_json IS NULL THEN
 			CASE kind
