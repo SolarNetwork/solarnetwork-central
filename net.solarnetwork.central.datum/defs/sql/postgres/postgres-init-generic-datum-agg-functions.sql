@@ -101,7 +101,7 @@ CREATE OR REPLACE FUNCTION solaragg.find_datum_for_minute_time_slots(
 	IN start_ts timestamp with time zone, 
 	IN span interval, 
 	IN slotsecs integer DEFAULT 600,
-	IN tolerance interval DEFAULT '00:20:00'::interval)
+	IN tolerance interval DEFAULT interval '1 hour')
   RETURNS TABLE(ts timestamp with time zone, ts_start timestamp with time zone, source_id text, tsms bigint, percent real, tdiffms integer, jdata json) AS
 $BODY$
 SELECT * FROM (
