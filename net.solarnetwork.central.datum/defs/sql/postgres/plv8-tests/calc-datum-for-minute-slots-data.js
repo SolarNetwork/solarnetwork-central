@@ -561,5 +561,25 @@ var testData = [
 {"ts":"2009-12-02 13:57:00.034+13","source_id":"Power","tsms":1259715420034,"percent":0,"tdiffms":60000,"jdata":{"i":{"watts":11},"a":{"wattHours":22336},"t":["power"]}},
 {"ts":"2009-12-02 14:32:00.034+13","source_id":"Power","tsms":1259717520034,"percent":0.914302,"tdiffms":2100000,"jdata":{"i":{"watts":1271},"a":{"wattHours":21621},"t":["power"]}}
 	]
+},
+{
+	description : 'Lots of consumption',
+	expected : [ {"i":{"watts":231129.692},"a":{"wattHours":169760.606},"t":["consumption"]} ],
+	params : [126, ['Power'], new Date(1405371600000), '01:00:00', 0, '01:00:00'],
+	data : [
+{"ts":"2014-07-15 09:15:31.267+12","source_id":"Hanger","tsms":1405372531267,"percent":1,"tdiffms":0,"jdata":{"i":{"watts":248056},"a":{"wattHours":193500985},"t":["consumption"]}},
+{"ts":"2014-07-15 09:19:31.372+12","source_id":"Hanger","tsms":1405372771372,"percent":1,"tdiffms":240105,"jdata":{"i":{"watts":253746},"a":{"wattHours":193517597},"t":["consumption"]}},
+{"ts":"2014-07-15 09:23:32.253+12","source_id":"Hanger","tsms":1405373012253,"percent":1,"tdiffms":240881,"jdata":{"i":{"watts":245950},"a":{"wattHours":193534147},"t":["consumption"]}},
+{"ts":"2014-07-15 09:27:33.088+12","source_id":"Hanger","tsms":1405373253088,"percent":1,"tdiffms":240835,"jdata":{"i":{"watts":240911},"a":{"wattHours":193550347},"t":["consumption"]}},
+{"ts":"2014-07-15 09:31:33.944+12","source_id":"Hanger","tsms":1405373493944,"percent":1,"tdiffms":240856,"jdata":{"i":{"watts":243728},"a":{"wattHours":193566668},"t":["consumption"]}},
+{"ts":"2014-07-15 09:35:34.766+12","source_id":"Hanger","tsms":1405373734766,"percent":1,"tdiffms":240822,"jdata":{"i":{"watts":235824},"a":{"wattHours":193582978},"t":["consumption"]}},
+{"ts":"2014-07-15 09:50:32.668+12","source_id":"Hanger","tsms":1405374632668,"percent":1,"tdiffms":897902,"jdata":{"i":{"watts":216851},"a":{"wattHours":193639858},"t":["consumption"]}},
+{"ts":"2014-07-15 09:55:31.179+12","source_id":"Hanger","tsms":1405374931179,"percent":1,"tdiffms":298511,"jdata":{"i":{"watts":221897},"a":{"wattHours":193654273},"t":["consumption"]}},
+{"ts":"2014-07-15 09:56:31.893+12","source_id":"Hanger","tsms":1405374991893,"percent":1,"tdiffms":60714,"jdata":{"i":{"watts":217136},"a":{"wattHours":193657978},"t":["consumption"]}},
+{"ts":"2014-07-15 09:57:32.504+12","source_id":"Hanger","tsms":1405375052504,"percent":1,"tdiffms":60611,"jdata":{"i":{"watts":214827},"a":{"wattHours":193661638},"t":["consumption"]}},
+{"ts":"2014-07-15 09:58:33.122+12","source_id":"Hanger","tsms":1405375113122,"percent":1,"tdiffms":60618,"jdata":{"i":{"watts":220965},"a":{"wattHours":193665309},"t":["consumption"]}},
+{"ts":"2014-07-15 09:59:33.824+12","source_id":"Hanger","tsms":1405375173824,"percent":1,"tdiffms":60702,"jdata":{"i":{"watts":225885},"a":{"wattHours":193669129},"t":["consumption"]}},
+{"ts":"2014-07-15 10:00:34.722+12","source_id":"Hanger","tsms":1405375234722,"percent":0.429834,"tdiffms":60898,"jdata":{"i":{"watts":218910},"a":{"wattHours":193672890},"t":["consumption"]}}
+	]
 }
 ];
