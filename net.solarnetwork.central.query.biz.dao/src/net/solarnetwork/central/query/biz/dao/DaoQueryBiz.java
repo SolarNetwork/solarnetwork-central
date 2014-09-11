@@ -44,8 +44,10 @@ import net.solarnetwork.central.datum.dao.PowerDatumDao;
 import net.solarnetwork.central.datum.dao.PriceDatumDao;
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.AggregateNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
@@ -54,9 +56,11 @@ import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.ReportingDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SolarNode;
@@ -72,7 +76,10 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.joda.time.MutableInterval;
+import org.joda.time.ReadableInstant;
 import org.joda.time.ReadableInterval;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,6 +99,11 @@ public class DaoQueryBiz implements QueryBiz {
 	private DayDatumDao dayDatumDao;
 	private GeneralNodeDatumDao generalNodeDatumDao;
 	private int filteredResultsLimit = 1000;
+	private long maxDaysForMinuteAggregation = 7;
+	private long maxDaysForHourAggregation = 31;
+	private long maxDaysForDayAggregation = 730;
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final Map<Class<? extends NodeDatum>, DatumDao<? extends NodeDatum>> daoMapping;
 	private final Map<Class<? extends Datum>, FilterableDao<? extends EntityMatch, Long, ? extends DatumFilter>> filterDaoMapping;
@@ -200,6 +212,9 @@ public class DaoQueryBiz implements QueryBiz {
 		if ( criteria.isMostRecent() ) {
 			return dao.getMostRecentDatum(criteria);
 		}
+		Aggregation forced = enforceAggregation(criteria.getAggregation(), criteria.getStartDate(),
+				criteria.getEndDate(), criteria);
+		criteria.setAggregate(forced);
 		return dao.getAggregatedDatum(criteria);
 	}
 
@@ -267,8 +282,75 @@ public class DaoQueryBiz implements QueryBiz {
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
-		return generalNodeDatumDao.findAggregationFiltered(filter, sortDescriptors,
-				limitFilterOffset(offset), limitFilterMaximum(max));
+		return generalNodeDatumDao.findAggregationFiltered(enforceGeneralAggregateLevel(filter),
+				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
+	}
+
+	private Aggregation enforceAggregation(Aggregation agg, final ReadableInstant s, ReadableInstant e,
+			Filter filter) {
+		Aggregation forced = null;
+		long diffDays = (s != null && e != null ? (e.getMillis() - s.getMillis())
+				/ (1000L * 60L * 60L * 24L) : 0);
+		if ( s == null || e == null ) {
+			if ( agg == null || agg.compareTo(Aggregation.Day) < 0 ) {
+				log.info(
+						"Restricting aggregate to Day level for filter with missing start or end date: {}",
+						filter);
+				forced = Aggregation.Day;
+			}
+		} else if ( diffDays > maxDaysForDayAggregation
+				&& (agg == null || agg.compareLevel(Aggregation.Month) < 0) ) {
+			log.info("Restricting aggregate to Month level for filter duration {} days (> {}): {}",
+					diffDays, maxDaysForDayAggregation, filter);
+			forced = Aggregation.Month;
+		} else if ( diffDays > maxDaysForHourAggregation
+				&& (agg == null || agg.compareLevel(Aggregation.Day) < 0) ) {
+			log.info("Restricting aggregate to Day level for filter duration {} days (> {}): {}",
+					diffDays, maxDaysForHourAggregation, filter);
+			forced = Aggregation.Day;
+		} else if ( diffDays > maxDaysForMinuteAggregation
+				&& (agg == null || agg.compareTo(Aggregation.Hour) < 0) ) {
+			log.info("Restricting aggregate to Hour level for filter duration {} days (> {}): {}",
+					diffDays, maxDaysForMinuteAggregation, filter);
+			forced = Aggregation.Hour;
+		}
+		return (forced != null ? forced : agg);
+	}
+
+	private AggregateGeneralNodeDatumFilter enforceGeneralAggregateLevel(
+			AggregateGeneralNodeDatumFilter filter) {
+		Aggregation forced = enforceAggregation(filter.getAggregation(), filter.getStartDate(),
+				filter.getEndDate(), filter);
+		if ( forced != null ) {
+			DatumFilterCommand cmd = new DatumFilterCommand();
+			cmd.setAggregate(forced);
+			cmd.setEndDate(filter.getEndDate());
+			cmd.setNodeIds(filter.getNodeIds());
+			cmd.setSourceIds(filter.getSourceIds());
+			cmd.setStartDate(filter.getStartDate());
+			return cmd;
+		}
+		return filter;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <A extends AggregationFilter> A enforceAggregateLevel(A filter) {
+		Aggregation forced = enforceAggregation(filter.getAggregation(), filter.getStartDate(),
+				filter.getEndDate(), filter);
+		if ( forced != null ) {
+			DatumFilterCommand cmd = new DatumFilterCommand();
+			cmd.setAggregate(forced);
+			cmd.setEndDate(filter.getEndDate());
+			cmd.setStartDate(filter.getStartDate());
+			if ( filter instanceof AggregateNodeDatumFilter ) {
+				AggregateNodeDatumFilter andf = (AggregateNodeDatumFilter) filter;
+				cmd.setNodeIds(andf.getNodeIds());
+				cmd.setSourceIds(andf.getSourceIds());
+			}
+			// this cast is not pretty... but this is legacy code so we're going with it
+			return (A) cmd;
+		}
+		return filter;
 	}
 
 	@Override
@@ -283,6 +365,7 @@ public class DaoQueryBiz implements QueryBiz {
 			throw new IllegalArgumentException("Datum type "
 					+ (datumClass == null ? "(null)" : datumClass.getSimpleName()) + " not supported");
 		}
+		filter = enforceAggregateLevel(filter);
 		return dao.findAggregationFiltered(filter, sortDescriptors, limitFilterOffset(offset),
 				limitFilterMaximum(max));
 	}
@@ -389,6 +472,18 @@ public class DaoQueryBiz implements QueryBiz {
 	@Autowired
 	public void setGeneralNodeDatumDao(GeneralNodeDatumDao generalNodeDatumDao) {
 		this.generalNodeDatumDao = generalNodeDatumDao;
+	}
+
+	public void setMaxDaysForMinuteAggregation(long maxDaysForMinuteAggregation) {
+		this.maxDaysForMinuteAggregation = maxDaysForMinuteAggregation;
+	}
+
+	public void setMaxDaysForHourAggregation(long maxDaysForHourAggregation) {
+		this.maxDaysForHourAggregation = maxDaysForHourAggregation;
+	}
+
+	public void setMaxDaysForDayAggregation(long maxDaysForDayAggregation) {
+		this.maxDaysForDayAggregation = maxDaysForDayAggregation;
 	}
 
 }

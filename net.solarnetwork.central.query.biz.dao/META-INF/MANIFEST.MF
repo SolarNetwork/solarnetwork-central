@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork DAO Query Biz
 Bundle-SymbolicName: net.solarnetwork.central.query.biz.dao
-Bundle-Version: 1.9.0
+Bundle-Version: 1.10.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
@@ -17,6 +17,7 @@ Import-Package:
  org.joda.time;version="[1.6,3.0)",
  org.joda.time.base;version="[1.6,3.0)",
  org.joda.time.field;version="[1.6,3.0)",
+ org.slf4j;version="[1.7.0,2.0.0)",
  org.springframework.aop;version="[3.1,4.0)",
  org.springframework.aop.framework;version="[3.1,4.0)",
  org.springframework.beans;version="[3.1,4.0)",

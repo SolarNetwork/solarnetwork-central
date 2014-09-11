@@ -20,6 +20,17 @@
 		http://www.springframework.org/schema/util
 		http://www.springframework.org/schema/util/spring-util-3.1.xsd">
 
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.query.biz.dao">
+		<beans:prop key="filteredResultsLimit">1000</beans:prop>
+		<beans:prop key="maxDaysForMinuteAggregation">7</beans:prop>
+		<beans:prop key="maxDaysForHourAggregation">31</beans:prop>
+		<beans:prop key="maxDaysForDayAggregation">730</beans:prop>
+	</osgix:cm-properties>
+
+	<ctx:property-placeholder properties-ref="cfg"/>
+	
 	<!-- Service References -->
 	
 	<reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
@@ -48,6 +59,14 @@
 	
 	<ctx:annotation-config/>
 	
-	<bean id="queryBiz" class="net.solarnetwork.central.query.biz.dao.DaoQueryBiz"/>
+	<bean id="queryBiz" class="net.solarnetwork.central.query.biz.dao.DaoQueryBiz">
+		<osgix:managed-properties 
+				persistent-id="net.solarnetwork.central.query.biz.dao" 
+				autowire-on-update="true"/>
+		<property name="filteredResultsLimit" value="${filteredResultsLimit}"/>
+		<property name="maxDaysForMinuteAggregation" value="${maxDaysForMinuteAggregation}"/>
+		<property name="maxDaysForHourAggregation" value="${maxDaysForHourAggregation}"/>
+		<property name="maxDaysForDayAggregation" value="${maxDaysForDayAggregation}"/>
+	</bean>
 	
 </blueprint>
