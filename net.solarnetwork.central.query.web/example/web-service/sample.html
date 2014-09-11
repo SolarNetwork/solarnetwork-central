@@ -88,6 +88,9 @@
 								<option value="/solarquery/api/v1/sec/datum/mostRecent?nodeId={nodeId}&sourceIds={sourceId}">Most recent datum</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, default sort</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&sorts%5B0%5D.sortKey=created&sorts%5B1%5D.sortKey=source&offset=0&max=50">Datum, sorted by date, source</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=FiveMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by 5 minute</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=TenMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by 10 minute</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=FifteenMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by 15 minutes</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Hour&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by hour</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Day&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by day</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Month&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by month</option>
