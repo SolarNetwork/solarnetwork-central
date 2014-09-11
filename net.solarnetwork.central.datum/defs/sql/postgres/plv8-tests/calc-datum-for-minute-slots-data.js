@@ -2,6 +2,7 @@ var testData = [
 { 
 	description : 'Big shift in Wh to near-0 should not result in negative Wh.',
 	expected : [ {"i":{"watts":3.362},"a":{"wattHours":14.992},"t":["consumption"]} ], 
+	params : [108, ['Power'], new Date(1403611200000), '01:00:00', 0, '01:00:00'],
 	data : [
 {"ts":"2013-11-07 19:59:30.209+13","source_id":"Main","tsms":1383807570209,"percent":0,"tdiffms":60000,"jdata":{"i":{"watts":0},"a":{"wattHours":1080},"t":["consumption"]}},
 {"ts":"2013-11-07 20:00:30.215+13","source_id":"Main","tsms":1383807630215,"percent":0.503533,"tdiffms":60006,"jdata":{"i":{"watts":0},"a":{"wattHours":1080},"t":["consumption"]}},
@@ -56,6 +57,7 @@ var testData = [
 {
 	description : 'End of day Wh results jump to 0, should result in 0.',
 	expected : [ {"i":{"watts":0},"a":{"wattHours":0},"t":["power"]} ],
+	params : [108, ['Power'], new Date(1403611200000), '01:00:00', 0, '01:00:00'],
 	data : [
 {"ts":"2011-10-16 02:59:03.505+13","source_id":"Power","tsms":1318687143505,"percent":0,"tdiffms":60024,"jdata":{"i":{"watts":0},"a":{"wattHours":10210},"t":["power"]}},
 {"ts":"2011-10-16 03:00:03.493+13","source_id":"Power","tsms":1318687203493,"percent":0.0582283,"tdiffms":59988,"jdata":{"i":{"watts":0},"a":{"wattHours":0},"t":["power"]}},
@@ -124,6 +126,7 @@ var testData = [
 {
 	description : 'End of day Wh results jump to 7, should result in first sample being 7.',
 	expected : [ {"i":{"watts":556.361},"a":{"wattHours":537.873},"t":["power"]} ],
+	params : [108, ['Power'], new Date(1403611200000), '01:00:00', 0, '01:00:00'],
 	data : [
 {"ts":"2014-05-05 23:59:02.756+12","source_id":"Main","tsms":1399291142756,"percent":0,"tdiffms":60047,"jdata":{"i":{"watts":447},"a":{"wattHours":22501},"t":["power"]}},
 {"ts":"2014-05-06 00:00:02.9+12","source_id":"Main","tsms":1399291202900,"percent":0.0482176,"tdiffms":60144,"jdata":{"i":{"watts":439},"a":{"wattHours":7},"t":["power"]}},
@@ -192,6 +195,7 @@ var testData = [
 {
 	description : 'End of day Wh results jump to 7, should result in first sample being 131.',
 	expected : [ {"i":{"watts":8353.639},"a":{"wattHours":8109.991},"t":["power"]} ],
+	params : [108, ['Power'], new Date(1403611200000), '01:00:00', 0, '01:00:00'],
 	data : [
 {"ts":"2014-01-28 23:59:02.702+13","source_id":"Main","tsms":1390906742702,"percent":0,"tdiffms":59941,"jdata":{"i":{"watts":8094},"a":{"wattHours":11008794},"t":["power"]}},
 {"ts":"2014-01-29 00:00:02.905+13","source_id":"Main","tsms":1390906802905,"percent":0.0482534,"tdiffms":60203,"jdata":{"i":{"watts":8107},"a":{"wattHours":131},"t":["power"]}},
@@ -260,6 +264,7 @@ var testData = [
 {
 	description : 'Drop in reported Wh with "power" tag: treat previous value as 0.',
 	expected : [ {"i":{"watts":3452.5},"a":{"wattHours":4977},"t":["power"]} ],
+	params : [108, ['Power'], new Date(1403611200000), '01:00:00', 0, '01:00:00'],
 	data : [
 {"ts":"2010-03-10 20:14:00.171+13","source_id":"Power","tsms":1268205240171,"percent":1,"tdiffms":0,"jdata":{"i":{"watts":3214},"a":{"wattHours":28416},"t":["power"]}},
 {"ts":"2010-03-10 20:15:00.265+13","source_id":"Power","tsms":1268205300265,"percent":1,"tdiffms":60094,"jdata":{"i":{"watts":3691},"a":{"wattHours":4977},"t":["power"]}}
@@ -268,6 +273,7 @@ var testData = [
 {
 	description : 'Drop in Wh when moving average is 0 after larger time after previous sample.',
 	expected : [ {"i":{"watts":194.429},"a":{"wattHours":0},"t":["power"]} ],
+	params : [108, ['Power'], new Date(1403611200000), '01:00:00', 0, '01:00:00'],
 	data : [
 {"ts":"2010-01-06 13:59:00.013+13","source_id":"Power","tsms":1262739540013,"percent":0,"tdiffms":60000,"jdata":{"i":{"watts":26},"a":{"wattHours":22003},"t":["power"]}},
 {"ts":"2010-01-06 14:00:00.013+13","source_id":"Power","tsms":1262739600013,"percent":0.000216667,"tdiffms":60000,"jdata":{"i":{"watts":26},"a":{"wattHours":22003},"t":["power"]}},
@@ -282,6 +288,7 @@ var testData = [
 {
 	description : 'Consumption drop in Wh.',
 	expected : [ {"i":{"watts":21.333},"a":{"wattHours":21.008},"t":["consumption"]} ],
+	params : [108, ['Power'], new Date(1403611200000), '01:00:00', 0, '01:00:00'],
 	data : [
 {"ts":"2012-11-11 11:59:30.247+13","source_id":"Main","tsms":1352588370247,"percent":0,"tdiffms":60001,"jdata":{"i":{"watts":21},"a":{"wattHours":101},"t":["consumption"]}},
 {"ts":"2012-11-11 12:00:30.25+13","source_id":"Main","tsms":1352588430250,"percent":0.504141,"tdiffms":60003,"jdata":{"i":{"watts":21},"a":{"wattHours":103},"t":["consumption"]}},
@@ -301,6 +308,7 @@ var testData = [
 {
 	description : 'Slight negative drop, then return to previous value, in power.',
 	expected : [ {"i":{"watts":108.836},"a":{"wattHours":80},"t":["power"]} ],
+	params : [108, ['Power'], new Date(1403611200000), '01:00:00', 0, '01:00:00'],
 	data : [
 {"ts":"2014-08-06 15:59:00.279+12","source_id":"Power","tsms":1407297540279,"percent":0,"tdiffms":59980,"jdata":{"i":{"watts":153},"a":{"wattHours":3480},"t":["power"]}},
 {"ts":"2014-08-06 16:00:00.365+12","source_id":"Power","tsms":1407297600365,"percent":0.00607463,"tdiffms":60086,"jdata":{"i":{"watts":141},"a":{"wattHours":3480},"t":["power"]}},
@@ -364,6 +372,194 @@ var testData = [
 {"ts":"2014-08-06 16:58:00.303+12","source_id":"Power","tsms":1407301080303,"percent":1,"tdiffms":59921,"jdata":{"i":{"watts":45},"a":{"wattHours":3560},"t":["power"]}},
 {"ts":"2014-08-06 16:59:00.307+12","source_id":"Power","tsms":1407301140307,"percent":1,"tdiffms":60004,"jdata":{"i":{"watts":42},"a":{"wattHours":3560},"t":["power"]}},
 {"ts":"2014-08-06 17:00:00.307+12","source_id":"Power","tsms":1407301200307,"percent":0.994883,"tdiffms":60000,"jdata":{"i":{"watts":38},"a":{"wattHours":3560},"t":["power"]}}
+	]
+},
+{
+	description : 'Drop in Wh when moving average is 0 after larger time after previous sample (B).',
+	expected : [ {"i":{"watts":513.75},"a":{"wattHours":0},"t":["power"]} ],
+	params : [108, ['Power'], new Date(1403611200000), '01:00:00', 0, '01:00:00'],
+	data : [
+{"ts":"2012-11-06 13:59:00.074+13","source_id":"Power","tsms":1352163540074,"percent":0,"tdiffms":60001,"jdata":{"i":{"watts":26},"a":{"wattHours":26284},"t":["power"]}},
+{"ts":"2012-11-06 14:00:00.075+13","source_id":"Power","tsms":1352163600075,"percent":0.00124998,"tdiffms":60001,"jdata":{"i":{"watts":26},"a":{"wattHours":26284},"t":["power"]}},
+{"ts":"2012-11-06 14:01:00.06+13","source_id":"Power","tsms":1352163660060,"percent":1,"tdiffms":59985,"jdata":{"i":{"watts":21},"a":{"wattHours":26284},"t":["power"]}},
+{"ts":"2012-11-06 14:02:00.076+13","source_id":"Power","tsms":1352163720076,"percent":1,"tdiffms":60016,"jdata":{"i":{"watts":20},"a":{"wattHours":26284},"t":["power"]}},
+{"ts":"2012-11-06 14:03:00.108+13","source_id":"Power","tsms":1352163780108,"percent":1,"tdiffms":60032,"jdata":{"i":{"watts":19},"a":{"wattHours":26284},"t":["power"]}},
+{"ts":"2012-11-06 14:04:00.108+13","source_id":"Power","tsms":1352163840108,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":18},"a":{"wattHours":26284},"t":["power"]}},
+{"ts":"2012-11-06 14:05:00.171+13","source_id":"Power","tsms":1352163900171,"percent":1,"tdiffms":60063,"jdata":{"i":{"watts":15},"a":{"wattHours":26284},"t":["power"]}},
+{"ts":"2012-11-06 14:06:00.078+13","source_id":"Power","tsms":1352163960078,"percent":1,"tdiffms":59907,"jdata":{"i":{"watts":11},"a":{"wattHours":26284},"t":["power"]}},
+{"ts":"2012-11-06 14:10:00.05+13","source_id":"Power","tsms":1352164200050,"percent":1,"tdiffms":239972,"jdata":{"i":{"watts":3980},"a":{"wattHours":14911},"t":["power"]}}
+	]
+},
+{
+	description : 'Large-ish gap in power generation.',
+	expected : [ {"i":{"watts":1380.75},"a":{"wattHours":694.552},"t":["power"]} ],
+	params : [126, ['Inverter1'], new Date(1403611200000), '01:00:00', 0, '01:00:00'],
+	data : [
+{"ts":"2014-07-15 10:18:42.891+12","source_id":"Inverter1","tsms":1405376322891,"percent":1,"tdiffms":0,"jdata":{"i":{"watts":28},"a":{"wattHours":5159},"t":["power"]}},
+{"ts":"2014-07-15 10:20:19.195+12","source_id":"Inverter1","tsms":1405376419195,"percent":1,"tdiffms":96304,"jdata":{"i":{"watts":28},"a":{"wattHours":5159},"t":["power"]}},
+{"ts":"2014-07-15 10:22:18.057+12","source_id":"Inverter1","tsms":1405376538057,"percent":1,"tdiffms":118862,"jdata":{"i":{"watts":28},"a":{"wattHours":5160},"t":["power"]}},
+{"ts":"2014-07-15 10:24:19.152+12","source_id":"Inverter1","tsms":1405376659152,"percent":1,"tdiffms":121095,"jdata":{"i":{"watts":2415},"a":{"wattHours":5173},"t":["power"]}},
+{"ts":"2014-07-15 10:27:19.055+12","source_id":"Inverter1","tsms":1405376839055,"percent":1,"tdiffms":179903,"jdata":{"i":{"watts":2457},"a":{"wattHours":5265},"t":["power"]}},
+{"ts":"2014-07-15 10:56:19.062+12","source_id":"Inverter1","tsms":1405378579062,"percent":1,"tdiffms":1740007,"jdata":{"i":{"watts":585},"a":{"wattHours":5730},"t":["power"]}},
+{"ts":"2014-07-15 10:59:19.078+12","source_id":"Inverter1","tsms":1405378759078,"percent":1,"tdiffms":180016,"jdata":{"i":{"watts":2736},"a":{"wattHours":5829},"t":["power"]}},
+{"ts":"2014-07-15 11:01:19.083+12","source_id":"Inverter1","tsms":1405378879083,"percent":0.341002,"tdiffms":120005,"jdata":{"i":{"watts":2769},"a":{"wattHours":5901},"t":["power"]}}
+	]
+},
+{
+	description : 'Abnormal jump in power generation.',
+	expected : [ {"i":{"watts":2053.245},"a":{"wattHours":1723.894},"t":["power"]} ],
+	params : [111, ['West'], new Date(1403611200000), '01:00:00', 0, '01:00:00'],
+	data : [
+{"ts":"2013-11-29 09:59:04.681+13","source_id":"West","tsms":1385672344681,"percent":0,"tdiffms":59999,"jdata":{"i":{"watts":1949},"a":{"wattHours":1983},"t":["power"]}},
+{"ts":"2013-11-29 10:00:04.718+13","source_id":"West","tsms":1385672404718,"percent":0.0785849,"tdiffms":60037,"jdata":{"i":{"watts":1963},"a":{"wattHours":2016},"t":["power"]}},
+{"ts":"2013-11-29 10:01:04.734+13","source_id":"West","tsms":1385672464734,"percent":1,"tdiffms":60016,"jdata":{"i":{"watts":1964},"a":{"wattHours":2046},"t":["power"]}},
+{"ts":"2013-11-29 10:02:06.613+13","source_id":"West","tsms":1385672526613,"percent":1,"tdiffms":61879,"jdata":{"i":{"watts":2021},"a":{"wattHours":2079},"t":["power"]}},
+{"ts":"2013-11-29 10:03:04.838+13","source_id":"West","tsms":1385672584838,"percent":1,"tdiffms":58225,"jdata":{"i":{"watts":1800},"a":{"wattHours":2111},"t":["power"]}},
+{"ts":"2013-11-29 10:04:04.658+13","source_id":"West","tsms":1385672644658,"percent":1,"tdiffms":59820,"jdata":{"i":{"watts":1623},"a":{"wattHours":2137},"t":["power"]}},
+{"ts":"2013-11-29 10:05:04.724+13","source_id":"West","tsms":1385672704724,"percent":1,"tdiffms":60066,"jdata":{"i":{"watts":1875},"a":{"wattHours":2166},"t":["power"]}},
+{"ts":"2013-11-29 10:06:06.61+13","source_id":"West","tsms":1385672766610,"percent":1,"tdiffms":61886,"jdata":{"i":{"watts":1894},"a":{"wattHours":2195},"t":["power"]}},
+{"ts":"2013-11-29 10:07:04.702+13","source_id":"West","tsms":1385672824702,"percent":1,"tdiffms":58092,"jdata":{"i":{"watts":1898},"a":{"wattHours":2226},"t":["power"]}},
+{"ts":"2013-11-29 10:08:04.667+13","source_id":"West","tsms":1385672884667,"percent":1,"tdiffms":59965,"jdata":{"i":{"watts":2057},"a":{"wattHours":2259},"t":["power"]}},
+{"ts":"2013-11-29 10:09:04.683+13","source_id":"West","tsms":1385672944683,"percent":1,"tdiffms":60016,"jdata":{"i":{"watts":2220},"a":{"wattHours":2292},"t":["power"]}},
+{"ts":"2013-11-29 10:10:04.806+13","source_id":"West","tsms":1385673004806,"percent":1,"tdiffms":60123,"jdata":{"i":{"watts":2380},"a":{"wattHours":2329},"t":["power"]}},
+{"ts":"2013-11-29 10:11:04.663+13","source_id":"West","tsms":1385673064663,"percent":1,"tdiffms":59857,"jdata":{"i":{"watts":2524},"a":{"wattHours":2369},"t":["power"]}},
+{"ts":"2013-11-29 10:12:04.785+13","source_id":"West","tsms":1385673124785,"percent":1,"tdiffms":60122,"jdata":{"i":{"watts":2454},"a":{"wattHours":2410},"t":["power"]}},
+{"ts":"2013-11-29 10:13:04.668+13","source_id":"West","tsms":1385673184668,"percent":1,"tdiffms":59883,"jdata":{"i":{"watts":2303},"a":{"wattHours":2447},"t":["power"]}},
+{"ts":"2013-11-29 10:14:06.602+13","source_id":"West","tsms":1385673246602,"percent":1,"tdiffms":61934,"jdata":{"i":{"watts":2939},"a":{"wattHours":2488},"t":["power"]}},
+{"ts":"2013-11-29 10:15:04.79+13","source_id":"West","tsms":1385673304790,"percent":1,"tdiffms":58188,"jdata":{"i":{"watts":3319},"a":{"wattHours":2536},"t":["power"]}},
+{"ts":"2013-11-29 10:16:04.68+13","source_id":"West","tsms":1385673364680,"percent":1,"tdiffms":59890,"jdata":{"i":{"watts":2842},"a":{"wattHours":2593},"t":["power"]}},
+{"ts":"2013-11-29 10:17:05.055+13","source_id":"West","tsms":1385673425055,"percent":1,"tdiffms":60375,"jdata":{"i":{"watts":4251},"a":{"wattHours":2655},"t":["power"]}},
+{"ts":"2013-11-29 10:18:04.834+13","source_id":"West","tsms":1385673484834,"percent":1,"tdiffms":59779,"jdata":{"i":{"watts":4159},"a":{"wattHours":2719},"t":["power"]}},
+{"ts":"2013-11-29 10:19:04.649+13","source_id":"West","tsms":1385673544649,"percent":1,"tdiffms":59815,"jdata":{"i":{"watts":2732},"a":{"wattHours":2778},"t":["power"]}},
+{"ts":"2013-11-29 10:20:04.782+13","source_id":"West","tsms":1385673604782,"percent":1,"tdiffms":60133,"jdata":{"i":{"watts":2464},"a":{"wattHours":2818},"t":["power"]}},
+{"ts":"2013-11-29 10:21:04.719+13","source_id":"West","tsms":1385673664719,"percent":1,"tdiffms":59937,"jdata":{"i":{"watts":2404},"a":{"wattHours":2861},"t":["power"]}},
+{"ts":"2013-11-29 10:22:04.704+13","source_id":"West","tsms":1385673724704,"percent":1,"tdiffms":59985,"jdata":{"i":{"watts":2978},"a":{"wattHours":2905},"t":["power"]}},
+{"ts":"2013-11-29 10:23:04.683+13","source_id":"West","tsms":1385673784683,"percent":1,"tdiffms":59979,"jdata":{"i":{"watts":2361},"a":{"wattHours":2948},"t":["power"]}},
+{"ts":"2013-11-29 10:24:04.879+13","source_id":"West","tsms":1385673844879,"percent":1,"tdiffms":60196,"jdata":{"i":{"watts":2181},"a":{"wattHours":2984},"t":["power"]}},
+{"ts":"2013-11-29 10:25:04.734+13","source_id":"West","tsms":1385673904734,"percent":1,"tdiffms":59855,"jdata":{"i":{"watts":2525},"a":{"wattHours":3023},"t":["power"]}},
+{"ts":"2013-11-29 10:26:04.765+13","source_id":"West","tsms":1385673964765,"percent":1,"tdiffms":60031,"jdata":{"i":{"watts":2567},"a":{"wattHours":3063},"t":["power"]}},
+{"ts":"2013-11-29 10:27:04.828+13","source_id":"West","tsms":1385674024828,"percent":1,"tdiffms":60063,"jdata":{"i":{"watts":2618},"a":{"wattHours":3104},"t":["power"]}},
+{"ts":"2013-11-29 10:28:04.747+13","source_id":"West","tsms":1385674084747,"percent":1,"tdiffms":59919,"jdata":{"i":{"watts":2258},"a":{"wattHours":3145},"t":["power"]}},
+{"ts":"2013-11-29 10:29:06.729+13","source_id":"West","tsms":1385674146729,"percent":1,"tdiffms":61982,"jdata":{"i":{"watts":1831},"a":{"wattHours":3178},"t":["power"]}},
+{"ts":"2013-11-29 10:30:04.748+13","source_id":"West","tsms":1385674204748,"percent":1,"tdiffms":58019,"jdata":{"i":{"watts":1637},"a":{"wattHours":3206},"t":["power"]}},
+{"ts":"2013-11-29 10:31:04.671+13","source_id":"West","tsms":1385674264671,"percent":1,"tdiffms":59923,"jdata":{"i":{"watts":1550},"a":{"wattHours":3232},"t":["power"]}},
+{"ts":"2013-11-29 10:32:04.686+13","source_id":"West","tsms":1385674324686,"percent":1,"tdiffms":60015,"jdata":{"i":{"watts":1384},"a":{"wattHours":3255},"t":["power"]}},
+{"ts":"2013-11-29 10:33:04.774+13","source_id":"West","tsms":1385674384774,"percent":1,"tdiffms":60088,"jdata":{"i":{"watts":1673},"a":{"wattHours":3278},"t":["power"]}},
+{"ts":"2013-11-29 10:34:04.684+13","source_id":"West","tsms":1385674444684,"percent":1,"tdiffms":59910,"jdata":{"i":{"watts":2200},"a":{"wattHours":3310},"t":["power"]}},
+{"ts":"2013-11-29 10:35:05.089+13","source_id":"West","tsms":1385674505089,"percent":1,"tdiffms":60405,"jdata":{"i":{"watts":1998},"a":{"wattHours":3346},"t":["power"]}},
+{"ts":"2013-11-29 10:36:04.706+13","source_id":"West","tsms":1385674564706,"percent":1,"tdiffms":59617,"jdata":{"i":{"watts":1945},"a":{"wattHours":3377},"t":["power"]}},
+{"ts":"2013-11-29 10:37:04.74+13","source_id":"West","tsms":1385674624740,"percent":1,"tdiffms":60034,"jdata":{"i":{"watts":2212},"a":{"wattHours":3411},"t":["power"]}},
+{"ts":"2013-11-29 10:38:04.694+13","source_id":"West","tsms":1385674684694,"percent":1,"tdiffms":59954,"jdata":{"i":{"watts":2220},"a":{"wattHours":3447},"t":["power"]}},
+{"ts":"2013-11-29 10:39:04.746+13","source_id":"West","tsms":1385674744746,"percent":1,"tdiffms":60052,"jdata":{"i":{"watts":2132},"a":{"wattHours":3482},"t":["power"]}},
+{"ts":"2013-11-29 10:40:04.661+13","source_id":"West","tsms":1385674804661,"percent":1,"tdiffms":59915,"jdata":{"i":{"watts":1900},"a":{"wattHours":3516},"t":["power"]}},
+{"ts":"2013-11-29 10:41:04.683+13","source_id":"West","tsms":1385674864683,"percent":1,"tdiffms":60022,"jdata":{"i":{"watts":1544},"a":{"wattHours":3542},"t":["power"]}},
+{"ts":"2013-11-29 10:42:04.884+13","source_id":"West","tsms":1385674924884,"percent":1,"tdiffms":60201,"jdata":{"i":{"watts":1354},"a":{"wattHours":3566},"t":["power"]}},
+{"ts":"2013-11-29 10:43:04.664+13","source_id":"West","tsms":1385674984664,"percent":1,"tdiffms":59780,"jdata":{"i":{"watts":1297},"a":{"wattHours":3586},"t":["power"]}},
+{"ts":"2013-11-29 10:44:04.698+13","source_id":"West","tsms":1385675044698,"percent":1,"tdiffms":60034,"jdata":{"i":{"watts":1211},"a":{"wattHours":3606},"t":["power"]}},
+{"ts":"2013-11-29 10:45:04.767+13","source_id":"West","tsms":1385675104767,"percent":1,"tdiffms":60069,"jdata":{"i":{"watts":1311},"a":{"wattHours":3626},"t":["power"]}},
+{"ts":"2013-11-29 10:46:04.979+13","source_id":"West","tsms":1385675164979,"percent":1,"tdiffms":60212,"jdata":{"i":{"watts":1385},"a":{"wattHours":3648},"t":["power"]}},
+{"ts":"2013-11-29 10:47:04.716+13","source_id":"West","tsms":1385675224716,"percent":1,"tdiffms":59737,"jdata":{"i":{"watts":1319},"a":{"wattHours":3669},"t":["power"]}},
+{"ts":"2013-11-29 10:48:04.724+13","source_id":"West","tsms":1385675284724,"percent":1,"tdiffms":60008,"jdata":{"i":{"watts":1307},"a":{"wattHours":3690},"t":["power"]}},
+{"ts":"2013-11-29 10:49:04.785+13","source_id":"West","tsms":1385675344785,"percent":1,"tdiffms":60061,"jdata":{"i":{"watts":1349},"a":{"wattHours":3711},"t":["power"]}},
+{"ts":"2013-11-29 10:50:06.504+13","source_id":"West","tsms":1385675406504,"percent":1,"tdiffms":61719,"jdata":{"i":{"watts":1438},"a":{"wattHours":3733},"t":["power"]}},
+{"ts":"2013-11-29 10:59:30.499+13","source_id":"West","tsms":1385675970499,"percent":1,"tdiffms":563995,"jdata":{"i":{"watts":511},"a":{"wattHours":96493},"t":["power"]}},
+{"ts":"2013-11-29 11:00:04.797+13","source_id":"West","tsms":1385676004797,"percent":0.860138,"tdiffms":34298,"jdata":{"i":{"watts":540},"a":{"wattHours":96498},"t":["power"]}}
+	]
+},
+{
+	description : 'Small Wh value anomaly.',
+	expected : [ {"i":{"watts":315.267},"a":{"wattHours":259.019},"t":["power"]} ],
+	params : [9, ['Power'], new Date(1271466000000), '01:00:00', 0, '01:00:00'],
+	data : [
+{"ts":"2010-04-17 12:59:00.109+12","source_id":"Power","tsms":1271465940109,"percent":0,"tdiffms":60000,"jdata":{"i":{"watts":774},"a":{"wattHours":30277},"t":["power"]}},
+{"ts":"2010-04-17 13:00:00.093+12","source_id":"Power","tsms":1271466000093,"percent":0.00155041,"tdiffms":59984,"jdata":{"i":{"watts":748},"a":{"wattHours":30290},"t":["power"]}},
+{"ts":"2010-04-17 13:01:00.078+12","source_id":"Power","tsms":1271466060078,"percent":1,"tdiffms":59985,"jdata":{"i":{"watts":705},"a":{"wattHours":30302},"t":["power"]}},
+{"ts":"2010-04-17 13:02:00.078+12","source_id":"Power","tsms":1271466120078,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":639},"a":{"wattHours":30312},"t":["power"]}},
+{"ts":"2010-04-17 13:03:00.015+12","source_id":"Power","tsms":1271466180015,"percent":1,"tdiffms":59937,"jdata":{"i":{"watts":635},"a":{"wattHours":30318},"t":["power"]}},
+{"ts":"2010-04-17 13:04:00.015+12","source_id":"Power","tsms":1271466240015,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":605},"a":{"wattHours":30327},"t":["power"]}},
+{"ts":"2010-04-17 13:05:00.015+12","source_id":"Power","tsms":1271466300015,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":579},"a":{"wattHours":30337},"t":["power"]}},
+{"ts":"2010-04-17 13:06:00.015+12","source_id":"Power","tsms":1271466360015,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":545},"a":{"wattHours":30347},"t":["power"]}},
+{"ts":"2010-04-17 13:08:00.109+12","source_id":"Power","tsms":1271466480109,"percent":1,"tdiffms":120094,"jdata":{"i":{"watts":444},"a":{"wattHours":30360},"t":["power"]}},
+{"ts":"2010-04-17 13:09:00.093+12","source_id":"Power","tsms":1271466540093,"percent":1,"tdiffms":59984,"jdata":{"i":{"watts":410},"a":{"wattHours":30367},"t":["power"]}},
+{"ts":"2010-04-17 13:10:00.078+12","source_id":"Power","tsms":1271466600078,"percent":1,"tdiffms":59985,"jdata":{"i":{"watts":383},"a":{"wattHours":30372},"t":["power"]}},
+{"ts":"2010-04-17 13:11:00.078+12","source_id":"Power","tsms":1271466660078,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":363},"a":{"wattHours":30378},"t":["power"]}},
+{"ts":"2010-04-17 13:12:00.078+12","source_id":"Power","tsms":1271466720078,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":351},"a":{"wattHours":30384},"t":["power"]}},
+{"ts":"2010-04-17 13:13:00.093+12","source_id":"Power","tsms":1271466780093,"percent":1,"tdiffms":60015,"jdata":{"i":{"watts":352},"a":{"wattHours":30386},"t":["power"]}},
+{"ts":"2010-04-17 13:14:00.093+12","source_id":"Power","tsms":1271466840093,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":342},"a":{"wattHours":30392},"t":["power"]}},
+{"ts":"2010-04-17 13:15:00.203+12","source_id":"Power","tsms":1271466900203,"percent":1,"tdiffms":60110,"jdata":{"i":{"watts":334},"a":{"wattHours":30398},"t":["power"]}},
+{"ts":"2010-04-17 13:16:00.093+12","source_id":"Power","tsms":1271466960093,"percent":1,"tdiffms":59890,"jdata":{"i":{"watts":331},"a":{"wattHours":30402},"t":["power"]}},
+{"ts":"2010-04-17 13:17:00.093+12","source_id":"Power","tsms":1271467020093,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":328},"a":{"wattHours":30408},"t":["power"]}},
+{"ts":"2010-04-17 13:18:00.093+12","source_id":"Power","tsms":1271467080093,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":321},"a":{"wattHours":30413},"t":["power"]}},
+{"ts":"2010-04-17 13:19:00.093+12","source_id":"Power","tsms":1271467140093,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":312},"a":{"wattHours":30417},"t":["power"]}},
+{"ts":"2010-04-17 13:20:00.109+12","source_id":"Power","tsms":1271467200109,"percent":1,"tdiffms":60016,"jdata":{"i":{"watts":312},"a":{"wattHours":30423},"t":["power"]}},
+{"ts":"2010-04-17 13:21:00.093+12","source_id":"Power","tsms":1271467260093,"percent":1,"tdiffms":59984,"jdata":{"i":{"watts":309},"a":{"wattHours":30427},"t":["power"]}},
+{"ts":"2010-04-17 13:22:00.062+12","source_id":"Power","tsms":1271467320062,"percent":1,"tdiffms":59969,"jdata":{"i":{"watts":301},"a":{"wattHours":30433},"t":["power"]}},
+{"ts":"2010-04-17 13:23:00.156+12","source_id":"Power","tsms":1271467380156,"percent":1,"tdiffms":60094,"jdata":{"i":{"watts":301},"a":{"wattHours":30434},"t":["power"]}},
+{"ts":"2010-04-17 13:24:00.093+12","source_id":"Power","tsms":1271467440093,"percent":1,"tdiffms":59937,"jdata":{"i":{"watts":298},"a":{"wattHours":30440},"t":["power"]}},
+{"ts":"2010-04-17 13:25:00.062+12","source_id":"Power","tsms":1271467500062,"percent":1,"tdiffms":59969,"jdata":{"i":{"watts":294},"a":{"wattHours":30444},"t":["power"]}},
+{"ts":"2010-04-17 13:26:00.062+12","source_id":"Power","tsms":1271467560062,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":284},"a":{"wattHours":30448},"t":["power"]}},
+{"ts":"2010-04-17 13:27:00.078+12","source_id":"Power","tsms":1271467620078,"percent":1,"tdiffms":60016,"jdata":{"i":{"watts":281},"a":{"wattHours":30452},"t":["power"]}},
+{"ts":"2010-04-17 13:28:00.078+12","source_id":"Power","tsms":1271467680078,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":278},"a":{"wattHours":30457},"t":["power"]}},
+{"ts":"2010-04-17 13:29:00.078+12","source_id":"Power","tsms":1271467740078,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":274},"a":{"wattHours":30461},"t":["power"]}},
+{"ts":"2010-04-17 13:30:00.078+12","source_id":"Power","tsms":1271467800078,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":277},"a":{"wattHours":30465},"t":["power"]}},
+{"ts":"2010-04-17 13:31:00.078+12","source_id":"Power","tsms":1271467860078,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":265},"a":{"wattHours":30469},"t":["power"]}},
+{"ts":"2010-04-17 13:32:00.078+12","source_id":"Power","tsms":1271467920078,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":268},"a":{"wattHours":30472},"t":["power"]}},
+{"ts":"2010-04-17 13:33:00.062+12","source_id":"Power","tsms":1271467980062,"percent":1,"tdiffms":59984,"jdata":{"i":{"watts":257},"a":{"wattHours":30475},"t":["power"]}},
+{"ts":"2010-04-17 13:34:00.078+12","source_id":"Power","tsms":1271468040078,"percent":1,"tdiffms":60016,"jdata":{"i":{"watts":258},"a":{"wattHours":30479},"t":["power"]}},
+{"ts":"2010-04-17 13:35:00.14+12","source_id":"Power","tsms":1271468100140,"percent":1,"tdiffms":60062,"jdata":{"i":{"watts":256},"a":{"wattHours":30483},"t":["power"]}},
+{"ts":"2010-04-17 13:36:00.078+12","source_id":"Power","tsms":1271468160078,"percent":1,"tdiffms":59938,"jdata":{"i":{"watts":250},"a":{"wattHours":30488},"t":["power"]}},
+{"ts":"2010-04-17 13:37:00.078+12","source_id":"Power","tsms":1271468220078,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":248},"a":{"wattHours":30490},"t":["power"]}},
+{"ts":"2010-04-17 13:38:00.093+12","source_id":"Power","tsms":1271468280093,"percent":1,"tdiffms":60015,"jdata":{"i":{"watts":246},"a":{"wattHours":30495},"t":["power"]}},
+{"ts":"2010-04-17 13:39:00.093+12","source_id":"Power","tsms":1271468340093,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":236},"a":{"wattHours":30499},"t":["power"]}},
+{"ts":"2010-04-17 13:40:00.093+12","source_id":"Power","tsms":1271468400093,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":232},"a":{"wattHours":30502},"t":["power"]}},
+{"ts":"2010-04-17 13:41:00.062+12","source_id":"Power","tsms":1271468460062,"percent":1,"tdiffms":59969,"jdata":{"i":{"watts":232},"a":{"wattHours":30506},"t":["power"]}},
+{"ts":"2010-04-17 13:42:00.062+12","source_id":"Power","tsms":1271468520062,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":231},"a":{"wattHours":30506},"t":["power"]}},
+{"ts":"2010-04-17 13:43:00.093+12","source_id":"Power","tsms":1271468580093,"percent":1,"tdiffms":60031,"jdata":{"i":{"watts":223},"a":{"wattHours":30510},"t":["power"]}},
+{"ts":"2010-04-17 13:44:00.078+12","source_id":"Power","tsms":1271468640078,"percent":1,"tdiffms":59985,"jdata":{"i":{"watts":221},"a":{"wattHours":30513},"t":["power"]}},
+{"ts":"2010-04-17 13:45:00.093+12","source_id":"Power","tsms":1271468700093,"percent":1,"tdiffms":60015,"jdata":{"i":{"watts":214},"a":{"wattHours":30517},"t":["power"]}},
+{"ts":"2010-04-17 13:46:00.093+12","source_id":"Power","tsms":1271468760093,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":214},"a":{"wattHours":30520},"t":["power"]}},
+{"ts":"2010-04-17 13:47:00.078+12","source_id":"Power","tsms":1271468820078,"percent":1,"tdiffms":59985,"jdata":{"i":{"watts":213},"a":{"wattHours":30523},"t":["power"]}},
+{"ts":"2010-04-17 13:48:00.015+12","source_id":"Power","tsms":1271468880015,"percent":1,"tdiffms":59937,"jdata":{"i":{"watts":201},"a":{"wattHours":30525},"t":["power"]}},
+{"ts":"2010-04-17 13:49:00.015+12","source_id":"Power","tsms":1271468940015,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":202},"a":{"wattHours":30528},"t":["power"]}},
+{"ts":"2010-04-17 13:50:00.015+12","source_id":"Power","tsms":1271469000015,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":178},"a":{"wattHours":30531},"t":["power"]}},
+{"ts":"2010-04-17 13:51:00.031+12","source_id":"Power","tsms":1271469060031,"percent":1,"tdiffms":60016,"jdata":{"i":{"watts":813},"a":{"wattHours":328},"t":["power"]}},
+{"ts":"2010-04-17 13:52:00.078+12","source_id":"Power","tsms":1271469120078,"percent":1,"tdiffms":60047,"jdata":{"i":{"watts":189},"a":{"wattHours":30534},"t":["power"]}},
+{"ts":"2010-04-17 13:53:00.078+12","source_id":"Power","tsms":1271469180078,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":182},"a":{"wattHours":30537},"t":["power"]}},
+{"ts":"2010-04-17 13:54:00.062+12","source_id":"Power","tsms":1271469240062,"percent":1,"tdiffms":59984,"jdata":{"i":{"watts":180},"a":{"wattHours":30540},"t":["power"]}},
+{"ts":"2010-04-17 13:55:00.078+12","source_id":"Power","tsms":1271469300078,"percent":1,"tdiffms":60016,"jdata":{"i":{"watts":178},"a":{"wattHours":30541},"t":["power"]}},
+{"ts":"2010-04-17 13:56:00.078+12","source_id":"Power","tsms":1271469360078,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":168},"a":{"wattHours":30545},"t":["power"]}},
+{"ts":"2010-04-17 13:57:00.109+12","source_id":"Power","tsms":1271469420109,"percent":1,"tdiffms":60031,"jdata":{"i":{"watts":161},"a":{"wattHours":30547},"t":["power"]}},
+{"ts":"2010-04-17 13:58:00.078+12","source_id":"Power","tsms":1271469480078,"percent":1,"tdiffms":59969,"jdata":{"i":{"watts":157},"a":{"wattHours":30548},"t":["power"]}},
+{"ts":"2010-04-17 13:59:00.062+12","source_id":"Power","tsms":1271469540062,"percent":1,"tdiffms":59984,"jdata":{"i":{"watts":159},"a":{"wattHours":30551},"t":["power"]}},
+{"ts":"2010-04-17 14:00:00.078+12","source_id":"Power","tsms":1271469600078,"percent":0.9987,"tdiffms":60016,"jdata":{"i":{"watts":148},"a":{"wattHours":30552},"t":["power"]}}
+	]
+},
+{
+	description : 'Drop in Wh at end of slot.',
+	expected : [ {"i":{"watts":304.9},"a":{"wattHours":0},"t":["power"]} ],
+	params : [9, ['Power'], new Date(1274756400000), '01:00:00', 0, '01:00:00'],
+	data : [
+{"ts":"2010-05-25 14:59:00.015+12","source_id":"Power","tsms":1274756340015,"percent":0,"tdiffms":60000,"jdata":{"i":{"watts":28},"a":{"wattHours":28841},"t":["power"]}},
+{"ts":"2010-05-25 15:00:00.203+12","source_id":"Power","tsms":1274756400203,"percent":0.00337277,"tdiffms":60188,"jdata":{"i":{"watts":23},"a":{"wattHours":28841},"t":["power"]}},
+{"ts":"2010-05-25 15:01:00.015+12","source_id":"Power","tsms":1274756460015,"percent":1,"tdiffms":59812,"jdata":{"i":{"watts":27},"a":{"wattHours":28841},"t":["power"]}},
+{"ts":"2010-05-25 15:02:00.015+12","source_id":"Power","tsms":1274756520015,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":26},"a":{"wattHours":28841},"t":["power"]}},
+{"ts":"2010-05-25 15:03:00.015+12","source_id":"Power","tsms":1274756580015,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":22},"a":{"wattHours":28841},"t":["power"]}},
+{"ts":"2010-05-25 15:04:00.015+12","source_id":"Power","tsms":1274756640015,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":21},"a":{"wattHours":28841},"t":["power"]}},
+{"ts":"2010-05-25 15:05:00.015+12","source_id":"Power","tsms":1274756700015,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":19},"a":{"wattHours":28841},"t":["power"]}},
+{"ts":"2010-05-25 15:06:00.015+12","source_id":"Power","tsms":1274756760015,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":19},"a":{"wattHours":28841},"t":["power"]}},
+{"ts":"2010-05-25 15:07:00.015+12","source_id":"Power","tsms":1274756820015,"percent":1,"tdiffms":60000,"jdata":{"i":{"watts":15},"a":{"wattHours":28841},"t":["power"]}},
+{"ts":"2010-05-25 15:08:00.031+12","source_id":"Power","tsms":1274756880031,"percent":1,"tdiffms":60016,"jdata":{"i":{"watts":11},"a":{"wattHours":28841},"t":["power"]}},
+{"ts":"2010-05-25 15:24:00.031+12","source_id":"Power","tsms":1274757840031,"percent":1,"tdiffms":960000,"jdata":{"i":{"watts":2866},"a":{"wattHours":25385},"t":["power"]}}
+	]
+},
+{
+	description : 'Drop in Wh without moving average results in negative Wh.',
+	flag : 1,
+	expected : [ {"i":{"watts":1271},"a":{"wattHours":-653.726},"t":["power"]} ],
+	params : [9, ['Power'], new Date(1259715630000), '01:00:00', 0, '01:00:00'],
+	data : [
+{"ts":"2009-12-02 13:57:00.034+13","source_id":"Power","tsms":1259715420034,"percent":0,"tdiffms":60000,"jdata":{"i":{"watts":11},"a":{"wattHours":22336},"t":["power"]}},
+{"ts":"2009-12-02 14:32:00.034+13","source_id":"Power","tsms":1259717520034,"percent":0.914302,"tdiffms":2100000,"jdata":{"i":{"watts":1271},"a":{"wattHours":21621},"t":["power"]}}
 	]
 }
 ];

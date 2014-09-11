@@ -9,17 +9,33 @@ function calc_datum_minute_time_slots(node, sources, start_ts, span, slotsecs, t
 'use strict';
 var runningAvgDiff,
 	runningAvgMax = 5,
-	toleranceMs,
-	hourFill = {'watts' : 'wattHours'};
+	toleranceMs = intervalMs(tolerance),
+	hourFill = {'watts' : 'wattHours'},
+	slotMode = (slotsecs > 0 && slotsecs < 3600),
+	ignoreLogMessages = (slotMode === true || intervalMs(span) !== 3600000),
+	logInsertStmt;
 
-toleranceMs = (function() {
+function intervalMs(intervalValue) {
 	// calculate the number of milliseconds in the tolerance interval, which plv8 gives us as a string which we look for HH:MM:SS format
-	var hms = tolerance.match(/(\d{2}):(\d{2}):(\d{2})$/);
+	var hms = intervalValue.match(/(\d{2}):(\d{2}):(\d{2})$/);
 	if ( hms && hms.length === 4 ) {
 		return ((hms[1] * 60 * 60 * 1000) + (hms[2] * 60 * 1000) + (hms[3] * 1000));
 	}
-	return 0;
-}());
+	return null;
+}
+
+function logMessage(nodeId, sourceId, ts, msg) {
+	if ( ignoreLogMessages ) {
+		return;
+	}
+	var msg;
+	if ( !logInsertStmt ) {
+		logInsertStmt = plv8.prepare('INSERT INTO solaragg.agg_messages (node_id, source_id, ts, msg) VALUES ($1, $2, $3, $4)', 
+			['bigint', 'text', 'timestamp with time zone', 'text']);
+	}
+	var dbMsg = Array.prototype.slice.call(arguments, 3).join(' ');
+	logInsertStmt.execute([nodeId, sourceId, ts, dbMsg]);
+}
 
 function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
 	var avgObj = r.accAvg[prop],
@@ -28,14 +44,14 @@ function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
 		diffT,
 		minutes;
 	if ( 
-		// disallow negative values for records tagged 'power', e.g. inverters that reset each night their reported accumulated energy
-		(val < prevVal * 0.5 && rec.jdata.t && Array.isArray(rec.jdata.t) && rec.jdata.t.indexOf('power') >= 0)
-		||
-		// the running average is 0, the previous value > 0, and the current val <= 1.5% of previous value (i.e. close to 0);
-		// don't treat this as a negative accumulation in this case if diff non trivial;
-		(prevVal > 0 && (!avgObj || avgObj.average < 1) && val < (prevVal * 0.015))
-		) {
-		plv8.elog(NOTICE, 'Forcing node', node, r.source_id, '@', new Date(rec.tsms), 'prevVal', prevVal, 'to 0, val =', val);
+			// disallow negative values for records tagged 'power', e.g. inverters that reset each night their reported accumulated energy
+			(val < prevVal * 0.5 && rec.jdata.t && Array.isArray(rec.jdata.t) && rec.jdata.t.indexOf('power') >= 0)
+			||
+			// the running average is 0, the previous value > 0, and the current val <= 1.5% of previous value (i.e. close to 0);
+			// don't treat this as a negative accumulation in this case if diff non trivial;
+			(prevVal > 0 && (!avgObj || avgObj.average < 1) && val < (prevVal * 0.015))
+			) {
+		logMessage(node, r.source_id, new Date(rec.tsms), 'Forcing node prevVal', prevVal, 'to 0, val =', val);
 		prevVal = 0;
 	}
 	diff = (val - prevVal);
@@ -43,17 +59,17 @@ function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
 	diffT = Math.abs(diff / minutes);
 	if ( avgObj ) {
 		if ( avgObj.average > 0 ) {
-			offsetT = (diffT / avgObj.average) * Math.pow(avgObj.samples.length / runningAvgMax, 2) 
+			offsetT = (diffT / avgObj.average) 
+				* (avgObj.next < runningAvgMax ? Math.pow(avgObj.next / runningAvgMax, 2) : 1)
 				* (minutes > 2 ? 4 : Math.pow(minutes, 2));
 		} else {
 			offsetT = (diffT * (minutes > 5 ? 25 : Math.pow(minutes, 2)));
 		}
 	}
 	if ( offsetT > 100 ) {
-		plv8.elog(NOTICE, 'Rejecting node', node, r.source_id, '@', new Date(rec.tsms), diff, 'offset(t)', offsetT.toFixed(1));
-		if ( avgObj ) {
-			plv8.elog(NOTICE, 'diff(t)', diffT.toFixed(2), '; ravg', avgObj.average, JSON.stringify(avgObj.samples));
-		}
+		logMessage(node, r.source_id, new Date(rec.tsms), 'Rejecting diff', diff, 'offset(t)', offsetT.toFixed(1), 
+			'diff(t)', sn.math.util.fixPrecision(diffT, 100), '; ravg', (avgObj ? sn.math.util.fixPrecision(avgObj.average, 100) : 'N/A'), 
+			(avgObj ? JSON.stringify(avgObj.samples.map(function(e) { return sn.math.util.fixPrecision(e, 100); })) : 'N/A'));
 		return 0;
 	}
 	maintainAccumulatingRunningAverageDifference(r.accAvg, prop, diffT)
@@ -76,11 +92,8 @@ function maintainAccumulatingRunningAverageDifference(accAvg, prop, diff) {
 		avg = diff;
 	} else {
 		samples = avgObj.samples;
-		samples[avgObj.next] = diff;
+		samples[avgObj.next % runningAvgMax] = diff;
 		avgObj.next += 1;
-		if ( avgObj.next >= runningAvgMax ) {
-			avgObj.next = 0;
-		}
 		for ( i = 0; i < runningAvgMax; i += 1 ) {
 			val = samples[i];
 			if ( val === 0x7FC00000 ) {
@@ -98,7 +111,7 @@ function finishResultObject(r) {
 		robj,
 		ri,
 		ra;
-	if ( r.tsms < start_ts.getTime() /*|| r.tsms > start_ts.getTime() +*/  ) {
+	if ( r.tsms < start_ts.getTime() ) {
 		// not included in output because before time start
 		return;
 	}
@@ -194,7 +207,7 @@ function handleFractionalAccumulatingResult(rec, result) {
 		prop,
 		stmt,
 		cur,
-		slotMode = (slotsecs > 0 && slotsecs < 3600);
+		spanMs = intervalMs(span);
 	
 	if ( slotMode ) {
 		stmt = plv8.prepare('SELECT source_id, tsms, percent, tdiffms, jdata FROM solaragg.find_datum_for_minute_time_slots($1, $2, $3, $4, $5, $6)', 
@@ -248,6 +261,10 @@ function handleFractionalAccumulatingResult(rec, result) {
 
 	for ( prop in results ) {
 		finishResultObject(results[prop]);
+	}
+	
+	if ( logInsertStmt ) {
+		logInsertStmt.free();
 	}
 }());
 
