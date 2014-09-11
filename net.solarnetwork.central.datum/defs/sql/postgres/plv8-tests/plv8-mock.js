@@ -7,6 +7,7 @@ function plv8js() {
 
 	var nextData = [];
 	var resultData = [];
+	var executions = [];
 	
 	that.elog = function() {
 		if ( !arguments.length ) {
@@ -50,11 +51,20 @@ function plv8js() {
 			return crsr;
 		};
 		
+		stmt.execute = function() {
+			executions.push({ sql : sql, args : Array.prototype.slice.call(arguments) });
+		};
+		
 		stmt.free = function() {
 			free = true;
 		};
 	
 		return stmt;
+	};
+	
+	that.reset = function() {
+		resultData.length = 0;
+		executions.length = 0;
 	};
 	
 	Object.defineProperties(that, {
@@ -66,6 +76,10 @@ function plv8js() {
 		resultData : {
 			enumerable : true,
 			value : resultData
+		},
+		executionResults : {
+			enumerable : true,
+			value : executions
 		}
 	});
 	
