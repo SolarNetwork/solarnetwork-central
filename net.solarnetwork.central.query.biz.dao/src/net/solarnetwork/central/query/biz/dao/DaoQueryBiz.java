@@ -286,18 +286,22 @@ public class DaoQueryBiz implements QueryBiz {
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
 	}
 
-	private Aggregation enforceAggregation(Aggregation agg, final ReadableInstant s, ReadableInstant e,
+	private Aggregation enforceAggregation(final Aggregation agg, ReadableInstant s, ReadableInstant e,
 			Filter filter) {
 		Aggregation forced = null;
+		if ( s == null && e != null ) {
+			// treat start date as SolarNetwork epoch (may want to make epoch configurable)
+			s = new DateTime(2008, 1, 1, 0, 0, 0, DateTimeZone.UTC);
+		} else if ( s != null && e == null ) {
+			// treat end date as now for purposes of this calculating query range
+			e = new DateTime();
+		}
 		long diffDays = (s != null && e != null ? (e.getMillis() - s.getMillis())
 				/ (1000L * 60L * 60L * 24L) : 0);
-		if ( s == null || e == null ) {
-			if ( agg == null || agg.compareTo(Aggregation.Day) < 0 ) {
-				log.info(
-						"Restricting aggregate to Day level for filter with missing start or end date: {}",
-						filter);
-				forced = Aggregation.Day;
-			}
+		if ( s == null && e == null && (agg == null || agg.compareTo(Aggregation.Day) < 0) ) {
+			log.info("Restricting aggregate to Day level for filter with missing start or end date: {}",
+					filter);
+			forced = Aggregation.Day;
 		} else if ( diffDays > maxDaysForDayAggregation
 				&& (agg == null || agg.compareLevel(Aggregation.Month) < 0) ) {
 			log.info("Restricting aggregate to Month level for filter duration {} days (> {}): {}",
