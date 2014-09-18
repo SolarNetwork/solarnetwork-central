@@ -27,6 +27,8 @@
 		<beans:prop key="maxDaysForMinuteAggregation">7</beans:prop>
 		<beans:prop key="maxDaysForHourAggregation">31</beans:prop>
 		<beans:prop key="maxDaysForDayAggregation">730</beans:prop>
+		<beans:prop key="maxDaysForDayOfWeekAggregation">3650</beans:prop>
+		<beans:prop key="maxDaysForHourOfDayAggregation">3650</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -67,6 +69,8 @@
 		<property name="maxDaysForMinuteAggregation" value="${maxDaysForMinuteAggregation}"/>
 		<property name="maxDaysForHourAggregation" value="${maxDaysForHourAggregation}"/>
 		<property name="maxDaysForDayAggregation" value="${maxDaysForDayAggregation}"/>
+		<property name="maxDaysForDayOfWeekAggregation" value="${maxDaysForDayOfWeekAggregation}"/>
+		<property name="maxDaysForHourOfDayAggregation" value="${maxDaysForHourOfDayAggregation}"/>
 	</bean>
 	
 </blueprint>

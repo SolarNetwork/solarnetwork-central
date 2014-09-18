@@ -102,6 +102,8 @@ public class DaoQueryBiz implements QueryBiz {
 	private long maxDaysForMinuteAggregation = 7;
 	private long maxDaysForHourAggregation = 31;
 	private long maxDaysForDayAggregation = 730;
+	private long maxDaysForDayOfWeekAggregation = 3650;
+	private long maxDaysForHourOfDayAggregation = 3650;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -298,10 +300,24 @@ public class DaoQueryBiz implements QueryBiz {
 		}
 		long diffDays = (s != null && e != null ? (e.getMillis() - s.getMillis())
 				/ (1000L * 60L * 60L * 24L) : 0);
-		if ( s == null && e == null && (agg == null || agg.compareTo(Aggregation.Day) < 0) ) {
+		if ( s == null && e == null && (agg == null || agg.compareTo(Aggregation.Day) < 0)
+				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
+				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek ) {
 			log.info("Restricting aggregate to Day level for filter with missing start or end date: {}",
 					filter);
 			forced = Aggregation.Day;
+		} else if ( agg == Aggregation.HourOfDay || agg == Aggregation.SeasonalHourOfDay ) {
+			if ( diffDays > maxDaysForHourOfDayAggregation ) {
+				log.info("Restricting aggregate to Month level for filter duration {} days (> {}): {}",
+						diffDays, maxDaysForHourOfDayAggregation, filter);
+				forced = Aggregation.Month;
+			}
+		} else if ( agg == Aggregation.DayOfWeek || agg == Aggregation.SeasonalDayOfWeek ) {
+			if ( diffDays > maxDaysForDayOfWeekAggregation ) {
+				log.info("Restricting aggregate to Month level for filter duration {} days (> {}): {}",
+						diffDays, maxDaysForDayOfWeekAggregation, filter);
+				forced = Aggregation.Month;
+			}
 		} else if ( diffDays > maxDaysForDayAggregation
 				&& (agg == null || agg.compareLevel(Aggregation.Month) < 0) ) {
 			log.info("Restricting aggregate to Month level for filter duration {} days (> {}): {}",
@@ -332,6 +348,7 @@ public class DaoQueryBiz implements QueryBiz {
 			cmd.setNodeIds(filter.getNodeIds());
 			cmd.setSourceIds(filter.getSourceIds());
 			cmd.setStartDate(filter.getStartDate());
+			cmd.setDataPath(filter.getDataPath());
 			return cmd;
 		}
 		return filter;
@@ -488,6 +505,14 @@ public class DaoQueryBiz implements QueryBiz {
 
 	public void setMaxDaysForDayAggregation(long maxDaysForDayAggregation) {
 		this.maxDaysForDayAggregation = maxDaysForDayAggregation;
+	}
+
+	public void setMaxDaysForDayOfWeekAggregation(long maxDaysForDayOfWeekAggregation) {
+		this.maxDaysForDayOfWeekAggregation = maxDaysForDayOfWeekAggregation;
+	}
+
+	public void setMaxDaysForHourOfDayAggregation(long maxDaysForHourOfDayAggregation) {
+		this.maxDaysForHourOfDayAggregation = maxDaysForHourOfDayAggregation;
 	}
 
 }
