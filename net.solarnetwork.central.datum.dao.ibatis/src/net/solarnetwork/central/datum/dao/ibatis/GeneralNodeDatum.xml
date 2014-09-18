@@ -232,6 +232,26 @@
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
 
+	<!-- Aggregated query: hour of day -->
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-HourOfDay" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
+		FROM
+			solaragg.find_agg_datum_hod(
+				#filter.nodeId#,
+				#filter.sourceIds,jdbcType=ARRAY#,
+				#filter.dataPathElements,jdbcType=ARRAY#
+				<isNotNull property="filter.startDate">
+					<isNotNull prepend="," property="filter.endDate">
+						#filter.startDate#::timestamptz,
+						#filter.endDate#::timestamptz
+					</isNotNull>
+				</isNotNull>
+			) AS datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
 	<!-- Aggregated query: seasonal hour of day -->
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-SeasonalHourOfDay" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">

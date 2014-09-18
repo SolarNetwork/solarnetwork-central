@@ -592,7 +592,7 @@ $BODY$;
 /**
  * Calculate seasonal hour-of-day aggregate values for a node and set of source IDs
  * and one specific general data value. Note that the `path` parameter currently only
- * supports an array with exactly two elements. 
+ * supports an array with exactly two elements.
  * 
  * @param node				node ID
  * @param source			array of source IDs
@@ -636,6 +636,53 @@ GROUP BY
 	EXTRACT(hour FROM d.local_date), 
 	d.source_id
 $BODY$;
+
+
+/**
+ * Calculate hour-of-day aggregate values for a node and set of source IDs
+ * and one specific general data value. Note that the `path` parameter currently only
+ * supports an array with exactly two elements. 
+ * 
+ * @param node				node ID
+ * @param source			array of source IDs
+ * @param path				the JSON path to the value to extract, e.g. ['i','watts']
+ * @param start_ts			the start timestamp (defaults to SN epoch)
+ * @param end_ts			the end timestamp (defaults to CURRENT_TIMESTAMP)
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_hod(
+	IN node bigint, 
+	IN source text[], 
+	IN path text[],
+	IN start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz, 
+	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
+  RETURNS TABLE(
+	node_id solarcommon.node_id, 
+	ts_start timestamp with time zone, 
+	local_date timestamp without time zone, 
+	source_id solarcommon.source_id,
+	jdata json)
+  LANGUAGE sql 
+  STABLE AS
+$BODY$
+SELECT
+	node::solarcommon.node_id,
+	(CAST('2008-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AT TIME ZONE 'UTC' AS ts_start,
+	(CAST('2008-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AS local_date,
+	d.source_id,
+	('{"' || path[1] || '":{"' || path[2] || '":' 
+		|| ROUND(AVG(CAST(json_extract_path_text(jdata, VARIADIC path) AS double precision)) * 1000) / 1000
+		|| '}}')::json as jdata
+FROM solaragg.agg_datum_hourly d
+WHERE
+	d.node_id = node
+	AND d.source_id = ANY(source)
+	AND d.ts_start >= start_ts
+	AND d.ts_start < end_ts
+GROUP BY 
+	EXTRACT(hour FROM d.local_date), 
+	d.source_id
+$BODY$;
+
 
 CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
   RETURNS integer AS
