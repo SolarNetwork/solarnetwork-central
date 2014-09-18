@@ -290,6 +290,46 @@
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
 
+	<!-- Aggregated query: day of week -->
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-DayOfWeek" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
+		FROM
+			solaragg.find_agg_datum_dow(
+				#filter.nodeId#,
+				#filter.sourceIds,jdbcType=ARRAY#,
+				#filter.dataPathElements,jdbcType=ARRAY#
+				<isNotNull property="filter.startDate">
+					<isNotNull prepend="," property="filter.endDate">
+						#filter.startDate#::timestamptz,
+						#filter.endDate#::timestamptz
+					</isNotNull>
+				</isNotNull>
+			) AS datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
+	<!-- Aggregated query: seasonal day of week -->
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-SeasonalDayOfWeek" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
+		FROM
+			solaragg.find_agg_datum_seasonal_dow(
+				#filter.nodeId#,
+				#filter.sourceIds,jdbcType=ARRAY#,
+				#filter.dataPathElements,jdbcType=ARRAY#
+				<isNotNull property="filter.startDate">
+					<isNotNull prepend="," property="filter.endDate">
+						#filter.startDate#::timestamptz,
+						#filter.endDate#::timestamptz
+					</isNotNull>
+				</isNotNull>
+			) AS datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
 	<!-- Aggregated query: month -->
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-count" resultClass="long">
