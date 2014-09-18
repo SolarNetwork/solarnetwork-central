@@ -52,6 +52,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	private List<MutableSortDescriptor> sorts;
 	private Integer offset = 0;
 	private Integer max;
+	private String dataPath; // bean path expression to a data value, e.g. "i.watts"
 
 	private Long[] nodeIds;
 	private String[] sourceIds;
@@ -300,6 +301,24 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	public void setMostRecent(boolean mostRecent) {
 		this.mostRecent = mostRecent;
+	}
+
+	@Override
+	public String getDataPath() {
+		return dataPath;
+	}
+
+	public void setDataPath(String dataPath) {
+		this.dataPath = dataPath;
+	}
+
+	@Override
+	public String[] getDataPathElements() {
+		String path = this.dataPath;
+		if ( path == null ) {
+			return null;
+		}
+		return path.split("\\.");
 	}
 
 }

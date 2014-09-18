@@ -29,7 +29,7 @@ import org.joda.time.DateTime;
  * Filter API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface GeneralNodeDatumFilter extends Filter {
 
@@ -84,5 +84,25 @@ public interface GeneralNodeDatumFilter extends Filter {
 	 * @return array of source IDs (may be <em>null</em>)
 	 */
 	public String[] getSourceIds();
+
+	/**
+	 * Get a bean object path to a specific data value key to extract and return
+	 * from the results, instead of all data. For example a path like
+	 * {@code i.watts} might return a watt value.
+	 * 
+	 * @return bean object path to extract
+	 * @since 1.1
+	 */
+	public String getDataPath();
+
+	/**
+	 * Get the {@link #getDataPath()} value split into bean path elements. For
+	 * example a path like {@code i.watts} would return an array like
+	 * {@code ["i", "watts"]}.
+	 * 
+	 * @return the data path elements, or <em>null</em>
+	 * @since 1.1
+	 */
+	public String[] getDataPathElements();
 
 }
