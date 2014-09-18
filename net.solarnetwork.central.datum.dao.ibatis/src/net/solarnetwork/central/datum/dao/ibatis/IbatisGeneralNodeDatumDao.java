@@ -181,8 +181,12 @@ public class IbatisGeneralNodeDatumDao extends
 		//postProcessAggregationFilterProperties(filter, sqlProps);
 
 		// attempt count first, if max NOT specified as -1
+		// and NOT a *Minute, *DayOfWeek, or *HourOfDay aggregate level
 		Long totalCount = null;
-		if ( max != null && max.intValue() != -1 ) {
+		final Aggregation agg = filter.getAggregation();
+		if ( max != null && max.intValue() != -1 && agg.compareTo(Aggregation.Hour) >= 0
+				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
+				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay ) {
 			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
 
