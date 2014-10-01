@@ -85,9 +85,10 @@
 			<isNotNull prepend="AND" property="filter.nodeId">
 				ni.node_id = #filter.nodeId#
 			</isNotNull>
-			<isNotNull prepend="AND" property="filter.state">
-				ni.deliver_state = CAST(#filter.state# AS solarnet.instruction_delivery_state)
-			</isNotNull>
+			<isNotEmpty prepend="AND" property="filter.states">
+				ni.deliver_state IN
+				<iterate open="(" close=")" conjunction="," property="filter.states">CAST(#filter.states[]# AS solarnet.instruction_delivery_state)</iterate>					
+			</isNotEmpty>
 		</dynamic>
 		ORDER BY ni.id
 	</select>

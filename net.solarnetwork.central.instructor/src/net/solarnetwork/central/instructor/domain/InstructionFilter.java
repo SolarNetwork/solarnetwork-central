@@ -18,19 +18,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.instructor.domain;
 
+import java.util.List;
 import net.solarnetwork.central.domain.Filter;
 
 /**
  * Filter for Instruction entities.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public interface InstructionFilter extends Filter {
 
@@ -40,12 +39,19 @@ public interface InstructionFilter extends Filter {
 	 * @return the node ID
 	 */
 	Long getNodeId();
-	
+
 	/**
 	 * Filter based on state.
 	 * 
 	 * @return the state
 	 */
 	InstructionState getState();
-	
+
+	/**
+	 * Filter based on a set of states.
+	 * 
+	 * @return the states, treated as a logical <em>or</em> so an instruction
+	 *         matches if its state is contained in this set
+	 */
+	List<InstructionState> getStates();
 }

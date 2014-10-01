@@ -33,21 +33,37 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  * API for central instruction service.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public interface InstructorBiz {
 
 	/**
-	 * Return any active instructions for a specific node.
+	 * Return any active instructions for a specific node. An instruction is
+	 * considered <em>active</em> if it is in the
+	 * {@link InstructionState#Queued} state.
 	 * 
 	 * @param node
-	 *        the node to get instructions for
+	 *        the node to get active instructions for
 	 * @return the instructions
 	 */
 	List<Instruction> getActiveInstructionsForNode(Long nodeId);
 
 	/**
-	 * Queue an instruction for a specific node.
+	 * Return any pending instructions for a specific node. An instruction is
+	 * considered <em>pending</em> if it is in {@link InstructionState#Queued},
+	 * {@link InstructionState#Received}, or {@link InstructionState#Executing}
+	 * states.
+	 * 
+	 * @param node
+	 *        the node to get pending instructions for
+	 * @return the instructions
+	 * @since 1.1
+	 */
+	List<Instruction> getPendingInstructionsForNode(Long nodeId);
+
+	/**
+	 * Queue an instruction for a specific node. The instruction will be put
+	 * into the {@link InstructionState#Queued} state.
 	 * 
 	 * @param nodeId
 	 *        the node ID

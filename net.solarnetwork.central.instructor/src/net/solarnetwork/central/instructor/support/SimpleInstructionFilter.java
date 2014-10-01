@@ -24,9 +24,13 @@
 
 package net.solarnetwork.central.instructor.support;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.util.SerializeIgnore;
@@ -40,8 +44,8 @@ import net.solarnetwork.util.SerializeIgnore;
 public class SimpleInstructionFilter implements InstructionFilter {
 
 	private Long nodeId;
-	private InstructionState state;
-	
+	private List<InstructionState> states;
+
 	@Override
 	@SerializeIgnore
 	public Map<String, ?> getFilter() {
@@ -49,8 +53,11 @@ public class SimpleInstructionFilter implements InstructionFilter {
 		if ( nodeId != null ) {
 			f.put("nodeId", nodeId);
 		}
-		if ( state != null ) {
-			f.put("state", state.toString());
+		if ( states != null && states.isEmpty() == false ) {
+			f.put("state", states.iterator().next().toString());
+			if ( states.size() > 1 ) {
+				f.put("states", states.toArray(new InstructionState[states.size()]));
+			}
 		}
 		return f;
 	}
@@ -62,14 +69,50 @@ public class SimpleInstructionFilter implements InstructionFilter {
 
 	@Override
 	public InstructionState getState() {
-		return state;
+		return (states != null && states.isEmpty() == false ? states.iterator().next() : null);
 	}
 
 	public void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
 	}
+
 	public void setState(InstructionState state) {
-		this.state = state;
+		if ( state == null ) {
+			states = null;
+		} else {
+			states = Arrays.asList(state);
+		}
+	}
+
+	@Override
+	public List<InstructionState> getStates() {
+		return states;
+	}
+
+	/**
+	 * Set the {@code states} property via a Set. This is useful when using an
+	 * {@link EnumSet}.
+	 * 
+	 * @param stateSet
+	 *        the Set to convert to a List of {@link InstructionState} values
+	 *        for the {@code states} property
+	 */
+	public void setStateSet(Set<InstructionState> stateSet) {
+		if ( stateSet == null ) {
+			this.states = null;
+		} else {
+			this.states = new ArrayList<InstructionState>(stateSet);
+		}
+	}
+
+	public void setStates(List<InstructionState> states) {
+		if ( states == null ) {
+			this.states = null;
+		} else {
+			// filter out duplicates
+			Set<InstructionState> set = EnumSet.copyOf(states);
+			this.states = new ArrayList<InstructionState>(set);
+		}
 	}
 
 }
