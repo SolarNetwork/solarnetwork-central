@@ -122,7 +122,7 @@ BEGIN
 	-- If this is the case, we store only 'source' as the source_id, and name the JSON key the value of 'prop'.
 	-- If 'prop' is not defined, we name the JSON key 'val'.
 	src := split_part(datum.source_id, ';', 1);
-	prop := substring(datum.source_id from E'[^;"]*$');
+	prop := split_part(datum.source_id, ';', 2);
 	IF src = '' THEN
 		src := 'HardwareControl';
 	END IF;
