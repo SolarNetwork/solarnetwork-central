@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE sqlMap 
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" 
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd"> 
+<sqlMap namespace="GeneralNodeDatumMetadata">
+
+	<parameterMap class="GeneralNodeDatumMetadata" id="pmap-GeneralNodeDatumMetadata">
+		<parameter property="created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="nodeId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="sourceId" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="metaJson" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+	<procedure id="insert-GeneralNodeDatumMetadata" parameterMap="pmap-GeneralNodeDatumMetadata">
+		{call solardatum.store_meta(?, ?, ?, ?)}
+	</procedure>
+	
+	<procedure id="update-GeneralNodeDatumMetadata" parameterMap="pmap-GeneralNodeDatumMetadata">
+		{call solardatum.store_meta(?, ?, ?, ?)}
+	</procedure>
+	
+	<sql id="fragment-GeneralNodeDatumMetadata-full-result">
+		meta.node_id AS meta_node_id,
+		meta.source_id AS meta_source_id,
+		meta.created AS meta_created,
+		meta.updated AS meta_updated,
+		meta.jdata AS meta_jdata
+	</sql>
+	
+	<resultMap id="GeneralNodeDatumMetadataFullResult" class="GeneralNodeDatumMetadata">
+		<result column="meta_node_id" property="nodeId"/>
+		<result column="meta_source_id" property="sourceId"/>
+		<result column="meta_created" property="created"/>
+		<result column="meta_updated" property="updated"/>
+		<result column="meta_jdata" property="metaJson"/>
+	</resultMap>
+	
+	<select id="get-GeneralNodeDatumMetadata-for-id" resultMap="GeneralNodeDatumMetadataFullResult">
+		SELECT
+			<include refid="fragment-GeneralNodeDatumMetadata-full-result"/>
+		FROM
+			solardatum.da_meta meta
+		WHERE
+			meta.node_id = #nodeId#
+			AND meta.source_id = #sourceId#
+	</select>
+
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="GeneralNodeDatumMetadataMatchResult" class="GeneralNodeDatumMetadataMatch" extends="GeneralNodeDatumMetadata.GeneralNodeDatumMetadataFullResult"/>
+
+	<sql id="fragment-findall-GeneralNodeDatumMetadata-GeneralNodeDatumMetadataMatch-where">
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="filter.nodeIds">
+				meta.node_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.nodeIds">#filter.nodeIds[]#</iterate>					
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="filter.sourceIds">
+				meta.source_id IN
+				<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+
+
+	<select id="findall-GeneralNodeDatumMetadata-GeneralNodeDatumMetadataMatch" resultMap="GeneralNodeDatumMetadataMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatumMetadata-full-result"/>
+		FROM
+			solardatum.da_meta meta
+		<include refid="fragment-findall-GeneralNodeDatumMetadata-GeneralNodeDatumMetadataMatch-where"/>
+		ORDER BY
+		<isNotEmpty property="SortDescriptors">
+			<iterate property="SortDescriptors" conjunction=",">
+				<isEqual property="SortDescriptors[].sortKey" compareValue="created">meta.created</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="updated">meta.updated</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="node">meta.node_id</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="source">meta.source_id</isEqual>
+				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
+			</iterate>
+		</isNotEmpty>
+		<isEmpty property="SortDescriptors">
+			meta.source_id
+		</isEmpty>
+	</select>
+
+	<select id="findall-GeneralNodeDatumMetadata-GeneralNodeDatumMetadataMatch-count" resultClass="long">
+		SELECT count(meta.created)
+		FROM
+			solardatum.da_meta meta
+		<include refid="fragment-findall-GeneralNodeDatumMetadata-GeneralNodeDatumMetadataMatch-where"/>
+	</select>
+
+</sqlMap>

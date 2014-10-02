@@ -81,6 +81,11 @@
 		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
+	<bean id="generalNodeDatumMetadtaDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralNodeDatumMetadataDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+		<property name="messageSource" ref="messageSource"/>
+	</bean>
+	
 	<bean id="hardwareControlDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisHardwareControlDatumDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
 		<property name="messageSource" ref="messageSource"/>
@@ -114,6 +119,7 @@
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/DayDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/Global.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralNodeDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralNodeDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/HardwareControlDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/PowerDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/PriceDatum.xml</value>

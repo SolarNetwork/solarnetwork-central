@@ -5,9 +5,9 @@
 	xmlns:tx="http://www.springframework.org/schema/tx"
 	xmlns:util="http://www.springframework.org/schema/util"
 	xsi:schemaLocation="
-			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
-			http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
-			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+			http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.1.xsd
+			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd">
 
 	<bean id="sqlMapClient" class="net.solarnetwork.central.dao.ibatis.SqlMapClientFactoryBean">
 		<property name="configLocation" 
@@ -21,6 +21,7 @@
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/ConsumptionDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/DayDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralNodeDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralNodeDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/HardwareControlDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/Global.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/PowerDatum.xml</value>
@@ -57,6 +58,10 @@
 	</bean>
 	
 	<bean id="generalNodeDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralNodeDatumDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+	</bean>
+	
+	<bean id="generalNodeDatumMetadataDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralNodeDatumMetadataDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
 	</bean>
 	

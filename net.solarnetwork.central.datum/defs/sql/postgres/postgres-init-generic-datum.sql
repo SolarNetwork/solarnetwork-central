@@ -11,6 +11,15 @@ CREATE TABLE solardatum.da_datum (
   CONSTRAINT da_datum_pkey PRIMARY KEY (node_id, ts, source_id) DEFERRABLE INITIALLY IMMEDIATE
 );
 
+CREATE TABLE solardatum.da_meta (
+  node_id solarcommon.node_id NOT NULL,
+  source_id solarcommon.source_id NOT NULL,
+  created solarcommon.ts NOT NULL,
+  updated solarcommon.ts NOT NULL,
+  jdata json NOT NULL,
+  CONSTRAINT da_meta_pkey PRIMARY KEY (node_id, source_id)
+);
+
 CREATE TABLE solaragg.agg_stale_datum (
   ts_start timestamp with time zone NOT NULL,
   node_id solarcommon.node_id NOT NULL,
@@ -113,6 +122,32 @@ BEGIN
 		WHERE
 			node_id = node
 			AND ts = cdate
+			AND source_id = src;
+	END;
+END;$BODY$
+  LANGUAGE plpgsql VOLATILE;
+
+CREATE OR REPLACE FUNCTION solardatum.store_meta(
+	cdate solarcommon.ts, 
+	node solarcommon.node_id, 
+	src solarcommon.source_id, 
+	jdata text)
+  RETURNS void AS
+$BODY$
+DECLARE
+	udate solarcommon.ts := now();
+	jdata_json json := jdata::json;
+BEGIN
+	BEGIN
+		INSERT INTO solardatum.da_meta(node_id, source_id, created, updated, jdata)
+		VALUES (node, src, cdate, udate, jdata_json);
+	EXCEPTION WHEN unique_violation THEN
+		-- We mostly expect inserts, but we allow updates
+		UPDATE solardatum.da_meta SET 
+			jdata = jdata_json, 
+			updated = udate
+		WHERE
+			node_id = node
 			AND source_id = src;
 	END;
 END;$BODY$

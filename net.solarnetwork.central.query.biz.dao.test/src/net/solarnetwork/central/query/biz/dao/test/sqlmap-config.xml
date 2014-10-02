@@ -30,6 +30,8 @@
 	<typeAlias alias="DayDatumMatch" type="net.solarnetwork.central.datum.domain.DayDatumMatch"/>
 	<typeAlias alias="GeneralNodeDatum" type="net.solarnetwork.central.datum.domain.GeneralNodeDatum"/>
 	<typeAlias alias="GeneralNodeDatumMatch" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch"/>
+	<typeAlias alias="GeneralNodeDatumMetadata" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata"/>
+	<typeAlias alias="GeneralNodeDatumMetadataMatch" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch"/>
 	<typeAlias alias="HardwareControlDatum" type="net.solarnetwork.central.datum.domain.HardwareControlDatum"/>
 	<typeAlias alias="HardwareControlDatumMatch" type="net.solarnetwork.central.datum.domain.HardwareControlDatumMatch"/>
 	<typeAlias alias="PriceDatum" type="net.solarnetwork.central.datum.domain.PriceDatum"/>

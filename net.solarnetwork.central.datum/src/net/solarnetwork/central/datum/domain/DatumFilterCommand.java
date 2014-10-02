@@ -39,10 +39,11 @@ import org.joda.time.DateTime;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
-		AggregateNodeDatumFilter, GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter {
+		AggregateNodeDatumFilter, GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter,
+		GeneralNodeDatumMetadataFilter {
 
 	private final SolarLocation location;
 	private DateTime startDate;
@@ -56,6 +57,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	private Long[] nodeIds;
 	private String[] sourceIds;
+	private String[] tags;
 	private Aggregation aggregation;
 
 	/**
@@ -272,6 +274,20 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	public void setSourceIds(String[] sourceIds) {
 		this.sourceIds = sourceIds;
+	}
+
+	@Override
+	public String getTag() {
+		return this.tags == null || this.tags.length < 1 ? null : this.tags[0];
+	}
+
+	@Override
+	public String[] getTags() {
+		return tags;
+	}
+
+	public void setTags(String[] tags) {
+		this.tags = tags;
 	}
 
 	@Override
