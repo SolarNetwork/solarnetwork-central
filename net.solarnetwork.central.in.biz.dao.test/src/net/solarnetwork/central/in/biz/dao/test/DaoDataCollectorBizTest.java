@@ -24,18 +24,10 @@ package net.solarnetwork.central.in.biz.dao.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.Datum;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
-import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
@@ -43,6 +35,7 @@ import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import net.solarnetwork.domain.GeneralDatumMetadata;
+import org.easymock.EasyMock;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.junit.Before;
@@ -63,12 +56,16 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 	private static final String TEST_SOURCE_ID_2 = "test.source.2";
 
 	@Autowired
-	DaoDataCollectorBiz biz;
+	private DaoDataCollectorBiz biz;
+
+	private DatumMetadataBiz datumMetadataBiz;
 
 	private Datum lastDatum;
 
 	@Before
 	public void setup() {
+		datumMetadataBiz = EasyMock.createMock(DatumMetadataBiz.class);
+		biz.setDatumMetadataBiz(datumMetadataBiz);
 		setupTestNode();
 		setupTestPriceLocation();
 		setAuthenticatedNode(TEST_NODE_ID);
@@ -155,115 +152,14 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("foo", "bar");
 		meta.addTag("bam");
-		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
-	}
 
-	@Test
-	public void addGeneralNodeDatumMetadataNewWithPropertyMeta() {
-		GeneralDatumMetadata meta = new GeneralDatumMetadata();
-		meta.putInfoValue("foo", "bar");
-		meta.putInfoValue("watts", "unit", "W");
-		meta.addTag("bam");
-		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
-	}
+		datumMetadataBiz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
 
-	@Test
-	public void findGeneralNodeDatumMetadataSingle() {
-		addGeneralNodeDatumMetadataNew();
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setSourceId(TEST_SOURCE_ID);
+		EasyMock.replay(datumMetadataBiz);
 
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
-				criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
-		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
-
-		GeneralNodeDatumMetadataFilterMatch match = results.getResults().iterator().next();
-		assertEquals("Primary key", new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
-	}
-
-	@Test
-	public void addGeneralNodeDatumMetadataMerge() {
-		addGeneralNodeDatumMetadataNew();
-		GeneralDatumMetadata meta = new GeneralDatumMetadata();
-		meta.putInfoValue("foo", "bam"); // this should not take
-		meta.putInfoValue("oof", "rab");
-		meta.addTag("mab");
 		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
 
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setSourceId(TEST_SOURCE_ID);
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
-				criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
-		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
-
-		GeneralNodeDatumMetadataFilterMatch match = results.getResults().iterator().next();
-		assertEquals("Primary key", new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
-		assertTrue(match instanceof GeneralNodeDatumMetadata);
-		meta = ((GeneralNodeDatumMetadata) match).getMeta();
-		assertTrue("Has original tag", meta.hasTag("bam"));
-		assertTrue("Has new tag", meta.hasTag("mab"));
-		assertEquals("Original info value", "bar", meta.getInfoString("foo"));
-		assertEquals("New info value", "rab", meta.getInfoString("oof"));
-	}
-
-	@Test
-	public void addGeneralNodeDatumMetadataMergeWithPropertyMeta() {
-		addGeneralNodeDatumMetadataNewWithPropertyMeta();
-		GeneralDatumMetadata meta = new GeneralDatumMetadata();
-		meta.putInfoValue("foo", "bam"); // this should not take
-		meta.putInfoValue("oof", "rab");
-		meta.putInfoValue("watts", "unit", "Wh"); // this should not take
-		meta.putInfoValue("watts", "unitType", "SI");
-		meta.addTag("mab");
-		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
-
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setSourceId(TEST_SOURCE_ID);
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
-				criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
-		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
-
-		GeneralNodeDatumMetadataFilterMatch match = results.getResults().iterator().next();
-		assertEquals("Primary key", new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
-		assertTrue(match instanceof GeneralNodeDatumMetadata);
-		meta = ((GeneralNodeDatumMetadata) match).getMeta();
-		assertTrue("Has original tag", meta.hasTag("bam"));
-		assertTrue("Has new tag", meta.hasTag("mab"));
-		assertEquals("Original info value", "bar", meta.getInfoString("foo"));
-		assertEquals("New info value", "rab", meta.getInfoString("oof"));
-		assertEquals("Original info property value", "W", meta.getInfoString("watts", "unit"));
-		assertEquals("New info property value", "SI", meta.getInfoString("watts", "unitType"));
-	}
-
-	@Test
-	public void findGeneralNodeDatumMetadataMultiple() {
-		addGeneralNodeDatumMetadataNew();
-
-		// add another, for a different source
-		GeneralDatumMetadata meta = new GeneralDatumMetadata();
-		meta.putInfoValue("foo", "bar");
-		meta.addTag("bam");
-		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID_2, meta);
-
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
-				criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals("Returned results", Integer.valueOf(2), results.getReturnedResultCount());
-		assertEquals("Total results", Long.valueOf(2L), results.getTotalResults());
-
-		Set<NodeSourcePK> expectedKeys = new HashSet<NodeSourcePK>(Arrays.asList(new NodeSourcePK(
-				TEST_NODE_ID, TEST_SOURCE_ID), new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID_2)));
-		for ( GeneralNodeDatumMetadataFilterMatch match : results.getResults() ) {
-			assertTrue("Found expected result", expectedKeys.remove(match.getId()));
-		}
-		assertEquals("Expected count", 0, expectedKeys.size());
+		EasyMock.verify(datumMetadataBiz);
 	}
 
 }

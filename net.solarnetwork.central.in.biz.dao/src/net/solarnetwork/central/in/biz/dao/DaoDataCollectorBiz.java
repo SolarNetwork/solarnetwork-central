@@ -33,22 +33,20 @@ import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.WeatherLocationDao;
+import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.dao.DatumDao;
 import net.solarnetwork.central.datum.dao.DayDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao;
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.LocationDatum;
 import net.solarnetwork.central.datum.domain.NodeDatum;
-import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.PowerDatum;
 import net.solarnetwork.central.datum.domain.PriceDatum;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
@@ -66,7 +64,6 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.util.ClassUtils;
-import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -129,7 +126,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private WeatherLocationDao weatherLocationDao = null;
 	private SolarLocationDao solarLocationDao = null;
 	private GeneralNodeDatumDao generalNodeDatumDao = null;
-	private GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao = null;
+	private DatumMetadataBiz datumMetadataBiz = null;
 	private int filteredResultsLimit = 250;
 
 	/** A class-level logger. */
@@ -276,59 +273,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			}
 			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 		}
-
-		NodeSourcePK pk = new NodeSourcePK(nodeId, sourceId);
-		GeneralNodeDatumMetadata gdm = generalNodeDatumMetadataDao.get(pk);
-		if ( gdm == null ) {
-			gdm = new GeneralNodeDatumMetadata();
-			gdm.setCreated(new DateTime());
-			gdm.setId(pk);
-			gdm.setMeta(meta);
-		} else {
-			if ( gdm.getMeta() == null ) {
-				gdm.setMeta(meta);
-			} else if ( gdm.getMeta().equals(meta) == false ) {
-				if ( meta.getTags() != null ) {
-					for ( String tag : meta.getTags() ) {
-						gdm.getMeta().addTag(tag);
-					}
-				}
-				if ( meta.getInfo() != null ) {
-					for ( Map.Entry<String, Object> me : meta.getInfo().entrySet() ) {
-						// do not overwrite keys, only add
-						if ( gdm.getMeta().getInfo() == null
-								|| gdm.getMeta().getInfo().containsKey(me.getKey()) == false ) {
-							gdm.getMeta().putInfoValue(me.getKey(), me.getValue());
-						}
-					}
-				}
-				if ( meta.getPropertyInfo() != null ) {
-					Map<String, Map<String, Object>> gdmPropertyMeta = gdm.getMeta().getPropertyInfo();
-					if ( gdmPropertyMeta == null ) {
-						gdm.getMeta().setPropertyInfo(meta.getPropertyInfo());
-					} else {
-						for ( Map.Entry<String, Map<String, Object>> me : meta.getPropertyInfo()
-								.entrySet() ) {
-							if ( gdmPropertyMeta.get(me.getKey()) == null ) {
-								gdmPropertyMeta.put(me.getKey(), me.getValue());
-							} else {
-								for ( Map.Entry<String, Object> pme : me.getValue().entrySet() ) {
-									if ( gdmPropertyMeta.get(me.getKey()).containsKey(pme.getKey()) ) {
-										continue;
-									}
-									gdm.getMeta()
-											.putInfoValue(me.getKey(), pme.getKey(), pme.getValue());
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		if ( gdm.getMeta() != null && (gdm.getUpdated() == null || gdm.getMeta().equals(meta) == false) ) {
-			// have changes, so persist
-			generalNodeDatumMetadataDao.store(gdm);
-		}
+		datumMetadataBiz.addGeneralNodeDatumMetadata(nodeId, sourceId, meta);
 	}
 
 	private GeneralNodeDatumMetadataFilter metadataCriteriaForcedToAuthenticatedNode(
@@ -354,7 +299,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	public FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
 			final GeneralNodeDatumMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
 			final Integer offset, final Integer max) {
-		return generalNodeDatumMetadataDao.findFiltered(
+		return datumMetadataBiz.findGeneralNodeDatumMetadata(
 				metadataCriteriaForcedToAuthenticatedNode(criteria), sortDescriptors, offset, max);
 	}
 
@@ -573,12 +518,12 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		this.generalNodeDatumDao = generalNodeDatumDao;
 	}
 
-	public GeneralNodeDatumMetadataDao getGeneralNodeDatumMetadataDao() {
-		return generalNodeDatumMetadataDao;
+	public DatumMetadataBiz getDatumMetadataBiz() {
+		return datumMetadataBiz;
 	}
 
-	public void setGeneralNodeDatumMetadataDao(GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao) {
-		this.generalNodeDatumMetadataDao = generalNodeDatumMetadataDao;
+	public void setDatumMetadataBiz(DatumMetadataBiz datumMetadataBiz) {
+		this.datumMetadataBiz = datumMetadataBiz;
 	}
 
 }

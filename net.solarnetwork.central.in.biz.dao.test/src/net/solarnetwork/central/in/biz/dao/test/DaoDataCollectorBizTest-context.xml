@@ -24,7 +24,6 @@
 		<property name="solarNodeDao" ref="solarNodeDao"/>
 		<property name="weatherLocationDao" ref="weatherLocationDao"/>
 		<property name="generalNodeDatumDao" ref="generalNodeDatumDao"/>
-		<property name="generalNodeDatumMetadataDao" ref="generalNodeDatumMetadataDao"/>
 		<property name="daoMapping">
 			<map>
 				<entry key="net.solarnetwork.central.datum.domain.ConsumptionDatum" value-ref="consumptionDatumDao"/>
