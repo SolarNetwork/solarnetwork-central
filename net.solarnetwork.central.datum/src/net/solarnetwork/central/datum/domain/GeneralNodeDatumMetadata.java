@@ -182,6 +182,7 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 			} catch ( Exception e ) {
 				LOG.error("Exception unmarshalling meta JSON {}", metaJson, e);
 			}
+			metaJson = null; // clear this out, because we might mutate meta and invalidate our cached JSON value
 		}
 		return meta;
 	}
@@ -202,6 +203,7 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 				LOG.error("Exception marshalling meta {} to JSON", this, e);
 				metaJson = "{}";
 			}
+			meta = null; // clear this out, because we might otherwise mutate it and invalidate our cached JSON value
 		}
 		return metaJson;
 	}
