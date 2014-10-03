@@ -302,6 +302,27 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 						}
 					}
 				}
+				if ( meta.getPropertyInfo() != null ) {
+					Map<String, Map<String, Object>> gdmPropertyMeta = gdm.getMeta().getPropertyInfo();
+					if ( gdmPropertyMeta == null ) {
+						gdm.getMeta().setPropertyInfo(meta.getPropertyInfo());
+					} else {
+						for ( Map.Entry<String, Map<String, Object>> me : meta.getPropertyInfo()
+								.entrySet() ) {
+							if ( gdmPropertyMeta.get(me.getKey()) == null ) {
+								gdmPropertyMeta.put(me.getKey(), me.getValue());
+							} else {
+								for ( Map.Entry<String, Object> pme : me.getValue().entrySet() ) {
+									if ( gdmPropertyMeta.get(me.getKey()).containsKey(pme.getKey()) ) {
+										continue;
+									}
+									gdm.getMeta()
+											.putInfoValue(me.getKey(), pme.getKey(), pme.getValue());
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 		if ( gdm.getMeta() != null && (gdm.getUpdated() == null || gdm.getMeta().equals(meta) == false) ) {

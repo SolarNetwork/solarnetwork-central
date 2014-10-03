@@ -159,6 +159,15 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 	}
 
 	@Test
+	public void addGeneralNodeDatumMetadataNewWithPropertyMeta() {
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bar");
+		meta.putInfoValue("watts", "unit", "W");
+		meta.addTag("bam");
+		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+	}
+
+	@Test
 	public void findGeneralNodeDatumMetadataSingle() {
 		addGeneralNodeDatumMetadataNew();
 		DatumFilterCommand criteria = new DatumFilterCommand();
@@ -199,6 +208,37 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 		assertTrue("Has new tag", meta.hasTag("mab"));
 		assertEquals("Original info value", "bar", meta.getInfoString("foo"));
 		assertEquals("New info value", "rab", meta.getInfoString("oof"));
+	}
+
+	@Test
+	public void addGeneralNodeDatumMetadataMergeWithPropertyMeta() {
+		addGeneralNodeDatumMetadataNewWithPropertyMeta();
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bam"); // this should not take
+		meta.putInfoValue("oof", "rab");
+		meta.putInfoValue("watts", "unit", "Wh"); // this should not take
+		meta.putInfoValue("watts", "unitType", "SI");
+		meta.addTag("mab");
+		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
+				criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
+		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
+
+		GeneralNodeDatumMetadataFilterMatch match = results.getResults().iterator().next();
+		assertEquals("Primary key", new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
+		assertTrue(match instanceof GeneralNodeDatumMetadata);
+		meta = ((GeneralNodeDatumMetadata) match).getMeta();
+		assertTrue("Has original tag", meta.hasTag("bam"));
+		assertTrue("Has new tag", meta.hasTag("mab"));
+		assertEquals("Original info value", "bar", meta.getInfoString("foo"));
+		assertEquals("New info value", "rab", meta.getInfoString("oof"));
+		assertEquals("Original info property value", "W", meta.getInfoString("watts", "unit"));
+		assertEquals("New info property value", "SI", meta.getInfoString("watts", "unitType"));
 	}
 
 	@Test
