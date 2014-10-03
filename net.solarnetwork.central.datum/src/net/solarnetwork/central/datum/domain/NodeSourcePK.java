@@ -38,6 +38,27 @@ public class NodeSourcePK implements Serializable, Cloneable, Comparable<NodeSou
 	private String sourceId;
 
 	/**
+	 * Default constructor.
+	 */
+	public NodeSourcePK() {
+		super();
+	}
+
+	/**
+	 * Construct with values.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 */
+	public NodeSourcePK(Long nodeId, String sourceId) {
+		super();
+		this.nodeId = nodeId;
+		this.sourceId = sourceId;
+	}
+
+	/**
 	 * Compare two {@code NodeSourcePK} objects. Keys are ordered based on:
 	 * 
 	 * <ol>
