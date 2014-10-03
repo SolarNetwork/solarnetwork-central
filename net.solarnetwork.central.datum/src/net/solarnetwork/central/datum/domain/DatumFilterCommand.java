@@ -240,7 +240,11 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 *        the ID of the node
 	 */
 	public void setSourceId(String sourceId) {
-		this.sourceIds = new String[] { sourceId };
+		if ( sourceId == null ) {
+			this.sourceIds = null;
+		} else {
+			this.sourceIds = new String[] { sourceId };
+		}
 	}
 
 	/**

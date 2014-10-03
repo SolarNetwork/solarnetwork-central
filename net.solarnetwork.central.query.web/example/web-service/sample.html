@@ -125,6 +125,10 @@
 								<option value="/solaruser/api/v1/sec/instr/view?id={instructionId}">View instruction</option>
 								<option value="/solaruser/api/v1/sec/instr/updateState?id={instructionId}&state={instructionState:(Received|Executing|Declined|Completed)}">Update instruction state</option>
 							</optgroup>
+							<optgroup label="Datum Metadata">
+								<option value="/solaruser/api/v1/sec/datum/meta/{nodeId}">View all datum metadata</option>
+								<option value="/solaruser/api/v1/sec/datum/meta/{nodeId}/{sourceId}">View datum metadata for a specific source</option>
+							</optgroup>
 						</select></label>
 						
 					</div>
@@ -149,6 +153,12 @@
 					    <label class="radio inline">
    							<input type="radio" name="method" value="POST"> POST
    						</label>
+					</div>
+				</div>
+				<div class="control-group" style="display: none;">
+					<label class="control-label">Upload</label>
+					<div class="controls">
+						<textarea name="upload" class="span6" rows="3" placeholder="Place upload data here"></textarea>
 					</div>
 				</div>
 				<div class="control-group">

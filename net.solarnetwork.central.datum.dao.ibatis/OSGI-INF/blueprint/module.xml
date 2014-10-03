@@ -32,6 +32,7 @@
 	<service ref="consumptionDatumDao" interface="net.solarnetwork.central.datum.dao.ConsumptionDatumDao" ranking="1"/>
 	<service ref="dayDatumDao" interface="net.solarnetwork.central.datum.dao.DayDatumDao" ranking="1"/>
 	<service ref="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao" ranking="1"/>
+	<service ref="generalNodeDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao" ranking="1"/>
 	<service ref="hardwareControlDatumDao" interface="net.solarnetwork.central.datum.dao.HardwareControlDatumDao" ranking="1"/>
 	<service ref="powerDatumDao" interface="net.solarnetwork.central.datum.dao.PowerDatumDao" ranking="1"/>
 	<service ref="priceDatumDao" interface="net.solarnetwork.central.datum.dao.PriceDatumDao" ranking="1"/>
@@ -81,7 +82,7 @@
 		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
-	<bean id="generalNodeDatumMetadtaDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralNodeDatumMetadataDao">
+	<bean id="generalNodeDatumMetadataDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralNodeDatumMetadataDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
 		<property name="messageSource" ref="messageSource"/>
 	</bean>

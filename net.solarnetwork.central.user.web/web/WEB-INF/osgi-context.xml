@@ -5,7 +5,7 @@
 	xmlns:osgix="http://www.springframework.org/schema/osgi-compendium"
 	xsi:schemaLocation="
 		http://www.springframework.org/schema/beans
-		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 		http://www.springframework.org/schema/osgi
 		http://www.springframework.org/schema/osgi/spring-osgi.xsd
 		http://www.springframework.org/schema/osgi-compendium
@@ -27,6 +27,9 @@
 	
 	<osgi:reference id="instructorBiz" sticky="false"
 		interface="net.solarnetwork.central.instructor.biz.InstructorBiz"/>
+	
+	<osgi:reference id="datumMetadtaBiz" sticky="false"
+		interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz"/>
 	
 	<osgi:reference id="registrationBiz" sticky="false" depends-on="userValidator"
 		interface="net.solarnetwork.central.user.biz.RegistrationBiz"/>
