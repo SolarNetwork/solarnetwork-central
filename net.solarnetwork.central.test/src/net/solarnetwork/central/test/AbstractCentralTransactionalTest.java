@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 import javax.sql.DataSource;
+import net.solarnetwork.central.security.AuthenticatedNode;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -38,6 +39,9 @@ import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.transaction.BeforeTransaction;
@@ -48,7 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Base test class for transactional unit tests.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml" })
 @TransactionConfiguration(transactionManager = "txManager", defaultRollback = true)
@@ -164,6 +168,33 @@ public abstract class AbstractCentralTransactionalTest extends
 		int count = jdbcTemplate.queryForInt("select count(*) from solarnet.sn_node where node_id = ?",
 				nodeId);
 		log.debug("Test SolarNode [" + nodeId + "] created: " + count);
+	}
+
+	/**
+	 * Set the currently authenticated user to an {@link AuthenticatedNode} with
+	 * the given ID.
+	 * 
+	 * @param nodeId
+	 *        the node ID to use
+	 * @return the AuthenticatedNode
+	 * @since 1.2
+	 */
+	protected AuthenticatedNode setAuthenticatedNode(final Long nodeId) {
+		AuthenticatedNode node = new AuthenticatedNode(nodeId, null, false);
+		TestingAuthenticationToken auth = new TestingAuthenticationToken(node, "foobar", "ROLE_NODE");
+		setAuthenticatedUser(auth);
+		return node;
+	}
+
+	/**
+	 * Set the currently authenticated user.
+	 * 
+	 * @param auth
+	 *        the user to set
+	 *        @since 1.2
+	 */
+	protected void setAuthenticatedUser(Authentication auth) {
+		SecurityContextHolder.getContext().setAuthentication(auth);
 	}
 
 	/**

@@ -36,13 +36,19 @@ import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.dao.DatumDao;
 import net.solarnetwork.central.datum.dao.DayDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
+import net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao;
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.LocationDatum;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.PowerDatum;
 import net.solarnetwork.central.datum.domain.PriceDatum;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
@@ -58,7 +64,9 @@ import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.util.ClassUtils;
+import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -96,9 +104,6 @@ import org.springframework.transaction.annotation.Transactional;
  * {@link DayDatum} and {@link WeatherDatum} objects if they are missing that
  * information when passed to {@link #postDatum(Datum)}.</dd>
  * 
- * <dt></dt>
- * 
- * <dd></dd>
  * </dl>
  * 
  * @author matt
@@ -124,6 +129,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private WeatherLocationDao weatherLocationDao = null;
 	private SolarLocationDao solarLocationDao = null;
 	private GeneralNodeDatumDao generalNodeDatumDao = null;
+	private GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao = null;
 	private int filteredResultsLimit = 250;
 
 	/** A class-level logger. */
@@ -243,6 +249,92 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			}
 			generalNodeDatumDao.store(d);
 		}
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void addGeneralNodeDatumMetadata(Long nodeId, final String sourceId,
+			final GeneralDatumMetadata meta) {
+		if ( sourceId == null
+				|| meta == null
+				|| ((meta.getTags() == null || meta.getTags().isEmpty()) && (meta.getInfo() == null || meta
+						.getInfo().isEmpty())) ) {
+			return;
+		}
+
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		if ( nodeId == null ) {
+			nodeId = authNode.getNodeId();
+		} else if ( nodeId.equals(authNode.getNodeId()) == false ) {
+			if ( log.isWarnEnabled() ) {
+				log.warn("Illegal datum metadata post by node " + authNode.getNodeId() + " as node "
+						+ nodeId);
+			}
+			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+		}
+
+		NodeSourcePK pk = new NodeSourcePK(nodeId, sourceId);
+		GeneralNodeDatumMetadata gdm = generalNodeDatumMetadataDao.get(pk);
+		if ( gdm == null ) {
+			gdm = new GeneralNodeDatumMetadata();
+			gdm.setCreated(new DateTime());
+			gdm.setId(pk);
+			gdm.setMeta(meta);
+		} else {
+			if ( gdm.getMeta() == null ) {
+				gdm.setMeta(meta);
+			} else if ( gdm.getMeta().equals(meta) == false ) {
+				if ( meta.getTags() != null ) {
+					for ( String tag : meta.getTags() ) {
+						gdm.getMeta().addTag(tag);
+					}
+				}
+				if ( meta.getInfo() != null ) {
+					for ( Map.Entry<String, Object> me : meta.getInfo().entrySet() ) {
+						// do not overwrite keys, only add
+						if ( gdm.getMeta().getInfo() == null
+								|| gdm.getMeta().getInfo().containsKey(me.getKey()) == false ) {
+							gdm.getMeta().putInfoValue(me.getKey(), me.getValue());
+						}
+					}
+				}
+			}
+		}
+		if ( gdm.getMeta() != null && (gdm.getUpdated() == null || gdm.getMeta().equals(meta) == false) ) {
+			// have changes, so persist
+			generalNodeDatumMetadataDao.store(gdm);
+		}
+	}
+
+	private GeneralNodeDatumMetadataFilter metadataCriteriaForcedToAuthenticatedNode(
+			final GeneralNodeDatumMetadataFilter criteria) {
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		if ( criteria.getNodeId() != null && authNode.getNodeId().equals(criteria.getNodeId()) ) {
+			return criteria;
+		}
+		if ( !(criteria instanceof DatumFilterCommand) ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		DatumFilterCommand dfc = (DatumFilterCommand) criteria;
+		dfc.setNodeId(authNode.getNodeId());
+		return dfc;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
+			final GeneralNodeDatumMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
+			final Integer offset, final Integer max) {
+		return generalNodeDatumMetadataDao.findFiltered(
+				metadataCriteriaForcedToAuthenticatedNode(criteria), sortDescriptors, offset, max);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -458,6 +550,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	public void setGeneralNodeDatumDao(GeneralNodeDatumDao generalNodeDatumDao) {
 		this.generalNodeDatumDao = generalNodeDatumDao;
+	}
+
+	public GeneralNodeDatumMetadataDao getGeneralNodeDatumMetadataDao() {
+		return generalNodeDatumMetadataDao;
+	}
+
+	public void setGeneralNodeDatumMetadataDao(GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao) {
+		this.generalNodeDatumMetadataDao = generalNodeDatumMetadataDao;
 	}
 
 }

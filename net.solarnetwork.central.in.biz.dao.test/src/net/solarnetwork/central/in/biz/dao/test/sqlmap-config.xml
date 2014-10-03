@@ -23,6 +23,7 @@
 	<typeAlias alias="WeatherSource" type="net.solarnetwork.central.domain.WeatherSource"/>
 
 	<typeAlias alias="ConsumptionDatum" type="net.solarnetwork.central.datum.domain.ConsumptionDatum"/>
+	<typeAlias alias="ConsumptionDatumMatch" type="net.solarnetwork.central.datum.domain.ConsumptionDatumMatch"/>
 	<typeAlias alias="DayDatum" type="net.solarnetwork.central.datum.domain.DayDatum"/>
 	<typeAlias alias="DayDatumMatch" type="net.solarnetwork.central.datum.domain.DayDatumMatch"/>
 	<typeAlias alias="GeneralNodeDatum" type="net.solarnetwork.central.datum.domain.GeneralNodeDatum"/>
@@ -30,13 +31,16 @@
 	<typeAlias alias="GeneralNodeDatumMetadata" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata"/>
 	<typeAlias alias="GeneralNodeDatumMetadataMatch" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch"/>
 	<typeAlias alias="HardwareControlDatum" type="net.solarnetwork.central.datum.domain.HardwareControlDatum"/>
+	<typeAlias alias="HardwareControlDatumMatch" type="net.solarnetwork.central.datum.domain.HardwareControlDatumMatch"/>
 	<typeAlias alias="PriceDatum" type="net.solarnetwork.central.datum.domain.PriceDatum"/>
 	<typeAlias alias="PowerDatum" type="net.solarnetwork.central.datum.domain.PowerDatum"/>
+	<typeAlias alias="PowerDatumMatch" type="net.solarnetwork.central.datum.domain.PowerDatumMatch"/>
 	<typeAlias alias="WeatherDatum" type="net.solarnetwork.central.datum.domain.WeatherDatum"/>
 	<typeAlias alias="WeatherDatumMatch" type="net.solarnetwork.central.datum.domain.WeatherDatumMatch"/>
 	
 	<typeAlias alias="ReportingConsumptionDatum" type="net.solarnetwork.central.datum.domain.ReportingConsumptionDatum"/>
 	<typeAlias alias="ReportingDayDatum" type="net.solarnetwork.central.datum.domain.ReportingDayDatum"/>
+	<typeAlias alias="ReportingGeneralNodeDatum" type="net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum"/>
 	<typeAlias alias="ReportingPowerDatum" type="net.solarnetwork.central.datum.domain.ReportingPowerDatum"/>
 	<typeAlias alias="ReportingPriceDatum" type="net.solarnetwork.central.datum.domain.ReportingPriceDatum"/>
 	<typeAlias alias="ReportingWeatherDatum" type="net.solarnetwork.central.datum.domain.ReportingWeatherDatum"/>
