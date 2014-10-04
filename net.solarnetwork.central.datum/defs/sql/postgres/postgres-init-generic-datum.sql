@@ -290,3 +290,18 @@ BEGIN
 END;$BODY$
   LANGUAGE plpgsql STABLE
   ROWS 20;
+
+CREATE OR REPLACE FUNCTION solardatum.populate_updated()
+  RETURNS "trigger" AS
+$BODY$
+BEGIN
+	NEW.updated := now();
+	RETURN NEW;
+END;$BODY$
+  LANGUAGE 'plpgsql' VOLATILE;
+
+CREATE TRIGGER populate_updated
+  BEFORE INSERT OR UPDATE
+  ON solardatum.da_meta
+  FOR EACH ROW
+  EXECUTE PROCEDURE solardatum.populate_updated();
