@@ -20,10 +20,7 @@ BEGIN
 		END IF;
 		jtext := jtext || '"a":{"wattHours":' || datum.watt_hour || '}';
 	END IF;
-	IF length(jtext) > 1 THEN
-		jtext := jtext || ',';
-	END IF;
-	jtext := jtext || '"t":["consumption"]}';
+	jtext := jtext || '}';
 
 	BEGIN
 		INSERT INTO solardatum.da_datum(
@@ -76,10 +73,7 @@ BEGIN
 		END IF;
 		jtext := jtext || '"a":{"wattHours":' || datum.watt_hour || '}';
 	END IF;
-	IF length(jtext) > 1 THEN
-		jtext := jtext || ',';
-	END IF;
-	jtext := jtext || '"t":["power"]}';
+	jtext := jtext || '}';
 
 	BEGIN
 		INSERT INTO solardatum.da_datum(
@@ -143,10 +137,7 @@ BEGIN
 		END IF;
 		jtext := jtext || '}';
 	END IF;
-	IF length(jtext) > 1 THEN
-		jtext := jtext || ',';
-	END IF;
-	jtext := jtext || '"t":["control"]}';
+	jtext := jtext || '}';
 
 	BEGIN
 		INSERT INTO solardatum.da_datum(
