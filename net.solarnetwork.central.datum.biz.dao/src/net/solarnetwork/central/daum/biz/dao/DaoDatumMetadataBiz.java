@@ -64,55 +64,81 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		assert meta != null;
 		NodeSourcePK pk = new NodeSourcePK(nodeId, sourceId);
 		GeneralNodeDatumMetadata gdm = generalNodeDatumMetadataDao.get(pk);
+		GeneralDatumMetadata newMeta = meta;
 		if ( gdm == null ) {
 			gdm = new GeneralNodeDatumMetadata();
 			gdm.setCreated(new DateTime());
 			gdm.setId(pk);
-			gdm.setMeta(meta);
-		} else {
-			if ( gdm.getMeta() == null ) {
-				gdm.setMeta(meta);
-			} else if ( gdm.getMeta().equals(meta) == false ) {
-				if ( meta.getTags() != null ) {
-					for ( String tag : meta.getTags() ) {
-						gdm.getMeta().addTag(tag);
+			newMeta = meta;
+		} else if ( gdm.getMeta() != null && gdm.getMeta().equals(meta) == false ) {
+			newMeta = new GeneralDatumMetadata(gdm.getMeta());
+			if ( meta.getTags() != null ) {
+				for ( String tag : meta.getTags() ) {
+					newMeta.addTag(tag);
+				}
+			}
+			if ( meta.getInfo() != null ) {
+				for ( Map.Entry<String, Object> me : meta.getInfo().entrySet() ) {
+					// do not overwrite keys, only add
+					if ( newMeta.getInfo() == null
+							|| newMeta.getInfo().containsKey(me.getKey()) == false ) {
+						newMeta.putInfoValue(me.getKey(), me.getValue());
 					}
 				}
-				if ( meta.getInfo() != null ) {
-					for ( Map.Entry<String, Object> me : meta.getInfo().entrySet() ) {
-						// do not overwrite keys, only add
-						if ( gdm.getMeta().getInfo() == null
-								|| gdm.getMeta().getInfo().containsKey(me.getKey()) == false ) {
-							gdm.getMeta().putInfoValue(me.getKey(), me.getValue());
-						}
-					}
-				}
-				if ( meta.getPropertyInfo() != null ) {
-					Map<String, Map<String, Object>> gdmPropertyMeta = gdm.getMeta().getPropertyInfo();
-					if ( gdmPropertyMeta == null ) {
-						gdm.getMeta().setPropertyInfo(meta.getPropertyInfo());
-					} else {
-						for ( Map.Entry<String, Map<String, Object>> me : meta.getPropertyInfo()
-								.entrySet() ) {
-							if ( gdmPropertyMeta.get(me.getKey()) == null ) {
-								gdmPropertyMeta.put(me.getKey(), me.getValue());
-							} else {
-								for ( Map.Entry<String, Object> pme : me.getValue().entrySet() ) {
-									if ( gdmPropertyMeta.get(me.getKey()).containsKey(pme.getKey()) ) {
-										continue;
-									}
-									gdm.getMeta()
-											.putInfoValue(me.getKey(), pme.getKey(), pme.getValue());
+			}
+			if ( meta.getPropertyInfo() != null ) {
+				Map<String, Map<String, Object>> gdmPropertyMeta = newMeta.getPropertyInfo();
+				if ( gdmPropertyMeta == null ) {
+					newMeta.setPropertyInfo(meta.getPropertyInfo());
+				} else {
+					for ( Map.Entry<String, Map<String, Object>> me : meta.getPropertyInfo().entrySet() ) {
+						if ( gdmPropertyMeta.get(me.getKey()) == null ) {
+							gdmPropertyMeta.put(me.getKey(), me.getValue());
+						} else {
+							for ( Map.Entry<String, Object> pme : me.getValue().entrySet() ) {
+								if ( gdmPropertyMeta.get(me.getKey()).containsKey(pme.getKey()) ) {
+									continue;
 								}
+								newMeta.putInfoValue(me.getKey(), pme.getKey(), pme.getValue());
 							}
 						}
 					}
 				}
 			}
 		}
-		if ( gdm.getMeta() != null && (gdm.getUpdated() == null || gdm.getMeta().equals(meta) == false) ) {
+		if ( newMeta != null && newMeta.equals(gdm.getMeta()) == false ) {
 			// have changes, so persist
+			gdm.setMeta(newMeta);
 			generalNodeDatumMetadataDao.store(gdm);
+		}
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void storeGeneralNodeDatumMetadata(Long nodeId, String sourceId, GeneralDatumMetadata meta) {
+		assert nodeId != null;
+		assert sourceId != null;
+		assert meta != null;
+		NodeSourcePK pk = new NodeSourcePK(nodeId, sourceId);
+		GeneralNodeDatumMetadata gdm = generalNodeDatumMetadataDao.get(pk);
+		if ( gdm == null ) {
+			gdm = new GeneralNodeDatumMetadata();
+			gdm.setCreated(new DateTime());
+			gdm.setId(pk);
+			gdm.setMeta(meta);
+		} else {
+			gdm.setMeta(meta);
+		}
+		generalNodeDatumMetadataDao.store(gdm);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void removeGeneralNodeDatumMetadata(Long nodeId, String sourceId) {
+		GeneralNodeDatumMetadata meta = generalNodeDatumMetadataDao.get(new NodeSourcePK(nodeId,
+				sourceId));
+		if ( meta != null ) {
+			generalNodeDatumMetadataDao.delete(meta);
 		}
 	}
 

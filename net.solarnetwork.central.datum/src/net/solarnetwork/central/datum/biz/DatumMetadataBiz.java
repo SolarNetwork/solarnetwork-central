@@ -52,6 +52,29 @@ public interface DatumMetadataBiz {
 	void addGeneralNodeDatumMetadata(Long nodeId, String sourceId, GeneralDatumMetadata meta);
 
 	/**
+	 * Store metadata to a specific node and source, replacing any existing
+	 * metadata with the provided metadata.
+	 * 
+	 * @param nodeId
+	 *        the node ID to add to
+	 * @param sourceId
+	 *        the source ID to add to
+	 * @param meta
+	 *        the metadata to store
+	 */
+	void storeGeneralNodeDatumMetadata(Long nodeId, String sourceId, GeneralDatumMetadata meta);
+
+	/**
+	 * Remove all metadata to a specific node and source.
+	 * 
+	 * @param nodeId
+	 *        the node ID to remove from
+	 * @param sourceId
+	 *        the source ID to remove from
+	 */
+	void removeGeneralNodeDatumMetadata(Long nodeId, String sourceId);
+
+	/**
 	 * Search for datum metadata.
 	 * 
 	 * @param criteria

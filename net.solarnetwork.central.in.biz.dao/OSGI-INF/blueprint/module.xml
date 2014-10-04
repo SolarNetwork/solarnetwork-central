@@ -49,6 +49,8 @@
 	
 	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager"/>
 	
+	<reference id="datumMetadataBiz" interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz" />
+	
 	<!-- Published Services -->
 	
 	<service ref="networkIdentityBiz" 
@@ -72,6 +74,7 @@
 		<property name="solarLocationDao" ref="solarLocationDao"/>
 		<property name="solarNodeDao" ref="solarNodeDao"/>
 		<property name="weatherLocationDao" ref="weatherLocationDao"/>
+		<property name="datumMetadataBiz" ref="datumMetadataBiz"/>
 		<property name="daoMapping">
 			<map>
 				<entry key="net.solarnetwork.central.datum.domain.ConsumptionDatum" value-ref="consumptionDatumDao"/>

@@ -19,6 +19,12 @@
 		{call solardatum.store_meta(?, ?, ?, ?)}
 	</procedure>
 	
+	<delete id="delete-GeneralNodeDatumMetadata" parameterClass="NodeSourcePK">
+		DELETE FROM solardatum.da_meta
+		WHERE node_id = #nodeId# 
+			AND source_id = #sourceId#
+	</delete>
+	
 	<sql id="fragment-GeneralNodeDatumMetadata-full-result">
 		meta.node_id AS meta_node_id,
 		meta.source_id AS meta_source_id,

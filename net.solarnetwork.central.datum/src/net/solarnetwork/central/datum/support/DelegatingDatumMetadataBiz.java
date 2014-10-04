@@ -64,4 +64,14 @@ public class DelegatingDatumMetadataBiz implements DatumMetadataBiz {
 		return delegate.findGeneralNodeDatumMetadata(criteria, sortDescriptors, offset, max);
 	}
 
+	@Override
+	public void removeGeneralNodeDatumMetadata(Long nodeId, String sourceId) {
+		delegate.removeGeneralNodeDatumMetadata(nodeId, sourceId);
+	}
+
+	@Override
+	public void storeGeneralNodeDatumMetadata(Long nodeId, String sourceId, GeneralDatumMetadata meta) {
+		delegate.storeGeneralNodeDatumMetadata(nodeId, sourceId, meta);
+	}
+
 }

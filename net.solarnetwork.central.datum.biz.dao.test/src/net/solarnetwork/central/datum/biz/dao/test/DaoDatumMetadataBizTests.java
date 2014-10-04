@@ -180,4 +180,46 @@ public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
 		}
 		assertEquals("Expected count", 0, expectedKeys.size());
 	}
+
+	@Test
+	public void remove() {
+		addGeneralNodeDatumMetadataNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
+				criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
+		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
+
+		GeneralNodeDatumMetadataFilterMatch match = results.getResults().iterator().next();
+		assertEquals("Primary key", new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
+
+		biz.removeGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID);
+
+		// now should be gone
+		results = biz.findGeneralNodeDatumMetadata(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals("Returned results", Integer.valueOf(0), results.getReturnedResultCount());
+		assertEquals("Total results", Long.valueOf(0L), results.getTotalResults());
+	}
+
+	@Test
+	public void removeNonExisting() {
+		addGeneralNodeDatumMetadataNew();
+		biz.removeGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID_2);
+
+		// verify first one still there
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
+				criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
+		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
+
+		GeneralNodeDatumMetadataFilterMatch match = results.getResults().iterator().next();
+		assertEquals("Primary key", new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
+	}
 }

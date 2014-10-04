@@ -53,6 +53,14 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	public void addMetadata(Long nodeId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.store*(..)) && args(nodeId,..)")
+	public void storeMetadata(Long nodeId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.remove*(..)) && args(nodeId,..)")
+	public void removeMetadata(Long nodeId) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.find*(..)) && args(filter,..)")
 	public void findMetadata(GeneralNodeDatumMetadataFilter filter) {
 	}
@@ -63,7 +71,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * @param nodeId
 	 *        the ID of the node to verify
 	 */
-	@Before("addMetadata(nodeId)")
+	@Before("addMetadata(nodeId) || storeMetadata(nodeId) || removeMetadata(nodeId)")
 	public void updateMetadataCheck(Long nodeId) {
 		requireNodeWriteAccess(nodeId);
 	}

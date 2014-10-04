@@ -24,6 +24,8 @@
 	<typeAlias alias="WeatherLocation" type="net.solarnetwork.central.domain.WeatherLocation"/>
 	<typeAlias alias="WeatherSource" type="net.solarnetwork.central.domain.WeatherSource"/>
 
+	<typeAlias alias="NodeSourcePK" type="net.solarnetwork.central.datum.domain.NodeSourcePK"/>
+
 	<typeAlias alias="ConsumptionDatum" type="net.solarnetwork.central.datum.domain.ConsumptionDatum"/>
 	<typeAlias alias="ConsumptionDatumMatch" type="net.solarnetwork.central.datum.domain.ConsumptionDatumMatch"/>
 	<typeAlias alias="DayDatum" type="net.solarnetwork.central.datum.domain.DayDatum"/>

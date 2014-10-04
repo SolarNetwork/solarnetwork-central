@@ -16,6 +16,8 @@
 	<typeAlias alias="SolarLocation" type="net.solarnetwork.central.domain.SolarLocation"/>
 	<typeAlias alias="SolarNode" type="net.solarnetwork.central.domain.SolarNode"/>
 
+	<typeAlias alias="NodeSourcePK" type="net.solarnetwork.central.datum.domain.NodeSourcePK"/>
+
 	<typeAlias alias="GeneralNodeDatum" type="net.solarnetwork.central.datum.domain.GeneralNodeDatum"/>
 	<typeAlias alias="GeneralNodeDatumMatch" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch"/>
 	<typeAlias alias="GeneralNodeDatumMetadata" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata"/>

@@ -69,6 +69,15 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 		binder.setIgnoreInvalidFields(true);
 	}
 
+	/**
+	 * Find all metadata for a node ID.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param criteria
+	 *        any sort or limit criteria
+	 * @return the results
+	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
 	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
@@ -76,6 +85,17 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 		return findMetadata(nodeId, null, criteria);
 	}
 
+	/**
+	 * Get metadata for a single node ID and source ID combination.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param criteria
+	 *        any sort or limit criteria
+	 * @return the results
+	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
 	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
@@ -90,11 +110,60 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 		return response(results);
 	}
 
+	/**
+	 * Add metadata to a source. The metadata is merged only, and will not
+	 * replace existing values.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param meta
+	 *        the metadata to merge
+	 * @return the results
+	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.POST)
 	public Response<Object> addMetadata(@PathVariable("nodeId") Long nodeId,
 			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		datumMetadataBiz.addGeneralNodeDatumMetadata(nodeId, sourceId, meta);
+		return response(null);
+	}
+
+	/**
+	 * Completely replace the metadata for a given source ID, or create it if it
+	 * doesn't already exist.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param meta
+	 *        the metadata to store
+	 * @return the results
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.PUT)
+	public Response<Object> replaceMetadata(@PathVariable("nodeId") Long nodeId,
+			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
+		datumMetadataBiz.storeGeneralNodeDatumMetadata(nodeId, sourceId, meta);
+		return response(null);
+	}
+
+	/**
+	 * Completely remove the metadata for a given source ID.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @return the results
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.DELETE)
+	public Response<Object> deleteMetadata(@PathVariable("nodeId") Long nodeId,
+			@PathVariable("sourceId") String sourceId) {
+		datumMetadataBiz.removeGeneralNodeDatumMetadata(nodeId, sourceId);
 		return response(null);
 	}
 
