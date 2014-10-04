@@ -7,7 +7,8 @@
 	<script src="js-lib/bootstrap.js"></script>
 	<script src="js-lib/prettify.js"></script>
 	<script src="js-lib/hmac-sha1.js"></script>
-	<script src="js-lib/enc-base64.js"></script>
+	<script src="js-lib/enc-base64-min.js"></script>
+	<script src="js-lib/md5-min.js"></script>
 	<script src="sample.js"></script>
 	<link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
 	<link rel="stylesheet" type="text/css" href="css/bootstrap-responsive.css" />
@@ -128,6 +129,9 @@
 							<optgroup label="Datum Metadata">
 								<option value="/solaruser/api/v1/sec/datum/meta/{nodeId}">View all datum metadata</option>
 								<option value="/solaruser/api/v1/sec/datum/meta/{nodeId}/{sourceId}">View datum metadata for a specific source</option>
+								<option value="/solaruser/api/v1/sec/datum/meta/{nodeId}/{sourceId}" data-method="POST">Add metadata for a specific source</option>
+								<option value="/solaruser/api/v1/sec/datum/meta/{nodeId}/{sourceId}" data-method="PUT">Store metadata for a specific source</option>
+								<option value="/solaruser/api/v1/sec/datum/meta/{nodeId}/{sourceId}" data-method="DELETE">Delete metadata for a specific source</option>
 							</optgroup>
 						</select></label>
 						
@@ -153,12 +157,18 @@
 					    <label class="radio inline">
    							<input type="radio" name="method" value="POST"> POST
    						</label>
+					    <label class="radio inline">
+   							<input type="radio" name="method" value="PUT"> PUT
+   						</label>
+					    <label class="radio inline">
+   							<input type="radio" name="method" value="DELETE"> DELETE
+   						</label>
 					</div>
 				</div>
-				<div class="control-group" style="display: none;">
+				<div class="control-group" style="display: none;" id="upload">
 					<label class="control-label">Upload</label>
 					<div class="controls">
-						<textarea name="upload" class="span6" rows="3" placeholder="Place upload data here"></textarea>
+						<textarea name="upload" class="span6" rows="3" placeholder="Place upload JSON here if needed"></textarea>
 					</div>
 				</div>
 				<div class="control-group">
