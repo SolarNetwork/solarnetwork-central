@@ -1,5 +1,10 @@
 var SNAPI = {};
 
+SNAPI.shouldIncludeContentMD5 = function(contentType) {
+	// we don't send Content-MD5 for form data, because server treats this as URL parameters
+	return (contentType !== null && contentType.indexOf('application/x-www-form-urlencoded') < 0);
+};
+
 /**
  * Generate the raw authorization message value.
  * 
@@ -17,7 +22,7 @@ var SNAPI = {};
 SNAPI.generateAuthorizationMessage = function(params) {
 	var msg = 
 		(params.method === undefined ? 'GET' : params.method.toUpperCase()) + '\n'
-		+(params.data === undefined ? '' : CryptoJS.MD5(params.data)) + '\n'
+		+(params.data !== undefined && SNAPI.shouldIncludeContentMD5(params.contentType) ? CryptoJS.MD5(params.data) : '') + '\n'
 		+(params.contentType === undefined ? '' : params.contentType) + '\n'
 		+params.date +'\n'
 		+params.path;
@@ -188,7 +193,7 @@ SNAPI.request  = function(url, dataType, method, data, contentType) {
 			var date = new Date().toUTCString();		
 			
 			// construct our canonicalized path value from our URL
-			var path = SNAPI.authURLPath(url, data);
+			var path = SNAPI.authURLPath(url, (cType !== undefined && cType.indexOf('application/x-www-form-urlencoded') === 0 ? data : undefined));
 			
 			// generate the authorization hash value now (cryptographically signing our request)
 			var auth = SNAPI.generateAuthorizationHeaderValue({
@@ -204,7 +209,7 @@ SNAPI.request  = function(url, dataType, method, data, contentType) {
 			// set the headers on our request
 			xhr.setRequestHeader('X-SN-Date', date);
 			xhr.setRequestHeader('Authorization', 'SolarNetworkWS ' +auth);
-			if ( data !== undefined ) {
+			if ( data !== undefined && SNAPI.shouldIncludeContentMD5(cType) ) {
 				xhr.setRequestHeader('Content-MD5', CryptoJS.MD5(data));
 			}
 		}
@@ -241,9 +246,9 @@ $(document).ready(function() {
 	
 	var showAuthSupport = function(params) {
 		var url = params.host +params.path;
-		var path = SNAPI.authURLPath(url, params.data);
 		var cType = (params.method === 'POST' && params.contentType === undefined 
 				? 'application/x-www-form-urlencoded; charset=UTF-8' : params.contentType);
+		var path = SNAPI.authURLPath(url, (cType !== undefined && cType.indexOf('application/x-www-form-urlencoded') === 0 ? params.data : undefined));
 		var submitParams = {
 			method: params.method,
 			date: params.date,

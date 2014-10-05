@@ -49,4 +49,7 @@
 	<osgi:reference id="queryBiz" sticky="false"
 		interface="net.solarnetwork.central.query.biz.QueryBiz" />
 
+	<osgi:reference id="datumMetadtaBiz" sticky="false"
+		interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz"/>
+	
 </beans>
