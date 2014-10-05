@@ -28,9 +28,6 @@
 	<osgi:reference id="instructorBiz" sticky="false"
 		interface="net.solarnetwork.central.instructor.biz.InstructorBiz"/>
 	
-	<osgi:reference id="datumMetadtaBiz" sticky="false"
-		interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz"/>
-	
 	<osgi:reference id="registrationBiz" sticky="false" depends-on="userValidator"
 		interface="net.solarnetwork.central.user.biz.RegistrationBiz"/>
 	

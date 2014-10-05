@@ -23,7 +23,6 @@ Import-Package:
  net.sf.packtag.servlet;version="3.7",
  net.sf.packtag.tag;version="3.7",
  net.solarnetwork.central.dao;version="[1.7.1,2.0.0)",
- net.solarnetwork.central.datum.biz;version="1.0.0",
  net.solarnetwork.central.datum.domain;version="1.13.0",
  net.solarnetwork.central.domain;version="[1.0.0,2.0.0)",
  net.solarnetwork.central.instructor.biz;version="[1.0.0,2.0.0)",
