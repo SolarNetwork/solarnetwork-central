@@ -75,8 +75,10 @@ public abstract class AuthorizationSupport {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, nodeId);
 		}
 
-		final SecurityActor actor = SecurityUtils.getCurrentActor();
-		if ( actor == null ) {
+		final SecurityActor actor;
+		try {
+			actor = SecurityUtils.getCurrentActor();
+		} catch ( SecurityException e ) {
 			log.warn("Access DENIED to node {} for non-authenticated user", nodeId);
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
 		}
