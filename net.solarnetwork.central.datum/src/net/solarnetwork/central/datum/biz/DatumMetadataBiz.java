@@ -40,7 +40,7 @@ public interface DatumMetadataBiz {
 	/**
 	 * Add metadata to a specific node and source. If metadata already exists
 	 * for the given node and source, the values will be merged such that tags
-	 * are only added and only new info values will be added.
+	 * are added and info values are added or updated.
 	 * 
 	 * @param nodeId
 	 *        the node ID to add to
