@@ -23,7 +23,6 @@
 package net.solarnetwork.central.daum.biz.dao;
 
 import java.util.List;
-import java.util.Map;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
@@ -72,39 +71,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 			newMeta = meta;
 		} else if ( gdm.getMeta() != null && gdm.getMeta().equals(meta) == false ) {
 			newMeta = new GeneralDatumMetadata(gdm.getMeta());
-			if ( meta.getTags() != null ) {
-				for ( String tag : meta.getTags() ) {
-					newMeta.addTag(tag);
-				}
-			}
-			if ( meta.getInfo() != null ) {
-				for ( Map.Entry<String, Object> me : meta.getInfo().entrySet() ) {
-					// do not overwrite keys, only add
-					if ( newMeta.getInfo() == null
-							|| newMeta.getInfo().containsKey(me.getKey()) == false ) {
-						newMeta.putInfoValue(me.getKey(), me.getValue());
-					}
-				}
-			}
-			if ( meta.getPropertyInfo() != null ) {
-				Map<String, Map<String, Object>> gdmPropertyMeta = newMeta.getPropertyInfo();
-				if ( gdmPropertyMeta == null ) {
-					newMeta.setPropertyInfo(meta.getPropertyInfo());
-				} else {
-					for ( Map.Entry<String, Map<String, Object>> me : meta.getPropertyInfo().entrySet() ) {
-						if ( gdmPropertyMeta.get(me.getKey()) == null ) {
-							gdmPropertyMeta.put(me.getKey(), me.getValue());
-						} else {
-							for ( Map.Entry<String, Object> pme : me.getValue().entrySet() ) {
-								if ( gdmPropertyMeta.get(me.getKey()).containsKey(pme.getKey()) ) {
-									continue;
-								}
-								newMeta.putInfoValue(me.getKey(), pme.getKey(), pme.getValue());
-							}
-						}
-					}
-				}
-			}
+			newMeta.merge(meta, true);
 		}
 		if ( newMeta != null && newMeta.equals(gdm.getMeta()) == false ) {
 			// have changes, so persist

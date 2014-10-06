@@ -102,7 +102,7 @@ public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
 	public void addGeneralNodeDatumMetadataMerge() {
 		addGeneralNodeDatumMetadataNew();
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
-		meta.putInfoValue("foo", "bam"); // this should not take
+		meta.putInfoValue("foo", "bam"); // this should replace
 		meta.putInfoValue("oof", "rab");
 		meta.addTag("mab");
 		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
@@ -121,7 +121,7 @@ public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
 		meta = ((GeneralNodeDatumMetadata) match).getMeta();
 		assertTrue("Has original tag", meta.hasTag("bam"));
 		assertTrue("Has new tag", meta.hasTag("mab"));
-		assertEquals("Original info value", "bar", meta.getInfoString("foo"));
+		assertEquals("Replaced info value", "bam", meta.getInfoString("foo"));
 		assertEquals("New info value", "rab", meta.getInfoString("oof"));
 	}
 
@@ -129,9 +129,9 @@ public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
 	public void addGeneralNodeDatumMetadataMergeWithPropertyMeta() {
 		addGeneralNodeDatumMetadataNewWithPropertyMeta();
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
-		meta.putInfoValue("foo", "bam"); // this should not take
+		meta.putInfoValue("foo", "bam"); // this should replace
 		meta.putInfoValue("oof", "rab");
-		meta.putInfoValue("watts", "unit", "Wh"); // this should not take
+		meta.putInfoValue("watts", "unit", "Wh"); // this should replace
 		meta.putInfoValue("watts", "unitType", "SI");
 		meta.addTag("mab");
 		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
@@ -150,9 +150,9 @@ public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
 		meta = ((GeneralNodeDatumMetadata) match).getMeta();
 		assertTrue("Has original tag", meta.hasTag("bam"));
 		assertTrue("Has new tag", meta.hasTag("mab"));
-		assertEquals("Original info value", "bar", meta.getInfoString("foo"));
+		assertEquals("Replaced info value", "bam", meta.getInfoString("foo"));
 		assertEquals("New info value", "rab", meta.getInfoString("oof"));
-		assertEquals("Original info property value", "W", meta.getInfoString("watts", "unit"));
+		assertEquals("Replaced info property value", "Wh", meta.getInfoString("watts", "unit"));
 		assertEquals("New info property value", "SI", meta.getInfoString("watts", "unitType"));
 	}
 

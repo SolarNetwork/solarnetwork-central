@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
@@ -73,12 +74,29 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
 	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
 			@PathVariable("nodeId") Long nodeId, DatumFilterCommand criteria) {
+		return findMetadata(nodeId, null, criteria);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
+	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
+			@PathVariable("nodeId") Long nodeId, @PathVariable("sourceId") String sourceId,
+			DatumFilterCommand criteria) {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
+		filter.setSourceId(sourceId);
 		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = dataCollectorBiz
 				.findGeneralNodeDatumMetadata(filter, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());
 		return response(results);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = { "sourceId" })
+	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadataAlt(
+			@PathVariable("nodeId") Long nodeId, @RequestParam("sourceId") String sourceId,
+			DatumFilterCommand criteria) {
+		return findMetadata(nodeId, sourceId, criteria);
 	}
 
 	@ResponseBody
@@ -87,6 +105,13 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		dataCollectorBiz.addGeneralNodeDatumMetadata(nodeId, sourceId, meta);
 		return response(null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = { "", "/" }, method = RequestMethod.POST, params = { "sourceId" })
+	public Response<Object> addMetadataAlt(@PathVariable("nodeId") Long nodeId,
+			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
+		return addMetadata(nodeId, sourceId, meta);
 	}
 
 }
