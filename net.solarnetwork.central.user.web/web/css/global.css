@@ -40,3 +40,11 @@ label {
 		margin-left: 110px;
 	}
 }
+
+.after {
+	display: none;
+}
+
+.monospace {
+	font-family: Monaco,Menlo,Consolas,"Courier New",monospace;
+}
