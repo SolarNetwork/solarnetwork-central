@@ -30,10 +30,10 @@ package net.solarnetwork.central.user.domain;
  */
 public enum UserAuthTokenStatus {
 
-	/** The certificate is active and valid. */
+	/** The token is active and valid. */
 	Active,
 
-	/** The certificate is disabled and should not be used. */
+	/** The token is disabled and should not be used. */
 	Disabled;
 
 }
