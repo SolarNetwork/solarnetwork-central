@@ -75,7 +75,7 @@ public final class UserBizConstants {
 	 */
 	public static String generateRandomAuthToken() {
 		UUID uuid = UUID.randomUUID();
-		ByteArrayOutputStream byos = new ByteArrayOutputStream(16);
+		ByteArrayOutputStream byos = new ByteArrayOutputStream(20);
 		DataOutputStream dos = new DataOutputStream(byos);
 		try {
 			dos.writeLong(uuid.getMostSignificantBits());
