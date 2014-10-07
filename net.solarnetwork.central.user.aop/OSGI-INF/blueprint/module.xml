@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+		http://www.osgi.org/xmlns/blueprint/v1.0.0
+		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-3.1.xsd">
+
+	<!-- Service References -->
+
+	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
+
+	<reference id="userBiz"
+		interface="net.solarnetwork.central.user.biz.UserBiz"
+		filter="(!(aop=true))"/>
+	
+	<!-- Published Services -->
+
+	<!--service ref="aopUserBiz" 
+			interface="net.solarnetwork.central.user.biz.UserBiz" ranking="10">
+		<service-properties>
+			<entry key="aop" value="true"/>
+		</service-properties>
+	</service-->
+
+	<!-- Supporting Services -->
+
+	<aop:aspectj-autoproxy/>
+
+	<bean id="userSecurityAspect" class="net.solarnetwork.central.user.aop.UserSecurityAspect">
+		<argument ref="userNodeDao"/>
+	</bean>
+	
+	<bean id="aopUserBiz" class="net.solarnetwork.central.user.support.DelegatingUserBiz">
+		<argument ref="userBiz"/>
+	</bean>
+
+</blueprint>
