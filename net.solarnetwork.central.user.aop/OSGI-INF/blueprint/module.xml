@@ -11,6 +11,7 @@
 	<!-- Service References -->
 
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
+	<reference id="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao"/>
 
 	<reference id="userBiz"
 		interface="net.solarnetwork.central.user.biz.UserBiz"
@@ -18,12 +19,12 @@
 	
 	<!-- Published Services -->
 
-	<!--service ref="aopUserBiz" 
+	<service ref="aopUserBiz" 
 			interface="net.solarnetwork.central.user.biz.UserBiz" ranking="10">
 		<service-properties>
 			<entry key="aop" value="true"/>
 		</service-properties>
-	</service-->
+	</service>
 
 	<!-- Supporting Services -->
 
@@ -31,6 +32,7 @@
 
 	<bean id="userSecurityAspect" class="net.solarnetwork.central.user.aop.UserSecurityAspect">
 		<argument ref="userNodeDao"/>
+		<argument ref="userAuthTokenDao"/>
 	</bean>
 	
 	<bean id="aopUserBiz" class="net.solarnetwork.central.user.support.DelegatingUserBiz">
