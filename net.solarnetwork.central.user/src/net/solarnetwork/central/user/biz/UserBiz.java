@@ -49,7 +49,7 @@ public interface UserBiz {
 	 *        the ID of the User to get
 	 * @return the User, or <em>null</em> if not found
 	 */
-	User getUser(Long id);
+	User getUser(Long id) throws AuthorizationException;
 
 	/**
 	 * Get a list of nodes belonging to a specific user.
@@ -58,7 +58,7 @@ public interface UserBiz {
 	 *        the ID of the user to get the nodes for
 	 * @return list of UserNode objects, or an empty list if none found
 	 */
-	List<UserNode> getUserNodes(Long userId);
+	List<UserNode> getUserNodes(Long userId) throws AuthorizationException;
 
 	/**
 	 * Get a specific node belonging to a specific user.
