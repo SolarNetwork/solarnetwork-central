@@ -23,8 +23,6 @@
 package net.solarnetwork.central.user.biz.dao;
 
 import static net.solarnetwork.central.user.biz.dao.UserBizConstants.generateRandomAuthToken;
-import static net.solarnetwork.central.user.biz.dao.UserBizConstants.getUnconfirmedEmail;
-import static net.solarnetwork.central.user.biz.dao.UserBizConstants.isUnconfirmedEmail;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.List;
@@ -83,57 +81,9 @@ public class DaoUserBiz implements UserBiz {
 	private PasswordEncoder passwordEncoder;
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
-	public User logonUser(String email, String password) throws AuthorizationException {
-		if ( email == null ) {
-			throw new AuthorizationException(email, AuthorizationException.Reason.UNKNOWN_EMAIL);
-		}
-
-		if ( log.isInfoEnabled() ) {
-			log.info("Login attempt: " + email);
-		}
-
-		// do not allow logon attempt of unconfirmed email
-		if ( isUnconfirmedEmail(email) ) {
-			throw new AuthorizationException(email, AuthorizationException.Reason.UNKNOWN_EMAIL);
-		}
-
-		User entity = userDao.getUserByEmail(email);
-		if ( entity == null ) {
-			// first check if user waiting confirmation still
-			String unconfirmedEmail = getUnconfirmedEmail(email);
-			entity = userDao.getUserByEmail(unconfirmedEmail);
-			if ( entity != null ) {
-				throw new AuthorizationException(email,
-						AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED);
-			}
-			throw new AuthorizationException(email, AuthorizationException.Reason.UNKNOWN_EMAIL);
-		}
-
-		if ( !passwordEncoder.matches(password, entity.getPassword()) ) {
-			throw new AuthorizationException(email, AuthorizationException.Reason.BAD_PASSWORD);
-		}
-
-		if ( log.isInfoEnabled() ) {
-			log.info("Login successful: " + email);
-		}
-
-		// populate roles
-		entity.setRoles(userDao.getUserRoles(entity));
-
-		return entity;
-	}
-
-	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public User getUser(Long id) {
 		return userDao.get(id);
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public User getUser(String email) {
-		return userDao.getUserByEmail(email);
 	}
 
 	@Override
@@ -151,6 +101,9 @@ public class DaoUserBiz implements UserBiz {
 		if ( result == null ) {
 			throw new AuthorizationException(nodeId.toString(), Reason.UNKNOWN_OBJECT);
 		}
+		if ( result.getUser().getId().equals(userId) == false ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+		}
 		return result;
 	}
 
@@ -167,6 +120,9 @@ public class DaoUserBiz implements UserBiz {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, null);
 		}
 		UserNode entity = userNodeDao.get(entry.getNode().getId());
+		if ( entity == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, entry.getNode().getId());
+		}
 		if ( entry.getName() != null ) {
 			entity.setName(entry.getName());
 		}
@@ -199,7 +155,8 @@ public class DaoUserBiz implements UserBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public UserAuthToken generateUserAuthToken(Long userId, UserAuthTokenType type, Set<Long> nodeIds) {
+	public UserAuthToken generateUserAuthToken(final Long userId, final UserAuthTokenType type,
+			final Set<Long> nodeIds) {
 		assert userId != null;
 		assert type != null;
 		SecureRandom rnd;
@@ -219,6 +176,15 @@ public class DaoUserBiz implements UserBiz {
 			if ( userAuthTokenDao.get(tok) == null ) {
 				UserAuthToken authToken = new UserAuthToken(tok, userId, secretString, type);
 				if ( nodeIds != null ) {
+					for ( Long nodeId : nodeIds ) {
+						UserNode userNode = userNodeDao.get(nodeId);
+						if ( userNode == null ) {
+							throw new AuthorizationException(Reason.UNKNOWN_OBJECT, nodeId);
+						}
+						if ( userNode.getUser().getId().equals(userId) == false ) {
+							throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+						}
+					}
 					authToken.setNodeIds(nodeIds);
 				}
 				userAuthTokenDao.store(authToken);

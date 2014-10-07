@@ -92,7 +92,7 @@ public interface RegistrationBiz {
 	 * <p>
 	 * After a user has registered (see {@link #registerUser(User)}) they must
 	 * confirm the registration via this method. After confirmation the user can
-	 * login via {@link UserBiz#logonUser(String, String)} as a normal user.
+	 * login as a normal user.
 	 * </p>
 	 * 
 	 * @param receipt

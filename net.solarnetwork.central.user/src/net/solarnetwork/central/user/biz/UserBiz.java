@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.user.biz;
@@ -40,22 +38,9 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * API for registered user tasks.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.1
  */
 public interface UserBiz {
-
-	/**
-	 * Authenticate a user by their email and password.
-	 * 
-	 * @param email
-	 *        the email of the user to log on
-	 * @param password
-	 *        the attempted password
-	 * @return the User if found and password matches
-	 * @throws AuthorizationException
-	 *         if user not found or password does not match
-	 */
-	User logonUser(String email, String password) throws AuthorizationException;
 
 	/**
 	 * Get a User object by its ID.
@@ -65,15 +50,6 @@ public interface UserBiz {
 	 * @return the User, or <em>null</em> if not found
 	 */
 	User getUser(Long id);
-
-	/**
-	 * Get a User object by its email.
-	 * 
-	 * @param email
-	 *        the email of the User to get
-	 * @return the User, or <em>null</em> if not found
-	 */
-	User getUser(String email);
 
 	/**
 	 * Get a list of nodes belonging to a specific user.

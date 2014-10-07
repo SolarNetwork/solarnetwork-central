@@ -35,7 +35,6 @@ import java.util.Set;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.PasswordEncoder;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
-import net.solarnetwork.central.user.biz.dao.UserBizConstants;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
@@ -50,13 +49,12 @@ import org.junit.Test;
  * Test cases for the {@link DaoUserBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserBizTest {
 
 	private static final Long TEST_USER_ID = -1L;
 	private static final String TEST_EMAIL = "test@localhost";
-	private static final String TEST_PASSWORD = "changeit";
 	private static final String TEST_ENC_PASSWORD = "encrypted.password";
 	private static final String TEST_NAME = "Test User";
 	private static final String TEST_ROLE = "ROLE_TEST";
@@ -92,142 +90,6 @@ public class DaoUserBizTest {
 		userBiz.setUserDao(userDao);
 		userBiz.setUserAuthTokenDao(userAuthTokenDao);
 		userBiz.setPasswordEncoder(passwordEncoder);
-	}
-
-	/**
-	 * Test able to logon a user successfully.
-	 */
-	@Test
-	public void logonUser() {
-		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
-		expect(userDao.getUserRoles(testUser)).andReturn(testUserRoles);
-		expect(passwordEncoder.matches(TEST_PASSWORD, TEST_ENC_PASSWORD)).andReturn(Boolean.TRUE);
-		replay(userDao, passwordEncoder);
-
-		final User user = userBiz.logonUser(TEST_EMAIL, TEST_PASSWORD);
-
-		verify(userDao, passwordEncoder);
-
-		assertNotNull(user);
-		assertNotNull(user.getId());
-		assertEquals(TEST_EMAIL, user.getEmail());
-		assertEquals(TEST_NAME, user.getName());
-	}
-
-	/**
-	 * Test attempting to logon an unconfirmed user fails.
-	 */
-	@Test
-	public void attemptLogonUnconfirmedUser() {
-		// make user's email "unconfirmed"
-		testUser.setEmail(UserBizConstants.getUnconfirmedEmail(TEST_EMAIL));
-
-		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(null);
-		expect(userDao.getUserByEmail(testUser.getEmail())).andReturn(testUser);
-		replay(userDao, passwordEncoder);
-
-		try {
-			userBiz.logonUser(TEST_EMAIL, TEST_PASSWORD);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED, e.getReason());
-			assertEquals(TEST_EMAIL, e.getEmail());
-		}
-
-		verify(userDao, passwordEncoder);
-	}
-
-	/**
-	 * Test attempting to logon a non-existing email fails.
-	 */
-	@Test
-	public void attemptLogonNonExistingEmail() {
-		final String badEmail = "does@not.exist";
-		expect(userDao.getUserByEmail(badEmail)).andReturn(null);
-		expect(userDao.getUserByEmail(UserBizConstants.getUnconfirmedEmail(badEmail))).andReturn(null);
-		replay(userDao);
-
-		try {
-			userBiz.logonUser(badEmail, TEST_PASSWORD);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.UNKNOWN_EMAIL, e.getReason());
-			assertEquals(badEmail, e.getEmail());
-		}
-	}
-
-	/**
-	 * Test attempting to logon a null email fails.
-	 */
-	@Test
-	public void attemptLogonNullEmail() {
-		replay(userDao);
-
-		try {
-			userBiz.logonUser(null, TEST_PASSWORD);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.UNKNOWN_EMAIL, e.getReason());
-			assertEquals(null, e.getEmail());
-		}
-		verify(userDao);
-	}
-
-	/**
-	 * Test attempting to logon a bad password fails.
-	 */
-	@Test
-	public void attemptLogonBadPassword() {
-		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
-		replay(userDao);
-
-		try {
-			userBiz.logonUser(TEST_EMAIL, "bad password");
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.BAD_PASSWORD, e.getReason());
-			assertEquals(TEST_EMAIL, e.getEmail());
-		}
-
-		verify(userDao);
-	}
-
-	/**
-	 * Test attempting to logon an empty password fails.
-	 */
-	@Test
-	public void attemptLogonEmptyPassword() {
-		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
-		replay(userDao);
-
-		try {
-			userBiz.logonUser(TEST_EMAIL, "");
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.BAD_PASSWORD, e.getReason());
-			assertEquals(TEST_EMAIL, e.getEmail());
-		}
-
-		verify(userDao);
-	}
-
-	/**
-	 * Test attempting to logon an empty password fails.
-	 */
-	@Test
-	public void attemptLogonNullPassword() {
-		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
-		replay(userDao);
-
-		try {
-			userBiz.logonUser(TEST_EMAIL, null);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.BAD_PASSWORD, e.getReason());
-			assertEquals(TEST_EMAIL, e.getEmail());
-		}
-
-		verify(userDao);
 	}
 
 	private void replayProperties() {
