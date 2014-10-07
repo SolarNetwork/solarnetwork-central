@@ -119,7 +119,7 @@
  			<label class="span2">
  				<fmt:message key='auth-tokens.label.token'/>
  			</label>
- 			<div class="span3 container-token"></div>
+ 			<div class="span3 container-token monospace"></div>
  		</div>
  	</div>
  	<div class="modal-footer">
@@ -229,7 +229,7 @@
 	 			</thead>
 	 			<tbody>
 	 				<tr>
-	 					<td class="result-token"></td>
+	 					<td class="monospace result-token"></td>
 	 					<td class="result-secret alert-error" style="background-color: transparent;"></td>
 	 				</tr>
 	 			</tbody>
@@ -259,7 +259,7 @@
  			<label class="span2">
  				<fmt:message key='auth-tokens.label.token'/>
  			</label>
- 			<div class="span3 container-token"></div>
+ 			<div class="span3 container-token monospace"></div>
  		</div>
  	</div>
  	<div class="modal-footer">
