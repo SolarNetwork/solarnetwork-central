@@ -129,6 +129,7 @@ public class DaoUserBiz implements UserBiz {
 		if ( entry.getDescription() != null ) {
 			entity.setDescription(entry.getDescription());
 		}
+		entity.setRequiresAuthorization(entry.isRequiresAuthorization());
 		userNodeDao.store(entity);
 		return entity;
 	}
