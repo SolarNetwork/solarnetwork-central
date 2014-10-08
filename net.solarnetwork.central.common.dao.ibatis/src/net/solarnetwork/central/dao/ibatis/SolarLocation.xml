@@ -119,24 +119,8 @@
 		FROM
 			solarnet.sn_loc l
 		<dynamic prepend="WHERE">
-		<!--  TODO: use FTS to allow partial matches -->
-			<isNotNull prepend="AND" property="filter.name">
-				l.loc_name = #filter.name#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.country">
-				l.country = #filter.country#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.region">
-				l.region = #filter.region#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.stateOrProvince">
-				l.state_prov = #filter.stateOrProvince#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.locality">
-				l.locality = #filter.locality#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.postalCode">
-				l.postal_code = #filter.postalCode#
+			<isNotNull property="fts" prepend="AND">
+			l.fts_default @@ solarcommon.plainto_prefix_tsquery(#fts#)
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.timeZoneId">
 				l.time_zone = #filter.timeZoneId#
@@ -148,7 +132,9 @@
 		SELECT
 			<include refid="fragment-SolarLocation-public-result"/>
 		<include refid="fragment-findall-SolarLocation-LocationMatch"/>
-		ORDER BY lower(l.loc_name), l.id
+		ORDER BY
+			lower(l.loc_name),
+			l.id
 	</select>
 
 	<select id="findall-SolarLocation-LocationMatch-count" resultClass="long">

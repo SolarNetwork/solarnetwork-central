@@ -27,7 +27,6 @@ package net.solarnetwork.central.dao.ibatis;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SourceLocation;
@@ -40,13 +39,16 @@ import net.solarnetwork.central.domain.WeatherLocation;
  * @author matt
  * @version $Revision$
  */
-public class IbatisWeatherLocationDao 
-extends IbatisFilterableDaoSupport<WeatherLocation, SourceLocationMatch, SourceLocation>
-implements WeatherLocationDao {
+public class IbatisWeatherLocationDao extends
+		IbatisFilterableDaoSupport<WeatherLocation, SourceLocationMatch, SourceLocation> implements
+		WeatherLocationDao {
 
-	/** The query name used for {@link #getWeatherLocationForName(String,Location)}. */
+	/**
+	 * The query name used for
+	 * {@link #getWeatherLocationForName(String,Location)}.
+	 */
 	public static final String QUERY_FOR_NAME = "get-WeatherLocation-for-name";
-	
+
 	/**
 	 * Default constructor.
 	 */
@@ -55,19 +57,34 @@ implements WeatherLocationDao {
 	}
 
 	@Override
-	public WeatherLocation getWeatherLocationForName(String sourceName,
-			Location locationFilter) {
+	public WeatherLocation getWeatherLocationForName(String sourceName, Location locationFilter) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("sourceName", sourceName);
 		params.put("filter", locationFilter);
-		
+
 		@SuppressWarnings("unchecked")
-		List<WeatherLocation> results = getSqlMapClientTemplate().queryForList(
-				QUERY_FOR_NAME, params, 0, 1);
+		List<WeatherLocation> results = getSqlMapClientTemplate().queryForList(QUERY_FOR_NAME, params,
+				0, 1);
 		if ( results == null || results.size() == 0 ) {
 			return null;
 		}
 		return results.get(0);
 	}
 
+	@Override
+	protected void postProcessFilterProperties(SourceLocation filter, Map<String, Object> sqlProps) {
+		if ( filter.getLocation() != null ) {
+			Location loc = filter.getLocation();
+			StringBuilder fts = new StringBuilder();
+			spaceAppend(loc.getName(), fts);
+			spaceAppend(loc.getCountry(), fts);
+			spaceAppend(loc.getRegion(), fts);
+			spaceAppend(loc.getStateOrProvince(), fts);
+			spaceAppend(loc.getLocality(), fts);
+			spaceAppend(loc.getPostalCode(), fts);
+			if ( fts.length() > 0 ) {
+				sqlProps.put("fts", fts.toString());
+			}
+		}
+	}
 }

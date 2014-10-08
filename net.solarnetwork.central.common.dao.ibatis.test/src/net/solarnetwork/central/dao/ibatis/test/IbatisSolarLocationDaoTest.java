@@ -25,9 +25,13 @@ package net.solarnetwork.central.dao.ibatis.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import java.util.Arrays;
+import java.util.List;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.ibatis.IbatisSolarLocationDao;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import org.joda.time.DateTime;
@@ -147,6 +151,68 @@ public class IbatisSolarLocationDaoTest extends AbstractIbatisDaoTestSupport {
 				loc.getTimeZoneId());
 		assertNotNull(loc);
 		validate(loc, found);
+	}
+
+	@Test
+	public void findFilteredNoMatch() {
+		SolarLocation filter = new SolarLocation();
+		filter.setName("does-not-exist");
+		FilterResults<LocationMatch> results = solarLocationDao.findFiltered(filter, null, null, null);
+		assertNotNull(results);
+		assertEquals(Integer.valueOf(0), results.getReturnedResultCount());
+		assertEquals(Long.valueOf(0L), results.getTotalResults());
+	}
+
+	@Test
+	public void findFilteredMatch() {
+		SolarLocation filter = new SolarLocation();
+		filter.setName(TEST_LOC_NAME);
+		FilterResults<LocationMatch> results = solarLocationDao.findFiltered(filter, null, null, null);
+		assertNotNull(results);
+		assertEquals(Integer.valueOf(1), results.getReturnedResultCount());
+		assertEquals(Long.valueOf(1L), results.getTotalResults());
+		assertNotNull(results.getResults());
+		LocationMatch match = results.getResults().iterator().next();
+		assertNotNull(match);
+		assertEquals(TEST_LOC_NAME, match.getName());
+		assertEquals(TEST_LOC_ID, match.getId());
+	}
+
+	@Test
+	public void findFilteredMultipleOrder() {
+		SolarLocation loc2 = new SolarLocation();
+		loc2.setCreated(new DateTime());
+		loc2.setName("Test Location Two");
+		loc2.setCountry(TEST_LOC_COUNTRY);
+		loc2.setPostalCode(TEST_LOC_POSTAL_CODE);
+		loc2.setTimeZoneId(TEST_TZ);
+		Long id2 = solarLocationDao.store(loc2);
+
+		SolarLocation loc3 = new SolarLocation();
+		loc3.setCreated(new DateTime());
+		loc3.setName("Test Location Three");
+		loc3.setCountry(TEST_LOC_COUNTRY);
+		loc3.setPostalCode(TEST_LOC_POSTAL_CODE);
+		loc3.setTimeZoneId(TEST_TZ);
+		Long id3 = solarLocationDao.store(loc3);
+
+		SolarLocation filter = new SolarLocation();
+		filter.setName(TEST_LOC_NAME);
+		filter.setRegion(loc3.getRegion());
+		filter.setPostalCode(TEST_LOC_POSTAL_CODE);
+		filter.setTimeZoneId(TEST_TZ);
+		FilterResults<LocationMatch> results = solarLocationDao.findFiltered(filter, null, null, null);
+		assertNotNull(results);
+		assertEquals(Integer.valueOf(3), results.getReturnedResultCount());
+		assertEquals(Long.valueOf(3L), results.getTotalResults());
+		assertNotNull(results.getResults());
+
+		List<Long> expectedIds = Arrays.asList(TEST_LOC_ID, id3, id2);
+		int idx = 0;
+		for ( LocationMatch match : results.getResults() ) {
+			assertEquals("Results should be ordered by name", expectedIds.get(idx), match.getId());
+			idx++;
+		}
 	}
 
 }

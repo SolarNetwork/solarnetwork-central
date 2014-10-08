@@ -34,7 +34,7 @@ import net.solarnetwork.central.domain.SolarLocation;
  * Ibatis implementation of {@link SolarLocationDao}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class IbatisSolarLocationDao extends
 		IbatisFilterableDaoSupport<SolarLocation, LocationMatch, Location> implements SolarLocationDao {
@@ -78,6 +78,20 @@ public class IbatisSolarLocationDao extends
 			return results.get(0);
 		}
 		return null;
+	}
+
+	@Override
+	protected void postProcessFilterProperties(Location filter, Map<String, Object> sqlProps) {
+		StringBuilder fts = new StringBuilder();
+		spaceAppend(filter.getName(), fts);
+		spaceAppend(filter.getCountry(), fts);
+		spaceAppend(filter.getRegion(), fts);
+		spaceAppend(filter.getStateOrProvince(), fts);
+		spaceAppend(filter.getLocality(), fts);
+		spaceAppend(filter.getPostalCode(), fts);
+		if ( fts.length() > 0 ) {
+			sqlProps.put("fts", fts.toString());
+		}
 	}
 
 }

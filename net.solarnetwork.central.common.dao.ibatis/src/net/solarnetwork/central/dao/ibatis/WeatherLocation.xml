@@ -109,28 +109,16 @@
 				wloc.id = #filter.id#
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.source">
-				wsource.sname = #filter.source#
+				wsource.fts_default @@ solarcommon.plainto_prefix_tsquery(#filter.source#)
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.timeZoneId">
 				l.time_zone = #filter.timeZoneId#
 			</isNotNull>
-			<isNotNull prepend="AND" property="filter.location.name">
-				l.loc_name = #filter.location.name#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.location.country">
-				l.country = #filter.location.country#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.location.region">
-				l.region = #filter.location.region#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.location.stateOrProvince">
-				l.state_prov = #filter.location.stateOrProvince#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.location.postalCode">
-				l.postal_code = #filter.location.postalCode#
-			</isNotNull>
 			<isNotNull prepend="AND" property="filter.location.timeZoneId">
 				l.time_zone = #filter.location.timeZoneId#
+			</isNotNull>
+			<isNotNull prepend="AND" property="fts">
+				l.fts_default @@ solarcommon.plainto_prefix_tsquery(#fts#)
 			</isNotNull>
 		</dynamic>
 	</sql>

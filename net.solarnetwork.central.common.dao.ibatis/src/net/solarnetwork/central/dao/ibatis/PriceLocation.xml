@@ -80,20 +80,17 @@
 		INNER JOIN 
 			solarnet.sn_price_source psource ON psource.id = ploc.source_id
 		<dynamic prepend="WHERE">
+			<isNotNull prepend="AND" property="filter.source">
+				psource.fts_default @@ solarcommon.plainto_prefix_tsquery(#filter.source#)
+			</isNotNull>
 			<isNotNull prepend="AND" property="filter.id">
 				ploc.id = #filter.id#
 			</isNotNull>
-			<isNotNull prepend="AND" property="filter.currency">
-				ploc.currency = #filter.currency#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.source">
-				psource.sname = #filter.source#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.location.name">
-				ploc.loc_name = #filter.location.name#
-			</isNotNull>
 			<isNotNull prepend="AND" property="filter.location.timeZoneId">
 				ploc.time_zone = #filter.timeZoneId#
+			</isNotNull>
+			<isNotNull prepend="AND" property="fts">
+				ploc.fts_default @@ solarcommon.plainto_prefix_tsquery(#fts#)
 			</isNotNull>
 		</dynamic>
 	</sql>

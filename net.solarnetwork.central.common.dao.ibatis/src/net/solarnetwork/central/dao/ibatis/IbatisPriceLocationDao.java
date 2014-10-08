@@ -25,6 +25,7 @@ package net.solarnetwork.central.dao.ibatis;
 import java.util.HashMap;
 import java.util.Map;
 import net.solarnetwork.central.dao.PriceLocationDao;
+import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
@@ -60,9 +61,27 @@ public class IbatisPriceLocationDao extends
 
 	@Override
 	protected void postProcessFilterProperties(SourceLocation filter, Map<String, Object> sqlProps) {
-		if ( !(filter instanceof PriceLocationFilter) ) {
+		PriceLocationFilter pFilter;
+		if ( filter instanceof PriceLocationFilter ) {
+			pFilter = (PriceLocationFilter) filter;
+		} else {
 			// mapping expects a PriceLocationFilter, so replace the input with one of those
-			sqlProps.put(FILTER_PROPERTY, new PriceLocationFilter(filter));
+			pFilter = new PriceLocationFilter(filter);
+			sqlProps.put(FILTER_PROPERTY, pFilter);
+		}
+		StringBuilder fts = new StringBuilder();
+		spaceAppend(pFilter.getCurrency(), fts);
+		if ( filter.getLocation() != null ) {
+			Location loc = filter.getLocation();
+			spaceAppend(loc.getName(), fts);
+			spaceAppend(loc.getCountry(), fts);
+			spaceAppend(loc.getRegion(), fts);
+			spaceAppend(loc.getStateOrProvince(), fts);
+			spaceAppend(loc.getLocality(), fts);
+			spaceAppend(loc.getPostalCode(), fts);
+		}
+		if ( fts.length() > 0 ) {
+			sqlProps.put("fts", fts.toString());
 		}
 	}
 
