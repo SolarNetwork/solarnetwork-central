@@ -41,6 +41,8 @@ import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.Location;
+import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
@@ -53,7 +55,7 @@ import org.joda.time.LocalDate;
  * API for querying business logic.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface QueryBiz {
 
@@ -256,7 +258,7 @@ public interface QueryBiz {
 			Integer max);
 
 	/**
-	 * API for querying for a filtered set of locations from all possible
+	 * API for querying for a filtered set of source locations from all possible
 	 * results.
 	 * 
 	 * @param filter
@@ -275,4 +277,23 @@ public interface QueryBiz {
 	FilterResults<SourceLocationMatch> findFilteredLocations(SourceLocation filter,
 			Class<? extends Entity<?>> locationClass, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
+
+	/**
+	 * API for querying for a filtered set of locations from all possible
+	 * results.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * 
+	 * @return the results, never <em>null</em>
+	 * @since 1.4
+	 */
+	FilterResults<LocationMatch> findFilteredLocations(Location filter,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
 }

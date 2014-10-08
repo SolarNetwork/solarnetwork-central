@@ -33,6 +33,7 @@ import java.util.TimeZone;
 import net.solarnetwork.central.dao.AggregationFilterableDao;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.PriceLocationDao;
+import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
@@ -62,6 +63,8 @@ import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.Location;
+import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -88,7 +91,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -98,6 +101,7 @@ public class DaoQueryBiz implements QueryBiz {
 	private WeatherDatumDao weatherDatumDao;
 	private DayDatumDao dayDatumDao;
 	private GeneralNodeDatumDao generalNodeDatumDao;
+	private SolarLocationDao solarLocationDao;
 	private int filteredResultsLimit = 1000;
 	private long maxDaysForMinuteAggregation = 7;
 	private long maxDaysForHourAggregation = 31;
@@ -407,6 +411,16 @@ public class DaoQueryBiz implements QueryBiz {
 				limitFilterMaximum(max));
 	}
 
+	@Override
+	public FilterResults<LocationMatch> findFilteredLocations(Location filter,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		if ( filter == null || filter.getFilter() == null || filter.getFilter().isEmpty() ) {
+			throw new IllegalArgumentException("Filter is required.");
+		}
+		return solarLocationDao.findFiltered(filter, sortDescriptors, limitFilterOffset(offset),
+				limitFilterMaximum(max));
+	}
+
 	private Integer limitFilterMaximum(Integer requestedMaximum) {
 		if ( requestedMaximum == null || requestedMaximum.intValue() > filteredResultsLimit
 				|| requestedMaximum.intValue() < 1 ) {
@@ -513,6 +527,15 @@ public class DaoQueryBiz implements QueryBiz {
 
 	public void setMaxDaysForHourOfDayAggregation(long maxDaysForHourOfDayAggregation) {
 		this.maxDaysForHourOfDayAggregation = maxDaysForHourOfDayAggregation;
+	}
+
+	public SolarLocationDao getSolarLocationDao() {
+		return solarLocationDao;
+	}
+
+	@Autowired
+	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
+		this.solarLocationDao = solarLocationDao;
 	}
 
 }

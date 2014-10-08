@@ -35,6 +35,7 @@
 	
 	<!-- Service References -->
 	
+	<reference id="solarLocationDao" interface="net.solarnetwork.central.dao.SolarLocationDao"/>
 	<reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
 	
 	<reference id="priceLocationDao" interface="net.solarnetwork.central.dao.PriceLocationDao"/>

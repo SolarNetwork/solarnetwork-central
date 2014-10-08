@@ -36,6 +36,8 @@ import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.Location;
+import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
@@ -49,7 +51,7 @@ import org.joda.time.LocalDate;
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DelegatingQueryBiz implements QueryBiz {
 
@@ -136,6 +138,12 @@ public class DelegatingQueryBiz implements QueryBiz {
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
 		return delegate.findFilteredAggregateGeneralNodeDatum(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public FilterResults<LocationMatch> findFilteredLocations(Location filter,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		return delegate.findFilteredLocations(filter, sortDescriptors, offset, max);
 	}
 
 }

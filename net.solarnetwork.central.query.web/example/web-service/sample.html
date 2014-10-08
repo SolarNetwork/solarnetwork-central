@@ -75,6 +75,11 @@
 								<option value="/solarquery/api/v1/sec/range/interval?nodeId={nodeId}&types=Consumption,Power">Interval</option>
 								<option value="/solarquery/api/v1/sec/range/sources?nodeId={nodeId}&type=Consumption">Sources</option>
 							</optgroup>
+							<optgroup label="Locations">
+								<option value="/solarquery/api/v1/sec/location?location.name={name}&location.country={country}&location.postalCode={postalCode}&location.timeZoneId={timeZoneId}">Location search</option>
+								<option value="/solarquery/api/v1/sec/location/price?currency={currency}&location.country={country}">Price location search</option>
+								<option value="/solarquery/api/v1/sec/location/weather?location.country={country}&location.postalCode={postalCode}">Weather location search</option>
+							</optgroup>
 							<optgroup label="Weather">
 								<option value="/solarquery/api/v1/sec/weather/recent?nodeId={nodeId}">Most recent weather</option>
 								<option value="/solarquery/api/v1/sec/datum/list?locationId={locationId}&startDate=2010-01-01T12%3A00&endDate=2010-02-01T12%3A00&type=Weather&sorts%5B0%5D.sortKey=created&offset=0&max=50">Weather, sorted by date</option>
