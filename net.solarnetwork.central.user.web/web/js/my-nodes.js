@@ -15,6 +15,7 @@ $(document).ready(function() {
 		dataType: 'json',
 		success: function(json, status, xhr, form) {
 			form.modal('hide');
+			document.location.reload(true);
 		},
 		error: function(xhr, status, statusText) {
 			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-error', statusText);

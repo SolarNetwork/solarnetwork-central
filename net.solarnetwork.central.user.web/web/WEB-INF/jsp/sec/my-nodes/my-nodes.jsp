@@ -13,7 +13,8 @@
 					<th><fmt:message key="user.node.created.label"/></th>
 					<th><fmt:message key="user.node.name.label"/></th>
 					<th><fmt:message key="user.node.description.label"/></th>
-					<th><fmt:message key="user.node.certificate.label"/></th>
+					<th><fmt:message key="user.node.private.label"/></th>
+					<%--th><fmt:message key="user.node.certificate.label"/></th--%>
 					<th></th>
 				</tr>
 			</thead>
@@ -30,6 +31,11 @@
 						<td>${userNode.name}</td>
 						<td>${userNode.description}</td>
 						<td>
+							<span class="label${userNode.requiresAuthorization ? '' : ' label-success'}">
+								<fmt:message key="user.node.private.${userNode.requiresAuthorization}"/>
+							</span>
+						</td>
+						<%--td>
 							<c:if test="${not empty userNode.certificate}">
 								<span class="label${userNode.certificate.status.value eq 'Active' 
 									? ' label-success' : userNode.certificate.status.value eq 'Disabled' 
@@ -42,7 +48,7 @@
 									</a>
 								</c:if>
 							</c:if>
-						</td>
+						</td--%>
 						<td>
 							<a data-toggle="modal" class="btn btn-small" 
 								href="<c:url value='/u/sec/my-nodes/editNode'/>?userId=${userNode.user.id}&nodeId=${userNode.node.id}"
