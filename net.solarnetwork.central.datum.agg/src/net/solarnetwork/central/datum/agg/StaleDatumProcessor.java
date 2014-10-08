@@ -78,6 +78,7 @@ public class StaleDatumProcessor extends JobSupport {
 		super(eventAdmin);
 		this.jdbcOps = jdbcOps;
 		setJobGroup("Datum");
+		setMaximumWaitMs(1800000L);
 	}
 
 	@Override
