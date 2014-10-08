@@ -24,6 +24,8 @@ package net.solarnetwork.central.scheduler;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 
@@ -37,7 +39,7 @@ import org.osgi.service.event.EventAdmin;
  * <dl class="class-properties">
  * <dt>maximumWaitMs</dt>
  * <dd>The maximum time, in milliseconds, to allow for the job to execute before
- * it is considered a failed job. Defaults to <b>10 minutes</b>.</dd>
+ * it is considered a failed job. Defaults to <b>15 minutes</b>.</dd>
  * 
  * <dt>jobId</dt>
  * <dd>The unique ID of the job to schedule.</dd>
@@ -54,16 +56,17 @@ import org.osgi.service.event.EventAdmin;
  * </dl>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class JobSupport extends EventHandlerSupport {
 
 	private final EventAdmin eventAdmin;
-	private long maximumWaitMs = 10L * 60L * 1000L;
+	private long maximumWaitMs = 15L * 60L * 1000L;
 	private String jobId;
 	private String jobTopic;
 	private String jobGroup;
 	public String jobCron = "0 0/1 * * * ?";
+	private ExecutorService executorService = Executors.newCachedThreadPool();
 
 	/**
 	 * Constructor.
@@ -76,7 +79,7 @@ public abstract class JobSupport extends EventHandlerSupport {
 	}
 
 	@Override
-	protected final void handleEventInternal(Event event) throws Exception {
+	protected final void handleEventInternal(final Event event) throws Exception {
 		if ( event.getTopic().equals(SchedulerConstants.TOPIC_SCHEDULER_READY) ) {
 			schedulerReady(event);
 			return;
@@ -85,21 +88,29 @@ public abstract class JobSupport extends EventHandlerSupport {
 			// same topic, wrong job
 			return;
 		}
-		Event ack = null;
-		try {
-			if ( handleJob(event) ) {
-				ack = SchedulerUtils.createJobCompleteEvent(event);
-			} else {
-				ack = SchedulerUtils.createJobFailureEvent(event, null);
+
+		// kick off to another thread, so we don't block the event handler thread (and possibly get blacklisted)
+		executorService.submit(new Runnable() {
+
+			@Override
+			public void run() {
+				Event ack = null;
+				try {
+					if ( handleJob(event) ) {
+						ack = SchedulerUtils.createJobCompleteEvent(event);
+					} else {
+						ack = SchedulerUtils.createJobFailureEvent(event, null);
+					}
+				} catch ( Exception e ) {
+					log.warn("Exception in job {}", event.getTopic(), e);
+					ack = SchedulerUtils.createJobFailureEvent(event, e);
+				} finally {
+					if ( ack != null ) {
+						eventAdmin.postEvent(ack);
+					}
+				}
 			}
-		} catch ( Exception e ) {
-			log.warn("Exception in job {}", event.getTopic(), e);
-			ack = SchedulerUtils.createJobFailureEvent(event, e);
-		} finally {
-			if ( ack != null ) {
-				eventAdmin.postEvent(ack);
-			}
-		}
+		});
 	}
 
 	/**
@@ -185,4 +196,13 @@ public abstract class JobSupport extends EventHandlerSupport {
 	public void setJobGroup(String jobGroup) {
 		this.jobGroup = jobGroup;
 	}
+
+	public ExecutorService getExecutorService() {
+		return executorService;
+	}
+
+	public void setExecutorService(ExecutorService executorService) {
+		this.executorService = executorService;
+	}
+
 }
