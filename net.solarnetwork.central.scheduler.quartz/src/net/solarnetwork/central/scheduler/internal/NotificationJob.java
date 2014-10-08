@@ -50,7 +50,7 @@ public class NotificationJob implements Job {
 	public static final String EVENT_ADMIN_CONTEXT_KEY = "EventAdmin";
 
 	/** The default amount of time to wait for a job to complete or fail. */
-	public static final long DEFAULT_MAX_JOB_WAIT = 120000;
+	public static final long DEFAULT_MAX_JOB_WAIT = 900000;
 
 	private boolean complete = false;
 	private boolean success = true;
@@ -84,7 +84,7 @@ public class NotificationJob implements Job {
 				// within maxWait milliseconds
 				eventAdmin.postEvent(event);
 				while ( !complete ) {
-					this.wait(maxWait); // TODO: make this configurable
+					this.wait(maxWait);
 					if ( !complete && (System.currentTimeMillis() - start) > maxWait ) {
 						throw new JobExecutionException("Timeout waiting for job to complete ("
 								+ maxWait + "ms)");
