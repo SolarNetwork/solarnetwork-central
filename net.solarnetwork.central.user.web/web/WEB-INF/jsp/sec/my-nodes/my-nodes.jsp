@@ -50,9 +50,9 @@
 							</c:if>
 						</td--%>
 						<td>
-							<a data-toggle="modal" class="btn btn-small" 
-								href="<c:url value='/u/sec/my-nodes/editNode'/>?userId=${userNode.user.id}&nodeId=${userNode.node.id}"
-								data-target="#edit-node-modal"><fmt:message key='my-nodes.action.edit'/></a>
+							<button type="button" class="btn btn-small edit-node" data-target="#edit-node-modal"
+								data-user-id="${userNode.user.id}" data-node-id="${userNode.node.id}"
+								><fmt:message key='my-nodes.action.edit'/></button>
 						</td>
 					</tr>
 				</c:forEach>
@@ -113,18 +113,61 @@
 	 		</a>
 	 	</div>
 	</div>
-	<form id="edit-node-modal" class="modal dynamic hide fade" action="<c:url value='/u/sec/my-nodes/updateNode'/>" method="post">
+	<form id="edit-node-modal" class="modal hide fade" action="<c:url value='/u/sec/my-nodes/updateNode'/>" method="post">
 	 	<div class="modal-header">
 	 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 	 		<h3><fmt:message key='my-nodes.edit-node.title'/></h3>
 	 	</div>
-	 	<div class="modal-body form-horizontal">
+	 	<div class="modal-body">
+			<div class="hbox">
+				<fieldset class="form-horizontal">
+					<div class="control-group">
+						<label class="control-label" for="usernode-id"><fmt:message key="user.node.id.label"/></label>
+						<div class="controls">
+							<span class="uneditable-input span2" id="usernode-id"></span>
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="usernode-name"><fmt:message key="user.node.name.label"/></label>
+						<div class="controls">
+							<input name="name" type="text" maxlength="128" class="span3" id="usernode-name"/>
+							<span class="help-block"><fmt:message key="user.node.name.caption"/></span>
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="usernode-description"><fmt:message key="user.node.description.label"/></label>
+						<div class="controls">
+							<input name="description" type="text" maxlength="512" class="span3" id="usernode-description"/>
+							<span class="help-block"><fmt:message key="user.node.description.caption"/></span>
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="usernode-private"><fmt:message key="user.node.private.label"/></label>
+						<div class="controls">
+							<input name="requiresAuthorization" type="checkbox" value="true" id="usernode-private"/>
+							<span class="help-block"><fmt:message key="user.node.private.caption"/></span>
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="usernode-location"><fmt:message key="user.node.location.label"/></label>
+						<div class="controls">
+							<span id="usernode-location"></span>
+							<button type="button" class="btn change-location"><fmt:message key='change.label'/></button>
+						</div>
+					</div>
+				</fieldset>
+				<fieldset class="edit-location-tz">
+				</fieldset>
+			</div>
 	 	</div>
 	 	<div class="modal-footer">
 	 		<a href="#" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></a>
 	 		<button type="submit" class="btn btn-primary"><fmt:message key='save.label'/></button>
 	 	</div>
-	 </form>
+		<input type="hidden" name="node.id"/>
+		<input type="hidden" name="user.id"/>
+		<input type="hidden" name="node.locationId"/>
+	</form>
 </section>
 <c:if test="${fn:length(pendingUserNodeConfirmationsList) > 0}">
 	<section id="pending">

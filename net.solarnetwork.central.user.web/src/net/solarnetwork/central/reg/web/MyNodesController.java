@@ -24,6 +24,7 @@
 
 package net.solarnetwork.central.reg.web;
 
+import static net.solarnetwork.web.domain.Response.response;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -36,6 +37,7 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.domain.NetworkAssociation;
+import net.solarnetwork.web.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -187,6 +189,13 @@ public class MyNodesController extends ControllerSupport {
 			Model model) {
 		model.addAttribute("userNode", userBiz.getUserNode(userId, nodeId));
 		return "my-nodes/edit-node";
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/node", method = RequestMethod.GET)
+	public Response<UserNode> getUserNode(@RequestParam("userId") Long userId,
+			@RequestParam("nodeId") Long nodeId) {
+		return response(userBiz.getUserNode(userId, nodeId));
 	}
 
 	@ResponseBody
