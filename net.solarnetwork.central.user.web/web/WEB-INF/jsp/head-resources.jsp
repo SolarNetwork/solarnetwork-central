@@ -3,6 +3,7 @@
 	/css/bootstrap.css
 	/css/bootstrap-responsive.css
 	/css/global.css
+	/css/edit-node.css
 </pack:style>
 <pack:script> 
 	/js-lib/jquery-2.1.1.js

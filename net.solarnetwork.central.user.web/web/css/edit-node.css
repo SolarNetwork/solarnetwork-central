@@ -1,0 +1,30 @@
+#edit-node-modal .modal-body .hbox {
+	width: 1200px;
+	-webkit-transition: transform 0.5s ease-in-out;
+	-moz-transition: transform 0.5s ease-in-out;
+	-ms-transition: transform 0.5s ease-in-out;
+	-o-transition: transform 0.5s ease-in-out;
+	transition: transform 0.5s ease-in-out;
+}
+
+#edit-node-modal .modal-body .hbox > * {
+	margin-right: 30px;
+	width: 570px;
+}
+
+#edit-node-modal.page2 .modal-body .hbox {
+    -webkit-transform:  translate(-600px,0px);
+	-moz-transform:  translate(-600px,0px);
+    -ms-transform:  translate(-600px,0px);
+    -o-transform:  translate(-600px,0px);
+    transform:  translate(-600px,0px);
+}
+
+#edit-node-modal.page1 .page2:not(.page1) {
+	display: none;
+}
+
+
+#edit-node-modal.page2 .page1:not(.page2) {
+	display: none;
+}

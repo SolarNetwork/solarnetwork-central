@@ -113,7 +113,7 @@
 	 		</a>
 	 	</div>
 	</div>
-	<form id="edit-node-modal" class="modal hide fade" action="<c:url value='/u/sec/my-nodes/updateNode'/>" method="post">
+	<form id="edit-node-modal" class="modal hide fade page1" action="<c:url value='/u/sec/my-nodes/updateNode'/>" method="post">
 	 	<div class="modal-header">
 	 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 	 		<h3><fmt:message key='my-nodes.edit-node.title'/></h3>
@@ -156,13 +156,31 @@
 						</div>
 					</div>
 				</fieldset>
-				<fieldset class="edit-location-tz">
+				<fieldset class="form-horizontal edit-location-tz">
+					<p><fmt:message key='my-nodes.edit-node.choose-tz.intro'/></p>
+					<div class="control-group">
+			 			<label class="control-label" for="edit-node-location-tz"><fmt:message key='location.tz.label'/></label>
+						<div class="controls">
+							<input type="text" class="span3" name="node.location.timeZoneId" id="edit-node-location-tz"
+	 							placeholder="<fmt:message key='my-nodes.invitation.tz.placeholder'/>"
+	 							maxlength="128" />
+						</div>
+			 		</div>
+					<div class="control-group">
+			 			<label class="control-label" for="edit-node-location-country"><fmt:message key='location.country.label'/></label>
+						<div class="controls">
+							<input type="text" class="span3" name="node.location.timeZoneId" id="edit-node-location-country" maxlength="128" />
+						</div>
+			 		</div>
+					<div class="tz-picker-container"></div>
 				</fieldset>
 			</div>
 	 	</div>
 	 	<div class="modal-footer">
-	 		<a href="#" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></a>
-	 		<button type="submit" class="btn btn-primary"><fmt:message key='save.label'/></button>
+	 		<button type="button" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></button>
+	 		<button type="button" class="btn page2 btn-info" id="edit-node-page-back"><fmt:message key='back.label'/></button>
+	 		<button type="button" class="btn page2 btn-primary" id="edit-node-select-tz"><fmt:message key='my-nodes.edit-node.choose-tz.action.select'/></button>
+	 		<button type="submit" class="btn page1 btn-primary"><fmt:message key='save.label'/></button>
 	 	</div>
 		<input type="hidden" name="node.id"/>
 		<input type="hidden" name="user.id"/>

@@ -1,6 +1,8 @@
 $(document).ready(function() {
 	'use strict';
 	
+	var tzPicker;
+	
 	$('a.view-cert').click(function(event) {
 		var a = this;
 		var id = a.href.match(/\d+$/)[0];
@@ -37,9 +39,11 @@ $(document).ready(function() {
 		}
 		if ( loc.country ) {
 			locDisplay.push(loc.country);
+			$('#edit-node-location-country').val(loc.country);
 		}
 		if ( loc.timeZoneId ) {
 			locDisplay.push(loc.timeZoneId);
+			$('#edit-node-location-tz').val(loc.timeZoneId);
 		}
 		if ( locDisplay.length > 0 ) {
 			$('#usernode-location').text(locDisplay.join(', '));
@@ -50,7 +54,7 @@ $(document).ready(function() {
 		form.find("input[name='node.locationId']").val(node.locationId || '');
 	}
 	
-	$('button.edit-node').on('click', function(event) {
+	$('#nodes').on('click', 'button.edit-node', function(event) {
 		var btn = $(this);
 		var form = $(btn.data('target'));
 		var url = form.attr('action').replace(/\/[^\/]+$/, '/node');
@@ -61,6 +65,7 @@ $(document).ready(function() {
 		}).fail(function(data, statusText, xhr) {
 			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-error', statusText);
 		});
+		editNodeShowPage(form, 1);
 		form.modal('show');
 	});
 	
@@ -73,6 +78,67 @@ $(document).ready(function() {
 		error: function(xhr, status, statusText) {
 			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-error', statusText);
 		}
+	}).data('page', 1);
+	
+	function editNodeShowPage(form, newPage) {
+		var currPage = form.data('page');
+		if ( currPage === newPage || newPage < 1 ) {
+			return;
+		}
+		if ( newPage > currPage ) {
+			while ( currPage < newPage ) {
+				form.removeClass('page'+currPage);
+				currPage += 1;
+			}
+		} else {
+			while ( currPage > newPage ) {
+				form.removeClass('page'+currPage);
+				currPage -= 1;
+			}
+		}
+		form.data('page', newPage);
+		form.addClass('page'+newPage);
+	}
+	
+	function selectTzPickerArea(tzcontainer) {
+		var timeZoneId = $('#edit-node-location-tz').val();
+		var country = $('#edit-node-location-country').val();
+		if ( timeZoneId && country ) {
+			tzcontainer.find("area[data-timezone='"+timeZoneId+"'][data-country="+country+']').trigger('click');
+		}
+	}
+	
+	$('#edit-node-modal button.change-location').on('click', function(event) {
+		var form = $(this).parents('form').first();
+		var pageContainer = form.find('.modal-body .hbox');
+		var pickerUrl = form.attr('action').replace(/\/[^\/]+$/, '/tzpicker.html');
+		var tzcontainer = form.find('.tz-picker-container');
+		if ( tzcontainer.children().length == 0 ) {
+			tzcontainer.load(pickerUrl, function() {
+				var picker = tzcontainer.find('.timezone-image');
+				picker.timezonePicker({
+					target : '#edit-node-location-tz',
+					countryTarget : '#edit-node-location-country',
+					changeHandler : function(tzName, countryName, offset) {
+						
+						// TODO$('#invite-tz-country').text(countryName);
+					}
+				});
+				selectTzPickerArea(tzcontainer);
+			});
+		} else {
+			selectTzPickerArea(tzcontainer);
+		}
+		editNodeShowPage(form, 2);
+	});
+	
+	$('#edit-node-page-back').on('click', function(event) {
+		var form = $(this).parents('form').first();
+		editNodeShowPage(form, form.data('page') - 1);
+	});
+	
+	$('#edit-node-select-tz').on('click', function(event) {
+		
 	});
 	
 	$('#invite-modal').on('show', function() {
@@ -81,7 +147,7 @@ $(document).ready(function() {
 		var tzcontainer = $('#tz-picker-container');
 		if ( tzcontainer.children().length == 0 ) {
 			tzcontainer.load(url, function() {
-				var picker = $('#timezone-image');
+				var picker = tzcontainer.find('.timezone-image');
 				picker.timezonePicker({
 					target : '#invite-tz',
 					countryTarget : '#invite-country',

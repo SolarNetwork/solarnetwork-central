@@ -57,3 +57,7 @@ label {
 .monospace {
 	font-family: Monaco,Menlo,Consolas,"Courier New",monospace;
 }
+
+.modal-body {
+	overflow-x: hidden;
+}
