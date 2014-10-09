@@ -118,14 +118,16 @@
 	<sql id="fragment-findall-SolarLocation-LocationMatch">
 		FROM
 			solarnet.sn_loc l
-		<dynamic prepend="WHERE">
-			<isNotNull property="fts" prepend="AND">
-			l.fts_default @@ solarcommon.plainto_prefix_tsquery(#fts#)
+		WHERE
+			l.address IS NULL
+			AND l.latitude IS NULL
+			AND l.longitude IS NULL
+			<isNotNull property="fts">
+			AND l.fts_default @@ solarcommon.plainto_prefix_tsquery(#fts#)
 			</isNotNull>
-			<isNotNull prepend="AND" property="filter.timeZoneId">
-				l.time_zone = #filter.timeZoneId#
+			<isNotNull property="filter.timeZoneId">
+			AND l.time_zone = #filter.timeZoneId#
 			</isNotNull>
-		</dynamic>
 	</sql>
 
 	<select id="findall-SolarLocation-LocationMatch" resultMap="SolarLocationPublicResult">
