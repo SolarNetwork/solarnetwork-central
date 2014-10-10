@@ -211,7 +211,6 @@
 					<table class="table table-striped table-hover hidden" id="edit-node-location-search-results">
 						<thead>
 							<tr>
-								<th><fmt:message key='location.name.label'/></th>
 								<th><fmt:message key='location.country.label'/></th>
 								<th><fmt:message key='location.state.label'/></th>
 								<th><fmt:message key='location.region.label'/></th>
@@ -219,7 +218,6 @@
 								<th><fmt:message key='location.postalCode.label'/></th>
 							</tr>
 							<tr class="template">
-								<td data-tprop="name"></td>
 								<td data-tprop="country"></td>
 								<td data-tprop="stateOrProvince"></td>
 								<td data-tprop="region"></td>

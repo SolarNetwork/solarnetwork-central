@@ -90,6 +90,7 @@ $(document).ready(function() {
 		}
 	}).data('page', 1).on('show', function() {
 		dynamicSearchTimer = undefined;
+		$('#edit-node-location-search-results').addClass('hidden');
 	});
 	
 	function editNodeShowPage(form, newPage) {
@@ -142,7 +143,11 @@ $(document).ready(function() {
 	
 	$('#edit-node-page-back').on('click', function(event) {
 		var form = $(this).parents('form').first();
-		editNodeShowPage(form, form.data('page') - 1);
+		var currPage = form.data('page');
+		if ( currPage === 3 ) {
+			$('#edit-node-location-search-results').addClass('hidden');
+		}
+		editNodeShowPage(form, currPage - 1);
 	});
 	
 	$('#edit-node-select-tz').on('click', function(event) {
@@ -249,6 +254,7 @@ $(document).ready(function() {
 	
 	$('#edit-node-select-location').on('click', function() {
 		var form = $('#edit-node-modal');
+		$('#edit-node-location-search-results').addClass('hidden');
 		editNodeShowPage(form, 1);
 		
 		setupEditUserNodeLocationDisplay({
@@ -257,7 +263,7 @@ $(document).ready(function() {
 			stateOrProvince : $('#edit-node-location-state').val(),
 			region : $('#edit-node-location-region').val(),
 			locality : $('#edit-node-location-locality').val(),
-			postalCode : $('#edit-node-location-postalCode').val(),
+			postalCode : $('#edit-node-location-postal-code').val(),
 			timeZoneId : $('#edit-node-location-tz').val()
 		});
 	});
