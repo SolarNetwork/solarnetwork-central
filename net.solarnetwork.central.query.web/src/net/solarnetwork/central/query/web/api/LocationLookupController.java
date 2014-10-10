@@ -81,6 +81,10 @@ public class LocationLookupController extends WebServiceControllerSupport {
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
 	public Response<FilterResults<LocationMatch>> findLocations(SourceLocationFilter cmd) {
+		if ( cmd == null ) {
+			return new Response<FilterResults<LocationMatch>>(false, null, "Search filter is required.",
+					null);
+		}
 		// convert empty strings to null
 		cmd.removeEmptyValues();
 
