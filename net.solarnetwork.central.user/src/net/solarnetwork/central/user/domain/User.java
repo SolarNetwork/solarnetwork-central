@@ -24,12 +24,14 @@ package net.solarnetwork.central.user.domain;
 
 import java.util.Set;
 import net.solarnetwork.central.domain.BaseEntity;
+import net.solarnetwork.util.SerializeIgnore;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
  * A user domain object.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class User extends BaseEntity {
 
@@ -68,77 +70,44 @@ public class User extends BaseEntity {
 		return "User{email=" + email + '}';
 	}
 
-	/**
-	 * @return the name
-	 */
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * @param name
-	 *        the name to set
-	 */
 	public void setName(String name) {
 		this.name = name;
 	}
 
-	/**
-	 * @return the email
-	 */
 	public String getEmail() {
 		return email;
 	}
 
-	/**
-	 * @param email
-	 *        the email to set
-	 */
 	public void setEmail(String email) {
 		this.email = email;
 	}
 
-	/**
-	 * @return the password
-	 */
+	@JsonIgnore
+	@SerializeIgnore
 	public String getPassword() {
 		return password;
 	}
 
-	/**
-	 * @param password
-	 *        the password to set
-	 */
 	public void setPassword(String password) {
 		this.password = password;
 	}
 
-	/**
-	 * @return the enabled
-	 */
 	public Boolean getEnabled() {
 		return enabled;
 	}
 
-	/**
-	 * @param enabled
-	 *        the enabled to set
-	 */
 	public void setEnabled(Boolean enabled) {
 		this.enabled = enabled;
 	}
 
-	/**
-	 * @return the roles
-	 */
 	public Set<String> getRoles() {
 		return roles;
 	}
 
-	/**
-	 * @param roles
-	 *        the roles to set
-	 */
 	public void setRoles(Set<String> roles) {
 		this.roles = roles;
 	}
