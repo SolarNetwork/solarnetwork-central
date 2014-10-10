@@ -42,11 +42,11 @@ import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.HardwareControlDatum;
 import net.solarnetwork.central.datum.domain.HardwareControlDatumMatch;
 import net.solarnetwork.central.datum.domain.PowerDatum;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -290,8 +290,8 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		int offset = 0;
 		final int maxResults = 2;
 		while ( offset < 8 ) {
-			FilterResults<? extends EntityMatch> matches = daoQueryBiz.findFilteredDatum(
-					filter, HardwareControlDatum.class, sorts, offset, maxResults);
+			FilterResults<? extends EntityMatch> matches = daoQueryBiz.findFilteredDatum(filter,
+					HardwareControlDatum.class, sorts, offset, maxResults);
 			assertNotNull(matches);
 			assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
 			Iterator<? extends EntityMatch> itr = matches.getResults().iterator();
@@ -416,9 +416,9 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 			Iterator<GeneralNodeDatumFilterMatch> itr = matches.getResults().iterator();
 			for ( int i = 0; i < maxResults; i++, offset++ ) {
 				GeneralNodeDatumFilterMatch match = itr.next();
-				assertEquals(GeneralNodeDatumMatch.class, match.getClass());
-				assertEquals(created + ((numDatum - offset - 1) * 1000), ((GeneralNodeDatumMatch) match)
-						.getCreated().getMillis());
+				assertEquals(ReportingGeneralNodeDatum.class, match.getClass());
+				assertEquals(created + ((numDatum - offset - 1) * 1000),
+						((ReportingGeneralNodeDatum) match).getCreated().getMillis());
 			}
 		}
 
