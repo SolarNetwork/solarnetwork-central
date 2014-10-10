@@ -22,7 +22,6 @@ CREATE DOMAIN solarnet.pk_i
 CREATE TABLE solarnet.sn_loc (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	loc_name		CHARACTER VARYING(128) NOT NULL,
 	country			CHARACTER(2) NOT NULL,
 	time_zone		CHARACTER VARYING(64) NOT NULL,
 	region			CHARACTER VARYING(128),
@@ -30,8 +29,9 @@ CREATE TABLE solarnet.sn_loc (
 	locality		CHARACTER VARYING(128),
 	postal_code		CHARACTER VARYING(32),
 	address			CHARACTER VARYING(256),
-	latitude		DOUBLE PRECISION,
-	longitude		DOUBLE PRECISION,
+	latitude		NUMERIC(9,6),
+	longitude		NUMERIC(9,6),
+	elevation		NUMERIC(8,3),
 	fts_default 	tsvector,
 	PRIMARY KEY (id)
 );
@@ -42,7 +42,7 @@ CREATE TRIGGER maintain_fts
   BEFORE INSERT OR UPDATE ON solarnet.sn_loc
   FOR EACH ROW EXECUTE PROCEDURE 
   tsvector_update_trigger(fts_default, 'pg_catalog.english', 
-  	loc_name, country, region, state_prov, locality, postal_code, address);
+  	country, region, state_prov, locality, postal_code, address);
 
 /* =========================================================================
    =========================================================================
