@@ -60,7 +60,20 @@ public class WeatherLocation extends BaseEntity implements Cloneable, Serializab
 
 	@Override
 	public String getLocationName() {
-		return location == null ? null : location.getName();
+		if ( location == null ) {
+			return null;
+		}
+		StringBuilder buf = new StringBuilder();
+		if ( location.getLocality() != null ) {
+			buf.append(location.getLocality());
+		} else if ( location.getRegion() != null ) {
+			buf.append(location.getRegion());
+		}
+		if ( buf.length() > 0 ) {
+			buf.append(", ");
+		}
+		buf.append(location.getCountry());
+		return buf.toString();
 	}
 
 	public SolarLocation getLocation() {

@@ -30,24 +30,10 @@ import net.solarnetwork.central.domain.SolarLocation;
  * DAO API for Location.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface SolarLocationDao extends GenericDao<SolarLocation, Long>,
 		FilterableDao<LocationMatch, Long, Location> {
-
-	/**
-	 * Find the first SolarLocation for a given location name.
-	 * 
-	 * <p>
-	 * Note that as location names are not unique, this merely returns the first
-	 * name that matches exactly.
-	 * </p>
-	 * 
-	 * @param locationName
-	 *        the location name
-	 * @return the SolarLocation, or <em>null</em> if not found
-	 */
-	SolarLocation getSolarLocationForName(String locationName);
 
 	/**
 	 * Find a SolarLocation for just a country and time zone.
@@ -59,5 +45,15 @@ public interface SolarLocationDao extends GenericDao<SolarLocation, Long>,
 	 * @return the SolarLocation, or <em>null</em> if none found
 	 */
 	SolarLocation getSolarLocationForTimeZone(String country, String timeZoneId);
+
+	/**
+	 * Find a SolarLocation that exactly matches the given criteria. By exactly
+	 * matching, even empty fields must match.
+	 * 
+	 * @param criteria
+	 *        the search criteria
+	 * @return the matching location, or <em>null</em> if not found
+	 */
+	SolarLocation getSolarLocationForLocation(Location criteria);
 
 }

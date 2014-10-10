@@ -93,7 +93,9 @@
 				l.postal_code = #filter.postalCode#
 			</isNotNull>
 		</dynamic>
-		ORDER BY lower(wsource.sname), lower(l.loc_name)
+		ORDER BY 
+			lower(wsource.sname),
+			<include refid="fragment-sort-SolarLocation-LocationMatch-default"/>
 	</select>
 	
 	<sql id="fragment-findall-WeatherLocation-SourceLocationMatch">
@@ -131,13 +133,13 @@
 		<include refid="fragment-findall-WeatherLocation-SourceLocationMatch"/>
 		ORDER BY
 		<isEmpty property="SortDescriptors">
-			lower(wsource.sname), lower(l.loc_name),
+			lower(wsource.sname),
+			<include refid="fragment-sort-SolarLocation-LocationMatch-default"/>,
 		</isEmpty>
 		<isNotEmpty property="SortDescriptors">
 			<iterate property="SortDescriptors" conjunction="," close=",">
 				<isEqual property="SortDescriptors[].sortKey" compareValue="created">ploc.created</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="sourceName">lower(psource.sname)</isEqual>
-				<isEqual property="SortDescriptors[].sortKey" compareValue="location.name">lower(l.loc_name)</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="location.country">l.country</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="location.region">l.region</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="location.stateOrProvince">l.state_prov</isEqual>

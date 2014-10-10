@@ -34,7 +34,7 @@ import net.solarnetwork.central.domain.SolarLocation;
  * Ibatis implementation of {@link SolarLocationDao}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class IbatisSolarLocationDao extends
 		IbatisFilterableDaoSupport<SolarLocation, LocationMatch, Location> implements SolarLocationDao {
@@ -49,21 +49,15 @@ public class IbatisSolarLocationDao extends
 	public static final String QUERY_FOR_COUNTRY_TIME_ZONE = "find-SolarLocation-for-country-timezone";
 
 	/**
+	 * The query name used for {@link #getSolarLocationForLocation(Location)}.
+	 */
+	public static final String QUERY_FOR_EXACT_LOCATION = "find-SolarLocation-for-location";
+
+	/**
 	 * Default constructor.
 	 */
 	public IbatisSolarLocationDao() {
 		super(SolarLocation.class, LocationMatch.class);
-	}
-
-	@Override
-	public SolarLocation getSolarLocationForName(String locationName) {
-		@SuppressWarnings("unchecked")
-		List<SolarLocation> results = getSqlMapClientTemplate().queryForList(QUERY_FOR_NAME,
-				locationName, 0, 1);
-		if ( results.size() > 0 ) {
-			return results.get(0);
-		}
-		return null;
 	}
 
 	@Override
@@ -74,6 +68,17 @@ public class IbatisSolarLocationDao extends
 		@SuppressWarnings("unchecked")
 		List<SolarLocation> results = getSqlMapClientTemplate().queryForList(
 				QUERY_FOR_COUNTRY_TIME_ZONE, params, 0, 1);
+		if ( results.size() > 0 ) {
+			return results.get(0);
+		}
+		return null;
+	}
+
+	@Override
+	public SolarLocation getSolarLocationForLocation(Location criteria) {
+		@SuppressWarnings("unchecked")
+		List<SolarLocation> results = getSqlMapClientTemplate().queryForList(QUERY_FOR_EXACT_LOCATION,
+				criteria, 0, 1);
 		if ( results.size() > 0 ) {
 			return results.get(0);
 		}
