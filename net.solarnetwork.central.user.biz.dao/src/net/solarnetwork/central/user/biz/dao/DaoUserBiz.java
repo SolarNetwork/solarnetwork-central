@@ -27,6 +27,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Set;
+import net.solarnetwork.central.dao.SolarLocationDao;
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.PasswordEncoder;
@@ -80,6 +84,12 @@ public class DaoUserBiz implements UserBiz {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
+	@Autowired
+	private SolarLocationDao solarLocationDao;
+
+	@Autowired
+	private SolarNodeDao solarNodeDao;
+
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public User getUser(Long id) {
@@ -130,7 +140,28 @@ public class DaoUserBiz implements UserBiz {
 			entity.setDescription(entry.getDescription());
 		}
 		entity.setRequiresAuthorization(entry.isRequiresAuthorization());
+
+		// Maintain the node's location as well; see if the location matches exactly one in the DB,
+		// and if so assign that location (if not already assigned). If no location matches, create
+		// a new location and assign that.
+		if ( entry.getNodeLocation() != null ) {
+			SolarNode node = entity.getNode();
+			SolarLocation norm = SolarLocation.normalizedLocation(entry.getNodeLocation());
+			SolarLocation locEntity = solarLocationDao.getSolarLocationForLocation(norm);
+			if ( locEntity == null ) {
+				log.debug("Saving new SolarLocation {}", locEntity);
+				locEntity = solarLocationDao.get(solarLocationDao.store(norm));
+			}
+			if ( locEntity.getId().equals(node.getLocationId()) == false ) {
+				log.debug("Updating node {} location from {} to {}", node.getId(), node.getLocationId(),
+						locEntity.getId());
+				node.setLocationId(locEntity.getId());
+				solarNodeDao.store(node);
+			}
+		}
+
 		userNodeDao.store(entity);
+
 		return entity;
 	}
 
@@ -258,6 +289,14 @@ public class DaoUserBiz implements UserBiz {
 
 	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
 		this.passwordEncoder = passwordEncoder;
+	}
+
+	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
+		this.solarLocationDao = solarLocationDao;
+	}
+
+	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
+		this.solarNodeDao = solarNodeDao;
 	}
 
 }

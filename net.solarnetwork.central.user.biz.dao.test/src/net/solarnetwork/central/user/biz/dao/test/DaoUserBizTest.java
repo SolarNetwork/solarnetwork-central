@@ -32,16 +32,25 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import java.util.HashSet;
 import java.util.Set;
+import net.solarnetwork.central.dao.SolarLocationDao;
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.PasswordEncoder;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.central.user.domain.UserNode;
 import org.easymock.EasyMock;
+import org.easymock.IArgumentMatcher;
+import org.joda.time.DateTime;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -61,11 +70,15 @@ public class DaoUserBizTest {
 	private static final String TEST_AUTH_TOKEN = "12345678901234567890";
 	private static final String TEST_AUTH_SECRET = "123";
 
+	private SolarNode testNode;
 	private User testUser;
 	private Set<String> testUserRoles;
 
+	private SolarLocationDao solarLocationDao;
+	private SolarNodeDao solarNodeDao;
 	private UserDao userDao;
 	private UserAuthTokenDao userAuthTokenDao;
+	private UserNodeDao userNodeDao;
 	private PasswordEncoder passwordEncoder;
 
 	private DaoUserBiz userBiz;
@@ -80,24 +93,34 @@ public class DaoUserBizTest {
 		testUser.setName(TEST_NAME);
 		testUser.setPassword(TEST_ENC_PASSWORD);
 
+		testNode = new SolarNode();
+		testNode.setId(-1L);
+		testNode.setLocationId(-2L);
+
 		testUserRoles = new HashSet<String>();
 		testUserRoles.add(TEST_ROLE);
 
+		solarLocationDao = EasyMock.createMock(SolarLocationDao.class);
+		solarNodeDao = EasyMock.createMock(SolarNodeDao.class);
 		userDao = EasyMock.createMock(UserDao.class);
 		userAuthTokenDao = EasyMock.createMock(UserAuthTokenDao.class);
+		userNodeDao = EasyMock.createMock(UserNodeDao.class);
 
 		userBiz = new DaoUserBiz();
+		userBiz.setSolarLocationDao(solarLocationDao);
+		userBiz.setSolarNodeDao(solarNodeDao);
 		userBiz.setUserDao(userDao);
 		userBiz.setUserAuthTokenDao(userAuthTokenDao);
+		userBiz.setUserNodeDao(userNodeDao);
 		userBiz.setPasswordEncoder(passwordEncoder);
 	}
 
 	private void replayProperties() {
-		replay(userAuthTokenDao, userDao);
+		replay(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao);
 	}
 
 	private void verifyProperties() {
-		verify(userAuthTokenDao, userDao);
+		verify(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao);
 	}
 
 	@Test
@@ -148,6 +171,135 @@ public class DaoUserBizTest {
 			assertEquals(AuthorizationException.Reason.ACCESS_DENIED, e.getReason());
 			assertEquals(TEST_AUTH_TOKEN, e.getId());
 		}
+		verifyProperties();
+	}
+
+	@Test
+	public void saveUserNodeNoLocationChange() {
+		final UserNode userNode = new UserNode();
+		userNode.setCreated(new DateTime());
+		userNode.setDescription("Test user node");
+		userNode.setName("Test UserNode");
+		userNode.setRequiresAuthorization(true);
+		userNode.setUser(testUser);
+		userNode.setNode(testNode);
+
+		SolarLocation loc = new SolarLocation();
+		loc.setId(testNode.getLocationId());
+		loc.setName("foo");
+
+		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
+		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass())))
+				.andReturn(loc);
+		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
+
+		replayProperties();
+
+		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		entry.getNode().setLocation(loc);
+
+		UserNode result = userBiz.saveUserNode(entry);
+		Assert.assertEquals(userNode, result);
+
+		verifyProperties();
+	}
+
+	public static SolarNode nodeLocationMatch(final Long nodeId, final Long locId) {
+		EasyMock.reportMatcher(new IArgumentMatcher() {
+
+			private Long nid;
+			private Long lid;
+
+			@Override
+			public boolean matches(Object argument) {
+				SolarNode node = (SolarNode) argument;
+				nid = (node == null ? null : node.getId());
+				lid = (node == null ? null : node.getLocationId());
+				return (nodeId.equals(nid) && locId.equals(lid));
+			}
+
+			@Override
+			public void appendTo(StringBuffer buffer) {
+				if ( !nodeId.equals(nid) ) {
+					buffer.append("SolarNode expected (" + nodeId + ") got (" + nid + ") ");
+				}
+				if ( !locId.equals(lid) ) {
+					buffer.append("SolarNode location expected (" + locId + ") got (" + lid + ")");
+				}
+			}
+		});
+		return null;
+	}
+
+	@Test
+	public void saveUserNodeLocationChange() {
+		final UserNode userNode = new UserNode();
+		userNode.setCreated(new DateTime());
+		userNode.setDescription("Test user node");
+		userNode.setName("Test UserNode");
+		userNode.setRequiresAuthorization(true);
+		userNode.setUser(testUser);
+		userNode.setNode(testNode);
+
+		SolarLocation loc = new SolarLocation();
+		loc.setId(testNode.getLocationId());
+		loc.setName("foo");
+
+		SolarLocation locMatch = new SolarLocation();
+		locMatch.setId(-9L);
+		locMatch.setName("bar");
+
+		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
+		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass()))).andReturn(
+				locMatch);
+		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), -9L))).andReturn(testNode.getId());
+		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
+
+		replayProperties();
+
+		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		entry.getNode().setLocation(loc);
+
+		UserNode result = userBiz.saveUserNode(entry);
+		Assert.assertEquals(userNode, result);
+
+		verifyProperties();
+	}
+
+	@Test
+	public void saveUserNodeNewLocation() {
+		final UserNode userNode = new UserNode();
+		userNode.setCreated(new DateTime());
+		userNode.setDescription("Test user node");
+		userNode.setName("Test UserNode");
+		userNode.setRequiresAuthorization(true);
+		userNode.setUser(testUser);
+		userNode.setNode(testNode);
+
+		SolarLocation loc = new SolarLocation();
+		loc.setId(testNode.getLocationId());
+		loc.setName("foo");
+
+		SolarLocation newLoc = new SolarLocation();
+		newLoc.setId(-99L);
+
+		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
+		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass()))).andReturn(
+				null);
+		expect(solarLocationDao.store(EasyMock.isA(loc.getClass()))).andReturn(newLoc.getId());
+		expect(solarLocationDao.get(newLoc.getId())).andReturn(newLoc);
+		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), newLoc.getId()))).andReturn(
+				testNode.getId());
+		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
+
+		replayProperties();
+
+		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		entry.getNode().setLocation(loc);
+
+		UserNode result = userBiz.saveUserNode(entry);
+		Assert.assertEquals(userNode, result);
+
 		verifyProperties();
 	}
 
