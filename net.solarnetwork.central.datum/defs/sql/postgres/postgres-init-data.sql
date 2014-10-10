@@ -1,7 +1,7 @@
 /* Location data */
 
-INSERT INTO solarnet.sn_loc (loc_name, country, region, time_zone) 
-	VALUES ('Unknown', '--', '--', 'UTC');
+INSERT INTO solarnet.sn_loc (loc_name, country, time_zone) 
+	VALUES ('Unknown', '--', 'UTC');
 INSERT INTO solarnet.sn_loc (loc_name, country, region, time_zone, latitude, longitude) 
 	VALUES ('Auckland', 'NZ', 'Auckland', 'Pacific/Auckland', -36.85, 174.77);
 INSERT INTO solarnet.sn_loc (loc_name, country, region, time_zone, latitude, longitude) 
