@@ -130,14 +130,14 @@
 					<div class="control-group">
 						<label class="control-label" for="usernode-name"><fmt:message key="user.node.name.label"/></label>
 						<div class="controls">
-							<input name="name" type="text" maxlength="128" class="span3" id="usernode-name"/>
+							<input name="name" type="text" maxlength="128" class="span5" id="usernode-name"/>
 							<span class="help-block"><fmt:message key="user.node.name.caption"/></span>
 						</div>
 					</div>
 					<div class="control-group">
 						<label class="control-label" for="usernode-description"><fmt:message key="user.node.description.label"/></label>
 						<div class="controls">
-							<input name="description" type="text" maxlength="512" class="span3" id="usernode-description"/>
+							<input name="description" type="text" maxlength="512" class="span5" id="usernode-description"/>
 							<span class="help-block"><fmt:message key="user.node.description.caption"/></span>
 						</div>
 					</div>
@@ -169,18 +169,76 @@
 					<div class="control-group">
 			 			<label class="control-label" for="edit-node-location-country"><fmt:message key='location.country.label'/></label>
 						<div class="controls">
-							<input type="text" class="span3" name="node.location.timeZoneId" id="edit-node-location-country" maxlength="128" />
+							<input type="text" class="span1" name="node.location.country" id="edit-node-location-country" maxlength="2" />
 						</div>
 			 		</div>
 					<div class="tz-picker-container"></div>
+				</fieldset>
+				<fieldset class="form-horizontal" id="edit-node-location-details" 
+					data-lookup-url="<c:url context="/solarquery" value='/api/v1/pub/location'/>">
+					<p><fmt:message key='my-nodes.edit-node.choose-location.intro'/></p>
+					<div class="control-group">
+			 			<label class="control-label" for="edit-node-location-postal-code"><fmt:message key='location.postalCode.label'/></label>
+						<div class="controls">
+							<input type="text" class="span3" name="node.location.postalCode" id="edit-node-location-postal-code"
+	 							maxlength="128" />
+						</div>
+			 		</div>
+					<div class="control-group">
+			 			<label class="control-label" for="edit-node-location-locality"><fmt:message key='location.locality.label'/></label>
+						<div class="controls">
+							<input type="text" class="span3" name="node.location.locality" id="edit-node-location-locality"
+	 							maxlength="128" />
+						</div>
+			 		</div>
+					<div class="control-group">
+			 			<label class="control-label" for="edit-node-location-state"><fmt:message key='location.state.label'/></label>
+						<div class="controls">
+							<input type="text" class="span3" name="node.location.stateOrProvince" id="edit-node-location-state"
+	 							maxlength="128" />
+						</div>
+			 		</div>
+					<div class="control-group">
+			 			<label class="control-label" for="edit-node-location-region"><fmt:message key='location.region.label'/></label>
+						<div class="controls">
+							<input type="text" class="span3" name="node.location.region" id="edit-node-location-region"
+	 							maxlength="128" />
+						</div>
+			 		</div>
+			 		<p class="hidden" id="edit-node-location-search-no-match">
+			 			<fmt:message key='my-nodes.edit-node.choose-location.nomatch'/>
+			 		</p>
+					<table class="table table-striped table-hover hidden" id="edit-node-location-search-results">
+						<thead>
+							<tr>
+								<th><fmt:message key='location.name.label'/></th>
+								<th><fmt:message key='location.country.label'/></th>
+								<th><fmt:message key='location.state.label'/></th>
+								<th><fmt:message key='location.region.label'/></th>
+								<th><fmt:message key='location.locality.label'/></th>
+								<th><fmt:message key='location.postalCode.label'/></th>
+							</tr>
+							<tr class="template">
+								<td data-tprop="name"></td>
+								<td data-tprop="country"></td>
+								<td data-tprop="stateOrProvince"></td>
+								<td data-tprop="region"></td>
+								<td data-tprop="locality"></td>
+								<td data-tprop="postalCode"></td>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
 				</fieldset>
 			</div>
 	 	</div>
 	 	<div class="modal-footer">
 	 		<button type="button" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></button>
-	 		<button type="button" class="btn page2 btn-info" id="edit-node-page-back"><fmt:message key='back.label'/></button>
-	 		<button type="button" class="btn page2 btn-primary" id="edit-node-select-tz"><fmt:message key='my-nodes.edit-node.choose-tz.action.select'/></button>
+	 		<button type="button" class="btn page2 page3 btn-info" id="edit-node-page-back"><fmt:message key='back.label'/></button>
 	 		<button type="submit" class="btn page1 btn-primary"><fmt:message key='save.label'/></button>
+	 		<button type="button" class="btn page2 btn-primary" id="edit-node-select-tz"><fmt:message key='my-nodes.edit-node.choose-tz.action.select'/></button>
+	 		<button type="button" class="btn page3 btn-primary" id="edit-node-select-location" disabled="disabled"><fmt:message key='my-nodes.edit-node.choose-location.action.select'/></button>
 	 	</div>
 		<input type="hidden" name="node.id"/>
 		<input type="hidden" name="user.id"/>

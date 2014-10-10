@@ -1,10 +1,10 @@
 #edit-node-modal .modal-body .hbox {
-	width: 1200px;
-	-webkit-transition: transform 0.5s ease-in-out;
-	-moz-transition: transform 0.5s ease-in-out;
-	-ms-transition: transform 0.5s ease-in-out;
-	-o-transition: transform 0.5s ease-in-out;
-	transition: transform 0.5s ease-in-out;
+	width: 1800px;
+	-webkit-transition: -webkit-transform 0.3s ease-in-out;
+	-moz-transition: -moz-transform 0.3s ease-in-out;
+	-ms-transition: -ms-transform 0.3s ease-in-out;
+	-o-transition: -o-transform 0.3s ease-in-out;
+	transition: transform 0.3s ease-in-out;
 }
 
 #edit-node-modal .modal-body .hbox > * {
@@ -20,11 +20,25 @@
     transform:  translate(-600px,0px);
 }
 
-#edit-node-modal.page1 .page2:not(.page1) {
+#edit-node-modal.page3 .modal-body .hbox {
+    -webkit-transform:  translate(-1200px,0px);
+	-moz-transform:  translate(-1200px,0px);
+    -ms-transform:  translate(-1200px,0px);
+    -o-transform:  translate(-1200px,0px);
+    transform:  translate(-1200px,0px);
+}
+
+#edit-node-modal.page1 .page2:not(.page1),
+#edit-node-modal.page1 .page3:not(.page1) {
 	display: none;
 }
 
+#edit-node-modal.page2 .page1:not(.page2),
+#edit-node-modal.page2 .page3:not(.page2) {
+	display: none;
+}
 
-#edit-node-modal.page2 .page1:not(.page2) {
+#edit-node-modal.page3 .page1:not(.page3),
+#edit-node-modal.page3 .page2:not(.page3) {
 	display: none;
 }

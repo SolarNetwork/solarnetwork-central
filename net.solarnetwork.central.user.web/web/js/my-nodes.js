@@ -2,6 +2,7 @@ $(document).ready(function() {
 	'use strict';
 	
 	var tzPicker;
+	var dynamicSearchTimer;
 	
 	$('a.view-cert').click(function(event) {
 		var a = this;
@@ -14,6 +15,28 @@ $(document).ready(function() {
 			$('#view-cert-modal').modal('show');
 		});
 	});
+	
+	function setupEditUserNodeLocationDisplay(loc) {
+		var locDisplay = [];
+		if ( loc.locality ) {
+			locDisplay.push(loc.locality);
+		}
+		if ( loc.region ) {
+			locDisplay.push(loc.region);
+		}
+		if ( loc.stateOrProvince ) {
+			locDisplay.push(loc.stateOrProvince);
+		}
+		if ( loc.postalCode ) {
+			locDisplay.push(loc.postalCode);
+		}
+		if ( loc.country ) {
+			locDisplay.push(loc.country);
+		}
+		if ( locDisplay.length > 0 ) {
+			$('#usernode-location').text(locDisplay.join(', '));
+		}
+	}
 	
 	function setupEditUserNodeFields(form, userNode) {
 		var node = userNode.node;
@@ -33,21 +56,8 @@ $(document).ready(function() {
 		$('#usernode-description').val(userNode.description);
 		$('#usernode-private').prop('checked', userNode.requiresAuthorization);
 		
-		var locDisplay = [];
-		if ( loc.name ) {
-			locDisplay.push(loc.name);
-		}
-		if ( loc.country ) {
-			locDisplay.push(loc.country);
-			$('#edit-node-location-country').val(loc.country);
-		}
-		if ( loc.timeZoneId ) {
-			locDisplay.push(loc.timeZoneId);
-			$('#edit-node-location-tz').val(loc.timeZoneId);
-		}
-		if ( locDisplay.length > 0 ) {
-			$('#usernode-location').text(locDisplay.join(', '));
-		}
+		setupEditUserNodeLocationDisplay(loc);
+		setupEditUserLocationFields(loc);
 
 		form.find("input[name='node.id']").val(node.id || '');
 		form.find("input[name='user.id']").val(user.id || '')
@@ -78,7 +88,9 @@ $(document).ready(function() {
 		error: function(xhr, status, statusText) {
 			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-error', statusText);
 		}
-	}).data('page', 1);
+	}).data('page', 1).on('show', function() {
+		dynamicSearchTimer = undefined;
+	});
 	
 	function editNodeShowPage(form, newPage) {
 		var currPage = form.data('page');
@@ -119,10 +131,6 @@ $(document).ready(function() {
 				picker.timezonePicker({
 					target : '#edit-node-location-tz',
 					countryTarget : '#edit-node-location-country',
-					changeHandler : function(tzName, countryName, offset) {
-						
-						// TODO$('#invite-tz-country').text(countryName);
-					}
 				});
 				selectTzPickerArea(tzcontainer);
 			});
@@ -138,7 +146,120 @@ $(document).ready(function() {
 	});
 	
 	$('#edit-node-select-tz').on('click', function(event) {
+		var form = $(this).parents('form').first();
+		$('#edit-node-select-location').attr('disabled', 'disabled');
+		editNodeShowPage(form, 3);
+		if ( dynamicSearchTimer === undefined ) {
+			searchForLocationDetails();
+		}
+	});
+	
+	$('#edit-node-location-search-results').on('click', 'tr', function(event) {
+		var me = $(this);
+		var loc = me.data('location');
+		if ( me.hasClass('success') === false ) {
+			me.parent().find('tr.success').removeClass('success');
+			me.addClass('success');
+		}
+		setupEditUserLocationFields(loc);
+	});
+	
+	function showLocationSearchResults(results) {
+		var table = $('#edit-node-location-search-results');
+		var templateRow = table.find('tr.template');
+		var tbody = table.find('tbody');
+		var form = $('#edit-node-modal');
+		var i, len, tr, loc, prop, cell;
+		tbody.empty();
+		if ( results.length > 0 ) {
+			for ( i = 0, len = results.length; i < len; i += 1 ) {
+				tr = templateRow.clone(true);
+				tr.removeClass('template');
+				loc = results[i];
+				tr.data('location', loc);
+				for ( prop in loc ) {
+					if ( loc.hasOwnProperty(prop) ) {
+						cell = tr.find("[data-tprop='" +prop +"']");
+						cell.text(loc[prop]);
+					}
+				}
+				tbody.append(tr);
+			}
+			table.removeClass('hidden');
+			$('#edit-node-location-search-no-match').addClass('hidden');
+		} else {
+			table.addClass('hidden');
+			$('#edit-node-location-search-no-match').removeClass('hidden'); // no matches, allow saving
+		}
+		$('#edit-node-select-location').removeAttr('disabled');
+	}
+	
+	function setupEditUserLocationFields(location) {
+		if ( !location ) {
+			location = {};
+		}
+		var form = $('#edit-node-modal');
+		var elements = form.get(0).elements;
+		var criteria = ['country', 'timeZoneId', 'region', 'stateOrProvince', 'locality', 'postalCode'];
+		var input;
+		criteria.forEach(function(prop) {
+			input = elements['node.location.'+prop];
+			if ( input ) {
+				$(input).val(location[prop]);
+			}
+		});
+		input = elements['node.locationId'];
+		if ( input ) {
+			$(input).val(location.id);
+		}
+	}
+	
+	function handleLocationDetailsChange(event) {
+		if ( dynamicSearchTimer ) {
+			clearTimeout(dynamicSearchTimer);
+		}
+		dynamicSearchTimer = setTimeout(searchForLocationDetails, 300);
+	}
+	
+	function searchForLocationDetails() {
+		var form = $('#edit-node-modal');
+		var elements = form.get(0).elements;
+		var url = $('#edit-node-location-details').data('lookup-url');
+		var criteria = ['timeZoneId', 'country', 'region', 'stateOrProvince', 'locality', 'postalCode'];
+		var req = {}, input;
+		criteria.forEach(function(prop) {
+			input = elements['node.location.'+prop];
+			if ( input ) {
+				input = $(input);
+				if ( input.val().length > 0 ) {
+					req['location.'+prop] = input.val();
+				}
+			}
+		});
+		$.getJSON(url, req, function(json) {
+			if ( json.success == true && json.data && Array.isArray(json.data.results) ) {
+				showLocationSearchResults(json.data.results);
+			}
+		}).fail(function(data, statusText, xhr) {
+			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-error', statusText);
+		});
+	}
+	
+	$('#edit-node-location-details').on('keyup', 'input', handleLocationDetailsChange);
+	
+	$('#edit-node-select-location').on('click', function() {
+		var form = $('#edit-node-modal');
+		editNodeShowPage(form, 1);
 		
+		setupEditUserNodeLocationDisplay({
+			name : $('#edit-node-location-name').val(),
+			country : $('#edit-node-location-country').val(),
+			stateOrProvince : $('#edit-node-location-state').val(),
+			region : $('#edit-node-location-region').val(),
+			locality : $('#edit-node-location-locality').val(),
+			postalCode : $('#edit-node-location-postalCode').val(),
+			timeZoneId : $('#edit-node-location-tz').val()
+		});
 	});
 	
 	$('#invite-modal').on('show', function() {
