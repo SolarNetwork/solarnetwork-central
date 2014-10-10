@@ -203,9 +203,6 @@
 				ddatum.day &lt; #filter.endDate#
 			</isNotNull>
 			<isEqual property="filter.hasLocationCriteria" compareValue="true">
-				<isNotNull prepend="AND" property="filter.location.name">
-					l.loc_name = #filter.location.name#
-				</isNotNull>
 				<isNotNull prepend="AND" property="filter.location.country">
 					l.country = #filter.location.country#
 				</isNotNull>
@@ -233,7 +230,6 @@
 				<isEqual property="SortDescriptors[].sortKey" compareValue="created">ddatum.day</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="day">ddatum.day</isEqual>
 				<isEqual property="filter.hasLocationCriteria" compareValue="true">
-					<isEqual property="SortDescriptors[].sortKey" compareValue="location.name">lower(l.loc_name)</isEqual>
 					<isEqual property="SortDescriptors[].sortKey" compareValue="location.country">l.country</isEqual>
 					<isEqual property="SortDescriptors[].sortKey" compareValue="location.region">l.region</isEqual>
 					<isEqual property="SortDescriptors[].sortKey" compareValue="location.stateOrProvince">l.state_prov</isEqual>

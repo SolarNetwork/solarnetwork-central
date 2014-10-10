@@ -112,7 +112,7 @@ public class AbstractIbatisDaoTestSupport extends AbstractCentralTransactionalTe
 	 */
 	protected void setupTestPriceLocation(Long id, String name, Long sourceId) {
 		jdbcTemplate
-				.update("insert into solarnet.sn_price_loc (id,loc_name,source_id,currency,unit,time_zone) values (?,?,?,?,?,?)",
+				.update("insert into solarnet.sn_price_loc (id,region,source_id,currency,unit,time_zone) values (?,?,?,?,?,?)",
 						id, name, sourceId, "NZD", "kWh", "Pacific/Auckland");
 	}
 

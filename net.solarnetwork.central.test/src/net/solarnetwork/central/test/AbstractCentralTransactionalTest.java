@@ -52,7 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Base test class for transactional unit tests.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml" })
 @TransactionConfiguration(transactionManager = "txManager", defaultRollback = true)
@@ -191,7 +191,7 @@ public abstract class AbstractCentralTransactionalTest extends
 	 * 
 	 * @param auth
 	 *        the user to set
-	 *        @since 1.2
+	 * @since 1.2
 	 */
 	protected void setAuthenticatedUser(Authentication auth) {
 		SecurityContextHolder.getContext().setAuthentication(auth);
@@ -201,17 +201,17 @@ public abstract class AbstractCentralTransactionalTest extends
 	 * Insert a test location into the sn_loc table.
 	 */
 	protected void setupTestLocation() {
-		setupTestLocation(TEST_LOC_ID, TEST_WEATHER_LOC_ID, TEST_LOC_NAME);
+		setupTestLocation(TEST_LOC_ID, TEST_WEATHER_LOC_ID);
 	}
 
 	/**
 	 * Insert a test location into the sn_loc table and weather location in the
 	 * sn_weather_loc table.
 	 */
-	protected void setupTestLocation(Long id, Long weatherLocId, String name) {
+	protected void setupTestLocation(Long id, Long weatherLocId) {
 		jdbcTemplate
-				.update("insert into solarnet.sn_loc (id,loc_name,country,region,postal_code,time_zone) values (?,?,?,?,?,?)",
-						id, name, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, TEST_TZ);
+				.update("insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
+						id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, TEST_TZ);
 		jdbcTemplate.update("insert into solarnet.sn_weather_source (id,sname) values (?,?)",
 				TEST_WEATHER_SOURCE_ID, TEST_WEATHER_SOURCE_NAME);
 		jdbcTemplate.update("insert into solarnet.sn_weather_loc (id,loc_id,source_id) values (?,?,?)",

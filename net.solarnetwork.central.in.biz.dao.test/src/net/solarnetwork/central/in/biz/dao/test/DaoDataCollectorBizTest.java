@@ -47,13 +47,12 @@ import org.springframework.test.context.ContextConfiguration;
  * Test case for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @ContextConfiguration
 public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 
 	private static final String TEST_SOURCE_ID = "test.source";
-	private static final String TEST_SOURCE_ID_2 = "test.source.2";
 
 	@Autowired
 	private DaoDataCollectorBiz biz;
@@ -118,7 +117,8 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 
 	@Test
 	public void findWeatherLocation() {
-		SourceLocationFilter filter = new SourceLocationFilter(TEST_WEATHER_SOURCE_NAME, TEST_LOC_NAME);
+		SourceLocationFilter filter = new SourceLocationFilter(TEST_WEATHER_SOURCE_NAME, null);
+		filter.getLocation().setRegion(TEST_LOC_REGION);
 		List<SourceLocationMatch> results = biz.findWeatherLocations(filter);
 		assertNotNull(results);
 		assertEquals(1, results.size());
@@ -127,7 +127,7 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 		assertNotNull(loc);
 		assertEquals(TEST_WEATHER_LOC_ID, loc.getId());
 		assertEquals(TEST_LOC_ID, loc.getLocationId());
-		assertEquals(TEST_LOC_NAME, loc.getLocationName());
+		assertEquals(TEST_LOC_REGION + ", " + TEST_LOC_COUNTRY, loc.getLocationName());
 		assertEquals(TEST_WEATHER_SOURCE_NAME, loc.getSourceName());
 	}
 
