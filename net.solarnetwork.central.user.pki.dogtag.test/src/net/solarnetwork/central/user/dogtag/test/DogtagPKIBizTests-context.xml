@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+			http://www.springframework.org/schema/context
+			http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+
+	<ctx:property-placeholder location="classpath:/dogtag.properties"/>
+
+	<bean id="restFactory" class="net.solarnetwork.central.user.dogtag.SSLContextFactory">
+		<property name="keystoreResource" value="classpath:/dogtag-client.jks"/>
+		<property name="keystorePassword" value="${dogtag.keystore.pass}"/>
+	</bean>
+	
+	<bean id="restOperations" factory-bean="restFactory" factory-method="createRestOps"/>
+
+</beans>
