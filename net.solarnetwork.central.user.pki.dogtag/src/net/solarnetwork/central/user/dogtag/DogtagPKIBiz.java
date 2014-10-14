@@ -29,6 +29,7 @@ import java.util.Map;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
@@ -74,11 +75,12 @@ public class DogtagPKIBiz implements NodePKIBiz {
 	private XPathExpression csrRequestIdXPath;
 	private Map<String, XPathExpression> csrInfoMapping;
 	private Map<String, XPathExpression> certDetailMapping;
+	private Map<String, XPathExpression> agentCsrInfoMapping;
 
 	@Override
 	public String submitCSR(final X509Certificate certificate, final PrivateKey privateKey)
 			throws net.solarnetwork.central.security.SecurityException {
-		SecurityUser requestor = SecurityUtils.getCurrentUser();
+		final SecurityUser requestor = SecurityUtils.getCurrentUser();
 		String csr = certificateService.generatePKCS10CertificateRequestString(certificate, privateKey);
 
 		MultiValueMap<String, Object> params = new LinkedMultiValueMap<String, Object>(6);
@@ -112,6 +114,8 @@ public class DogtagPKIBiz implements NodePKIBiz {
 			throw new IllegalArgumentException("The request ID argument must be provided.");
 		}
 
+		final SecurityUser actor = SecurityUtils.getCurrentUser();
+
 		// get the agent details for the CSR (required to approve)
 		ResponseEntity<DOMSource> result = restOps.getForEntity(baseUrl
 				+ DOGTAG_10_AGENT_CERTREQ_GET_PATH, DOMSource.class, requestID);
@@ -120,7 +124,12 @@ public class DogtagPKIBiz implements NodePKIBiz {
 					xmlSupport.getXmlAsString(result.getBody(), true));
 		}
 
-		// TODO: must match the active security user with the requester details
+		final DogtagAgentCertRequestInfo agentInfo = getAgentCsrInfo(result.getBody().getNode());
+		if ( actor.getEmail().equalsIgnoreCase(agentInfo.getRequestorEmail()) == false ) {
+			log.warn("Access DENIED to CSR request {} for user {}; email does not match", requestID,
+					actor.getUserId());
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, requestID);
+		}
 
 		// approve the CSR
 		restOps.postForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH, result.getBody(), null,
@@ -143,6 +152,13 @@ public class DogtagPKIBiz implements NodePKIBiz {
 		return certificateService.parsePKCS7CertificateChainString(certData.getPkcs7Chain());
 	}
 
+	private DogtagAgentCertRequestInfo getAgentCsrInfo(Node node) {
+		DogtagAgentCertRequestInfo info = new DogtagAgentCertRequestInfo();
+		PropertyAccessor bean = PropertyAccessorFactory.forBeanPropertyAccess(info);
+		xmlSupport.extractBeanDataFromXml(bean, node, getAgentCsrInfoMapping());
+		return info;
+	}
+
 	private DogtagCertRequestInfo getCertRequestInfo(Node node) {
 		DogtagCertRequestInfo info = new DogtagCertRequestInfo();
 		PropertyAccessor bean = PropertyAccessorFactory.forBeanPropertyAccess(info);
@@ -155,6 +171,21 @@ public class DogtagPKIBiz implements NodePKIBiz {
 		PropertyAccessor bean = PropertyAccessorFactory.forBeanPropertyAccess(data);
 		xmlSupport.extractBeanDataFromXml(bean, node, getCertDetailMapping());
 		return data;
+	}
+
+	private Map<String, XPathExpression> getAgentCsrInfoMapping() {
+		Map<String, XPathExpression> result = this.agentCsrInfoMapping;
+		if ( result == null ) {
+			Map<String, String> map = new LinkedHashMap<String, String>(3);
+			map.put("requestorEmail", "//InputAttr[@name='requestor_email']");
+			map.put("requestorName", "//InputAttr[@name='requestor_name']");
+			map.put("csr", "//InputAttr[@name='cert_request']");
+			map.put("subjectDn",
+					"//def[@id='User Supplied Subject Name Default']/policyAttribute[@name='name']/value");
+			result = xmlSupport.getXPathExpressionMap(map);
+			this.agentCsrInfoMapping = result;
+		}
+		return result;
 	}
 
 	private Map<String, XPathExpression> getCsrInfoMapping() {
