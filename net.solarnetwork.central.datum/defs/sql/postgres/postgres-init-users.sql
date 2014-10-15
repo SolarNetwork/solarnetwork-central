@@ -163,16 +163,14 @@ CREATE VIEW solaruser.network_association  AS
  */
 
 CREATE TABLE solaruser.user_node_cert (
-	id				BIGINT NOT NULL DEFAULT nextval('solaruser.solaruser_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id			BIGINT NOT NULL,
-	conf_key		CHARACTER(64) NOT NULL,
 	node_id			BIGINT NOT NULL,
 	status			CHAR(1) NOT NULL,
-	cert			bytea,
-	CONSTRAINT user_node_cert_pkey PRIMARY KEY (id),
+	request_id		VARCHAR(32) NOT NULL,
+	keystore		bytea,
+	CONSTRAINT user_node_cert_pkey PRIMARY KEY (user_id, node_id),
 	CONSTRAINT user_cert_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT user_node_cert_unq UNIQUE (user_id, conf_key)
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
