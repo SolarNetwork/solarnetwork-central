@@ -27,6 +27,8 @@
 	</osgix:cm-properties>
 	
 	<!-- Service References -->
+	
+	<reference id="nodePKIBiz" interface="net.solarnetwork.central.user.biz.NodePKIBiz"/>
 
 	<reference id="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao"/>
 	
@@ -78,12 +80,6 @@
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 
-	<!-- See http://forum.springsource.org/archive/index.php/t-54188.html for discussion
-		on getting component-scan to work in PDE. We are required to add are Eclipse build
-		path to the Bundle-Classpath value. -->
-	<ctx:annotation-config/>
-	<ctx:component-scan base-package="net.solarnetwork.central.user.biz.dao"/>
-	
 	<bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
 		<property name="configLocation" value="classpath:/net/solarnetwork/central/user/biz/dao/ehcache.xml"/>
 	</bean>
@@ -95,6 +91,31 @@
 		<property name="timeToIdle" value="300"/>
 		<property name="timeToLive" value="300"/>
 		<property name="overflowToDisk" value="true"/>
+	</bean>
+	
+	<bean id="daoRegistrationBiz" class="net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz">
+		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz" autowire-on-update="true"/>
+		<property name="userDao" ref="userDao"/>
+		<property name="userNodeDao" ref="userNodeDao"/>
+		<property name="userNodeConfirmationDao" ref="userNodeConfirmationDao"/>
+		<property name="userNodeCertificateDao" ref="userNodeCertificateDao"/>
+		<property name="userValidator" ref="userValidator"/>
+		<property name="solarNodeDao" ref="solarNodeDao"/>
+		<property name="solarLocationDao" ref="solarLocationDao"/>
+		<property name="networkIdentityBiz" ref="networkIdentityBiz"/>
+		<property name="passwordEncoder" ref="passwordEncoder"/>
+		<property name="emailThrottleCache" ref="emailThrottleCache"/>
+		<property name="nodePKIBiz" ref="nodePKIBiz"/>
+	</bean>
+	
+	<bean id="daoUserBiz" class="net.solarnetwork.central.user.biz.dao.DaoUserBiz">
+		<property name="userDao" ref="userDao"/>
+		<property name="userNodeDao" ref="userNodeDao"/>
+		<property name="userNodeConfirmationDao" ref="userNodeConfirmationDao"/>
+		<property name="userNodeCertificateDao" ref="userNodeCertificateDao"/>
+		<property name="userAuthTokenDao" ref="userAuthTokenDao"/>
+		<property name="solarNodeDao" ref="solarNodeDao"/>
+		<property name="solarLocationDao" ref="solarLocationDao"/>
 	</bean>
 	
 </blueprint>

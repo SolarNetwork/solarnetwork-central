@@ -35,7 +35,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
  * API for user registration tasks.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface RegistrationBiz {
 
@@ -176,9 +176,55 @@ public interface RegistrationBiz {
 	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED};
 	 *         if the node has already been confirmed then
 	 *         {@link AuthorizationException.Reason#REGISTRATION_ALREADY_CONFIRMED}
+	 * @deprecated see {@link #confirmNodeAssociation(NetworkAssociation)}
 	 */
+	@Deprecated
 	NetworkCertificate confirmNodeAssociation(String username, String confirmationKey)
 			throws AuthorizationException;
+
+	/**
+	 * Confirm a node association previously created via
+	 * {@link #createNodeAssociation(User)}. This method must be called after a
+	 * call to {@link #createNodeAssociation(Long, String)} to confirm the node
+	 * association. The {@code username} and {@code confirmationKey} are
+	 * required. If a {@code keystorePassword} is provided a private key will be
+	 * generated and a certificate will be automatically requested for the node,
+	 * which will be encrypted with the provided password.
+	 * 
+	 * 
+	 * @param association
+	 *        the association details
+	 * @return new RegistrationReceipt object
+	 * @throws AuthorizationException
+	 *         if the details do not match those returned from a previous call
+	 *         to {@link #createNodeAssociation(User)} then the reason code will
+	 *         be set to
+	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED};
+	 *         if the node has already been confirmed then
+	 *         {@link AuthorizationException.Reason#REGISTRATION_ALREADY_CONFIRMED}
+	 * @since 1.3
+	 */
+	NetworkCertificate confirmNodeAssociation(NetworkAssociation association)
+			throws AuthorizationException;
+
+	/**
+	 * Obtain a certificate generated and signed by SolarUser on behalf of the
+	 * node. This method can be called <em>after</em> a call to
+	 * {@link #confirmNodeAssociation(NetworkAssociation)} where a
+	 * {@code keystorePassword} was also supplied. The {@code username},
+	 * {@code confirmationKey}, and {@code keystorePassword} are required in
+	 * this call, and must match the values previously used in
+	 * {@link #confirmNodeAssociation(NetworkAssociation)}.
+	 * 
+	 * @param association
+	 *        the association details
+	 * @return the network certificate
+	 * @throws AuthorizationException
+	 *         if the details do not match those returned from a previous call
+	 *         to {@link #confirmNodeAssociation(NetworkAssociation)}
+	 * @since 1.3
+	 */
+	NetworkCertificate getNodeCertificate(NetworkAssociation association);
 
 	/**
 	 * Update the details of a user entity.

@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.user.biz.dao;
@@ -27,12 +25,26 @@ package net.solarnetwork.central.user.biz.dao;
 import static net.solarnetwork.central.user.biz.dao.UserBizConstants.getUnconfirmedEmail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.GeneralSecurityException;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.zip.GZIPOutputStream;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
@@ -45,6 +57,8 @@ import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.PasswordEncoder;
+import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
@@ -57,25 +71,24 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.domain.BasicRegistrationReceipt;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.NetworkCertificate;
 import net.solarnetwork.domain.NetworkIdentity;
 import net.solarnetwork.domain.RegistrationReceipt;
+import net.solarnetwork.support.CertificateException;
 import net.solarnetwork.util.JavaBeanXmlSerializer;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Base64OutputStream;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -102,58 +115,35 @@ import org.springframework.validation.Validator;
  * </dl>
  * 
  * @author matt
- * @version $Id$
+ * @version 1.7
  */
-@Service("daoRegistrationBiz")
 public class DaoRegistrationBiz implements RegistrationBiz {
 
 	public static final SortedSet<String> DEFAULT_CONFIRMED_USER_ROLES = Collections
 			.unmodifiableSortedSet(new TreeSet<String>(Arrays.asList("ROLE_USER")));
 
-	@Autowired
+	private final Logger log = LoggerFactory.getLogger(getClass());
+
 	private UserDao userDao;
-
-	@Autowired
 	private UserNodeDao userNodeDao;
-
-	@Autowired
 	private UserNodeConfirmationDao userNodeConfirmationDao;
-
-	@Autowired
 	private UserNodeCertificateDao userNodeCertificateDao;
-
-	@Autowired
 	private Validator userValidator;
-
-	@Autowired
 	private SolarNodeDao solarNodeDao;
-
-	@Autowired
 	private SolarLocationDao solarLocationDao;
-
-	@Autowired
 	private NetworkIdentityBiz networkIdentityBiz;
-
-	@Autowired
 	private PasswordEncoder passwordEncoder;
-
-	@Autowired(required = false)
 	private Set<String> confirmedUserRoles = DEFAULT_CONFIRMED_USER_ROLES;
-
-	@Autowired(required = false)
 	private JavaBeanXmlSerializer xmlSerializer = new JavaBeanXmlSerializer();
-
-	@Autowired(required = false)
-	@Qualifier("emailThrottleCache")
 	private Ehcache emailThrottleCache;
+	private NodePKIBiz nodePKIBiz;
+	private int nodePrivateKeySize = 2048;
+	private String nodeKeystoreAlias = "node";
+	private ExecutorService executorService = Executors.newCachedThreadPool();
 
 	private Period invitationExpirationPeriod = new Period(0, 0, 1, 0, 0, 0, 0, 0); // 1 week
 	private String defaultSolarLocationName = "Unknown";
-
-	@Value("${RegistrationBiz.networkCertificateSubjectDNFormat}")
 	private String networkCertificateSubjectDNFormat = "UID=%s,O=SolarNetwork";
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private User getCurrentUser() {
 		String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -392,7 +382,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		userNodeConfirmationDao.delete(conf);
 	}
 
-	private String calculateCertificateConfirmationCode(DateTime date, Long nodeId) {
+	private String calculateNodeAssociationConfirmationCode(DateTime date, Long nodeId) {
 		return DigestUtils.sha256Hex(String.valueOf(date.getMillis()) + String.valueOf(nodeId));
 	}
 
@@ -401,7 +391,91 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	public NetworkCertificate confirmNodeAssociation(final String username, final String confirmationKey) {
 		assert username != null;
 		assert confirmationKey != null;
+		return confirmNodeAssociation(new NetworkAssociationDetails(username, confirmationKey, null));
+	}
 
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public NetworkCertificate getNodeCertificate(final NetworkAssociation association) {
+		if ( association == null ) {
+			throw new IllegalArgumentException("NetworkAssociation must be provided.");
+		}
+		final String username = association.getUsername();
+		final String confirmationKey = association.getConfirmationKey();
+		final String keystorePassword = association.getKeystorePassword();
+		if ( username == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+		if ( confirmationKey == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+		if ( keystorePassword == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+
+		final User user = userDao.getUserByEmail(username);
+		if ( user == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_EMAIL, username);
+		}
+
+		final UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(user.getId(),
+				confirmationKey);
+		if ( conf == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT,
+					confirmationKey);
+		}
+
+		final Long nodeId = conf.getNodeId();
+		if ( nodeId == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+
+		final UserNodeCertificate cert = userNodeCertificateDao
+				.get(new UserNodePK(user.getId(), nodeId));
+		if ( cert == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+
+		final KeyStore keystore;
+		try {
+			keystore = cert.getKeyStore(keystorePassword);
+		} catch ( CertificateException e ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		}
+
+		final NetworkAssociationDetails details = new NetworkAssociationDetails();
+
+		final X509Certificate certificate = cert.getNodeCertificate(keystore);
+		if ( certificate != null ) {
+			details.setNetworkCertificateSubjectDN(certificate.getSubjectX500Principal().getName());
+
+			// if the certificate has been signed by a CA, then include the entire .p12 in the response (Base 64 encoded)
+			if ( certificate.getIssuerX500Principal().equals(certificate.getSubjectX500Principal()) == false ) {
+				details.setNetworkCertificate(Base64.encodeBase64String(cert.getKeystoreData()));
+			}
+		}
+
+		details.setNetworkId(nodeId);
+		details.setConfirmationKey(confirmationKey);
+		details.setNetworkCertificateStatus(cert.getStatus().getValue());
+		return details;
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public NetworkCertificate confirmNodeAssociation(NetworkAssociation association)
+			throws AuthorizationException {
+		if ( association == null ) {
+			throw new IllegalArgumentException("NetworkAssociation must be provided.");
+		}
+		final String username = association.getUsername();
+		final String confirmationKey = association.getConfirmationKey();
+		if ( username == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+		if ( confirmationKey == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
 		final User user = userDao.getUserByEmail(username);
 		if ( user == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_EMAIL, null);
@@ -477,23 +551,161 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		conf.setNodeId(nodeId);
 		userNodeConfirmationDao.store(conf);
 
-		UserNodeCertificate cert = new UserNodeCertificate();
-		cert.setCreated(conf.getConfirmationDate());
-		cert.setNode(node);
-		cert.setUser(user);
-		cert.setStatus(UserNodeCertificateStatus.a);
-		cert.setConfirmationKey(calculateCertificateConfirmationCode(cert.getCreated(), nodeId));
+		final String certSubjectDN = String.format(networkCertificateSubjectDNFormat, nodeId.toString());
 
-		// here we might generate the certificate on the fly...
-		userNodeCertificateDao.store(cert);
+		UserNodeCertificate cert = null;
+		if ( association.getKeystorePassword() != null ) {
+			// we must become the User now for CSR to be generated
+			SecurityUtils.becomeUser(user.getEmail(), user.getName(), user.getId());
+
+			// we'll generate a key and CSR for the user, encrypting with the provided password
+			cert = generateNodeCSR(association, certSubjectDN);
+			if ( cert.getRequestId() == null ) {
+				log.error("No CSR request ID returned for {}", certSubjectDN);
+				throw new CertificateException("No CSR request ID returned");
+			}
+
+			cert.setCreated(conf.getConfirmationDate());
+			cert.setNodeId(node.getId());
+			cert.setUserId(user.getId());
+
+			userNodeCertificateDao.store(cert);
+
+			approveCSR(association, user, cert);
+		}
 
 		NetworkAssociationDetails details = new NetworkAssociationDetails();
 		details.setNetworkId(nodeId);
-		details.setConfirmationKey(cert.getConfirmationKey());
-		details.setNetworkCertificateStatus(cert.getStatus().getValue());
-		details.setNetworkCertificateSubjectDN(String.format(networkCertificateSubjectDNFormat,
-				nodeId.toString()));
+		details.setConfirmationKey(calculateNodeAssociationConfirmationCode(conf.getConfirmationDate(),
+				nodeId));
+		if ( cert != null ) {
+			details.setNetworkCertificateStatus(cert.getStatus().getValue());
+		}
+		details.setNetworkCertificateSubjectDN(certSubjectDN);
 		return details;
+	}
+
+	private void approveCSR(final NetworkAssociation association, final User user,
+			final UserNodeCertificate cert) {
+		executorService.submit(new Runnable() {
+
+			@Override
+			public void run() {
+				SecurityUtils.becomeUser(user.getEmail(), user.getName(), user.getId());
+				X509Certificate[] chain = nodePKIBiz.approveCSR(cert.getRequestId());
+				saveNodeSignedCertificate(association, cert, chain);
+				userNodeCertificateDao.store(cert);
+			}
+		});
+	}
+
+	public void saveNodeSignedCertificate(final NetworkAssociation association,
+			UserNodeCertificate cert, X509Certificate[] chain) throws CertificateException {
+		KeyStore keyStore = cert.getKeyStore(association.getKeystorePassword());
+		Key key;
+		try {
+			key = keyStore.getKey(UserNodeCertificate.KEYSTORE_NODE_ALIAS, association
+					.getKeystorePassword().toCharArray());
+		} catch ( GeneralSecurityException e ) {
+			throw new CertificateException("Error opening node private key", e);
+		}
+		X509Certificate nodeCert = cert.getNodeCertificate(keyStore);
+		if ( nodeCert == null ) {
+			throw new CertificateException("UserNodeCertificate " + cert.getId()
+					+ " does not have a private key.");
+		}
+
+		log.info("Installing node certificate reply {} issued by {}", chain[0].getSubjectDN().getName(),
+				chain[0].getIssuerDN().getName());
+		try {
+			keyStore.setKeyEntry(UserNodeCertificate.KEYSTORE_NODE_ALIAS, key, association
+					.getKeystorePassword().toCharArray(), chain);
+		} catch ( KeyStoreException e ) {
+			throw new CertificateException("Error opening node certificate", e);
+		}
+
+		ByteArrayOutputStream byos = new ByteArrayOutputStream();
+		storeKeyStore(keyStore, association.getKeystorePassword(), byos);
+		cert.setKeystoreData(byos.toByteArray());
+		cert.setStatus(UserNodeCertificateStatus.v);
+	}
+
+	private UserNodeCertificate generateNodeCSR(NetworkAssociation association,
+			final String certSubjectDN) {
+		try {
+			KeyStore keystore = loadKeyStore(association.getKeystorePassword(), null);
+
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+			keyGen.initialize(nodePrivateKeySize, new SecureRandom());
+			KeyPair keypair = keyGen.generateKeyPair();
+			X509Certificate certificate = nodePKIBiz.generateCertificate(certSubjectDN,
+					keypair.getPublic(), keypair.getPrivate());
+			keystore.setKeyEntry(nodeKeystoreAlias, keypair.getPrivate(), association
+					.getKeystorePassword().toCharArray(), new Certificate[] { certificate });
+
+			String csrID = nodePKIBiz.submitCSR(certificate, keypair.getPrivate());
+
+			ByteArrayOutputStream byos = new ByteArrayOutputStream();
+			storeKeyStore(keystore, association.getKeystorePassword(), byos);
+
+			UserNodeCertificate cert = new UserNodeCertificate();
+			cert.setStatus(UserNodeCertificateStatus.a);
+			cert.setRequestId(csrID);
+			cert.setKeystoreData(byos.toByteArray());
+			return cert;
+		} catch ( GeneralSecurityException e ) {
+			log.error("Error creating node CSR {}: {}", certSubjectDN, e.getMessage());
+			throw new CertificateException("Unable to create node CSR " + certSubjectDN, e);
+		}
+	}
+
+	private KeyStore loadKeyStore(String password, InputStream in) {
+		KeyStore keyStore = null;
+		try {
+			keyStore = KeyStore.getInstance("pkcs12");
+			keyStore.load(in, password.toCharArray());
+			return keyStore;
+		} catch ( KeyStoreException e ) {
+			throw new CertificateException("Error loading certificate key store", e);
+		} catch ( NoSuchAlgorithmException e ) {
+			throw new CertificateException("Error loading certificate key store", e);
+		} catch ( java.security.cert.CertificateException e ) {
+			throw new CertificateException("Error loading certificate key store", e);
+		} catch ( IOException e ) {
+			String msg;
+			if ( e.getCause() instanceof UnrecoverableKeyException ) {
+				msg = "Invalid password loading key store";
+			} else {
+				msg = "Error loading certificate key store";
+			}
+			throw new CertificateException(msg, e);
+		} finally {
+			if ( in != null ) {
+				try {
+					in.close();
+				} catch ( IOException e ) {
+					// ignore this one
+				}
+			}
+		}
+	}
+
+	private void storeKeyStore(KeyStore keystore, String password, OutputStream out) {
+		final char[] pass = (password == null ? new char[0] : password.toCharArray());
+		try {
+			keystore.store(out, pass);
+		} catch ( IOException e ) {
+			throw new CertificateException("Unable to serialize keystore", e);
+		} catch ( GeneralSecurityException e ) {
+			throw new CertificateException("Unable to serialize keystore", e);
+		} finally {
+			try {
+				out.flush();
+				out.close();
+			} catch ( IOException e ) {
+				// ignore this one
+			}
+		}
 	}
 
 	@Override
@@ -673,6 +885,22 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	public void setEmailThrottleCache(Ehcache emailThrottleCache) {
 		this.emailThrottleCache = emailThrottleCache;
+	}
+
+	public void setNodePKIBiz(NodePKIBiz nodePKIBiz) {
+		this.nodePKIBiz = nodePKIBiz;
+	}
+
+	public void setNodePrivateKeySize(int nodePrivateKeySize) {
+		this.nodePrivateKeySize = nodePrivateKeySize;
+	}
+
+	public void setNodeKeystoreAlias(String nodeKeystoreAlias) {
+		this.nodeKeystoreAlias = nodeKeystoreAlias;
+	}
+
+	public void setExecutorService(ExecutorService executorService) {
+		this.executorService = executorService;
 	}
 
 }

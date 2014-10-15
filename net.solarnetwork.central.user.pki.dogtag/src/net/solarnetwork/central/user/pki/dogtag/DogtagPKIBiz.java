@@ -20,9 +20,10 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dogtag;
+package net.solarnetwork.central.user.pki.dogtag;
 
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -76,6 +77,29 @@ public class DogtagPKIBiz implements NodePKIBiz {
 	private Map<String, XPathExpression> csrInfoMapping;
 	private Map<String, XPathExpression> certDetailMapping;
 	private Map<String, XPathExpression> agentCsrInfoMapping;
+
+	@Override
+	public X509Certificate generateCertificate(String dn, PublicKey publicKey, PrivateKey privateKey)
+			throws CertificateException {
+		return certificateService.generateCertificate(dn, publicKey, privateKey);
+	}
+
+	@Override
+	public String generatePKCS10CertificateRequestString(X509Certificate cert, PrivateKey privateKey)
+			throws CertificateException {
+		return certificateService.generatePKCS10CertificateRequestString(cert, privateKey);
+	}
+
+	@Override
+	public String generatePKCS7CertificateChainString(X509Certificate[] chain)
+			throws CertificateException {
+		return certificateService.generatePKCS7CertificateChainString(chain);
+	}
+
+	@Override
+	public X509Certificate[] parsePKCS7CertificateChainString(String pem) throws CertificateException {
+		return certificateService.parsePKCS7CertificateChainString(pem);
+	}
 
 	@Override
 	public String submitCSR(final X509Certificate certificate, final PrivateKey privateKey)

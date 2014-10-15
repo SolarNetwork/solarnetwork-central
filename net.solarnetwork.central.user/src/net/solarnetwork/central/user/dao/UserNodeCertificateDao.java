@@ -24,14 +24,15 @@ package net.solarnetwork.central.user.dao;
 
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import net.solarnetwork.central.user.domain.UserNodePK;
 
 /**
  * DAO API for user node certificates.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface UserNodeCertificateDao extends GenericDao<UserNodeCertificate, Long> {
+public interface UserNodeCertificateDao extends GenericDao<UserNodeCertificate, UserNodePK> {
 
 	/**
 	 * Get a certificate object for a given node ID and key.
@@ -41,16 +42,5 @@ public interface UserNodeCertificateDao extends GenericDao<UserNodeCertificate, 
 	 * @return the found UserNodeCertificate, or <em>null</em> if not found
 	 */
 	UserNodeCertificate getActiveCertificateForNode(Long nodeId);
-
-	/**
-	 * Get a certificate object for a given user ID and key.
-	 * 
-	 * @param userId
-	 *        the user ID
-	 * @param key
-	 *        the confirmation key
-	 * @return the found UserNodeCertificate, or <em>null</em> if not found
-	 */
-	UserNodeCertificate getCertificateForKey(Long userId, String key);
 
 }

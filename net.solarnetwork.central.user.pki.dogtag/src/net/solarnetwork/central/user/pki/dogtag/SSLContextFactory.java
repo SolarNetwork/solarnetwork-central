@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dogtag;
+package net.solarnetwork.central.user.pki.dogtag;
 
 import java.io.IOException;
 import java.io.InputStream;

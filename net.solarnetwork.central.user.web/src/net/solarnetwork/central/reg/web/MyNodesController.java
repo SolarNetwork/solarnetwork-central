@@ -25,10 +25,13 @@
 package net.solarnetwork.central.reg.web;
 
 import static net.solarnetwork.web.domain.Response.response;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
@@ -37,6 +40,7 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.domain.NetworkAssociation;
+import net.solarnetwork.support.CertificateService;
 import net.solarnetwork.web.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -46,6 +50,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -64,6 +69,7 @@ public class MyNodesController extends ControllerSupport {
 
 	public final UserBiz userBiz;
 	public final RegistrationBiz registrationBiz;
+	public final CertificateService certificateService;
 
 	/**
 	 * Constructor.
@@ -74,10 +80,12 @@ public class MyNodesController extends ControllerSupport {
 	 *        the RegistrationBiz
 	 */
 	@Autowired
-	public MyNodesController(UserBiz userBiz, RegistrationBiz registrationBiz) {
+	public MyNodesController(UserBiz userBiz, RegistrationBiz registrationBiz,
+			CertificateService certificateService) {
 		super();
 		this.userBiz = userBiz;
 		this.registrationBiz = registrationBiz;
+		this.certificateService = certificateService;
 	}
 
 	/**
@@ -158,22 +166,31 @@ public class MyNodesController extends ControllerSupport {
 	 *        if TRUE, then download the certificate as a PEM file
 	 * @return the response data
 	 */
-	@RequestMapping("/cert")
+	@RequestMapping("/cert/{nodeId}")
 	@ResponseBody
-	public Object viewCert(@RequestParam("id") Long certId,
+	public Object viewCert(@PathVariable("nodeId") Long nodeId,
 			@RequestParam(value = "download", required = false) Boolean download) {
-		UserNodeCertificate cert = userBiz.getUserNodeCertificate(certId);
+		SecurityUser actor = SecurityUtils.getCurrentUser();
+		UserNodeCertificate cert = userBiz.getUserNodeCertificate(actor.getUserId(), nodeId);
 		if ( cert == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, certId);
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
 		}
+
 		if ( !Boolean.TRUE.equals(download) ) {
 			return cert;
 		}
 
-		String pem = cert.getPEMValue();
+		String pkcs7 = "";
+
+		if ( cert.getKeystoreData() != null ) {
+			KeyStore keystore = cert.getKeyStore(null);
+			X509Certificate certificate = cert.getNodeCertificate(keystore);
+			pkcs7 = certificateService
+					.generatePKCS7CertificateChainString(new X509Certificate[] { certificate });
+		}
 
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentLength(pem.length());
+		headers.setContentLength(pkcs7.length());
 		headers.setContentType(MediaType.parseMediaType("application/x-pem-file"));
 		headers.setLastModified(System.currentTimeMillis());
 		headers.setCacheControl("no-cache");
@@ -181,7 +198,7 @@ public class MyNodesController extends ControllerSupport {
 		headers.set("Content-Disposition", "attachment; filename=solarnode-" + cert.getNode().getId()
 				+ ".pem");
 
-		return new ResponseEntity<String>(pem, headers, HttpStatus.OK);
+		return new ResponseEntity<String>(pkcs7, headers, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/editNode", method = RequestMethod.GET)

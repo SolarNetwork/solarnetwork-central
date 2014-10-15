@@ -11,7 +11,7 @@
 
 	<ctx:property-placeholder location="classpath:/dogtag.properties"/>
 
-	<bean id="restFactory" class="net.solarnetwork.central.user.dogtag.SSLContextFactory">
+	<bean id="restFactory" class="net.solarnetwork.central.user.pki.dogtag.SSLContextFactory">
 		<property name="keystoreResource" value="classpath:/dogtag-client.jks"/>
 		<property name="keystorePassword" value="${dogtag.keystore.pass}"/>
 	</bean>

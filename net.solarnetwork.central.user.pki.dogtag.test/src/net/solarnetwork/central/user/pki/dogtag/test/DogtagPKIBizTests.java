@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dogtag.test;
+package net.solarnetwork.central.user.pki.dogtag.test;
 
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -31,7 +31,7 @@ import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import net.solarnetwork.central.security.AuthenticatedUser;
-import net.solarnetwork.central.user.dogtag.DogtagPKIBiz;
+import net.solarnetwork.central.user.pki.dogtag.DogtagPKIBiz;
 import net.solarnetwork.pki.bc.BCCertificateService;
 import org.junit.Assert;
 import org.junit.Before;

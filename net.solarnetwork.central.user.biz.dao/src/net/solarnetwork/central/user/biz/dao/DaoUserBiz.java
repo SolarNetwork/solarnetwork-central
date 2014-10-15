@@ -33,7 +33,6 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.security.PasswordEncoder;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -47,11 +46,10 @@ import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.central.user.domain.UserNodePK;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,33 +59,16 @@ import org.springframework.transaction.annotation.Transactional;
  * @author matt
  * @version 1.0
  */
-@Service("daoUserBiz")
 public class DaoUserBiz implements UserBiz {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Autowired
 	private UserDao userDao;
-
-	@Autowired
 	private UserNodeDao userNodeDao;
-
-	@Autowired
 	private UserNodeConfirmationDao userNodeConfirmationDao;
-
-	@Autowired
 	private UserNodeCertificateDao userNodeCertificateDao;
-
-	@Autowired
 	private UserAuthTokenDao userAuthTokenDao;
-
-	@Autowired
-	private PasswordEncoder passwordEncoder;
-
-	@Autowired
 	private SolarLocationDao solarLocationDao;
-
-	@Autowired
 	private SolarNodeDao solarNodeDao;
 
 	@Override
@@ -180,9 +161,10 @@ public class DaoUserBiz implements UserBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public UserNodeCertificate getUserNodeCertificate(Long certId) {
-		assert certId != null;
-		return userNodeCertificateDao.get(certId);
+	public UserNodeCertificate getUserNodeCertificate(Long userId, Long nodeId) {
+		assert userId != null;
+		assert nodeId != null;
+		return userNodeCertificateDao.get(new UserNodePK(userId, nodeId));
 	}
 
 	@Override
@@ -285,10 +267,6 @@ public class DaoUserBiz implements UserBiz {
 
 	public void setUserAuthTokenDao(UserAuthTokenDao userAuthTokenDao) {
 		this.userAuthTokenDao = userAuthTokenDao;
-	}
-
-	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-		this.passwordEncoder = passwordEncoder;
 	}
 
 	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {

@@ -1,5 +1,5 @@
 /* ==================================================================
- * DogtagAgentCertRequestInfo.java - Oct 15, 2014 7:00:52 AM
+ * DogtagCertificateData.java - Oct 14, 2014 9:12:30 PM
  * 
  * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
@@ -20,51 +20,35 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dogtag;
+package net.solarnetwork.central.user.pki.dogtag;
+
+import java.math.BigInteger;
 
 /**
- * Agent info on a certificate request in Dogtag.
+ * Details about a certificate in Dogtag.
  * 
  * @author matt
  * @version 1.0
  */
-public class DogtagAgentCertRequestInfo {
+public class DogtagCertificateData {
 
-	private String requestorName;
-	private String requestorEmail;
-	private String subjectDn;
-	private String csr;
+	private BigInteger id;
+	private String pkcs7Chain;
 
-	public String getRequestorName() {
-		return requestorName;
+	public BigInteger getId() {
+		return id;
 	}
 
-	public void setRequestorName(String requestorName) {
-		this.requestorName = requestorName;
+	public void setId(BigInteger id) {
+		this.id = id;
 	}
 
-	public String getRequestorEmail() {
-		return requestorEmail;
+	public String getPkcs7Chain() {
+		return pkcs7Chain;
 	}
 
-	public void setRequestorEmail(String requestorEmail) {
-		this.requestorEmail = requestorEmail;
-	}
-
-	public String getSubjectDn() {
-		return subjectDn;
-	}
-
-	public void setSubjectDn(String subjectDn) {
-		this.subjectDn = subjectDn;
-	}
-
-	public String getCsr() {
-		return csr;
-	}
-
-	public void setCsr(String csr) {
-		this.csr = csr;
+	public void setPkcs7Chain(String pkcs7Chain) {
+		this.pkcs7Chain = pkcs7Chain;
 	}
 
 }

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.biz;
 
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import net.solarnetwork.support.CertificateService;
 
 /**
  * API for managing SolarNode PKI from within SolarUser.
@@ -31,7 +32,7 @@ import java.security.cert.X509Certificate;
  * @author matt
  * @version 1.0
  */
-public interface NodePKIBiz {
+public interface NodePKIBiz extends CertificateService {
 
 	/**
 	 * Submit a certificate signing request (CSR) and obtain a unique request

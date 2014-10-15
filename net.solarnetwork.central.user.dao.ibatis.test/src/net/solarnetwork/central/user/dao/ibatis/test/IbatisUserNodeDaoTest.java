@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.user.dao.ibatis.test;
@@ -35,7 +33,7 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
-import org.apache.commons.codec.digest.DigestUtils;
+import net.solarnetwork.central.user.domain.UserNodePK;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * Test case for the {@link IbatisUserNodeDao} class.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.1
  */
 public class IbatisUserNodeDaoTest extends AbstractIbatisUserDaoTestSupport {
 
@@ -60,7 +58,6 @@ public class IbatisUserNodeDaoTest extends AbstractIbatisUserDaoTestSupport {
 	private static final String TEST_DESC = "Test description";
 	private static final Long TEST_ID_2 = -2L;
 	private static final byte[] TEST_CERT = "test cert".getBytes();
-	private static final String TEST_CONF_KEY = DigestUtils.sha256Hex("test conf key");
 
 	@Autowired
 	private IbatisUserNodeDao userNodeDao;
@@ -172,46 +169,28 @@ public class IbatisUserNodeDaoTest extends AbstractIbatisUserDaoTestSupport {
 		this.user = createNewUser(TEST_EMAIL);
 	}
 
-	private UserNodeCertificate storeNewCert(String key, UserNodeCertificateStatus status) {
+	private UserNodeCertificate storeNewCert(UserNodeCertificateStatus status) {
 		UserNodeCertificate newUserNodeCert = new UserNodeCertificate();
 		newUserNodeCert.setCreated(new DateTime());
-		newUserNodeCert.setNode(this.node);
-		newUserNodeCert.setUser(this.user);
-		newUserNodeCert.setConfirmationKey(key);
-		newUserNodeCert.setCertificate(TEST_CERT);
+		newUserNodeCert.setNodeId(this.node.getId());
+		newUserNodeCert.setUserId(this.user.getId());
+		newUserNodeCert.setKeystoreData(TEST_CERT);
 		newUserNodeCert.setStatus(status);
-		Long id = userNodeCertificateDao.store(newUserNodeCert);
+		newUserNodeCert.setRequestId("test req ID");
+		UserNodePK id = userNodeCertificateDao.store(newUserNodeCert);
 		assertNotNull(id);
 		return userNodeCertificateDao.get(id);
 	}
 
 	@Test
-	public void findForUserWithCertificates() {
+	public void findForUserWithCertificate() {
 		storeNewUserNode();
-		final UserNodeCertificate cert1 = storeNewCert(TEST_CONF_KEY, UserNodeCertificateStatus.v);
+		final UserNodeCertificate cert1 = storeNewCert(UserNodeCertificateStatus.v);
 
 		List<UserNode> results = userNodeDao.findUserNodesAndCertificatesForUser(user.getId());
 		assertNotNull(results);
 		assertEquals(1, results.size());
 		assertEquals(cert1, results.get(0).getCertificate());
-
-		// add a second cert for the same user, with higher status
-		UserNodeCertificate newUserNodeCert = new UserNodeCertificate();
-		newUserNodeCert.setCreated(new DateTime());
-		newUserNodeCert.setNode(this.node);
-		newUserNodeCert.setUser(this.user);
-		newUserNodeCert.setConfirmationKey(DigestUtils.sha256Hex(TEST_CONF_KEY));
-		newUserNodeCert.setCertificate(TEST_CERT);
-		newUserNodeCert.setStatus(UserNodeCertificateStatus.a);
-		Long id = userNodeCertificateDao.store(newUserNodeCert);
-		assertNotNull(id);
-
-		final UserNodeCertificate cert2 = userNodeCertificateDao.get(id);
-
-		results = userNodeDao.findUserNodesAndCertificatesForUser(user.getId());
-		assertNotNull(results);
-		assertEquals(1, results.size());
-		assertEquals(cert2, results.get(0).getCertificate());
 	}
 
 }

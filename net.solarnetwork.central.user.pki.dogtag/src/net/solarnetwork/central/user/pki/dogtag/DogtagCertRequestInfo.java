@@ -1,5 +1,5 @@
 /* ==================================================================
- * DogtagCertificateData.java - Oct 14, 2014 9:12:30 PM
+ * DogtagCertRequestInfo.java - Oct 14, 2014 8:46:57 PM
  * 
  * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
@@ -20,35 +20,44 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dogtag;
+package net.solarnetwork.central.user.pki.dogtag;
 
-import java.math.BigInteger;
+import java.net.URL;
 
 /**
- * Details about a certificate in Dogtag.
+ * Details on a Dogtag CSR.
  * 
  * @author matt
  * @version 1.0
  */
-public class DogtagCertificateData {
+public class DogtagCertRequestInfo {
 
-	private BigInteger id;
-	private String pkcs7Chain;
+	private String requestStatus;
+	private URL requestURL;
+	private URL certURL;
 
-	public BigInteger getId() {
-		return id;
+	public String getRequestStatus() {
+		return requestStatus;
 	}
 
-	public void setId(BigInteger id) {
-		this.id = id;
+	public void setRequestStatus(String requestStatus) {
+		this.requestStatus = requestStatus;
 	}
 
-	public String getPkcs7Chain() {
-		return pkcs7Chain;
+	public URL getRequestURL() {
+		return requestURL;
 	}
 
-	public void setPkcs7Chain(String pkcs7Chain) {
-		this.pkcs7Chain = pkcs7Chain;
+	public void setRequestURL(URL requestURL) {
+		this.requestURL = requestURL;
+	}
+
+	public URL getCertURL() {
+		return certURL;
+	}
+
+	public void setCertURL(URL certURL) {
+		this.certURL = certURL;
 	}
 
 }

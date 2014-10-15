@@ -1,5 +1,5 @@
 /* ==================================================================
- * DogtagCertRequestInfo.java - Oct 14, 2014 8:46:57 PM
+ * DogtagAgentCertRequestInfo.java - Oct 15, 2014 7:00:52 AM
  * 
  * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
@@ -20,44 +20,51 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dogtag;
-
-import java.net.URL;
+package net.solarnetwork.central.user.pki.dogtag;
 
 /**
- * Details on a Dogtag CSR.
+ * Agent info on a certificate request in Dogtag.
  * 
  * @author matt
  * @version 1.0
  */
-public class DogtagCertRequestInfo {
+public class DogtagAgentCertRequestInfo {
 
-	private String requestStatus;
-	private URL requestURL;
-	private URL certURL;
+	private String requestorName;
+	private String requestorEmail;
+	private String subjectDn;
+	private String csr;
 
-	public String getRequestStatus() {
-		return requestStatus;
+	public String getRequestorName() {
+		return requestorName;
 	}
 
-	public void setRequestStatus(String requestStatus) {
-		this.requestStatus = requestStatus;
+	public void setRequestorName(String requestorName) {
+		this.requestorName = requestorName;
 	}
 
-	public URL getRequestURL() {
-		return requestURL;
+	public String getRequestorEmail() {
+		return requestorEmail;
 	}
 
-	public void setRequestURL(URL requestURL) {
-		this.requestURL = requestURL;
+	public void setRequestorEmail(String requestorEmail) {
+		this.requestorEmail = requestorEmail;
 	}
 
-	public URL getCertURL() {
-		return certURL;
+	public String getSubjectDn() {
+		return subjectDn;
 	}
 
-	public void setCertURL(URL certURL) {
-		this.certURL = certURL;
+	public void setSubjectDn(String subjectDn) {
+		this.subjectDn = subjectDn;
+	}
+
+	public String getCsr() {
+		return csr;
+	}
+
+	public void setCsr(String csr) {
+		this.csr = csr;
 	}
 
 }
