@@ -24,19 +24,25 @@
 
 package net.solarnetwork.central.security;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 
 /**
  * Security helper methods.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SecurityUtils {
 
@@ -61,6 +67,27 @@ public class SecurityUtils {
 			SecurityContextHolder.getContext().setAuthentication(null);
 			throw e;
 		}
+	}
+
+	/**
+	 * Become a user with a {@code RUN_AS_ROLE_USER} authority.
+	 * 
+	 * @param username
+	 *        the username (email) to use
+	 * @param name
+	 *        the name
+	 * @param userId
+	 *        the user ID
+	 * @since 1.1
+	 */
+	public static void becomeUser(String username, String name, Long userId) {
+		User userDetails = new User(username, "", AuthorityUtils.NO_AUTHORITIES);
+		AuthenticatedUser user = new AuthenticatedUser(userDetails, userId, name, false);
+		Collection<GrantedAuthority> authorities = Collections
+				.singleton((GrantedAuthority) new SimpleGrantedAuthority("RUN_AS_ROLE_USER"));
+		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, "",
+				authorities);
+		SecurityContextHolder.getContext().setAuthentication(auth);
 	}
 
 	/**
