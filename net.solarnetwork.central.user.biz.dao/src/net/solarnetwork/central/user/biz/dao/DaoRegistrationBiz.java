@@ -43,8 +43,13 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
@@ -140,6 +145,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	private int nodePrivateKeySize = 2048;
 	private String nodeKeystoreAlias = "node";
 	private ExecutorService executorService = Executors.newCachedThreadPool();
+	private int approveCSRMaximumWaitSecs = 15;
 
 	private Period invitationExpirationPeriod = new Period(0, 0, 1, 0, 0, 0, 0, 0); // 1 week
 	private String defaultSolarLocationName = "Unknown";
@@ -571,7 +577,19 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 			userNodeCertificateDao.store(cert);
 
-			approveCSR(association, user, cert);
+			Future<UserNodeCertificate> approval = approveCSR(association, user, cert);
+			try {
+				cert = approval.get(approveCSRMaximumWaitSecs, TimeUnit.SECONDS);
+			} catch ( TimeoutException e ) {
+				log.debug("Timeout waiting for {} CSR approval", certSubjectDN);
+				// just continue
+			} catch ( InterruptedException e ) {
+				log.debug("Interrupted waiting for {} CSR approval", certSubjectDN);
+				// just continue
+			} catch ( ExecutionException e ) {
+				log.error("CSR {} approval threw an exception: {}", certSubjectDN, e.getMessage());
+				throw new CertificateException("Error approving CSR", e);
+			}
 		}
 
 		NetworkAssociationDetails details = new NetworkAssociationDetails();
@@ -580,21 +598,29 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				nodeId));
 		if ( cert != null ) {
 			details.setNetworkCertificateStatus(cert.getStatus().getValue());
+			if ( cert.getStatus() == UserNodeCertificateStatus.v ) {
+				details.setNetworkCertificate(getCertificateAsString(cert.getKeystoreData()));
+			}
 		}
 		details.setNetworkCertificateSubjectDN(certSubjectDN);
 		return details;
 	}
 
-	private void approveCSR(final NetworkAssociation association, final User user,
-			final UserNodeCertificate cert) {
-		executorService.submit(new Runnable() {
+	private String getCertificateAsString(byte[] data) {
+		return Base64.encodeBase64String(data);
+	}
+
+	private Future<UserNodeCertificate> approveCSR(final NetworkAssociation association,
+			final User user, final UserNodeCertificate cert) {
+		return executorService.submit(new Callable<UserNodeCertificate>() {
 
 			@Override
-			public void run() {
+			public UserNodeCertificate call() throws Exception {
 				SecurityUtils.becomeUser(user.getEmail(), user.getName(), user.getId());
 				X509Certificate[] chain = nodePKIBiz.approveCSR(cert.getRequestId());
 				saveNodeSignedCertificate(association, cert, chain);
 				userNodeCertificateDao.store(cert);
+				return cert;
 			}
 		});
 	}
@@ -901,6 +927,10 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	public void setExecutorService(ExecutorService executorService) {
 		this.executorService = executorService;
+	}
+
+	public void setApproveCSRMaximumWaitSecs(int approveCSRMaximumWaitSecs) {
+		this.approveCSRMaximumWaitSecs = approveCSRMaximumWaitSecs;
 	}
 
 }
