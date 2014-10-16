@@ -169,6 +169,7 @@ public class MyNodesController extends ControllerSupport {
 	@RequestMapping("/cert/{nodeId}")
 	@ResponseBody
 	public Object viewCert(@PathVariable("nodeId") Long nodeId,
+			@RequestParam(value = "password", required = false) String password,
 			@RequestParam(value = "download", required = false) Boolean download) {
 		SecurityUser actor = SecurityUtils.getCurrentUser();
 		UserNodeCertificate cert = userBiz.getUserNodeCertificate(actor.getUserId(), nodeId);
@@ -176,29 +177,50 @@ public class MyNodesController extends ControllerSupport {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
 		}
 
+		final byte[] data = cert.getKeystoreData();
+
 		if ( !Boolean.TRUE.equals(download) ) {
-			return cert;
-		}
-
-		String pkcs7 = "";
-
-		if ( cert.getKeystoreData() != null ) {
-			KeyStore keystore = cert.getKeyStore(null);
-			X509Certificate certificate = cert.getNodeCertificate(keystore);
-			pkcs7 = certificateService
-					.generatePKCS7CertificateChainString(new X509Certificate[] { certificate });
+			String pkcs7 = "";
+			if ( data != null ) {
+				KeyStore keystore = cert.getKeyStore(password);
+				X509Certificate[] chain = cert.getNodeCertificateChain(keystore);
+				pkcs7 = certificateService.generatePKCS7CertificateChainString(chain);
+			}
+			return new UserNodeCertificateDecoded(cert, pkcs7);
 		}
 
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentLength(pkcs7.length());
-		headers.setContentType(MediaType.parseMediaType("application/x-pem-file"));
+		headers.setContentLength(data.length);
+		headers.setContentType(MediaType.parseMediaType("application/x-pkcs12"));
 		headers.setLastModified(System.currentTimeMillis());
 		headers.setCacheControl("no-cache");
 
 		headers.set("Content-Disposition", "attachment; filename=solarnode-" + cert.getNode().getId()
-				+ ".pem");
+				+ ".p12");
 
-		return new ResponseEntity<String>(pkcs7, headers, HttpStatus.OK);
+		return new ResponseEntity<byte[]>(data, headers, HttpStatus.OK);
+	}
+
+	public static class UserNodeCertificateDecoded extends UserNodeCertificate {
+
+		private static final long serialVersionUID = 4591637182934678849L;
+
+		private final String pemValue;
+
+		private UserNodeCertificateDecoded(UserNodeCertificate cert, String pkcs7) {
+			super();
+			setCreated(cert.getCreated());
+			setId(cert.getId());
+			setNodeId(cert.getNodeId());
+			setRequestId(cert.getRequestId());
+			setUserId(cert.getUserId());
+			this.pemValue = pkcs7;
+		}
+
+		public String getPemValue() {
+			return pemValue;
+		}
+
 	}
 
 	@RequestMapping(value = "/editNode", method = RequestMethod.GET)

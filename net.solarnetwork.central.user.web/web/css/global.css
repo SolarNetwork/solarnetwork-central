@@ -43,6 +43,10 @@ label {
 	width: 366px;
 }
 
+#modal-cert-container {
+	margin-top: 12px;
+}
+
 .hbox {
 	display: -webkit-flex;
 	display: -ms-flexbox;
