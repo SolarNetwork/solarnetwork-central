@@ -38,7 +38,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * Delegating implementation of {@link UserBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelegatingUserBiz implements UserBiz {
 
@@ -86,8 +86,8 @@ public class DelegatingUserBiz implements UserBiz {
 	}
 
 	@Override
-	public UserNodeCertificate getUserNodeCertificate(Long certId) {
-		return delegate.getUserNodeCertificate(certId);
+	public UserNodeCertificate getUserNodeCertificate(Long userId, Long nodeId) {
+		return delegate.getUserNodeCertificate(userId, nodeId);
 	}
 
 	@Override

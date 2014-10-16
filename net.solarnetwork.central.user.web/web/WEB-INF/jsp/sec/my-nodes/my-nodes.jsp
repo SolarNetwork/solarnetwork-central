@@ -6,7 +6,7 @@
 <section id="nodes">
 	<h2><fmt:message key='my-nodes.nodelist.header'/></h2>
 	<c:if test="${fn:length(userNodesList) > 0}">
-		<table class="table">
+		<table class="table" id="my-nodes-table">
 			<thead>
 				<tr>
 					<th><fmt:message key="user.node.id.label"/></th>
@@ -14,7 +14,7 @@
 					<th><fmt:message key="user.node.name.label"/></th>
 					<th><fmt:message key="user.node.description.label"/></th>
 					<th><fmt:message key="user.node.private.label"/></th>
-					<%--th><fmt:message key="user.node.certificate.label"/></th--%>
+					<th><fmt:message key="user.node.certificate.label"/></th>
 					<th></th>
 				</tr>
 			</thead>
@@ -35,20 +35,27 @@
 								<fmt:message key="user.node.private.${userNode.requiresAuthorization}"/>
 							</span>
 						</td>
-						<%--td>
-							<c:if test="${not empty userNode.certificate}">
-								<span class="label${userNode.certificate.status.value eq 'Active' 
-									? ' label-success' : userNode.certificate.status.value eq 'Disabled' 
-									? ' label-important' : ''}">
-									<fmt:message key="user.node.certificate.status.${userNode.certificate.status.value}"/>
-								</span>
-								<c:if test="${userNode.certificate.status.value eq 'Active'}">
-									<a href="<c:url value='/u/sec/my-nodes/cert'/>?id=${userNode.certificate.id}" class="btn btn-small view-cert">
-										<fmt:message key="user.node.certificate.action.view"/>
-									</a>
-								</c:if>
-							</c:if>
-						</td--%>
+						<td>
+							<c:choose>
+								<c:when test="${empty userNode.certificate}">
+									<span class="label">
+										<fmt:message key="user.node.certificate.unmanaged"/>
+									</span>
+								</c:when>
+								<c:otherwise>
+									<span class="label${userNode.certificate.status.value eq 'Active' 
+										? ' label-success' : userNode.certificate.status.value eq 'Disabled' 
+										? ' label-important' : ''}">
+										<fmt:message key="user.node.certificate.status.${userNode.certificate.status.value}"/>
+									</span>
+									<c:if test="${userNode.certificate.status.value eq 'Active'}">
+										<button type="button" data-node-id="${userNode.node.id}" class="btn btn-small view-cert">
+											<fmt:message key="user.node.certificate.action.view"/>
+										</button>
+									</c:if>
+								</c:otherwise>
+							</c:choose>
+						</td>
 						<td>
 							<button type="button" class="btn btn-small edit-node" data-target="#edit-node-modal"
 								data-user-id="${userNode.user.id}" data-node-id="${userNode.node.id}"
@@ -97,22 +104,29 @@
 	 		<button type="submit" class="btn btn-primary"><fmt:message key='my-nodes.inviteNode'/></button>
 	 	</div>
 	</form>
-	<div id="view-cert-modal" class="modal hide fade">
+	<form id="view-cert-modal" class="modal hide fade" action="<c:url value='/u/sec/my-nodes/cert'/>/0">
 	 	<div class="modal-header">
 	 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 	 		<h3><fmt:message key='my-nodes.cert.view.title'/></h3>
 	 	</div>
 	 	<div class="modal-body">
 	 		<p><fmt:message key='my-nodes-cert.view.intro'/></p>
-	 		<pre class="cert" id="modal-cert-container"></pre>
+	 		<fieldset class="form-inline">
+	 			<label for="view-cert-password"><fmt:message key='my-nodes.cert.view.password.label'/></label>
+				<input class="span3" type="password" name="password" id="view-cert-password" />
+	 		</fieldset>
+	 		<pre class="cert hidden" id="modal-cert-container"></pre>
 	 	</div>
 	 	<div class="modal-footer">
 	 		<a href="#" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></a>
-	 		<a href="<c:url value='/u/sec/my-nodes/cert'/>?download=true&id=0" id="modal-cert-download" class="btn btn-primary">
+	 		<a href="<c:url value='/u/sec/my-nodes/cert/0'/>?download=true" id="modal-cert-download" class="btn">
 	 			<fmt:message key='my-nodes.cert.action.download'/>
 	 		</a>
+	 		<button type="submit" class="btn btn-primary">
+	 			<fmt:message key='my-nodes-cert.action.view'/>
+	 		</button>
 	 	</div>
-	</div>
+	</form>
 	<form id="edit-node-modal" class="modal hide fade page1" action="<c:url value='/u/sec/my-nodes/updateNode'/>" method="post">
 	 	<div class="modal-header">
 	 		<button type="button" class="close" data-dismiss="modal">&times;</button>

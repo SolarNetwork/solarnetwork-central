@@ -32,7 +32,7 @@ import net.solarnetwork.central.user.dao.ibatis.IbatisUserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
-import org.apache.commons.codec.digest.DigestUtils;
+import net.solarnetwork.central.user.domain.UserNodePK;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,7 +54,7 @@ public class IbatisUserNodeCertificateTest extends AbstractIbatisUserDaoTestSupp
 			"solaruser.user_node", "solaruser.user_user" };
 
 	private static final byte[] TEST_CERT = "test cert".getBytes();
-	private static final String TEST_CONF_KEY = DigestUtils.sha256Hex("test conf key");
+	private static final String TEST_REQ_KEY = "test req key";
 
 	@Autowired
 	private IbatisUserNodeCertificateDao userNodeCertificateDao;
@@ -84,12 +84,12 @@ public class IbatisUserNodeCertificateTest extends AbstractIbatisUserDaoTestSupp
 	public void storeNew() {
 		UserNodeCertificate newUserNodeCert = new UserNodeCertificate();
 		newUserNodeCert.setCreated(new DateTime());
-		newUserNodeCert.setNode(this.node);
-		newUserNodeCert.setUser(this.user);
-		newUserNodeCert.setConfirmationKey(TEST_CONF_KEY);
-		newUserNodeCert.setCertificate(TEST_CERT);
+		newUserNodeCert.setNodeId(this.node.getId());
+		newUserNodeCert.setUserId(this.user.getId());
+		newUserNodeCert.setRequestId(TEST_REQ_KEY);
+		newUserNodeCert.setKeystoreData(TEST_CERT);
 		newUserNodeCert.setStatus(UserNodeCertificateStatus.v);
-		Long id = userNodeCertificateDao.store(newUserNodeCert);
+		UserNodePK id = userNodeCertificateDao.store(newUserNodeCert);
 		assertNotNull(id);
 		this.userNodeCert = userNodeCertificateDao.get(id);
 	}
@@ -98,7 +98,7 @@ public class IbatisUserNodeCertificateTest extends AbstractIbatisUserDaoTestSupp
 		assertNotNull("UserNodeCertificate should exist", entity);
 		assertNotNull("Created date should be set", entity.getCreated());
 		assertEquals(cert.getId(), entity.getId());
-		assertArrayEquals(cert.getCertificate(), entity.getCertificate());
+		assertArrayEquals(cert.getKeystoreData(), entity.getKeystoreData());
 		assertEquals(cert.getStatus(), entity.getStatus());
 		assertEquals(cert.getNode(), entity.getNode());
 		assertEquals(cert.getUser(), entity.getUser());

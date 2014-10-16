@@ -4,16 +4,28 @@ $(document).ready(function() {
 	var tzPicker;
 	var dynamicSearchTimer;
 	
-	$('a.view-cert').click(function(event) {
-		var a = this;
-		var id = a.href.match(/\d+$/)[0];
+	$('#my-nodes-table').on('click', 'button.view-cert', function(event) {
 		event.preventDefault();
-		$.getJSON(a.href, function(data) {
-			$('#modal-cert-container').text(data.pemvalue);
-			var downLink = $('#modal-cert-download');
-			downLink.attr('href',  downLink.attr('href').replace(/\d+$/, id));
-			$('#view-cert-modal').modal('show');
-		});
+		
+		var btn = $(this);
+		var id = btn.data('node-id');
+		var form = $('#view-cert-modal');
+		var downLink = $('#modal-cert-download').get(0);
+
+		form.attr('action', form.attr('action').replace(/\d+$/, id));
+		downLink.pathname = downLink.pathname.replace(/\d+$/, id);
+
+		form.modal('show');
+	});
+	
+	$('#view-cert-modal').ajaxForm({
+		dataType: 'json',
+		success: function(json, status, xhr, form) {
+			$('#modal-cert-container').text(json.pemValue).removeClass('hidden');
+		},
+		error: function(xhr, status, statusText) {
+			SolarReg.showAlertBefore('#view-cert-modal .modal-body > *:first-child', 'alert-error', statusText);
+		}
 	});
 	
 	function setupEditUserNodeLocationDisplay(loc) {

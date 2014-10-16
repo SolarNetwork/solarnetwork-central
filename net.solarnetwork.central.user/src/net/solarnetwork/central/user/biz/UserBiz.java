@@ -38,7 +38,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * API for registered user tasks.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface UserBiz {
 
@@ -111,11 +111,13 @@ public interface UserBiz {
 	/**
 	 * Get a specific UserNodeCertificate object.
 	 * 
-	 * @param certId
-	 *        the cert ID
+	 * @param userId
+	 *        the user ID
+	 * @param nodeId
+	 *        the node ID
 	 * @return the certificate, or <em>null</em> if not available
 	 */
-	UserNodeCertificate getUserNodeCertificate(Long certId);
+	UserNodeCertificate getUserNodeCertificate(Long userId, Long nodeId);
 
 	/**
 	 * Generate a new, unique {@link UserAuthToken} entity and return it.

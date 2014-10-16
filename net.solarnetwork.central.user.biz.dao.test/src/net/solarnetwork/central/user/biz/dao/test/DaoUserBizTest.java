@@ -37,7 +37,6 @@ import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.PasswordEncoder;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -58,7 +57,7 @@ import org.junit.Test;
  * Test cases for the {@link DaoUserBiz} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoUserBizTest {
 
@@ -79,14 +78,11 @@ public class DaoUserBizTest {
 	private UserDao userDao;
 	private UserAuthTokenDao userAuthTokenDao;
 	private UserNodeDao userNodeDao;
-	private PasswordEncoder passwordEncoder;
 
 	private DaoUserBiz userBiz;
 
 	@Before
 	public void setup() {
-		passwordEncoder = EasyMock.createMock(PasswordEncoder.class);
-
 		testUser = new User();
 		testUser.setEmail(TEST_EMAIL);
 		testUser.setId(TEST_USER_ID);
@@ -112,7 +108,6 @@ public class DaoUserBizTest {
 		userBiz.setUserDao(userDao);
 		userBiz.setUserAuthTokenDao(userAuthTokenDao);
 		userBiz.setUserNodeDao(userNodeDao);
-		userBiz.setPasswordEncoder(passwordEncoder);
 	}
 
 	private void replayProperties() {

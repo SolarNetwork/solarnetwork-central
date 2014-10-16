@@ -38,6 +38,8 @@
 	
 	<osgi:reference id="passwordEncoder" 
 		interface="org.springframework.security.crypto.password.PasswordEncoder"/>
+		
+	<osgi:reference id="certificateService" interface="net.solarnetwork.support.CertificateService"/>
 	
 	<!-- Published Services -->
 	

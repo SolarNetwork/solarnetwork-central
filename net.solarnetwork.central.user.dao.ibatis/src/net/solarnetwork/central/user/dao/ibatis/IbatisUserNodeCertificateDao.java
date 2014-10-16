@@ -22,12 +22,11 @@
 
 package net.solarnetwork.central.user.dao.ibatis;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import net.solarnetwork.central.dao.ibatis.IbatisGenericDaoSupport;
+import net.solarnetwork.central.dao.ibatis.IbatisBaseGenericDaoSupport;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import net.solarnetwork.central.user.domain.UserNodePK;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,22 +34,19 @@ import org.springframework.transaction.annotation.Transactional;
  * iBATIS implementation of {@link UserNodeCertificateDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class IbatisUserNodeCertificateDao extends IbatisGenericDaoSupport<UserNodeCertificate> implements
-		UserNodeCertificateDao {
+public class IbatisUserNodeCertificateDao extends
+		IbatisBaseGenericDaoSupport<UserNodeCertificate, UserNodePK> implements UserNodeCertificateDao {
 
 	/** The query name used for {@link #getActiveCertificateForNode(Long)}. */
 	public static final String QUERY_ACTIVE_FOR_NODE = "get-UserNodeCertificate-for-active-node";
-
-	/** The query name used for {@link #getCertificateForKey(Long, String)}. */
-	public static final String QUERY_FOR_KEY = "get-UserNodeCertificate-for-key";
 
 	/**
 	 * Default constructor.
 	 */
 	public IbatisUserNodeCertificateDao() {
-		super(UserNodeCertificate.class);
+		super(UserNodeCertificate.class, UserNodePK.class);
 	}
 
 	@Override
@@ -59,21 +55,6 @@ public class IbatisUserNodeCertificateDao extends IbatisGenericDaoSupport<UserNo
 		@SuppressWarnings("unchecked")
 		List<UserNodeCertificate> results = getSqlMapClientTemplate().queryForList(
 				QUERY_ACTIVE_FOR_NODE, nodeId);
-		if ( results.size() > 0 ) {
-			return results.get(0);
-		}
-		return null;
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public UserNodeCertificate getCertificateForKey(Long userId, String key) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("userId", userId);
-		params.put("key", key);
-		@SuppressWarnings("unchecked")
-		List<UserNodeCertificate> results = getSqlMapClientTemplate()
-				.queryForList(QUERY_FOR_KEY, params);
 		if ( results.size() > 0 ) {
 			return results.get(0);
 		}
