@@ -575,14 +575,25 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			cert.setNodeId(node.getId());
 			cert.setUserId(user.getId());
 
-			userNodeCertificateDao.store(cert);
-
-			Future<UserNodeCertificate> approval = approveCSR(association, user, cert);
+			final Future<UserNodeCertificate> approval = approveCSR(certSubjectDN, association, user,
+					cert);
 			try {
 				cert = approval.get(approveCSRMaximumWaitSecs, TimeUnit.SECONDS);
 			} catch ( TimeoutException e ) {
 				log.debug("Timeout waiting for {} CSR approval", certSubjectDN);
-				// just continue
+				// save to DB when we do get our reply
+				executorService.submit(new Runnable() {
+
+					@Override
+					public void run() {
+						try {
+							UserNodeCertificate approvedCert = approval.get();
+							userNodeCertificateDao.store(approvedCert);
+						} catch ( Exception e ) {
+							log.error("Error approving cert {}", certSubjectDN, e);
+						}
+					}
+				});
 			} catch ( InterruptedException e ) {
 				log.debug("Interrupted waiting for {} CSR approval", certSubjectDN);
 				// just continue
@@ -590,6 +601,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				log.error("CSR {} approval threw an exception: {}", certSubjectDN, e.getMessage());
 				throw new CertificateException("Error approving CSR", e);
 			}
+
+			userNodeCertificateDao.store(cert);
 		}
 
 		NetworkAssociationDetails details = new NetworkAssociationDetails();
@@ -610,16 +623,16 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		return Base64.encodeBase64String(data);
 	}
 
-	private Future<UserNodeCertificate> approveCSR(final NetworkAssociation association,
-			final User user, final UserNodeCertificate cert) {
+	private Future<UserNodeCertificate> approveCSR(final String certSubjectDN,
+			final NetworkAssociation association, final User user, final UserNodeCertificate cert) {
 		return executorService.submit(new Callable<UserNodeCertificate>() {
 
 			@Override
 			public UserNodeCertificate call() throws Exception {
 				SecurityUtils.becomeUser(user.getEmail(), user.getName(), user.getId());
+				log.debug("Approving CSR {} request ID {}", certSubjectDN, cert.getRequestId());
 				X509Certificate[] chain = nodePKIBiz.approveCSR(cert.getRequestId());
 				saveNodeSignedCertificate(association, cert, chain);
-				userNodeCertificateDao.store(cert);
 				return cert;
 			}
 		});
@@ -627,6 +640,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	private void saveNodeSignedCertificate(final NetworkAssociation association,
 			UserNodeCertificate cert, X509Certificate[] chain) throws CertificateException {
+		log.debug("Saving approved certificate {}", (chain != null && chain.length > 0 ? chain[0]
+				.getSubjectDN().getName() : null));
 		KeyStore keyStore = cert.getKeyStore(association.getKeystorePassword());
 		Key key;
 		try {
@@ -641,8 +656,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 					+ " does not have a private key.");
 		}
 
-		log.info("Installing node certificate reply {} issued by {}", chain[0].getSubjectDN().getName(),
-				chain[0].getIssuerDN().getName());
+		log.info("Installing node certificate reply {} issued by {}",
+				(chain != null && chain.length > 0 ? chain[0].getSubjectDN().getName() : null),
+				(chain != null && chain.length > 0 ? chain[0].getIssuerDN().getName() : null));
 		try {
 			keyStore.setKeyEntry(UserNodeCertificate.KEYSTORE_NODE_ALIAS, key, association
 					.getKeystorePassword().toCharArray(), chain);
@@ -658,6 +674,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	private UserNodeCertificate generateNodeCSR(NetworkAssociation association,
 			final String certSubjectDN) {
+		log.debug("Generating private key and CSR for {}", certSubjectDN);
 		try {
 			KeyStore keystore = loadKeyStore(association.getKeystorePassword(), null);
 
@@ -669,7 +686,11 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			keystore.setKeyEntry(nodeKeystoreAlias, keypair.getPrivate(), association
 					.getKeystorePassword().toCharArray(), new Certificate[] { certificate });
 
+			log.debug("Submitting CSR {} to CA", certSubjectDN);
+
 			String csrID = nodePKIBiz.submitCSR(certificate, keypair.getPrivate());
+
+			log.debug("Submitted CSR {} to CA, got request ID {}", certSubjectDN, csrID);
 
 			ByteArrayOutputStream byos = new ByteArrayOutputStream();
 			storeKeyStore(keystore, association.getKeystorePassword(), byos);
