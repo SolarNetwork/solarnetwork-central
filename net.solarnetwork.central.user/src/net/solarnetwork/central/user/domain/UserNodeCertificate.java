@@ -116,9 +116,6 @@ public class UserNodeCertificate implements Entity<UserNodePK>, Cloneable, Seria
 	 * @return the KeyStore
 	 */
 	public KeyStore getKeyStore(String password) {
-		if ( password == null ) {
-			password = "";
-		}
 		KeyStore keyStore = null;
 		InputStream in = null;
 		if ( keystoreData != null ) {
@@ -126,7 +123,7 @@ public class UserNodeCertificate implements Entity<UserNodePK>, Cloneable, Seria
 		}
 		try {
 			keyStore = KeyStore.getInstance(KEYSTORE_TYPE);
-			keyStore.load(in, password.toCharArray());
+			keyStore.load(in, (password == null ? null : password.toCharArray()));
 			return keyStore;
 		} catch ( KeyStoreException e ) {
 			throw new CertificateException("Error loading certificate key store", e);
