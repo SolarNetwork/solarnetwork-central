@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.domain;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Map;
+import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.SerializeIgnore;
@@ -33,39 +34,23 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.annotate.JsonUnwrapped;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Generalized node-based datum.
  * 
  * <p>
- * <b>Note</b> that an internal {@link ObjectMapper} is used to manage the JSON
- * value passed to {@link #setSampleJson(String)}. All floating point values
- * will be converted to {@link BigDecimal} when parsed, to faithfully represent
- * the data.
+ * <b>Note</b> that {@link DatumUtils#getObjectFromJSON(String, Class)} is used
+ * to manage the JSON value passed to {@link #setSampleJson(String)}.
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId" })
 public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable {
 
-	private static final long serialVersionUID = 9030100020202210123L;
-
-	protected static final Logger LOG = LoggerFactory.getLogger(GeneralNodeDatum.class);
-	protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-	static {
-		OBJECT_MAPPER.setSerializationInclusion(Inclusion.NON_NULL);
-		OBJECT_MAPPER.setDeserializationConfig(OBJECT_MAPPER.getDeserializationConfig().with(
-				DeserializationConfig.Feature.USE_BIG_DECIMAL_FOR_FLOATS));
-	}
+	private static final long serialVersionUID = 1099409416648794740L;
 
 	private GeneralNodeDatumPK id = new GeneralNodeDatumPK();
 	private GeneralNodeDatumSamples samples;
@@ -220,12 +205,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	@JsonIgnore
 	public String getSampleJson() {
 		if ( sampleJson == null ) {
-			try {
-				sampleJson = OBJECT_MAPPER.writeValueAsString(samples);
-			} catch ( Exception e ) {
-				LOG.error("Exception marshalling sample {} to JSON", this, e);
-				sampleJson = "{}";
-			}
+			sampleJson = DatumUtils.getJSONString(samples, "{}");
 		}
 		return sampleJson;
 	}
@@ -262,11 +242,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	@JsonIgnore
 	public GeneralNodeDatumSamples getSamples() {
 		if ( samples == null && sampleJson != null ) {
-			try {
-				samples = OBJECT_MAPPER.readValue(sampleJson, GeneralNodeDatumSamples.class);
-			} catch ( Exception e ) {
-				LOG.error("Exception unmarshalling sampleJson {}", sampleJson, e);
-			}
+			samples = DatumUtils.getObjectFromJSON(sampleJson, GeneralNodeDatumSamples.class);
 		}
 		return samples;
 	}
