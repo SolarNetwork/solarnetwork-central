@@ -625,7 +625,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		});
 	}
 
-	public void saveNodeSignedCertificate(final NetworkAssociation association,
+	private void saveNodeSignedCertificate(final NetworkAssociation association,
 			UserNodeCertificate cert, X509Certificate[] chain) throws CertificateException {
 		KeyStore keyStore = cert.getKeyStore(association.getKeystorePassword());
 		Key key;
