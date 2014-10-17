@@ -52,7 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Base test class for transactional unit tests.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml" })
 @TransactionConfiguration(transactionManager = "txManager", defaultRollback = true)
@@ -301,7 +301,8 @@ public abstract class AbstractCentralTransactionalTest extends
 	}
 
 	/**
-	 * Call the {@code solaragg.process_agg_stale_datum} procedure to populate
+	 * Call the {@code solaragg.process_agg_stale_datum} and
+	 * {@code solaragg.process_agg_stale_loc_datum} procedures to populate
 	 * reporting data.
 	 * 
 	 * @since 1.1
@@ -313,6 +314,29 @@ public abstract class AbstractCentralTransactionalTest extends
 			public CallableStatement createCallableStatement(Connection con) throws SQLException {
 				CallableStatement stmt = con
 						.prepareCall("{call solaragg.process_agg_stale_datum(?, ?)}");
+				return stmt;
+			}
+		}, new CallableStatementCallback<Object>() {
+
+			@Override
+			public Object doInCallableStatement(CallableStatement cs) throws SQLException,
+					DataAccessException {
+				cs.setString(1, "h");
+				cs.setInt(2, -1);
+				cs.execute();
+				cs.setString(1, "d");
+				cs.execute();
+				cs.setString(1, "m");
+				cs.execute();
+				return null;
+			}
+		});
+		jdbcTemplate.execute(new CallableStatementCreator() {
+
+			@Override
+			public CallableStatement createCallableStatement(Connection con) throws SQLException {
+				CallableStatement stmt = con
+						.prepareCall("{call solaragg.process_agg_stale_loc_datum(?, ?)}");
 				return stmt;
 			}
 		}, new CallableStatementCallback<Object>() {
