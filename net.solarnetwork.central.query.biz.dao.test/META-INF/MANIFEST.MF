@@ -2,13 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork DAO Query Biz Test
 Bundle-SymbolicName: net.solarnetwork.central.query.biz.dao.test
-Bundle-Version: 1.1.0
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
-Fragment-Host: net.solarnetwork.central.query.biz.dao;bundle-version="1.8.0"
+Fragment-Host: net.solarnetwork.central.query.biz.dao;bundle-version="1.12.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
  net.solarnetwork.central.dao.ibatis;version="[1.6.0,2.0.0)",
- net.solarnetwork.central.datum.dao.ibatis;version="[1.5.0,2.0.0)",
+ net.solarnetwork.central.datum.dao.ibatis;version="[1.19.0,2.0.0)",
  net.solarnetwork.central.support;version="[1.5.0,2.0.0)",
  net.solarnetwork.central.test;version="[1.0,2.0)",
  org.apache.commons.logging;version="[1.1,1.2)",

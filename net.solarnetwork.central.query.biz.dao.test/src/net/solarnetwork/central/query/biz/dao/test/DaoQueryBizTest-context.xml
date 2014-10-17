@@ -28,6 +28,8 @@
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/WeatherLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/ConsumptionDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/DayDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralLocationDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralLocationDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralNodeDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralNodeDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/HardwareControlDatum.xml</value>
@@ -87,6 +89,14 @@
 	<bean id="dayDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisDayDatumDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
 		<property name="conditionMap" ref="skyConditionMap"/>
+	</bean>
+	
+	<bean id="generalLocationDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralLocationDatumDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+	</bean>
+	
+	<bean id="generalLocationDatumMetadataDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralLocationDatumMetadataDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
 	</bean>
 	
 	<bean id="generalNodeDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralNodeDatumDao">

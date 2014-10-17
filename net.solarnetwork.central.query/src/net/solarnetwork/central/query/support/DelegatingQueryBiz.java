@@ -24,13 +24,17 @@ package net.solarnetwork.central.query.support;
 
 import java.util.List;
 import java.util.Set;
+import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
@@ -51,7 +55,7 @@ import org.joda.time.LocalDate;
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DelegatingQueryBiz implements QueryBiz {
 
@@ -144,6 +148,30 @@ public class DelegatingQueryBiz implements QueryBiz {
 	public FilterResults<LocationMatch> findFilteredLocations(Location filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		return delegate.findFilteredLocations(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public FilterResults<GeneralLocationDatumFilterMatch> findGeneralLocationDatum(
+			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		return delegate.findGeneralLocationDatum(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public FilterResults<ReportingGeneralLocationDatumMatch> findAggregateGeneralLocationDatum(
+			AggregateGeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
+		return delegate.findAggregateGeneralLocationDatum(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public Set<String> getLocationAvailableSources(Long locationId, DateTime start, DateTime end) {
+		return delegate.getLocationAvailableSources(locationId, start, end);
+	}
+
+	@Override
+	public ReportableInterval getLocationReportableInterval(Long locationId, String sourceId) {
+		return delegate.getLocationReportableInterval(locationId, sourceId);
 	}
 
 }

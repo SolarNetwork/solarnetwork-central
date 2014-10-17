@@ -242,8 +242,8 @@ public abstract class AbstractCentralTransactionalTest extends
 		jdbcTemplate.update("insert into solarnet.sn_price_source (id,sname) values (?,?)", sourceId,
 				sourceName);
 		jdbcTemplate
-				.update("insert into solarnet.sn_price_loc (id,loc_name,source_id,currency,unit,time_zone) values (?,?,?,?,?,?)",
-						id, name, sourceId, TEST_CURRENCY, "MWh", "Pacific/Auckland");
+				.update("insert into solarnet.sn_price_loc (id,loc_name,source_id,currency,unit,loc_id) values (?,?,?,?,?,?)",
+						id, name, sourceId, TEST_CURRENCY, "MWh", id);
 	}
 
 	/**

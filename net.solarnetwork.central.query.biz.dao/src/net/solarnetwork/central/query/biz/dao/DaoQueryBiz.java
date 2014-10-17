@@ -39,11 +39,13 @@ import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
 import net.solarnetwork.central.datum.dao.DatumDao;
 import net.solarnetwork.central.datum.dao.DayDatumDao;
+import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.dao.HardwareControlDatumDao;
 import net.solarnetwork.central.datum.dao.PowerDatumDao;
 import net.solarnetwork.central.datum.dao.PriceDatumDao;
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
+import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.Datum;
@@ -51,10 +53,13 @@ import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.ReportingDatum;
+import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.WeatherDatum;
 import net.solarnetwork.central.domain.Aggregation;
@@ -91,7 +96,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -101,6 +106,7 @@ public class DaoQueryBiz implements QueryBiz {
 	private WeatherDatumDao weatherDatumDao;
 	private DayDatumDao dayDatumDao;
 	private GeneralNodeDatumDao generalNodeDatumDao;
+	private GeneralLocationDatumDao generalLocationDatumDao;
 	private SolarLocationDao solarLocationDao;
 	private int filteredResultsLimit = 1000;
 	private long maxDaysForMinuteAggregation = 7;
@@ -412,6 +418,7 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public FilterResults<LocationMatch> findFilteredLocations(Location filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		if ( filter == null || filter.getFilter() == null || filter.getFilter().isEmpty() ) {
@@ -419,6 +426,61 @@ public class DaoQueryBiz implements QueryBiz {
 		}
 		return solarLocationDao.findFiltered(filter, sortDescriptors, limitFilterOffset(offset),
 				limitFilterMaximum(max));
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<GeneralLocationDatumFilterMatch> findGeneralLocationDatum(
+			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		return generalLocationDatumDao.findFiltered(filter, sortDescriptors, limitFilterOffset(offset),
+				limitFilterMaximum(max));
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralLocationDatumMatch> findAggregateGeneralLocationDatum(
+			AggregateGeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
+		return generalLocationDatumDao.findAggregationFiltered(enforceGeneralAggregateLevel(filter),
+				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
+	}
+
+	private AggregateGeneralLocationDatumFilter enforceGeneralAggregateLevel(
+			AggregateGeneralLocationDatumFilter filter) {
+		Aggregation forced = enforceAggregation(filter.getAggregation(), filter.getStartDate(),
+				filter.getEndDate(), filter);
+		if ( forced != null ) {
+			DatumFilterCommand cmd = new DatumFilterCommand();
+			cmd.setAggregate(forced);
+			cmd.setEndDate(filter.getEndDate());
+			cmd.setNodeIds(filter.getLocationIds());
+			cmd.setSourceIds(filter.getSourceIds());
+			cmd.setStartDate(filter.getStartDate());
+			cmd.setDataPath(filter.getDataPath());
+			return cmd;
+		}
+		return filter;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<String> getLocationAvailableSources(Long locationId, DateTime start, DateTime end) {
+		return generalLocationDatumDao.getAvailableSources(locationId, start, end);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public ReportableInterval getLocationReportableInterval(Long locationId, String sourceId) {
+		ReadableInterval interval = generalLocationDatumDao.getReportableInterval(locationId, sourceId);
+		if ( interval == null ) {
+			return null;
+		}
+		DateTimeZone tz = null;
+		if ( interval.getChronology() != null ) {
+			tz = interval.getChronology().getZone();
+		}
+		return new ReportableInterval(interval, (tz == null ? null : tz.toTimeZone()));
 	}
 
 	private Integer limitFilterMaximum(Integer requestedMaximum) {
@@ -536,6 +598,15 @@ public class DaoQueryBiz implements QueryBiz {
 	@Autowired
 	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
 		this.solarLocationDao = solarLocationDao;
+	}
+
+	public GeneralLocationDatumDao getGeneralLocationDatumDao() {
+		return generalLocationDatumDao;
+	}
+
+	@Autowired
+	public void setGeneralLocationDatumDao(GeneralLocationDatumDao generalLocationDatumDao) {
+		this.generalLocationDatumDao = generalLocationDatumDao;
 	}
 
 }

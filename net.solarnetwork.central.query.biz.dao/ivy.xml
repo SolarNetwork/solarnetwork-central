@@ -12,7 +12,7 @@
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.20.0,2.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.13.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.15.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[1.8.0,2.0.0)"/>
     	<dependency org="org.aopalliance" name="com.springsource.org.aopalliance" rev="1.0.0" />
 		<dependency org="org.joda" name="com.springsource.org.joda.time" rev="1.6.0" />
