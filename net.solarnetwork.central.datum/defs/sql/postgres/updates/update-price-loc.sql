@@ -8,3 +8,4 @@ ALTER TABLE solarnet.sn_price_loc
       ON UPDATE NO ACTION ON DELETE NO ACTION;
 
 ALTER TABLE solarnet.sn_price_loc DROP COLUMN time_zone;
+ALTER TABLE solarnet.sn_price_loc ALTER COLUMN loc_id SET NOT NULL;
