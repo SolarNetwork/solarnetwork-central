@@ -31,6 +31,8 @@
 	
 	<service ref="consumptionDatumDao" interface="net.solarnetwork.central.datum.dao.ConsumptionDatumDao" ranking="1"/>
 	<service ref="dayDatumDao" interface="net.solarnetwork.central.datum.dao.DayDatumDao" ranking="1"/>
+	<service ref="generalLocationDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumDao" ranking="1"/>
+	<service ref="generalLocationDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao" ranking="1"/>
 	<service ref="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao" ranking="1"/>
 	<service ref="generalNodeDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao" ranking="1"/>
 	<service ref="hardwareControlDatumDao" interface="net.solarnetwork.central.datum.dao.HardwareControlDatumDao" ranking="1"/>
@@ -77,6 +79,16 @@
 		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
+	<bean id="generalLocationDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralLocationDatumDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+		<property name="messageSource" ref="messageSource"/>
+	</bean>
+	
+	<bean id="generalLocationDatumMetadataDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralLocationDatumMetadataDao">
+		<property name="sqlMapClient" ref="sqlMapClient"/>
+		<property name="messageSource" ref="messageSource"/>
+	</bean>
+	
 	<bean id="generalNodeDatumDao" class="net.solarnetwork.central.datum.dao.ibatis.IbatisGeneralNodeDatumDao">
 		<property name="sqlMapClient" ref="sqlMapClient"/>
 		<property name="messageSource" ref="messageSource"/>
@@ -119,6 +131,8 @@
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/ConsumptionDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/DayDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/Global.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralLocationDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralLocationDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralNodeDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/GeneralNodeDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/ibatis/HardwareControlDatum.xml</value>

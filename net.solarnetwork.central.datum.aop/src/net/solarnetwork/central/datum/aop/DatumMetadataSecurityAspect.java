@@ -34,7 +34,7 @@ import org.aspectj.lang.annotation.Pointcut;
  * Security AOP support for {@link DatumMetadataBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 public class DatumMetadataSecurityAspect extends AuthorizationSupport {
@@ -49,19 +49,19 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 		super(userNodeDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.add*(..)) && args(nodeId,..)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.addGeneralNode*(..)) && args(nodeId,..)")
 	public void addMetadata(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.store*(..)) && args(nodeId,..)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.storeGeneralNode*(..)) && args(nodeId,..)")
 	public void storeMetadata(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.remove*(..)) && args(nodeId,..)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.removeGeneralNode*(..)) && args(nodeId,..)")
 	public void removeMetadata(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.find*(..)) && args(filter,..)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.findGeneralNode*(..)) && args(filter,..)")
 	public void findMetadata(GeneralNodeDatumMetadataFilter filter) {
 	}
 

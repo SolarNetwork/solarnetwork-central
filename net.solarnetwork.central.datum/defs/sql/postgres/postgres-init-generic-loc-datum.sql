@@ -222,7 +222,7 @@ BEGIN
 		CAST(EXTRACT(epoch FROM z.utc_offset) / 60 AS INTEGER)
 	FROM solarnet.sn_loc l
 	INNER JOIN pg_timezone_names z ON z.name = l.time_zone
-	WHERE n.loc_id = loc
+	WHERE l.id = loc
 	INTO loc_tz, loc_tz_offset;
 	
 	IF NOT FOUND THEN

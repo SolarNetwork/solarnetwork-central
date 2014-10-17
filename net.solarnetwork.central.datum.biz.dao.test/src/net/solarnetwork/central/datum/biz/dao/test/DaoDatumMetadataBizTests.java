@@ -28,10 +28,14 @@ import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.daum.biz.dao.DaoDatumMetadataBiz;
 import net.solarnetwork.central.domain.FilterResults;
@@ -57,11 +61,15 @@ public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
 	@Autowired
 	private GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao;
 
+	@Autowired
+	private GeneralLocationDatumMetadataDao generalLocationDatumMetadataDao;
+
 	private DaoDatumMetadataBiz biz;
 
 	@Before
 	public void setup() {
 		biz = new DaoDatumMetadataBiz();
+		biz.setGeneralLocationDatumMetadataDao(generalLocationDatumMetadataDao);
 		biz.setGeneralNodeDatumMetadataDao(generalNodeDatumMetadataDao);
 	}
 
@@ -182,7 +190,7 @@ public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
 	}
 
 	@Test
-	public void remove() {
+	public void removeNode() {
 		addGeneralNodeDatumMetadataNew();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
@@ -206,7 +214,7 @@ public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
 	}
 
 	@Test
-	public void removeNonExisting() {
+	public void removeNodeNonExisting() {
 		addGeneralNodeDatumMetadataNew();
 		biz.removeGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID_2);
 
@@ -221,5 +229,164 @@ public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
 
 		GeneralNodeDatumMetadataFilterMatch match = results.getResults().iterator().next();
 		assertEquals("Primary key", new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
+	}
+
+	@Test
+	public void addGeneralLocationDatumMetadataNew() {
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bar");
+		meta.addTag("bam");
+		biz.addGeneralLocationDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+	}
+
+	@Test
+	public void addGeneralLocationDatumMetadataNewWithPropertyMeta() {
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bar");
+		meta.putInfoValue("watts", "unit", "W");
+		meta.addTag("bam");
+		biz.addGeneralLocationDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+	}
+
+	@Test
+	public void findGeneralLocationDatumMetadataSingle() {
+		addGeneralLocationDatumMetadataNew();
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setSourceId(TEST_SOURCE_ID);
+
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = biz
+				.findGeneralLocationDatumMetadata(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
+		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
+
+		GeneralLocationDatumMetadataFilterMatch match = results.getResults().iterator().next();
+		assertEquals("Primary key", new LocationSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
+	}
+
+	@Test
+	public void addGeneralLocationDatumMetadataMerge() {
+		addGeneralLocationDatumMetadataNew();
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bam"); // this should replace
+		meta.putInfoValue("oof", "rab");
+		meta.addTag("mab");
+		biz.addGeneralLocationDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = biz
+				.findGeneralLocationDatumMetadata(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
+		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
+
+		GeneralLocationDatumMetadataFilterMatch match = results.getResults().iterator().next();
+		assertEquals("Primary key", new LocationSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
+		assertTrue(match instanceof GeneralLocationDatumMetadata);
+		meta = ((GeneralLocationDatumMetadata) match).getMeta();
+		assertTrue("Has original tag", meta.hasTag("bam"));
+		assertTrue("Has new tag", meta.hasTag("mab"));
+		assertEquals("Replaced info value", "bam", meta.getInfoString("foo"));
+		assertEquals("New info value", "rab", meta.getInfoString("oof"));
+	}
+
+	@Test
+	public void addGeneralLocationDatumMetadataMergeWithPropertyMeta() {
+		addGeneralLocationDatumMetadataNewWithPropertyMeta();
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bam"); // this should replace
+		meta.putInfoValue("oof", "rab");
+		meta.putInfoValue("watts", "unit", "Wh"); // this should replace
+		meta.putInfoValue("watts", "unitType", "SI");
+		meta.addTag("mab");
+		biz.addGeneralLocationDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = biz
+				.findGeneralLocationDatumMetadata(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
+		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
+
+		GeneralLocationDatumMetadataFilterMatch match = results.getResults().iterator().next();
+		assertEquals("Primary key", new LocationSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
+		assertTrue(match instanceof GeneralLocationDatumMetadata);
+		meta = ((GeneralLocationDatumMetadata) match).getMeta();
+		assertTrue("Has original tag", meta.hasTag("bam"));
+		assertTrue("Has new tag", meta.hasTag("mab"));
+		assertEquals("Replaced info value", "bam", meta.getInfoString("foo"));
+		assertEquals("New info value", "rab", meta.getInfoString("oof"));
+		assertEquals("Replaced info property value", "Wh", meta.getInfoString("watts", "unit"));
+		assertEquals("New info property value", "SI", meta.getInfoString("watts", "unitType"));
+	}
+
+	@Test
+	public void findGeneralLocationDatumMetadataMultiple() {
+		addGeneralLocationDatumMetadataNew();
+
+		// add another, for a different source
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bar");
+		meta.addTag("bam");
+		biz.addGeneralLocationDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID_2, meta);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = biz
+				.findGeneralLocationDatumMetadata(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals("Returned results", Integer.valueOf(2), results.getReturnedResultCount());
+		assertEquals("Total results", Long.valueOf(2L), results.getTotalResults());
+
+		Set<LocationSourcePK> expectedKeys = new HashSet<LocationSourcePK>(Arrays.asList(
+				new LocationSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), new LocationSourcePK(TEST_NODE_ID,
+						TEST_SOURCE_ID_2)));
+		for ( GeneralLocationDatumMetadataFilterMatch match : results.getResults() ) {
+			assertTrue("Found expected result", expectedKeys.remove(match.getId()));
+		}
+		assertEquals("Expected count", 0, expectedKeys.size());
+	}
+
+	@Test
+	public void removeLocation() {
+		addGeneralLocationDatumMetadataNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = biz
+				.findGeneralLocationDatumMetadata(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
+		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
+
+		GeneralLocationDatumMetadataFilterMatch match = results.getResults().iterator().next();
+		assertEquals("Primary key", new LocationSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
+
+		biz.removeGeneralLocationDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID);
+
+		// now should be gone
+		results = biz.findGeneralLocationDatumMetadata(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals("Returned results", Integer.valueOf(0), results.getReturnedResultCount());
+		assertEquals("Total results", Long.valueOf(0L), results.getTotalResults());
+	}
+
+	@Test
+	public void removeLocationNonExisting() {
+		addGeneralLocationDatumMetadataNew();
+		biz.removeGeneralLocationDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID_2);
+
+		// verify first one still there
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = biz
+				.findGeneralLocationDatumMetadata(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
+		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
+
+		GeneralLocationDatumMetadataFilterMatch match = results.getResults().iterator().next();
+		assertEquals("Primary key", new LocationSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
 	}
 }

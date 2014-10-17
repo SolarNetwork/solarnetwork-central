@@ -24,10 +24,15 @@ package net.solarnetwork.central.daum.biz.dao;
 
 import java.util.List;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -44,6 +49,9 @@ import org.springframework.transaction.annotation.Transactional;
  * </p>
  * 
  * <dl class="class-properties">
+ * <dt>generalLocationDatumMetadataDao</dt>
+ * <dd>The {@link GeneralLocationDatumMetadataDao} to use.</dd>
+ * 
  * <dt>generalNodeDatumMetadataDao</dt>
  * <dd>The {@link GeneralNodeDatumMetadataDao} to use.</dd>
  * </dl>
@@ -53,6 +61,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
+	private GeneralLocationDatumMetadataDao generalLocationDatumMetadataDao = null;
 	private GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao = null;
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -117,12 +126,115 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		return generalNodeDatumMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void addGeneralLocationDatumMetadata(Long locationId, String sourceId,
+			GeneralDatumMetadata meta) {
+		assert locationId != null;
+		assert sourceId != null;
+		assert meta != null;
+		LocationSourcePK pk = new LocationSourcePK(locationId, sourceId);
+		GeneralLocationDatumMetadata gdm = generalLocationDatumMetadataDao.get(pk);
+		GeneralDatumMetadata newMeta = meta;
+		if ( gdm == null ) {
+			gdm = new GeneralLocationDatumMetadata();
+			gdm.setCreated(new DateTime());
+			gdm.setId(pk);
+			newMeta = meta;
+		} else if ( gdm.getMeta() != null && gdm.getMeta().equals(meta) == false ) {
+			newMeta = new GeneralDatumMetadata(gdm.getMeta());
+			newMeta.merge(meta, true);
+		}
+		if ( newMeta != null && newMeta.equals(gdm.getMeta()) == false ) {
+			// have changes, so persist
+			gdm.setMeta(newMeta);
+			generalLocationDatumMetadataDao.store(gdm);
+		}
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void storeGeneralLocationDatumMetadata(Long locationId, String sourceId,
+			GeneralDatumMetadata meta) {
+		assert locationId != null;
+		assert sourceId != null;
+		assert meta != null;
+		LocationSourcePK pk = new LocationSourcePK(locationId, sourceId);
+		GeneralLocationDatumMetadata gdm = generalLocationDatumMetadataDao.get(pk);
+		if ( gdm == null ) {
+			gdm = new GeneralLocationDatumMetadata();
+			gdm.setCreated(new DateTime());
+			gdm.setId(pk);
+			gdm.setMeta(meta);
+		} else {
+			gdm.setMeta(meta);
+		}
+		generalLocationDatumMetadataDao.store(gdm);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void removeGeneralLocationDatumMetadata(Long locationId, String sourceId) {
+		GeneralLocationDatumMetadata meta = generalLocationDatumMetadataDao.get(new LocationSourcePK(
+				locationId, sourceId));
+		if ( meta != null ) {
+			generalLocationDatumMetadataDao.delete(meta);
+		}
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
+		return generalLocationDatumMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		return super.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		// TODO Auto-generated method stub
+		return super.equals(obj);
+	}
+
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+		// TODO Auto-generated method stub
+		return super.clone();
+	}
+
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return super.toString();
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		// TODO Auto-generated method stub
+		super.finalize();
+	}
+
 	public GeneralNodeDatumMetadataDao getGeneralNodeDatumMetadataDao() {
 		return generalNodeDatumMetadataDao;
 	}
 
 	public void setGeneralNodeDatumMetadataDao(GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao) {
 		this.generalNodeDatumMetadataDao = generalNodeDatumMetadataDao;
+	}
+
+	public GeneralLocationDatumMetadataDao getGeneralLocationDatumMetadataDao() {
+		return generalLocationDatumMetadataDao;
+	}
+
+	public void setGeneralLocationDatumMetadataDao(
+			GeneralLocationDatumMetadataDao generalLocationDatumMetadataDao) {
+		this.generalLocationDatumMetadataDao = generalLocationDatumMetadataDao;
 	}
 
 }

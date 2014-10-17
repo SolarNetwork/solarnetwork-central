@@ -22,6 +22,7 @@
 
 	<!-- Service References -->
 
+	<reference id="generalLocationDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao"/>
 	<reference id="generalNodeDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao"/>
 	
 	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager"/>
@@ -38,6 +39,7 @@
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 	
 	<bean id="daoDatumMetadataBiz" class="net.solarnetwork.central.daum.biz.dao.DaoDatumMetadataBiz">
+		<property name="generalLocationDatumMetadataDao" ref="generalLocationDatumMetadataDao"/>
 		<property name="generalNodeDatumMetadataDao" ref="generalNodeDatumMetadataDao"/>
 	</bean>
 

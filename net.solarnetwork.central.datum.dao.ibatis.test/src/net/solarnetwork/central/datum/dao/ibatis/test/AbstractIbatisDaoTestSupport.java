@@ -110,10 +110,10 @@ public class AbstractIbatisDaoTestSupport extends AbstractCentralTransactionalTe
 	 * @param sourceId
 	 *        the price source ID
 	 */
-	protected void setupTestPriceLocation(Long id, String name, Long sourceId) {
+	protected void setupTestPriceLocation(Long id, Long locationId, String name, Long sourceId) {
 		jdbcTemplate
-				.update("insert into solarnet.sn_price_loc (id,region,source_id,currency,unit,time_zone) values (?,?,?,?,?,?)",
-						id, name, sourceId, "NZD", "kWh", "Pacific/Auckland");
+				.update("insert into solarnet.sn_price_loc (id,loc_id,loc_name,source_id,currency,unit) values (?,?,?,?,?,?)",
+						id, locationId, name, sourceId, "NZD", "kWh");
 	}
 
 	/**
@@ -122,14 +122,16 @@ public class AbstractIbatisDaoTestSupport extends AbstractCentralTransactionalTe
 	 * <p>
 	 * This will use the {@link #TEST_PRICE_SOURCE_ID},
 	 * {@link #TEST_PRICE_SOURCE_NAME}, {@link #TEST_PRICE_LOC_ID}, and
-	 * {@link #TEST_PRICE_LOC_NAME} values.
+	 * {@link #TEST_PRICE_LOC_NAME} values. The
+	 * {@link AbstractCentralTransactionalTest#TEST_LOC_ID} will be used, and is
+	 * assumed to exist in the database already.
 	 * </p>
 	 * 
 	 */
 	@Override
 	protected void setupTestPriceLocation() {
 		setupTestPriceSource(TEST_PRICE_SOURCE_ID, TEST_PRICE_SOURCE_NAME);
-		setupTestPriceLocation(TEST_PRICE_LOC_ID, TEST_PRICE_LOC_NAME, TEST_PRICE_SOURCE_ID);
+		setupTestPriceLocation(TEST_PRICE_LOC_ID, TEST_LOC_ID, TEST_PRICE_LOC_NAME, TEST_PRICE_SOURCE_ID);
 	}
 
 }
