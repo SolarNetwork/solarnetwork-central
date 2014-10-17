@@ -157,8 +157,8 @@ DECLARE
 BEGIN
 	IF st IS NOT NULL OR en IS NOT NULL THEN
 		-- get the node TZ for local date/time
-		SELECT l.time_zone  FROM solarnet.sn_loc l
-		WHERE l.loc_id = loc
+		SELECT l.time_zone FROM solarnet.sn_loc l
+		WHERE l.id = loc
 		INTO loc_tz;
 
 		IF NOT FOUND THEN
@@ -177,14 +177,14 @@ BEGIN
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc
-				AND d.ts_start >= CAST(st at time zone node_tz AS DATE);
+				AND d.ts_start >= CAST(st at time zone loc_tz AS DATE);
 				
 		ELSE
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc
-				AND d.ts_start >= CAST(st at time zone node_tz AS DATE)
-				AND d.ts_start <= CAST(en at time zone node_tz AS DATE);
+				AND d.ts_start >= CAST(st at time zone loc_tz AS DATE)
+				AND d.ts_start <= CAST(en at time zone loc_tz AS DATE);
 	END CASE;	
 END;$BODY$
   LANGUAGE plpgsql STABLE;
