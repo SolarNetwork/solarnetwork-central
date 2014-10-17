@@ -194,6 +194,7 @@ public interface QueryBiz {
 	 * @param max
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
+	 * @since 1.4
 	 */
 	FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
 			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
@@ -212,6 +213,7 @@ public interface QueryBiz {
 	 * @param max
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
+	 * @since 1.4
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
