@@ -20,3 +20,4 @@
 \i postgres-init-generic-datum-agg-triggers.sql
 \i postgres-init-generic-datum-migration.sql
 \i postgres-init-generic-datum-migration-triggers.sql
+\i postgres-init-generic-loc-datum.sql
