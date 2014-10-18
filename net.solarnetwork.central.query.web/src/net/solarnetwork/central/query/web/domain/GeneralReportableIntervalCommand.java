@@ -28,10 +28,11 @@ import org.joda.time.DateTime;
  * Command for general reportable interval queries.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class GeneralReportableIntervalCommand {
 
+	private Long locationId;
 	private Long nodeId;
 	private String sourceId;
 	private DateTime start;
@@ -67,6 +68,14 @@ public class GeneralReportableIntervalCommand {
 
 	public void setEnd(DateTime end) {
 		this.end = end;
+	}
+
+	public Long getLocationId() {
+		return locationId;
+	}
+
+	public void setLocationId(Long locationId) {
+		this.locationId = locationId;
 	}
 
 }
