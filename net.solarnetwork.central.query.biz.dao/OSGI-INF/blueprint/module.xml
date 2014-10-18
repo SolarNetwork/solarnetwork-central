@@ -43,6 +43,7 @@
 
 	<reference id="consumptionDatumDao" interface="net.solarnetwork.central.datum.dao.ConsumptionDatumDao"/>
 	<reference id="dayDatumDao" interface="net.solarnetwork.central.datum.dao.DayDatumDao"/>
+	<reference id="generalLocationDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumDao"/>
 	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 	<reference id="hardwareControlDatumDao" interface="net.solarnetwork.central.datum.dao.HardwareControlDatumDao"/>
 	<reference id="priceDatumDao" interface="net.solarnetwork.central.datum.dao.PriceDatumDao"/>
