@@ -5,18 +5,19 @@ DECLARE
 	jtext TEXT;
 	src TEXT;
 	loc_tz TEXT;
+	loc solarcommon.loc_id;
 	tstamp TIMESTAMP WITH TIME ZONE;
 BEGIN
 	jtext :=  '{"s":{"sunrise":"' || to_char(datum.sunrise, 'HH24:MI') 
 		|| '","sunset":"' || to_char(datum.sunset, 'HH24:MI') 
 		|| '"}}';
 
-	SELECT ws.sname || ' ' || COALESCE(wl.source_data, '') || ' Day', l.time_zone 
+	SELECT ws.sname || ' ' || COALESCE(wl.source_data, '') || ' Day', l.time_zone, l.id
 	FROM solarnet.sn_weather_loc wl
 	INNER JOIN solarnet.sn_weather_source ws ON ws.id = wl.source_id
 	INNER JOIN solarnet.sn_loc l ON l.id = wl.loc_id
 	WHERE wl.id = datum.loc_id
-	INTO src, loc_tz;
+	INTO src, loc_tz, loc;
 
 	tstamp := datum.day at time zone loc_tz at time zone loc_tz;
 
@@ -25,7 +26,7 @@ BEGIN
 			ts, loc_id, source_id, posted, jdata)
 		VALUES (
 			tstamp,
-			datum.loc_id,
+			loc,
 			src, 
 			datum.created,
 			jtext::json
@@ -34,7 +35,7 @@ BEGIN
 		UPDATE solardatum.da_loc_datum SET
 			jdata = jtext::json
 		WHERE 
-			loc_id = datum.loc_id
+			loc_id = loc
 			AND source_id = src
 			AND ts = tstamp;
 	END;
@@ -64,6 +65,7 @@ DECLARE
 	jtext TEXT;
 	src TEXT;
 	loc_tz TEXT;
+	loc solarcommon.loc_id;
 BEGIN
 	jtext :=  '{"i":{"temp":' || datum.temperature;
 	
@@ -105,19 +107,19 @@ BEGIN
 	
 	jtext := jtext || '}';
 
-	SELECT ws.sname || ' ' || COALESCE(wl.source_data, ''), l.time_zone 
+	SELECT ws.sname || ' ' || COALESCE(wl.source_data, ''), l.time_zone, l.id
 	FROM solarnet.sn_weather_loc wl
 	INNER JOIN solarnet.sn_weather_source ws ON ws.id = wl.source_id
 	INNER JOIN solarnet.sn_loc l ON l.id = wl.loc_id
 	WHERE wl.id = datum.loc_id
-	INTO src, loc_tz;
+	INTO src, loc_tz, loc;
 
 	BEGIN
 		INSERT INTO solardatum.da_loc_datum(
 			ts, loc_id, source_id, posted, jdata)
 		VALUES (
 			datum.info_date,
-			datum.loc_id,
+			loc,
 			src, 
 			datum.created,
 			jtext::json
@@ -126,7 +128,7 @@ BEGIN
 		UPDATE solardatum.da_loc_datum SET
 			jdata = jtext::json
 		WHERE 
-			loc_id = datum.loc_id
+			loc_id = loc
 			AND source_id = src
 			AND ts = datum.info_date;
 	END;
@@ -148,6 +150,7 @@ DECLARE
 	jtext TEXT;
 	src TEXT;
 	loc_tz TEXT;
+	loc solarcommon.loc_id;
 BEGIN
 	IF datum.price IS NULL THEN
 		RETURN;
@@ -155,19 +158,19 @@ BEGIN
 	
 	jtext :=  '{"i":{"price":' || datum.price || '}}';
 	
-	SELECT ps.sname || ' ' || pl.loc_name, l.time_zone 
+	SELECT ps.sname || ' ' || pl.loc_name, l.time_zone, l.id
 	FROM solarnet.sn_price_loc pl
 	INNER JOIN solarnet.sn_price_source ps ON ps.id = pl.source_id
 	INNER JOIN solarnet.sn_loc l ON l.id = pl.loc_id
 	WHERE pl.id = datum.loc_id
-	INTO src, loc_tz;
+	INTO src, loc_tz, loc;
 
 	BEGIN
 		INSERT INTO solardatum.da_loc_datum(
 			ts, loc_id, source_id, posted, jdata)
 		VALUES (
 			datum.created,
-			datum.loc_id,
+			loc,
 			src, 
 			datum.posted,
 			jtext::json
@@ -176,7 +179,7 @@ BEGIN
 		UPDATE solardatum.da_loc_datum SET
 			jdata = jtext::json
 		WHERE 
-			loc_id = datum.loc_id
+			loc_id = loc
 			AND source_id = src
 			AND ts = datum.created;
 	END;
