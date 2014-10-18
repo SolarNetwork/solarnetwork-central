@@ -126,7 +126,7 @@ CREATE OR REPLACE FUNCTION solaragg.find_loc_datum_for_time_slot(
 	IN start_ts timestamp with time zone, 
 	IN span interval, 
 	IN tolerance interval DEFAULT interval '1 hour')
-  RETURNS TABLE(ts timestamp with time zone, source_id text, tsms bigint, percent real, tdiffms integer, jdata json) AS
+  RETURNS TABLE(ts timestamp with time zone, source_id text, tsms bigint, percent real, tdiffms bigint, jdata json) AS
 $BODY$
 SELECT * FROM (
 	SELECT 
@@ -146,7 +146,7 @@ SELECT * FROM (
 				THEN (EXTRACT('epoch' FROM (d.ts - start_ts)) / EXTRACT('epoch' FROM (d.ts - lag(d.ts) over win)))::real
 			ELSE 1::real
 		END AS percent,
-		COALESCE(CAST(EXTRACT(EPOCH FROM d.ts - lag(d.ts) over win) * 1000 AS INTEGER), 0) as tdiff,
+		COALESCE(CAST(EXTRACT(EPOCH FROM d.ts - lag(d.ts) over win) * 1000 AS BIGINT), 0) as tdiff,
 		d.jdata as jdata
 	FROM solardatum.da_loc_datum d
 	WHERE d.loc_id = loc
@@ -196,7 +196,7 @@ CREATE OR REPLACE FUNCTION solaragg.find_loc_datum_for_minute_time_slots(
 	IN span interval, 
 	IN slotsecs integer DEFAULT 600,
 	IN tolerance interval DEFAULT interval '1 hour')
-  RETURNS TABLE(ts timestamp with time zone, ts_start timestamp with time zone, source_id text, tsms bigint, percent real, tdiffms integer, jdata json) AS
+  RETURNS TABLE(ts timestamp with time zone, ts_start timestamp with time zone, source_id text, tsms bigint, percent real, tdiffms bigint, jdata json) AS
 $BODY$
 SELECT * FROM (
 	SELECT 
@@ -215,7 +215,7 @@ SELECT * FROM (
 				THEN (1::real - EXTRACT('epoch' FROM solaragg.minute_time_slot(d.ts, slotsecs) - lag(d.ts) over win) / EXTRACT('epoch' FROM d.ts - lag(d.ts) over win))::real
 			ELSE 1::real
 		END AS percent,
-		COALESCE(CAST(EXTRACT(EPOCH FROM d.ts - lag(d.ts) over win) * 1000 AS INTEGER), 0) as tdiff,
+		COALESCE(CAST(EXTRACT(EPOCH FROM d.ts - lag(d.ts) over win) * 1000 AS BIGINT), 0) as tdiff,
 		d.jdata as jdata
 	FROM solardatum.da_loc_datum d
 	WHERE d.loc_id = loc
