@@ -12,7 +12,7 @@ BEGIN
 		|| '","sunset":"' || to_char(datum.sunset, 'HH24:MI') 
 		|| '"}}';
 
-	SELECT ws.sname || ' ' || COALESCE(wl.source_data, '') || ' Day', l.time_zone, l.id
+	SELECT ws.sname || ' Day', l.time_zone, l.id
 	FROM solarnet.sn_weather_loc wl
 	INNER JOIN solarnet.sn_weather_source ws ON ws.id = wl.source_id
 	INNER JOIN solarnet.sn_loc l ON l.id = wl.loc_id
@@ -107,7 +107,7 @@ BEGIN
 	
 	jtext := jtext || '}';
 
-	SELECT ws.sname || ' ' || COALESCE(wl.source_data, ''), l.time_zone, l.id
+	SELECT ws.sname, l.time_zone, l.id
 	FROM solarnet.sn_weather_loc wl
 	INNER JOIN solarnet.sn_weather_source ws ON ws.id = wl.source_id
 	INNER JOIN solarnet.sn_loc l ON l.id = wl.loc_id
@@ -158,7 +158,7 @@ BEGIN
 	
 	jtext :=  '{"i":{"price":' || datum.price || '}}';
 	
-	SELECT ps.sname || ' ' || pl.loc_name, l.time_zone, l.id
+	SELECT ps.sname, l.time_zone, l.id
 	FROM solarnet.sn_price_loc pl
 	INNER JOIN solarnet.sn_price_source ps ON ps.id = pl.source_id
 	INNER JOIN solarnet.sn_loc l ON l.id = pl.loc_id
