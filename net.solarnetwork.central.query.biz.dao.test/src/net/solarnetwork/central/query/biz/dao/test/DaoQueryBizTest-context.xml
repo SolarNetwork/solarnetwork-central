@@ -20,9 +20,9 @@
 			<list>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/Hardware.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/HardwareControl.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/ibatis/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/PriceSource.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/PriceLocation.xml</value>
-				<value>classpath:/net/solarnetwork/central/dao/ibatis/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/SolarNode.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/WeatherSource.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/ibatis/WeatherLocation.xml</value>

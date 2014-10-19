@@ -11,11 +11,11 @@
 		INSERT INTO solarnet.sn_price_loc 
 			(id
 			<isNotNull property="created">, created</isNotNull>
-			, loc_name, currency, unit, source_id, source_data, time_zone)
+			, loc_name, currency, unit, source_id, source_data, loc_id)
 		VALUES
 			(#id#
 			<isNotNull property="created">, #created#</isNotNull>
-			, #name#, #currency#, #unit#, #source.id#, #sourceData#, #timeZoneId#)
+			, #name#, #currency#, #unit#, #source.id#, #sourceData#, #location.id#)
 	</insert>
 
 	<update id="update-PriceLocation" parameterClass="PriceLocation">
@@ -25,7 +25,7 @@
 			unit = #unit#,
 			source_id = #source.id#,
 			source_data = #sourceData#,
-			time_zone = #timeZoneId#
+			loc_id = #location.id#
 		WHERE
 			id = #id#
 	</update>
@@ -36,8 +36,7 @@
 		ploc.loc_name AS sn_price_loc_name,
 		ploc.currency AS sn_price_loc_currency,
 		ploc.unit AS sn_price_loc_unit,
-		ploc.source_data AS sn_price_loc_source_data,
-		ploc.time_zone AS sn_price_loc_time_zone
+		ploc.source_data AS sn_price_loc_source_data
 	</sql>
 
 	<resultMap id="PriceLocationFullResult" class="PriceLocation">
@@ -47,17 +46,19 @@
 		<result column="sn_price_loc_currency" property="currency"/>
 		<result column="sn_price_loc_unit" property="unit"/>
 		<result column="sn_price_loc_source_data" property="sourceData"/>
-		<result column="sn_price_loc_time_zone" property="timeZoneId"/>
 		<result property="source" resultMap="PriceSource.PriceSourceFullResult"/>
+		<result property="location" resultMap="SolarLocation.SolarLocationPublicResult"/>
 	</resultMap>
 	
 	<select id="get-PriceLocation-for-id" resultMap="PriceLocationFullResult">
 		SELECT
 			<include refid="fragment-PriceLocation-full-result"/>,
-			<include refid="fragment-PriceSource-full-result"/>
+			<include refid="fragment-PriceSource-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>
 		FROM
 			solarnet.sn_price_loc ploc
 		INNER JOIN solarnet.sn_price_source psource ON psource.id = ploc.source_id
+		INNER JOIN solarnet.sn_loc l ON l.id = ploc.loc_id
 		WHERE
 			ploc.id = #id#
 	</select>
@@ -65,10 +66,12 @@
 	<select id="get-PriceLocation-for-name" resultMap="PriceLocationFullResult">
 		SELECT
 			<include refid="fragment-PriceLocation-full-result"/>,
-			<include refid="fragment-PriceSource-full-result"/>
+			<include refid="fragment-PriceSource-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>
 		FROM
 			solarnet.sn_price_loc ploc
 		INNER JOIN solarnet.sn_price_source psource ON psource.id = ploc.source_id
+		INNER JOIN solarnet.sn_loc l ON l.id = ploc.loc_id
 		WHERE
 			ploc.loc_name = #locationName#
 			AND psource.sname = #sourceName#
@@ -77,8 +80,8 @@
 	<sql id="fragment-findall-PriceLocation-SourceLocationMatch">
 		FROM
 			solarnet.sn_price_loc ploc
-		INNER JOIN 
-			solarnet.sn_price_source psource ON psource.id = ploc.source_id
+		INNER JOIN solarnet.sn_price_source psource ON psource.id = ploc.source_id
+		INNER JOIN solarnet.sn_loc l ON l.id = ploc.loc_id 
 		<dynamic prepend="WHERE">
 			<isNotNull prepend="AND" property="filter.source">
 				psource.fts_default @@ solarcommon.plainto_prefix_tsquery(#filter.source#)
@@ -87,7 +90,7 @@
 				ploc.id = #filter.id#
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.location.timeZoneId">
-				ploc.time_zone = #filter.timeZoneId#
+				l.time_zone = #filter.timeZoneId#
 			</isNotNull>
 			<isNotNull prepend="AND" property="fts">
 				ploc.fts_default @@ solarcommon.plainto_prefix_tsquery(#fts#)
@@ -98,7 +101,8 @@
 	<select id="findall-PriceLocation-SourceLocationMatch" resultMap="PriceLocationFullResult">
 		SELECT
 			<include refid="fragment-PriceLocation-full-result"/>,
-			<include refid="fragment-PriceSource-full-result"/>
+			<include refid="fragment-PriceSource-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>
 		<include refid="fragment-findall-PriceLocation-SourceLocationMatch"/>
 		ORDER BY
 		<isEmpty property="SortDescriptors">
@@ -112,8 +116,8 @@
 				<isEqual property="SortDescriptors[].sortKey" compareValue="location.name">lower(ploc.loc_name)</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="locationName">lower(ploc.loc_name)</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="currency">ploc.currency</isEqual>
-				<isEqual property="SortDescriptors[].sortKey" compareValue="timeZoneId">ploc.time_zone</isEqual>
-				<isEqual property="SortDescriptors[].sortKey" compareValue="location.timeZoneId">ploc.time_zone</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="timeZoneId">l.time_zone</isEqual>
+				<isEqual property="SortDescriptors[].sortKey" compareValue="location.timeZoneId">loc.time_zone</isEqual>
 				<isEqual property="SortDescriptors[].descending" compareValue="true">DESC</isEqual>
 			</iterate>
 		</isNotEmpty>
