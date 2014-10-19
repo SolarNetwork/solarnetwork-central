@@ -26,6 +26,8 @@ package net.solarnetwork.central.security;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,7 +44,7 @@ import org.springframework.security.core.userdetails.User;
  * Security helper methods.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SecurityUtils {
 
@@ -88,6 +90,54 @@ public class SecurityUtils {
 		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, "",
 				authorities);
 		SecurityContextHolder.getContext().setAuthentication(auth);
+	}
+
+	/**
+	 * Require any one of a set of roles for the current actor. The actor's
+	 * roles are converted to upper case before testing for inclusion in the
+	 * {@code roles} argument.
+	 * 
+	 * @param roles
+	 * @since 1.2
+	 */
+	public static void requireAnyRole(final Set<String> roles) {
+		Authentication auth = getCurrentAuthentication();
+		if ( auth == null || auth.isAuthenticated() == false ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		for ( GrantedAuthority role : auth.getAuthorities() ) {
+			if ( roles.contains(role.getAuthority().toUpperCase()) ) {
+				return;
+			}
+		}
+		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+	}
+
+	/**
+	 * Require any one of a set of roles for the current actor. The actor's
+	 * roles are converted to upper case before testing for inclusion in the
+	 * {@code roles} argument.
+	 * 
+	 * @param roles
+	 * @since 1.2
+	 */
+	public static void requireAllRoles(final Set<String> roles) {
+		Authentication auth = getCurrentAuthentication();
+		if ( auth == null || auth.isAuthenticated() == false ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		Set<String> rolesCopy = new HashSet<String>(roles);
+		for ( GrantedAuthority role : auth.getAuthorities() ) {
+			if ( rolesCopy.remove(role.getAuthority().toUpperCase()) == false ) {
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+			}
+			if ( rolesCopy.size() < 1 ) {
+				return;
+			}
+		}
+		if ( rolesCopy.size() > 0 ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		}
 	}
 
 	/**
