@@ -351,7 +351,13 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	@Override
 	public Long[] getLocationIds() {
-		return locationIds;
+		if ( locationIds != null ) {
+			return locationIds;
+		}
+		if ( location != null && location.getId() != null ) {
+			return new Long[] { location.getId() };
+		}
+		return null;
 	}
 
 	public void setLocationIds(Long[] locationIds) {
