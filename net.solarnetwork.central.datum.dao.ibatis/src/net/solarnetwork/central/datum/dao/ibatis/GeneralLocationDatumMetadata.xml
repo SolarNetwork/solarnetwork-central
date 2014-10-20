@@ -58,6 +58,12 @@
 	<resultMap id="GeneralLocationDatumMetadataMatchResult" class="GeneralLocationDatumMetadataMatch" extends="GeneralLocationDatumMetadata.GeneralLocationDatumMetadataFullResult"/>
 
 	<sql id="fragment-findall-GeneralLocationDatumMetadata-GeneralLocationDatumMetadataMatch-where">
+		<isNotNull property="fts">
+		INNER JOIN solarnet.sn_loc l ON l.id = meta.loc_id
+		</isNotNull>
+		<isNotEmpty property="filter.tags">
+			JOIN LATERAL json_array_elements(meta.jdata->'t') jtag ON true
+		</isNotEmpty>
 		<dynamic prepend="WHERE">
 			<isNotEmpty prepend="AND" property="filter.locationIds">
 				meta.loc_id IN
@@ -66,6 +72,16 @@
 			<isNotEmpty prepend="AND" property="filter.sourceIds">
 				meta.source_id IN
 				<iterate open="(" close=")" conjunction="," property="filter.sourceIds">#filter.sourceIds[]#</iterate>					
+			</isNotEmpty>
+			<isNotNull prepend="AND" property="fts">
+				l.address IS NULL
+				AND l.latitude IS NULL
+				AND l.longitude IS NULL
+				AND l.elevation IS NULL
+				AND l.fts_default @@ solarcommon.plainto_prefix_tsquery(#fts#)
+			</isNotNull>
+			<isNotEmpty prepend="AND" property="filter.tags">
+				trim(jtag::text, '"') = ANY(#filter.tags,jdbcType=ARRAY#)
 			</isNotEmpty>
 		</dynamic>
 	</sql>

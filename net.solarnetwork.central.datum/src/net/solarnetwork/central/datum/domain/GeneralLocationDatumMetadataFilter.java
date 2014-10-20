@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.domain.Location;
 
 /**
  * Filter API for {@link GeneralLocationDatumMetadata}.
@@ -31,6 +32,16 @@ import net.solarnetwork.central.domain.Filter;
  * @version 1.0
  */
 public interface GeneralLocationDatumMetadataFilter extends Filter {
+
+	/**
+	 * Get a location filter to restrict the results to. This provides a way to
+	 * query for {@link GeneralLocationDatumMetadata} indirectly that match a
+	 * {@link Location} criteria, for example all metadata that match the region
+	 * <em>Wellington</em>.
+	 * 
+	 * @return the location filter
+	 */
+	public Location getLocation();
 
 	/**
 	 * Get the first location ID. This returns the first available location ID

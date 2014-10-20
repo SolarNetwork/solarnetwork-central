@@ -37,6 +37,7 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -70,6 +71,8 @@ public class IbatisGeneralLocationDatumMetadataDaoTest extends AbstractIbatisDao
 		Map<String, Object> msgs = new HashMap<String, Object>(2);
 		msgs.put("foo", "bar");
 		samples.setInfo(msgs);
+
+		samples.addTag("foo");
 
 		return datum;
 	}
@@ -181,6 +184,35 @@ public class IbatisGeneralLocationDatumMetadataDaoTest extends AbstractIbatisDao
 		assertEquals("Returned results", 2L, (long) results.getTotalResults());
 		assertEquals("Returned result count", 1, (int) results.getReturnedResultCount());
 		assertEquals("Datum ID", lastDatum.getId(), results.iterator().next().getId());
+	}
+
+	@Test
+	public void findFilteredWithLocationSearch() {
+		storeNew();
+
+		SolarLocation loc = new SolarLocation();
+		loc.setRegion("NZ");
+		DatumFilterCommand criteria = new DatumFilterCommand(loc);
+
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria,
+				null, null, null);
+		assertNotNull(results);
+		assertEquals(1L, (long) results.getTotalResults());
+		assertEquals(1, (int) results.getReturnedResultCount());
+	}
+
+	@Test
+	public void findFilteredWithTagSearch() {
+		storeNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setTags(new String[] { "foo", "bar" });
+
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria,
+				null, null, null);
+		assertNotNull(results);
+		assertEquals(1L, (long) results.getTotalResults());
+		assertEquals(1, (int) results.getReturnedResultCount());
 	}
 
 }

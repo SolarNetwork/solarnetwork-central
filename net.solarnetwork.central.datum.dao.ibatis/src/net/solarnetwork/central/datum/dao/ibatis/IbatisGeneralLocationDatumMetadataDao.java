@@ -32,6 +32,7 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
 
@@ -39,7 +40,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * Ibatis implementation of {@link GeneralLocationDatumMetadataDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class IbatisGeneralLocationDatumMetadataDao extends
 		IbatisBaseGenericDaoSupport<GeneralLocationDatumMetadata, LocationSourcePK> implements
@@ -92,6 +93,8 @@ public class IbatisGeneralLocationDatumMetadataDao extends
 			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
 		}
 
+		addFullTextSearchFilterProperties(filter, sqlProps);
+
 		// attempt count first, if max NOT specified as -1
 		Long totalCount = null;
 		if ( max != null && max.intValue() != -1 ) {
@@ -105,6 +108,23 @@ public class IbatisGeneralLocationDatumMetadataDao extends
 				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
 
 		return results;
+	}
+
+	protected void addFullTextSearchFilterProperties(GeneralLocationDatumMetadataFilter filter,
+			Map<String, Object> sqlProps) {
+		if ( filter != null && filter.getLocation() != null ) {
+			Location loc = filter.getLocation();
+			StringBuilder fts = new StringBuilder();
+			spaceAppend(loc.getName(), fts);
+			spaceAppend(loc.getCountry(), fts);
+			spaceAppend(loc.getRegion(), fts);
+			spaceAppend(loc.getStateOrProvince(), fts);
+			spaceAppend(loc.getLocality(), fts);
+			spaceAppend(loc.getPostalCode(), fts);
+			if ( fts.length() > 0 ) {
+				sqlProps.put("fts", fts.toString());
+			}
+		}
 	}
 
 }
