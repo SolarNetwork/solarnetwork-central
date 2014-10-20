@@ -359,7 +359,10 @@ public interface QueryBiz {
 	 *        an optional maximum number of returned results
 	 * 
 	 * @return the results, never <em>null</em>
+	 * @deprecated see
+	 *             {@code net.solarnetwork.central.datum.biz.DatumMetadataBiz.findGeneralLocationDatumMetadata}
 	 */
+	@Deprecated
 	FilterResults<SourceLocationMatch> findFilteredLocations(SourceLocation filter,
 			Class<? extends Entity<?>> locationClass, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);

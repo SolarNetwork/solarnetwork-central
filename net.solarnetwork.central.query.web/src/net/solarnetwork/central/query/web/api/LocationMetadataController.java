@@ -27,6 +27,7 @@ import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.web.domain.Response;
@@ -45,10 +46,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * Controller for location metadata actions.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller("v1LocationMetadataController")
-@RequestMapping({ "/api/v1/pub/location/meta/{locationId}", "/api/v1/sec/location/meta/{locationId}" })
+@RequestMapping({ "/api/v1/pub/location/meta", "/api/v1/sec/location/meta" })
 public class LocationMetadataController extends WebServiceControllerSupport {
 
 	private final DatumMetadataBiz datumMetadataBiz;
@@ -71,6 +72,48 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 	}
 
 	/**
+	 * Query for metadata.
+	 * 
+	 * @param query
+	 *        a general search query
+	 * @param criteria
+	 *        specific criteria, such as source ID, sort order, max results,
+	 *        etc.
+	 * @return the results
+	 * @since 1.2
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "", "/", "/query" }, method = RequestMethod.GET)
+	public Response<?> findGeneralLocations(
+			@RequestParam(value = "query", required = false) String query, DatumFilterCommand command) {
+		SolarLocation loc;
+		if ( command != null ) {
+			loc = new SolarLocation(command.getLocation());
+		} else {
+			loc = new SolarLocation();
+		}
+		if ( query != null ) {
+			loc.setRegion(query);
+		}
+		DatumFilterCommand criteria = new DatumFilterCommand(loc);
+		if ( command != null ) {
+			if ( command.getLocationIds() != null ) {
+				criteria.setLocationIds(command.getLocationIds());
+			}
+			if ( command.getSourceIds() != null ) {
+				criteria.setSourceIds(command.getSourceIds());
+			}
+			if ( command.getTags() != null ) {
+				criteria.setTags(command.getTags());
+			}
+		}
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = datumMetadataBiz
+				.findGeneralLocationDatumMetadata(criteria, command.getSortDescriptors(),
+						command.getOffset(), command.getMax());
+		return response(results);
+	}
+
+	/**
 	 * Find all metadata for a location ID.
 	 * 
 	 * @param locationId
@@ -80,7 +123,7 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 	 * @return the results
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
+	@RequestMapping(value = "/{locationId}", method = RequestMethod.GET)
 	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch>> findMetadata(
 			@PathVariable("locationId") Long locationId, DatumFilterCommand criteria) {
 		return findMetadata(locationId, null, criteria);
@@ -98,7 +141,7 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 	 * @return the results
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
+	@RequestMapping(value = { "/{locationId}/{sourceId}" }, method = RequestMethod.GET)
 	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch>> findMetadata(
 			@PathVariable("locationId") Long locationId, @PathVariable("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
@@ -112,7 +155,7 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = { "sourceId" })
+	@RequestMapping(value = "/{locationId}", method = RequestMethod.GET, params = { "sourceId" })
 	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch>> findMetadataAlt(
 			@PathVariable("locationId") Long locationId, @RequestParam("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
@@ -132,7 +175,7 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 	 * @return the results
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.POST)
+	@RequestMapping(value = { "/{locationId}/{sourceId}" }, method = RequestMethod.POST)
 	public Response<Object> addMetadata(@PathVariable("locationId") Long locationId,
 			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		datumMetadataBiz.addGeneralLocationDatumMetadata(locationId, sourceId, meta);
@@ -140,7 +183,7 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = { "", "/" }, method = RequestMethod.POST, params = { "sourceId" })
+	@RequestMapping(value = "/{locationId}", method = RequestMethod.POST, params = { "sourceId" })
 	public Response<Object> addMetadataAlt(@PathVariable("locationId") Long locationId,
 			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		return addMetadata(locationId, sourceId, meta);
@@ -159,7 +202,7 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 	 * @return the results
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.PUT)
+	@RequestMapping(value = { "/{locationId}/{sourceId}" }, method = RequestMethod.PUT)
 	public Response<Object> replaceMetadata(@PathVariable("locationId") Long locationId,
 			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		datumMetadataBiz.storeGeneralLocationDatumMetadata(locationId, sourceId, meta);
@@ -167,7 +210,7 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = { "", "/" }, method = RequestMethod.PUT, params = { "sourceId" })
+	@RequestMapping(value = "/{locationId}", method = RequestMethod.PUT, params = { "sourceId" })
 	public Response<Object> replaceMetadataAlt(@PathVariable("locationId") Long locationId,
 			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		return replaceMetadata(locationId, sourceId, meta);
@@ -183,7 +226,7 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 	 * @return the results
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.DELETE)
+	@RequestMapping(value = "/{locationId}/{sourceId}", method = RequestMethod.DELETE)
 	public Response<Object> deleteMetadata(@PathVariable("locationId") Long locationId,
 			@PathVariable("sourceId") String sourceId) {
 		datumMetadataBiz.removeGeneralLocationDatumMetadata(locationId, sourceId);
@@ -191,7 +234,7 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = { "", "/" }, method = RequestMethod.DELETE, params = { "sourceId" })
+	@RequestMapping(value = "/{locationId}", method = RequestMethod.DELETE, params = { "sourceId" })
 	public Response<Object> deleteMetadataAlt(@PathVariable("locationId") Long locationId,
 			@RequestParam("sourceId") String sourceId) {
 		return deleteMetadata(locationId, sourceId);
