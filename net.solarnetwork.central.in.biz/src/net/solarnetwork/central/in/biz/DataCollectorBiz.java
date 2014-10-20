@@ -26,6 +26,8 @@ package net.solarnetwork.central.in.biz;
 
 import java.util.List;
 import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
@@ -45,7 +47,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * </p>
  * 
  * @author matt.magoffin
- * @version 1.2
+ * @version 1.3
  */
 public interface DataCollectorBiz {
 
@@ -107,6 +109,26 @@ public interface DataCollectorBiz {
 	 */
 	FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
 			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max);
+
+	/**
+	 * Search for location datum metadata based on a location criteria. The
+	 * location and metadata criteria must both match for results to be
+	 * included.
+	 * 
+	 * @param criteria
+	 *        the search criteria
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 * @since 1.3
+	 */
+	FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+			GeneralLocationDatumMetadataFilter metadataCriteria, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
 
 	/**

@@ -42,6 +42,8 @@ import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
@@ -301,6 +303,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			final Integer offset, final Integer max) {
 		return datumMetadataBiz.findGeneralNodeDatumMetadata(
 				metadataCriteriaForcedToAuthenticatedNode(criteria), sortDescriptors, offset, max);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+			final GeneralLocationDatumMetadataFilter criteria,
+			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max) {
+		return datumMetadataBiz.findGeneralLocationDatumMetadata(criteria, sortDescriptors, offset, max);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
