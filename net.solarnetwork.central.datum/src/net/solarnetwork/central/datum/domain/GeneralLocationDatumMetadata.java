@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.domain;
 import java.io.Serializable;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.util.SerializeIgnore;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -55,6 +56,8 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 	private DateTime updated;
 	private GeneralDatumMetadata meta;
 	private String metaJson;
+
+	private SolarLocation location;
 
 	@Override
 	public int compareTo(LocationSourcePK o) {
@@ -214,6 +217,14 @@ public class GeneralLocationDatumMetadata implements Entity<LocationSourcePK>, C
 
 	public void setUpdated(DateTime updated) {
 		this.updated = updated;
+	}
+
+	public SolarLocation getLocation() {
+		return location;
+	}
+
+	public void setLocation(SolarLocation location) {
+		this.location = location;
 	}
 
 }

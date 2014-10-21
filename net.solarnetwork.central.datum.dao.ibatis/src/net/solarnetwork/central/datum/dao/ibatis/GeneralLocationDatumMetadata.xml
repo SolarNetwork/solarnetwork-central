@@ -39,13 +39,16 @@
 		<result column="meta_created" property="created"/>
 		<result column="meta_updated" property="updated"/>
 		<result column="meta_jdata" property="metaJson"/>
+		<result property="location" resultMap="SolarLocation.SolarLocationPublicResult"/>
 	</resultMap>
 	
 	<select id="get-GeneralLocationDatumMetadata-for-id" resultMap="GeneralLocationDatumMetadataFullResult">
 		SELECT
-			<include refid="fragment-GeneralLocationDatumMetadata-full-result"/>
+			<include refid="fragment-GeneralLocationDatumMetadata-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>
 		FROM
 			solardatum.da_loc_meta meta
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = meta.loc_id
 		WHERE
 			meta.loc_id = #locationId#
 			AND meta.source_id = #sourceId#
@@ -58,9 +61,6 @@
 	<resultMap id="GeneralLocationDatumMetadataMatchResult" class="GeneralLocationDatumMetadataMatch" extends="GeneralLocationDatumMetadata.GeneralLocationDatumMetadataFullResult"/>
 
 	<sql id="fragment-findall-GeneralLocationDatumMetadata-GeneralLocationDatumMetadataMatch-where">
-		<isNotNull property="fts">
-		INNER JOIN solarnet.sn_loc l ON l.id = meta.loc_id
-		</isNotNull>
 		<isNotEmpty property="filter.tags">
 			JOIN LATERAL json_array_elements(meta.jdata->'t') jtag ON true
 		</isNotEmpty>
@@ -89,9 +89,11 @@
 
 	<select id="findall-GeneralLocationDatumMetadata-GeneralLocationDatumMetadataMatch" resultMap="GeneralLocationDatumMetadataMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		SELECT
-			<include refid="fragment-GeneralLocationDatumMetadata-full-result"/>
+			<include refid="fragment-GeneralLocationDatumMetadata-full-result"/>,
+			<include refid="fragment-SolarLocation-full-result"/>
 		FROM
 			solardatum.da_loc_meta meta
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = meta.loc_id
 		<include refid="fragment-findall-GeneralLocationDatumMetadata-GeneralLocationDatumMetadataMatch-where"/>
 		ORDER BY
 		<isNotEmpty property="SortDescriptors">
