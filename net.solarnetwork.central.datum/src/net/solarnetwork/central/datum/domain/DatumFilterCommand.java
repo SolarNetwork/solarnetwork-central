@@ -39,10 +39,11 @@ import org.joda.time.DateTime;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
-		AggregateNodeDatumFilter, GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter,
+		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
+		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
 		GeneralNodeDatumMetadataFilter {
 
 	private final SolarLocation location;
@@ -55,6 +56,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	private Integer max;
 	private String dataPath; // bean path expression to a data value, e.g. "i.watts"
 
+	private Long[] locationIds;
 	private Long[] nodeIds;
 	private String[] sourceIds;
 	private String[] tags;
@@ -126,7 +128,13 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	@Override
 	public Long getLocationId() {
-		return location.getId();
+		if ( location.getId() != null ) {
+			return location.getId();
+		}
+		if ( locationIds != null && locationIds.length > 0 ) {
+			return locationIds[0];
+		}
+		return null;
 	}
 
 	@Override
@@ -339,6 +347,21 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 			return null;
 		}
 		return path.split("\\.");
+	}
+
+	@Override
+	public Long[] getLocationIds() {
+		if ( locationIds != null ) {
+			return locationIds;
+		}
+		if ( location != null && location.getId() != null ) {
+			return new Long[] { location.getId() };
+		}
+		return null;
+	}
+
+	public void setLocationIds(Long[] locationIds) {
+		this.locationIds = locationIds;
 	}
 
 }

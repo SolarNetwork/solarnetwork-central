@@ -97,10 +97,16 @@ CREATE VIEW solaruser.user_auth_token_login  AS
 		t.status = CAST('Active' AS solaruser.user_auth_token_status);
 
 CREATE VIEW solaruser.user_auth_token_role AS
-	SELECT
+	SELECT 
 		t.auth_token AS username,
-		'ROLE_' || upper(CAST(t.token_type AS character varying)) AS authority
-	FROM solaruser.user_auth_token t;
+		'ROLE_'::text || upper(t.token_type::character varying::text) AS authority
+	FROM solaruser.user_auth_token t
+	UNION
+	SELECT 
+		t.auth_token AS username,
+		r.role_name AS authority
+	FROM solaruser.user_auth_token t
+	JOIN solaruser.user_role r ON r.user_id = t.user_id AND t.token_type = 'User'::solaruser.user_auth_token_type;
 
 /* === USER NODE =========================================================== */
 

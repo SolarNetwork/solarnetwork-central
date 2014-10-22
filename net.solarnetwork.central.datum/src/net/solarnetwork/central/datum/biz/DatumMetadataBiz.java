@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.biz;
 
 import java.util.List;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
@@ -33,7 +35,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * API for manipulating general datum metadata.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface DatumMetadataBiz {
 
@@ -89,6 +91,64 @@ public interface DatumMetadataBiz {
 	 */
 	FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
 			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max);
+
+	/**
+	 * Add metadata to a specific location and source. If metadata already
+	 * exists for the given location and source, the values will be merged such
+	 * that tags are added and info values are added or updated.
+	 * 
+	 * @param locationId
+	 *        the location ID to add to
+	 * @param sourceId
+	 *        the source ID to add to
+	 * @param meta
+	 *        the metadata to add
+	 * @since 1.1
+	 */
+	void addGeneralLocationDatumMetadata(Long locationId, String sourceId, GeneralDatumMetadata meta);
+
+	/**
+	 * Store metadata to a specific location and source, replacing any existing
+	 * metadata with the provided metadata.
+	 * 
+	 * @param locationId
+	 *        the location ID to add to
+	 * @param sourceId
+	 *        the source ID to add to
+	 * @param meta
+	 *        the metadata to store
+	 * @since 1.1
+	 */
+	void storeGeneralLocationDatumMetadata(Long locationId, String sourceId, GeneralDatumMetadata meta);
+
+	/**
+	 * Remove all metadata to a specific location and source.
+	 * 
+	 * @param locationId
+	 *        the location ID to remove from
+	 * @param sourceId
+	 *        the source ID to remove from
+	 * @since 1.1
+	 */
+	void removeGeneralLocationDatumMetadata(Long locationId, String sourceId);
+
+	/**
+	 * Search for datum metadata.
+	 * 
+	 * @param criteria
+	 *        the search criteria
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 * @since 1.1
+	 */
+	FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
 
 }

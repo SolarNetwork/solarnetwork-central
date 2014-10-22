@@ -36,12 +36,16 @@ import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.dao.DatumDao;
 import net.solarnetwork.central.datum.dao.DayDatumDao;
+import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
@@ -104,7 +108,7 @@ import org.springframework.transaction.annotation.Transactional;
  * </dl>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -126,6 +130,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private WeatherLocationDao weatherLocationDao = null;
 	private SolarLocationDao solarLocationDao = null;
 	private GeneralNodeDatumDao generalNodeDatumDao = null;
+	private GeneralLocationDatumDao generalLocationDatumDao = null;
 	private DatumMetadataBiz datumMetadataBiz = null;
 	private int filteredResultsLimit = 250;
 
@@ -250,6 +255,26 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
+	public void postGeneralLocationDatum(Iterable<GeneralLocationDatum> datums) {
+		if ( datums == null ) {
+			return;
+		}
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		for ( GeneralLocationDatum d : datums ) {
+			if ( d.getLocationId() == null ) {
+				throw new IllegalArgumentException(
+						"A locationId value is required for GeneralLocationDatum");
+			}
+			generalLocationDatumDao.store(d);
+		}
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
 	public void addGeneralNodeDatumMetadata(Long nodeId, final String sourceId,
 			final GeneralDatumMetadata meta) {
 		if ( sourceId == null
@@ -301,6 +326,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			final Integer offset, final Integer max) {
 		return datumMetadataBiz.findGeneralNodeDatumMetadata(
 				metadataCriteriaForcedToAuthenticatedNode(criteria), sortDescriptors, offset, max);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+			final GeneralLocationDatumMetadataFilter criteria,
+			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max) {
+		return datumMetadataBiz.findGeneralLocationDatumMetadata(criteria, sortDescriptors, offset, max);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -524,6 +557,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	public void setDatumMetadataBiz(DatumMetadataBiz datumMetadataBiz) {
 		this.datumMetadataBiz = datumMetadataBiz;
+	}
+
+	public GeneralLocationDatumDao getGeneralLocationDatumDao() {
+		return generalLocationDatumDao;
+	}
+
+	public void setGeneralLocationDatumDao(GeneralLocationDatumDao generalLocationDatumDao) {
+		this.generalLocationDatumDao = generalLocationDatumDao;
 	}
 
 }

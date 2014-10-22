@@ -35,17 +35,22 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Resource;
 import net.solarnetwork.central.datum.dao.ConsumptionDatumDao;
+import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.dao.HardwareControlDatumDao;
 import net.solarnetwork.central.datum.dao.PowerDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.HardwareControlDatum;
 import net.solarnetwork.central.datum.domain.HardwareControlDatumMatch;
 import net.solarnetwork.central.datum.domain.PowerDatum;
+import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
@@ -54,6 +59,7 @@ import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.support.SimpleSortDescriptor;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -65,7 +71,7 @@ import org.springframework.test.context.ContextConfiguration;
  * Unit test for the {@link DaoQueryBiz} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ContextConfiguration
 public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
@@ -87,6 +93,9 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 
 	@Autowired
 	private GeneralNodeDatumDao generalNodeDatumDao;
+
+	@Autowired
+	private GeneralLocationDatumDao generalLocationDatumDao;
 
 	@Before
 	public void setup() {
@@ -271,6 +280,31 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 		return datum;
 	}
 
+	private GeneralLocationDatum createGeneralLocationDatum(Long locationId, String sourceId) {
+		GeneralLocationDatum datum = new GeneralLocationDatum();
+		datum.setCreated(new DateTime());
+		datum.setLocationId(locationId);
+		datum.setPosted(new DateTime());
+		datum.setSourceId(sourceId);
+
+		GeneralLocationDatumSamples samples = new GeneralLocationDatumSamples();
+		datum.setSamples(samples);
+
+		// some sample data
+		Map<String, Number> instants = new HashMap<String, Number>(2);
+		instants.put("watts", 231);
+		samples.setInstantaneous(instants);
+
+		Map<String, Number> accum = new HashMap<String, Number>(2);
+		accum.put("watt_hours", 4123);
+		samples.setAccumulating(accum);
+
+		Map<String, Object> msgs = new HashMap<String, Object>(2);
+		msgs.put("foo", "bar");
+		samples.setStatus(msgs);
+		return datum;
+	}
+
 	@Test
 	public void testIterateHardwareControlDatum() {
 		List<Long> ids = new ArrayList<Long>(10);
@@ -419,6 +453,131 @@ public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 				assertEquals(ReportingGeneralNodeDatum.class, match.getClass());
 				assertEquals(created + ((numDatum - offset - 1) * 1000),
 						((ReportingGeneralNodeDatum) match).getCreated().getMillis());
+			}
+		}
+
+	}
+
+	private GeneralLocationDatum getTestGeneralLocationDatumInstance() {
+		return createGeneralLocationDatum(TEST_LOC_ID, TEST_SOURCE_ID);
+	}
+
+	@Test
+	public void getReportableIntervalGeneralLocationNoData() {
+		ReportableInterval result = daoQueryBiz.getReportableInterval(TEST_NODE_ID, (String) null);
+		assertNull(result);
+	}
+
+	@Test
+	public void getReportableIntervalSingleGeneralLocationDatum() {
+		GeneralLocationDatum d = getTestGeneralLocationDatumInstance();
+		generalLocationDatumDao.store(d);
+
+		ReportableInterval result = daoQueryBiz.getLocationReportableInterval(TEST_NODE_ID,
+				(String) null);
+		assertNotNull(result);
+		assertEquals(d.getCreated(), result.getInterval().getStart());
+		assertEquals(d.getCreated(), result.getInterval().getEnd());
+	}
+
+	@Test
+	public void getReportableIntervalRangeGeneralLocationDatum() {
+		GeneralLocationDatum d = getTestGeneralLocationDatumInstance();
+		generalLocationDatumDao.store(d);
+
+		GeneralLocationDatum d2 = getTestGeneralLocationDatumInstance();
+		d2.setCreated(d2.getCreated().plusDays(5));
+		generalLocationDatumDao.store(d2);
+
+		ReportableInterval result = daoQueryBiz.getLocationReportableInterval(TEST_NODE_ID,
+				(String) null);
+		assertNotNull(result);
+		assertEquals(d.getCreated(), result.getInterval().getStart());
+		assertEquals(d2.getCreated(), result.getInterval().getEnd());
+	}
+
+	@Test
+	public void getAvailableSourcesGeneralLocationDatum() {
+		GeneralLocationDatum d = getTestGeneralLocationDatumInstance();
+		generalLocationDatumDao.store(d);
+
+		GeneralLocationDatum d2 = getTestGeneralLocationDatumInstance();
+		d2.setCreated(d2.getCreated().plusDays(5));
+		d2.setSourceId(TEST_SOURCE_ID2);
+		generalLocationDatumDao.store(d2);
+
+		// immediately process reporting data, which the DAO relies on
+		processAggregateStaleData();
+
+		Set<String> result = daoQueryBiz.getLocationAvailableSources(TEST_NODE_ID, null, null);
+		assertNotNull(result);
+		assertEquals(2, result.size());
+		assertTrue(result.contains(TEST_SOURCE_ID));
+		assertTrue(result.contains(TEST_SOURCE_ID2));
+	}
+
+	@Test
+	public void getAvailableSourcesGeneralLocationDatumWithDateRange() {
+		GeneralLocationDatum d = getTestGeneralLocationDatumInstance();
+		generalLocationDatumDao.store(d);
+
+		GeneralLocationDatum d2 = getTestGeneralLocationDatumInstance();
+		d2.setCreated(d2.getCreated().plusDays(5));
+		d2.setSourceId(TEST_SOURCE_ID2);
+		generalLocationDatumDao.store(d2);
+
+		// immediately process reporting data, which the DAO relies on
+		processAggregateStaleData();
+
+		Set<String> result;
+
+		result = daoQueryBiz.getLocationAvailableSources(TEST_NODE_ID, d.getCreated(), d.getCreated()
+				.plusDays(1));
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertTrue("1st result inclusive start date", result.contains(TEST_SOURCE_ID));
+
+		result = daoQueryBiz.getLocationAvailableSources(TEST_NODE_ID, d.getCreated().plusDays(1), d
+				.getCreated().plusDays(2));
+		assertNotNull(result);
+		assertEquals("No results within date range", 0, result.size());
+
+		result = daoQueryBiz.getLocationAvailableSources(TEST_NODE_ID, d.getCreated().plusDays(4),
+				d2.getCreated());
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertTrue("2nd result inclusive end date", result.contains(TEST_SOURCE_ID2));
+	}
+
+	@Test
+	public void testIterateGeneralLocationDatum() {
+		List<GeneralLocationDatumPK> ids = new ArrayList<GeneralLocationDatumPK>(10);
+		// make sure created dates are different and ascending
+		final int numDatum = 10;
+		final long created = System.currentTimeMillis() - (1000 * numDatum);
+		for ( int i = 0; i < numDatum; i++ ) {
+			GeneralLocationDatum d = createGeneralLocationDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+			d.setCreated(new DateTime(created + (i * 1000)));
+			generalLocationDatumDao.store(d);
+			ids.add(d.getId());
+		}
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setLocationId(TEST_NODE_ID);
+		List<SortDescriptor> sorts = Collections
+				.singletonList((SortDescriptor) new SimpleSortDescriptor("created", true));
+		int offset = 0;
+		final int maxResults = 2;
+		while ( offset < 8 ) {
+			FilterResults<GeneralLocationDatumFilterMatch> matches = daoQueryBiz
+					.findGeneralLocationDatum(filter, sorts, offset, maxResults);
+			assertNotNull(matches);
+			assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
+			Iterator<GeneralLocationDatumFilterMatch> itr = matches.getResults().iterator();
+			for ( int i = 0; i < maxResults; i++, offset++ ) {
+				GeneralLocationDatumFilterMatch match = itr.next();
+				assertEquals(ReportingGeneralLocationDatum.class, match.getClass());
+				assertEquals(created + ((numDatum - offset - 1) * 1000),
+						((ReportingGeneralLocationDatum) match).getCreated().getMillis());
 			}
 		}
 

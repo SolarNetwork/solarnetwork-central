@@ -93,6 +93,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 		return response(results);
 	}
 
+	@Deprecated
 	@ResponseBody
 	@RequestMapping(value = "/price", method = RequestMethod.GET)
 	public Response<FilterResults<SourceLocationMatch>> findPriceLocations(PriceLocationFilter cmd) {
@@ -104,6 +105,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 		return response(results);
 	}
 
+	@Deprecated
 	@ResponseBody
 	@RequestMapping(value = "/weather", method = RequestMethod.GET)
 	public Response<FilterResults<SourceLocationMatch>> findWeatherLocations(SourceLocationFilter cmd) {

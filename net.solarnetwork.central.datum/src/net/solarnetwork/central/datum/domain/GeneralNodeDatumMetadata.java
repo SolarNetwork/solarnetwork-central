@@ -23,7 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
+import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.util.SerializeIgnore;
@@ -31,40 +31,24 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.annotate.JsonUnwrapped;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Metadata about the {@link GeneralNodeDatum} associated with a specific node
  * and source.
  * 
  * <p>
- * <b>Note</b> that an internal {@link ObjectMapper} is used to manage the JSON
- * value passed to {@link #setSampleJson(String)}. All floating point values
- * will be converted to {@link BigDecimal} when parsed, to faithfully represent
- * the data.
+ * <b>Note</b> that {@link DatumUtils#getObjectFromJSON(String, Class)} is used
+ * to manage the JSON value passed to {@link #setMetaJson(String)}.
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "created", "updated", "nodeId", "sourceId", "m", "t" })
 public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable, Serializable {
 
-	private static final long serialVersionUID = 9219762451921441252L;
-
-	protected static final Logger LOG = LoggerFactory.getLogger(GeneralNodeDatumMetadata.class);
-	protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-	static {
-		OBJECT_MAPPER.setSerializationInclusion(Inclusion.NON_NULL);
-		OBJECT_MAPPER.setDeserializationConfig(OBJECT_MAPPER.getDeserializationConfig().with(
-				DeserializationConfig.Feature.USE_BIG_DECIMAL_FOR_FLOATS));
-	}
+	private static final long serialVersionUID = -1918479844558497435L;
 
 	private NodeSourcePK id = new NodeSourcePK();
 	private DateTime created;
@@ -177,11 +161,7 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	@SerializeIgnore
 	public GeneralDatumMetadata getMeta() {
 		if ( meta == null && metaJson != null ) {
-			try {
-				meta = OBJECT_MAPPER.readValue(metaJson, GeneralDatumMetadata.class);
-			} catch ( Exception e ) {
-				LOG.error("Exception unmarshalling meta JSON {}", metaJson, e);
-			}
+			meta = DatumUtils.getObjectFromJSON(metaJson, GeneralDatumMetadata.class);
 			metaJson = null; // clear this out, because we might mutate meta and invalidate our cached JSON value
 		}
 		return meta;
@@ -197,12 +177,7 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	@SerializeIgnore
 	public String getMetaJson() {
 		if ( metaJson == null ) {
-			try {
-				metaJson = OBJECT_MAPPER.writeValueAsString(meta);
-			} catch ( Exception e ) {
-				LOG.error("Exception marshalling meta {} to JSON", this, e);
-				metaJson = "{}";
-			}
+			metaJson = DatumUtils.getJSONString(meta, "{}");
 			meta = null; // clear this out, because we might otherwise mutate it and invalidate our cached JSON value
 		}
 		return metaJson;

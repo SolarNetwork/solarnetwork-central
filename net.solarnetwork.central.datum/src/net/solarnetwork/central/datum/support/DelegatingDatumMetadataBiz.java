@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.support;
 
 import java.util.List;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
@@ -35,7 +37,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * {@link DatumMetadataBiz}. Designed for use with AOP.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelegatingDatumMetadataBiz implements DatumMetadataBiz {
 
@@ -72,6 +74,30 @@ public class DelegatingDatumMetadataBiz implements DatumMetadataBiz {
 	@Override
 	public void storeGeneralNodeDatumMetadata(Long nodeId, String sourceId, GeneralDatumMetadata meta) {
 		delegate.storeGeneralNodeDatumMetadata(nodeId, sourceId, meta);
+	}
+
+	@Override
+	public void addGeneralLocationDatumMetadata(Long locationId, String sourceId,
+			GeneralDatumMetadata meta) {
+		delegate.addGeneralLocationDatumMetadata(locationId, sourceId, meta);
+	}
+
+	@Override
+	public void storeGeneralLocationDatumMetadata(Long locationId, String sourceId,
+			GeneralDatumMetadata meta) {
+		delegate.storeGeneralLocationDatumMetadata(locationId, sourceId, meta);
+	}
+
+	@Override
+	public void removeGeneralLocationDatumMetadata(Long locationId, String sourceId) {
+		delegate.removeGeneralLocationDatumMetadata(locationId, sourceId);
+	}
+
+	@Override
+	public FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
+		return delegate.findGeneralLocationDatumMetadata(criteria, sortDescriptors, offset, max);
 	}
 
 }

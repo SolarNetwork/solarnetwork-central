@@ -2,16 +2,16 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Ibatis DAO Support
 Bundle-SymbolicName: net.solarnetwork.central.common.dao.ibatis
-Bundle-Version: 1.19.0
+Bundle-Version: 1.21.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
- net.solarnetwork.central.dao.ibatis;version="1.16.0"
+ net.solarnetwork.central.dao.ibatis;version="1.18.0"
 Import-Package: 
  javax.sql,
  net.solarnetwork.central;version="1.2.0",
  net.solarnetwork.central.dao;version="1.13.0",
- net.solarnetwork.central.domain;version="1.15.0",
+ net.solarnetwork.central.domain;version="1.16.0",
  net.solarnetwork.central.support;version="1.8.0",
  net.solarnetwork.domain;version="1.2.0",
  com.ibatis.common.util;version="[2.3.4,3.0.0)",

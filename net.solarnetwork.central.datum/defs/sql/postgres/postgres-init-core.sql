@@ -411,14 +411,17 @@ CREATE INDEX sn_price_source_fts_default_idx ON solarnet.sn_price_source USING g
 CREATE TABLE solarnet.sn_price_loc (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	loc_id			BIGINT NOT NULL,
 	loc_name		CHARACTER VARYING(128) NOT NULL UNIQUE,
 	source_id		BIGINT NOT NULL,
 	source_data		CHARACTER VARYING(128),
 	currency		VARCHAR(10) NOT NULL,
 	unit			VARCHAR(20) NOT NULL,
-	time_zone		VARCHAR(64) NOT NULL,
 	fts_default		tsvector,
 	PRIMARY KEY (id),
+    CONSTRAINT sn_price_loc_loc_fk FOREIGN KEY (loc_id)
+  	    REFERENCES solarnet.sn_loc (id) MATCH SIMPLE
+	    ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT sn_price_loc_sn_price_source_fk FOREIGN KEY (source_id)
 		REFERENCES solarnet.sn_price_source (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION

@@ -9,7 +9,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
  org.junit;version="[4.5,5.0)",
  org.junit.runner;version="[4.5,5.0)",
- net.solarnetwork.central.dao.ibatis;version="[1.6.0,2.0.0)",
+ net.solarnetwork.central.dao.ibatis;version="[1.17.0,2.0.0)",
  net.solarnetwork.central.datum.dao.ibatis;version="[1.18.0,2.0.0)",
  net.solarnetwork.central.support;version="[1.5.0,2.0.0)",
  net.solarnetwork.central.test;version="[1.0,2.0)",

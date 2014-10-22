@@ -22,8 +22,12 @@
 
 package net.solarnetwork.central.datum.aop;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
 import org.aspectj.lang.annotation.Aspect;
@@ -34,10 +38,19 @@ import org.aspectj.lang.annotation.Pointcut;
  * Security AOP support for {@link DatumMetadataBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 public class DatumMetadataSecurityAspect extends AuthorizationSupport {
+
+	/**
+	 * The default value for the {@link #setLocaitonMetadataAdminRoles(Set)}
+	 * property, contains the single role {@code ROLE_LOC_META_ADMIN}.
+	 */
+	public static final Set<String> DEFAULT_LOCATION_METADATA_ADMIN_ROLES = Collections
+			.singleton("ROLE_LOC_META_ADMIN");
+
+	private Set<String> locaitonMetadataAdminRoles = DEFAULT_LOCATION_METADATA_ADMIN_ROLES;
 
 	/**
 	 * Constructor.
@@ -49,20 +62,32 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 		super(userNodeDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.add*(..)) && args(nodeId,..)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.addGeneralNode*(..)) && args(nodeId,..)")
 	public void addMetadata(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.store*(..)) && args(nodeId,..)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.storeGeneralNode*(..)) && args(nodeId,..)")
 	public void storeMetadata(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.remove*(..)) && args(nodeId,..)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.removeGeneralNode*(..)) && args(nodeId,..)")
 	public void removeMetadata(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.find*(..)) && args(filter,..)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.findGeneralNode*(..)) && args(filter,..)")
 	public void findMetadata(GeneralNodeDatumMetadataFilter filter) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.addGeneralLocation*(..)) && args(locationId,..)")
+	public void addLocationMetadata(Long locationId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.storeGeneralLocation*(..)) && args(locationId,..)")
+	public void storeLocationMetadata(Long locationId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.removeGeneralLocation*(..)) && args(locationId,..)")
+	public void removeLocationMetadata(Long locationId) {
 	}
 
 	/**
@@ -85,6 +110,38 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	@Before("findMetadata(filter)")
 	public void readMetadataCheck(GeneralNodeDatumMetadataFilter filter) {
 		requireNodeReadAccess(filter == null ? null : filter.getNodeId());
+	}
+
+	@Before("addLocationMetadata(locationId) || storeLocationMetadata(locationId) || removeLocationMetadata(locationId)")
+	public void updateLocationMetadataCheck(Long locationId) {
+		SecurityUtils.requireAnyRole(locaitonMetadataAdminRoles);
+	}
+
+	/**
+	 * Set the set of roles required to administer location metadata. If more
+	 * than one role is provided, any one role must match for the authorization
+	 * to succeed.
+	 * 
+	 * @param locaitonMetadataAdminRoles
+	 *        the set of roles
+	 * @since 1.2
+	 */
+	public void setLocaitonMetadataAdminRoles(Set<String> locaitonMetadataAdminRoles) {
+		if ( locaitonMetadataAdminRoles == null || locaitonMetadataAdminRoles.size() < 1 ) {
+			throw new IllegalArgumentException(
+					"The roleLocationMetadataAdmin argument must not be null or empty.");
+		}
+		Set<String> capitalized;
+		if ( locaitonMetadataAdminRoles.size() == 1 ) {
+			capitalized = Collections.singleton(locaitonMetadataAdminRoles.iterator().next()
+					.toUpperCase());
+		} else {
+			capitalized = new HashSet<String>(locaitonMetadataAdminRoles.size());
+			for ( String role : locaitonMetadataAdminRoles ) {
+				capitalized.add(role.toUpperCase());
+			}
+		}
+		this.locaitonMetadataAdminRoles = capitalized;
 	}
 
 }

@@ -28,8 +28,10 @@ import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 @SuiteClasses({ IbatisConsumptionDatumDaoTest.class, IbatisDayDatumDaoTest.class,
-		IbatisGeneralNodeDatumDaoTest.class, IbatisHardwareControlDatumDaoTest.class,
-		IbatisPowerDatumDaoTest.class, IbatisPriceDatumDaoTest.class, IbatisWeatherDatumDaoTest.class })
+		IbatisGeneralLocationDatumDaoTest.class, IbatisGeneralLocationDatumMetadataDaoTest.class,
+		IbatisGeneralNodeDatumDaoTest.class, IbatisGeneralNodeDatumMetadataDaoTest.class,
+		IbatisHardwareControlDatumDaoTest.class, IbatisPowerDatumDaoTest.class,
+		IbatisPriceDatumDaoTest.class, IbatisWeatherDatumDaoTest.class })
 public class AllTests {
 
 }

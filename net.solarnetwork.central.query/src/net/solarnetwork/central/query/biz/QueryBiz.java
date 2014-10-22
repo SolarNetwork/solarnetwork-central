@@ -28,14 +28,19 @@ package net.solarnetwork.central.query.biz;
 
 import java.util.List;
 import java.util.Set;
+import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Entity;
@@ -55,7 +60,7 @@ import org.joda.time.LocalDate;
  * API for querying business logic.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface QueryBiz {
 
@@ -194,6 +199,7 @@ public interface QueryBiz {
 	 * @param max
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
+	 * @since 1.4
 	 */
 	FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
 			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
@@ -212,10 +218,90 @@ public interface QueryBiz {
 	 * @param max
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
+	 * @since 1.4
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
+
+	/**
+	 * API for querying for a filtered set of
+	 * {@link GeneralLocationDatumFilterMatch} results from all possible
+	 * results.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 * @since 1.5
+	 */
+	FilterResults<GeneralLocationDatumFilterMatch> findGeneralLocationDatum(
+			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max);
+
+	/**
+	 * API for querying for a filtered set of aggregated
+	 * {@link ReportingGeneralLocationDatumMatch} results from all possible
+	 * results.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 * @since 1.5
+	 */
+	FilterResults<ReportingGeneralLocationDatumMatch> findAggregateGeneralLocationDatum(
+			AggregateGeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max);
+
+	/**
+	 * Get the available source IDs for a given location, optionally limited to
+	 * a date range.
+	 * 
+	 * @param locationId
+	 *        the location ID to search for
+	 * @param start
+	 *        an optional start date (inclusive) to filter on
+	 * @param end
+	 *        an optional end date (inclusive) to filter on
+	 * @return the distinct source IDs available (never <em>null</em>)
+	 * @since 1.5
+	 */
+	Set<String> getLocationAvailableSources(Long locationId, DateTime start, DateTime end);
+
+	/**
+	 * Get a date interval of available data for a location, optionally limited
+	 * to a source ID.
+	 * 
+	 * <p>
+	 * This method can be used to find the earliest and latest dates data is
+	 * available for a set of given {@link GeneralLocationDatum}. This could be
+	 * useful for reporting UIs that want to display a view of the complete
+	 * range of data available.
+	 * </p>
+	 * <p>
+	 * If the {@code sourceId} parameter is <em>null</em> then the returned
+	 * interval will be for the node as a whole, for any sources.
+	 * </p>
+	 * 
+	 * @param locationId
+	 *        the ID of the location to look for
+	 * @param sourceId
+	 *        an optional source ID to find the available interval for
+	 * @return ReadableInterval instance, or <em>null</em> if no data available
+	 * @since 1.5
+	 */
+	ReportableInterval getLocationReportableInterval(Long locationId, String sourceId);
 
 	/**
 	 * API for querying for a filtered set of results from all possible results.
@@ -273,7 +359,10 @@ public interface QueryBiz {
 	 *        an optional maximum number of returned results
 	 * 
 	 * @return the results, never <em>null</em>
+	 * @deprecated see
+	 *             {@code net.solarnetwork.central.datum.biz.DatumMetadataBiz.findGeneralLocationDatumMetadata}
 	 */
+	@Deprecated
 	FilterResults<SourceLocationMatch> findFilteredLocations(SourceLocation filter,
 			Class<? extends Entity<?>> locationClass, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
