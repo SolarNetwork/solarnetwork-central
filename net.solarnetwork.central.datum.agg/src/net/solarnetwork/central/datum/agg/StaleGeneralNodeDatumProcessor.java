@@ -78,6 +78,8 @@ public class StaleGeneralNodeDatumProcessor extends StaleDatumProcessor {
 
 	@Override
 	protected boolean handleJob(Event job) throws Exception {
+		log.debug("Processing at most {} stale general data for aggregate '{}' with call {}",
+				aggregateProcessMax, aggregateProcessType, getJdbcCall());
 		getJdbcOps().execute(new ConnectionCallback<Object>() {
 
 			@Override
