@@ -82,11 +82,11 @@ BEGIN
 	END IF;
 
 	IF datum.bar IS NOT NULL THEN
-		jtext := jtext || ',"bar":' || datum.bar;
+		jtext := jtext || ',"atm":' || CAST(datum.bar * 100 AS INTEGER);
 	END IF;
 
 	IF datum.visibility IS NOT NULL AND datum.visibility::double precision < 100 THEN
-		jtext := jtext || ',"visibility":' || datum.visibility::double precision;
+		jtext := jtext || ',"visibility":' || CAST(datum.visibility::double precision * 1000 AS INTEGER);
 	END IF;
 
 	jtext := jtext || '}';
@@ -95,12 +95,6 @@ BEGIN
 		jtext := jtext || ',"s":{';
 		IF datum.sky IS NOT NULL THEN
 			jtext := jtext || '"sky":"' || datum.sky || '"';
-		END IF;
-		IF datum.bar_dir IS NOT NULL THEN
-			IF datum.sky IS NOT NULL THEN
-				jtext := jtext || ',';
-			END IF;
-			jtext := jtext || '"barDir":"' || datum.bar_dir || '"';
 		END IF;
 		jtext := jtext || '}';
 	END IF;
