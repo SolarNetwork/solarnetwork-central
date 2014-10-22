@@ -454,7 +454,7 @@ public class DaoQueryBiz implements QueryBiz {
 			DatumFilterCommand cmd = new DatumFilterCommand();
 			cmd.setAggregate(forced);
 			cmd.setEndDate(filter.getEndDate());
-			cmd.setNodeIds(filter.getLocationIds());
+			cmd.setLocationIds(filter.getLocationIds());
 			cmd.setSourceIds(filter.getSourceIds());
 			cmd.setStartDate(filter.getStartDate());
 			cmd.setDataPath(filter.getDataPath());
