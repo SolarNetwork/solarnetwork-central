@@ -41,6 +41,7 @@
 	
 	<reference id="consumptionDatumDao" interface="net.solarnetwork.central.datum.dao.ConsumptionDatumDao"/>
 	<reference id="dayDatumDao" interface="net.solarnetwork.central.datum.dao.DayDatumDao"/>
+	<reference id="generalLocationDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumDao"/>
 	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 	<reference id="hardwareControlDatumDao" interface="net.solarnetwork.central.datum.dao.HardwareControlDatumDao"/>
 	<reference id="powerDatumDao" interface="net.solarnetwork.central.datum.dao.PowerDatumDao"/>
@@ -69,6 +70,7 @@
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 	
 	<bean id="daoDataCollectorBiz" class="net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz">
+		<property name="generalLocationDatumDao" ref="generalLocationDatumDao"/>
 		<property name="generalNodeDatumDao" ref="generalNodeDatumDao"/>
 		<property name="priceLocationDao" ref="priceLocationDao"/>
 		<property name="solarLocationDao" ref="solarLocationDao"/>

@@ -26,6 +26,7 @@ package net.solarnetwork.central.in.biz;
 
 import java.util.List;
 import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -79,6 +80,16 @@ public interface DataCollectorBiz {
 	 *        the collection of datums
 	 */
 	void postGeneralNodeDatum(Iterable<GeneralNodeDatum> datums);
+
+	/**
+	 * Post a collection of {@link GeneralLocationDatum} in a single
+	 * transaction.
+	 * 
+	 * @param datums
+	 *        the collection of datums
+	 * @since 1.3
+	 */
+	void postGeneralLocationDatum(Iterable<GeneralLocationDatum> datums);
 
 	/**
 	 * Add metadata to a specific node and source. If metadata already exists

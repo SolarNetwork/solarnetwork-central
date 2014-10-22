@@ -31,6 +31,7 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.web.GenericSourceLocationFilter.LocationType;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.support.PriceLocationFilter;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -40,6 +41,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -87,7 +89,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/", "/query" }, method = RequestMethod.GET, params = "!type")
-	public Response<?> findGeneralLocations(
+	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch>> findGeneralLocationMetadata(
 			@RequestParam(value = "query", required = false) String query, DatumFilterCommand command) {
 		SolarLocation loc;
 		if ( command != null ) {
@@ -116,6 +118,34 @@ public class LocationLookupController extends WebServiceControllerSupport {
 		return response(results);
 	}
 
+	/**
+	 * Query for general location datum metadata.
+	 * 
+	 * @param query
+	 *        a general search query
+	 * @param criteria
+	 *        specific criteria, such as source ID, sort order, max results,
+	 *        etc.
+	 * @return the results
+	 * @since 1.2
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/{locationId}" }, method = RequestMethod.GET)
+	public Response<GeneralLocationDatumMetadataFilterMatch> getGeneralLocationMetadata(
+			@PathVariable("locationId") Long locationId,
+			@RequestParam(value = "sourceId") String sourceId) {
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setLocationId(locationId);
+		criteria.setSourceId(sourceId);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dataCollectorBiz
+				.findGeneralLocationDatumMetadata(criteria, null, 0, 1);
+		if ( results.getReturnedResultCount() < 1 ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, sourceId);
+		}
+		return response(results.getResults().iterator().next());
+	}
+
+	@Deprecated
 	@ResponseBody
 	@RequestMapping(value = { "", "/", "/query" }, method = RequestMethod.GET, params = "type")
 	public Response<FilterResults<SourceLocationMatch>> findLocations(SourceLocationFilter criteria,
@@ -138,6 +168,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 		}
 	}
 
+	@Deprecated
 	@ResponseBody
 	@RequestMapping(value = "/price", method = RequestMethod.GET)
 	public Response<FilterResults<SourceLocationMatch>> findPriceLocations(PriceLocationFilter criteria) {
@@ -149,6 +180,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 		return response(matches);
 	}
 
+	@Deprecated
 	@ResponseBody
 	@RequestMapping(value = "/weather", method = RequestMethod.GET)
 	public Response<FilterResults<SourceLocationMatch>> findWeatherLocations(

@@ -27,9 +27,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
+import javax.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.HardwareControlDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
@@ -44,6 +46,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -53,7 +56,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * JSON implementation of bulk upload service.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller
 @RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" }, consumes = "application/json")
@@ -68,8 +71,14 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	/** The NodeControlInfo type. */
 	public static final String NODE_CONTROL_INFO_TYPE = "NodeControlInfo";
 
-	/** The GeneralNodeDatum type. */
+	/** The {@link GeneralNodeDatum} or {@link GeneralLocationDatum} type. */
 	public static final String GENERAL_NODE_DATUM_TYPE = "datum";
+
+	/**
+	 * The JSON field name for a location ID on a {@link GeneralLocationDatum}
+	 * value.
+	 */
+	public static final String LOCATION_ID_FIELD = "locationId";
 
 	private final ObjectMapper objectMapper;
 
@@ -89,6 +98,22 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		setDataCollectorBiz(dataCollectorBiz);
 		setSolarNodeDao(solarNodeDao);
 		this.objectMapper = objectMapper;
+	}
+
+	/**
+	 * Handle a {@link RuntimeException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 */
+	@ExceptionHandler(RuntimeException.class)
+	@ResponseBody
+	public Response<?> handleRuntimeException(RuntimeException e, HttpServletResponse response) {
+		log.error("RuntimeException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
 	}
 
 	/**
@@ -122,6 +147,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 
 		List<Datum> parsedDatum = new ArrayList<Datum>();
 		List<GeneralNodeDatum> parsedGeneralNodeDatum = new ArrayList<GeneralNodeDatum>();
+		List<GeneralLocationDatum> parsedGeneralLocationDatum = new ArrayList<GeneralLocationDatum>();
 		List<Object> resultDatum = new ArrayList<Object>();
 
 		try {
@@ -131,6 +157,8 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 					Object o = handleNode(child);
 					if ( o instanceof GeneralNodeDatum ) {
 						parsedGeneralNodeDatum.add((GeneralNodeDatum) o);
+					} else if ( o instanceof GeneralLocationDatum ) {
+						parsedGeneralLocationDatum.add((GeneralLocationDatum) o);
 					} else if ( o instanceof Datum ) {
 						parsedDatum.add((Datum) o);
 					} else if ( o instanceof Instruction ) {
@@ -152,6 +180,12 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			if ( parsedGeneralNodeDatum.size() > 0 ) {
 				getDataCollectorBiz().postGeneralNodeDatum(parsedGeneralNodeDatum);
 				for ( GeneralNodeDatum d : parsedGeneralNodeDatum ) {
+					resultDatum.add(d.getId());
+				}
+			}
+			if ( parsedGeneralLocationDatum.size() > 0 ) {
+				getDataCollectorBiz().postGeneralLocationDatum(parsedGeneralLocationDatum);
+				for ( GeneralLocationDatum d : parsedGeneralLocationDatum ) {
 					resultDatum.add(d.getId());
 				}
 			}
@@ -186,6 +220,11 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	private Object handleNode(JsonNode node) {
 		String nodeType = getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
 		if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) ) {
+			// if we have a location ID, this is actually a GeneralLocationDatum
+			final JsonNode locId = node.get(LOCATION_ID_FIELD);
+			if ( locId != null && locId.isNumber() ) {
+				return handleGeneralLocationDatum(node);
+			}
 			return handleGeneralNodeDatum(node);
 		} else if ( INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
 			return handleInstructionStatus(node);
@@ -293,6 +332,15 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			return objectMapper.readValue(node, GeneralNodeDatum.class);
 		} catch ( IOException e ) {
 			log.debug("Unable to parse JSON into GeneralNodeDatum: {}", e.getMessage());
+			return null;
+		}
+	}
+
+	private GeneralLocationDatum handleGeneralLocationDatum(JsonNode node) {
+		try {
+			return objectMapper.readValue(node, GeneralLocationDatum.class);
+		} catch ( IOException e ) {
+			log.debug("Unable to parse JSON into GeneralLocationDatum: {}", e.getMessage());
 			return null;
 		}
 	}
