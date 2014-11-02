@@ -23,10 +23,10 @@
 package net.solarnetwork.central.datum.domain;
 
 import net.solarnetwork.util.SerializeIgnore;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Extension of {@link GeneralLocationDatum} with some additional properties

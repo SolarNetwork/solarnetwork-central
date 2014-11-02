@@ -20,8 +20,9 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import net.solarnetwork.util.SerializeIgnore;
 import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Domain object for weather related data.
@@ -104,6 +105,7 @@ public class WeatherDatum extends BaseNodeDatum implements LocationDatum {
 
 	@Deprecated
 	@JsonIgnore
+	@SerializeIgnore
 	public Float getTemperatureCelcius() {
 		return getTemperatureCelsius();
 	}

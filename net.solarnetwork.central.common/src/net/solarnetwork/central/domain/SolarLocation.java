@@ -28,14 +28,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TimeZone;
 import net.solarnetwork.util.SerializeIgnore;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.springframework.util.StringUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * A location entity.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SolarLocation extends BaseEntity implements Cloneable, Serializable, Location,
 		LocationMatch {
