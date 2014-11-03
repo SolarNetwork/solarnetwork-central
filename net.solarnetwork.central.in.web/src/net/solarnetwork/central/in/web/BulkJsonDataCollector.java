@@ -41,8 +41,6 @@ import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.domain.NodeControlPropertyType;
 import net.solarnetwork.web.domain.Response;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -51,12 +49,14 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * JSON implementation of bulk upload service.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Controller
 @RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" }, consumes = "application/json")
@@ -309,7 +309,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		Object datum = null;
 		try {
 			datumClass = Class.forName(className, true, Datum.class.getClassLoader());
-			datum = objectMapper.readValue(node, datumClass);
+			datum = objectMapper.treeToValue(node, datumClass);
 		} catch ( ClassNotFoundException e ) {
 			if ( log.isWarnEnabled() ) {
 				log.warn("Unable to load Datum class " + className + " specified in JSON");
@@ -329,7 +329,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 
 	private GeneralNodeDatum handleGeneralNodeDatum(JsonNode node) {
 		try {
-			return objectMapper.readValue(node, GeneralNodeDatum.class);
+			return objectMapper.treeToValue(node, GeneralNodeDatum.class);
 		} catch ( IOException e ) {
 			log.debug("Unable to parse JSON into GeneralNodeDatum: {}", e.getMessage());
 			return null;
@@ -338,7 +338,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 
 	private GeneralLocationDatum handleGeneralLocationDatum(JsonNode node) {
 		try {
-			return objectMapper.readValue(node, GeneralLocationDatum.class);
+			return objectMapper.treeToValue(node, GeneralLocationDatum.class);
 		} catch ( IOException e ) {
 			log.debug("Unable to parse JSON into GeneralLocationDatum: {}", e.getMessage());
 			return null;

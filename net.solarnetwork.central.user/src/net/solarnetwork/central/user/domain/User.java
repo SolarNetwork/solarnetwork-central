@@ -25,13 +25,13 @@ package net.solarnetwork.central.user.domain;
 import java.util.Set;
 import net.solarnetwork.central.domain.BaseEntity;
 import net.solarnetwork.util.SerializeIgnore;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * A user domain object.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class User extends BaseEntity {
 
