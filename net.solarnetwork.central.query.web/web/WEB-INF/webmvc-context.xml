@@ -21,7 +21,7 @@
 
 	<mvc:annotation-driven>
 		<mvc:message-converters register-defaults="true">
-			<bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+			<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
 				<property name="prefixJson" value="false" />
 				<property name="supportedMediaTypes" value="application/json" />
 				<property name="objectMapper" ref="objectMapper"/>
@@ -42,9 +42,7 @@
 
 	<bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter" />
 
-	<bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"/>
-
-	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"/>
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"/>
 
 	<bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
 		<property name="mappings">

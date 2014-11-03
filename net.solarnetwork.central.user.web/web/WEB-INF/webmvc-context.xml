@@ -27,7 +27,7 @@
 
 	<mvc:annotation-driven>
 		<mvc:message-converters register-defaults="true">
-			<bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+			<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
 				<property name="prefixJson" value="false" />
 				<property name="supportedMediaTypes" value="application/json" />
 				<property name="objectMapper" ref="objectMapper"/>
@@ -47,7 +47,7 @@
 	</mvc:annotation-driven>
 
 	<!-- Maps request paths to @RequestMapping annotations -->
-	<bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">
 		<property name="order" value="0"/>
 	</bean>
 

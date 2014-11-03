@@ -28,7 +28,7 @@
 		</property>
 		<property name="featuresToDisable">
 			<list>
-				<util:constant static-field="com.fasterxml.jackson.databind.DeserializationFeature$FAIL_ON_UNKNOWN_PROPERTIES"/>
+				<util:constant static-field="com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES"/>
 			</list>
 		</property>
 	</bean>
