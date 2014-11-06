@@ -26,12 +26,19 @@ package net.solarnetwork.central.in.biz;
 
 import java.util.List;
 import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 
 /**
  * API for collecting data from solar nodes.
@@ -41,7 +48,7 @@ import net.solarnetwork.central.domain.SourceLocationMatch;
  * </p>
  * 
  * @author matt.magoffin
- * @version 1.1
+ * @version 1.3
  */
 public interface DataCollectorBiz {
 
@@ -65,6 +72,75 @@ public interface DataCollectorBiz {
 	 *         {@code datums}
 	 */
 	List<Datum> postDatum(Iterable<Datum> datums);
+
+	/**
+	 * Post a collection of {@link GeneralNodeDatum} in a single transaction.
+	 * 
+	 * @param datums
+	 *        the collection of datums
+	 */
+	void postGeneralNodeDatum(Iterable<GeneralNodeDatum> datums);
+
+	/**
+	 * Post a collection of {@link GeneralLocationDatum} in a single
+	 * transaction.
+	 * 
+	 * @param datums
+	 *        the collection of datums
+	 * @since 1.3
+	 */
+	void postGeneralLocationDatum(Iterable<GeneralLocationDatum> datums);
+
+	/**
+	 * Add metadata to a specific node and source. If metadata already exists
+	 * for the given node and source, the values will be merged such that tags
+	 * are only added and only new info values will be added.
+	 * 
+	 * @param nodeId
+	 *        the node ID to add to
+	 * @param sourceId
+	 *        the source ID to add to
+	 * @param meta
+	 *        the metadata to add
+	 */
+	void addGeneralNodeDatumMetadata(Long nodeId, String sourceId, GeneralDatumMetadata meta);
+
+	/**
+	 * Search for datum metadata.
+	 * 
+	 * @param criteria
+	 *        the search criteria
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 */
+	FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
+			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max);
+
+	/**
+	 * Search for location datum metadata based on a location criteria. The
+	 * location and metadata criteria must both match for results to be
+	 * included.
+	 * 
+	 * @param criteria
+	 *        the search criteria
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 * @since 1.3
+	 */
+	FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+			GeneralLocationDatumMetadataFilter metadataCriteria, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max);
 
 	/**
 	 * Look up PriceLocation objects based on a source name and location name.

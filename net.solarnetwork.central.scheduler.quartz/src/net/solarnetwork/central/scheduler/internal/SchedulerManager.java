@@ -43,7 +43,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
  * Manage the lifecycle of the Quartz Scheduler.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SchedulerManager extends EventHandlerSupport implements
 		ApplicationListener<ContextRefreshedEvent>, EventHandler {
@@ -94,10 +94,14 @@ public class SchedulerManager extends EventHandlerSupport implements
 		log.debug("Got event: {}", event.getTopic());
 		if ( SchedulerConstants.TOPIC_JOB_COMPLETE.equals(event.getTopic()) ) {
 			NotificationJob job = getRunningJob(event);
-			job.finish(event);
+			if ( job != null ) {
+				job.finish(event);
+			}
 		} else if ( SchedulerConstants.TOPIC_JOB_FAILURE.equals(event.getTopic()) ) {
 			NotificationJob job = getRunningJob(event);
-			job.finish(event);
+			if ( job != null ) {
+				job.finish(event);
+			}
 		} else if ( TEST_TOPIC.equals(event.getTopic()) ) {
 			Event ack = SchedulerUtils.createJobCompleteEvent(event);
 			eventAdmin.postEvent(ack);
@@ -124,7 +128,7 @@ public class SchedulerManager extends EventHandlerSupport implements
 				return (NotificationJob) jec.getJobInstance();
 			}
 		}
-		log.debug("Running job {} in group {} not found", jobId, jobGroup);
+		log.warn("Running job {} in group {} not found", jobId, jobGroup);
 		return null;
 	}
 

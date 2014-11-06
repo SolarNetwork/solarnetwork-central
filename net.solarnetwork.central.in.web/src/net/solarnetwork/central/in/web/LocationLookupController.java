@@ -29,7 +29,7 @@ import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
-import net.solarnetwork.central.web.domain.Response;
+import net.solarnetwork.web.domain.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +50,7 @@ import org.springframework.web.servlet.ModelAndView;
  * Web access to PriceLocation data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Controller
 public class LocationLookupController {

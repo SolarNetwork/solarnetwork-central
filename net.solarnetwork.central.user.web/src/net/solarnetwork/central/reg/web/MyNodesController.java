@@ -24,10 +24,14 @@
 
 package net.solarnetwork.central.reg.web;
 
+import static net.solarnetwork.web.domain.Response.response;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
@@ -36,6 +40,8 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.domain.NetworkAssociation;
+import net.solarnetwork.support.CertificateService;
+import net.solarnetwork.web.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -44,6 +50,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -62,6 +69,7 @@ public class MyNodesController extends ControllerSupport {
 
 	public final UserBiz userBiz;
 	public final RegistrationBiz registrationBiz;
+	public final CertificateService certificateService;
 
 	/**
 	 * Constructor.
@@ -72,10 +80,12 @@ public class MyNodesController extends ControllerSupport {
 	 *        the RegistrationBiz
 	 */
 	@Autowired
-	public MyNodesController(UserBiz userBiz, RegistrationBiz registrationBiz) {
+	public MyNodesController(UserBiz userBiz, RegistrationBiz registrationBiz,
+			CertificateService certificateService) {
 		super();
 		this.userBiz = userBiz;
 		this.registrationBiz = registrationBiz;
+		this.certificateService = certificateService;
 	}
 
 	/**
@@ -156,30 +166,61 @@ public class MyNodesController extends ControllerSupport {
 	 *        if TRUE, then download the certificate as a PEM file
 	 * @return the response data
 	 */
-	@RequestMapping("/cert")
+	@RequestMapping("/cert/{nodeId}")
 	@ResponseBody
-	public Object viewCert(@RequestParam("id") Long certId,
+	public Object viewCert(@PathVariable("nodeId") Long nodeId,
+			@RequestParam(value = "password", required = false) String password,
 			@RequestParam(value = "download", required = false) Boolean download) {
-		UserNodeCertificate cert = userBiz.getUserNodeCertificate(certId);
+		SecurityUser actor = SecurityUtils.getCurrentUser();
+		UserNodeCertificate cert = userBiz.getUserNodeCertificate(actor.getUserId(), nodeId);
 		if ( cert == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, certId);
-		}
-		if ( !Boolean.TRUE.equals(download) ) {
-			return cert;
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
 		}
 
-		String pem = cert.getPEMValue();
+		final byte[] data = cert.getKeystoreData();
+
+		if ( !Boolean.TRUE.equals(download) ) {
+			String pkcs7 = "";
+			if ( data != null ) {
+				KeyStore keystore = cert.getKeyStore(password);
+				X509Certificate[] chain = cert.getNodeCertificateChain(keystore);
+				pkcs7 = certificateService.generatePKCS7CertificateChainString(chain);
+			}
+			return new UserNodeCertificateDecoded(cert, pkcs7);
+		}
 
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentLength(pem.length());
-		headers.setContentType(MediaType.parseMediaType("application/x-pem-file"));
+		headers.setContentLength(data.length);
+		headers.setContentType(MediaType.parseMediaType("application/x-pkcs12"));
 		headers.setLastModified(System.currentTimeMillis());
 		headers.setCacheControl("no-cache");
 
 		headers.set("Content-Disposition", "attachment; filename=solarnode-" + cert.getNode().getId()
-				+ ".pem");
+				+ ".p12");
 
-		return new ResponseEntity<String>(pem, headers, HttpStatus.OK);
+		return new ResponseEntity<byte[]>(data, headers, HttpStatus.OK);
+	}
+
+	public static class UserNodeCertificateDecoded extends UserNodeCertificate {
+
+		private static final long serialVersionUID = 4591637182934678849L;
+
+		private final String pemValue;
+
+		private UserNodeCertificateDecoded(UserNodeCertificate cert, String pkcs7) {
+			super();
+			setCreated(cert.getCreated());
+			setId(cert.getId());
+			setNodeId(cert.getNodeId());
+			setRequestId(cert.getRequestId());
+			setUserId(cert.getUserId());
+			this.pemValue = pkcs7;
+		}
+
+		public String getPemValue() {
+			return pemValue;
+		}
+
 	}
 
 	@RequestMapping(value = "/editNode", method = RequestMethod.GET)
@@ -187,6 +228,13 @@ public class MyNodesController extends ControllerSupport {
 			Model model) {
 		model.addAttribute("userNode", userBiz.getUserNode(userId, nodeId));
 		return "my-nodes/edit-node";
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/node", method = RequestMethod.GET)
+	public Response<UserNode> getUserNode(@RequestParam("userId") Long userId,
+			@RequestParam("nodeId") Long nodeId) {
+		return response(userBiz.getUserNode(userId, nodeId));
 	}
 
 	@ResponseBody

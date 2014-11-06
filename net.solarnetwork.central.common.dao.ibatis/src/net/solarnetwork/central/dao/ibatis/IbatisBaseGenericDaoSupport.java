@@ -135,7 +135,7 @@ import com.ibatis.sqlmap.client.SqlMapException;
  * </dl>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class IbatisBaseGenericDaoSupport<T extends Entity<PK>, PK extends Serializable> extends
 		SqlMapClientDaoSupport implements GenericDao<T, PK> {
@@ -676,6 +676,36 @@ public abstract class IbatisBaseGenericDaoSupport<T extends Entity<PK>, PK exten
 	 */
 	protected String getMemberDomainKey(Class<?> memberClass) {
 		return memberClass.getSimpleName();
+	}
+
+	/**
+	 * Append to a space-delimited string buffer.
+	 * 
+	 * <p>
+	 * This is designed with full-text search in mind, for building up a query
+	 * string.
+	 * </p>
+	 * 
+	 * @param value
+	 *        the value to append if not empty
+	 * @param buf
+	 *        the buffer to append to
+	 * @return <em>true</em> if {@code value} was appended to {@code buf}
+	 * @since 1.2
+	 */
+	protected boolean spaceAppend(String value, StringBuilder buf) {
+		if ( value == null ) {
+			return false;
+		}
+		value = value.trim();
+		if ( value.length() < 1 ) {
+			return false;
+		}
+		if ( buf.length() > 0 ) {
+			buf.append(' ');
+		}
+		buf.append(value);
+		return true;
 	}
 
 	public String getQueryForId() {

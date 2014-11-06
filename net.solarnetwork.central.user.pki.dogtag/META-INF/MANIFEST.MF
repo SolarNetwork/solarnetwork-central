@@ -1,0 +1,29 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SolarNet Dogtag CA
+Bundle-SymbolicName: net.solarnetwork.central.user.pki.dogtag
+Bundle-Version: 1.0.0
+Bundle-Vendor: SolarNetwork
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: 
+ javax.net.ssl,
+ javax.security.auth.x500,
+ net.solarnetwork.central.security;version="1.5.0",
+ net.solarnetwork.central.user.biz;version="1.6.0",
+ net.solarnetwork.support;version="1.2.0",
+ org.apache.http.client;version="[4.3,5.0)",
+ org.apache.http.client.config;version="[4.3,5.0)",
+ org.apache.http.config;version="[4.3,5.0)",
+ org.apache.http.conn;version="[4.3,5.0)",
+ org.apache.http.conn.socket;version="[4.3,5.0)",
+ org.apache.http.conn.ssl;version="4.3.5",
+ org.apache.http.impl.client;version="[4.3,5.0)",
+ org.apache.http.impl.conn;version="[4.3,5.0)",
+ org.slf4j;version="[1.5.0,2.0.0)",
+ org.springframework.beans;version="[3.1,4.0)",
+ org.springframework.beans.factory;version="[3.1,4.0)",
+ org.springframework.core.io;version="[3.1,4.0)",
+ org.springframework.http;version="[3.1,4.0)",
+ org.springframework.http.client;version="[3.1,4.0)",
+ org.springframework.util;version="[3.1,4.0)",
+ org.springframework.web.client;version="[3.1,4.0)"

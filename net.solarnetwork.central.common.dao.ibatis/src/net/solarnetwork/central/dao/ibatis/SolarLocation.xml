@@ -11,21 +11,20 @@
 		INSERT INTO solarnet.sn_loc 
 			(id
 			<isNotNull prepend="," property="created">created</isNotNull>
-			, loc_name, country, time_zone, region, state_prov, locality, postal_code,
-			address, latitude, longitude)
+			, country, time_zone, region, state_prov, locality, postal_code,
+			address, latitude, longitude, elevation)
 		VALUES
 			(#id#
 			<isNotNull prepend="," property="created">#created#</isNotNull>
-			, #name#, #country#, #timeZoneId#, #region#, 
+			, #country#, #timeZoneId#, #region#, 
 			#stateOrProvince#, #locality#, #postalCode#, #street#,
-			#latitude#, #longitude#)
+			#latitude#, #longitude#, #elevation#)
 	</insert>
 
 	<update id="update-SolarLocation" parameterClass="SolarLocation">
 		UPDATE
 			solarnet.sn_loc
 		SET
-			loc_name = #name#, 
 			country = #country#, 
 			time_zone = #timeZoneId#, 
 			region = #region#,
@@ -34,7 +33,8 @@
 			postal_code = #postalCode#, 
 			address = #street#, 
 			latitude = #latitude#,
-			longitude = #longitude#
+			longitude = #longitude#,
+			elevation = #elevation#
 		WHERE
 			id = #id#
 	</update>
@@ -42,7 +42,6 @@
 	<sql id="fragment-SolarLocation-public-result">
 		l.id AS sn_loc_id, 
 		l.created AS sn_loc_created,
-		l.loc_name AS sn_loc_loc_name,
 		l.country AS sn_loc_country,
 		l.time_zone AS sn_loc_time_zone,
 		l.region AS sn_loc_region,
@@ -55,13 +54,13 @@
 		<include refid="fragment-SolarLocation-public-result"/>,
 		l.address AS sn_loc_address,
 		l.latitude AS sn_loc_latitude,
-		l.longitude AS sn_loc_longitude
+		l.longitude AS sn_loc_longitude,
+		l.elevation AS sn_loc_elevation
 	</sql>
 
 	<resultMap id="SolarLocationPublicResult" class="SolarLocation">
 		<result column="sn_loc_id" property="id"/>
 		<result column="sn_loc_created" property="created"/>
-		<result column="sn_loc_loc_name" property="name"/>
 		<result column="sn_loc_country" property="country"/>
 		<result column="sn_loc_time_zone" property="timeZoneId"/>
 		<result column="sn_loc_region" property="region"/>
@@ -74,6 +73,7 @@
 		<result column="sn_loc_address" property="street"/>
 		<result column="sn_loc_latitude" property="latitude"/>
 		<result column="sn_loc_longitude" property="longitude"/>
+		<result column="sn_loc_elevation" property="elevation"/>
 	</resultMap>
 	
 	<select id="get-SolarLocation-for-id" resultMap="SolarLocationFullResult" parameterClass="long">
@@ -83,17 +83,6 @@
 			solarnet.sn_loc l
 		WHERE
 			l.id = #id#
-	</select>
-	
-	<select id="find-SolarLocation-for-name" resultMap="SolarLocationPublicResult" parameterClass="string">
-		SELECT
-			<include refid="fragment-SolarLocation-public-result"/>
-		FROM
-			solarnet.sn_loc l
-		WHERE
-			l.loc_name = #name#
-		ORDER BY
-			l.id
 	</select>
 	
 	<select id="find-SolarLocation-for-country-timezone" resultMap="SolarLocationFullResult" parameterClass="map">
@@ -111,6 +100,7 @@
 			AND l.address IS NULL
 			AND l.latitude IS NULL
 			AND l.longitude IS NULL
+			AND l.elevation IS NULL
 		ORDER BY
 			l.id
 	</select>
@@ -118,37 +108,35 @@
 	<sql id="fragment-findall-SolarLocation-LocationMatch">
 		FROM
 			solarnet.sn_loc l
-		<dynamic prepend="WHERE">
-		<!--  TODO: use FTS to allow partial matches -->
-			<isNotNull prepend="AND" property="filter.name">
-				l.loc_name = #filter.name#
+		WHERE
+			l.address IS NULL
+			AND l.latitude IS NULL
+			AND l.longitude IS NULL
+			AND l.elevation IS NULL
+			<isNotNull property="fts">
+			AND l.fts_default @@ solarcommon.plainto_prefix_tsquery(#fts#)
 			</isNotNull>
-			<isNotNull prepend="AND" property="filter.country">
-				l.country = #filter.country#
+			<isNotNull property="filter.timeZoneId">
+			AND l.time_zone = #filter.timeZoneId#
 			</isNotNull>
-			<isNotNull prepend="AND" property="filter.region">
-				l.region = #filter.region#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.stateOrProvince">
-				l.state_prov = #filter.stateOrProvince#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.locality">
-				l.locality = #filter.locality#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.postalCode">
-				l.postal_code = #filter.postalCode#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.timeZoneId">
-				l.time_zone = #filter.timeZoneId#
-			</isNotNull>
-		</dynamic>
+	</sql>
+	
+	<sql id="fragment-sort-SolarLocation-LocationMatch-default">
+		l.country,
+		l.time_zone,
+		l.state_prov,
+		l.region,
+		l.locality,
+		l.postal_code,
+		l.id
 	</sql>
 
 	<select id="findall-SolarLocation-LocationMatch" resultMap="SolarLocationPublicResult">
 		SELECT
 			<include refid="fragment-SolarLocation-public-result"/>
 		<include refid="fragment-findall-SolarLocation-LocationMatch"/>
-		ORDER BY lower(l.loc_name), l.id
+		ORDER BY
+		<include refid="fragment-sort-SolarLocation-LocationMatch-default"/>
 	</select>
 
 	<select id="findall-SolarLocation-LocationMatch-count" resultClass="long">
@@ -156,4 +144,76 @@
 		<include refid="fragment-findall-SolarLocation-LocationMatch"/>
 	</select>
 
+	<select id="find-SolarLocation-for-location" parameterClass="SolarLocation" resultMap="SolarLocationFullResult">
+		SELECT
+			<include refid="fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_loc l
+		WHERE
+			l.country = #country#
+			AND l.time_zone = #timeZoneId#
+			
+			<isNull property="region">
+			AND l.region IS NULL
+			</isNull>
+			<isNotNull property="region">
+			AND lower(l.region)	= lower(#region#)
+			</isNotNull>
+			
+			<isNull property="stateOrProvince">
+			AND l.state_prov IS NULL
+			</isNull>
+			<isNotNull property="stateOrProvince">
+			AND lower(l.state_prov) = lower(#stateOrProvince#)
+			</isNotNull>
+			
+			<isNull property="locality">
+			AND l.locality IS NULL
+			</isNull>
+			<isNotNull property="locality">
+			AND lower(l.locality) = lower(#locality#)
+			</isNotNull>
+			
+			<isNull property="postalCode">
+			AND l.postal_code IS NULL
+			</isNull>
+			<isNotNull property="postalCode">
+			AND lower(l.postal_code) = lower(#postalCode#)
+			</isNotNull>
+			
+			<isNull property="street">
+			AND l.address IS NULL
+			</isNull>
+			<isNotNull property="street">
+			AND lower(l.address) = lower(#street#)
+			</isNotNull>
+			
+			AND l.latitude
+			<isNull property="latitude">
+				IS NULL
+			</isNull>
+			<isNotNull property="latitude">
+				= #latitude#
+			</isNotNull>
+			
+			AND l.longitude
+			<isNull property="longitude">
+				IS NULL
+			</isNull>
+			<isNotNull property="longitude">
+				= #longitude#
+			</isNotNull>
+			
+			AND l.elevation
+			<isNull property="elevation">
+				IS NULL
+			</isNull>
+			<isNotNull property="elevation">
+				= #elevation#
+			</isNotNull>
+			
+		ORDER BY
+			l.id
+	</select>
+	
 </sqlMap>

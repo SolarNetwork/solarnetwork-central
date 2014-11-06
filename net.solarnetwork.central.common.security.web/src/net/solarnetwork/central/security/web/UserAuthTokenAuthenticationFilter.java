@@ -125,7 +125,8 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException,
 			ServletException {
-		HttpServletRequest request = (HttpServletRequest) req;
+		SecurityHttpServletRequestWrapper request = new SecurityHttpServletRequestWrapper(
+				(HttpServletRequest) req, 65536);
 		HttpServletResponse response = (HttpServletResponse) res;
 
 		final String header = request.getHeader("Authorization");
@@ -144,6 +145,21 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		} catch ( AuthenticationException e ) {
 			fail(request, response, e);
 			return;
+		}
+
+		final String providedMD5 = request.getHeader("Content-MD5");
+		if ( providedMD5 != null && providedMD5.length() > 0 ) {
+			// compute the MD5 and validate now
+			try {
+				String computedMD5 = request.getContentMD5();
+				if ( providedMD5.equals(computedMD5) == false ) {
+					fail(request, response, new BadCredentialsException("Invalid Content-MD5 value"));
+					return;
+				}
+			} catch ( net.solarnetwork.central.security.SecurityException e ) {
+				fail(request, response, new BadCredentialsException("Content too large", e));
+				return;
+			}
 		}
 
 		final UserDetails user;

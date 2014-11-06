@@ -93,7 +93,9 @@
 				l.postal_code = #filter.postalCode#
 			</isNotNull>
 		</dynamic>
-		ORDER BY lower(wsource.sname), lower(l.loc_name)
+		ORDER BY 
+			lower(wsource.sname),
+			<include refid="fragment-sort-SolarLocation-LocationMatch-default"/>
 	</select>
 	
 	<sql id="fragment-findall-WeatherLocation-SourceLocationMatch">
@@ -109,28 +111,16 @@
 				wloc.id = #filter.id#
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.source">
-				wsource.sname = #filter.source#
+				wsource.fts_default @@ solarcommon.plainto_prefix_tsquery(#filter.source#)
 			</isNotNull>
 			<isNotNull prepend="AND" property="filter.timeZoneId">
 				l.time_zone = #filter.timeZoneId#
 			</isNotNull>
-			<isNotNull prepend="AND" property="filter.location.name">
-				l.loc_name = #filter.location.name#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.location.country">
-				l.country = #filter.location.country#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.location.region">
-				l.region = #filter.location.region#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.location.stateOrProvince">
-				l.state_prov = #filter.location.stateOrProvince#
-			</isNotNull>
-			<isNotNull prepend="AND" property="filter.location.postalCode">
-				l.postal_code = #filter.location.postalCode#
-			</isNotNull>
 			<isNotNull prepend="AND" property="filter.location.timeZoneId">
 				l.time_zone = #filter.location.timeZoneId#
+			</isNotNull>
+			<isNotNull prepend="AND" property="fts">
+				l.fts_default @@ solarcommon.plainto_prefix_tsquery(#fts#)
 			</isNotNull>
 		</dynamic>
 	</sql>
@@ -143,13 +133,13 @@
 		<include refid="fragment-findall-WeatherLocation-SourceLocationMatch"/>
 		ORDER BY
 		<isEmpty property="SortDescriptors">
-			lower(wsource.sname), lower(l.loc_name),
+			lower(wsource.sname),
+			<include refid="fragment-sort-SolarLocation-LocationMatch-default"/>,
 		</isEmpty>
 		<isNotEmpty property="SortDescriptors">
 			<iterate property="SortDescriptors" conjunction="," close=",">
 				<isEqual property="SortDescriptors[].sortKey" compareValue="created">ploc.created</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="sourceName">lower(psource.sname)</isEqual>
-				<isEqual property="SortDescriptors[].sortKey" compareValue="location.name">lower(l.loc_name)</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="location.country">l.country</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="location.region">l.region</isEqual>
 				<isEqual property="SortDescriptors[].sortKey" compareValue="location.stateOrProvince">l.state_prov</isEqual>

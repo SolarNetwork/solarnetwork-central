@@ -18,14 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.instructor.dao.ibatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.dao.ibatis.IbatisNodeInstructionDao;
@@ -41,7 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * Test case for the {@link IbatisNodeInstructionDao} class.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public class IbatisNodeInstructionDaoTest extends AbstractIbatisDaoTestSupport {
 
@@ -133,6 +135,60 @@ public class IbatisNodeInstructionDaoTest extends AbstractIbatisDaoTestSupport {
 		}
 		assertEquals(1, count);
 		assertEquals(lastDatum.getId(), m.getId());
+	}
+
+	@Test
+	public void findActive() {
+		findByNodeId();
+
+		SimpleInstructionFilter filter = new SimpleInstructionFilter();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setState(InstructionState.Queued);
+		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		assertNotNull(matches);
+		assertEquals(Long.valueOf(1L), matches.getTotalResults());
+		assertEquals(Integer.valueOf(1), matches.getReturnedResultCount());
+		assertNotNull(matches.getResults());
+		int count = 0;
+		EntityMatch m = null;
+		for ( EntityMatch one : matches.getResults() ) {
+			count++;
+			m = one;
+		}
+		assertEquals(1, count);
+		assertEquals(lastDatum.getId(), m.getId());
+	}
+
+	@Test
+	public void findPending() {
+		findByNodeId();
+
+		// store a second for a different state, to make sure filter working
+		final NodeInstruction datum = new NodeInstruction();
+		datum.setCreated(new DateTime());
+		datum.setInstructionDate(new DateTime());
+		datum.setNodeId(TEST_NODE_ID);
+		datum.setState(InstructionState.Executing);
+		datum.setTopic("Test Topic");
+		final Long instr2Id = dao.store(datum);
+		assertNotNull(instr2Id);
+		datum.setId(instr2Id);
+
+		SimpleInstructionFilter filter = new SimpleInstructionFilter();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
+				InstructionState.Executing));
+		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		assertNotNull(matches);
+		assertEquals(Long.valueOf(2L), matches.getTotalResults());
+		assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
+		assertNotNull(matches.getResults());
+
+		Set<Long> expectedIds = new HashSet<Long>(Arrays.asList(lastDatum.getId(), datum.getId()));
+		for ( EntityMatch one : matches.getResults() ) {
+			expectedIds.remove(one.getId());
+		}
+		assertEquals("Two results returned", 0, expectedIds.size());
 	}
 
 }

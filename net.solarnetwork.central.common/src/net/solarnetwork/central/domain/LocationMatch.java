@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.domain;
 
+import java.math.BigDecimal;
+
 /**
  * API for Location search results.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public interface LocationMatch extends EntityMatch {
 
@@ -84,13 +86,21 @@ public interface LocationMatch extends EntityMatch {
 	 * 
 	 * @return latitude
 	 */
-	Double getLatitude();
+	BigDecimal getLatitude();
 
 	/**
 	 * Get the decimal longitude.
 	 * 
 	 * @return longitude
 	 */
-	Double getLongitude();
+	BigDecimal getLongitude();
+
+	/**
+	 * Get the elevation, in meters.
+	 * 
+	 * @return the elevation
+	 * @since 1.2
+	 */
+	BigDecimal getElevation();
 
 }

@@ -23,22 +23,24 @@
 package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import net.solarnetwork.util.SerializeIgnore;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.springframework.util.StringUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * A location entity.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.4
  */
 public class SolarLocation extends BaseEntity implements Cloneable, Serializable, Location,
 		LocationMatch {
 
-	private static final long serialVersionUID = 5597249684004944213L;
+	private static final long serialVersionUID = -3752573628286835489L;
 
 	private String name;
 	private String country;
@@ -47,8 +49,9 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 	private String locality;
 	private String postalCode;
 	private String street;
-	private Double latitude;
-	private Double longitude;
+	private BigDecimal latitude;
+	private BigDecimal longitude;
+	private BigDecimal elevation;
 	private String timeZoneId;
 
 	/**
@@ -75,6 +78,7 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 		setStreet(loc.getStreet());
 		setLatitude(loc.getLatitude());
 		setLongitude(loc.getLongitude());
+		setElevation(loc.getElevation());
 		setTimeZoneId(loc.getTimeZoneId());
 	}
 
@@ -113,6 +117,72 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 		}
 	}
 
+	/**
+	 * Return a new SolarLocation with normalized values from another Location.
+	 * 
+	 * @param loc
+	 *        the location to normalize
+	 * @return the normalized location
+	 * @since 1.3
+	 */
+	public static SolarLocation normalizedLocation(Location loc) {
+		assert loc != null;
+		SolarLocation norm = new SolarLocation();
+		if ( loc.getName() != null ) {
+			String name = loc.getName().trim();
+			if ( name.length() > 0 ) {
+				norm.setName(name);
+			}
+		}
+		if ( loc.getCountry() != null && loc.getCountry().length() >= 2 ) {
+			String country = loc.getCountry();
+			if ( country.length() > 2 ) {
+				country = country.substring(0, 2);
+			}
+			norm.setCountry(country.toUpperCase());
+		}
+		if ( loc.getTimeZoneId() != null ) {
+			TimeZone tz = TimeZone.getTimeZone(loc.getTimeZoneId());
+			if ( tz != null ) {
+				norm.setTimeZoneId(tz.getID());
+			}
+		}
+		if ( loc.getRegion() != null ) {
+			String region = loc.getRegion().trim();
+			if ( region.length() > 0 ) {
+				norm.setRegion(region);
+			}
+		}
+		if ( loc.getStateOrProvince() != null ) {
+			String state = loc.getStateOrProvince().trim();
+			if ( state.length() > 0 ) {
+				norm.setStateOrProvince(state);
+			}
+		}
+		if ( loc.getLocality() != null ) {
+			String locality = loc.getLocality().trim();
+			if ( locality.length() > 0 ) {
+				norm.setLocality(locality);
+			}
+		}
+		if ( loc.getPostalCode() != null ) {
+			String postalCode = loc.getPostalCode().trim().toUpperCase();
+			if ( postalCode.length() > 0 ) {
+				norm.setPostalCode(postalCode);
+			}
+		}
+		if ( loc.getStreet() != null ) {
+			String street = loc.getStreet().trim();
+			if ( street.length() > 0 ) {
+				norm.setStreet(street);
+			}
+		}
+		norm.setLatitude(loc.getLatitude());
+		norm.setLongitude(loc.getLongitude());
+		norm.setElevation(loc.getElevation());
+		return norm;
+	}
+
 	@Override
 	@SerializeIgnore
 	@JsonIgnore
@@ -144,6 +214,9 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 		}
 		if ( longitude != null ) {
 			filter.put("longitude", longitude);
+		}
+		if ( elevation != null ) {
+			filter.put("elevation", elevation);
 		}
 		if ( timeZoneId != null ) {
 			filter.put("tz", timeZoneId);
@@ -221,20 +294,20 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 	}
 
 	@Override
-	public Double getLatitude() {
+	public BigDecimal getLatitude() {
 		return latitude;
 	}
 
-	public void setLatitude(Double latitude) {
+	public void setLatitude(BigDecimal latitude) {
 		this.latitude = latitude;
 	}
 
 	@Override
-	public Double getLongitude() {
+	public BigDecimal getLongitude() {
 		return longitude;
 	}
 
-	public void setLongitude(Double longitude) {
+	public void setLongitude(BigDecimal longitude) {
 		this.longitude = longitude;
 	}
 
@@ -245,6 +318,15 @@ public class SolarLocation extends BaseEntity implements Cloneable, Serializable
 
 	public void setTimeZoneId(String timeZoneId) {
 		this.timeZoneId = timeZoneId;
+	}
+
+	@Override
+	public BigDecimal getElevation() {
+		return elevation;
+	}
+
+	public void setElevation(BigDecimal elevation) {
+		this.elevation = elevation;
 	}
 
 }

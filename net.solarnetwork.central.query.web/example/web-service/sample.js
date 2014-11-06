@@ -1,5 +1,10 @@
 var SNAPI = {};
 
+SNAPI.shouldIncludeContentMD5 = function(contentType) {
+	// we don't send Content-MD5 for form data, because server treats this as URL parameters
+	return (contentType !== null && contentType.indexOf('application/x-www-form-urlencoded') < 0);
+};
+
 /**
  * Generate the raw authorization message value.
  * 
@@ -9,13 +14,15 @@ var SNAPI = {};
  * @param {Object} params the request parameters
  * @param {String} params.method the HTTP request method, or 'GET' if not defined
  * @param {String} params.contentType the HTTP content type, for HTTP POST requests
+ * @param {String} params.data the HTTP request body data
  * @param {String} params.date the formatted HTTP request date
  * @param {String} params.path the SolarNetworkWS canonicalized path value
  * @return {String} the authorization message value
  */
 SNAPI.generateAuthorizationMessage = function(params) {
 	var msg = 
-		(params.method === undefined ? 'GET' : params.method.toUpperCase()) + '\n\n'
+		(params.method === undefined ? 'GET' : params.method.toUpperCase()) + '\n'
+		+(params.data !== undefined && SNAPI.shouldIncludeContentMD5(params.contentType) ? CryptoJS.MD5(params.data) : '') + '\n'
 		+(params.contentType === undefined ? '' : params.contentType) + '\n'
 		+params.date +'\n'
 		+params.path;
@@ -186,7 +193,7 @@ SNAPI.request  = function(url, dataType, method, data, contentType) {
 			var date = new Date().toUTCString();		
 			
 			// construct our canonicalized path value from our URL
-			var path = SNAPI.authURLPath(url, data);
+			var path = SNAPI.authURLPath(url, (cType !== undefined && cType.indexOf('application/x-www-form-urlencoded') === 0 ? data : undefined));
 			
 			// generate the authorization hash value now (cryptographically signing our request)
 			var auth = SNAPI.generateAuthorizationHeaderValue({
@@ -202,12 +209,20 @@ SNAPI.request  = function(url, dataType, method, data, contentType) {
 			// set the headers on our request
 			xhr.setRequestHeader('X-SN-Date', date);
 			xhr.setRequestHeader('Authorization', 'SolarNetworkWS ' +auth);
+			if ( data !== undefined && SNAPI.shouldIncludeContentMD5(cType) ) {
+				xhr.setRequestHeader('Content-MD5', CryptoJS.MD5(data));
+			}
 		}
 	});
 	return ajax;
 };
 
 $(document).ready(function() {
+	if ( window !== undefined && window.location.protocol !== undefined && window.location.protocol.toLowerCase().indexOf('http') === 0 ) {
+		$('#credentials input[name=host]').val(window.location.protocol +'//' 
+			+window.location.host +(window.location.port && (Number(window.location.port) !== 80 || Number(window.location.port) !== 443) ? ':' +window.location.port : ''));
+	}
+
 	var getCredentials = function() {
 		var form = $('#credentials')[0];
 		var params = {
@@ -231,9 +246,9 @@ $(document).ready(function() {
 	
 	var showAuthSupport = function(params) {
 		var url = params.host +params.path;
-		var path = SNAPI.authURLPath(url, params.data);
 		var cType = (params.method === 'POST' && params.contentType === undefined 
 				? 'application/x-www-form-urlencoded; charset=UTF-8' : params.contentType);
+		var path = SNAPI.authURLPath(url, (cType !== undefined && cType.indexOf('application/x-www-form-urlencoded') === 0 ? params.data : undefined));
 		var submitParams = {
 			method: params.method,
 			date: params.date,
@@ -259,8 +274,59 @@ $(document).ready(function() {
 	
 	$('#shortcuts').change(function(event) {
 		event.preventDefault();
-		var form = this.form;
-		form.elements['path'].value = this.value;
+		var form = this.form,
+			val = this.value,
+			method;
+		if ( $(form).find('input[name=useAuth]:checked').val() === 'false' ) {
+			val = val.replace(/\/sec\//, '/pub/');
+		}
+		form.elements['path'].value = val;
+		method = $(this.options[this.selectedIndex]).data('method');
+		method = (method || 'GET');
+		$(form).find('input[name=method]').removeAttr('checked');
+		$(form).find('input[name=method][value='+method+']').trigger('click');
+	});
+	
+	$('#auth-result-toggle').click(function(event) {
+		var btn = $(this);
+		if ( btn.hasClass('fa-caret-down') ) {
+			btn.addClass('fa-caret-right');
+			btn.removeClass('fa-caret-down');
+			$('#auth-result-container').hide();
+		} else {
+			btn.addClass('fa-caret-down');
+			btn.removeClass('fa-caret-right');
+			$('#auth-result-container').show();
+		}
+	});
+		
+	$('input[name=useAuth]').change(function(event) {
+		event.preventDefault();
+		var form = this.form,
+			val = form.elements['path'].value,
+			credForm = $('#credentials')[0];
+		if ( $(this).val() === 'true' ) {
+			val = val.replace(/\/pub\//, '/sec/');
+			$(credForm.elements['token']).removeAttr('disabled');
+			$(credForm.elements['secret']).removeAttr('disabled');
+			$('#auth-result').show();
+		} else {
+			val = val.replace(/\/sec\//, '/pub/');
+			$(credForm.elements['token']).attr('disabled', 'disabled');
+			$(credForm.elements['secret']).attr('disabled', 'disabled');
+			$('#auth-result').hide();
+		}
+		form.elements['path'].value = val;
+	});
+	
+	$('input[name=method]').change(function(event) {
+		event.preventDefault();
+		var val = $(this).val();
+		if ( val === 'POST' || val === 'PUT' ) {
+			$('#upload').show();
+		} else {
+			$('#upload').hide();
+		}
 	});
 	
 	var formatXml = function(xml) {
@@ -295,15 +361,19 @@ $(document).ready(function() {
 	};
 	
 	var textForDisplay = function(xhr, output) {
-		if ( xhr.responseXML !== undefined ) {
-			return $('<div/>').text(formatXml(xhr.responseText)).html();
+		var result = '';
+		if ( xhr.status >= 400 && xhr.status < 500 ) {
+			result = 'Unauthorized.';
+		} else if ( xhr.responseXML !== undefined ) {
+			result = $('<div/>').text(formatXml(xhr.responseText)).html();
 		} else if ( xhr.responseText ) {
 			if ( output === 'json' ) {
-				return JSON.stringify(JSON.parse(xhr.responseText), null, 2);
+				result = JSON.stringify(JSON.parse(xhr.responseText), null, 2);
+			} else {
+				result = xhr.responseText;
 			}
-			return xhr.responseText;
 		}
-		return '';
+		return result;
 	};
 
 	$('#generic-path').submit(function(event) {
@@ -313,24 +383,32 @@ $(document).ready(function() {
 		params.method = $(form).find('input[name=method]:checked').val();
 		params.output = $(form).find('input[name=output]:checked').val();
 		params.path = form.elements['path'].value;
-		if ( params.method == 'POST' ) {
-			// move any parameters into post body
-			var a = document.createElement('a');
-			a.href = params.path;
-			params.path = a.pathname;
-			params.data = a.search;
-			if ( params.data.indexOf('?') === 0 ) {
-				params.data = params.data.substring(1);
+		if ( params.method === 'POST' || params.method === 'PUT' ) {
+			params.data = $(form).find('textarea[name=upload]').val();
+			if ( params.data.length < 1 ) {
+				// move any parameters into post body
+				var a = document.createElement('a');
+				a.href = params.path;
+				params.path = a.pathname;
+				params.data = a.search;
+				if ( params.data.indexOf('?') === 0 ) {
+					params.data = params.data.substring(1);
+				}
+				params.contentType = 'application/x-www-form-urlencoded; charset=UTF-8';
+			} else {
+				// assume content type is json if post body provided
+				params.contentType = 'application/json; charset=UTF-8';
 			}
-			params.contentType = 'application/x-www-form-urlencoded; charset=UTF-8';
 		}
 		SNAPI.ajaxCredentials = params;
 
 		// show some developer info in the auth-message area
 		showAuthSupport(params);
 		
+		$('#result').empty();
+		
 		// make HTTP request and show the results
-		SNAPI.request(params.host +params.path, params.output, params.method, params.data).done(function (data, status, xhr) {
+		SNAPI.request(params.host +params.path, params.output, params.method, params.data, params.contentType).done(function (data, status, xhr) {
 			showResult(textForDisplay(xhr, params.output));
 		}).fail(function(xhr, status, reason) {
 			showResult(textForDisplay(xhr, params.output));

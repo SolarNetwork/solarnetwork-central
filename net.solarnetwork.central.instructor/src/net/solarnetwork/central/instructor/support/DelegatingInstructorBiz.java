@@ -32,7 +32,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  * Delegates to another InstructorBiz, designed for AOP use.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelegatingInstructorBiz implements InstructorBiz {
 
@@ -67,6 +67,11 @@ public class DelegatingInstructorBiz implements InstructorBiz {
 	@Override
 	public void updateInstructionState(Long instructionId, InstructionState state) {
 		delegate.updateInstructionState(instructionId, state);
+	}
+
+	@Override
+	public List<Instruction> getPendingInstructionsForNode(Long nodeId) {
+		return delegate.getPendingInstructionsForNode(nodeId);
 	}
 
 }

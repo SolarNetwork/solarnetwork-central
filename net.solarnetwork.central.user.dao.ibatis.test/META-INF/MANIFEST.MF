@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Ibatis User DAO Test
 Bundle-SymbolicName: net.solarnetwork.central.user.dao.ibatis.test
-Bundle-Version: 1.1.0
+Bundle-Version: 1.3.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
@@ -15,9 +15,9 @@ Import-Package:
  net.solarnetwork.central.dao.ibatis;version="[1.0,2.0)",
  net.solarnetwork.central.domain;version="[1.0,2.0)",
  net.solarnetwork.central.test;version="[1.0,2.0)",
- net.solarnetwork.central.user.domain;version="[1.0,2.0)",
- net.solarnetwork.central.user.dao;version="[1.0,2.0)",
- net.solarnetwork.central.user.dao.ibatis;version="[1.2,2.0)",
+ net.solarnetwork.central.user.domain;version="[1.5,2.0)",
+ net.solarnetwork.central.user.dao;version="[1.2,2.0)",
+ net.solarnetwork.central.user.dao.ibatis;version="[1.5,2.0)",
  org.apache.commons.codec.binary;version="[1.4,2.0)",
  org.apache.commons.codec.digest;version="[1.4,2.0)",
  org.apache.commons.logging;version="[1.1,1.2)",

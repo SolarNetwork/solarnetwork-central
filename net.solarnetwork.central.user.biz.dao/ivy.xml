@@ -1,25 +1,26 @@
-<ivy-module version="2.0">
-    <info organisation="SolarNetwork" module="${bundle.name}" />
+<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
+    <info organisation="net.solarnetwork.central" module="${bundle.name}" />
 	<configurations defaultconf="compile,runtime">
 		<conf name="compile" visibility="public" description="Build dependencies"/>
 		<conf name="runtime" visibility="public" description="Runtime dependencies"/>
+		<conf name="sources"/>
 	</configurations>
-	<dependencies defaultconfmapping="runtime->runtime(default);compile->compile(default)">
-    	<dependency org="commons-codec" name="commons-codec" rev="1.7" >
-    		<artifact name="commons-codec" type="jar"/>
-    	</dependency>
-		<dependency org="net.sf.ehcache" name="ehcache" rev="2.7.0">
-    		<artifact name="ehcache" type="jar" />
-		</dependency>
-		<dependency org="org.joda" name="com.springsource.org.joda.time" rev="1.6.0" />
-    	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.2">
-    		<artifact name="slf4j-api" type="jar"/>
-    	</dependency>
-		<dependency org="org.springframework" name="spring-tx" rev="3.1.3.RELEASE">
-    		<artifact name="spring-tx" type="jar" />
-		</dependency>
-		<dependency org="org.springframework.security" name="spring-security-core" rev="3.1.3.RELEASE">
-    		<artifact name="spring-security-core" type="jar" />
-		</dependency>
-    </dependencies>
+	<publications>
+		<artifact type="pom" ext="pom" conf="compile"/>
+		<artifact type="bundle" ext="jar" conf="runtime"/>
+		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
+	</publications>
+	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.23.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.7.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.in.biz" rev="[1.12.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.12.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="[1.22.0,2.0.0)"/>
+		<dependency org="commons-codec" name="commons-codec" rev="1.7"/>
+		<dependency org="net.sf.ehcache" name="ehcache" rev="2.7.0"/>
+ 		<dependency org="org.joda" name="com.springsource.org.joda.time" rev="1.6.0" />
+    	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.2"/>
+    	<dependency org="org.springframework" name="spring-tx" rev="3.1.3.RELEASE"/>
+    	<dependency org="org.springframework.security" name="spring-security-core" rev="3.1.3.RELEASE"/>
+	</dependencies>
 </ivy-module>

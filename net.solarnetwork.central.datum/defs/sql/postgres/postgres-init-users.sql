@@ -97,10 +97,16 @@ CREATE VIEW solaruser.user_auth_token_login  AS
 		t.status = CAST('Active' AS solaruser.user_auth_token_status);
 
 CREATE VIEW solaruser.user_auth_token_role AS
-	SELECT
+	SELECT 
 		t.auth_token AS username,
-		'ROLE_' || upper(CAST(t.token_type AS character varying)) AS authority
-	FROM solaruser.user_auth_token t;
+		'ROLE_'::text || upper(t.token_type::character varying::text) AS authority
+	FROM solaruser.user_auth_token t
+	UNION
+	SELECT 
+		t.auth_token AS username,
+		r.role_name AS authority
+	FROM solaruser.user_auth_token t
+	JOIN solaruser.user_role r ON r.user_id = t.user_id AND t.token_type = 'User'::solaruser.user_auth_token_type;
 
 /* === USER NODE =========================================================== */
 
@@ -163,16 +169,14 @@ CREATE VIEW solaruser.network_association  AS
  */
 
 CREATE TABLE solaruser.user_node_cert (
-	id				BIGINT NOT NULL DEFAULT nextval('solaruser.solaruser_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id			BIGINT NOT NULL,
-	conf_key		CHARACTER(64) NOT NULL,
 	node_id			BIGINT NOT NULL,
 	status			CHAR(1) NOT NULL,
-	cert			bytea,
-	CONSTRAINT user_node_cert_pkey PRIMARY KEY (id),
+	request_id		VARCHAR(32) NOT NULL,
+	keystore		bytea,
+	CONSTRAINT user_node_cert_pkey PRIMARY KEY (user_id, node_id),
 	CONSTRAINT user_cert_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT user_node_cert_unq UNIQUE (user_id, conf_key)
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );

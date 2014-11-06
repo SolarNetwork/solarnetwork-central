@@ -1,5 +1,5 @@
 <div id="timezone-picker" style="position: relative; width: 500px;">
-  <img id="timezone-image" src="<c:url value='/img/tz-gray-500.png'/>" width="500" height="250" usemap="#timezone-map" />
+  <img class="timezone-image" src="<c:url value='/img/tz-gray-500.png'/>" width="500" height="250" usemap="#timezone-map" />
   <img class="timezone-pin" src="<c:url value='/img/tz-pin.png'/>" style="padding-top: 4px;" />
   <map name="timezone-map" id="timezone-map">
     <area data-timezone="Africa/Abidjan" data-country="CI" data-pin="244,118" data-offset="0" shape="poly" coords="241,118,240,119,240,117,238,116,238,115,239,114,239,113,239,113,239,111,241,110,241,111,243,111,244,112,246,111,247,113,245,116,246,118,241,118" />

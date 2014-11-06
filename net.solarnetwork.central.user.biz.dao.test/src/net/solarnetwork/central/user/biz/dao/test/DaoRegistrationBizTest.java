@@ -33,9 +33,17 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
 import java.util.zip.GZIPInputStream;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
@@ -44,6 +52,7 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.PasswordEncoder;
+import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
@@ -56,11 +65,13 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.domain.BasicNetworkIdentity;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.NetworkCertificate;
 import net.solarnetwork.domain.RegistrationReceipt;
+import net.solarnetwork.pki.bc.BCCertificateService;
 import net.solarnetwork.util.JavaBeanXmlSerializer;
 import org.apache.commons.codec.binary.Base64InputStream;
 import org.easymock.EasyMock;
@@ -72,7 +83,7 @@ import org.junit.Test;
  * Unit tests for the {@link DaoRegistrationBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoRegistrationBizTest {
 
@@ -80,12 +91,14 @@ public class DaoRegistrationBizTest {
 	private static final Long TEST_CONF_ID = -2L;
 	private static final Long TEST_NODE_ID = -3L;
 	private static final Long TEST_LOC_ID = -4L;
-	private static final Long TEST_CERT_ID = -5L;
+	private static final UserNodePK TEST_CERT_ID = new UserNodePK(TEST_USER_ID, TEST_NODE_ID);
 	private static final String TEST_ENC_PASSWORD = "encoded.password";
 	private static final String TEST_EMAIL = "test@localhost";
 	private static final String TEST_SECURITY_PHRASE = "test phrase";
 	private static final String TEST_CONF_KEY = "test conf key";
 	private static final String TEST_DN_FORMAT = "UID=%s, OU=Unit Test, O=SolarNetwork";
+	private static final String TEST_KEYSTORE_PASS = "test password";
+	private static final String TEST_CERT_REQ_ID = "test req ID";
 
 	private SolarLocationDao solarLocationDao;
 	private SolarNodeDao nodeDao;
@@ -98,6 +111,10 @@ public class DaoRegistrationBizTest {
 	private DaoRegistrationBiz registrationBiz;
 	private BasicNetworkIdentity networkIdentity;
 	private PasswordEncoder passwordEncoder;
+	private NodePKIBiz nodePKIBiz;
+	private ExecutorService executorService;
+
+	private final BCCertificateService certificateService = new BCCertificateService();
 
 	@Before
 	public void setup() {
@@ -115,6 +132,8 @@ public class DaoRegistrationBizTest {
 		nodeDao = EasyMock.createMock(SolarNodeDao.class);
 		solarLocationDao = EasyMock.createMock(SolarLocationDao.class);
 		passwordEncoder = EasyMock.createMock(PasswordEncoder.class);
+		nodePKIBiz = EasyMock.createMock(NodePKIBiz.class);
+		executorService = EasyMock.createMock(ExecutorService.class);
 		registrationBiz = new DaoRegistrationBiz();
 		registrationBiz.setNetworkIdentityBiz(networkIdentityBiz);
 		registrationBiz.setUserDao(userDao);
@@ -125,6 +144,20 @@ public class DaoRegistrationBizTest {
 		registrationBiz.setUserNodeDao(userNodeDao);
 		registrationBiz.setNetworkCertificateSubjectDNFormat(TEST_DN_FORMAT);
 		registrationBiz.setPasswordEncoder(passwordEncoder);
+		registrationBiz.setNodePKIBiz(nodePKIBiz);
+		registrationBiz.setExecutorService(executorService);
+	}
+
+	private void replayAll() {
+		replay(networkIdentityBiz, userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao, nodeDao, solarLocationDao, passwordEncoder, nodePKIBiz,
+				executorService);
+	}
+
+	private void verifyAll() {
+		verify(networkIdentityBiz, userDao, userNodeDao, userNodeConfirmationDao,
+				userNodeCertificateDao, nodeDao, solarLocationDao, passwordEncoder, nodePKIBiz,
+				executorService);
 	}
 
 	@Test
@@ -133,12 +166,12 @@ public class DaoRegistrationBizTest {
 		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 		expect(userNodeConfirmationDao.store(EasyMock.anyObject(UserNodeConfirmation.class))).andReturn(
 				TEST_CONF_ID);
-		replay(networkIdentityBiz, userDao, userNodeConfirmationDao);
+		replayAll();
 
 		final NetworkAssociation result = registrationBiz.createNodeAssociation(new NewNodeRequest(
 				TEST_USER_ID, TEST_SECURITY_PHRASE, TimeZone.getDefault(), Locale.getDefault()));
 
-		verify(networkIdentityBiz, userDao, userNodeConfirmationDao);
+		verifyAll();
 
 		assertEquals(networkIdentity.getHost(), result.getHost());
 		assertEquals(networkIdentity.getPort(), result.getPort());
@@ -168,11 +201,11 @@ public class DaoRegistrationBizTest {
 		conf.setId(testConfId);
 		expect(userNodeConfirmationDao.get(testConfId)).andReturn(conf);
 		userNodeConfirmationDao.delete(conf);
-		replay(userNodeConfirmationDao);
+		replayAll();
 
 		registrationBiz.cancelNodeAssociation(testConfId);
 
-		verify(userNodeConfirmationDao);
+		verifyAll();
 	}
 
 	@Test
@@ -205,22 +238,18 @@ public class DaoRegistrationBizTest {
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
 		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
 		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
-		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
-				TEST_CERT_ID);
 
-		replay(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
-				userNodeCertificateDao);
+		replayAll();
 
 		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
 
-		verify(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
-				userNodeCertificateDao);
+		verifyAll();
 
 		assertNotNull(cert);
 		assertNotNull(cert.getConfirmationKey());
 		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
 				cert.getNetworkCertificateSubjectDN());
-		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
+		assertNull(cert.getNetworkCertificateStatus());
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
 		assertNotNull(conf.getConfirmationDate());
 		assertNotNull(conf.getNodeId());
@@ -264,22 +293,18 @@ public class DaoRegistrationBizTest {
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
 		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
 		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
-		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
-				TEST_CERT_ID);
 
-		replay(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
-				userNodeCertificateDao);
+		replayAll();
 
 		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
 
-		verify(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
-				userNodeCertificateDao);
+		verifyAll();
 
 		assertNotNull(cert);
 		assertNotNull(cert.getConfirmationKey());
 		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
 				cert.getNetworkCertificateSubjectDN());
-		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
+		assertNull(cert.getNetworkCertificateStatus());
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
 		assertNotNull(conf.getConfirmationDate());
 		assertNotNull(conf.getNodeId());
@@ -316,22 +341,18 @@ public class DaoRegistrationBizTest {
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
 		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
 		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
-		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
-				TEST_CERT_ID);
 
-		replay(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
-				userNodeCertificateDao);
+		replayAll();
 
 		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
 
-		verify(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
-				userNodeCertificateDao);
+		verifyAll();
 
 		assertNotNull(cert);
 		assertNotNull(cert.getConfirmationKey());
 		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
 				cert.getNetworkCertificateSubjectDN());
-		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
+		assertNull(cert.getNetworkCertificateStatus());
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
 		assertNotNull(conf.getConfirmationDate());
 		assertEquals(TEST_NODE_ID, conf.getNodeId());
@@ -369,22 +390,18 @@ public class DaoRegistrationBizTest {
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
 		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
 		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
-		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
-				TEST_CERT_ID);
 
-		replay(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
-				userNodeCertificateDao);
+		replayAll();
 
 		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
 
-		verify(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
-				userNodeCertificateDao);
+		verifyAll();
 
 		assertNotNull(cert);
 		assertNotNull(cert.getConfirmationKey());
 		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
 				cert.getNetworkCertificateSubjectDN());
-		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
+		assertNull(cert.getNetworkCertificateStatus());
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
 		assertNotNull(conf.getConfirmationDate());
 		assertEquals(TEST_NODE_ID, conf.getNodeId());
@@ -421,22 +438,18 @@ public class DaoRegistrationBizTest {
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(node);
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(userNode);
 		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
-		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
-				TEST_CERT_ID);
 
-		replay(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
-				userNodeCertificateDao);
+		replayAll();
 
 		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
 
-		verify(solarLocationDao, nodeDao, userDao, userNodeDao, userNodeConfirmationDao,
-				userNodeCertificateDao);
+		verifyAll();
 
 		assertNotNull(cert);
 		assertNotNull(cert.getConfirmationKey());
 		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
 				cert.getNetworkCertificateSubjectDN());
-		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
+		assertNull(cert.getNetworkCertificateStatus());
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
 		assertNotNull(conf.getConfirmationDate());
 		assertEquals(TEST_NODE_ID, conf.getNodeId());
@@ -450,14 +463,14 @@ public class DaoRegistrationBizTest {
 		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, BAD_CONF_KEY))
 				.andReturn(null);
 
-		replay(userDao, userNodeConfirmationDao);
+		replayAll();
 		try {
 			registrationBiz.confirmNodeAssociation(TEST_EMAIL, BAD_CONF_KEY);
 			fail("Expected AuthorizationException for bad node ID");
 		} catch ( AuthorizationException e ) {
 			assertEquals(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED, e.getReason());
 		}
-		verify(userDao, userNodeConfirmationDao);
+		verifyAll();
 	}
 
 	@Test
@@ -471,7 +484,7 @@ public class DaoRegistrationBizTest {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
 				conf);
-		replay(userDao, userNodeConfirmationDao);
+		replayAll();
 		try {
 			registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
 			fail("Expected AuthorizationException for already confirmed");
@@ -479,7 +492,7 @@ public class DaoRegistrationBizTest {
 			assertEquals(AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED, e.getReason());
 		}
 
-		verify(userDao, userNodeConfirmationDao);
+		verifyAll();
 	}
 
 	private Map<String, Object> decodeAssociationDetails(String code) throws IOException {
@@ -507,14 +520,14 @@ public class DaoRegistrationBizTest {
 		// must get the existing user to generate the conf code
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 
-		replay(userDao);
+		replayAll();
 
 		//BasicRegistrationReceipt receipt = new BasicRegistrationReceipt(TEST_EMAIL, TEST_CONF_KEY);
 		RegistrationReceipt receipt = registrationBiz.generateResetPasswordReceipt(TEST_EMAIL);
 		assertNotNull("Receipt must not be null", receipt);
 		assertEquals("The username should be the email", TEST_EMAIL, receipt.getUsername());
 
-		verify(userDao);
+		verifyAll();
 	}
 
 	@Test
@@ -529,13 +542,88 @@ public class DaoRegistrationBizTest {
 		// then must save the updated user
 		expect(userDao.store(testUser)).andReturn(testUser.getId());
 
-		replay(userDao, passwordEncoder);
+		replayAll();
 
 		RegistrationReceipt receipt = registrationBiz.generateResetPasswordReceipt(TEST_EMAIL);
 		registrationBiz.resetPassword(receipt, pass);
 
-		verify(userDao, passwordEncoder);
+		verifyAll();
 
 		assertEquals("The user's password should be changed", encodedPass, testUser.getPassword());
+	}
+
+	@Test
+	public void confirmNodeAssociationWithCertificate() throws IOException, NoSuchAlgorithmException {
+		final UserNodeConfirmation conf = new UserNodeConfirmation();
+		conf.setUser(testUser);
+		conf.setCreated(new DateTime());
+		conf.setCountry("NZ");
+		conf.setTimeZoneId("Pacific/Auckland");
+		final SolarLocation loc = new SolarLocation();
+		loc.setId(TEST_LOC_ID);
+		loc.setCountry(conf.getCountry());
+		loc.setTimeZoneId(conf.getTimeZoneId());
+		final UserNode userNode = new UserNode();
+		userNode.setId(TEST_NODE_ID);
+
+		final String nodeSubjectDN = String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString());
+
+		final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+		keyGen.initialize(1024, new SecureRandom());
+		final KeyPair keypair = keyGen.generateKeyPair();
+
+		final X509Certificate certificate = certificateService.generateCertificate(nodeSubjectDN,
+				keypair.getPublic(), keypair.getPrivate());
+
+		final DateTime now = new DateTime();
+
+		// to confirm a node, we must look up the UserNodeConfirmation by userId+key, then
+		// create the new SolarNode using a default SolarLocation, followed by
+		// a new UserNode and UserNodeCertificate. The original UserNodeConfirmation should
+		// have its 
+
+		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
+		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY)).andReturn(
+				conf);
+
+		// here SolarLocation doesn't exist for the requested country+time zone, so we create it now
+		expect(solarLocationDao.getSolarLocationForTimeZone(conf.getCountry(), conf.getTimeZoneId()))
+				.andReturn(null);
+		expect(solarLocationDao.store(EasyMock.anyObject(SolarLocation.class))).andReturn(TEST_LOC_ID);
+		expect(solarLocationDao.get(TEST_LOC_ID)).andReturn(loc);
+
+		expect(nodeDao.getUnusedNodeId()).andReturn(TEST_NODE_ID);
+		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
+		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
+		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
+		expect(
+				nodePKIBiz.generateCertificate(EasyMock.eq(nodeSubjectDN),
+						EasyMock.anyObject(PublicKey.class), EasyMock.anyObject(PrivateKey.class)))
+				.andReturn(certificate);
+		expect(nodePKIBiz.submitCSR(EasyMock.eq(certificate), EasyMock.anyObject(PrivateKey.class)))
+				.andReturn(TEST_CERT_REQ_ID);
+		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
+				TEST_CERT_ID);
+		expect(executorService.submit(EasyMock.anyObject(Runnable.class))).andReturn(null);
+
+		replayAll();
+
+		NetworkAssociationDetails req = new NetworkAssociationDetails(TEST_EMAIL, TEST_CONF_KEY,
+				TEST_KEYSTORE_PASS);
+		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(req);
+
+		verifyAll();
+
+		assertNotNull(cert);
+		assertNotNull(cert.getConfirmationKey());
+		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
+				cert.getNetworkCertificateSubjectDN());
+		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
+		assertEquals(TEST_NODE_ID, cert.getNetworkId());
+		assertNotNull(conf.getConfirmationDate());
+		assertNotNull(conf.getNodeId());
+		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
 	}
 }

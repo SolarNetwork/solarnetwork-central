@@ -18,20 +18,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.datum.dao;
 
+import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.datum.domain.HardwareControlDatum;
+import net.solarnetwork.central.datum.domain.HardwareControlDatumMatch;
+import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 
 /**
  * DAO API for {@link HardwareControlDatum}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
-public interface HardwareControlDatumDao extends DatumDao<HardwareControlDatum> {
+public interface HardwareControlDatumDao extends DatumDao<HardwareControlDatum>,
+		FilterableDao<HardwareControlDatumMatch, Long, NodeDatumFilter> {
 
 }

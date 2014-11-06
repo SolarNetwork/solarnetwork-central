@@ -22,14 +22,14 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.central.web.domain.Response.response;
+import static net.solarnetwork.web.domain.Response.response;
 import java.util.List;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.web.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,7 +41,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * Controller for node instruction web service API.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller("v1nodeInstructionController")
 @RequestMapping(value = "/v1/sec/instr")
@@ -61,6 +61,21 @@ public class NodeInstructionController extends WebServiceControllerSupport {
 	@ResponseBody
 	public Response<List<Instruction>> activeInstructions(@RequestParam("nodeId") Long nodeId) {
 		List<Instruction> instructions = instructorBiz.getActiveInstructionsForNode(nodeId);
+		return response(instructions);
+	}
+
+	/**
+	 * Get a list of all pending instructions for a specific node.
+	 * 
+	 * @param nodeId
+	 *        the ID of the node to get instructions for
+	 * @return the pending instructions for the node
+	 * @since 1.1
+	 */
+	@RequestMapping(value = "/viewPending", method = RequestMethod.GET)
+	@ResponseBody
+	public Response<List<Instruction>> pendingInstructions(@RequestParam("nodeId") Long nodeId) {
+		List<Instruction> instructions = instructorBiz.getPendingInstructionsForNode(nodeId);
 		return response(instructions);
 	}
 

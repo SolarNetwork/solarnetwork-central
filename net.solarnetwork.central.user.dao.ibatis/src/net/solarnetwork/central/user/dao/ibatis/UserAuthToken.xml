@@ -64,11 +64,14 @@
 		<result column="uat_auth_token" property="id"/>
 		<result column="uat_created" property="created"/>
 		<result column="uat_user_id" property="userId"/>
-		<result column="uat_auth_secret" property="authSecret"/>
 		<result column="uat_status" property="status"/>
 		<result column="uat_token_type" property="type"/>
 		<result resultMap="UserAuthToken.UserAuthTokenNodeResult" property="nodeIds"/>
 	</resultMap>
+	
+	<!--resultMap id="UserAuthTokenFullResultWithSecret" extends="UserAuthToken.UserAuthTokenNormalResult">
+		<result column="uat_auth_secret" property="authSecret"/>
+	</resultMap-->
 	
 	<resultMap id="UserAuthTokenNodeResult" class="long">
 		<result column="uatn_node_id" property="nodeIds"/> 

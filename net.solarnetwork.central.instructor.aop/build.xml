@@ -1,13 +1,5 @@
 <project basedir=".">
 
-	<property name="bundle.deps" value="true"/>
-	<dirset id="bundle.deps" dir="${basedir}/..">
-		<include name="net.solarnetwork.central.common"/>
-		<include name="net.solarnetwork.central.common.security"/>
-		<include name="net.solarnetwork.central.instructor"/>
-		<include name="net.solarnetwork.central.user"/>
-	</dirset>
-
 	<property name="dir.osgi.base" value="${basedir}/../../solarnetwork-build/solarnetwork-osgi-lib"/>	
 	<import file="${dir.osgi.base}/lib-build.xml"/>
 	

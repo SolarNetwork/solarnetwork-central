@@ -90,26 +90,26 @@
 	</resultMap>
 	
 	<select id="find-UserNode-for-user-with-certs" resultMap="UserNodeWithCertificates" parameterClass="long">
-		SELECT DISTINCT ON (uncert.node_id)
+		SELECT
 			<include refid="fragment-UserNode-full-result"/>,
 			<include refid="fragment-UserNodeCertificate-full-result"/>,
 			<include refid="fragment-SolarNode-full-result"/>,
 			<include refid="fragment-SolarLocation-full-result"/>,
 			<include refid="fragment-User-full-result"/>
 		FROM
-			solaruser.user_node_cert uncert
-		INNER JOIN 
-			solaruser.user_node un ON un.user_id = uncert.user_id AND un.node_id = uncert.node_id
+			solaruser.user_node un
 		INNER JOIN
-			solarnet.sn_node n ON n.node_id = uncert.node_id
+			solarnet.sn_node n ON n.node_id = un.node_id
 		INNER JOIN
 			solarnet.sn_loc l ON l.id = n.loc_id
 		INNER JOIN
-			solaruser.user_user u ON u.id = uncert.user_id
+			solaruser.user_user u ON u.id = un.user_id
+		LEFT OUTER JOIN
+			solaruser.user_node_cert uncert ON uncert.user_id = un.user_id AND uncert.node_id = un.node_id
 		WHERE
-			uncert.user_id = #id#
+			un.user_id = #id#
 		ORDER BY
-			uncert.node_id ASC, uncert.status ASC
+			un.node_id ASC
 	</select>
 	
 </sqlMap>

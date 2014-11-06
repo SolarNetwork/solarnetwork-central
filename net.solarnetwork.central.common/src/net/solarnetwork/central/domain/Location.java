@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.domain;
 
+import java.math.BigDecimal;
+
 /**
  * Information describing the physical location of an object.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface Location extends Filter {
 
@@ -84,14 +86,22 @@ public interface Location extends Filter {
 	 * 
 	 * @return latitude
 	 */
-	Double getLatitude();
+	BigDecimal getLatitude();
 
 	/**
 	 * Get the decimal longitude.
 	 * 
 	 * @return longitude
 	 */
-	Double getLongitude();
+	BigDecimal getLongitude();
+
+	/**
+	 * Get the elevation, in meters.
+	 * 
+	 * @return the elevation
+	 * @since 1.2
+	 */
+	BigDecimal getElevation();
 
 	/**
 	 * Get a time zone ID, e.g. {@code Pacific/Auckland}.

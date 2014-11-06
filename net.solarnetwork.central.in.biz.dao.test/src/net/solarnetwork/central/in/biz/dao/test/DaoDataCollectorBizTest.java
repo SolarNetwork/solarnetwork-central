@@ -25,6 +25,7 @@ package net.solarnetwork.central.in.biz.dao.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import java.util.List;
+import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.domain.LocationMatch;
@@ -33,6 +34,8 @@ import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.domain.GeneralDatumMetadata;
+import org.easymock.EasyMock;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.junit.Before;
@@ -44,20 +47,27 @@ import org.springframework.test.context.ContextConfiguration;
  * Test case for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 @ContextConfiguration
 public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 
+	private static final String TEST_SOURCE_ID = "test.source";
+
 	@Autowired
-	DaoDataCollectorBiz biz;
+	private DaoDataCollectorBiz biz;
+
+	private DatumMetadataBiz datumMetadataBiz;
 
 	private Datum lastDatum;
 
 	@Before
 	public void setup() {
+		datumMetadataBiz = EasyMock.createMock(DatumMetadataBiz.class);
+		biz.setDatumMetadataBiz(datumMetadataBiz);
 		setupTestNode();
 		setupTestPriceLocation();
+		setAuthenticatedNode(TEST_NODE_ID);
 	}
 
 	private DayDatum newDayDatumInstance() {
@@ -107,7 +117,8 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 
 	@Test
 	public void findWeatherLocation() {
-		SourceLocationFilter filter = new SourceLocationFilter(TEST_WEATHER_SOURCE_NAME, TEST_LOC_NAME);
+		SourceLocationFilter filter = new SourceLocationFilter(TEST_WEATHER_SOURCE_NAME, null);
+		filter.getLocation().setRegion(TEST_LOC_REGION);
 		List<SourceLocationMatch> results = biz.findWeatherLocations(filter);
 		assertNotNull(results);
 		assertEquals(1, results.size());
@@ -116,7 +127,7 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 		assertNotNull(loc);
 		assertEquals(TEST_WEATHER_LOC_ID, loc.getId());
 		assertEquals(TEST_LOC_ID, loc.getLocationId());
-		assertEquals(TEST_LOC_NAME, loc.getLocationName());
+		assertEquals(TEST_LOC_REGION + ", " + TEST_LOC_COUNTRY, loc.getLocationName());
 		assertEquals(TEST_WEATHER_SOURCE_NAME, loc.getSourceName());
 	}
 
@@ -134,6 +145,21 @@ public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
 		assertEquals(TEST_LOC_ID, loc.getId());
 		assertEquals(TEST_LOC_COUNTRY, loc.getCountry());
 		assertEquals(TEST_LOC_POSTAL_CODE, loc.getPostalCode());
+	}
+
+	@Test
+	public void addGeneralNodeDatumMetadataNew() {
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bar");
+		meta.addTag("bam");
+
+		datumMetadataBiz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+
+		EasyMock.replay(datumMetadataBiz);
+
+		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+
+		EasyMock.verify(datumMetadataBiz);
 	}
 
 }

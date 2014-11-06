@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.user.biz;
@@ -40,22 +38,9 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * API for registered user tasks.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.2
  */
 public interface UserBiz {
-
-	/**
-	 * Authenticate a user by their email and password.
-	 * 
-	 * @param email
-	 *        the email of the user to log on
-	 * @param password
-	 *        the attempted password
-	 * @return the User if found and password matches
-	 * @throws AuthorizationException
-	 *         if user not found or password does not match
-	 */
-	User logonUser(String email, String password) throws AuthorizationException;
 
 	/**
 	 * Get a User object by its ID.
@@ -64,16 +49,7 @@ public interface UserBiz {
 	 *        the ID of the User to get
 	 * @return the User, or <em>null</em> if not found
 	 */
-	User getUser(Long id);
-
-	/**
-	 * Get a User object by its email.
-	 * 
-	 * @param email
-	 *        the email of the User to get
-	 * @return the User, or <em>null</em> if not found
-	 */
-	User getUser(String email);
+	User getUser(Long id) throws AuthorizationException;
 
 	/**
 	 * Get a list of nodes belonging to a specific user.
@@ -82,7 +58,7 @@ public interface UserBiz {
 	 *        the ID of the user to get the nodes for
 	 * @return list of UserNode objects, or an empty list if none found
 	 */
-	List<UserNode> getUserNodes(Long userId);
+	List<UserNode> getUserNodes(Long userId) throws AuthorizationException;
 
 	/**
 	 * Get a specific node belonging to a specific user.
@@ -135,11 +111,13 @@ public interface UserBiz {
 	/**
 	 * Get a specific UserNodeCertificate object.
 	 * 
-	 * @param certId
-	 *        the cert ID
+	 * @param userId
+	 *        the user ID
+	 * @param nodeId
+	 *        the node ID
 	 * @return the certificate, or <em>null</em> if not available
 	 */
-	UserNodeCertificate getUserNodeCertificate(Long certId);
+	UserNodeCertificate getUserNodeCertificate(Long userId, Long nodeId);
 
 	/**
 	 * Generate a new, unique {@link UserAuthToken} entity and return it.

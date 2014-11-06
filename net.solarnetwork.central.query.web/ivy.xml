@@ -1,23 +1,26 @@
-<ivy-module version="2.0">
-    <info organisation="SolarNetwork" module="${bundle.name}" />
+<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
+    <info organisation="net.solarnetwork.central" module="${bundle.name}" />
 	<configurations defaultconf="compile,runtime">
 		<conf name="compile" visibility="public" description="Build dependencies"/>
 		<conf name="runtime" visibility="public" description="Runtime dependencies"/>
+		<conf name="sources"/>
 	</configurations>
-	<dependencies defaultconfmapping="runtime->runtime(default);compile->compile(default)">
+	<publications>
+		<artifact type="pom" ext="pom" conf="compile"/>
+		<artifact type="bundle" ext="jar" conf="runtime"/>
+		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
+	</publications>
+	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
+		<dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.4.3" />
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.25.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.web" rev="[1.9.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.16.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[1.10.0,2.0.0)"/>
+		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="[1.24.0,2.0.0)"/>
+		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common.web" rev="[1.8.0,2.0.0)"/>
 		<dependency org="javax.servlet" name="com.springsource.javax.servlet" rev="2.5.0" />
-		<dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="1.9.5">
-			<artifact name="jackson-core-asl" type="jar" />
-		</dependency>
-		<dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.5">
-    		<artifact name="jackson-mapper-asl" type="jar" />
-		</dependency>
 		<dependency org="org.joda" name="com.springsource.org.joda.time" rev="1.6.0" />
-    	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.2">
-    		<artifact name="slf4j-api" type="jar"/>
-    	</dependency>
-		<dependency org="org.springframework" name="spring-webmvc" rev="3.1.3.RELEASE">
-    		<artifact name="spring-webmvc" type="jar" />
-		</dependency>
+    	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.2"/>
+		<dependency org="org.springframework" name="spring-webmvc" rev="3.1.3.RELEASE"/>
     </dependencies>
 </ivy-module>

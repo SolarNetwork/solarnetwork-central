@@ -159,3 +159,15 @@ INSERT INTO quartz.locks values('JOB_ACCESS');
 INSERT INTO quartz.locks values('CALENDAR_ACCESS');
 INSERT INTO quartz.locks values('STATE_ACCESS');
 INSERT INTO quartz.locks values('MISFIRE_ACCESS');
+
+CREATE OR REPLACE VIEW quartz.cron_trigger_view AS 
+SELECT t.trigger_name, t.trigger_group, t.job_name, t.job_group, t.is_volatile, 
+	c.cron_expression,
+	to_timestamp(t.next_fire_time / 1000) as next_fire_time,
+	to_timestamp(t.prev_fire_time / 1000) as prev_fire_time,
+	t.priority, t.trigger_state,
+	CASE t.start_time WHEN 0 THEN NULL ELSE to_timestamp(t.start_time / 1000) END as start_time,
+	CASE t.end_time WHEN 0 THEN NULL ELSE to_timestamp(t.end_time / 1000) END as end_time
+FROM quartz.triggers t
+INNER JOIN quartz.cron_triggers c ON c.trigger_name = t.trigger_name AND c.trigger_group = t.trigger_group
+ORDER BY t.trigger_group, t.trigger_name, t.job_group, t.job_name;

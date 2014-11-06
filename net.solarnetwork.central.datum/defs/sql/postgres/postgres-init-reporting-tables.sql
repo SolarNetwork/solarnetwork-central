@@ -6,6 +6,18 @@ CREATE SCHEMA solarrep;
    =========================================================================
    ========================================================================= */
 
+/**************************************************************************************************
+ * TABLE solarrep.rep_stale_node_datum
+ * 
+ * A table to hold references to "stale" aggregate data that is associated with a particular
+ * BIGINT key such as a 'node_id' or 'loc_id' value. This table is populated by trigger functions
+ * on raw datum tables when rows are inserted, updated, or deleted, with the assumption that 
+ * inserting into this table should be quick. Later on some other process is expected to query 
+ * this table and perform some aggregate calculations based on the details of each row. The 
+ * results of the calculation are stored in some associated reporting table, and then the row
+ * in this table can be deleted. In essence the reporting table is like a materialized view
+ * of aggregate data on some raw source table.
+ */
 CREATE TABLE solarrep.rep_stale_node_datum (
 	ts			TIMESTAMP WITH TIME ZONE NOT NULL,
 	node_id 	BIGINT NOT NULL,
@@ -13,6 +25,9 @@ CREATE TABLE solarrep.rep_stale_node_datum (
 	datum_kind 	CHARACTER VARYING(64) NOT NULL,
 	PRIMARY KEY (ts, node_id, agg_kind, datum_kind)
 );
+COMMENT ON TABLE solarrep.rep_stale_node_datum IS 
+'The node_id column in this table is inappropriately named. Really it holds any datum table
+BIGINT key value, for example a loc_id value from sn_price_datum.';
 
 CREATE TABLE solarrep.rep_stale_datum (
 	ts			TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -35,7 +50,7 @@ CREATE TABLE solarrep.rep_consum_datum_hourly (
   watt_hours 	double precision,
   cost_amt 		real,
   cost_currency	character varying(10),
-  PRIMARY KEY (created_hour, node_id, source_id)
+  CONSTRAINT rep_consum_datum_hourly_pkey PRIMARY KEY (node_id, created_hour, source_id)
 );
 
 COMMENT ON TABLE solarrep.rep_consum_datum_hourly IS 'To refresh this table, call something like this:
@@ -45,9 +60,6 @@ where c.id in (
 	select max(id) from solarnet.sn_consum_datum
 	group by date_trunc(''hour'', created), node_id, source_id
 )';
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_consum_datum_hourly_node_idx ON solarrep.rep_consum_datum_hourly (node_id,created_hour);
 
 CLUSTER solarrep.rep_consum_datum_hourly USING rep_consum_datum_hourly_pkey;
 
@@ -59,7 +71,7 @@ CREATE TABLE solarrep.rep_consum_datum_daily (
   watt_hours 	double precision,
   cost_amt 		double precision,
   cost_currency	character varying(10),
-  PRIMARY KEY (created_day, node_id, source_id)
+  CONSTRAINT rep_consum_datum_daily_pkey PRIMARY KEY (node_id, created_day, source_id)
 );
 
 COMMENT ON TABLE solarrep.rep_consum_datum_daily IS 'To refresh this table, call something like this:
@@ -69,9 +81,6 @@ where c.id in (
 	select max(id) from solarnet.sn_consum_datum
 	group by date_trunc(''day'', created), node_id, source_id
 )';
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_consum_datum_daily_node_idx ON solarrep.rep_consum_datum_daily (node_id,created_day);
 
 CLUSTER solarrep.rep_consum_datum_daily USING rep_consum_datum_daily_pkey;
 
@@ -90,7 +99,7 @@ CREATE TABLE solarrep.rep_power_datum_hourly (
   watt_hours 	DOUBLE PRECISION,
   cost_amt 		REAL,
   cost_currency	CHARACTER VARYING(10),
-  PRIMARY KEY (created_hour, node_id, source_id)
+  CONSTRAINT rep_power_datum_hourly_pkey PRIMARY KEY (node_id, created_hour, source_id)
 );
 
 COMMENT ON TABLE solarrep.rep_power_datum_hourly IS 
@@ -101,9 +110,6 @@ where c.id in (
 	select max(id) from solarnet.sn_power_datum
 	group by date_trunc(''hour'', created), node_id, source_id
 )';
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_power_datum_hourly_node_idx ON solarrep.rep_power_datum_hourly (node_id,created_hour);
 
 CLUSTER solarrep.rep_power_datum_hourly USING rep_power_datum_hourly_pkey;
 
@@ -124,7 +130,7 @@ CREATE TABLE solarrep.rep_power_datum_daily (
   watt_hours 	DOUBLE PRECISION,
   cost_amt 		REAL,
   cost_currency	CHARACTER VARYING(10),
-  PRIMARY KEY (created_day, node_id, source_id)
+  CONSTRAINT rep_power_datum_daily_pkey PRIMARY KEY (node_id, created_day, source_id)
 );
 
 COMMENT ON TABLE solarrep.rep_power_datum_daily IS 
@@ -135,9 +141,6 @@ where c.id in (
 	select max(id) from solarnet.sn_power_datum
 	group by date_trunc(''day'', created), node_id, source_id
 )';
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_power_datum_daily_node_idx ON solarrep.rep_power_datum_daily (node_id,created_day);
 
 CLUSTER solarrep.rep_power_datum_daily USING rep_power_datum_daily_pkey;
 
@@ -159,7 +162,7 @@ CREATE TABLE solarrep.rep_price_datum_hourly (
   created_hour 	TIMESTAMP WITHOUT TIME ZONE NOT NULL,
   loc_id		BIGINT NOT NULL,
   price			REAL,
-  CONSTRAINT rep_price_datum_hourly_pkey PRIMARY KEY (created_hour, loc_id)
+  CONSTRAINT rep_price_datum_hourly_pkey PRIMARY KEY (loc_id, created_hour)
 );
 
 COMMENT ON TABLE solarrep.rep_price_datum_hourly IS 'To refresh this table, call something like this:
@@ -170,16 +173,13 @@ where c.id in (
 	group by date_trunc(''hour'', created), loc_id
 )';
 
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_price_datum_hourly_node_idx ON solarrep.rep_price_datum_hourly (loc_id,created_hour);
-
 CLUSTER solarrep.rep_price_datum_hourly USING rep_price_datum_hourly_pkey;
 
 CREATE TABLE solarrep.rep_price_datum_daily (
   created_day 	DATE NOT NULL,
   loc_id		BIGINT NOT NULL,
   price			REAL,
-  CONSTRAINT rep_price_datum_daily_pkey PRIMARY KEY (created_day, loc_id)
+  CONSTRAINT rep_price_datum_daily_pkey PRIMARY KEY (loc_id, created_day)
 );
 
 COMMENT ON TABLE solarrep.rep_price_datum_daily IS 'To refresh this table, call something like this:
@@ -189,8 +189,5 @@ where c.id in (
 	select max(id) from solarnet.sn_price_datum
 	group by date_trunc(''hour'', created), loc_id
 )';
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX rep_price_datum_daily_node_idx ON solarrep.rep_price_datum_daily (loc_id,created_day);
 
 CLUSTER solarrep.rep_price_datum_daily USING rep_price_datum_daily_pkey;

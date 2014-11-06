@@ -20,9 +20,10 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import net.solarnetwork.util.SerializeIgnore;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Domain object for day related data.
@@ -128,6 +129,7 @@ public class DayDatum extends BaseNodeDatum implements LocationDatum {
 
 	@Deprecated
 	@JsonIgnore
+	@SerializeIgnore
 	public Float getTemperatureHighCelcius() {
 		return temperatureHighCelsius;
 	}
@@ -142,6 +144,7 @@ public class DayDatum extends BaseNodeDatum implements LocationDatum {
 
 	@Deprecated
 	@JsonIgnore
+	@SerializeIgnore
 	public Float getTemperatureLowCelcius() {
 		return temperatureLowCelsius;
 	}
@@ -172,6 +175,7 @@ public class DayDatum extends BaseNodeDatum implements LocationDatum {
 
 	@Deprecated
 	@JsonIgnore
+	@SerializeIgnore
 	public Float getTemperatureStartCelcius() {
 		return temperatureStartCelsius;
 	}
@@ -186,6 +190,7 @@ public class DayDatum extends BaseNodeDatum implements LocationDatum {
 
 	@Deprecated
 	@JsonIgnore
+	@SerializeIgnore
 	public Float getTemperatureEndCelcius() {
 		return temperatureEndCelsius;
 	}

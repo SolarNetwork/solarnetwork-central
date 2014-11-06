@@ -31,9 +31,9 @@ import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
-import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.JodaDateFormatEditor;
+import net.solarnetwork.web.domain.Response;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -48,7 +48,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
@@ -86,7 +86,7 @@ public class DatumController extends WebServiceControllerSupport {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/query", method = RequestMethod.GET)
+	@RequestMapping(value = "/query", method = RequestMethod.GET, params = "type")
 	public Response<List<? extends NodeDatum>> getDatumData(final DatumQueryCommand cmd) {
 		final String datumType = (cmd == null || cmd.getDatumType() == null ? null : cmd.getDatumType()
 				.toLowerCase());
@@ -96,13 +96,15 @@ public class DatumController extends WebServiceControllerSupport {
 			return new Response<List<? extends NodeDatum>>(false, "unsupported.type",
 					"Unsupported datum type", null);
 		}
-		final List<? extends NodeDatum> results = queryBiz.getAggregatedDatum(datumClass, cmd);
+		final List<? extends NodeDatum> results = queryBiz.getAggregatedDatum(cmd, datumClass);
 		return new Response<List<? extends NodeDatum>>(results);
 	}
 
+	@Deprecated
 	@ResponseBody
-	@RequestMapping(value = "/list", method = RequestMethod.GET)
+	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "type")
 	public Response<FilterResults<?>> filterDatumData(final DatumFilterCommand cmd) {
+		FilterResults<?> results;
 		final String datumType = (cmd == null || cmd.getType() == null ? null : cmd.getType()
 				.toLowerCase());
 		final Class<? extends Datum> datumClass = filterTypeMap.get(datumType);
@@ -111,23 +113,44 @@ public class DatumController extends WebServiceControllerSupport {
 			return new Response<FilterResults<?>>(false, "unsupported.type", "Unsupported datum type",
 					null);
 		}
-		FilterResults<?> results;
 		if ( cmd.getAggregation() != null ) {
 			// return aggregated results
-			results = queryBiz.findFilteredAggregateDatum(datumClass, cmd, cmd.getSortDescriptors(),
+			results = queryBiz.findFilteredAggregateDatum(cmd, datumClass, cmd.getSortDescriptors(),
 					cmd.getOffset(), cmd.getMax());
 		} else {
-			results = queryBiz.findFilteredDatum(datumClass, cmd, cmd.getSortDescriptors(),
+			results = queryBiz.findFilteredDatum(cmd, datumClass, cmd.getSortDescriptors(),
 					cmd.getOffset(), cmd.getMax());
 		}
 		return new Response<FilterResults<?>>(results);
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET)
+	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
+	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd) {
+		FilterResults<?> results;
+		if ( cmd.getAggregation() != null ) {
+			results = queryBiz.findFilteredAggregateGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
+					cmd.getOffset(), cmd.getMax());
+		} else {
+			results = queryBiz.findFilteredGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
+					cmd.getOffset(), cmd.getMax());
+		}
+		return new Response<FilterResults<?>>(results);
+	}
+
+	@Deprecated
+	@ResponseBody
+	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "type")
 	public Response<List<? extends NodeDatum>> getMostRecentDatumData(final DatumQueryCommand cmd) {
 		cmd.setMostRecent(true);
 		return getDatumData(cmd);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "!type")
+	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final DatumFilterCommand cmd) {
+		cmd.setMostRecent(true);
+		return filterGeneralDatumData(cmd);
 	}
 
 	// this awful mess is because in OpenJDK on BSD, Spring could not wire up the util:map properly!

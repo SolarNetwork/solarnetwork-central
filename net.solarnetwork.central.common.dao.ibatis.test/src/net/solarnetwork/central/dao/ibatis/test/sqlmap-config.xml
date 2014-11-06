@@ -13,9 +13,12 @@
 	<typeAlias alias="SolarNode" type="net.solarnetwork.central.domain.SolarNode"/>
 	<typeAlias alias="User" type="net.solarnetwork.central.user.domain.User"/>
 	<typeAlias alias="UserNode" type="net.solarnetwork.central.user.domain.UserNode"/>
+	<typeAlias alias="UserNodePK" type="net.solarnetwork.central.user.domain.UserNodePK"/>
 	<typeAlias alias="WeatherLocation" type="net.solarnetwork.central.domain.WeatherLocation"/>
 	<typeAlias alias="WeatherSource" type="net.solarnetwork.central.domain.WeatherSource"/>
 	
+	<typeHandler javaType="[Ljava.lang.String;" jdbcType="ARRAY" 
+		callback="net.solarnetwork.central.dao.ibatis.ArrayTypeHandler$TextArrayTypeHandler"/>
 	<typeHandler javaType="org.joda.time.DateTime" 
 		callback="net.solarnetwork.central.dao.ibatis.JodaDateTimeTypeHandlerCallback" />
 	<typeHandler javaType="org.joda.time.LocalDateTime" 

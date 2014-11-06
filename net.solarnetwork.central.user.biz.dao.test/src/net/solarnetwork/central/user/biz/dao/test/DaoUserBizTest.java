@@ -32,17 +32,24 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import java.util.HashSet;
 import java.util.Set;
+import net.solarnetwork.central.dao.SolarLocationDao;
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.PasswordEncoder;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
-import net.solarnetwork.central.user.biz.dao.UserBizConstants;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.central.user.domain.UserNode;
 import org.easymock.EasyMock;
+import org.easymock.IArgumentMatcher;
+import org.joda.time.DateTime;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,192 +57,65 @@ import org.junit.Test;
  * Test cases for the {@link DaoUserBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public class DaoUserBizTest {
 
 	private static final Long TEST_USER_ID = -1L;
 	private static final String TEST_EMAIL = "test@localhost";
-	private static final String TEST_PASSWORD = "changeit";
 	private static final String TEST_ENC_PASSWORD = "encrypted.password";
 	private static final String TEST_NAME = "Test User";
 	private static final String TEST_ROLE = "ROLE_TEST";
 	private static final String TEST_AUTH_TOKEN = "12345678901234567890";
 	private static final String TEST_AUTH_SECRET = "123";
 
+	private SolarNode testNode;
 	private User testUser;
 	private Set<String> testUserRoles;
 
+	private SolarLocationDao solarLocationDao;
+	private SolarNodeDao solarNodeDao;
 	private UserDao userDao;
 	private UserAuthTokenDao userAuthTokenDao;
-	private PasswordEncoder passwordEncoder;
+	private UserNodeDao userNodeDao;
 
 	private DaoUserBiz userBiz;
 
 	@Before
 	public void setup() {
-		passwordEncoder = EasyMock.createMock(PasswordEncoder.class);
-
 		testUser = new User();
 		testUser.setEmail(TEST_EMAIL);
 		testUser.setId(TEST_USER_ID);
 		testUser.setName(TEST_NAME);
 		testUser.setPassword(TEST_ENC_PASSWORD);
 
+		testNode = new SolarNode();
+		testNode.setId(-1L);
+		testNode.setLocationId(-2L);
+
 		testUserRoles = new HashSet<String>();
 		testUserRoles.add(TEST_ROLE);
 
+		solarLocationDao = EasyMock.createMock(SolarLocationDao.class);
+		solarNodeDao = EasyMock.createMock(SolarNodeDao.class);
 		userDao = EasyMock.createMock(UserDao.class);
 		userAuthTokenDao = EasyMock.createMock(UserAuthTokenDao.class);
+		userNodeDao = EasyMock.createMock(UserNodeDao.class);
 
 		userBiz = new DaoUserBiz();
+		userBiz.setSolarLocationDao(solarLocationDao);
+		userBiz.setSolarNodeDao(solarNodeDao);
 		userBiz.setUserDao(userDao);
 		userBiz.setUserAuthTokenDao(userAuthTokenDao);
-		userBiz.setPasswordEncoder(passwordEncoder);
-	}
-
-	/**
-	 * Test able to logon a user successfully.
-	 */
-	@Test
-	public void logonUser() {
-		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
-		expect(userDao.getUserRoles(testUser)).andReturn(testUserRoles);
-		expect(passwordEncoder.matches(TEST_PASSWORD, TEST_ENC_PASSWORD)).andReturn(Boolean.TRUE);
-		replay(userDao, passwordEncoder);
-
-		final User user = userBiz.logonUser(TEST_EMAIL, TEST_PASSWORD);
-
-		verify(userDao, passwordEncoder);
-
-		assertNotNull(user);
-		assertNotNull(user.getId());
-		assertEquals(TEST_EMAIL, user.getEmail());
-		assertEquals(TEST_NAME, user.getName());
-	}
-
-	/**
-	 * Test attempting to logon an unconfirmed user fails.
-	 */
-	@Test
-	public void attemptLogonUnconfirmedUser() {
-		// make user's email "unconfirmed"
-		testUser.setEmail(UserBizConstants.getUnconfirmedEmail(TEST_EMAIL));
-
-		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(null);
-		expect(userDao.getUserByEmail(testUser.getEmail())).andReturn(testUser);
-		replay(userDao, passwordEncoder);
-
-		try {
-			userBiz.logonUser(TEST_EMAIL, TEST_PASSWORD);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED, e.getReason());
-			assertEquals(TEST_EMAIL, e.getEmail());
-		}
-
-		verify(userDao, passwordEncoder);
-	}
-
-	/**
-	 * Test attempting to logon a non-existing email fails.
-	 */
-	@Test
-	public void attemptLogonNonExistingEmail() {
-		final String badEmail = "does@not.exist";
-		expect(userDao.getUserByEmail(badEmail)).andReturn(null);
-		expect(userDao.getUserByEmail(UserBizConstants.getUnconfirmedEmail(badEmail))).andReturn(null);
-		replay(userDao);
-
-		try {
-			userBiz.logonUser(badEmail, TEST_PASSWORD);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.UNKNOWN_EMAIL, e.getReason());
-			assertEquals(badEmail, e.getEmail());
-		}
-	}
-
-	/**
-	 * Test attempting to logon a null email fails.
-	 */
-	@Test
-	public void attemptLogonNullEmail() {
-		replay(userDao);
-
-		try {
-			userBiz.logonUser(null, TEST_PASSWORD);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.UNKNOWN_EMAIL, e.getReason());
-			assertEquals(null, e.getEmail());
-		}
-		verify(userDao);
-	}
-
-	/**
-	 * Test attempting to logon a bad password fails.
-	 */
-	@Test
-	public void attemptLogonBadPassword() {
-		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
-		replay(userDao);
-
-		try {
-			userBiz.logonUser(TEST_EMAIL, "bad password");
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.BAD_PASSWORD, e.getReason());
-			assertEquals(TEST_EMAIL, e.getEmail());
-		}
-
-		verify(userDao);
-	}
-
-	/**
-	 * Test attempting to logon an empty password fails.
-	 */
-	@Test
-	public void attemptLogonEmptyPassword() {
-		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
-		replay(userDao);
-
-		try {
-			userBiz.logonUser(TEST_EMAIL, "");
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.BAD_PASSWORD, e.getReason());
-			assertEquals(TEST_EMAIL, e.getEmail());
-		}
-
-		verify(userDao);
-	}
-
-	/**
-	 * Test attempting to logon an empty password fails.
-	 */
-	@Test
-	public void attemptLogonNullPassword() {
-		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
-		replay(userDao);
-
-		try {
-			userBiz.logonUser(TEST_EMAIL, null);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.BAD_PASSWORD, e.getReason());
-			assertEquals(TEST_EMAIL, e.getEmail());
-		}
-
-		verify(userDao);
+		userBiz.setUserNodeDao(userNodeDao);
 	}
 
 	private void replayProperties() {
-		replay(userAuthTokenDao, userDao);
+		replay(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao);
 	}
 
 	private void verifyProperties() {
-		verify(userAuthTokenDao, userDao);
+		verify(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao);
 	}
 
 	@Test
@@ -286,6 +166,135 @@ public class DaoUserBizTest {
 			assertEquals(AuthorizationException.Reason.ACCESS_DENIED, e.getReason());
 			assertEquals(TEST_AUTH_TOKEN, e.getId());
 		}
+		verifyProperties();
+	}
+
+	@Test
+	public void saveUserNodeNoLocationChange() {
+		final UserNode userNode = new UserNode();
+		userNode.setCreated(new DateTime());
+		userNode.setDescription("Test user node");
+		userNode.setName("Test UserNode");
+		userNode.setRequiresAuthorization(true);
+		userNode.setUser(testUser);
+		userNode.setNode(testNode);
+
+		SolarLocation loc = new SolarLocation();
+		loc.setId(testNode.getLocationId());
+		loc.setName("foo");
+
+		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
+		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass())))
+				.andReturn(loc);
+		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
+
+		replayProperties();
+
+		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		entry.getNode().setLocation(loc);
+
+		UserNode result = userBiz.saveUserNode(entry);
+		Assert.assertEquals(userNode, result);
+
+		verifyProperties();
+	}
+
+	public static SolarNode nodeLocationMatch(final Long nodeId, final Long locId) {
+		EasyMock.reportMatcher(new IArgumentMatcher() {
+
+			private Long nid;
+			private Long lid;
+
+			@Override
+			public boolean matches(Object argument) {
+				SolarNode node = (SolarNode) argument;
+				nid = (node == null ? null : node.getId());
+				lid = (node == null ? null : node.getLocationId());
+				return (nodeId.equals(nid) && locId.equals(lid));
+			}
+
+			@Override
+			public void appendTo(StringBuffer buffer) {
+				if ( !nodeId.equals(nid) ) {
+					buffer.append("SolarNode expected (" + nodeId + ") got (" + nid + ") ");
+				}
+				if ( !locId.equals(lid) ) {
+					buffer.append("SolarNode location expected (" + locId + ") got (" + lid + ")");
+				}
+			}
+		});
+		return null;
+	}
+
+	@Test
+	public void saveUserNodeLocationChange() {
+		final UserNode userNode = new UserNode();
+		userNode.setCreated(new DateTime());
+		userNode.setDescription("Test user node");
+		userNode.setName("Test UserNode");
+		userNode.setRequiresAuthorization(true);
+		userNode.setUser(testUser);
+		userNode.setNode(testNode);
+
+		SolarLocation loc = new SolarLocation();
+		loc.setId(testNode.getLocationId());
+		loc.setName("foo");
+
+		SolarLocation locMatch = new SolarLocation();
+		locMatch.setId(-9L);
+		locMatch.setName("bar");
+
+		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
+		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass()))).andReturn(
+				locMatch);
+		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), -9L))).andReturn(testNode.getId());
+		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
+
+		replayProperties();
+
+		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		entry.getNode().setLocation(loc);
+
+		UserNode result = userBiz.saveUserNode(entry);
+		Assert.assertEquals(userNode, result);
+
+		verifyProperties();
+	}
+
+	@Test
+	public void saveUserNodeNewLocation() {
+		final UserNode userNode = new UserNode();
+		userNode.setCreated(new DateTime());
+		userNode.setDescription("Test user node");
+		userNode.setName("Test UserNode");
+		userNode.setRequiresAuthorization(true);
+		userNode.setUser(testUser);
+		userNode.setNode(testNode);
+
+		SolarLocation loc = new SolarLocation();
+		loc.setId(testNode.getLocationId());
+		loc.setName("foo");
+
+		SolarLocation newLoc = new SolarLocation();
+		newLoc.setId(-99L);
+
+		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
+		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass()))).andReturn(
+				null);
+		expect(solarLocationDao.store(EasyMock.isA(loc.getClass()))).andReturn(newLoc.getId());
+		expect(solarLocationDao.get(newLoc.getId())).andReturn(newLoc);
+		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), newLoc.getId()))).andReturn(
+				testNode.getId());
+		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
+
+		replayProperties();
+
+		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		entry.getNode().setLocation(loc);
+
+		UserNode result = userBiz.saveUserNode(entry);
+		Assert.assertEquals(userNode, result);
+
 		verifyProperties();
 	}
 

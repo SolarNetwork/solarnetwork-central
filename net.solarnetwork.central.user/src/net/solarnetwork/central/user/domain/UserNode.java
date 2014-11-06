@@ -18,13 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.user.domain;
 
 import net.solarnetwork.central.domain.BaseEntity;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 
 /**
@@ -37,7 +36,7 @@ import net.solarnetwork.central.domain.SolarNode;
  * </p>
  * 
  * @author matt
- * @version $Id$
+ * @version 1.1
  */
 public class UserNode extends BaseEntity {
 
@@ -120,6 +119,15 @@ public class UserNode extends BaseEntity {
 
 	public void setRequiresAuthorization(boolean requiresAuthorization) {
 		this.requiresAuthorization = requiresAuthorization;
+	}
+
+	/**
+	 * Exposed as a top-level property so that it can be marshalled to clients.
+	 * 
+	 * @return
+	 */
+	public SolarLocation getNodeLocation() {
+		return (node != null ? node.getLocation() : null);
 	}
 
 }

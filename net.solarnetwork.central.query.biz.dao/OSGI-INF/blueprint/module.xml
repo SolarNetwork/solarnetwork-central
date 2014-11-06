@@ -20,8 +20,22 @@
 		http://www.springframework.org/schema/util
 		http://www.springframework.org/schema/util/spring-util-3.1.xsd">
 
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.query.biz.dao">
+		<beans:prop key="filteredResultsLimit">1000</beans:prop>
+		<beans:prop key="maxDaysForMinuteAggregation">7</beans:prop>
+		<beans:prop key="maxDaysForHourAggregation">31</beans:prop>
+		<beans:prop key="maxDaysForDayAggregation">730</beans:prop>
+		<beans:prop key="maxDaysForDayOfWeekAggregation">3650</beans:prop>
+		<beans:prop key="maxDaysForHourOfDayAggregation">3650</beans:prop>
+	</osgix:cm-properties>
+
+	<ctx:property-placeholder properties-ref="cfg"/>
+	
 	<!-- Service References -->
 	
+	<reference id="solarLocationDao" interface="net.solarnetwork.central.dao.SolarLocationDao"/>
 	<reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
 	
 	<reference id="priceLocationDao" interface="net.solarnetwork.central.dao.PriceLocationDao"/>
@@ -29,6 +43,8 @@
 
 	<reference id="consumptionDatumDao" interface="net.solarnetwork.central.datum.dao.ConsumptionDatumDao"/>
 	<reference id="dayDatumDao" interface="net.solarnetwork.central.datum.dao.DayDatumDao"/>
+	<reference id="generalLocationDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumDao"/>
+	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 	<reference id="hardwareControlDatumDao" interface="net.solarnetwork.central.datum.dao.HardwareControlDatumDao"/>
 	<reference id="priceDatumDao" interface="net.solarnetwork.central.datum.dao.PriceDatumDao"/>
 	<reference id="powerDatumDao" interface="net.solarnetwork.central.datum.dao.PowerDatumDao"/>
@@ -47,6 +63,16 @@
 	
 	<ctx:annotation-config/>
 	
-	<bean id="queryBiz" class="net.solarnetwork.central.query.biz.dao.DaoQueryBiz"/>
+	<bean id="queryBiz" class="net.solarnetwork.central.query.biz.dao.DaoQueryBiz">
+		<osgix:managed-properties 
+				persistent-id="net.solarnetwork.central.query.biz.dao" 
+				autowire-on-update="true"/>
+		<property name="filteredResultsLimit" value="${filteredResultsLimit}"/>
+		<property name="maxDaysForMinuteAggregation" value="${maxDaysForMinuteAggregation}"/>
+		<property name="maxDaysForHourAggregation" value="${maxDaysForHourAggregation}"/>
+		<property name="maxDaysForDayAggregation" value="${maxDaysForDayAggregation}"/>
+		<property name="maxDaysForDayOfWeekAggregation" value="${maxDaysForDayOfWeekAggregation}"/>
+		<property name="maxDaysForHourOfDayAggregation" value="${maxDaysForHourOfDayAggregation}"/>
+	</bean>
 	
 </blueprint>

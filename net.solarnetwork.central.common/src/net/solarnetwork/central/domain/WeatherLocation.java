@@ -24,13 +24,13 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
 import net.solarnetwork.util.SerializeIgnore;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Information about a specific weather location.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class WeatherLocation extends BaseEntity implements Cloneable, Serializable, SourceLocationMatch {
 
@@ -60,7 +60,20 @@ public class WeatherLocation extends BaseEntity implements Cloneable, Serializab
 
 	@Override
 	public String getLocationName() {
-		return location == null ? null : location.getName();
+		if ( location == null ) {
+			return null;
+		}
+		StringBuilder buf = new StringBuilder();
+		if ( location.getLocality() != null ) {
+			buf.append(location.getLocality());
+		} else if ( location.getRegion() != null ) {
+			buf.append(location.getRegion());
+		}
+		if ( buf.length() > 0 ) {
+			buf.append(", ");
+		}
+		buf.append(location.getCountry());
+		return buf.toString();
 	}
 
 	public SolarLocation getLocation() {

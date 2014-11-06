@@ -18,32 +18,30 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
 import net.solarnetwork.util.SerializeIgnore;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Information about a specific price location.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.2
  */
 public class PriceLocation extends BaseEntity implements Cloneable, Serializable, SourceLocationMatch {
 
-	private static final long serialVersionUID = 851170317202125774L;
+	private static final long serialVersionUID = -5102271666130994934L;
 
 	private String name;
 	private String currency;
 	private String unit;
+	private SolarLocation location;
 	private PriceSource source;
 	private String sourceData;
-	private String timeZoneId;
 
 	@Override
 	public String toString() {
@@ -60,7 +58,7 @@ public class PriceLocation extends BaseEntity implements Cloneable, Serializable
 	@SerializeIgnore
 	@JsonIgnore
 	public Long getLocationId() {
-		return getId();
+		return location == null ? null : location.getId();
 	}
 
 	@Override
@@ -112,12 +110,12 @@ public class PriceLocation extends BaseEntity implements Cloneable, Serializable
 		this.sourceData = sourceData;
 	}
 
-	public String getTimeZoneId() {
-		return timeZoneId;
+	public SolarLocation getLocation() {
+		return location;
 	}
 
-	public void setTimeZoneId(String timeZoneId) {
-		this.timeZoneId = timeZoneId;
+	public void setLocation(SolarLocation location) {
+		this.location = location;
 	}
 
 }

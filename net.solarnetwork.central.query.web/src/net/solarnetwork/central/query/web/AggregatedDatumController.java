@@ -28,19 +28,22 @@ package net.solarnetwork.central.query.web;
 
 import java.util.List;
 import java.util.TimeZone;
-
 import javax.servlet.http.HttpServletRequest;
-
-import net.solarnetwork.central.datum.dao.DatumDao;
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
+import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.datum.domain.HardwareControlDatum;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.datum.domain.PowerDatum;
+import net.solarnetwork.central.datum.domain.PriceDatum;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.AbstractNodeController;
-
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,47 +53,120 @@ import org.springframework.web.servlet.ModelAndView;
 /**
  * Controller for querying and viewing aggregated {@link NodeDatum} data.
  * 
- * <p>The configurable properties of this class are:</p>
+ * <p>
+ * The configurable properties of this class are:
+ * </p>
  * 
  * <dl class="class-properties">
- *   <dt>datumClass</dt>
- *   <dd>The type of NodeDatum to obtain aggregated data of. This can also
- *   be configured by calling the {@link #setDatumDao(DatumDao)} method.</dd>
- *   
- *   <dt>defaultTimeZone</dt>
- *   <dd>The default time zone to use when no {@link SolarNode} ID is provided
- *   in the command. For aggregated data across nodes, this is the time zone
- *   that will be to create the start/end dates (if not provided in the command)
- *   and also returned to the view on the {@link #MODEL_KEY_TZ} key. When
- *   the {@link DatumQueryCommand#getNodeId()} is provided, the time zone for
- *   that node will be used instead of this default value. Defaults to
- *   {@code GMT+12}.</dd> 
+ * 
+ * <dt>defaultTimeZone</dt>
+ * <dd>The default time zone to use when no {@link SolarNode} ID is provided in
+ * the command. For aggregated data across nodes, this is the time zone that
+ * will be to create the start/end dates (if not provided in the command) and
+ * also returned to the view on the {@link #MODEL_KEY_TZ} key. When the
+ * {@link DatumQueryCommand#getNodeId()} is provided, the time zone for that
+ * node will be used instead of this default value. Defaults to {@code GMT+12}.</dd>
  * </dl>
  *
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.1
+ * @deprecated use the
+ *             {@link net.solarnetwork.central.query.web.api.DatumController}
+ *             API
  */
+@Deprecated
+@Controller
 public class AggregatedDatumController extends AbstractNodeController {
-	
+
 	/** The model key for the {@code List&lt;NodeDatum&gt;} results. */
 	public static final String MODEL_KEY_DATA_LIST = "data";
-	
+
 	/** The model key for the client {@link TimeZone} results. */
 	public static final String MODEL_KEY_TZ = "tz";
-	
+
 	private TimeZone defaultTimeZone = TimeZone.getTimeZone("GMT+12");
-	@Autowired private QueryBiz queryBiz;
-	private Class<? extends NodeDatum> datumClass;
-	
+
+	private final QueryBiz queryBiz;
+
+	@Autowired
+	public AggregatedDatumController(SolarNodeDao solarNodeDao, QueryBiz queryBiz) {
+		super();
+		setSolarNodeDao(solarNodeDao);
+		this.queryBiz = queryBiz;
+	}
+
 	/**
 	 * Query for consumption data.
 	 * 
-	 * @param cmd the query criteria
-	 * @param request the servlet request
+	 * @param cmd
+	 *        the query criteria
+	 * @param request
+	 *        the servlet request
 	 * @return model and view
 	 */
-	@RequestMapping(method = RequestMethod.GET)
-	public ModelAndView getData(DatumQueryCommand cmd, HttpServletRequest request) {
+	@RequestMapping(value = "/consumptionData.*", method = RequestMethod.GET)
+	public ModelAndView getConsumptionData(DatumQueryCommand cmd, HttpServletRequest request) {
+		return getData(cmd, request, ConsumptionDatum.class);
+	}
+
+	/**
+	 * Query for power data.
+	 * 
+	 * @param cmd
+	 *        the query criteria
+	 * @param request
+	 *        the servlet request
+	 * @return model and view
+	 */
+	@RequestMapping(value = { "/generationData.*", "/powerData.*" }, method = RequestMethod.GET)
+	private ModelAndView getPowerData(DatumQueryCommand cmd, HttpServletRequest request) {
+		return getData(cmd, request, PowerDatum.class);
+	}
+
+	/**
+	 * Query for hardware control data.
+	 * 
+	 * @param cmd
+	 *        the query criteria
+	 * @param request
+	 *        the servlet request
+	 * @return model and view
+	 */
+	@RequestMapping(value = "/hardwareControlData.*", method = RequestMethod.GET)
+	private ModelAndView getHardwareControlData(DatumQueryCommand cmd, HttpServletRequest request) {
+		return getData(cmd, request, HardwareControlDatum.class);
+	}
+
+	/**
+	 * Query for price data.
+	 * 
+	 * @param cmd
+	 *        the query criteria
+	 * @param request
+	 *        the servlet request
+	 * @return model and view
+	 */
+	@RequestMapping(value = "/priceData.*", method = RequestMethod.GET)
+	private ModelAndView getPriceData(DatumQueryCommand cmd, HttpServletRequest request) {
+		return getData(cmd, request, PriceDatum.class);
+	}
+
+	/**
+	 * Query for day data.
+	 * 
+	 * @param cmd
+	 *        the query criteria
+	 * @param request
+	 *        the servlet request
+	 * @return model and view
+	 */
+	@RequestMapping(value = "/dayData.*", method = RequestMethod.GET)
+	private ModelAndView getDayData(DatumQueryCommand cmd, HttpServletRequest request) {
+		return getData(cmd, request, DayDatum.class);
+	}
+
+	public ModelAndView getData(DatumQueryCommand cmd, HttpServletRequest request,
+			Class<? extends NodeDatum> datumClass) {
 		ModelAndView mv = resolveViewFromUrlExtension(request);
 
 		TimeZone tz = this.defaultTimeZone;
@@ -101,7 +177,7 @@ public class AggregatedDatumController extends AbstractNodeController {
 				tz = node.getTimeZone();
 			}
 		}
-		
+
 		// make sure required criteria values are set
 		if ( cmd.getStartDate() == null ) {
 			// default to 1 day ago
@@ -113,74 +189,36 @@ public class AggregatedDatumController extends AbstractNodeController {
 		if ( cmd.getPrecision() == null ) {
 			cmd.setPrecision(60);
 		}
-		
+
 		// execute query, and return results
-		List<? extends NodeDatum> results = queryBiz.getAggregatedDatum(datumClass, cmd);
+		List<? extends NodeDatum> results = queryBiz.getAggregatedDatum(cmd, datumClass);
 		mv.addObject(MODEL_KEY_DATA_LIST, results);
-        mv.addObject(MODEL_KEY_TZ, tz);
-        
+		mv.addObject(MODEL_KEY_TZ, tz);
+
 		return mv;
 	}
 
 	/**
 	 * Web binder initialization.
 	 * 
-	 * @param binder the binder to initialize
+	 * @param binder
+	 *        the binder to initialize
 	 */
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
 		initBinderDateFormatEditor(binder);
 	}
-	
-	/**
-	 * Set the {@code datumClass} via the {@link DatumDao#getDatumType()} method.
-	 * 
-	 * @param dao the DAO from which to infer the datum class from
-	 */
-	public void setDatumDao(DatumDao<NodeDatum> dao) {
-		setDatumClass(dao.getDatumType());
-	}
-	
-	/**
-	 * @return the defaultTimeZone
-	 */
+
 	public TimeZone getDefaultTimeZone() {
 		return defaultTimeZone;
 	}
-	
-	/**
-	 * @param defaultTimeZone the defaultTimeZone to set
-	 */
+
 	public void setDefaultTimeZone(TimeZone defaultTimeZone) {
 		this.defaultTimeZone = defaultTimeZone;
 	}
 
-	/**
-	 * @return the queryBiz
-	 */
 	public QueryBiz getQueryBiz() {
 		return queryBiz;
 	}
 
-	/**
-	 * @param queryBiz the queryBiz to set
-	 */
-	public void setQueryBiz(QueryBiz queryBiz) {
-		this.queryBiz = queryBiz;
-	}
-
-	/**
-	 * @return the datumClass
-	 */
-	public Class<? extends NodeDatum> getDatumClass() {
-		return datumClass;
-	}
-
-	/**
-	 * @param datumClass the datumClass to set
-	 */
-	public void setDatumClass(Class<? extends NodeDatum> datumClass) {
-		this.datumClass = datumClass;
-	}
-	
 }

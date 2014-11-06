@@ -24,19 +24,27 @@
 
 package net.solarnetwork.central.security;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 
 /**
  * Security helper methods.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public class SecurityUtils {
 
@@ -60,6 +68,75 @@ public class SecurityUtils {
 		} catch ( AuthenticationException e ) {
 			SecurityContextHolder.getContext().setAuthentication(null);
 			throw e;
+		}
+	}
+
+	/**
+	 * Become a user with a {@code RUN_AS_ROLE_USER} authority.
+	 * 
+	 * @param username
+	 *        the username (email) to use
+	 * @param name
+	 *        the name
+	 * @param userId
+	 *        the user ID
+	 * @since 1.1
+	 */
+	public static void becomeUser(String username, String name, Long userId) {
+		User userDetails = new User(username, "", AuthorityUtils.NO_AUTHORITIES);
+		AuthenticatedUser user = new AuthenticatedUser(userDetails, userId, name, false);
+		Collection<GrantedAuthority> authorities = Collections
+				.singleton((GrantedAuthority) new SimpleGrantedAuthority("RUN_AS_ROLE_USER"));
+		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, "",
+				authorities);
+		SecurityContextHolder.getContext().setAuthentication(auth);
+	}
+
+	/**
+	 * Require any one of a set of roles for the current actor. The actor's
+	 * roles are converted to upper case before testing for inclusion in the
+	 * {@code roles} argument.
+	 * 
+	 * @param roles
+	 * @since 1.2
+	 */
+	public static void requireAnyRole(final Set<String> roles) {
+		Authentication auth = getCurrentAuthentication();
+		if ( auth == null || auth.isAuthenticated() == false ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		for ( GrantedAuthority role : auth.getAuthorities() ) {
+			if ( roles.contains(role.getAuthority().toUpperCase()) ) {
+				return;
+			}
+		}
+		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+	}
+
+	/**
+	 * Require any one of a set of roles for the current actor. The actor's
+	 * roles are converted to upper case before testing for inclusion in the
+	 * {@code roles} argument.
+	 * 
+	 * @param roles
+	 * @since 1.2
+	 */
+	public static void requireAllRoles(final Set<String> roles) {
+		Authentication auth = getCurrentAuthentication();
+		if ( auth == null || auth.isAuthenticated() == false ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		Set<String> rolesCopy = new HashSet<String>(roles);
+		for ( GrantedAuthority role : auth.getAuthorities() ) {
+			if ( rolesCopy.remove(role.getAuthority().toUpperCase()) == false ) {
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+			}
+			if ( rolesCopy.size() < 1 ) {
+				return;
+			}
+		}
+		if ( rolesCopy.size() > 0 ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
 	}
 

@@ -22,7 +22,6 @@ CREATE DOMAIN solarnet.pk_i
 CREATE TABLE solarnet.sn_loc (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	loc_name		CHARACTER VARYING(128) NOT NULL,
 	country			CHARACTER(2) NOT NULL,
 	time_zone		CHARACTER VARYING(64) NOT NULL,
 	region			CHARACTER VARYING(128),
@@ -30,8 +29,9 @@ CREATE TABLE solarnet.sn_loc (
 	locality		CHARACTER VARYING(128),
 	postal_code		CHARACTER VARYING(32),
 	address			CHARACTER VARYING(256),
-	latitude		DOUBLE PRECISION,
-	longitude		DOUBLE PRECISION,
+	latitude		NUMERIC(9,6),
+	longitude		NUMERIC(9,6),
+	elevation		NUMERIC(8,3),
 	fts_default 	tsvector,
 	PRIMARY KEY (id)
 );
@@ -42,7 +42,7 @@ CREATE TRIGGER maintain_fts
   BEFORE INSERT OR UPDATE ON solarnet.sn_loc
   FOR EACH ROW EXECUTE PROCEDURE 
   tsvector_update_trigger(fts_default, 'pg_catalog.english', 
-  	loc_name, country, region, state_prov, locality, postal_code, address);
+  	country, region, state_prov, locality, postal_code, address);
 
 /* =========================================================================
    =========================================================================
@@ -108,7 +108,7 @@ CREATE TABLE solarnet.sn_day_datum (
 	CONSTRAINT sn_day_datum_weather_loc_fk
 		FOREIGN KEY (loc_id) REFERENCES solarnet.sn_weather_loc (id) 
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT sn_day_datum_loc_unq UNIQUE (day, loc_id)
+	CONSTRAINT sn_day_datum_loc_unq UNIQUE (loc_id, day)
 );
 
 CREATE INDEX day_datum_created_idx ON solarnet.sn_day_datum (created);
@@ -134,7 +134,7 @@ CREATE TABLE solarnet.sn_weather_datum (
 	CONSTRAINT sn_weather_datum_weather_loc_fk
 		FOREIGN KEY (loc_id) REFERENCES solarnet.sn_weather_loc (id) 
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT sn_weather_datum_loc_unq UNIQUE (info_date, loc_id)
+	CONSTRAINT sn_weather_datum_loc_unq UNIQUE (loc_id, info_date)
 );
 
 CLUSTER solarnet.sn_weather_datum USING sn_weather_datum_loc_unq;
@@ -325,6 +325,66 @@ $BODY$
 $BODY$
   LANGUAGE 'sql' STABLE;
 
+/**************************************************************************************************
+ * FUNCTION solarnet.get_season(date)
+ * 
+ * Assign a "season" number to a date. Seasons are defined as: 
+ * 
+ * Dec,Jan,Feb = 0
+ * Mar,Apr,May = 1
+ * Jun,Jul,Aug = 2
+ * Sep,Oct,Nov = 3
+ * 
+ * @param date the date to calcualte the season for
+ * @returns integer season constant
+ */
+CREATE OR REPLACE FUNCTION solarnet.get_season(date)
+RETURNS INTEGER AS
+$BODY$
+	SELECT
+	CASE EXTRACT(MONTH FROM $1) 
+		WHEN 12 THEN 0
+		WHEN 1 THEN 0
+		WHEN 2 THEN 0
+		WHEN 3 THEN 1
+		WHEN 4 THEN 1
+		WHEN 5 THEN 1
+		WHEN 6 THEN 2
+		WHEN 7 THEN 2
+		WHEN 8 THEN 2
+		WHEN 9 THEN 3
+		WHEN 10 THEN 3
+		WHEN 11 THEN 3
+	END AS season
+$BODY$
+  LANGUAGE 'sql' IMMUTABLE;
+
+
+/**************************************************************************************************
+ * FUNCTION solarnet.get_season_monday_start(date)
+ * 
+ * Returns a date representing the first Monday within the provide date's season, where season
+ * is defined by the solarnet.get_season(date) function. The actual returned date is meaningless 
+ * other than it will be a Monday and will be within the appropriate season.
+ * 
+ * @param date the date to calcualte the Monday season date for
+ * @returns date representing the first Monday within the season
+ * @see solarnet.get_season(date)
+ */
+CREATE OR REPLACE FUNCTION solarnet.get_season_monday_start(date)
+RETURNS DATE AS
+$BODY$
+	SELECT
+	CASE solarnet.get_season($1)
+		WHEN 0 THEN DATE '2000-12-04'
+		WHEN 1 THEN DATE '2001-03-05'
+		WHEN 2 THEN DATE '2001-06-04'
+		ELSE DATE '2001-09-03'
+  END AS season_monday
+$BODY$
+  LANGUAGE 'sql' IMMUTABLE;
+
+
 /* =========================================================================
    =========================================================================
    PRICE
@@ -351,14 +411,17 @@ CREATE INDEX sn_price_source_fts_default_idx ON solarnet.sn_price_source USING g
 CREATE TABLE solarnet.sn_price_loc (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	loc_id			BIGINT NOT NULL,
 	loc_name		CHARACTER VARYING(128) NOT NULL UNIQUE,
 	source_id		BIGINT NOT NULL,
 	source_data		CHARACTER VARYING(128),
 	currency		VARCHAR(10) NOT NULL,
 	unit			VARCHAR(20) NOT NULL,
-	time_zone		VARCHAR(64) NOT NULL,
 	fts_default		tsvector,
 	PRIMARY KEY (id),
+    CONSTRAINT sn_price_loc_loc_fk FOREIGN KEY (loc_id)
+  	    REFERENCES solarnet.sn_loc (id) MATCH SIMPLE
+	    ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT sn_price_loc_sn_price_source_fk FOREIGN KEY (source_id)
 		REFERENCES solarnet.sn_price_source (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION
@@ -379,16 +442,13 @@ CREATE TABLE solarnet.sn_price_datum (
 	price			REAL,
 	prev_datum		BIGINT,
 	PRIMARY KEY (id),
-    CONSTRAINT price_datum_unq UNIQUE (created, loc_id),
+    CONSTRAINT price_datum_unq UNIQUE (loc_id, created),
 	CONSTRAINT sn_price_datum_price_loc_fk FOREIGN KEY (loc_id)
 		REFERENCES solarnet.sn_price_loc (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
 CREATE INDEX price_datum_prev_datum_idx ON solarnet.sn_price_datum (prev_datum);
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX price_datum_loc_idx ON solarnet.sn_price_datum (loc_id,created);
 
 CLUSTER solarnet.sn_price_datum USING price_datum_unq;
 
@@ -456,7 +516,6 @@ CREATE TABLE solarnet.sn_power_datum (
 	bat_amp_hrs		REAL,
 	watt_hour		BIGINT,
 	prev_datum		BIGINT,
-	local_created	TIMESTAMP WITHOUT TIME ZONE NOT NULL,
 	PRIMARY KEY (id),
 	CONSTRAINT sn_power_datum_node_fk
 		FOREIGN KEY (node_id) REFERENCES solarnet.sn_node (node_id)
@@ -464,14 +523,10 @@ CREATE TABLE solarnet.sn_power_datum (
 	CONSTRAINT sn_power_datum_price_loc_fk
 		FOREIGN KEY (price_loc_id) REFERENCES solarnet.sn_price_loc (id)
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT power_datum_node_unq UNIQUE (created, node_id, source_id)
+	CONSTRAINT power_datum_node_unq UNIQUE (node_id, created, source_id)
 );
 
 CREATE INDEX power_datum_prev_datum_idx ON solarnet.sn_power_datum (prev_datum);
-CREATE INDEX power_datum_local_created_idx ON solarnet.sn_power_datum (local_created);
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX power_datum_node_idx ON solarnet.sn_power_datum (node_id,created);
 
 CLUSTER solarnet.sn_power_datum USING power_datum_node_unq;
 
@@ -510,6 +565,7 @@ CREATE TRIGGER populate_prev_power_datum
   FOR EACH ROW
   EXECUTE PROCEDURE solarnet.populate_prev_power_datum();
 
+/*
 CREATE OR REPLACE FUNCTION solarnet.populate_local_created()
   RETURNS trigger AS
 $BODY$
@@ -523,6 +579,7 @@ CREATE TRIGGER populate_local_created
    BEFORE INSERT OR UPDATE
    ON solarnet.sn_power_datum FOR EACH ROW
    EXECUTE PROCEDURE solarnet.populate_local_created();
+*/
    
 /**************************************************************************************************
  * FUNCTION solarnet.calc_avg_watt_hours(integer, integer, double precision, 
@@ -585,13 +642,10 @@ CREATE TABLE solarnet.sn_consum_datum (
 	CONSTRAINT sn_consum_datum_price_loc_fk
 		FOREIGN KEY (price_loc_id) REFERENCES solarnet.sn_price_loc (id)
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT consum_datum_node_unq UNIQUE (created,node_id,source_id)
+	CONSTRAINT consum_datum_node_unq UNIQUE (node_id,created,source_id)
 );
 
 CREATE INDEX consum_datum_prev_datum_idx ON solarnet.sn_consum_datum (prev_datum);
-
--- this index is used for foreign key validation in other tables
-CREATE INDEX consum_datum_node_idx ON solarnet.sn_consum_datum (node_id,created);
 
 CLUSTER solarnet.sn_consum_datum USING consum_datum_node_unq;
 

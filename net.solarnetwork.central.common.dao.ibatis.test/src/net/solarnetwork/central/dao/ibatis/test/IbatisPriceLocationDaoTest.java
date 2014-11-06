@@ -30,10 +30,12 @@ import java.util.Iterator;
 import java.util.List;
 import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.PriceSourceDao;
+import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.ibatis.IbatisPriceLocationDao;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.PriceSource;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.support.PriceLocationFilter;
@@ -48,21 +50,28 @@ import org.springframework.beans.factory.annotation.Autowired;
  * Test case for the {@link IbatisPriceLocationDao} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class IbatisPriceLocationDaoTest extends AbstractIbatisDaoTestSupport {
 
 	@Autowired
 	private PriceLocationDao dao;
+
 	@Autowired
 	private PriceSourceDao priceSourceDao;
 
+	@Autowired
+	private SolarLocationDao solarLocationDao;
+
+	private SolarLocation location = null;
 	private PriceLocation priceLocation = null;
 	private PriceSource priceSource = null;
 
 	@Before
 	public void setUp() throws Exception {
+		setupTestLocation();
 		setupTestPriceLocation();
+		this.location = solarLocationDao.get(TEST_LOC_ID);
 		this.priceSource = priceSourceDao.get(TEST_PRICE_SOURCE_ID);
 	}
 
@@ -71,10 +80,10 @@ public class IbatisPriceLocationDaoTest extends AbstractIbatisDaoTestSupport {
 		loc.setCreated(new DateTime());
 		loc.setName("A test location");
 		loc.setSource(this.priceSource);
+		loc.setLocation(this.location);
 		loc.setSourceData("Test source data");
 		loc.setCurrency(TEST_CURRENCY);
 		loc.setUnit("MWh");
-		loc.setTimeZoneId(TEST_TZ);
 		return loc;
 	}
 
@@ -95,6 +104,7 @@ public class IbatisPriceLocationDaoTest extends AbstractIbatisDaoTestSupport {
 		assertEquals(src.getSourceData(), entity.getSourceData());
 		assertEquals(src.getCurrency(), entity.getCurrency());
 		assertEquals(src.getUnit(), entity.getUnit());
+		assertEquals(src.getLocation(), entity.getLocation());
 	}
 
 	@Test
@@ -147,7 +157,7 @@ public class IbatisPriceLocationDaoTest extends AbstractIbatisDaoTestSupport {
 		assertNotNull(results.getResults());
 		SourceLocationMatch match = results.getResults().iterator().next();
 		assertEquals(loc.getId(), match.getId());
-		assertEquals(loc.getId(), match.getLocationId());
+		assertEquals(this.location.getId(), match.getLocationId());
 		assertEquals(source.getName(), match.getSourceName());
 	}
 
@@ -171,7 +181,7 @@ public class IbatisPriceLocationDaoTest extends AbstractIbatisDaoTestSupport {
 
 		SourceLocationMatch match = itr.next();
 		assertEquals(loc.getId(), match.getId());
-		assertEquals(loc.getId(), match.getLocationId());
+		assertEquals(this.location.getId(), match.getLocationId());
 		assertEquals(source.getName(), match.getSourceName());
 		assertTrue(match instanceof PriceLocation);
 		assertEquals(TEST_CURRENCY, ((PriceLocation) match).getCurrency());
@@ -219,7 +229,7 @@ public class IbatisPriceLocationDaoTest extends AbstractIbatisDaoTestSupport {
 
 		match = itr.next();
 		assertEquals(loc.getId(), match.getId());
-		assertEquals(loc.getId(), match.getLocationId());
+		assertEquals(this.location.getId(), match.getLocationId());
 		assertEquals(source.getName(), match.getSourceName());
 		assertTrue(match instanceof PriceLocation);
 		assertEquals(TEST_CURRENCY, ((PriceLocation) match).getCurrency());
@@ -257,7 +267,7 @@ public class IbatisPriceLocationDaoTest extends AbstractIbatisDaoTestSupport {
 
 		match = itr.next();
 		assertEquals(loc.getId(), match.getId());
-		assertEquals(loc.getId(), match.getLocationId());
+		assertEquals(this.location.getId(), match.getLocationId());
 		assertEquals(source.getName(), match.getSourceName());
 		assertTrue(match instanceof PriceLocation);
 		assertEquals(TEST_CURRENCY, ((PriceLocation) match).getCurrency());
@@ -267,7 +277,6 @@ public class IbatisPriceLocationDaoTest extends AbstractIbatisDaoTestSupport {
 		assertEquals(TEST_LOC_NAME, match.getLocationName());
 		assertTrue(match instanceof PriceLocation);
 		assertEquals(TEST_CURRENCY, ((PriceLocation) match).getCurrency());
-
 	}
 
 }

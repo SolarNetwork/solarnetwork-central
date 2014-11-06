@@ -36,24 +36,30 @@ import org.joda.time.DateTime;
 
 /**
  * Implementation of {@link LocationDatumFilter}, {@link NodeDatumFilter}, and
- * {@link AggregateNodeDatumFilter}.
+ * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.5
  */
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
-		AggregateNodeDatumFilter {
+		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
+		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
+		GeneralNodeDatumMetadataFilter {
 
 	private final SolarLocation location;
 	private DateTime startDate;
 	private DateTime endDate;
+	private boolean mostRecent = false;
 	private String type; // e.g. Power, Consumption, etc.
 	private List<MutableSortDescriptor> sorts;
 	private Integer offset = 0;
 	private Integer max;
+	private String dataPath; // bean path expression to a data value, e.g. "i.watts"
 
+	private Long[] locationIds;
 	private Long[] nodeIds;
 	private String[] sourceIds;
+	private String[] tags;
 	private Aggregation aggregation;
 
 	/**
@@ -122,7 +128,13 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	@Override
 	public Long getLocationId() {
-		return location.getId();
+		if ( location.getId() != null ) {
+			return location.getId();
+		}
+		if ( locationIds != null && locationIds.length > 0 ) {
+			return locationIds[0];
+		}
+		return null;
 	}
 
 	@Override
@@ -148,6 +160,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		this.endDate = endDate;
 	}
 
+	@Override
 	public String getType() {
 		return type;
 	}
@@ -235,7 +248,11 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 *        the ID of the node
 	 */
 	public void setSourceId(String sourceId) {
-		this.sourceIds = new String[] { sourceId };
+		if ( sourceId == null ) {
+			this.sourceIds = null;
+		} else {
+			this.sourceIds = new String[] { sourceId };
+		}
 	}
 
 	/**
@@ -272,6 +289,20 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	}
 
 	@Override
+	public String getTag() {
+		return this.tags == null || this.tags.length < 1 ? null : this.tags[0];
+	}
+
+	@Override
+	public String[] getTags() {
+		return tags;
+	}
+
+	public void setTags(String[] tags) {
+		this.tags = tags;
+	}
+
+	@Override
 	public Aggregation getAggregation() {
 		return aggregation;
 	}
@@ -289,6 +320,48 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 */
 	public void setAggregate(Aggregation aggregate) {
 		setAggregation(aggregate);
+	}
+
+	@Override
+	public boolean isMostRecent() {
+		return mostRecent;
+	}
+
+	public void setMostRecent(boolean mostRecent) {
+		this.mostRecent = mostRecent;
+	}
+
+	@Override
+	public String getDataPath() {
+		return dataPath;
+	}
+
+	public void setDataPath(String dataPath) {
+		this.dataPath = dataPath;
+	}
+
+	@Override
+	public String[] getDataPathElements() {
+		String path = this.dataPath;
+		if ( path == null ) {
+			return null;
+		}
+		return path.split("\\.");
+	}
+
+	@Override
+	public Long[] getLocationIds() {
+		if ( locationIds != null ) {
+			return locationIds;
+		}
+		if ( location != null && location.getId() != null ) {
+			return new Long[] { location.getId() };
+		}
+		return null;
+	}
+
+	public void setLocationIds(Long[] locationIds) {
+		this.locationIds = locationIds;
 	}
 
 }

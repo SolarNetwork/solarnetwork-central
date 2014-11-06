@@ -129,7 +129,7 @@ public class IbatisUserAuthTokenDaoTest extends AbstractIbatisUserDaoTestSupport
 		assertEquals(token.getId(), entity.getId());
 		assertEquals(token.getStatus(), entity.getStatus());
 		assertEquals(token.getAuthToken(), entity.getAuthToken());
-		assertEquals(token.getAuthSecret(), entity.getAuthSecret());
+		assertNull(entity.getAuthSecret()); // the secret is NOT returned
 		assertEquals(token.getNodeIds(), entity.getNodeIds());
 	}
 

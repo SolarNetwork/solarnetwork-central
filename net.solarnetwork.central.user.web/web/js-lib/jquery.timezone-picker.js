@@ -4,17 +4,23 @@
 // for all subsequent calls.
 var methods = {};
 var opts = {};
-var selectedTimzone = null;
+var selectedTimezone = null;
 var imgElement = null;
 var mapElement = null;
 var $pin = null;
+
+// Gets called upon timezone change.
+// The expected method signature is changeHandler(timezoneName, countryName, offset).
+var changeHandler = null;
 
 methods.init = function(initOpts) {
   var $origCall = this;
 
   // Set the instance options.
   opts = $.extend({}, $.fn.timezonePicker.defaults, initOpts);
-  selectedTimzone = opts.timezone;
+  selectedTimezone = opts.timezone;
+
+  changeHandler = opts.changeHandler;
 
   return $origCall.each(function(index, item) {
     imgElement = item;
@@ -50,20 +56,22 @@ methods.init = function(initOpts) {
           top: (pinCoords[1] - pinHeight) + 'px'
         });
       }
+
+      var timezoneName = $(areaElement).attr('data-timezone');
+      var countryName = $(areaElement).attr('data-country');
+      var offset = $(areaElement).attr('data-offset');
+
+      // Call the change handler
+      if (typeof changeHandler === 'function') {
+        changeHandler(timezoneName, countryName, offset);
+      }
+
       // Update the target select list.
       if (opts.target) {
-        var timezoneName = $(areaElement).attr('data-timezone');
         if (timezoneName) $(opts.target).val(timezoneName);
       }
       if (opts.countryTarget) {
-        var countryName = $(areaElement).attr('data-country');
         if (countryName) $(opts.countryTarget).val(countryName);
-      }
-      if ( (typeof opts.change) == 'function' ) {
-    	  opts.change.call($origCall, {
-    		  timezoneName : $(areaElement).attr('data-timezone'),
-    		  countryName : $(areaElement).attr('data-country')
-    	  });
       }
 
       return false;
@@ -120,13 +128,13 @@ methods.init = function(initOpts) {
 };
 
 /**
- * Update the currnetly selected timezone and update the pin location.
+ * Update the currently selected timezone and update the pin location.
  */
 methods.updateTimezone = function(newTimezone) {
-  selectedTimzone = newTimezone;
+  selectedTimezone = newTimezone;
   $pin.css('display', 'none');
   $(mapElement).find('area').each(function(m, areaElement) {
-    if (areaElement.getAttribute('data-timezone') === selectedTimzone) {
+    if (areaElement.getAttribute('data-timezone') === selectedTimezone) {
       $(areaElement).triggerHandler('click');
       return false;
     }
@@ -136,7 +144,7 @@ methods.updateTimezone = function(newTimezone) {
 };
 
 /**
- * Update the currnetly selected timezone and update the pin location.
+ * Use browser geolocation to update the currently selected timezone and update the pin location.
  */
 methods.detectLocation = function(detectOpts) {
   var detectDefaults = {
@@ -243,7 +251,7 @@ methods.resize = function() {
         timezone: areaElement.getAttribute('data-timezone'),
         country: areaElement.getAttribute('data-country'),
         coords: areaElement.getAttribute('coords'),
-        pin: areaElement.getAttribute('data-pin'),
+        pin: areaElement.getAttribute('data-pin')
       };
     }
     var rescale = imgElement.width/imgElement.getAttribute('width');
@@ -287,7 +295,7 @@ $.fn.timezonePicker = function(method) {
   }
   else {
     $.error('Method ' +  method + ' does not exist on jQuery.timezonePicker');
-  } 
+  }
 };
 
 $.fn.timezonePicker.defaults = {

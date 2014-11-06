@@ -5,7 +5,7 @@
 </p>
 <p>
 	<fmt:message key="registration.confirm.login">
-		<fmt:param><c:url value='/u/my-nodes'/></fmt:param>
+		<fmt:param><c:url value='/u/sec/my-nodes'/></fmt:param>
 		<fmt:param>${user.email}</fmt:param>
 	</fmt:message>
 </p>

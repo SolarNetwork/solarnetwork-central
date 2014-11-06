@@ -33,12 +33,22 @@ import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.WeatherLocationDao;
+import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.dao.DatumDao;
 import net.solarnetwork.central.datum.dao.DayDatumDao;
+import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
+import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.dao.WeatherDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.LocationDatum;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.PowerDatum;
@@ -53,7 +63,10 @@ import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthenticatedNode;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.util.ClassUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
@@ -91,10 +104,11 @@ import org.springframework.transaction.annotation.Transactional;
  * <dd>The {@link SolarNodeDao} so location information can be added to
  * {@link DayDatum} and {@link WeatherDatum} objects if they are missing that
  * information when passed to {@link #postDatum(Datum)}.</dd>
+ * 
  * </dl>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -115,6 +129,9 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private PriceLocationDao priceLocationDao = null;
 	private WeatherLocationDao weatherLocationDao = null;
 	private SolarLocationDao solarLocationDao = null;
+	private GeneralNodeDatumDao generalNodeDatumDao = null;
+	private GeneralLocationDatumDao generalLocationDatumDao = null;
+	private DatumMetadataBiz datumMetadataBiz = null;
 	private int filteredResultsLimit = 250;
 
 	/** A class-level logger. */
@@ -144,7 +161,10 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 		// verify node ID with security
 		AuthenticatedNode authNode = getAuthenticatedNode();
-		if ( authNode != null && datum instanceof NodeDatum ) {
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		if ( datum instanceof NodeDatum ) {
 			NodeDatum nd = (NodeDatum) datum;
 			if ( nd.getNodeId() == null ) {
 				if ( log.isDebugEnabled() ) {
@@ -158,7 +178,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 					log.warn("Illegal datum post by node " + authNode.getNodeId() + " as node "
 							+ nd.getNodeId());
 				}
-				throw new SecurityException("Illegal data access");
+				throw new AuthorizationException(Reason.ACCESS_DENIED, nd.getNodeId());
 			}
 		}
 
@@ -206,6 +226,114 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			results.add(entity);
 		}
 		return results;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void postGeneralNodeDatum(Iterable<GeneralNodeDatum> datums) {
+		if ( datums == null ) {
+			return;
+		}
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		for ( GeneralNodeDatum d : datums ) {
+			if ( d.getNodeId() == null ) {
+				d.setNodeId(authNode.getNodeId());
+			} else if ( !d.getNodeId().equals(authNode.getNodeId()) ) {
+				if ( log.isWarnEnabled() ) {
+					log.warn("Illegal datum post by node " + authNode.getNodeId() + " as node "
+							+ d.getNodeId());
+				}
+				throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
+			}
+			generalNodeDatumDao.store(d);
+		}
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void postGeneralLocationDatum(Iterable<GeneralLocationDatum> datums) {
+		if ( datums == null ) {
+			return;
+		}
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		for ( GeneralLocationDatum d : datums ) {
+			if ( d.getLocationId() == null ) {
+				throw new IllegalArgumentException(
+						"A locationId value is required for GeneralLocationDatum");
+			}
+			generalLocationDatumDao.store(d);
+		}
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void addGeneralNodeDatumMetadata(Long nodeId, final String sourceId,
+			final GeneralDatumMetadata meta) {
+		if ( sourceId == null
+				|| meta == null
+				|| ((meta.getTags() == null || meta.getTags().isEmpty()) && (meta.getInfo() == null || meta
+						.getInfo().isEmpty())) ) {
+			return;
+		}
+
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		if ( nodeId == null ) {
+			nodeId = authNode.getNodeId();
+		} else if ( nodeId.equals(authNode.getNodeId()) == false ) {
+			if ( log.isWarnEnabled() ) {
+				log.warn("Illegal datum metadata post by node " + authNode.getNodeId() + " as node "
+						+ nodeId);
+			}
+			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+		}
+		datumMetadataBiz.addGeneralNodeDatumMetadata(nodeId, sourceId, meta);
+	}
+
+	private GeneralNodeDatumMetadataFilter metadataCriteriaForcedToAuthenticatedNode(
+			final GeneralNodeDatumMetadataFilter criteria) {
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		if ( criteria.getNodeId() != null && authNode.getNodeId().equals(criteria.getNodeId()) ) {
+			return criteria;
+		}
+		if ( !(criteria instanceof DatumFilterCommand) ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		DatumFilterCommand dfc = (DatumFilterCommand) criteria;
+		dfc.setNodeId(authNode.getNodeId());
+		return dfc;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
+			final GeneralNodeDatumMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
+			final Integer offset, final Integer max) {
+		return datumMetadataBiz.findGeneralNodeDatumMetadata(
+				metadataCriteriaForcedToAuthenticatedNode(criteria), sortDescriptors, offset, max);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+			final GeneralLocationDatumMetadataFilter criteria,
+			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max) {
+		return datumMetadataBiz.findGeneralLocationDatumMetadata(criteria, sortDescriptors, offset, max);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -413,6 +541,30 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	public void setFilteredResultsLimit(int filteredResultsLimit) {
 		this.filteredResultsLimit = filteredResultsLimit;
+	}
+
+	public GeneralNodeDatumDao getGeneralNodeDatumDao() {
+		return generalNodeDatumDao;
+	}
+
+	public void setGeneralNodeDatumDao(GeneralNodeDatumDao generalNodeDatumDao) {
+		this.generalNodeDatumDao = generalNodeDatumDao;
+	}
+
+	public DatumMetadataBiz getDatumMetadataBiz() {
+		return datumMetadataBiz;
+	}
+
+	public void setDatumMetadataBiz(DatumMetadataBiz datumMetadataBiz) {
+		this.datumMetadataBiz = datumMetadataBiz;
+	}
+
+	public GeneralLocationDatumDao getGeneralLocationDatumDao() {
+		return generalLocationDatumDao;
+	}
+
+	public void setGeneralLocationDatumDao(GeneralLocationDatumDao generalLocationDatumDao) {
+		this.generalLocationDatumDao = generalLocationDatumDao;
 	}
 
 }

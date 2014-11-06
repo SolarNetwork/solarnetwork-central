@@ -23,15 +23,16 @@
 package net.solarnetwork.central.user.biz.dao;
 
 import static net.solarnetwork.central.user.biz.dao.UserBizConstants.generateRandomAuthToken;
-import static net.solarnetwork.central.user.biz.dao.UserBizConstants.getUnconfirmedEmail;
-import static net.solarnetwork.central.user.biz.dao.UserBizConstants.isUnconfirmedEmail;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Set;
+import net.solarnetwork.central.dao.SolarLocationDao;
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.security.PasswordEncoder;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -45,11 +46,10 @@ import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.central.user.domain.UserNodePK;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,81 +59,22 @@ import org.springframework.transaction.annotation.Transactional;
  * @author matt
  * @version 1.0
  */
-@Service("daoUserBiz")
 public class DaoUserBiz implements UserBiz {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Autowired
 	private UserDao userDao;
-
-	@Autowired
 	private UserNodeDao userNodeDao;
-
-	@Autowired
 	private UserNodeConfirmationDao userNodeConfirmationDao;
-
-	@Autowired
 	private UserNodeCertificateDao userNodeCertificateDao;
-
-	@Autowired
 	private UserAuthTokenDao userAuthTokenDao;
-
-	@Autowired
-	private PasswordEncoder passwordEncoder;
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
-	public User logonUser(String email, String password) throws AuthorizationException {
-		if ( email == null ) {
-			throw new AuthorizationException(email, AuthorizationException.Reason.UNKNOWN_EMAIL);
-		}
-
-		if ( log.isInfoEnabled() ) {
-			log.info("Login attempt: " + email);
-		}
-
-		// do not allow logon attempt of unconfirmed email
-		if ( isUnconfirmedEmail(email) ) {
-			throw new AuthorizationException(email, AuthorizationException.Reason.UNKNOWN_EMAIL);
-		}
-
-		User entity = userDao.getUserByEmail(email);
-		if ( entity == null ) {
-			// first check if user waiting confirmation still
-			String unconfirmedEmail = getUnconfirmedEmail(email);
-			entity = userDao.getUserByEmail(unconfirmedEmail);
-			if ( entity != null ) {
-				throw new AuthorizationException(email,
-						AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED);
-			}
-			throw new AuthorizationException(email, AuthorizationException.Reason.UNKNOWN_EMAIL);
-		}
-
-		if ( !passwordEncoder.matches(password, entity.getPassword()) ) {
-			throw new AuthorizationException(email, AuthorizationException.Reason.BAD_PASSWORD);
-		}
-
-		if ( log.isInfoEnabled() ) {
-			log.info("Login successful: " + email);
-		}
-
-		// populate roles
-		entity.setRoles(userDao.getUserRoles(entity));
-
-		return entity;
-	}
+	private SolarLocationDao solarLocationDao;
+	private SolarNodeDao solarNodeDao;
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public User getUser(Long id) {
 		return userDao.get(id);
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public User getUser(String email) {
-		return userDao.getUserByEmail(email);
 	}
 
 	@Override
@@ -151,6 +92,9 @@ public class DaoUserBiz implements UserBiz {
 		if ( result == null ) {
 			throw new AuthorizationException(nodeId.toString(), Reason.UNKNOWN_OBJECT);
 		}
+		if ( result.getUser().getId().equals(userId) == false ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+		}
 		return result;
 	}
 
@@ -167,13 +111,38 @@ public class DaoUserBiz implements UserBiz {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, null);
 		}
 		UserNode entity = userNodeDao.get(entry.getNode().getId());
+		if ( entity == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, entry.getNode().getId());
+		}
 		if ( entry.getName() != null ) {
 			entity.setName(entry.getName());
 		}
 		if ( entry.getDescription() != null ) {
 			entity.setDescription(entry.getDescription());
 		}
+		entity.setRequiresAuthorization(entry.isRequiresAuthorization());
+
+		// Maintain the node's location as well; see if the location matches exactly one in the DB,
+		// and if so assign that location (if not already assigned). If no location matches, create
+		// a new location and assign that.
+		if ( entry.getNodeLocation() != null ) {
+			SolarNode node = entity.getNode();
+			SolarLocation norm = SolarLocation.normalizedLocation(entry.getNodeLocation());
+			SolarLocation locEntity = solarLocationDao.getSolarLocationForLocation(norm);
+			if ( locEntity == null ) {
+				log.debug("Saving new SolarLocation {}", locEntity);
+				locEntity = solarLocationDao.get(solarLocationDao.store(norm));
+			}
+			if ( locEntity.getId().equals(node.getLocationId()) == false ) {
+				log.debug("Updating node {} location from {} to {}", node.getId(), node.getLocationId(),
+						locEntity.getId());
+				node.setLocationId(locEntity.getId());
+				solarNodeDao.store(node);
+			}
+		}
+
 		userNodeDao.store(entity);
+
 		return entity;
 	}
 
@@ -192,14 +161,16 @@ public class DaoUserBiz implements UserBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public UserNodeCertificate getUserNodeCertificate(Long certId) {
-		assert certId != null;
-		return userNodeCertificateDao.get(certId);
+	public UserNodeCertificate getUserNodeCertificate(Long userId, Long nodeId) {
+		assert userId != null;
+		assert nodeId != null;
+		return userNodeCertificateDao.get(new UserNodePK(userId, nodeId));
 	}
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public UserAuthToken generateUserAuthToken(Long userId, UserAuthTokenType type, Set<Long> nodeIds) {
+	public UserAuthToken generateUserAuthToken(final Long userId, final UserAuthTokenType type,
+			final Set<Long> nodeIds) {
 		assert userId != null;
 		assert type != null;
 		SecureRandom rnd;
@@ -219,6 +190,15 @@ public class DaoUserBiz implements UserBiz {
 			if ( userAuthTokenDao.get(tok) == null ) {
 				UserAuthToken authToken = new UserAuthToken(tok, userId, secretString, type);
 				if ( nodeIds != null ) {
+					for ( Long nodeId : nodeIds ) {
+						UserNode userNode = userNodeDao.get(nodeId);
+						if ( userNode == null ) {
+							throw new AuthorizationException(Reason.UNKNOWN_OBJECT, nodeId);
+						}
+						if ( userNode.getUser().getId().equals(userId) == false ) {
+							throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+						}
+					}
 					authToken.setNodeIds(nodeIds);
 				}
 				userAuthTokenDao.store(authToken);
@@ -289,8 +269,12 @@ public class DaoUserBiz implements UserBiz {
 		this.userAuthTokenDao = userAuthTokenDao;
 	}
 
-	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-		this.passwordEncoder = passwordEncoder;
+	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
+		this.solarLocationDao = solarLocationDao;
+	}
+
+	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
+		this.solarNodeDao = solarNodeDao;
 	}
 
 }

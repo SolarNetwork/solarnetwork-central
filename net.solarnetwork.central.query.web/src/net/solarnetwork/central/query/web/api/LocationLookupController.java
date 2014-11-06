@@ -22,17 +22,17 @@
 
 package net.solarnetwork.central.query.web.api;
 
-import java.util.TimeZone;
+import static net.solarnetwork.web.domain.Response.response;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.domain.WeatherLocation;
 import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.central.support.PriceLocationFilter;
 import net.solarnetwork.central.support.SourceLocationFilter;
-import net.solarnetwork.central.web.domain.Response;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
-import net.solarnetwork.util.JodaDateFormatEditor;
-import org.joda.time.DateTime;
+import net.solarnetwork.web.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -45,14 +45,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * Controller for querying location data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/api/v1/pub/location", "/api/v1/sec/location" })
 public class LocationLookupController extends WebServiceControllerSupport {
 
 	private final QueryBiz queryBiz;
-	private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT };
 
 	/**
 	 * Constructor.
@@ -69,34 +68,53 @@ public class LocationLookupController extends WebServiceControllerSupport {
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
 		binder.setIgnoreInvalidFields(true);
-		binder.registerCustomEditor(DateTime.class, new JodaDateFormatEditor(this.requestDateFormats,
-				TimeZone.getTimeZone("UTC")));
 	}
 
+	/**
+	 * Search for locations.
+	 * 
+	 * @param cmd
+	 *        the search criteria
+	 * @return the search results
+	 * @since 1.2
+	 */
 	@ResponseBody
-	@RequestMapping(value = "/price", method = RequestMethod.GET)
-	public Response<FilterResults<SourceLocationMatch>> findPriceLocations(SourceLocationFilter cmd) {
+	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
+	public Response<FilterResults<LocationMatch>> findLocations(SourceLocationFilter cmd) {
+		if ( cmd == null ) {
+			return new Response<FilterResults<LocationMatch>>(false, null, "Search filter is required.",
+					null);
+		}
 		// convert empty strings to null
 		cmd.removeEmptyValues();
 
-		FilterResults<SourceLocationMatch> results = queryBiz.findFilteredLocations(PriceLocation.class,
-				cmd, cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
-		return new Response<FilterResults<SourceLocationMatch>>(results);
+		FilterResults<LocationMatch> results = queryBiz.findFilteredLocations(cmd.getLocation(),
+				cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
+		return response(results);
 	}
 
+	@Deprecated
+	@ResponseBody
+	@RequestMapping(value = "/price", method = RequestMethod.GET)
+	public Response<FilterResults<SourceLocationMatch>> findPriceLocations(PriceLocationFilter cmd) {
+		// convert empty strings to null
+		cmd.removeEmptyValues();
+
+		FilterResults<SourceLocationMatch> results = queryBiz.findFilteredLocations(cmd,
+				PriceLocation.class, cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
+		return response(results);
+	}
+
+	@Deprecated
 	@ResponseBody
 	@RequestMapping(value = "/weather", method = RequestMethod.GET)
 	public Response<FilterResults<SourceLocationMatch>> findWeatherLocations(SourceLocationFilter cmd) {
 		// convert empty strings to null
 		cmd.removeEmptyValues();
 
-		FilterResults<SourceLocationMatch> matches = queryBiz.findFilteredLocations(
-				WeatherLocation.class, cmd, cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
-		return new Response<FilterResults<SourceLocationMatch>>(matches);
-	}
-
-	public void setRequestDateFormats(String[] requestDateFormats) {
-		this.requestDateFormats = requestDateFormats;
+		FilterResults<SourceLocationMatch> matches = queryBiz.findFilteredLocations(cmd,
+				WeatherLocation.class, cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
+		return response(matches);
 	}
 
 }

@@ -21,7 +21,14 @@
 	<!-- Stateless BASIC authentication realm for web services. -->
 	<http pattern="/api/v1/sec/**" create-session="stateless" entry-point-ref="authTokenEntryPoint" use-expressions="true">
 		<intercept-url pattern='/**' method="OPTIONS" access="permitAll" />
-		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_READNODEDATA')" />
+		
+		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_READNODEDATA')" method="GET"/>
+		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_READNODEDATA')" method="HEAD"/>
+		
+		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_WRITENODEDATA')" method="POST"/>
+		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_WRITENODEDATA')" method="PUT"/>
+		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_WRITENODEDATA')" method="DELETE"/>
+		
 		<custom-filter position="PRE_AUTH_FILTER" ref="authTokenFilter" />
 	</http>
 	
