@@ -21,7 +21,7 @@
 
 	<mvc:annotation-driven>
 		<mvc:message-converters register-defaults="true">
-			<bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+			<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
 				<property name="prefixJson" value="false" />
 				<property name="supportedMediaTypes" value="application/json" />
 				<property name="objectMapper" ref="objectMapper"/>
@@ -42,23 +42,6 @@
 
 	<bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter" />
 
-	<bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"/>
-
-	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"/>
-
-	<bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
-		<property name="mappings">
-			<props>
-				<prop key="/consumptionData.*">consumptionDataController</prop>
-				<prop key="/generationData.*">generationDataController</prop>
-				<prop key="/hardwareControlData.*">hardwareControlDataController</prop>
-				<prop key="/powerData.*">generationDataController</prop>
-				<prop key="/priceData.*">priceDataController</prop>
-				<prop key="/dayData.*">dayDataController</prop>
-			</props>
-		</property>
-	</bean>
-	
 	<util:map id="datumControllerTypeMap" value-type="java.lang.Class">
 		<entry key="consumption" value="#{T(net.solarnetwork.central.datum.domain.ConsumptionDatum)}"/>
 		<entry key="hardwarecontrol" value="#{T(net.solarnetwork.central.datum.domain.HardwareControlDatum)}"/>
@@ -77,31 +60,6 @@
 	
 	<bean id="beanNameViewResolver" class="org.springframework.web.servlet.view.BeanNameViewResolver">
 		<property name="order" value="1"/>
-	</bean>
-
-	<bean id="generationDataController" class="net.solarnetwork.central.query.web.AggregatedDatumController">
-		<property name="solarNodeDao" ref="solarNodeDao"/>
-		<property name="datumDao" ref="powerDatumDao"/>
-	</bean>
-	
-	<bean id="consumptionDataController" class="net.solarnetwork.central.query.web.AggregatedDatumController">
-		<property name="solarNodeDao" ref="solarNodeDao"/>
-		<property name="datumDao" ref="consumptionDatumDao"/>
-	</bean>
-	
-	<bean id="priceDataController" class="net.solarnetwork.central.query.web.AggregatedDatumController">
-		<property name="solarNodeDao" ref="solarNodeDao"/>
-		<property name="datumDao" ref="priceDatumDao"/>
-	</bean>
-	
-	<bean id="dayDataController" class="net.solarnetwork.central.query.web.AggregatedDatumController">
-		<property name="solarNodeDao" ref="solarNodeDao"/>
-		<property name="datumDao" ref="dayDatumDao"/>
-	</bean>
-
-	<bean id="hardwareControlDataController" class="net.solarnetwork.central.query.web.AggregatedDatumController">
-		<property name="solarNodeDao" ref="solarNodeDao"/>
-		<property name="datumDao" ref="hardwareControlDatumDao"/>
 	</bean>
 	
 	<!-- Views -->

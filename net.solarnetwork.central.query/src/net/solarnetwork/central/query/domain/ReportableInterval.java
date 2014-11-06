@@ -23,13 +23,14 @@
 package net.solarnetwork.central.query.domain;
 
 import java.util.TimeZone;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import net.solarnetwork.util.SerializeIgnore;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.joda.time.ReadableInstant;
 import org.joda.time.ReadableInterval;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * The overall interval range something can be reported on.
@@ -40,7 +41,7 @@ import org.joda.time.ReadableInterval;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class ReportableInterval {
 
@@ -166,6 +167,7 @@ public final class ReportableInterval {
 	}
 
 	@JsonIgnore
+	@SerializeIgnore
 	public ReadableInterval getInterval() {
 		return this.interval;
 	}

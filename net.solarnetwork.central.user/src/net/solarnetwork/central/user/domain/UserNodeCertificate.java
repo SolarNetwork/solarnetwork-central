@@ -36,14 +36,14 @@ import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.support.CertificateException;
 import net.solarnetwork.util.SerializeIgnore;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * A user node certificate. The certificate is expected to be in X.509 format.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UserNodeCertificate implements Entity<UserNodePK>, Cloneable, Serializable {
 
@@ -256,6 +256,7 @@ public class UserNodeCertificate implements Entity<UserNodePK>, Cloneable, Seria
 	}
 
 	@JsonIgnore
+	@SerializeIgnore
 	public byte[] getKeystoreData() {
 		return keystoreData;
 	}

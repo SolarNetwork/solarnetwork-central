@@ -20,8 +20,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ===================================================================
- * $Id$
- * ===================================================================
  */
 
 package net.solarnetwork.central.domain;
@@ -29,14 +27,14 @@ package net.solarnetwork.central.domain;
 import java.io.Serializable;
 import java.util.TimeZone;
 import net.solarnetwork.util.SerializeIgnore;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Domain object for node related info.
  * 
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.1
  */
 public class SolarNode extends BaseEntity implements Cloneable, Serializable, NodeIdentity {
 

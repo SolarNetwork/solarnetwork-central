@@ -52,7 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Base test class for transactional unit tests.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml" })
 @TransactionConfiguration(transactionManager = "txManager", defaultRollback = true)
@@ -165,8 +165,8 @@ public abstract class AbstractCentralTransactionalTest extends
 	protected void setupTestNode(Long nodeId, Long locationId, Long weatherLocationId) {
 		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id, wloc_id) values (?,?,?)",
 				nodeId, locationId, weatherLocationId);
-		int count = jdbcTemplate.queryForInt("select count(*) from solarnet.sn_node where node_id = ?",
-				nodeId);
+		int count = jdbcTemplate.queryForObject(
+				"select count(*) from solarnet.sn_node where node_id = ?", Integer.class, nodeId);
 		log.debug("Test SolarNode [" + nodeId + "] created: " + count);
 	}
 

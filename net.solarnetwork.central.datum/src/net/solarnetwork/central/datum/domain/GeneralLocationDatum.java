@@ -29,11 +29,12 @@ import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.util.SerializeIgnore;
-import org.codehaus.jackson.annotate.JsonAnyGetter;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonUnwrapped;
 import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 /**
  * Generalized location-based datum.
@@ -44,8 +45,9 @@ import org.joda.time.DateTime;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
+@JsonPropertyOrder({ "created", "locationId", "sourceId" })
 public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Cloneable, Serializable {
 
 	private static final long serialVersionUID = -198848117745110139L;

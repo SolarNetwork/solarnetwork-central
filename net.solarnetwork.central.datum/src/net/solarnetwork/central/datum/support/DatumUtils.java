@@ -25,11 +25,11 @@ package net.solarnetwork.central.datum.support;
 import java.math.BigDecimal;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.util.ClassUtils;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Utilities for Datum domain classes.
@@ -41,13 +41,8 @@ public final class DatumUtils {
 
 	private static final Logger LOG = LoggerFactory.getLogger(DatumUtils.class);
 
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-	static {
-		OBJECT_MAPPER.setSerializationInclusion(Inclusion.NON_NULL);
-		OBJECT_MAPPER.setDeserializationConfig(OBJECT_MAPPER.getDeserializationConfig().with(
-				DeserializationConfig.Feature.USE_BIG_DECIMAL_FOR_FLOATS));
-	}
+	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().setSerializationInclusion(
+			Include.NON_NULL).configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
 
 	// can't construct me
 	private DatumUtils() {

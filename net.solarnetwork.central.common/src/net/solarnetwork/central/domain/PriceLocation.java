@@ -24,13 +24,13 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
 import net.solarnetwork.util.SerializeIgnore;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Information about a specific price location.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class PriceLocation extends BaseEntity implements Cloneable, Serializable, SourceLocationMatch {
 
