@@ -23,14 +23,12 @@
 package net.solarnetwork.central.dao.mybatis;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
-import org.apache.ibatis.session.RowBounds;
 
 /**
  * MyBatis implementation of {@link SolarLocationDao}.
@@ -68,22 +66,12 @@ public class MyBatisSolarLocationDao extends
 		Map<String, String> params = new HashMap<String, String>(2);
 		params.put("country", country);
 		params.put("timeZoneId", timeZoneId);
-		List<SolarLocation> results = getSqlSession().selectList(QUERY_FOR_COUNTRY_TIME_ZONE, params,
-				new RowBounds(0, 1));
-		if ( results.size() > 0 ) {
-			return results.get(0);
-		}
-		return null;
+		return selectFirst(QUERY_FOR_COUNTRY_TIME_ZONE, params);
 	}
 
 	@Override
 	public SolarLocation getSolarLocationForLocation(Location criteria) {
-		List<SolarLocation> results = getSqlSession().selectList(QUERY_FOR_EXACT_LOCATION, criteria,
-				new RowBounds(0, 1));
-		if ( results.size() > 0 ) {
-			return results.get(0);
-		}
-		return null;
+		return selectFirst(QUERY_FOR_EXACT_LOCATION, criteria);
 	}
 
 	@Override

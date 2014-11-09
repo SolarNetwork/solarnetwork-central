@@ -32,6 +32,8 @@ import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.Identity;
 import net.solarnetwork.central.domain.SortDescriptor;
+import org.apache.ibatis.session.RowBounds;
+import org.apache.ibatis.session.SqlSession;
 import org.joda.time.DateTime;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.slf4j.Logger;
@@ -141,6 +143,9 @@ import org.springframework.validation.Errors;
  */
 public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Serializable> extends
 		SqlSessionDaoSupport implements GenericDao<T, PK> {
+
+	/** A RowBounds instance that returns at most the first row. */
+	public static final RowBounds FIRST_ROW = new RowBounds(0, 1);
 
 	/** Error code to report that a named query was not found. */
 	public static final int ERROR_CODE_INVALID_QUERY = 1101;
@@ -696,7 +701,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the buffer to append to
 	 * @return <em>true</em> if {@code value} was appended to {@code buf}
 	 */
-	protected boolean spaceAppend(String value, StringBuilder buf) {
+	protected final boolean spaceAppend(String value, StringBuilder buf) {
 		if ( value == null ) {
 			return false;
 		}
@@ -709,6 +714,27 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 		}
 		buf.append(value);
 		return true;
+	}
+
+	/**
+	 * Select the first available result from a query. This is similar to
+	 * {@link SqlSession#selectOne(String, Object)} except that the
+	 * {@link BaseMyBatisGenericDao#FIRST_ROW} bounds is passed to the database.
+	 * 
+	 * @param statement
+	 *        the statement name to execute
+	 * @param parameters
+	 *        any parameters to pass to the statement
+	 * @param <E>
+	 *        the result type
+	 * @return the first result, or <em>null</em> if none matched the query
+	 */
+	protected final <E> E selectFirst(String statement, Object parameters) {
+		List<E> results = getSqlSession().selectList(statement, parameters, FIRST_ROW);
+		if ( results.size() > 0 ) {
+			return results.get(0);
+		}
+		return null;
 	}
 
 	public String getQueryForId() {

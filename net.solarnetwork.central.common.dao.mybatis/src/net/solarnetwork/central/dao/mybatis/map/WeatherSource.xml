@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed Nov 05 09:48:44 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.dao.mybatis.WeatherSource">
+
+	<insert id="insert-WeatherSource" parameterType="WeatherSource">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarnet.solarnet_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_weather_source 
+			(id
+			<if test="created != null">, created</if>
+			, sname)
+		VALUES
+			(#{id}
+			<if test="created != null">, #{created}</if>
+			, #{name})
+	</insert>
+
+	<update id="update-WeatherSource" parameterType="WeatherSource">
+		UPDATE 
+			solarnet.sn_weather_source
+		SET
+			sname = #{name}
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-WeatherSource-full-result">
+		wsource.id AS sn_weather_source_id,
+		wsource.created AS sn_weather_source_created,
+		wsource.sname AS sn_weather_source_sname
+	</sql>
+
+	<resultMap id="WeatherSourceFullResult" type="WeatherSource">
+		<result property="id" column="sn_weather_source_id"/>
+		<result property="created" column="sn_weather_source_created"/>
+		<result property="name" column="sn_weather_source_sname"/>
+	</resultMap>
+
+	<select id="get-WeatherSource-for-id" parameterType="long" resultMap="WeatherSourceFullResult">
+		SELECT
+			<include refid="fragment-WeatherSource-full-result"/>
+		FROM
+			solarnet.sn_weather_source wsource
+		WHERE
+			wsource.id = #{id}
+	</select>
+	
+	<select id="get-WeatherSource-for-name" parameterType="map" resultMap="WeatherSourceFullResult">
+		SELECT
+			<include refid="fragment-WeatherSource-full-result"/>
+		FROM
+			solarnet.sn_weather_source wsource
+		WHERE
+			wsource.sname = #{name,javaType=string,jdbcType=VARCHAR}
+	</select>
+
+</mapper>

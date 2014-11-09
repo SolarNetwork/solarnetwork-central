@@ -50,7 +50,7 @@
 	</sql>
 	
 	<sql id="fragment-SolarLocation-full-result">
-		<include refid="fragment-SolarLocation-public-result"/>,
+		<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-public-result"/>,
 		l.address AS sn_loc_address,
 		l.latitude AS sn_loc_latitude,
 		l.longitude AS sn_loc_longitude,

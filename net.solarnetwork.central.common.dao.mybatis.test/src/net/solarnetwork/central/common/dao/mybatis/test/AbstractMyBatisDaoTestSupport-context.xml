@@ -11,7 +11,14 @@
 		<property name="dataSource" ref="dataSource"/>
 		<property name="typeAliasesPackage" value="net.solarnetwork.central.domain"/>
 		<property name="typeHandlersPackage" value="net.solarnetwork.central.dao.mybatis.type"/>
-		<property name="mapperLocations" value="classpath*:/net/solarnetwork/central/dao/mybatis/map/*.xml"/>
+		<property name="mapperLocations">
+			<!-- Note: the order of these elements is significant because of inter-resource includes -->
+			<list>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherSource.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherLocation.xml</value>
+			</list>
+		</property>
 	</bean>
 	
 </beans>
