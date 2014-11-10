@@ -85,7 +85,7 @@
 	</select>
 	
 	<resultMap id="UserNodeWithCertificates" type="UserNode" extends="UserNodeFullResult">
-		<collection property="certificate" resultMap="net.solarnetwork.central.user.dao.mybatis.UserNodeCertificate.UserNodeCertificateFullResult"/>
+		<association property="certificate" notNullColumn="uncert_user_id,uncert_node_id" resultMap="net.solarnetwork.central.user.dao.mybatis.UserNodeCertificate.UserNodeCertificateFullResult"/>
 	</resultMap>
 	
 	<select id="find-UserNode-for-user-with-certs" parameterType="long" resultMap="UserNodeWithCertificates">

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import java.util.List;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
@@ -163,6 +164,8 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertEquals(this.userNodeId, n1.getId());
 		assertEquals(this.node, n1.getNode());
 		assertEquals(this.user, n1.getUser());
+
+		assertNull("Certificate", n1.getCertificate());
 	}
 
 	private void storeNewUser() {
@@ -180,6 +183,15 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		UserNodePK id = userNodeCertificateDao.store(newUserNodeCert);
 		assertNotNull(id);
 		return userNodeCertificateDao.get(id);
+	}
+
+	@Test
+	public void findForUserWithNoCertificate() {
+		storeNewUserNode();
+		List<UserNode> results = userNodeDao.findUserNodesAndCertificatesForUser(user.getId());
+		assertNotNull(results);
+		assertEquals(1, results.size());
+		assertNull("Certificate not present", results.get(0).getCertificate());
 	}
 
 	@Test
