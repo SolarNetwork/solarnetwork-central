@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao.mybatis.test;
+package net.solarnetwork.central.dao.mybatis.test;
 
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import org.apache.ibatis.session.SqlSessionFactory;

@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao.mybatis.test;
+package net.solarnetwork.central.dao.mybatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

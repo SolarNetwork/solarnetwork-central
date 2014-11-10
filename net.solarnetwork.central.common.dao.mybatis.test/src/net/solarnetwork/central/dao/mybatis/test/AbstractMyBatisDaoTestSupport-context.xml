@@ -14,6 +14,8 @@
 		<property name="mapperLocations">
 			<!-- Note: the order of these elements is significant because of inter-resource includes -->
 			<list>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/NetworkAssociation.xml</value>
+				
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherSource.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherLocation.xml</value>
