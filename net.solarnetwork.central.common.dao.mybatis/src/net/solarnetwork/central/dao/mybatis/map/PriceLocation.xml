@@ -39,7 +39,7 @@
 	</sql>
 
 	<resultMap id="PriceLocationFullResult" type="PriceLocation">
-		<result property="id" column="sn_price_loc_id"/>
+		<id property="id" column="sn_price_loc_id"/>
 		<result property="created" column="sn_price_loc_created"/>
 		<result property="name" column="sn_price_loc_name"/>
 		<result property="currency" column="sn_price_loc_currency"/>

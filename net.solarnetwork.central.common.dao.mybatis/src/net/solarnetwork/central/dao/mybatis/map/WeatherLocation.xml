@@ -33,7 +33,7 @@
 	</sql>
 
 	<resultMap id="WeatherLocationPublicResult" type="WeatherLocation">
-		<result property="id" column="sn_weather_loc_id"/>
+		<id property="id" column="sn_weather_loc_id"/>
 		<result property="created" column="sn_weather_loc_created"/>
 		<result property="sourceData" column="sn_weather_loc_source_data"/>
 		<association property="source" resultMap="net.solarnetwork.central.dao.mybatis.WeatherSource.WeatherSourceFullResult"/>
@@ -41,7 +41,7 @@
 	</resultMap>
 	
 	<resultMap id="WeatherLocationFullResult" type="WeatherLocation">
-		<result property="id" column="sn_weather_loc_id"/>
+		<id property="id" column="sn_weather_loc_id"/>
 		<result property="created" column="sn_weather_loc_created"/>
 		<result property="sourceData" column="sn_weather_loc_source_data"/>
 		<association property="source" resultMap="net.solarnetwork.central.dao.mybatis.WeatherSource.WeatherSourceFullResult"/>

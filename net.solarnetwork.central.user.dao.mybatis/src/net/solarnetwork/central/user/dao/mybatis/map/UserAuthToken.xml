@@ -60,7 +60,7 @@
 	</sql>
 
 	<resultMap id="UserAuthTokenFullResult" type="UserAuthToken">
-		<result property="id" column="uat_auth_token"/>
+		<id property="id" column="uat_auth_token"/>
 		<result property="created" column="uat_created"/>
 		<result property="userId" column="uat_user_id"/>
 		<result property="status" column="uat_status"/>

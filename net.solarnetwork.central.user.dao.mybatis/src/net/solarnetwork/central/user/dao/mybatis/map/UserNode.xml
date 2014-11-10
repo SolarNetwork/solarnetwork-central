@@ -36,13 +36,13 @@
 	</sql>
 
 	<resultMap id="UserNodeFullResult" type="UserNode">
-		<result property="id" column="user_node_node_id"/>
+		<id property="id" column="user_node_node_id"/>
 		<result property="created" column="user_node_created"/>
 		<result property="name" column="user_node_disp_name"/>
 		<result property="description" column="user_node_description"/>
 		<result property="requiresAuthorization" column="user_node_private"/>
-		<collection property="node" resultMap="net.solarnetwork.central.dao.mybatis.SolarNode.SolarNodeFullResult"/>
-		<collection property="user" resultMap="net.solarnetwork.central.user.dao.mybatis.User.UserFullResult"/>
+		<association property="node" resultMap="net.solarnetwork.central.dao.mybatis.SolarNode.SolarNodeFullResult"/>
+		<association property="user" resultMap="net.solarnetwork.central.user.dao.mybatis.User.UserFullResult"/>
 	</resultMap>
 	
 	<select id="get-UserNode-for-id" parameterType="long" resultMap="UserNodeFullResult">

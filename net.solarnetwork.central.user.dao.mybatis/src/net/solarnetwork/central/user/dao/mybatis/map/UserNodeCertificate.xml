@@ -37,14 +37,14 @@
 	</sql>
 
 	<resultMap id="UserNodeCertificateFullResult" type="UserNodeCertificate">
+		<id property="userId" column="uncert_user_id"/>
+		<id property="nodeId" column="uncert_node_id"/>
 		<result property="created" column="uncert_created"/>
-		<result property="userId" column="uncert_user_id"/>
-		<result property="nodeId" column="uncert_node_id"/>
 		<result property="keystoreData" column="uncert_keystore"/>
 		<result property="status" column="uncert_status"/>
 		<result property="requestId" column="uncert_request_id"/>
-		<collection property="user" resultMap="net.solarnetwork.central.user.dao.mybatis.User.UserFullResult"/>
-		<collection property="node" resultMap="net.solarnetwork.central.dao.mybatis.SolarNode.SolarNodeFullResult"/>
+		<association property="user" resultMap="net.solarnetwork.central.user.dao.mybatis.User.UserFullResult"/>
+		<association property="node" resultMap="net.solarnetwork.central.dao.mybatis.SolarNode.SolarNodeFullResult"/>
 	</resultMap>
 	
 	<select id="get-UserNodeCertificate-for-id" parameterType="UserNodePK" resultMap="UserNodeCertificateFullResult">

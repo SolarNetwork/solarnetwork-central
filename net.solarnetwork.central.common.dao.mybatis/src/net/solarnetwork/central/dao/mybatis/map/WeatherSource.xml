@@ -33,7 +33,7 @@
 	</sql>
 
 	<resultMap id="WeatherSourceFullResult" type="WeatherSource">
-		<result property="id" column="sn_weather_source_id"/>
+		<id property="id" column="sn_weather_source_id"/>
 		<result property="created" column="sn_weather_source_created"/>
 		<result property="name" column="sn_weather_source_sname"/>
 	</resultMap>

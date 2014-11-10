@@ -33,7 +33,7 @@
 	</sql>
 
 	<resultMap id="UserFullResult" type="User">
-		<result property="id" column="user_id"/>
+		<id property="id" column="user_id"/>
 		<result property="created" column="user_created"/>
 		<result property="name" column="user_disp_name"/>
 		<result property="email" column="user_email"/>

@@ -58,7 +58,7 @@
 	</sql>
 
 	<resultMap id="SolarLocationPublicResult" type="SolarLocation">
-		<result property="id" column="sn_loc_id"/>
+		<id property="id" column="sn_loc_id"/>
 		<result property="created" column="sn_loc_created"/>
 		<result property="country" column="sn_loc_country"/>
 		<result property="timeZoneId" column="sn_loc_time_zone"/>

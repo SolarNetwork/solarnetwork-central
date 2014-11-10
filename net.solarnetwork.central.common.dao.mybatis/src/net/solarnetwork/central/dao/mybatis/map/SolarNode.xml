@@ -38,7 +38,7 @@
 	</sql>
 
 	<resultMap id="SolarNodeFullResult" type="SolarNode">
-		<result property="id" column="sn_node_node_id"/>
+		<id property="id" column="sn_node_node_id"/>
 		<result property="created" column="sn_node_created"/>
 		<result property="name" column="sn_node_node_name"/>
 		<result property="locationId" column="sn_node_loc_id"/>

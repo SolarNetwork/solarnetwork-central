@@ -33,7 +33,7 @@
 	</sql>
 
 	<resultMap id="PriceSourceFullResult" type="PriceSource">
-		<result property="id" column="sn_price_source_id"/>
+		<id property="id" column="sn_price_source_id"/>
 		<result property="created" column="sn_price_source_created"/>
 		<result property="name" column="sn_price_source_sname"/>
 	</resultMap>
