@@ -28,6 +28,8 @@ import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupp
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.PriceSource;
 import net.solarnetwork.central.domain.SourceLocation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link PriceSourceDao}.
@@ -50,6 +52,7 @@ public class MyBatisPriceSourceDao extends
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public PriceSource getPriceSourceForName(String sourceName) {
 		return selectFirst(QUERY_FOR_NAME, sourceName);
 	}

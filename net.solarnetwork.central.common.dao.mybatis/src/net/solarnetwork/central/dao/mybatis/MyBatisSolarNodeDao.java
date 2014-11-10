@@ -25,6 +25,8 @@ package net.solarnetwork.central.dao.mybatis;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.domain.SolarNode;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link SolarNodeDao}.
@@ -45,11 +47,13 @@ public class MyBatisSolarNodeDao extends BaseMyBatisGenericDao<SolarNode, Long> 
 	}
 
 	@Override
+	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
 	public Long getUnusedNodeId() {
 		return getSqlSession().selectOne(QUERY_FOR_NEXT_NODE_ID);
 	}
 
 	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Long store(SolarNode datum) {
 		// because we allow the node ID to be pre-assigned (i.e. from a
 		// previous call to getUnusedNodeId() we have to test if the node

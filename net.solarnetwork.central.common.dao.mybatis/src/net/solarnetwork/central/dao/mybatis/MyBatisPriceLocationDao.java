@@ -31,6 +31,8 @@ import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.support.PriceLocationFilter;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link PriceLocationDao}.
@@ -53,6 +55,7 @@ public class MyBatisPriceLocationDao extends
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public PriceLocation getPriceLocationForName(String sourceName, String locationName) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("locationName", locationName);

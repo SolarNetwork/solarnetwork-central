@@ -29,6 +29,8 @@ import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupp
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link SolarLocationDao}.
@@ -62,6 +64,7 @@ public class MyBatisSolarLocationDao extends
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public SolarLocation getSolarLocationForTimeZone(String country, String timeZoneId) {
 		Map<String, String> params = new HashMap<String, String>(2);
 		params.put("country", country);
@@ -70,6 +73,7 @@ public class MyBatisSolarLocationDao extends
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public SolarLocation getSolarLocationForLocation(Location criteria) {
 		return selectFirst(QUERY_FOR_EXACT_LOCATION, criteria);
 	}

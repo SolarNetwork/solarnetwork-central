@@ -25,6 +25,8 @@ package net.solarnetwork.central.dao.mybatis;
 import net.solarnetwork.central.dao.WeatherSourceDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.domain.WeatherSource;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link WeatherSourceDao}.
@@ -46,6 +48,7 @@ public class MyBatisWeatherSourceDao extends BaseMyBatisGenericDao<WeatherSource
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public WeatherSource getWeatherSourceForName(String sourceName) {
 		return selectFirst(QUERY_FOR_NAME, sourceName);
 	}

@@ -32,6 +32,8 @@ import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.domain.WeatherLocation;
 import org.apache.ibatis.session.RowBounds;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link WeatherLocationDao}.
@@ -57,6 +59,7 @@ public class MyBatisWeatherLocationDao extends
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public WeatherLocation getWeatherLocationForName(String sourceName, Location locationFilter) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("sourceName", sourceName);
