@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed Nov 05 09:48:43 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.dao.mybatis.PriceSource">
+
+	<insert id="insert-PriceSource" parameterType="PriceSource">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarnet.solarnet_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_price_source 
+			(id
+			<if test="created != null">, created</if>
+			, sname)
+		VALUES
+			(#{id}
+			<if test="created != null">, #{created}</if>
+			, #{name})
+	</insert>
+
+	<update id="update-PriceSource" parameterType="PriceSource">
+		UPDATE 
+			solarnet.sn_price_source
+		SET
+			sname = #{name}
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-PriceSource-full-result">
+		psource.id AS sn_price_source_id,
+		psource.created AS sn_price_source_created,
+		psource.sname AS sn_price_source_sname
+	</sql>
+
+	<resultMap id="PriceSourceFullResult" type="PriceSource">
+		<result property="id" column="sn_price_source_id"/>
+		<result property="created" column="sn_price_source_created"/>
+		<result property="name" column="sn_price_source_sname"/>
+	</resultMap>
+
+	<select id="get-PriceSource-for-id" parameterType="long" resultMap="PriceSourceFullResult">
+		SELECT
+			<include refid="fragment-PriceSource-full-result"/>
+		FROM
+			solarnet.sn_price_source psource
+		WHERE
+			psource.id = #{id}
+	</select>
+	
+	<select id="get-PriceSource-for-name" resultMap="PriceSourceFullResult">
+		SELECT
+			<include refid="fragment-PriceSource-full-result"/>
+		FROM
+			solarnet.sn_price_source psource
+		WHERE
+			psource.sname = #{name,javaType=string,jdbcType=VARCHAR}
+	</select>
+
+	<!--  Filter search -->
+	
+	<select id="findall-PriceSource-EntityMatch" parameterType="map" resultMap="PriceSourceFullResult">
+		SELECT
+			<include refid="fragment-PriceSource-full-result"/>
+		FROM
+			solarnet.sn_price_source psource
+		<!--
+		Sorry, I can`t migrate	WHERE
+		See console output for further details 
+	-->
+		ORDER BY
+			psource.sname ASC,
+			psource.id ASC
+	</select>
+
+</mapper>

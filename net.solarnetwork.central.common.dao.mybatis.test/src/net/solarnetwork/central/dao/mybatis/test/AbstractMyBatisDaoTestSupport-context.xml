@@ -17,6 +17,10 @@
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/NetworkAssociation.xml</value>
 				
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
+				
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/PriceSource.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/PriceLocation.xml</value>
+
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherSource.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherLocation.xml</value>
 			</list>

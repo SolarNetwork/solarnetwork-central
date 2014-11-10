@@ -133,14 +133,14 @@
 			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-public-result"/>
 		<include refid="fragment-findall-WeatherLocation-SourceLocationMatch"/>
 		ORDER BY
-		
-			lower(wsource.sname),
-			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-sort-SolarLocation-LocationMatch-default"/>,
-		
+			<if test="SortDescriptors == null">
+				lower(wsource.sname),
+				<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-sort-SolarLocation-LocationMatch-default"/>,
+			</if>	
 			<if test="SortDescriptors != null">
 				<foreach collection="SortDescriptors" item="item" separator="," close=",">
-					<if test="item.sortKey == &quot;created&quot;">ploc.created</if>
-					<if test="item.sortKey == &quot;sourceName&quot;">lower(psource.sname)</if>
+					<if test="item.sortKey == &quot;created&quot;">wloc.created</if>
+					<if test="item.sortKey == &quot;sourceName&quot;">lower(wsource.sname)</if>
 					<if test="item.sortKey == &quot;location.country&quot;">l.country</if>
 					<if test="item.sortKey == &quot;location.region&quot;">l.region</if>
 					<if test="item.sortKey == &quot;location.stateOrProvince&quot;">l.state_prov</if>

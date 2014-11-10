@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed Nov 05 09:48:43 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.dao.mybatis.PriceLocation">
+
+	<insert id="insert-PriceLocation" parameterType="PriceLocation">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarnet.solarnet_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_price_loc 
+			(id
+			<if test="created != null">, created</if>
+			, loc_name, currency, unit, source_id, source_data, loc_id)
+		VALUES
+			(#{id}
+			<if test="created != null">, #{created}</if>
+			, #{name}, #{currency}, #{unit}, #{source.id}, #{sourceData}, #{location.id})
+	</insert>
+
+	<update id="update-PriceLocation" parameterType="PriceLocation">
+		UPDATE solarnet.sn_price_loc SET
+			loc_name = #{name},
+			currency = #{currency},
+			unit = #{unit},
+			source_id = #{source.id},
+			source_data = #{sourceData},
+			loc_id = #{location.id}
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-PriceLocation-full-result">
+		ploc.id AS sn_price_loc_id,
+		ploc.created AS sn_price_loc_created,
+		ploc.loc_name AS sn_price_loc_name,
+		ploc.currency AS sn_price_loc_currency,
+		ploc.unit AS sn_price_loc_unit,
+		ploc.source_data AS sn_price_loc_source_data
+	</sql>
+
+	<resultMap id="PriceLocationFullResult" type="PriceLocation">
+		<result property="id" column="sn_price_loc_id"/>
+		<result property="created" column="sn_price_loc_created"/>
+		<result property="name" column="sn_price_loc_name"/>
+		<result property="currency" column="sn_price_loc_currency"/>
+		<result property="unit" column="sn_price_loc_unit"/>
+		<result property="sourceData" column="sn_price_loc_source_data"/>
+		<association property="source" resultMap="net.solarnetwork.central.dao.mybatis.PriceSource.PriceSourceFullResult"/>
+		<association property="location" resultMap="net.solarnetwork.central.dao.mybatis.SolarLocation.SolarLocationPublicResult"/>
+	</resultMap>
+	
+	<select id="get-PriceLocation-for-id" parameterType="long" resultMap="PriceLocationFullResult">
+		SELECT
+			<include refid="fragment-PriceLocation-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.PriceSource.fragment-PriceSource-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_price_loc ploc
+		INNER JOIN solarnet.sn_price_source psource ON psource.id = ploc.source_id
+		INNER JOIN solarnet.sn_loc l ON l.id = ploc.loc_id
+		WHERE
+			ploc.id = #{id}
+	</select>
+	
+	<select id="get-PriceLocation-for-name" parameterType="map" resultMap="PriceLocationFullResult">
+		SELECT
+			<include refid="fragment-PriceLocation-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.PriceSource.fragment-PriceSource-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-public-result"/>
+		FROM
+			solarnet.sn_price_loc ploc
+		INNER JOIN solarnet.sn_price_source psource ON psource.id = ploc.source_id
+		INNER JOIN solarnet.sn_loc l ON l.id = ploc.loc_id
+		WHERE
+			ploc.loc_name = #{locationName,javaType=string,jdbcType=VARCHAR}
+			AND psource.sname = #{sourceName,javaType=string,jdbcType=VARCHAR}
+	</select>
+
+	<sql id="fragment-findall-PriceLocation-SourceLocationMatch">
+		FROM
+			solarnet.sn_price_loc ploc
+		INNER JOIN solarnet.sn_price_source psource ON psource.id = ploc.source_id
+		INNER JOIN solarnet.sn_loc l ON l.id = ploc.loc_id 
+		<where>
+			<if test="fts != null">
+				AND ploc.fts_default @@ solarcommon.plainto_prefix_tsquery(#{fts,javaType=string,jdbcType=VARCHAR})
+			</if>
+			<if test="filter != null">
+				<if test="filter.id != null">
+					AND ploc.id = #{filter.id,javaType=long,jdbcType=BIGINT}
+				</if>
+				<if test="filter.source != null">
+					AND psource.fts_default @@ solarcommon.plainto_prefix_tsquery(#{filter.source,javaType=string,jdbcType=VARCHAR})
+				</if>
+				<if test="filter.timeZoneId != null">
+					AND l.time_zone = #{filter.timeZoneId,javaType=string,jdbcType=VARCHAR}
+				</if>
+				<if test="filter.location != null and filter.location.timeZoneId != null">
+					AND l.time_zone = #{filter.location.timeZoneId,javaType=string,jdbcType=VARCHAR}
+				</if>
+			</if>
+		</where>
+	</sql>
+	
+	<select id="findall-PriceLocation-SourceLocationMatch" resultMap="PriceLocationFullResult">
+		SELECT
+			<include refid="fragment-PriceLocation-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.PriceSource.fragment-PriceSource-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-public-result"/>
+		<include refid="fragment-findall-PriceLocation-SourceLocationMatch"/>
+		ORDER BY
+			<if test="SortDescriptors == null">
+				lower(psource.sname), lower(ploc.loc_name),
+			</if>
+			<if test="SortDescriptors != null">
+				<foreach collection="SortDescriptors" item="item" separator="," close=",">
+					<if test="item.sortKey == &quot;created&quot;">ploc.created</if>
+					<if test="item.sortKey == &quot;sourceName&quot;">lower(psource.sname)</if>
+					<if test="item.sortKey == &quot;location.name&quot;">lower(ploc.loc_name)</if>
+					<if test="item.sortKey == &quot;locationName&quot;">lower(ploc.loc_name)</if>
+					<if test="item.sortKey == &quot;currency&quot;">ploc.currency</if>
+					<if test="item.sortKey == &quot;timeZoneId&quot;">l.time_zone</if>
+					<if test="item.sortKey == &quot;location.timeZoneId&quot;">l.time_zone</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</if>
+		
+		ploc.id
+	</select>
+
+	<select id="findall-PriceLocation-SourceLocationMatch-count" resultType="long">
+		SELECT count(ploc.id) as total
+		<include refid="fragment-findall-PriceLocation-SourceLocationMatch"/>
+	</select>
+	
+</mapper>
