@@ -26,26 +26,22 @@
 	
 	<!-- Published Services -->
 	
-	<!--service ref="hardwareDao" interface="net.solarnetwork.central.dao.HardwareDao"/>
+	<service ref="userDao" interface="net.solarnetwork.central.user.dao.UserDao" ranking="5"/>
+
+	<service ref="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao" ranking="5"/>
+
+	<service ref="userNodeCertificateDao" interface="net.solarnetwork.central.user.dao.UserNodeCertificateDao" ranking="5"/>
+
+	<service ref="userNodeConfirmationDao" interface="net.solarnetwork.central.user.dao.UserNodeConfirmationDao" ranking="5"/>
+
+	<service ref="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao" ranking="5"/>
 	
-	<service ref="hardwareControlDao" interface="net.solarnetwork.central.dao.HardwareControlDao"/-->
-	
-	<service ref="networkAssociationDao" interface="net.solarnetwork.central.dao.NetworkAssociationDao" ranking="5"/>
-
-	<service ref="solarLocationDao" interface="net.solarnetwork.central.dao.SolarLocationDao" ranking="5"/>
-	
-	<service ref="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao" ranking="5"/>
-
-	<service ref="priceLocationDao" interface="net.solarnetwork.central.dao.PriceLocationDao" ranking="5"/>
-
-	<service ref="weatherLocationDao" interface="net.solarnetwork.central.dao.WeatherLocationDao" ranking="5"/>
-
-	<service ref="weatherSourceDao" interface="net.solarnetwork.central.dao.WeatherSourceDao" ranking="5"/>
+	<!--service ref="userNodeHardwareControlDao" interface="net.solarnetwork.central.user.dao.UserNodeHardwareControlDao" ranking="5"/-->
 
 	<service ref="sqlSessionFactory" interface="org.apache.ibatis.session.SqlSessionFactory">
 		<service-properties>
 			<entry key="db" value="central"/>
-			<entry key="function" value="common"/>
+			<entry key="function" value="user"/>
 		</service-properties>
 	</service>
 
@@ -54,41 +50,29 @@
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="txManager"/>
 
-	<!--bean id="hardwareDao" class="net.solarnetwork.central.dao.mybatis.MyBatisHardwareDao">
+	<bean id="userDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean>
 	
-	<bean id="hardwareControlDao" class="net.solarnetwork.central.dao.mybatis.MyBatisHardwareControlDao">
+	<bean id="userAuthTokenDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="userNodeConfirmationDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeConfirmationDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="userNodeCertificateDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeCertificateDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="userNodeDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<!--bean id="userNodeHardwareControlDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeHardwareControlDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean-->
-	
-	<bean id="networkAssociationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisNetworkAssociationDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-
-	<bean id="solarLocationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisSolarLocationDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-	
-	<bean id="solarNodeDao" class="net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-	
-	<bean id="priceLocationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisPriceLocationDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-	
-	<bean id="priceSourceDao" class="net.solarnetwork.central.dao.mybatis.MyBatisPriceSourceDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-	
-	<bean id="weatherLocationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisWeatherLocationDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-	
-	<bean id="weatherSourceDao" class="net.solarnetwork.central.dao.mybatis.MyBatisWeatherSourceDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
 	
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSource"/>
@@ -119,10 +103,10 @@
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
-				<!--value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserAuthToken.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserAuthToken.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeCertificate.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNode.xml</value>
-				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeConfirmation.xml</value-->
+				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeConfirmation.xml</value>
 			</list>
 		</property>
 	</bean>
