@@ -36,8 +36,8 @@
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserAuthToken.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeCertificate.xml</value>
-				<!--value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNode.xml</value>
-				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeConfirmation.xml</value-->
+				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNode.xml</value>
+				<!--value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeConfirmation.xml</value-->
 			</list>
 		</property>
 	</bean>
