@@ -59,4 +59,35 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 		return null;
 	}
 
+	/**
+	 * Select a list with optional support for row bounds.
+	 * 
+	 * @param statement
+	 *        the statement name to execute
+	 * @param parameters
+	 *        any parameters to pass to the statement
+	 * @param offset
+	 *        a result offset, or <em>null</em> for no offset
+	 * @param max
+	 *        the maximum number of results, or <em>null</em> for no maximum
+	 * @param <E>
+	 *        the result type
+	 * @return the first result, or <em>null</em> if none matched the query
+	 */
+	protected final <E> List<E> selectList(final String statement, Object parameters, Integer offset,
+			Integer max) {
+		List<E> rows = null;
+		if ( max != null && max > 0 ) {
+			rows = getSqlSession()
+					.selectList(
+							statement,
+							parameters,
+							new RowBounds((offset == null || offset.intValue() < 0 ? 0 : offset
+									.intValue()), max));
+		} else {
+			rows = getSqlSession().selectList(statement, parameters);
+		}
+		return rows;
+	}
+
 }

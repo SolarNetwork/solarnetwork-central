@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.WeatherLocationDao;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
@@ -42,7 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @version 1.0
  */
 public class MyBatisWeatherLocationDao extends
-		BaseMyBatisFilterableDaoSupport<WeatherLocation, SourceLocationMatch, SourceLocation, Long>
+		BaseMyBatisFilterableDao<WeatherLocation, SourceLocationMatch, SourceLocation, Long>
 		implements WeatherLocationDao {
 
 	/**

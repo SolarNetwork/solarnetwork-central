@@ -25,7 +25,7 @@ package net.solarnetwork.central.dao.mybatis;
 import java.util.HashMap;
 import java.util.Map;
 import net.solarnetwork.central.dao.SolarLocationDao;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -39,7 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @version 1.0
  */
 public class MyBatisSolarLocationDao extends
-		BaseMyBatisFilterableDaoSupport<SolarLocation, LocationMatch, Location, Long> implements
+		BaseMyBatisFilterableDao<SolarLocation, LocationMatch, Location, Long> implements
 		SolarLocationDao {
 
 	/** The query name used for {@link #getSolarLocationForName(String)}. */

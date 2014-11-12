@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.instructor.dao.mybatis;
 
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
@@ -36,7 +36,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  * @version 1.0
  */
 public class MyBatisNodeInstructionDao extends
-		BaseMyBatisFilterableDaoSupport<NodeInstruction, EntityMatch, InstructionFilter, Long> implements
+		BaseMyBatisFilterableDao<NodeInstruction, EntityMatch, InstructionFilter, Long> implements
 		NodeInstructionDao {
 
 	/**

@@ -63,7 +63,7 @@
 			wloc.id = #{id}
 	</select>
 
-	<select id="get-WeatherLocation-for-name" parameterType="map" resultMap="WeatherLocationPublicResult">
+	<select id="get-WeatherLocation-for-name" parameterType="map" resultMap="WeatherLocationPublicResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-WeatherLocation-full-result"/>,
 			<include refid="net.solarnetwork.central.dao.mybatis.WeatherSource.fragment-WeatherSource-full-result"/>,
@@ -126,7 +126,7 @@
 		</where>
 	</sql>
 
-	<select id="findall-WeatherLocation-SourceLocationMatch" resultMap="WeatherLocationPublicResult">
+	<select id="findall-WeatherLocation-SourceLocationMatch" resultMap="WeatherLocationPublicResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-WeatherLocation-full-result"/>,
 			<include refid="net.solarnetwork.central.dao.mybatis.WeatherSource.fragment-WeatherSource-full-result"/>,

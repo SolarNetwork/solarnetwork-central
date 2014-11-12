@@ -84,7 +84,7 @@
 			l.id = #{id}
 	</select>
 	
-	<select id="find-SolarLocation-for-country-timezone" parameterType="map" resultMap="SolarLocationFullResult" resultSetType="FORWARD_ONLY">
+	<select id="find-SolarLocation-for-country-timezone" parameterType="map" resultMap="SolarLocationFullResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-SolarLocation-full-result"/>
 		FROM
@@ -130,7 +130,7 @@
 		l.id
 	</sql>
 
-	<select id="findall-SolarLocation-LocationMatch" resultMap="SolarLocationPublicResult" resultSetType="FORWARD_ONLY">
+	<select id="findall-SolarLocation-LocationMatch" resultMap="SolarLocationPublicResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-SolarLocation-public-result"/>
 		<include refid="fragment-findall-SolarLocation-LocationMatch"/>
@@ -143,7 +143,7 @@
 		<include refid="fragment-findall-SolarLocation-LocationMatch"/>
 	</select>
 
-	<select id="find-SolarLocation-for-location" parameterType="SolarLocation" resultMap="SolarLocationFullResult" resultSetType="FORWARD_ONLY">
+	<select id="find-SolarLocation-for-location" parameterType="SolarLocation" resultMap="SolarLocationFullResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-SolarLocation-full-result"/>
 		FROM

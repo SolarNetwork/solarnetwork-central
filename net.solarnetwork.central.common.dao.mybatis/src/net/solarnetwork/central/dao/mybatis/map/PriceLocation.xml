@@ -102,7 +102,7 @@
 		</where>
 	</sql>
 	
-	<select id="findall-PriceLocation-SourceLocationMatch" resultMap="PriceLocationFullResult">
+	<select id="findall-PriceLocation-SourceLocationMatch" resultMap="PriceLocationFullResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-PriceLocation-full-result"/>,
 			<include refid="net.solarnetwork.central.dao.mybatis.PriceSource.fragment-PriceSource-full-result"/>,

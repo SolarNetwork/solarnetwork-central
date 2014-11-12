@@ -24,7 +24,7 @@ package net.solarnetwork.central.dao.mybatis;
 
 import java.util.Map;
 import net.solarnetwork.central.dao.PriceSourceDao;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.PriceSource;
 import net.solarnetwork.central.domain.SourceLocation;
@@ -38,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @version 1.0
  */
 public class MyBatisPriceSourceDao extends
-		BaseMyBatisFilterableDaoSupport<PriceSource, EntityMatch, SourceLocation, Long> implements
+		BaseMyBatisFilterableDao<PriceSource, EntityMatch, SourceLocation, Long> implements
 		PriceSourceDao {
 
 	/** The query name used for {@link #getPriceSourceForName(String)}. */

@@ -40,7 +40,6 @@ Import-Package:
  org.springframework.dao;version="[3.1,4.0)",
  org.springframework.expression;version="[3.1,4.0)",
  org.springframework.jdbc.core;version="[3.1,4.0)",
- org.springframework.orm.ibatis.support;version="[3.1,4.0)",
  org.springframework.test.annotation;version="[3.1,4.0)",
  org.springframework.test.context;version="[3.1,4.0)",
  org.springframework.test.context.junit4;version="[3.1,4.0)",

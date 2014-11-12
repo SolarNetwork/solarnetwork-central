@@ -47,7 +47,7 @@
 			wsource.id = #{id}
 	</select>
 	
-	<select id="get-WeatherSource-for-name" parameterType="map" resultMap="WeatherSourceFullResult">
+	<select id="get-WeatherSource-for-name" parameterType="map" resultMap="WeatherSourceFullResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-WeatherSource-full-result"/>
 		FROM

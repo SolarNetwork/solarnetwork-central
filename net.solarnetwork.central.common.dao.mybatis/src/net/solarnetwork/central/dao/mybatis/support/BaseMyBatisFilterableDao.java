@@ -1,5 +1,5 @@
 /* ==================================================================
- * BaseMyBatisFilterableDaoSupport.java - Nov 10, 2014 7:26:27 AM
+ * BaseMyBatisFilterableDao.java - Nov 10, 2014 7:26:27 AM
  * 
  * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
@@ -36,12 +36,12 @@ import net.solarnetwork.central.support.BasicFilterResults;
 import org.apache.ibatis.session.RowBounds;
 
 /**
- * Base MyBatis FilterableDao implementation.
+ * Base MyBatis {@link FilterableDao} implementation.
  * 
  * @author matt
  * @version 1.0
  */
-public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<PK>, M extends FilterMatch<PK>, F extends Filter, PK extends Serializable>
+public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends FilterMatch<PK>, F extends Filter, PK extends Serializable>
 		extends BaseMyBatisGenericDao<T, PK> implements FilterableDao<M, PK, F> {
 
 	/** A query property for a general Filter object value. */
@@ -57,7 +57,7 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<PK>, M ex
 	 * @param pkClass
 	 *        the primary key class
 	 */
-	public BaseMyBatisFilterableDaoSupport(Class<? extends T> domainClass, Class<? extends PK> pkClass,
+	public BaseMyBatisFilterableDao(Class<? extends T> domainClass, Class<? extends PK> pkClass,
 			Class<? extends M> filterResultClass) {
 		super(domainClass, pkClass);
 		this.filterResultClass = filterResultClass;

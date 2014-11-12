@@ -25,7 +25,7 @@ package net.solarnetwork.central.dao.mybatis;
 import java.util.HashMap;
 import java.util.Map;
 import net.solarnetwork.central.dao.PriceLocationDao;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SourceLocation;
@@ -41,7 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @version 1.0
  */
 public class MyBatisPriceLocationDao extends
-		BaseMyBatisFilterableDaoSupport<PriceLocation, SourceLocationMatch, SourceLocation, Long>
+		BaseMyBatisFilterableDao<PriceLocation, SourceLocationMatch, SourceLocation, Long>
 		implements PriceLocationDao {
 
 	/** The query name used for {@link #getPriceLocationForName(String,String)}. */

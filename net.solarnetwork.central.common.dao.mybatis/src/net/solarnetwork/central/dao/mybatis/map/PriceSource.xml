@@ -58,15 +58,16 @@
 
 	<!--  Filter search -->
 	
-	<select id="findall-PriceSource-EntityMatch" parameterType="map" resultMap="PriceSourceFullResult">
+	<select id="findall-PriceSource-EntityMatch" parameterType="map" resultMap="PriceSourceFullResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-PriceSource-full-result"/>
 		FROM
 			solarnet.sn_price_source psource
-		<!--
-		Sorry, I can`t migrate	WHERE
-		See console output for further details 
-	-->
+		<where>
+			<if test="fts != null">
+				psource.fts_default @@ solarcommon.plainto_prefix_tsquery(#{fts,javaType=string,jdbcType=VARCHAR})
+			</if>
+		</where>
 		ORDER BY
 			psource.sname ASC,
 			psource.id ASC
