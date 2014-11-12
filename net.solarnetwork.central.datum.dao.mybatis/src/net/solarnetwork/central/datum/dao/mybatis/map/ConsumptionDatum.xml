@@ -102,7 +102,7 @@
 				</foreach>
 			</when>
 			<when test="source != null">
-				AND c.source_id = #{source}
+				AND c.source_id = #{source,javaType=string,jdbcType=VARCHAR}
 			</when>
 		</choose>
 	</sql>
@@ -308,26 +308,49 @@
 	<sql id="fragment-findall-ConsumptionDatum-ConsumptionDatumMatch">
 		FROM
 			solarnet.sn_consum_datum cdatum
-		<!--
-		Sorry, I can`t migrate	WHERE
-		See console output for further details 
-	-->
+		<if test="filter != null">
+			<where>
+				<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+					AND cdatum.source_id IN
+					<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
+						#{source,javaType=string,jdbcType=VARCHAR}
+					</foreach>
+				</if>
+				<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+					AND cdatum.node_id IN
+					<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
+						#{node,javaType=long,jdbcType=BIGINT}
+					</foreach>
+				</if>
+				<if test="filter.startDate != null">
+					AND cdatum.created &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+				</if>
+				<if test="filter.endDate != null">
+					AND cdatum.created &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+				</if>
+			</where>
+		</if>
 	</sql>
 
 	<select id="findall-ConsumptionDatum-ConsumptionDatumMatch" resultMap="ConsumptionDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-ConsumptionDatum-full-result"/>
-		<include refid="fragment-findall-ConsumptionDatum-ConsumptionDatumMatch"/>
+			<include refid="fragment-findall-ConsumptionDatum-ConsumptionDatumMatch"/>
 		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item != null and item.sortKey == &quot;created&quot;">cdatum.created</if>
+					<if test="item != null and item.sortKey == &quot;node&quot;">cdatum.node_id</if>
+					<if test="item != null and item.sortKey == &quot;source&quot;">cdatum.source_id</if>
+					<if test="item != null and item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				cdatum.id
+			</otherwise>
+		</choose>
 		
-			 <foreach collection="SortDescriptors" item="item" separator="," close=",">
-				<if test="item != null and item.sortKey == &quot;created&quot;">cdatum.created</if>
-				<if test="item != null and item.sortKey == &quot;node&quot;">cdatum.node_id</if>
-				<if test="item != null and item.sortKey == &quot;source&quot;">cdatum.source_id</if>
-				<if test="item != null and item.descending == &quot;true&quot;">DESC</if>
-			</foreach>
-		
-		cdatum.id
 	</select>
 
 	<select id="findall-ConsumptionDatum-ConsumptionDatumMatch-count" resultType="long">
@@ -382,10 +405,46 @@
 	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Hour">
 		FROM
 			solarrep.rep_consum_datum_hourly rcdatum
-		<!--
-		Sorry, I can`t migrate	WHERE
-		See console output for further details 
-	-->
+		<if test="filter != null">
+			<where>
+				<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+					AND rcdatum.source_id IN
+					<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
+						#{source,javaType=string,jdbcType=VARCHAR}
+					</foreach>
+				</if>
+				<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+					AND rcdatum.node_id IN
+					<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
+						#{node,javaType=long,jdbcType=BIGINT}
+					</foreach>
+				</if>
+				<if test="filter.startDate != null">
+					<choose>
+						<when test="filter.nodeId != null">
+							AND rcdatum.created_hour &gt;= solarnet.get_node_local_timestamp(
+								#{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP},
+								#{filter.nodeId,javaType=long,jdbcType=BIGINT})
+						</when>
+						<otherwise>
+							AND rcdatum.created_hour &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+						</otherwise>
+					</choose>
+				</if>
+				<if test="filter.endDate != null">
+					<choose>
+						<when test="filter.nodeId != null">
+							AND rcdatum.created_hour &lt;= solarnet.get_node_local_timestamp(
+								#{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP},
+								#{filter.nodeId,javaType=long,jdbcType=BIGINT})
+						</when>
+						<otherwise>
+							AND rcdatum.created_hour &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+		</if>
 	</sql>
 
 	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-Hour-count" resultType="long">
@@ -399,17 +458,19 @@
 			<include refid="fragment-ConsumptionDatum-aggregation-result"/>
 		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Hour"/>
 		ORDER BY
-		
-			 <foreach collection="SortDescriptors" item="item" separator=",">
-				<if test="item != null and item.sortKey == &quot;created&quot;">rcdatum.created_hour</if>
-				<if test="item != null and item.sortKey == &quot;node&quot;">rcdatum.node_id</if>
-				<if test="item != null and item.sortKey == &quot;source&quot;">rcdatum.source_id</if>
-				<if test="item != null and item.descending == &quot;true&quot;">DESC</if>
-			</foreach>
-		
-		
-			rcdatum.created_hour, rcdatum.node_id, rcdatum.source_id
-		
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item != null and item.sortKey == &quot;created&quot;">rcdatum.created_hour</if>
+					<if test="item != null and item.sortKey == &quot;node&quot;">rcdatum.node_id</if>
+					<if test="item != null and item.sortKey == &quot;source&quot;">rcdatum.source_id</if>
+					<if test="item != null and item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				rcdatum.created_hour, rcdatum.node_id, rcdatum.source_id
+			</otherwise>
+		</choose>
 	</select>
 
 	<!-- HourOfDay aggregation: grouped by hour. 
@@ -467,10 +528,46 @@
 	<sql id="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Day">
 		FROM
 			solarrep.rep_consum_datum_daily rcdatum
-		<!--
-		Sorry, I can`t migrate	WHERE
-		See console output for further details 
-	-->
+		<if test="filter != null">
+			<where>
+				<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+					AND rcdatum.source_id IN
+					<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
+						#{source,javaType=string,jdbcType=VARCHAR}
+					</foreach>
+				</if>
+				<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+					AND rcdatum.node_id IN
+					<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
+						#{node,javaType=long,jdbcType=BIGINT}
+					</foreach>
+				</if>
+				<if test="filter.startDate != null">
+					<choose>
+						<when test="filter.nodeId != null">
+							AND rcdatum.created_day &gt;= solarnet.get_node_local_timestamp(
+								#{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP},
+								#{filter.nodeId,javaType=long,jdbcType=BIGINT})
+						</when>
+						<otherwise>
+							AND rcdatum.created_day &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+						</otherwise>
+					</choose>
+				</if>
+				<if test="filter.endDate != null">
+					<choose>
+						<when test="filter.nodeId != null">
+							AND rcdatum.created_day &lt;= solarnet.get_node_local_timestamp(
+								#{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP},
+								#{filter.nodeId,javaType=long,jdbcType=BIGINT})
+						</when>
+						<otherwise>
+							AND rcdatum.created_day &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+		</if>
 	</sql>
 
 	<select id="findall-ConsumptionDatum-ReportingConsumptionDatum-Day-count" resultType="long">
@@ -484,17 +581,19 @@
 			<include refid="fragment-ConsumptionDatum-aggregation-result"/>
 		<include refid="fragment-findall-ConsumptionDatum-ReportingConsumptionDatum-Day"/>
 		ORDER BY
-		
-			 <foreach collection="SortDescriptors" item="item" separator=",">
-				<if test="item != null and item.sortKey == &quot;created&quot;">rcdatum.created_day</if>
-				<if test="item != null and item.sortKey == &quot;node&quot;">rcdatum.node_id</if>
-				<if test="item != null and item.sortKey == &quot;source&quot;">rcdatum.source_id</if>
-				<if test="item != null and item.descending == &quot;true&quot;">DESC</if>
-			</foreach>
-		
-		
-			rcdatum.created_day, rcdatum.node_id, rcdatum.source_id
-		
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item != null and item.sortKey == &quot;created&quot;">rcdatum.created_day</if>
+					<if test="item != null and item.sortKey == &quot;node&quot;">rcdatum.node_id</if>
+					<if test="item != null and item.sortKey == &quot;source&quot;">rcdatum.source_id</if>
+					<if test="item != null and item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				rcdatum.created_day, rcdatum.node_id, rcdatum.source_id
+			</otherwise>
+		</choose>
 	</select>
 
 	<!-- Month aggregation -->
