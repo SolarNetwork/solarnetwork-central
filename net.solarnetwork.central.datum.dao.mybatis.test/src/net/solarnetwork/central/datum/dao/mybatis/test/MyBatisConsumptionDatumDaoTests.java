@@ -101,6 +101,13 @@ public class MyBatisConsumptionDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 	}
 
 	@Test
+	public void getForDate() {
+		storeNew();
+		ConsumptionDatum datum = dao.getDatumForDate(lastDatum.getNodeId(), lastDatum.getCreated());
+		validate(lastDatum, datum);
+	}
+
+	@Test
 	public void getMostRecent() {
 		storeNew();
 

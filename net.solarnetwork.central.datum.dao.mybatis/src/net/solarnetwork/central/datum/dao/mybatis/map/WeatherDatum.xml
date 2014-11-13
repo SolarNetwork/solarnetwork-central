@@ -85,7 +85,7 @@
 			solarnet.sn_weather_datum wdatum
 		WHERE
 			wdatum.loc_id = #{id}
-			AND wdatum.info_date = #{date}
+			AND wdatum.info_date = #{date,jdbcType=TIMESTAMP}
 	</select>
 	
 	<resultMap id="WeatherDatumAggResult" type="ReportingWeatherDatum">

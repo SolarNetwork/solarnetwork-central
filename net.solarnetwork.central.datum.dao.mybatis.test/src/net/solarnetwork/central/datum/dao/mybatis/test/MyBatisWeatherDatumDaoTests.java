@@ -103,6 +103,13 @@ public class MyBatisWeatherDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	@Test
+	public void getForDate() {
+		storeNew();
+		WeatherDatum datum = dao.getDatumForDate(lastDatum.getLocationId(), lastDatum.getInfoDate());
+		validate(lastDatum, datum);
+	}
+
+	@Test
 	public void findByPostalCode() {
 		storeNew();
 		SolarLocation locFilter = new SolarLocation();

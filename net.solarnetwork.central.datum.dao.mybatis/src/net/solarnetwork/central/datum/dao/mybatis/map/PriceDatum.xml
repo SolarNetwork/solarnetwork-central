@@ -58,8 +58,8 @@
 		FROM
 			solarnet.sn_price_datum prdatum
 		WHERE
-			prdatum.node_id = #{id,javaType=long,jdbcType=BIGINT}
-			AND prdatum.created = #{date,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			prdatum.loc_id = #{id,javaType=long,jdbcType=BIGINT}
+			AND prdatum.created = #{date,jdbcType=TIMESTAMP}
 	</select>
 	
 	<select id="find-PriceDatum-most-recent" parameterType="map" resultMap="PriceDatumFullResult">

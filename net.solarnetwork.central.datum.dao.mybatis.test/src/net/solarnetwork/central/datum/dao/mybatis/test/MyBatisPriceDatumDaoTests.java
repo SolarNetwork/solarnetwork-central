@@ -80,6 +80,13 @@ public class MyBatisPriceDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	@Test
+	public void getForDate() {
+		storeNew();
+		PriceDatum datum = dao.getDatumForDate(lastDatum.getLocationId(), lastDatum.getCreated());
+		validate(lastDatum, datum);
+	}
+
+	@Test
 	public void getMostRecent() {
 		storeNew();
 

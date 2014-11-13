@@ -86,7 +86,7 @@
 			solarnet.sn_power_datum pdatum
 		WHERE
 			pdatum.node_id = #{id,javaType=long,jdbcType=BIGINT}
-			AND pdatum.created = #{date,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			AND pdatum.created = #{date,jdbcType=TIMESTAMP}
 	</select>
 
 	<select id="find-PowerDatum-most-recent" parameterType="map" resultMap="PowerDatumFullResult">

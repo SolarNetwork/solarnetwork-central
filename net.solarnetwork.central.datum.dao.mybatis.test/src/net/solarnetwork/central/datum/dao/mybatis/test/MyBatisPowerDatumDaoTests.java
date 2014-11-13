@@ -111,6 +111,13 @@ public class MyBatisPowerDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	@Test
+	public void getForDate() {
+		storeNew();
+		PowerDatum datum = dao.getDatumForDate(lastDatum.getNodeId(), lastDatum.getCreated());
+		validate(lastDatum, datum);
+	}
+
+	@Test
 	public void getMostRecent() {
 		storeNew();
 

@@ -68,7 +68,7 @@
 			solarnet.sn_consum_datum cdatum
 		WHERE
 			cdatum.node_id = #{id,javaType=long,jdbcType=BIGINT}
-			AND cdatum.created = #{date,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			AND cdatum.created = #{date,jdbcType=TIMESTAMP}
 	</select>
 
 	<select id="find-ConsumptionDatum-most-recent" parameterType="map" resultMap="ConsumptionDatumFullResult">

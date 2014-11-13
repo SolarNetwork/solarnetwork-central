@@ -69,7 +69,7 @@
 			solarnet.sn_day_datum ddatum
 		WHERE
 			ddatum.loc_id = #{id}
-			AND ddatum.day = #{date}
+			AND ddatum.day = #{date,jdbcType=TIMESTAMP}
 	</select>
 	
 	<resultMap id="DayDatumReportingResult" type="ReportingDayDatum">

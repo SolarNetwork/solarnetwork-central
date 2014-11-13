@@ -62,7 +62,7 @@
 			solarnet.sn_hardware_control_datum hcdatum
 		WHERE
 			hcdatum.node_id = #{id}
-			AND hcdatum.created = #{date}
+			AND hcdatum.created = #{date,jdbcType=TIMESTAMP}
 	</select>
 	
 	<select id="find-HardwareControlDatum-most-recent" resultMap="HardwareControlDatumFullResult">
