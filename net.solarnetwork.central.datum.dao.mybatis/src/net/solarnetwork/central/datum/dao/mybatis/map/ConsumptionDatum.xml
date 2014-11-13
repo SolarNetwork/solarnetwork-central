@@ -107,7 +107,7 @@
 		</choose>
 	</sql>
 		
-	<select id="find-ConsumptionDatum-for-agg-minute" resultMap="ConsumptionDatumAggResult">
+	<select id="find-ConsumptionDatum-for-agg-minute" resultMap="ConsumptionDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT 
 			dates.d AS created_date,
 			COALESCE(data.source, '') AS source,
@@ -153,7 +153,7 @@
 		<result property="currency" column="cost_curr"/>
 	</resultMap>
 		
-	<select id="find-ConsumptionDatum-for-agg-hour" resultMap="ReportingConsumptionDatumAggResult">
+	<select id="find-ConsumptionDatum-for-agg-hour" resultMap="ReportingConsumptionDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT 
 			<include refid="fragment-ReportingConsumptionDatum-agg-result"/>
 			
@@ -181,7 +181,7 @@
 		ORDER BY created_date, source
 	</select>
 	
-	<select id="find-ConsumptionDatum-for-agg-day" resultMap="ReportingConsumptionDatumAggResult">
+	<select id="find-ConsumptionDatum-for-agg-day" resultMap="ReportingConsumptionDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT 
 			dates.d AS created_date,
 			COALESCE(data.source, '') AS source,
@@ -217,7 +217,7 @@
 		ORDER BY created_date, source
 	</select>
 	
-	<select id="find-ConsumptionDatum-for-agg-week" resultMap="ReportingConsumptionDatumAggResult">
+	<select id="find-ConsumptionDatum-for-agg-week" resultMap="ReportingConsumptionDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT 
 			<include refid="fragment-ReportingConsumptionDatum-agg-result"/>
 			
@@ -252,7 +252,7 @@
 		ORDER BY created_date, source
 	</select>
 	
-	<select id="find-ConsumptionDatum-for-agg-month" resultMap="ReportingConsumptionDatumAggResult">
+	<select id="find-ConsumptionDatum-for-agg-month" resultMap="ReportingConsumptionDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT 
 			<include refid="fragment-ReportingConsumptionDatum-agg-result"/>
 			
@@ -349,8 +349,7 @@
 			<otherwise>
 				cdatum.id
 			</otherwise>
-		</choose>
-		
+		</choose>	
 	</select>
 
 	<select id="findall-ConsumptionDatum-ConsumptionDatumMatch-count" resultType="long">

@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Thu Nov 13 07:30:22 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.dao.mybatis.PriceDatum">
+
+	<insert id="insert-PriceDatum" parameterType="PriceDatum">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarnet.price_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_price_datum 
+			(id
+			<if test="created != null">,created</if>
+			<if test="posted != null">,posted</if>
+			, loc_id, price)
+		VALUES
+			(#{id}
+			<if test="created != null">,#{created}</if>
+			<if test="posted != null">,#{posted}</if>
+			, #{locationId}, #{price})
+	</insert>
+
+	<update id="update-PriceDatum" parameterType="PriceDatum">
+		UPDATE solarnet.sn_price_datum SET
+			loc_id = #{locationId},
+			price = #{price}
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-PriceDatum-full-result">
+		prdatum.id AS sn_price_datum_id,
+		prdatum.created AS sn_price_datum_created,
+		prdatum.posted AS sn_price_datum_posted,
+		prdatum.loc_id AS sn_price_datum_loc_id,
+		prdatum.price AS sn_price_datum_price
+	</sql>
+	
+	<resultMap id="PriceDatumFullResult" type="PriceDatum">
+		<result property="id" column="sn_price_datum_id"/>
+		<result property="created" column="sn_price_datum_created"/>
+		<result property="posted" column="sn_price_datum_posted"/>
+		<result property="locationId" column="sn_price_datum_loc_id"/>
+		<result property="price" column="sn_price_datum_price"/>
+	</resultMap>
+	
+	<select id="get-PriceDatum-for-id" parameterType="long" resultMap="PriceDatumFullResult">
+		SELECT
+			<include refid="fragment-PriceDatum-full-result"/>
+		FROM
+			solarnet.sn_price_datum prdatum
+		WHERE
+			prdatum.id = #{id}
+	</select>
+
+	<select id="find-PriceDatum-for-date" parameterType="map" resultMap="PriceDatumFullResult">
+		SELECT
+			<include refid="fragment-PriceDatum-full-result"/>
+		FROM
+			solarnet.sn_price_datum prdatum
+		WHERE
+			prdatum.node_id = #{id,javaType=long,jdbcType=BIGINT}
+			AND prdatum.created = #{date,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+	</select>
+	
+	<select id="find-PriceDatum-most-recent" parameterType="map" resultMap="PriceDatumFullResult">
+		SELECT
+			<include refid="fragment-PriceDatum-full-result"/>
+		FROM
+			solarnet.sn_price_datum_most_recent recent
+		INNER JOIN
+			solarnet.sn_price_datum prdatum ON prdatum.id = recent.datum_id
+		WHERE
+			recent.loc_id = #{location,javaType=long,jdbcType=BIGINT}
+	</select>
+	
+	<select id="find-PriceDatum-min" parameterType="map" resultMap="PriceDatumFullResult">
+		SELECT 
+			<include refid="fragment-PriceDatum-full-result"/>
+		FROM solarnet.sn_price_datum prdatum
+		INNER JOIN (
+			SELECT min(id) as id
+			FROM solarnet.sn_price_datum prdatum2
+			WHERE
+				prdatum2.created BETWEEN #{start} and #{end}
+				<if test="_PriceLocationRequired != null">
+				AND prdatum2.loc_id IS NOT NULL
+				</if>
+		) AS p1 ON p1.id = prdatum.id
+	</select>
+	
+	<sql id="fragment-ReportingPriceDatum-agg-result">
+		dates.d AS created_date,
+		COALESCE(data.price, -1) AS price,
+		loc.currency as currency,
+		loc.unit as unit
+	</sql>
+	
+	<resultMap id="ReportingPriceDatumAggResult" type="ReportingPriceDatum">
+		<result property="localDateTime" column="created_date"/>
+		<result property="price" column="price"/>
+		<result property="currency" column="currency"/>
+		<result property="unit" column="unit"/>
+	</resultMap>
+		
+	<select id="find-PriceDatum-for-agg-minute" parameterType="map" resultMap="ReportingPriceDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT 
+			<include refid="fragment-ReportingPriceDatum-agg-result"/>
+			
+		FROM ( 
+			SELECT #{start}::timestamptz + (series.d * interval '1 minute') AS d 
+			FROM generate_series(0, floor(extract('epoch' from #{end}::timestamptz - #{start}::timestamptz))::integer / 60 - #{precision}, #{precision}) AS series(d)
+		) AS dates
+		LEFT OUTER JOIN (
+			SELECT 
+				to_timestamp(
+					extract('epoch' from date_trunc('minute', p.created))
+					- ((cast(extract('minute' from p.created) as integer) % #{precision}) * 60)
+				) as created_date,
+				avg(p.price) as price
+			FROM solarnet.sn_price_datum p
+			WHERE 
+				p.loc_id = #{location}
+				AND p.created BETWEEN #{start}::timestamptz AND #{end}::timestamptz
+			GROUP BY created_date
+		) AS data ON data.created_date = dates.d
+		INNER JOIN solarnet.sn_price_loc loc ON loc.id = #{location}
+		ORDER BY created_date
+	</select>
+
+	<select id="find-PriceDatum-for-agg-hour" resultMap="ReportingPriceDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT 
+			<include refid="fragment-ReportingPriceDatum-agg-result"/>
+			
+		FROM generate_series(#{start}::timestamp, #{end}::timestamp, '1 hour') AS dates(d)
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				c.created_hour as created_date,
+				avg(c.price) as price
+		
+			FROM solarrep.rep_price_datum_hourly c
+		
+			WHERE 
+				c.loc_id = #{location}
+				AND c.created_hour BETWEEN #{start} AND #{end}
+				
+			GROUP BY created_date
+			ORDER BY created_date
+		) AS data ON data.created_date = dates.d
+		INNER JOIN solarnet.sn_price_loc loc ON loc.id = #{location}
+		ORDER BY created_date
+	</select>
+	
+	<select id="find-PriceDatum-for-agg-day" resultMap="ReportingPriceDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT 
+			<include refid="fragment-ReportingPriceDatum-agg-result"/>
+			
+		FROM ( 
+			SELECT date(#{start}) + series.d AS d 
+			FROM generate_series(0, date(#{end}) - date(#{start})) AS series(d)
+		) AS dates
+		LEFT OUTER JOIN (
+			SELECT 
+				c.created_day as created_date,
+				avg(c.price) as price
+		
+			FROM solarrep.rep_price_datum_daily c
+		
+			WHERE 
+				c.loc_id = #{location}
+				AND c.created_day BETWEEN #{start}::date AND #{end}::date
+			GROUP BY created_date
+			ORDER BY created_date
+		) AS data ON data.created_date = dates.d
+		INNER JOIN solarnet.sn_price_loc loc ON loc.id = #{location}
+		ORDER BY dates.d
+	</select>
+	
+	<select id="find-PriceDatum-for-agg-week" resultMap="ReportingPriceDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT 
+			<include refid="fragment-ReportingPriceDatum-agg-result"/>
+			
+		FROM ( 
+			SELECT date_trunc('week', #{start}::timestamp) + (series.d * interval '1 week') AS d 
+			FROM generate_series(0, 
+				CAST(extract('days' from date_trunc('week', #{end}::timestamp) 
+					- date_trunc('week', #{start}::timestamp)) / 7 AS INTEGER)
+			) AS series(d)
+		) AS dates
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				date_trunc('week', c.created_day) as created_date,
+				avg(c.price) as price
+		
+			FROM solarrep.rep_price_datum_daily c
+		
+			WHERE 
+				c.loc_id = #{location}
+				AND c.created_day &gt;= date_trunc('week', #{start}::timestamp)::date
+				AND c.created_day &lt; (date_trunc('week', #{end}::timestamp) + interval '1 week')::date
+				
+			GROUP BY created_date
+			ORDER BY created_date
+		) AS data ON data.created_date = dates.d
+		INNER JOIN solarnet.sn_price_loc loc ON loc.id = #{location}
+		ORDER BY created_date
+	</select>
+	
+	<select id="find-PriceDatum-for-agg-month" resultMap="ReportingPriceDatumAggResult">
+		SELECT 
+			<include refid="fragment-ReportingPriceDatum-agg-result"/>
+			
+		FROM ( 
+			SELECT date_trunc('month', date(#{start})) + (series.d * interval '1 month') AS d 
+			FROM generate_series(0, 
+				(((extract('year' from #{end}::timestamp) - extract('year' from #{start}::timestamp)) * 12)
+					+ (extract('month' from #{end}::timestamp) - extract('month' from #{start}::timestamp)))::integer
+			) AS series(d)
+		) AS dates
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				date_trunc('month', c.created_day) as created_date,
+				avg(c.price) as price
+		
+			FROM solarrep.rep_price_datum_daily c
+		
+			WHERE 
+				c.loc_id = #{location}
+				AND c.created_day &gt;= #{start}::date
+				AND c.created_day &lt; (#{end}::date + interval '1 month')::date
+				
+			GROUP BY created_date
+			ORDER BY created_date
+		) AS data ON data.created_date = dates.d
+		INNER JOIN solarnet.sn_price_loc loc ON loc.id = #{location}
+		ORDER BY created_date
+	</select>
+	
+</mapper>
