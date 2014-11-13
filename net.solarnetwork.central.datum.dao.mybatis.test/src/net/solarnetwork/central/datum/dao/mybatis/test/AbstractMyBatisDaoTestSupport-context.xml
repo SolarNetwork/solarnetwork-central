@@ -17,6 +17,7 @@
 				
 				<value>net.solarnetwork.central.datum.domain.LocationSourcePK</value>
 				<value>net.solarnetwork.central.datum.domain.NodeSourcePK</value>
+				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumPK</value>
 			
 				<value>net.solarnetwork.central.datum.domain.ConsumptionDatum</value>
 				<value>net.solarnetwork.central.datum.domain.ConsumptionDatumMatch</value>
@@ -67,8 +68,8 @@
 
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/ConsumptionDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/DayDatum.xml</value>
-				<!--value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatumMetadata.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatum.xml</value>
+				<!--value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/HardwareControlDatum.xml</value>

@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Thu Nov 13 07:30:20 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.dao.mybatis.GeneralLocationDatum">
+
+	<parameterMap id="pmap-GeneralLocationDatum" type="GeneralLocationDatum">
+		<parameter property="created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="locationId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="sourceId" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="posted" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="sampleJson" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+	<update id="insert-GeneralLocationDatum" parameterMap="pmap-GeneralLocationDatum" statementType="CALLABLE">
+		{call solardatum.store_loc_datum(?, ?, ?, ?, ?)}
+	</update>
+	
+	<update id="update-GeneralLocationDatum" parameterMap="pmap-GeneralLocationDatum" statementType="CALLABLE">
+		{call solardatum.store_loc_datum(?, ?, ?, ?, ?)}
+	</update>
+	
+	<sql id="fragment-GeneralLocationDatum-full-result">
+		datum.loc_id AS datum_loc_id,
+		datum.ts AS datum_ts,
+		datum.source_id AS datum_source_id,
+		datum.posted AS datum_posted,
+		datum.jdata AS datum_jdata
+	</sql>
+	
+	<resultMap id="GeneralLocationDatumFullResult" type="GeneralLocationDatum">
+		<result property="locationId" column="datum_loc_id"/>
+		<result property="created" column="datum_ts"/>
+		<result property="sourceId" column="datum_source_id"/>
+		<result property="posted" column="datum_posted"/>
+		<result property="sampleJson" column="datum_jdata"/>
+	</resultMap>
+	
+	<resultMap id="GeneralLocationDatumDirectResult" type="GeneralLocationDatum">
+		<result property="locationId" column="loc_id"/>
+		<result property="created" column="ts"/>
+		<result property="sourceId" column="source_id"/>
+		<result property="posted" column="posted"/>
+		<result property="sampleJson" column="jdata"/>
+	</resultMap>
+	
+	<select id="get-GeneralLocationDatum-for-id" parameterType="GeneralLocationDatumPK" resultMap="GeneralLocationDatumFullResult">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-full-result"/>
+		FROM
+			solardatum.da_loc_datum datum
+		WHERE
+			datum.loc_id = #{locationId}
+			AND datum.ts = #{created}
+			AND datum.source_id = #{sourceId}
+	</select>
+
+	<select id="find-general-loc-distinct-sources" statementType="CALLABLE" resultType="string">
+		{call solardatum.find_loc_available_sources(#{location,jdbcType=BIGINT}, #{start,jdbcType=TIMESTAMP}, #{end,jdbcType=TIMESTAMP})}
+	</select>
+	
+	<parameterMap id="pmap-reportable-interval" type="map">
+		<parameter property="location" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="source" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="ts_start" jdbcType="TIMESTAMP" mode="OUT"/>
+		<parameter property="ts_end" jdbcType="TIMESTAMP" mode="OUT"/>
+		<parameter property="location_tz" jdbcType="VARCHAR" mode="OUT"/>
+		<parameter property="location_tz_offset" jdbcType="INTEGER" mode="OUT"/>
+	</parameterMap>
+
+	<update id="find-general-loc-reportable-interval" parameterMap="pmap-reportable-interval" statementType="CALLABLE">
+		{call solardatum.find_loc_reportable_interval(?, ?, ?, ?, ?, ?)}
+	</update>
+
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="GeneralLocationDatumMatchResult" type="ReportingGeneralLocationDatum" extends="net.solarnetwork.central.datum.dao.mybatis.GeneralLocationDatum.GeneralLocationDatumFullResult">
+		<result property="localDateTime" column="datum_local_date"/>
+	</resultMap>
+	<resultMap id="GeneralLocationDatumDirectMatchResult" type="GeneralLocationDatumMatch" extends="net.solarnetwork.central.datum.dao.mybatis.GeneralLocationDatum.GeneralLocationDatumDirectResult"/>
+
+	<parameterMap id="pmap-most-recent" type="map">
+		<parameter property="filter.locationId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="filter.sourceIds" jdbcType="ARRAY" mode="IN" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler" />
+	</parameterMap>
+
+	<select id="find-general-loc-most-recent" parameterMap="pmap-most-recent" resultMap="GeneralLocationDatumDirectMatchResult" statementType="CALLABLE">
+		{call solardatum.find_loc_most_recent(?, ?)}
+	</select>
+
+	<sql id="fragment-findall-GeneralLocationDatum-GeneralLocationDatumMatch-where">
+		<where>
+			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+				AND datum.source_id IN
+				<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
+					#{source,javaType=string,jdbcType=VARCHAR}
+				</foreach>
+			</if>
+			<if test="filter.locationIds != null and filter.locationIds.length > 0">
+				AND datum.loc_id IN
+				<foreach collection="filter.locationIds" open="(" close=")" separator="," item="loc">
+					#{loc,javaType=long,jdbcType=BIGINT}
+				</foreach>
+			</if>
+			<if test="filter.startDate != null">
+				AND datum.ts &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+			<if test="filter.endDate != null">
+				AND datum.ts &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+		</where>
+	</sql>
+
+
+	<select id="findall-GeneralLocationDatum-GeneralLocationDatumMatch" resultMap="GeneralLocationDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-full-result"/>
+			, datum.ts AT TIME ZONE COALESCE(loc.time_zone, 'UTC') AS datum_local_date
+		FROM
+			solardatum.da_loc_datum datum
+		LEFT OUTER JOIN solarnet.sn_loc loc ON loc.id = datum.loc_id
+		<include refid="fragment-findall-GeneralLocationDatum-GeneralLocationDatumMatch-where"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item.sortKey == &quot;created&quot;">datum.ts</if>
+					<if test="item.sortKey == &quot;location&quot;">datum.loc_id</if>
+					<if test="item.sortKey == &quot;source&quot;">datum.source_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				datum.loc_id,
+				datum.ts,
+				datum.source_id
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findall-GeneralLocationDatum-GeneralLocationDatumMatch-count" resultType="long">
+		SELECT count(datum.ts)
+		FROM
+			solardatum.da_loc_datum datum
+		<include refid="fragment-findall-GeneralLocationDatum-GeneralLocationDatumMatch-where"/>
+	</select>
+
+	<!-- Aggregated query support -->
+
+	<resultMap id="ReportingGeneralLocationDatumMatchResult" type="ReportingGeneralLocationDatum">
+		<result property="locationId" column="r_datum_loc_id"/>
+		<result property="created" column="r_datum_ts_start"/>
+		<result property="localDateTime" column="r_datum_local_date"/>
+		<result property="sourceId" column="r_datum_source_id"/>
+		<result property="sampleJson" column="r_datum_jdata"/>
+	</resultMap>
+
+	<sql id="fragment-GeneralLocationDatum-aggregation-result">
+		datum.loc_id AS r_datum_loc_id,
+		datum.ts_start AS r_datum_ts_start,
+		datum.local_date AS r_datum_local_date,
+		datum.source_id AS r_datum_source_id,
+		datum.jdata AS r_datum_jdata
+	</sql>
+
+	<sql id="fragment-findall-ReportingGeneralLocationDatum-where">
+		<where>
+			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+				AND datum.source_id IN
+				<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
+					#{source,javaType=string,jdbcType=VARCHAR}
+				</foreach>
+			</if>
+			<if test="filter.locationIds != null and filter.locationIds.length > 0">
+				AND datum.loc_id IN
+				<foreach collection="filter.locationIds" open="(" close=")" separator="," item="loc">
+					#{loc,javaType=long,jdbcType=BIGINT}
+				</foreach>
+			</if>
+			<if test="filter.startDate != null">
+				AND datum.ts_start &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+			<if test="filter.endDate != null">
+				AND datum.ts_start &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+		</where>
+	</sql>
+	
+	<sql id="fragment-findall-ReportingGeneralLocationDatum-order">
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item.sortKey == &quot;created&quot;">r_datum_ts_start</if>
+					<if test="item.sortKey == &quot;location&quot;">r_datum_loc_id</if>
+					<if test="item.sortKey == &quot;source&quot;">r_datum_source_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				r_datum_ts_start, r_datum_loc_id, r_datum_source_id
+			</otherwise>
+		</choose>
+	</sql>
+
+	<sql id="fragment-findall-ReportingGeneralLocationDatum-minuteagg-where">
+		solaragg.find_agg_loc_datum_minute(
+			#{filter.locationId},
+			#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
+			#{filter.startDate,jdbcType=TIMESTAMP}::timestamptz,
+			#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz,
+			#{filter.aggregation.level}
+		) AS datum
+	</sql>
+
+	<sql id="fragment-findall-ReportingGeneralLocationDatum-agg-where">
+		#{filter.locationId},
+		#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
+		#{filter.dataPathElements,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		<if test="filter != null and filter.startDate != null and filter.endDate != null">
+			#{filter.startDate,jdbcType=TIMESTAMP}::timestamptz,
+			#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz
+		</if>
+	</sql>
+
+	<!-- Aggregated query: Minute -->
+
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Minute" resultMap="ReportingGeneralLocationDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
+		FROM
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-minuteagg-where"/>
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
+	</select>
+
+	<!-- Aggregated query: hour -->
+
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Hour-count" resultType="long">
+		SELECT count(datum.ts_start)
+		FROM
+			solaragg.agg_loc_datum_hourly datum
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
+	</select>
+	
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Hour" resultMap="ReportingGeneralLocationDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
+		FROM
+			solaragg.agg_loc_datum_hourly datum
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
+	</select>
+
+	<!-- Aggregated query: hour of day -->
+
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-HourOfDay" resultMap="ReportingGeneralLocationDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
+		FROM
+			solaragg.find_agg_loc_datum_hod(
+				<include refid="fragment-findall-ReportingGeneralLocationDatum-agg-where"/>
+			) AS datum
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
+	</select>
+
+	<!-- Aggregated query: seasonal hour of day -->
+
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-SeasonalHourOfDay" resultMap="ReportingGeneralLocationDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
+		FROM
+			solaragg.find_agg_loc_datum_seasonal_hod(
+				<include refid="fragment-findall-ReportingGeneralLocationDatum-agg-where"/>
+			) AS datum
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
+	</select>
+
+	<!-- Aggregated query: day -->
+
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Day-count" resultType="long">
+		SELECT count(datum.ts_start)
+		FROM
+			solaragg.agg_loc_datum_daily datum
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
+	</select>
+	
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Day" resultMap="ReportingGeneralLocationDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
+		FROM
+			solaragg.agg_loc_datum_daily datum
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
+	</select>
+
+	<!-- Aggregated query: day of week -->
+
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-DayOfWeek" resultMap="ReportingGeneralLocationDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
+		FROM
+			solaragg.find_agg_loc_datum_dow(
+				<include refid="fragment-findall-ReportingGeneralLocationDatum-agg-where"/>
+			) AS datum
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
+	</select>
+
+	<!-- Aggregated query: seasonal day of week -->
+
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-SeasonalDayOfWeek" resultMap="ReportingGeneralLocationDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
+		FROM
+			solaragg.find_agg_loc_datum_seasonal_dow(
+				<include refid="fragment-findall-ReportingGeneralLocationDatum-agg-where"/>
+			) AS datum
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
+	</select>
+	
+	<!-- Aggregated query: month -->
+
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Month-count" resultType="long">
+		SELECT count(datum.ts_start)
+		FROM
+			solaragg.agg_loc_datum_monthly datum
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
+	</select>
+	
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Month" resultMap="ReportingGeneralLocationDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
+		FROM
+			solaragg.agg_loc_datum_monthly datum
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
+	</select>
+
+</mapper>
