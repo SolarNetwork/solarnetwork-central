@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Thu Nov 13 07:30:20 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.dao.mybatis.DayDatum">
+
+	<insert id="insert-DayDatum" parameterType="DayDatum">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarnet.weather_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_day_datum 
+			(id
+			<if test="created != null">,created</if>
+			, loc_id, day, sunrise, sunset)
+		VALUES
+			(#{id}
+			<if test="created != null">,#{created}</if>
+			, #{locationId}, #{day}, #{sunrise}, #{sunset})
+	</insert>
+
+	<update id="update-DayDatum" parameterType="DayDatum">
+		UPDATE solarnet.sn_day_datum SET
+			loc_id = #{locationId}, 
+			day = #{day},
+			sunrise = #{sunrise},
+			sunset = #{sunset},
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-DayDatum-full-result">
+		ddatum.id AS sn_day_datum_id,
+		ddatum.created AS sn_day_datum_created,
+		ddatum.loc_id AS sn_day_datum_loc_id,
+		ddatum.day AS sn_day_datum_day,
+		ddatum.sunrise AS sn_day_datum_sunrise,
+		ddatum.sunset AS sn_day_datum_sunset,
+		ddatum.temperature_h AS sn_day_datum_temperature_h,
+		ddatum.temperature_l AS sn_day_datum_temperature_l,
+		ddatum.sky AS sn_day_datum_sky
+	</sql>
+	
+	<resultMap id="DayDatumFullResult" type="DayDatum">
+		<result property="id" column="sn_day_datum_id"/>
+		<result property="created" column="sn_day_datum_created"/>
+		<result property="locationId" column="sn_day_datum_loc_id"/>
+		<result property="day" column="sn_day_datum_day"/>
+		<result property="sunrise" column="sn_day_datum_sunrise"/>
+		<result property="sunset" column="sn_day_datum_sunset"/>
+		<result property="temperatureHighCelsius" column="sn_day_datum_temperature_h"/>
+		<result property="temperatureLowCelsius" column="sn_day_datum_temperature_l"/>
+		<result property="skyConditions" column="sn_day_datum_sky"/>
+	</resultMap>
+
+	<resultMap id="DayDatumMatchResult" type="DayDatumMatch" extends="net.solarnetwork.central.datum.dao.mybatis.DayDatum.DayDatumFullResult"/>
+	
+	<select id="get-DayDatum-for-id" parameterType="long" resultType="DayDatum" resultMap="DayDatumFullResult">
+		SELECT
+			<include refid="fragment-DayDatum-full-result"/>
+		FROM
+			solarnet.sn_day_datum ddatum
+		WHERE
+			id = #{id}
+	</select>
+	
+	<select id="find-DayDatum-for-date" resultType="DayDatum" resultMap="DayDatumFullResult">
+		SELECT
+			<include refid="fragment-DayDatum-full-result"/>
+		FROM
+			solarnet.sn_day_datum ddatum
+		WHERE
+			ddatum.loc_id = #{id}
+			AND ddatum.day = #{date}
+	</select>
+	
+	<resultMap id="DayDatumReportingResult" type="ReportingDayDatum">
+		<result property="day" column="day"/>
+		<result property="locationId" column="loc_id"/>
+		<result property="timeZoneId" column="time_zone"/>
+		<result property="sunrise" column="sunrise"/>
+		<result property="sunset" column="sunset"/>
+		<result property="latitude" column="latitude"/>
+		<result property="longitude" column="longitude"/>
+		<result property="temperatureHighCelsius" column="temperature_h"/>
+		<result property="temperatureLowCelsius" column="temperature_l"/>
+		<result property="temperatureStartCelsius" column="temperature_s"/>
+		<result property="temperatureEndCelsius" column="temperature_e"/>
+		<result property="skyConditions" column="sky"/>
+	</resultMap>
+	
+	<select id="find-DayDatum-for-agg-day" resultMap="DayDatumReportingResult">
+		SELECT 
+			dates.d as day,
+			d.loc_id,
+			l.time_zone,
+			d.sunrise,
+			d.sunset,
+			l.latitude,
+			l.longitude,
+			d.temperature_h,
+			d.temperature_l,
+			d.sky,
+			ws.temperature as temperature_s,
+			we.temperature as temperature_e
+			
+		FROM ( 
+			SELECT date(#{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}) + series.d AS d 
+			FROM generate_series(0, date(#{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}) - date(#{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP})) AS series(d)
+		) AS dates
+		
+		LEFT OUTER JOIN solarnet.sn_day_datum d ON d.day = dates.d
+		INNER JOIN solarnet.sn_node n ON n.wloc_id = d.loc_id
+		INNER JOIN solarnet.sn_weather_loc wl ON wl.id = d.loc_id
+		INNER JOIN solarnet.sn_loc l ON l.id = wl.loc_id
+		LEFT OUTER JOIN (
+				SELECT DISTINCT ON (day)
+					date(w.info_date at time zone l.time_zone) as day,
+					w.temperature
+				FROM solarnet.sn_weather_datum w
+				INNER JOIN solarnet.sn_node n ON n.wloc_id = w.loc_id
+				INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+				WHERE 
+					n.node_id = #{node}
+					AND w.info_date &gt;= #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP} at time zone l.time_zone
+					AND w.info_date &lt; (#{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp + interval '1 day') at time zone l.time_zone
+				ORDER BY day, w.info_date
+			) AS ws ON ws.day = dates.d
+		LEFT OUTER JOIN (
+				SELECT DISTINCT ON (day)
+					date(w.info_date at time zone l.time_zone) as day,
+					w.temperature
+				FROM solarnet.sn_weather_datum w
+				INNER JOIN solarnet.sn_node n ON n.wloc_id = w.loc_id
+				INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+				WHERE 
+					n.node_id = #{node}
+					AND w.info_date &gt;= #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP} at time zone l.time_zone
+					AND w.info_date &lt; (#{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp + interval '1 day') at time zone l.time_zone
+				ORDER BY day, w.info_date DESC
+			) AS we ON we.day = dates.d
+		WHERE 
+			n.node_id = #{node}
+			AND d.day &gt;= #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP} 
+			AND d.day &lt; (#{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::date + interval '1 day')
+		
+		ORDER BY day
+	</select>
+	
+	<resultMap id="DayDatumAggResult" type="DayDatum">
+		<result property="day" column="day"/>
+		<result property="temperatureHighCelsius" column="temperature_h"/>
+		<result property="temperatureLowCelsius" column="temperature_l"/>
+	</resultMap>
+	
+	<select id="find-DayDatum-for-agg-month" resultMap="DayDatumAggResult">
+		SELECT 
+			dates.d as day,
+			d.temperature_h,
+			d.temperature_l
+			
+		FROM ( 
+			SELECT date_trunc('month', date(#{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP})) + (series.d * interval '1 month') AS d 
+			FROM generate_series(0, 
+				(((extract('year' from #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp) - extract('year' from #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp)) * 12)
+					+ (extract('month' from #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp) - extract('month' from #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp)))::integer
+			) AS series(d)
+		) AS dates
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				date_trunc('month', d.day) as day,
+				max(d.temperature_h) as temperature_h,
+				min(d.temperature_l) as temperature_l
+		
+			FROM solarnet.sn_day_datum d
+			INNER JOIN solarnet.sn_node n ON n.wloc_id = d.loc_id
+			WHERE 
+				n.node_id = #{node,javaType=long,jdbcType=BIGINT}
+				AND d.day &gt;= #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::date
+				AND d.day &lt; (#{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::date + interval '1 month')
+				
+			GROUP BY date_trunc('month', d.day)
+			ORDER BY date_trunc('month', d.day)
+			) AS d ON d.day = dates.d
+		
+		ORDER BY day
+	</select>
+	
+	<sql id="fragment-findall-DayDatum-DayDatumMatch">
+		FROM
+			solarnet.sn_day_datum ddatum
+		<if test="filter != null">
+			<if test="filter.hasLocationCriteria">
+				INNER JOIN solarnet.sn_loc l ON l.id = ddatum.loc_id
+			</if>
+			<where>
+				<if test="filter.locationId != null">
+					AND ddatum.loc_id = #{filter.locationId}
+				</if>
+				<if test="filter.startDate != null">
+					AND ddatum.day &gt;= #{filter.startDate,javaType=org.joda.time.LocalDate,jdbcType=DATE}
+				</if>
+				<if test="filter.endDate != null">
+					AND ddatum.day &lt; #{filter.endDate,javaType=org.joda.time.LocalDate,jdbcType=DATE}
+				</if>
+				<if test="filter.hasLocationCriteria">
+					<if test="filter.location.country != null">
+						AND l.country = #{filter.location.country}
+					</if>
+					<if test="filter.location.region != null">
+						AND l.region = #{filter.location.region}
+					</if>
+					<if test="filter.location.stateOrProvince != null">
+						AND l.state_prov = #{filter.location.stateOrProvince}
+					</if>
+					<if test="filter.location.postalCode != null">
+						AND l.postal_code = #{filter.location.postalCode}
+					</if>
+				</if>
+			</where>
+		</if>
+	</sql>
+
+	<select id="findall-DayDatum-DayDatumMatch" resultMap="DayDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-DayDatum-full-result"/>
+		<include refid="fragment-findall-DayDatum-DayDatumMatch"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				<foreach collection="SortDescriptors" item="item" separator="," close=",">
+					<if test="item.sortKey == &quot;locationId&quot;">ddatum.loc_id</if>
+					<if test="item.sortKey == &quot;created&quot;">ddatum.day</if>
+					<if test="item.sortKey == &quot;day&quot;">ddatum.day</if>
+					<if test="filter != null and filter.hasLocationCriteria == &quot;true&quot;">
+						<if test="item.sortKey == &quot;location.country&quot;">l.country</if>
+						<if test="item.sortKey == &quot;location.region&quot;">l.region</if>
+						<if test="item.sortKey == &quot;location.stateOrProvince&quot;">l.state_prov</if>
+						<if test="item.sortKey == &quot;location.postalCode&quot;">l.postal_code</if>
+					</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				ddatum.id
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findall-DayDatum-DayDatumMatch-count" resultType="long">
+		SELECT count(ddatum.id)
+		<include refid="fragment-findall-DayDatum-DayDatumMatch"/>
+	</select>
+	
+</mapper>
