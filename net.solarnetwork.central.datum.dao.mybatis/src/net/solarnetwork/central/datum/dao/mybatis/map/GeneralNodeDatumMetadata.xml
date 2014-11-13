@@ -33,9 +33,9 @@
 	</sql>
 	
 	<resultMap id="GeneralNodeDatumMetadataFullResult" type="GeneralNodeDatumMetadata">
-		<result property="nodeId" column="meta_node_id"/>
-		<result property="sourceId" column="meta_source_id"/>
-		<result property="created" column="meta_created"/>
+		<id property="nodeId" column="meta_node_id"/>
+		<id property="sourceId" column="meta_source_id"/>
+		<id property="created" column="meta_created"/>
 		<result property="updated" column="meta_updated"/>
 		<result property="metaJson" column="meta_jdata"/>
 	</resultMap>

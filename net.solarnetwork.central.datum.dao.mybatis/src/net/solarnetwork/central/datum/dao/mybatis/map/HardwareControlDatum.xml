@@ -38,7 +38,7 @@
 	</sql>
 	
 	<resultMap id="HardwareControlDatumFullResult" type="HardwareControlDatum">
-		<result property="id" column="sn_hardware_control_datum_id"/>
+		<id property="id" column="sn_hardware_control_datum_id"/>
 		<result property="created" column="sn_hardware_control_datum_created"/>
 		<result property="nodeId" column="sn_hardware_control_datum_node_id"/>
 		<result property="sourceId" column="sn_hardware_control_datum_source_id"/>

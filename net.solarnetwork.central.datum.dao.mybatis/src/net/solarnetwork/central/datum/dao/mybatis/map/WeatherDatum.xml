@@ -53,7 +53,7 @@
 	</sql>
 	
 	<resultMap id="WeatherDatumFullResult" type="WeatherDatum">
-		<result property="id" column="sn_weather_datum_id"/>
+		<id property="id" column="sn_weather_datum_id"/>
 		<result property="created" column="sn_weather_datum_created"/>
 		<result property="locationId" column="sn_weather_datum_loc_id"/>
 		<result property="infoDate" column="sn_weather_datum_info_date"/>

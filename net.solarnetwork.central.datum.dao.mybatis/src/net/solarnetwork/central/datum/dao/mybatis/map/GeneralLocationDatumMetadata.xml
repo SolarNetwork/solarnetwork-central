@@ -33,9 +33,9 @@
 	</sql>
 	
 	<resultMap id="GeneralLocationDatumMetadataFullResult" type="GeneralLocationDatumMetadata">
-		<result property="locationId" column="meta_loc_id"/>
-		<result property="sourceId" column="meta_source_id"/>
-		<result property="created" column="meta_created"/>
+		<id property="locationId" column="meta_loc_id"/>
+		<id property="sourceId" column="meta_source_id"/>
+		<id property="created" column="meta_created"/>
 		<result property="updated" column="meta_updated"/>
 		<result property="metaJson" column="meta_jdata"/>
 		<collection property="location" resultMap="net.solarnetwork.central.dao.mybatis.SolarLocation.SolarLocationPublicResult"/>

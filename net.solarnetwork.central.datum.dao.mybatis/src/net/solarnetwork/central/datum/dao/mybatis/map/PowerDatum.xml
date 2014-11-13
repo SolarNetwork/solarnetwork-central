@@ -58,7 +58,7 @@
 	</sql>
 	
 	<resultMap id="PowerDatumFullResult" type="PowerDatum">
-		<result property="id" column="sn_power_datum_id"/>
+		<id property="id" column="sn_power_datum_id"/>
 		<result property="created" column="sn_power_datum_created"/>
 		<result property="posted" column="sn_power_datum_posted"/>
 		<result property="nodeId" column="sn_power_datum_node_id"/>

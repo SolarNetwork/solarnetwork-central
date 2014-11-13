@@ -28,17 +28,17 @@
 	</sql>
 	
 	<resultMap id="GeneralNodeDatumFullResult" type="GeneralNodeDatum">
-		<result property="nodeId" column="datum_node_id"/>
-		<result property="created" column="datum_ts"/>
-		<result property="sourceId" column="datum_source_id"/>
+		<id property="nodeId" column="datum_node_id"/>
+		<id property="created" column="datum_ts"/>
+		<id property="sourceId" column="datum_source_id"/>
 		<result property="posted" column="datum_posted"/>
 		<result property="sampleJson" column="datum_jdata"/>
 	</resultMap>
 	
 	<resultMap id="GeneralNodeDatumDirectResult" type="GeneralNodeDatum">
-		<result property="nodeId" column="node_id"/>
-		<result property="created" column="ts"/>
-		<result property="sourceId" column="source_id"/>
+		<id property="nodeId" column="node_id"/>
+		<id property="created" column="ts"/>
+		<id property="sourceId" column="source_id"/>
 		<result property="posted" column="posted"/>
 		<result property="sampleJson" column="jdata"/>
 	</resultMap>
@@ -150,10 +150,10 @@
 	<!-- Aggregated query support -->
 
 	<resultMap id="ReportingGeneralNodeDatumMatchResult" type="ReportingGeneralNodeDatum">
-		<result property="nodeId" column="r_datum_node_id"/>
-		<result property="created" column="r_datum_ts_start"/>
+		<id property="nodeId" column="r_datum_node_id"/>
+		<id property="created" column="r_datum_ts_start"/>
+		<id property="sourceId" column="r_datum_source_id"/>
 		<result property="localDateTime" column="r_datum_local_date"/>
-		<result property="sourceId" column="r_datum_source_id"/>
 		<result property="sampleJson" column="r_datum_jdata"/>
 	</resultMap>
 

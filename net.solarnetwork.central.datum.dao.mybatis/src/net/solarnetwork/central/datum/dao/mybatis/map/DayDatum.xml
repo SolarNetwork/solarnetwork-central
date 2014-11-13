@@ -40,7 +40,7 @@
 	</sql>
 	
 	<resultMap id="DayDatumFullResult" type="DayDatum">
-		<result property="id" column="sn_day_datum_id"/>
+		<id property="id" column="sn_day_datum_id"/>
 		<result property="created" column="sn_day_datum_created"/>
 		<result property="locationId" column="sn_day_datum_loc_id"/>
 		<result property="day" column="sn_day_datum_day"/>

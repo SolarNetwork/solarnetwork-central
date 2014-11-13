@@ -28,17 +28,17 @@
 	</sql>
 	
 	<resultMap id="GeneralLocationDatumFullResult" type="GeneralLocationDatum">
-		<result property="locationId" column="datum_loc_id"/>
-		<result property="created" column="datum_ts"/>
-		<result property="sourceId" column="datum_source_id"/>
+		<id property="locationId" column="datum_loc_id"/>
+		<id property="created" column="datum_ts"/>
+		<id property="sourceId" column="datum_source_id"/>
 		<result property="posted" column="datum_posted"/>
 		<result property="sampleJson" column="datum_jdata"/>
 	</resultMap>
 	
 	<resultMap id="GeneralLocationDatumDirectResult" type="GeneralLocationDatum">
-		<result property="locationId" column="loc_id"/>
-		<result property="created" column="ts"/>
-		<result property="sourceId" column="source_id"/>
+		<id property="locationId" column="loc_id"/>
+		<id property="created" column="ts"/>
+		<id property="sourceId" column="source_id"/>
 		<result property="posted" column="posted"/>
 		<result property="sampleJson" column="jdata"/>
 	</resultMap>
@@ -149,10 +149,10 @@
 	<!-- Aggregated query support -->
 
 	<resultMap id="ReportingGeneralLocationDatumMatchResult" type="ReportingGeneralLocationDatum">
-		<result property="locationId" column="r_datum_loc_id"/>
-		<result property="created" column="r_datum_ts_start"/>
+		<id property="locationId" column="r_datum_loc_id"/>
+		<id property="created" column="r_datum_ts_start"/>
+		<id property="sourceId" column="r_datum_source_id"/>
 		<result property="localDateTime" column="r_datum_local_date"/>
-		<result property="sourceId" column="r_datum_source_id"/>
 		<result property="sampleJson" column="r_datum_jdata"/>
 	</resultMap>
 
