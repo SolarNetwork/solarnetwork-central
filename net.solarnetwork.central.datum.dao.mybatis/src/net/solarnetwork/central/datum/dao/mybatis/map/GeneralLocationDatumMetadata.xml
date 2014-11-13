@@ -38,7 +38,7 @@
 		<id property="created" column="meta_created"/>
 		<result property="updated" column="meta_updated"/>
 		<result property="metaJson" column="meta_jdata"/>
-		<collection property="location" resultMap="net.solarnetwork.central.dao.mybatis.SolarLocation.SolarLocationPublicResult"/>
+		<association property="location" resultMap="net.solarnetwork.central.dao.mybatis.SolarLocation.SolarLocationPublicResult"/>
 	</resultMap>
 	
 	<select id="get-GeneralLocationDatumMetadata-for-id" parameterType="LocationSourcePK" resultMap="GeneralLocationDatumMetadataFullResult">
