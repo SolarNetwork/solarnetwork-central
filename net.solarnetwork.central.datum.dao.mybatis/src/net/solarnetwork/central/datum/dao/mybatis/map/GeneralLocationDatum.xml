@@ -82,7 +82,7 @@
 
 	<parameterMap id="pmap-most-recent" type="map">
 		<parameter property="filter.locationId" jdbcType="BIGINT" mode="IN"/>
-		<parameter property="filter.sourceIds" jdbcType="ARRAY" mode="IN" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler" />
+		<parameter property="filter.sourceIds" jdbcType="ARRAY" mode="IN" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
 	</parameterMap>
 
 	<select id="find-general-loc-most-recent" parameterMap="pmap-most-recent" resultMap="GeneralLocationDatumDirectMatchResult" statementType="CALLABLE">
