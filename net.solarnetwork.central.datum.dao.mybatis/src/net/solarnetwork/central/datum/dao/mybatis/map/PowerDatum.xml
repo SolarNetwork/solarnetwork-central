@@ -1,0 +1,692 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Thu Nov 13 07:30:22 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.dao.mybatis.PowerDatum">
+
+	<insert id="insert-PowerDatum" parameterType="PowerDatum">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarnet.power_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_power_datum 
+			(id
+			<if test="created != null">,created</if>
+			<if test="posted != null">,posted</if>
+			, node_id, 
+			<if test="sourceId != null">
+				source_id, 
+			</if>
+			price_loc_id, watts, bat_volts,
+			bat_amp_hrs, watt_hour)
+		VALUES
+			(#{id}
+			<if test="created != null">,#{created}</if>
+			<if test="posted != null">,#{posted}</if>
+			, #{nodeId}, 
+			<if test="sourceId != null">
+				#{sourceId}, 
+			</if>
+			#{locationId}, #{watts}, #{batteryVolts},
+			#{batteryAmpHours}, #{wattHourReading})
+	</insert>
+
+	<update id="update-PowerDatum" parameterType="PowerDatum">
+		UPDATE solarnet.sn_power_datum SET
+			node_id = #{nodeId}, 
+			<if test="sourceId != null">
+				source_id = #{sourceId}, 
+			</if>
+			price_loc_id = #{locationId},
+			watts = #{watts},
+			bat_volts = #{batteryVolts},
+			bat_amp_hrs = #{batteryAmpHours},
+			watt_hour = #{wattHourReading}
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-PowerDatum-full-result">
+		pdatum.id AS sn_power_datum_id,
+		pdatum.created AS sn_power_datum_created,
+		pdatum.posted AS sn_power_datum_posted,
+		pdatum.node_id AS sn_power_datum_node_id,
+		pdatum.source_id AS sn_power_datum_source_id,
+		pdatum.price_loc_id AS sn_power_datum_price_loc_id,
+		pdatum.watts AS sn_power_datum_watts,
+		pdatum.bat_volts AS sn_power_datum_bat_volts,
+		pdatum.bat_amp_hrs AS sn_power_datum_bat_amp_hrs,
+		pdatum.watt_hour AS sn_power_datum_watt_hour
+	</sql>
+	
+	<resultMap id="PowerDatumFullResult" type="PowerDatum">
+		<result property="id" column="sn_power_datum_id"/>
+		<result property="created" column="sn_power_datum_created"/>
+		<result property="posted" column="sn_power_datum_posted"/>
+		<result property="nodeId" column="sn_power_datum_node_id"/>
+		<result property="sourceId" column="sn_power_datum_source_id"/>
+		<result property="locationId" column="sn_power_datum_price_loc_id"/>
+		<result property="watts" column="sn_power_datum_watts"/>
+		<result property="batteryVolts" column="sn_power_datum_bat_volts"/>
+		<result property="batteryAmpHours" column="sn_power_datum_bat_amp_hrs"/>
+		<result property="wattHourReading" column="sn_power_datum_watt_hour"/>
+	</resultMap>
+	
+	<select id="get-PowerDatum-for-id" parameterType="long" resultMap="PowerDatumFullResult">
+		SELECT
+			<include refid="fragment-PowerDatum-full-result"/>
+		FROM
+			solarnet.sn_power_datum pdatum
+		WHERE
+			pdatum.id = #{id}
+	</select>
+	
+	<select id="find-PowerDatum-for-date" parameterType="map" resultMap="PowerDatumFullResult">
+		SELECT
+			<include refid="fragment-PowerDatum-full-result"/>
+		FROM
+			solarnet.sn_power_datum pdatum
+		WHERE
+			pdatum.node_id = #{id,javaType=long,jdbcType=BIGINT}
+			AND pdatum.created = #{date,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+	</select>
+
+	<select id="find-PowerDatum-most-recent" parameterType="map" resultMap="PowerDatumFullResult">
+		SELECT
+			<include refid="fragment-PowerDatum-full-result"/>
+		FROM
+			solarnet.sn_power_datum_most_recent recent
+		INNER JOIN
+			solarnet.sn_power_datum pdatum ON pdatum.id = recent.datum_id
+		WHERE
+			recent.node_id = #{node,javaType=long,jdbcType=BIGINT}
+			<if test="source != null">
+				AND recent.source_id = #{source,javaType=string,jdbcType=VARCHAR}
+			</if>
+		ORDER BY
+			pdatum.source_id
+	</select>
+	
+	<resultMap id="PowerDatumAggResult" type="ReportingPowerDatum">
+		<result property="localDateTime" column="created_date"/>
+		<result property="sourceId" column="source"/>
+		<result property="watts" column="watts"/>
+		<result property="batteryVolts" column="bat_volts"/>
+	</resultMap>
+	
+	<sql id="fragment-PowerDatum-node-sources-filter">
+		p.node_id = #{node,javaType=long,jdbcType=BIGINT}
+		<choose>
+			<when test="sources != null and sources.length > 0">
+				AND p.source_id IN
+				<foreach collection="sources" open="(" close=")" separator="," item="source">
+					#{source,javaType=string,jdbcType=VARCHAR}
+				</foreach>
+			</when>
+			<when test="source != null">
+				AND p.source_id = #{source,javaType=string,jdbcType=VARCHAR}
+			</when>
+		</choose>
+	</sql>
+	
+	<select id="find-PowerDatum-for-agg-minute" resultMap="PowerDatumAggResult">
+		SELECT 
+			dates.d AS created_date,
+			COALESCE(data.source, '') AS source,
+			COALESCE(data.watts, -1) AS watts,
+			COALESCE(data.bat_volts, -1) AS bat_volts
+		FROM ( 
+			SELECT #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamptz + (series.d * interval '1 minute') AS d 
+			FROM generate_series(0, floor(extract('epoch' from #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamptz - #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamptz))::integer / 60 - #{precision}, #{precision}) AS series(d)
+		) AS dates
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				to_timestamp(
+					extract('epoch' from date_trunc('minute', p.created))
+					- ((cast(extract('minute' from p.created) as integer) % #{precision}) * 60)
+				) as created_date,
+				p.source_id as source,
+				avg(p.watts) as watts,
+				avg(p.bat_volts) as bat_volts
+			FROM solarnet.sn_power_datum p
+			WHERE 
+				<include refid="fragment-PowerDatum-node-sources-filter"/>
+				AND p.created BETWEEN #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamptz AND #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamptz
+			GROUP BY created_date, p.source_id
+		) AS data ON data.created_date = dates.d
+		
+		ORDER BY created_date
+	</select>
+
+	<sql id="fragment-ReportingPowerDatum-agg-result">
+		dates.d AS created_date,
+		COALESCE(data.source, '') AS source,
+		COALESCE(data.watts, -1) AS watts,
+		COALESCE(data.bat_volts, -1) AS bat_volts,
+		COALESCE(data.wh, -1) AS wh,
+		COALESCE(data.cost_amt, -1) AS cost_amt,
+		COALESCE(data.cost_curr, '') AS cost_curr
+	</sql>
+	
+	<resultMap id="ReportingPowerDatumAggResult" type="ReportingPowerDatum">
+		<result property="localDateTime" column="created_date"/>
+		<result property="sourceId" column="source"/>
+		<result property="watts" column="watts"/>
+		<result property="batteryVolts" column="bat_volts"/>
+		<result property="wattHours" column="wh"/>
+		<result property="cost" column="cost_amt"/>
+		<result property="currency" column="cost_curr"/>
+	</resultMap>
+		
+	<select id="find-PowerDatum-for-agg-hour" resultMap="ReportingPowerDatumAggResult">
+		SELECT 
+			<include refid="fragment-ReportingPowerDatum-agg-result"/>
+			
+		FROM generate_series(#{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp, #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp, '1 hour') AS dates(d)
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				p.created_hour as created_date,
+				p.source_id as source,
+				p.watts as watts,
+				p.bat_volts as bat_volts,
+				p.watt_hours as wh,
+				p.cost_amt as cost_amt,
+				p.cost_currency as cost_curr
+		
+			FROM solarrep.rep_power_datum_hourly p
+		
+			WHERE 
+				<include refid="fragment-PowerDatum-node-sources-filter"/>
+				AND p.created_hour BETWEEN #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP} AND #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+		) AS data ON data.created_date = dates.d
+		
+		ORDER BY created_date
+	</select>
+	
+	<select id="find-PowerDatum-for-agg-day" resultMap="ReportingPowerDatumAggResult">
+		SELECT 
+			<include refid="fragment-ReportingPowerDatum-agg-result"/>
+			
+		FROM ( 
+			SELECT date(#{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}) + series.d AS d 
+			FROM generate_series(0, date(#{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}) - date(#{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP})) AS series(d)
+		) AS dates
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				p.created_day as created_date,
+				p.source_id as source,
+				p.watts,
+				p.bat_volts,
+				p.watt_hours as wh,
+				p.cost_amt,
+				p.cost_currency as cost_curr
+		
+			FROM solarrep.rep_power_datum_daily p
+		
+			WHERE 
+				<include refid="fragment-PowerDatum-node-sources-filter"/>
+				AND p.created_day BETWEEN #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::date AND #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::date
+		) AS data ON data.created_date = dates.d
+		
+		ORDER BY created_date
+	</select>
+
+	<select id="find-PowerDatum-for-agg-week" resultMap="ReportingPowerDatumAggResult">
+		SELECT 
+			<include refid="fragment-ReportingPowerDatum-agg-result"/>
+			
+		FROM ( 
+			SELECT date_trunc('week', #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp) + (series.d * interval '1 week') AS d 
+			FROM generate_series(0, 
+				CAST(extract('days' from date_trunc('week', #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp) 
+					- date_trunc('week', #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp)) / 7 AS INTEGER)
+			) AS series(d)
+		) AS dates
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				date_trunc('week', p.created_day) as created_date,
+				p.source_id as source,
+				avg(p.watts) as watts,
+				avg(p.bat_volts) as bat_volts,
+				sum(p.watt_hours) as wh,
+				sum(p.cost_amt) as cost_amt,
+				min(p.cost_currency) as cost_curr
+		
+			FROM solarrep.rep_power_datum_daily p
+		
+			WHERE 
+				<include refid="fragment-PowerDatum-node-sources-filter"/>
+				AND p.created_day &gt;= date_trunc('week', #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp)::date
+				AND p.created_day &lt; (date_trunc('week', #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp) + interval '1 week')::date
+				
+			GROUP BY created_date, c.source_id
+		) AS data ON data.created_date = dates.d
+		
+		ORDER BY created_date
+	</select>
+	
+	<select id="find-PowerDatum-for-agg-month" resultMap="ReportingPowerDatumAggResult">
+		SELECT 
+			<include refid="fragment-ReportingPowerDatum-agg-result"/>
+			
+		FROM ( 
+			SELECT date_trunc('month', date(#{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP})) + (series.d * interval '1 month') AS d 
+			FROM generate_series(0, 
+				(((extract('year' from #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp) - extract('year' from #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp)) * 12)
+					+ (extract('month' from #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp) - extract('month' from #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp)))::integer
+			) AS series(d)
+		) AS dates
+		
+		LEFT OUTER JOIN (
+			SELECT 
+				date_trunc('month', p.created_day) as created_date,
+				p.source_id as source,
+				avg(p.watts) as watts,
+				avg(p.bat_volts) as bat_volts,
+				sum(p.watt_hours) as wh,
+				sum(p.cost_amt) as cost_amt,
+				min(p.cost_currency) as cost_curr
+		
+			FROM solarrep.rep_power_datum_daily p
+		
+			WHERE 
+				<include refid="fragment-PowerDatum-node-sources-filter"/>
+				AND p.created_day &gt;= #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::date
+				AND p.created_day &lt; (#{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::date + interval '1 month')::date
+				
+			GROUP BY created_date, c.source_id
+		) AS data ON data.created_date = dates.d
+		
+		ORDER BY created_date
+	</select>
+
+	<select id="find-PowerDatum-distinct-sources" resultType="java.lang.String">
+		SELECT DISTINCT source_id
+		FROM solarrep.rep_power_datum_daily
+		WHERE node_id = #{node,javaType=long,jdbcType=BIGINT}
+		<if test="start != null">
+			AND created_day &gt;= #{start,javaType=org.joda.time.LocalDate,jdbcType=DATE}::date
+		</if>
+		<if test="end != null">
+			AND created_day &lt;= #{end,javaType=org.joda.time.LocalDate,jdbcType=DATE}::date
+		</if>
+	</select>
+
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="PowerDatumMatchResult" type="PowerDatumMatch" extends="net.solarnetwork.central.datum.dao.mybatis.PowerDatum.PowerDatumFullResult"/>
+
+	<sql id="fragment-findall-PowerDatum-PowerDatumMatch">
+		FROM
+			solarnet.sn_power_datum pdatum
+		<if test="filter != null">
+			<where>
+				<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+					AND pdatum.source_id IN
+					<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
+						#{source,javaType=string,jdbcType=VARCHAR}
+					</foreach>
+				</if>
+				<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+					AND pdatum.node_id IN
+					<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
+						#{node,javaType=long,jdbcType=BIGINT}
+					</foreach>
+				</if>
+				<if test="filter.startDate != null">
+					AND pdatum.created &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+				</if>
+				<if test="filter.endDate != null">
+					AND pdatum.created &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+				</if>
+			</where>
+		</if>
+	</sql>
+
+	<select id="findall-PowerDatum-PowerDatumMatch" resultMap="PowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-PowerDatum-full-result"/>
+		<include refid="fragment-findall-PowerDatum-PowerDatumMatch"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item != null and item.sortKey == &quot;created&quot;">pdatum.created</if>
+					<if test="item != null and item.sortKey == &quot;node&quot;">pdatum.node_id</if>
+					<if test="item != null and item.sortKey == &quot;source&quot;">pdatum.source_id</if>
+					<if test="item != null and item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				pdatum.id
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findall-PowerDatum-PowerDatumMatch-count" resultType="long">
+		SELECT count(pdatum.id)
+		<include refid="fragment-findall-PowerDatum-PowerDatumMatch"/>
+	</select>
+
+	<!-- 
+		AggregationFilterableDao support
+	-->
+	
+	<resultMap id="ReportingPowerDatumMatchResult" type="ReportingPowerDatum">
+		<result property="localDateTime" column="r_power_datum_created_date"/>
+		<result property="nodeId" column="r_power_datum_node_id"/>
+		<result property="sourceId" column="r_power_datum_source_id"/>
+		<result property="watts" column="r_power_datum_watts"/>
+		<result property="wattHours" column="r_power_datum_watt_hours"/>
+		<result property="cost" column="r_power_datum_cost_amt"/>
+		<result property="currency" column="r_power_datum_cost_currency"/>
+	</resultMap>
+
+	<!--  Note: r_power_datum_created_date is not provided by this base fragment, because that column name varies -->
+	<sql id="fragment-PowerDatum-aggregation-result">
+		rpdatum.node_id AS r_power_datum_node_id,
+		rpdatum.source_id AS r_power_datum_source_id,
+		rpdatum.watts AS r_power_datum_watts,
+		rpdatum.watt_hours AS r_power_datum_watt_hours,
+		rpdatum.cost_amt AS r_power_datum_cost_amt,
+		rpdatum.cost_currency AS r_power_datum_cost_currency
+	</sql>
+
+	<!--  Note: r_power_datum_created_date is not provided by this base fragment, because that column name varies -->
+	<sql id="fragment-PowerDatum-average-result">
+		rpdatum.node_id AS r_power_datum_node_id,
+		rpdatum.source_id AS r_power_datum_source_id,
+		AVG(rpdatum.watts) AS r_power_datum_watts,
+		AVG(rpdatum.watt_hours) AS r_power_datum_watt_hours,
+		AVG(rpdatum.cost_amt) AS r_power_datum_cost_amt,
+		MIN(rpdatum.cost_currency) AS r_power_datum_cost_currency
+	</sql>
+
+	<!--  Note: r_power_datum_created_date is not provided by this base fragment, because that column name varies -->
+	<sql id="fragment-PowerDatum-sum-result">
+		rpdatum.node_id AS r_power_datum_node_id,
+		rpdatum.source_id AS r_power_datum_source_id,
+		AVG(rpdatum.watts) AS r_power_datum_watts,
+		SUM(rpdatum.watt_hours) AS r_power_datum_watt_hours,
+		SUM(rpdatum.cost_amt) AS r_power_datum_cost_amt,
+		MIN(rpdatum.cost_currency) AS r_power_datum_cost_currency
+	</sql>
+
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-Hour">
+		FROM
+			solarrep.rep_power_datum_hourly rpdatum
+		<if test="filter != null">
+			<where>
+				<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+					AND rpdatum.source_id IN
+					<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
+						#{source,javaType=string,jdbcType=VARCHAR}
+					</foreach>
+				</if>
+				<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+					AND rpdatum.node_id IN
+					<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
+						#{node,javaType=long,jdbcType=BIGINT}
+					</foreach>
+				</if>
+				<if test="filter.startDate != null">
+					<choose>
+						<when test="filter.nodeId != null">
+							AND rpdatum.created_hour &gt;= solarnet.get_node_local_timestamp(
+								#{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP},
+								#{filter.nodeId,javaType=long,jdbcType=BIGINT})
+						</when>
+						<otherwise>
+							AND rpdatum.created_hour &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+						</otherwise>
+					</choose>
+				</if>
+				<if test="filter.endDate != null">
+					<choose>
+						<when test="filter.nodeId != null">
+							AND rpdatum.created_hour &lt;= solarnet.get_node_local_timestamp(
+								#{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP},
+								#{filter.nodeId,javaType=long,jdbcType=BIGINT})
+						</when>
+						<otherwise>
+							AND rpdatum.created_hour &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+		</if>
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-Hour-count" resultType="long">
+		SELECT count(rpdatum.created_hour)
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Hour"/>
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-Hour" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			rpdatum.created_hour AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-aggregation-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Hour"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item != null and item.sortKey == &quot;created&quot;">rpdatum.created_hour</if>
+					<if test="item != null and item.sortKey == &quot;node&quot;">rpdatum.node_id</if>
+					<if test="item != null and item.sortKey == &quot;source&quot;">rpdatum.source_id</if>
+					<if test="item != null and item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				rpdatum.created_hour, rpdatum.node_id, rpdatum.source_id
+			</otherwise>
+		</choose>
+	</select>
+
+	<!-- HourOfDay aggregation: grouped by hour. 
+		The "creation date" is returned as an offset from solarnet.get_season_monday_start().  -->
+		
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-HourOfDay">
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Hour"/>
+		GROUP BY EXTRACT(hour FROM rpdatum.created_hour), rpdatum.node_id, rpdatum.source_id
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-HourOfDay-count" resultType="long">
+		SELECT count(sub.h) FROM (SELECT EXTRACT(hour FROM rpdatum.created_hour) AS h
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-HourOfDay"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-HourOfDay" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM rpdatum.created_hour), '00') || ':00' AS TIMESTAMP) AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-average-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-HourOfDay"/>
+		ORDER BY EXTRACT(hour FROM rpdatum.created_hour), rpdatum.node_id, rpdatum.source_id
+	</select>
+
+	<!-- SeasonalHourOfDay aggregation: grouped by "season" and by hour. 
+		The "creation date" is returned as an offset from midnight 2001-01-01.  -->
+		
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalHourOfDay">
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Hour"/>
+		GROUP BY 
+			solarnet.get_season_monday_start(CAST(rpdatum.created_hour AS DATE)), 
+			EXTRACT(hour FROM rpdatum.created_hour), 
+			rpdatum.node_id, 
+			rpdatum.source_id
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-SeasonalHourOfDay-count" resultType="long">
+		SELECT count(sub.h) FROM (SELECT EXTRACT(hour FROM rpdatum.created_hour) AS h
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalHourOfDay"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-SeasonalHourOfDay" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			solarnet.get_season_monday_start(CAST(rpdatum.created_hour AS DATE)) + CAST(EXTRACT(hour FROM rpdatum.created_hour) || ' hour' AS INTERVAL) AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-average-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalHourOfDay"/>
+		ORDER BY 
+			solarnet.get_season_monday_start(CAST(rpdatum.created_hour AS DATE)),
+			EXTRACT(hour FROM rpdatum.created_hour), 
+			rpdatum.node_id, 
+			rpdatum.source_id
+	</select>
+
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-Day">
+		FROM
+			solarrep.rep_power_datum_daily rpdatum
+		<if test="filter != null">
+			<where>
+				<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+					AND rpdatum.source_id IN
+					<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
+						#{source,javaType=string,jdbcType=VARCHAR}
+					</foreach>
+				</if>
+				<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+					AND rpdatum.node_id IN
+					<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
+						#{node,javaType=long,jdbcType=BIGINT}
+					</foreach>
+				</if>
+				<if test="filter.startDate != null">
+					<choose>
+						<when test="filter.nodeId != null">
+							AND rpdatum.created_hour &gt;= solarnet.get_node_local_timestamp(
+								#{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP},
+								#{filter.nodeId,javaType=long,jdbcType=BIGINT})
+						</when>
+						<otherwise>
+							AND rpdatum.created_hour &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+						</otherwise>
+					</choose>
+				</if>
+				<if test="filter.endDate != null">
+					<choose>
+						<when test="filter.nodeId != null">
+							AND rpdatum.created_hour &lt;= solarnet.get_node_local_timestamp(
+								#{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP},
+								#{filter.nodeId,javaType=long,jdbcType=BIGINT})
+						</when>
+						<otherwise>
+							AND rpdatum.created_hour &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+		</if>
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-Day-count" resultType="long">
+		SELECT count(rpdatum.created_day)
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Day"/>
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-Day" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			rpdatum.created_day AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-aggregation-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Day"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item != null and item.sortKey == &quot;created&quot;">rpdatum.created_day</if>
+					<if test="item != null and item.sortKey == &quot;node&quot;">rpdatum.node_id</if>
+					<if test="item != null and item.sortKey == &quot;source&quot;">rpdatum.source_id</if>
+					<if test="item != null and item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				rpdatum.created_day, rpdatum.node_id, rpdatum.source_id
+			</otherwise>
+		</choose>
+	</select>
+
+	<!-- Month aggregation -->
+		
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-Month">
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Day"/>
+		GROUP BY 
+			date_trunc('month', rpdatum.created_day), 
+			rpdatum.node_id, 
+			rpdatum.source_id
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-Month-count" resultType="long">
+		SELECT count(sub.d) FROM (SELECT date_trunc('month', rpdatum.created_day) AS d
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Month"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-Month" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			date_trunc('month', rpdatum.created_day) AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-sum-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Month"/>
+		ORDER BY 
+			date_trunc('month', rpdatum.created_day), 
+			rpdatum.node_id, 
+			rpdatum.source_id
+	</select>
+
+	<!-- DayOfWeek aggregation: grouped by ISODOW so Monday == 1, Sunday == 7. 
+		The "creation date" is returned as an offset from 2001-01-01 (a Monday).  -->
+		
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-DayOfWeek">
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Day"/>
+		GROUP BY EXTRACT(isodow FROM rpdatum.created_day), rpdatum.node_id, rpdatum.source_id
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-DayOfWeek-count" resultType="long">
+		SELECT count(sub.d) FROM (SELECT EXTRACT(isodow FROM rpdatum.created_day) AS d
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-DayOfWeek"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-DayOfWeek" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			DATE '2001-01-01' + CAST((EXTRACT(isodow FROM rpdatum.created_day) - 1) || ' day' AS INTERVAL) AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-average-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-DayOfWeek"/>
+		ORDER BY EXTRACT(isodow FROM rpdatum.created_day), rpdatum.node_id, rpdatum.source_id
+	</select>
+
+	<!-- SeasonalDayOfWeek aggregation: grouped by "season" and ISODOW so Monday == 1, Sunday == 7. 
+		The "creation date" is returned as an offset from solarnet.get_season_monday_start().  -->
+		
+	<sql id="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalDayOfWeek">
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-Day"/>
+		GROUP BY 
+			solarnet.get_season_monday_start(rpdatum.created_day), 
+			EXTRACT(isodow FROM rpdatum.created_day), 
+			rpdatum.node_id, 
+			rpdatum.source_id
+	</sql>
+
+	<select id="findall-PowerDatum-ReportingPowerDatum-SeasonalDayOfWeek-count" resultType="long">
+		SELECT count(sub.d) FROM (SELECT EXTRACT(isodow FROM rpdatum.created_day) AS d
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalDayOfWeek"/>
+		) AS sub
+	</select>
+	
+	<select id="findall-PowerDatum-ReportingPowerDatum-SeasonalDayOfWeek" resultMap="ReportingPowerDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			solarnet.get_season_monday_start(rpdatum.created_day) + CAST((EXTRACT(isodow FROM rpdatum.created_day) - 1) || ' day' AS INTERVAL) AS r_power_datum_created_date,
+			<include refid="fragment-PowerDatum-average-result"/>
+		<include refid="fragment-findall-PowerDatum-ReportingPowerDatum-SeasonalDayOfWeek"/>
+		ORDER BY 
+			solarnet.get_season_monday_start(rpdatum.created_day), 
+			EXTRACT(isodow FROM rpdatum.created_day), 
+			rpdatum.node_id, 
+			rpdatum.source_id
+	</select>
+
+</mapper>

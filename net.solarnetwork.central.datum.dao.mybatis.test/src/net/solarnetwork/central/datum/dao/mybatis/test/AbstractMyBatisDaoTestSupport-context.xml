@@ -74,8 +74,8 @@
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/HardwareControlDatum.xml</value>
-				<!--value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/PowerDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/PriceDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/PowerDatum.xml</value>
+				<!--value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/PriceDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/WeatherDatum.xml</value-->
 			</list>
 		</property>
