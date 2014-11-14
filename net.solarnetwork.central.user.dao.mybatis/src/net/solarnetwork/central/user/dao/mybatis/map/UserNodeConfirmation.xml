@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Tue Nov 11 06:02:39 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.dao.mybatis.UserNodeConfirmation">
+
+	<insert id="insert-UserNodeConfirmation" parameterType="UserNodeConfirmation">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solaruser.solaruser_seq') AS id 
+		</selectKey>
+		INSERT INTO solaruser.user_node_conf 
+			(id
+			<if test="created != null">,created</if>
+			, user_id, node_id, conf_key
+			<if test="confirmationDate != null">,conf_date</if>
+			, sec_phrase, country, time_zone
+			)
+		VALUES
+			(#{id}
+			<if test="created != null">,#{created}</if>
+			, #{user.id}, #{nodeId}, #{confirmationKey}
+			<if test="confirmationDate != null">,#{confirmationDate}</if>
+			, #{securityPhrase}, #{country}, #{timeZoneId}
+			)
+	</insert>
+
+	<update id="update-UserNodeConfirmation" parameterType="UserNodeConfirmation">
+		UPDATE solaruser.user_node_conf SET
+			node_id = #{nodeId},
+			conf_date = #{confirmationDate},
+			sec_phrase = #{securityPhrase},
+			country = #{country},
+			time_zone = #{timeZoneId}
+		WHERE
+			id = #{id}
+	</update>
+
+	<update id="delete-UserNodeConfirmation" parameterType="long">
+		DELETE FROM solaruser.user_node_conf
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-UserNodeConfirmation-full-result">
+		unc.id AS unc_id,
+		unc.created AS unc_created,
+		unc.node_id AS unc_node_id,
+		unc.conf_key AS unc_conf_key,
+		unc.conf_date AS unc_conf_date,
+		unc.sec_phrase AS unc_sec_phrase,
+		unc.country AS unc_country,
+		unc.time_zone AS unc_time_zone
+	</sql>
+
+	<resultMap id="UserNodeConfirmationFullResult" type="UserNodeConfirmation">
+		<id property="id" column="unc_id"/>
+		<result property="created" column="unc_created"/>
+		<result property="nodeId" column="unc_node_id"/>
+		<result property="confirmationKey" column="unc_conf_key"/>
+		<result property="confirmationDate" column="unc_conf_date"/>
+		<result property="securityPhrase" column="unc_sec_phrase"/>
+		<result property="country" column="unc_country"/>
+		<result property="timeZoneId" column="unc_time_zone"/>
+		<association property="user" resultMap="net.solarnetwork.central.user.dao.mybatis.User.UserFullResult"/>
+	</resultMap>
+	
+	<select id="get-UserNodeConfirmation-for-id" parameterType="long" resultMap="UserNodeConfirmationFullResult">
+		SELECT
+			<include refid="fragment-UserNodeConfirmation-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.User.fragment-User-full-result"/>
+		FROM
+			solaruser.user_node_conf unc
+		INNER JOIN
+			solaruser.user_user u ON u.id = unc.user_id
+		WHERE
+			unc.id = #{id}
+	</select>
+	
+	<select id="get-UserNodeConfirmation-for-key" parameterType="map" resultMap="UserNodeConfirmationFullResult">
+		SELECT
+			<include refid="fragment-UserNodeConfirmation-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.User.fragment-User-full-result"/>
+		FROM
+			solaruser.user_node_conf unc
+		INNER JOIN
+			solaruser.user_user u ON u.id = unc.user_id
+		WHERE
+			unc.user_id = #{userId,javaType=long,jdbcType=BIGINT}
+			AND unc.conf_key = #{key,javaType=string,jdbcType=VARCHAR}
+	</select>
+	
+	<select id="find-UserNodeConfirmation-for-User" parameterType="User" resultMap="UserNodeConfirmationFullResult">
+		SELECT
+			<include refid="fragment-UserNodeConfirmation-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.User.fragment-User-full-result"/>
+		FROM
+			solaruser.user_node_conf unc
+		INNER JOIN
+			solaruser.user_user u ON u.id = unc.user_id
+		WHERE
+			unc.user_id = #{user.id}
+			<if test="pending != null">AND unc.conf_date IS NULL</if>
+		ORDER BY
+			unc.created
+	</select>
+	
+</mapper>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Thu Nov 13 07:30:20 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.dao.mybatis.GeneralLocationDatumMetadata">
+
+	<parameterMap id="pmap-GeneralLocationDatumMetadata" type="GeneralLocationDatumMetadata">
+		<parameter property="created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="locationId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="sourceId" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="metaJson" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+	<update id="insert-GeneralLocationDatumMetadata" parameterMap="pmap-GeneralLocationDatumMetadata" statementType="CALLABLE">
+		{call solardatum.store_loc_meta(?, ?, ?, ?)}
+	</update>
+	
+	<update id="update-GeneralLocationDatumMetadata" parameterMap="pmap-GeneralLocationDatumMetadata" statementType="CALLABLE">
+		{call solardatum.store_loc_meta(?, ?, ?, ?)}
+	</update>
+	
+	<delete id="delete-GeneralLocationDatumMetadata" parameterType="LocationSourcePK">
+		DELETE FROM solardatum.da_loc_meta
+		WHERE loc_id = #{locationId} 
+			AND source_id = #{sourceId}
+	</delete>
+	
+	<sql id="fragment-GeneralLocationDatumMetadata-full-result">
+		meta.loc_id AS meta_loc_id,
+		meta.source_id AS meta_source_id,
+		meta.created AS meta_created,
+		meta.updated AS meta_updated,
+		meta.jdata AS meta_jdata
+	</sql>
+	
+	<resultMap id="GeneralLocationDatumMetadataFullResult" type="GeneralLocationDatumMetadata">
+		<id property="locationId" column="meta_loc_id"/>
+		<id property="sourceId" column="meta_source_id"/>
+		<id property="created" column="meta_created"/>
+		<result property="updated" column="meta_updated"/>
+		<result property="metaJson" column="meta_jdata"/>
+		<association property="location" resultMap="net.solarnetwork.central.dao.mybatis.SolarLocation.SolarLocationPublicResult"/>
+	</resultMap>
+	
+	<select id="get-GeneralLocationDatumMetadata-for-id" parameterType="LocationSourcePK" resultMap="GeneralLocationDatumMetadataFullResult">
+		SELECT
+			<include refid="fragment-GeneralLocationDatumMetadata-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-full-result"/>
+		FROM
+			solardatum.da_loc_meta meta
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = meta.loc_id
+		WHERE
+			meta.loc_id = #{locationId}
+			AND meta.source_id = #{sourceId}
+	</select>
+
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="GeneralLocationDatumMetadataMatchResult" type="GeneralLocationDatumMetadataMatch" extends="net.solarnetwork.central.datum.dao.mybatis.GeneralLocationDatumMetadata.GeneralLocationDatumMetadataFullResult"/>
+
+	<sql id="fragment-findall-GeneralLocationDatumMetadata-GeneralLocationDatumMetadataMatch-where">
+		<if test="filter.tags != null and filter.tags.length &gt; 0">
+			JOIN LATERAL json_array_elements(meta.jdata-&gt;'t') jtag ON true
+		</if>
+		<where>
+			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+				AND meta.source_id IN
+				<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
+					#{source,javaType=string,jdbcType=VARCHAR}
+				</foreach>
+			</if>
+			<if test="filter.locationIds != null and filter.locationIds.length > 0">
+				AND meta.loc_id IN
+				<foreach collection="filter.locationIds" open="(" close=")" separator="," item="loc">
+					#{loc,javaType=long,jdbcType=BIGINT}
+				</foreach>
+			</if>
+			<if test="fts != null">
+				l.address IS NULL
+				AND l.latitude IS NULL
+				AND l.longitude IS NULL
+				AND l.elevation IS NULL
+				AND l.fts_default @@ solarcommon.plainto_prefix_tsquery(#{fts,javaType=string})
+			</if>
+			<if test="filter.tags != null and filter.tags.length &gt; 0">
+				trim(jtag::text, '"') = ANY(#{filter.tags,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
+		</where>
+	</sql>
+
+
+	<select id="findall-GeneralLocationDatumMetadata-GeneralLocationDatumMetadataMatch" resultMap="GeneralLocationDatumMetadataMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatumMetadata-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-full-result"/>
+		FROM
+			solardatum.da_loc_meta meta
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = meta.loc_id
+		<include refid="fragment-findall-GeneralLocationDatumMetadata-GeneralLocationDatumMetadataMatch-where"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item.sortKey == &quot;created&quot;">meta.created</if>
+					<if test="item.sortKey == &quot;updated&quot;">meta.updated</if>
+					<if test="item.sortKey == &quot;location&quot;">meta.loc_id</if>
+					<if test="item.sortKey == &quot;source&quot;">meta.source_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				meta.source_id
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findall-GeneralLocationDatumMetadata-GeneralLocationDatumMetadataMatch-count" resultType="long">
+		SELECT count(meta.created)
+		FROM
+			solardatum.da_loc_meta meta
+		<include refid="fragment-findall-GeneralLocationDatumMetadata-GeneralLocationDatumMetadataMatch-where"/>
+	</select>
+
+</mapper>
