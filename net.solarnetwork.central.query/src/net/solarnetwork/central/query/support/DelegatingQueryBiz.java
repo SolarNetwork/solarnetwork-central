@@ -77,17 +77,20 @@ public class DelegatingQueryBiz implements QueryBiz {
 		return delegate.getReportableInterval(nodeId, types);
 	}
 
+	@Deprecated
 	@Override
 	public ReportableInterval getNetworkReportableInterval(Class<? extends NodeDatum>[] types) {
 		return delegate.getNetworkReportableInterval(types);
 	}
 
+	@Deprecated
 	@Override
 	public Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type,
 			LocalDate start, LocalDate end) {
 		return delegate.getAvailableSources(nodeId, type, start, end);
 	}
 
+	@Deprecated
 	@Override
 	public List<? extends NodeDatum> getAggregatedDatum(DatumQueryCommand criteria,
 			Class<? extends NodeDatum> datumClass) {
@@ -99,6 +102,7 @@ public class DelegatingQueryBiz implements QueryBiz {
 		return delegate.getMostRecentWeatherConditions(nodeId);
 	}
 
+	@Deprecated
 	@Override
 	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(F filter,
 			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
@@ -114,6 +118,7 @@ public class DelegatingQueryBiz implements QueryBiz {
 		return delegate.findFilteredLocations(filter, locationClass, sortDescriptors, offset, max);
 	}
 
+	@Deprecated
 	@Override
 	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(A filter,
 			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
@@ -121,6 +126,7 @@ public class DelegatingQueryBiz implements QueryBiz {
 		return delegate.findFilteredAggregateDatum(filter, datumClass, sortDescriptors, offset, max);
 	}
 
+	@Deprecated
 	@Override
 	public ReportableInterval getReportableInterval(Long nodeId, String sourceId) {
 		return delegate.getReportableInterval(nodeId, sourceId);

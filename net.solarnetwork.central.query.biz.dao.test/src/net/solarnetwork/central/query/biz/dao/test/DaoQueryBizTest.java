@@ -74,6 +74,7 @@ import org.springframework.test.context.ContextConfiguration;
  * @version 1.2
  */
 @ContextConfiguration
+@SuppressWarnings("deprecation")
 public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
 
 	private final String TEST_SOURCE_ID = "test.source";
