@@ -107,6 +107,7 @@ public class DelegatingQueryBiz implements QueryBiz {
 	}
 
 	@Override
+	@Deprecated
 	public FilterResults<SourceLocationMatch> findFilteredLocations(SourceLocation filter,
 			Class<? extends Entity<?>> locationClass, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
