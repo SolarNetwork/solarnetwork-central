@@ -35,9 +35,11 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.PowerDatum;
 import net.solarnetwork.central.datum.domain.PowerDatumMatch;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.MutableDateTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -275,6 +277,86 @@ public class MyBatisPowerDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 			ids.add(d.getId());
 		}
 		assertEquals("Result order", Arrays.asList(lastDatum.getId(), id2, id3), ids);
+	}
+
+	@Test
+	public void getAggregatedDatumTenMinute() {
+		MutableDateTime mdt = new MutableDateTime();
+		mdt.setRounding(mdt.getChronology().hourOfDay(), MutableDateTime.ROUND_FLOOR);
+
+		PowerDatum datum = getTestInstance();
+		datum.setWatts(10);
+		mdt.setDate(datum.getCreated());
+		datum.setCreated(mdt.toDateTime());
+		dao.store(datum);
+
+		DateTime s = mdt.toDateTime();
+
+		DatumQueryCommand criteria = new DatumQueryCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setAggregate(Aggregation.Minute);
+		criteria.setPrecision(10);
+		criteria.setStartDate(s);
+		criteria.setEndDate(s.plusHours(1));
+
+		List<PowerDatum> results = dao.getAggregatedDatum(criteria);
+		assertNotNull(results);
+		assertEquals(6, results.size());
+
+		// first slot should contain our test datum
+		for ( int i = 0; i < results.size(); i++ ) {
+			PowerDatum d = results.get(i);
+			if ( i == 0 ) {
+				assertEquals("First result", datum.getWatts(), d.getWatts());
+			} else {
+				assertEquals("Result " + i, Integer.valueOf(-1), d.getWatts());
+			}
+		}
+
+		PowerDatum datum2 = new PowerDatum();
+		datum2.setCreated(datum.getCreated().plusMinutes(10));
+		datum2.setNodeId(TEST_NODE_ID);
+		datum2.setSourceId(datum.getSourceId());
+		datum2.setWatts(20);
+		dao.store(datum2);
+
+		results = dao.getAggregatedDatum(criteria);
+		assertNotNull(results);
+		assertEquals(6, results.size());
+
+		for ( int i = 0; i < results.size(); i++ ) {
+			PowerDatum d = results.get(i);
+			if ( i == 0 ) {
+				assertEquals("First result", datum.getWatts(), d.getWatts());
+			} else if ( i == 1 ) {
+				assertEquals("Second result", datum2.getWatts(), d.getWatts());
+			} else {
+				assertEquals("Result " + i, Integer.valueOf(-1), d.getWatts());
+			}
+		}
+
+		PowerDatum datum3 = new PowerDatum();
+		datum3.setCreated(datum2.getCreated().plusMinutes(5));
+		datum3.setNodeId(TEST_NODE_ID);
+		datum3.setSourceId(datum.getSourceId());
+		datum3.setWatts(30);
+		dao.store(datum3);
+
+		results = dao.getAggregatedDatum(criteria);
+		assertNotNull(results);
+		assertEquals(6, results.size());
+
+		for ( int i = 0; i < results.size(); i++ ) {
+			PowerDatum d = results.get(i);
+			if ( i == 0 ) {
+				assertEquals("First result", datum.getWatts(), d.getWatts());
+			} else if ( i == 1 ) {
+				assertEquals("Second result", (datum2.getWatts() + datum3.getWatts()) / 2, d.getWatts()
+						.intValue());
+			} else {
+				assertEquals("Result " + i, Integer.valueOf(-1), d.getWatts());
+			}
+		}
 	}
 
 }

@@ -28,6 +28,7 @@ import java.util.Map;
 import net.solarnetwork.central.datum.dao.PriceDatumDao;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.PriceDatum;
+import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * MyBatis implementation of {@link PriceDatumDao}.
@@ -91,7 +92,7 @@ public class MyBatisPriceDatumDao extends BaseMyBatisDatumDao<PriceDatum> implem
 	protected String setupAggregatedDatumQuery(DatumQueryCommand criteria, Map<String, Object> params) {
 		long timeDiff = criteria.getEndDate().getMillis() - criteria.getStartDate().getMillis();
 		String queryName = QUERY_PRICE_DATUM_FOR_AGGREGATE_BY_MINUTE;
-		if ( criteria.getAggregate() != null ) {
+		if ( criteria.getAggregate() != null && criteria.getAggregate() != Aggregation.Minute ) {
 			// if criteria specifies aggregate, use that
 			switch (criteria.getAggregate()) {
 				case Month:

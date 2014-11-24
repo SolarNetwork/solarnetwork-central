@@ -182,8 +182,14 @@ public abstract class BaseMyBatisDatumDao<T extends Datum> extends BaseMyBatisGe
 				&& criteria.getProperties().containsKey(CRITERIA_PROPERTY_SOURCE_ID) ) {
 			params.put("source", criteria.getProperties().get(CRITERIA_PROPERTY_SOURCE_ID));
 		}
-		params.put(PARAM_START_DATE, new java.sql.Timestamp(criteria.getStartDate().getMillis()));
-		params.put(PARAM_END_DATE, new java.sql.Timestamp(criteria.getEndDate().getMillis()));
+		if ( criteria.getStartDate() == null ) {
+			throw new IllegalArgumentException("The start date is required.");
+		}
+		if ( criteria.getEndDate() == null ) {
+			throw new IllegalArgumentException("The end date is required.");
+		}
+		params.put(PARAM_START_DATE, criteria.getStartDate());
+		params.put(PARAM_END_DATE, criteria.getEndDate());
 		String queryName = setupAggregatedDatumQuery(criteria, params);
 		if ( queryName == null ) {
 			return Collections.emptyList();

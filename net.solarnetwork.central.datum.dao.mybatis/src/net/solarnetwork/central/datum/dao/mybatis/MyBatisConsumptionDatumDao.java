@@ -30,6 +30,7 @@ import net.solarnetwork.central.datum.domain.ConsumptionDatumMatch;
 import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.datum.domain.ReportingConsumptionDatum;
+import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * MyBatis implementation of {@link ConsumptionDatumDao}.
@@ -91,7 +92,7 @@ public class MyBatisConsumptionDatumDao
 	protected String setupAggregatedDatumQuery(DatumQueryCommand criteria, Map<String, Object> params) {
 		long timeDiff = criteria.getEndDate().getMillis() - criteria.getStartDate().getMillis();
 		String queryName = QUERY_CONSUMPTION_DATUM_FOR_AGGREGATE_BY_MINUTE;
-		if ( criteria.getAggregate() != null ) {
+		if ( criteria.getAggregate() != null && criteria.getAggregate() != Aggregation.Minute ) {
 			// if criteria specifies aggregate, use that
 			switch (criteria.getAggregate()) {
 				case Month:
