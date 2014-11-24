@@ -7,14 +7,21 @@ Bundle-Vendor: SolarNetwork
 Fragment-Host: net.solarnetwork.central.query.biz.dao;bundle-version="1.12.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
- net.solarnetwork.central.dao.ibatis;version="[1.17.0,2.0.0)",
- net.solarnetwork.central.datum.dao.ibatis;version="[1.19.0,2.0.0)",
+ net.solarnetwork.central.dao.mybatis;version="1.0.0",
+ net.solarnetwork.central.dao.mybatis.map;version="1.0.0",
+ net.solarnetwork.central.dao.mybatis.support;version="1.0.0",
+ net.solarnetwork.central.dao.mybatis.type;version="1.0.0",
+ net.solarnetwork.central.datum.dao.mybatis;version="1.0.0",
+ net.solarnetwork.central.datum.dao.mybatis.map;version="1.0.0",
  net.solarnetwork.central.support;version="[1.5.0,2.0.0)",
  net.solarnetwork.central.test;version="[1.0,2.0)",
  org.apache.commons.logging;version="[1.1,1.2)",
+ org.apache.ibatis.session;version="[3.2,4.0)",
  org.joda.time;version="[1.6,3.0)",
  org.junit;version="[4.5,5.0)",
  org.junit.runner;version="[4.5,5.0)",
+ org.mybatis.spring;version="[1.2,2.0)",
+ org.mybatis.spring.support;version="[1.2,2.0)",
  org.slf4j;version="[1.5.0,2.0.0)",
  org.springframework.aop;version="[3.1,4.0)",
  org.springframework.aop.framework;version="[3.1,4.0)",

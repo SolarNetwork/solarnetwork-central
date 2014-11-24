@@ -58,24 +58,21 @@ import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.support.SimpleSortDescriptor;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Unit test for the {@link DaoQueryBiz} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-@ContextConfiguration
 @SuppressWarnings("deprecation")
-public class DaoQueryBizTest extends AbstractCentralTransactionalTest {
+public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 
 	private final String TEST_SOURCE_ID = "test.source";
 	private final String TEST_SOURCE_ID2 = "test.source.2";
