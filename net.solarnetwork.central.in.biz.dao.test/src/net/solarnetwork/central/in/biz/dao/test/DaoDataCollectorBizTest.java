@@ -33,7 +33,6 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import org.easymock.EasyMock;
 import org.joda.time.LocalDate;
@@ -41,16 +40,14 @@ import org.joda.time.LocalTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Test case for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
-@ContextConfiguration
-public class DaoDataCollectorBizTest extends AbstractCentralTransactionalTest {
+public class DaoDataCollectorBizTest extends AbstractInBizDaoTestSupport {
 
 	private static final String TEST_SOURCE_ID = "test.source";
 

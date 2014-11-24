@@ -1,5 +1,5 @@
 /* ==================================================================
- * AbstractDatumBizDaoTestSupport.java - Nov 25, 2014 7:00:00 AM
+ * AbstractInBizDaoTestSupport.java - Nov 25, 2014 7:22:41 AM
  * 
  * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.biz.dao.test;
+package net.solarnetwork.central.in.biz.dao.test;
 
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -28,13 +28,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
- * Base class for other unit tests.
+ * Base text class for other tests.
  * 
  * @author matt
  * @version 1.0
  */
 @ContextConfiguration
-public abstract class AbstractDatumBizDaoTestSupport extends AbstractCentralTransactionalTest {
+public abstract class AbstractInBizDaoTestSupport extends AbstractCentralTransactionalTest {
 
 	private SqlSessionFactory sqlSessionFactory;
 
