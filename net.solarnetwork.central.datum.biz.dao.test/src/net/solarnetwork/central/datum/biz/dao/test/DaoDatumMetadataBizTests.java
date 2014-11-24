@@ -28,8 +28,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao;
+import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralLocationDatumMetadataDao;
+import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumMetadataDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
@@ -39,35 +39,32 @@ import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.daum.biz.dao.DaoDatumMetadataBiz;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Test cases for the {@link DaoDatumMetadataBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-@ContextConfiguration
-public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
+public class DaoDatumMetadataBizTests extends AbstractDatumBizDaoTestSupport {
 
 	private final String TEST_SOURCE_ID = "test.source";
 	private final String TEST_SOURCE_ID_2 = "test.source.2";
 
-	@Autowired
-	private GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao;
-
-	@Autowired
-	private GeneralLocationDatumMetadataDao generalLocationDatumMetadataDao;
+	private MyBatisGeneralNodeDatumMetadataDao generalNodeDatumMetadataDao;
+	private MyBatisGeneralLocationDatumMetadataDao generalLocationDatumMetadataDao;
 
 	private DaoDatumMetadataBiz biz;
 
 	@Before
 	public void setup() {
+		generalNodeDatumMetadataDao = new MyBatisGeneralNodeDatumMetadataDao();
+		generalNodeDatumMetadataDao.setSqlSessionFactory(getSqlSessionFactory());
+		generalLocationDatumMetadataDao = new MyBatisGeneralLocationDatumMetadataDao();
+		generalLocationDatumMetadataDao.setSqlSessionFactory(getSqlSessionFactory());
 		biz = new DaoDatumMetadataBiz();
 		biz.setGeneralLocationDatumMetadataDao(generalLocationDatumMetadataDao);
 		biz.setGeneralNodeDatumMetadataDao(generalNodeDatumMetadataDao);
