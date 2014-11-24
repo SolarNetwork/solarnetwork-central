@@ -5,6 +5,9 @@ Bundle-SymbolicName: net.solarnetwork.central.datum.dao.mybatis
 Bundle-Version: 1.0.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: 
+ net.solarnetwork.central.datum.dao.mybatis;version="1.0.0",
+ net.solarnetwork.central.datum.dao.mybatis.map;version="1.0.0"
 Import-Package: 
  javax.sql,
  net.solarnetwork.central.dao;version="1.13.0",
