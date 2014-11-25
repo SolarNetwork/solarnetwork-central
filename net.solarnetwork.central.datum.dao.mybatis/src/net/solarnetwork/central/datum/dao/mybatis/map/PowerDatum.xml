@@ -127,7 +127,7 @@
 		</choose>
 	</sql>
 	
-	<select id="find-PowerDatum-for-agg-minute" resultMap="PowerDatumAggResult">
+	<select id="find-PowerDatum-for-agg-minute" resultMap="PowerDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT 
 			dates.d AS created_date,
 			COALESCE(data.source, '') AS source,
@@ -177,7 +177,7 @@
 		<result property="currency" column="cost_curr"/>
 	</resultMap>
 		
-	<select id="find-PowerDatum-for-agg-hour" resultMap="ReportingPowerDatumAggResult">
+	<select id="find-PowerDatum-for-agg-hour" resultMap="ReportingPowerDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT 
 			<include refid="fragment-ReportingPowerDatum-agg-result"/>
 			
@@ -203,7 +203,7 @@
 		ORDER BY created_date
 	</select>
 	
-	<select id="find-PowerDatum-for-agg-day" resultMap="ReportingPowerDatumAggResult">
+	<select id="find-PowerDatum-for-agg-day" resultMap="ReportingPowerDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT 
 			<include refid="fragment-ReportingPowerDatum-agg-result"/>
 			
@@ -232,7 +232,7 @@
 		ORDER BY created_date
 	</select>
 
-	<select id="find-PowerDatum-for-agg-week" resultMap="ReportingPowerDatumAggResult">
+	<select id="find-PowerDatum-for-agg-week" resultMap="ReportingPowerDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT 
 			<include refid="fragment-ReportingPowerDatum-agg-result"/>
 			
@@ -267,7 +267,7 @@
 		ORDER BY created_date
 	</select>
 	
-	<select id="find-PowerDatum-for-agg-month" resultMap="ReportingPowerDatumAggResult">
+	<select id="find-PowerDatum-for-agg-month" resultMap="ReportingPowerDatumAggResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT 
 			<include refid="fragment-ReportingPowerDatum-agg-result"/>
 			

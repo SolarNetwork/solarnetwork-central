@@ -259,7 +259,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	// Propagation.REQUIRED for server-side cursors
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public List<T> getAll(List<SortDescriptor> sortDescriptors) {
 		List<T> results;
 		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {

@@ -97,7 +97,8 @@ public abstract class BaseMyBatisAggregationFilterableDatumDao<T extends Datum, 
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	// Propagation.REQUIRED for server-side cursors
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public FilterResults<AM> findAggregationFiltered(final AF filter,
 			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max) {
 		final String filterDomain = getMemberDomainKey(aggregationFilterResultClass);

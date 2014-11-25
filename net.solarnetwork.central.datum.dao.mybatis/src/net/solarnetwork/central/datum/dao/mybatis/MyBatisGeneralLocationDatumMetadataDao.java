@@ -35,6 +35,8 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link GeneralLocationDatumMetadataDao}.
@@ -69,6 +71,8 @@ public class MyBatisGeneralLocationDatumMetadataDao extends
 	}
 
 	@Override
+	// Propagation.REQUIRED for server-side cursors
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public FilterResults<GeneralLocationDatumMetadataFilterMatch> findFiltered(
 			GeneralLocationDatumMetadataFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {

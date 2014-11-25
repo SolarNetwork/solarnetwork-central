@@ -89,7 +89,8 @@ public abstract class BaseMyBatisFilterableDatumDao<T extends Datum, M extends F
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	// Propagation.REQUIRED for server-side cursors
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public FilterResults<M> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
 		final String filterDomain = getMemberDomainKey(filterResultClass);

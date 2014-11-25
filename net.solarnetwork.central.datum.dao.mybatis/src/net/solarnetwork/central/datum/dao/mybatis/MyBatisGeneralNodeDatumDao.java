@@ -140,7 +140,8 @@ public class MyBatisGeneralNodeDatumDao extends
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	// Propagation.REQUIRED for server-side cursors
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public FilterResults<GeneralNodeDatumFilterMatch> findFiltered(GeneralNodeDatumFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		final String query = getQueryForFilter(filter);
@@ -168,7 +169,8 @@ public class MyBatisGeneralNodeDatumDao extends
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	// Propagation.REQUIRED for server-side cursors
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public FilterResults<ReportingGeneralNodeDatumMatch> findAggregationFiltered(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {

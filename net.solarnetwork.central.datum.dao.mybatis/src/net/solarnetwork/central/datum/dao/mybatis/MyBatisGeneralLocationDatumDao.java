@@ -141,7 +141,8 @@ public class MyBatisGeneralLocationDatumDao extends
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	// Propagation.REQUIRED for server-side cursors
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public FilterResults<GeneralLocationDatumFilterMatch> findFiltered(
 			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
@@ -170,7 +171,8 @@ public class MyBatisGeneralLocationDatumDao extends
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	// Propagation.REQUIRED for server-side cursors
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public FilterResults<ReportingGeneralLocationDatumMatch> findAggregationFiltered(
 			AggregateGeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
