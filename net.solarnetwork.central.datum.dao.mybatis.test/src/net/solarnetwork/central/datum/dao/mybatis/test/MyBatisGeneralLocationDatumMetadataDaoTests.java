@@ -220,4 +220,20 @@ public class MyBatisGeneralLocationDatumMetadataDaoTests extends AbstractMyBatis
 		assertEquals(1, (int) results.getReturnedResultCount());
 	}
 
+	@Test
+	public void findFilteredWithTagAndRegionQuery() {
+		storeNew();
+
+		SolarLocation loc = new SolarLocation();
+		loc.setRegion("nz");
+		DatumFilterCommand criteria = new DatumFilterCommand(loc);
+		criteria.setTags(new String[] { "foo" });
+
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria,
+				null, null, null);
+		assertNotNull(results);
+		assertEquals(1L, (long) results.getTotalResults());
+		assertEquals(1, (int) results.getReturnedResultCount());
+	}
+
 }

@@ -84,7 +84,7 @@
 				AND l.fts_default @@ solarcommon.plainto_prefix_tsquery(#{fts,javaType=string})
 			</if>
 			<if test="filter.tags != null and filter.tags.length &gt; 0">
-				trim(jtag::text, '"') = ANY(#{filter.tags,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+				AND trim(jtag::text, '"') = ANY(#{filter.tags,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 		</where>
 	</sql>
