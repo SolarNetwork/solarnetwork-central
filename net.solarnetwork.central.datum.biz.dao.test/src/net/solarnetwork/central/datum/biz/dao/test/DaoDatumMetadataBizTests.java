@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.biz.dao.test;
 
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -39,12 +41,12 @@ import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.daum.biz.dao.DaoDatumMetadataBiz;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import net.solarnetwork.domain.GeneralDatumMetadata;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Test cases for the {@link DaoDatumMetadataBiz} class.
@@ -52,23 +54,30 @@ import org.springframework.test.context.ContextConfiguration;
  * @author matt
  * @version 1.0
  */
-@ContextConfiguration
-public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
+public class DaoDatumMetadataBizTests {
 
+	private final Long TEST_NODE_ID = -11L;
 	private final String TEST_SOURCE_ID = "test.source";
 	private final String TEST_SOURCE_ID_2 = "test.source.2";
 
-	@Autowired
 	private GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao;
-
-	@Autowired
 	private GeneralLocationDatumMetadataDao generalLocationDatumMetadataDao;
 
 	private DaoDatumMetadataBiz biz;
 
+	private void replayAll() {
+		replay(generalLocationDatumMetadataDao, generalNodeDatumMetadataDao);
+	}
+
+	private void verifyAll() {
+		verify(generalLocationDatumMetadataDao, generalNodeDatumMetadataDao);
+	}
+
 	@Before
 	public void setup() {
 		biz = new DaoDatumMetadataBiz();
+		generalLocationDatumMetadataDao = EasyMock.createMock(GeneralLocationDatumMetadataDao.class);
+		generalNodeDatumMetadataDao = EasyMock.createMock(GeneralNodeDatumMetadataDao.class);
 		biz.setGeneralLocationDatumMetadataDao(generalLocationDatumMetadataDao);
 		biz.setGeneralNodeDatumMetadataDao(generalNodeDatumMetadataDao);
 	}
@@ -78,7 +87,22 @@ public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("foo", "bar");
 		meta.addTag("bam");
+
+		NodeSourcePK pk = new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID);
+		Capture<GeneralNodeDatumMetadata> metaCap = new Capture<GeneralNodeDatumMetadata>();
+
+		EasyMock.expect(generalNodeDatumMetadataDao.get(pk)).andReturn(null);
+		EasyMock.expect(generalNodeDatumMetadataDao.store(EasyMock.capture(metaCap))).andReturn(pk);
+
+		replayAll();
 		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+		verifyAll();
+
+		GeneralNodeDatumMetadata stored = metaCap.getValue();
+		assertEquals("Node", pk.getNodeId(), stored.getNodeId());
+		assertEquals("Source", pk.getSourceId(), stored.getSourceId());
+		assertTrue("Tag created", stored.getMeta().hasTag("bam"));
+		assertEquals("Info value", "bar", stored.getMeta().getInfoString("foo"));
 	}
 
 	@Test
@@ -87,50 +111,74 @@ public class DaoDatumMetadataBizTests extends AbstractCentralTransactionalTest {
 		meta.putInfoValue("foo", "bar");
 		meta.putInfoValue("watts", "unit", "W");
 		meta.addTag("bam");
+
+		NodeSourcePK pk = new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID);
+		Capture<GeneralNodeDatumMetadata> metaCap = new Capture<GeneralNodeDatumMetadata>();
+
+		EasyMock.expect(generalNodeDatumMetadataDao.get(pk)).andReturn(null);
+		EasyMock.expect(generalNodeDatumMetadataDao.store(EasyMock.capture(metaCap))).andReturn(pk);
+
+		replayAll();
 		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+		verifyAll();
+
+		GeneralNodeDatumMetadata stored = metaCap.getValue();
+		assertEquals("Node", pk.getNodeId(), stored.getNodeId());
+		assertEquals("Source", pk.getSourceId(), stored.getSourceId());
+		assertTrue("Tag created", stored.getMeta().hasTag("bam"));
+		assertEquals("Info value", "bar", stored.getMeta().getInfoString("foo"));
+		assertEquals("Info prop value", "W", stored.getMeta().getInfoString("watts", "unit"));
 	}
 
 	@Test
 	public void findGeneralNodeDatumMetadataSingle() {
-		addGeneralNodeDatumMetadataNew();
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setSourceId(TEST_SOURCE_ID);
 
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
-				criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
-		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
-
-		GeneralNodeDatumMetadataFilterMatch match = results.getResults().iterator().next();
-		assertEquals("Primary key", new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
+		generalNodeDatumMetadataDao.findFiltered(criteria, null, null, null);
 	}
 
 	@Test
 	public void addGeneralNodeDatumMetadataMerge() {
-		addGeneralNodeDatumMetadataNew();
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
-		meta.putInfoValue("foo", "bam"); // this should replace
-		meta.putInfoValue("oof", "rab");
+		meta.putInfoValue("foo", "bar");
+		meta.addTag("bam");
+
+		NodeSourcePK pk = new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID);
+		final Capture<GeneralNodeDatumMetadata> metaCap = new Capture<GeneralNodeDatumMetadata>();
+
+		EasyMock.expect(generalNodeDatumMetadataDao.get(pk)).andReturn(null);
+		EasyMock.expect(generalNodeDatumMetadataDao.store(EasyMock.capture(metaCap))).andReturn(pk);
+
+		GeneralDatumMetadata meta2 = new GeneralDatumMetadata();
+		meta2.putInfoValue("foo", "bam"); // this should replace
+		meta2.putInfoValue("oof", "rab");
 		meta.addTag("mab");
+
+		Capture<GeneralNodeDatumMetadata> meta2Cap = new Capture<GeneralNodeDatumMetadata>();
+
+		EasyMock.expect(generalNodeDatumMetadataDao.get(pk)).andAnswer(
+				new IAnswer<GeneralNodeDatumMetadata>() {
+
+					@Override
+					public GeneralNodeDatumMetadata answer() throws Throwable {
+						return metaCap.getValue();
+					}
+				});
+		EasyMock.expect(generalNodeDatumMetadataDao.store(EasyMock.capture(meta2Cap))).andReturn(pk);
+
+		replayAll();
 		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta2);
+		verifyAll();
 
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setSourceId(TEST_SOURCE_ID);
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
-				criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
-		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
-
-		GeneralNodeDatumMetadataFilterMatch match = results.getResults().iterator().next();
-		assertEquals("Primary key", new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
-		assertTrue(match instanceof GeneralNodeDatumMetadata);
-		meta = ((GeneralNodeDatumMetadata) match).getMeta();
-		assertTrue("Has original tag", meta.hasTag("bam"));
-		assertTrue("Has new tag", meta.hasTag("mab"));
-		assertEquals("Replaced info value", "bam", meta.getInfoString("foo"));
-		assertEquals("New info value", "rab", meta.getInfoString("oof"));
+		GeneralNodeDatumMetadata stored = meta2Cap.getValue();
+		assertEquals("Node", pk.getNodeId(), stored.getNodeId());
+		assertEquals("Source", pk.getSourceId(), stored.getSourceId());
+		assertTrue("Has original tag", stored.getMeta().hasTag("bam"));
+		assertTrue("Has new tag", stored.getMeta().hasTag("mab"));
+		assertEquals("Replaced info value", "bam", stored.getMeta().getInfoString("foo"));
+		assertEquals("New info value", "rab", stored.getMeta().getInfoString("oof"));
 	}
 
 	@Test
