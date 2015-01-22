@@ -183,82 +183,70 @@ public class DaoDatumMetadataBizTests {
 
 	@Test
 	public void addGeneralNodeDatumMetadataMergeWithPropertyMeta() {
-		addGeneralNodeDatumMetadataNewWithPropertyMeta();
-		GeneralDatumMetadata meta = new GeneralDatumMetadata();
-		meta.putInfoValue("foo", "bam"); // this should replace
-		meta.putInfoValue("oof", "rab");
-		meta.putInfoValue("watts", "unit", "Wh"); // this should replace
-		meta.putInfoValue("watts", "unitType", "SI");
-		meta.addTag("mab");
-		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
-
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setSourceId(TEST_SOURCE_ID);
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
-				criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
-		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
-
-		GeneralNodeDatumMetadataFilterMatch match = results.getResults().iterator().next();
-		assertEquals("Primary key", new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
-		assertTrue(match instanceof GeneralNodeDatumMetadata);
-		meta = ((GeneralNodeDatumMetadata) match).getMeta();
-		assertTrue("Has original tag", meta.hasTag("bam"));
-		assertTrue("Has new tag", meta.hasTag("mab"));
-		assertEquals("Replaced info value", "bam", meta.getInfoString("foo"));
-		assertEquals("New info value", "rab", meta.getInfoString("oof"));
-		assertEquals("Replaced info property value", "Wh", meta.getInfoString("watts", "unit"));
-		assertEquals("New info property value", "SI", meta.getInfoString("watts", "unitType"));
-	}
-
-	@Test
-	public void findGeneralNodeDatumMetadataMultiple() {
-		addGeneralNodeDatumMetadataNew();
-
-		// add another, for a different source
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("foo", "bar");
+		meta.putInfoValue("watts", "unit", "W");
 		meta.addTag("bam");
-		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID_2, meta);
 
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
-				criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals("Returned results", Integer.valueOf(2), results.getReturnedResultCount());
-		assertEquals("Total results", Long.valueOf(2L), results.getTotalResults());
+		NodeSourcePK pk = new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID);
+		final Capture<GeneralNodeDatumMetadata> metaCap = new Capture<GeneralNodeDatumMetadata>();
 
-		Set<NodeSourcePK> expectedKeys = new HashSet<NodeSourcePK>(Arrays.asList(new NodeSourcePK(
-				TEST_NODE_ID, TEST_SOURCE_ID), new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID_2)));
-		for ( GeneralNodeDatumMetadataFilterMatch match : results.getResults() ) {
-			assertTrue("Found expected result", expectedKeys.remove(match.getId()));
-		}
-		assertEquals("Expected count", 0, expectedKeys.size());
+		EasyMock.expect(generalNodeDatumMetadataDao.get(pk)).andReturn(null);
+		EasyMock.expect(generalNodeDatumMetadataDao.store(EasyMock.capture(metaCap))).andReturn(pk);
+
+		GeneralDatumMetadata meta2 = new GeneralDatumMetadata();
+		meta2.putInfoValue("foo", "bam"); // this should replace
+		meta2.putInfoValue("oof", "rab");
+		meta2.putInfoValue("watts", "unit", "Wh"); // this should replace
+		meta2.putInfoValue("watts", "unitType", "SI");
+		meta2.addTag("mab");
+
+		Capture<GeneralNodeDatumMetadata> meta2Cap = new Capture<GeneralNodeDatumMetadata>();
+
+		EasyMock.expect(generalNodeDatumMetadataDao.get(pk)).andAnswer(
+				new IAnswer<GeneralNodeDatumMetadata>() {
+
+					@Override
+					public GeneralNodeDatumMetadata answer() throws Throwable {
+						return metaCap.getValue();
+					}
+				});
+		EasyMock.expect(generalNodeDatumMetadataDao.store(EasyMock.capture(meta2Cap))).andReturn(pk);
+
+		replayAll();
+		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta);
+		biz.addGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID, meta2);
+		verifyAll();
+
+		GeneralNodeDatumMetadata stored = metaCap.getValue();
+		assertEquals("Node", pk.getNodeId(), stored.getNodeId());
+		assertEquals("Source", pk.getSourceId(), stored.getSourceId());
+
+		assertTrue("Has original tag", stored.getMeta().hasTag("bam"));
+		assertTrue("Has new tag", stored.getMeta().hasTag("mab"));
+		assertEquals("Replaced info value", "bam", stored.getMeta().getInfoString("foo"));
+		assertEquals("New info value", "rab", stored.getMeta().getInfoString("oof"));
+		assertEquals("Replaced info property value", "Wh",
+				stored.getMeta().getInfoString("watts", "unit"));
+		assertEquals("New info property value", "SI", stored.getMeta()
+				.getInfoString("watts", "unitType"));
 	}
 
 	@Test
 	public void removeNode() {
-		addGeneralNodeDatumMetadataNew();
 
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setSourceId(TEST_SOURCE_ID);
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = biz.findGeneralNodeDatumMetadata(
-				criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals("Returned results", Integer.valueOf(1), results.getReturnedResultCount());
-		assertEquals("Total results", Long.valueOf(1L), results.getTotalResults());
+		GeneralNodeDatumMetadata gndm = new GeneralNodeDatumMetadata();
+		gndm.setNodeId(TEST_NODE_ID);
+		gndm.setSourceId(TEST_SOURCE_ID);
 
-		GeneralNodeDatumMetadataFilterMatch match = results.getResults().iterator().next();
-		assertEquals("Primary key", new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), match.getId());
+		NodeSourcePK pk = new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID);
 
+		EasyMock.expect(generalNodeDatumMetadataDao.get(pk)).andReturn(gndm);
+		generalNodeDatumMetadataDao.delete(gndm);
+
+		replayAll();
 		biz.removeGeneralNodeDatumMetadata(TEST_NODE_ID, TEST_SOURCE_ID);
-
-		// now should be gone
-		results = biz.findGeneralNodeDatumMetadata(criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals("Returned results", Integer.valueOf(0), results.getReturnedResultCount());
-		assertEquals("Total results", Long.valueOf(0L), results.getTotalResults());
+		verifyAll();
 	}
 
 	@Test
