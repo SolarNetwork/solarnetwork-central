@@ -44,9 +44,8 @@
 	</mvc:annotation-driven>
 
 	<bean id="mappedViewResolver"
-		class="org.springframework.web.servlet.view.XmlViewResolver">
+		class="org.springframework.web.servlet.view.BeanNameViewResolver">
 		<property name="order" value="1"/>
-		<property name="location" value="/WEB-INF/solarin-views.xml"/>
 	</bean>
 
 	<bean id="jspViewResolver"
@@ -58,4 +57,20 @@
 		<property name="suffix" value=".jsp"/>
 	</bean>
 	
+	<bean id="xml" class="net.solarnetwork.web.support.SimpleXmlView">
+		<property name="contentType" value="text/xml;charset=UTF-8"/>
+		<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
+		<property name="classNamesAllowedForNesting">
+			<set>
+				<value>net.solarnetwork</value>
+			</set>
+		</property>
+	</bean>
+	
+	<bean id="json" class="net.solarnetwork.web.support.JSONView">
+		<property name="contentType" value="application/json;charset=UTF-8"/>
+		<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
+		<property name="includeParentheses" value="false"/>
+	</bean>
+
 </beans>
