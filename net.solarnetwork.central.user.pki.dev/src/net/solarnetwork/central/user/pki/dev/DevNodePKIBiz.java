@@ -23,16 +23,25 @@
 package net.solarnetwork.central.user.pki.dev;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.UUID;
 import net.solarnetwork.central.security.SecurityException;
@@ -59,6 +68,8 @@ public class DevNodePKIBiz implements NodePKIBiz {
 	private CertificateService certificateService;
 	private CertificationAuthorityService caService;
 	private File baseDir = new File("var/DeveloperCA");
+	private int keySize = 2048;
+	private String caDN = "CN=Developer CA, O=SolarDev";
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -98,8 +109,15 @@ public class DevNodePKIBiz implements NodePKIBiz {
 			log.error("Error reading CSR to [{}]", csrFile, e);
 			throw new CertificateException("Error reading CSR data");
 		}
-		X509Certificate caCert = null;// TODO
-		PrivateKey caPrivateKey = null;//TODO
+
+		final String caAlias = "ca";
+		final KeyStore keyStore = loadKeyStore();
+		X509Certificate caCert = getCertificate(keyStore, caAlias);
+		if ( caCert == null ) {
+			// generate a new CA
+			caCert = createCACertificate(keyStore, caDN, caAlias);
+		}
+		PrivateKey caPrivateKey = getPrivateKey(keyStore, caAlias);
 		X509Certificate signedCert = caService.signCertificate(csr, caCert, caPrivateKey);
 		return new X509Certificate[] { caCert, signedCert };
 	}
@@ -125,6 +143,47 @@ public class DevNodePKIBiz implements NodePKIBiz {
 	@Override
 	public X509Certificate[] parsePKCS7CertificateChainString(String pem) throws CertificateException {
 		return certificateService.parsePKCS7CertificateChainString(pem);
+	}
+
+	private X509Certificate getCertificate(KeyStore keyStore, String alias) {
+		try {
+			return (X509Certificate) keyStore.getCertificate(alias);
+		} catch ( KeyStoreException e ) {
+			throw new CertificateException("Error opening node certificate", e);
+		}
+	}
+
+	private PrivateKey getPrivateKey(KeyStore keyStore, String alias) {
+		try {
+			return (PrivateKey) keyStore.getKey(alias, getKeyStorePassword().toCharArray());
+		} catch ( UnrecoverableKeyException e ) {
+			throw new CertificateException("Error opening node certificate", e);
+		} catch ( KeyStoreException e ) {
+			throw new CertificateException("Error opening node certificate", e);
+		} catch ( NoSuchAlgorithmException e ) {
+			throw new CertificateException("Error opening node certificate", e);
+		}
+	}
+
+	private X509Certificate createCACertificate(KeyStore keyStore, String dn, String alias) {
+		try {
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+			keyGen.initialize(keySize, new SecureRandom());
+			KeyPair keypair = keyGen.generateKeyPair();
+			PublicKey publicKey = keypair.getPublic();
+			PrivateKey privateKey = keypair.getPrivate();
+
+			Certificate cert = caService.generateCertificationAuthorityCertificate(dn, publicKey,
+					privateKey);
+			keyStore.setKeyEntry(alias, privateKey, getKeyStorePassword().toCharArray(),
+					new Certificate[] { cert });
+			saveKeyStore(keyStore);
+			return (X509Certificate) cert;
+		} catch ( NoSuchAlgorithmException e ) {
+			throw new CertificateException("Error setting up node key pair", e);
+		} catch ( KeyStoreException e ) {
+			throw new CertificateException("Error setting up node key pair", e);
+		}
 	}
 
 	private String getKeyStorePassword() {
@@ -155,8 +214,12 @@ public class DevNodePKIBiz implements NodePKIBiz {
 		return pw;
 	}
 
+	private File getKeyStoreFile() {
+		return new File(baseDir, "ca.jks");
+	}
+
 	private synchronized KeyStore loadKeyStore() {
-		File ksFile = new File(baseDir, "ca.jks");
+		File ksFile = getKeyStoreFile();
 		InputStream in = null;
 		String passwd = getKeyStorePassword();
 		try {
@@ -199,6 +262,40 @@ public class DevNodePKIBiz implements NodePKIBiz {
 		}
 	}
 
+	private synchronized void saveKeyStore(KeyStore keyStore) {
+		if ( keyStore == null ) {
+			return;
+		}
+		final File ksFile = getKeyStoreFile();
+		final File ksDir = ksFile.getParentFile();
+		if ( !ksDir.isDirectory() && !ksDir.mkdirs() ) {
+			throw new RuntimeException("Unable to create KeyStore directory: " + ksFile.getParent());
+		}
+		OutputStream out = null;
+		try {
+			String passwd = getKeyStorePassword();
+			out = new BufferedOutputStream(new FileOutputStream(ksFile));
+			keyStore.store(out, passwd.toCharArray());
+		} catch ( KeyStoreException e ) {
+			throw new CertificateException("Error saving certificate key store", e);
+		} catch ( NoSuchAlgorithmException e ) {
+			throw new CertificateException("Error saving certificate key store", e);
+		} catch ( java.security.cert.CertificateException e ) {
+			throw new CertificateException("Error saving certificate key store", e);
+		} catch ( IOException e ) {
+			throw new CertificateException("Error saving certificate key store", e);
+		} finally {
+			if ( out != null ) {
+				try {
+					out.flush();
+					out.close();
+				} catch ( IOException e ) {
+					throw new CertificateException("Error closing KeyStore file: " + ksFile.getPath(), e);
+				}
+			}
+		}
+	}
+
 	public void setCertificateService(CertificateService certificateService) {
 		this.certificateService = certificateService;
 	}
@@ -209,6 +306,14 @@ public class DevNodePKIBiz implements NodePKIBiz {
 
 	public void setCaService(CertificationAuthorityService caService) {
 		this.caService = caService;
+	}
+
+	public void setKeySize(int keySize) {
+		this.keySize = keySize;
+	}
+
+	public void setCaDN(String caDN) {
+		this.caDN = caDN;
 	}
 
 }
