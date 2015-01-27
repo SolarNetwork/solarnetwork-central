@@ -214,7 +214,7 @@ public class DevNodePKIBiz implements NodePKIBiz {
 	public String submitCSR(X509Certificate certificate, PrivateKey privateKey) throws SecurityException {
 		final String csr = certificateService.generatePKCS10CertificateRequestString(certificate,
 				privateKey);
-		final String csrID = DigestUtils.sha256Hex(csr);
+		final String csrID = DigestUtils.md5Hex(csr);
 		final File csrDir = new File(baseDir, DIR_REQUESTS);
 		if ( !csrDir.isDirectory() ) {
 			csrDir.mkdirs();
