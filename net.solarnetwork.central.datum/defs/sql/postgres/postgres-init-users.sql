@@ -180,3 +180,30 @@ CREATE TABLE solaruser.user_node_cert (
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+CREATE OR REPLACE FUNCTION solaruser.store_user_node_cert(
+	created solarcommon.ts, 
+	node solarcommon.node_id, 
+	userid bigint, 
+	stat char, 
+	request text,
+	keydata bytea)
+  RETURNS void AS
+$BODY$
+DECLARE
+	ts TIMESTAMP WITH TIME ZONE := (CASE WHEN created IS NULL THEN now() ELSE created END);
+BEGIN
+	BEGIN
+		INSERT INTO solaruser.user_node_cert(created, node_id, user_id, status, request_id, keystore)
+		VALUES (ts, node, userid, stat, request, keydata);
+	EXCEPTION WHEN unique_violation THEN
+		UPDATE solaruser.user_node_cert SET 
+			keystore = keydata, 
+			status = stat,
+			request_id = request
+		WHERE
+			node_id = node
+			AND user_id = userid;
+	END;
+END;$BODY$
+  LANGUAGE plpgsql VOLATILE;
