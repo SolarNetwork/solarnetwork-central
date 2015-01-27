@@ -17,6 +17,7 @@
 	<!-- Service References -->
 	
 	<reference id="certificateService" interface="net.solarnetwork.support.CertificateService"/>
+	<reference id="caService" interface="net.solarnetwork.support.CertificationAuthorityService"/>
 		
 	<!-- Published Services -->
 	
@@ -24,9 +25,10 @@
 	
 	<!-- Supporting Services -->
 
-	<bean id="devNodePKIBiz" class="net.solarnetwork.central.user.pki.dev.DevNodePKIBiz">
+	<bean id="devNodePKIBiz" class="net.solarnetwork.central.user.pki.dev.DevNodePKIBiz" init-method="init">
 		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.pki.dev.DevNodePKIBiz" autowire-on-update="true"/>
 		<property name="certificateService" ref="certificateService"/>
+		<property name="caService" ref="caService"/>
 	</bean>
 
 </blueprint>

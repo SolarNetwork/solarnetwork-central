@@ -62,6 +62,7 @@ import org.springframework.util.FileCopyUtils;
  */
 public class DevNodePKIBiz implements NodePKIBiz {
 
+	private static final String CA_ALIAS = "ca";
 	private static final String DIR_REQUESTS = "requests";
 	private static final String PASSWORD_FILE = "secret";
 
@@ -72,6 +73,80 @@ public class DevNodePKIBiz implements NodePKIBiz {
 	private String caDN = "CN=Developer CA, O=SolarDev";
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
+
+	/**
+	 * Initialize this service after all properties are configured.
+	 * 
+	 * <p>
+	 * This method will generate a new certification authority (CA) certificate
+	 * if one does not already exist in the configured {@code baseDir}
+	 * directory. When it is generated, a copy of the keystore will be saved as
+	 * {@code central.jks} with a password {@code dev123}, which is designed to
+	 * be configured with your development webserver to support SolarIn
+	 * development.
+	 * </p>
+	 * 
+	 * <p>
+	 * Also, if a new CA certificate is generated, a {@code central-trust.jks}
+	 * keystore will be created that contains just the CA certificate. This is
+	 * designed to be configured as the developer node's trust store, to allow
+	 * posting to the development SolarIn service.
+	 * </p>
+	 */
+	public void init() {
+		// make sure CA cert created
+		final KeyStore keyStore = loadKeyStore();
+		X509Certificate caCert = getCertificate(keyStore, CA_ALIAS);
+		if ( caCert == null ) {
+			// generate a new CA
+			caCert = createCACertificate(keyStore, caDN, CA_ALIAS);
+
+			// save a copy of KeyStore with private key to a new "central" KeyStore, to use with dev web server
+			File webserverKeyStoreFile = new File(getKeyStoreFile().getParentFile(), "central.jks");
+			OutputStream out = null;
+			try {
+				out = new BufferedOutputStream(new FileOutputStream(webserverKeyStoreFile));
+				keyStore.store(out, "dev123".toCharArray());
+				log.info("Development webserver keystore saved to {}; password is dev123",
+						webserverKeyStoreFile.getAbsolutePath());
+			} catch ( Exception e ) {
+				log.error("Error saving central webserver KeyStore [{}]", webserverKeyStoreFile, e);
+			} finally {
+				if ( out != null ) {
+					try {
+						out.flush();
+						out.close();
+					} catch ( IOException e2 ) {
+						log.warn("Error closing central.jks OutputStream", e2);
+					}
+				}
+			}
+
+			// save just the certificate to a new "central-trust" keystore, to use with Node
+			File trustKeyStoreFile = new File(getKeyStoreFile().getParentFile(), "central-trust.jks");
+			out = null;
+			try {
+				KeyStore trustStore = loadKeyStore(KeyStore.getDefaultType(), null, "");
+				trustStore.setCertificateEntry(CA_ALIAS, caCert);
+				out = new BufferedOutputStream(new FileOutputStream(trustKeyStoreFile));
+				keyStore.store(out, "".toCharArray());
+				log.info("Development node trust keystore saved to {}",
+						trustKeyStoreFile.getAbsolutePath());
+			} catch ( Exception e ) {
+				log.error("Error saving node trust KeyStore [{}]", trustKeyStoreFile, e);
+			} finally {
+				if ( out != null ) {
+					try {
+						out.flush();
+						out.close();
+					} catch ( IOException e2 ) {
+						log.warn("Error closing central.jks OutputStream", e2);
+					}
+				}
+			}
+		}
+
+	}
 
 	@Override
 	public String submitCSR(X509Certificate certificate, PrivateKey privateKey) throws SecurityException {
@@ -110,14 +185,13 @@ public class DevNodePKIBiz implements NodePKIBiz {
 			throw new CertificateException("Error reading CSR data");
 		}
 
-		final String caAlias = "ca";
 		final KeyStore keyStore = loadKeyStore();
-		X509Certificate caCert = getCertificate(keyStore, caAlias);
+		X509Certificate caCert = getCertificate(keyStore, CA_ALIAS);
 		if ( caCert == null ) {
 			// generate a new CA
-			caCert = createCACertificate(keyStore, caDN, caAlias);
+			caCert = createCACertificate(keyStore, caDN, CA_ALIAS);
 		}
-		PrivateKey caPrivateKey = getPrivateKey(keyStore, caAlias);
+		PrivateKey caPrivateKey = getPrivateKey(keyStore, CA_ALIAS);
 		X509Certificate signedCert = caService.signCertificate(csr, caCert, caPrivateKey);
 		return new X509Certificate[] { caCert, signedCert };
 	}
