@@ -63,6 +63,7 @@ import org.springframework.util.FileCopyUtils;
 public class DevNodePKIBiz implements NodePKIBiz {
 
 	private static final String CA_ALIAS = "ca";
+	private static final String WEBSERVER_ALIAS = "central";
 	private static final String DIR_REQUESTS = "requests";
 	private static final String PASSWORD_FILE = "secret";
 
@@ -100,52 +101,113 @@ public class DevNodePKIBiz implements NodePKIBiz {
 		if ( caCert == null ) {
 			// generate a new CA
 			caCert = createCACertificate(keyStore, caDN, CA_ALIAS);
+		}
 
-			// save a copy of KeyStore with private key to a new "central" KeyStore, to use with dev web server
-			File webserverKeyStoreFile = new File(getKeyStoreFile().getParentFile(), "central.jks");
-			OutputStream out = null;
-			try {
-				out = new BufferedOutputStream(new FileOutputStream(webserverKeyStoreFile));
-				keyStore.store(out, "dev123".toCharArray());
-				log.info("Development webserver keystore saved to {}; password is dev123",
-						webserverKeyStoreFile.getAbsolutePath());
-			} catch ( Exception e ) {
-				log.error("Error saving central webserver KeyStore [{}]", webserverKeyStoreFile, e);
-			} finally {
-				if ( out != null ) {
-					try {
-						out.flush();
-						out.close();
-					} catch ( IOException e2 ) {
-						log.warn("Error closing central.jks OutputStream", e2);
+		InputStream in = null;
+
+		// create a webserver keystore if one does not exist
+		final String webserverKeystorePassword = "dev123";
+		final File webserverKeyStoreFile = new File(getKeyStoreFile().getParentFile(), "central.jks");
+		final KeyStore webserverKeyStore;
+		try {
+			if ( webserverKeyStoreFile.canRead() ) {
+				in = new BufferedInputStream(new FileInputStream(webserverKeyStoreFile));
+			}
+			webserverKeyStore = loadKeyStore(KeyStore.getDefaultType(), in, webserverKeystorePassword);
+			X509Certificate webserverCert = getCertificate(webserverKeyStore, WEBSERVER_ALIAS);
+			if ( webserverCert == null ) {
+				OutputStream out = null;
+				try {
+					// create a new private key + CSR and approve for webserver certificate for developer SolarIn
+					KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+					keyGen.initialize(2048, new SecureRandom());
+					KeyPair webserverKeyPair = keyGen.generateKeyPair();
+					webserverCert = certificateService.generateCertificate(
+							"CN=solarnetworkdev.net, O=SolarDev", webserverKeyPair.getPublic(),
+							webserverKeyPair.getPrivate());
+					String csr = certificateService.generatePKCS10CertificateRequestString(
+							webserverCert, webserverKeyPair.getPrivate());
+					X509Certificate signedWebserverCert = caService.signCertificate(csr, caCert,
+							getPrivateKey(keyStore, CA_ALIAS));
+					webserverKeyStore.setKeyEntry(WEBSERVER_ALIAS, webserverKeyPair.getPrivate(),
+							webserverKeystorePassword.toCharArray(), new X509Certificate[] {
+									signedWebserverCert, caCert });
+
+					// add the CA cert as a trusted cert
+					webserverKeyStore.setCertificateEntry(CA_ALIAS, caCert);
+
+					out = new BufferedOutputStream(new FileOutputStream(webserverKeyStoreFile));
+					webserverKeyStore.store(out, "dev123".toCharArray());
+					log.info("Development webserver keystore saved to {}; password is dev123",
+							webserverKeyStoreFile.getAbsolutePath());
+				} catch ( Exception e ) {
+					log.error("Error saving central webserver KeyStore [{}]", webserverKeyStoreFile, e);
+				} finally {
+					if ( out != null ) {
+						try {
+							out.flush();
+							out.close();
+						} catch ( IOException e2 ) {
+							log.warn("Error closing central.jks OutputStream", e2);
+						}
 					}
 				}
 			}
-
-			// save just the certificate to a new "central-trust" keystore, to use with Node
-			File trustKeyStoreFile = new File(getKeyStoreFile().getParentFile(), "central-trust.jks");
-			out = null;
-			try {
-				KeyStore trustStore = loadKeyStore(KeyStore.getDefaultType(), null, "");
-				trustStore.setCertificateEntry(CA_ALIAS, caCert);
-				out = new BufferedOutputStream(new FileOutputStream(trustKeyStoreFile));
-				keyStore.store(out, "".toCharArray());
-				log.info("Development node trust keystore saved to {}",
-						trustKeyStoreFile.getAbsolutePath());
-			} catch ( Exception e ) {
-				log.error("Error saving node trust KeyStore [{}]", trustKeyStoreFile, e);
-			} finally {
-				if ( out != null ) {
-					try {
-						out.flush();
-						out.close();
-					} catch ( IOException e2 ) {
-						log.warn("Error closing central.jks OutputStream", e2);
-					}
+		} catch ( IOException e ) {
+			log.error("Error loading webserver keystore [{}]", webserverKeyStoreFile, e);
+		} finally {
+			if ( in != null ) {
+				try {
+					in.close();
+				} catch ( IOException e ) {
+					// ignore this
 				}
 			}
 		}
 
+		// make sure trust CA keystore exists
+		final File trustKeyStoreFile = new File(getKeyStoreFile().getParentFile(), "central-trust.jks");
+		final KeyStore trustStore;
+		try {
+			if ( trustKeyStoreFile.canRead() ) {
+				in = new BufferedInputStream(new FileInputStream(trustKeyStoreFile));
+			} else {
+				in = null;
+			}
+			trustStore = loadKeyStore(KeyStore.getDefaultType(), in, "");
+			X509Certificate trustCert = getCertificate(trustStore, CA_ALIAS);
+			if ( trustCert == null ) {
+				OutputStream out = null;
+				try {
+					trustStore.setCertificateEntry(CA_ALIAS, caCert);
+					out = new BufferedOutputStream(new FileOutputStream(trustKeyStoreFile));
+					trustStore.store(out, "".toCharArray());
+					log.info("Development node trust keystore saved to {}",
+							trustKeyStoreFile.getAbsolutePath());
+				} catch ( Exception e ) {
+					log.error("Error saving node trust KeyStore [{}]", trustKeyStoreFile, e);
+				} finally {
+					if ( out != null ) {
+						try {
+							out.flush();
+							out.close();
+						} catch ( IOException e2 ) {
+							log.warn("Error closing central.jks OutputStream", e2);
+						}
+					}
+				}
+			}
+		} catch ( IOException e ) {
+			log.error("Error loading trust keystore [{}]", trustKeyStoreFile, e);
+		} finally {
+			if ( in != null ) {
+				try {
+					in.close();
+				} catch ( IOException e ) {
+					// ignore this
+				}
+			}
+		}
 	}
 
 	@Override
@@ -376,6 +438,10 @@ public class DevNodePKIBiz implements NodePKIBiz {
 
 	public void setBaseDir(File baseDir) {
 		this.baseDir = baseDir;
+	}
+
+	public File getBaseDir() {
+		return baseDir;
 	}
 
 	public void setCaService(CertificationAuthorityService caService) {

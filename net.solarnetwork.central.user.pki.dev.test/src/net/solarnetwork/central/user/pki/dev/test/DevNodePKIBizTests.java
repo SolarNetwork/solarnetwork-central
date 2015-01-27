@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.pki.dev.test;
 
+import java.io.File;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -96,6 +97,17 @@ public class DevNodePKIBizTests {
 		Assert.assertNotNull("CSR request ID", reqID);
 		X509Certificate[] result = biz.approveCSR(reqID);
 		Assert.assertNotNull("X.509 certificate", result);
+	}
+
+	@Test
+	public void initCA() throws Exception {
+		biz.init();
+
+		File webserverKeyStoreFile = new File(biz.getBaseDir(), "central.jks");
+		Assert.assertTrue("Webserver KeyStore exists", webserverKeyStoreFile.canRead());
+
+		File nodeTrustKeyStoreFile = new File(biz.getBaseDir(), "central-trust.jks");
+		Assert.assertTrue("Node trust  KeyStore exists", nodeTrustKeyStoreFile.canRead());
 	}
 
 }
