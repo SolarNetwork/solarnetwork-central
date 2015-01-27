@@ -255,7 +255,7 @@ public class DevNodePKIBiz implements NodePKIBiz {
 		}
 		PrivateKey caPrivateKey = getPrivateKey(keyStore, CA_ALIAS);
 		X509Certificate signedCert = caService.signCertificate(csr, caCert, caPrivateKey);
-		return new X509Certificate[] { caCert, signedCert };
+		return new X509Certificate[] { signedCert, caCert };
 	}
 
 	@Override
