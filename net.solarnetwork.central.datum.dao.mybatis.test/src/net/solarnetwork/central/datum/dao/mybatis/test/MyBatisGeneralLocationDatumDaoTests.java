@@ -257,8 +257,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		storeNew();
 		ReadableInterval result = dao.getReportableInterval(TEST_LOC_ID, null);
 		assertNotNull(result);
-		assertEquals(lastDatum.getCreated(), result.getStart());
-		assertEquals(lastDatum.getCreated(), result.getEnd());
+		assertEquals(lastDatum.getCreated().getMillis(), result.getStart().getMillis());
+		assertEquals(lastDatum.getCreated().getMillis(), result.getEnd().getMillis());
 	}
 
 	@Test
@@ -271,8 +271,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 
 		ReadableInterval result = dao.getReportableInterval(TEST_LOC_ID, null);
 		assertNotNull(result);
-		assertEquals(lastDatum.getCreated(), result.getStart());
-		assertEquals(d2.getCreated(), result.getEnd());
+		assertEquals(lastDatum.getCreated().getMillis(), result.getStart().getMillis());
+		assertEquals(d2.getCreated().getMillis(), result.getEnd().getMillis());
 	}
 
 	@Test
@@ -286,8 +286,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 
 		ReadableInterval result = dao.getReportableInterval(TEST_LOC_ID, null);
 		assertNotNull(result);
-		assertEquals(lastDatum.getCreated(), result.getStart());
-		assertEquals(d2.getCreated(), result.getEnd());
+		assertEquals(lastDatum.getCreated().getMillis(), result.getStart().getMillis());
+		assertEquals(d2.getCreated().getMillis(), result.getEnd().getMillis());
 	}
 
 	@Test
@@ -302,8 +302,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		storeNew();
 		ReadableInterval result = dao.getReportableInterval(TEST_LOC_ID, TEST_SOURCE_ID);
 		assertNotNull(result);
-		assertEquals(lastDatum.getCreated(), result.getStart());
-		assertEquals(lastDatum.getCreated(), result.getEnd());
+		assertEquals(lastDatum.getCreated().getMillis(), result.getStart().getMillis());
+		assertEquals(lastDatum.getCreated().getMillis(), result.getEnd().getMillis());
 	}
 
 	@Test
@@ -317,13 +317,13 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 
 		ReadableInterval result = dao.getReportableInterval(TEST_LOC_ID, TEST_SOURCE_ID);
 		assertNotNull(result);
-		assertEquals(lastDatum.getCreated(), result.getStart());
-		assertEquals(lastDatum.getCreated(), result.getEnd());
+		assertEquals(lastDatum.getCreated().getMillis(), result.getStart().getMillis());
+		assertEquals(lastDatum.getCreated().getMillis(), result.getEnd().getMillis());
 
 		result = dao.getReportableInterval(TEST_LOC_ID, TEST_2ND_SOURCE);
 		assertNotNull(result);
-		assertEquals(d2.getCreated(), result.getStart());
-		assertEquals(d2.getCreated(), result.getEnd());
+		assertEquals(d2.getCreated().getMillis(), result.getStart().getMillis());
+		assertEquals(d2.getCreated().getMillis(), result.getEnd().getMillis());
 	}
 
 	@Test
