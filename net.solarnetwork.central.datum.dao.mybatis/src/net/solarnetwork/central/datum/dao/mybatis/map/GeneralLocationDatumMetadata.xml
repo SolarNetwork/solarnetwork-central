@@ -110,7 +110,7 @@
 				</foreach>
 			</when>
 			<otherwise>
-				meta.source_id
+				meta.source_id, meta.loc_id, meta.source_id
 			</otherwise>
 		</choose>
 	</select>
