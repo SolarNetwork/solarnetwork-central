@@ -44,7 +44,7 @@ import org.springframework.security.core.userdetails.User;
  * Security helper methods.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SecurityUtils {
 
@@ -169,6 +169,29 @@ public class SecurityUtils {
 			return (SecurityActor) auth.getDetails();
 		}
 		throw new SecurityException("Actor not available");
+	}
+
+	/**
+	 * Get the current {@link SecurityActor}'s {@code userId}.
+	 * 
+	 * @return The user ID of the current {@link SecurityActor} (never
+	 *         <em>null</em>).
+	 * @throws SecurityException
+	 *         If the actor is not available.
+	 * @since 1.3
+	 */
+	public static Long getCurrentActorUserId() throws SecurityException {
+		SecurityActor actor = getCurrentActor();
+		Long userId = null;
+		if ( actor instanceof SecurityUser ) {
+			userId = ((SecurityUser) actor).getUserId();
+		} else if ( actor instanceof SecurityToken ) {
+			userId = ((SecurityToken) actor).getUserId();
+		}
+		if ( userId != null ) {
+			return userId;
+		}
+		throw new SecurityException("User not available");
 	}
 
 	/**
