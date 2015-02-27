@@ -90,7 +90,10 @@ CREATE VIEW solaruser.user_auth_token_login  AS
 		u.enabled AS enabled,
 		u.id AS user_id,
 		u.disp_name AS display_name,
-		CAST(t.token_type AS character varying) AS token_type
+		CAST(t.token_type AS character varying) AS token_type,
+		ARRAY(SELECT n.node_id 
+			FROM solaruser.user_auth_token_node n 
+			WHERE n.auth_token = t.auth_token) AS node_ids
 	FROM solaruser.user_auth_token t
 	INNER JOIN solaruser.user_user u ON u.id = t.user_id
 	WHERE 
