@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * Controller for user nodes web service API.
@@ -70,8 +71,9 @@ public class NodesController extends WebServiceControllerSupport {
 	 * @return The list of nodes available to the active user.
 	 */
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
+	@ResponseBody
 	public Response<List<UserNode>> getMyNodes() {
-		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentUser().getUserId());
+		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentActorUserId());
 		return response(nodes);
 	}
 
@@ -81,9 +83,10 @@ public class NodesController extends WebServiceControllerSupport {
 	 * @return The list of pending node confirmations for the active user.
 	 */
 	@RequestMapping(value = "/pending", method = RequestMethod.GET)
+	@ResponseBody
 	public Response<List<UserNodeConfirmation>> getPendingNodes() {
 		List<UserNodeConfirmation> pending = userBiz.getPendingUserNodeConfirmations(SecurityUtils
-				.getCurrentUser().getUserId());
+				.getCurrentActorUserId());
 		return response(pending);
 	}
 
