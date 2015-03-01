@@ -24,7 +24,9 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.List;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
@@ -72,9 +74,11 @@ public class NodesController extends WebServiceControllerSupport {
 	 */
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
 	@ResponseBody
-	public Response<List<UserNode>> getMyNodes() {
+	public Response<FilterResults<UserNode>> getMyNodes() {
 		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentActorUserId());
-		return response(nodes);
+		FilterResults<UserNode> result = new BasicFilterResults<UserNode>(nodes, (long) nodes.size(), 0,
+				nodes.size());
+		return response(result);
 	}
 
 	/**
@@ -84,10 +88,12 @@ public class NodesController extends WebServiceControllerSupport {
 	 */
 	@RequestMapping(value = "/pending", method = RequestMethod.GET)
 	@ResponseBody
-	public Response<List<UserNodeConfirmation>> getPendingNodes() {
+	public Response<FilterResults<UserNodeConfirmation>> getPendingNodes() {
 		List<UserNodeConfirmation> pending = userBiz.getPendingUserNodeConfirmations(SecurityUtils
 				.getCurrentActorUserId());
-		return response(pending);
+		FilterResults<UserNodeConfirmation> result = new BasicFilterResults<UserNodeConfirmation>(
+				pending, (long) pending.size(), 0, pending.size());
+		return response(result);
 	}
 
 }
