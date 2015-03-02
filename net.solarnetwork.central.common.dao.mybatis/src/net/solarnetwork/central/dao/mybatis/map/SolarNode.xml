@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed Nov 05 09:48:44 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.dao.mybatis.SolarNode">
+
+	<select id="get-next-node-id" resultType="long">
+		SELECT nextval('solarnet.node_seq') AS id 
+	</select>
+
+	<insert id="insert-SolarNode" parameterType="SolarNode">
+		INSERT INTO solarnet.sn_node 
+			(node_id 
+			<if test="created != null">,created</if>
+			, node_name, loc_id, wloc_id)
+		VALUES
+			(#{id}
+			<if test="created != null">,#{created}</if>
+			, #{name}, #{locationId}, #{weatherLocationId})
+	</insert>
+
+	<update id="update-SolarNode" parameterType="SolarNode">
+		UPDATE
+			solarnet.sn_node 
+		SET
+			node_name = #{name},
+			loc_id = #{locationId},
+			wloc_id = #{weatherLocationId}
+		WHERE
+			node_id = #{id}
+	</update>
+
+	<sql id="fragment-SolarNode-full-result">
+		n.node_id AS sn_node_node_id, 
+		n.created AS sn_node_created,
+		n.node_name AS sn_node_node_name,
+		n.loc_id AS sn_node_loc_id,
+		n.wloc_id AS sn_node_wloc_id
+	</sql>
+
+	<resultMap id="SolarNodeFullResult" type="SolarNode">
+		<id property="id" column="sn_node_node_id"/>
+		<result property="created" column="sn_node_created"/>
+		<result property="name" column="sn_node_node_name"/>
+		<result property="locationId" column="sn_node_loc_id"/>
+		<result property="weatherLocationId" column="sn_node_wloc_id"/>
+		<association property="location" resultMap="net.solarnetwork.central.dao.mybatis.SolarLocation.SolarLocationFullResult"/>
+	</resultMap>
+	
+	<select id="get-SolarNode-for-id" parameterType="long" resultMap="SolarNodeFullResult">
+		SELECT
+			<include refid="fragment-SolarNode-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_node n
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE
+			n.node_id = #{id}
+	</select>
+	
+</mapper>

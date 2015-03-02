@@ -85,6 +85,7 @@ public class DatumController extends WebServiceControllerSupport {
 				TimeZone.getTimeZone("UTC")));
 	}
 
+	@Deprecated
 	@ResponseBody
 	@RequestMapping(value = "/query", method = RequestMethod.GET, params = "type")
 	public Response<List<? extends NodeDatum>> getDatumData(final DatumQueryCommand cmd) {

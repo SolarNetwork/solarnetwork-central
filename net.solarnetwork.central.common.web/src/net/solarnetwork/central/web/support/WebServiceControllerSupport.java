@@ -41,7 +41,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class WebServiceControllerSupport {
 
@@ -74,6 +74,25 @@ public abstract class WebServiceControllerSupport {
 				e.getMessage());
 		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 		return new Response<Object>(Boolean.FALSE, null, e.getReason().toString(), null);
+	}
+
+	/**
+	 * Handle a {@link net.solarnetwork.central.security.SecurityException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 * @since 1.2
+	 */
+	@ExceptionHandler(net.solarnetwork.central.security.SecurityException.class)
+	@ResponseBody
+	public Response<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e,
+			HttpServletResponse response) {
+		log.debug("SecurityException in {} controller: {}", getClass().getSimpleName(), e.getMessage());
+		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
 
 	/**

@@ -23,6 +23,8 @@
 package net.solarnetwork.central.security.web;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,11 +36,19 @@ import org.springframework.security.web.AuthenticationEntryPoint;
  * Entry point for SolarNetworkWS authentication.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UserAuthTokenAuthenticationEntryPoint implements AuthenticationEntryPoint, Ordered {
 
 	private int order = Integer.MAX_VALUE;
+	private Map<String, String> httpHeaders = defaultHttpHeaders();
+
+	private static Map<String, String> defaultHttpHeaders() {
+		Map<String, String> headers = new HashMap<String, String>(2);
+		headers.put("Access-Control-Allow-Origin", "*");
+		headers.put("Access-Control-Allow-Headers", "Authorization, X-SN-Date");
+		return headers;
+	}
 
 	@Override
 	public int getOrder() {
@@ -50,11 +60,41 @@ public class UserAuthTokenAuthenticationEntryPoint implements AuthenticationEntr
 			AuthenticationException authException) throws IOException, ServletException {
 		response.addHeader("WWW-Authenticate", UserAuthTokenAuthenticationFilter.AUTHORIZATION_SCHEME);
 		response.addHeader(WebConstants.HEADER_ERROR_MESSAGE, authException.getMessage());
+		if ( httpHeaders != null ) {
+			for ( Map.Entry<String, String> me : httpHeaders.entrySet() ) {
+				response.addHeader(me.getKey(), me.getValue());
+			}
+		}
 		response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
 	}
 
 	public void setOrder(int order) {
 		this.order = order;
+	}
+
+	/**
+	 * Get the currently configured HTTP headers that are included in each
+	 * response.
+	 * 
+	 * @return The HTTP headers to include in each response.
+	 * @since 1.1
+	 */
+	public Map<String, String> getHttpHeaders() {
+		return httpHeaders;
+	}
+
+	/**
+	 * Set additional HTTP headers to include in the response. By default the
+	 * {@code Access-Control-Allow-Origin} header is set to {@code *} and
+	 * {@code Access-Control-Allow-Headers} header is set to
+	 * {@code Authorization, X-SN-Date}.
+	 * 
+	 * @param httpHeaders
+	 *        The HTTP headers to include in each response.
+	 * @since 1.1
+	 */
+	public void setHttpHeaders(Map<String, String> httpHeaders) {
+		this.httpHeaders = httpHeaders;
 	}
 
 }

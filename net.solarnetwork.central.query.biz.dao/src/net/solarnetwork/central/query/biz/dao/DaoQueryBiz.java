@@ -136,6 +136,7 @@ public class DaoQueryBiz implements QueryBiz {
 				4);
 	}
 
+	@Deprecated
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReportableInterval getReportableInterval(Long nodeId, Class<? extends NodeDatum>[] types) {
@@ -185,6 +186,7 @@ public class DaoQueryBiz implements QueryBiz {
 		return new ReportableInterval(interval, (tz == null ? null : tz.toTimeZone()));
 	}
 
+	@Deprecated
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type,
@@ -206,6 +208,7 @@ public class DaoQueryBiz implements QueryBiz {
 		return generalNodeDatumDao.getAvailableSources(nodeId, start, end);
 	}
 
+	@Deprecated
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReportableInterval getNetworkReportableInterval(Class<? extends NodeDatum>[] types) {
@@ -264,6 +267,7 @@ public class DaoQueryBiz implements QueryBiz {
 		return new WeatherConditions(weather, day, node.getTimeZone());
 	}
 
+	@Deprecated
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(F filter,
@@ -384,6 +388,7 @@ public class DaoQueryBiz implements QueryBiz {
 		return filter;
 	}
 
+	@Deprecated
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(A filter,
@@ -401,6 +406,7 @@ public class DaoQueryBiz implements QueryBiz {
 				limitFilterMaximum(max));
 	}
 
+	@Deprecated
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public FilterResults<SourceLocationMatch> findFilteredLocations(SourceLocation filter,

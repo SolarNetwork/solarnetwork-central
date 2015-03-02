@@ -125,7 +125,9 @@ public interface QueryBiz {
 	 * @param types
 	 *        the set of NodeDatum types to look for
 	 * @return ReadableInterval instance, or <em>null</em> if no data available
+	 * @deprecated
 	 */
+	@Deprecated
 	ReportableInterval getNetworkReportableInterval(Class<? extends NodeDatum>[] types);
 
 	/**
@@ -141,7 +143,9 @@ public interface QueryBiz {
 	 * @param end
 	 *        an optional end date (inclusive) to filter on
 	 * @return the distinct source IDs available (never <em>null</em>)
+	 * @deprecated see {@link #getAvailableSources(Long, DateTime, DateTime)}
 	 */
+	@Deprecated
 	Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type, LocalDate start,
 			LocalDate end);
 
@@ -173,7 +177,10 @@ public interface QueryBiz {
 	 *        the type of NodeDatum to query for
 	 * 
 	 * @return the query results
+	 * @deprecated use
+	 *             {@link #findFilteredAggregateGeneralNodeDatum(AggregateGeneralNodeDatumFilter, List, Integer, Integer)}
 	 */
+	@Deprecated
 	List<? extends NodeDatum> getAggregatedDatum(DatumQueryCommand criteria,
 			Class<? extends NodeDatum> datumClass);
 
@@ -318,7 +325,10 @@ public interface QueryBiz {
 	 *        an optional maximum number of returned results
 	 * 
 	 * @return the results, never <em>null</em>
+	 * @deprecated see
+	 *             {@link #findFilteredAggregateGeneralNodeDatum(AggregateGeneralNodeDatumFilter, List, Integer, Integer)}
 	 */
+	@Deprecated
 	<F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(F filter,
 			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max);
@@ -338,7 +348,10 @@ public interface QueryBiz {
 	 *        an optional maximum number of returned results
 	 * 
 	 * @return the results, never <em>null</em>
+	 * @deprecated use
+	 *             {@link #findFilteredAggregateGeneralNodeDatum(AggregateGeneralNodeDatumFilter, List, Integer, Integer)}
 	 */
+	@Deprecated
 	<A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(A filter,
 			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max);

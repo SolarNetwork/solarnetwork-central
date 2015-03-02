@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.dao.mybatis.SolarLocation">
+
+	<insert id="insert-SolarLocation" parameterType="SolarLocation">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarnet.solarnet_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_loc 
+			(id
+			<if test="created != null">,created</if>
+			, country, time_zone, region, state_prov, locality, postal_code,
+			address, latitude, longitude, elevation)
+		VALUES
+			(#{id}
+			<if test="created != null">,#{created}</if>
+			, #{country}, #{timeZoneId}, #{region}, 
+			#{stateOrProvince}, #{locality}, #{postalCode}, #{street},
+			#{latitude}, #{longitude}, #{elevation})
+	</insert>
+
+	<update id="update-SolarLocation" parameterType="SolarLocation">
+		UPDATE
+			solarnet.sn_loc
+		SET
+			country = #{country}, 
+			time_zone = #{timeZoneId}, 
+			region = #{region},
+			state_prov = #{stateOrProvince},
+			locality = #{locality},
+			postal_code = #{postalCode}, 
+			address = #{street}, 
+			latitude = #{latitude},
+			longitude = #{longitude},
+			elevation = #{elevation}
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-SolarLocation-public-result">
+		l.id AS sn_loc_id, 
+		l.created AS sn_loc_created,
+		l.country AS sn_loc_country,
+		l.time_zone AS sn_loc_time_zone,
+		l.region AS sn_loc_region,
+		l.state_prov AS sn_loc_state_prov,
+		l.locality AS sn_loc_locality,
+		l.postal_code AS sn_loc_postal_code
+	</sql>
+	
+	<sql id="fragment-SolarLocation-full-result">
+		<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-public-result"/>,
+		l.address AS sn_loc_address,
+		l.latitude AS sn_loc_latitude,
+		l.longitude AS sn_loc_longitude,
+		l.elevation AS sn_loc_elevation
+	</sql>
+
+	<resultMap id="SolarLocationPublicResult" type="SolarLocation">
+		<id property="id" column="sn_loc_id"/>
+		<result property="created" column="sn_loc_created"/>
+		<result property="country" column="sn_loc_country"/>
+		<result property="timeZoneId" column="sn_loc_time_zone"/>
+		<result property="region" column="sn_loc_region"/>
+		<result property="stateOrProvince" column="sn_loc_state_prov"/>
+		<result property="locality" column="sn_loc_locality"/>
+		<result property="postalCode" column="sn_loc_postal_code"/>
+	</resultMap>
+	
+	<resultMap id="SolarLocationFullResult" type="SolarLocation" extends="net.solarnetwork.central.dao.mybatis.SolarLocation.SolarLocationPublicResult">
+		<result property="street" column="sn_loc_address"/>
+		<result property="latitude" column="sn_loc_latitude"/>
+		<result property="longitude" column="sn_loc_longitude"/>
+		<result property="elevation" column="sn_loc_elevation"/>
+	</resultMap>
+	
+	<select id="get-SolarLocation-for-id" parameterType="long" resultMap="SolarLocationFullResult" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_loc l
+		WHERE
+			l.id = #{id}
+	</select>
+	
+	<select id="find-SolarLocation-for-country-timezone" parameterType="map" resultMap="SolarLocationFullResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_loc l
+		WHERE
+			l.country = #{country,javaType=string,jdbcType=VARCHAR}
+			AND l.time_zone = #{timeZoneId,javaType=string,jdbcType=VARCHAR}
+			AND l.region IS NULL
+			AND l.state_prov IS NULL
+			AND l.locality IS NULL
+			AND l.postal_code IS NULL
+			AND l.address IS NULL
+			AND l.latitude IS NULL
+			AND l.longitude IS NULL
+			AND l.elevation IS NULL
+		ORDER BY
+			l.id
+	</select>
+	
+	<sql id="fragment-findall-SolarLocation-LocationMatch">
+		FROM
+			solarnet.sn_loc l
+		WHERE
+			l.address IS NULL
+			AND l.latitude IS NULL
+			AND l.longitude IS NULL
+			AND l.elevation IS NULL
+			<if test="fts != null">
+			AND l.fts_default @@ solarcommon.plainto_prefix_tsquery(#{fts,javaType=string,jdbcType=VARCHAR})
+			</if>
+			<if test="filter != null and filter.timeZoneId != null">
+			AND l.time_zone = #{filter.timeZoneId,javaType=string,jdbcType=VARCHAR}
+			</if>
+	</sql>
+	
+	<sql id="fragment-sort-SolarLocation-LocationMatch-default">
+		l.country,
+		l.time_zone,
+		l.state_prov,
+		l.region,
+		l.locality,
+		l.postal_code,
+		l.id
+	</sql>
+
+	<select id="findall-SolarLocation-LocationMatch" resultMap="SolarLocationPublicResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-SolarLocation-public-result"/>
+		<include refid="fragment-findall-SolarLocation-LocationMatch"/>
+		ORDER BY
+		<include refid="fragment-sort-SolarLocation-LocationMatch-default"/>
+	</select>
+
+	<select id="findall-SolarLocation-LocationMatch-count" resultType="long">
+		SELECT count(l.id)
+		<include refid="fragment-findall-SolarLocation-LocationMatch"/>
+	</select>
+
+	<select id="find-SolarLocation-for-location" parameterType="SolarLocation" resultMap="SolarLocationFullResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_loc l
+		WHERE
+			l.country = #{country}
+			AND l.time_zone = #{timeZoneId}
+			
+			<if test="region == null">
+			AND l.region IS NULL
+			</if>
+			<if test="region != null">
+			AND lower(l.region)	= lower(#{region})
+			</if>
+			
+			<if test="stateOrProvince == null">
+			AND l.state_prov IS NULL
+			</if>
+			<if test="stateOrProvince != null">
+			AND lower(l.state_prov) = lower(#{stateOrProvince})
+			</if>
+			
+			<if test="locality == null">
+			AND l.locality IS NULL
+			</if>
+			<if test="locality != null">
+			AND lower(l.locality) = lower(#{locality})
+			</if>
+			
+			<if test="postalCode == null">
+			AND l.postal_code IS NULL
+			</if>
+			<if test="postalCode != null">
+			AND lower(l.postal_code) = lower(#{postalCode})
+			</if>
+			
+			<if test="street == null">
+			AND l.address IS NULL
+			</if>
+			<if test="street != null">
+			AND lower(l.address) = lower(#{street})
+			</if>
+			
+			AND l.latitude
+			<if test="latitude == null">
+				IS NULL
+			</if>
+			<if test="latitude != null">
+				= #{latitude}
+			</if>
+			
+			AND l.longitude
+			<if test="longitude == null">
+				IS NULL
+			</if>
+			<if test="longitude != null">
+				= #{longitude}
+			</if>
+			
+			AND l.elevation
+			<if test="elevation == null">
+				IS NULL
+			</if>
+			<if test="elevation != null">
+				= #{elevation}
+			</if>
+			
+		ORDER BY
+			l.id
+	</select>
+	
+</mapper>

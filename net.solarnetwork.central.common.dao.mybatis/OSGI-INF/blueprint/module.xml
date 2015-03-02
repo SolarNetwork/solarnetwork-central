@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xmlns:osgix="http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+		http://www.osgi.org/xmlns/blueprint/v1.0.0
+		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-3.1.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-3.1.xsd">
+
+	<!-- Service References -->
+	
+	<reference id="dataSource" interface="javax.sql.DataSource" filter="(db=central)"/>
+	
+	<reference id="txManager" interface="org.springframework.transaction.PlatformTransactionManager"
+		filter="(db=central)"/>
+	
+	<!-- Published Services -->
+	
+	<!--service ref="hardwareDao" interface="net.solarnetwork.central.dao.HardwareDao"/>
+	
+	<service ref="hardwareControlDao" interface="net.solarnetwork.central.dao.HardwareControlDao"/-->
+	
+	<service ref="networkAssociationDao" interface="net.solarnetwork.central.dao.NetworkAssociationDao" ranking="5"/>
+
+	<service ref="solarLocationDao" interface="net.solarnetwork.central.dao.SolarLocationDao" ranking="5"/>
+	
+	<service ref="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao" ranking="5"/>
+
+	<service ref="priceLocationDao" interface="net.solarnetwork.central.dao.PriceLocationDao" ranking="5"/>
+
+	<service ref="weatherLocationDao" interface="net.solarnetwork.central.dao.WeatherLocationDao" ranking="5"/>
+
+	<service ref="weatherSourceDao" interface="net.solarnetwork.central.dao.WeatherSourceDao" ranking="5"/>
+
+	<service ref="sqlSessionFactory" interface="org.apache.ibatis.session.SqlSessionFactory">
+		<service-properties>
+			<entry key="db" value="central"/>
+			<entry key="function" value="common"/>
+		</service-properties>
+	</service>
+
+	<!-- Supporting Services -->
+	
+	<!-- Use Java @Transactional annotations to declare transactions. -->
+	<tx:annotation-driven transaction-manager="txManager"/>
+
+	<!--bean id="hardwareDao" class="net.solarnetwork.central.dao.mybatis.MyBatisHardwareDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="hardwareControlDao" class="net.solarnetwork.central.dao.mybatis.MyBatisHardwareControlDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean-->
+	
+	<bean id="networkAssociationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisNetworkAssociationDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+
+	<bean id="solarLocationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisSolarLocationDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="solarNodeDao" class="net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="priceLocationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisPriceLocationDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="priceSourceDao" class="net.solarnetwork.central.dao.mybatis.MyBatisPriceSourceDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="weatherLocationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisWeatherLocationDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="weatherSourceDao" class="net.solarnetwork.central.dao.mybatis.MyBatisWeatherSourceDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="typeAliases">
+			<list>
+				<value>net.solarnetwork.domain.NetworkAssociationDetails</value>
+				<value>net.solarnetwork.central.domain.PriceLocation</value>
+				<value>net.solarnetwork.central.domain.PriceSource</value>
+				<value>net.solarnetwork.central.domain.SolarLocation</value>
+				<value>net.solarnetwork.central.domain.SolarNode</value>
+				<value>net.solarnetwork.central.domain.WeatherLocation</value>
+				<value>net.solarnetwork.central.domain.WeatherSource</value>
+			</list>
+		</property>
+		<property name="typeHandlers">
+			<list>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaDateTimeTypeHandler"/>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler"/>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTypeHandler"/>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalTimeTypeHandler"/>
+			</list>
+		</property>
+		<property name="mapperLocations">
+			<!-- Note: the order of these elements is significant because of inter-resource includes -->
+			<list>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/NetworkAssociation.xml</value>
+				
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
+				
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/PriceSource.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/PriceLocation.xml</value>
+
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherSource.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherLocation.xml</value>
+			</list>
+		</property>
+	</bean>
+	
+</blueprint>
