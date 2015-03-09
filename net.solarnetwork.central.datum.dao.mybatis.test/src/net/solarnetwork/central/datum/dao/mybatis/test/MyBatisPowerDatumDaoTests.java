@@ -359,4 +359,28 @@ public class MyBatisPowerDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 		}
 	}
 
+	@Test
+	public void getAggregatedDatumMonth() {
+		MutableDateTime mdt = new MutableDateTime();
+		mdt.setRounding(mdt.getChronology().monthOfYear(), MutableDateTime.ROUND_FLOOR);
+
+		PowerDatum datum = getTestInstance();
+		datum.setWatts(10);
+		mdt.setDate(datum.getCreated());
+		datum.setCreated(mdt.toDateTime());
+		dao.store(datum);
+
+		DateTime s = mdt.toDateTime();
+
+		DatumQueryCommand criteria = new DatumQueryCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setAggregate(Aggregation.Month);
+		criteria.setStartDate(s);
+		criteria.setEndDate(s.plusMonths(1));
+
+		List<PowerDatum> results = dao.getAggregatedDatum(criteria);
+		assertNotNull(results);
+		assertEquals(2, results.size());
+	}
+
 }
