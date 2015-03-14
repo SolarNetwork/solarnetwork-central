@@ -24,6 +24,7 @@
 
 package net.solarnetwork.central.in.biz.dao;
 
+import java.util.Map;
 import net.solarnetwork.central.dao.NetworkAssociationDao;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.domain.BasicNetworkIdentity;
@@ -36,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Simple implementation of {@link NetworkIdentityBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SimpleNetworkIdentityBiz implements NetworkIdentityBiz {
 
@@ -45,12 +46,16 @@ public class SimpleNetworkIdentityBiz implements NetworkIdentityBiz {
 	private String host;
 	private Integer port;
 	private boolean forceTLS;
+	private Map<String, String> networkServiceURLs;
 
 	private NetworkAssociationDao networkAssociationDao;
 
 	@Override
 	public NetworkIdentity getNetworkIdentity() {
-		return new BasicNetworkIdentity(networkIdentityKey, termsOfService, host, port, forceTLS);
+		BasicNetworkIdentity ident = new BasicNetworkIdentity(networkIdentityKey, termsOfService, host,
+				port, forceTLS);
+		ident.setNetworkServiceURLs(networkServiceURLs);
+		return ident;
 	}
 
 	@Override
@@ -81,6 +86,10 @@ public class SimpleNetworkIdentityBiz implements NetworkIdentityBiz {
 
 	public void setNetworkAssociationDao(NetworkAssociationDao networkAssociationDao) {
 		this.networkAssociationDao = networkAssociationDao;
+	}
+
+	public void setNetworkServiceURLs(Map<String, String> networkServiceURLs) {
+		this.networkServiceURLs = networkServiceURLs;
 	}
 
 }

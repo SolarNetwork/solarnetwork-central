@@ -28,6 +28,8 @@
 		<beans:prop key="SimpleNetworkIdentityBiz.host">localhost</beans:prop>
 		<beans:prop key="SimpleNetworkIdentityBiz.port">8080</beans:prop>
 		<beans:prop key="SimpleNetworkIdentityBiz.forceTLS">false</beans:prop>
+		<beans:prop key="SimpleNetworkIdentityBiz.solarUserBaseURL">http://localhost/solaruser</beans:prop>
+		<beans:prop key="SimpleNetworkIdentityBiz.solarQueryBaseURL">http://localhost/solarquery</beans:prop>
 	</osgix:cm-properties>
 
 	<!-- Service References -->
@@ -95,6 +97,12 @@
 		<property name="host" value="${SimpleNetworkIdentityBiz.host}"/>
 		<property name="port" value="${SimpleNetworkIdentityBiz.port}"/>
 		<property name="forceTLS" value="${SimpleNetworkIdentityBiz.forceTLS}"/>
+		<property name="networkServiceURLs">
+			<map>
+				<entry key="solaruser" value="${SimpleNetworkIdentityBiz.solarUserBaseURL}"/>
+				<entry key="solarquery" value="${SimpleNetworkIdentityBiz.solarQueryBaseURL}"/>
+			</map>
+		</property>
 		<property name="networkAssociationDao" ref="networkAssociationDao"/>
 	</bean>
 	
