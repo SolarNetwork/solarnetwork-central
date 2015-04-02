@@ -246,9 +246,9 @@
 				<fieldset class="form-horizontal" id="edit-node-location-private-details">
 					<p><fmt:message key='my-nodes.edit-node.private-location.intro'/></p>
 					<div class="control-group">
-			 			<label class="control-label" for="edit-node-location-address"><fmt:message key='location.address.label'/></label>
+			 			<label class="control-label" for="edit-node-location-street"><fmt:message key='location.address.label'/></label>
 						<div class="controls">
-							<input type="text" class="span3" name="node.location.street" id="edit-node-location-address"
+							<input type="text" class="span3" name="node.location.street" id="edit-node-location-street"
 	 							maxlength="256" />
 						</div>
 			 		</div>
