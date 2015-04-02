@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.in.web;
@@ -39,7 +37,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * Controller for {@link NetworkIdentityBiz} requests.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 @Controller
 public class NetworkIdentityController {
@@ -95,6 +93,7 @@ public class NetworkIdentityController {
 				details.setPort(ident.getPort());
 				details.setTermsOfService(ident.getTermsOfService());
 				details.setForceTLS(ident.isForceTLS());
+				details.setNetworkServiceURLs(ident.getNetworkServiceURLs());
 				ident = details;
 			}
 		}

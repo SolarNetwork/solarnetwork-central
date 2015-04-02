@@ -261,7 +261,7 @@
 				AND p.created_day &gt;= date_trunc('week', #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp)::date
 				AND p.created_day &lt; (date_trunc('week', #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp) + interval '1 week')::date
 				
-			GROUP BY created_date, c.source_id
+			GROUP BY created_date, p.source_id
 		) AS data ON data.created_date = dates.d
 		
 		ORDER BY created_date
@@ -296,7 +296,7 @@
 				AND p.created_day &gt;= #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::date
 				AND p.created_day &lt; (#{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::date + interval '1 month')::date
 				
-			GROUP BY created_date, c.source_id
+			GROUP BY created_date, p.source_id
 		) AS data ON data.created_date = dates.d
 		
 		ORDER BY created_date

@@ -1,5 +1,5 @@
 #edit-node-modal .modal-body .hbox {
-	width: 1800px;
+	width: 2400px;
 	-webkit-transition: -webkit-transform 0.3s ease-in-out;
 	-moz-transition: -moz-transform 0.3s ease-in-out;
 	-ms-transition: -ms-transform 0.3s ease-in-out;
@@ -28,17 +28,34 @@
     transform:  translate(-1200px,0px);
 }
 
+#edit-node-modal.page4 .modal-body .hbox {
+    -webkit-transform:  translate(-1800px,0px);
+	-moz-transform:  translate(-1800px,0px);
+    -ms-transform:  translate(-1800px,0px);
+    -o-transform:  translate(-1800px,0px);
+    transform:  translate(-1800px,0px);
+}
+
 #edit-node-modal.page1 .page2:not(.page1),
-#edit-node-modal.page1 .page3:not(.page1) {
+#edit-node-modal.page1 .page3:not(.page1),
+#edit-node-modal.page1 .page4:not(.page1) {
 	display: none;
 }
 
 #edit-node-modal.page2 .page1:not(.page2),
-#edit-node-modal.page2 .page3:not(.page2) {
+#edit-node-modal.page2 .page3:not(.page2),
+#edit-node-modal.page2 .page4:not(.page2) {
 	display: none;
 }
 
 #edit-node-modal.page3 .page1:not(.page3),
-#edit-node-modal.page3 .page2:not(.page3) {
+#edit-node-modal.page3 .page2:not(.page3),
+#edit-node-modal.page3 .page4:not(.page3) {
+	display: none;
+}
+
+#edit-node-modal.page4 .page1:not(.page4),
+#edit-node-modal.page4 .page2:not(.page4),
+#edit-node-modal.page4 .page3:not(.page4) {
 	display: none;
 }

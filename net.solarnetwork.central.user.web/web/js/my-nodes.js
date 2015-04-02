@@ -29,7 +29,10 @@ $(document).ready(function() {
 	});
 	
 	function setupEditUserNodeLocationDisplay(loc) {
-		var locDisplay = [];
+		var locDisplay = [], text = '';
+		if ( loc.street ) {
+			locDisplay.push(loc.street);
+		}
 		if ( loc.locality ) {
 			locDisplay.push(loc.locality);
 		}
@@ -46,8 +49,19 @@ $(document).ready(function() {
 			locDisplay.push(loc.country);
 		}
 		if ( locDisplay.length > 0 ) {
-			$('#usernode-location').text(locDisplay.join(', '));
+			text = locDisplay.join(', ');
 		}
+		if ( loc.latitude !== undefined && loc.longitude !== undefined ) {
+			if ( text.length > 0 ) {
+				text += ' (';
+			}
+			text += loc.latitude.toFixed(3) + ', ' + loc.longitude.toFixed(3);
+			if ( loc.elevation ) {
+				text += ' @ ' +loc.elevation + 'm';
+			}
+			text += ')';
+		}
+		$('#usernode-location').text(text);
 	}
 	
 	function setupEditUserNodeFields(form, userNode) {
@@ -155,11 +169,9 @@ $(document).ready(function() {
 	
 	$('#edit-node-page-back').on('click', function(event) {
 		var form = $(this).parents('form').first();
-		var currPage = form.data('page');
-		if ( currPage === 3 ) {
-			$('#edit-node-location-search-results').addClass('hidden');
-		}
-		editNodeShowPage(form, currPage - 1);
+		var destPage = form.data('page') - 1;
+		$('#edit-node-location-search-results').toggleClass('hidden', destPage !== 3);
+		editNodeShowPage(form, destPage);
 	});
 	
 	$('#edit-node-select-tz').on('click', function(event) {
@@ -217,7 +229,8 @@ $(document).ready(function() {
 		}
 		var form = $('#edit-node-modal');
 		var elements = form.get(0).elements;
-		var criteria = ['country', 'timeZoneId', 'region', 'stateOrProvince', 'locality', 'postalCode'];
+		var criteria = ['country', 'timeZoneId', 'region', 'stateOrProvince', 'locality', 'postalCode', 
+		                'street', 'latitude', 'longitude', 'elevation'];
 		var input;
 		criteria.forEach(function(prop) {
 			input = elements['node.location.'+prop];
@@ -267,8 +280,27 @@ $(document).ready(function() {
 	$('#edit-node-select-location').on('click', function() {
 		var form = $('#edit-node-modal');
 		$('#edit-node-location-search-results').addClass('hidden');
+		editNodeShowPage(form, 4);
+	});
+	
+	function numberOrUndefined(value) {
+		var result;
+		if ( typeof value === 'number' ) {
+			result = value;
+		} else if ( value === '' ) {
+			// empty string to undefined;
+		} else {
+			result = Number(value);
+			if ( isNaN(result) ) {
+				result = undefined;
+			}
+		}
+		return result;
+	}
+	
+	$('#edit-node-select-location-private').on('click', function() {
+		var form = $('#edit-node-modal');
 		editNodeShowPage(form, 1);
-		
 		setupEditUserNodeLocationDisplay({
 			name : $('#edit-node-location-name').val(),
 			country : $('#edit-node-location-country').val(),
@@ -276,6 +308,10 @@ $(document).ready(function() {
 			region : $('#edit-node-location-region').val(),
 			locality : $('#edit-node-location-locality').val(),
 			postalCode : $('#edit-node-location-postal-code').val(),
+			street : $('#edit-node-location-street').val(),
+			latitude : numberOrUndefined($('#edit-node-location-latitude').val()),
+			longitude : numberOrUndefined($('#edit-node-location-longitude').val()),
+			elevation : numberOrUndefined($('#edit-node-location-elevation').val()),
 			timeZoneId : $('#edit-node-location-tz').val()
 		});
 	});

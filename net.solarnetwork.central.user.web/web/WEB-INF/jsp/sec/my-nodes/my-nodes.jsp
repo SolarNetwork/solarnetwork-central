@@ -243,14 +243,49 @@
 						</tbody>
 					</table>
 				</fieldset>
+				<fieldset class="form-horizontal" id="edit-node-location-private-details">
+					<p><fmt:message key='my-nodes.edit-node.private-location.intro'/></p>
+					<div class="control-group">
+			 			<label class="control-label" for="edit-node-location-street"><fmt:message key='location.address.label'/></label>
+						<div class="controls">
+							<input type="text" class="span3" name="node.location.street" id="edit-node-location-street"
+	 							maxlength="256" />
+						</div>
+			 		</div>
+					<div class="control-group">
+			 			<label class="control-label" for="edit-node-location-latitude"><fmt:message key='location.lat.label'/></label>
+						<div class="controls">
+							<input type="text" class="span3" name="node.location.latitude" id="edit-node-location-latitude"
+	 							maxlength="16"  aria-describedby="edit-node-locaiton-latitude-help"/>
+	 						<span class="help-block" id="edit-node-locaiton-latitude-help"><fmt:message key='my-nodes.edit-node.choose-location-private.latlon.caption'/></span>
+						</div>
+			 		</div>
+					<div class="control-group">
+			 			<label class="control-label" for="edit-node-location-longitude"><fmt:message key='location.lon.label'/></label>
+						<div class="controls">
+							<input type="text" class="span3" name="node.location.longitude" id="edit-node-location-longitude"
+	 							maxlength="16" aria-describedby="edit-node-locaiton-longitude-help"/>
+	 						<span class="help-block" id="edit-node-locaiton-longitude-help"><fmt:message key='my-nodes.edit-node.choose-location-private.latlon.caption'/></span>
+						</div>
+			 		</div>
+					<div class="control-group">
+			 			<label class="control-label" for="edit-node-location-elevation"><fmt:message key='location.elevation.label'/></label>
+						<div class="controls">
+							<input type="text" class="span3" name="node.location.elevation" id="edit-node-location-elevation"
+	 							maxlength="12"  aria-describedby="edit-node-locaiton-elevation-help"/>
+	 						<span class="help-block" id="edit-node-locaiton-elevation-help"><fmt:message key='my-nodes.edit-node.choose-location-private.elevation.caption'/></span>
+						</div>
+			 		</div>
+				</fieldset>
 			</div>
 	 	</div>
 	 	<div class="modal-footer">
 	 		<button type="button" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></button>
-	 		<button type="button" class="btn page2 page3 btn-info" id="edit-node-page-back"><fmt:message key='back.label'/></button>
+	 		<button type="button" class="btn page2 page3 page4 btn-info" id="edit-node-page-back"><fmt:message key='back.label'/></button>
 	 		<button type="submit" class="btn page1 btn-primary"><fmt:message key='save.label'/></button>
 	 		<button type="button" class="btn page2 btn-primary" id="edit-node-select-tz"><fmt:message key='my-nodes.edit-node.choose-tz.action.select'/></button>
 	 		<button type="button" class="btn page3 btn-primary" id="edit-node-select-location" disabled="disabled"><fmt:message key='my-nodes.edit-node.choose-location.action.select'/></button>
+	 		<button type="button" class="btn page4 btn-primary" id="edit-node-select-location-private"><fmt:message key='my-nodes.edit-node.choose-location-private.action.select'/></button>
 	 	</div>
 		<input type="hidden" name="node.id"/>
 		<input type="hidden" name="user.id"/>
