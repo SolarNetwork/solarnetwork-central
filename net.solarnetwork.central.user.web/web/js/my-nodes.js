@@ -30,8 +30,8 @@ $(document).ready(function() {
 	
 	function setupEditUserNodeLocationDisplay(loc) {
 		var locDisplay = [], text = '';
-		if ( loc.address ) {
-			locDisplay.push(loc.address);
+		if ( loc.street ) {
+			locDisplay.push(loc.street);
 		}
 		if ( loc.locality ) {
 			locDisplay.push(loc.locality);
@@ -230,7 +230,7 @@ $(document).ready(function() {
 		var form = $('#edit-node-modal');
 		var elements = form.get(0).elements;
 		var criteria = ['country', 'timeZoneId', 'region', 'stateOrProvince', 'locality', 'postalCode', 
-		                'address', 'latitude', 'longitude', 'elevation'];
+		                'street', 'latitude', 'longitude', 'elevation'];
 		var input;
 		criteria.forEach(function(prop) {
 			input = elements['node.location.'+prop];
@@ -308,7 +308,7 @@ $(document).ready(function() {
 			region : $('#edit-node-location-region').val(),
 			locality : $('#edit-node-location-locality').val(),
 			postalCode : $('#edit-node-location-postal-code').val(),
-			address : $('#edit-node-location-address').val(),
+			street : $('#edit-node-location-street').val(),
 			latitude : numberOrUndefined($('#edit-node-location-latitude').val()),
 			longitude : numberOrUndefined($('#edit-node-location-longitude').val()),
 			elevation : numberOrUndefined($('#edit-node-location-elevation').val()),
