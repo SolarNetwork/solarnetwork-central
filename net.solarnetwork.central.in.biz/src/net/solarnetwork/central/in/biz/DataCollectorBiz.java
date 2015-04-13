@@ -48,7 +48,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * </p>
  * 
  * @author matt.magoffin
- * @version 1.3
+ * @version 1.4
  */
 public interface DataCollectorBiz {
 
@@ -60,7 +60,9 @@ public interface DataCollectorBiz {
 	 * @param datum
 	 *        the data to persist
 	 * @return the persisted entity
+	 * @deprecated See {@link #postGeneralNodeDatum(Iterable)}
 	 */
+	@Deprecated
 	<D extends Datum> D postDatum(D datum);
 
 	/**
@@ -70,7 +72,9 @@ public interface DataCollectorBiz {
 	 *        the collection of datum
 	 * @return the persisted entities, ordered in iterator order of
 	 *         {@code datums}
+	 * @deprecated See {@link #postGeneralNodeDatum(Iterable)}
 	 */
+	@Deprecated
 	List<Datum> postDatum(Iterable<Datum> datums);
 
 	/**

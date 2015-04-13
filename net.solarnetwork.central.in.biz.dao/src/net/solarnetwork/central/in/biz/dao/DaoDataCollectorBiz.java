@@ -35,10 +35,8 @@ import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.dao.DatumDao;
-import net.solarnetwork.central.datum.dao.DayDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
-import net.solarnetwork.central.datum.dao.WeatherDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -108,7 +106,7 @@ import org.springframework.transaction.annotation.Transactional;
  * </dl>
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -124,7 +122,6 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			.unmodifiableSet(new HashSet<String>(Arrays.asList(new String[] { "class", "id", "created",
 					"locationId" })));
 
-	private Map<String, DatumDao<Datum>> daoMapping;
 	private SolarNodeDao solarNodeDao = null;
 	private PriceLocationDao priceLocationDao = null;
 	private WeatherLocationDao weatherLocationDao = null;
@@ -182,12 +179,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			}
 		}
 
-		DatumDao<Datum> dao = daoMapping.get(datum.getClass().getName());
-		if ( dao == null ) {
-			throw new IllegalArgumentException("The [" + datum.getClass().getName()
-					+ "] Datum is not supported. Supported types are: " + daoMapping.keySet());
-		}
-		D datumToPersist = preprocessDatum(datum, dao);
+		D datumToPersist = preprocessDatum(datum);
 		if ( datumToPersist == null ) {
 			return datum;
 		}
@@ -196,7 +188,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			return datumToPersist;
 		}
 		try {
-			return persistDatum(datumToPersist, dao);
+			return persistDatum(datumToPersist);
 		} catch ( DataIntegrityViolationException e ) {
 			if ( log.isDebugEnabled() ) {
 				log.debug(
@@ -400,27 +392,27 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <D extends Datum> D preprocessDatum(D datum, DatumDao<? extends Datum> dao) {
+	private <D extends Datum> D preprocessDatum(D datum) {
 		Datum result = datum;
 		if ( datum instanceof ConsumptionDatum ) {
-			result = preprocessConsumptionDatum((ConsumptionDatum) datum, dao);
+			result = preprocessConsumptionDatum((ConsumptionDatum) datum);
 		} else if ( datum instanceof DayDatum ) {
-			result = preprocessDayDatum((DayDatum) datum, (DayDatumDao) dao);
+			result = preprocessDayDatum((DayDatum) datum);
 		} else if ( datum instanceof PowerDatum ) {
-			result = preprocessPowerDatum((PowerDatum) datum, dao);
+			result = preprocessPowerDatum((PowerDatum) datum);
 		} else if ( datum instanceof PriceDatum ) {
-			result = preprocessPriceDatum((PriceDatum) datum, dao);
+			result = preprocessPriceDatum((PriceDatum) datum);
 		} else if ( datum instanceof WeatherDatum ) {
-			result = preprocessWeatherDatum((WeatherDatum) datum, (WeatherDatumDao) dao);
+			result = preprocessWeatherDatum((WeatherDatum) datum);
 		}
 		return (D) result;
 	}
 
-	private Datum preprocessConsumptionDatum(ConsumptionDatum datum, DatumDao<? extends Datum> dao) {
-		return checkForNodeDatumByDate(datum, dao, CONSUMPTION_DATUM_IGNORE_ENTITY_COPY);
+	private Datum preprocessConsumptionDatum(ConsumptionDatum datum) {
+		return checkForNodeDatumByDate(datum, CONSUMPTION_DATUM_IGNORE_ENTITY_COPY);
 	}
 
-	private Datum preprocessDayDatum(DayDatum datum, DayDatumDao dao) {
+	private Datum preprocessDayDatum(DayDatum datum) {
 		// fill in location ID if not provided
 		if ( datum.getLocationId() == null ) {
 			SolarNode node = solarNodeDao.get(datum.getNodeId());
@@ -431,7 +423,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		// see if exists already for given day
 		DayDatum entity = null;
 		if ( datum.getLocationId() != null ) {
-			entity = dao.getDatumForDate(datum.getLocationId(), datum.getDay());
+			entity = null; // FIXME: dao.getDatumForDate(datum.getLocationId(), datum.getDay());
 			if ( entity == null || !entity.isSameDay(datum) ) {
 				return datum;
 			}
@@ -439,15 +431,15 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		return entity;
 	}
 
-	private Datum preprocessPriceDatum(PriceDatum datum, DatumDao<? extends Datum> dao) {
-		return checkForLocationDatumByDate(datum, dao, PRICE_DATUM_IGNORE_ENTITY_COPY);
+	private Datum preprocessPriceDatum(PriceDatum datum) {
+		return checkForLocationDatumByDate(datum, PRICE_DATUM_IGNORE_ENTITY_COPY);
 	}
 
-	private Datum preprocessPowerDatum(PowerDatum datum, DatumDao<? extends Datum> dao) {
-		return checkForNodeDatumByDate(datum, dao, POWER_DATUM_IGNORE_ENTITY_COPY);
+	private Datum preprocessPowerDatum(PowerDatum datum) {
+		return checkForNodeDatumByDate(datum, POWER_DATUM_IGNORE_ENTITY_COPY);
 	}
 
-	private Datum preprocessWeatherDatum(WeatherDatum datum, WeatherDatumDao dao) {
+	private Datum preprocessWeatherDatum(WeatherDatum datum) {
 		// fill in location ID if not provided
 		if ( datum.getLocationId() == null ) {
 			SolarNode node = solarNodeDao.get(datum.getNodeId());
@@ -456,7 +448,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			}
 		}
 		// see if exists already for given date
-		WeatherDatum entity = dao.getDatumForDate(datum.getLocationId(), datum.getInfoDate());
+		WeatherDatum entity = null; // FIXME: dao.getDatumForDate(datum.getLocationId(), datum.getInfoDate());
 		if ( entity == null || !entity.isSameInfoDate(datum) ) {
 			return datum;
 		}
@@ -464,14 +456,13 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <D extends Datum> D persistDatum(D datum, DatumDao<Datum> dao) {
-		Long id = dao.storeDatum(datum);
-		return (D) dao.getDatum(id);
+	private <D extends Datum> D persistDatum(D datum) {
+		Long id = null;// FIXME: dao.storeDatum(datum);
+		return null;// FIXME: dao.getDatum(id);
 	}
 
-	private Datum checkForNodeDatumByDate(NodeDatum datum, DatumDao<? extends Datum> dao,
-			Set<String> copyPropertiesIgnore) {
-		Datum entity = dao.getDatumForDate(datum.getNodeId(), datum.getCreated());
+	private Datum checkForNodeDatumByDate(NodeDatum datum, Set<String> copyPropertiesIgnore) {
+		Datum entity = null; // FIXME: dao.getDatumForDate(datum.getNodeId(), datum.getCreated());
 		if ( entity != null ) {
 			// copy non-null properties from posted data onto entity
 			Map<String, Object> propsToCopy = ClassUtils.getBeanProperties(datum, copyPropertiesIgnore);
@@ -482,9 +473,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		return datum;
 	}
 
-	private Datum checkForLocationDatumByDate(LocationDatum datum, DatumDao<? extends Datum> dao,
-			Set<String> copyPropertiesIgnore) {
-		Datum entity = dao.getDatumForDate(datum.getLocationId(), datum.getCreated());
+	private Datum checkForLocationDatumByDate(LocationDatum datum, Set<String> copyPropertiesIgnore) {
+		Datum entity = null; // FIXME: dao.getDatumForDate(datum.getLocationId(), datum.getCreated());
 		if ( entity != null ) {
 			// copy non-null properties from posted data onto entity
 			Map<String, Object> propsToCopy = ClassUtils.getBeanProperties(datum, copyPropertiesIgnore);
@@ -493,14 +483,6 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			return entity;
 		}
 		return datum;
-	}
-
-	public Map<String, DatumDao<Datum>> getDaoMapping() {
-		return daoMapping;
-	}
-
-	public void setDaoMapping(Map<String, DatumDao<Datum>> daoMapping) {
-		this.daoMapping = daoMapping;
 	}
 
 	public SolarNodeDao getSolarNodeDao() {
