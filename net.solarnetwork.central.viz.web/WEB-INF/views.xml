@@ -8,17 +8,8 @@
 		<put-attribute name="body" value="/WEB-INF/jsp/index.jsp" />
 	</definition>
 	
-	<definition name="net-gen-dashboard" extends="default">
-		<put-attribute name="body" value="/WEB-INF/jsp/net-gen-dashboard.jsp" />
-	</definition>
-	
-	<definition name="node-gen-dashboard" extends="default">
-		<put-attribute name="body" value="/WEB-INF/jsp/node-gen-dashboard.jsp" />
-	</definition>
-	
 	<definition name="node-dashboard" extends="default">
 		<put-attribute name="body" value="/WEB-INF/jsp/node-dashboard.jsp" />
 	</definition>
-	
 	
 </tiles-definitions>
