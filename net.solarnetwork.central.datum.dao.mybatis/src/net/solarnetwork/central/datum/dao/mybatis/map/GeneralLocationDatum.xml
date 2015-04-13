@@ -70,6 +70,47 @@
 	<update id="find-general-loc-reportable-interval" parameterMap="pmap-reportable-interval" statementType="CALLABLE">
 		{call solardatum.find_loc_reportable_interval(?, ?, ?, ?, ?, ?)}
 	</update>
+	
+	<!-- Legacy mapping support -->
+
+	<resultMap id="DatumMappingInfoResult" type="net.solarnetwork.central.datum.domain.DatumMappingInfo">
+		<id property="id" column="loc_id"/>
+		<id property="sourceId" column="loc_src"/>
+		<id property="timeZoneId" column="loc_tz"/>
+	</resultMap>
+
+	<select id="get-mapping-info-day" resultMap="DatumMappingInfoResult" parameterType="long">
+		SELECT 
+			ws.sname || ' Day' AS loc_src,
+			l.time_zone AS loc_tz,
+			l.id AS loc_id
+		FROM solarnet.sn_weather_loc wl
+		INNER JOIN solarnet.sn_weather_source ws ON ws.id = wl.source_id
+		INNER JOIN solarnet.sn_loc l ON l.id = wl.loc_id
+		WHERE wl.id = #{id,javaType=long,jdbcType=BIGINT}
+	</select>
+
+	<select id="get-mapping-info-weather" resultMap="DatumMappingInfoResult" parameterType="long">
+		SELECT 
+			ws.sname AS loc_src,
+			l.time_zone AS loc_tz,
+			l.id AS loc_id
+		FROM solarnet.sn_weather_loc wl
+		INNER JOIN solarnet.sn_weather_source ws ON ws.id = wl.source_id
+		INNER JOIN solarnet.sn_loc l ON l.id = wl.loc_id
+		WHERE wl.id = #{id,javaType=long,jdbcType=BIGINT}
+	</select>
+
+	<select id="get-mapping-info-price" resultMap="DatumMappingInfoResult" parameterType="long">
+		SELECT 
+			ps.sname AS loc_src, 
+			l.time_zone AS loc_tz, 
+			l.id AS loc_id
+		FROM solarnet.sn_price_loc pl
+		INNER JOIN solarnet.sn_price_source ps ON ps.id = pl.source_id
+		INNER JOIN solarnet.sn_loc l ON l.id = pl.loc_id
+		WHERE pl.id = #{id,javaType=long,jdbcType=BIGINT}
+	</select>
 
 	<!-- 
 		FilterableDao support 
