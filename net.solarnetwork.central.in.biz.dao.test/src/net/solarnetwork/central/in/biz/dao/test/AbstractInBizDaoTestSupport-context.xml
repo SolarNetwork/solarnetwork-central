@@ -25,6 +25,7 @@
 		<property name="solarNodeDao" ref="solarNodeDao"/>
 		<property name="weatherLocationDao" ref="weatherLocationDao"/>
 		<property name="generalNodeDatumDao" ref="generalNodeDatumDao"/>
+		<property name="generalLocationDatumDao" ref="generalLocationDatumDao"/>
 	</bean>
 	
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">

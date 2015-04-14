@@ -20,10 +20,6 @@
 				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumPK</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumPK</value>
 			
-				<value>net.solarnetwork.central.datum.domain.ConsumptionDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ConsumptionDatumMatch</value>
-				<value>net.solarnetwork.central.datum.domain.DayDatum</value>
-				<value>net.solarnetwork.central.datum.domain.DayDatumMatch</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatum</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumMatch</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata</value>
@@ -32,22 +28,9 @@
 				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch</value>
-				<value>net.solarnetwork.central.datum.domain.HardwareControlDatum</value>
-				<value>net.solarnetwork.central.datum.domain.HardwareControlDatumMatch</value>
-				<value>net.solarnetwork.central.datum.domain.PriceDatum</value>
-				<value>net.solarnetwork.central.datum.domain.PowerDatum</value>
-				<value>net.solarnetwork.central.datum.domain.PowerDatumMatch</value>
-				<value>net.solarnetwork.central.datum.domain.WeatherDatum</value>
-				<value>net.solarnetwork.central.datum.domain.WeatherDatumMatch</value>
 				
-				<value>net.solarnetwork.central.datum.domain.ReportingConsumptionDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingDayDatum</value>
 				<value>net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum</value>
 				<value>net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingHardwareControlDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingPowerDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingPriceDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingWeatherDatum</value>
 			</list>
 		</property>
 		<property name="typeHandlers">
@@ -67,16 +50,10 @@
 
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/Global.xml</value>
 
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/ConsumptionDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/DayDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumMetadata.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/HardwareControlDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/PowerDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/PriceDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/WeatherDatum.xml</value>
 			</list>
 		</property>
 	</bean>

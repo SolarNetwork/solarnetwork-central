@@ -26,8 +26,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import java.util.List;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DayDatum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.HardwareControlDatum;
+import net.solarnetwork.central.datum.domain.PowerDatum;
+import net.solarnetwork.central.datum.domain.PriceDatum;
+import net.solarnetwork.central.datum.domain.WeatherDatum;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
@@ -35,6 +44,8 @@ import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import org.easymock.EasyMock;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.junit.Before;
@@ -45,7 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * Test case for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 public class DaoDataCollectorBizTest extends AbstractInBizDaoTestSupport {
 
@@ -80,21 +91,211 @@ public class DaoDataCollectorBizTest extends AbstractInBizDaoTestSupport {
 	@Test
 	public void collectDay() {
 		DayDatum d = newDayDatumInstance();
+		@SuppressWarnings("deprecation")
 		DayDatum result = biz.postDatum(d);
 		assertNotNull(result);
 		assertNotNull(result.getId());
 		assertEquals(d.getDay(), result.getDay());
 		assertNotNull(d.getLocationId());
 		lastDatum = d;
+
+		// verify created as GeneralLocationDatum
+		GeneralLocationDatumPK pk = new GeneralLocationDatumPK();
+		pk.setCreated(d.getDay().toDateTimeAtStartOfDay(DateTimeZone.forID(TEST_TZ)));
+		pk.setLocationId(TEST_LOC_ID);
+		pk.setSourceId(TEST_WEATHER_SOURCE_NAME + " Day");
+		GeneralLocationDatum entity = biz.getGeneralLocationDatumDao().get(pk);
+		assertNotNull(entity);
+		assertEquals("Sunrise", "06:40", entity.getSamples().getStatusSampleString("sunrise"));
+		assertEquals("Sunset", "18:56", entity.getSamples().getStatusSampleString("sunset"));
 	}
 
 	@Test
 	public void collectSameDay() {
 		collectDay();
 		DayDatum d = newDayDatumInstance();
+		@SuppressWarnings("deprecation")
 		DayDatum result = biz.postDatum(d);
 		assertNotNull(result);
 		assertEquals(lastDatum.getId(), result.getId());
+	}
+
+	private WeatherDatum newWeatherDatumInstance() {
+		WeatherDatum d = new WeatherDatum();
+		d.setNodeId(TEST_NODE_ID);
+		d.setSkyConditions("Sunny");
+		d.setInfoDate(new DateTime(2015, 4, 14, 10, 30, DateTimeZone.forID(TEST_TZ)));
+		d.setTemperatureCelsius(18f);
+		d.setBarometricPressure(32f);
+		d.setHumidity(70f);
+		d.setVisibility(3.2f);
+		return d;
+	}
+
+	@Test
+	public void collectWeather() {
+		WeatherDatum d = newWeatherDatumInstance();
+		@SuppressWarnings("deprecation")
+		WeatherDatum result = biz.postDatum(d);
+		assertNotNull(result);
+		assertNotNull(result.getId());
+		assertEquals(d.getInfoDate(), result.getInfoDate());
+		assertNotNull(d.getLocationId());
+		lastDatum = d;
+
+		// verify created as GeneralLocationDatum
+		GeneralLocationDatumPK pk = new GeneralLocationDatumPK();
+		pk.setCreated(d.getInfoDate());
+		pk.setLocationId(TEST_LOC_ID);
+		pk.setSourceId(TEST_WEATHER_SOURCE_NAME);
+		GeneralLocationDatum entity = biz.getGeneralLocationDatumDao().get(pk);
+		assertNotNull(entity);
+		assertEquals("Temp", d.getTemperatureCelsius().doubleValue(), entity.getSamples()
+				.getInstantaneousSampleDouble("temp").doubleValue(), 0.001);
+		assertEquals("Humidity", d.getHumidity().doubleValue(), entity.getSamples()
+				.getInstantaneousSampleDouble("humidity").doubleValue(), 0.001);
+		assertEquals("ATM", d.getBarometricPressure().doubleValue() * 100, entity.getSamples()
+				.getInstantaneousSampleDouble("atm").doubleValue(), 0.001);
+		assertEquals("Sky", d.getSkyConditions(), entity.getSamples().getStatusSampleString("sky"));
+		assertEquals("Visibility", d.getVisibility().doubleValue() * 1000, entity.getSamples()
+				.getInstantaneousSampleDouble("visibility"), 0.001);
+	}
+
+	@Test
+	public void collectWeatherSameDate() {
+		collectWeather();
+		WeatherDatum d = newWeatherDatumInstance();
+		@SuppressWarnings("deprecation")
+		WeatherDatum result = biz.postDatum(d);
+		assertNotNull(result);
+		assertEquals(lastDatum.getId(), result.getId());
+	}
+
+	private PriceDatum newPriceDatumInstance() {
+		PriceDatum d = new PriceDatum();
+		d.setNodeId(TEST_NODE_ID);
+		d.setLocationId(TEST_LOC_ID);
+		d.setCreated(new DateTime(2015, 4, 14, 10, 30, DateTimeZone.forID(TEST_TZ)));
+		d.setPrice(23.50f);
+		return d;
+	}
+
+	@Test
+	public void collectPrice() {
+		PriceDatum d = newPriceDatumInstance();
+		@SuppressWarnings("deprecation")
+		PriceDatum result = biz.postDatum(d);
+		assertNotNull(result);
+		assertNotNull(result.getId());
+		assertEquals(d.getCreated(), result.getCreated());
+		assertNotNull(d.getLocationId());
+		lastDatum = d;
+
+		// verify created as GeneralLocationDatum
+		GeneralLocationDatumPK pk = new GeneralLocationDatumPK();
+		pk.setCreated(d.getCreated());
+		pk.setLocationId(TEST_LOC_ID);
+		pk.setSourceId(TEST_PRICE_SOURCE_NAME);
+		GeneralLocationDatum entity = biz.getGeneralLocationDatumDao().get(pk);
+		assertNotNull(entity);
+		assertEquals("Price", d.getPrice().doubleValue(), entity.getSamples()
+				.getInstantaneousSampleDouble("price").doubleValue(), 0.001);
+	}
+
+	private PowerDatum newPowerDatumInstance() {
+		PowerDatum d = new PowerDatum();
+		d.setNodeId(TEST_NODE_ID);
+		d.setSourceId(TEST_SOURCE_ID);
+		d.setCreated(new DateTime(2015, 4, 14, 10, 30, DateTimeZone.forID(TEST_TZ)));
+		d.setWattHourReading(12345L);
+		d.setWatts(350);
+		return d;
+	}
+
+	@Test
+	public void collectPower() {
+		PowerDatum d = newPowerDatumInstance();
+		@SuppressWarnings("deprecation")
+		PowerDatum result = biz.postDatum(d);
+		assertNotNull(result);
+		assertNotNull(result.getId());
+		assertEquals(d.getCreated(), result.getCreated());
+		lastDatum = d;
+
+		// verify created as GeneralNodeDatum
+		GeneralNodeDatumPK pk = new GeneralNodeDatumPK();
+		pk.setCreated(d.getCreated());
+		pk.setNodeId(TEST_NODE_ID);
+		pk.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatum entity = biz.getGeneralNodeDatumDao().get(pk);
+		assertNotNull(entity);
+		assertEquals("Watts", d.getWatts().doubleValue(), entity.getSamples()
+				.getInstantaneousSampleDouble("watts").doubleValue(), 0.001);
+		assertEquals("Wh", d.getWattHourReading().doubleValue(), entity.getSamples()
+				.getInstantaneousSampleDouble("wattHours").doubleValue(), 0.001);
+	}
+
+	private ConsumptionDatum newConsumptionDatumInstance() {
+		ConsumptionDatum d = new ConsumptionDatum();
+		d.setNodeId(TEST_NODE_ID);
+		d.setSourceId(TEST_SOURCE_ID);
+		d.setCreated(new DateTime(2015, 4, 14, 10, 30, DateTimeZone.forID(TEST_TZ)));
+		d.setWattHourReading(12345L);
+		d.setWatts(350);
+		return d;
+	}
+
+	@Test
+	public void collectConsumption() {
+		ConsumptionDatum d = newConsumptionDatumInstance();
+		@SuppressWarnings("deprecation")
+		ConsumptionDatum result = biz.postDatum(d);
+		assertNotNull(result);
+		assertNotNull(result.getId());
+		assertEquals(d.getCreated(), result.getCreated());
+		lastDatum = d;
+
+		// verify created as GeneralNodeDatum
+		GeneralNodeDatumPK pk = new GeneralNodeDatumPK();
+		pk.setCreated(d.getCreated());
+		pk.setNodeId(TEST_NODE_ID);
+		pk.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatum entity = biz.getGeneralNodeDatumDao().get(pk);
+		assertNotNull(entity);
+		assertEquals("Watts", d.getWatts().doubleValue(), entity.getSamples()
+				.getInstantaneousSampleDouble("watts").doubleValue(), 0.001);
+		assertEquals("Wh", d.getWattHourReading().doubleValue(), entity.getSamples()
+				.getInstantaneousSampleDouble("wattHours").doubleValue(), 0.001);
+	}
+
+	private HardwareControlDatum newHardwareControlDatumInstance() {
+		HardwareControlDatum d = new HardwareControlDatum();
+		d.setNodeId(TEST_NODE_ID);
+		d.setSourceId("/power/switch/1");
+		d.setCreated(new DateTime(2015, 4, 14, 10, 30, DateTimeZone.forID(TEST_TZ)));
+		d.setIntegerValue(1);
+		return d;
+	}
+
+	@Test
+	public void collectHardwareControl() {
+		HardwareControlDatum d = newHardwareControlDatumInstance();
+		@SuppressWarnings("deprecation")
+		HardwareControlDatum result = biz.postDatum(d);
+		assertNotNull(result);
+		assertNotNull(result.getId());
+		assertEquals(d.getCreated(), result.getCreated());
+		lastDatum = d;
+
+		// verify created as GeneralNodeDatum
+		GeneralNodeDatumPK pk = new GeneralNodeDatumPK();
+		pk.setCreated(d.getCreated());
+		pk.setNodeId(TEST_NODE_ID);
+		pk.setSourceId(d.getSourceId());
+		GeneralNodeDatum entity = biz.getGeneralNodeDatumDao().get(pk);
+		assertNotNull(entity);
+		assertEquals("Value", d.getIntegerValue().intValue(), entity.getSamples()
+				.getStatusSampleInteger("val").intValue());
 	}
 
 	@Test

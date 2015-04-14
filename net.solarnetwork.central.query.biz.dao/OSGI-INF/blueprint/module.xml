@@ -41,14 +41,8 @@
 	<reference id="priceLocationDao" interface="net.solarnetwork.central.dao.PriceLocationDao"/>
 	<reference id="weatherLocationDao" interface="net.solarnetwork.central.dao.WeatherLocationDao"/>
 
-	<reference id="consumptionDatumDao" interface="net.solarnetwork.central.datum.dao.ConsumptionDatumDao"/>
-	<reference id="dayDatumDao" interface="net.solarnetwork.central.datum.dao.DayDatumDao"/>
 	<reference id="generalLocationDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumDao"/>
 	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
-	<reference id="hardwareControlDatumDao" interface="net.solarnetwork.central.datum.dao.HardwareControlDatumDao"/>
-	<reference id="priceDatumDao" interface="net.solarnetwork.central.datum.dao.PriceDatumDao"/>
-	<reference id="powerDatumDao" interface="net.solarnetwork.central.datum.dao.PowerDatumDao"/>
-	<reference id="weatherDatumDao" interface="net.solarnetwork.central.datum.dao.WeatherDatumDao"/>
 
 	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager"/>
 

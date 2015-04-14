@@ -29,16 +29,10 @@
 	
 	<!-- Published Services -->
 	
-	<service ref="consumptionDatumDao" interface="net.solarnetwork.central.datum.dao.ConsumptionDatumDao" ranking="5"/>
-	<service ref="dayDatumDao" interface="net.solarnetwork.central.datum.dao.DayDatumDao" ranking="5"/>
 	<service ref="generalLocationDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumDao" ranking="5"/>
 	<service ref="generalLocationDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao" ranking="5"/>
 	<service ref="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao" ranking="5"/>
 	<service ref="generalNodeDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao" ranking="5"/>
-	<service ref="hardwareControlDatumDao" interface="net.solarnetwork.central.datum.dao.HardwareControlDatumDao" ranking="5"/>
-	<service ref="powerDatumDao" interface="net.solarnetwork.central.datum.dao.PowerDatumDao" ranking="5"/>
-	<service ref="priceDatumDao" interface="net.solarnetwork.central.datum.dao.PriceDatumDao" ranking="5"/>
-	<service ref="weatherDatumDao" interface="net.solarnetwork.central.datum.dao.WeatherDatumDao" ranking="5"/>
 
 	<service ref="sqlSessionFactory" interface="org.apache.ibatis.session.SqlSessionFactory">
 		<service-properties>
@@ -68,17 +62,6 @@
 		<property name="basenames" value="net.solarnetwork.central.datum.dao.mybatis.messages"/>
 	</bean>
 	
-	<bean id="consumptionDatumDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisConsumptionDatumDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-		<property name="messageSource" ref="messageSource"/>
-	</bean>
-	
-	<bean id="dayDatumDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisDayDatumDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-		<property name="messageSource" ref="messageSource"/>
-		<property name="conditionMap" ref="skyConditionMap"/>
-	</bean>
-	
 	<bean id="generalLocationDatumDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralLocationDatumDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 		<property name="messageSource" ref="messageSource"/>
@@ -99,27 +82,6 @@
 		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
-	<bean id="hardwareControlDatumDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisHardwareControlDatumDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-		<property name="messageSource" ref="messageSource"/>
-	</bean>
-	
-	<bean id="priceDatumDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisPriceDatumDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-		<property name="messageSource" ref="messageSource"/>
-	</bean>
-	
-	<bean id="powerDatumDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisPowerDatumDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-		<property name="messageSource" ref="messageSource"/>
-	</bean>
-	
-	<bean id="weatherDatumDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisWeatherDatumDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-		<property name="messageSource" ref="messageSource"/>
-		<property name="conditionMap" ref="skyConditionMap"/>
-	</bean>
-	
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSource"/>
 		<property name="typeAliases">
@@ -132,10 +94,6 @@
 				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumPK</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumPK</value>
 			
-				<value>net.solarnetwork.central.datum.domain.ConsumptionDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ConsumptionDatumMatch</value>
-				<value>net.solarnetwork.central.datum.domain.DayDatum</value>
-				<value>net.solarnetwork.central.datum.domain.DayDatumMatch</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatum</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumMatch</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata</value>
@@ -144,22 +102,9 @@
 				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch</value>
-				<value>net.solarnetwork.central.datum.domain.HardwareControlDatum</value>
-				<value>net.solarnetwork.central.datum.domain.HardwareControlDatumMatch</value>
-				<value>net.solarnetwork.central.datum.domain.PriceDatum</value>
-				<value>net.solarnetwork.central.datum.domain.PowerDatum</value>
-				<value>net.solarnetwork.central.datum.domain.PowerDatumMatch</value>
-				<value>net.solarnetwork.central.datum.domain.WeatherDatum</value>
-				<value>net.solarnetwork.central.datum.domain.WeatherDatumMatch</value>
 				
-				<value>net.solarnetwork.central.datum.domain.ReportingConsumptionDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingDayDatum</value>
 				<value>net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum</value>
 				<value>net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingHardwareControlDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingPowerDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingPriceDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingWeatherDatum</value>
 			</list>
 		</property>
 		<property name="typeHandlers">
@@ -179,16 +124,10 @@
 
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/Global.xml</value>
 
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/ConsumptionDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/DayDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumMetadata.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/HardwareControlDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/PowerDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/PriceDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/WeatherDatum.xml</value>
 			</list>
 		</property>
 	</bean>
