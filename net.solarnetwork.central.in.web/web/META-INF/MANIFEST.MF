@@ -23,7 +23,7 @@ Import-Package:
  net.solarnetwork.central.dao;version="1.13.0",
  net.solarnetwork.central.datum.domain;version="1.15.0",
  net.solarnetwork.central.domain;version="1.16.0",
- net.solarnetwork.central.in.biz;version="1.10.0",
+ net.solarnetwork.central.in.biz;version="1.11.0",
  net.solarnetwork.central.instructor.biz;version="1.0.0",
  net.solarnetwork.central.instructor.domain;version="1.0.0",
  net.solarnetwork.central.security;version="1.1.0",
