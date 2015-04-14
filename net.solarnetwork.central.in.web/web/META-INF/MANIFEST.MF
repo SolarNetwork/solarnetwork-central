@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central In Web
 Bundle-SymbolicName: net.solarnetwork.central.in.web
-Bundle-Version: 1.16.0
+Bundle-Version: 1.16.1
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: WEB-INF/classes/
