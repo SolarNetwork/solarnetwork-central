@@ -171,22 +171,28 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 				GeneralLocationDatum g = preprocessLocationDatum((LocationDatum) datum);
 				GeneralLocationDatum entity = checkForLocationDatumByDate(g.getLocationId(),
 						g.getCreated(), g.getSourceId());
+				GeneralLocationDatumPK pk;
 				if ( entity == null ) {
-					entity = generalLocationDatumDao.get(generalLocationDatumDao.store(g));
+					pk = generalLocationDatumDao.store(g);
+				} else {
+					pk = entity.getId();
 				}
-				entityId = ((entity.getLocationId().longValue() & 0x7FFFFF) << 40)
-						| ((entity.getSourceId().hashCode() & 0xFF) << 32)
-						| (entity.getCreated().minusYears(40).getMillis() & 0xFFFFFFFF);
+				entityId = ((pk.getLocationId().longValue() & 0x7FFFFF) << 40)
+						| ((pk.getSourceId().hashCode() & 0xFF) << 32)
+						| (pk.getCreated().minusYears(40).getMillis() & 0xFFFFFFFF);
 			} else {
 				GeneralNodeDatum g = preprocessDatum(datum);
 				GeneralNodeDatum entity = checkForNodeDatumByDate(g.getNodeId(), g.getCreated(),
 						g.getSourceId());
+				GeneralNodeDatumPK pk;
 				if ( entity == null ) {
-					entity = generalNodeDatumDao.get(generalNodeDatumDao.store(g));
+					pk = generalNodeDatumDao.store(g);
+				} else {
+					pk = entity.getId();
 				}
-				entityId = ((entity.getNodeId().longValue() & 0x7FFFFF) << 40)
-						| ((entity.getSourceId().hashCode() & 0xFF) << 32)
-						| (entity.getCreated().minusYears(40).getMillis() & 0xFFFFFFFF);
+				entityId = ((pk.getNodeId().longValue() & 0x7FFFFF) << 40)
+						| ((pk.getSourceId().hashCode() & 0xFF) << 32)
+						| (pk.getCreated().minusYears(40).getMillis() & 0xFFFFFFFF);
 			}
 		} catch ( DataIntegrityViolationException e ) {
 			if ( log.isDebugEnabled() ) {
