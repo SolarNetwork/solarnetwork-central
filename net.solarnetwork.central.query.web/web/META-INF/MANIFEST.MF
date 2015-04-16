@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Query Web
 Bundle-SymbolicName: net.solarnetwork.central.query.web
-Bundle-Version: 1.18.0
+Bundle-Version: 2.0.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: WEB-INF/classes/
@@ -16,11 +16,11 @@ Import-Package:
  net.solarnetwork.central;version="1.2.0",
  net.solarnetwork.central.dao;version="1.13.0",
  net.solarnetwork.central.datum.biz;version="1.0.0",
- net.solarnetwork.central.datum.dao;version="1.6.0",
+ net.solarnetwork.central.datum.dao;version="2.0.0",
  net.solarnetwork.central.datum.domain;version="1.15.0",
  net.solarnetwork.central.datum.support;version="1.1.0",
  net.solarnetwork.central.domain;version="1.16.0",
- net.solarnetwork.central.query.biz;version="1.9.0",
+ net.solarnetwork.central.query.biz;version="2.0.0",
  net.solarnetwork.central.query.domain;version="1.2.0",
  net.solarnetwork.central.security;version="1.2.0",
  net.solarnetwork.central.security.jdbc;version="1.1.0",

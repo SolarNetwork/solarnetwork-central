@@ -23,22 +23,14 @@
 package net.solarnetwork.central.in.biz.dao;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
-import net.solarnetwork.central.datum.dao.DatumDao;
-import net.solarnetwork.central.datum.dao.DayDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
-import net.solarnetwork.central.datum.dao.WeatherDatumDao;
 import net.solarnetwork.central.datum.domain.ConsumptionDatum;
 import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -46,9 +38,11 @@ import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.LocationDatum;
 import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.PowerDatum;
@@ -68,8 +62,10 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.util.ClassUtils;
+import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.PropertyAccessor;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
@@ -78,15 +74,16 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Implementation of {@link DataCollectorBiz} using {@link DatumDao} objects to
- * persist the data.
+ * Implementation of {@link DataCollectorBiz} using {@link GeneralNodeDatumDao}
+ * and {@link GeneralLocationDatumDao} APIs to persist the data.
  * 
  * <p>
- * This service expects all calls into {@link #postDatum(Datum)} and
- * {@link #postDatum(Iterable)} to provide a {@link AuthenticatedNode} via the
- * normal Spring Security {@link SecurityContextHolder} API. Any attempt to post
- * data for a node different from the currently authenticated node will result
- * in a {@link SecurityException}. If a {@link NodeDatum} is posted with a
+ * This service expects all calls into {@link #postGeneralNodeDatum(Iterable)}
+ * and {@link #postGeneralLocationDatum(Iterable)} to provide a
+ * {@link AuthenticatedNode} via the normal Spring Security
+ * {@link SecurityContextHolder} API. Any attempt to post data for a node
+ * different from the currently authenticated node will result in a
+ * {@link SecurityException}. If a {@link NodeDatum} is posted with a
  * <em>null</em> {@link NodeDatum#getNodeId()} value, this service will set the
  * node ID to the authenticated node ID automatically.
  * </p>
@@ -96,10 +93,6 @@ import org.springframework.transaction.annotation.Transactional;
  * </p>
  * 
  * <dl class="class-properties">
- * <dt>daoMapping</dt>
- * <dd>A mapping of {@link Datum} class objects to associated {@link DatumDao}
- * objects that know how to persist them.</dd>
- * 
  * <dt>solarNodeDao</dt>
  * <dd>The {@link SolarNodeDao} so location information can be added to
  * {@link DayDatum} and {@link WeatherDatum} objects if they are missing that
@@ -108,23 +101,10 @@ import org.springframework.transaction.annotation.Transactional;
  * </dl>
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
-	private static final Set<String> CONSUMPTION_DATUM_IGNORE_ENTITY_COPY = Collections
-			.unmodifiableSet(new HashSet<String>(Arrays.asList(new String[] { "class", "id", "created",
-					"nodeId", "watts" })));
-
-	private static final Set<String> POWER_DATUM_IGNORE_ENTITY_COPY = Collections
-			.unmodifiableSet(new HashSet<String>(Arrays.asList(new String[] { "class", "id", "created",
-					"nodeId" })));
-
-	private static final Set<String> PRICE_DATUM_IGNORE_ENTITY_COPY = Collections
-			.unmodifiableSet(new HashSet<String>(Arrays.asList(new String[] { "class", "id", "created",
-					"locationId" })));
-
-	private Map<String, DatumDao<Datum>> daoMapping;
 	private SolarNodeDao solarNodeDao = null;
 	private PriceLocationDao priceLocationDao = null;
 	private WeatherLocationDao weatherLocationDao = null;
@@ -133,6 +113,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private GeneralLocationDatumDao generalLocationDatumDao = null;
 	private DatumMetadataBiz datumMetadataBiz = null;
 	private int filteredResultsLimit = 250;
+	private GeneralDatumMapper datumMapper = null;
 
 	/** A class-level logger. */
 	private final org.slf4j.Logger log = LoggerFactory.getLogger(getClass());
@@ -154,6 +135,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
+	@Deprecated
 	public <D extends Datum> D postDatum(D datum) {
 		if ( datum == null ) {
 			throw new IllegalArgumentException("Datum must not be null");
@@ -182,43 +164,62 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			}
 		}
 
-		DatumDao<Datum> dao = daoMapping.get(datum.getClass().getName());
-		if ( dao == null ) {
-			throw new IllegalArgumentException("The [" + datum.getClass().getName()
-					+ "] Datum is not supported. Supported types are: " + daoMapping.keySet());
-		}
-		D datumToPersist = preprocessDatum(datum, dao);
-		if ( datumToPersist == null ) {
-			return datum;
-		}
-		if ( datumToPersist.getId() != null ) {
-			// ignore updates... perhaps in future we need way to process updates?
-			return datumToPersist;
-		}
+		Long entityId = null;
 		try {
-			return persistDatum(datumToPersist, dao);
+			if ( datum instanceof LocationDatum
+					&& !(datum instanceof PowerDatum || datum instanceof ConsumptionDatum) ) {
+				GeneralLocationDatum g = preprocessLocationDatum((LocationDatum) datum);
+				GeneralLocationDatum entity = checkForLocationDatumByDate(g.getLocationId(),
+						g.getCreated(), g.getSourceId());
+				GeneralLocationDatumPK pk;
+				if ( entity == null ) {
+					pk = generalLocationDatumDao.store(g);
+				} else {
+					pk = entity.getId();
+				}
+				entityId = ((pk.getLocationId().longValue() & 0x7FFFFF) << 40)
+						| ((pk.getSourceId().hashCode() & 0xFF) << 32)
+						| (pk.getCreated().minusYears(40).getMillis() & 0xFFFFFFFF);
+			} else {
+				GeneralNodeDatum g = preprocessDatum(datum);
+				GeneralNodeDatum entity = checkForNodeDatumByDate(g.getNodeId(), g.getCreated(),
+						g.getSourceId());
+				GeneralNodeDatumPK pk;
+				if ( entity == null ) {
+					pk = generalNodeDatumDao.store(g);
+				} else {
+					pk = entity.getId();
+				}
+				entityId = ((pk.getNodeId().longValue() & 0x7FFFFF) << 40)
+						| ((pk.getSourceId().hashCode() & 0xFF) << 32)
+						| (pk.getCreated().minusYears(40).getMillis() & 0xFFFFFFFF);
+			}
 		} catch ( DataIntegrityViolationException e ) {
 			if ( log.isDebugEnabled() ) {
-				log.debug(
-						"DataIntegretyViolation on store of "
-								+ datumToPersist.getClass().getSimpleName() + ": "
-								+ ClassUtils.getBeanProperties(datumToPersist, null), e);
+				log.debug("DataIntegretyViolation on store of " + datum.getClass().getSimpleName()
+						+ ": " + ClassUtils.getBeanProperties(datum, null), e);
 			} else if ( log.isWarnEnabled() ) {
-				log.warn("DataIntegretyViolation on store of "
-						+ datumToPersist.getClass().getSimpleName() + ": "
-						+ ClassUtils.getBeanProperties(datumToPersist, null));
+				log.warn("DataIntegretyViolation on store of " + datum.getClass().getSimpleName() + ": "
+						+ ClassUtils.getBeanProperties(datum, null));
 			}
 			throw new net.solarnetwork.central.RepeatableTaskException(e);
 		} catch ( RuntimeException e ) {
 			// log this
-			log.error("Unable to store " + datumToPersist.getClass().getSimpleName() + ": "
-					+ ClassUtils.getBeanProperties(datumToPersist, null));
+			log.error("Unable to store " + datum.getClass().getSimpleName() + ": "
+					+ ClassUtils.getBeanProperties(datum, null));
 			throw e;
 		}
+
+		// now get numeric ID for datum and return
+		PropertyAccessor bean = PropertyAccessorFactory.forBeanPropertyAccess(datum);
+		bean.setPropertyValue("id", entityId);
+
+		return datum;
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
+	@Deprecated
 	public List<Datum> postDatum(Iterable<Datum> datums) {
 		List<Datum> results = new ArrayList<Datum>();
 		for ( Datum d : datums ) {
@@ -399,28 +400,24 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
-	private <D extends Datum> D preprocessDatum(D datum, DatumDao<? extends Datum> dao) {
-		Datum result = datum;
-		if ( datum instanceof ConsumptionDatum ) {
-			result = preprocessConsumptionDatum((ConsumptionDatum) datum, dao);
-		} else if ( datum instanceof DayDatum ) {
-			result = preprocessDayDatum((DayDatum) datum, (DayDatumDao) dao);
-		} else if ( datum instanceof PowerDatum ) {
-			result = preprocessPowerDatum((PowerDatum) datum, dao);
+	private GeneralLocationDatum preprocessLocationDatum(LocationDatum datum) {
+		GeneralLocationDatum result = null;
+		if ( datum instanceof DayDatum ) {
+			result = preprocessDayDatum((DayDatum) datum);
 		} else if ( datum instanceof PriceDatum ) {
-			result = preprocessPriceDatum((PriceDatum) datum, dao);
+			result = preprocessPriceDatum((PriceDatum) datum);
 		} else if ( datum instanceof WeatherDatum ) {
-			result = preprocessWeatherDatum((WeatherDatum) datum, (WeatherDatumDao) dao);
+			result = preprocessWeatherDatum((WeatherDatum) datum);
 		}
-		return (D) result;
+		return result;
 	}
 
-	private Datum preprocessConsumptionDatum(ConsumptionDatum datum, DatumDao<? extends Datum> dao) {
-		return checkForNodeDatumByDate(datum, dao, CONSUMPTION_DATUM_IGNORE_ENTITY_COPY);
+	private GeneralNodeDatum preprocessDatum(Datum datum) {
+		GeneralNodeDatum result = getGeneralDatumMapper().mapDatum(datum);
+		return result;
 	}
 
-	private Datum preprocessDayDatum(DayDatum datum, DayDatumDao dao) {
+	private GeneralLocationDatum preprocessDayDatum(DayDatum datum) {
 		// fill in location ID if not provided
 		if ( datum.getLocationId() == null ) {
 			SolarNode node = solarNodeDao.get(datum.getNodeId());
@@ -428,26 +425,16 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 				datum.setLocationId(node.getWeatherLocationId());
 			}
 		}
-		// see if exists already for given day
-		DayDatum entity = null;
-		if ( datum.getLocationId() != null ) {
-			entity = dao.getDatumForDate(datum.getLocationId(), datum.getDay());
-			if ( entity == null || !entity.isSameDay(datum) ) {
-				return datum;
-			}
-		}
-		return entity;
+		GeneralLocationDatum g = getGeneralDatumMapper().mapLocationDatum(datum);
+		return g;
 	}
 
-	private Datum preprocessPriceDatum(PriceDatum datum, DatumDao<? extends Datum> dao) {
-		return checkForLocationDatumByDate(datum, dao, PRICE_DATUM_IGNORE_ENTITY_COPY);
+	private GeneralLocationDatum preprocessPriceDatum(PriceDatum datum) {
+		GeneralLocationDatum g = getGeneralDatumMapper().mapLocationDatum(datum);
+		return g;
 	}
 
-	private Datum preprocessPowerDatum(PowerDatum datum, DatumDao<? extends Datum> dao) {
-		return checkForNodeDatumByDate(datum, dao, POWER_DATUM_IGNORE_ENTITY_COPY);
-	}
-
-	private Datum preprocessWeatherDatum(WeatherDatum datum, WeatherDatumDao dao) {
+	private GeneralLocationDatum preprocessWeatherDatum(WeatherDatum datum) {
 		// fill in location ID if not provided
 		if ( datum.getLocationId() == null ) {
 			SolarNode node = solarNodeDao.get(datum.getNodeId());
@@ -455,52 +442,42 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 				datum.setLocationId(node.getWeatherLocationId());
 			}
 		}
-		// see if exists already for given date
-		WeatherDatum entity = dao.getDatumForDate(datum.getLocationId(), datum.getInfoDate());
-		if ( entity == null || !entity.isSameInfoDate(datum) ) {
-			return datum;
-		}
+		GeneralLocationDatum g = getGeneralDatumMapper().mapLocationDatum(datum);
+		return g;
+	}
+
+	private GeneralNodeDatum checkForNodeDatumByDate(Long nodeId, DateTime date, String sourceId) {
+		GeneralNodeDatumPK pk = new GeneralNodeDatumPK();
+		pk.setCreated(date);
+		pk.setNodeId(nodeId);
+		pk.setSourceId(sourceId == null ? "" : sourceId);
+		GeneralNodeDatum entity = generalNodeDatumDao.get(pk);
 		return entity;
 	}
 
-	@SuppressWarnings("unchecked")
-	private <D extends Datum> D persistDatum(D datum, DatumDao<Datum> dao) {
-		Long id = dao.storeDatum(datum);
-		return (D) dao.getDatum(id);
+	private GeneralLocationDatum checkForLocationDatumByDate(Long locationId, DateTime date,
+			String sourceId) {
+		GeneralLocationDatumPK pk = new GeneralLocationDatumPK();
+		pk.setCreated(date);
+		pk.setLocationId(locationId);
+		pk.setSourceId(sourceId == null ? "" : sourceId);
+		GeneralLocationDatum entity = generalLocationDatumDao.get(pk);
+		return entity;
 	}
 
-	private Datum checkForNodeDatumByDate(NodeDatum datum, DatumDao<? extends Datum> dao,
-			Set<String> copyPropertiesIgnore) {
-		Datum entity = dao.getDatumForDate(datum.getNodeId(), datum.getCreated());
-		if ( entity != null ) {
-			// copy non-null properties from posted data onto entity
-			Map<String, Object> propsToCopy = ClassUtils.getBeanProperties(datum, copyPropertiesIgnore);
-			BeanWrapper bean = PropertyAccessorFactory.forBeanPropertyAccess(entity);
-			bean.setPropertyValues(propsToCopy);
-			return entity;
+	private GeneralDatumMapper getGeneralDatumMapper() {
+		if ( datumMapper != null ) {
+			return datumMapper;
 		}
-		return datum;
-	}
-
-	private Datum checkForLocationDatumByDate(LocationDatum datum, DatumDao<? extends Datum> dao,
-			Set<String> copyPropertiesIgnore) {
-		Datum entity = dao.getDatumForDate(datum.getLocationId(), datum.getCreated());
-		if ( entity != null ) {
-			// copy non-null properties from posted data onto entity
-			Map<String, Object> propsToCopy = ClassUtils.getBeanProperties(datum, copyPropertiesIgnore);
-			BeanWrapper bean = PropertyAccessorFactory.forBeanPropertyAccess(entity);
-			bean.setPropertyValues(propsToCopy);
-			return entity;
+		GeneralLocationDatumDao locationDao = getGeneralLocationDatumDao();
+		if ( locationDao == null ) {
+			throw new UnsupportedOperationException(
+					"A GeneralLocationDatumDao is required to use GeneralDatumMapper");
 		}
-		return datum;
-	}
-
-	public Map<String, DatumDao<Datum>> getDaoMapping() {
-		return daoMapping;
-	}
-
-	public void setDaoMapping(Map<String, DatumDao<Datum>> daoMapping) {
-		this.daoMapping = daoMapping;
+		GeneralDatumMapper mapper = new GeneralDatumMapper();
+		mapper.setGeneralLocationDatumDao(locationDao);
+		datumMapper = mapper;
+		return mapper;
 	}
 
 	public SolarNodeDao getSolarNodeDao() {

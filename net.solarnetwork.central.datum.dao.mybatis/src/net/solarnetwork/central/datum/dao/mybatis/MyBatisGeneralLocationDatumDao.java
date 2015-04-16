@@ -32,11 +32,16 @@ import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
+import net.solarnetwork.central.datum.domain.DatumMappingInfo;
+import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
+import net.solarnetwork.central.datum.domain.LocationDatum;
+import net.solarnetwork.central.datum.domain.PriceDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
+import net.solarnetwork.central.datum.domain.WeatherDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.FilterResults;
@@ -53,7 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
  * MyBatis implementation of {@link GeneralLocationDatumDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisGeneralLocationDatumDao extends
 		BaseMyBatisGenericDao<GeneralLocationDatum, GeneralLocationDatumPK>
@@ -101,6 +106,20 @@ public class MyBatisGeneralLocationDatumDao extends
 	 * <em>true</em>.
 	 */
 	public static final String QUERY_FOR_MOST_RECENT = "find-general-loc-most-recent";
+
+	/** The query name to find {@link DatumMappingInfo} for a {@code DayDatum}. */
+	public static final String QUERY_FOR_DAY_DATUM_INFO = "get-mapping-info-day";
+
+	/**
+	 * The query name to find {@link DatumMappingInfo} for a
+	 * {@code WeatherDatum}.
+	 */
+	public static final String QUERY_FOR_WEATHER_DATUM_INFO = "get-mapping-info-weather";
+
+	/**
+	 * The query name to find {@link DatumMappingInfo} for a {@code PriceDatum}.
+	 */
+	public static final String QUERY_FOR_PRICE_DATUM_INFO = "get-mapping-info-price";
 
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
@@ -254,6 +273,23 @@ public class MyBatisGeneralLocationDatumDao extends
 		}
 		List<String> results = getSqlSession().selectList(this.queryForDistinctSources, params);
 		return new LinkedHashSet<String>(results);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public DatumMappingInfo getMappingInfo(LocationDatum datum) {
+		String queryName = null;
+		if ( datum instanceof DayDatum ) {
+			queryName = QUERY_FOR_DAY_DATUM_INFO;
+		} else if ( datum instanceof PriceDatum ) {
+			queryName = QUERY_FOR_PRICE_DATUM_INFO;
+		} else if ( datum instanceof WeatherDatum ) {
+			queryName = QUERY_FOR_WEATHER_DATUM_INFO;
+		} else {
+			throw new IllegalArgumentException("Unsupported LocationDatum type: " + datum);
+		}
+		DatumMappingInfo info = getSqlSession().selectOne(queryName, datum.getLocationId());
+		return info;
 	}
 
 	public String getQueryForReportableInterval() {

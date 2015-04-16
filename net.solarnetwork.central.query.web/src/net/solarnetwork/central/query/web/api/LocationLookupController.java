@@ -25,11 +25,7 @@ package net.solarnetwork.central.query.web.api;
 import static net.solarnetwork.web.domain.Response.response;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationMatch;
-import net.solarnetwork.central.domain.PriceLocation;
-import net.solarnetwork.central.domain.SourceLocationMatch;
-import net.solarnetwork.central.domain.WeatherLocation;
 import net.solarnetwork.central.query.biz.QueryBiz;
-import net.solarnetwork.central.support.PriceLocationFilter;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.web.domain.Response;
@@ -45,7 +41,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * Controller for querying location data.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/api/v1/pub/location", "/api/v1/sec/location" })
@@ -91,30 +87,6 @@ public class LocationLookupController extends WebServiceControllerSupport {
 		FilterResults<LocationMatch> results = queryBiz.findFilteredLocations(cmd.getLocation(),
 				cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
 		return response(results);
-	}
-
-	@Deprecated
-	@ResponseBody
-	@RequestMapping(value = "/price", method = RequestMethod.GET)
-	public Response<FilterResults<SourceLocationMatch>> findPriceLocations(PriceLocationFilter cmd) {
-		// convert empty strings to null
-		cmd.removeEmptyValues();
-
-		FilterResults<SourceLocationMatch> results = queryBiz.findFilteredLocations(cmd,
-				PriceLocation.class, cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
-		return response(results);
-	}
-
-	@Deprecated
-	@ResponseBody
-	@RequestMapping(value = "/weather", method = RequestMethod.GET)
-	public Response<FilterResults<SourceLocationMatch>> findWeatherLocations(SourceLocationFilter cmd) {
-		// convert empty strings to null
-		cmd.removeEmptyValues();
-
-		FilterResults<SourceLocationMatch> matches = queryBiz.findFilteredLocations(cmd,
-				WeatherLocation.class, cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
-		return response(matches);
 	}
 
 }

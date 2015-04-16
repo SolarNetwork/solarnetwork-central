@@ -27,11 +27,9 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({ MyBatisConsumptionDatumDaoTests.class, MyBatisDayDatumDaoTests.class,
-		MyBatisGeneralLocationDatumDaoTests.class, MyBatisGeneralLocationDatumMetadataDaoTests.class,
-		MyBatisGeneralNodeDatumDaoTests.class, MyBatisGeneralNodeDatumMetadataDaoTests.class,
-		MyBatisHardwareControlDatumDaoTests.class, MyBatisPowerDatumDaoTests.class,
-		MyBatisPriceDatumDaoTests.class, MyBatisWeatherDatumDaoTests.class })
+@SuiteClasses({ MyBatisGeneralLocationDatumDaoTests.class,
+		MyBatisGeneralLocationDatumMetadataDaoTests.class, MyBatisGeneralNodeDatumDaoTests.class,
+		MyBatisGeneralNodeDatumMetadataDaoTests.class })
 public class AllTests {
 
 }

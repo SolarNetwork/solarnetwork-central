@@ -56,7 +56,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * JSON implementation of bulk upload service.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Controller
 @RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" }, consumes = "application/json")
@@ -174,6 +174,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 
 		try {
 			if ( parsedDatum.size() > 0 ) {
+				@SuppressWarnings("deprecation")
 				List<Datum> postedDatum = getDataCollectorBiz().postDatum(parsedDatum);
 				resultDatum.addAll(postedDatum);
 			}
