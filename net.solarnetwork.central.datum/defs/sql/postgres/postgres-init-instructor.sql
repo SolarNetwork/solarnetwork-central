@@ -47,7 +47,7 @@ DECLARE
 BEGIN
 	DELETE FROM solarnet.sn_node_instruction
 	WHERE instr_date < older_date
-		AND deliver_state NOT IN (
+		AND deliver_state IN (
 			'Declined'::solarnet.instruction_delivery_state, 
 			'Completed'::solarnet.instruction_delivery_state);
 	GET DIAGNOSTICS num_rows = ROW_COUNT;
