@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.instructor.dao;
@@ -34,9 +32,9 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  * DAO API for {@link NodeInstruction}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public interface NodeInstructionDao extends GenericDao<NodeInstruction, Long>,
-FilterableDao<EntityMatch, Long, InstructionFilter> {
+		FilterableDao<EntityMatch, Long, InstructionFilter> {
 
 }
