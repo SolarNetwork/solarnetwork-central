@@ -70,7 +70,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
  * 
  * @author matt
  * @version 1.1
+ * @deprecated see {@link BulkJsonDataCollector}
  */
+@Deprecated
 @Controller
 @RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" })
 public class BulkDataCollector extends AbstractDataCollector {

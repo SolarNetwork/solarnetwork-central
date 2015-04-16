@@ -1,7 +1,13 @@
 var nodeId = -1;
 var featureConsumption = false;
 var featureGridPrice = false;
-var consumptionSourceId = '';
+var sourceId = 'Solar';
+var consumptionSourceId = 'Main';
+var priceSourceId;
+var priceLocationId;
+var daySourceId;
+var weatherSourceId;
+var weatherLocationId;
 var mainChart;
 var rangeChart;
 var rollingWeekHourlyConsumptionChart;
@@ -15,6 +21,10 @@ var rollingDayWeatherChart;
 
 var dateTimeDataFormat = '%Y-%m-%d %H:%M';
 var dateDataFormat = '%Y-%m-%d';
+
+var nodeUrlHelper;
+var priceUrlHelper;
+var weatherUrlHelper;
 
 /**
  * NodeChart constructor.
@@ -73,7 +83,7 @@ function NodeChart(divId, nodeId, interval, opts, chartOpts) {
 		var queryParams = {
 				nodeId: this.nodeId,
 				startDate: this.interval.startDate,
-				endDate: this.interval.endDate
+				endDate: this.interval.endDate,
 			};
 		var dt = this.interval.eDate.diff(this.interval.sDate, 'days', true);
 		var endDateEOD = false;
@@ -133,52 +143,65 @@ function NodeChart(divId, nodeId, interval, opts, chartOpts) {
 
 		// set up date ticks
 		this.setupDateTicks();
-
-		$.getJSON('generationData.json', queryParams,
-				function(data) {
-					$(data.data).each(function(i, obj) {
-						var dateVal = obj.localDate;
-						if ( me.timeReportingLevel ) {
-							dateVal += ' ' + obj.localTime;
-						}
-						me.powerWattSeries.push([dateVal, obj.watts < 0 ? 0 : obj.watts]);
-					});
-					me.numSeriesLoaded++;
-					me.drawChart();
-				});
-		if ( this.featureConsumption ) {
-			var consumParams = queryParams;
-			if ( this.consumptionSourceId ) {
-				consumParams = {};
-				$.extend(true, consumParams, queryParams);
-				consumParams["properties['sourceId']"] = this.consumptionSourceId;
+		
+		if ( queryParams.aggreagate === undefined ) {
+			if ( this.interval.aggregate ) {
+				queryParams.aggregate = this.interval.aggregate;
+			} else {
+				queryParams.aggregate = 'Day';
 			}
-			$.getJSON('consumptionData.json', consumParams,
-					function(data) {
-						$(data.data).each(function(i, obj) {
-							var dateVal = obj.localDate;
-							if ( me.timeReportingLevel ) {
-								dateVal += ' ' + obj.localTime;
-							}
-							me.consumptionWattSeries.push([dateVal, obj.watts < 0 ? 0 : obj.watts]);
-						});
-						me.numSeriesLoaded++;
-						me.drawChart();
-					});
+		}
+
+		var queryRange = sn.datum.loaderQueryRange(queryParams.aggregate, this.interval, this.interval.eDate);
+		sn.datum.loader([sourceId], nodeUrlHelper, queryRange.start, queryRange.end, queryParams.aggregate).load(function(error, data) {
+			if ( !Array.isArray(data) )  {
+				console.log('Error loading consumption data: %s', error);
+				return;
+			}
+			$(data).each(function(i, obj) {
+				var dateVal = obj.localDate;
+				if ( me.timeReportingLevel ) {
+					dateVal += ' ' + obj.localTime;
+				}
+				me.powerWattSeries.push([dateVal, obj.watts < 0 ? 0 : obj.watts]);
+			});
+			me.numSeriesLoaded++;
+			me.drawChart();
+		});
+
+		if ( this.featureConsumption ) {
+			sn.datum.loader([this.consumptionSourceId], nodeUrlHelper, queryRange.start, queryRange.end, queryParams.aggregate).load(function(error, data) {
+				if ( !Array.isArray(data) )  {
+					console.log('Error loading consumption data: %s', error);
+					return;
+				}
+				$(data).each(function(i, obj) {
+					var dateVal = obj.localDate;
+					if ( me.timeReportingLevel ) {
+						dateVal += ' ' + obj.localTime;
+					}
+					me.consumptionWattSeries.push([dateVal, obj.watts < 0 ? 0 : obj.watts]);
+				});
+				me.numSeriesLoaded++;
+				me.drawChart();
+			});
 		}
 		if ( this.featureGridPrice ) {
-			$.getJSON('priceData.json', queryParams,
-					function(data) {
-						$(data.data).each(function(i, obj) {
-							var dateVal = obj.localDate;
-							if ( me.timeReportingLevel ) {
-								dateVal += ' ' + obj.localTime;
-							}
-							me.gridPriceSeries.push([dateVal, obj.price < 0 ? 0 : obj.price]);
-						});
-						me.numSeriesLoaded++;
-						me.drawChart();
-					});
+			sn.datum.loader([priceSourceId], priceUrlHelper, queryRange.start, queryRange.end, queryParams.aggregate).load(function(error, data) {
+				if ( !Array.isArray(data) )  {
+					console.log('Error loading consumption data: %s', error);
+					return;
+				}
+				$(data).each(function(i, obj) {
+					var dateVal = obj.localDate;
+					if ( me.timeReportingLevel ) {
+						dateVal += ' ' + obj.localTime;
+					}
+					me.gridPriceSeries.push([dateVal, obj.price < 0 ? 0 : obj.price]);
+				});
+				me.numSeriesLoaded++;
+				me.drawChart();
+			});
 		}
 		return this;
 	};
@@ -268,7 +291,7 @@ function NodeChart(divId, nodeId, interval, opts, chartOpts) {
 		$.jqplot(this.divId, seriesArray,  opts);
 		if ( this.showDaylight ) {
 			new DaylightCanvas(this.nodeId, $('#'+this.divId +' canvas.jqplot-series-canvas'), 
-					this.interval.sDate.clone(), this.interval.eDate.clone()).showDaylight();
+					this.interval.sDate.clone(), this.interval.eDate.clone(), this.interval).showDaylight();
 		}
 		$(document).trigger("NodeChartReady", [this]);
 		return this;
@@ -292,26 +315,21 @@ function ConsumptionHourlyCostChart(divId, nodeId, consumptionSourceId, interval
 		this.kwHourSeries = [];
 		this.costSeries = [];
 		var me = this;
-		var queryParams = {
-			nodeId: this.nodeId,
-			startDate: this.interval.startDate,
-			endDate: this.interval.endDate,
-			//precision: 60,
-			aggregate: 'Hour'
-		};
-		queryParams["properties['sourceId']"] = this.consumptionSourceId;
-		
-		$.getJSON('consumptionData.json', queryParams,
-				function(data) {
-					$(data.data).each(function(i, obj) {
-						me.kwHourSeries.push([obj.localDate +' ' +obj.localTime, obj.wattHours < 0 ? 0 : obj.wattHours / 1000]);
-						me.costSeries.push([obj.localDate +' ' +obj.localTime, obj.cost < 0 ? 0 : obj.cost]);
-						if ( me.currency == '' && obj.currency != '' ) {
-							me.currency = obj.currency;
-						}
-					});
-					me.drawChart();
-				});
+		var queryRange = sn.datum.loaderQueryRange('Hour', this.interval, this.interval.eDate);
+		sn.datum.loader([consumptionSourceId], nodeUrlHelper, queryRange.start, queryRange.end, 'Hour').load(function(error, data) {
+			if ( !Array.isArray(data) )  {
+				console.log('Error loading consumption data: %s', error);
+				return;
+			}
+			$(data).each(function(i, obj) {
+				me.kwHourSeries.push([obj.localDate +' ' +obj.localTime, obj.wattHours < 0 ? 0 : obj.wattHours / 1000]);
+				me.costSeries.push([obj.localDate +' ' +obj.localTime, obj.cost < 0 ? 0 : obj.cost]);
+				if ( me.currency == '' && obj.currency != '' ) {
+					me.currency = obj.currency;
+				}
+			});
+			me.drawChart();
+		});
 		return this;
 	};
 	
@@ -352,7 +370,8 @@ function ConsumptionHourlyCostChart(divId, nodeId, consumptionSourceId, interval
 				opts);
 		new DaylightCanvas(this.nodeId, $('#'+this.divId +' canvas.jqplot-series-canvas'), 
 				Date.create(this.kwHourSeries[0][0]), 
-				Date.create(this.kwHourSeries[this.kwHourSeries.length-1][0])).showDaylight();
+				Date.create(this.kwHourSeries[this.kwHourSeries.length-1][0]),
+				this.interval).showDaylight();
 		$(document).trigger("ConsumptionHourlyCostChartReady", [this]);
 		return this;
 	};
@@ -360,7 +379,7 @@ function ConsumptionHourlyCostChart(divId, nodeId, consumptionSourceId, interval
 
 var daylightIconCache = {};
 
-function DaylightCanvas(nodeId, canvasDiv, startDate, endDate) {
+function DaylightCanvas(nodeId, canvasDiv, startDate, endDate, interval) {
 	
 	this.nodeId = nodeId;
 	this.canvas = $(canvasDiv);
@@ -372,17 +391,15 @@ function DaylightCanvas(nodeId, canvasDiv, startDate, endDate) {
 	this.showDaylight = function() {
 		this.dayData = [];
 		var me = this;
-		var queryParams = {
-			nodeId: this.nodeId,
-			startDate: this.startDate.strftime(dateDataFormat),
-			endDate: this.endDate.strftime(dateDataFormat),
-			aggregate: 'Day'
-		};
-		$.getJSON('dayData.json', queryParams,
-				function(data) {
-					me.dayData = data.data;
-					me.drawDaylight();
-				});
+		var queryRange = sn.datum.loaderQueryRange('Day', interval, interval.eDate);
+		sn.datum.loader([daySourceId], weatherUrlHelper, queryRange.start, queryRange.end, 'Day').load(function(error, data) {
+			if ( !Array.isArray(data) )  {
+				console.log('Error loading day data: %s', error);
+				return;
+			}
+			me.dayData = data;
+			me.drawDaylight();
+		});
 	};
 	
 	this.drawDaylight = function() {
@@ -402,9 +419,9 @@ function DaylightCanvas(nodeId, canvasDiv, startDate, endDate) {
 			day = this.dayData[dayIdx];
 			tom = dayIdx == (this.dayData.length-1) 
 				? this.dayData[dayIdx] : this.dayData[dayIdx+1];
-			sunset = Date.create(day.day +' ' +day.sunset);
-			sunrise = Date.create(tom.day +' ' +tom.sunrise);
-			noon = Date.create(tom.day +' 12:00');
+			sunset = Date.create(day.localDate +' ' +day.sunset);
+			sunrise = Date.create(tom.localDate +' ' +tom.sunrise);
+			noon = Date.create(tom.localDate +' 12:00');
 			if ( day === tom ) {
 				// we don't have sunrise time for "tomorrow", so just use today's value
 				// most likely this is will be drawn outside the bounds of the chart anyway
@@ -493,36 +510,33 @@ function ConsumptionBarChart(divId, nodeId, consumptionSourceId, interval, query
 		this.dateTicks = [];
 		this.pointLabels = [];
 		var me = this;
-		var queryParams = {
-			nodeId: this.nodeId,
-			startDate: this.interval.startDate,
-			endDate: this.interval.endDate,
-			aggregate: this._aggregate()
-		};
-		queryParams["properties['sourceId']"] = this.consumptionSourceId;
 		
-		$.getJSON('consumptionData.json', queryParams,
-				function(data) {
-					var datePattern = me._dateFormat();
-					$(data.data).each(function(i, obj) {
-						me.dateTicks.push(Date.create(obj.localDate).strftime(datePattern));
-						me.kwHourSeries.push(obj.wattHours < 0 ? 0 : obj.wattHours / 1000);
-						var pl = me.kwHourSeries[me.kwHourSeries.length-1];
-						if ( pl == 0 ) {
-							pl = null;
-						} else {
-							pl = pl.toFixed(2);
-							if ( obj.cost > 0 ) {
-								pl += '<br /><span class="cost">$' +obj.cost.toFixed(2) +'</span>';
-							}
-						}
-						me.pointLabels.push(pl);
-						if ( me.currency == '' && obj.currency != '' ) {
-							me.currency = obj.currency;
-						}
-					});
-					me.drawChart();
-				});
+		var queryRange = sn.datum.loaderQueryRange(this._aggregate(), this.interval, this.interval.eDate);
+		sn.datum.loader([consumptionSourceId], nodeUrlHelper, queryRange.start, queryRange.end, this._aggregate()).load(function(error, data) {
+			if ( !Array.isArray(data) )  {
+				console.log('Error loading consumption data: %s', error);
+				return;
+			}
+			var datePattern = me._dateFormat();
+			$(data).each(function(i, obj) {
+				me.dateTicks.push(Date.create(obj.localDate).strftime(datePattern));
+				me.kwHourSeries.push(obj.wattHours < 0 ? 0 : obj.wattHours / 1000);
+				var pl = me.kwHourSeries[me.kwHourSeries.length-1];
+				if ( pl == 0 ) {
+					pl = null;
+				} else {
+					pl = pl.toFixed(2);
+					if ( obj.cost > 0 ) {
+						pl += '<br /><span class="cost">$' +obj.cost.toFixed(2) +'</span>';
+					}
+				}
+				me.pointLabels.push(pl);
+				if ( me.currency == '' && obj.currency != '' ) {
+					me.currency = obj.currency;
+				}
+			});
+			me.drawChart();
+		});
 		return this;
 	};
 	
@@ -596,22 +610,26 @@ function WeatherChart(divId, nodeId, interval, queryOpts, chartOpts) {
 			aggregate: this._aggregate()
 		};
 		
-		$.getJSON('dayData.json', queryParams,
-				function(data) {
-					var datePattern = me._dateFormat();
-					$(data.data).each(function(i, obj) {
-						me.dateTicks.push(Date.create(obj.day).strftime(datePattern));
-						me.temperatureSeries.push(
-								[(i+1), 
-								 obj.temperatureStartCelcius ? obj.temperatureStartCelcius : obj.temperatureHighCelcius 
-										 ? obj.temperatureHighCelcius : 0,
-								 obj.temperatureHighCelcius ? obj.temperatureHighCelcius : 0,
-								 obj.temperatureLowCelcius ? obj.temperatureLowCelcius : 0,
-								 obj.temperatureEndCelcius ? obj.temperatureEndCelcius : obj.temperatureLowCelcius 
-										 ? obj.temperatureLowCelcius : 0]);
-					});
-					me.drawChart();
-				});
+		var queryRange = sn.datum.loaderQueryRange(this._aggregate(), interval, interval.eDate);
+		sn.datum.loader([daySourceId], weatherUrlHelper, queryRange.start, queryRange.end, this._aggregate()).load(function(error, data) {
+			if ( !Array.isArray(data) )  {
+				console.log('Error loading day data: %s', error);
+				return;
+			}
+			var datePattern = me._dateFormat();
+			$(data).each(function(i, obj) {
+				me.dateTicks.push(Date.create(obj.day).strftime(datePattern));
+				me.temperatureSeries.push(
+						[(i+1), 
+						 obj.temperatureStartCelcius ? obj.temperatureStartCelcius : obj.temperatureHighCelcius 
+								 ? obj.temperatureHighCelcius : 0,
+						 obj.temperatureHighCelcius ? obj.temperatureHighCelcius : 0,
+						 obj.temperatureLowCelcius ? obj.temperatureLowCelcius : 0,
+						 obj.temperatureEndCelcius ? obj.temperatureEndCelcius : obj.temperatureLowCelcius 
+								 ? obj.temperatureLowCelcius : 0]);
+			});
+			me.drawChart();
+		});
 		return this;
 	};
 	
@@ -691,35 +709,32 @@ function GenerationBarChart(divId, nodeId, interval, opts, chartOpts) {
 		this.dateTicks = [];
 		this.pointLabels = [];
 		var me = this;
-		var queryParams = {
-			nodeId: this.nodeId,
-			startDate: this.interval.startDate,
-			endDate: this.interval.endDate,
-			aggregate: this._aggregate()
-		};
-		
-		$.getJSON('generationData.json', queryParams,
-				function(data) {
-					var datePattern = me._dateFormat();
-					$(data.data).each(function(i, obj) {
-						me.dateTicks.push(Date.create(obj.localDate).strftime(datePattern));
-						me.kwHourSeries.push(obj.wattHours < 0 ? 0 : obj.wattHours / 1000);
-						var pl = me.kwHourSeries[me.kwHourSeries.length-1];
-						if ( pl == 0 ) {
-							pl = null;
-						} else {
-							pl = pl.toFixed(2);
-							if ( obj.cost > 0 ) {
-								pl += '<br /><span class="cost">$' +obj.cost.toFixed(2) +'</span>';
-							}
-						}
-						me.pointLabels.push(pl);
-						if ( me.currency == '' && obj.currency != '' ) {
-							me.currency = obj.currency;
-						}
-					});
-					me.drawChart();
-				});
+		var queryRange = sn.datum.loaderQueryRange(this._aggregate(), this.interval, this.interval.eDate);
+		sn.datum.loader([consumptionSourceId], nodeUrlHelper, queryRange.start, queryRange.end, this._aggregate()).load(function(error, data) {
+			if ( !Array.isArray(data) )  {
+				console.log('Error loading consumption data: %s', error);
+				return;
+			}
+			var datePattern = me._dateFormat();
+			$(data).each(function(i, obj) {
+				me.dateTicks.push(Date.create(obj.localDate).strftime(datePattern));
+				me.kwHourSeries.push(obj.wattHours < 0 ? 0 : obj.wattHours / 1000);
+				var pl = me.kwHourSeries[me.kwHourSeries.length-1];
+				if ( pl == 0 ) {
+					pl = null;
+				} else {
+					pl = pl.toFixed(2);
+					if ( obj.cost > 0 ) {
+						pl += '<br /><span class="cost">$' +obj.cost.toFixed(2) +'</span>';
+					}
+				}
+				me.pointLabels.push(pl);
+				if ( me.currency == '' && obj.currency != '' ) {
+					me.currency = obj.currency;
+				}
+			});
+			me.drawChart();
+		});
 		return this;
 	};
 	
@@ -783,19 +798,31 @@ function NodeWeather(divId, nodeId) {
 	this.refresh = function() {
 		var queryParams = {nodeId:this.nodeId};
 		var me = this;
-		$.getJSON('currentWeather.json', queryParams,
-				function(data) {
-					me.weather = data.weather;
-					me.day = data.day;
-					me.tz = data.tz;
-					me.display();
-				});
+		var q = queue();
+		q.defer(d3.json, weatherUrlHelper.mostRecentURL([weatherSourceId]));
+		q.defer(d3.json, weatherUrlHelper.mostRecentURL([daySourceId]));
+		q.awaitAll(function(error, results) {
+			if ( !(results && Array.isArray(results) && results.length == 2) ) {
+				console.log('No data available for weather location %s', weatherUrlHelper.locationId);
+				return;
+			}
+			var json = results[0].data.results; // weather
+			if ( Array.isArray(json) && json.length > 0 ) {
+				me.weather = json[0];
+			}
+			json = results[1].data.results; // day
+			if ( Array.isArray(json) && json.length > 0 ) {
+				me.day = json[0];
+			}
+			//me.tz = data.tz;
+			me.display();
+		});
 	};
 	
 	this.display = function() {
 		this.loadIcon();
-		if ( this.weather.temperatureCelcius ) {
-			this.div.children('.current-temp').html(this.weather.temperatureCelcius +'&#xb0;');
+		if ( this.weather.temp ) {
+			this.div.children('.current-temp').html(this.weather.temp +'&#xb0;');
 		} else {
 			this.div.children('.current-temp').hide();
 		}
@@ -1086,42 +1113,54 @@ $(document).bind("NodeChartReady", function(e, nodeChart) {
 $(document).ready(function() {
 	nodeId = $('#nodeId').val();
 	consumptionSourceId =  $('#consumptionSourceId').val();
+	sourceId =  $('#sourceId').val();
+	priceSourceId =  $('#priceSourceId').val();
+	priceLocationId =  $('#priceLocationId').val();
+	daySourceId =  $('#daySourceId').val();
+	weatherSourceId =  $('#weatherSourceId').val();
+	weatherLocationId =  $('#weatherLocationId').val();
 	featureConsumption = $('#feature-consumption').val() == 'true' ? true : false;
 	featureGridPrice = $('#feature-gridPrice').val() == 'true' ? true : false;
 	
-	$.getJSON('reportableInterval.json', {
-				nodeId:$('#nodeId').val(),
-				types:['Consumption','Power']
-			},
-			function(data) {
-				var reportableInterval = {};
-				reportableInterval.startDate = data.data.startDate;
-				reportableInterval.sDate = Date.create(data.data.startDate);
-				reportableInterval.endDate = data.data.endDate;
-				reportableInterval.eDate = Date.create(reportableInterval.endDate);
-				
-				var chartInterval = {};
-				chartInterval.eDate = Date.create(reportableInterval.endDate);
-				chartInterval.eDate.setHours(23,59,59,999);
-				chartInterval.endDate = chartInterval.eDate.strftime(dateDataFormat);
-				chartInterval.sDate = chartInterval.eDate.clone().add(-1, 'week');
-				chartInterval.sDate.setHours(0,0,0,0);
-				chartInterval.startDate = chartInterval.sDate.strftime(dateDataFormat);
-				
-				setupChart(chartInterval);
-				setupRangeChart(reportableInterval);
-			});
+	nodeUrlHelper = sn.datum.nodeUrlHelper(nodeId);
+	priceUrlHelper = sn.datum.locationUrlHelper(priceLocationId);
+	weatherUrlHelper = sn.datum.locationUrlHelper(weatherLocationId);
+	
+	var sourceSets = [
+	                  { nodeUrlHelper : nodeUrlHelper, sourceIds : [sourceId, consumptionSourceId] }
+	                  ];
+	sn.datum.availableDataRange(sourceSets, function(data) {
+		var reportableInterval = {};
+		reportableInterval.startDate = data.startDate;
+		reportableInterval.sDate = Date.create(data.startDate);
+		reportableInterval.endDate = data.endDate;
+		reportableInterval.eDate = Date.create(reportableInterval.endDate);
+		reportableInterval.aggregate = 'Month';
+		
+		var chartInterval = {};
+		chartInterval.eDate = Date.create(reportableInterval.endDate);
+		chartInterval.eDate.setHours(23,59,59,999);
+		chartInterval.endDate = chartInterval.eDate.strftime(dateDataFormat);
+		chartInterval.sDate = chartInterval.eDate.clone().add(-1, 'week');
+		chartInterval.sDate.setHours(0,0,0,0);
+		chartInterval.startDate = chartInterval.sDate.strftime(dateDataFormat);
+		
+		setupChart(chartInterval);
+		setupRangeChart(reportableInterval);
+	});
 	
 	var rollingWeekInterval = {eDate : Date.create(new Date().strftime('%Y-%m-%d %H:00:00')).add(1, 'hours')};
 	rollingWeekInterval.endDate = rollingWeekInterval.eDate.strftime(dateTimeDataFormat);
 	rollingWeekInterval.sDate = rollingWeekInterval.eDate.clone().add(-6, 'days');
 	rollingWeekInterval.startDate = rollingWeekInterval.sDate.strftime(dateTimeDataFormat);
+	rollingWeekInterval.numDays = 6;
 	setupRollingWeekHourlyConsumptionChart(rollingWeekInterval);
 	
 	var rollingMonthInterval = {eDate : Date.create(new Date().strftime('%Y-%m-01'))};
 	rollingMonthInterval.endDate = rollingMonthInterval.eDate.strftime(dateDataFormat);
 	rollingMonthInterval.sDate = rollingMonthInterval.eDate.clone().add(-12, 'months');
 	rollingMonthInterval.startDate = rollingMonthInterval.sDate.strftime(dateDataFormat);
+	rollingMonthInterval.numYears = 1;
 	setupRollingMonthConsumptionChart(rollingMonthInterval);
 	setupRollingMonthWeatherChart(rollingMonthInterval);
 	setupRollingMonthGenerationChart(rollingMonthInterval);
@@ -1130,6 +1169,7 @@ $(document).ready(function() {
 	rollingDayInterval.endDate = rollingDayInterval.eDate.strftime(dateDataFormat);
 	rollingDayInterval.sDate = rollingDayInterval.eDate.clone().add(-7, 'days');
 	rollingDayInterval.startDate = rollingDayInterval.sDate.strftime(dateDataFormat);
+	rollingDayInterval.numMonths = 0.25;
 	setupRollingDayConsumptionChart(rollingDayInterval);
 	setupRollingDayWeatherChart(rollingDayInterval);
 	setupRollingDayGenerationChart(rollingDayInterval);

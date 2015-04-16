@@ -20,22 +20,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ===================================================================
- * $Id$
- * ===================================================================
  */
 
 package net.solarnetwork.central.in.web;
 
 import java.beans.PropertyEditor;
-import java.io.IOException;
 import java.util.List;
-
 import javax.annotation.Resource;
-
-import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.datum.domain.Datum;
-import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
@@ -45,10 +37,8 @@ import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.util.JodaDateFormatEditor;
 import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
 import net.solarnetwork.util.OptionalServiceTracker;
-
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.WebDataBinder;
@@ -60,22 +50,22 @@ import org.springframework.web.bind.annotation.RequestMethod;
  * Base class for data collector implementations.
  *
  * @author matt.magoffin
- * @version $Revision$ $Date$
+ * @version 1.1
  */
 public abstract class AbstractDataCollector {
 
 	/** The default value for the {@code viewName} property. */
 	public static final String DEFAULT_VIEW_NAME = "xml";
-	
+
 	/** The model key for the {@code Datum} result. */
 	public static final String MODEL_KEY_RESULT = "result";
-	
+
 	/** The model key for the collection of {@code Instruction} results. */
 	public static final String MODEL_KEY_INSTRUCTIONS = "instructions";
-	
+
 	/** The model key for the node's {@code TimeZone}. */
 	public static final String MODEL_KEY_NODE_TZ = "node-tz";
-	
+
 	/** The date format to use for parsing dates. */
 	public static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss.SSSZ";
 
@@ -86,26 +76,27 @@ public abstract class AbstractDataCollector {
 	public static final String TIME_FORMAT = "HH:mm";
 
 	/** A cloneable PropertyEditor for the {@link #DATE_FORMAT}. */
-	protected static final JodaDateFormatEditor LOCAL_DATE_EDITOR 
-		= new JodaDateFormatEditor(DATE_FORMAT, ParseMode.LocalDate);
-	
+	protected static final JodaDateFormatEditor LOCAL_DATE_EDITOR = new JodaDateFormatEditor(
+			DATE_FORMAT, ParseMode.LocalDate);
+
 	/** A cloneable PropertyEditor for the {@link #TIME_FORMAT}. */
-	protected static final JodaDateFormatEditor LOCAL_TIME_EDITOR 
-		= new JodaDateFormatEditor(TIME_FORMAT, ParseMode.LocalTime);
+	protected static final JodaDateFormatEditor LOCAL_TIME_EDITOR = new JodaDateFormatEditor(
+			TIME_FORMAT, ParseMode.LocalTime);
 
 	/** A cloneable PropertyEditor for the {@link #DATE_TIME_FORMAT}. */
-	protected static final JodaDateFormatEditor DATE_TIME_EDITOR 
-		= new JodaDateFormatEditor(DATE_TIME_FORMAT, ParseMode.DateTime);
-	
+	protected static final JodaDateFormatEditor DATE_TIME_EDITOR = new JodaDateFormatEditor(
+			DATE_TIME_FORMAT, ParseMode.DateTime);
+
 	private DataCollectorBiz dataCollectorBiz;
 	private SolarNodeDao solarNodeDao;
 	private String viewName = DEFAULT_VIEW_NAME;
 
-	@Resource private OptionalServiceTracker<InstructorBiz> instructorBiz;
+	@Resource
+	private OptionalServiceTracker<InstructorBiz> instructorBiz;
 
 	/** A class-level logger. */
 	protected final org.slf4j.Logger log = LoggerFactory.getLogger(getClass());
-	
+
 	/**
 	 * Warn that POST is required.
 	 */
@@ -113,84 +104,39 @@ public abstract class AbstractDataCollector {
 	public String getData() {
 		return "post-required";
 	}
-	
+
 	/**
 	 * Default handling of node instructions.
 	 * 
-	 * <p>This method will use the configured {@link #getInstructorBiz()}, if available,
-	 * and put the returned instructions on the {@code Model} on the 
-	 * {@link #MODEL_KEY_INSTRUCTIONS} key.</p>
+	 * <p>
+	 * This method will use the configured {@link #getInstructorBiz()}, if
+	 * available, and put the returned instructions on the {@code Model} on the
+	 * {@link #MODEL_KEY_INSTRUCTIONS} key.
+	 * </p>
 	 * 
-	 * @param nodeId the node ID to get instructions for
-	 * @param model the model
+	 * @param nodeId
+	 *        the node ID to get instructions for
+	 * @param model
+	 *        the model
 	 */
 	protected void defaultHandleNodeInstructions(Long nodeId, Model model) {
 		// look for instructions to return for the given node
 		if ( getInstructorBiz() != null && getInstructorBiz().isAvailable() ) {
 			List<Instruction> instructions = getInstructorBiz().getService()
-				.getActiveInstructionsForNode(nodeId);
+					.getActiveInstructionsForNode(nodeId);
 			if ( instructions.size() > 0 ) {
 				model.addAttribute(MODEL_KEY_INSTRUCTIONS, instructions);
 			}
 		}
 	}
-	
-	/**
-	 * Default handling of datum post.
-	 * 
-	 * <p>Removes any "id" value from the datum (assumes an ID setter method),
-	 * calls {@link DataCollectorBiz#postDatum(Datum)}, removes the datum from
-	 * the model key {@code datumModelKey}, places the posted datum on the model
-	 * at the key {@link #MODEL_KEY_RESULT}, calls
-	 * {@link #setupNodeTimeZone(Long, Model)}, and returns
-	 * {@link #getViewName()}.</p>
-	 * 
-	 * @param datum the datum to post
-	 * @param model the model object
-	 * @param datumModelKey the key in the model for the input Datum object
-	 * @return the posted Datum object
-	 */
-	protected String defaultHandlePostDatum(NodeDatum datum, Model model, 
-			String datumModelKey) {
-		
-		// remove any ID posted
-		PropertyAccessorFactory.forBeanPropertyAccess(datum).setPropertyValue(
-				"id", null);
-		model.asMap().remove(datumModelKey);
-		try {
-			Datum entity = getDataCollectorBiz().postDatum(datum);
-			model.addAttribute(MODEL_KEY_RESULT, entity);
-		} catch ( RepeatableTaskException e ) {
-			if ( log.isDebugEnabled() ) {
-				Throwable root = e;
-				while ( root.getCause() != null ) {
-					root = root.getCause();
-				}
-				log.debug("RepeatableTaskException caused by: " +root.getMessage());
-			}
-		} catch ( RuntimeException e ) {
-			Throwable root = e;
-			while ( root.getCause() != null ) {
-				root = root.getCause();
-			}
-			if ( root instanceof IOException ) {
-				if ( log.isWarnEnabled() ) {
-					log.warn("{} posting datum {}: {}", 
-							new Object[] {e.getClass().getName(), datum, e.getMessage()});
-				}
-			} else {
-				throw e;
-			}
-		}
-		setupNodeTimeZone(datum.getNodeId(), model);
-		return getViewName();
-	}
-	
+
 	/**
 	 * Add a SolarNode's TimeZone to the result model.
 	 * 
-	 * @param nodeId the node ID
-	 * @param model the model
+	 * @param nodeId
+	 *        the node ID
+	 * @param model
+	 *        the model
 	 * @return the SolarNode entity
 	 */
 	protected SolarNode setupNodeTimeZone(Long nodeId, Model model) {
@@ -201,29 +147,33 @@ public abstract class AbstractDataCollector {
 		}
 		return node;
 	}
-	
+
 	/**
 	 * Web binder initialization.
 	 * 
-	 * @param binder the binder to initialize
+	 * @param binder
+	 *        the binder to initialize
 	 */
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
-		binder.registerCustomEditor(DateTime.class, (PropertyEditor)DATE_TIME_EDITOR.clone());
+		binder.registerCustomEditor(DateTime.class, (PropertyEditor) DATE_TIME_EDITOR.clone());
 	}
-	
+
 	/**
 	 * Get the currently authenticated node.
 	 * 
-	 * @param required <em>true</em> if AuthenticatedNode is required, or <em>false</em> if not
+	 * @param required
+	 *        <em>true</em> if AuthenticatedNode is required, or <em>false</em>
+	 *        if not
 	 * @return AuthenticatedNode
-	 * @throws SecurityException if an AuthenticatedNode is not available and {@code required}
-	 * is <em>true</em>
+	 * @throws SecurityException
+	 *         if an AuthenticatedNode is not available and {@code required} is
+	 *         <em>true</em>
 	 */
 	protected AuthenticatedNode getAuthenticatedNode(boolean required) {
 		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		if ( principal instanceof AuthenticatedNode ) {
-			return (AuthenticatedNode)principal;
+			return (AuthenticatedNode) principal;
 		}
 		if ( required ) {
 			throw new SecurityException("Authenticated node required but not avaialble");
@@ -237,37 +187,40 @@ public abstract class AbstractDataCollector {
 	public SolarNodeDao getSolarNodeDao() {
 		return solarNodeDao;
 	}
-	
+
 	/**
-	 * @param solarNodeDao the solarNodeDao to set
+	 * @param solarNodeDao
+	 *        the solarNodeDao to set
 	 */
 	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
 		this.solarNodeDao = solarNodeDao;
 	}
-	
+
 	/**
 	 * @return the viewName
 	 */
 	public String getViewName() {
 		return viewName;
 	}
-	
+
 	/**
-	 * @param viewName the viewName to set
+	 * @param viewName
+	 *        the viewName to set
 	 */
 	public void setViewName(String viewName) {
 		this.viewName = viewName;
 	}
-	
+
 	/**
 	 * @return the dataCollectorBiz
 	 */
 	public DataCollectorBiz getDataCollectorBiz() {
 		return dataCollectorBiz;
 	}
-	
+
 	/**
-	 * @param dataCollectorBiz the dataCollectorBiz to set
+	 * @param dataCollectorBiz
+	 *        the dataCollectorBiz to set
 	 */
 	public void setDataCollectorBiz(DataCollectorBiz dataCollectorBiz) {
 		this.dataCollectorBiz = dataCollectorBiz;
@@ -281,10 +234,11 @@ public abstract class AbstractDataCollector {
 	}
 
 	/**
-	 * @param instructorBiz the instructorBiz to set
+	 * @param instructorBiz
+	 *        the instructorBiz to set
 	 */
 	public void setInstructorBiz(OptionalServiceTracker<InstructorBiz> instructorBiz) {
 		this.instructorBiz = instructorBiz;
 	}
-	
+
 }

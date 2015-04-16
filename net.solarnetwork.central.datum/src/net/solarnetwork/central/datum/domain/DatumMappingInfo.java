@@ -1,7 +1,7 @@
 /* ==================================================================
- * HardwareControlDatumDao.java - Sep 29, 2011 3:31:46 PM
+ * DatumMappingInfo.java - Apr 14, 2015 6:30:29 AM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2007-2015 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,20 +20,43 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.dao;
-
-import net.solarnetwork.central.dao.FilterableDao;
-import net.solarnetwork.central.datum.domain.HardwareControlDatum;
-import net.solarnetwork.central.datum.domain.HardwareControlDatumMatch;
-import net.solarnetwork.central.datum.domain.NodeDatumFilter;
+package net.solarnetwork.central.datum.domain;
 
 /**
- * DAO API for {@link HardwareControlDatum}.
+ * Helper object when mapping legacy {link Datum} objects into
+ * {@link GeneralNodeDatum} or {@link GeneralLocationDatum} objects.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface HardwareControlDatumDao extends DatumDao<HardwareControlDatum>,
-		FilterableDao<HardwareControlDatumMatch, Long, NodeDatumFilter> {
+public class DatumMappingInfo {
+
+	private Long id;
+	private String sourceId;
+	private String timeZoneId;
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getSourceId() {
+		return sourceId;
+	}
+
+	public void setSourceId(String sourceId) {
+		this.sourceId = sourceId;
+	}
+
+	public String getTimeZoneId() {
+		return timeZoneId;
+	}
+
+	public void setTimeZoneId(String timeZoneId) {
+		this.timeZoneId = timeZoneId;
+	}
 
 }

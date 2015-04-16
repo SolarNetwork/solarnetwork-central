@@ -11,12 +11,51 @@
 <c:set var="consumptionSourceId">
 	<c:choose>
 		<c:when test='${param["consumptionSourceId"] != null}'>${param["consumptionSourceId"]}</c:when>
-		<c:otherwise>C7</c:otherwise>
+		<c:otherwise>Main</c:otherwise>
+	</c:choose>
+</c:set>
+<c:set var="sourceId">
+	<c:choose>
+		<c:when test='${param["sourceId"] != null}'>${param["sourceId"]}</c:when>
+		<c:otherwise>Solar</c:otherwise>
+	</c:choose>
+</c:set>
+<c:set var="priceSourceId">
+	<c:choose>
+		<c:when test='${param["priceSourceId"] != null}'>${param["priceSourceId"]}</c:when>
+		<c:otherwise>electricityinfo.co.nz</c:otherwise>
+	</c:choose>
+</c:set>
+<c:set var="priceLocationId">
+	<c:choose>
+		<c:when test='${param["priceLocationId"] != null}'>${param["priceLocationId"]}</c:when>
+		<c:otherwise>11536821</c:otherwise>
+	</c:choose>
+</c:set>
+<c:set var="daySourceId">
+	<c:choose>
+		<c:when test='${param["daySourceId"] != null}'>${param["daySourceId"]}</c:when>
+		<c:otherwise>NZ MetService Day</c:otherwise>
+	</c:choose>
+</c:set>
+<c:set var="weatherSourceId">
+	<c:choose>
+		<c:when test='${param["weatherSourceId"] != null}'>${param["weatherSourceId"]}</c:when>
+		<c:otherwise>NZ MetService</c:otherwise>
+	</c:choose>
+</c:set>
+<c:set var="weatherLocationId">
+	<c:choose>
+		<c:when test='${param["weatherLocationId"] != null}'>${param["weatherLocationId"]}</c:when>
+		<c:otherwise>11536819</c:otherwise>
 	</c:choose>
 </c:set>
 <head>
 	<title><fmt:message key="node.displayName"/> ${nodeId} <fmt:message key="dashboard.displayName"/></title>
 	<meta name="viewport" content="width=1120" />
+	<script src="js-lib/d3-3.4.8.min.js"></script>
+	<script src="js-lib/queue-1.0.7.min.js"></script>
+	
 	<pack:style>
 		<src>/css/global.css</src>
 		<src>/css/node-dashboard.css</src>
@@ -40,6 +79,10 @@
 		<src>/js/jqplot-plugins/jqplot.highlighter.js</src>
 		<src>/js/jqplot-plugins/jqplot.pointLabels.js</src>
 		<%--src>/js/date.js</src --%>
+		
+		<src>/js-lib/solarnetwork-d3.js</src>		
+		<src>/js-lib/solarnetwork-d3-datum.js</src>
+
 		<src>/js/node-dashboard.js</src>
 	</pack:script>
 </head>
@@ -91,5 +134,11 @@
 	<input type="hidden" id="feature-consumption" name="feature.consumption" value="true" />
 	<input type="hidden" id="feature-gridPrice" name="feature.gridPrice" value="true" />
 	<input type="hidden" id="consumptionSourceId" name="consumptionSourceId" value="${consumptionSourceId}" />
+	<input type="hidden" id="sourceId" name="sourceId" value="${sourceId}" />
+	<input type="hidden" id="priceSourceId" name="sourceId" value="${priceSourceId}" />
+	<input type="hidden" id="priceLocationId" name="sourceId" value="${priceLocationId}" />
+	<input type="hidden" id="daySourceId" name="sourceId" value="${daySourceId}" />
+	<input type="hidden" id="weatherSourceId" name="sourceId" value="${weatherSourceId}" />
+	<input type="hidden" id="weatherLocationId" name="sourceId" value="${weatherLocationId}" />
 </div>
 </body>

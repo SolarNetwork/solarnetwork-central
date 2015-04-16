@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Viz Web
 Bundle-SymbolicName: net.solarnetwork.central.viz.web
-Bundle-Version: 1.4.0
+Bundle-Version: 1.6.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-Classpath: .,build/eclipse
@@ -19,10 +19,10 @@ Import-Package:
  net.sf.packtag.servlet;version="3.7",
  net.sf.packtag.tag;version="3.7",
  net.solarnetwork.central.dao;version="[1.0.0,2.0.0)",
- net.solarnetwork.central.datum.dao;version="[1.0.0,2.0.0)",
+ net.solarnetwork.central.datum.dao;version="[1.0.0,3.0.0)",
  net.solarnetwork.central.datum.domain;version="[1.5.0,2.0.0)",
  net.solarnetwork.central.domain;version="[1.0.0,2.0.0)",
- net.solarnetwork.central.query.biz;version="[1.0.0,2.0.0)",
+ net.solarnetwork.central.query.biz;version="[1.0.0,3.0.0)",
  net.solarnetwork.central.web;version="[1.0.0,2.0.0)",
  net.solarnetwork.central.web.support;version="[1.0.0,2.0.0)",
  net.solarnetwork.util;version="[1.0.0,2.0.0)",

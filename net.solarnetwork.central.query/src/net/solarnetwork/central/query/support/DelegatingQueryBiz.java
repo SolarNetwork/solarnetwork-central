@@ -26,36 +26,25 @@ import java.util.List;
 import java.util.Set;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
-import net.solarnetwork.central.datum.domain.Datum;
-import net.solarnetwork.central.datum.domain.DatumFilter;
-import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
-import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
-import net.solarnetwork.central.domain.AggregationFilter;
-import net.solarnetwork.central.domain.Entity;
-import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
-import net.solarnetwork.central.domain.SourceLocation;
-import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
-import net.solarnetwork.central.query.domain.WeatherConditions;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 
 /**
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.5
+ * @version 2.0
  */
 public class DelegatingQueryBiz implements QueryBiz {
 
@@ -72,61 +61,6 @@ public class DelegatingQueryBiz implements QueryBiz {
 		this.delegate = delegate;
 	}
 
-	@Override
-	public ReportableInterval getReportableInterval(Long nodeId, Class<? extends NodeDatum>[] types) {
-		return delegate.getReportableInterval(nodeId, types);
-	}
-
-	@Deprecated
-	@Override
-	public ReportableInterval getNetworkReportableInterval(Class<? extends NodeDatum>[] types) {
-		return delegate.getNetworkReportableInterval(types);
-	}
-
-	@Deprecated
-	@Override
-	public Set<String> getAvailableSources(Long nodeId, Class<? extends NodeDatum> type,
-			LocalDate start, LocalDate end) {
-		return delegate.getAvailableSources(nodeId, type, start, end);
-	}
-
-	@Deprecated
-	@Override
-	public List<? extends NodeDatum> getAggregatedDatum(DatumQueryCommand criteria,
-			Class<? extends NodeDatum> datumClass) {
-		return delegate.getAggregatedDatum(criteria, datumClass);
-	}
-
-	@Override
-	public WeatherConditions getMostRecentWeatherConditions(Long nodeId) {
-		return delegate.getMostRecentWeatherConditions(nodeId);
-	}
-
-	@Deprecated
-	@Override
-	public <F extends DatumFilter> FilterResults<? extends EntityMatch> findFilteredDatum(F filter,
-			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
-			Integer max) {
-		return delegate.findFilteredDatum(filter, datumClass, sortDescriptors, offset, max);
-	}
-
-	@Override
-	@Deprecated
-	public FilterResults<SourceLocationMatch> findFilteredLocations(SourceLocation filter,
-			Class<? extends Entity<?>> locationClass, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
-		return delegate.findFilteredLocations(filter, locationClass, sortDescriptors, offset, max);
-	}
-
-	@Deprecated
-	@Override
-	public <A extends AggregationFilter> FilterResults<?> findFilteredAggregateDatum(A filter,
-			Class<? extends Datum> datumClass, List<SortDescriptor> sortDescriptors, Integer offset,
-			Integer max) {
-		return delegate.findFilteredAggregateDatum(filter, datumClass, sortDescriptors, offset, max);
-	}
-
-	@Deprecated
 	@Override
 	public ReportableInterval getReportableInterval(Long nodeId, String sourceId) {
 		return delegate.getReportableInterval(nodeId, sourceId);

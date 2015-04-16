@@ -32,22 +32,6 @@ CREATE TABLE solarnet.sn_hardware_control (
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
-CREATE TABLE solarnet.sn_hardware_control_datum (
-	id				BIGINT NOT NULL DEFAULT nextval('solarnet.hardware_control_seq'),
-	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	node_id			BIGINT NOT NULL,
-	source_id		CHARACTER VARYING(128) NOT NULL,
-	int_val			INTEGER,
-	float_val		REAL,
-	CONSTRAINT sn_hardware_control_datum_pkey PRIMARY KEY (id),
-	CONSTRAINT sn_hardware_control_datum_node_unq UNIQUE (node_id,created,source_id),
-	CONSTRAINT sn_hardware_control_datum_node_fk
-		FOREIGN KEY (node_id) REFERENCES solarnet.sn_node (node_id)
-		ON UPDATE NO ACTION ON DELETE NO ACTION
-);
-
-CLUSTER solarnet.sn_hardware_control_datum USING sn_hardware_control_datum_node_unq;
-
 CREATE TABLE solaruser.user_node_hardware_control (
 	id				BIGINT NOT NULL DEFAULT nextval('solaruser.solaruser_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,

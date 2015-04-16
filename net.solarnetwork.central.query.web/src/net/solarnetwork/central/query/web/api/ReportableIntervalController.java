@@ -22,17 +22,11 @@
 
 package net.solarnetwork.central.query.web.api;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
-import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
-import net.solarnetwork.central.query.domain.ReportableIntervalType;
 import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
-import net.solarnetwork.central.query.web.domain.ReportableIntervalCommand;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.JodaDateFormatEditor;
 import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
@@ -56,7 +50,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
@@ -93,63 +87,6 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 				ParseMode.LocalDate));
 		binder.registerCustomEditor(DateTime.class, new JodaDateFormatEditor(new String[] {
 				DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT }, TimeZone.getTimeZone("UTC")));
-	}
-
-	/**
-	 * Get the reportable date range for a node and set of data types.
-	 * 
-	 * <p>
-	 * This method returns a start/end date range.
-	 * </p>
-	 * 
-	 * <p>
-	 * Example URL:
-	 * <code>/api/v1/sec/range/interval?nodeId=1&types=Consumption,Power</code>
-	 * </p>
-	 * 
-	 * <p>
-	 * Example JSON response:
-	 * </p>
-	 * 
-	 * <pre>
-	 * {
-	 *   "success": true,
-	 *   "data": {
-	 *     "timeZone": "Pacific/Auckland",
-	 *     "endDate": "2012-12-11 01:49",
-	 *     "startDate": "2012-12-11 00:30",
-	 *     "dayCount": 1683,
-	 *     "monthCount": 56,
-	 *     "yearCount": 6
-	 *   }
-	 * }
-	 * </pre>
-	 * 
-	 * @param cmd
-	 *        the input command
-	 * @return the {@link ReportableInterval}
-	 * @deprecated see
-	 *             {@link #getReportableInterval(GeneralReportableIntervalCommand)}
-	 */
-	@Deprecated
-	@ResponseBody
-	@RequestMapping(value = "/interval", method = RequestMethod.GET, params = "types")
-	public Response<ReportableInterval> getReportableInterval(ReportableIntervalCommand cmd) {
-		List<Class<? extends NodeDatum>> typeList = new ArrayList<Class<? extends NodeDatum>>();
-		for ( ReportableIntervalType type : cmd.getTypes() ) {
-			typeList.add(type.getDatumTypeClass());
-		}
-		@SuppressWarnings("unchecked")
-		Class<? extends NodeDatum>[] types = typeList.toArray(new Class[typeList.size()]);
-		ReportableInterval data = queryBiz.getReportableInterval(cmd.getNodeId(), types);
-		return new Response<ReportableInterval>(data);
-	}
-
-	@Deprecated
-	@ResponseBody
-	@RequestMapping(value = "/interval", method = RequestMethod.GET, params = { "type", "!types" })
-	public Response<ReportableInterval> getReportableIntervalForType(ReportableIntervalCommand cmd) {
-		return getReportableInterval(cmd);
 	}
 
 	/**
@@ -191,61 +128,6 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	public Response<ReportableInterval> getReportableInterval(GeneralReportableIntervalCommand cmd) {
 		ReportableInterval data = queryBiz.getReportableInterval(cmd.getNodeId(), cmd.getSourceId());
 		return new Response<ReportableInterval>(data);
-	}
-
-	/**
-	 * Get the set of source IDs available for a reportable interval for a
-	 * single node.
-	 * 
-	 * <p>
-	 * This method only supports returning the source ID set for a <b>single</b>
-	 * data type ({@link ReportableIntervalCommand#getTypes()}. If more than one
-	 * data type value is provided, only the first type will be used.
-	 * </p>
-	 * 
-	 * <p>
-	 * Example URL:
-	 * <code>/api/v1/sec/range/sources?nodeId=1&type=Consumption</code>
-	 * </p>
-	 * 
-	 * <p>
-	 * Example JSON response:
-	 * </p>
-	 * 
-	 * <pre>
-	 * {
-	 *   "success": true,
-	 *   "data": [
-	 *     "Main"
-	 *   ]
-	 * }
-	 * </pre>
-	 * 
-	 * @param cmd
-	 *        the input command
-	 * @return the set of sources for the given type and node
-	 * @deprecated use
-	 *             {@link #getAvailableSources(GeneralReportableIntervalCommand)}
-	 */
-	@Deprecated
-	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = "types")
-	public Response<Set<String>> getAvailableSources(ReportableIntervalCommand cmd) {
-		if ( cmd.getTypes() == null || cmd.getTypes().length < 1 ) {
-			Set<String> data = Collections.emptySet();
-			return new Response<Set<String>>(data);
-		}
-		Class<? extends NodeDatum> type = cmd.getTypes()[0].getDatumTypeClass();
-		Set<String> data = queryBiz.getAvailableSources(cmd.getNodeId(), type, cmd.getStart(),
-				cmd.getEnd());
-		return new Response<Set<String>>(data);
-	}
-
-	@Deprecated
-	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "type", "!types" })
-	public Response<Set<String>> getAvailableSourcesForType(ReportableIntervalCommand cmd) {
-		return getAvailableSources(cmd);
 	}
 
 	/**

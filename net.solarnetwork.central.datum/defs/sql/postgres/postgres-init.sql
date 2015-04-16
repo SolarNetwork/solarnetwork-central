@@ -11,17 +11,10 @@
 \i postgres-init-instructor.sql
 \i postgres-init-users.sql
 \i postgres-init-controls.sql
-\i postgres-init-most-recent.sql
-\i postgres-init-reporting-tables.sql
-\i postgres-init-reporting-triggers.sql
 \i postgres-init-quartz.sql
 \i postgres-init-generic-datum.sql
 \i postgres-init-generic-datum-agg-functions.sql
 \i postgres-init-generic-datum-agg-triggers.sql
-\i postgres-init-generic-datum-migration.sql
-\i postgres-init-generic-datum-migration-triggers.sql
 \i postgres-init-generic-loc-datum.sql
 \i postgres-init-generic-loc-datum-agg-functions.sql
 \i postgres-init-generic-loc-datum-agg-triggers.sql
-\i postgres-init-generic-loc-datum-migration.sql
-\i postgres-init-generic-loc-datum-migration-triggers.sql

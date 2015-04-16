@@ -22,7 +22,6 @@
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.agg">
 		<beans:prop key="staleNodeDatumProcessor.maximumRowCount">200</beans:prop>
 		<beans:prop key="staleLocationDatumProcessor.maximumRowCount">200</beans:prop>
-		<beans:prop key="staleNodeDatumProcessor.jobCron">0 0/1 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.hourly.jobCron">15 0/1 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.daily.jobCron">30 0/5 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.monthly.jobCron">45 0/20 * * * ?</beans:prop>
@@ -40,16 +39,6 @@
 	<reference id="jdbcOps" interface="org.springframework.jdbc.core.JdbcOperations" filter="(db=central)"/>
 	
 	<!-- Supporting Services -->
-	
-	<bean id="staleNodeDatumProcessor" class="net.solarnetwork.central.datum.agg.StaleDatumProcessor">
-		<argument ref="eventAdmin"/>
-		<argument ref="jdbcOps"/>
-		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
-		<property name="jobCron" value="${staleNodeDatumProcessor.jobCron}"/>
-		<property name="jdbcCall" value="{? = call solarrep.process_one_rep_stale_node_datum()}"/>
-		<property name="jobId" value="StaleNodeDatumProcessor"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleNodeDatumProcessor"/>
-	</bean>
 	
 	<bean id="staleGeneralNodeDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor">
 		<argument ref="eventAdmin"/>
@@ -112,17 +101,6 @@
 	</bean>
 	
 	<!-- Published Services -->
-
-	<service ref="staleNodeDatumProcessor" interface="org.osgi.service.event.EventHandler">
-		<service-properties>
-			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
-				<array value-type="java.lang.String">
-					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleNodeDatumProcessor.jobTopic}</value>
-				</array>
-			</entry>
-		</service-properties>
-	</service>
 
 	<service ref="staleGeneralNodeDatumProcessorHourly" interface="org.osgi.service.event.EventHandler">
 		<service-properties>
