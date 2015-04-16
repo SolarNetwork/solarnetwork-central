@@ -27,6 +27,7 @@ import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import org.joda.time.DateTime;
 
 /**
  * DAO API for {@link NodeInstruction}.
@@ -36,5 +37,15 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  */
 public interface NodeInstructionDao extends GenericDao<NodeInstruction, Long>,
 		FilterableDao<EntityMatch, Long, InstructionFilter> {
+
+	/**
+	 * Purge instructions that have reached a final state and are older than a
+	 * given date.
+	 * 
+	 * @param olderThanDate
+	 *        The maximum date for which to purge completed instructions.
+	 * @return The number of instructions deleted.
+	 */
+	long purgeCompletedInstructions(DateTime olderThanDate);
 
 }
