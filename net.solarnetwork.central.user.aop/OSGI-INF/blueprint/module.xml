@@ -17,10 +17,19 @@
 		interface="net.solarnetwork.central.user.biz.UserBiz"
 		filter="(!(aop=true))"/>
 	
+	<reference id="nodeOwnershipBiz"
+		interface="net.solarnetwork.central.user.biz.NodeOwnershipBiz"
+		filter="(!(aop=true))"/>
+	
 	<!-- Published Services -->
 
-	<service ref="aopUserBiz" 
-			interface="net.solarnetwork.central.user.biz.UserBiz" ranking="10">
+	<service ref="aopUserBiz" interface="net.solarnetwork.central.user.biz.UserBiz" ranking="10">
+		<service-properties>
+			<entry key="aop" value="true"/>
+		</service-properties>
+	</service>
+
+	<service ref="aopNodeOwnershipBiz" interface="net.solarnetwork.central.user.biz.NodeOwnershipBiz" ranking="10">
 		<service-properties>
 			<entry key="aop" value="true"/>
 		</service-properties>
@@ -37,6 +46,10 @@
 	
 	<bean id="aopUserBiz" class="net.solarnetwork.central.user.support.DelegatingUserBiz">
 		<argument ref="userBiz"/>
+	</bean>
+
+	<bean id="aopNodeOwnershipBiz" class="net.solarnetwork.central.user.support.DelegatingNodeOwnershipBiz">
+		<argument ref="nodeOwnershipBiz"/>
 	</bean>
 
 </blueprint>

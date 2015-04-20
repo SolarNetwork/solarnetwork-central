@@ -36,7 +36,7 @@ import net.solarnetwork.central.domain.SolarNode;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UserNode extends BaseEntity {
 
@@ -51,6 +51,7 @@ public class UserNode extends BaseEntity {
 
 	// transient
 	private UserNodeCertificate certificate;
+	private UserNodeTransfer transfer;
 
 	/**
 	 * Default constructor.
@@ -128,6 +129,14 @@ public class UserNode extends BaseEntity {
 	 */
 	public SolarLocation getNodeLocation() {
 		return (node != null ? node.getLocation() : null);
+	}
+
+	public UserNodeTransfer getTransfer() {
+		return transfer;
+	}
+
+	public void setTransfer(UserNodeTransfer transfer) {
+		this.transfer = transfer;
 	}
 
 }

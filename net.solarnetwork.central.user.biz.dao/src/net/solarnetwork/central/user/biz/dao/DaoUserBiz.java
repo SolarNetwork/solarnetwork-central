@@ -33,6 +33,7 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -57,9 +58,9 @@ import org.springframework.transaction.annotation.Transactional;
  * DAO-based implementation of {@link UserBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class DaoUserBiz implements UserBiz {
+public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -247,6 +248,26 @@ public class DaoUserBiz implements UserBiz {
 			userAuthTokenDao.store(token);
 		}
 		return token;
+	}
+
+	@Override
+	public String requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
+			throws AuthorizationException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void cancelNodeOwnershipTransfer(Long userId, Long nodeId) throws AuthorizationException {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void confirmNodeOwnershipTransfer(String confirmationCode, boolean accept)
+			throws AuthorizationException {
+		// TODO Auto-generated method stub
+
 	}
 
 	public void setUserDao(UserDao userDao) {

@@ -27,6 +27,7 @@ import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,6 +77,20 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNode> findUserNodesAndCertificatesForUser(Long userId) {
 		return getSqlSession().selectList(QUERY_FOR_USER_WITH_CERT, userId);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public void storeUserNodeTransfer(UserNodeTransfer transfer) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public List<UserNodeTransfer> findUserNodeTransferRequestsForEmail(String email) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

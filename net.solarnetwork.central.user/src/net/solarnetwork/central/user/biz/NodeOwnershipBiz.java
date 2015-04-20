@@ -1,0 +1,104 @@
+/* ==================================================================
+ * NodeOwnershipBiz.java - Apr 20, 2015 8:16:26 PM
+ * 
+ * Copyright 2007-2015 SolarNetwork.net Dev Team
+ * 
+ * This program is free software; you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as 
+ * published by the Free Software Foundation; either version 2 of 
+ * the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ * 02111-1307 USA
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.user.biz;
+
+import net.solarnetwork.central.security.AuthorizationException;
+
+/**
+ * API for node owner tasks.
+ * 
+ * @author matt
+ * @version 1.0
+ */
+public interface NodeOwnershipBiz {
+
+	/**
+	 * Request a transfer of ownership of a node.
+	 * 
+	 * When requesting a new owner for a node, the email address of the new
+	 * owner is provided and an email will be sent a message with a special link
+	 * for confirming or rejecting the transfer request. The node will not be
+	 * transferred until the request is confirmed, via the
+	 * {@link #confirmNodeOwnershipTransfer(String)}.
+	 * 
+	 * @param userId
+	 *        The ID of the user making the request.
+	 * @param nodeId
+	 *        The ID of the node to transfer.
+	 * @param newOwnerEmail
+	 *        The email address of the user requested to take ownership of the
+	 *        node.
+	 * @return A confirmation code to be passed to
+	 *         {@link #confirmNodeOwnershipTransfer(String, boolean)}.
+	 * @throws AuthorizationException
+	 *         If the active user is not authorized to transfer ownership of the
+	 *         given node.
+	 * @since 1.3
+	 */
+	String requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
+			throws AuthorizationException;
+
+	/**
+	 * Cancel a node ownership transfer request.
+	 * 
+	 * After a node transfer request has been made via
+	 * {@link #requestNodeOwnershipTransfer(Long, Long, String)} but before the
+	 * new owner has accepted the request, the original owner can cancel the
+	 * request by calling this method.
+	 * 
+	 * @param userId
+	 *        The ID of the user making the request.
+	 * @param nodeId
+	 *        The ID of the node to transfer.
+	 * @throws AuthorizationException
+	 *         If the active user is not authorized to transfer ownership of the
+	 *         given node.
+	 * @since 1.3
+	 */
+	void cancelNodeOwnershipTransfer(Long userId, Long nodeId) throws AuthorizationException;
+
+	/**
+	 * Confirm or reject a node transfer request.
+	 * 
+	 * After a node transfer request has been made via
+	 * {@link #requestNodeOwnershipTransfer(Long, Long, String)} the recipient
+	 * of the transfer request can confirm or reject the request by calling this
+	 * method.
+	 * 
+	 * <b>Note:</b> the active user's email address must match the one used in
+	 * the original transfer request.
+	 * 
+	 * @param confirmationCode
+	 *        A confirmation code generated when the transfer request was made.
+	 * @param accept
+	 *        If <em>true</em> then accept the transfer request, otherwise
+	 *        reject (canceling the request).
+	 * @throws AuthorizationException
+	 *         If the active user is not authorized to confirm (or reject) the
+	 *         ownership transfer.
+	 * @since 1.3
+	 */
+	void confirmNodeOwnershipTransfer(String confirmationCode, boolean accept)
+			throws AuthorizationException;
+
+}
