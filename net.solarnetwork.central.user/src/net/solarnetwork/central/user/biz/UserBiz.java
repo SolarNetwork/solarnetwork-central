@@ -38,7 +38,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * API for registered user tasks.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.2
  */
 public interface UserBiz {
 
@@ -163,5 +163,4 @@ public interface UserBiz {
 	 * @return the updated token
 	 */
 	UserAuthToken updateUserAuthTokenStatus(Long userId, String tokenId, UserAuthTokenStatus newStatus);
-
 }
