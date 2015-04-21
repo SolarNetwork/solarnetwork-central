@@ -24,10 +24,6 @@ package net.solarnetwork.central.user.aop;
 
 import java.util.Set;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.SecurityActor;
-import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.central.security.SecurityUser;
-import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -141,59 +137,6 @@ public class UserSecurityAspect extends AuthorizationSupport {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
 		}
 		requireNodeWriteAccess(entry.getNode().getId());
-	}
-
-	/**
-	 * Require the active user have "write" access to a given user ID. If the
-	 * active user is not authorized, a {@link AuthorizationException} will be
-	 * thrown.
-	 * 
-	 * @param userId
-	 *        the user ID to check
-	 * @throws AuthorizationException
-	 *         if the authorization check fails
-	 */
-	protected void requireUserWriteAccess(Long userId) {
-		final SecurityActor actor = SecurityUtils.getCurrentActor();
-
-		if ( actor instanceof SecurityUser ) {
-			SecurityUser user = (SecurityUser) actor;
-			if ( !user.getUserId().equals(userId) ) {
-				log.warn("Access DENIED to user {} for user {}; wrong user", userId, user.getEmail());
-				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
-			}
-			return;
-		}
-
-		if ( actor instanceof SecurityToken ) {
-			SecurityToken token = (SecurityToken) actor;
-			if ( UserAuthTokenType.User.toString().equals(token.getTokenType()) ) {
-				// user token, so user ID must match node user's ID
-				if ( !token.getUserId().equals(userId) ) {
-					log.warn("Access DENIED to user {} for token {}; wrong user", userId,
-							token.getToken());
-					throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
-				}
-				return;
-			}
-		}
-
-		log.warn("Access DENIED to user {} for actor {}", userId, actor);
-		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
-	}
-
-	/**
-	 * Require the active user have "read" access to a given user ID. If the
-	 * active user is not authorized, a {@link AuthorizationException} will be
-	 * thrown.
-	 * 
-	 * @param userId
-	 *        the user ID to check
-	 * @throws AuthorizationException
-	 *         if the authorization check fails
-	 */
-	protected void requireUserReadAccess(Long userId) {
-		requireUserWriteAccess(userId);
 	}
 
 }
