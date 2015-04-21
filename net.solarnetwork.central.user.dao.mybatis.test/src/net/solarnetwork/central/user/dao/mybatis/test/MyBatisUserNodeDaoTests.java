@@ -289,4 +289,18 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertEquals(new UserNodePK(user.getId(), node.getId()), xfer2.getId());
 		assertEquals(TEST_EMAIL_2, xfer2.getEmail());
 	}
+
+	@Test
+	public void findForUserWithTransferRequest() {
+		insertUserNodeTransfer();
+		List<UserNode> results = userNodeDao.findUserNodesAndCertificatesForUser(user.getId());
+		assertNotNull(results);
+		assertEquals(1, results.size());
+
+		UserNodeTransfer xfer1 = results.get(0).getTransfer();
+		assertNotNull("Associated UserNodeTransfer", xfer1);
+		assertEquals(user.getId(), xfer1.getUserId());
+		assertEquals(node.getId(), xfer1.getNodeId());
+		assertEquals(TEST_EMAIL_2, xfer1.getEmail());
+	}
 }
