@@ -39,7 +39,7 @@ public interface NodeOwnershipBiz {
 	 * owner is provided and an email will be sent a message with a special link
 	 * for confirming or rejecting the transfer request. The node will not be
 	 * transferred until the request is confirmed, via the
-	 * {@link #confirmNodeOwnershipTransfer(String)}.
+	 * {@link #confirmNodeOwnershipTransfer()}.
 	 * 
 	 * @param userId
 	 *        The ID of the user making the request.
@@ -48,14 +48,12 @@ public interface NodeOwnershipBiz {
 	 * @param newOwnerEmail
 	 *        The email address of the user requested to take ownership of the
 	 *        node.
-	 * @return A confirmation code to be passed to
-	 *         {@link #confirmNodeOwnershipTransfer(String, boolean)}.
 	 * @throws AuthorizationException
 	 *         If the active user is not authorized to transfer ownership of the
 	 *         given node.
 	 * @since 1.3
 	 */
-	String requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
+	void requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
 			throws AuthorizationException;
 
 	/**
@@ -88,8 +86,8 @@ public interface NodeOwnershipBiz {
 	 * <b>Note:</b> the active user's email address must match the one used in
 	 * the original transfer request.
 	 * 
-	 * @param confirmationCode
-	 *        A confirmation code generated when the transfer request was made.
+	 * @param nodeId
+	 *        The node ID if the node to accept or reject ownership of.
 	 * @param accept
 	 *        If <em>true</em> then accept the transfer request, otherwise
 	 *        reject (canceling the request).
@@ -98,7 +96,6 @@ public interface NodeOwnershipBiz {
 	 *         ownership transfer.
 	 * @since 1.3
 	 */
-	void confirmNodeOwnershipTransfer(String confirmationCode, boolean accept)
-			throws AuthorizationException;
+	void confirmNodeOwnershipTransfer(Long nodeId, boolean accept) throws AuthorizationException;
 
 }

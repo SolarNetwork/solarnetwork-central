@@ -251,23 +251,23 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
-	public String requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
 			throws AuthorizationException {
 		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void cancelNodeOwnershipTransfer(Long userId, Long nodeId) throws AuthorizationException {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void confirmNodeOwnershipTransfer(String confirmationCode, boolean accept)
-			throws AuthorizationException {
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void confirmNodeOwnershipTransfer(Long nodeId, boolean accept) throws AuthorizationException {
 		// TODO Auto-generated method stub
-
 	}
 
 	public void setUserDao(UserDao userDao) {

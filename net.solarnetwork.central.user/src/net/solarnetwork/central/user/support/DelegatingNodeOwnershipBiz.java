@@ -48,9 +48,9 @@ public class DelegatingNodeOwnershipBiz implements NodeOwnershipBiz {
 	}
 
 	@Override
-	public String requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
+	public void requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
 			throws AuthorizationException {
-		return delegate.requestNodeOwnershipTransfer(userId, nodeId, newOwnerEmail);
+		delegate.requestNodeOwnershipTransfer(userId, nodeId, newOwnerEmail);
 	}
 
 	@Override
@@ -59,9 +59,8 @@ public class DelegatingNodeOwnershipBiz implements NodeOwnershipBiz {
 	}
 
 	@Override
-	public void confirmNodeOwnershipTransfer(String confirmationCode, boolean accept)
-			throws AuthorizationException {
-		delegate.confirmNodeOwnershipTransfer(confirmationCode, accept);
+	public void confirmNodeOwnershipTransfer(Long nodeId, boolean accept) throws AuthorizationException {
+		delegate.confirmNodeOwnershipTransfer(nodeId, accept);
 	}
 
 }
