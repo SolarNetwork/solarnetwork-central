@@ -86,6 +86,8 @@ public interface NodeOwnershipBiz {
 	 * <b>Note:</b> the active user's email address must match the one used in
 	 * the original transfer request.
 	 * 
+	 * @param userId
+	 *        The ID of the user making the request.
 	 * @param nodeId
 	 *        The node ID if the node to accept or reject ownership of.
 	 * @param accept
@@ -96,6 +98,7 @@ public interface NodeOwnershipBiz {
 	 *         ownership transfer.
 	 * @since 1.3
 	 */
-	void confirmNodeOwnershipTransfer(Long nodeId, boolean accept) throws AuthorizationException;
+	void confirmNodeOwnershipTransfer(Long userId, Long nodeId, boolean accept)
+			throws AuthorizationException;
 
 }

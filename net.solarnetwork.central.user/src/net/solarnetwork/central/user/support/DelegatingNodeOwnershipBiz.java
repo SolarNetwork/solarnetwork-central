@@ -59,8 +59,9 @@ public class DelegatingNodeOwnershipBiz implements NodeOwnershipBiz {
 	}
 
 	@Override
-	public void confirmNodeOwnershipTransfer(Long nodeId, boolean accept) throws AuthorizationException {
-		delegate.confirmNodeOwnershipTransfer(nodeId, accept);
+	public void confirmNodeOwnershipTransfer(Long userId, Long nodeId, boolean accept)
+			throws AuthorizationException {
+		delegate.confirmNodeOwnershipTransfer(userId, nodeId, accept);
 	}
 
 }

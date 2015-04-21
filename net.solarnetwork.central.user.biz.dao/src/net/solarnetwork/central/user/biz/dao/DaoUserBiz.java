@@ -48,6 +48,7 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodePK;
+import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -254,20 +255,53 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
 			throws AuthorizationException {
-		// TODO Auto-generated method stub
+		UserNodeTransfer xfer = new UserNodeTransfer();
+		xfer.setUserId(userId);
+		xfer.setNodeId(nodeId);
+		xfer.setEmail(newOwnerEmail);
+		userNodeDao.storeUserNodeTransfer(xfer);
 	}
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void cancelNodeOwnershipTransfer(Long userId, Long nodeId) throws AuthorizationException {
-		// TODO Auto-generated method stub
-
+		UserNodeTransfer xfer = userNodeDao.getUserNodeTransfer(new UserNodePK(userId, nodeId));
+		if ( xfer != null ) {
+			userNodeDao.deleteUserNodeTrasnfer(xfer);
+		}
 	}
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public void confirmNodeOwnershipTransfer(Long nodeId, boolean accept) throws AuthorizationException {
-		// TODO Auto-generated method stub
+	public void confirmNodeOwnershipTransfer(Long userId, Long nodeId, boolean accept)
+			throws AuthorizationException {
+		if ( accept ) {
+			UserNodePK pk = new UserNodePK(userId, nodeId);
+			UserNodeTransfer xfer = userNodeDao.getUserNodeTransfer(pk);
+			if ( xfer == null ) {
+				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, pk);
+			}
+			UserNode userNode = userNodeDao.get(nodeId);
+			if ( userNode == null ) {
+				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, nodeId);
+			}
+			User recipient = userDao.getUserByEmail(xfer.getEmail());
+			if ( recipient == null ) {
+				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, xfer.getEmail());
+			}
+
+			// at this point, we can delete the transfer request
+			userNodeDao.deleteUserNodeTrasnfer(xfer);
+
+			// and now, transfer ownership
+			if ( recipient.getId().equals(userNode.getUser().getId()) == false ) {
+				userNode.setUser(recipient);
+				userNodeDao.store(userNode);
+			}
+		} else {
+			// rejecting
+			cancelNodeOwnershipTransfer(userId, nodeId);
+		}
 	}
 
 	public void setUserDao(UserDao userDao) {
