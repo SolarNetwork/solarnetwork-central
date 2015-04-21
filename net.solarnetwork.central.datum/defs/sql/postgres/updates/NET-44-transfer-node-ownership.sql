@@ -1,14 +1,51 @@
+-- As a db superuser, must first run
+-- CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
+
+-- convert solaruser.user_user.email to citext (case insensitive text)
+-- have to recreate views using the email column
+
+DROP VIEW solaruser.network_association;
+DROP VIEW solaruser.user_login;
+DROP VIEW solaruser.user_login_role;
+   
+ALTER TABLE solaruser.user_user DROP CONSTRAINT user_user_email_unq;
+ALTER TABLE solaruser.user_user ALTER COLUMN email TYPE citext;
+ALTER TABLE solaruser.user_user ADD CONSTRAINT user_user_email_unq UNIQUE(email);
+
+CREATE OR REPLACE VIEW solaruser.network_association AS 
+ SELECT u.email::text AS username,
+    unc.conf_key,
+    unc.sec_phrase
+   FROM solaruser.user_node_conf unc
+     JOIN solaruser.user_user u ON u.id = unc.user_id;
+CREATE OR REPLACE VIEW solaruser.user_login AS 
+ SELECT user_user.email::text AS username,
+    user_user.password,
+    user_user.enabled,
+    user_user.id AS user_id,
+    user_user.disp_name AS display_name
+   FROM solaruser.user_user;
+CREATE OR REPLACE VIEW solaruser.user_login_role AS 
+ SELECT u.email::text AS username,
+    r.role_name AS authority
+   FROM solaruser.user_user u
+     JOIN solaruser.user_role r ON r.user_id = u.id;
+
+-- create new transfer structures
+     
+DROP TABLE IF EXISTS solaruser.user_node_xfer;
 CREATE TABLE solaruser.user_node_xfer (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id			BIGINT NOT NULL,
 	node_id			solarcommon.node_id,
-	recipient		CHARACTER VARYING(255) NOT NULL,
+	recipient		citext NOT NULL,
 	CONSTRAINT user_node_xfer_pkey PRIMARY KEY (user_id, node_id),
 	CONSTRAINT user_node_xfer_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+DROP INDEX IF EXISTS user_node_xfer_recipient_idx;
 CREATE INDEX user_node_xfer_recipient_idx ON solaruser.user_node_xfer (recipient);
 
 /**************************************************************************************************

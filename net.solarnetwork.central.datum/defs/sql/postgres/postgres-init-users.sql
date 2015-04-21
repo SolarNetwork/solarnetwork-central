@@ -11,7 +11,7 @@ CREATE TABLE solaruser.user_user (
 	id				BIGINT NOT NULL DEFAULT nextval('solaruser.solaruser_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	disp_name		CHARACTER VARYING(128) NOT NULL,
-	email			CHARACTER VARYING(255) NOT NULL,
+	email			citext NOT NULL,
 	password		CHARACTER VARYING(128) NOT NULL,
 	enabled			BOOLEAN NOT NULL DEFAULT TRUE,
 	CONSTRAINT user_user_pkey PRIMARY KEY (id),
@@ -35,7 +35,7 @@ CREATE TABLE solaruser.user_role (
  */
 CREATE VIEW solaruser.user_login AS
 	SELECT
-		email AS username, 
+		email::text AS username, 
 		password AS password, 
 		enabled AS enabled,
 		id AS user_id,
@@ -46,7 +46,7 @@ CREATE VIEW solaruser.user_login AS
  * user_login_role: view used by UI for login authorization purposes
  */
 CREATE VIEW solaruser.user_login_role AS
-	SELECT u.email AS username, r.role_name AS authority
+	SELECT u.email::text AS username, r.role_name AS authority
 	FROM solaruser.user_user u
 	INNER JOIN solaruser.user_role r ON r.user_id = u.id;
 
@@ -160,7 +160,7 @@ CREATE TABLE solaruser.user_node_conf (
 
 CREATE VIEW solaruser.network_association  AS
 	SELECT
-		u.email AS username,
+		u.email::text AS username,
 		unc.conf_key AS conf_key,
 		unc.sec_phrase AS sec_phrase
 	FROM solaruser.user_node_conf unc
