@@ -49,6 +49,30 @@ public class UserNodeTransfer implements Entity<UserNodePK>, Cloneable, Serializ
 	private SolarNode node;
 
 	/**
+	 * Default constructor.
+	 */
+	public UserNodeTransfer() {
+		super();
+	}
+
+	/**
+	 * Construct with values.
+	 * 
+	 * @param userId
+	 *        The user ID.
+	 * @param nodeId
+	 *        The node ID.
+	 * @param email
+	 *        The email.
+	 */
+	public UserNodeTransfer(Long userId, Long nodeId, String email) {
+		super();
+		setUserId(userId);
+		setNodeId(nodeId);
+		setEmail(email);
+	}
+
+	/**
 	 * Get the email of the requested new owner of the node.
 	 * 
 	 * @return The email address.
