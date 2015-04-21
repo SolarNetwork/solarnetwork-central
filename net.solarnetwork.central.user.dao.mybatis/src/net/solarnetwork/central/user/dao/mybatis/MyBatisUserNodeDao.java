@@ -27,6 +27,7 @@ import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,26 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 * {@link #findUserNodesAndCertificatesForUser(Long)}.
 	 */
 	public static final String QUERY_FOR_USER_WITH_CERT = "find-UserNode-for-user-with-certs";
+
+	/**
+	 * The callable statement used in
+	 * {@link #storeUserNodeTransfer(UserNodeTransfer)}.
+	 */
+	public static final String CALL_STORE_USER_NODE_TRANSFER = "store-UserNodeTransfer";
+
+	/** The query name for {@link #deleteUserNodeTrasnfer(UserNodeTransfer)}. */
+	public static final String DELETE_USER_NODE_TRANSFER = "delete-UserNodeTransfer";
+
+	/**
+	 * The query name used for {@link #getUserNodeTransfer(UserNodePK)}.
+	 */
+	public static final String QUERY_USER_NODE_TRANSFERS_FOR_ID = "get-UserNodeTransfer-for-id";
+
+	/**
+	 * The query name used for
+	 * {@link #findUserNodeTransferRequestsForEmail(String)}.
+	 */
+	public static final String QUERY_USER_NODE_TRANSFERS_FOR_EMAIL = "find-UserNodeTransfer-for-email";
 
 	/**
 	 * Default constructor.
@@ -80,17 +101,28 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
 	public void storeUserNodeTransfer(UserNodeTransfer transfer) {
-		// TODO Auto-generated method stub
+		getSqlSession().update(CALL_STORE_USER_NODE_TRANSFER, transfer);
+	}
 
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public UserNodeTransfer getUserNodeTransfer(UserNodePK pk) {
+		return getSqlSession().selectOne(QUERY_USER_NODE_TRANSFERS_FOR_ID, pk);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	public void deleteUserNodeTrasnfer(UserNodeTransfer transfer) {
+		int count = getSqlSession().delete(DELETE_USER_NODE_TRANSFER, transfer.getId());
+		log.debug("Deleted {} UserNodeTransfer entities for ID {}", count, transfer.getId());
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNodeTransfer> findUserNodeTransferRequestsForEmail(String email) {
-		// TODO Auto-generated method stub
-		return null;
+		return getSqlSession().selectList(QUERY_USER_NODE_TRANSFERS_FOR_EMAIL, email);
 	}
 
 }

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.domain;
 
 import java.io.Serializable;
 import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.util.SerializeIgnore;
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -38,12 +39,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 public class UserNodeTransfer implements Entity<UserNodePK>, Cloneable, Serializable {
 
-	private static final long serialVersionUID = 1524581941853284595L;
+	private static final long serialVersionUID = -1316805739552206861L;
 
 	private UserNodePK id = new UserNodePK();
 	private DateTime created;
 	private String email;
-	private String code;
+
+	private User user;
+	private SolarNode node;
 
 	/**
 	 * Get the email of the requested new owner of the node.
@@ -62,14 +65,6 @@ public class UserNodeTransfer implements Entity<UserNodePK>, Cloneable, Serializ
 	 */
 	public void setEmail(String email) {
 		this.email = email;
-	}
-
-	public String getCode() {
-		return code;
-	}
-
-	public void setCode(String code) {
-		this.code = code;
 	}
 
 	@Override
@@ -184,6 +179,22 @@ public class UserNodeTransfer implements Entity<UserNodePK>, Cloneable, Serializ
 	@Override
 	public String toString() {
 		return "UserNodeTransfer{" + id + "}";
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public SolarNode getNode() {
+		return node;
+	}
+
+	public void setNode(SolarNode node) {
+		this.node = node;
 	}
 
 }
