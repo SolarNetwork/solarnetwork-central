@@ -33,12 +33,14 @@ import java.util.TimeZone;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.support.CertificateService;
 import net.solarnetwork.web.domain.Response;
@@ -67,25 +69,31 @@ import org.springframework.web.servlet.ModelAndView;
 @RequestMapping("/sec/my-nodes")
 public class MyNodesController extends ControllerSupport {
 
-	public final UserBiz userBiz;
-	public final RegistrationBiz registrationBiz;
-	public final CertificateService certificateService;
+	private final UserBiz userBiz;
+	private final RegistrationBiz registrationBiz;
+	private final NodeOwnershipBiz nodeOwnershipBiz;
+	private final CertificateService certificateService;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param userBiz
-	 *        the UserBiz
+	 *        The {@link UserBiz} to use.
 	 * @param registrationBiz
-	 *        the RegistrationBiz
+	 *        The {@link RegistrationBiz} to use.
+	 * @param nodeOwnershipBiz
+	 *        the {@link NodeOwnershipBiz} to use.
+	 * @param certificateService
+	 *        The {@link CertificateService} to use.
 	 */
 	@Autowired
 	public MyNodesController(UserBiz userBiz, RegistrationBiz registrationBiz,
-			CertificateService certificateService) {
+			NodeOwnershipBiz nodeOwnershipBiz, CertificateService certificateService) {
 		super();
 		this.userBiz = userBiz;
 		this.registrationBiz = registrationBiz;
 		this.certificateService = certificateService;
+		this.nodeOwnershipBiz = nodeOwnershipBiz;
 	}
 
 	/**
@@ -95,12 +103,16 @@ public class MyNodesController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public ModelAndView viewMyNodes() {
+		final SecurityUser actor = SecurityUtils.getCurrentUser();
 		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentUser().getUserId());
 		List<UserNodeConfirmation> pendingConfirmationList = userBiz
-				.getPendingUserNodeConfirmations(SecurityUtils.getCurrentUser().getUserId());
+				.getPendingUserNodeConfirmations(actor.getUserId());
+		List<UserNodeTransfer> pendingNodeOwnershipRequests = nodeOwnershipBiz
+				.pendingNodeOwnershipTransfersForEmail(actor.getEmail());
 		ModelAndView mv = new ModelAndView("my-nodes/my-nodes");
 		mv.addObject("userNodesList", nodes);
 		mv.addObject("pendingUserNodeConfirmationsList", pendingConfirmationList);
+		mv.addObject("pendingNodeOwnershipRequests", pendingNodeOwnershipRequests);
 		return mv;
 	}
 
