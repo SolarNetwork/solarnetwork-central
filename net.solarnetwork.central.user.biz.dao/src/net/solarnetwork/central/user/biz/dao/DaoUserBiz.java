@@ -252,6 +252,12 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public List<UserNodeTransfer> pendingNodeOwnershipTransfersForEmail(String email) {
+		return userNodeDao.findUserNodeTransferRequestsForEmail(email);
+	}
+
+	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
 			throws AuthorizationException {

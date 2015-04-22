@@ -56,6 +56,10 @@ public class NodeOwnershipSecurityAspect extends AuthorizationSupport {
 		this.userDao = userDao;
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*NodeOwnershipBiz.pending*(..)) && args(String)")
+	public void pendingRequestsForEmail(String email) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*NodeOwnershipBiz.request*(..)) && args(userId,nodeId,..)")
 	public void requestTransfer(Long userId, Long nodeId) {
 	}
@@ -68,14 +72,24 @@ public class NodeOwnershipSecurityAspect extends AuthorizationSupport {
 	public void confirmTransferRequest(Long userId, Long nodeId) {
 	}
 
+	@Before("pendingRequestsForEmail(email)")
+	public void checkPendingRequestsForEmail(String email) {
+		User recipient = userDao.getUserByEmail(email);
+		if ( recipient == null ) {
+			log.warn("Access DENIED to transfer recipient {}; not found", email);
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, email);
+		}
+		requireUserReadAccess(recipient.getId());
+	}
+
 	@Before("requestTransfer(userId, nodeId) || cancelTransferReqeust(userId, nodeId)")
-	public void userNodeRequestOrCancelTransferRequest(Long userId, Long nodeId) {
+	public void checkUserNodeRequestOrCancelTransferRequest(Long userId, Long nodeId) {
 		// the active user must have write-access to the given node
 		requireNodeWriteAccess(nodeId);
 	}
 
 	@Before("confirmTransferRequest(userId, nodeId)")
-	public void userNodeConfirmTransferAccessCheck(Long userId, Long nodeId) {
+	public void checkUserNodeConfirmTransferAccess(Long userId, Long nodeId) {
 		// the active user must be the recipient of the transfer request
 		final UserNodePK userNodePK = new UserNodePK(userId, nodeId);
 		UserNodeTransfer xfer = getUserNodeDao().getUserNodeTransfer(userNodePK);

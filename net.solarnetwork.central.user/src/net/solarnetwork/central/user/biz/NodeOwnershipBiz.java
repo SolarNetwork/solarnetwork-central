@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.biz;
 
+import java.util.List;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.user.domain.UserNodeTransfer;
 
 /**
  * API for node owner tasks.
@@ -31,6 +33,21 @@ import net.solarnetwork.central.security.AuthorizationException;
  * @version 1.0
  */
 public interface NodeOwnershipBiz {
+
+	/**
+	 * Get a complete list of transfers for a given recipient.
+	 * 
+	 * <p>
+	 * This provides a view into all transfer requests awaiting confirmation by
+	 * a single user.
+	 * </p>
+	 * 
+	 * @param email
+	 *        The email address of the requested ownership recipient.
+	 * @return A list of all ownership requests associated with the given
+	 *         recipient (never <em>null</em>).
+	 */
+	List<UserNodeTransfer> pendingNodeOwnershipTransfersForEmail(String email);
 
 	/**
 	 * Request a transfer of ownership of a node.
@@ -51,7 +68,6 @@ public interface NodeOwnershipBiz {
 	 * @throws AuthorizationException
 	 *         If the active user is not authorized to transfer ownership of the
 	 *         given node.
-	 * @since 1.3
 	 */
 	void requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
 			throws AuthorizationException;
@@ -71,7 +87,6 @@ public interface NodeOwnershipBiz {
 	 * @throws AuthorizationException
 	 *         If the active user is not authorized to transfer ownership of the
 	 *         given node.
-	 * @since 1.3
 	 */
 	void cancelNodeOwnershipTransfer(Long userId, Long nodeId) throws AuthorizationException;
 
@@ -96,7 +111,6 @@ public interface NodeOwnershipBiz {
 	 * @throws AuthorizationException
 	 *         If the active user is not authorized to confirm (or reject) the
 	 *         ownership transfer.
-	 * @since 1.3
 	 */
 	void confirmNodeOwnershipTransfer(Long userId, Long nodeId, boolean accept)
 			throws AuthorizationException;

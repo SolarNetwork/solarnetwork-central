@@ -82,6 +82,47 @@ public class NodeOwnershipSecurityAspectTests extends AbstractCentralTransaction
 	}
 
 	@Test(expected = AuthorizationException.class)
+	public void pendingTransfersNoAuth() {
+		final NodeOwnershipSecurityAspect aspect = getTestInstance();
+		final net.solarnetwork.central.user.domain.User user = new net.solarnetwork.central.user.domain.User(
+				TEST_USER_ID, TEST_EMAIL);
+
+		EasyMock.expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(user);
+
+		replayAll();
+		aspect.checkPendingRequestsForEmail(TEST_EMAIL);
+		verifyAll();
+	}
+
+	@Test(expected = AuthorizationException.class)
+	public void pendingTransfersNotOwner() {
+		final NodeOwnershipSecurityAspect aspect = getTestInstance();
+		final net.solarnetwork.central.user.domain.User user = new net.solarnetwork.central.user.domain.User(
+				TEST_USER_ID, TEST_EMAIL);
+
+		EasyMock.expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(user);
+
+		becomeUser(-2L, "ROLE_USER");
+		replayAll();
+		aspect.checkPendingRequestsForEmail(TEST_EMAIL);
+		verifyAll();
+	}
+
+	@Test
+	public void pendingTransfersSuccess() {
+		final NodeOwnershipSecurityAspect aspect = getTestInstance();
+		final net.solarnetwork.central.user.domain.User user = new net.solarnetwork.central.user.domain.User(
+				TEST_USER_ID, TEST_EMAIL);
+
+		EasyMock.expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(user);
+
+		becomeUser(TEST_USER_ID, "ROLE_USER");
+		replayAll();
+		aspect.checkPendingRequestsForEmail(TEST_EMAIL);
+		verifyAll();
+	}
+
+	@Test(expected = AuthorizationException.class)
 	public void requestOrCancelTransferNoAuth() {
 		final NodeOwnershipSecurityAspect aspect = getTestInstance();
 		final net.solarnetwork.central.user.domain.User user = new net.solarnetwork.central.user.domain.User(
@@ -93,7 +134,7 @@ public class NodeOwnershipSecurityAspectTests extends AbstractCentralTransaction
 		EasyMock.expect(userNodeDao.get(TEST_NODE_ID)).andReturn(userNode);
 
 		replayAll();
-		aspect.userNodeRequestOrCancelTransferRequest(TEST_USER_ID, TEST_NODE_ID);
+		aspect.checkUserNodeRequestOrCancelTransferRequest(TEST_USER_ID, TEST_NODE_ID);
 		verifyAll();
 	}
 
@@ -110,7 +151,7 @@ public class NodeOwnershipSecurityAspectTests extends AbstractCentralTransaction
 
 		becomeUser(-2L, "ROLE_USER");
 		replayAll();
-		aspect.userNodeRequestOrCancelTransferRequest(TEST_USER_ID, TEST_NODE_ID);
+		aspect.checkUserNodeRequestOrCancelTransferRequest(TEST_USER_ID, TEST_NODE_ID);
 		verifyAll();
 	}
 
@@ -127,7 +168,7 @@ public class NodeOwnershipSecurityAspectTests extends AbstractCentralTransaction
 
 		becomeUser(TEST_USER_ID, "ROLE_USER");
 		replayAll();
-		aspect.userNodeRequestOrCancelTransferRequest(TEST_USER_ID, TEST_NODE_ID);
+		aspect.checkUserNodeRequestOrCancelTransferRequest(TEST_USER_ID, TEST_NODE_ID);
 		verifyAll();
 	}
 
@@ -143,7 +184,7 @@ public class NodeOwnershipSecurityAspectTests extends AbstractCentralTransaction
 		EasyMock.expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(user);
 
 		replayAll();
-		aspect.userNodeConfirmTransferAccessCheck(TEST_USER_ID, TEST_NODE_ID);
+		aspect.checkUserNodeConfirmTransferAccess(TEST_USER_ID, TEST_NODE_ID);
 		verifyAll();
 	}
 
@@ -160,7 +201,7 @@ public class NodeOwnershipSecurityAspectTests extends AbstractCentralTransaction
 
 		becomeUser(-2L, "ROLE_USER");
 		replayAll();
-		aspect.userNodeConfirmTransferAccessCheck(TEST_USER_ID, TEST_NODE_ID);
+		aspect.checkUserNodeConfirmTransferAccess(TEST_USER_ID, TEST_NODE_ID);
 		verifyAll();
 	}
 
@@ -177,7 +218,7 @@ public class NodeOwnershipSecurityAspectTests extends AbstractCentralTransaction
 
 		becomeUser(TEST_USER_ID, "ROLE_USER");
 		replayAll();
-		aspect.userNodeConfirmTransferAccessCheck(TEST_USER_ID, TEST_NODE_ID);
+		aspect.checkUserNodeConfirmTransferAccess(TEST_USER_ID, TEST_NODE_ID);
 		verifyAll();
 	}
 

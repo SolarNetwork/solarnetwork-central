@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.user.support;
 
+import java.util.List;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
+import net.solarnetwork.central.user.domain.UserNodeTransfer;
 
 /**
  * Delegating implementation of {@link NodeOwnershipBiz}, mostly to help with
@@ -45,6 +47,11 @@ public class DelegatingNodeOwnershipBiz implements NodeOwnershipBiz {
 	public DelegatingNodeOwnershipBiz(NodeOwnershipBiz delegate) {
 		super();
 		this.delegate = delegate;
+	}
+
+	@Override
+	public List<UserNodeTransfer> pendingNodeOwnershipTransfersForEmail(String email) {
+		return delegate.pendingNodeOwnershipTransfersForEmail(email);
 	}
 
 	@Override
