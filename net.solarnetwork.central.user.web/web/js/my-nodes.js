@@ -316,7 +316,7 @@ $(document).ready(function() {
 		});
 	});
 	
-	$('#invite-modal').on('show', function() {
+	$('#invite-modal').on('show.bs.modal', function() {
 		var form = $(this);
 		var url = form.attr('action').replace(/\/[^\/]+$/, '/tzpicker.html');
 		var tzcontainer = $('#tz-picker-container');

@@ -1,6 +1,6 @@
-.navbar .brand {
-	padding-top: 4px !important;
-	padding-bottom: 5px !important;
+.navbar .navbar-brand {
+	padding-top: 10px !important;
+	padding-bottom: 10px !important;
 }
 
 fieldset.review .uneditable-input {
@@ -45,6 +45,11 @@ label {
 
 #modal-cert-container {
 	margin-top: 12px;
+}
+
+#invite-tz-country {
+	margin-left: -15px;
+	font-weight: 700;
 }
 
 .hbox {

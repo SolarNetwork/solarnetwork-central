@@ -28,7 +28,7 @@
 				<c:remove var="statusMessageParam0" scope="session"/>
 			</c:if>
 			<c:if test="${not empty errorMessageKey}">
-				<div class="alert alert-error">
+				<div class="alert alert-warning">
 					<fmt:message key="${errorMessageKey}">
 						<c:if test="${not empty errorMessageKey}">
 							<fmt:param value="${errorMessageKeyParam0}"/>
