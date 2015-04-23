@@ -25,6 +25,8 @@ package net.solarnetwork.central.reg.web;
 import static net.solarnetwork.web.domain.Response.response;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -103,6 +105,19 @@ public class MyNodesController extends ControllerSupport {
 	public ModelAndView viewMyNodes() {
 		final SecurityUser actor = SecurityUtils.getCurrentUser();
 		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentUser().getUserId());
+
+		// move any nodes with pending transfer into own list
+		List<UserNode> pendingTransferNodes = new ArrayList<UserNode>(nodes == null ? 0 : nodes.size());
+		if ( nodes != null ) {
+			for ( Iterator<UserNode> itr = nodes.iterator(); itr.hasNext(); ) {
+				UserNode node = itr.next();
+				if ( node.getTransfer() != null ) {
+					itr.remove();
+					pendingTransferNodes.add(node);
+				}
+			}
+		}
+
 		List<UserNodeConfirmation> pendingConfirmationList = userBiz
 				.getPendingUserNodeConfirmations(actor.getUserId());
 		List<UserNodeTransfer> pendingNodeOwnershipRequests = nodeOwnershipBiz
@@ -110,6 +125,7 @@ public class MyNodesController extends ControllerSupport {
 		ModelAndView mv = new ModelAndView("my-nodes/my-nodes");
 		mv.addObject("userNodesList", nodes);
 		mv.addObject("pendingUserNodeConfirmationsList", pendingConfirmationList);
+		mv.addObject("pendingUserNodeTransferList", pendingTransferNodes);
 		mv.addObject("pendingNodeOwnershipRequests", pendingNodeOwnershipRequests);
 		return mv;
 	}
@@ -264,7 +280,7 @@ public class MyNodesController extends ControllerSupport {
 	@ResponseBody
 	@RequestMapping(value = "/cancelNodeTransferRequest", method = RequestMethod.POST)
 	public Response<Boolean> cancelNodeOwnershipTransfer(@RequestParam("userId") Long userId,
-			@RequestParam("nodeId") Long nodeId, @RequestParam("recipient") String email) {
+			@RequestParam("nodeId") Long nodeId) {
 		nodeOwnershipBiz.cancelNodeOwnershipTransfer(userId, nodeId);
 		return response(Boolean.TRUE);
 	}

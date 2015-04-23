@@ -35,6 +35,17 @@ $(document).ready(function() {
 		form.modal('show');
 	});
 	
+	$('#pending-transfer').on('click', 'button.cancel-ownership-transfer', function(event) {
+		event.preventDefault();
+		var btn = $(this);
+		var url = btn.data('action');
+		$.post(url, function(json) {
+			document.location.reload(true);
+		}).fail(function(data, statusText, xhr) {
+			SolarReg.showAlertBefore('#top', 'alert-warning', statusText);
+		});
+	});
+	
 	$('#view-cert-modal').ajaxForm({
 		dataType: 'json',
 		success: function(json, status, xhr, form) {
@@ -56,8 +67,7 @@ $(document).ready(function() {
 			SolarReg.showAlertBefore('#transfer-ownership-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		}
 	}).on('hidden.bs.modal', function() {
-		$('#view-cert-password').val('');
-		$('#modal-cert-container').empty().addClass('hidden');
+		document.location.reload(true);
 	});;
 	
 	function setupEditUserNodeLocationDisplay(loc) {
@@ -131,7 +141,7 @@ $(document).ready(function() {
 		$.getJSON(url, req, function(json) {
 			setupEditUserNodeFields(form, json.data);
 		}).fail(function(data, statusText, xhr) {
-			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-error', statusText);
+			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		});
 		editNodeShowPage(form, 1);
 		form.modal('show');
@@ -144,7 +154,7 @@ $(document).ready(function() {
 			document.location.reload(true);
 		},
 		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-error', statusText);
+			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		}
 	}).data('page', 1).on('show', function() {
 		dynamicSearchTimer = undefined;
@@ -303,7 +313,7 @@ $(document).ready(function() {
 				showLocationSearchResults(json.data.results);
 			}
 		}).fail(function(data, statusText, xhr) {
-			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-error', statusText);
+			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		});
 	}
 	
