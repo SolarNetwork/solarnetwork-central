@@ -29,20 +29,6 @@ label {
     margin: auto;
 }
 
-
-#edit-node-modal {
-	width: 600px;
-}
-#edit-node-modal .form-horizontal .control-label {
-	width: 130px;
-}
-#edit-node-modal .form-horizontal .controls {
-	margin-left: 150px;
-}
-#edit-node-modal .form-horizontal input.span5 {
-	width: 366px;
-}
-
 #modal-cert-container {
 	margin-top: 12px;
 }
