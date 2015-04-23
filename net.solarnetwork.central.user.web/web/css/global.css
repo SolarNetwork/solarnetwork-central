@@ -16,6 +16,11 @@ pre.cert {
 	line-height: 11px;
 }
 
+section + section {
+	margin-top: 24px;
+	border-top: 2px solid #d6ad15;
+}
+
 .timezone-pin {
 	display: none;
 }
@@ -62,4 +67,8 @@ pre.cert {
 .hidden,
 .template {
 	display: none;
+}
+
+#create-data-auth-token .checkbox label {
+	margin-right: 18px;
 }

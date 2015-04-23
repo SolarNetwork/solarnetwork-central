@@ -1,6 +1,6 @@
 $(document).ready(function() {
 	function handleAuthTokenCreated(json, status, xhr, form) {
-		form.on('hidden', function() {
+		form.on('hidden.bs.modal', function() {
 			document.location.reload(true);
 		});
 		if ( json.success === true && json.data ) {
