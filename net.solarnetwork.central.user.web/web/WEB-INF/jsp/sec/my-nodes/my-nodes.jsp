@@ -1,5 +1,47 @@
 <a id="top"></a>
-<c:if test="${fn:length(pendingUserNodeConfirmationsList) > 0}">
+
+<c:if test='${fn:length(pendingNodeOwnershipRequests) > 0}'>
+	<section id="pending-transfer-requests">
+		<h2><fmt:message key='my-nodes.pending-transfer-requests.header'/></h2>
+		<p>
+			<fmt:message key='my-nodes.pending-transfer-requests.intro'>
+				<fmt:param>${fn:length(pendingNodeOwnershipRequests)}</fmt:param>
+			</fmt:message>
+		</p>
+		<table class="table" id="pending-transfer-requests-table">
+			<thead>
+				<tr>
+					<th><fmt:message key="user.node.id.label"/></th>
+					<th><fmt:message key="my-nodes.transferOwnership.requester.label"/></th>
+					<th><fmt:message key="my-nodes.transferOwnership.requestDate.label"/></th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<c:forEach items="${pendingNodeOwnershipRequests}" var="transfer">
+					<tr>
+						<td>${transfer.node.id}</td>
+						<td>${transfer.email}</td>
+						<td>
+							<joda:dateTimeZone value="GMT">
+								<joda:format value="${transfer.created}" pattern="dd MMM yyyy"/> GMT
+							</joda:dateTimeZone>
+						</td>
+						<td>
+							<button type="button" class="btn btn-small btn-default decide-ownership-transfer"
+								data-user-id="${transfer.user.id}" data-node-id="${transfer.node.id}" 
+								data-requester="${transfer.user.email}">
+								<fmt:message key='my-nodes.transferOwnership.action.requestDecision'/>
+							</button>
+						</td>
+					</tr>
+				</c:forEach>
+			</tbody>
+		</table>
+	</section>
+</c:if>
+
+<c:if test='${fn:length(pendingUserNodeConfirmationsList) > 0}'>
 	<section id="pending">
 		<h2><fmt:message key='my-nodes.pending-invite.header'/></h2>
 		<p>
@@ -35,7 +77,7 @@
 								<ul class="dropdown-menu" role="menu">
 									<li>
 										<a class="btn btn-danger" href="<c:url value='/u/sec/my-nodes/cancelInvitation'/>?id=${userNodeConf.id}">
-											<i class="icon-trash icon-white"></i> <fmt:message key='my-nodes.cancel-invitation.link'/>
+											<i class="glyphicon glyphicon-trash"></i> <fmt:message key='my-nodes.cancel-invitation.link'/>
 										</a>
 									</li>
 								</ul>
@@ -89,7 +131,8 @@
 						</td>
 						<td>
 							<button type="button" data-action="<c:url value='/u/sec/my-nodes/cancelNodeTransferRequest'/>?userId=${userNode.user.id}&nodeId=${userNode.node.id}"
-								class="btn btn-small btn-danger cancel-ownership-transfer"><i class="glyphicon glyphicon-trash"></i></button>
+								title="<fmt:message key='my-nodes.transferOwnership.action.cancel'/>"
+								class="btn btn-small btn-danger cancel-ownership-transfer"><i class="glyphicon glyphicon-remove"></i></button>
 						</td>
 					</tr>
 				</c:forEach>
@@ -471,4 +514,41 @@
 	</div>
 	<input type="hidden" name="nodeId"/>
 	<input type="hidden" name="userId"/>
+</form>
+<form id="decide-transfer-ownership-modal" class="modal fade" action="<c:url value='/u/sec/my-nodes/confirmNodeTransferRequest'/>" method="post">
+	<div class="modal-dialog">
+		<div class="modal-content">
+		 	<div class="modal-header">
+		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
+		 		<h4 class="modal-title"><fmt:message key='my-nodes.transferOwnership.requestDecision.title'/></h4>
+		 	</div>
+		 	<div class="modal-body form-horizontal">
+		 		<p><fmt:message key='my-nodes.transferOwnership.requestDecision.intro'/></p>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="transfer-ownership-request-node"><fmt:message key="user.node.id.label"/></label>
+					<div class="col-sm-10">
+						<p id="transfer-ownership-request-node" class="form-control-static"></p>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="transfer-ownership-request-requester"><fmt:message key="my-nodes.transferOwnership.requester.label"/></label>
+					<div class="col-sm-10">
+						<p id="transfer-ownership-request-requester" class="form-control-static"></p>
+					</div>
+				</div>
+		 	</div>
+		 	<div class="modal-footer">
+		 		<a href="#" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></a>
+		 		<button type="button" class="btn btn-danger submit">
+		 			<fmt:message key='my-nodes.transferOwnership.action.decline'/>
+		 		</button>
+		 		<button type="button" class="btn btn-success submit" data-accept="true">
+		 			<fmt:message key='my-nodes.transferOwnership.action.accept'/>
+		 		</button>
+		 	</div>
+		 </div>
+	</div>
+	<input type="hidden" name="nodeId"/>
+	<input type="hidden" name="userId"/>
+	<input type="hidden" name="accept" value="false"/>
 </form>
