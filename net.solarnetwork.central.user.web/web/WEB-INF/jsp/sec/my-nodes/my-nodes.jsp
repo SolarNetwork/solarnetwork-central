@@ -189,13 +189,13 @@
 		 		<p><fmt:message key='my-nodes-cert.view.intro'/></p>
 		 		<fieldset class="form-inline">
 		 			<label for="view-cert-password"><fmt:message key='my-nodes.cert.view.password.label'/></label>
-					<input class="span3" type="password" name="password" id="view-cert-password" />
+					<input class="span3 form-control" type="password" name="password" id="view-cert-password" />
 		 		</fieldset>
 		 		<pre class="cert hidden" id="modal-cert-container"></pre>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<a href="#" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></a>
-		 		<a href="<c:url value='/u/sec/my-nodes/cert/0'/>?download=true" id="modal-cert-download" class="btn">
+		 		<a href="#" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></a>
+		 		<a href="<c:url value='/u/sec/my-nodes/cert/0'/>?download=true" id="modal-cert-download" class="btn btn-default">
 		 			<fmt:message key='my-nodes.cert.action.download'/>
 		 		</a>
 		 		<button type="submit" class="btn btn-primary">

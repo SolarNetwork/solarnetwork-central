@@ -4,7 +4,7 @@ $(document).ready(function() {
 	var tzPicker;
 	var dynamicSearchTimer;
 	
-	$('#my-nodes-table').on('click', 'button.view-cert', function(event) {
+	$('#my-nodes-table').on('click', 'a.view-cert', function(event) {
 		event.preventDefault();
 		
 		var btn = $(this);
@@ -24,8 +24,11 @@ $(document).ready(function() {
 			$('#modal-cert-container').text(json.pemValue).removeClass('hidden');
 		},
 		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#view-cert-modal .modal-body > *:first-child', 'alert-error', statusText);
+			SolarReg.showAlertBefore('#view-cert-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		}
+	}).on('hidden.bs.modal', function() {
+		$('#view-cert-password').val('');
+		$('#modal-cert-container').empty().addClass('hidden');
 	});
 	
 	function setupEditUserNodeLocationDisplay(loc) {
