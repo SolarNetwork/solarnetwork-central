@@ -83,6 +83,8 @@ $(document).ready(function() {
 		error: function(xhr, status, statusText) {
 			SolarReg.showAlertBefore('#transfer-ownership-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		}
+	}).on('shown.bs.modal', function() {
+		$('#transfer-ownership-recipient').focus();
 	}).on('hidden.bs.modal', function() {
 		document.location.reload(true);
 	});

@@ -304,6 +304,25 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 				userNode.setUser(recipient);
 				userNodeDao.store(userNode);
 			}
+
+			// clean up auth tokens associated with node: if token contains just this node id, delete it
+			// but if it contains other node IDs, just remove this node ID from it
+			for ( UserAuthToken token : userAuthTokenDao.findUserAuthTokensForUser(userId) ) {
+				if ( token.getNodeIds() != null && token.getNodeIds().contains(nodeId) ) {
+					token.getNodeIds().remove(nodeId);
+					if ( token.getNodeIds().size() == 0 ) {
+						// only node ID associated, so delete token
+						log.debug("Deleting UserAuthToken {} for node ownership transfer", token);
+						userAuthTokenDao.delete(token);
+					} else {
+						// other node IDs associated, so remove this token
+						log.debug(
+								"Removing node ID {} from UserAuthToken {} for node ownership transfer",
+								nodeId, token);
+						userAuthTokenDao.store(token);
+					}
+				}
+			}
 		} else {
 			// rejecting
 			cancelNodeOwnershipTransfer(userId, nodeId);
