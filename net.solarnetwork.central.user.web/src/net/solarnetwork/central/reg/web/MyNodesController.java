@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.reg.web;
@@ -63,7 +61,7 @@ import org.springframework.web.servlet.ModelAndView;
  * Controller for "my nodes".
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 @Controller
 @RequestMapping("/sec/my-nodes")
@@ -253,6 +251,30 @@ public class MyNodesController extends ControllerSupport {
 	@RequestMapping(value = "/updateNode", method = RequestMethod.POST)
 	public UserNode editNodeSave(UserNode userNode, Errors userNodeErrors, Model model) {
 		return userBiz.saveUserNode(userNode);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/requestNodeTransfer", method = RequestMethod.POST)
+	public Response<Boolean> requestNodeOwnershipTransfer(@RequestParam("userId") Long userId,
+			@RequestParam("nodeId") Long nodeId, @RequestParam("recipient") String email) {
+		nodeOwnershipBiz.requestNodeOwnershipTransfer(userId, nodeId, email);
+		return response(Boolean.TRUE);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/cancelNodeTransferRequest", method = RequestMethod.POST)
+	public Response<Boolean> cancelNodeOwnershipTransfer(@RequestParam("userId") Long userId,
+			@RequestParam("nodeId") Long nodeId, @RequestParam("recipient") String email) {
+		nodeOwnershipBiz.cancelNodeOwnershipTransfer(userId, nodeId);
+		return response(Boolean.TRUE);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/confirmNodeTransferRequest", method = RequestMethod.POST)
+	public Response<Boolean> confirmNodeOwnershipTransfer(@RequestParam("userId") Long userId,
+			@RequestParam("nodeId") Long nodeId, @RequestParam("accept") boolean accept) {
+		nodeOwnershipBiz.confirmNodeOwnershipTransfer(userId, nodeId, accept);
+		return response(Boolean.TRUE);
 	}
 
 }

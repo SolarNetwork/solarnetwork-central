@@ -74,7 +74,9 @@
 			</thead>
 			<tbody>
 				<c:forEach items="${userNodesList}" var="userNode">
-					<tr>
+					<tr class="node-row" data-node-id="${userNode.node.id}" data-user-id="${userNode.user.id}"
+						<c:if test='${fn:length(userNode.name) gt 0}'>data-node-name="${userNode.name}"</c:if>
+						>
 						<td>${userNode.node.id}</td>
 						<td>
 							<joda:dateTimeZone value="GMT">
@@ -110,21 +112,22 @@
 								<button type="button" class="btn btn-small btn-default edit-node" data-target="#edit-node-modal"
 									data-user-id="${userNode.user.id}" data-node-id="${userNode.node.id}"
 									><fmt:message key='my-nodes.action.edit'/></button>
-								
-								<%-- Show dropdown only if options available... --%>
-								<c:if test='${userNode.certificate.status.value eq "Active"}'>
-									<button type="button" class="btn btn-small btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-										<span class="caret"></span>
-										<span class="sr-only"><fmt:message key='toggle.dropdown.label'/></span>
-									</button>
-									<ul class="dropdown-menu dropdown-menu-right" role="menu">
-										<li>
-											<a href="#" data-node-id="${userNode.node.id}" class="view-cert">
+								<button type="button" class="btn btn-small btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+									<span class="caret"></span>
+									<span class="sr-only"><fmt:message key='toggle.dropdown.label'/></span>
+								</button>
+								<ul class="dropdown-menu dropdown-menu-right" role="menu">
+									<li>
+										<c:if test='${userNode.certificate.status.value eq "Active"}'>
+											<a href="#" class="view-cert">
 												<fmt:message key="user.node.certificate.action.view"/>
 											</a>
-										</li>
-									</ul>
-								</c:if>
+										</c:if>
+										<a href="#" class="transfer-ownership">
+											<fmt:message key="user.node.action.transferOwnership"/>
+										</a>
+									</li>
+								</ul>
 							</div>
 						</td>
 					</tr>
@@ -379,4 +382,42 @@
 	<input type="hidden" name="node.id"/>
 	<input type="hidden" name="user.id"/>
 	<input type="hidden" name="node.locationId"/>
+</form>
+<form id="transfer-ownership-modal" class="modal fade" action="<c:url value='/u/sec/my-nodes/requestNodeTransfer'/>" method="post">
+	<div class="modal-dialog">
+		<div class="modal-content">
+		 	<div class="modal-header">
+		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
+		 		<h4 class="modal-title"><fmt:message key='user.node.transferOwnership.title'/></h4>
+		 	</div>
+		 	<div class="modal-body form-horizontal">
+		 		<p><fmt:message key='user.node.transferOwnership.intro'/></p>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="transfer-ownership-node"><fmt:message key="user.node.id.label"/></label>
+					<div class="col-sm-10">
+						<p id="transfer-ownership-node" class="form-control-static"></p>
+					</div>
+				</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-2 control-label" for="transfer-ownership-recipient"><fmt:message key='user.node.transferOwnership.recipient.label'/></label>
+					<div class="col-sm-10">
+						<input class="form-control" type="text" name="recipient" maxlength="240" id="transfer-ownership-recipient"
+							required="required"
+							placeholder="<fmt:message key='user.node.transferOwnership.recipient.placeholder'/>"
+							aria-describedby="transfer-ownership-recipient-help"
+							 />
+						<span class="help-block" id="transfer-ownership-recipient-help"><fmt:message key='user.node.transferOwnership.recipient.caption'/></span>
+					</div>
+		 		</div>
+		 	</div>
+		 	<div class="modal-footer">
+		 		<a href="#" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></a>
+		 		<button type="submit" class="btn btn-primary">
+		 			<fmt:message key='user.node.transferOwnership.action.submit'/>
+		 		</button>
+		 	</div>
+		 </div>
+	</div>
+	<input type="hidden" name="nodeId"/>
+	<input type="hidden" name="userId"/>
 </form>
