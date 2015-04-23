@@ -3,6 +3,10 @@
 	padding-bottom: 10px !important;
 }
 
+footer {
+	margin-top: 12px;
+}
+
 fieldset.review .uneditable-input {
 	color: black;
 }
@@ -10,10 +14,6 @@ fieldset.review .uneditable-input {
 pre.cert {
 	font-size: 9px;
 	line-height: 11px;
-}
-
-label {
-	font-weight: 700;
 }
 
 .timezone-pin {

@@ -1,8 +1,52 @@
-<p class="intro">
-	<fmt:message key='my-nodes.intro'>
-		<fmt:param value="${fn:length(userNodesList)}"/>
-	</fmt:message>
-</p>
+<c:if test="${fn:length(pendingUserNodeConfirmationsList) > 0}">
+	<section id="pending">
+		<h2><fmt:message key='my-nodes.pending-invite.header'/></h2>
+		<p>
+			<fmt:message key='my-nodes.pending-invite.intro'>
+				<fmt:param>${fn:length(pendingUserNodeConfirmationsList)}</fmt:param>
+			</fmt:message>
+		</p>
+		<table class="table">
+			<thead>
+				<tr>
+					<th class="col-sm-2"><fmt:message key="user.nodeconf.created.label"/></th>
+					<th class="col-sm-10"></th>
+				</tr>
+			</thead>
+			<tbody>
+				<c:forEach items="${pendingUserNodeConfirmationsList}" var="userNodeConf">
+					<tr>
+						<td>
+							<joda:dateTimeZone value="GMT">
+								<joda:format value="${userNodeConf.created}"
+									 pattern="dd MMM yyyy"/> GMT
+							</joda:dateTimeZone>
+						</td>
+						<td>
+							<div class="btn-group">
+								<a class="btn btn-default" href="<c:url value='/u/sec/my-nodes/invitation'/>?id=${userNodeConf.id}">
+									<fmt:message key='my-nodes.view-invitation.link'/>
+								</a>
+								<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+									<span class="caret"></span>
+									<span class="sr-only"><fmt:message key='toggle.dropdown.label'/></span>
+								</button>
+								<ul class="dropdown-menu" role="menu">
+									<li>
+										<a class="btn btn-danger" href="<c:url value='/u/sec/my-nodes/cancelInvitation'/>?id=${userNodeConf.id}">
+											<i class="icon-trash icon-white"></i> <fmt:message key='my-nodes.cancel-invitation.link'/>
+										</a>
+									</li>
+								</ul>
+							</div>
+						</td>
+					</tr>
+				</c:forEach>
+			</tbody>
+		</table>
+	</section>
+</c:if>
+
 <section id="nodes">
 	<h2>
 		<fmt:message key='my-nodes.nodelist.header'/>
@@ -10,6 +54,11 @@
 			<i class="glyphicon glyphicon-plus"></i> <fmt:message key='my-nodes.inviteNode'/>
 		</button>
 	</h2>
+	<p class="intro">
+		<fmt:message key='my-nodes.intro'>
+			<fmt:param value="${fn:length(userNodesList)}"/>
+		</fmt:message>
+	</p>
 	<c:if test="${fn:length(userNodesList) > 0}">
 		<table class="table" id="my-nodes-table">
 			<thead>
@@ -84,54 +133,8 @@
 		</table>
 	</c:if>
 </section>
-<c:if test="${fn:length(pendingUserNodeConfirmationsList) > 0}">
-	<section id="pending">
-		<h2><fmt:message key='my-nodes.pending-invite.header'/></h2>
-		<p>
-			<fmt:message key='my-nodes.pending-invite.intro'>
-				<fmt:param>${fn:length(pendingUserNodeConfirmationsList)}</fmt:param>
-			</fmt:message>
-		</p>
-		<table class="table">
-			<thead>
-				<tr>
-					<th class="col-sm-2"><fmt:message key="user.nodeconf.created.label"/></th>
-					<th class="col-sm-10"></th>
-				</tr>
-			</thead>
-			<tbody>
-				<c:forEach items="${pendingUserNodeConfirmationsList}" var="userNodeConf">
-					<tr>
-						<td>
-							<joda:dateTimeZone value="GMT">
-								<joda:format value="${userNodeConf.created}"
-									 pattern="dd MMM yyyy"/> GMT
-							</joda:dateTimeZone>
-						</td>
-						<td>
-							<div class="btn-group">
-								<a class="btn btn-default" href="<c:url value='/u/sec/my-nodes/invitation'/>?id=${userNodeConf.id}">
-									<fmt:message key='my-nodes.view-invitation.link'/>
-								</a>
-								<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-									<span class="caret"></span>
-									<span class="sr-only"><fmt:message key='toggle.dropdown.label'/></span>
-								</button>
-								<ul class="dropdown-menu" role="menu">
-									<li>
-										<a class="btn btn-danger" href="<c:url value='/u/sec/my-nodes/cancelInvitation'/>?id=${userNodeConf.id}">
-											<i class="icon-trash icon-white"></i> <fmt:message key='my-nodes.cancel-invitation.link'/>
-										</a>
-									</li>
-								</ul>
-							</div>
-						</td>
-					</tr>
-				</c:forEach>
-			</tbody>
-		</table>
-	</section>
-</c:if>
+
+<%-- Modal forms --%>
 
 <form id="invite-modal" class="modal fade" action="<c:url value='/u/sec/my-nodes/new'/>" method="post">
 	<div class="modal-dialog">
