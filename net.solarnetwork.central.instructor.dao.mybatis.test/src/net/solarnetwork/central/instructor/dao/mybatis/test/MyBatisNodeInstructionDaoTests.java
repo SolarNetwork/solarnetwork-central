@@ -24,6 +24,7 @@ package net.solarnetwork.central.instructor.dao.mybatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -219,6 +220,45 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		NodeInstruction ni = (NodeInstruction) match;
 		assertNotNull(ni.getParameters());
 		assertEquals("Empty parameters", 0, ni.getParameters().size());
+	}
+
+	@Test
+	public void purgeCompletedInstructionsNone() {
+		long result = dao.purgeCompletedInstructions(new DateTime());
+		assertEquals(0, result);
+	}
+
+	@Test
+	public void purgeCompletedInstructionsNoMatch() {
+		storeNew();
+		long result = dao.purgeCompletedInstructions(lastDatum.getInstructionDate().plusDays(1));
+		assertEquals(0, result);
+	}
+
+	@Test
+	public void purgeCompletedInstructionsMatch() {
+		storeNew();
+		lastDatum.setState(InstructionState.Completed);
+		dao.store(lastDatum);
+		long result = dao.purgeCompletedInstructions(lastDatum.getInstructionDate().plusDays(1));
+		assertEquals(1, result);
+		NodeInstruction instr = dao.get(lastDatum.getId());
+		assertNull("Purged instruction is not found", instr);
+	}
+
+	@Test
+	public void purgeCompletedInstructionsMatchMultiple() {
+		storeNew();
+		lastDatum.setState(InstructionState.Completed);
+		dao.store(lastDatum);
+		storeNew(); // Queued state, should NOT be deleted
+		storeNew();
+		lastDatum.setState(InstructionState.Declined);
+		dao.store(lastDatum);
+		long result = dao.purgeCompletedInstructions(lastDatum.getInstructionDate().plusDays(1));
+		assertEquals(2, result);
+		NodeInstruction instr = dao.get(lastDatum.getId());
+		assertNull("Purged instruction is not found", instr);
 	}
 
 }

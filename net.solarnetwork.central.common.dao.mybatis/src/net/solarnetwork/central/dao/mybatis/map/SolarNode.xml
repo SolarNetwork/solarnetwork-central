@@ -37,6 +37,13 @@
 		n.wloc_id AS sn_node_wloc_id
 	</sql>
 
+	<sql id="fragment-SolarNode-share-result">
+		n.node_id AS sn_node_node_id, 
+		n.node_name AS sn_node_node_name,
+		n.loc_id AS sn_node_loc_id,
+		n.wloc_id AS sn_node_wloc_id
+	</sql>
+
 	<resultMap id="SolarNodeFullResult" type="SolarNode">
 		<id property="id" column="sn_node_node_id"/>
 		<result property="created" column="sn_node_created"/>

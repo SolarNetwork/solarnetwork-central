@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.instructor.dao;
@@ -29,14 +27,25 @@ import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import org.joda.time.DateTime;
 
 /**
  * DAO API for {@link NodeInstruction}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public interface NodeInstructionDao extends GenericDao<NodeInstruction, Long>,
-FilterableDao<EntityMatch, Long, InstructionFilter> {
+		FilterableDao<EntityMatch, Long, InstructionFilter> {
+
+	/**
+	 * Purge instructions that have reached a final state and are older than a
+	 * given date.
+	 * 
+	 * @param olderThanDate
+	 *        The maximum date for which to purge completed instructions.
+	 * @return The number of instructions deleted.
+	 */
+	long purgeCompletedInstructions(DateTime olderThanDate);
 
 }

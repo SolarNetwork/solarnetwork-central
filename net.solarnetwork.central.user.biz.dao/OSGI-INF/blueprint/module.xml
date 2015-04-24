@@ -61,6 +61,7 @@
 		ranking="1">
 		<interfaces>
 			<value>net.solarnetwork.central.user.biz.UserBiz</value>
+			<value>net.solarnetwork.central.user.biz.NodeOwnershipBiz</value>
 		</interfaces>
 	</service>
 	

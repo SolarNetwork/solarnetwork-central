@@ -17,6 +17,7 @@
 				<value>net.solarnetwork.central.user.domain.UserNodePK</value>
 				<value>net.solarnetwork.central.user.domain.UserNodeCertificate</value>
 				<value>net.solarnetwork.central.user.domain.UserNodeConfirmation</value>
+				<value>net.solarnetwork.central.user.domain.UserNodeTransfer</value>
 			</list>
 		</property>
 		<property name="typeHandlers">
@@ -38,6 +39,7 @@
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeCertificate.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNode.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeConfirmation.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeTransfer.xml</value>
 			</list>
 		</property>
 	</bean>

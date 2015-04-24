@@ -12,3 +12,5 @@ CREATE DATABASE solarnet WITH ENCODING='UTF8' OWNER=solarnet TEMPLATE=template0;
 
 -- pgpgsql is included by default in Postgres 9.x now
 -- CREATE LANGUAGE plpgsql;
+
+CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;

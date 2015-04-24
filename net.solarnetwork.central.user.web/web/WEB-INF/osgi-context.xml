@@ -34,6 +34,9 @@
 	<osgi:reference id="userBiz" sticky="false" depends-on="userValidator"
 		interface="net.solarnetwork.central.user.biz.UserBiz"/>
 	
+	<osgi:reference id="nodeOwnershipBiz" sticky="false"
+		interface="net.solarnetwork.central.user.biz.NodeOwnershipBiz"/>
+	
 	<osgi:reference id="mailSender" interface="org.springframework.mail.MailSender"/>
 	
 	<osgi:reference id="passwordEncoder" 

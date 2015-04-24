@@ -1,3 +1,7 @@
+#edit-node-modal .modal-dialog {
+	width: 600px;
+}
+
 #edit-node-modal .modal-body .hbox {
 	width: 2400px;
 	-webkit-transition: -webkit-transform 0.3s ease-in-out;

@@ -33,6 +33,7 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -47,6 +48,7 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodePK;
+import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,9 +59,9 @@ import org.springframework.transaction.annotation.Transactional;
  * DAO-based implementation of {@link UserBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class DaoUserBiz implements UserBiz {
+public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -247,6 +249,91 @@ public class DaoUserBiz implements UserBiz {
 			userAuthTokenDao.store(token);
 		}
 		return token;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public List<UserNodeTransfer> pendingNodeOwnershipTransfersForEmail(String email) {
+		return userNodeDao.findUserNodeTransferRequestsForEmail(email);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public UserNodeTransfer getNodeOwnershipTransfer(Long userId, Long nodeId) {
+		return userNodeDao.getUserNodeTransfer(new UserNodePK(userId, nodeId));
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
+			throws AuthorizationException {
+		UserNodeTransfer xfer = new UserNodeTransfer();
+		xfer.setUserId(userId);
+		xfer.setNodeId(nodeId);
+		xfer.setEmail(newOwnerEmail);
+		userNodeDao.storeUserNodeTransfer(xfer);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void cancelNodeOwnershipTransfer(Long userId, Long nodeId) throws AuthorizationException {
+		UserNodeTransfer xfer = userNodeDao.getUserNodeTransfer(new UserNodePK(userId, nodeId));
+		if ( xfer != null ) {
+			userNodeDao.deleteUserNodeTrasnfer(xfer);
+		}
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public UserNodeTransfer confirmNodeOwnershipTransfer(Long userId, Long nodeId, boolean accept)
+			throws AuthorizationException {
+		UserNodePK pk = new UserNodePK(userId, nodeId);
+		UserNodeTransfer xfer = userNodeDao.getUserNodeTransfer(pk);
+		if ( accept ) {
+			if ( xfer == null ) {
+				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, pk);
+			}
+			UserNode userNode = userNodeDao.get(nodeId);
+			if ( userNode == null ) {
+				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, nodeId);
+			}
+			User recipient = userDao.getUserByEmail(xfer.getEmail());
+			if ( recipient == null ) {
+				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, xfer.getEmail());
+			}
+
+			// at this point, we can delete the transfer request
+			userNodeDao.deleteUserNodeTrasnfer(xfer);
+
+			// and now, transfer ownership
+			if ( recipient.getId().equals(userNode.getUser().getId()) == false ) {
+				userNode.setUser(recipient);
+				userNodeDao.store(userNode);
+			}
+
+			// clean up auth tokens associated with node: if token contains just this node id, delete it
+			// but if it contains other node IDs, just remove this node ID from it
+			for ( UserAuthToken token : userAuthTokenDao.findUserAuthTokensForUser(userId) ) {
+				if ( token.getNodeIds() != null && token.getNodeIds().contains(nodeId) ) {
+					token.getNodeIds().remove(nodeId);
+					if ( token.getNodeIds().size() == 0 ) {
+						// only node ID associated, so delete token
+						log.debug("Deleting UserAuthToken {} for node ownership transfer", token.getId());
+						userAuthTokenDao.delete(token);
+					} else {
+						// other node IDs associated, so remove this token
+						log.debug(
+								"Removing node ID {} from UserAuthToken {} for node ownership transfer",
+								nodeId, token.getId());
+						userAuthTokenDao.store(token);
+					}
+				}
+			}
+		} else {
+			// rejecting
+			cancelNodeOwnershipTransfer(userId, nodeId);
+		}
+		return xfer;
 	}
 
 	public void setUserDao(UserDao userDao) {

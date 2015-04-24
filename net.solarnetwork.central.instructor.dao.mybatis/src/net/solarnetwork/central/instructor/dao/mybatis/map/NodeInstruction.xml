@@ -5,7 +5,7 @@
 
 	<insert id="insert-NodeInstruction" parameterType="NodeInstruction">
 		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
-              SELECT nextval('solarnet.solarnet_seq') AS id 
+              SELECT nextval('solarnet.instruction_seq') AS id 
 		</selectKey>
 		INSERT INTO solarnet.sn_node_instruction 
 			(id
@@ -93,6 +93,12 @@
 		</where>
 		ORDER BY ni.id
 	</select>
+	
+	<update id="delete-NodeInstruction-completed" statementType="CALLABLE" parameterType="map">
+		{#{result, mode=OUT, jdbcType=BIGINT} = call solarnet.purge_completed_instructions(
+			#{date, mode=IN, jdbcType=TIMESTAMP}
+		)}
+	</update>
 	
 	<!-- InstructionParameter support -->
 	
