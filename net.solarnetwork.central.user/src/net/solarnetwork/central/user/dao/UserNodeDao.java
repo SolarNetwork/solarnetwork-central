@@ -29,12 +29,14 @@ import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import net.solarnetwork.central.user.domain.UserNodePK;
+import net.solarnetwork.central.user.domain.UserNodeTransfer;
 
 /**
  * DAO API for UserNode objects.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
@@ -53,7 +55,8 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 	 * <p>
 	 * The returned nodes will have {@link UserNodeCertificate} values populated
 	 * in {@link UserNode#getCertificate()}, with the priority being requested,
-	 * active, disabled.
+	 * active, disabled. The {@link UserNodeTransfer} values will be populated
+	 * in {@link UserNode#getTransfer()} as well.
 	 * </p>
 	 * 
 	 * @param userId
@@ -61,5 +64,43 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 	 * @return the nodes
 	 */
 	List<UserNode> findUserNodesAndCertificatesForUser(Long userId);
+
+	/**
+	 * Store a {@link UserNodeTransfer}.
+	 * 
+	 * @param transfer
+	 *        The transfer to store.
+	 * @since 1.2
+	 */
+	void storeUserNodeTransfer(UserNodeTransfer transfer);
+
+	/**
+	 * Get a {@link UserNodeTransfer} by primary key.
+	 * 
+	 * @param pk
+	 *        The ID of the transfer to get.
+	 * @return The matching UserNodeTransfer, or <em>null</em> if not available.
+	 * @since 1.2
+	 */
+	UserNodeTransfer getUserNodeTransfer(UserNodePK pk);
+
+	/**
+	 * Delete a {@link UserNodeTransfer}.
+	 * 
+	 * @param transfer
+	 *        The transfer to delete.
+	 * @since 1.2
+	 */
+	void deleteUserNodeTrasnfer(UserNodeTransfer transfer);
+
+	/**
+	 * Get all {@link UserNodeTransfer} instances for a given email address.
+	 * 
+	 * @param email
+	 *        The email of the requested recipient of the ownership trasnfer.
+	 * @return The available node transfers, never <em>null</em>.
+	 * @since 1.2
+	 */
+	List<UserNodeTransfer> findUserNodeTransferRequestsForEmail(String email);
 
 }

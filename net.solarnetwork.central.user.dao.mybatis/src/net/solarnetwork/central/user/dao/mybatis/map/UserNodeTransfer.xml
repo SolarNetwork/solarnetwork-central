@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.dao.mybatis.UserNodeTransfer">
+
+	<update id="store-UserNodeTransfer" statementType="CALLABLE">
+		{call solaruser.store_user_node_xfer(
+			#{nodeId, mode=IN, jdbcType=BIGINT}, 
+			#{userId, mode=IN, jdbcType=BIGINT}, 
+			#{email, mode=IN, jdbcType=VARCHAR}
+		)}
+	</update>
+	
+	<update id="delete-UserNodeTransfer" parameterType="UserNodePK">
+		DELETE FROM solaruser.user_node_xfer
+		WHERE
+			user_id = #{userId}
+			AND node_id = #{nodeId}
+	</update>
+
+	<sql id="fragment-UserNodeTransfer-full-result">
+		unxfer.created AS unxfer_created,
+		unxfer.user_id AS unxfer_user_id,
+		unxfer.node_id AS unxfer_node_id,
+		unxfer.recipient AS unxfer_recipient
+	</sql>
+
+	<resultMap id="UserNodeTransferFullResult" type="UserNodeTransfer">
+		<id property="userId" column="unxfer_user_id"/>
+		<id property="nodeId" column="unxfer_node_id"/>
+		<result property="created" column="unxfer_created"/>
+		<result property="email" column="unxfer_recipient"/>
+		<association property="user" resultMap="net.solarnetwork.central.user.dao.mybatis.User.UserFullResult"/>
+		<association property="node" resultMap="net.solarnetwork.central.dao.mybatis.SolarNode.SolarNodeFullResult"/>
+	</resultMap>
+	
+	<select id="get-UserNodeTransfer-for-id" parameterType="UserNodePK" resultMap="UserNodeTransferFullResult">
+		SELECT
+			<include refid="fragment-UserNodeTransfer-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarNode.fragment-SolarNode-share-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-public-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.User.fragment-User-share-result"/>
+		FROM
+			solaruser.user_node_xfer unxfer
+		INNER JOIN
+			solarnet.sn_node n ON n.node_id = unxfer.node_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		INNER JOIN
+			solaruser.user_user u ON u.id = unxfer.user_id
+		WHERE
+			unxfer.user_id = #{userId}
+			AND unxfer.node_id = #{nodeId}
+	</select>
+	
+	<select id="find-UserNodeTransfer-for-email" parameterType="string" resultMap="UserNodeTransferFullResult">
+		SELECT
+			<include refid="fragment-UserNodeTransfer-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarNode.fragment-SolarNode-share-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-public-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.User.fragment-User-share-result"/>
+		FROM
+			solaruser.user_node_xfer unxfer
+		INNER JOIN
+			solarnet.sn_node n ON n.node_id = unxfer.node_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		INNER JOIN
+			solaruser.user_user u ON u.id = unxfer.user_id
+		WHERE
+			unxfer.recipient = #{email}
+		ORDER BY
+			unxfer.created, unxfer.node_id
+	</select>
+	
+</mapper>

@@ -35,6 +35,7 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
 import net.solarnetwork.central.user.domain.UserNodePK;
+import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,7 +44,7 @@ import org.junit.Test;
  * Test cases for the {@link MyBatisUserNodeDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -58,6 +59,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	private static final String TEST_DESC = "Test description";
 	private static final Long TEST_ID_2 = -2L;
 	private static final byte[] TEST_CERT = "test cert".getBytes();
+	private static final Long TEST_NODE_2 = -99999L;
 
 	private MyBatisUserNodeDao userNodeDao;
 	private MyBatisSolarNodeDao solarNodeDao;
@@ -205,4 +207,100 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertEquals(cert1, results.get(0).getCertificate());
 	}
 
+	private UserNodeTransfer storeNewTransfer(Long nodeId) {
+		UserNodeTransfer newUserNodeTransfer = new UserNodeTransfer();
+		newUserNodeTransfer.setCreated(new DateTime());
+		newUserNodeTransfer.setNodeId(nodeId);
+		newUserNodeTransfer.setUserId(this.user.getId());
+		newUserNodeTransfer.setEmail(TEST_EMAIL_2);
+		userNodeDao.storeUserNodeTransfer(newUserNodeTransfer);
+		UserNodeTransfer stored = userNodeDao.getUserNodeTransfer(newUserNodeTransfer.getId());
+		assertNotNull("Inserted UserNodeTransfer", stored);
+		return stored;
+	}
+
+	@Test
+	public void insertUserNodeTransfer() {
+		storeNewUserNode();
+		final UserNodeTransfer xfer1 = storeNewTransfer(this.node.getId());
+		assertNotNull("Creation date", xfer1.getCreated());
+		assertEquals(this.node.getId(), xfer1.getNodeId());
+		assertEquals(this.user.getId(), xfer1.getUserId());
+		assertEquals(TEST_EMAIL_2, xfer1.getEmail());
+	}
+
+	@Test
+	public void updateUserNodeTransfer() {
+		insertUserNodeTransfer();
+		UserNodeTransfer xfer1 = userNodeDao.getUserNodeTransfer(new UserNodePK(this.user.getId(),
+				this.node.getId()));
+		xfer1.setEmail("test.email.3@localhost");
+		userNodeDao.storeUserNodeTransfer(xfer1);
+
+		UserNodeTransfer xfer2 = userNodeDao.getUserNodeTransfer(xfer1.getId());
+		assertNotNull("Updated UserNodeTransfer", xfer2);
+		assertEquals("Creation date unchanged", xfer1.getCreated(), xfer2.getCreated());
+		assertEquals(xfer1.getId(), xfer2.getId());
+		assertEquals(xfer1.getEmail(), xfer2.getEmail());
+	}
+
+	@Test
+	public void deleteUserNodeTransfer() {
+		insertUserNodeTransfer();
+		UserNodeTransfer xfer1 = userNodeDao.getUserNodeTransfer(new UserNodePK(this.user.getId(),
+				this.node.getId()));
+		userNodeDao.deleteUserNodeTrasnfer(xfer1);
+		xfer1 = userNodeDao.getUserNodeTransfer(xfer1.getId());
+		assertNull("UserNodeTransfer deleted", xfer1);
+	}
+
+	@Test
+	public void findUserNodeTransferForEmailNoMatch() {
+		List<UserNodeTransfer> results = userNodeDao.findUserNodeTransferRequestsForEmail(this.user
+				.getEmail());
+		assertNotNull("UserNodeTransfers for email results", results);
+		assertEquals(0, results.size());
+	}
+
+	@Test
+	public void findUserNodeTransferForEmail() throws Exception {
+		insertUserNodeTransfer();
+
+		// set up a 2nd node
+		setupTestNode(TEST_NODE_2);
+		SolarNode node2 = solarNodeDao.get(TEST_NODE_2);
+		UserNode userNode2 = new UserNode(user, node2);
+		userNode2 = userNodeDao.get(userNodeDao.store(userNode2));
+
+		// set up a 2nd node transfer request
+		storeNewTransfer(node2.getId());
+
+		List<UserNodeTransfer> results = userNodeDao.findUserNodeTransferRequestsForEmail(TEST_EMAIL_2);
+		assertNotNull("UserNodeTransfers for email results", results);
+		assertEquals(2, results.size());
+
+		// results will have same creation time from unit test transaction, so sorted by node ID ascending
+
+		UserNodeTransfer xfer1 = results.get(0);
+		assertEquals(new UserNodePK(user.getId(), node2.getId()), xfer1.getId());
+		assertEquals(TEST_EMAIL_2, xfer1.getEmail());
+
+		UserNodeTransfer xfer2 = results.get(1);
+		assertEquals(new UserNodePK(user.getId(), node.getId()), xfer2.getId());
+		assertEquals(TEST_EMAIL_2, xfer2.getEmail());
+	}
+
+	@Test
+	public void findForUserWithTransferRequest() {
+		insertUserNodeTransfer();
+		List<UserNode> results = userNodeDao.findUserNodesAndCertificatesForUser(user.getId());
+		assertNotNull(results);
+		assertEquals(1, results.size());
+
+		UserNodeTransfer xfer1 = results.get(0).getTransfer();
+		assertNotNull("Associated UserNodeTransfer", xfer1);
+		assertEquals(user.getId(), xfer1.getUserId());
+		assertEquals(node.getId(), xfer1.getNodeId());
+		assertEquals(TEST_EMAIL_2, xfer1.getEmail());
+	}
 }

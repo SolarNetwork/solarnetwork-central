@@ -86,12 +86,14 @@
 	
 	<resultMap id="UserNodeWithCertificates" type="UserNode" extends="UserNodeFullResult">
 		<association property="certificate" notNullColumn="uncert_user_id,uncert_node_id" resultMap="net.solarnetwork.central.user.dao.mybatis.UserNodeCertificate.UserNodeCertificateFullResult"/>
+		<association property="transfer" notNullColumn="unxfer_user_id,unxfer_node_id" resultMap="net.solarnetwork.central.user.dao.mybatis.UserNodeTransfer.UserNodeTransferFullResult"/>
 	</resultMap>
 	
 	<select id="find-UserNode-for-user-with-certs" parameterType="long" resultMap="UserNodeWithCertificates">
 		SELECT
 			<include refid="fragment-UserNode-full-result"/>,
 			<include refid="net.solarnetwork.central.user.dao.mybatis.UserNodeCertificate.fragment-UserNodeCertificate-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.UserNodeTransfer.fragment-UserNodeTransfer-full-result"/>,
 			<include refid="net.solarnetwork.central.dao.mybatis.SolarNode.fragment-SolarNode-full-result"/>,
 			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-full-result"/>,
 			<include refid="net.solarnetwork.central.user.dao.mybatis.User.fragment-User-full-result"/>
@@ -105,6 +107,8 @@
 			solaruser.user_user u ON u.id = un.user_id
 		LEFT OUTER JOIN
 			solaruser.user_node_cert uncert ON uncert.user_id = un.user_id AND uncert.node_id = un.node_id
+		LEFT OUTER JOIN
+			solaruser.user_node_xfer unxfer ON unxfer.user_id = un.user_id AND unxfer.node_id = un.node_id
 		WHERE
 			un.user_id = #{id}
 		ORDER BY

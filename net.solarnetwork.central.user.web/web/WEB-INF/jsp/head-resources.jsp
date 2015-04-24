@@ -1,7 +1,7 @@
 <%@ taglib prefix="pack" uri="http://packtag.sf.net" %>
 <pack:style>
 	/css/bootstrap.css
-	/css/bootstrap-responsive.css
+	/css/bootstrap-theme.css
 	/css/global.css
 	/css/edit-node.css
 </pack:style>

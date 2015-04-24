@@ -32,6 +32,12 @@
 		u.enabled AS user_enabled
 	</sql>
 
+	<sql id="fragment-User-share-result">
+		u.id AS user_id, 
+		u.disp_name AS user_disp_name,
+		u.email AS user_email
+	</sql>
+
 	<resultMap id="UserFullResult" type="User">
 		<id property="id" column="user_id"/>
 		<result property="created" column="user_created"/>

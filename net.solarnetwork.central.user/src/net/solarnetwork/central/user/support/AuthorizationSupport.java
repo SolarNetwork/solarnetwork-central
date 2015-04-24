@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * Helper class for authorization needs, e.g. aspect impelmentations.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class AuthorizationSupport {
 
@@ -56,6 +56,16 @@ public abstract class AuthorizationSupport {
 	public AuthorizationSupport(UserNodeDao userNodeDao) {
 		super();
 		this.userNodeDao = userNodeDao;
+	}
+
+	/**
+	 * Get the {@link UserNodeDao}.
+	 * 
+	 * @return The {@link UserNodeDao}.
+	 * @since 1.1
+	 */
+	protected UserNodeDao getUserNodeDao() {
+		return userNodeDao;
 	}
 
 	/**
@@ -197,6 +207,67 @@ public abstract class AuthorizationSupport {
 
 		log.warn("Access DENIED to node {} for actor {}", nodeId, actor);
 		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+	}
+
+	/**
+	 * Require the active user have "write" access to a given user ID. If the
+	 * active user is not authorized, a {@link AuthorizationException} will be
+	 * thrown.
+	 * 
+	 * @param userId
+	 *        the user ID to check
+	 * @throws AuthorizationException
+	 *         if the authorization check fails
+	 * @since 1.1
+	 */
+	protected void requireUserWriteAccess(Long userId) {
+		final SecurityActor actor;
+		try {
+			actor = SecurityUtils.getCurrentActor();
+		} catch ( SecurityException e ) {
+			log.warn("Access DENIED to user {} for non-authenticated user", userId);
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+		}
+
+		if ( actor instanceof SecurityUser ) {
+			SecurityUser user = (SecurityUser) actor;
+			if ( !user.getUserId().equals(userId) ) {
+				log.warn("Access DENIED to user {} for user {}; wrong user", userId, user.getEmail());
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+			}
+			return;
+		}
+
+		if ( actor instanceof SecurityToken ) {
+			SecurityToken token = (SecurityToken) actor;
+			if ( UserAuthTokenType.User.toString().equals(token.getTokenType()) ) {
+				// user token, so user ID must match node user's ID
+				if ( !token.getUserId().equals(userId) ) {
+					log.warn("Access DENIED to user {} for token {}; wrong user", userId,
+							token.getToken());
+					throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+				}
+				return;
+			}
+		}
+
+		log.warn("Access DENIED to user {} for actor {}", userId, actor);
+		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+	}
+
+	/**
+	 * Require the active user have "read" access to a given user ID. If the
+	 * active user is not authorized, a {@link AuthorizationException} will be
+	 * thrown.
+	 * 
+	 * @param userId
+	 *        the user ID to check
+	 * @throws AuthorizationException
+	 *         if the authorization check fails
+	 * @since 1.1
+	 */
+	protected void requireUserReadAccess(Long userId) {
+		requireUserWriteAccess(userId);
 	}
 
 }
