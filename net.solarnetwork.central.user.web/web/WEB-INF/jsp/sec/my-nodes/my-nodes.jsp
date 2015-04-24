@@ -21,7 +21,7 @@
 				<c:forEach items="${pendingNodeOwnershipRequests}" var="transfer">
 					<tr>
 						<td>${transfer.node.id}</td>
-						<td>${transfer.email}</td>
+						<td>${transfer.user.email}</td>
 						<td>
 							<joda:dateTimeZone value="GMT">
 								<joda:format value="${transfer.created}" pattern="dd MMM yyyy"/> GMT
