@@ -35,6 +35,17 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
 public interface NodeOwnershipBiz {
 
 	/**
+	 * Get a specific transfer for a given node.
+	 * 
+	 * @param userId
+	 *        The ID of the user making the request.
+	 * @param nodeId
+	 *        The ID of the node to transfer.
+	 * @return The transfer, or <em>null</em> if none exists.
+	 */
+	UserNodeTransfer getNodeOwnershipTransfer(Long userId, Long nodeId);
+
+	/**
 	 * Get a complete list of transfers for a given recipient.
 	 * 
 	 * <p>
@@ -108,11 +119,12 @@ public interface NodeOwnershipBiz {
 	 * @param accept
 	 *        If <em>true</em> then accept the transfer request, otherwise
 	 *        reject (canceling the request).
+	 * @returns The original transfer entity.
 	 * @throws AuthorizationException
 	 *         If the active user is not authorized to confirm (or reject) the
 	 *         ownership transfer.
 	 */
-	void confirmNodeOwnershipTransfer(Long userId, Long nodeId, boolean accept)
+	UserNodeTransfer confirmNodeOwnershipTransfer(Long userId, Long nodeId, boolean accept)
 			throws AuthorizationException;
 
 }

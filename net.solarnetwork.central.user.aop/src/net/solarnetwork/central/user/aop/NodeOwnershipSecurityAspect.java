@@ -64,6 +64,10 @@ public class NodeOwnershipSecurityAspect extends AuthorizationSupport {
 	public void requestTransfer(Long userId, Long nodeId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*NodeOwnershipBiz.getNodeOwnershipTransfer(..)) && args(userId,nodeId)")
+	public void getTransfer(Long userId, Long nodeId) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*NodeOwnershipBiz.cancel*(..)) && args(userId,nodeId,..)")
 	public void cancelTransferRequest(Long userId, Long nodeId) {
 	}
@@ -82,7 +86,7 @@ public class NodeOwnershipSecurityAspect extends AuthorizationSupport {
 		requireUserReadAccess(recipient.getId());
 	}
 
-	@Before("requestTransfer(userId, nodeId) || cancelTransferRequest(userId, nodeId)")
+	@Before("requestTransfer(userId, nodeId) || getTransfer(userId, nodeId) || cancelTransferRequest(userId, nodeId)")
 	public void checkUserNodeRequestOrCancelTransferRequest(Long userId, Long nodeId) {
 		// the active user must have write-access to the given node
 		requireNodeWriteAccess(nodeId);

@@ -26,10 +26,15 @@ import static net.solarnetwork.web.domain.Response.response;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
+import net.solarnetwork.central.mail.MailService;
+import net.solarnetwork.central.mail.support.BasicMailAddress;
+import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -37,6 +42,7 @@ import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
+import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
@@ -45,6 +51,7 @@ import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.support.CertificateService;
 import net.solarnetwork.web.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -58,6 +65,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Controller for "my nodes".
@@ -73,6 +81,12 @@ public class MyNodesController extends ControllerSupport {
 	private final RegistrationBiz registrationBiz;
 	private final NodeOwnershipBiz nodeOwnershipBiz;
 	private final CertificateService certificateService;
+
+	@Autowired(required = false)
+	private MailService mailService;
+
+	@Autowired
+	private MessageSource messageSource;
 
 	/**
 	 * Constructor.
@@ -94,6 +108,27 @@ public class MyNodesController extends ControllerSupport {
 		this.registrationBiz = registrationBiz;
 		this.certificateService = certificateService;
 		this.nodeOwnershipBiz = nodeOwnershipBiz;
+	}
+
+	/**
+	 * Set a {@link MailService} to use.
+	 * 
+	 * @param mailService
+	 *        The service to use.
+	 */
+	public void setMailService(MailService mailService) {
+		this.mailService = mailService;
+	}
+
+	/**
+	 * The {@link MessageSource} to use in conjunction with
+	 * {@link #setMailService(MailService)}.
+	 * 
+	 * @param messageSource
+	 *        A message source to use.
+	 */
+	public void setMessageSource(MessageSource messageSource) {
+		this.messageSource = messageSource;
 	}
 
 	/**
@@ -269,27 +304,123 @@ public class MyNodesController extends ControllerSupport {
 		return userBiz.saveUserNode(userNode);
 	}
 
+	/**
+	 * Request an ownership transfer of a node to another SolarNetwork account.
+	 * 
+	 * @param userId
+	 *        The user ID of the current node owner.
+	 * @param nodeId
+	 *        The ID of the node to transfer ownership of.
+	 * @param email
+	 *        The recipient of the node ownership request.
+	 * @param locale
+	 *        The request locale to use in the generated email content.
+	 * @param uriBuilder
+	 *        A URI builder to assist in the generated email content.
+	 * @return A {@code TRUE} value on success.
+	 */
 	@ResponseBody
 	@RequestMapping(value = "/requestNodeTransfer", method = RequestMethod.POST)
 	public Response<Boolean> requestNodeOwnershipTransfer(@RequestParam("userId") Long userId,
-			@RequestParam("nodeId") Long nodeId, @RequestParam("recipient") String email) {
+			@RequestParam("nodeId") Long nodeId, @RequestParam("recipient") String email, Locale locale,
+			UriComponentsBuilder uriBuilder) {
 		nodeOwnershipBiz.requestNodeOwnershipTransfer(userId, nodeId, email);
+		if ( mailService != null ) {
+			try {
+				User actor = userBiz.getUser(SecurityUtils.getCurrentActorUserId());
+
+				uriBuilder.pathSegment("sec", "my-nodes");
+
+				Map<String, Object> mailModel = new HashMap<String, Object>(2);
+				mailModel.put("actor", actor);
+				mailModel.put("recipient", email);
+				mailModel.put("nodeId", nodeId);
+				mailModel.put("url", uriBuilder.build().toUriString());
+
+				mailService.sendMail(
+						new BasicMailAddress(null, email),
+						new ClasspathResourceMessageTemplateDataSource(locale, messageSource.getMessage(
+								"my-nodes.transferOwnership.mail.subject", null, locale),
+								"/net/solarnetwork/central/reg/web/transfer-ownership.txt", mailModel));
+			} catch ( RuntimeException e ) {
+				// ignore this other than log
+				log.warn("Error sending ownership transfer mail message to {}: {}", email,
+						e.getMessage(), e);
+			}
+		}
 		return response(Boolean.TRUE);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/cancelNodeTransferRequest", method = RequestMethod.POST)
 	public Response<Boolean> cancelNodeOwnershipTransfer(@RequestParam("userId") Long userId,
-			@RequestParam("nodeId") Long nodeId) {
-		nodeOwnershipBiz.cancelNodeOwnershipTransfer(userId, nodeId);
+			@RequestParam("nodeId") Long nodeId, Locale locale) {
+		UserNodeTransfer xfer = nodeOwnershipBiz.getNodeOwnershipTransfer(userId, nodeId);
+		if ( xfer != null ) {
+			nodeOwnershipBiz.cancelNodeOwnershipTransfer(userId, nodeId);
+			if ( mailService != null ) {
+				// notify the recipient about the cancellation
+				try {
+					User actor = userBiz.getUser(SecurityUtils.getCurrentActorUserId());
+
+					Map<String, Object> mailModel = new HashMap<String, Object>(2);
+					mailModel.put("actor", actor);
+					mailModel.put("transfer", xfer);
+
+					mailService
+							.sendMail(
+									new BasicMailAddress(null, xfer.getEmail()),
+									new ClasspathResourceMessageTemplateDataSource(
+											locale,
+											messageSource.getMessage(
+													"my-nodes.transferOwnership.mail.subject.cancelled",
+													null, locale),
+											"/net/solarnetwork/central/reg/web/transfer-ownership-cancelled.txt",
+											mailModel));
+				} catch ( RuntimeException e ) {
+					// ignore this other than log
+					log.warn("Error sending ownership transfer mail message to {}: {}", xfer.getEmail(),
+							e.getMessage(), e);
+				}
+			}
+		}
 		return response(Boolean.TRUE);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/confirmNodeTransferRequest", method = RequestMethod.POST)
 	public Response<Boolean> confirmNodeOwnershipTransfer(@RequestParam("userId") Long userId,
-			@RequestParam("nodeId") Long nodeId, @RequestParam("accept") boolean accept) {
-		nodeOwnershipBiz.confirmNodeOwnershipTransfer(userId, nodeId, accept);
+			@RequestParam("nodeId") Long nodeId, @RequestParam("accept") boolean accept, Locale locale) {
+		UserNodeTransfer xfer = nodeOwnershipBiz.confirmNodeOwnershipTransfer(userId, nodeId, accept);
+		if ( xfer != null ) {
+			if ( mailService != null ) {
+				// notify the recipient about the cancellation
+				try {
+					User actor = userBiz.getUser(SecurityUtils.getCurrentActorUserId());
+
+					Map<String, Object> mailModel = new HashMap<String, Object>(2);
+					mailModel.put("actor", actor);
+					mailModel.put("transfer", xfer);
+
+					mailService
+							.sendMail(
+									new BasicMailAddress(null, xfer.getUser().getEmail()),
+									new ClasspathResourceMessageTemplateDataSource(
+											locale,
+											messageSource
+													.getMessage(
+															("my-nodes.transferOwnership.mail.subject." + (accept ? "accepted"
+																	: "declined")), null, locale),
+											("/net/solarnetwork/central/reg/web/transfer-ownership-"
+													+ (accept ? "accepted" : "declined") + ".txt"),
+											mailModel));
+				} catch ( RuntimeException e ) {
+					// ignore this other than log
+					log.warn("Error sending ownership transfer mail message to {}: {}", xfer.getEmail(),
+							e.getMessage(), e);
+				}
+			}
+		}
 		return response(Boolean.TRUE);
 	}
 

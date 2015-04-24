@@ -258,6 +258,12 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public UserNodeTransfer getNodeOwnershipTransfer(Long userId, Long nodeId) {
+		return userNodeDao.getUserNodeTransfer(new UserNodePK(userId, nodeId));
+	}
+
+	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
 			throws AuthorizationException {
@@ -279,11 +285,11 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public void confirmNodeOwnershipTransfer(Long userId, Long nodeId, boolean accept)
+	public UserNodeTransfer confirmNodeOwnershipTransfer(Long userId, Long nodeId, boolean accept)
 			throws AuthorizationException {
+		UserNodePK pk = new UserNodePK(userId, nodeId);
+		UserNodeTransfer xfer = userNodeDao.getUserNodeTransfer(pk);
 		if ( accept ) {
-			UserNodePK pk = new UserNodePK(userId, nodeId);
-			UserNodeTransfer xfer = userNodeDao.getUserNodeTransfer(pk);
 			if ( xfer == null ) {
 				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, pk);
 			}
@@ -312,13 +318,13 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 					token.getNodeIds().remove(nodeId);
 					if ( token.getNodeIds().size() == 0 ) {
 						// only node ID associated, so delete token
-						log.debug("Deleting UserAuthToken {} for node ownership transfer", token);
+						log.debug("Deleting UserAuthToken {} for node ownership transfer", token.getId());
 						userAuthTokenDao.delete(token);
 					} else {
 						// other node IDs associated, so remove this token
 						log.debug(
 								"Removing node ID {} from UserAuthToken {} for node ownership transfer",
-								nodeId, token);
+								nodeId, token.getId());
 						userAuthTokenDao.store(token);
 					}
 				}
@@ -327,6 +333,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			// rejecting
 			cancelNodeOwnershipTransfer(userId, nodeId);
 		}
+		return xfer;
 	}
 
 	public void setUserDao(UserDao userDao) {
