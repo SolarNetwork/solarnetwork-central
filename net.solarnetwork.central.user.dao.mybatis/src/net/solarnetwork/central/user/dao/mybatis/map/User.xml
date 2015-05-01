@@ -62,7 +62,7 @@
 		FROM
 			solaruser.user_user u
 		WHERE
-			u.email = #{email}
+			u.email = #{email}::citext
 	</select>
 	
 	<select id="find-roles-for-User" resultType="java.lang.String">
