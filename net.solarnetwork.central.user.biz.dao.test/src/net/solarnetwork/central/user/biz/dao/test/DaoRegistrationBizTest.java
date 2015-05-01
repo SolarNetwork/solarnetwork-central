@@ -183,7 +183,7 @@ public class DaoRegistrationBizTest {
 		final RegistrationReceipt receipt = registrationBiz.registerUser(testUser);
 		assertNotNull(receipt);
 		assertNotNull(receipt.getConfirmationCode());
-		assertEquals(testUser.getEmail(), receipt.getUsername());
+		assertEquals(newUser.getEmail(), receipt.getUsername());
 
 		verifyAll();
 	}

@@ -34,12 +34,13 @@ import org.springframework.util.FileCopyUtils;
  * Constants for common user items.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class UserBizConstants {
 
-	/** The unconfirmed user email prefix. */
-	public static final String UNCONFIRMED_EMAIL_PREFIX = "UNCONFIRMED@";
+	private static final int RANDOM_AUTH_TOKEN_LENGTH = 20;
+	private static final char UNCONFIRMED_EMAIL_DELIMITER = '@';
+	private static final int UNCONFIRMED_EMAIL_PREFIX_LENGTH = RANDOM_AUTH_TOKEN_LENGTH + 1;
 
 	/**
 	 * Get an "unconfirmed" value for a given email address.
@@ -49,7 +50,7 @@ public final class UserBizConstants {
 	 * @return the encoded "unconfirmed" value
 	 */
 	public static String getUnconfirmedEmail(String email) {
-		return UNCONFIRMED_EMAIL_PREFIX + email;
+		return generateRandomAuthToken() + UNCONFIRMED_EMAIL_DELIMITER + email;
 	}
 
 	/**
@@ -63,9 +64,27 @@ public final class UserBizConstants {
 		// validate email starts with unconfirmed key and also contains
 		// another @ character, in case somebody does have an email name
 		// the same as our unconfirmed key
-		return email != null && email.startsWith(UNCONFIRMED_EMAIL_PREFIX)
-				&& email.length() > UNCONFIRMED_EMAIL_PREFIX.length()
-				&& email.indexOf('@', UNCONFIRMED_EMAIL_PREFIX.length()) != -1;
+		return email != null && email.length() > UNCONFIRMED_EMAIL_PREFIX_LENGTH
+				&& email.charAt(UNCONFIRMED_EMAIL_PREFIX_LENGTH - 1) == UNCONFIRMED_EMAIL_DELIMITER
+				&& email.indexOf('@', UNCONFIRMED_EMAIL_PREFIX_LENGTH) != -1;
+	}
+
+	/**
+	 * Get the original email value from an unconfirmed email value.
+	 * 
+	 * @param unconfirmedEmail
+	 *        The unconfirmed email, previously returned from
+	 *        {@link UserBizConstants#getUnconfirmedEmail(String)}.
+	 * @return The original email.
+	 * @throws IllegalArgumentException
+	 *         if the email does not appear to be an unconfirmed email.
+	 * @since 1.2
+	 */
+	public static String getOriginalEmail(String unconfirmedEmail) {
+		if ( isUnconfirmedEmail(unconfirmedEmail) ) {
+			return unconfirmedEmail.substring(UNCONFIRMED_EMAIL_PREFIX_LENGTH);
+		}
+		throw new IllegalArgumentException("[" + unconfirmedEmail + "] is not a valid unconfirmed email");
 	}
 
 	/**
