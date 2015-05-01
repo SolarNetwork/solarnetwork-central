@@ -37,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
  * MyBatis implementation of {@link UserDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserDao extends BaseMyBatisGenericDao<User, Long> implements UserDao {
 
@@ -63,7 +63,7 @@ public class MyBatisUserDao extends BaseMyBatisGenericDao<User, Long> implements
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public User getUserByEmail(String email) {
-		return selectFirst(QUERY_FOR_EMAIL, email);
+		return selectFirst(QUERY_FOR_EMAIL, email == null ? null : email.trim());
 	}
 
 	@Override

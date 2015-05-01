@@ -1,7 +1,5 @@
-Thank you for registering for SolarNetwork. Please go to the following
-URL to confirm your registration:
+Thank you for registering for SolarNetwork. Please go to the following URL to confirm your registration:
 
-${MvcExternalContext.nativeRequest.scheme}://${MvcExternalContext.nativeRequest.serverName}:${MvcExternalContext.nativeRequest.serverPort}${MvcExternalContext.contextPath}/register/confirm.do?c=${RegistrationReceipt.confirmationCode}&m=${RegistrationReceipt.username}
+${MvcExternalContext.nativeRequest.scheme}://${MvcExternalContext.nativeRequest.serverName}:${MvcExternalContext.nativeRequest.serverPort}${MvcExternalContext.contextPath}/register/confirm.do?c=${RegistrationReceipt.confirmationCode}&m=${RegistrationReceipt.usernameURLComponent}
 
-This email was sent to ${RegistrationReceipt.username} in response to
-registering as a new user on SolarNetwork.
+This email was sent to ${User.email} in response to registering as a new user on SolarNetwork.

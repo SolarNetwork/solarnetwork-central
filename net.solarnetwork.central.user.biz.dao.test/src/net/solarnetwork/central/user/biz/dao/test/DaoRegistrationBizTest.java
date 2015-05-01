@@ -43,7 +43,12 @@ import java.security.cert.X509Certificate;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPInputStream;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
@@ -51,6 +56,7 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.PasswordEncoder;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz;
@@ -83,7 +89,7 @@ import org.junit.Test;
  * Unit tests for the {@link DaoRegistrationBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoRegistrationBizTest {
 
@@ -158,6 +164,51 @@ public class DaoRegistrationBizTest {
 		verify(networkIdentityBiz, userDao, userNodeDao, userNodeConfirmationDao,
 				userNodeCertificateDao, nodeDao, solarLocationDao, passwordEncoder, nodePKIBiz,
 				executorService);
+	}
+
+	@Test
+	public void registerNewUser() {
+		final String encodedPass = "encrypted.password";
+		final User newUser = (User) testUser.clone();
+		newUser.setId(-2L);
+		newUser.setEmail("unconfirmed@" + TEST_EMAIL);
+
+		expect(passwordEncoder.isPasswordEncrypted(testUser.getPassword())).andReturn(Boolean.FALSE);
+		expect(passwordEncoder.encode(testUser.getPassword())).andReturn(encodedPass);
+		expect(userDao.getUserByEmail(testUser.getEmail())).andReturn(null);
+		expect(userDao.store(EasyMock.anyObject(User.class))).andReturn(newUser.getId());
+		expect(userDao.get(newUser.getId())).andReturn(newUser);
+		replayAll();
+
+		final RegistrationReceipt receipt = registrationBiz.registerUser(testUser);
+		assertNotNull(receipt);
+		assertNotNull(receipt.getConfirmationCode());
+		assertEquals(newUser.getEmail(), receipt.getUsername());
+
+		verifyAll();
+	}
+
+	@Test
+	public void registerDuplicateNewUser() {
+		final String encodedPass = "encrypted.password";
+		final User existingUser = (User) testUser.clone();
+		existingUser.setId(-2L);
+		existingUser.setEmail(TEST_EMAIL);
+
+		expect(passwordEncoder.isPasswordEncrypted(testUser.getPassword())).andReturn(Boolean.FALSE);
+		expect(passwordEncoder.encode(testUser.getPassword())).andReturn(encodedPass);
+		expect(userDao.getUserByEmail(testUser.getEmail())).andReturn(existingUser);
+		replayAll();
+
+		try {
+			registrationBiz.registerUser(testUser);
+			fail("Expected AuthorizationException for duplicate user");
+		} catch ( AuthorizationException e ) {
+			assertEquals(e.getEmail(), testUser.getEmail());
+			assertEquals(e.getReason(), Reason.DUPLICATE_EMAIL);
+		}
+
+		verifyAll();
 	}
 
 	@Test
@@ -552,8 +603,10 @@ public class DaoRegistrationBizTest {
 		assertEquals("The user's password should be changed", encodedPass, testUser.getPassword());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
-	public void confirmNodeAssociationWithCertificate() throws IOException, NoSuchAlgorithmException {
+	public void confirmNodeAssociationWithCertificateRequest() throws IOException,
+			NoSuchAlgorithmException {
 		final UserNodeConfirmation conf = new UserNodeConfirmation();
 		conf.setUser(testUser);
 		conf.setCreated(new DateTime());
@@ -576,6 +629,10 @@ public class DaoRegistrationBizTest {
 				keypair.getPublic(), keypair.getPrivate());
 
 		final DateTime now = new DateTime();
+
+		final UserNodeCertificate userNodeCertificate = new UserNodeCertificate();
+		userNodeCertificate.setUser(testUser);
+		userNodeCertificate.setStatus(UserNodeCertificateStatus.a);
 
 		// to confirm a node, we must look up the UserNodeConfirmation by userId+key, then
 		// create the new SolarNode using a default SolarLocation, followed by
@@ -606,7 +663,35 @@ public class DaoRegistrationBizTest {
 				.andReturn(TEST_CERT_REQ_ID);
 		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class))).andReturn(
 				TEST_CERT_ID);
-		expect(executorService.submit(EasyMock.anyObject(Runnable.class))).andReturn(null);
+		expect(executorService.submit(EasyMock.anyObject(Callable.class))).andReturn(
+				new Future<UserNodeCertificate>() {
+
+					@Override
+					public boolean cancel(boolean mayInterruptIfRunning) {
+						return false;
+					}
+
+					@Override
+					public boolean isCancelled() {
+						return false;
+					}
+
+					@Override
+					public boolean isDone() {
+						return true;
+					}
+
+					@Override
+					public UserNodeCertificate get() throws InterruptedException, ExecutionException {
+						return userNodeCertificate;
+					}
+
+					@Override
+					public UserNodeCertificate get(long timeout, TimeUnit unit)
+							throws InterruptedException, ExecutionException, TimeoutException {
+						return userNodeCertificate;
+					}
+				});
 
 		replayAll();
 

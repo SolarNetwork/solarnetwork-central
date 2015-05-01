@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
+import static net.solarnetwork.central.user.biz.dao.UserBizConstants.getOriginalEmail;
 import static net.solarnetwork.central.user.biz.dao.UserBizConstants.getUnconfirmedEmail;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -203,20 +204,28 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			log.info("Registered user '" + entity.getEmail() + "' with confirmation '" + conf + "'");
 		}
 
-		return new BasicRegistrationReceipt(user.getEmail(), conf);
+		return new BasicRegistrationReceipt(entity.getEmail(), conf);
 	}
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public User confirmRegisteredUser(RegistrationReceipt receipt) throws AuthorizationException {
+		final String confirmedEmail;
+		try {
+			confirmedEmail = getOriginalEmail(receipt.getUsername());
+		} catch ( IllegalArgumentException e ) {
+			throw new AuthorizationException(receipt.getUsername(),
+					AuthorizationException.Reason.UNKNOWN_EMAIL);
+		}
+
 		// first check if already registered
-		User entity = userDao.getUserByEmail(receipt.getUsername());
+		User entity = userDao.getUserByEmail(confirmedEmail);
 		if ( entity != null ) {
 			throw new AuthorizationException(receipt.getUsername(),
 					AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED);
 		}
 
-		String unregEmail = getUnconfirmedEmail(receipt.getUsername());
+		final String unregEmail = receipt.getUsername();
 		entity = userDao.getUserByEmail(unregEmail);
 		if ( entity == null ) {
 			throw new AuthorizationException(receipt.getUsername(),
@@ -231,7 +240,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 
 		// change their email to "registered"
-		entity.setEmail(receipt.getUsername());
+		entity.setEmail(confirmedEmail);
 
 		// update confirmed user
 		entity = userDao.get(userDao.store(entity));
@@ -267,7 +276,10 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			user.setCreated(new DateTime());
 		}
 
-		// verify email not already in use
+		// verify email not already in use, after trimming
+		if ( user.getEmail() != null && user.getEmail().trim().equals(user.getEmail()) == false ) {
+			user.setEmail(user.getEmail().trim());
+		}
 		User existingUser = userDao.getUserByEmail(user.getEmail());
 		if ( existingUser != null && !existingUser.getId().equals(user.getId()) ) {
 			throw new AuthorizationException(user.getEmail(),

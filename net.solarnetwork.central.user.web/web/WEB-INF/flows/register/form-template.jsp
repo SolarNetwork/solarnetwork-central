@@ -1,5 +1,5 @@
 <c:if test="${not empty rootCauseException}">
-	<div class="global-error">
+	<div class="alert alert-warning">
 		<c:choose>
 			<c:when test="${not empty rootCauseException.reason}">
 				<fmt:message key="registration.error.auth.${rootCauseException.reason}">
