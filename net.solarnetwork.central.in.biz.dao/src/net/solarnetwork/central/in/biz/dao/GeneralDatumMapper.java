@@ -49,7 +49,7 @@ import org.joda.time.format.DateTimeFormatterBuilder;
  * migrate away from {@link Datum}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class GeneralDatumMapper {
 
@@ -105,7 +105,7 @@ public class GeneralDatumMapper {
 
 		GeneralNodeDatum g = mapBaseGeneralNodeDatumProperties(datum);
 		g.setSourceId(datum.getSourceId());
-		if ( samples.getSampleData().size() > 0 ) {
+		if ( samples.getSampleData() != null && samples.getSampleData().size() > 0 ) {
 			g.setSamples(samples);
 		}
 		return g;
@@ -135,7 +135,7 @@ public class GeneralDatumMapper {
 
 		GeneralNodeDatum g = mapBaseGeneralNodeDatumProperties(datum);
 		g.setSourceId(sourceId);
-		if ( samples.getSampleData().size() > 0 ) {
+		if ( samples.getSampleData() != null && samples.getSampleData().size() > 0 ) {
 			g.setSamples(samples);
 		}
 		return g;
@@ -156,7 +156,7 @@ public class GeneralDatumMapper {
 
 		GeneralNodeDatum g = mapBaseGeneralNodeDatumProperties(datum);
 		g.setSourceId(datum.getSourceId());
-		if ( samples.getSampleData().size() > 0 ) {
+		if ( samples.getSampleData() != null && samples.getSampleData().size() > 0 ) {
 			g.setSamples(samples);
 		}
 		return g;
@@ -215,7 +215,7 @@ public class GeneralDatumMapper {
 
 		g.setLocationId(info.getId());
 		g.setSourceId(info.getSourceId());
-		if ( samples.getSampleData().size() > 0 ) {
+		if ( samples.getSampleData() != null && samples.getSampleData().size() > 0 ) {
 			g.setSamples(samples);
 		}
 		return g;
@@ -261,7 +261,7 @@ public class GeneralDatumMapper {
 		g.setCreated(datum.getInfoDate());
 		g.setLocationId(info.getId());
 		g.setSourceId(info.getSourceId());
-		if ( samples.getSampleData().size() > 0 ) {
+		if ( samples.getSampleData() != null && samples.getSampleData().size() > 0 ) {
 			g.setSamples(samples);
 		}
 		return g;
@@ -286,7 +286,7 @@ public class GeneralDatumMapper {
 		g.setCreated(datum.getCreated());
 		g.setLocationId(info.getId());
 		g.setSourceId(info.getSourceId());
-		if ( samples.getSampleData().size() > 0 ) {
+		if ( samples.getSampleData() != null && samples.getSampleData().size() > 0 ) {
 			g.setSamples(samples);
 		}
 		return g;
