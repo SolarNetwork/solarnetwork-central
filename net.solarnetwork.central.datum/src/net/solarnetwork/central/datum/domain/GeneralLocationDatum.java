@@ -45,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonPropertyOrder({ "created", "locationId", "sourceId" })
 public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Cloneable, Serializable {
@@ -268,6 +268,17 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	public void setSamples(GeneralLocationDatumSamples samples) {
 		this.samples = samples;
 		sampleJson = null;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("GeneralLocationDatum{id=");
+		builder.append(id);
+		builder.append(", samples=");
+		builder.append(samples == null ? "null" : samples.getSampleData());
+		builder.append("}");
+		return builder.toString();
 	}
 
 }

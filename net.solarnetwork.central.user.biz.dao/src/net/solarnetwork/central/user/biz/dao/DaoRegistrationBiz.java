@@ -341,16 +341,20 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		details.setPort(ident.getPort());
 		details.setForceTLS(ident.isForceTLS());
 		details.setIdentityKey(ident.getIdentityKey());
-		//details.setTermsOfService(ident.getTermsOfService());
 		details.setUsername(user.getEmail());
 		details.setExpiration(now.plus(invitationExpirationPeriod).toDate());
+
 		String confKey = DigestUtils.sha256Hex(String.valueOf(now.getMillis())
 				+ details.getIdentityKey() + details.getTermsOfService() + details.getUsername()
 				+ details.getExpiration() + request.getSecurityPhrase());
 		details.setConfirmationKey(confKey);
+
 		String xml = encodeNetworkAssociationDetails(details);
 		details.setConfirmationKey(xml);
-		details.setSecurityPhrase(request.getSecurityPhrase()); // this must not be part of the encoded XML
+
+		// the following are not encoded into confirmation XML
+		details.setSecurityPhrase(request.getSecurityPhrase());
+		details.setTermsOfService(ident.getTermsOfService());
 
 		// create UserNodeConfirmation now
 		UserNodeConfirmation conf = new UserNodeConfirmation();
@@ -380,13 +384,17 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		details.setForceTLS(ident.isForceTLS());
 		details.setNetworkId(conf.getNodeId());
 		details.setIdentityKey(ident.getIdentityKey());
-		details.setTermsOfService(ident.getTermsOfService());
 		details.setUsername(conf.getUser().getEmail());
 		details.setExpiration(conf.getCreated().plus(invitationExpirationPeriod).toDate());
 		details.setConfirmationKey(conf.getConfirmationKey());
-		details.setSecurityPhrase(conf.getSecurityPhrase());
+
 		String xml = encodeNetworkAssociationDetails(details);
 		details.setConfirmationKey(xml);
+
+		// the following are not encoded into confirmation XML
+		details.setSecurityPhrase(conf.getSecurityPhrase());
+		details.setTermsOfService(ident.getTermsOfService());
+
 		return details;
 	}
 
