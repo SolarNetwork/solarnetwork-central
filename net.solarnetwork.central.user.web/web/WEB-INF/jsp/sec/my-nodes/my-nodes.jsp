@@ -49,6 +49,10 @@
 				<fmt:param>${fn:length(pendingUserNodeConfirmationsList)}</fmt:param>
 			</fmt:message>
 		</p>
+		<div class="alert alert-info alert-dismissible" role="alert">
+			<button type="button" class="close" data-dismiss="alert" aria-label="<fmt:message key='close.label'/>"><span aria-hidden="true">&times;</span></button>
+			<fmt:message key='my-nodes.solarnode.link.help'/>
+		</div>
 		<table class="table">
 			<thead>
 				<tr>
