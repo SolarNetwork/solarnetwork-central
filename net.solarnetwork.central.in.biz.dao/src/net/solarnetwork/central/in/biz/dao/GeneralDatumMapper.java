@@ -43,6 +43,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Map {@link Datum} instances into {@link GeneralNodeDatum} instances, to help
@@ -56,6 +58,8 @@ public class GeneralDatumMapper {
 	private final DateTimeFormatter localTimeFormatter;
 	private GeneralLocationDatumDao generalLocationDatumDao;
 	private final Map<String, DatumMappingInfo> datumMappingInfoCache;
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	public GeneralDatumMapper() {
 		super();
@@ -80,6 +84,7 @@ public class GeneralDatumMapper {
 		} else if ( datum instanceof PowerDatum ) {
 			g = mapPowerDatum((PowerDatum) datum);
 		}
+		log.trace("Mapped Datum {} to general form {}", datum, g);
 		return g;
 	}
 
@@ -179,6 +184,7 @@ public class GeneralDatumMapper {
 		} else if ( datum instanceof WeatherDatum ) {
 			g = mapWeatherDatum((WeatherDatum) datum);
 		}
+		log.trace("Mapped LocationDatum {} to general form {}", datum, g);
 		return g;
 	}
 
