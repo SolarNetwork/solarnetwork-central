@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumUtils.java - Feb 13, 2012 2:52:39 PM
+ * JsonUtils.java - 15/05/2015 11:46:24 am
  * 
- * Copyright 2007-2012 SolarNetwork.net Dev Team
+ * Copyright 2007-2015 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,30 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.support;
+package net.solarnetwork.central.support;
 
 import java.math.BigDecimal;
-import net.solarnetwork.central.datum.domain.NodeDatum;
-import net.solarnetwork.central.support.JsonUtils;
-import net.solarnetwork.util.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Utilities for Datum domain classes.
+ * Utilities for JSON data.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
  */
-public final class DatumUtils {
+public final class JsonUtils {
 
-	private static final Logger LOG = LoggerFactory.getLogger(DatumUtils.class);
+	private static final Logger LOG = LoggerFactory.getLogger(JsonUtils.class);
 
-	// can't construct me
-	private DatumUtils() {
+	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().setSerializationInclusion(
+			Include.NON_NULL).configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
+
+	// don't construct me
+	private JsonUtils() {
 		super();
 	}
 
@@ -58,10 +60,17 @@ public final class DatumUtils {
 	 *        error occurs serializing the object to JSON
 	 * @return the JSON string
 	 * @since 1.1
-	 * @see JsonUtils#getJSONString(Object, String)
 	 */
 	public static String getJSONString(final Object o, final String defaultValue) {
-		return JsonUtils.getJSONString(o, defaultValue);
+		String result = defaultValue;
+		if ( o != null ) {
+			try {
+				return OBJECT_MAPPER.writeValueAsString(o);
+			} catch ( Exception e ) {
+				LOG.error("Exception marshalling {} to JSON", o, e);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -77,53 +86,15 @@ public final class DatumUtils {
 	 *        the type of Object to map the JSON into
 	 * @return the object
 	 * @since 1.1
-	 * @see JsonUtils#getJSONString(Object, String)
 	 */
 	public static <T> T getObjectFromJSON(final String json, Class<T> clazz) {
-		return JsonUtils.getObjectFromJSON(json, clazz);
-	}
-
-	/**
-	 * Get a {@link NodeDatum} {@link Class} for a given name.
-	 * 
-	 * <p>
-	 * If {@code name} contains a period, it will be treated as a
-	 * fully-qualified class name. Otherwise a FQCN will be constructed as
-	 * residing in the same package as {@link NodeDatum} named by capitalizing
-	 * {@code name} and appending {@code Datum} to the end. For example, a
-	 * {@code name} value of <em>power</em> would result in a class named
-	 * {@code PowerDatum} in the same package as {@link NodeDatum} (e.g.
-	 * {@code net.solarnetwork.central.datum.domain.PowerDatum}).
-	 * 
-	 * @param name
-	 *        the node datum class name
-	 * @return the class, or <em>null</em> if not available
-	 */
-	public static Class<? extends NodeDatum> nodeDatumClassForName(String name) {
-		if ( name == null ) {
-			return null;
-		}
-		StringBuilder buf = new StringBuilder();
-		if ( name.indexOf('.') < 0 ) {
-			buf.append(NodeDatum.class.getPackage().getName());
-			buf.append('.');
-
-			// fix case and append "Datum"
-			name = name.toLowerCase();
-			buf.append(name.substring(0, 1).toUpperCase());
-			if ( name.length() > 1 ) {
-				buf.append(name.substring(1));
+		T result = null;
+		if ( json != null ) {
+			try {
+				result = OBJECT_MAPPER.readValue(json, clazz);
+			} catch ( Exception e ) {
+				LOG.error("Exception deserialzing json {}", json, e);
 			}
-			buf.append("Datum");
-		} else {
-			// contains a period, so treat as FQCN
-			buf.append(name);
-		}
-		Class<? extends NodeDatum> result = null;
-		try {
-			result = ClassUtils.loadClass(name, NodeDatum.class);
-		} catch ( RuntimeException e ) {
-			LOG.debug("Exception loading NodeDatum class {}", name, e);
 		}
 		return result;
 	}
