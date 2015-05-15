@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.scheduler.internal;
 
+import java.util.Map;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
@@ -31,6 +32,8 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.SchedulerContext;
 import org.quartz.SchedulerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Quartz Job that sends out an OSGi Event notification based on the data in the
@@ -42,7 +45,7 @@ import org.quartz.SchedulerException;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class NotificationJob implements Job {
 
@@ -55,6 +58,9 @@ public class NotificationJob implements Job {
 	private boolean complete = false;
 	private boolean success = true;
 	private Throwable throwable = null;
+	private JobExecutionContext ctx;
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Override
 	public void execute(JobExecutionContext jobContext) throws JobExecutionException {
@@ -74,6 +80,9 @@ public class NotificationJob implements Job {
 
 		@SuppressWarnings("unchecked")
 		final Event event = new Event(jobTopic, jobContext.getMergedJobDataMap());
+
+		// save a ref to jobContext for finished callback
+		ctx = jobContext;
 
 		final long start = System.currentTimeMillis();
 		final long maxWait = (jobDataMap.containsKey(SchedulerConstants.JOB_MAX_WAIT) ? (Long) jobDataMap
@@ -115,6 +124,14 @@ public class NotificationJob implements Job {
 		complete = true;
 		if ( SchedulerConstants.TOPIC_JOB_FAILURE.equals(event.getTopic()) ) {
 			success = false;
+		}
+
+		@SuppressWarnings("unchecked")
+		final Map<String, ?> jobProps = (Map<String, ?>) event
+				.getProperty(SchedulerConstants.JOB_PROPERTIES);
+		if ( jobProps != null && jobProps.size() > 0 && ctx != null ) {
+			log.debug("Saving {} job result properties: {}", ctx.getJobDetail().getName(), jobProps);
+			ctx.getJobDetail().getJobDataMap().putAll(jobProps);
 		}
 		throwable = (Throwable) event.getProperty(SchedulerConstants.JOB_EXCEPTION);
 		this.notifyAll();
