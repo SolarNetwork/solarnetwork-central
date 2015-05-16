@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Tue Nov 11 06:02:38 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation">
+<!--
+	<insert id="insert-UserAlertSituation" parameterType="UserAlertSituation">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solaruser.user_alert_seq') AS id 
+		</selectKey>
+		INSERT INTO solaruser.user_user 
+			(id, created, disp_name, email, password, enabled)
+		VALUES
+			(#{id}, #{created}, #{name}, #{email}, #{password}, #{enabled})
+	</insert>
+
+	<update id="update-UserAlertSituation" parameterType="UserAlertSituation">
+		UPDATE solaruser.user_user SET
+			disp_name = #{name}, 
+			email = #{email}, 
+			password = #{password},
+			enabled = #{enabled}
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-UserAlertSituation-full-result">
+		u.id AS user_id, 
+		u.created AS user_created,
+		u.disp_name AS user_disp_name,
+		u.email AS user_email,
+		u.password AS user_password,
+		u.enabled AS user_enabled
+	</sql>
+
+	<resultMap id="UserAlertSituationFullResult" type="UserAlertSituation">
+		<id property="id" column="user_id"/>
+		<result property="created" column="user_created"/>
+		<result property="name" column="user_disp_name"/>
+		<result property="email" column="user_email"/>
+		<result property="password" column="user_password"/>
+		<result property="enabled" column="user_enabled"/>
+	</resultMap>
+	
+	<select id="get-UserAlertSituation-for-id" parameterType="long" resultMap="UserAlertSituationFullResult">
+		SELECT
+			<include refid="fragment-User-full-result"/>
+		FROM
+			solaruser.user_user u
+		WHERE
+			u.id = #{id}
+	</select>
+-->	
+</mapper>

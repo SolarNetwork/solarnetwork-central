@@ -28,6 +28,10 @@
 	
 	<service ref="userDao" interface="net.solarnetwork.central.user.dao.UserDao" ranking="5"/>
 
+	<service ref="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao" ranking="5"/>
+
+	<service ref="userAlertSituationDao" interface="net.solarnetwork.central.user.dao.UserAlertSituationDao" ranking="5"/>
+
 	<service ref="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao" ranking="5"/>
 
 	<service ref="userNodeCertificateDao" interface="net.solarnetwork.central.user.dao.UserNodeCertificateDao" ranking="5"/>
@@ -51,6 +55,14 @@
 	<tx:annotation-driven transaction-manager="txManager"/>
 
 	<bean id="userDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="userAlertDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserAlertDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="userAlertSituationDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserAlertSituationDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean>
 	
@@ -81,6 +93,8 @@
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
 				<value>net.solarnetwork.central.user.domain.User</value>
+				<value>net.solarnetwork.central.user.domain.UserAlert</value>
+				<value>net.solarnetwork.central.user.domain.UserAlertSituation</value>
 				<value>net.solarnetwork.central.user.domain.UserAuthToken</value>
 				<value>net.solarnetwork.central.user.domain.UserNode</value>
 				<value>net.solarnetwork.central.user.domain.UserNodePK</value>
@@ -104,6 +118,8 @@
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserAlert.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserAlertSituation.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserAuthToken.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeCertificate.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNode.xml</value>
