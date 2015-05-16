@@ -22,11 +22,15 @@
 
 package net.solarnetwork.central.user.dao.mybatis;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertType;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link UserAlertDao}.
@@ -37,6 +41,12 @@ import net.solarnetwork.central.user.domain.UserAlertType;
 public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> implements UserAlertDao {
 
 	/**
+	 * The query name used for
+	 * {@link #findAlertsToProcess(UserAlertType, Long, Integer)}.
+	 */
+	public static final String QUERY_FOR_PROCESSING = "find-UserAlert-for-processing";
+
+	/**
 	 * Default constructor.
 	 */
 	public MyBatisUserAlertDao() {
@@ -44,9 +54,15 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	}
 
 	@Override
+	// Propagation.REQUIRED for server-side cursors
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public List<UserAlert> findAlertsToProcess(UserAlertType type, Long startingId, Integer max) {
-		// TODO Auto-generated method stub
-		return null;
+		Map<String, Object> params = new HashMap<String, Object>(3);
+		params.put("type", type);
+		if ( startingId != null ) {
+			params.put("startingId", startingId);
+		}
+		return selectList(QUERY_FOR_PROCESSING, params, null, max);
 	}
 
 }

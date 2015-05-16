@@ -149,4 +149,22 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 
 		assertEquals(created, updatedUserAlert.getCreated());
 	}
+
+	@Test
+	public void findAlertsToProcessNone() {
+		List<UserAlert> results = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
+				null);
+		assertNotNull("Results should not be null", results);
+		assertEquals(0, results.size());
+	}
+
+	@Test
+	public void findAlertsToProcessOne() {
+		storeNew();
+		List<UserAlert> results = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
+				null);
+		assertNotNull("Results should not be null", results);
+		assertEquals(1, results.size());
+		assertEquals(userAlert, results.get(0));
+	}
 }
