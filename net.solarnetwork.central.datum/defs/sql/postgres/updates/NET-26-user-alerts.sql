@@ -43,17 +43,18 @@ CREATE TABLE solaruser.user_alert_sit (
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-CREATE OR REPLACE FUNCTION solaruser.find_user_alerts_to_process(
-	IN a_type solaruser.user_alert_type NOT NULL, 
-	IN starting_id bigint, 
-	IN max integer DEFAULT 50)
-  RETURNS SETOF solaruser.user_alert AS
+/**
+ * Return most recent datum records for all available sources for a given set of node IDs.
+ * 
+ * @param nodes An array of node IDs to return results for.
+ * @returns Set of solardatum.da_datum records.
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes solarcommon.node_ids)
+  RETURNS SETOF solardatum.da_datum AS
 $BODY$
-SELECT ual.* FROM solaruser.user_alert ual
-WHERE 
-	ual.alert_type = a_type
-	AND ual.id > COALESCE(starting_id, -1)
-ORDER BY ual.id
-LIMIT max;
+	SELECT r.* 
+	FROM (SELECT unnest(nodes) AS node_id) AS n,
+	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
+	ORDER BY r.node_id, r.source_id;
 $BODY$
   LANGUAGE sql STABLE;
