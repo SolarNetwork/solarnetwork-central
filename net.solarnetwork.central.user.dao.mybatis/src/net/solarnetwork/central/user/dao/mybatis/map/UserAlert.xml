@@ -77,8 +77,9 @@
 		FROM
 			solaruser.user_alert ual
 		WHERE 
-			ual.alert_type = CAST(#{type} AS solaruser.user_alert_type)
-			<if test="startingId != null">AND ual.id > COALESCE(#{startingId}, -1)</if>
+			ual.alert_type = CAST(#{type,jdbcType=VARCHAR} AS solaruser.user_alert_type)
+			AND ual.status != CAST('Disabled' AS solaruser.user_alert_status)
+			<if test="startingId != null">AND ual.id > #{startingId,javaType=long,jdbcType=BIGINT}</if>
 		ORDER BY
 			ual.id
 	</select>

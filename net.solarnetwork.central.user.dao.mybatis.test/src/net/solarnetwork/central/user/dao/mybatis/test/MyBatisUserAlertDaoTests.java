@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -166,5 +167,80 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		assertNotNull("Results should not be null", results);
 		assertEquals(1, results.size());
 		assertEquals(userAlert, results.get(0));
+	}
+
+	@Test
+	public void findAlertsToProcessMulti() {
+		List<UserAlert> alerts = new ArrayList<UserAlert>(5);
+		for ( int i = 0; i < 5; i++ ) {
+			storeNew();
+			alerts.add(this.userAlert);
+		}
+		List<UserAlert> results = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
+				null);
+		assertNotNull("Results should not be null", results);
+		assertEquals(alerts.size(), results.size());
+		assertEquals(alerts, results);
+	}
+
+	@Test
+	public void findAlertsToProcessBatch() {
+		List<UserAlert> alerts = new ArrayList<UserAlert>(12);
+		for ( int i = 0; i < 12; i++ ) {
+			storeNew();
+			alerts.add(this.userAlert);
+		}
+		List<UserAlert> results = new ArrayList<UserAlert>(12);
+		Long startingId = null;
+		final Integer max = 5;
+		for ( int i = 0; i < 4; i++ ) {
+			List<UserAlert> batch = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
+					startingId, max);
+			assertNotNull("Results should not be null", batch);
+			if ( i < 3 ) {
+				assertTrue("Batch results available", batch.size() > 0);
+			} else {
+				assertEquals("No more batch results available", 0, batch.size());
+			}
+			results.addAll(batch);
+			if ( batch.size() > 0 ) {
+				startingId = batch.get(batch.size() - 1).getId();
+			}
+		}
+		assertEquals(alerts.size(), results.size());
+		assertEquals(alerts, results);
+	}
+
+	@Test
+	public void findAlertsToProcessBatchWithDisabled() {
+		List<UserAlert> alerts = new ArrayList<UserAlert>(12);
+		for ( int i = 0; i < 24; i++ ) {
+			storeNew();
+			if ( (i % 2) == 0 ) {
+				this.userAlert.setStatus(UserAlertStatus.Disabled);
+				userAlertDao.store(this.userAlert);
+			} else {
+				alerts.add(this.userAlert);
+			}
+		}
+		List<UserAlert> results = new ArrayList<UserAlert>(12);
+		Long startingId = null;
+		final Integer max = 5;
+		for ( int i = 0; i < 4; i++ ) {
+			List<UserAlert> batch = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
+					startingId, max);
+			assertNotNull("Results should not be null", batch);
+			if ( i < 3 ) {
+				assertTrue("Batch results available", batch.size() > 0);
+			} else {
+				assertEquals("No more batch results available", 0, batch.size());
+			}
+			results.addAll(batch);
+			if ( batch.size() > 0 ) {
+				startingId = batch.get(batch.size() - 1).getId();
+			}
+		}
+		assertEquals(alerts.size(), results.size());
+		assertEquals(alerts, results);
 	}
 }
