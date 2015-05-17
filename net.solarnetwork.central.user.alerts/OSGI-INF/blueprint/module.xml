@@ -30,6 +30,7 @@
 	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
 	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 	<reference id="mailService" interface="net.solarnetwork.central.mail.MailService"/>
+	<reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
 	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
 	<reference id="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao"/>
 
@@ -56,11 +57,17 @@
 
 	<!-- Supporting Services -->
 
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basenames" value="net.solarnetwork.central.user.alerts.messages"/>
+	</bean>
+	
 	<bean id="emailNodeStaleDataAlertProcessor" class="net.solarnetwork.central.user.alerts.EmailNodeStaleDataAlertProcessor">
+		<argument ref="solarNodeDao"/>
 		<argument ref="userDao"/>
 		<argument ref="userAlertDao"/>
 		<argument ref="generalNodeDatumDao"/>
 		<argument ref="mailService"/>
+		<argument ref="messageSource"/>
 		<property name="batchSize" value="${nodeStaleDataAlertProcessor.batchSize}"/>
 	</bean>
 	
