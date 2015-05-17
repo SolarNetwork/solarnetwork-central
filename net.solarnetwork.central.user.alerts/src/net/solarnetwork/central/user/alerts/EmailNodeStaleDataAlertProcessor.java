@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.alerts;
 
 import java.util.List;
 import net.solarnetwork.central.RepeatableTaskException;
+import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.MessageTemplateDataSource;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
@@ -45,22 +46,28 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 	private final UserDao userDao;
 	private final UserAlertDao userAlertDao;
+	private final GeneralNodeDatumDao generalNodeDatumDao;
 	private final MailService mailService;
-	private final Integer batchSize = DEFAULT_BATCH_SIZE;
+	private Integer batchSize = DEFAULT_BATCH_SIZE;
 
 	/**
 	 * Construct with properties.
 	 * 
+	 * @param userDao
+	 *        The {@link UserDao} to use.
 	 * @param userAlertDao
 	 *        The {@link UserAlertDao} to use.
+	 * @param generalNodeDatumDao
+	 *        The {@link GeneralNodeDatumDao} to use.
 	 * @param mailService
 	 *        The {@link MailService} to use.
 	 */
 	public EmailNodeStaleDataAlertProcessor(UserDao userDao, UserAlertDao userAlertDao,
-			MailService mailService) {
+			GeneralNodeDatumDao generalNodeDatumDao, MailService mailService) {
 		super();
 		this.userDao = userDao;
 		this.userAlertDao = userAlertDao;
+		this.generalNodeDatumDao = generalNodeDatumDao;
 		this.mailService = mailService;
 	}
 
@@ -88,6 +95,14 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			throw new RepeatableTaskException("Error processing user alerts", e, lastAlertId);
 		}
 		return lastAlertId;
+	}
+
+	public Integer getBatchSize() {
+		return batchSize;
+	}
+
+	public void setBatchSize(Integer batchSize) {
+		this.batchSize = batchSize;
 	}
 
 }
