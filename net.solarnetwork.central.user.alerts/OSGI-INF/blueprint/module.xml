@@ -37,6 +37,7 @@
 	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
 	<reference id="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao"/>
 	<reference id="userAlertSituationDao" interface="net.solarnetwork.central.user.dao.UserAlertSituationDao"/>
+	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 
 	<!-- Jobs -->
 
@@ -88,6 +89,7 @@
 	<bean id="emailNodeStaleDataAlertProcessor" class="net.solarnetwork.central.user.alerts.EmailNodeStaleDataAlertProcessor">
 		<argument ref="solarNodeDao"/>
 		<argument ref="userDao"/>
+		<argument ref="userNodeDao"/>
 		<argument ref="userAlertDao"/>
 		<argument ref="userAlertSituationDao"/>
 		<argument ref="generalNodeDatumDao"/>
