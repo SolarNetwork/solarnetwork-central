@@ -166,8 +166,9 @@ public class UserAlert extends BaseEntity {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("UserAlert{");
-		builder.append("userId=");
+		builder.append("UserAlert{id=");
+		builder.append(getId());
+		builder.append(", userId=");
 		builder.append(userId);
 		builder.append(", type=");
 		builder.append(type);

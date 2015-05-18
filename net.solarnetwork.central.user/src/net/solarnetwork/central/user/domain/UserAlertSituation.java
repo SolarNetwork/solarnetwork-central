@@ -63,4 +63,21 @@ public class UserAlertSituation extends BaseEntity {
 		this.notified = notified;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("UserAlertSituation{id=");
+		builder.append(getId());
+		builder.append(", created=");
+		builder.append(getCreated());
+		builder.append(", alert=");
+		builder.append(alert);
+		builder.append(", status=");
+		builder.append(status);
+		builder.append(", notified=");
+		builder.append(notified);
+		builder.append("}");
+		return builder.toString();
+	}
+
 }
