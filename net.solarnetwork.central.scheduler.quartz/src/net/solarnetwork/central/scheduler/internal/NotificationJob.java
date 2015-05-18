@@ -129,9 +129,9 @@ public class NotificationJob implements Job {
 		@SuppressWarnings("unchecked")
 		final Map<String, ?> jobProps = (Map<String, ?>) event
 				.getProperty(SchedulerConstants.JOB_PROPERTIES);
-		if ( jobProps != null && jobProps.size() > 0 && ctx != null ) {
+		if ( jobProps != null && ctx != null ) {
 			log.debug("Saving {} job result properties: {}", ctx.getJobDetail().getName(), jobProps);
-			ctx.getJobDetail().getJobDataMap().putAll(jobProps);
+			ctx.getJobDetail().getJobDataMap().put(SchedulerConstants.JOB_PROPERTIES, jobProps);
 		}
 		throwable = (Throwable) event.getProperty(SchedulerConstants.JOB_EXCEPTION);
 		this.notifyAll();
