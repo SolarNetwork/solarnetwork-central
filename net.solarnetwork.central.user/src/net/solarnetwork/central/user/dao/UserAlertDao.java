@@ -26,6 +26,7 @@ import java.util.List;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertType;
+import org.joda.time.DateTime;
 
 /**
  * DAO API for UserAlert objects.
@@ -45,10 +46,19 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 *        An optional {@link UserAlert} ID value to start from. Only alerts
 	 *        with an ID value <em>higher</em> than this ID will be considered.
 	 *        If <em>null</em> then consider all alerts.
+	 * @param validDate
+	 *        A timestamp to use for the validity check date. If
+	 *        {@code startingId} is provided, this value can be provided to
+	 *        issue a stable batch query based on the same valid date as the
+	 *        previous call to this method. If not provided the current time
+	 *        will be used, but then a subsequent batch call might not have the
+	 *        same date if another batch call is needed. Therefore it is
+	 *        recommended to always pass a value for this parameter.
 	 * @param max
 	 *        An optional maximum number of result rows to return.
 	 * @return The found alerts, or an empty list if none found.
 	 */
-	List<UserAlert> findAlertsToProcess(UserAlertType type, Long startingId, Integer max);
+	List<UserAlert> findAlertsToProcess(UserAlertType type, Long startingId, DateTime validDate,
+			Integer max);
 
 }

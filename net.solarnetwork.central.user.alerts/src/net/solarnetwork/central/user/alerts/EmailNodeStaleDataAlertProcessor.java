@@ -45,6 +45,7 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertOptions;
 import net.solarnetwork.central.user.domain.UserAlertType;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -64,7 +65,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	public static final Integer DEFAULT_BATCH_SIZE = 50;
 
 	/** The default value for {@link #get}. */
-	public static final String DEFAULT_MAIL_TEMPLATE_RESOURCE = "net/solarnetwork/central/user/alerts/user-alert-NodeStaleData.txt";
+	public static final String DEFAULT_MAIL_TEMPLATE_RESOURCE = "/net/solarnetwork/central/user/alerts/user-alert-NodeStaleData.txt";
 
 	private final SolarNodeDao solarNodeDao;
 	private final UserDao userDao;
@@ -107,10 +108,10 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	}
 
 	@Override
-	public Long processAlerts(Long lastProcessedAlertId) {
+	public Long processAlerts(Long lastProcessedAlertId, DateTime validDate) {
 		List<UserAlert> alerts = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
-				lastProcessedAlertId, batchSize);
-		Long lastAlertId = lastProcessedAlertId;
+				lastProcessedAlertId, validDate, batchSize);
+		Long lastAlertId = null;
 		try {
 			// get our set of unique node IDs, to query for the latest data; 
 			// maintain result listing order via LinkedHashMap, so our startingId logic works later on
@@ -202,6 +203,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					new Object[] { alert.getNodeId() }, locale);
 			ClasspathResourceMessageTemplateDataSource msg = new ClasspathResourceMessageTemplateDataSource(
 					locale, subject, mailTemplateResource, model);
+			msg.setClassLoader(getClass().getClassLoader());
 			mailService.sendMail(addr, msg);
 		}
 	}

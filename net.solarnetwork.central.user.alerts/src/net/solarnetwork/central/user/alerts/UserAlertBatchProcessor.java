@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.alerts;
 
 import net.solarnetwork.central.user.domain.UserAlert;
+import org.joda.time.DateTime;
 
 /**
  * API for batch processing user alerts.
@@ -39,9 +40,11 @@ public interface UserAlertBatchProcessor {
 	 * @param lastProcessedAlertId
 	 *        An optional {@link UserAlert} ID representing the last ID
 	 *        processed on a previous batch run.
+	 * @param validDate
+	 *        The valid date to use when batch processing alerts.
 	 * @return The ID of the last {@link UserAlert} processed, or <em>null</em>
-	 *         if no more alerts are avaialble to process.
+	 *         if no more alerts are available to process.
 	 */
-	Long processAlerts(Long lastProcessedAlertId);
+	Long processAlerts(Long lastProcessedAlertId, DateTime validDate);
 
 }

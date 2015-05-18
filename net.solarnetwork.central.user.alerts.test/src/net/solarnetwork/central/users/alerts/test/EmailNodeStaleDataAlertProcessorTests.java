@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.users.alerts.test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -102,6 +103,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		service = new EmailNodeStaleDataAlertProcessor(solarNodeDao, userDao, userAlertDao,
 				generalNodeDatumDao, MailService, MessageSource);
 		service.setBatchSize(5);
+		service.setMailTemplateResource(EmailNodeStaleDataAlertProcessor.DEFAULT_MAIL_TEMPLATE_RESOURCE
+				.substring(1));
 		AlertIdCounter.set(TEST_USER_ALERT_ID);
 
 		testUser = new User(TEST_USER_ID, "test@localhost");
@@ -152,16 +155,18 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 	public void processNoAlerts() {
 		List<UserAlert> pendingAlerts = Collections.emptyList();
 		EasyMock.expect(
-				userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
+				userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, null,
 						service.getBatchSize())).andReturn(pendingAlerts);
 		replayAll();
-		Long startingId = service.processAlerts(null);
+		Long startingId = service.processAlerts(null, null);
 		Assert.assertNull(startingId);
 		Assert.assertEquals("No mail sent", 0, MailSender.getSent().size());
 	}
 
 	@Test
 	public void processOneAlertTrigger() {
+		final DateTime batchTime = new DateTime();
+
 		List<UserAlert> pendingAlerts = Arrays.asList(newUserAlertInstance());
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeIds(new Long[] { TEST_NODE_ID });
@@ -174,7 +179,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		// first query for pending alerts, starting at beginning
 		EasyMock.expect(
-				userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
+				userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
 						service.getBatchSize())).andReturn(pendingAlerts);
 
 		// then query for most recent node datum
@@ -188,7 +193,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
 		replayAll();
-		Long startingId = service.processAlerts(null);
+		Long startingId = service.processAlerts(null, batchTime);
 		Assert.assertEquals("Next staring ID is last processed alert ID", pendingAlerts.get(0).getId(),
 				startingId);
 		Assert.assertEquals("Mail sent", 1, MailSender.getSent().size());
@@ -203,4 +208,106 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 								+ service.getTimestampFormat().print(
 										nodeData.get(0).getId().getCreated())));
 	}
+
+	@Test
+	public void processBatchAlertsTrigger() {
+		final DateTime batchTime = new DateTime();
+
+		// add 10 alerts, so we can test batching
+		List<UserAlert> pendingAlerts = new ArrayList<UserAlert>();
+		for ( int i = 0; i < 12; i++ ) {
+			pendingAlerts.add(newUserAlertInstance());
+		}
+
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+
+		List<GeneralNodeDatumFilterMatch> nodeData = Arrays.asList(newGeneralNodeDatumMatch(
+				new DateTime().minusSeconds(10), TEST_NODE_ID, TEST_SOURCE_ID));
+		BasicFilterResults<GeneralNodeDatumFilterMatch> nodeDataResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
+				nodeData, 1L, 0, 1);
+
+		// first query for pending alerts, starting at beginning
+		EasyMock.expect(
+				userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+						service.getBatchSize())).andReturn(pendingAlerts.subList(0, 5));
+
+		// then query for most recent node datum
+		EasyMock.expect(
+				generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
+						EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
+						EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+
+		// get User, SolarNode for alert
+		EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser).times(5);
+		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode).times(5);
+
+		// 2nd batch query for pending alerts, starting at previous ID
+		EasyMock.expect(
+				userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, pendingAlerts.get(4)
+						.getId(), batchTime, service.getBatchSize())).andReturn(
+				pendingAlerts.subList(5, 10));
+
+		// then query for most recent node datum
+		EasyMock.expect(
+				generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
+						EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
+						EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+
+		// get User, SolarNode for alert
+		EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser).times(5);
+		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode).times(5);
+
+		// 3rd batch query for pending alerts, starting at previous ID
+		EasyMock.expect(
+				userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, pendingAlerts.get(9)
+						.getId(), batchTime, service.getBatchSize())).andReturn(
+				pendingAlerts.subList(10, pendingAlerts.size()));
+
+		// then query for most recent node datum
+		EasyMock.expect(
+				generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
+						EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
+						EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+
+		// get User, SolarNode for alert
+		EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser).times(2);
+		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode).times(2);
+
+		// 4th batch query for pending alerts, starting at previous ID
+		EasyMock.expect(
+				userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, pendingAlerts.get(11)
+						.getId(), batchTime, service.getBatchSize())).andReturn(
+				Collections.<UserAlert> emptyList());
+
+		replayAll();
+
+		Long startingId = null;
+		for ( int i = 0; i < 4; i++ ) {
+			final int batchSize = (i < 2 ? 5 : 2);
+			startingId = service.processAlerts(startingId, batchTime);
+			if ( i == 3 ) {
+				Assert.assertNull("No more batch values", startingId);
+			} else {
+				Assert.assertEquals("Next staring ID is last processed alert ID",
+						pendingAlerts.get((i * 5) + batchSize - 1).getId(), startingId);
+				Assert.assertEquals("Mail sent", batchSize, MailSender.getSent().size());
+				for ( SimpleMailMessage sentMail : MailSender.getSent() ) {
+					Assert.assertEquals("SolarNetwork alert: SolarNode " + TEST_NODE_ID
+							+ " data is stale", sentMail.getSubject());
+					Assert.assertTrue("Mail has source ID",
+							sentMail.getText().contains("source " + TEST_SOURCE_ID));
+					Assert.assertTrue(
+							"Mail has formatted datum date",
+							sentMail.getText().contains(
+									"since "
+											+ service.getTimestampFormat().print(
+													nodeData.get(0).getId().getCreated())));
+				}
+			}
+			MailSender.getSent().clear();
+		}
+	}
+
 }

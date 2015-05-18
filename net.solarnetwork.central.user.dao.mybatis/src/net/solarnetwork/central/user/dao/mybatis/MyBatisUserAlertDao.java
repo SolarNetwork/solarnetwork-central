@@ -29,6 +29,7 @@ import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertType;
+import org.joda.time.DateTime;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,12 +57,14 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	@Override
 	// Propagation.REQUIRED for server-side cursors
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
-	public List<UserAlert> findAlertsToProcess(UserAlertType type, Long startingId, Integer max) {
+	public List<UserAlert> findAlertsToProcess(UserAlertType type, Long startingId, DateTime validDate,
+			Integer max) {
 		Map<String, Object> params = new HashMap<String, Object>(3);
 		params.put("type", type);
 		if ( startingId != null ) {
 			params.put("startingId", startingId);
 		}
+		params.put("validDate", (validDate == null ? new DateTime() : validDate));
 		return selectList(QUERY_FOR_PROCESSING, params, null, max);
 	}
 

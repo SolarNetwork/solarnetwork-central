@@ -19,8 +19,9 @@
 	<!-- Configuration -->
 	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.alerts">
-		<beans:prop key="nodeStaleDataAlertProcessor.batchSize">50</beans:prop>
-		<beans:prop key="emailNodeStaleDataAlertProcessor.jobCron">30 0/15 * * * ?</beans:prop>
+		<beans:prop key="alert.mail.from">alerts@solarnetwork.net</beans:prop>
+		<beans:prop key="nodeStaleDataAlertProcessor.batchSize">250</beans:prop>
+		<beans:prop key="emailNodeStaleDataAlertProcessor.jobCron">30 0/5 * * * ?</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -29,7 +30,7 @@
 
 	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
 	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
-	<reference id="mailService" interface="net.solarnetwork.central.mail.MailService"/>
+	<reference id="mailSender" interface="org.springframework.mail.MailSender"/>
 	<reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
 	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
 	<reference id="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao"/>
@@ -69,6 +70,15 @@
 		<argument ref="mailService"/>
 		<argument ref="messageSource"/>
 		<property name="batchSize" value="${nodeStaleDataAlertProcessor.batchSize}"/>
+	</bean>
+	
+	<bean id="mailService" class="net.solarnetwork.central.mail.support.DefaultMailService">
+		<argument ref="mailSender"/>
+		<property name="templateMessage">
+			<bean class="org.springframework.mail.SimpleMailMessage">
+				<property name="from" value="${alert.mail.from}"/>
+			</bean>
+		</property>
 	</bean>
 	
 </blueprint>

@@ -12,7 +12,7 @@ Import-Package:
  net.solarnetwork.central.datum.domain;version="1.16.1",
  net.solarnetwork.central.domain;version="1.16.0",
  net.solarnetwork.central.mail;version="1.0.0",
- net.solarnetwork.central.mail.support;version="1.0.0",
+ net.solarnetwork.central.mail.support;version="1.1.0",
  net.solarnetwork.central.scheduler;version="1.4.0",
  net.solarnetwork.central.user.dao;version="1.4.0",
  net.solarnetwork.central.user.domain;version="1.8.0",

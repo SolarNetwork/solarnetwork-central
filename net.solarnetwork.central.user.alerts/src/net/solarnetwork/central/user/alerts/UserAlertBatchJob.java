@@ -22,13 +22,13 @@
 
 package net.solarnetwork.central.user.alerts;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.central.user.domain.UserAlertType;
+import org.joda.time.DateTime;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 
@@ -47,9 +47,22 @@ public class UserAlertBatchJob extends JobSupport {
 	 */
 	public static final String JOB_PROP_STARTING_ID = "AlertIdStart";
 
+	/**
+	 * The job property for the valid date to use, as milliseconds since the
+	 * epoch. If not specified, use the current date.
+	 */
+	public static final String JOB_PROP_VALID_DATE = "AlertValidDate";
+
 	private final UserAlertBatchProcessor processor;
 
-	private static final ThreadLocal<Long> lastId = new ThreadLocal<Long>();
+	private static final ThreadLocal<Map<String, Object>> props = new ThreadLocal<Map<String, Object>>() {
+
+		@Override
+		protected Map<String, Object> initialValue() {
+			return new HashMap<String, Object>(2);
+		}
+
+	};
 
 	/**
 	 * Construct with properties.
@@ -73,12 +86,21 @@ public class UserAlertBatchJob extends JobSupport {
 				.getProperty(SchedulerConstants.JOB_PROPERTIES);
 
 		// reset thread-local
-		lastId.remove();
+		props.get().clear();
 
-		Long startingId = (Long) inputProperties.get(JOB_PROP_STARTING_ID);
+		Long startingId = null;
+		Long validDateMs = null;
+		if ( inputProperties != null ) {
+			startingId = (Long) inputProperties.get(JOB_PROP_STARTING_ID);
+			validDateMs = (Long) inputProperties.get(JOB_PROP_VALID_DATE);
+		}
+		DateTime validDate = (validDateMs == null ? new DateTime() : new DateTime(validDateMs));
 		if ( processor != null ) {
-			startingId = processor.processAlerts(startingId);
-			lastId.set(startingId);
+			startingId = processor.processAlerts(startingId, validDate);
+			if ( startingId != null ) {
+				props.get().put(JOB_PROP_STARTING_ID, startingId);
+				props.get().put(JOB_PROP_VALID_DATE, validDate.getMillis());
+			}
 		}
 
 		return true;
@@ -87,21 +109,17 @@ public class UserAlertBatchJob extends JobSupport {
 	@Override
 	protected Event handleJobCompleteEvent(Event jobEvent, boolean complete, Throwable thrown) {
 		Event ack = super.handleJobCompleteEvent(jobEvent, complete, thrown);
-		Long nextStartingId = lastId.get();
-		if ( nextStartingId != null ) {
-			lastId.remove();
 
-			// add JOB_PROPERTIES Map with JOB_PROP_STARTING_NODE_ID to save with job
-			Map<String, Object> props = new HashMap<String, Object>();
-			for ( String key : ack.getPropertyNames() ) {
-				props.put(key, ack.getProperty(key));
-			}
-
-			props.put(SchedulerConstants.JOB_PROPERTIES,
-					Collections.singletonMap(JOB_PROP_STARTING_ID, nextStartingId));
-
-			ack = new Event(ack.getTopic(), props);
+		// add JOB_PROPERTIES Map with JOB_PROP_STARTING_NODE_ID to save with job
+		Map<String, Object> jobProps = new HashMap<String, Object>();
+		for ( String key : ack.getPropertyNames() ) {
+			jobProps.put(key, ack.getProperty(key));
 		}
+
+		jobProps.put(SchedulerConstants.JOB_PROPERTIES, new HashMap<String, Object>(props.get()));
+
+		ack = new Event(ack.getTopic(), jobProps);
+
 		return ack;
 	}
 

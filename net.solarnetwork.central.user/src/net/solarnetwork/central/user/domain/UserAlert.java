@@ -28,6 +28,7 @@ import net.solarnetwork.central.domain.BaseEntity;
 import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.SerializeIgnore;
+import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -48,12 +49,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class UserAlert extends BaseEntity {
 
-	private static final long serialVersionUID = -4478130575573145792L;
+	private static final long serialVersionUID = -7231784761519842163L;
 
 	private Long userId;
 	private UserAlertType type;
 	private UserAlertStatus status;
 	private Long nodeId;
+	private DateTime validTo;
 	private Map<String, Object> options;
 	private String optionsJson;
 
@@ -123,6 +125,14 @@ public class UserAlert extends BaseEntity {
 
 	public void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
+	}
+
+	public DateTime getValidTo() {
+		return validTo;
+	}
+
+	public void setValidTo(DateTime validTo) {
+		this.validTo = validTo;
 	}
 
 	@SuppressWarnings("unchecked")

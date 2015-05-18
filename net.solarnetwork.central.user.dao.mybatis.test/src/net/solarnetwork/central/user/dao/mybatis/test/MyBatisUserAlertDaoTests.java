@@ -154,7 +154,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 	@Test
 	public void findAlertsToProcessNone() {
 		List<UserAlert> results = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
-				null);
+				null, null);
 		assertNotNull("Results should not be null", results);
 		assertEquals(0, results.size());
 	}
@@ -163,7 +163,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 	public void findAlertsToProcessOne() {
 		storeNew();
 		List<UserAlert> results = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
-				null);
+				null, null);
 		assertNotNull("Results should not be null", results);
 		assertEquals(1, results.size());
 		assertEquals(userAlert, results.get(0));
@@ -177,7 +177,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 			alerts.add(this.userAlert);
 		}
 		List<UserAlert> results = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
-				null);
+				null, null);
 		assertNotNull("Results should not be null", results);
 		assertEquals(alerts.size(), results.size());
 		assertEquals(alerts, results);
@@ -192,10 +192,11 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		}
 		List<UserAlert> results = new ArrayList<UserAlert>(12);
 		Long startingId = null;
+		final DateTime batchTime = new DateTime();
 		final Integer max = 5;
 		for ( int i = 0; i < 4; i++ ) {
 			List<UserAlert> batch = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
-					startingId, max);
+					startingId, batchTime, max);
 			assertNotNull("Results should not be null", batch);
 			if ( i < 3 ) {
 				assertTrue("Batch results available", batch.size() > 0);
@@ -225,10 +226,11 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		}
 		List<UserAlert> results = new ArrayList<UserAlert>(12);
 		Long startingId = null;
+		final DateTime batchTime = new DateTime();
 		final Integer max = 5;
 		for ( int i = 0; i < 4; i++ ) {
 			List<UserAlert> batch = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
-					startingId, max);
+					startingId, batchTime, max);
 			assertNotNull("Results should not be null", batch);
 			if ( i < 3 ) {
 				assertTrue("Batch results available", batch.size() > 0);

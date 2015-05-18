@@ -16,6 +16,7 @@ CREATE TABLE solaruser.user_alert (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id			BIGINT NOT NULL,
 	node_id			BIGINT,
+	valid_to		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	alert_type		solaruser.user_alert_type NOT NULL,
 	status			solaruser.user_alert_status NOT NULL,
 	alert_opt		json,
@@ -28,8 +29,11 @@ CREATE TABLE solaruser.user_alert (
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
-/* Add index on node_id so we can batch process in sets of nodes */
+/* Add index on node_id so we can batch process in sets of nodes. */
 CREATE INDEX user_alert_node_idx ON solaruser.user_alert (node_id);
+
+/* Add index on valid_to so we can batch process only those alerts that need validation. */
+CREATE INDEX user_alert_valid_idx ON solaruser.user_alert (valid_to);
 
 CREATE TABLE solaruser.user_alert_sit (
 	id				BIGINT NOT NULL DEFAULT nextval('solaruser.user_alert_seq'),

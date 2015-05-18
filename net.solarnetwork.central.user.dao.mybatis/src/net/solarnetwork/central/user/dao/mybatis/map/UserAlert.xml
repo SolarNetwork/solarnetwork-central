@@ -21,6 +21,7 @@
 			(id, user_id, alert_type, status
 			<if test="created != null">,created</if>
 			<if test="nodeId != null">,node_id</if>
+			<if test="validTo != null">,valid_to</if>
 			<if test="optionsJson != null">,alert_opt</if>
 			)
 		VALUES
@@ -29,6 +30,7 @@
 			CAST(#{status} AS solaruser.user_alert_status)
 			<if test="created != null">,#{created}</if>
 			<if test="nodeId != null">,#{nodeId}</if>
+			<if test="validTo != null">,#{validTo}</if>
 			<if test="optionsJson != null">,CAST(#{optionsJson} AS json)</if>
 			)
 	</insert>
@@ -37,6 +39,7 @@
 		UPDATE solaruser.user_alert SET
 			status = CAST(#{status} AS solaruser.user_alert_status) 
 			<if test="nodeId != null">, node_id = #{nodeId}</if>
+			<if test="validTo != null">, valid_to = #{validTo}</if>
 			<if test="optionsJson != null">, alert_opt = CAST(#{optionsJson} AS json)</if>
 		WHERE
 			id = #{id}
@@ -47,6 +50,7 @@
 		ual.created AS user_alert_created,
 		ual.user_id AS user_alert_user_id,
 		ual.node_id AS user_alert_node_id,
+		ual.valid_to AS user_alert_valid_to,
 		ual.alert_type AS user_alert_alert_type,
 		ual.status AS user_alert_status,
 		ual.alert_opt AS user_alert_alert_opt
@@ -57,6 +61,7 @@
 		<result property="created" column="user_alert_created"/>
 		<result property="userId" column="user_alert_user_id"/>
 		<result property="nodeId" column="user_alert_node_id"/>
+		<result property="validTo" column="user_alert_valid_to"/>
 		<result property="type" column="user_alert_alert_type"/>
 		<result property="status" column="user_alert_status"/>
 		<result property="optionsJson" column="user_alert_alert_opt"/>
@@ -79,6 +84,7 @@
 		WHERE 
 			ual.alert_type = CAST(#{type,jdbcType=VARCHAR} AS solaruser.user_alert_type)
 			AND ual.status != CAST('Disabled' AS solaruser.user_alert_status)
+			<if test="validDate != null">AND ual.valid_to &lt; #{validDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}</if>
 			<if test="startingId != null">AND ual.id > #{startingId,javaType=long,jdbcType=BIGINT}</if>
 		ORDER BY
 			ual.id
