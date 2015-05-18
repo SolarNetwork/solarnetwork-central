@@ -50,6 +50,9 @@ CREATE TABLE solaruser.user_alert_sit (
 /* Add index on valid_to so we can batch process only those alerts that need validation. */
 CREATE INDEX user_alert_sit_alert_status_idx ON solaruser.user_alert_sit (alert_id, status);
 
+/* Add a partial index on notified to support purging resolved situations. */
+CREATE INDEX user_alert_sit_notified_idx ON solaruser.user_alert_sit (notified)
+WHERE (notified is not null);
 
 /**
  * Return most recent datum records for all available sources for a given set of node IDs.
@@ -66,3 +69,26 @@ $BODY$
 	ORDER BY r.node_id, r.source_id;
 $BODY$
   LANGUAGE sql STABLE;
+
+/**************************************************************************************************
+ * FUNCTION solaruser.purge_resolved_situations(timestamp with time zone)
+ * 
+ * Delete user_alert_sit rows that have reached the Resolved state, and whose 
+ * notified date is older than the given date.
+ * 
+ * @param older_date The maximum date to delete situations for.
+ * @return The number of situations deleted.
+ */
+CREATE OR REPLACE FUNCTION solaruser.purge_resolved_situations(older_date timestamp with time zone)
+  RETURNS BIGINT AS
+$BODY$
+DECLARE
+	num_rows BIGINT := 0;
+BEGIN
+	DELETE FROM solaruser.user_alert_sit
+	WHERE notified < older_date
+		AND status = 'Resolved'::solaruser.user_alert_sit_status;
+	GET DIAGNOSTICS num_rows = ROW_COUNT;
+	RETURN num_rows;
+END;$BODY$
+  LANGUAGE plpgsql VOLATILE;

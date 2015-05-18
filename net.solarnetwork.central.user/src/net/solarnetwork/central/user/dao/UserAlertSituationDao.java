@@ -26,6 +26,7 @@ import java.util.List;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
+import org.joda.time.DateTime;
 
 /**
  * DAO API for UserAlertSituation objects.
@@ -46,6 +47,16 @@ public interface UserAlertSituationDao extends GenericDao<UserAlertSituation, Lo
 	 *         available.
 	 */
 	UserAlertSituation getActiveAlertSituationForAlert(Long alertId);
+
+	/**
+	 * Purge situations that have reached a final state and are older than a
+	 * given date.
+	 * 
+	 * @param olderThanDate
+	 *        The maximum date for which to purge resolved situations.
+	 * @return The number of situations deleted.
+	 */
+	long purgeResolvedSituations(DateTime olderThanDate);
 
 	List<UserAlert> findActiveAlertSituationsForUser(Long userId);
 

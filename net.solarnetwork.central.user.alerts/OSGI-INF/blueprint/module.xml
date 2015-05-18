@@ -22,6 +22,8 @@
 		<beans:prop key="alert.mail.from">alerts@solarnetwork.net</beans:prop>
 		<beans:prop key="nodeStaleDataAlertProcessor.batchSize">250</beans:prop>
 		<beans:prop key="emailNodeStaleDataAlertProcessor.jobCron">30 0/5 * * * ?</beans:prop>
+		<beans:prop key="resolvedSituationCleaner.jobCron">0 5 1 ? * SUN</beans:prop><!--  Weekly, on Sunday 1:05am -->
+		<beans:prop key="resolvedSituationCleaner.daysOlder">21</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -57,6 +59,26 @@
 		</service-properties>
 	</service>
 
+	<bean id="resolvedSituationCleaner" class="net.solarnetwork.central.user.alerts.UserAlertSituationCleaner">
+		<argument ref="eventAdmin"/>
+		<argument ref="userAlertSituationDao"/>
+		<property name="jobCron" value="${resolvedSituationCleaner.jobCron}"/>
+		<property name="jobId" value="UserAlertSituationCleaner"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/alert/UserAlertSituationCleaner"/>
+		<property name="daysOlder" value="${resolvedSituationCleaner.daysOlder}"/>
+	</bean>
+	
+	<service ref="resolvedSituationCleaner" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{resolvedSituationCleaner.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+	
 	<!-- Supporting Services -->
 
 	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">

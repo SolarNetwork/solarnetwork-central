@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -80,7 +81,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		userAlertSituation = null;
 	}
 
-	private void createUserAlert() {
+	private UserAlert createUserAlert() {
 		UserAlert alert = new UserAlert();
 		alert.setCreated(new DateTime());
 		alert.setUserId(this.user.getId());
@@ -103,20 +104,26 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		assertNotNull(id);
 		alert.setId(id);
 		this.userAlert = alert;
+		return alert;
+	}
+
+	private UserAlertSituation storeNew(UserAlert alert, UserAlertSituationStatus status,
+			DateTime notified) {
+		UserAlertSituation sit = new UserAlertSituation();
+		sit.setCreated(new DateTime());
+		sit.setAlert(alert);
+		sit.setStatus(status);
+		sit.setNotified(notified);
+
+		Long id = userAlertSituationDao.store(sit);
+		sit.setId(id);
+		return sit;
 	}
 
 	@Test
 	public void storeNew() {
-		createUserAlert();
-		UserAlertSituation sit = new UserAlertSituation();
-		sit.setCreated(new DateTime());
-		sit.setAlert(this.userAlert);
-		sit.setStatus(UserAlertSituationStatus.Active);
-		sit.setNotified(new DateTime());
-
-		Long id = userAlertSituationDao.store(sit);
-		assertNotNull(id);
-		sit.setId(id);
+		UserAlertSituation sit = storeNew(createUserAlert(), UserAlertSituationStatus.Active, null);
+		assertNotNull("Primary key should be assigned", sit.getId());
 		this.userAlertSituation = sit;
 	}
 
@@ -189,6 +196,67 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 				.getId());
 		assertNotNull(sit);
 		assertEquals(this.userAlertSituation.getId(), sit.getId());
+	}
+
+	@Test
+	public void purgeCompletedInstructionsNone() {
+		long result = userAlertSituationDao.purgeResolvedSituations(new DateTime());
+		assertEquals(0, result);
+	}
+
+	@Test
+	public void purgeCompletedInstructionsNoMatchActive() {
+		userAlertSituation = storeNew(createUserAlert(), UserAlertSituationStatus.Active, new DateTime());
+		long result = userAlertSituationDao.purgeResolvedSituations(userAlertSituation.getCreated()
+				.plusDays(1));
+		assertEquals(0, result);
+	}
+
+	@Test
+	public void purgeCompletedInstructionsNoMatchDateMissing() {
+		userAlertSituation = storeNew(createUserAlert(), UserAlertSituationStatus.Resolved, null);
+		long result = userAlertSituationDao.purgeResolvedSituations(userAlertSituation.getCreated()
+				.minusDays(1));
+		assertEquals(0, result);
+	}
+
+	@Test
+	public void purgeCompletedInstructionsNoMatchDateMismatch() {
+		userAlertSituation = storeNew(createUserAlert(), UserAlertSituationStatus.Resolved,
+				new DateTime());
+		long result = userAlertSituationDao.purgeResolvedSituations(userAlertSituation.getCreated()
+				.minusDays(1));
+		assertEquals(0, result);
+	}
+
+	@Test
+	public void purgeCompletedInstructionsMatch() {
+		userAlertSituation = storeNew(createUserAlert(), UserAlertSituationStatus.Resolved,
+				new DateTime());
+		long result = userAlertSituationDao.purgeResolvedSituations(userAlertSituation.getCreated()
+				.plusDays(1));
+		assertEquals(1, result);
+		UserAlertSituation sit = userAlertSituationDao.get(userAlertSituation.getId());
+		assertNull("Purged situation is not found", sit);
+	}
+
+	@Test
+	public void purgeCompletedInstructionsMatchMultiple() {
+		List<UserAlertSituation> toPurge = new ArrayList<UserAlertSituation>();
+		List<UserAlertSituation> notToPurge = new ArrayList<UserAlertSituation>();
+		toPurge.add(storeNew(createUserAlert(), UserAlertSituationStatus.Resolved, new DateTime()));
+		notToPurge.add(storeNew(userAlert, UserAlertSituationStatus.Active, new DateTime())); // Active state, should NOT be deleted
+		toPurge.add(storeNew(userAlert, UserAlertSituationStatus.Resolved, new DateTime()));
+		long result = userAlertSituationDao.purgeResolvedSituations(new DateTime().plusDays(1));
+		assertEquals("Purged resolved", toPurge.size(), result);
+		for ( UserAlertSituation sit : notToPurge ) {
+			UserAlertSituation match = userAlertSituationDao.get(sit.getId());
+			assertNotNull("Should not be purged", match);
+		}
+		for ( UserAlertSituation sit : toPurge ) {
+			UserAlertSituation match = userAlertSituationDao.get(sit.getId());
+			assertNull("Purged situation is not found", match);
+		}
 	}
 
 }

@@ -67,4 +67,10 @@
 			AND uas.status = CAST('Active' AS solaruser.user_alert_sit_status)
 	</select>
 
+	<update id="delete-UserAlertSituation-resolved" statementType="CALLABLE" parameterType="map">
+		{#{result, mode=OUT, jdbcType=BIGINT} = call solaruser.purge_resolved_situations(
+			#{date, mode=IN, jdbcType=TIMESTAMP}
+		)}
+	</update>
+	
 </mapper>
