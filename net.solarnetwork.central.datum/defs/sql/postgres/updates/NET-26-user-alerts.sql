@@ -1,3 +1,38 @@
+/* Add index on user_node to assist finding all nodes for a given user. */
+CREATE INDEX user_node_user_idx ON solaruser.user_node (user_id);
+
+/**
+ * Return most recent datum records for all available sources for all nodes owned by a given user ID.
+ * 
+ * @param users An array of user IDs to return results for.
+ * @returns Set of solardatum.da_datum records.
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent_for_user(users bigint[])
+  RETURNS SETOF solardatum.da_datum AS
+$BODY$
+	SELECT r.* 
+	FROM (SELECT node_id FROM solaruser.user_node WHERE user_id = ANY(users)) AS n,
+	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
+	ORDER BY r.node_id, r.source_id;
+$BODY$
+  LANGUAGE sql STABLE;
+
+/**
+ * Return most recent datum records for all available sources for a given set of node IDs.
+ * 
+ * @param nodes An array of node IDs to return results for.
+ * @returns Set of solardatum.da_datum records.
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes solarcommon.node_ids)
+  RETURNS SETOF solardatum.da_datum AS
+$BODY$
+	SELECT r.* 
+	FROM (SELECT unnest(nodes) AS node_id) AS n,
+	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
+	ORDER BY r.node_id, r.source_id;
+$BODY$
+  LANGUAGE sql STABLE;
+
 /* === USER ALERTS ===================================================== */
 
 CREATE TYPE solaruser.user_alert_status AS ENUM 
@@ -53,22 +88,6 @@ CREATE INDEX user_alert_sit_alert_status_idx ON solaruser.user_alert_sit (alert_
 /* Add a partial index on notified to support purging resolved situations. */
 CREATE INDEX user_alert_sit_notified_idx ON solaruser.user_alert_sit (notified)
 WHERE (notified is not null);
-
-/**
- * Return most recent datum records for all available sources for a given set of node IDs.
- * 
- * @param nodes An array of node IDs to return results for.
- * @returns Set of solardatum.da_datum records.
- */
-CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes solarcommon.node_ids)
-  RETURNS SETOF solardatum.da_datum AS
-$BODY$
-	SELECT r.* 
-	FROM (SELECT unnest(nodes) AS node_id) AS n,
-	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
-	ORDER BY r.node_id, r.source_id;
-$BODY$
-  LANGUAGE sql STABLE;
 
 /**************************************************************************************************
  * FUNCTION solaruser.purge_resolved_situations(timestamp with time zone)
