@@ -70,8 +70,11 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	/** The default value for {@link #getBatchSize()}. */
 	public static final Integer DEFAULT_BATCH_SIZE = 50;
 
-	/** The default value for {@link #get}. */
+	/** The default value for {@link #getMailTemplateResource()}. */
 	public static final String DEFAULT_MAIL_TEMPLATE_RESOURCE = "/net/solarnetwork/central/user/alerts/user-alert-NodeStaleData.txt";
+
+	/** The default value for {@link #getMailTemplateResolvedResource()}. */
+	public static final String DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE = "/net/solarnetwork/central/user/alerts/user-alert-NodeStaleData-Resolved.txt";
 
 	private final SolarNodeDao solarNodeDao;
 	private final UserDao userDao;
@@ -82,6 +85,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	private Integer batchSize = DEFAULT_BATCH_SIZE;
 	private final MessageSource messageSource;
 	private String mailTemplateResource = DEFAULT_MAIL_TEMPLATE_RESOURCE;
+	private String mailTemplateResolvedResource = DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE;
 	private DateTimeFormatter timestampFormat = DateTimeFormat.forPattern("d MMM yyyy HH:mm z");
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -146,10 +150,15 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 						// extract options
 						Number age;
-						String[] sourceIds;
+						String[] sourceIds = null;
 						try {
 							age = (Number) alertOptions.get(UserAlertOptions.AGE_THRESHOLD);
-							sourceIds = (String[]) alertOptions.get(UserAlertOptions.SOURCE_IDS);
+							@SuppressWarnings("unchecked")
+							List<String> sources = (List<String>) alertOptions
+									.get(UserAlertOptions.SOURCE_IDS);
+							if ( sources != null ) {
+								sourceIds = sources.toArray(new String[sources.size()]);
+							}
 						} catch ( ClassCastException e ) {
 							log.warn("Unexpected option data type in alert {}: {}", alert,
 									e.getMessage());
@@ -168,21 +177,13 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 						}
 
 						// look for first stale data matching age + source criteria
-						GeneralNodeDatumFilterMatch stale = null;
-						for ( GeneralNodeDatumFilterMatch datum : latestNodeData ) {
-							if ( datum.getId().getCreated().getMillis()
-									+ (long) (age.doubleValue() * 1000) < now
-									&& (sourceIds == null || Arrays.binarySearch(sourceIds, datum
-											.getId().getSourceId()) >= 0) ) {
-								stale = datum;
-								break;
-							}
-						}
+						GeneralNodeDatumFilterMatch stale = getFirstStaleDatum(now, latestNodeData, age,
+								sourceIds);
 
+						// get UserAlertSitutation for this alert
+						UserAlertSituation sit = userAlertSituationDao
+								.getActiveAlertSituationForAlert(alert.getId());
 						if ( stale != null ) {
-							// get UserAlertSitutation for this alert
-							UserAlertSituation sit = userAlertSituationDao
-									.getActiveAlertSituationForAlert(alert.getId());
 							if ( sit == null ) {
 								sit = new UserAlertSituation();
 								sit.setCreated(new DateTime(now));
@@ -192,19 +193,30 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 							}
 
 							// taper off the alerts so the become less frequent over time
-							if ( sit.getCreated().getMillis()
-									+ (sit.getNotified().getMillis() - sit.getCreated().getMillis())
-									* 1.5 >= now ) {
-								sendAlertMail(alert, stale);
+							if ( (sit.getCreated().getMillis() + ((sit.getNotified().getMillis() - sit
+									.getCreated().getMillis()) * 1.5)) <= now ) {
+								sendAlertMail(alert, "user.alert.NodeStaleData.mail.subject",
+										mailTemplateResource, stale);
 								sit.setNotified(new DateTime(now));
 							}
 							if ( sit.getNotified().getMillis() == now ) {
 								userAlertSituationDao.store(sit);
 							}
-							alert.setValidTo(validDate.plus(MIN_ALERT_VALID_DELAY));
 						} else {
 							// not stale, so mark valid for age span
 							alert.setValidTo(validDate.plusSeconds(age.intValue()));
+							if ( sit != null ) {
+								// make Resolved
+								sit.setStatus(UserAlertSituationStatus.Resolved);
+								sit.setNotified(new DateTime(now));
+								userAlertSituationDao.store(sit);
+
+								GeneralNodeDatumFilterMatch nonStale = getFirstNonStaleDatum(now,
+										latestNodeData, age, sourceIds);
+
+								sendAlertMail(alert, "user.alert.NodeStaleData.Resolved.mail.subject",
+										mailTemplateResolvedResource, nonStale);
+							}
 						}
 						userAlertDao.store(alert);
 						lastAlertId = alert.getId();
@@ -225,7 +237,34 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return lastAlertId;
 	}
 
-	private void sendAlertMail(UserAlert alert, GeneralNodeDatumFilterMatch stale) {
+	private GeneralNodeDatumFilterMatch getFirstStaleDatum(final long now,
+			List<GeneralNodeDatumFilterMatch> latestNodeData, Number age, String[] sourceIds) {
+		GeneralNodeDatumFilterMatch stale = null;
+		for ( GeneralNodeDatumFilterMatch datum : latestNodeData ) {
+			if ( datum.getId().getCreated().getMillis() + (long) (age.doubleValue() * 1000) < now
+					&& (sourceIds == null || Arrays.binarySearch(sourceIds, datum.getId().getSourceId()) >= 0) ) {
+				stale = datum;
+				break;
+			}
+		}
+		return stale;
+	}
+
+	private GeneralNodeDatumFilterMatch getFirstNonStaleDatum(final long now,
+			List<GeneralNodeDatumFilterMatch> latestNodeData, Number age, String[] sourceIds) {
+		GeneralNodeDatumFilterMatch nonStale = null;
+		for ( GeneralNodeDatumFilterMatch datum : latestNodeData ) {
+			if ( datum.getId().getCreated().getMillis() + (long) (age.doubleValue() * 1000) >= now
+					&& (sourceIds == null || Arrays.binarySearch(sourceIds, datum.getId().getSourceId()) >= 0) ) {
+				nonStale = datum;
+				break;
+			}
+		}
+		return nonStale;
+	}
+
+	private void sendAlertMail(UserAlert alert, String subjectKey, String resourcePath,
+			GeneralNodeDatumFilterMatch datum) {
 		User user = userDao.get(alert.getUserId());
 		SolarNode node = solarNodeDao.get(alert.getNodeId());
 		if ( user != null ) {
@@ -234,21 +273,22 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			Map<String, Object> model = new HashMap<String, Object>(4);
 			model.put("alert", alert);
 			model.put("user", user);
-			model.put("datum", stale);
+			model.put("datum", datum);
 
 			// add a formatted datum date to model
 			DateTimeFormatter dateFormat = timestampFormat.withLocale(locale);
 			if ( node != null && node.getTimeZone() != null ) {
 				dateFormat = dateFormat.withZone(DateTimeZone.forTimeZone(node.getTimeZone()));
 			}
-			model.put("datumDate", dateFormat.print(stale.getId().getCreated()));
+			model.put("datumDate", dateFormat.print(datum.getId().getCreated()));
 
-			log.debug("Sending NodeStaleData alert to {} with model {}", user.getEmail(), model);
+			String subject = messageSource.getMessage(subjectKey, new Object[] { alert.getNodeId() },
+					locale);
 
-			String subject = messageSource.getMessage("user.alert.NodeStaleData.mail.subject",
-					new Object[] { alert.getNodeId() }, locale);
+			log.debug("Sending NodeStaleData alert {} to {} with model {}", subject, user.getEmail(),
+					model);
 			ClasspathResourceMessageTemplateDataSource msg = new ClasspathResourceMessageTemplateDataSource(
-					locale, subject, mailTemplateResource, model);
+					locale, subject, resourcePath, model);
 			msg.setClassLoader(getClass().getClassLoader());
 			mailService.sendMail(addr, msg);
 		}
@@ -316,6 +356,14 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 	public void setTimestampFormat(DateTimeFormatter timestampFormat) {
 		this.timestampFormat = timestampFormat;
+	}
+
+	public String getMailTemplateResolvedResource() {
+		return mailTemplateResolvedResource;
+	}
+
+	public void setMailTemplateResolvedResource(String mailTemplateResolvedResource) {
+		this.mailTemplateResolvedResource = mailTemplateResolvedResource;
 	}
 
 }

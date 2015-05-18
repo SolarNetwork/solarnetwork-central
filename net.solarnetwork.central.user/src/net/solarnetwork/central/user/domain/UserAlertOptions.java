@@ -36,7 +36,7 @@ public interface UserAlertOptions {
 	static String AGE_THRESHOLD = "age";
 
 	/**
-	 * An array of string datum source ID values.
+	 * A list of string datum source ID values.
 	 */
 	static String SOURCE_IDS = "sourceIds";
 

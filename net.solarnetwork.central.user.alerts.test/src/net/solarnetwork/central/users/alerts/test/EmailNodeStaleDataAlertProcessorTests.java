@@ -109,10 +109,14 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		MailSender.getSent().clear();
 		service = new EmailNodeStaleDataAlertProcessor(solarNodeDao, userDao, userAlertDao,
 				userAlertSituationDao, generalNodeDatumDao, MailService, MessageSource);
-		service.setBatchSize(5);
+		service.setBatchSize(1);
+		AlertIdCounter.set(TEST_USER_ALERT_ID);
+
+		// not quite sure why unit tests require no leading slash, but runtime DOES
 		service.setMailTemplateResource(EmailNodeStaleDataAlertProcessor.DEFAULT_MAIL_TEMPLATE_RESOURCE
 				.substring(1));
-		AlertIdCounter.set(TEST_USER_ALERT_ID);
+		service.setMailTemplateResolvedResource(EmailNodeStaleDataAlertProcessor.DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE
+				.substring(1));
 
 		testUser = new User(TEST_USER_ID, "test@localhost");
 		testUser.setName("Tester Dude");
@@ -235,8 +239,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
 		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
 		Assert.assertNotNull(newSituation.getValue().getNotified());
-		Assert.assertTrue("Saved alert validTo increased",
-				pendingAlerts.get(0).getValidTo().isAfter(pendingAlertValidTo));
+		Assert.assertTrue("Saved alert validTo not increased",
+				pendingAlerts.get(0).getValidTo().equals(pendingAlertValidTo));
 	}
 
 	@Test
@@ -385,6 +389,75 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 			}
 			MailSender.getSent().clear();
 		}
+	}
+
+	@Test
+	public void processOneAlertResolved() {
+		final DateTime batchTime = new DateTime();
+
+		List<UserAlert> pendingAlerts = Arrays.asList(newUserAlertInstance());
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+		final DateTime pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+
+		List<GeneralNodeDatumFilterMatch> nodeData = Arrays.asList(newGeneralNodeDatumMatch(
+				new DateTime(), TEST_NODE_ID, TEST_SOURCE_ID));
+		BasicFilterResults<GeneralNodeDatumFilterMatch> nodeDataResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
+				nodeData, 1L, 0, 1);
+
+		// first query for pending alerts, starting at beginning
+		EasyMock.expect(
+				userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+						service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		EasyMock.expect(
+				generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
+						EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
+						EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+
+		// then query for active situation
+		final UserAlertSituation activeSituation = new UserAlertSituation();
+		activeSituation.setId(AlertIdCounter.getAndIncrement());
+		activeSituation.setCreated(new DateTime());
+		activeSituation.setAlert(pendingAlerts.get(0));
+		activeSituation.setStatus(UserAlertSituationStatus.Active);
+		EasyMock.expect(
+				userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+				.andReturn(activeSituation);
+
+		// get User, SolarNode for alert
+		EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then save active situation -> resolved
+		EasyMock.expect(userAlertSituationDao.store(activeSituation)).andReturn(activeSituation.getId());
+
+		// and finally save the alert
+		EasyMock.expect(userAlertDao.store(pendingAlerts.get(0)))
+				.andReturn(pendingAlerts.get(0).getId());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		Assert.assertEquals("Next staring ID is last processed alert ID", pendingAlerts.get(0).getId(),
+				startingId);
+		Assert.assertEquals("Mail sent", 1, MailSender.getSent().size());
+		SimpleMailMessage sentMail = MailSender.getSent().element();
+		Assert.assertEquals("SolarNetwork alert resolved: SolarNode " + TEST_NODE_ID
+				+ " data is no longer stale", sentMail.getSubject());
+		Assert.assertTrue("Mail has source ID", sentMail.getText().contains("source " + TEST_SOURCE_ID));
+		Assert.assertTrue(
+				"Mail has formatted datum date",
+				sentMail.getText()
+						.contains(
+								"on "
+										+ service.getTimestampFormat().print(
+												nodeData.get(0).getId().getCreated())));
+		Assert.assertEquals(UserAlertSituationStatus.Resolved, activeSituation.getStatus());
+		Assert.assertNotNull(activeSituation.getNotified());
+		Assert.assertTrue("Saved alert validTo increased",
+				pendingAlerts.get(0).getValidTo().isAfter(pendingAlertValidTo));
 	}
 
 }
