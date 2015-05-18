@@ -214,6 +214,14 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		} catch ( RuntimeException e ) {
 			throw new RepeatableTaskException("Error processing user alerts", e, lastAlertId);
 		}
+
+		// short-circuit performing batch for no results if obvious
+		if ( alerts.size() < batchSize && lastAlertId != null
+				&& lastAlertId.equals(alerts.get(alerts.size() - 1).getId()) ) {
+			// we've finished our batch
+			lastAlertId = null;
+		}
+
 		return lastAlertId;
 	}
 
