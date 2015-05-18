@@ -64,9 +64,6 @@ import org.springframework.context.MessageSource;
  */
 public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor {
 
-	/** The minimum number of ms before an alert reminder will be processed. */
-	private static final int MIN_ALERT_VALID_DELAY = 60000;
-
 	/** The default value for {@link #getBatchSize()}. */
 	public static final Integer DEFAULT_BATCH_SIZE = 50;
 
