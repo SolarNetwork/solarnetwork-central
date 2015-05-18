@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.user.dao.mybatis;
 
+import java.util.List;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
+import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 
 /**
@@ -36,10 +38,32 @@ public class MyBatisUserAlertSituationDao extends BaseMyBatisGenericDao<UserAler
 		implements UserAlertSituationDao {
 
 	/**
+	 * The query name used for {@link #getActiveAlertSituationForAlert(Long)}.
+	 */
+	public static final String QUERY_ACTIVE_FOR_ALERT = "get-UserAlertSituation-for-active-alert";
+
+	/**
 	 * Default constructor.
 	 */
 	public MyBatisUserAlertSituationDao() {
 		super(UserAlertSituation.class, Long.class);
+	}
+
+	@Override
+	public UserAlertSituation getActiveAlertSituationForAlert(Long alertId) {
+		return selectFirst(QUERY_ACTIVE_FOR_ALERT, alertId);
+	}
+
+	@Override
+	public List<UserAlert> findActiveAlertSituationsForUser(Long userId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<UserAlert> findActiveAlertSituationsForNode(Long nodeId) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

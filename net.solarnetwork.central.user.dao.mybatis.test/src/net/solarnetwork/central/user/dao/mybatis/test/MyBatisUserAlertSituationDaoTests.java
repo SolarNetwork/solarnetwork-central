@@ -22,7 +22,26 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
+import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAlertDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAlertSituationDao;
+import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserAlert;
+import net.solarnetwork.central.user.domain.UserAlertSituation;
+import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
+import net.solarnetwork.central.user.domain.UserAlertStatus;
+import net.solarnetwork.central.user.domain.UserAlertType;
+import org.joda.time.DateTime;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Test cases for the {@link MyBatisUserAlertSituationDao} class.
@@ -31,5 +50,145 @@ import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAlertSituationDao;
  * @version 1.0
  */
 public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTestSupport {
+
+	private MyBatisSolarNodeDao solarNodeDao;
+	private MyBatisUserAlertDao userAlertDao;
+
+	private MyBatisUserAlertSituationDao userAlertSituationDao;
+
+	private User user = null;
+	private SolarNode node = null;
+	private UserAlert userAlert = null;
+	private UserAlertSituation userAlertSituation = null;
+
+	@Before
+	public void setUp() throws Exception {
+		solarNodeDao = new MyBatisSolarNodeDao();
+		solarNodeDao.setSqlSessionFactory(getSqlSessionFactory());
+		userAlertDao = new MyBatisUserAlertDao();
+		userAlertDao.setSqlSessionFactory(getSqlSessionFactory());
+		userAlertSituationDao = new MyBatisUserAlertSituationDao();
+		userAlertSituationDao.setSqlSessionFactory(getSqlSessionFactory());
+
+		setupTestNode();
+		this.node = solarNodeDao.get(TEST_NODE_ID);
+		assertNotNull(this.node);
+		//deleteFromTables(DELETE_TABLES);
+		this.user = createNewUser(TEST_EMAIL);
+		assertNotNull(this.user);
+		userAlert = null;
+		userAlertSituation = null;
+	}
+
+	private void createUserAlert() {
+		UserAlert alert = new UserAlert();
+		alert.setCreated(new DateTime());
+		alert.setUserId(this.user.getId());
+		alert.setNodeId(TEST_NODE_ID);
+		alert.setType(UserAlertType.NodeStaleData);
+		alert.setStatus(UserAlertStatus.Active);
+
+		Map<String, Object> options = new HashMap<String, Object>(4);
+		options.put("string", "foo");
+		options.put("number", 42);
+
+		List<String> optionList = new ArrayList<String>(4);
+		optionList.add("first");
+		optionList.add("second");
+		options.put("list", optionList);
+
+		alert.setOptions(options);
+
+		Long id = userAlertDao.store(alert);
+		assertNotNull(id);
+		alert.setId(id);
+		this.userAlert = alert;
+	}
+
+	@Test
+	public void storeNew() {
+		createUserAlert();
+		UserAlertSituation sit = new UserAlertSituation();
+		sit.setCreated(new DateTime());
+		sit.setAlert(this.userAlert);
+		sit.setStatus(UserAlertSituationStatus.Active);
+		sit.setNotified(new DateTime());
+
+		Long id = userAlertSituationDao.store(sit);
+		assertNotNull(id);
+		sit.setId(id);
+		this.userAlertSituation = sit;
+	}
+
+	@Test
+	public void getByPrimaryKey() {
+		storeNew();
+		UserAlertSituation sit = userAlertSituationDao.get(this.userAlertSituation.getId());
+		assertNotNull(sit);
+		assertEquals(this.userAlertSituation.getId(), sit.getId());
+		assertEquals(this.userAlertSituation.getStatus(), sit.getStatus());
+		assertNotNull(sit.getAlert());
+		assertEquals(this.userAlert.getId(), sit.getAlert().getId());
+	}
+
+	@Test
+	public void update() {
+		storeNew();
+		UserAlertSituation sit = userAlertSituationDao.get(this.userAlertSituation.getId());
+
+		DateTime created = userAlertSituation.getCreated();
+		sit.setStatus(UserAlertSituationStatus.Resolved);
+		sit.setNotified(created.plusHours(1));
+		Long id = userAlertSituationDao.store(sit);
+		assertNotNull(id);
+		assertEquals(this.userAlertSituation.getId(), id);
+		UserAlertSituation updatedSit = userAlertSituationDao.get(id);
+		assertNotNull(updatedSit);
+		assertEquals(this.userAlertSituation.getId(), updatedSit.getId());
+		assertNotNull(updatedSit.getAlert());
+		assertEquals(this.userAlert.getId(), updatedSit.getAlert().getId());
+		assertEquals(UserAlertSituationStatus.Resolved, updatedSit.getStatus());
+		assertEquals(created, updatedSit.getCreated());
+	}
+
+	@Test
+	public void getByActiveAlertNoAlert() {
+		UserAlertSituation sit = userAlertSituationDao.getActiveAlertSituationForAlert(123L);
+		Assert.assertNull(sit);
+	}
+
+	@Test
+	public void getByActiveAlertAlert() {
+		storeNew();
+		UserAlertSituation sit = userAlertSituationDao.getActiveAlertSituationForAlert(this.userAlert
+				.getId());
+		assertNotNull(sit);
+		assertEquals(this.userAlertSituation.getId(), sit.getId());
+	}
+
+	@Test
+	public void getByActiveAlertAlertResolved() {
+		storeNew();
+		this.userAlertSituation.setStatus(UserAlertSituationStatus.Resolved);
+		userAlertSituationDao.store(this.userAlertSituation);
+		UserAlertSituation sit = userAlertSituationDao.getActiveAlertSituationForAlert(this.userAlert
+				.getId());
+		Assert.assertNull(sit);
+	}
+
+	@Test
+	public void getByActiveAlertAlertAndResolved() {
+		storeNew();
+		this.userAlertSituation.setStatus(UserAlertSituationStatus.Resolved);
+		userAlertSituationDao.store(this.userAlertSituation);
+
+		// store another now, as Active
+		storeNew();
+
+		UserAlertSituation sit = userAlertSituationDao.getActiveAlertSituationForAlert(this.userAlert
+				.getId());
+		assertNotNull(sit);
+		assertEquals(this.userAlertSituation.getId(), sit.getId());
+	}
 
 }

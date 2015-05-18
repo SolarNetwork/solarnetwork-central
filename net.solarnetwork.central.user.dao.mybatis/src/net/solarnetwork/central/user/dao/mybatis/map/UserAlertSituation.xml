@@ -2,52 +2,69 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation">
-<!--
+
 	<insert id="insert-UserAlertSituation" parameterType="UserAlertSituation">
 		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
               SELECT nextval('solaruser.user_alert_seq') AS id 
 		</selectKey>
-		INSERT INTO solaruser.user_user 
-			(id, created, disp_name, email, password, enabled)
+		INSERT INTO solaruser.user_alert_sit 
+			(id, alert_id, status
+			<if test="created != null">,created</if>
+			<if test="notified != null">,notified</if>
+			)
 		VALUES
-			(#{id}, #{created}, #{name}, #{email}, #{password}, #{enabled})
+			(#{id}, #{alert.id}, CAST(#{status} AS solaruser.user_alert_sit_status)
+			<if test="created != null">,#{created}</if>
+			<if test="notified != null">,#{notified}</if>
+			)
 	</insert>
 
 	<update id="update-UserAlertSituation" parameterType="UserAlertSituation">
-		UPDATE solaruser.user_user SET
-			disp_name = #{name}, 
-			email = #{email}, 
-			password = #{password},
-			enabled = #{enabled}
+		UPDATE solaruser.user_alert_sit SET
+			notified = #{notified}, 
+			status = CAST(#{status} AS solaruser.user_alert_sit_status)
 		WHERE
 			id = #{id}
 	</update>
 
 	<sql id="fragment-UserAlertSituation-full-result">
-		u.id AS user_id, 
-		u.created AS user_created,
-		u.disp_name AS user_disp_name,
-		u.email AS user_email,
-		u.password AS user_password,
-		u.enabled AS user_enabled
+		uas.id AS user_alert_sit_id, 
+		uas.created AS user_alert_sit_created,
+		uas.notified AS user_alert_sit_notified,
+		uas.status AS user_alert_sit_status
 	</sql>
 
 	<resultMap id="UserAlertSituationFullResult" type="UserAlertSituation">
-		<id property="id" column="user_id"/>
-		<result property="created" column="user_created"/>
-		<result property="name" column="user_disp_name"/>
-		<result property="email" column="user_email"/>
-		<result property="password" column="user_password"/>
-		<result property="enabled" column="user_enabled"/>
+		<id property="id" column="user_alert_sit_id"/>
+		<result property="created" column="user_alert_sit_created"/>
+		<result property="notified" column="user_alert_sit_notified"/>
+		<result property="status" column="user_alert_sit_status"/>
+		<association property="alert" resultMap="net.solarnetwork.central.user.dao.mybatis.UserAlert.UserAlertFullResult"/>
 	</resultMap>
 	
 	<select id="get-UserAlertSituation-for-id" parameterType="long" resultMap="UserAlertSituationFullResult">
 		SELECT
-			<include refid="fragment-User-full-result"/>
+			<include refid="fragment-UserAlertSituation-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.UserAlert.fragment-UserAlert-full-result"/>
 		FROM
-			solaruser.user_user u
+			solaruser.user_alert_sit uas
+		INNER JOIN
+			solaruser.user_alert ual ON ual.id = uas.alert_id
 		WHERE
-			u.id = #{id}
+			uas.id = #{id}
 	</select>
--->	
+	
+	<select id="get-UserAlertSituation-for-active-alert" parameterType="long" resultMap="UserAlertSituationFullResult">
+		SELECT
+			<include refid="fragment-UserAlertSituation-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.UserAlert.fragment-UserAlert-full-result"/>
+		FROM
+			solaruser.user_alert_sit uas
+		INNER JOIN
+			solaruser.user_alert ual ON ual.id = uas.alert_id
+		WHERE
+			uas.alert_id = #{id}
+			AND uas.status = CAST('Active' AS solaruser.user_alert_sit_status)
+	</select>
+
 </mapper>

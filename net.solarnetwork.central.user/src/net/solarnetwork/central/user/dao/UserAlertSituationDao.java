@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.dao;
 
+import java.util.List;
 import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 
 /**
@@ -32,5 +34,21 @@ import net.solarnetwork.central.user.domain.UserAlertSituation;
  * @version 1.0
  */
 public interface UserAlertSituationDao extends GenericDao<UserAlertSituation, Long> {
+
+	/**
+	 * Get an {@link UserAlertSituation} that is active for a given
+	 * {@link UserAlert} ID. If more than one are active, this will return the
+	 * most recent one only.
+	 * 
+	 * @param alertId
+	 *        The ID of the {@link UserAlert} to get the active situations for.
+	 * @return The found {@link UserAlertSituation}, or <em>null</em> if none
+	 *         available.
+	 */
+	UserAlertSituation getActiveAlertSituationForAlert(Long alertId);
+
+	List<UserAlert> findActiveAlertSituationsForUser(Long userId);
+
+	List<UserAlert> findActiveAlertSituationsForNode(Long nodeId);
 
 }

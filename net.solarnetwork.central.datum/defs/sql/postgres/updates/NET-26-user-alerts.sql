@@ -47,6 +47,10 @@ CREATE TABLE solaruser.user_alert_sit (
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+/* Add index on valid_to so we can batch process only those alerts that need validation. */
+CREATE INDEX user_alert_sit_alert_status_idx ON solaruser.user_alert_sit (alert_id, status);
+
+
 /**
  * Return most recent datum records for all available sources for a given set of node IDs.
  * 
