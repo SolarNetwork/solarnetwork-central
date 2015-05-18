@@ -40,10 +40,13 @@ import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
 import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
 import net.solarnetwork.central.user.dao.UserAlertDao;
+import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertOptions;
+import net.solarnetwork.central.user.domain.UserAlertSituation;
+import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
 import net.solarnetwork.central.user.domain.UserAlertType;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -61,6 +64,9 @@ import org.springframework.context.MessageSource;
  */
 public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor {
 
+	/** The minimum number of ms before an alert reminder will be processed. */
+	private static final int MIN_ALERT_VALID_DELAY = 60000;
+
 	/** The default value for {@link #getBatchSize()}. */
 	public static final Integer DEFAULT_BATCH_SIZE = 50;
 
@@ -70,6 +76,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	private final SolarNodeDao solarNodeDao;
 	private final UserDao userDao;
 	private final UserAlertDao userAlertDao;
+	private final UserAlertSituationDao userAlertSituationDao;
 	private final GeneralNodeDatumDao generalNodeDatumDao;
 	private final MailService mailService;
 	private Integer batchSize = DEFAULT_BATCH_SIZE;
@@ -88,6 +95,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	 *        The {@link UserDao} to use.
 	 * @param userAlertDao
 	 *        The {@link UserAlertDao} to use.
+	 * @param userAlertSituationDao
+	 *        The {@link UserAlertSituationDao} to use.
 	 * @param generalNodeDatumDao
 	 *        The {@link GeneralNodeDatumDao} to use.
 	 * @param mailService
@@ -96,12 +105,13 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	 *        The {@link MessageSource} to use.
 	 */
 	public EmailNodeStaleDataAlertProcessor(SolarNodeDao solarNodeDao, UserDao userDao,
-			UserAlertDao userAlertDao, GeneralNodeDatumDao generalNodeDatumDao, MailService mailService,
-			MessageSource messageSource) {
+			UserAlertDao userAlertDao, UserAlertSituationDao userAlertSituationDao,
+			GeneralNodeDatumDao generalNodeDatumDao, MailService mailService, MessageSource messageSource) {
 		super();
 		this.solarNodeDao = solarNodeDao;
 		this.userDao = userDao;
 		this.userAlertDao = userAlertDao;
+		this.userAlertSituationDao = userAlertSituationDao;
 		this.generalNodeDatumDao = generalNodeDatumDao;
 		this.mailService = mailService;
 		this.messageSource = messageSource;
@@ -109,6 +119,9 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 	@Override
 	public Long processAlerts(Long lastProcessedAlertId, DateTime validDate) {
+		if ( validDate == null ) {
+			validDate = new DateTime();
+		}
 		List<UserAlert> alerts = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
 				lastProcessedAlertId, validDate, batchSize);
 		Long lastAlertId = null;
@@ -167,8 +180,33 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 						}
 
 						if ( stale != null ) {
-							sendAlertMail(alert, stale);
+							// get UserAlertSitutation for this alert
+							UserAlertSituation sit = userAlertSituationDao
+									.getActiveAlertSituationForAlert(alert.getId());
+							if ( sit == null ) {
+								sit = new UserAlertSituation();
+								sit.setCreated(new DateTime(now));
+								sit.setAlert(alert);
+								sit.setStatus(UserAlertSituationStatus.Active);
+								sit.setNotified(new DateTime(now));
+							}
+
+							// taper off the alerts so the become less frequent over time
+							if ( sit.getCreated().getMillis()
+									+ (sit.getNotified().getMillis() - sit.getCreated().getMillis())
+									* 1.5 >= now ) {
+								sendAlertMail(alert, stale);
+								sit.setNotified(new DateTime(now));
+							}
+							if ( sit.getNotified().getMillis() == now ) {
+								userAlertSituationDao.store(sit);
+							}
+							alert.setValidTo(validDate.plus(MIN_ALERT_VALID_DELAY));
+						} else {
+							// not stale, so mark valid for age span
+							alert.setValidTo(validDate.plusSeconds(age.intValue()));
 						}
+						userAlertDao.store(alert);
 						lastAlertId = alert.getId();
 					}
 				}
