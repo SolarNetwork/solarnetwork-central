@@ -251,6 +251,59 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 	}
 
 	@Test
+	public void processOneAlertTriggerSuppressed() {
+		final DateTime batchTime = new DateTime();
+
+		final UserAlert pendingAlert = newUserAlertInstance();
+		pendingAlert.setStatus(UserAlertStatus.Suppressed);
+		List<UserAlert> pendingAlerts = Arrays.asList(pendingAlert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+		final DateTime pendingAlertValidTo = pendingAlert.getValidTo();
+
+		List<GeneralNodeDatumFilterMatch> nodeData = Arrays.asList(newGeneralNodeDatumMatch(
+				new DateTime().minusSeconds(10), TEST_NODE_ID, TEST_SOURCE_ID));
+		BasicFilterResults<GeneralNodeDatumFilterMatch> nodeDataResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
+				nodeData, 1L, 0, 1);
+
+		// first query for pending alerts, starting at beginning
+		EasyMock.expect(
+				userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+						service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		EasyMock.expect(
+				generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
+						EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
+						EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+
+		// then query for active situation
+		EasyMock.expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
+				.andReturn(null);
+
+		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
+		EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation))).andReturn(
+				AlertIdCounter.getAndIncrement());
+
+		// and finally save the alert
+		EasyMock.expect(userAlertDao.store(pendingAlert)).andReturn(pendingAlert.getId());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		Assert.assertEquals("Next staring ID is last processed alert ID", pendingAlert.getId(),
+				startingId);
+		Assert.assertEquals("No mail sent", 0, MailSender.getSent().size());
+		Assert.assertTrue("Situation created", newSituation.hasCaptured());
+		Assert.assertEquals(pendingAlert, newSituation.getValue().getAlert());
+		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
+		Assert.assertNotNull(newSituation.getValue().getNotified());
+		Assert.assertTrue("Saved alert validTo not increased",
+				pendingAlert.getValidTo().equals(pendingAlertValidTo));
+	}
+
+	@Test
 	public void processOneAlertTriggerForUser() {
 		final DateTime batchTime = new DateTime();
 

@@ -50,6 +50,7 @@ import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertOptions;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
+import net.solarnetwork.central.user.domain.UserAlertStatus;
 import net.solarnetwork.central.user.domain.UserAlertType;
 import net.solarnetwork.central.user.domain.UserNode;
 import org.joda.time.DateTime;
@@ -367,6 +368,11 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 	private void sendAlertMail(UserAlert alert, String subjectKey, String resourcePath,
 			GeneralNodeDatumFilterMatch datum) {
+		if ( alert.getStatus() == UserAlertStatus.Suppressed ) {
+			// no emails for this alert
+			log.debug("Alert email suppressed: {}; datum {}; subject {}", alert, datum, subjectKey);
+			return;
+		}
 		User user = userDao.get(alert.getUserId());
 		SolarNode node = solarNodeDao.get(datum.getId().getNodeId());
 		if ( user != null ) {
