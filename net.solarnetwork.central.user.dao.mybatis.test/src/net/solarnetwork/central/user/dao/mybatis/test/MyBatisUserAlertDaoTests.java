@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,8 +34,11 @@ import java.util.Map;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAlertDao;
+import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAlertSituationDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAlert;
+import net.solarnetwork.central.user.domain.UserAlertSituation;
+import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
 import net.solarnetwork.central.user.domain.UserAlertStatus;
 import net.solarnetwork.central.user.domain.UserAlertType;
 import org.joda.time.DateTime;
@@ -50,8 +54,8 @@ import org.junit.Test;
 public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private MyBatisSolarNodeDao solarNodeDao;
-
 	private MyBatisUserAlertDao userAlertDao;
+	private MyBatisUserAlertSituationDao userAlertSituationDao;
 
 	private User user = null;
 	private SolarNode node = null;
@@ -63,6 +67,8 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		solarNodeDao.setSqlSessionFactory(getSqlSessionFactory());
 		userAlertDao = new MyBatisUserAlertDao();
 		userAlertDao.setSqlSessionFactory(getSqlSessionFactory());
+		userAlertSituationDao = new MyBatisUserAlertSituationDao();
+		userAlertSituationDao.setSqlSessionFactory(getSqlSessionFactory());
 
 		setupTestNode();
 		this.node = solarNodeDao.get(TEST_NODE_ID);
@@ -244,5 +250,99 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		}
 		assertEquals(alerts.size(), results.size());
 		assertEquals(alerts, results);
+	}
+
+	@Test
+	public void findAlertsForUserNoResults() {
+		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
+		assertNotNull("Results should never be null", results);
+		assertEquals("No alerts available", 0, results.size());
+	}
+
+	@Test
+	public void findAlertsForUserNoMatch() {
+		storeNew();
+		List<UserAlert> results = userAlertDao.findAlertsForUser(Long.MIN_VALUE);
+		assertNotNull("Results should never be null", results);
+		assertEquals("No alerts available for user", 0, results.size());
+	}
+
+	@Test
+	public void findAlertsForUserNoSituation() {
+		storeNew();
+		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
+		assertNotNull("Results should never be null", results);
+		assertEquals("Alerts available for user", 1, results.size());
+		UserAlert found = results.get(0);
+		assertEquals(this.userAlert.getId(), found.getId());
+		assertNull(found.getSituation());
+	}
+
+	@Test
+	public void findAlertsForUserWithSituationResolved() {
+		storeNew();
+
+		// create a Resolved situation
+		UserAlertSituation resolved = new UserAlertSituation();
+		resolved.setAlert(userAlert);
+		resolved.setCreated(new DateTime());
+		resolved.setStatus(UserAlertSituationStatus.Resolved);
+		resolved.setId(userAlertSituationDao.store(resolved));
+
+		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
+		assertNotNull("Results should never be null", results);
+		assertEquals("Alerts available for user", 1, results.size());
+		UserAlert found = results.get(0);
+		assertEquals(this.userAlert.getId(), found.getId());
+		assertNull(found.getSituation());
+	}
+
+	@Test
+	public void findAlertsForUserWithSituationActive() {
+		storeNew();
+
+		// create an active situation
+		UserAlertSituation sit = new UserAlertSituation();
+		sit.setAlert(userAlert);
+		sit.setCreated(new DateTime());
+		sit.setStatus(UserAlertSituationStatus.Active);
+		sit.setId(userAlertSituationDao.store(sit));
+
+		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
+		assertNotNull("Results should never be null", results);
+		assertEquals("Alerts available for user", 1, results.size());
+		UserAlert found = results.get(0);
+		assertEquals(this.userAlert.getId(), found.getId());
+
+		assertNotNull("Situation associated", found.getSituation());
+		assertEquals(sit.getId(), found.getSituation().getId());
+	}
+
+	@Test
+	public void findAlertsForUserWithSituationActiveAndResolved() {
+		storeNew();
+
+		// create a Resolved situation
+		UserAlertSituation resolved = new UserAlertSituation();
+		resolved.setAlert(userAlert);
+		resolved.setCreated(new DateTime());
+		resolved.setStatus(UserAlertSituationStatus.Resolved);
+		resolved.setId(userAlertSituationDao.store(resolved));
+
+		// create an Active situation
+		UserAlertSituation sit = new UserAlertSituation();
+		sit.setAlert(userAlert);
+		sit.setCreated(new DateTime());
+		sit.setStatus(UserAlertSituationStatus.Active);
+		sit.setId(userAlertSituationDao.store(sit));
+
+		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
+		assertNotNull("Results should never be null", results);
+		assertEquals("Alerts available for user", 1, results.size());
+		UserAlert found = results.get(0);
+		assertEquals(this.userAlert.getId(), found.getId());
+
+		assertNotNull("Situation associated", found.getSituation());
+		assertEquals(sit.getId(), found.getSituation().getId());
 	}
 }

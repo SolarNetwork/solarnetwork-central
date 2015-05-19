@@ -90,4 +90,23 @@
 			ual.id
 	</select>
 	
+	<resultMap id="UserAlertWithSituation" type="UserAlert" extends="UserAlertFullResult">
+		<association property="situation" notNullColumn="user_alert_alert_id" resultMap="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation.UserAlertSituationResult"/>
+	</resultMap>
+	
+	<select id="find-UserAlert-for-user-with-situation" parameterType="long" resultMap="UserAlertWithSituation" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT DISTINCT ON (ual.id)
+			<include refid="fragment-UserAlert-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation.fragment-UserAlertSituation-full-result"/>
+		FROM
+			solaruser.user_alert ual
+		LEFT OUTER JOIN
+			solaruser.user_alert_sit uas ON uas.alert_id = ual.id 
+				AND uas.status = 'Active'::solaruser.user_alert_sit_status 
+		WHERE 
+			ual.user_id = #{id}
+		ORDER BY
+			ual.id, uas.created DESC, uas.id
+	</select>
+	
 </mapper>

@@ -49,7 +49,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class UserAlert extends BaseEntity {
 
-	private static final long serialVersionUID = -7231784761519842163L;
+	private static final long serialVersionUID = 1374111067444093568L;
 
 	private Long userId;
 	private UserAlertType type;
@@ -58,6 +58,9 @@ public class UserAlert extends BaseEntity {
 	private DateTime validTo;
 	private Map<String, Object> options;
 	private String optionsJson;
+
+	// transient
+	private UserAlertSituation situation;
 
 	/**
 	 * Get the options object as a JSON string.
@@ -181,6 +184,14 @@ public class UserAlert extends BaseEntity {
 		}
 		builder.append("}");
 		return builder.toString();
+	}
+
+	public UserAlertSituation getSituation() {
+		return situation;
+	}
+
+	public void setSituation(UserAlertSituation situation) {
+		this.situation = situation;
 	}
 
 }

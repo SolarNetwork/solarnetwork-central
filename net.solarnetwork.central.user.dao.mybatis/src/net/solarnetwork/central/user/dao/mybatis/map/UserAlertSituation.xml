@@ -30,15 +30,19 @@
 	<sql id="fragment-UserAlertSituation-full-result">
 		uas.id AS user_alert_sit_id, 
 		uas.created AS user_alert_sit_created,
+		uas.alert_id AS user_alert_alert_id,
 		uas.notified AS user_alert_sit_notified,
 		uas.status AS user_alert_sit_status
 	</sql>
 
-	<resultMap id="UserAlertSituationFullResult" type="UserAlertSituation">
+	<resultMap id="UserAlertSituationResult" type="UserAlertSituation">
 		<id property="id" column="user_alert_sit_id"/>
 		<result property="created" column="user_alert_sit_created"/>
 		<result property="notified" column="user_alert_sit_notified"/>
 		<result property="status" column="user_alert_sit_status"/>
+	</resultMap>
+	
+	<resultMap id="UserAlertSituationFullResult" type="UserAlertSituation" extends="UserAlertSituationResult">
 		<association property="alert" resultMap="net.solarnetwork.central.user.dao.mybatis.UserAlert.UserAlertFullResult"/>
 	</resultMap>
 	
@@ -64,7 +68,7 @@
 			solaruser.user_alert ual ON ual.id = uas.alert_id
 		WHERE
 			uas.alert_id = #{id}
-			AND uas.status = CAST('Active' AS solaruser.user_alert_sit_status)
+			AND uas.status = 'Active'::solaruser.user_alert_sit_status
 	</select>
 
 	<update id="delete-UserAlertSituation-resolved" statementType="CALLABLE" parameterType="map">

@@ -47,6 +47,9 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	 */
 	public static final String QUERY_FOR_PROCESSING = "find-UserAlert-for-processing";
 
+	/** The query name used for {@link #findAlertsForUser(Long)}. */
+	public static final String QUERY_FOR_USER_WITH_SITUATION = "find-UserAlert-for-user-with-situation";
+
 	/**
 	 * Default constructor.
 	 */
@@ -66,6 +69,13 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 		}
 		params.put("validDate", (validDate == null ? new DateTime() : validDate));
 		return selectList(QUERY_FOR_PROCESSING, params, null, max);
+	}
+
+	@Override
+	// Propagation.REQUIRED for server-side cursors
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	public List<UserAlert> findAlertsForUser(Long userId) {
+		return selectList(QUERY_FOR_USER_WITH_SITUATION, userId, null, null);
 	}
 
 }

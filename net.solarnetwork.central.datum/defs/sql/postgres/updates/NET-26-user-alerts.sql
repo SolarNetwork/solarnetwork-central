@@ -70,6 +70,10 @@ CREATE INDEX user_alert_node_idx ON solaruser.user_alert (node_id);
 /* Add index on valid_to so we can batch process only those alerts that need validation. */
 CREATE INDEX user_alert_valid_idx ON solaruser.user_alert (valid_to);
 
+/* Add index on user_id so we can show all alerts to user. */
+CREATE INDEX user_alert_user_idx ON solaruser.user_alert (user_id);
+
+
 CREATE TABLE solaruser.user_alert_sit (
 	id				BIGINT NOT NULL DEFAULT nextval('solaruser.user_alert_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -82,8 +86,8 @@ CREATE TABLE solaruser.user_alert_sit (
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-/* Add index on valid_to so we can batch process only those alerts that need validation. */
-CREATE INDEX user_alert_sit_alert_status_idx ON solaruser.user_alert_sit (alert_id, status);
+/* Add index on alert_id, created so we can quickly get most recent for given alert. */
+CREATE INDEX user_alert_sit_alert_created_idx ON solaruser.user_alert_sit (alert_id, created DESC);
 
 /* Add a partial index on notified to support purging resolved situations. */
 CREATE INDEX user_alert_sit_notified_idx ON solaruser.user_alert_sit (notified)
