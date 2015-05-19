@@ -67,7 +67,7 @@ public class UserAlertController extends ControllerSupport {
 			}
 			model.addAttribute("nodeDataAlerts", nodeDataAlerts);
 		}
-		return "alerts/view";
+		return "alerts/view-alerts";
 	}
 
 }
