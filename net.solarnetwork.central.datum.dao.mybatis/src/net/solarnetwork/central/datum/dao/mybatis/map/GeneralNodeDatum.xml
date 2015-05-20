@@ -83,7 +83,7 @@
 	<select id="find-general-most-recent" resultMap="GeneralNodeDatumDirectMatchResult" statementType="CALLABLE">
 		<choose>
 			<when test="filter.userIds != null">
-				{call solardatum.find_most_recent_for_user(
+				{call solaruser.find_most_recent_datum_for_user(
 					#{filter.userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
 				)}
 			</when>

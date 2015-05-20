@@ -7,7 +7,7 @@ CREATE INDEX user_node_user_idx ON solaruser.user_node (user_id);
  * @param users An array of user IDs to return results for.
  * @returns Set of solardatum.da_datum records.
  */
-CREATE OR REPLACE FUNCTION solardatum.find_most_recent_for_user(users bigint[])
+CREATE OR REPLACE FUNCTION solaruser.find_most_recent_datum_for_user(users bigint[])
   RETURNS SETOF solardatum.da_datum AS
 $BODY$
 	SELECT r.* 
