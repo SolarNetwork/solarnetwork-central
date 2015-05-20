@@ -235,7 +235,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		SimpleMailMessage sentMail = MailSender.getSent().element();
 		Assert.assertEquals("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale",
 				sentMail.getSubject());
-		Assert.assertTrue("Mail has source ID", sentMail.getText().contains("source " + TEST_SOURCE_ID));
+		Assert.assertTrue("Mail has source ID", sentMail.getText()
+				.contains("source \"" + TEST_SOURCE_ID));
 		Assert.assertTrue(
 				"Mail has formatted datum date",
 				sentMail.getText().contains(
@@ -366,7 +367,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		SimpleMailMessage sentMail = MailSender.getSent().element();
 		Assert.assertEquals("SolarNetwork alert: SolarNode " + TEST_NODE_ID_2 + " data is stale",
 				sentMail.getSubject());
-		Assert.assertTrue("Mail has source ID", sentMail.getText().contains("source " + TEST_SOURCE_ID));
+		Assert.assertTrue("Mail has source ID", sentMail.getText()
+				.contains("source \"" + TEST_SOURCE_ID));
 		Assert.assertTrue(
 				"Mail has formatted datum date",
 				sentMail.getText().contains(
@@ -516,7 +518,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 					Assert.assertEquals("SolarNetwork alert: SolarNode " + TEST_NODE_ID
 							+ " data is stale", sentMail.getSubject());
 					Assert.assertTrue("Mail has source ID",
-							sentMail.getText().contains("source " + TEST_SOURCE_ID));
+							sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
 					Assert.assertTrue(
 							"Mail has formatted datum date",
 							sentMail.getText().contains(
@@ -584,7 +586,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		SimpleMailMessage sentMail = MailSender.getSent().element();
 		Assert.assertEquals("SolarNetwork alert resolved: SolarNode " + TEST_NODE_ID
 				+ " data is no longer stale", sentMail.getSubject());
-		Assert.assertTrue("Mail has source ID", sentMail.getText().contains("source " + TEST_SOURCE_ID));
+		Assert.assertTrue("Mail has source ID", sentMail.getText()
+				.contains("source \"" + TEST_SOURCE_ID));
 		Assert.assertTrue(
 				"Mail has formatted datum date",
 				sentMail.getText()
