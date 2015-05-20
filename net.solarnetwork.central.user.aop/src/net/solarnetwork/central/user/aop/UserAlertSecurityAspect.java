@@ -64,6 +64,14 @@ public class UserAlertSecurityAspect extends AuthorizationSupport {
 	public void saveAlert(UserAlert alert) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.alertSituation(..)) && args(alertId)")
+	public void getAlert(Long alertId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.updateSituationStatus(..)) && args(alertId, ..)")
+	public void updateSituationStatus(Long alertId) {
+	}
+
 	@Before("findAlertsForUser(userId)")
 	public void checkViewAlertsForUser(Long userId) {
 		requireUserReadAccess(userId);
@@ -83,4 +91,23 @@ public class UserAlertSecurityAspect extends AuthorizationSupport {
 		}
 	}
 
+	@Before("getAlert(alertId)")
+	public void checkGetAlert(Long alertId) {
+		// check userID of existing alert
+		UserAlert entity = userAlertDao.get(alertId);
+		if ( entity == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, alertId);
+		}
+		requireUserReadAccess(entity.getUserId());
+	}
+
+	@Before("updateSituationStatus(alertId)")
+	public void checkUpdateAlertProperties(Long alertId) {
+		// check userID of existing alert
+		UserAlert entity = userAlertDao.get(alertId);
+		if ( entity == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, alertId);
+		}
+		requireUserWriteAccess(entity.getUserId());
+	}
 }

@@ -25,7 +25,9 @@ package net.solarnetwork.central.user.biz.dao;
 import java.util.List;
 import net.solarnetwork.central.user.biz.UserAlertBiz;
 import net.solarnetwork.central.user.dao.UserAlertDao;
+import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 import net.solarnetwork.central.user.domain.UserAlert;
+import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,10 +40,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class DaoUserAlertBiz implements UserAlertBiz {
 
 	private final UserAlertDao userAlertDao;
+	private final UserAlertSituationDao userAlertSituationDao;
 
-	public DaoUserAlertBiz(UserAlertDao userAlertDao) {
+	public DaoUserAlertBiz(UserAlertDao userAlertDao, UserAlertSituationDao userAlertSituationDao) {
 		super();
 		this.userAlertDao = userAlertDao;
+		this.userAlertSituationDao = userAlertSituationDao;
 	}
 
 	@Override
@@ -54,6 +58,24 @@ public class DaoUserAlertBiz implements UserAlertBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Long saveAlert(UserAlert alert) {
 		return userAlertDao.store(alert);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public UserAlert alertSituation(Long alertId) {
+		return userAlertDao.getAlertSituation(alertId);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public UserAlert updateSituationStatus(Long alertId, UserAlertSituationStatus status) {
+		UserAlert alert = alertSituation(alertId);
+		if ( alert != null && alert.getSituation() != null
+				&& !alert.getSituation().getStatus().equals(status) ) {
+			alert.getSituation().setStatus(status);
+			userAlertSituationDao.store(alert.getSituation());
+		}
+		return alert;
 	}
 
 }

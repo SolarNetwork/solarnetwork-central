@@ -23,6 +23,7 @@
 
 	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
 	<reference id="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao"/>
+	<reference id="userAlertSituationDao" interface="net.solarnetwork.central.user.dao.UserAlertSituationDao"/>
 	<reference id="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao"/>
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 	<reference id="userNodeCertificateDao" interface="net.solarnetwork.central.user.dao.UserNodeCertificateDao"/>
@@ -107,6 +108,7 @@
 	
 	<bean id="daoUserAlertBiz" class="net.solarnetwork.central.user.biz.dao.DaoUserAlertBiz">
 		<argument ref="userAlertDao"/>
+		<argument ref="userAlertSituationDao"/>
 	</bean>
 	
 </blueprint>

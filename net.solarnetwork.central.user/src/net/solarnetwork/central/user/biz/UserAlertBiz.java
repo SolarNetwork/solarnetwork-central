@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.biz;
 import java.util.List;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
+import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
 
 /**
  * API for user alert tasks.
@@ -55,5 +56,28 @@ public interface UserAlertBiz {
 	 * @return The primary key of the saved alert.
 	 */
 	Long saveAlert(UserAlert alert);
+
+	/**
+	 * Get an alert with the most recently available <em>active</em>
+	 * {@link UserAlertSituation} populated, if one exists.
+	 * 
+	 * @param alertId
+	 *        The ID of the alert to get.
+	 * @return The alert, or <em>null</em> if not available.
+	 */
+	UserAlert alertSituation(Long alertId);
+
+	/**
+	 * Update an alert <em>active</em> situation's status. If the given alert
+	 * does not have an active situation, nothing will be updated.
+	 * 
+	 * @param alertId
+	 *        The ID of the alert to update the situation status of.
+	 * @param status
+	 *        The status to update the situation to.
+	 * @return The updated alert, or <em>null</em> if not available. The
+	 *         {@link UserAlertSituation} will be populated, if one was updated.
+	 */
+	UserAlert updateSituationStatus(Long alertId, UserAlertSituationStatus status);
 
 }

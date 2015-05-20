@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.support;
 import java.util.List;
 import net.solarnetwork.central.user.biz.UserAlertBiz;
 import net.solarnetwork.central.user.domain.UserAlert;
+import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
 
 /**
  * Delegating implementation of {@link UserAlertBiz}, mostly to help with AOP.
@@ -55,6 +56,16 @@ public class DelegatingUserAlertBiz implements UserAlertBiz {
 	@Override
 	public Long saveAlert(UserAlert alert) {
 		return delegate.saveAlert(alert);
+	}
+
+	@Override
+	public UserAlert alertSituation(Long alertId) {
+		return delegate.alertSituation(alertId);
+	}
+
+	@Override
+	public UserAlert updateSituationStatus(Long alertId, UserAlertSituationStatus status) {
+		return delegate.updateSituationStatus(alertId, status);
 	}
 
 }

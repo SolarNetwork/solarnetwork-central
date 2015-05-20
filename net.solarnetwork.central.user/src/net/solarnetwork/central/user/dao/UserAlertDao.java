@@ -73,4 +73,15 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 */
 	List<UserAlert> findAlertsForUser(Long userId);
 
+	/**
+	 * Get a specific alert with the most recently available active
+	 * {@link UserAlertSituation} populated on the
+	 * {@link UserAlert#getSituation()} property.
+	 * 
+	 * @param alertId
+	 *        The ID of the alert to get.
+	 * @return The found alert, or <em>null</em> if not available.
+	 */
+	UserAlert getAlertSituation(Long alertId);
+
 }

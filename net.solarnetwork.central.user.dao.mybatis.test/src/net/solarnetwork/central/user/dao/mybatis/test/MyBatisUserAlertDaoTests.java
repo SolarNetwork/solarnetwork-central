@@ -345,4 +345,75 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		assertNotNull("Situation associated", found.getSituation());
 		assertEquals(sit.getId(), found.getSituation().getId());
 	}
+
+	@Test
+	public void getAlertWithSituationNoSituation() {
+		storeNew();
+		UserAlert found = userAlertDao.getAlertSituation(userAlert.getId());
+		assertNotNull("Alert available", found);
+		assertEquals(this.userAlert.getId(), found.getId());
+		assertNull("No active situation", found.getSituation());
+	}
+
+	@Test
+	public void getAlertWithSituationSituationResolved() {
+		storeNew();
+
+		// create a Resolved situation
+		UserAlertSituation resolved = new UserAlertSituation();
+		resolved.setAlert(userAlert);
+		resolved.setCreated(new DateTime());
+		resolved.setStatus(UserAlertSituationStatus.Resolved);
+		resolved.setId(userAlertSituationDao.store(resolved));
+
+		UserAlert found = userAlertDao.getAlertSituation(userAlert.getId());
+		assertNotNull("Alert available", found);
+		assertEquals(this.userAlert.getId(), found.getId());
+		assertNull("No active situation", found.getSituation());
+	}
+
+	@Test
+	public void getAlertWithSituationSituationActive() {
+		storeNew();
+
+		// create an active situation
+		UserAlertSituation sit = new UserAlertSituation();
+		sit.setAlert(userAlert);
+		sit.setCreated(new DateTime());
+		sit.setStatus(UserAlertSituationStatus.Active);
+		sit.setId(userAlertSituationDao.store(sit));
+
+		UserAlert found = userAlertDao.getAlertSituation(userAlert.getId());
+		assertNotNull("Alert available", found);
+		assertEquals(this.userAlert.getId(), found.getId());
+
+		assertNotNull("Situation associated", found.getSituation());
+		assertEquals(sit.getId(), found.getSituation().getId());
+	}
+
+	@Test
+	public void getAlertWithSituationSituationActiveAndResolved() {
+		storeNew();
+
+		// create a Resolved situation
+		UserAlertSituation resolved = new UserAlertSituation();
+		resolved.setAlert(userAlert);
+		resolved.setCreated(new DateTime());
+		resolved.setStatus(UserAlertSituationStatus.Resolved);
+		resolved.setId(userAlertSituationDao.store(resolved));
+
+		// create an Active situation
+		UserAlertSituation sit = new UserAlertSituation();
+		sit.setAlert(userAlert);
+		sit.setCreated(new DateTime());
+		sit.setStatus(UserAlertSituationStatus.Active);
+		sit.setId(userAlertSituationDao.store(sit));
+
+		UserAlert found = userAlertDao.getAlertSituation(userAlert.getId());
+		assertNotNull("Alert available", found);
+		assertEquals(this.userAlert.getId(), found.getId());
+
+		assertNotNull("Situation associated", found.getSituation());
+		assertEquals(sit.getId(), found.getSituation().getId());
+	}
 }
