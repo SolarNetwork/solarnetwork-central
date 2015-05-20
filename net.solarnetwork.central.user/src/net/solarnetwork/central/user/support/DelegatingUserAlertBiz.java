@@ -52,4 +52,9 @@ public class DelegatingUserAlertBiz implements UserAlertBiz {
 		return delegate.userAlertsForUser(userId);
 	}
 
+	@Override
+	public Long saveAlert(UserAlert alert) {
+		return delegate.saveAlert(alert);
+	}
+
 }

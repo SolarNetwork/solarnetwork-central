@@ -46,4 +46,14 @@ public interface UserAlertBiz {
 	 */
 	List<UserAlert> userAlertsForUser(Long userId);
 
+	/**
+	 * Save an alert. This method can be used to create new alerts or update
+	 * existing alerts.
+	 * 
+	 * @param alert
+	 *        The alert to save.
+	 * @return The primary key of the saved alert.
+	 */
+	Long saveAlert(UserAlert alert);
+
 }

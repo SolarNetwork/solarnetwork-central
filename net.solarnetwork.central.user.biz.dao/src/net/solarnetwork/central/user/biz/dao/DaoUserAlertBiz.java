@@ -50,4 +50,10 @@ public class DaoUserAlertBiz implements UserAlertBiz {
 		return userAlertDao.findAlertsForUser(userId);
 	}
 
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public Long saveAlert(UserAlert alert) {
+		return userAlertDao.store(alert);
+	}
+
 }

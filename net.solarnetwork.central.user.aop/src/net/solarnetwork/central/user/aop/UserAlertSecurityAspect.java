@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.aop;
 
 import net.solarnetwork.central.user.biz.UserAlertBiz;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -52,9 +53,18 @@ public class UserAlertSecurityAspect extends AuthorizationSupport {
 	public void findAlertsForUser(Long userId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.saveAlert(..)) && args(alert)")
+	public void saveAlert(UserAlert alert) {
+	}
+
 	@Before("findAlertsForUser(userId)")
 	public void checkViewAlertsForUser(Long userId) {
 		requireUserReadAccess(userId);
+	}
+
+	@Before("saveAlert(alert)")
+	public void checkViewAlertsForUser(UserAlert alert) {
+		requireUserWriteAccess(alert.getUserId());
 	}
 
 }
