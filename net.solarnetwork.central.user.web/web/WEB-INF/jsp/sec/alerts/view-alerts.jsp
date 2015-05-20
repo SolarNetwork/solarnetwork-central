@@ -106,10 +106,8 @@
 					<div class="col-sm-10 checkbox">
 						<select name="type" class="form-control" id="create-node-data-alert-type">
 							<c:forEach items="${nodeDataAlertTypes}" var="alertType">
-								<c:set var="alertTypeLabel">alert.type.${alertType}.label</c:set>
-								<c:set var="alertTypeCaption">alert.type.${alertType}.caption</c:set>
-								<option value="${alertType}" title="<fmt:message key='${alertTypeCaption}'/>">
-									<fmt:message key='${alertTypeLabel}'/>
+								<option value="${alertType}" title="<fmt:message key='alert.type.${alertType}.caption'/>">
+									<fmt:message key='alert.type.${alertType}.label'/>
 								</option>
 							</c:forEach>
 						</select>
@@ -133,14 +131,12 @@
 		 			<label class="col-sm-2 control-label" for="create-node-data-alert-status"><fmt:message key='alert.status.label'/></label>
 					<div class="col-sm-10" id="create-node-data-alert-status">
 						<c:forEach items="${alertStatuses}" var="alertStatus" varStatus="itr">
-							<c:set var="alertStatusLabel">alert.status.${alertStatus}.label</c:set>
-							<c:set var="alertStatusCaption">alert.status.${alertStatus}.caption</c:set>
 							<label class="radio-inline">
 								<input type="radio" name="status" value="${alertStatus}" 
 									<c:if test='${itr.first}'>checked</c:if>
-									title="<fmt:message key='${alertStatusCaption}'/>"/>
+									title="<fmt:message key='alert.status.${alertStatus}.caption'/>"/>
 								<c:out value=" "/>
-								<fmt:message key='${alertStatusLabel}'/>
+								<fmt:message key='alert.status.${alertStatus}.label'/>
 							</label>
 						</c:forEach>
 						<div class="help-block alert-status-help"></div>
