@@ -12,7 +12,7 @@
 <section id="node-data-alerts">
 	<h2>
 		<fmt:message key='alerts.node.data.header'/>
-		<button type="button" id="add-node-data-button" class="btn btn-primary pull-right" data-target="#create-node-data-alert-modal" data-toggle="modal">
+		<button type="button" id="add-node-data-button" class="btn btn-primary pull-right">
 			<i class="glyphicon glyphicon-plus"></i> <fmt:message key='alerts.action.create'/>
 		</button>
 	</h2>
@@ -35,7 +35,7 @@
 			</thead>
 			<tbody>
 				<c:forEach items="${nodeDataAlerts}" var="alert">
-					<tr class="alert-row" data-node-id="${alert.nodeId}" data-alert-id="${alert.id}">
+					<tr class="alert-row">
 						<td>
 							<c:choose>
 								<c:when test="${alert.nodeId != null}">
@@ -50,17 +50,23 @@
 							<fmt:message key='alert.type.${alert.type}.label'/>
 						</td>
 						<td>
-							<c:if test="${not empty alert.options.sourceIds}">
-								<c:forEach items="${alert.options.sourceIds}" var="source" varStatus="itr">
-									<c:if test="${not itr.first}">, </c:if>
-									${source}
-								</c:forEach>
-							</c:if>
+							<c:set var="alertSources">
+								<c:if test="${not empty alert.options.sourceIds}">
+									<c:forEach items="${alert.options.sourceIds}" var="source" varStatus="itr">
+										<c:if test="${not itr.first}">, </c:if>
+										${source}
+									</c:forEach>
+								</c:if>
+							</c:set>
+							<c:out value="${alertSources}"/>
 						</td>
 						<td>
-							<c:if test="${alert.options.age != null}">
-								<fmt:formatNumber type="number" maxFractionDigits="0">${alert.options.age / 60}</fmt:formatNumber>
-							</c:if>
+							<c:set var="alertAge">
+								<c:if test="${alert.options.age != null}">
+									<fmt:formatNumber type="number" maxFractionDigits="0" >${alert.options.age / 60}</fmt:formatNumber>
+								</c:if>
+							</c:set>
+							<c:out value="${alertAge}"/>
 						</td>
 						<td>
 							<span class="label${alert.status eq 'Active' 
@@ -70,7 +76,12 @@
 							</span>
 						</td>
 						<td>
-						
+							<button type="button" class="btn btn-small btn-default edit-alert"
+								data-node-id="${alert.nodeId}" data-alert-id="${alert.id}"
+								data-alert-type="${alert.type}" data-alert-status="${alert.status}"
+								data-sources="${alertSources}" data-age="${alertAge}">
+								<fmt:message key='alerts.action.edit'/>
+							</button>
 						</td>
 					</tr>
 				</c:forEach>
@@ -81,7 +92,7 @@
 
 <%-- Modal views --%>
 
-<form id="create-node-data-alert-modal" class="modal fade alert-form" action="<c:url value='/u/sec/alerts/add'/>" method="post">
+<form id="create-node-data-alert-modal" class="modal fade alert-form" action="<c:url value='/u/sec/alerts/save'/>" method="post">
 	<div class="modal-dialog">
 		<div class="modal-content">
 		 	<div class="modal-header">
@@ -116,7 +127,7 @@
 		 		<div class="form-group">
 		 			<label class="col-sm-2 control-label" for="create-node-data-alert-age"><fmt:message key='alert.options.ageMinutes.label'/></label>
 					<div class="col-sm-10">
-						<input name='options["ageMinutes"]' type="number" min="10" required="required" value="30" class="form-control col-sm-3" id="create-node-data-alert-sources"/>
+						<input name='options["ageMinutes"]' type="number" min="10" required="required" value="30" class="form-control col-sm-3" id="create-node-data-alert-age"/>
 						<span class="help-block"><fmt:message key="alert.options.ageMinutes.caption"/></span>
 					</div>
 		 		</div>
@@ -146,10 +157,10 @@
 		 	<div class="modal-footer">
 		 		<a href="#" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></a>
 		 		<button type="submit" class="btn btn-primary before">
-		 			<fmt:message key='alerts.action.create'/>
+		 			<fmt:message key='alerts.action.save'/>
 		 		</button>
 		 	</div>
 		</div>
 	</div>
-	<input type="hidden" name="type" value="NodeStaleData"/><%-- At the momemnt, this is the only supported type --%>
+	<input type="hidden" name="id" value=""/>
 </form>

@@ -105,15 +105,20 @@ public class UserAlertController extends ControllerSupport {
 		return "alerts/view-alerts";
 	}
 
-	@RequestMapping(value = "/add", method = RequestMethod.POST)
+	@RequestMapping(value = "/save", method = RequestMethod.POST)
 	@ResponseBody
 	public Response<UserAlert> addAlert(UserAlert model, Errors alertErrors) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		UserAlert alert = new UserAlert();
+		alert.setId(model.getId());
+		alert.setNodeId(model.getNodeId());
 		alert.setUserId(user.getUserId());
 		alert.setCreated(new DateTime());
 		alert.setStatus(model.getStatus() == null ? UserAlertStatus.Active : model.getStatus());
 		alert.setType(model.getType() == null ? UserAlertType.NodeStaleData : model.getType());
+
+		// reset validTo date to now, so alert re-processed
+		alert.setValidTo(new DateTime());
 
 		Map<String, Object> options = new HashMap<String, Object>();
 		if ( model.getOptions() != null ) {
@@ -128,7 +133,7 @@ public class UserAlertController extends ControllerSupport {
 						// ignore
 						log.warn("Alert option ageMinutes is not a number, setting to 1: [{}]", v);
 					}
-					options.put(UserAlertOptions.AGE_THRESHOLD, minutes * 60.0);
+					options.put(UserAlertOptions.AGE_THRESHOLD, Math.round(minutes * 60.0));
 				} else if ( "sources".equalsIgnoreCase(me.getKey()) && me.getValue() != null ) {
 					// convert sources to List of String
 					Set<String> sources = StringUtils
