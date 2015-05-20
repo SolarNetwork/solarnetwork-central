@@ -23,14 +23,19 @@
 package net.solarnetwork.central.reg.web;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserAlertBiz;
+import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.UserAlert;
+import net.solarnetwork.central.user.domain.UserAlertStatus;
+import net.solarnetwork.central.user.domain.UserAlertType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -44,12 +49,25 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @RequestMapping("/sec/alerts")
 public class UserAlertController extends ControllerSupport {
 
+	private final UserBiz userBiz;
 	private final UserAlertBiz userAlertBiz;
 
 	@Autowired
-	public UserAlertController(UserAlertBiz userAlertBiz) {
+	public UserAlertController(UserBiz userBiz, UserAlertBiz userAlertBiz) {
 		super();
+		this.userBiz = userBiz;
 		this.userAlertBiz = userAlertBiz;
+	}
+
+	@ModelAttribute("nodeDataAlertTypes")
+	public List<UserAlertType> nodeDataAlertTypes() {
+		// now now, only one alert type!
+		return Collections.singletonList(UserAlertType.NodeStaleData);
+	}
+
+	@ModelAttribute("alertStatuses")
+	public UserAlertStatus[] alertStatuses() {
+		return UserAlertStatus.values();
 	}
 
 	@RequestMapping(value = "", method = RequestMethod.GET)
@@ -67,6 +85,7 @@ public class UserAlertController extends ControllerSupport {
 			}
 			model.addAttribute("nodeDataAlerts", nodeDataAlerts);
 		}
+		model.addAttribute("userNodes", userBiz.getUserNodes(user.getUserId()));
 		return "alerts/view-alerts";
 	}
 
