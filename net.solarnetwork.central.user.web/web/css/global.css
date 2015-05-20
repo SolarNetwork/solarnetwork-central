@@ -72,3 +72,8 @@ section + section {
 #create-data-auth-token .checkbox label {
 	margin-right: 18px;
 }
+
+.modal-header.bg-danger {
+	border-top-left-radius: 6px;
+	border-top-right-radius: 6px;
+}
