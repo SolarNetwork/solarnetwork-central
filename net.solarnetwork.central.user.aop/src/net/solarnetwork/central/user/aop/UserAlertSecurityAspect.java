@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.aop;
 
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.biz.UserAlertBiz;
+import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
@@ -39,14 +41,19 @@ import org.aspectj.lang.annotation.Pointcut;
 @Aspect
 public class UserAlertSecurityAspect extends AuthorizationSupport {
 
+	private final UserAlertDao userAlertDao;
+
 	/**
 	 * Constructor.
 	 * 
 	 * @param userNodeDao
 	 *        The {@link UserNodeDao} to use.
+	 * @param userAlertDao
+	 *        The {@link UserAlertDao} to use.
 	 */
-	public UserAlertSecurityAspect(UserNodeDao userNodeDao) {
+	public UserAlertSecurityAspect(UserNodeDao userNodeDao, UserAlertDao userAlertDao) {
 		super(userNodeDao);
+		this.userAlertDao = userAlertDao;
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.userAlertsForUser(..)) && args(userId)")
@@ -63,8 +70,17 @@ public class UserAlertSecurityAspect extends AuthorizationSupport {
 	}
 
 	@Before("saveAlert(alert)")
-	public void checkViewAlertsForUser(UserAlert alert) {
+	public void checkSaveAlert(UserAlert alert) {
 		requireUserWriteAccess(alert.getUserId());
+		if ( alert.getId() != null ) {
+			// check userID not being changed
+			UserAlert entity = userAlertDao.get(alert.getId());
+			if ( entity == null ) {
+				throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT,
+						alert.getId());
+			}
+			requireUserWriteAccess(entity.getUserId());
+		}
 	}
 
 }

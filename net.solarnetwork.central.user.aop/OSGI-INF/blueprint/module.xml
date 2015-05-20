@@ -11,6 +11,7 @@
 	<!-- Service References -->
 
 	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
+	<reference id="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao"/>
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 	<reference id="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao"/>
 
@@ -62,6 +63,7 @@
 	
 	<bean id="userAlertSecurityAspect" class="net.solarnetwork.central.user.aop.UserAlertSecurityAspect">
 		<argument ref="userNodeDao"/>
+		<argument ref="userAlertDao"/>
 	</bean>
 	
 	<bean id="aopUserBiz" class="net.solarnetwork.central.user.support.DelegatingUserBiz">
