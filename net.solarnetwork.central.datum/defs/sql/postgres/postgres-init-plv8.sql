@@ -1,6 +1,5 @@
 CREATE OR REPLACE FUNCTION public.plv8_startup()
-  RETURNS void 
-  LANGUAGE plv8 AS
+  RETURNS void AS
 $BODY$
 'use strict';
 /**
@@ -131,4 +130,5 @@ this.sn.util.merge = function(result, obj) {
 
 	return result;
 };
-$BODY$;
+$BODY$
+LANGUAGE plv8;
