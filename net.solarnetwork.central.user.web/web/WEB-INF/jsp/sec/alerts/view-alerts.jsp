@@ -18,21 +18,60 @@
 	</h2>
 	<p class="intro">
 		<fmt:message key='alerts.node.data.intro'>
-			<fmt:param value="${fn:length(userAlerts)}"/>
+			<fmt:param value="${fn:length(nodeDataAlerts)}"/>
 		</fmt:message>
 	</p>
-	<c:if test="${not empty userAlerts}">
+	<c:if test="${not empty nodeDataAlerts}">
 		<table class="table" id="node-data-alerts">
 			<thead>
 				<tr>
 					<th><fmt:message key="alert.nodeId.label"/></th>
+					<th><fmt:message key="alert.type.label"/></th>
+					<th><fmt:message key="alert.options.sourceIds.label"/></th>
+					<th><fmt:message key="alert.options.ageMinutes.heading"/></th>
+					<th><fmt:message key="alert.status.label"/></th>
 					<th></th>
 				</tr>
 			</thead>
 			<tbody>
-				<c:forEach items="${userAlerts}" var="alert">
-					<tr class="alert-row" data-node-id="${userAlert.nodeId}" data-alert-id="${userAlert.id}">
-						<td>${userAlert.nodeId}</td>
+				<c:forEach items="${nodeDataAlerts}" var="alert">
+					<tr class="alert-row" data-node-id="${alert.nodeId}" data-alert-id="${alert.id}">
+						<td>
+							<c:choose>
+								<c:when test="${alert.nodeId != null}">
+									${alert.nodeId}
+								</c:when>
+								<c:otherwise>
+									<fmt:message key='alert.nodeId.any'/>
+								</c:otherwise>
+							</c:choose>
+						</td>
+						<td>
+							<fmt:message key='alert.type.${alert.type}.label'/>
+						</td>
+						<td>
+							<c:if test="${not empty alert.options.sourceIds}">
+								<c:forEach items="${alert.options.sourceIds}" var="source" varStatus="itr">
+									<c:if test="${not itr.first}">, </c:if>
+									${source}
+								</c:forEach>
+							</c:if>
+						</td>
+						<td>
+							<c:if test="${alert.options.age != null}">
+								<fmt:formatNumber type="number" maxFractionDigits="0">${alert.options.age / 60}</fmt:formatNumber>
+							</c:if>
+						</td>
+						<td>
+							<span class="label${alert.status eq 'Active' 
+								? ' label-success' : alert.status eq 'Disabled' 
+								? ' label-default' : ' label-primary'}">
+								<fmt:message key='alert.status.${alert.status}.label'/>
+							</span>
+						</td>
+						<td>
+						
+						</td>
 					</tr>
 				</c:forEach>
 			</tbody>
@@ -77,10 +116,17 @@
 					</div>
 				</div>
 		 		<div class="form-group">
-		 			<label class="col-sm-2 control-label" for="create-node-data-alert-sources"><fmt:message key='alert.sourceIds.label'/></label>
+		 			<label class="col-sm-2 control-label" for="create-node-data-alert-age"><fmt:message key='alert.options.ageMinutes.label'/></label>
 					<div class="col-sm-10">
-						<input name="name" type="text" maxlength="255" class="form-control" id="create-node-data-alert-sources"/>
-						<span class="help-block"><fmt:message key="alert.sourceIds.caption"/></span>
+						<input name='options["ageMinutes"]' type="number" min="10" required="required" value="30" class="form-control col-sm-3" id="create-node-data-alert-sources"/>
+						<span class="help-block"><fmt:message key="alert.options.ageMinutes.caption"/></span>
+					</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-2 control-label" for="create-node-data-alert-sources"><fmt:message key='alert.options.sourceIds.label'/></label>
+					<div class="col-sm-10">
+						<input name='options["sources"]' type="text" maxlength="255" class="form-control" id="create-node-data-alert-sources"/>
+						<span class="help-block"><fmt:message key="alert.options.sourceIds.caption"/></span>
 					</div>
 		 		</div>
 		 		<div class="form-group">
