@@ -31,6 +31,7 @@ import net.solarnetwork.util.SerializeIgnore;
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * An alert condition definition. User alerts are designed to cover conditions
@@ -47,6 +48,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author matt
  * @version 1.0
  */
+@JsonPropertyOrder({ "id", "created", "userId", "nodeId", "type", "status", "validTo", "options" })
 public class UserAlert extends BaseEntity {
 
 	private static final long serialVersionUID = 1374111067444093568L;
@@ -139,8 +141,7 @@ public class UserAlert extends BaseEntity {
 	}
 
 	@SuppressWarnings("unchecked")
-	@SerializeIgnore
-	@JsonIgnore
+	@JsonProperty
 	public Map<String, Object> getOptions() {
 		if ( options == null && optionsJson != null ) {
 			options = JsonUtils.getObjectFromJSON(optionsJson, Map.class);
@@ -160,7 +161,6 @@ public class UserAlert extends BaseEntity {
 	 *        the samples instance to set
 	 */
 	@JsonProperty
-	// @JsonProperty needed because of @JsonIgnore on getter
 	public void setOptions(Map<String, Object> options) {
 		this.options = options;
 		optionsJson = null;
