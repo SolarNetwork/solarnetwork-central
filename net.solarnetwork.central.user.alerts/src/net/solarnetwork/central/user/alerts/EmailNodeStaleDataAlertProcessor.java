@@ -90,6 +90,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	private String mailTemplateResource = DEFAULT_MAIL_TEMPLATE_RESOURCE;
 	private String mailTemplateResolvedResource = DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE;
 	private DateTimeFormatter timestampFormat = DateTimeFormat.forPattern("d MMM yyyy HH:mm z");
+	private int initialAlertReminderDelayMinutes = 60;
+	private int alertReminderFrequencyMultiplier = 4;
 
 	// maintain a cache of node data during the execution of the job (cleared after each invocation)
 	private final Map<Long, List<GeneralNodeDatumFilterMatch>> nodeDataCache = new HashMap<Long, List<GeneralNodeDatumFilterMatch>>(
@@ -184,17 +186,21 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				UserAlertSituation sit = userAlertSituationDao.getActiveAlertSituationForAlert(alert
 						.getId());
 				if ( stale != null ) {
+					long notifyOffset = 0;
 					if ( sit == null ) {
 						sit = new UserAlertSituation();
 						sit.setCreated(new DateTime(now));
 						sit.setAlert(alert);
 						sit.setStatus(UserAlertSituationStatus.Active);
 						sit.setNotified(new DateTime(now));
+					} else if ( sit.getNotified().equals(sit.getCreated()) ) {
+						notifyOffset = (initialAlertReminderDelayMinutes * 60L * 1000L);
+					} else {
+						notifyOffset = ((sit.getNotified().getMillis() - sit.getCreated().getMillis()) * alertReminderFrequencyMultiplier);
 					}
 
 					// taper off the alerts so the become less frequent over time
-					if ( (sit.getCreated().getMillis() + ((sit.getNotified().getMillis() - sit
-							.getCreated().getMillis()) * 1.5)) <= now ) {
+					if ( (sit.getCreated().getMillis() + notifyOffset) <= now ) {
 						sendAlertMail(alert, "user.alert.NodeStaleData.mail.subject",
 								mailTemplateResource, stale);
 						sit.setNotified(new DateTime(now));
@@ -432,6 +438,22 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 	public void setMailTemplateResolvedResource(String mailTemplateResolvedResource) {
 		this.mailTemplateResolvedResource = mailTemplateResolvedResource;
+	}
+
+	public int getInitialAlertReminderDelayMinutes() {
+		return initialAlertReminderDelayMinutes;
+	}
+
+	public void setInitialAlertReminderDelayMinutes(int initialAlertReminderDelayMinutes) {
+		this.initialAlertReminderDelayMinutes = initialAlertReminderDelayMinutes;
+	}
+
+	public int getAlertReminderFrequencyMultiplier() {
+		return alertReminderFrequencyMultiplier;
+	}
+
+	public void setAlertReminderFrequencyMultiplier(int alertReminderFrequencyMultiplier) {
+		this.alertReminderFrequencyMultiplier = alertReminderFrequencyMultiplier;
 	}
 
 }

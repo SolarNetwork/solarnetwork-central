@@ -22,6 +22,8 @@
 		<beans:prop key="alert.mail.from">alerts@solarnetwork.net</beans:prop>
 		<beans:prop key="nodeStaleDataAlertProcessor.batchSize">250</beans:prop>
 		<beans:prop key="emailNodeStaleDataAlertProcessor.jobCron">30 0/5 * * * ?</beans:prop>
+		<beans:prop key="emailNodeStaleDataAlertProcessor.initialAlertReminderDelayMinutes">60</beans:prop>
+		<beans:prop key="emailNodeStaleDataAlertProcessor.alertReminderFrequencyMultiplier">4</beans:prop>
 		<beans:prop key="resolvedSituationCleaner.jobCron">0 5 1 ? * SUN</beans:prop><!--  Weekly, on Sunday 1:05am -->
 		<beans:prop key="resolvedSituationCleaner.daysOlder">21</beans:prop>
 	</osgix:cm-properties>
@@ -98,6 +100,8 @@
 		<argument ref="mailService"/>
 		<argument ref="messageSource"/>
 		<property name="batchSize" value="${nodeStaleDataAlertProcessor.batchSize}"/>
+		<property name="initialAlertReminderDelayMinutes" value="${emailNodeStaleDataAlertProcessor.initialAlertReminderDelayMinutes}"/>
+		<property name="alertReminderFrequencyMultiplier" value="${emailNodeStaleDataAlertProcessor.alertReminderFrequencyMultiplier}"/>
 	</bean>
 	
 	<bean id="mailService" class="net.solarnetwork.central.mail.support.DefaultMailService">
