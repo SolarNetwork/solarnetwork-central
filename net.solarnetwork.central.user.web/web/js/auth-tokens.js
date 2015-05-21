@@ -17,7 +17,7 @@ $(document).ready(function() {
 			handleAuthTokenCreated(json, status, xhr, form);
 		},
 		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#create-user-auth-token .modal-body > *:first-child', 'alert-error', statusText);
+			SolarReg.showAlertBefore('#create-user-auth-token .modal-body > *:first-child', 'alert-warning', statusText);
 		}
 	});
 	

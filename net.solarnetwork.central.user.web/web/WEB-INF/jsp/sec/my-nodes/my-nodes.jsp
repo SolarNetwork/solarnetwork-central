@@ -199,7 +199,7 @@
 								<c:otherwise>
 									<span class="label${userNode.certificate.status.value eq 'Active' 
 										? ' label-success' : userNode.certificate.status.value eq 'Disabled' 
-										? ' label-important' : ''}">
+										? ' label-warning' : ' label-primary'}">
 										<fmt:message key="user.node.certificate.status.${userNode.certificate.status.value}"/>
 									</span>
 								</c:otherwise>

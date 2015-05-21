@@ -80,13 +80,25 @@
 	</resultMap>
 	<resultMap id="GeneralNodeDatumDirectMatchResult" type="GeneralNodeDatumMatch" extends="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatum.GeneralNodeDatumDirectResult"/>
 
-	<parameterMap id="pmap-most-recent" type="map">
-		<parameter property="filter.nodeId" jdbcType="BIGINT" mode="IN"/>
-		<parameter property="filter.sourceIds" jdbcType="ARRAY" mode="IN" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
-	</parameterMap>
-
-	<select id="find-general-most-recent" parameterMap="pmap-most-recent" resultMap="GeneralNodeDatumDirectMatchResult" statementType="CALLABLE">
-		{call solardatum.find_most_recent(?, ?)}
+	<select id="find-general-most-recent" resultMap="GeneralNodeDatumDirectMatchResult" statementType="CALLABLE">
+		<choose>
+			<when test="filter.userIds != null">
+				{call solaruser.find_most_recent_datum_for_user(
+					#{filter.userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+				)}
+			</when>
+			<when test="filter.nodeIds.length > 1">
+				{call solardatum.find_most_recent(
+					CAST(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler} AS solarcommon.node_ids)
+				)}
+			</when>
+			<otherwise>
+				{call solardatum.find_most_recent(
+					#{filter.nodeId,jdbcType=BIGINT}, 
+					#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+				)}
+			</otherwise>
+		</choose>
 	</select>
 
 	<sql id="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where">

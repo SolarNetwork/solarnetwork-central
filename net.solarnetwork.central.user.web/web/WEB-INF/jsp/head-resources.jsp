@@ -16,4 +16,5 @@
 	/js/register.js
 	/js/my-nodes.js
 	/js/auth-tokens.js
+	/js/alerts.js
 </pack:script>

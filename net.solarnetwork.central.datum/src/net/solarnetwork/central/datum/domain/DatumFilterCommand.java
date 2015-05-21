@@ -39,7 +39,7 @@ import org.joda.time.DateTime;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
@@ -59,6 +59,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	private Long[] locationIds;
 	private Long[] nodeIds;
 	private String[] sourceIds;
+	private Long[] userIds;
 	private String[] tags;
 	private Aggregation aggregation;
 
@@ -362,6 +363,48 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	public void setLocationIds(Long[] locationIds) {
 		this.locationIds = locationIds;
+	}
+
+	/**
+	 * Set a single user ID.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single user ID at a
+	 * time. The user ID is still stored on the {@code userIds} array, just as
+	 * the first value. Calling this method replaces any existing
+	 * {@code userIds} value with a new array containing just the ID passed into
+	 * this method.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the ID of the user
+	 */
+	public void setUserId(Long userId) {
+		this.userIds = new Long[] { userId };
+	}
+
+	/**
+	 * Get the first user ID.
+	 * 
+	 * <p>
+	 * This returns the first available user ID from the {@code userIds} array,
+	 * or <em>null</em> if not available.
+	 * </p>
+	 * 
+	 * @return the first user ID
+	 */
+	@Override
+	public Long getUserId() {
+		return this.userIds == null || this.userIds.length < 1 ? null : this.userIds[0];
+	}
+
+	@Override
+	public Long[] getUserIds() {
+		return userIds;
+	}
+
+	public void setUserIds(Long[] userIds) {
+		this.userIds = userIds;
 	}
 
 }

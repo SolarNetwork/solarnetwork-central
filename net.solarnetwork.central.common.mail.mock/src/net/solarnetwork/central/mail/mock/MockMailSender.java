@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.mail.mock;
 
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
@@ -36,11 +38,13 @@ import org.springframework.mail.SimpleMailMessage;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MockMailSender implements MailSender {
 
 	private final Logger log = LoggerFactory.getLogger(MockMailSender.class);
+
+	private final Queue<SimpleMailMessage> sent = new ConcurrentLinkedQueue<SimpleMailMessage>();
 
 	@Override
 	public void send(SimpleMailMessage msg) throws MailException {
@@ -50,6 +54,7 @@ public class MockMailSender implements MailSender {
 
 		log.info("MOCK: sending mail from {} to {} with text:\n{}\n", msg.getFrom(), msg.getTo(),
 				msg.getText());
+		sent.add(msg);
 	}
 
 	@Override
@@ -60,6 +65,21 @@ public class MockMailSender implements MailSender {
 		for ( SimpleMailMessage msg : msgs ) {
 			send(msg);
 		}
+	}
+
+	public Logger getLog() {
+		return log;
+	}
+
+	/**
+	 * Get a list of all sent messages. This list can be cleared during unit
+	 * tests to keep track of the messages sent during the test.
+	 * 
+	 * @return List of messages, never <em>null</em>.
+	 * @since 1.1
+	 */
+	public Queue<SimpleMailMessage> getSent() {
+		return sent;
 	}
 
 }

@@ -2,12 +2,12 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Common Mail
 Bundle-SymbolicName: net.solarnetwork.central.common.mail
-Bundle-Version: 1.1.0
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
  net.solarnetwork.central.mail;version="1.0.0",
- net.solarnetwork.central.mail.support;version="1.0.0"
+ net.solarnetwork.central.mail.support;version="1.1.0"
 Import-Package: 
  net.solarnetwork.util;version="1.0.0",
  org.slf4j;version="[1.5.10,2.0.0)",

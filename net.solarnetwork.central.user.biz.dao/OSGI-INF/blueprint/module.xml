@@ -21,14 +21,12 @@
 	
 	<reference id="nodePKIBiz" interface="net.solarnetwork.central.user.biz.NodePKIBiz"/>
 
-	<reference id="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao"/>
-	
 	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
-	
+	<reference id="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao"/>
+	<reference id="userAlertSituationDao" interface="net.solarnetwork.central.user.dao.UserAlertSituationDao"/>
+	<reference id="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao"/>
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
-	
 	<reference id="userNodeCertificateDao" interface="net.solarnetwork.central.user.dao.UserNodeCertificateDao"/>
-	
 	<reference id="userNodeConfirmationDao" interface="net.solarnetwork.central.user.dao.UserNodeConfirmationDao"/>
 	
 	<reference id="userValidator" interface="org.springframework.validation.Validator"
@@ -36,7 +34,6 @@
 		filter="(&amp;(targetClassName=net.solarnetwork.central.user.domain.User)(mode=Registration))"/>
 	
 	<reference id="solarLocationDao" interface="net.solarnetwork.central.dao.SolarLocationDao"/>
-	
 	<reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
 	
 	<reference id="transactionManager"
@@ -50,8 +47,7 @@
 	
 	<!-- Published Services -->
 	
-	<service ref="daoRegistrationBiz" 
-		ranking="1">
+	<service ref="daoRegistrationBiz" ranking="1">
 		<interfaces>
 			<value>net.solarnetwork.central.user.biz.RegistrationBiz</value>
 		</interfaces>
@@ -64,6 +60,8 @@
 			<value>net.solarnetwork.central.user.biz.NodeOwnershipBiz</value>
 		</interfaces>
 	</service>
+	
+	<service ref="daoUserAlertBiz" ranking="1" interface="net.solarnetwork.central.user.biz.UserAlertBiz"/>
 	
 	<!-- Supporting Services -->
 	
@@ -106,6 +104,11 @@
 		<property name="userAuthTokenDao" ref="userAuthTokenDao"/>
 		<property name="solarNodeDao" ref="solarNodeDao"/>
 		<property name="solarLocationDao" ref="solarLocationDao"/>
+	</bean>
+	
+	<bean id="daoUserAlertBiz" class="net.solarnetwork.central.user.biz.dao.DaoUserAlertBiz">
+		<argument ref="userAlertDao"/>
+		<argument ref="userAlertSituationDao"/>
 	</bean>
 	
 </blueprint>

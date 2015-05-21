@@ -36,7 +36,7 @@ import net.solarnetwork.central.domain.SolarNode;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class UserNode extends BaseEntity {
 
@@ -88,6 +88,24 @@ public class UserNode extends BaseEntity {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	/**
+	 * Get the node ID and associated name, if available, as a string. If no
+	 * name is available, this method returns just the node ID.
+	 * 
+	 * @return The node ID and name as a string.
+	 * @since 1.3
+	 */
+	public String getIdAndName() {
+		StringBuilder buf = new StringBuilder();
+		if ( node != null ) {
+			buf.append(node.getId());
+		}
+		if ( name != null && name.length() > 0 ) {
+			buf.append(" - ").append(name);
+		}
+		return buf.toString();
 	}
 
 	public User getUser() {

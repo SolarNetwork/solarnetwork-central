@@ -28,6 +28,9 @@
 	<osgi:reference id="instructorBiz" sticky="false"
 		interface="net.solarnetwork.central.instructor.biz.InstructorBiz"/>
 	
+	<osgi:reference id="queryBiz" sticky="false"
+		interface="net.solarnetwork.central.query.biz.QueryBiz"/>
+	
 	<osgi:reference id="registrationBiz" sticky="false" depends-on="userValidator"
 		interface="net.solarnetwork.central.user.biz.RegistrationBiz"/>
 	
@@ -36,6 +39,9 @@
 	
 	<osgi:reference id="nodeOwnershipBiz" sticky="false"
 		interface="net.solarnetwork.central.user.biz.NodeOwnershipBiz"/>
+	
+	<osgi:reference id="userAlertBiz" sticky="false"
+		interface="net.solarnetwork.central.user.biz.UserAlertBiz"/>
 	
 	<osgi:reference id="mailSender" interface="org.springframework.mail.MailSender"/>
 	

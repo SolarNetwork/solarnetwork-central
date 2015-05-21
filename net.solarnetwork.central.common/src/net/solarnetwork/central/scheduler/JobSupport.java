@@ -56,7 +56,7 @@ import org.osgi.service.event.EventAdmin;
  * </dl>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class JobSupport extends EventHandlerSupport {
 
@@ -95,22 +95,48 @@ public abstract class JobSupport extends EventHandlerSupport {
 			@Override
 			public void run() {
 				Event ack = null;
+				Throwable thrown = null;
+				boolean complete = false;
 				try {
-					if ( handleJob(event) ) {
-						ack = SchedulerUtils.createJobCompleteEvent(event);
-					} else {
-						ack = SchedulerUtils.createJobFailureEvent(event, null);
-					}
+					complete = handleJob(event);
 				} catch ( Exception e ) {
 					log.warn("Exception in job {}", event.getTopic(), e);
-					ack = SchedulerUtils.createJobFailureEvent(event, e);
+					thrown = e;
 				} finally {
+					ack = handleJobCompleteEvent(event, complete, thrown);
 					if ( ack != null ) {
 						eventAdmin.postEvent(ack);
 					}
 				}
 			}
 		});
+	}
+
+	/**
+	 * Handle the completion of a job.
+	 * 
+	 * This method is called internally by {@link #handleEventInternal(Event)}
+	 * after {@link #handleJob(Event)} returns. Extending classes may want to
+	 * customize the resulting job acknowledgement event.
+	 * 
+	 * @param jobEvent
+	 *        The original job event that initiated the job.
+	 * @param complete
+	 *        The result of {@link #handleJob(Event)}, or <em>false</em> if that
+	 *        method throws an exception.
+	 * @param thrown
+	 *        An exception thrown by {@link #handleJob(Event)}, or <em>null</em>
+	 *        if none thrown.
+	 * @return A new job acknowledgement event.
+	 * @see SchedulerUtils#createJobCompleteEvent(Event)
+	 * @see SchedulerUtils#createJobFailureEvent(Event, Throwable)
+	 * @since 1.3
+	 */
+	protected Event handleJobCompleteEvent(Event jobEvent, boolean complete, Throwable thrown) {
+		if ( complete ) {
+			return SchedulerUtils.createJobCompleteEvent(jobEvent);
+		}
+		return SchedulerUtils.createJobFailureEvent(jobEvent, thrown);
 	}
 
 	/**

@@ -24,25 +24,21 @@ package net.solarnetwork.central.datum.support;
 
 import java.math.BigDecimal;
 import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.util.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Utilities for Datum domain classes.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class DatumUtils {
 
 	private static final Logger LOG = LoggerFactory.getLogger(DatumUtils.class);
-
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().setSerializationInclusion(
-			Include.NON_NULL).configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
 
 	// can't construct me
 	private DatumUtils() {
@@ -62,17 +58,10 @@ public final class DatumUtils {
 	 *        error occurs serializing the object to JSON
 	 * @return the JSON string
 	 * @since 1.1
+	 * @see JsonUtils#getJSONString(Object, String)
 	 */
 	public static String getJSONString(final Object o, final String defaultValue) {
-		String result = defaultValue;
-		if ( o != null ) {
-			try {
-				return OBJECT_MAPPER.writeValueAsString(o);
-			} catch ( Exception e ) {
-				LOG.error("Exception marshalling {} to JSON", o, e);
-			}
-		}
-		return result;
+		return JsonUtils.getJSONString(o, defaultValue);
 	}
 
 	/**
@@ -88,17 +77,10 @@ public final class DatumUtils {
 	 *        the type of Object to map the JSON into
 	 * @return the object
 	 * @since 1.1
+	 * @see JsonUtils#getJSONString(Object, String)
 	 */
 	public static <T> T getObjectFromJSON(final String json, Class<T> clazz) {
-		T result = null;
-		if ( json != null ) {
-			try {
-				result = OBJECT_MAPPER.readValue(json, clazz);
-			} catch ( Exception e ) {
-				LOG.error("Exception deserialzing json {}", json, e);
-			}
-		}
-		return result;
+		return JsonUtils.getObjectFromJSON(json, clazz);
 	}
 
 	/**

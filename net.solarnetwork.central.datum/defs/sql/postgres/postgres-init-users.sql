@@ -129,6 +129,8 @@ CREATE TABLE solaruser.user_node (
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
+/* Add index on user_node to assist finding all nodes for a given user. */
+CREATE INDEX user_node_user_idx ON solaruser.user_node (user_id);
 
 /* === USER NODE CONF ======================================================
  * Note the node_id is NOT a foreign key to the node table, because the ID
@@ -256,3 +258,20 @@ BEGIN
 	END;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
+
+/**
+ * Return most recent datum records for all available sources for all nodes owned by a given user ID.
+ * 
+ * @param users An array of user IDs to return results for.
+ * @returns Set of solardatum.da_datum records.
+ */
+CREATE OR REPLACE FUNCTION solaruser.find_most_recent_datum_for_user(users bigint[])
+  RETURNS SETOF solardatum.da_datum AS
+$BODY$
+	SELECT r.* 
+	FROM (SELECT node_id FROM solaruser.user_node WHERE user_id = ANY(users)) AS n,
+	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
+	ORDER BY r.node_id, r.source_id;
+$BODY$
+  LANGUAGE sql STABLE;
+
