@@ -200,7 +200,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					}
 
 					// taper off the alerts so the become less frequent over time
-					if ( (sit.getCreated().getMillis() + notifyOffset) <= now ) {
+					if ( (sit.getNotified().getMillis() + notifyOffset) <= now ) {
 						sendAlertMail(alert, "user.alert.NodeStaleData.mail.subject",
 								mailTemplateResource, stale);
 						sit.setNotified(new DateTime(now));
