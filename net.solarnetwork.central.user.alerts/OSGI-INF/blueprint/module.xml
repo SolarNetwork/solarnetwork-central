@@ -46,6 +46,7 @@
 		<argument ref="emailNodeStaleDataAlertProcessor"/>
 		<property name="jobCron" value="${emailNodeStaleDataAlertProcessor.jobCron}"/>
 		<property name="jobId" value="EmailNodeStaleDataAlertProcessor"/>
+		<property name="jobGroup" value="UserAlert"/>
 		<property name="jobTopic" value="net/solarnetwork/central/user/alert/NodeStaleDataAlertProcessor"/>
 	</bean>
 
@@ -65,6 +66,7 @@
 		<argument ref="userAlertSituationDao"/>
 		<property name="jobCron" value="${resolvedSituationCleaner.jobCron}"/>
 		<property name="jobId" value="UserAlertSituationCleaner"/>
+		<property name="jobGroup" value="UserAlert"/>
 		<property name="jobTopic" value="net/solarnetwork/central/user/alert/UserAlertSituationCleaner"/>
 		<property name="daysOlder" value="${resolvedSituationCleaner.daysOlder}"/>
 	</bean>
