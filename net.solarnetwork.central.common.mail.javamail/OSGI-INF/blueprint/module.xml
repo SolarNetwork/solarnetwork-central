@@ -22,13 +22,12 @@
 	
 	<!-- Published Services -->
 	
-	<service ref="mailSender" 
-		interface="org.springframework.mail.MailSender"
-		ranking="1"/>
-	
-	<service ref="mailSender" 
-		interface="org.springframework.mail.javamail.JavaMailSender"
-		ranking="1"/>
+	<service ref="mailSender" ranking="1">
+		<interfaces>
+			<value>org.springframework.mail.MailSender</value>
+			<value>org.springframework.mail.javamail.JavaMailSender</value>
+		</interfaces>
+	</service>
 	
 	<!-- Supporting Services -->
 	
