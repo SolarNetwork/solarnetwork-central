@@ -13,6 +13,32 @@ $(document).ready(function() {
 		setupAlertStatusHelp(this);
 	});
 	
+	function nodeSourcesURL(nodeId) {
+		return $('#create-node-data-alert-modal').data('action-node-sources').replace(/\/\d+(?=\/)/, '/'+nodeId);
+	}
+	
+	function populateSourceList(nodeId, sourceListContainer) {
+		if ( nodeId === '' ) {
+			sourceListContainer.addClass('hidden');
+		} else {
+			$.getJSON(nodeSourcesURL(nodeId), function(json) {
+				if ( json && json.success === true && Array.isArray(json.data) && json.data.length > 0 ) {
+					sourceListContainer.find('.sources').text(json.data.join(', '));
+					sourceListContainer.removeClass('hidden');
+				} else {
+					sourceListContainer.addClass('hidden');
+				}
+			}).fail(function(data, statusText, xhr) {
+				// just hide the list
+				sourceListContainer.addClass('hidden');
+			});;
+		}
+	}
+	
+	$('.alert-form select[name=nodeId]').change(function(event) {
+		populateSourceList($(this).val(), $('#create-node-data-alert-sources-list'));
+	});
+	
 	$('#create-node-data-alert-modal').ajaxForm({
 		dataType: 'json',
 		success: function(json, status, xhr, form) {
@@ -21,6 +47,8 @@ $(document).ready(function() {
 		error: function(xhr, status, statusText) {
 			SolarReg.showAlertBefore('#create-node-data-alert-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		}
+	}).on('shown.bs.modal', function() {
+		populateSourceList($('#create-node-data-alert-node-id').val(), $('#create-node-data-alert-sources-list'));
 	});
 	
 	$('#add-node-data-button').on('click', function(event) {

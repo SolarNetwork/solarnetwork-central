@@ -100,7 +100,8 @@
 
 <%-- Modal views --%>
 
-<form id="create-node-data-alert-modal" class="modal fade alert-form" action="<c:url value='/u/sec/alerts/save'/>" method="post">
+<form id="create-node-data-alert-modal" class="modal fade alert-form" action="<c:url value='/u/sec/alerts/save'/>" method="post"
+	data-action-node-sources='<c:url value="/u/sec/alerts/node/0/sources"/>'>
 	<div class="modal-dialog">
 		<div class="modal-content">
 		 	<div class="modal-header">
@@ -144,6 +145,11 @@
 					<div class="col-sm-10">
 						<input name='options["sources"]' type="text" maxlength="255" class="form-control" id="create-node-data-alert-sources"/>
 						<span class="help-block"><fmt:message key="alert.options.sourceIds.caption"/></span>
+						<div class="text-info hidden" id="create-node-data-alert-sources-list">
+							<%-- This container will be used to display the available sources for a given node. --%>
+							<b><fmt:message key='alert.options.sourceIds.available.label'/>: </b>
+							<span class="sources"></span>
+						</div>
 					</div>
 		 		</div>
 		 		<div class="form-group">

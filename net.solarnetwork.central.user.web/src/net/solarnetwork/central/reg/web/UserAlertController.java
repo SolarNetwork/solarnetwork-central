@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web;
 
+import static net.solarnetwork.web.domain.Response.response;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserAlertBiz;
@@ -66,12 +68,14 @@ public class UserAlertController extends ControllerSupport {
 
 	private final UserBiz userBiz;
 	private final UserAlertBiz userAlertBiz;
+	private final QueryBiz queryBiz;
 
 	@Autowired
-	public UserAlertController(UserBiz userBiz, UserAlertBiz userAlertBiz) {
+	public UserAlertController(UserBiz userBiz, UserAlertBiz userAlertBiz, QueryBiz queryBiz) {
 		super();
 		this.userBiz = userBiz;
 		this.userAlertBiz = userAlertBiz;
+		this.queryBiz = queryBiz;
 	}
 
 	@ModelAttribute("nodeDataAlertTypes")
@@ -109,6 +113,27 @@ public class UserAlertController extends ControllerSupport {
 		}
 		model.addAttribute("userNodes", userBiz.getUserNodes(user.getUserId()));
 		return "alerts/view-alerts";
+	}
+
+	/**
+	 * Get all available sources for a given node ID.
+	 * 
+	 * @param nodeId
+	 *        The ID of the node to get all available sources for.
+	 * @param start
+	 *        An optional start date to limit the query to.
+	 * @param end
+	 *        An optional end date to limit the query to.
+	 * @return The found sources.
+	 */
+	@RequestMapping(value = "/node/{nodeId}/sources", method = RequestMethod.GET)
+	@ResponseBody
+	public Response<List<String>> availableSourcesForNode(@PathVariable("nodeId") Long nodeId,
+			@RequestParam(value = "start", required = false) DateTime start,
+			@RequestParam(value = "end", required = false) DateTime end) {
+		Set<String> sources = queryBiz.getAvailableSources(nodeId, start, end);
+		List<String> sourceList = new ArrayList<String>(sources);
+		return response(sourceList);
 	}
 
 	/**
@@ -164,7 +189,7 @@ public class UserAlertController extends ControllerSupport {
 
 		Long id = userAlertBiz.saveAlert(alert);
 		alert.setId(id);
-		return new Response<UserAlert>(alert);
+		return response(alert);
 	}
 
 	private void populateUsefulAlertOptions(UserAlert alert, Locale locale) {
@@ -208,7 +233,7 @@ public class UserAlertController extends ControllerSupport {
 	public Response<UserAlert> viewSituation(@PathVariable("alertId") Long alertId, Locale locale) {
 		UserAlert alert = userAlertBiz.alertSituation(alertId);
 		populateUsefulAlertOptions(alert, locale);
-		return new Response<UserAlert>(alert);
+		return response(alert);
 	}
 
 	/**
@@ -228,6 +253,6 @@ public class UserAlertController extends ControllerSupport {
 			@RequestParam("status") UserAlertSituationStatus status, Locale locale) {
 		UserAlert alert = userAlertBiz.updateSituationStatus(alertId, status);
 		populateUsefulAlertOptions(alert, locale);
-		return new Response<UserAlert>(alert);
+		return response(alert);
 	}
 }
