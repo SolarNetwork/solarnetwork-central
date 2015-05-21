@@ -198,7 +198,7 @@ BEGIN
 			ORDER BY d.source_id;
 	END CASE;	
 END;$BODY$
-  LANGUAGE plpgsql STABLE;
+  LANGUAGE plpgsql STABLE ROWS 50;
 
 CREATE OR REPLACE FUNCTION solardatum.find_reportable_interval(
 	IN node solarcommon.node_id, 
