@@ -51,65 +51,15 @@ import org.springframework.transaction.annotation.Transactional;
  * @author matt
  * @version 1.5
  */
-@ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml" })
+@ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml",
+		"classpath:/net/solarnetwork/central/test/test-tx-context.xml" })
 @TransactionConfiguration(transactionManager = "txManager", defaultRollback = true)
 @Transactional
 public abstract class AbstractCentralTransactionalTest extends
-		AbstractTransactionalJUnit4SpringContextTests {
-
-	/** A test Node ID. */
-	public static final Long TEST_NODE_ID = -1L;
-
-	/** A test Weather Source ID. */
-	public static final Long TEST_WEATHER_SOURCE_ID = -1L;
-
-	/** A test Weather Source name. */
-	public static final String TEST_WEATHER_SOURCE_NAME = "Test weather source";
-
-	/** A test Price Source ID. */
-	public static final Long TEST_PRICE_SOURCE_ID = -1L;
-
-	/** A test Price Source name. */
-	public static final String TEST_PRICE_SOURCE_NAME = "Test price source";
-
-	/** A test Location ID. */
-	public static final Long TEST_LOC_ID = -1L;
-
-	/** A test location country. */
-	public static final String TEST_LOC_COUNTRY = "NZ";
-
-	/** A test location name */
-	public static final String TEST_LOC_NAME = "Test Location";
-
-	/** A test location region */
-	public static final String TEST_LOC_REGION = "Wellington";
-
-	/** A test location postal code */
-	public static final String TEST_LOC_POSTAL_CODE = "6011";
-
-	/** A test weather Location ID. */
-	public static final Long TEST_WEATHER_LOC_ID = -1L;
-
-	/** A test hardware ID. */
-	public static final Long TEST_HARDWARE_ID = -1L;
-
-	/** A test hardware manufacturer. */
-	public static final String TEST_HARDWARE_MANUFACTURER = "Test Manufacturer";
-
-	/** A test hardware model. */
-	public static final String TEST_HARDWARE_MODEL = "Test Model";
-
-	/** A test hardware control ID. */
-	public static final Long TEST_HARDWARE_CONTROL_ID = -1L;
-
-	/** A test TimeZone ID. */
-	public static final String TEST_TZ = "Pacific/Auckland";
+		AbstractTransactionalJUnit4SpringContextTests implements CentralTestConstants {
 
 	/** A date + time format. */
 	public final DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-
-	/** A test currency. */
-	public static final String TEST_CURRENCY = "NZD";
 
 	/** A class-level logger. */
 	protected final Logger log = Logger.getLogger(getClass());

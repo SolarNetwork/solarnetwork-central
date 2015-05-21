@@ -11,11 +11,16 @@
 	<!-- Service References -->
 
 	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
+	<reference id="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao"/>
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 	<reference id="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao"/>
 
 	<reference id="userBiz"
 		interface="net.solarnetwork.central.user.biz.UserBiz"
+		filter="(!(aop=true))"/>
+	
+	<reference id="userAlertBiz"
+		interface="net.solarnetwork.central.user.biz.UserAlertBiz"
 		filter="(!(aop=true))"/>
 	
 	<reference id="nodeOwnershipBiz"
@@ -36,6 +41,12 @@
 		</service-properties>
 	</service>
 
+	<service ref="aopUserAlertBiz" interface="net.solarnetwork.central.user.biz.UserAlertBiz" ranking="10">
+		<service-properties>
+			<entry key="aop" value="true"/>
+		</service-properties>
+	</service>
+	
 	<!-- Supporting Services -->
 
 	<aop:aspectj-autoproxy/>
@@ -45,17 +56,26 @@
 		<argument ref="userAuthTokenDao"/>
 	</bean>
 	
-	<bean id="aopUserBiz" class="net.solarnetwork.central.user.support.DelegatingUserBiz">
-		<argument ref="userBiz"/>
-	</bean>
-
 	<bean id="nodeOwnershipSecurityAspect" class="net.solarnetwork.central.user.aop.NodeOwnershipSecurityAspect">
 		<argument ref="userNodeDao"/>
 		<argument ref="userDao"/>
 	</bean>
 	
+	<bean id="userAlertSecurityAspect" class="net.solarnetwork.central.user.aop.UserAlertSecurityAspect">
+		<argument ref="userNodeDao"/>
+		<argument ref="userAlertDao"/>
+	</bean>
+	
+	<bean id="aopUserBiz" class="net.solarnetwork.central.user.support.DelegatingUserBiz">
+		<argument ref="userBiz"/>
+	</bean>
+
 	<bean id="aopNodeOwnershipBiz" class="net.solarnetwork.central.user.support.DelegatingNodeOwnershipBiz">
 		<argument ref="nodeOwnershipBiz"/>
+	</bean>
+	
+	<bean id="aopUserAlertBiz" class="net.solarnetwork.central.user.support.DelegatingUserAlertBiz">
+		<argument ref="userAlertBiz"/>
 	</bean>
 
 </blueprint>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xmlns:osgix="http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium"
+	xsi:schemaLocation="
+		http://www.osgi.org/xmlns/blueprint/v1.0.0
+		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint/gemini-blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.alerts">
+		<beans:prop key="alert.mail.from">alerts@solarnetwork.net</beans:prop>
+		<beans:prop key="nodeStaleDataAlertProcessor.batchSize">250</beans:prop>
+		<beans:prop key="emailNodeStaleDataAlertProcessor.jobCron">30 0/5 * * * ?</beans:prop>
+		<beans:prop key="emailNodeStaleDataAlertProcessor.initialAlertReminderDelayMinutes">60</beans:prop>
+		<beans:prop key="emailNodeStaleDataAlertProcessor.alertReminderFrequencyMultiplier">4</beans:prop>
+		<beans:prop key="resolvedSituationCleaner.jobCron">0 5 1 ? * SUN</beans:prop><!--  Weekly, on Sunday 1:05am -->
+		<beans:prop key="resolvedSituationCleaner.daysOlder">21</beans:prop>
+	</osgix:cm-properties>
+
+	<ctx:property-placeholder properties-ref="cfg"/>
+
+	<!-- Service References -->
+
+	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
+	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
+	<reference id="mailSender" interface="org.springframework.mail.MailSender"/>
+	<reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
+	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
+	<reference id="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao"/>
+	<reference id="userAlertSituationDao" interface="net.solarnetwork.central.user.dao.UserAlertSituationDao"/>
+	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
+
+	<!-- Jobs -->
+
+	<bean id="emailNodeStaleDataAlertProcessorJob" class="net.solarnetwork.central.user.alerts.UserAlertBatchJob">
+		<argument ref="eventAdmin"/>
+		<argument ref="emailNodeStaleDataAlertProcessor"/>
+		<property name="jobCron" value="${emailNodeStaleDataAlertProcessor.jobCron}"/>
+		<property name="jobId" value="EmailNodeStaleDataAlertProcessor"/>
+		<property name="jobGroup" value="UserAlert"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/alert/NodeStaleDataAlertProcessor"/>
+	</bean>
+
+	<service ref="emailNodeStaleDataAlertProcessorJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{emailNodeStaleDataAlertProcessorJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<bean id="resolvedSituationCleaner" class="net.solarnetwork.central.user.alerts.UserAlertSituationCleaner">
+		<argument ref="eventAdmin"/>
+		<argument ref="userAlertSituationDao"/>
+		<property name="jobCron" value="${resolvedSituationCleaner.jobCron}"/>
+		<property name="jobId" value="UserAlertSituationCleaner"/>
+		<property name="jobGroup" value="UserAlert"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/alert/UserAlertSituationCleaner"/>
+		<property name="daysOlder" value="${resolvedSituationCleaner.daysOlder}"/>
+	</bean>
+	
+	<service ref="resolvedSituationCleaner" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{resolvedSituationCleaner.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+	
+	<!-- Supporting Services -->
+
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basenames" value="net.solarnetwork.central.user.alerts.messages"/>
+	</bean>
+	
+	<bean id="emailNodeStaleDataAlertProcessor" class="net.solarnetwork.central.user.alerts.EmailNodeStaleDataAlertProcessor">
+		<argument ref="solarNodeDao"/>
+		<argument ref="userDao"/>
+		<argument ref="userNodeDao"/>
+		<argument ref="userAlertDao"/>
+		<argument ref="userAlertSituationDao"/>
+		<argument ref="generalNodeDatumDao"/>
+		<argument ref="mailService"/>
+		<argument ref="messageSource"/>
+		<property name="batchSize" value="${nodeStaleDataAlertProcessor.batchSize}"/>
+		<property name="initialAlertReminderDelayMinutes" value="${emailNodeStaleDataAlertProcessor.initialAlertReminderDelayMinutes}"/>
+		<property name="alertReminderFrequencyMultiplier" value="${emailNodeStaleDataAlertProcessor.alertReminderFrequencyMultiplier}"/>
+	</bean>
+	
+	<bean id="mailService" class="net.solarnetwork.central.mail.support.DefaultMailService">
+		<argument ref="mailSender"/>
+		<property name="templateMessage">
+			<bean class="org.springframework.mail.SimpleMailMessage">
+				<property name="from" value="${alert.mail.from}"/>
+			</bean>
+		</property>
+	</bean>
+	
+</blueprint>

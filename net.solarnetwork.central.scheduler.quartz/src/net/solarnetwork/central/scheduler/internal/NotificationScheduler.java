@@ -25,6 +25,7 @@ package net.solarnetwork.central.scheduler.internal;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
+import java.util.TimeZone;
 import net.solarnetwork.central.scheduler.EventHandlerSupport;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import org.osgi.service.event.Event;
@@ -43,7 +44,7 @@ import org.slf4j.LoggerFactory;
  * OSGi {@link EventHandler} that schedules job requests.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class NotificationScheduler extends EventHandlerSupport {
 
@@ -53,6 +54,7 @@ public class NotificationScheduler extends EventHandlerSupport {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final Scheduler scheduler;
+	private String cronTimeZoneId = TimeZone.getDefault().getID();
 
 	/**
 	 * Constructor.
@@ -108,7 +110,11 @@ public class NotificationScheduler extends EventHandlerSupport {
 			trigger = new SimpleTrigger(jobId, jobGroup, new Date(jobDate));
 		} else {
 			try {
-				trigger = new CronTrigger(jobId, jobGroup, jobCron);
+				CronTrigger cronTrigger = new CronTrigger(jobId, jobGroup, jobCron);
+				if ( cronTimeZoneId != null ) {
+					cronTrigger.setTimeZone(TimeZone.getTimeZone(cronTimeZoneId));
+				}
+				trigger = cronTrigger;
 			} catch ( ParseException e ) {
 				log.error("Bad cron expression [{}]: {}", jobCron, e.getMessage());
 				return;
@@ -150,6 +156,14 @@ public class NotificationScheduler extends EventHandlerSupport {
 					(jobCron != null ? jobCron : new Date(jobDate).toString()) });
 			scheduler.scheduleJob(trigger);
 		}
+	}
+
+	public String getCronTimeZoneId() {
+		return cronTimeZoneId;
+	}
+
+	public void setCronTimeZoneId(String cronTimeZoneId) {
+		this.cronTimeZoneId = cronTimeZoneId;
 	}
 
 }

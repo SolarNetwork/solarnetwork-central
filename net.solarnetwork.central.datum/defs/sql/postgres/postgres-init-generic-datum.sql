@@ -179,23 +179,26 @@ BEGIN
 		WHEN st IS NULL AND en IS NULL THEN
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_datum_daily d
-			WHERE d.node_id = node;
+			WHERE d.node_id = node
+			ORDER BY d.source_id;
 		
 		WHEN st IS NULL THEN
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_datum_daily d
 			WHERE d.node_id = node
-				AND d.ts_start >= CAST(st at time zone node_tz AS DATE);
+				AND d.ts_start >= CAST(st at time zone node_tz AS DATE)
+			ORDER BY d.source_id;
 				
 		ELSE
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_datum_daily d
 			WHERE d.node_id = node
 				AND d.ts_start >= CAST(st at time zone node_tz AS DATE)
-				AND d.ts_start <= CAST(en at time zone node_tz AS DATE);
+				AND d.ts_start <= CAST(en at time zone node_tz AS DATE)
+			ORDER BY d.source_id;
 	END CASE;	
 END;$BODY$
-  LANGUAGE plpgsql STABLE;
+  LANGUAGE plpgsql STABLE ROWS 50;
 
 CREATE OR REPLACE FUNCTION solardatum.find_reportable_interval(
 	IN node solarcommon.node_id, 
@@ -290,6 +293,22 @@ BEGIN
 END;$BODY$
   LANGUAGE plpgsql STABLE
   ROWS 20;
+
+/**
+ * Return most recent datum records for all available sources for a given set of node IDs.
+ * 
+ * @param nodes An array of node IDs to return results for.
+ * @returns Set of solardatum.da_datum records.
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes solarcommon.node_ids)
+  RETURNS SETOF solardatum.da_datum AS
+$BODY$
+	SELECT r.* 
+	FROM (SELECT unnest(nodes) AS node_id) AS n,
+	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
+	ORDER BY r.node_id, r.source_id;
+$BODY$
+  LANGUAGE sql STABLE;
 
 CREATE OR REPLACE FUNCTION solardatum.populate_updated()
   RETURNS "trigger" AS

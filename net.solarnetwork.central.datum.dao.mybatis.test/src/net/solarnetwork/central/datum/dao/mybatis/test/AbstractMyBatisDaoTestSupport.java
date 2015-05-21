@@ -38,7 +38,7 @@ import org.springframework.test.context.ContextConfiguration;
  * Base class for MyBatis tests.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ContextConfiguration
 public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
@@ -99,6 +99,24 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 		jdbcTemplate
 				.update("insert into solaruser.user_user (id,email,password,disp_name,enabled) values (?,?,?,?,?)",
 						id, username, DigestUtils.sha256Hex("password"), "Unit Test", Boolean.TRUE);
+	}
+
+	/**
+	 * Insert a test UserNode into the solaruser.user_node table. The user and
+	 * node must already exist.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param name
+	 *        the display name
+	 * @since 1.1
+	 */
+	protected void setupTestUserNode(Long userId, Long nodeId, String name) {
+		jdbcTemplate.update(
+				"insert into solaruser.user_node (user_id,node_id,disp_name) values (?,?,?)", userId,
+				nodeId, name);
 	}
 
 	/**

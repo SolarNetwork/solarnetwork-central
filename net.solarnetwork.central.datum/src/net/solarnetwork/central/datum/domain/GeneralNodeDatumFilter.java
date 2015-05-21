@@ -29,7 +29,7 @@ import org.joda.time.DateTime;
  * Filter API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface GeneralNodeDatumFilter extends Filter {
 
@@ -104,5 +104,22 @@ public interface GeneralNodeDatumFilter extends Filter {
 	 * @since 1.1
 	 */
 	public String[] getDataPathElements();
+
+	/**
+	 * Get the first user ID. This returns the first available user ID from the
+	 * {@link #getUserIds()} array, or <em>null</em> if not available.
+	 * 
+	 * @return the first user ID, or <em>null</em> if not available
+	 * @since 1.2
+	 */
+	public Long getUserId();
+
+	/**
+	 * Get an array of user IDs.
+	 * 
+	 * @return array of user IDs (may be <em>null</em>)
+	 * @since 1.2
+	 */
+	public Long[] getUserIds();
 
 }
