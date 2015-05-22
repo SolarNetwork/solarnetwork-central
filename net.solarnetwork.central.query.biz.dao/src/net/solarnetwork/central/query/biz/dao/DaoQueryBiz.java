@@ -70,7 +70,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -138,6 +138,10 @@ public class DaoQueryBiz implements QueryBiz {
 	private Aggregation enforceAggregation(final Aggregation agg, ReadableInstant s, ReadableInstant e,
 			Filter filter) {
 		Aggregation forced = null;
+		if ( agg == Aggregation.RunningTotal ) {
+			// running total
+			return null;
+		}
 		if ( s == null && e != null ) {
 			// treat start date as SolarNetwork epoch (may want to make epoch configurable)
 			s = new DateTime(2008, 1, 1, 0, 0, 0, DateTimeZone.UTC);

@@ -229,11 +229,13 @@
 
 	<sql id="fragment-findall-ReportingGeneralNodeDatum-agg-where">
 		#{filter.nodeId,jdbcType=BIGINT},
-		#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
-		#{filter.dataPathElements,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		<if test="filter.dataPathElements != null">
+			,#{filter.dataPathElements,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		</if>
 		<if test="filter != null and filter.startDate != null and filter.endDate != null">
-			#{filter.startDate,jdbcType=TIMESTAMP}::timestamptz,
-			#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz
+			,#{filter.startDate,jdbcType=TIMESTAMP}::timestamptz
+			,#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz
 		</if>
 	</sql>
 
@@ -347,6 +349,17 @@
 			solaragg.agg_datum_monthly datum
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
+	<!-- Aggregated query: RunningTotal -->
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-RunningTotal" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
+		FROM
+			solaragg.calc_running_datum_total(
+				<include refid="fragment-findall-ReportingGeneralNodeDatum-agg-where"/>
+			) AS datum
 	</select>
 
 </mapper>

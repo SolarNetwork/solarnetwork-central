@@ -54,7 +54,7 @@ import org.junit.Test;
  * Test cases for the {@link MyBatisGeneralNodeDatumDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -579,6 +579,30 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		processAggregateStaleData();
 
 		criteria.setAggregate(Aggregation.Day);
+		results = dao.findAggregationFiltered(criteria, null, null, null);
+
+		assertNotNull(results);
+		assertEquals("Daily query results", 1L, (long) results.getTotalResults());
+		assertEquals("Daily query results", 1, (int) results.getReturnedResultCount());
+		data = results.getResults().iterator().next().getSampleData();
+		assertNotNull("Aggregate sample data", data);
+		assertNotNull("Aggregate Wh", data.get("watt_hours"));
+		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
+	}
+
+	@Test
+	public void findFilteredAggregateRunningTotal() {
+		// populate 1 hour of data
+		findFilteredAggregateDaily();
+
+		// first, verify that the the day is also at 10 Wh
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setAggregate(Aggregation.RunningTotal);
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results;
+		Map<String, ?> data;
 		results = dao.findAggregationFiltered(criteria, null, null, null);
 
 		assertNotNull(results);
