@@ -257,11 +257,13 @@
 
 	<sql id="fragment-findall-ReportingGeneralLocationDatum-agg-where">
 		#{filter.locationId},
-		#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
-		#{filter.dataPathElements,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		<if test="filter.dataPathElements != null">
+			,#{filter.dataPathElements,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		</if>
 		<if test="filter != null and filter.startDate != null and filter.endDate != null">
-			#{filter.startDate,jdbcType=TIMESTAMP}::timestamptz,
-			#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz
+			,#{filter.startDate,jdbcType=TIMESTAMP}::timestamptz
+			,#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz
 		</if>
 	</sql>
 
@@ -375,6 +377,17 @@
 			solaragg.agg_loc_datum_monthly datum
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
+	</select>
+
+	<!-- Aggregated query: RunningTotal -->
+
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-RunningTotal" resultMap="ReportingGeneralLocationDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
+		FROM
+			solaragg.calc_running_loc_datum_total(
+				<include refid="fragment-findall-ReportingGeneralLocationDatum-agg-where"/>
+			) AS datum
 	</select>
 
 </mapper>

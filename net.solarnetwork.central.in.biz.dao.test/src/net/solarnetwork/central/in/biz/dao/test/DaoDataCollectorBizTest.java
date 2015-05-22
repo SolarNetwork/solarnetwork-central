@@ -232,7 +232,7 @@ public class DaoDataCollectorBizTest extends AbstractInBizDaoTestSupport {
 		assertEquals("Watts", d.getWatts().doubleValue(), entity.getSamples()
 				.getInstantaneousSampleDouble("watts").doubleValue(), 0.001);
 		assertEquals("Wh", d.getWattHourReading().doubleValue(), entity.getSamples()
-				.getInstantaneousSampleDouble("wattHours").doubleValue(), 0.001);
+				.getAccumulatingSampleDouble("wattHours").doubleValue(), 0.001);
 	}
 
 	private ConsumptionDatum newConsumptionDatumInstance() {
@@ -265,7 +265,7 @@ public class DaoDataCollectorBizTest extends AbstractInBizDaoTestSupport {
 		assertEquals("Watts", d.getWatts().doubleValue(), entity.getSamples()
 				.getInstantaneousSampleDouble("watts").doubleValue(), 0.001);
 		assertEquals("Wh", d.getWattHourReading().doubleValue(), entity.getSamples()
-				.getInstantaneousSampleDouble("wattHours").doubleValue(), 0.001);
+				.getAccumulatingSampleDouble("wattHours").doubleValue(), 0.001);
 	}
 
 	private HardwareControlDatum newHardwareControlDatumInstance() {

@@ -27,7 +27,7 @@ package net.solarnetwork.central.domain;
 /**
  * An aggregation level enumeration.
  * 
- * @version 1.3
+ * @version 1.4
  */
 public enum Aggregation {
 
@@ -74,7 +74,14 @@ public enum Aggregation {
 	WeekOfYear(604800),
 
 	/** Month level aggregation. */
-	Month(2419200);
+	Month(2419200),
+
+	/**
+	 * Aggregate all values into a single total result.
+	 * 
+	 * @since 1.4
+	 */
+	RunningTotal(Integer.MAX_VALUE);
 
 	private final Integer level;
 

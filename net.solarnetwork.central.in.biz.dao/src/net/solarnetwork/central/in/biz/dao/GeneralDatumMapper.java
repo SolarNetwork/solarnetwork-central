@@ -105,7 +105,7 @@ public class GeneralDatumMapper {
 			samples.putInstantaneousSampleValue("watts", datum.getWatts());
 		}
 		if ( datum.getWattHourReading() != null ) {
-			samples.putInstantaneousSampleValue("wattHours", datum.getWattHourReading());
+			samples.putAccumulatingSampleValue("wattHours", datum.getWattHourReading());
 		}
 
 		GeneralNodeDatum g = mapBaseGeneralNodeDatumProperties(datum);
@@ -156,7 +156,7 @@ public class GeneralDatumMapper {
 			samples.putInstantaneousSampleValue("watts", datum.getWatts());
 		}
 		if ( datum.getWattHourReading() != null ) {
-			samples.putInstantaneousSampleValue("wattHours", datum.getWattHourReading());
+			samples.putAccumulatingSampleValue("wattHours", datum.getWattHourReading());
 		}
 
 		GeneralNodeDatum g = mapBaseGeneralNodeDatumProperties(datum);
