@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<title>SolarIn Ping Test</title>
+	<title>SolarUser Ping Test</title>
 	<style type="text/css">
 		body {
 			font-family: helvetica,sans-serif;

@@ -46,6 +46,10 @@
 		<property name="order" value="1"/>
 	</bean>
 	
+	<bean id="pingController" class="net.solarnetwork.central.web.PingController">
+		<property name="pingTests" ref="pingTests"/>
+	</bean>
+	
 	<!-- Views -->
 	
 	<bean id="xml" class="net.solarnetwork.web.support.SimpleXmlView">
@@ -58,7 +62,7 @@
 		</property>
 	</bean>
 	
-	<bean id="json" class="net.solarnetwork.web.support.JSONView">
+	<bean id="json" name="ping" class="net.solarnetwork.web.support.JSONView">
 		<property name="contentType" value="application/json;charset=UTF-8"/>
 		<property name="indentAmount" value="${JSONView.indentAmount}"/>
 		<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
