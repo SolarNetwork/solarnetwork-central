@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
-import org.joda.time.DateTime;
+import java.util.Date;
 
 /**
  * Extension of {@link PingTestResult} to support the UI layer.
@@ -34,8 +34,8 @@ public class PingTestResultDisplay extends PingTestResult {
 
 	private final String pingTestId;
 	private final String pingTestName;
-	private final DateTime start;
-	private final DateTime end;
+	private final Date start;
+	private final Date end;
 
 	/**
 	 * Construct from a test and a result.
@@ -47,12 +47,12 @@ public class PingTestResultDisplay extends PingTestResult {
 	 * @param start
 	 *        The time the test started.
 	 */
-	public PingTestResultDisplay(PingTest test, PingTestResult result, DateTime start) {
+	public PingTestResultDisplay(PingTest test, PingTestResult result, Date start) {
 		super(result.isSuccess(), result.getMessage(), result.getProperties());
 		this.pingTestId = test.getPingTestId();
 		this.pingTestName = test.getPingTestName();
 		this.start = start;
-		this.end = new DateTime();
+		this.end = new Date();
 	}
 
 	public String getPingTestId() {
@@ -63,11 +63,11 @@ public class PingTestResultDisplay extends PingTestResult {
 		return pingTestName;
 	}
 
-	public DateTime getStart() {
+	public Date getStart() {
 		return start;
 	}
 
-	public DateTime getEnd() {
+	public Date getEnd() {
 		return end;
 	}
 

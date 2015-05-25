@@ -23,6 +23,7 @@
 package net.solarnetwork.central.web;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,6 @@ import net.solarnetwork.central.domain.PingTest;
 import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.domain.PingTestResultDisplay;
 import net.solarnetwork.web.domain.Response;
-import org.joda.time.DateTime;
 import org.springframework.http.MediaType;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,12 +62,12 @@ public class PingController {
 			TimeUnit.MILLISECONDS, queue);
 
 	private PingResults executeTests() {
-		final DateTime now = new DateTime();
+		final Date now = new Date();
 		Map<String, PingTestResultDisplay> results = null;
 		if ( pingTests != null ) {
 			results = new LinkedHashMap<String, PingTestResultDisplay>(pingTests.size());
 			for ( final PingTest t : pingTests ) {
-				final DateTime start = new DateTime();
+				final Date start = new Date();
 				PingTestResult pingTestResult = null;
 				Future<PingTestResult> f = null;
 				try {
@@ -118,7 +118,7 @@ public class PingController {
 	 */
 	public static class PingResults {
 
-		private final DateTime date;
+		private final Date date;
 		private final Map<String, PingTestResultDisplay> results;
 		private final boolean allGood;
 
@@ -130,7 +130,7 @@ public class PingController {
 		 * @param results
 		 *        The test results (or <em>null</em> if none available).
 		 */
-		public PingResults(DateTime date, Map<String, PingTestResultDisplay> results) {
+		public PingResults(Date date, Map<String, PingTestResultDisplay> results) {
 			super();
 			this.date = date;
 			boolean allOK = true;
@@ -163,7 +163,7 @@ public class PingController {
 		 * 
 		 * @return The date.
 		 */
-		public DateTime getDate() {
+		public Date getDate() {
 			return date;
 		}
 
