@@ -329,9 +329,9 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 				result = new PingTestResult(false, "Profile ID mismatch. Expected [" + dogtagProfileId
 						+ "] but found [" + resultId + "].");
 			} else if ( !"true".equalsIgnoreCase(enabled) ) {
-				result = new PingTestResult(false, "Profile [" + dogtagProfileId + "] is disabled.");
+				result = new PingTestResult(false, "Profile " + dogtagProfileId + " is disabled.");
 			} else {
-				result = new PingTestResult(true, "Profile [" + dogtagProfileId + "] available.");
+				result = new PingTestResult(true, "Profile " + dogtagProfileId + " available.");
 			}
 		}
 		CachedResult<PingTestResult> cached = new CachedResult<PingTestResult>(result,
