@@ -27,7 +27,7 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStore.Entry;
-import java.security.KeyStore.TrustedCertificateEntry;
+import java.security.KeyStore.PrivateKeyEntry;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -170,7 +170,7 @@ public class SSLContextFactory implements PingTest {
 		Enumeration<String> aliases = keyStore.aliases();
 		PingTestResult result = null;
 		boolean validated = false;
-		String message = null;
+		StringBuilder message = new StringBuilder();
 		while ( aliases.hasMoreElements() ) {
 			String alias = aliases.nextElement();
 			Entry entry = null;
@@ -180,38 +180,45 @@ public class SSLContextFactory implements PingTest {
 				entry = keyStore.getEntry(alias, new KeyStore.PasswordProtection(
 						keystorePassword == null ? null : keystorePassword.toCharArray()));
 			}
-			if ( entry instanceof TrustedCertificateEntry ) {
-				// validate expiration date
-				TrustedCertificateEntry certEntry = (TrustedCertificateEntry) entry;
-				Certificate cert = certEntry.getTrustedCertificate();
-				if ( cert instanceof X509Certificate ) {
-					X509Certificate x509 = (X509Certificate) cert;
-					validated = true;
-					if ( x509.getNotBefore().getTime() > now ) {
-						result = new PingTestResult(false, "CA cert " + x509.getSubjectDN().getName()
-								+ " not yet valid. Valid from " + x509.getNotBefore() + ".");
-						break;
+			if ( entry instanceof PrivateKeyEntry ) {
+				PrivateKeyEntry keyEntry = (PrivateKeyEntry) entry;
+				Certificate[] certs = keyEntry.getCertificateChain();
+				for ( Certificate cert : certs ) {
+					if ( cert instanceof X509Certificate ) {
+						X509Certificate x509 = (X509Certificate) cert;
+						validated = true;
+						if ( x509.getNotBefore().getTime() > now ) {
+							result = new PingTestResult(false, "Certificate "
+									+ x509.getSubjectDN().getName() + " not yet valid. Valid from "
+									+ x509.getNotBefore() + ".");
+							break;
+						}
+						if ( x509.getNotAfter().getTime() < now ) {
+							result = new PingTestResult(false, "Certificate "
+									+ x509.getSubjectDN().getName() + " expired on "
+									+ x509.getNotAfter() + ".");
+							break;
+						}
+						if ( x509.getNotAfter().getTime() < monthAgo ) {
+							result = new PingTestResult(false, "Certificate "
+									+ x509.getSubjectDN().getName() + " will exipre on "
+									+ x509.getNotAfter() + ".");
+							break;
+						}
+						if ( message.length() > 0 ) {
+							message.append(" ");
+						}
+						message.append("Certificate " + x509.getSubjectDN().getName() + " valid until "
+								+ x509.getNotAfter() + ".");
 					}
-					if ( x509.getNotAfter().getTime() < now ) {
-						result = new PingTestResult(false, "CA cert " + x509.getSubjectDN().getName()
-								+ " expired on " + x509.getNotAfter() + ".");
-						break;
-					}
-					if ( x509.getNotAfter().getTime() < monthAgo ) {
-						result = new PingTestResult(false, "CA cert " + x509.getSubjectDN().getName()
-								+ " will exipre on " + x509.getNotAfter() + ".");
-						break;
-					}
-					message = "CA cert " + x509.getSubjectDN().getName() + " valid until "
-							+ x509.getNotAfter() + ".";
 				}
 			}
 		}
 		if ( result == null ) {
 			if ( !validated ) {
-				message = "No CA certs found in keystore.";
+				message.append("No certificates found in keystore.");
 			}
-			result = new PingTestResult(validated, message);
+			result = new PingTestResult(validated, message.toString());
 		}
 		// cache the results: for success cache for longer so we don't spend a lot of time parsing the certificates
 		CachedResult<PingTestResult> cached = new CachedResult<PingTestResult>(result,
