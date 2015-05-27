@@ -25,14 +25,19 @@ package net.solarnetwork.central.user.pki.dogtag;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
+import net.solarnetwork.central.domain.PingTest;
+import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.support.CachedResult;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.support.CertificateException;
 import net.solarnetwork.support.CertificateService;
@@ -41,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.PropertyAccessor;
 import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -53,13 +59,16 @@ import org.w3c.dom.Node;
  * @author matt
  * @version 1.0
  */
-public class DogtagPKIBiz implements NodePKIBiz {
+public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 
 	public static final String DOGTAG_10_PROFILE_SUBMIT_PATH = "/ca/ee/ca/profileSubmit";
 
 	public static final String DOGTAG_10_PROFILE_PROCESS_PATH = "/ca/agent/ca/profileProcess";
 
 	public static final String DOGTAG_10_PROFILE_SUBMIT_RESPONSE_REQUEST_ID_XPATH = "/*/RequestId/text()";
+
+	public static final String DOGTAG_10_PROFILE_ID_XPATH = "/ProfileData/id";
+	public static final String DOGTAG_10_PROFILE_ENABLED_XPATH = "/ProfileData/isEnabled";
 
 	public static final String DOGTAG_10_CERT_GET_PATH = "/ca/rest/certs/{id}";
 	public static final String DOGTAG_10_CERTREG_GET_PATH = "/ca/rest/certrequests/{id}";
@@ -78,6 +87,10 @@ public class DogtagPKIBiz implements NodePKIBiz {
 	private Map<String, XPathExpression> csrInfoMapping;
 	private Map<String, XPathExpression> certDetailMapping;
 	private Map<String, XPathExpression> agentCsrInfoMapping;
+	private int pingResultsCacheSeconds = 300;
+
+	private final Map<String, XPathExpression> xpathCache = new HashMap<String, XPathExpression>();
+	private CachedResult<PingTestResult> cachedResult;
 
 	@Override
 	public X509Certificate generateCertificate(String dn, PublicKey publicKey, PrivateKey privateKey)
@@ -254,8 +267,77 @@ public class DogtagPKIBiz implements NodePKIBiz {
 		}
 	}
 
+	// PingTest support
+
 	public String getBaseUrl() {
 		return baseUrl;
+	}
+
+	@Override
+	public String getPingTestId() {
+		return getClass().getName();
+	}
+
+	@Override
+	public String getPingTestName() {
+		return "CA Service";
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 10000;
+	}
+
+	private XPathExpression xpathForString(String xpathString) {
+		XPathExpression result = xpathCache.get(xpathString);
+		if ( result == null ) {
+			try {
+				result = xmlSupport.getXPathExpression(xpathString);
+				xpathCache.put(xpathString, result);
+			} catch ( XPathExpressionException e ) {
+				throw new IllegalArgumentException("The XPath [" + xpathString + "] is not valid", e);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public PingTestResult performPingTest() throws Exception {
+		if ( cachedResult != null && cachedResult.isValid() ) {
+			return cachedResult.getResult();
+		}
+		if ( restOps == null ) {
+			return new PingTestResult(false, "RestOperations not configured.");
+		}
+		if ( dogtagProfileId == null ) {
+			return new PingTestResult(false, "Profile ID not configured.");
+		}
+		PingTestResult result = null;
+		ResponseEntity<DOMSource> response = restOps.getForEntity(baseUrl
+				+ DOGTAG_10_AGENT_PROFILE_GET_PATH, DOMSource.class, dogtagProfileId);
+		if ( response.getStatusCode() != HttpStatus.OK ) {
+			result = new PingTestResult(false, "HTTP status not 200: " + response.getStatusCode());
+		} else if ( !response.hasBody() ) {
+			result = new PingTestResult(false, "HTTP response has no content");
+		} else {
+			Node doc = response.getBody().getNode();
+			String resultId = xmlSupport.extractStringFromXml(doc,
+					xpathForString(DOGTAG_10_PROFILE_ID_XPATH));
+			String enabled = xmlSupport.extractStringFromXml(doc,
+					xpathForString(DOGTAG_10_PROFILE_ENABLED_XPATH));
+			if ( !dogtagProfileId.equals(resultId) ) {
+				result = new PingTestResult(false, "Profile ID mismatch. Expected [" + dogtagProfileId
+						+ "] but found [" + resultId + "].");
+			} else if ( !"true".equalsIgnoreCase(enabled) ) {
+				result = new PingTestResult(false, "Profile [" + dogtagProfileId + "] is disabled.");
+			} else {
+				result = new PingTestResult(true, "Profile [" + dogtagProfileId + "] available.");
+			}
+		}
+		CachedResult<PingTestResult> cached = new CachedResult<PingTestResult>(result,
+				pingResultsCacheSeconds, TimeUnit.SECONDS);
+		cachedResult = cached;
+		return result;
 	}
 
 	public void setBaseUrl(String baseUrl) {
@@ -292,6 +374,14 @@ public class DogtagPKIBiz implements NodePKIBiz {
 
 	public void setXmlSupport(XmlSupport xmlSupport) {
 		this.xmlSupport = xmlSupport;
+	}
+
+	public int getPingResultsCacheSeconds() {
+		return pingResultsCacheSeconds;
+	}
+
+	public void setPingResultsCacheSeconds(int pingResultsCacheSeconds) {
+		this.pingResultsCacheSeconds = pingResultsCacheSeconds;
 	}
 
 }

@@ -29,7 +29,12 @@
 		
 	<!-- Published Services -->
 	
-	<service ref="dogtagPKIBiz" interface="net.solarnetwork.central.user.biz.NodePKIBiz" ranking="1"/>
+	<service ref="dogtagPKIBiz" ranking="1">
+		<interfaces>
+			<value>net.solarnetwork.central.user.biz.NodePKIBiz</value>
+			<value>net.solarnetwork.central.domain.PingTest</value>
+		</interfaces>
+	</service>
 	
 	<service ref="restFactory" interface="net.solarnetwork.central.domain.PingTest"/>
 	
