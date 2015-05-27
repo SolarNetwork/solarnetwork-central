@@ -82,26 +82,28 @@
 				</thead>
 				<tbody>
 					<c:forEach items="${results.results}" var="result">
-						<th>
-							${result.value.pingTestName}<br />
-							<div class="caption">${result.key}</div>
-						</th>
-						<td${result.value.success ? '' : ' class="fail"'}>
-							<c:choose>
-								<c:when test="${result.value.success}">
-									PASS
-								</c:when>
-								<c:otherwise>
-									FAIL
-								</c:otherwise>
-							</c:choose>
-						</td>
-						<td>
-							${result.value.end.time - result.value.start.time}
-						</td>
-						<td>
-							${result.value.message}
-						</td>
+						<tr>
+							<th>
+								${result.value.pingTestName}<br />
+								<div class="caption">${result.key}</div>
+							</th>
+							<td${result.value.success ? '' : ' class="fail"'}>
+								<c:choose>
+									<c:when test="${result.value.success}">
+										PASS
+									</c:when>
+									<c:otherwise>
+										FAIL
+									</c:otherwise>
+								</c:choose>
+							</td>
+							<td>
+								${result.value.end.time - result.value.start.time}
+							</td>
+							<td>
+								${result.value.message}
+							</td>
+						</tr>
 					</c:forEach>
 				</tbody>
 			</table>
