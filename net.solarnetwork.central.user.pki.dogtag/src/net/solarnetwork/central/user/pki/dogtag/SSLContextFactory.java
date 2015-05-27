@@ -26,8 +26,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.KeyStore.Entry;
+import java.security.KeyStore.TrustedCertificateEntry;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Enumeration;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
+import net.solarnetwork.central.domain.PingTest;
+import net.solarnetwork.central.domain.PingTestResult;
+import net.solarnetwork.central.support.CachedResult;
 import net.solarnetwork.support.CertificateException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.config.RegistryBuilder;
@@ -50,12 +59,15 @@ import org.springframework.web.client.RestTemplate;
  * key/trust store.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class SSLContextFactory {
+public class SSLContextFactory implements PingTest {
 
 	private Resource keystoreResource;
 	private String keystorePassword;
+	private int trustedCertificateExpireWarningDays = 30;
+
+	private CachedResult<PingTestResult> cachedResult;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -126,6 +138,88 @@ public class SSLContextFactory {
 		}
 	}
 
+	@Override
+	public String getPingTestId() {
+		return getClass().getName();
+	}
+
+	@Override
+	public String getPingTestName() {
+		return "SolarNetwork CA Agent Certificate";
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 1000;
+	}
+
+	@Override
+	public PingTestResult performPingTest() throws Exception {
+		if ( cachedResult != null && cachedResult.isValid() ) {
+			return cachedResult.getResult();
+		}
+		if ( keystoreResource == null ) {
+			return new PingTestResult(false, "No keystore configured");
+		}
+		if ( keystorePassword == null ) {
+			return new PingTestResult(false, "No keystore password configured");
+		}
+		final long now = System.currentTimeMillis();
+		final long monthAgo = now - (1000 * 60 * 60 * 24 * trustedCertificateExpireWarningDays);
+		KeyStore keyStore = loadKeyStore();
+		Enumeration<String> aliases = keyStore.aliases();
+		PingTestResult result = null;
+		boolean validated = false;
+		String message = null;
+		while ( aliases.hasMoreElements() ) {
+			String alias = aliases.nextElement();
+			Entry entry = null;
+			try {
+				entry = keyStore.getEntry(alias, null);
+			} catch ( UnrecoverableKeyException e ) {
+				entry = keyStore.getEntry(alias, new KeyStore.PasswordProtection(
+						keystorePassword == null ? null : keystorePassword.toCharArray()));
+			}
+			if ( entry instanceof TrustedCertificateEntry ) {
+				// validate expiration date
+				TrustedCertificateEntry certEntry = (TrustedCertificateEntry) entry;
+				Certificate cert = certEntry.getTrustedCertificate();
+				if ( cert instanceof X509Certificate ) {
+					X509Certificate x509 = (X509Certificate) cert;
+					validated = true;
+					if ( x509.getNotBefore().getTime() > now ) {
+						result = new PingTestResult(false, "CA cert " + x509.getSubjectDN().getName()
+								+ " not yet valid. Valid from " + x509.getNotBefore() + ".");
+						break;
+					}
+					if ( x509.getNotAfter().getTime() < now ) {
+						result = new PingTestResult(false, "CA cert " + x509.getSubjectDN().getName()
+								+ " expired on " + x509.getNotAfter() + ".");
+						break;
+					}
+					if ( x509.getNotAfter().getTime() < monthAgo ) {
+						result = new PingTestResult(false, "CA cert " + x509.getSubjectDN().getName()
+								+ " will exipre on " + x509.getNotAfter() + ".");
+						break;
+					}
+					message = "CA cert " + x509.getSubjectDN().getName() + " valid until "
+							+ x509.getNotAfter() + ".";
+				}
+			}
+		}
+		if ( result == null ) {
+			if ( !validated ) {
+				message = "No CA certs found in keystore.";
+			}
+			result = new PingTestResult(validated, message);
+		}
+		// cache the results: for success cache for longer so we don't spend a lot of time parsing the certificates
+		CachedResult<PingTestResult> cached = new CachedResult<PingTestResult>(result,
+				(result.isSuccess() ? 1L : 30L), (result.isSuccess() ? TimeUnit.DAYS : TimeUnit.MINUTES));
+		cachedResult = cached;
+		return result;
+	}
+
 	public Resource getKeystoreResource() {
 		return keystoreResource;
 	}
@@ -140,6 +234,14 @@ public class SSLContextFactory {
 
 	public void setKeystorePassword(String keystorePassword) {
 		this.keystorePassword = keystorePassword;
+	}
+
+	public int getTrustedCertificateExpireWarningDays() {
+		return trustedCertificateExpireWarningDays;
+	}
+
+	public void setTrustedCertificateExpireWarningDays(int trustedCertificateExpireWarningDays) {
+		this.trustedCertificateExpireWarningDays = trustedCertificateExpireWarningDays;
 	}
 
 }

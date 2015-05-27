@@ -65,6 +65,7 @@ public class DogtagPKIBiz implements NodePKIBiz {
 	public static final String DOGTAG_10_CERTREG_GET_PATH = "/ca/rest/certrequests/{id}";
 	public static final String DOGTAG_10_AGENT_CERTREQ_GET_PATH = "/ca/rest/agent/certrequests/{id}";
 	public static final String DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH = "/ca/rest/agent/certrequests/{id}/approve";
+	public static final String DOGTAG_10_AGENT_PROFILE_GET_PATH = "/ca/rest/agent/profiles/{id}";
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 

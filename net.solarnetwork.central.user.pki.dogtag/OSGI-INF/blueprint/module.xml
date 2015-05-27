@@ -31,6 +31,8 @@
 	
 	<service ref="dogtagPKIBiz" interface="net.solarnetwork.central.user.biz.NodePKIBiz" ranking="1"/>
 	
+	<service ref="restFactory" interface="net.solarnetwork.central.domain.PingTest"/>
+	
 	<!-- Supporting Services -->
 
 	<bean id="restFactory" class="net.solarnetwork.central.user.pki.dogtag.SSLContextFactory">
