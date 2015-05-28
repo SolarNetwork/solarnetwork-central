@@ -45,6 +45,17 @@
 			id = #{id}
 	</update>
 
+	<delete id="delete-UserAlert" parameterType="long">
+		DELETE FROM solaruser.user_alert
+		WHERE id = #{id}
+	</delete>
+	
+	<delete id="delete-UserAlert-for-node" parameterType="map">
+		DELETE FROM solaruser.user_alert
+		WHERE user_id = #{user,javaType=long,jdbcType=BIGINT}
+			AND node_id = #{node,javaType=long,jdbcType=BIGINT}
+	</delete>
+	
 	<sql id="fragment-UserAlert-full-result">
 		ual.id AS user_alert_id, 
 		ual.created AS user_alert_created,

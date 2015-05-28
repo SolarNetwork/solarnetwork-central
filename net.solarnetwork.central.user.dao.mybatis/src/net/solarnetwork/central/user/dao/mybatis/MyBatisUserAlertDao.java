@@ -53,6 +53,9 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	/** The query name used for {@link #getAlertSituation(Long)}. */
 	public static final String QUERY_FOR_SITUATION = "get-UserAlert-with-situation";
 
+	/** The query name used for {@link #deleteAllAlertsForNode(Long, Long)}. */
+	public static final String DELETE_FOR_NODE = "delete-UserAlert-for-node";
+
 	/**
 	 * Default constructor.
 	 */
@@ -79,6 +82,15 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public List<UserAlert> findAlertsForUser(Long userId) {
 		return selectList(QUERY_FOR_USER_WITH_SITUATION, userId, null, null);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public int deleteAllAlertsForNode(Long userId, Long nodeId) {
+		Map<String, Object> params = new HashMap<String, Object>(2);
+		params.put("user", userId);
+		params.put("node", nodeId);
+		return getSqlSession().delete(DELETE_FOR_NODE, params);
 	}
 
 	@Override

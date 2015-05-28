@@ -33,7 +33,7 @@ import org.joda.time.DateTime;
  * DAO API for UserAlert objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 
@@ -72,6 +72,18 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 * @return The found alerts, or an empty list if none found.
 	 */
 	List<UserAlert> findAlertsForUser(Long userId);
+
+	/**
+	 * Delete all alerts configured for a given user and node.
+	 * 
+	 * @param userId
+	 *        The ID of the owner of the alerts.
+	 * @param nodeId
+	 *        The ID of the node.
+	 * @return The count of alerts deleted.
+	 * @since 1.1
+	 */
+	int deleteAllAlertsForNode(Long userId, Long nodeId);
 
 	/**
 	 * Get a specific alert with the most recently available active

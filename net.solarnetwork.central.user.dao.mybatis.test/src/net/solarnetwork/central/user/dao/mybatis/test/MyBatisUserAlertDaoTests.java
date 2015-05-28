@@ -158,6 +158,66 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 	}
 
 	@Test
+	public void delete() {
+		storeNew();
+		userAlertDao.delete(userAlert);
+		UserAlert alert = userAlertDao.get(userAlert.getId());
+		assertNull("Deleted alert not found", alert);
+	}
+
+	@Test
+	public void deleteWithSituation() {
+		getAlertWithSituationSituationActiveAndResolved();
+		userAlertDao.delete(userAlert);
+		UserAlert alert = userAlertDao.get(userAlert.getId());
+		assertNull("Deleted alert not found", alert);
+	}
+
+	@Test
+	public void deleteForNodeNone() {
+		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
+		assertEquals("None deleted", 0, deleted);
+	}
+
+	@Test
+	public void deleteForNode() {
+		storeNew();
+		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
+		assertEquals("1 deleted", 1, deleted);
+	}
+
+	@Test
+	public void deleteForNodeMulti() {
+		final int numAlerts = 5;
+		for ( int i = 0; i < numAlerts; i++ ) {
+			storeNew();
+		}
+		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
+		assertEquals("All alerts for user deleted", numAlerts, deleted);
+	}
+
+	@Test
+	public void deleteForNodeNotOtherNodes() {
+		storeNew();
+
+		// setup an alert for a 2nd node, to make sure that alert is NOT deleted
+		setupTestNode(-2L); // add a 2nd
+		UserAlert alert = new UserAlert();
+		alert.setCreated(new DateTime());
+		alert.setUserId(this.user.getId());
+		alert.setNodeId(-2L);
+		alert.setType(UserAlertType.NodeStaleData);
+		alert.setStatus(UserAlertStatus.Active);
+		Long secondAlertId = userAlertDao.store(alert);
+
+		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
+		assertEquals("Only 1 deleted", 1, deleted);
+
+		UserAlert secondAlert = userAlertDao.get(secondAlertId);
+		assertNotNull("Other alert not deleted", secondAlert);
+	}
+
+	@Test
 	public void findAlertsToProcessNone() {
 		List<UserAlert> results = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
 				null, null);
