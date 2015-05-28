@@ -87,6 +87,7 @@
 	<!-- Resolves logical view names returned by Controllers to Tiles; 
 		a view name to resolve is treated as the name of a tiles definition -->
 	<bean id="tilesViewResolver" class="org.springframework.js.ajax.AjaxUrlBasedViewResolver">
+		<property name="order" value="1"/>
 		<property name="viewClass" value="org.springframework.webflow.mvc.view.FlowAjaxTilesView"/>
 	</bean>
 
