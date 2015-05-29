@@ -209,23 +209,21 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 						EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
 						EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
 
+		// then query for the node, to grab time zone
+		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
 		// then query for active situation
 		EasyMock.expect(
 				userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
 				.andReturn(null);
 
-		// get User, SolarNode for alert
+		// get User for alert
 		EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
-		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
 		EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation))).andReturn(
 				AlertIdCounter.getAndIncrement());
-
-		// and finally save the alert
-		EasyMock.expect(userAlertDao.store(pendingAlerts.get(0)))
-				.andReturn(pendingAlerts.get(0).getId());
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
@@ -279,6 +277,9 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 						EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
 						EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
 
+		// then query for the node, to grab time zone
+		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
 		// then query for active situation
 		EasyMock.expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
 				.andReturn(null);
@@ -287,9 +288,6 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
 		EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation))).andReturn(
 				AlertIdCounter.getAndIncrement());
-
-		// and finally save the alert
-		EasyMock.expect(userAlertDao.store(pendingAlert)).andReturn(pendingAlert.getId());
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
@@ -347,17 +345,13 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		EasyMock.expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
 				.andReturn(null);
 
-		// get User, SolarNode for alert
+		// get User for alert
 		EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
-		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID_2)).andReturn(testNode2);
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
 		EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation))).andReturn(
 				AlertIdCounter.getAndIncrement());
-
-		// and finally save the alert
-		EasyMock.expect(userAlertDao.store(pendingAlert)).andReturn(pendingAlert.getId());
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
@@ -413,6 +407,9 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 						EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
 						EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
 
+		// then query for the node, to grab time zone
+		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>(CaptureType.ALL);
 
 		// then query for active situation
@@ -421,17 +418,12 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 					userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(i).getId()))
 					.andReturn(null);
 
-			// get User, SolarNode for alert
+			// get User for alert
 			EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
-			EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
 			// then save active situation
 			EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation))).andReturn(
 					AlertIdCounter.getAndIncrement());
-
-			// and finally save the alert
-			EasyMock.expect(userAlertDao.store(pendingAlerts.get(i))).andReturn(
-					pendingAlerts.get(i).getId());
 		}
 
 		// 2nd batch query for pending alerts, starting at previous ID
@@ -446,23 +438,21 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 						EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
 						EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
 
+		// then query for the node, to grab time zone
+		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
 		// then query for active situation
 		for ( int i = 5; i < 10; i++ ) {
 			EasyMock.expect(
 					userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(i).getId()))
 					.andReturn(null);
 
-			// get User, SolarNode for alert
+			// get User for alert
 			EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
-			EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
 			// then save active situation
 			EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation))).andReturn(
 					AlertIdCounter.getAndIncrement());
-
-			// and finally save the alert
-			EasyMock.expect(userAlertDao.store(pendingAlerts.get(i))).andReturn(
-					pendingAlerts.get(i).getId());
 		}
 
 		// 3rd batch query for pending alerts, starting at previous ID
@@ -477,6 +467,9 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 						EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
 						EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
 
+		// then query for the node, to grab time zone
+		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
 		// then query for active situation
 		for ( int i = 10; i < 12; i++ ) {
 			EasyMock.expect(
@@ -485,15 +478,10 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 			// get User, SolarNode for alert
 			EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
-			EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
 			// then save active situation
 			EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation))).andReturn(
 					AlertIdCounter.getAndIncrement());
-
-			// and finally save the alert
-			EasyMock.expect(userAlertDao.store(pendingAlerts.get(i))).andReturn(
-					pendingAlerts.get(i).getId());
 		}
 
 		// 4th batch query for pending alerts, starting at previous ID
@@ -557,6 +545,9 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 						EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
 						EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
 
+		// then query for the node, to grab time zone
+		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
 		// then query for active situation
 		final UserAlertSituation activeSituation = new UserAlertSituation();
 		activeSituation.setId(AlertIdCounter.getAndIncrement());
@@ -567,16 +558,15 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
 				.andReturn(activeSituation);
 
-		// get User, SolarNode for alert
+		// get User for alert
 		EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
-		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
 		// then save active situation -> resolved
 		EasyMock.expect(userAlertSituationDao.store(activeSituation)).andReturn(activeSituation.getId());
 
-		// and finally save the alert
-		EasyMock.expect(userAlertDao.store(pendingAlerts.get(0)))
-				.andReturn(pendingAlerts.get(0).getId());
+		// and finally save the alert valid date
+		userAlertDao.updateValidTo(EasyMock.eq(pendingAlerts.get(0).getId()),
+				EasyMock.<DateTime> anyObject());
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
