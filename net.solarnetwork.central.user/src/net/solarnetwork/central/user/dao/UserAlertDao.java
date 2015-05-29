@@ -96,4 +96,15 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 */
 	UserAlert getAlertSituation(Long alertId);
 
+	/**
+	 * Update the {@code validTo} property to a new date.
+	 * 
+	 * @param alertId
+	 *        The ID of the alert to update.
+	 * @param validTo
+	 *        The new value for the {@code validTo} property.
+	 * @since 1.1
+	 */
+	void updateValidTo(Long alertId, DateTime validTo);
+
 }

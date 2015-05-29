@@ -45,6 +45,12 @@
 			id = #{id}
 	</update>
 
+	<update id="update-UserAlert-valid-to" parameterType="map">
+		UPDATE solaruser.user_alert
+		SET valid_to = #{validDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+		WHERE id = #{id,javaType=long,jdbcType=BIGINT}
+	</update>
+
 	<delete id="delete-UserAlert" parameterType="long">
 		DELETE FROM solaruser.user_alert
 		WHERE id = #{id}

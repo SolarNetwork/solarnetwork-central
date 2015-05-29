@@ -158,6 +158,17 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 	}
 
 	@Test
+	public void updateValidTo() {
+		storeNew();
+		UserAlert alert = userAlertDao.get(this.userAlert.getId());
+		DateTime old = alert.getValidTo();
+		DateTime v = old.plusDays(1);
+		userAlertDao.updateValidTo(alert.getId(), v);
+		UserAlert updated = userAlertDao.get(alert.getId());
+		assertEquals("ValidTo date updated", v, updated.getValidTo());
+	}
+
+	@Test
 	public void delete() {
 		storeNew();
 		userAlertDao.delete(userAlert);

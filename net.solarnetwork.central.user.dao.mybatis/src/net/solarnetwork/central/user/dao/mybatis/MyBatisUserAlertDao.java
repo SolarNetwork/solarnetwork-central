@@ -37,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
  * MyBatis implementation of {@link UserAlertDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> implements UserAlertDao {
 
@@ -55,6 +55,9 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 
 	/** The query name used for {@link #deleteAllAlertsForNode(Long, Long)}. */
 	public static final String DELETE_FOR_NODE = "delete-UserAlert-for-node";
+
+	/** The query name used for {@link #updateValidTo(Long, DateTime)}. */
+	public static final String UPDATE_VALID_TO = "update-UserAlert-valid-to";
 
 	/**
 	 * Default constructor.
@@ -97,6 +100,15 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public UserAlert getAlertSituation(Long alertId) {
 		return selectFirst(QUERY_FOR_SITUATION, alertId);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void updateValidTo(Long alertId, DateTime validTo) {
+		Map<String, Object> params = new HashMap<String, Object>(3);
+		params.put("id", alertId);
+		params.put("validDate", (validTo == null ? new DateTime() : validTo));
+		getSqlSession().update(UPDATE_VALID_TO, params);
 	}
 
 }
