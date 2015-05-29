@@ -299,6 +299,16 @@ public class DaoDataCollectorBizTest extends AbstractInBizDaoTestSupport {
 	}
 
 	@Test
+	public void collectHardwareControlWithNoCreationDate() {
+		HardwareControlDatum d = newHardwareControlDatumInstance();
+		d.setCreated(null);
+		@SuppressWarnings("deprecation")
+		HardwareControlDatum result = biz.postDatum(d);
+		assertNotNull(result);
+		assertNotNull(result.getId());
+	}
+
+	@Test
 	public void findPriceLocation() {
 		SourceLocationFilter filter = new SourceLocationFilter(TEST_PRICE_SOURCE_NAME, TEST_LOC_NAME);
 		List<SourceLocationMatch> results = biz.findPriceLocations(filter);
