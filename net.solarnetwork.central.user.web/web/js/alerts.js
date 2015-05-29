@@ -39,14 +39,38 @@ $(document).ready(function() {
 		populateSourceList($(this).val(), $('#create-node-data-alert-sources-list'));
 	});
 	
-	$('#create-node-data-alert-modal').ajaxForm({
-		dataType: 'json',
-		success: function(json, status, xhr, form) {
-			document.location.reload(true);
-		},
-		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#create-node-data-alert-modal .modal-body > *:first-child', 'alert-warning', statusText);
-		}
+	$('#create-node-data-alert-modal').on('submit', function(event) {
+		event.preventDefault();
+		var form = this;
+		var url = $(form).attr('action');
+		var data = {};
+		data.id = form.elements['id'].value;
+		data.nodeId = $(form.elements['nodeId']).val();
+		data.type = $(form.elements['type']).val();
+		data.status = $(form).find('input[name=status]:checked').val();
+		data.options = {
+			ageMinutes : form.elements['option-age-minutes'].value,
+			sources : form.elements['option-sources'].value,
+			windows : [ // currently we only support one window, so we hard-code the array
+			           { 
+			        	   timeStart : form.elements['option-window-time-start'].value, 
+			        	   timeEnd : form.elements['option-window-time-end'].value
+			           }
+			           ]
+		};
+		$.ajax({
+			type : 'POST',
+			url : url,
+			dataType : 'json',
+			contentType : 'application/json',
+			data : JSON.stringify(data),
+			success: function(json, status, xhr, form) {
+				document.location.reload(true);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#create-node-data-alert-modal .modal-body > *:first-child', 'alert-warning', statusText);
+			}
+		});
 	}).on('shown.bs.modal', function() {
 		populateSourceList($('#create-node-data-alert-node-id').val(), $('#create-node-data-alert-sources-list'));
 	});
@@ -55,6 +79,7 @@ $(document).ready(function() {
 		var form = $('#create-node-data-alert-modal');
 		form.get(0).reset(); // doesn't reset hidden fields
 		form.get(0).elements['id'].value = '';
+		form.find('button.action-delete').hide();
 		form.modal('show');
 	});
 	
@@ -69,6 +94,7 @@ $(document).ready(function() {
 		var node = $('#create-node-data-alert-node-id').find('option[value="'+(alert && alert.nodeId ? alert.nodeId : '')+'"]').text();
 		var age = (alert && alert.options && alert.options.age ? (alert.options.age / 60).toFixed(0) : '1');
 		var sources = (alert && alert.options && alert.options.sources ? alert.options.sources : '');
+		
 		root.find('.alert-situation-type').text(type);
 		root.find('.alert-situation-created').text(date);
 		root.find('.alert-situation-node').text(node);
@@ -95,14 +121,19 @@ $(document).ready(function() {
 			alertType = btn.data('alert-type'),
 			alertStatus = btn.data('alert-status'),
 			alertSources = btn.data('sources'),
-			alertAge = btn.data('age');
+			alertAge = btn.data('age'),
+			alertWindowStart = btn.data('window-time-start'),
+			alertWindowEnd = btn.data('window-time-end');
 		var form = $('#create-node-data-alert-modal');
 		$('#create-node-data-alert-node-id').val(nodeId);
 		$('#create-node-data-alert-type').val(alertType);
 		form.find('input[type=radio][value=' + alertStatus + ']').prop('checked', true);
 		$('#create-node-data-alert-sources').val(alertSources);
 		$('#create-node-data-alert-age').val(alertAge);
+		$('#create-node-data-alert-window-time-start').val(alertWindowStart);
+		$('#create-node-data-alert-window-time-end').val(alertWindowEnd);
 		form.get(0).elements['id'].value = alertId;
+		form.find('button.action-delete').show();
 		form.modal('show');
 	}).on('click', 'button.view-situation', function(event) {
 		event.preventDefault();

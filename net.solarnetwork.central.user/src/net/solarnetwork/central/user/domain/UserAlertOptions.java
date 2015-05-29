@@ -26,7 +26,7 @@ package net.solarnetwork.central.user.domain;
  * {@link UserAlert} option constants.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserAlertOptions {
 
@@ -39,5 +39,10 @@ public interface UserAlertOptions {
 	 * A list of string datum source ID values.
 	 */
 	static String SOURCE_IDS = "sourceIds";
+
+	/**
+	 * A list of time window objects.
+	 */
+	static String TIME_WINDOWS = "windows";
 
 }
