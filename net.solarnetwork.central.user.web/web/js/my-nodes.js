@@ -32,6 +32,15 @@ $(document).ready(function() {
 		$('#transfer-ownership-node').text(nodeId + (nodeName ? ' - ' + nodeName : ''));
 		
 		form.modal('show');
+	}).on('click', 'button.view-situation', function(event) {
+		// use call(this) to preserve button as 'this' object
+		var nodeRow = $(this).parents('.node-row').first();
+		var nodeId = nodeRow.data('node-id');
+		var nodeName = nodeRow.data('node-name');
+		if ( nodeName ) {
+			nodeName = nodeId + ' - ' + nodeName;
+		}
+		SolarReg.viewAlertSituation.call(this, event, nodeName);
 	});
 	
 	$('#pending-transfer').on('click', 'button.cancel-ownership-transfer', function(event) {
@@ -410,6 +419,21 @@ $(document).ready(function() {
 				});
 				picker.timezonePicker('detectLocation');
 			});
+		}
+	});
+	
+	// show active aelrt situations
+	$.getJSON(SolarReg.solarUserURL('/sec/alerts/user/situations'), function(json) {
+		var i, alert;
+		if ( json && json.data && Array.isArray(json.data) ) {
+			for ( i = 0; i < json.data.length; i++ ) {
+				alert = json.data[i];
+				if ( alert.nodeId ) {
+					$('.node-row[data-node-id='+alert.nodeId+'] button.view-situation').each(function(idx, el) {
+						$(el).data('alert-id', alert.id);
+					}).removeClass('hidden');
+				}
+			}
 		}
 	});
 });

@@ -83,15 +83,15 @@ $(document).ready(function() {
 		form.modal('show');
 	});
 	
-	function populateAlertSituationValues(root, alert) {
-		// make use of the i18n type/status values available in the edit form
-		var type = (alert && alert.type 
-				? $('#create-node-data-alert-type').find('option[value='+alert.type+']').text()
+	function populateAlertSituationValues(root, alert, nodeName) {
+		// make use of the i18n type/status
+		var type = (alert && alert.type && SolarReg.userAlertTypes
+				? SolarReg.userAlertTypes[alert.type]
 				: '');
 		var date = (alert && alert.options && alert.options.situationDate
 				? alert.options.situationDate
 				: '');
-		var node = $('#create-node-data-alert-node-id').find('option[value="'+(alert && alert.nodeId ? alert.nodeId : '')+'"]').text();
+		var node = (nodeName ? nodeName : alert.nodeId);
 		var age = (alert && alert.options && alert.options.age ? (alert.options.age / 60).toFixed(0) : '1');
 		var sources = (alert && alert.options && alert.options.sources ? alert.options.sources : '');
 		
@@ -110,8 +110,33 @@ $(document).ready(function() {
 	}
 
 	function alertSituationBaseURL() {
-		return $('#node-data-alerts').data('action-situation');
+		return SolarReg.solarUserURL('/sec/alerts/situation');
 	}
+	
+	/**
+	 * View a single alert situation via a click event. The event target must define a data 
+	 * attribute <code>alert-id</code> for the ID of the alert to view, and a modal 
+	 * dialog with an ID <code>alert-situation-modal</code> to display the alert details.
+	 */
+	SolarReg.viewAlertSituation = function(event, nodeName) {
+		event.preventDefault();
+		var btn = $(this);
+		var alertId = btn.data('alert-id');
+		var url = alertSituationBaseURL() + '/' + encodeURIComponent(alertId);
+		$.getJSON(url, function(json) {
+			var modal = $('#alert-situation-modal'),
+				alert = json.data,
+				name = (nodeName ? nodeName : $('#create-node-data-alert-node-id').find('option[value="'+(alert.nodeId ? alert.nodeId : '')+'"]').text());
+			if ( json.success === true && alert !== undefined ) {
+				populateAlertSituationValues(modal, alert, name);
+				$('#alert-situation-resolve').data('alert-id', json.data.id);
+			}
+			modal.modal('show');
+		}).fail(function(data, statusText, xhr) {
+			SolarReg.showAlertBefore('#alert-situation-modal .modal-body > *:first-child', 'alert-warning', 
+					'Error getting alert situation details. ' +statusText);
+		});
+	};
 	
 	$('#node-data-alerts').on('click', 'button.edit-alert', function(event) {
 		event.preventDefault();
@@ -135,24 +160,7 @@ $(document).ready(function() {
 		form.get(0).elements['id'].value = alertId;
 		form.find('button.action-delete').show();
 		form.modal('show');
-	}).on('click', 'button.view-situation', function(event) {
-		event.preventDefault();
-		var btn = $(this);
-		var alertId = btn.data('alert-id');
-		var url = alertSituationBaseURL() + '/' + encodeURIComponent(alertId);
-		$.getJSON(url, function(json) {
-			console.log('hi: ' +json.data);
-			var modal = $('#alert-situation-modal');
-			if ( json.success === true && json.data !== undefined ) {
-				populateAlertSituationValues(modal, json.data);
-				$('#alert-situation-resolve').data('alert-id', json.data.id);
-			}
-			modal.modal('show');
-		}).fail(function(data, statusText, xhr) {
-			SolarReg.showAlertBefore('#alert-situation-modal .modal-body > *:first-child', 'alert-warning', 
-					'Error getting alert situation details. ' +statusText);
-		});
-	});
+	}).on('click', 'button.view-situation', SolarReg.viewAlertSituation);
 	
 	$('#alert-situation-resolve').on('click', function(event) {
 		event.preventDefault();
@@ -165,14 +173,10 @@ $(document).ready(function() {
 		}
 	});
 	
-	function solarUserURL(relativeURL) {
-		return $('meta[name=solarUserRootURL]').attr('content') + relativeURL;
-	}
-	
 	(function() {
 		var situationCountContainers = $('.alert-situation-count');
 		if ( situationCountContainers.length > 0 ) {
-			$.getJSON(solarUserURL('/sec/alerts/user/situation/count'), function(json) {
+			$.getJSON(SolarReg.solarUserURL('/sec/alerts/user/situation/count'), function(json) {
 				var count = 0;
 				if ( json && json.data ) {
 					count = Number(json.data);

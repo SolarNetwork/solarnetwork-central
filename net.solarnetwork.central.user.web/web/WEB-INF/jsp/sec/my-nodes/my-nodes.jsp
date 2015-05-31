@@ -227,6 +227,9 @@
 									</li>
 								</ul>
 							</div>
+							<button class="btn btn-small btn-danger view-situation hidden" type="button">
+								<span aria-hidden="true" class="glyphicon glyphicon-alert"></span>
+							</button>
 						</td>
 					</tr>
 				</c:forEach>
@@ -556,3 +559,5 @@
 	<input type="hidden" name="userId"/>
 	<input type="hidden" name="accept" value="false"/>
 </form>
+<%@include file="/WEB-INF/jsp/sec/alerts/situation-modal.jsp" %>
+<%@include file="/WEB-INF/jsp/sec/alerts/alert-enums.jsp" %>

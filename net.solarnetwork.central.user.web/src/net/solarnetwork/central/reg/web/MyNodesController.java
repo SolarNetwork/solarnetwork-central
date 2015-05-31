@@ -26,6 +26,7 @@ import static net.solarnetwork.web.domain.Response.response;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -43,6 +44,8 @@ import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserAlertStatus;
+import net.solarnetwork.central.user.domain.UserAlertType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
@@ -59,6 +62,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -129,6 +133,17 @@ public class MyNodesController extends ControllerSupport {
 	 */
 	public void setMessageSource(MessageSource messageSource) {
 		this.messageSource = messageSource;
+	}
+
+	@ModelAttribute("nodeDataAlertTypes")
+	public List<UserAlertType> nodeDataAlertTypes() {
+		// now now, only one alert type!
+		return Collections.singletonList(UserAlertType.NodeStaleData);
+	}
+
+	@ModelAttribute("alertStatuses")
+	public UserAlertStatus[] alertStatuses() {
+		return UserAlertStatus.values();
 	}
 
 	/**
