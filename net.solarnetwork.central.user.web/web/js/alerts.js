@@ -164,4 +164,24 @@ $(document).ready(function() {
 			}, 'json');
 		}
 	});
+	
+	function solarUserURL(relativeURL) {
+		return $('meta[name=solarUserRootURL]').attr('content') + relativeURL;
+	}
+	
+	(function() {
+		var situationCountContainers = $('.alert-situation-count');
+		if ( situationCountContainers.length > 0 ) {
+			$.getJSON(solarUserURL('/sec/alerts/user/situation/count'), function(json) {
+				var count = 0;
+				if ( json && json.data ) {
+					count = Number(json.data);
+					if ( isNaN(count) ) {
+						count = 0;
+					}
+				}
+				situationCountContainers.text(count > 0 ? count : '');
+			});
+		}
+	}());
 });

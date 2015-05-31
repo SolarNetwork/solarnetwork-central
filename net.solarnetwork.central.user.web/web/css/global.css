@@ -87,11 +87,19 @@ section + section {
 }
 
 .carousel-indicators.dark li {
-  background-color: #777;
-  border: none;
+	background-color: #777;
+	border: none;
 }
 
 .carousel-indicators.dark .active {
-  background-color: #d6ad15;
-  border: none;
+	background-color: #d6ad15;
+	border: none;
+}
+
+.label-as-badge {
+	border-radius: 1em;
+}
+
+.alert-situation-count {
+	margin-left: 4px;
 }

@@ -63,7 +63,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * Controller for user alerts.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller
 @RequestMapping("/sec/alerts")
@@ -139,6 +139,60 @@ public class UserAlertController extends ControllerSupport {
 		Set<String> sources = queryBiz.getAvailableSources(nodeId, start, end);
 		List<String> sourceList = new ArrayList<String>(sources);
 		return response(sourceList);
+	}
+
+	/**
+	 * Get <em>active</em> situations for a given node.
+	 * 
+	 * @param nodeId
+	 *        The ID of the node to get the sitautions for.
+	 * @param locale
+	 *        The request locale.
+	 * @return The alerts with active situations.
+	 * @since 1.1
+	 */
+	@RequestMapping(value = "/node/{nodeId}/situations", method = RequestMethod.GET)
+	@ResponseBody
+	public Response<List<UserAlert>> activeSituationsNode(@PathVariable("nodeId") Long nodeId,
+			Locale locale) {
+		List<UserAlert> results = userAlertBiz.alertSituationsForNode(nodeId);
+		for ( UserAlert alert : results ) {
+			populateUsefulAlertOptions(alert, locale);
+		}
+		return response(results);
+	}
+
+	/**
+	 * Get a count of <em>active</em> situations for the active user.
+	 * 
+	 * @return The count.
+	 * @since 1.1
+	 */
+	@RequestMapping(value = "/user/situation/count", method = RequestMethod.GET)
+	@ResponseBody
+	public Response<Integer> activeSituationCount() {
+		Long userId = SecurityUtils.getCurrentActorUserId();
+		Integer count = userAlertBiz.alertSituationCountForUser(userId);
+		return response(count);
+	}
+
+	/**
+	 * Get <em>active</em> situations for the active user
+	 * 
+	 * @param locale
+	 *        The request locale.
+	 * @return The alerts with active situations.
+	 * @since 1.1
+	 */
+	@RequestMapping(value = "/user/situations", method = RequestMethod.GET)
+	@ResponseBody
+	public Response<List<UserAlert>> activeSituations(Locale locale) {
+		Long userId = SecurityUtils.getCurrentActorUserId();
+		List<UserAlert> results = userAlertBiz.alertSituationsForUser(userId);
+		for ( UserAlert alert : results ) {
+			populateUsefulAlertOptions(alert, locale);
+		}
+		return response(results);
 	}
 
 	/**

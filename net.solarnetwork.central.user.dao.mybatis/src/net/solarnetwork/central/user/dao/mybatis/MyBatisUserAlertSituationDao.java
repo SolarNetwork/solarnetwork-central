@@ -23,11 +23,9 @@
 package net.solarnetwork.central.user.dao.mybatis;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
-import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import org.joda.time.DateTime;
 import org.springframework.transaction.annotation.Propagation;
@@ -74,20 +72,6 @@ public class MyBatisUserAlertSituationDao extends BaseMyBatisGenericDao<UserAler
 		getSqlSession().update(UPDATE_PURGE_RESOLVED, params);
 		Long result = (Long) params.get("result");
 		return (result == null ? 0 : result.longValue());
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<UserAlert> findActiveAlertSituationsForUser(Long userId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<UserAlert> findActiveAlertSituationsForNode(Long nodeId) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }

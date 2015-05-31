@@ -107,4 +107,38 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 */
 	void updateValidTo(Long alertId, DateTime validTo);
 
+	/**
+	 * Get all available active situations for a given user. The situations are
+	 * returned as {@link UserAlert} entities with the
+	 * {@link UserAlert#getSituation()} populated.
+	 * 
+	 * @param userId
+	 *        The ID of the user to get all active situations for.
+	 * @return The found alerts with active situations.
+	 * @since 1.1
+	 */
+	List<UserAlert> findActiveAlertSituationsForUser(Long userId);
+
+	/**
+	 * Get all available active situations for a given node. The situations are
+	 * returned as {@link UserAlert} entities with the
+	 * {@link UserAlert#getSituation()} populated.
+	 * 
+	 * @param nodeId
+	 *        The ID of the node to get all active situations for.
+	 * @return The found alerts with active situations.
+	 * @since 1.1
+	 */
+	List<UserAlert> findActiveAlertSituationsForNode(Long nodeId);
+
+	/**
+	 * Get a count of <em>active</em> alert situations for a given user.
+	 * 
+	 * @param userId
+	 *        The ID of the user to get the alert situation count for.
+	 * @return The number of active alert situations for the given user.
+	 * @since 1.1
+	 */
+	int alertSituationCountForUser(Long userId);
+
 }

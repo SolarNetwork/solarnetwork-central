@@ -64,8 +64,23 @@ public class DelegatingUserAlertBiz implements UserAlertBiz {
 	}
 
 	@Override
+	public int alertSituationCountForUser(Long userId) {
+		return delegate.alertSituationCountForUser(userId);
+	}
+
+	@Override
 	public UserAlert updateSituationStatus(Long alertId, UserAlertSituationStatus status) {
 		return delegate.updateSituationStatus(alertId, status);
+	}
+
+	@Override
+	public List<UserAlert> alertSituationsForUser(Long userId) {
+		return delegate.alertSituationsForUser(userId);
+	}
+
+	@Override
+	public List<UserAlert> alertSituationsForNode(Long nodeId) {
+		return delegate.alertSituationsForNode(nodeId);
 	}
 
 }

@@ -3,6 +3,7 @@
 <tiles:useAttribute name="navloc" scope="request"/>
 <html lang="en">
 	<tiles:insertAttribute name="head" />
+	<meta name="solarUserRootURL" content="<c:url value='/u'/>">
 	<body>
 		<c:import url="/WEB-INF/jsp/navbar.jsp"/>
 		<tiles:insertAttribute name="header" />

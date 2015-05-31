@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.dao;
 
-import java.util.List;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
@@ -57,9 +56,5 @@ public interface UserAlertSituationDao extends GenericDao<UserAlertSituation, Lo
 	 * @return The number of situations deleted.
 	 */
 	long purgeResolvedSituations(DateTime olderThanDate);
-
-	List<UserAlert> findActiveAlertSituationsForUser(Long userId);
-
-	List<UserAlert> findActiveAlertSituationsForNode(Long nodeId);
 
 }

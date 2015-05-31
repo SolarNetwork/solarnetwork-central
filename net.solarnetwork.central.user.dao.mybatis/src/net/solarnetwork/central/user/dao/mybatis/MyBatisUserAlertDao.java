@@ -59,6 +59,15 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	/** The query name used for {@link #updateValidTo(Long, DateTime)}. */
 	public static final String UPDATE_VALID_TO = "update-UserAlert-valid-to";
 
+	/** The query name used for {@link #findActiveAlertSituationsForNode(Long)}. */
+	public static final String QUERY_ACTIVE_SITUATIONS_FOR_NODE = "find-UserAlert-active-for-node";
+
+	/** The query name used for {@link #findActiveAlertSituationsForUser(Long)}. */
+	public static final String QUERY_ACTIVE_SITUATIONS_FOR_USER = "find-UserAlert-active-for-user";
+
+	/** The query name used for {@link #alertSituationCountForUser(Long)}. */
+	public static final String QUERY_ACTIVE_SITUATIONS_FOR_USER_COUNT = "find-UserAlert-active-for-user-count";
+
 	/**
 	 * Default constructor.
 	 */
@@ -109,6 +118,28 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 		params.put("id", alertId);
 		params.put("validDate", (validTo == null ? new DateTime() : validTo));
 		getSqlSession().update(UPDATE_VALID_TO, params);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public List<UserAlert> findActiveAlertSituationsForUser(Long userId) {
+		return selectList(QUERY_ACTIVE_SITUATIONS_FOR_USER, userId, null, null);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public List<UserAlert> findActiveAlertSituationsForNode(Long nodeId) {
+		return selectList(QUERY_ACTIVE_SITUATIONS_FOR_NODE, nodeId, null, null);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public int alertSituationCountForUser(Long userId) {
+		Number n = getSqlSession().selectOne(QUERY_ACTIVE_SITUATIONS_FOR_USER_COUNT, userId);
+		if ( n != null ) {
+			return n.intValue();
+		}
+		return 0;
 	}
 
 }

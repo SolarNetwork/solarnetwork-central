@@ -15,7 +15,7 @@ Import-Package:
  net.solarnetwork.central.security;version="1.6",
  net.solarnetwork.central.user.biz;version="1.9",
  net.solarnetwork.central.user.dao;version="1.5",
- net.solarnetwork.central.user.domain;version="1.8",
+ net.solarnetwork.central.user.domain;version="1.9",
  net.solarnetwork.domain;version="1.5",
  net.solarnetwork.io;version="1.1.0",
  net.solarnetwork.support;version="1.2.0",
