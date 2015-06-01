@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarUser Alert Processor
 Bundle-SymbolicName: net.solarnetwork.central.user.alerts
-Bundle-Version: 1.1.0
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
@@ -11,8 +11,8 @@ Import-Package:
  net.solarnetwork.central.datum.dao;version="2.0.0",
  net.solarnetwork.central.datum.domain;version="1.16.1",
  net.solarnetwork.central.domain;version="1.16.0",
- net.solarnetwork.central.mail;version="1.0.0",
- net.solarnetwork.central.mail.support;version="1.1.0",
+ net.solarnetwork.central.mail;version="1.1.0",
+ net.solarnetwork.central.mail.support;version="1.2.0",
  net.solarnetwork.central.scheduler;version="1.4.0",
  net.solarnetwork.central.user.dao;version="1.4.0",
  net.solarnetwork.central.user.domain;version="1.8.0",
