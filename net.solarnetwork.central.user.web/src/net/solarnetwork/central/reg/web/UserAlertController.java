@@ -337,4 +337,18 @@ public class UserAlertController extends ControllerSupport {
 		populateUsefulAlertOptions(alert, locale);
 		return response(alert);
 	}
+
+	/**
+	 * Delete an alert.
+	 * 
+	 * @param alertId
+	 *        The ID of the alert to delete.
+	 * @return The result.
+	 */
+	@RequestMapping(value = "/{alertId}", method = RequestMethod.DELETE)
+	@ResponseBody
+	public Response<Object> deleteAlert(@PathVariable("alertId") Long alertId) {
+		userAlertBiz.deleteAlert(alertId);
+		return response(null);
+	}
 }

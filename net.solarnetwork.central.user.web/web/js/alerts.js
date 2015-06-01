@@ -64,7 +64,7 @@ $(document).ready(function() {
 			dataType : 'json',
 			contentType : 'application/json',
 			data : JSON.stringify(data),
-			success: function(json, status, xhr, form) {
+			success: function(json, status, xhr) {
 				document.location.reload(true);
 			},
 			error: function(xhr, status, statusText) {
@@ -73,6 +73,20 @@ $(document).ready(function() {
 		});
 	}).on('shown.bs.modal', function() {
 		populateSourceList($('#create-node-data-alert-node-id').val(), $('#create-node-data-alert-sources-list'));
+	}).on('click', 'button.action-delete', function(event) {
+		var alertId = $('#create-node-data-alert-modal').get(0).elements['id'].value,
+			url = SolarReg.solarUserURL('/sec/alerts/') + alertId;
+		$.ajax({
+			type : 'DELETE',
+			url : url,
+			dataType : 'json',
+			success : function(json, status, xhr) {
+				document.location.reload(true);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#create-node-data-alert-modal .modal-body > *:first-child', 'alert-warning', statusText);
+			}
+		});
 	});
 	
 	$('#add-node-data-button').on('click', function(event) {

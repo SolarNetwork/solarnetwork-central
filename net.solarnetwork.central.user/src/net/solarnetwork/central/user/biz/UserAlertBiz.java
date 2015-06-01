@@ -58,6 +58,15 @@ public interface UserAlertBiz {
 	Long saveAlert(UserAlert alert);
 
 	/**
+	 * Delete an alert.
+	 * 
+	 * @param alertId
+	 *        The ID of the alert to delete.
+	 * @since 1.1
+	 */
+	void deleteAlert(Long alertId);
+
+	/**
 	 * Get an alert with the most recently available <em>active</em>
 	 * {@link UserAlertSituation} populated, if one exists.
 	 * 

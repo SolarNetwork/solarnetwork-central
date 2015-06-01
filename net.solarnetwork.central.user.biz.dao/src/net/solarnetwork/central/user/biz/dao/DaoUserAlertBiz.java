@@ -96,4 +96,12 @@ public class DaoUserAlertBiz implements UserAlertBiz {
 		return userAlertDao.findActiveAlertSituationsForNode(nodeId);
 	}
 
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void deleteAlert(Long alertId) {
+		UserAlert alert = new UserAlert();
+		alert.setId(alertId);
+		userAlertDao.delete(alert);
+	}
+
 }

@@ -80,6 +80,10 @@ public class UserAlertSecurityAspect extends AuthorizationSupport {
 	public void getAlert(Long alertId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.deleteAlert(..)) && args(alertId)")
+	public void deleteAlert(Long alertId) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.updateSituationStatus(..)) && args(alertId, ..)")
 	public void updateSituationStatus(Long alertId) {
 	}
@@ -113,7 +117,7 @@ public class UserAlertSecurityAspect extends AuthorizationSupport {
 		requireUserReadAccess(entity.getUserId());
 	}
 
-	@Before("updateSituationStatus(alertId)")
+	@Before("updateSituationStatus(alertId) || deleteAlert(alertId)")
 	public void checkUpdateAlertProperties(Long alertId) {
 		// check userID of existing alert
 		UserAlert entity = userAlertDao.get(alertId);
