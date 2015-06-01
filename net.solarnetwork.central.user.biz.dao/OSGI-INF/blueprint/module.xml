@@ -98,6 +98,7 @@
 	
 	<bean id="daoUserBiz" class="net.solarnetwork.central.user.biz.dao.DaoUserBiz">
 		<property name="userDao" ref="userDao"/>
+		<property name="userAlertDao" ref="userAlertDao"/>
 		<property name="userNodeDao" ref="userNodeDao"/>
 		<property name="userNodeConfirmationDao" ref="userNodeConfirmationDao"/>
 		<property name="userNodeCertificateDao" ref="userNodeCertificateDao"/>

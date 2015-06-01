@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (c) 2002-2006 Solarnetwork.net Dev Team
+  Copyright (c) 2002 Solarnetwork.net Dev Team
   
   This program is free software; you can redistribute it and/or 
   modify it under the terms of the GNU General Public License as 
@@ -16,8 +16,6 @@
   along with this program; if not, write to the Free Software 
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
   02111-1307 USA
-
-  $Id: web.xml,v 1.58 2007/08/27 04:04:21 matt Exp $
 -->
 <web-app xmlns="http://java.sun.com/xml/ns/javaee"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -109,4 +107,12 @@
 		<welcome-file>index.jsp</welcome-file>
 	</welcome-file-list>
 
+	<jsp-config>
+		<jsp-property-group>
+			<url-pattern>*.jsp</url-pattern>
+			<include-prelude>/WEB-INF/jsp/prelude.jsp</include-prelude>
+			<trim-directive-whitespaces>true</trim-directive-whitespaces>
+		</jsp-property-group>
+	</jsp-config>
+	
 </web-app>

@@ -36,7 +36,7 @@ import org.aspectj.lang.annotation.Pointcut;
  * Security enforcing AOP aspect for {@link UserAlertBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 public class UserAlertSecurityAspect extends AuthorizationSupport {
@@ -60,6 +60,18 @@ public class UserAlertSecurityAspect extends AuthorizationSupport {
 	public void findAlertsForUser(Long userId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.alertSituationCountForUser(..)) && args(userId)")
+	public void getAlertSituationCountForUser(Long userId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.alertSituationsForUser(..)) && args(userId)")
+	public void getAlertSituationsForUser(Long userId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.alertSituationsForNode(..)) && args(nodeId)")
+	public void getAlertSituationsForNode(Long nodeId) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.saveAlert(..)) && args(alert)")
 	public void saveAlert(UserAlert alert) {
 	}
@@ -68,11 +80,15 @@ public class UserAlertSecurityAspect extends AuthorizationSupport {
 	public void getAlert(Long alertId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.deleteAlert(..)) && args(alertId)")
+	public void deleteAlert(Long alertId) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserAlertBiz.updateSituationStatus(..)) && args(alertId, ..)")
 	public void updateSituationStatus(Long alertId) {
 	}
 
-	@Before("findAlertsForUser(userId)")
+	@Before("findAlertsForUser(userId) || getAlertSituationCountForUser(userId) || getAlertSituationsForUser(userId)")
 	public void checkViewAlertsForUser(Long userId) {
 		requireUserReadAccess(userId);
 	}
@@ -101,7 +117,7 @@ public class UserAlertSecurityAspect extends AuthorizationSupport {
 		requireUserReadAccess(entity.getUserId());
 	}
 
-	@Before("updateSituationStatus(alertId)")
+	@Before("updateSituationStatus(alertId) || deleteAlert(alertId)")
 	public void checkUpdateAlertProperties(Long alertId) {
 		// check userID of existing alert
 		UserAlert entity = userAlertDao.get(alertId);
@@ -109,5 +125,11 @@ public class UserAlertSecurityAspect extends AuthorizationSupport {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, alertId);
 		}
 		requireUserWriteAccess(entity.getUserId());
+	}
+
+	@Before("getAlertSituationsForNode(nodeId)")
+	public void checkGetForNode(Long nodeId) {
+		// require WRITE access here because read access not sufficient for alerts: we want owners or user tokens only
+		requireNodeWriteAccess(nodeId);
 	}
 }

@@ -77,3 +77,29 @@ section + section {
 	border-top-left-radius: 6px;
 	border-top-right-radius: 6px;
 }
+
+.modal-content .carousel-indicators {
+	bottom: 0;
+}
+
+.modal-content .carousel-indicators li + li {
+	margin-left: 10px;
+}
+
+.carousel-indicators.dark li {
+	background-color: #777;
+	border: none;
+}
+
+.carousel-indicators.dark .active {
+	background-color: #d6ad15;
+	border: none;
+}
+
+.label-as-badge {
+	border-radius: 1em;
+}
+
+.alert-situation-count {
+	margin-left: 4px;
+}

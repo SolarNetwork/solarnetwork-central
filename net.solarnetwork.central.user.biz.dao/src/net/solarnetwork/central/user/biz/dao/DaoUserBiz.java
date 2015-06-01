@@ -35,6 +35,7 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
+import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
@@ -66,6 +67,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private UserDao userDao;
+	private UserAlertDao userAlertDao;
 	private UserNodeDao userNodeDao;
 	private UserNodeConfirmationDao userNodeConfirmationDao;
 	private UserNodeCertificateDao userNodeCertificateDao;
@@ -305,11 +307,10 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			// at this point, we can delete the transfer request
 			userNodeDao.deleteUserNodeTrasnfer(xfer);
 
-			// and now, transfer ownership
-			if ( recipient.getId().equals(userNode.getUser().getId()) == false ) {
-				userNode.setUser(recipient);
-				userNodeDao.store(userNode);
-			}
+			// remove any node alerts associated with this node
+			int deletedAlertCount = userAlertDao.deleteAllAlertsForNode(userId, nodeId);
+			log.debug("Deleted {} alerts associated with node {} for ownership transfer",
+					deletedAlertCount, nodeId);
 
 			// clean up auth tokens associated with node: if token contains just this node id, delete it
 			// but if it contains other node IDs, just remove this node ID from it
@@ -328,6 +329,12 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 						userAuthTokenDao.store(token);
 					}
 				}
+			}
+
+			// and now, transfer ownership
+			if ( recipient.getId().equals(userNode.getUser().getId()) == false ) {
+				userNode.setUser(recipient);
+				userNodeDao.store(userNode);
 			}
 		} else {
 			// rejecting
@@ -362,6 +369,10 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
 	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
 		this.solarNodeDao = solarNodeDao;
+	}
+
+	public void setUserAlertDao(UserAlertDao userAlertDao) {
+		this.userAlertDao = userAlertDao;
 	}
 
 }

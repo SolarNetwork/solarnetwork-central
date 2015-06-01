@@ -67,6 +67,12 @@ public class DaoUserAlertBiz implements UserAlertBiz {
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public int alertSituationCountForUser(Long userId) {
+		return userAlertDao.alertSituationCountForUser(userId);
+	}
+
+	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public UserAlert updateSituationStatus(Long alertId, UserAlertSituationStatus status) {
 		UserAlert alert = alertSituation(alertId);
@@ -76,6 +82,26 @@ public class DaoUserAlertBiz implements UserAlertBiz {
 			userAlertSituationDao.store(alert.getSituation());
 		}
 		return alert;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public List<UserAlert> alertSituationsForUser(Long userId) {
+		return userAlertDao.findActiveAlertSituationsForUser(userId);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public List<UserAlert> alertSituationsForNode(Long nodeId) {
+		return userAlertDao.findActiveAlertSituationsForNode(nodeId);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void deleteAlert(Long alertId) {
+		UserAlert alert = new UserAlert();
+		alert.setId(alertId);
+		userAlertDao.delete(alert);
 	}
 
 }

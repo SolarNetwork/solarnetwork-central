@@ -31,7 +31,7 @@ import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
  * Delegating implementation of {@link UserAlertBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelegatingUserAlertBiz implements UserAlertBiz {
 
@@ -64,8 +64,28 @@ public class DelegatingUserAlertBiz implements UserAlertBiz {
 	}
 
 	@Override
+	public int alertSituationCountForUser(Long userId) {
+		return delegate.alertSituationCountForUser(userId);
+	}
+
+	@Override
 	public UserAlert updateSituationStatus(Long alertId, UserAlertSituationStatus status) {
 		return delegate.updateSituationStatus(alertId, status);
+	}
+
+	@Override
+	public List<UserAlert> alertSituationsForUser(Long userId) {
+		return delegate.alertSituationsForUser(userId);
+	}
+
+	@Override
+	public List<UserAlert> alertSituationsForNode(Long nodeId) {
+		return delegate.alertSituationsForNode(nodeId);
+	}
+
+	@Override
+	public void deleteAlert(Long alertId) {
+		delegate.deleteAlert(alertId);
 	}
 
 }

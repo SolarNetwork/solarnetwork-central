@@ -4,6 +4,7 @@
 		nodeDataAlerts 		- collection of UserAuth objects of type NodeStaleData
 		nodeDataAlertTypes 	- collection of UserAlertType that represent node data alerts
 		userNodes      		- collection of UserNode objects
+		alertStatuses       - collection of UesrAlertStatus
  --%>
 <p class="intro">
 	<fmt:message key='alerts.intro'/>
@@ -30,6 +31,7 @@
 					<th><fmt:message key="alert.type.label"/></th>
 					<th><fmt:message key="alert.options.sourceIds.label"/></th>
 					<th><fmt:message key="alert.options.ageMinutes.heading"/></th>
+					<th><fmt:message key="alert.options.window.label"/></th>
 					<th><fmt:message key="alert.status.label"/></th>
 					<th></th>
 				</tr>
@@ -70,6 +72,21 @@
 							<c:out value="${alertAge}"/>
 						</td>
 						<td>
+							<c:set var="alertWindowTimeStart">
+								<c:if test="${alert.options.windows != null && not empty alert.options.windows}">
+									${alert.options.windows[0].timeStart}
+								</c:if>
+							</c:set>
+							<c:set var="alertWindowTimeEnd">
+								<c:if test="${alert.options.windows != null && not empty alert.options.windows}">
+									${alert.options.windows[0].timeEnd}
+								</c:if>
+							</c:set>
+							<c:if test="${fn:length(alertWindowTimeStart) gt 0 && fn:length(alertWindowTimeEnd) gt 0}">
+								<c:out value="${alertWindowTimeStart}"/> - <c:out value="${alertWindowTimeEnd}"/>
+							</c:if>
+						</td>
+						<td>
 							<span class="label${alert.status eq 'Active' 
 								? ' label-success' : alert.status eq 'Disabled' 
 								? ' label-default' : ' label-primary'}">
@@ -80,7 +97,8 @@
 							<button type="button" class="btn btn-small btn-default edit-alert"
 								data-node-id="${alert.nodeId}" data-alert-id="${alert.id}"
 								data-alert-type="${alert.type}" data-alert-status="${alert.status}"
-								data-sources="${alertSources}" data-age="${alertAge}">
+								data-sources="${alertSources}" data-age="${alertAge}"
+								data-window-time-start="${alertWindowTimeStart}" data-window-time-end="${alertWindowTimeEnd}">
 								<fmt:message key='alerts.action.edit'/>
 							</button>
 							<c:if test="${alert.situation != null}">
@@ -108,67 +126,89 @@
 		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
 		 		<h4 class="modal-title"><fmt:message key='alerts.node.data.create.title'/></h4>
 		 	</div>
-		 	<div class="modal-body form-horizontal">
-		 		<p><fmt:message key='alerts.node.data.create.intro'/></p>
-				<div class="form-group">
-					<label class="col-sm-2 control-label" for="create-node-data-alert-node-id"><fmt:message key="alert.nodeId.label"/></label>
-					<div class="col-sm-10">
-						<select name="nodeId" class="form-control" id="create-node-data-alert-node-id">
-							<option value=""><fmt:message key='alert.nodeId.any'/></option>
-							<c:forEach items="${userNodes}" var="userNode">
-								<option value="${userNode.node.id}">${userNode.idAndName}</option>
-							</c:forEach>
-						</select>
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="col-sm-2 control-label" for="create-node-data-alert-type"><fmt:message key="alert.type.label"/></label>
-					<div class="col-sm-10 checkbox">
-						<select name="type" class="form-control" id="create-node-data-alert-type">
-							<c:forEach items="${nodeDataAlertTypes}" var="alertType">
-								<option value="${alertType}" title="<fmt:message key='alert.type.${alertType}.caption'/>">
-									<fmt:message key='alert.type.${alertType}.label'/>
-								</option>
-							</c:forEach>
-						</select>
-					</div>
-				</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-2 control-label" for="create-node-data-alert-age"><fmt:message key='alert.options.ageMinutes.label'/></label>
-					<div class="col-sm-10">
-						<input name='options["ageMinutes"]' type="number" min="10" required="required" value="30" class="form-control col-sm-3" id="create-node-data-alert-age"/>
-						<span class="help-block"><fmt:message key="alert.options.ageMinutes.caption"/></span>
-					</div>
-		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-2 control-label" for="create-node-data-alert-sources"><fmt:message key='alert.options.sourceIds.label'/></label>
-					<div class="col-sm-10">
-						<input name='options["sources"]' type="text" maxlength="255" class="form-control" id="create-node-data-alert-sources"/>
-						<span class="help-block"><fmt:message key="alert.options.sourceIds.caption"/></span>
-						<div class="text-info hidden" id="create-node-data-alert-sources-list">
-							<%-- This container will be used to display the available sources for a given node. --%>
-							<b><fmt:message key='alert.options.sourceIds.available.label'/>: </b>
-							<span class="sources"></span>
+		 	<div class="modal-body form-horizontal carousel slide" id="create-node-data-alert-carousel">
+		 		<ol class="carousel-indicators dark">
+    				<li data-target="#create-node-data-alert-carousel" data-slide-to="0" class="active" title="<fmt:message key='alerts.node.data.create.section.main.title'/>"></li>
+    				<li data-target="#create-node-data-alert-carousel" data-slide-to="1" title="<fmt:message key='alerts.node.data.create.section.filters.title'/>"></li>
+  				</ol>
+		 		<div class="carousel-inner" role="listbox">
+		 			<div class="item active">
+				 		<p><fmt:message key='alerts.node.data.create.intro'/></p>
+						<div class="form-group">
+							<label class="col-sm-2 control-label" for="create-node-data-alert-node-id"><fmt:message key="alert.nodeId.label"/></label>
+							<div class="col-sm-10">
+								<select name="nodeId" class="form-control" id="create-node-data-alert-node-id">
+									<option value=""><fmt:message key='alert.nodeId.any'/></option>
+									<c:forEach items="${userNodes}" var="userNode">
+										<option value="${userNode.node.id}">${userNode.idAndName}</option>
+									</c:forEach>
+								</select>
+							</div>
 						</div>
-					</div>
-		 		</div>
-		 		<div class="form-group">
-		 			<label class="col-sm-2 control-label" for="create-node-data-alert-status"><fmt:message key='alert.status.label'/></label>
-					<div class="col-sm-10" id="create-node-data-alert-status">
-						<c:forEach items="${alertStatuses}" var="alertStatus" varStatus="itr">
-							<label class="radio-inline">
-								<input type="radio" name="status" value="${alertStatus}" 
-									<c:if test='${itr.first}'>checked</c:if>
-									title="<fmt:message key='alert.status.${alertStatus}.caption'/>"/>
-								<c:out value=" "/>
-								<fmt:message key='alert.status.${alertStatus}.label'/>
-							</label>
-						</c:forEach>
-						<div class="help-block alert-status-help"></div>
-					</div>
-		 		</div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label" for="create-node-data-alert-type"><fmt:message key="alert.type.label"/></label>
+							<div class="col-sm-10 checkbox">
+								<select name="type" class="form-control" id="create-node-data-alert-type">
+									<c:forEach items="${nodeDataAlertTypes}" var="alertType">
+										<option value="${alertType}" title="<fmt:message key='alert.type.${alertType}.caption'/>">
+											<fmt:message key='alert.type.${alertType}.label'/>
+										</option>
+									</c:forEach>
+								</select>
+							</div>
+						</div>
+				 		<div class="form-group">
+				 			<label class="col-sm-2 control-label" for="create-node-data-alert-age"><fmt:message key='alert.options.ageMinutes.label'/></label>
+							<div class="col-sm-10">
+								<input name='option-age-minutes' type="number" min="10" required="required" value="30" class="form-control col-sm-3" id="create-node-data-alert-age"/>
+								<span class="help-block"><fmt:message key="alert.options.ageMinutes.caption"/></span>
+							</div>
+				 		</div>
+				 		<div class="form-group">
+				 			<label class="col-sm-2 control-label" for="create-node-data-alert-status"><fmt:message key='alert.status.label'/></label>
+							<div class="col-sm-10" id="create-node-data-alert-status">
+								<c:forEach items="${alertStatuses}" var="alertStatus" varStatus="itr">
+									<label class="radio-inline">
+										<input type="radio" name="status" value="${alertStatus}" 
+											<c:if test='${itr.first}'>checked</c:if>
+											title="<fmt:message key='alert.status.${alertStatus}.caption'/>"/>
+										<c:out value=" "/>
+										<fmt:message key='alert.status.${alertStatus}.label'/>
+									</label>
+								</c:forEach>
+								<div class="help-block alert-status-help"></div>
+							</div>
+				 		</div>
+		 			</div>
+		 			<div class="item">
+				 		<div class="form-group">
+				 			<label class="col-sm-2 control-label" for="create-node-data-alert-sources"><fmt:message key='alert.options.sourceIds.label'/></label>
+							<div class="col-sm-10">
+								<input name='option-sources' type="text" maxlength="255" class="form-control" id="create-node-data-alert-sources"/>
+								<span class="help-block"><fmt:message key="alert.options.sourceIds.caption"/></span>
+								<div class="text-info hidden" id="create-node-data-alert-sources-list">
+									<%-- This container will be used to display the available sources for a given node. --%>
+									<b><fmt:message key='alert.options.sourceIds.available.label'/>: </b>
+									<span class="sources"></span>
+								</div>
+							</div>
+				 		</div>
+				 		<div class="form-group">
+				 			<label class="col-sm-2 control-label" for="create-node-data-alert-window"><fmt:message key='alert.options.window.label'/></label>
+							<div class="col-sm-10 form-inline" id="create-node-data-alert-window">
+								<input name='option-window-time-start' type="text" size="5" maxlength="5" placeholder="08:00" class="form-control" id="create-node-data-alert-window-time-start"/>
+								<input name='option-window-time-end' type="text" size="5" maxlength="5" placeholder="20:00" class="form-control" id="create-node-data-alert-window-time-end"/>
+								<span class="help-block"><fmt:message key="alert.options.window.caption"/></span>
+							</div>
+				 		</div>
+				 	</div>
+				 </div>
 		 	</div>
 		 	<div class="modal-footer">
+		 		<button class="btn btn-small btn-danger action-delete pull-left" type="button">
+					<i class="glyphicon glyphicon-trash"></i>
+					<fmt:message key='alerts.action.delete'/>
+				</button>
 		 		<a href="#" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></a>
 		 		<button type="submit" class="btn btn-primary before">
 		 			<fmt:message key='alerts.action.save'/>
@@ -179,62 +219,5 @@
 	<input type="hidden" name="id" value=""/>
 </form>
 
-<div id="alert-situation-modal" class="modal fade alert-situation-form">
-	<div class="modal-dialog">
-		<div class="modal-content">
-		 	<div class="modal-header bg-danger">
-		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
-		 		<h4 class="modal-title"><fmt:message key='alerts.situation.view.title'/></h4>
-		 	</div>
-		 	<div class="modal-body">
-		 		<%-- Note: when we have more than one alert type, use JS to toggle the visibility of alert-type elements
-		 				   based on the type of the alert being displayed. This allows i18n messages to be rendered for 
-		 				   all types.
-		 		--%>
-		 		<p class="alert-type alert-type-NodeStaleData"><fmt:message key='alerts.situation.view.NodeStaleData.intro'/></p>
-		 		<table class="table">
-		 			<tbody>
-		 				<tr>
-		 					<th><fmt:message key="alert.type.label"/></th>
-		 					<td class="alert-situation-type"></td>
-		 				</tr>
-		 				<tr>
-		 					<th><fmt:message key="alert.situation.created.label"/></th>
-		 					<td>
-		 						<span class="alert-situation-created"></span>
-		 						<div class="help-block"><fmt:message key='alert.situation.created.caption'/></div>
-		 					</td>
-		 				</tr>
-		 				<tr>
-		 					<th><fmt:message key="alert.nodeId.label"/></th>
-		 					<td class="alert-situation-node"></td>
-		 				</tr>
-		 				<tr>
-		 					<th><fmt:message key="alert.options.ageMinutes.heading"/></th>
-		 					<td class="alert-situation-age"></td>
-		 				</tr>
-		 				<tr>
-		 					<th><fmt:message key="alert.options.sourceIds.label"/></th>
-		 					<td class="alert-situation-sources"></td>
-		 				</tr>
-		 				<tr class="notified">
-		 					<th><fmt:message key="alert.situation.notified.label"/></th>
-		 					<td>
-		 						<span class="alert-situation-notified"></span>
-		 						<div class="help-block"><fmt:message key='alert.situation.notified.caption'/></div>
-		 					</td>
-		 				</tr>
-		 			</tbody>
-		 		</table>
-		 		<p class="alert-type alert-type-NodeStaleData"><fmt:message key='alerts.situation.resolve.caption'/></p>
-		 	</div>
-		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left" id="alert-situation-resolve">
-		 			<span class="glyphicon glyphicon-trash"></span>
-		 			<fmt:message key='alerts.action.resolve'/>
-		 		</button>
-		 		<a href="#" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></a>
-		 	</div>
-		</div>
-	</div>
-</div>
+<%@include file="/WEB-INF/jsp/sec/alerts/situation-modal.jsp" %>
+<%@include file="/WEB-INF/jsp/sec/alerts/alert-enums.jsp" %>

@@ -39,36 +39,76 @@ $(document).ready(function() {
 		populateSourceList($(this).val(), $('#create-node-data-alert-sources-list'));
 	});
 	
-	$('#create-node-data-alert-modal').ajaxForm({
-		dataType: 'json',
-		success: function(json, status, xhr, form) {
-			document.location.reload(true);
-		},
-		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#create-node-data-alert-modal .modal-body > *:first-child', 'alert-warning', statusText);
-		}
+	$('#create-node-data-alert-modal').on('submit', function(event) {
+		event.preventDefault();
+		var form = this;
+		var url = $(form).attr('action');
+		var data = {};
+		data.id = form.elements['id'].value;
+		data.nodeId = $(form.elements['nodeId']).val();
+		data.type = $(form.elements['type']).val();
+		data.status = $(form).find('input[name=status]:checked').val();
+		data.options = {
+			ageMinutes : form.elements['option-age-minutes'].value,
+			sources : form.elements['option-sources'].value,
+			windows : [ // currently we only support one window, so we hard-code the array
+			           { 
+			        	   timeStart : form.elements['option-window-time-start'].value, 
+			        	   timeEnd : form.elements['option-window-time-end'].value
+			           }
+			           ]
+		};
+		$.ajax({
+			type : 'POST',
+			url : url,
+			dataType : 'json',
+			contentType : 'application/json',
+			data : JSON.stringify(data),
+			success: function(json, status, xhr) {
+				document.location.reload(true);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#create-node-data-alert-modal .modal-body > *:first-child', 'alert-warning', statusText);
+			}
+		});
 	}).on('shown.bs.modal', function() {
 		populateSourceList($('#create-node-data-alert-node-id').val(), $('#create-node-data-alert-sources-list'));
+	}).on('click', 'button.action-delete', function(event) {
+		var alertId = $('#create-node-data-alert-modal').get(0).elements['id'].value,
+			url = SolarReg.solarUserURL('/sec/alerts/') + alertId;
+		$.ajax({
+			type : 'DELETE',
+			url : url,
+			dataType : 'json',
+			success : function(json, status, xhr) {
+				document.location.reload(true);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#create-node-data-alert-modal .modal-body > *:first-child', 'alert-warning', statusText);
+			}
+		});
 	});
 	
 	$('#add-node-data-button').on('click', function(event) {
 		var form = $('#create-node-data-alert-modal');
 		form.get(0).reset(); // doesn't reset hidden fields
 		form.get(0).elements['id'].value = '';
+		form.find('button.action-delete').hide();
 		form.modal('show');
 	});
 	
-	function populateAlertSituationValues(root, alert) {
-		// make use of the i18n type/status values available in the edit form
-		var type = (alert && alert.type 
-				? $('#create-node-data-alert-type').find('option[value='+alert.type+']').text()
+	function populateAlertSituationValues(root, alert, nodeName) {
+		// make use of the i18n type/status
+		var type = (alert && alert.type && SolarReg.userAlertTypes
+				? SolarReg.userAlertTypes[alert.type]
 				: '');
 		var date = (alert && alert.options && alert.options.situationDate
 				? alert.options.situationDate
 				: '');
-		var node = $('#create-node-data-alert-node-id').find('option[value="'+(alert && alert.nodeId ? alert.nodeId : '')+'"]').text();
+		var node = (nodeName ? nodeName : alert.nodeId);
 		var age = (alert && alert.options && alert.options.age ? (alert.options.age / 60).toFixed(0) : '1');
 		var sources = (alert && alert.options && alert.options.sources ? alert.options.sources : '');
+		
 		root.find('.alert-situation-type').text(type);
 		root.find('.alert-situation-created').text(date);
 		root.find('.alert-situation-node').text(node);
@@ -84,8 +124,33 @@ $(document).ready(function() {
 	}
 
 	function alertSituationBaseURL() {
-		return $('#node-data-alerts').data('action-situation');
+		return SolarReg.solarUserURL('/sec/alerts/situation');
 	}
+	
+	/**
+	 * View a single alert situation via a click event. The event target must define a data 
+	 * attribute <code>alert-id</code> for the ID of the alert to view, and a modal 
+	 * dialog with an ID <code>alert-situation-modal</code> to display the alert details.
+	 */
+	SolarReg.viewAlertSituation = function(event, nodeName) {
+		event.preventDefault();
+		var btn = $(this);
+		var alertId = btn.data('alert-id');
+		var url = alertSituationBaseURL() + '/' + encodeURIComponent(alertId);
+		$.getJSON(url, function(json) {
+			var modal = $('#alert-situation-modal'),
+				alert = json.data,
+				name = (nodeName ? nodeName : $('#create-node-data-alert-node-id').find('option[value="'+(alert.nodeId ? alert.nodeId : '')+'"]').text());
+			if ( json.success === true && alert !== undefined ) {
+				populateAlertSituationValues(modal, alert, name);
+				$('#alert-situation-resolve').data('alert-id', json.data.id);
+			}
+			modal.modal('show');
+		}).fail(function(data, statusText, xhr) {
+			SolarReg.showAlertBefore('#alert-situation-modal .modal-body > *:first-child', 'alert-warning', 
+					'Error getting alert situation details. ' +statusText);
+		});
+	};
 	
 	$('#node-data-alerts').on('click', 'button.edit-alert', function(event) {
 		event.preventDefault();
@@ -95,33 +160,21 @@ $(document).ready(function() {
 			alertType = btn.data('alert-type'),
 			alertStatus = btn.data('alert-status'),
 			alertSources = btn.data('sources'),
-			alertAge = btn.data('age');
+			alertAge = btn.data('age'),
+			alertWindowStart = btn.data('window-time-start'),
+			alertWindowEnd = btn.data('window-time-end');
 		var form = $('#create-node-data-alert-modal');
 		$('#create-node-data-alert-node-id').val(nodeId);
 		$('#create-node-data-alert-type').val(alertType);
 		form.find('input[type=radio][value=' + alertStatus + ']').prop('checked', true);
 		$('#create-node-data-alert-sources').val(alertSources);
 		$('#create-node-data-alert-age').val(alertAge);
+		$('#create-node-data-alert-window-time-start').val(alertWindowStart);
+		$('#create-node-data-alert-window-time-end').val(alertWindowEnd);
 		form.get(0).elements['id'].value = alertId;
+		form.find('button.action-delete').show();
 		form.modal('show');
-	}).on('click', 'button.view-situation', function(event) {
-		event.preventDefault();
-		var btn = $(this);
-		var alertId = btn.data('alert-id');
-		var url = alertSituationBaseURL() + '/' + encodeURIComponent(alertId);
-		$.getJSON(url, function(json) {
-			console.log('hi: ' +json.data);
-			var modal = $('#alert-situation-modal');
-			if ( json.success === true && json.data !== undefined ) {
-				populateAlertSituationValues(modal, json.data);
-				$('#alert-situation-resolve').data('alert-id', json.data.id);
-			}
-			modal.modal('show');
-		}).fail(function(data, statusText, xhr) {
-			SolarReg.showAlertBefore('#alert-situation-modal .modal-body > *:first-child', 'alert-warning', 
-					'Error getting alert situation details. ' +statusText);
-		});
-	});
+	}).on('click', 'button.view-situation', SolarReg.viewAlertSituation);
 	
 	$('#alert-situation-resolve').on('click', function(event) {
 		event.preventDefault();
@@ -133,4 +186,20 @@ $(document).ready(function() {
 			}, 'json');
 		}
 	});
+	
+	(function() {
+		var situationCountContainers = $('.alert-situation-count');
+		if ( situationCountContainers.length > 0 ) {
+			$.getJSON(SolarReg.solarUserURL('/sec/alerts/user/situation/count'), function(json) {
+				var count = 0;
+				if ( json && json.data ) {
+					count = Number(json.data);
+					if ( isNaN(count) ) {
+						count = 0;
+					}
+				}
+				situationCountContainers.text(count > 0 ? count : '');
+			});
+		}
+	}());
 });

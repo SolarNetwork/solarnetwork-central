@@ -42,6 +42,8 @@
 		    </bean>
 		</mvc:message-converters>
 	</mvc:annotation-driven>
+	
+	<bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter" />
 
 	<bean id="mappedViewResolver"
 		class="org.springframework.web.servlet.view.BeanNameViewResolver">
@@ -71,6 +73,10 @@
 		<property name="contentType" value="application/json;charset=UTF-8"/>
 		<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
 		<property name="includeParentheses" value="false"/>
+	</bean>
+
+	<bean id="pingController" class="net.solarnetwork.central.web.PingController">
+		<property name="pingTests" ref="pingTests"/>
 	</bean>
 
 </beans>

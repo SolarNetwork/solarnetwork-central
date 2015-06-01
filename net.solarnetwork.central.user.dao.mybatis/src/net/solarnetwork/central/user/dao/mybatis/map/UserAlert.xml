@@ -45,6 +45,23 @@
 			id = #{id}
 	</update>
 
+	<update id="update-UserAlert-valid-to" parameterType="map">
+		UPDATE solaruser.user_alert
+		SET valid_to = #{validDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+		WHERE id = #{id,javaType=long,jdbcType=BIGINT}
+	</update>
+
+	<delete id="delete-UserAlert" parameterType="long">
+		DELETE FROM solaruser.user_alert
+		WHERE id = #{id}
+	</delete>
+	
+	<delete id="delete-UserAlert-for-node" parameterType="map">
+		DELETE FROM solaruser.user_alert
+		WHERE user_id = #{user,javaType=long,jdbcType=BIGINT}
+			AND node_id = #{node,javaType=long,jdbcType=BIGINT}
+	</delete>
+	
 	<sql id="fragment-UserAlert-full-result">
 		ual.id AS user_alert_id, 
 		ual.created AS user_alert_created,
@@ -90,11 +107,7 @@
 			ual.id
 	</select>
 	
-	<resultMap id="UserAlertWithSituation" type="UserAlert" extends="UserAlertFullResult">
-		<association property="situation" notNullColumn="user_alert_alert_id" resultMap="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation.UserAlertSituationResult"/>
-	</resultMap>
-	
-	<select id="find-UserAlert-for-user-with-situation" parameterType="long" resultMap="UserAlertWithSituation" fetchSize="250" resultSetType="FORWARD_ONLY">
+	<sql id="fragment-UserAlert-active-situations-select">
 		SELECT DISTINCT ON (ual.id)
 			<include refid="fragment-UserAlert-full-result"/>,
 			<include refid="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation.fragment-UserAlertSituation-full-result"/>
@@ -103,21 +116,65 @@
 		LEFT OUTER JOIN
 			solaruser.user_alert_sit uas ON uas.alert_id = ual.id 
 				AND uas.status = 'Active'::solaruser.user_alert_sit_status 
+	</sql>
+	
+	<resultMap id="UserAlertWithSituation" type="UserAlert" extends="UserAlertFullResult">
+		<association property="situation" notNullColumn="user_alert_alert_id" resultMap="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation.UserAlertSituationResult"/>
+	</resultMap>
+	
+	<select id="find-UserAlert-for-user-with-situation" parameterType="long" resultMap="UserAlertWithSituation" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-UserAlert-active-situations-select"/>
+		WHERE 
+			ual.user_id = #{id}
+		ORDER BY
+			ual.id, uas.created DESC, uas.id
+	</select>
+
+	<sql id="fragment-UserAlert-only-active-situations-select">
+		SELECT DISTINCT ON (ual.id)
+			<include refid="fragment-UserAlert-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation.fragment-UserAlertSituation-full-result"/>
+		FROM
+			solaruser.user_alert ual
+		INNER JOIN
+			solaruser.user_alert_sit uas ON uas.alert_id = ual.id 
+				AND uas.status = 'Active'::solaruser.user_alert_sit_status 
+	</sql>
+	
+	<select id="find-UserAlert-active-for-user" parameterType="long" resultMap="UserAlertWithSituation" fetchSize="50" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-UserAlert-only-active-situations-select"/>
 		WHERE 
 			ual.user_id = #{id}
 		ORDER BY
 			ual.id, uas.created DESC, uas.id
 	</select>
 	
+	<select id="find-UserAlert-active-for-user-count" parameterType="long" resultType="long">
+		SELECT COUNT(*) FROM (
+			SELECT DISTINCT ON (ual.id)
+				ual.id
+			FROM
+				solaruser.user_alert ual
+			INNER JOIN
+				solaruser.user_alert_sit uas ON uas.alert_id = ual.id 
+					AND uas.status = 'Active'::solaruser.user_alert_sit_status 
+			WHERE 
+				ual.user_id = #{id}
+			ORDER BY
+				ual.id, uas.created DESC, uas.id
+		) AS t
+	</select>
+	
+	<select id="find-UserAlert-active-for-node" parameterType="long" resultMap="UserAlertWithSituation" fetchSize="50" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-UserAlert-only-active-situations-select"/>
+		WHERE 
+			ual.node_id = #{id}
+		ORDER BY
+			ual.id, uas.created DESC, uas.id
+	</select>
+	
 	<select id="get-UserAlert-with-situation" parameterType="long" resultMap="UserAlertWithSituation">
-		SELECT DISTINCT ON (ual.id)
-			<include refid="fragment-UserAlert-full-result"/>,
-			<include refid="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation.fragment-UserAlertSituation-full-result"/>
-		FROM
-			solaruser.user_alert ual
-		LEFT OUTER JOIN
-			solaruser.user_alert_sit uas ON uas.alert_id = ual.id 
-				AND uas.status = 'Active'::solaruser.user_alert_sit_status 
+		<include refid="fragment-UserAlert-active-situations-select"/>
 		WHERE 
 			ual.id = #{id}
 		ORDER BY

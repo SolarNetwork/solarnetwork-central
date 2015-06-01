@@ -68,6 +68,10 @@
 	</bean>
 	
     <bean id="urlViewController" class="org.springframework.web.servlet.mvc.UrlFilenameViewController"/>
+
+	<bean id="pingController" class="net.solarnetwork.central.web.PingController">
+		<property name="pingTests" ref="pingTests"/>
+	</bean>
 	
 	<!-- Dispatches requests mapped to POJO @Controllers implementations -->
 	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"/>
@@ -83,6 +87,7 @@
 	<!-- Resolves logical view names returned by Controllers to Tiles; 
 		a view name to resolve is treated as the name of a tiles definition -->
 	<bean id="tilesViewResolver" class="org.springframework.js.ajax.AjaxUrlBasedViewResolver">
+		<property name="order" value="1"/>
 		<property name="viewClass" value="org.springframework.webflow.mvc.view.FlowAjaxTilesView"/>
 	</bean>
 
@@ -99,6 +104,14 @@
 	<!-- If Tiles view not found, try a bean name (xml, json below) -->
 	<bean id="beanNameViewResolver" class="org.springframework.web.servlet.view.BeanNameViewResolver">
 		<property name="order" value="2"/>
+	</bean>
+	
+	<bean id="jspViewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="order" value="3"/>
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+		<property name="prefix" value="/WEB-INF/jsp/"/>
+		<property name="suffix" value=".jsp"/>
 	</bean>
 	
 	<!-- View beans -->

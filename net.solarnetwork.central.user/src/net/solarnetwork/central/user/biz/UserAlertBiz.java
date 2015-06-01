@@ -31,7 +31,7 @@ import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
  * API for user alert tasks.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserAlertBiz {
 
@@ -58,6 +58,15 @@ public interface UserAlertBiz {
 	Long saveAlert(UserAlert alert);
 
 	/**
+	 * Delete an alert.
+	 * 
+	 * @param alertId
+	 *        The ID of the alert to delete.
+	 * @since 1.1
+	 */
+	void deleteAlert(Long alertId);
+
+	/**
 	 * Get an alert with the most recently available <em>active</em>
 	 * {@link UserAlertSituation} populated, if one exists.
 	 * 
@@ -79,5 +88,39 @@ public interface UserAlertBiz {
 	 *         {@link UserAlertSituation} will be populated, if one was updated.
 	 */
 	UserAlert updateSituationStatus(Long alertId, UserAlertSituationStatus status);
+
+	/**
+	 * Get a count of <em>active</em> alert situations for a given user.
+	 * 
+	 * @param userId
+	 *        The ID of the user to get the alert situation count for.
+	 * @return The number of active alert situations for the given user.
+	 * @since 1.1
+	 */
+	int alertSituationCountForUser(Long userId);
+
+	/**
+	 * Get all available <em>active</em> alert situations for a given user. The
+	 * {@link UserAlert#getSituation()} property will be populated with matching
+	 * {@link UserAlertSituation}.
+	 * 
+	 * @param userId
+	 *        The ID of the user to get alert situations for.
+	 * @return List of alerts, or an empty list if none available.
+	 * @since 1.1
+	 */
+	List<UserAlert> alertSituationsForUser(Long userId);
+
+	/**
+	 * Get all available <em>active</em> alert situations for a given node. The
+	 * {@link UserAlert#getSituation()} property will be populated with matching
+	 * {@link UserAlertSituation}.
+	 * 
+	 * @param nodeId
+	 *        The ID of the node to get alert situations for.
+	 * @return List of alerts, or an empty list if none available.
+	 * @since 1.1
+	 */
+	List<UserAlert> alertSituationsForNode(Long nodeId);
 
 }

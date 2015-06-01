@@ -101,12 +101,13 @@ CREATE OR REPLACE FUNCTION solardatum.store_loc_datum(
   RETURNS void AS
 $BODY$
 DECLARE
-	ts_post solarcommon.ts := (CASE WHEN pdate IS NULL THEN now() ELSE pdate END);
+	ts_post solarcommon.ts := COALESCE(pdate, now());
+	ts_crea solarcommon.ts := COALESCE(cdate, now());
 	jdata_json json := jdata::json;
 BEGIN
 	BEGIN
 		INSERT INTO solardatum.da_loc_datum(ts, loc_id, source_id, posted, jdata)
-		VALUES (cdate, loc, src, ts_post, jdata_json);
+		VALUES (ts_crea, loc, src, ts_post, jdata_json);
 	EXCEPTION WHEN unique_violation THEN
 		-- We mostly expect inserts, but we allow updates
 		UPDATE solardatum.da_loc_datum SET 
@@ -114,7 +115,7 @@ BEGIN
 			posted = ts_post
 		WHERE
 			loc_id = loc
-			AND ts = cdate
+			AND ts = ts_crea
 			AND source_id = src;
 	END;
 END;$BODY$

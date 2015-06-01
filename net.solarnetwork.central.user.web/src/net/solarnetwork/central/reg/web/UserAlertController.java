@@ -27,10 +27,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -51,6 +53,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -60,11 +63,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * Controller for user alerts.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller
 @RequestMapping("/sec/alerts")
 public class UserAlertController extends ControllerSupport {
+
+	private static final Pattern TIME_PAT = Pattern.compile("[0-2]?\\d:[0-5]\\d");
 
 	private final UserBiz userBiz;
 	private final UserAlertBiz userAlertBiz;
@@ -137,6 +142,60 @@ public class UserAlertController extends ControllerSupport {
 	}
 
 	/**
+	 * Get <em>active</em> situations for a given node.
+	 * 
+	 * @param nodeId
+	 *        The ID of the node to get the sitautions for.
+	 * @param locale
+	 *        The request locale.
+	 * @return The alerts with active situations.
+	 * @since 1.1
+	 */
+	@RequestMapping(value = "/node/{nodeId}/situations", method = RequestMethod.GET)
+	@ResponseBody
+	public Response<List<UserAlert>> activeSituationsNode(@PathVariable("nodeId") Long nodeId,
+			Locale locale) {
+		List<UserAlert> results = userAlertBiz.alertSituationsForNode(nodeId);
+		for ( UserAlert alert : results ) {
+			populateUsefulAlertOptions(alert, locale);
+		}
+		return response(results);
+	}
+
+	/**
+	 * Get a count of <em>active</em> situations for the active user.
+	 * 
+	 * @return The count.
+	 * @since 1.1
+	 */
+	@RequestMapping(value = "/user/situation/count", method = RequestMethod.GET)
+	@ResponseBody
+	public Response<Integer> activeSituationCount() {
+		Long userId = SecurityUtils.getCurrentActorUserId();
+		Integer count = userAlertBiz.alertSituationCountForUser(userId);
+		return response(count);
+	}
+
+	/**
+	 * Get <em>active</em> situations for the active user
+	 * 
+	 * @param locale
+	 *        The request locale.
+	 * @return The alerts with active situations.
+	 * @since 1.1
+	 */
+	@RequestMapping(value = "/user/situations", method = RequestMethod.GET)
+	@ResponseBody
+	public Response<List<UserAlert>> activeSituations(Locale locale) {
+		Long userId = SecurityUtils.getCurrentActorUserId();
+		List<UserAlert> results = userAlertBiz.alertSituationsForUser(userId);
+		for ( UserAlert alert : results ) {
+			populateUsefulAlertOptions(alert, locale);
+		}
+		return response(results);
+	}
+
+	/**
 	 * Create or update an alert.
 	 * 
 	 * @param model
@@ -145,7 +204,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/save", method = RequestMethod.POST)
 	@ResponseBody
-	public Response<UserAlert> addAlert(UserAlert model) {
+	public Response<UserAlert> addAlert(@RequestBody UserAlert model) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		UserAlert alert = new UserAlert();
 		alert.setId(model.getId());
@@ -179,6 +238,29 @@ public class UserAlertController extends ControllerSupport {
 					if ( sources != null ) {
 						List<String> sourceList = new ArrayList<String>(sources);
 						options.put(UserAlertOptions.SOURCE_IDS, sourceList);
+					}
+				} else if ( "windows".equalsIgnoreCase(me.getKey())
+						&& me.getValue() instanceof Collection ) {
+					@SuppressWarnings("unchecked")
+					Collection<Map<String, ?>> windows = (Collection<Map<String, ?>>) me.getValue();
+					List<Map<String, Object>> windowsList = new ArrayList<Map<String, Object>>();
+					for ( Map<String, ?> window : windows ) {
+						Object timeStart = window.get("timeStart");
+						Object timeEnd = window.get("timeEnd");
+
+						if ( timeStart != null && timeEnd != null ) {
+							String ts = timeStart.toString();
+							String te = timeEnd.toString();
+							if ( TIME_PAT.matcher(ts).matches() && TIME_PAT.matcher(te).matches() ) {
+								Map<String, Object> win = new LinkedHashMap<String, Object>(2);
+								win.put("timeStart", ts);
+								win.put("timeEnd", te);
+								windowsList.add(win);
+							}
+						}
+					}
+					if ( windowsList.size() > 0 ) {
+						options.put(UserAlertOptions.TIME_WINDOWS, windowsList);
 					}
 				}
 			}
@@ -254,5 +336,19 @@ public class UserAlertController extends ControllerSupport {
 		UserAlert alert = userAlertBiz.updateSituationStatus(alertId, status);
 		populateUsefulAlertOptions(alert, locale);
 		return response(alert);
+	}
+
+	/**
+	 * Delete an alert.
+	 * 
+	 * @param alertId
+	 *        The ID of the alert to delete.
+	 * @return The result.
+	 */
+	@RequestMapping(value = "/{alertId}", method = RequestMethod.DELETE)
+	@ResponseBody
+	public Response<Object> deleteAlert(@PathVariable("alertId") Long alertId) {
+		userAlertBiz.deleteAlert(alertId);
+		return response(null);
 	}
 }

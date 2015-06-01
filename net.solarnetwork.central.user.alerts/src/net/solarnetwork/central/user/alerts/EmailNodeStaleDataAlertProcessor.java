@@ -25,12 +25,14 @@ package net.solarnetwork.central.user.alerts;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
@@ -55,6 +57,8 @@ import net.solarnetwork.central.user.domain.UserAlertType;
 import net.solarnetwork.central.user.domain.UserNode;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
+import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
@@ -94,6 +98,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	private int alertReminderFrequencyMultiplier = 4;
 
 	// maintain a cache of node data during the execution of the job (cleared after each invocation)
+	private final Map<Long, SolarNode> nodeCache = new HashMap<Long, SolarNode>(64);
 	private final Map<Long, List<GeneralNodeDatumFilterMatch>> nodeDataCache = new HashMap<Long, List<GeneralNodeDatumFilterMatch>>(
 			64);
 	private final Map<Long, List<GeneralNodeDatumFilterMatch>> userDataCache = new HashMap<Long, List<GeneralNodeDatumFilterMatch>>(
@@ -145,6 +150,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				lastProcessedAlertId, validDate, batchSize);
 		Long lastAlertId = null;
 		final long now = System.currentTimeMillis();
+		final DateTime nowDateTime = new DateTime(now);
+		final DateTimeFormatter timeFormatter = DateTimeFormat.forPattern("H:mm");
 		try {
 			loadMostRecentNodeData(alerts);
 			for ( UserAlert alert : alerts ) {
@@ -156,6 +163,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				// extract options
 				Number age;
 				String[] sourceIds = null;
+				List<Interval> timePeriods = null;
 				try {
 					age = (Number) alertOptions.get(UserAlertOptions.AGE_THRESHOLD);
 					@SuppressWarnings("unchecked")
@@ -163,6 +171,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					if ( sources != null ) {
 						sourceIds = sources.toArray(new String[sources.size()]);
 					}
+					timePeriods = parseAlertTimeWindows(nowDateTime, timeFormatter, alert);
 				} catch ( ClassCastException e ) {
 					log.warn("Unexpected option data type in alert {}: {}", alert, e.getMessage());
 					continue;
@@ -180,7 +189,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				}
 
 				// look for first stale data matching age + source criteria
-				GeneralNodeDatumFilterMatch stale = getFirstStaleDatum(alert, now, age, sourceIds);
+				GeneralNodeDatumFilterMatch stale = getFirstStaleDatum(alert, now, age, sourceIds,
+						timePeriods);
 
 				// get UserAlertSitutation for this alert
 				UserAlertSituation sit = userAlertSituationDao.getActiveAlertSituationForAlert(alert
@@ -210,8 +220,18 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					}
 				} else {
 					// not stale, so mark valid for age span
-					alert.setValidTo(validDate.plusSeconds(age.intValue()));
-					if ( sit != null ) {
+					final boolean withinTimePeriods = withinIntervals(now, timePeriods);
+					DateTime newValidTo;
+					if ( timePeriods != null && !withinTimePeriods ) {
+						// we're not in valid to the start of the next time period
+						newValidTo = startOfNextTimePeriod(now, timePeriods);
+					} else {
+						newValidTo = validDate.plusSeconds(age.intValue());
+					}
+					log.debug("Marking alert {} valid to {}", alert.getId(), newValidTo);
+					userAlertDao.updateValidTo(alert.getId(), newValidTo);
+					alert.setValidTo(newValidTo);
+					if ( sit != null && withinTimePeriods ) {
 						// make Resolved
 						sit.setStatus(UserAlertSituationStatus.Resolved);
 						sit.setNotified(new DateTime(now));
@@ -224,12 +244,12 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 								mailTemplateResolvedResource, nonStale);
 					}
 				}
-				userAlertDao.store(alert);
 				lastAlertId = alert.getId();
 			}
 		} catch ( RuntimeException e ) {
 			throw new RepeatableTaskException("Error processing user alerts", e, lastAlertId);
 		} finally {
+			nodeCache.clear();
 			nodeDataCache.clear();
 			userDataCache.clear();
 		}
@@ -244,8 +264,63 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return lastAlertId;
 	}
 
+	private List<Interval> parseAlertTimeWindows(final DateTime nowDateTime,
+			final DateTimeFormatter timeFormatter, UserAlert alert) {
+		Map<String, Object> alertOptions = alert.getOptions();
+		if ( alertOptions == null ) {
+			return null;
+		}
+		@SuppressWarnings("unchecked")
+		List<Map<String, Object>> windows = (List<Map<String, Object>>) alertOptions
+				.get(UserAlertOptions.TIME_WINDOWS);
+		if ( windows == null ) {
+			return null;
+		}
+
+		List<Interval> timePeriods = new ArrayList<Interval>(windows.size());
+		for ( Map<String, Object> window : windows ) {
+			Object s = window.get("timeStart");
+			Object e = window.get("timeEnd");
+			if ( s != null && e != null ) {
+				try {
+					LocalTime start = timeFormatter.parseLocalTime(s.toString());
+					LocalTime end = timeFormatter.parseLocalTime(e.toString());
+					SolarNode node = nodeCache.get(alert.getNodeId());
+					DateTimeZone tz = DateTimeZone.UTC;
+					if ( node != null ) {
+						TimeZone nodeTz = node.getTimeZone();
+						if ( nodeTz != null ) {
+							tz = DateTimeZone.forTimeZone(nodeTz);
+						}
+					} else {
+						log.warn("Node {} not available, defaulting to UTC time zone", alert.getNodeId());
+					}
+					DateTime startTimeToday = start.toDateTime(nowDateTime.toDateTime(tz));
+					DateTime endTimeToday = end.toDateTime(nowDateTime.toDateTime(tz));
+					timePeriods.add(new Interval(startTimeToday, endTimeToday));
+				} catch ( IllegalArgumentException t ) {
+					log.warn("Error parsing time window time: {}", t.getMessage());
+				}
+			}
+		}
+		if ( timePeriods.size() > 0 ) {
+			// sort by start dates if there is more than one interval
+			Collections.sort(timePeriods, new Comparator<Interval>() {
+
+				@Override
+				public int compare(Interval o1, Interval o2) {
+					return o1.getStart().compareTo(o2.getStart());
+				}
+			});
+		} else {
+			timePeriods = null;
+		}
+		return timePeriods;
+	}
+
 	private void loadMostRecentNodeData(List<UserAlert> alerts) {
 		// reset cache
+		nodeCache.clear();
 		nodeDataCache.clear();
 		userDataCache.clear();
 
@@ -265,6 +340,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				List<UserNode> nodes = userNodeDao
 						.findUserNodesForUser(new User(alert.getUserId(), null));
 				for ( UserNode userNode : nodes ) {
+					nodeCache.put(userNode.getNode().getId(), userNode.getNode());
 					nodeUserMapping.put(userNode.getNode().getId(), alert.getUserId());
 				}
 			}
@@ -320,6 +396,10 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					datumMatches = new ArrayList<GeneralNodeDatumFilterMatch>();
 					nodeDataCache.put(match.getId().getNodeId(), datumMatches);
 				}
+				if ( !nodeCache.containsKey(match.getId().getNodeId()) ) {
+					nodeCache
+							.put(match.getId().getNodeId(), solarNodeDao.get(match.getId().getNodeId()));
+				}
 				datumMatches.add(match);
 			}
 			log.debug("Loaded most recent datum for nodes {}: {}", nodeIds, nodeDataCache);
@@ -344,13 +424,40 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return (results == null ? Collections.<GeneralNodeDatumFilterMatch> emptyList() : results);
 	}
 
+	private boolean withinIntervals(final long now, List<Interval> intervals) {
+		if ( intervals == null ) {
+			return true;
+		}
+		for ( Interval i : intervals ) {
+			if ( !i.contains(now) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private DateTime startOfNextTimePeriod(final long now, List<Interval> intervals) {
+		if ( intervals == null || intervals.size() < 1 ) {
+			return new DateTime();
+		}
+		for ( Interval i : intervals ) {
+			if ( i.isAfter(now) ) {
+				// this time period starts later than now, so that is the next period to work with
+				return i.getStart();
+			}
+		}
+		// no time period later than now, so make the next period the start of the first interval, tomorrow
+		return intervals.get(0).getStart().plusDays(1);
+	}
+
 	private GeneralNodeDatumFilterMatch getFirstStaleDatum(final UserAlert alert, final long now,
-			final Number age, final String[] sourceIds) {
+			final Number age, final String[] sourceIds, final List<Interval> intervals) {
 		GeneralNodeDatumFilterMatch stale = null;
 		List<GeneralNodeDatumFilterMatch> latestNodeData = getLatestNodeData(alert);
 		for ( GeneralNodeDatumFilterMatch datum : latestNodeData ) {
 			if ( datum.getId().getCreated().getMillis() + (long) (age.doubleValue() * 1000) < now
-					&& (sourceIds == null || Arrays.binarySearch(sourceIds, datum.getId().getSourceId()) >= 0) ) {
+					&& (sourceIds == null || Arrays.binarySearch(sourceIds, datum.getId().getSourceId()) >= 0)
+					&& withinIntervals(now, intervals) ) {
 				stale = datum;
 				break;
 			}
@@ -380,8 +487,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			return;
 		}
 		User user = userDao.get(alert.getUserId());
-		SolarNode node = solarNodeDao.get(datum.getId().getNodeId());
-		if ( user != null ) {
+		SolarNode node = nodeCache.get(datum.getId().getNodeId());
+		if ( user != null && node != null ) {
 			BasicMailAddress addr = new BasicMailAddress(user.getName(), user.getEmail());
 			Locale locale = Locale.US; // TODO: get Locale from User entity
 			Map<String, Object> model = new HashMap<String, Object>(4);

@@ -158,6 +158,77 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 	}
 
 	@Test
+	public void updateValidTo() {
+		storeNew();
+		UserAlert alert = userAlertDao.get(this.userAlert.getId());
+		DateTime old = alert.getValidTo();
+		DateTime v = old.plusDays(1);
+		userAlertDao.updateValidTo(alert.getId(), v);
+		UserAlert updated = userAlertDao.get(alert.getId());
+		assertEquals("ValidTo date updated", v, updated.getValidTo());
+	}
+
+	@Test
+	public void delete() {
+		storeNew();
+		userAlertDao.delete(userAlert);
+		UserAlert alert = userAlertDao.get(userAlert.getId());
+		assertNull("Deleted alert not found", alert);
+	}
+
+	@Test
+	public void deleteWithSituation() {
+		getAlertWithSituationSituationActiveAndResolved();
+		userAlertDao.delete(userAlert);
+		UserAlert alert = userAlertDao.get(userAlert.getId());
+		assertNull("Deleted alert not found", alert);
+	}
+
+	@Test
+	public void deleteForNodeNone() {
+		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
+		assertEquals("None deleted", 0, deleted);
+	}
+
+	@Test
+	public void deleteForNode() {
+		storeNew();
+		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
+		assertEquals("1 deleted", 1, deleted);
+	}
+
+	@Test
+	public void deleteForNodeMulti() {
+		final int numAlerts = 5;
+		for ( int i = 0; i < numAlerts; i++ ) {
+			storeNew();
+		}
+		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
+		assertEquals("All alerts for user deleted", numAlerts, deleted);
+	}
+
+	@Test
+	public void deleteForNodeNotOtherNodes() {
+		storeNew();
+
+		// setup an alert for a 2nd node, to make sure that alert is NOT deleted
+		setupTestNode(-2L); // add a 2nd
+		UserAlert alert = new UserAlert();
+		alert.setCreated(new DateTime());
+		alert.setUserId(this.user.getId());
+		alert.setNodeId(-2L);
+		alert.setType(UserAlertType.NodeStaleData);
+		alert.setStatus(UserAlertStatus.Active);
+		Long secondAlertId = userAlertDao.store(alert);
+
+		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
+		assertEquals("Only 1 deleted", 1, deleted);
+
+		UserAlert secondAlert = userAlertDao.get(secondAlertId);
+		assertNotNull("Other alert not deleted", secondAlert);
+	}
+
+	@Test
 	public void findAlertsToProcessNone() {
 		List<UserAlert> results = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
 				null, null);
@@ -415,5 +486,107 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 
 		assertNotNull("Situation associated", found.getSituation());
 		assertEquals(sit.getId(), found.getSituation().getId());
+	}
+
+	@Test
+	public void findCountForUserWithSituationResolved() {
+		findAlertsForUserWithSituationResolved();
+
+		int count = userAlertDao.alertSituationCountForUser(user.getId());
+		assertEquals("Active count", 0, count);
+	}
+
+	@Test
+	public void findCountForUserWithSituationActiveAndResolved() {
+		findAlertsForUserWithSituationActiveAndResolved();
+
+		int count = userAlertDao.alertSituationCountForUser(user.getId());
+		assertEquals("Active count", 1, count);
+	}
+
+	@Test
+	public void findForActiveSituationsForUserResolved() {
+		findAlertsForUserWithSituationResolved();
+
+		List<UserAlert> results = userAlertDao.findActiveAlertSituationsForUser(user.getId());
+		assertNotNull("Results never null", results);
+		assertEquals("No active situations", 0, results.size());
+	}
+
+	@Test
+	public void findForActiveSituationsForUserActiveAndResolved() {
+		findAlertsForUserWithSituationActiveAndResolved();
+
+		List<UserAlert> results = userAlertDao.findActiveAlertSituationsForUser(user.getId());
+		assertNotNull("Results never null", results);
+		assertEquals("Active situations", 1, results.size());
+
+		UserAlert alert = results.get(0);
+		assertNotNull("With situation", alert.getSituation());
+		assertEquals("Situation active", UserAlertSituationStatus.Active, alert.getSituation()
+				.getStatus());
+	}
+
+	@Test
+	public void findForActiveSituationsForNodeResolved() {
+		findAlertsForUserWithSituationResolved();
+
+		// add 2nd node to verify filter working as expected
+		setupTestNode(-200L);
+
+		// create an alert for 2nd node
+		UserAlert otherNodeAlert = new UserAlert();
+		otherNodeAlert.setCreated(new DateTime());
+		otherNodeAlert.setNodeId(-200L);
+		otherNodeAlert.setUserId(user.getId());
+		otherNodeAlert.setStatus(UserAlertStatus.Active);
+		otherNodeAlert.setType(UserAlertType.NodeStaleData);
+		otherNodeAlert.setValidTo(new DateTime());
+		otherNodeAlert.setId(userAlertDao.store(otherNodeAlert));
+
+		// create an Active situation, but for other node ID
+		UserAlertSituation resolved = new UserAlertSituation();
+		resolved.setAlert(otherNodeAlert);
+		resolved.setCreated(new DateTime());
+		resolved.setStatus(UserAlertSituationStatus.Active);
+		resolved.setId(userAlertSituationDao.store(resolved));
+
+		List<UserAlert> results = userAlertDao.findActiveAlertSituationsForNode(node.getId());
+		assertNotNull("Results never null", results);
+		assertEquals("No active situations", 0, results.size());
+	}
+
+	@Test
+	public void findForActiveSituationsForNodeActiveAndResolved() {
+		findAlertsForUserWithSituationActiveAndResolved();
+
+		// add 2nd node to verify filter working as expected
+		setupTestNode(-200L);
+
+		// create an alert for 2nd node
+		UserAlert otherNodeAlert = new UserAlert();
+		otherNodeAlert.setCreated(new DateTime());
+		otherNodeAlert.setNodeId(-200L);
+		otherNodeAlert.setUserId(user.getId());
+		otherNodeAlert.setStatus(UserAlertStatus.Active);
+		otherNodeAlert.setType(UserAlertType.NodeStaleData);
+		otherNodeAlert.setValidTo(new DateTime());
+		otherNodeAlert.setId(userAlertDao.store(otherNodeAlert));
+
+		// create an Active situation, but for other node ID
+		UserAlertSituation resolved = new UserAlertSituation();
+		resolved.setAlert(otherNodeAlert);
+		resolved.setCreated(new DateTime());
+		resolved.setStatus(UserAlertSituationStatus.Active);
+		resolved.setId(userAlertSituationDao.store(resolved));
+
+		List<UserAlert> results = userAlertDao.findActiveAlertSituationsForNode(node.getId());
+		assertNotNull("Results never null", results);
+		assertEquals("Active situations", 1, results.size());
+
+		UserAlert alert = results.get(0);
+		assertNotNull("With situation", alert.getSituation());
+		assertEquals("Situation active", UserAlertSituationStatus.Active, alert.getSituation()
+				.getStatus());
 	}
 }

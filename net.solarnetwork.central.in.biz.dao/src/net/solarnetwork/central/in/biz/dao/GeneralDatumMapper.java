@@ -90,14 +90,13 @@ public class GeneralDatumMapper {
 
 	private GeneralNodeDatum mapBaseGeneralNodeDatumProperties(NodeDatum datum) {
 		GeneralNodeDatum g = new GeneralNodeDatum();
-		g.setCreated(datum.getCreated());
+		g.setCreated(datum.getCreated() != null ? datum.getCreated() : new DateTime());
 		g.setNodeId(datum.getNodeId());
 		return g;
 	}
 
 	private GeneralNodeDatum mapConsumptionDatum(ConsumptionDatum datum) {
 		assert datum != null;
-		assert datum.getCreated() != null;
 		assert datum.getSourceId() != null;
 
 		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
@@ -118,7 +117,6 @@ public class GeneralDatumMapper {
 
 	private GeneralNodeDatum mapHardwareControlDatum(HardwareControlDatum datum) {
 		assert datum != null;
-		assert datum.getCreated() != null;
 
 		// The source_id value could be in form source;prop where 'prop' is a property name.
 		// If this is the case, we store only 'source' as the source_id, and name the JSON key the value of 'prop'.
@@ -148,7 +146,6 @@ public class GeneralDatumMapper {
 
 	private GeneralNodeDatum mapPowerDatum(PowerDatum datum) {
 		assert datum != null;
-		assert datum.getCreated() != null;
 		assert datum.getSourceId() != null;
 
 		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
@@ -190,7 +187,7 @@ public class GeneralDatumMapper {
 
 	private GeneralLocationDatum mapBaseGeneralLocationDatumProperties(LocationDatum datum) {
 		GeneralLocationDatum g = new GeneralLocationDatum();
-		g.setCreated(datum.getCreated());
+		g.setCreated(datum.getCreated() != null ? datum.getCreated() : new DateTime());
 		g.setLocationId(datum.getLocationId());
 		return g;
 	}

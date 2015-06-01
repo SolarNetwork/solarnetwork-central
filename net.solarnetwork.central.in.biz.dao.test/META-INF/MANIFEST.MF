@@ -2,9 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central In Biz DAO Test
 Bundle-SymbolicName: net.solarnetwork.central.in.biz.dao.test
-Bundle-Version: 1.5.0
+Bundle-Version: 1.5.1
 Bundle-Vendor: SolarNetwork
-Fragment-Host: net.solarnetwork.central.in.biz.dao;bundle-version="1.14.0"
+Fragment-Host: net.solarnetwork.central.in.biz.dao;bundle-version="1.14.3"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
  net.solarnetwork.central.dao.mybatis;version="1.0.0",

@@ -50,6 +50,8 @@
 		
 	<osgi:reference id="certificateService" interface="net.solarnetwork.support.CertificateService"/>
 	
+	<osgi:list id="pingTests" availability="optional" interface="net.solarnetwork.central.domain.PingTest"/>
+
 	<!-- Published Services -->
 	
 	<osgi:service ref="userValidator" 

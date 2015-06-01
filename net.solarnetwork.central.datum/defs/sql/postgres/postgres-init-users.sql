@@ -275,3 +275,31 @@ $BODY$
 $BODY$
   LANGUAGE sql STABLE;
 
+/**
+ * TRIGGER function that automatically transfers rows related to a user_node to 
+ * the new owner when the user_id value is changed. Expected record is solaruser.uesr_node.
+ */
+CREATE OR REPLACE FUNCTION solaruser.node_ownership_transfer()
+  RETURNS "trigger" AS
+$BODY$
+BEGIN
+	UPDATE solaruser.user_node_cert
+	SET user_id = NEW.user_id
+	WHERE user_id = OLD.user_id
+		AND node_id = NEW.node_id;
+	
+	UPDATE solaruser.user_node_conf
+	SET user_id = NEW.user_id
+	WHERE user_id = OLD.user_id
+		AND node_id = NEW.node_id;
+	
+	RETURN NEW;
+END;$BODY$
+  LANGUAGE 'plpgsql' VOLATILE;
+
+CREATE TRIGGER node_ownership_transfer
+  BEFORE UPDATE
+  ON solaruser.user_node
+  FOR EACH ROW
+  WHEN (OLD.user_id IS DISTINCT FROM NEW.user_id)
+  EXECUTE PROCEDURE solaruser.node_ownership_transfer();
