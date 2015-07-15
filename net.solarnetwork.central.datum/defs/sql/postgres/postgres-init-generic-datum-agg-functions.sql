@@ -332,7 +332,7 @@ function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
 	}
 	diff = (val - prevVal);
 	minutes = ms / 60000;
-	diffT = Math.abs(diff / minutes);
+	diffT = (diff / minutes);
 	if ( avgObj ) {
 		if ( avgObj.average > 0 ) {
 			offsetT = (diffT / avgObj.average) 

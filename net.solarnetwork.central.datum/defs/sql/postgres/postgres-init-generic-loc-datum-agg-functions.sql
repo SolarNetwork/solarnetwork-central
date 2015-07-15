@@ -277,7 +277,7 @@ function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
 		minutes;
 	diff = (val - prevVal);
 	minutes = ms / 60000;
-	diffT = Math.abs(diff / minutes);
+	diffT = (diff / minutes);
 	maintainAccumulatingRunningAverageDifference(r.accAvg, prop, diffT)
 	return diff;
 }
