@@ -243,20 +243,11 @@ $BODY$
 'use strict';
 var runningAvgDiff,
 	runningAvgMax = 5,
-	toleranceMs = intervalMs(tolerance),
+	toleranceMs = sn.util.intervalMs(tolerance),
 	hourFill = {'watts' : 'wattHours'},
 	slotMode = (slotsecs > 0 && slotsecs < 3600),
-	ignoreLogMessages = (slotMode === true || intervalMs(span) !== 3600000),
+	ignoreLogMessages = (slotMode === true || sn.util.intervalMs(span) !== 3600000),
 	logInsertStmt;
-
-function intervalMs(intervalValue) {
-	// calculate the number of milliseconds in the tolerance interval, which plv8 gives us as a string which we look for HH:MM:SS format
-	var hms = intervalValue.match(/(\d{2}):(\d{2}):(\d{2})$/);
-	if ( hms && hms.length === 4 ) {
-		return ((hms[1] * 60 * 60 * 1000) + (hms[2] * 60 * 1000) + (hms[3] * 1000));
-	}
-	return null;
-}
 
 function logMessage(nodeId, sourceId, ts, msg) {
 	if ( ignoreLogMessages ) {
@@ -414,7 +405,7 @@ function handleFractionalAccumulatingResult(rec, result) {
 		prop,
 		stmt,
 		cur,
-		spanMs = intervalMs(span),
+		spanMs = sn.util.intervalMs(span),
 		endts = start_ts.getTime() + spanMs;
 	
 	if ( slotMode ) {

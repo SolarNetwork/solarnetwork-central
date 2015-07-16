@@ -2,6 +2,8 @@ CREATE OR REPLACE FUNCTION public.plv8_startup()
   RETURNS void AS
 $BODY$
 'use strict';
+var intervalMsStms = plv8.prepare('SELECT EXTRACT(EPOCH FROM $1::interval)', ['text']);
+
 /**
  * @namespace
  */
@@ -130,5 +132,20 @@ this.sn.util.merge = function(result, obj) {
 
 	return result;
 };
+
+/**
+ * Convert an interval string into milliseconds.
+ *
+ * @param {String} intervalValue The interval string, for example <code>1 day</code> or <code>01:00:00</code>.
+ * @returns {Number} The millisecond value, or <em>null</em> if could not be converted.
+ */
+this.sn.util.intervalMs = function(intervalValue) {
+	var secs = intervalMsStms.execute([intervalValue]);
+	if ( secs.length > 0 && secs[0].date_part !== undefined ) {
+		return secs[0].date_part * 1000;
+	}
+	return null;
+};
+
 $BODY$
 LANGUAGE plv8;
