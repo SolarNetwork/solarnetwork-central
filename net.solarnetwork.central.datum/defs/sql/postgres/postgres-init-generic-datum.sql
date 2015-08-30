@@ -183,11 +183,18 @@ BEGIN
 			WHERE d.node_id = node
 			ORDER BY d.source_id;
 		
-		WHEN st IS NULL THEN
+		WHEN en IS NULL THEN
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_datum_daily d
 			WHERE d.node_id = node
 				AND d.ts_start >= CAST(st at time zone node_tz AS DATE)
+			ORDER BY d.source_id;
+				
+		WHEN st IS NULL THEN
+			RETURN QUERY SELECT DISTINCT d.source_id
+			FROM solaragg.agg_datum_daily d
+			WHERE d.node_id = node
+				AND d.ts_start <= CAST(en at time zone node_tz AS DATE)
 			ORDER BY d.source_id;
 				
 		ELSE
