@@ -334,7 +334,7 @@ function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
 			offsetT = (diffT * (minutes > 5 ? 25 : Math.pow(minutes, 2)));
 		}
 	}
-	if ( offsetT > 100 ) {
+	if ( offsetT > 1000 ) {
 		logMessage(node, r.source_id, new Date(rec.tsms), 'Rejecting diff', diff, 'offset(t)', offsetT.toFixed(1), 
 			'diff(t)', sn.math.util.fixPrecision(diffT, 100), '; ravg', (avgObj ? sn.math.util.fixPrecision(avgObj.average, 100) : 'N/A'), 
 			(avgObj ? JSON.stringify(avgObj.samples.map(function(e) { return sn.math.util.fixPrecision(e, 100); })) : 'N/A'));
