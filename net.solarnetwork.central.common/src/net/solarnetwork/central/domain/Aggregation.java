@@ -27,7 +27,7 @@ package net.solarnetwork.central.domain;
 /**
  * An aggregation level enumeration.
  * 
- * @version 1.4
+ * @version 1.5
  */
 public enum Aggregation {
 
@@ -42,6 +42,13 @@ public enum Aggregation {
 
 	/** Fifteen minute level aggregation. */
 	FifteenMinute(60 * 15),
+
+	/**
+	 * Thirty minute level aggregation.
+	 * 
+	 * @since 1.5
+	 */
+	ThirtyMinute(60 * 30),
 
 	/** Hour level aggregation. */
 	Hour(3600),
