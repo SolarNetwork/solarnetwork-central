@@ -132,7 +132,10 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 
 		DateTime created = userAlert.getCreated();
 		alert.setStatus(UserAlertStatus.Disabled);
-		alert.getOptions().put("updated-string", "updated");
+
+		Map<String, Object> options = alert.getOptions();
+		options.put("updated-string", "updated");
+		alert.setOptions(options);
 
 		Long id = userAlertDao.store(alert);
 		assertNotNull(id);
@@ -146,7 +149,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		assertEquals(UserAlertStatus.Disabled, updatedUserAlert.getStatus());
 		assertNotNull(alert.getOptions());
 
-		Map<String, Object> options = alert.getOptions();
+		options = updatedUserAlert.getOptions();
 		assertEquals("foo", options.get("string"));
 		assertEquals(42, options.get("number"));
 		assertEquals("updated", options.get("updated-string"));

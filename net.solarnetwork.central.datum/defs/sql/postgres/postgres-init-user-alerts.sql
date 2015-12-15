@@ -43,6 +43,7 @@ CREATE TABLE solaruser.user_alert_sit (
 	alert_id		BIGINT NOT NULL,
 	status			solaruser.user_alert_sit_status NOT NULL,
 	notified		TIMESTAMP WITH TIME ZONE,
+	info			json,
 	CONSTRAINT user_alert_sit_pkey PRIMARY KEY (id),
 	CONSTRAINT user_alert_sit_alert_fk FOREIGN KEY (alert_id)
 		REFERENCES solaruser.user_alert (id) MATCH SIMPLE

@@ -26,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -115,6 +116,17 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		sit.setStatus(status);
 		sit.setNotified(notified);
 
+		Map<String, Object> info = new HashMap<String, Object>(4);
+		info.put("string", "foo");
+		info.put("number", 42);
+
+		List<String> optionList = new ArrayList<String>(4);
+		optionList.add("first");
+		optionList.add("second");
+		info.put("list", optionList);
+
+		sit.setInfo(info);
+
 		Long id = userAlertSituationDao.store(sit);
 		sit.setId(id);
 		return sit;
@@ -134,6 +146,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		assertNotNull(sit);
 		assertEquals(this.userAlertSituation.getId(), sit.getId());
 		assertEquals(this.userAlertSituation.getStatus(), sit.getStatus());
+		assertEquals(this.userAlertSituation.getInfo(), sit.getInfo());
 		assertNotNull(sit.getAlert());
 		assertEquals(this.userAlert.getId(), sit.getAlert().getId());
 	}
@@ -142,6 +155,10 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 	public void update() {
 		storeNew();
 		UserAlertSituation sit = userAlertSituationDao.get(this.userAlertSituation.getId());
+
+		Map<String, Object> info = sit.getInfo();
+		info.put("updated-string", "updated");
+		sit.setInfo(info);
 
 		DateTime created = userAlertSituation.getCreated();
 		sit.setStatus(UserAlertSituationStatus.Resolved);
@@ -155,6 +172,15 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		assertNotNull(updatedSit.getAlert());
 		assertEquals(this.userAlert.getId(), updatedSit.getAlert().getId());
 		assertEquals(UserAlertSituationStatus.Resolved, updatedSit.getStatus());
+
+		info = updatedSit.getInfo();
+		assertEquals("foo", info.get("string"));
+		assertEquals(42, info.get("number"));
+		assertEquals("updated", info.get("updated-string"));
+
+		assertNotNull(info.get("list"));
+		assertEquals(Arrays.asList("first", "second"), info.get("list"));
+
 		assertEquals(created, updatedSit.getCreated());
 	}
 
