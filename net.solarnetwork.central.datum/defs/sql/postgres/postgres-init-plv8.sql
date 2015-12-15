@@ -56,7 +56,7 @@ this.sn.math.util.addto = function(k, v, o, p, c) {
  * @returns {Number} the average of the values, projected over an hour
  */
 this.sn.math.util.calculateAverageOverHours = function(w, prevW, milli) {
-	return ((w + prevW) / 2) * (milli / 3600000));
+	return (((w + prevW) / 2) * (milli / 3600000));
 };
 
 /**
