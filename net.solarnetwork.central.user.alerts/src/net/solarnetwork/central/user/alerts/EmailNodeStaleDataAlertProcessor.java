@@ -69,7 +69,7 @@ import org.springframework.context.MessageSource;
  * Process stale data alerts for nodes.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor {
 
@@ -81,6 +81,29 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 	/** The default value for {@link #getMailTemplateResolvedResource()}. */
 	public static final String DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE = "/net/solarnetwork/central/user/alerts/user-alert-NodeStaleData-Resolved.txt";
+
+	/**
+	 * A {@code UserAlertSituation} {@code info} key for an associated node ID.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String SITUATION_INFO_NODE_ID = "nodeId";
+
+	/**
+	 * A {@code UserAlertSituation} {@code info} key for an associated source
+	 * ID.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String SITUATION_INFO_SOURCE_ID = "sourceId";
+
+	/**
+	 * A {@code UserAlertSituation} {@code info} key for an associated datum
+	 * creation date.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String SITUATION_INFO_DATUM_CREATED = "datumCreated";
 
 	private final SolarNodeDao solarNodeDao;
 	private final UserDao userDao;
@@ -192,6 +215,14 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				GeneralNodeDatumFilterMatch stale = getFirstStaleDatum(alert, now, age, sourceIds,
 						timePeriods);
 
+				Map<String, Object> staleInfo = new HashMap<String, Object>(4);
+				if ( stale != null ) {
+					staleInfo.put(SITUATION_INFO_DATUM_CREATED,
+							Long.valueOf(stale.getId().getCreated().getMillis()));
+					staleInfo.put(SITUATION_INFO_NODE_ID, stale.getId().getNodeId());
+					staleInfo.put(SITUATION_INFO_SOURCE_ID, stale.getId().getSourceId());
+				}
+
 				// get UserAlertSitutation for this alert
 				UserAlertSituation sit = userAlertSituationDao.getActiveAlertSituationForAlert(alert
 						.getId());
@@ -203,6 +234,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 						sit.setAlert(alert);
 						sit.setStatus(UserAlertSituationStatus.Active);
 						sit.setNotified(new DateTime(now));
+						sit.setInfo(staleInfo);
+
 					} else if ( sit.getNotified().equals(sit.getCreated()) ) {
 						notifyOffset = (initialAlertReminderDelayMinutes * 60L * 1000L);
 					} else {
@@ -215,7 +248,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 								mailTemplateResource, stale);
 						sit.setNotified(new DateTime(now));
 					}
-					if ( sit.getNotified().getMillis() == now ) {
+					if ( sit.getNotified().getMillis() == now || sit.getInfo() == null
+							|| !staleInfo.equals(sit.getInfo()) ) {
 						userAlertSituationDao.store(sit);
 					}
 				} else {

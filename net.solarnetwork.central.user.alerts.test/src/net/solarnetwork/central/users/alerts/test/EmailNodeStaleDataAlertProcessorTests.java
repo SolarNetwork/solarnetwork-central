@@ -375,6 +375,15 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		Assert.assertNotNull(newSituation.getValue().getNotified());
 		Assert.assertTrue("Saved alert validTo not increased",
 				pendingAlert.getValidTo().equals(pendingAlertValidTo));
+		Assert.assertNotNull(newSituation.getValue().getInfo());
+		Assert.assertEquals(
+				nodeData.get(0).getId().getNodeId(),
+				newSituation.getValue().getInfo()
+						.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID));
+		Assert.assertEquals(nodeData.get(0).getId().getSourceId(), newSituation.getValue().getInfo()
+				.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID));
+		Assert.assertEquals(nodeData.get(0).getId().getCreated().getMillis(), newSituation.getValue()
+				.getInfo().get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_DATUM_CREATED));
 	}
 
 	@Test
