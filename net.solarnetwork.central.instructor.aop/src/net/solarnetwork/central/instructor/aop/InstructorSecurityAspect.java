@@ -104,7 +104,7 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 		if ( instructionId == null ) {
 			return;
 		}
-		final Long nodeId = instruction.getNodeId();
+		final Long nodeId = (instruction != null ? instruction.getNodeId() : null);
 		if ( nodeId == null ) {
 			return;
 		}

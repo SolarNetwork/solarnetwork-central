@@ -20,6 +20,7 @@
 	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.alerts">
 		<beans:prop key="alert.mail.from">alerts@solarnetwork.net</beans:prop>
+		<beans:prop key="alert.mail.wrap">80</beans:prop>
 		<beans:prop key="nodeStaleDataAlertProcessor.batchSize">250</beans:prop>
 		<beans:prop key="emailNodeStaleDataAlertProcessor.jobCron">30 0/5 * * * ?</beans:prop>
 		<beans:prop key="emailNodeStaleDataAlertProcessor.initialAlertReminderDelayMinutes">60</beans:prop>
@@ -111,6 +112,7 @@
 				<property name="from" value="${alert.mail.from}"/>
 			</bean>
 		</property>
+		<property name="hardWrapColumnIndex" value="${alert.mail.wrap}"/>
 	</bean>
 	
 </blueprint>

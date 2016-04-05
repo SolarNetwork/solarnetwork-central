@@ -97,6 +97,21 @@ $(document).ready(function() {
 		form.modal('show');
 	});
 	
+	function alertSituationInfoHTML(alert) {
+		if ( !(alert && alert.situation && alert.situration.info) ) {
+			return '';
+		}
+		var info = '<dl>';
+		if ( alert.situation.info.nodeId ) {
+			info += '<dt>Node ID</dt><dd>' +alert.situation.info.nodeId +'</dd>';
+		}
+		if ( alert.situation.info.sourceId ) {
+			info += '<dt>Source ID</dt><dd>' +alert.situation.info.nodeId +'</dd>';
+		}
+		info += '</dl>'
+		return info;
+	}
+	
 	function populateAlertSituationValues(root, alert, nodeName) {
 		// make use of the i18n type/status
 		var type = (alert && alert.type && SolarReg.userAlertTypes
@@ -108,12 +123,22 @@ $(document).ready(function() {
 		var node = (nodeName ? nodeName : alert.nodeId);
 		var age = (alert && alert.options && alert.options.age ? (alert.options.age / 60).toFixed(0) : '1');
 		var sources = (alert && alert.options && alert.options.sources ? alert.options.sources : '');
+		var infoNodeId = (alert && alert.situation && alert.situation.info ? alert.situation.info.nodeId : '');
+		var infoSourceId = (alert && alert.situation && alert.situation.info ? alert.situation.info.sourceId : '');
 		
 		root.find('.alert-situation-type').text(type);
 		root.find('.alert-situation-created').text(date);
 		root.find('.alert-situation-node').text(node);
 		root.find('.alert-situation-age').text(age);
 		root.find('.alert-situation-sources').text(sources);
+		
+		if ( infoNodeId && infoSourceId ) {
+			root.find('.alert-situation-info').show();
+			root.find('.alert-situation-info-nodeId').text(infoNodeId);
+			root.find('.alert-situation-info-sourceId').text(infoSourceId);
+		} else {
+			root.find('.alert-situation-info').hide();
+		}
 		
 		if ( alert && alert.options.situationNotificationDate ) {
 			root.find('.alert-situation-notified').text(alert.options.situationNotificationDate);

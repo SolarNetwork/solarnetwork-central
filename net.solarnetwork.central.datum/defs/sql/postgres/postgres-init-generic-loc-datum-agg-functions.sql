@@ -136,7 +136,7 @@ SELECT * FROM (
 		CASE 
 			WHEN lead(d.ts) over win < start_ts OR lag(d.ts) over win > (start_ts + span)
 				THEN -1::real
-			WHEN d.ts < start_ts OR lag(d.ts) over win > (start_ts + span)
+			WHEN d.ts < start_ts
 				THEN 0::real
 			WHEN d.ts > (start_ts + span) AND lag(d.ts) over win IS NULL
 				THEN 0::real
@@ -154,7 +154,7 @@ SELECT * FROM (
 		AND d.ts >= start_ts - tolerance
 		AND d.ts <= start_ts + span + tolerance
 	WINDOW win AS (PARTITION BY d.source_id ORDER BY d.ts)
-	ORDER BY d.ts
+	ORDER BY d.ts, d.source_id
 ) AS sub
 WHERE 
 	sub.percent > -1
@@ -191,7 +191,7 @@ $BODY$
  */
 CREATE OR REPLACE FUNCTION solaragg.find_loc_datum_for_minute_time_slots(
 	IN loc bigint, 
-	IN source text[], 
+	IN sources text[], 
 	IN start_ts timestamp with time zone, 
 	IN span interval, 
 	IN slotsecs integer DEFAULT 600,
@@ -205,13 +205,14 @@ SELECT * FROM (
 		d.source_id,
 		CAST(EXTRACT(EPOCH FROM solaragg.minute_time_slot(d.ts, slotsecs)) * 1000 AS BIGINT) as tsms,
 		CASE 
-			WHEN lead(d.ts) over win < start_ts OR d.ts > (start_ts + span)
+			WHEN lead(d.ts) over win < start_ts OR lag(d.ts) over win > (start_ts + span)
 				THEN -1::real
-			WHEN d.ts < start_ts OR lag(d.ts) over win > (start_ts + span)
+			WHEN d.ts < start_ts
 				THEN 0::real
 			WHEN d.ts > (start_ts + span) AND lag(d.ts) over win IS NULL
 				THEN 0::real
 			WHEN solaragg.minute_time_slot(lag(d.ts) over win, slotsecs) < solaragg.minute_time_slot(d.ts, slotsecs)
+					AND EXTRACT('epoch' FROM d.ts - lag(d.ts) over win) < slotsecs
 				THEN (1::real - EXTRACT('epoch' FROM solaragg.minute_time_slot(d.ts, slotsecs) - lag(d.ts) over win) / EXTRACT('epoch' FROM d.ts - lag(d.ts) over win))::real
 			ELSE 1::real
 		END AS percent,
@@ -219,7 +220,7 @@ SELECT * FROM (
 		d.jdata as jdata
 	FROM solardatum.da_loc_datum d
 	WHERE d.loc_id = loc
-		AND d.source_id = ANY(source)
+		AND d.source_id = ANY(sources)
 		AND d.ts >= start_ts - tolerance
 		AND d.ts <= start_ts + span + tolerance
 	WINDOW win AS (PARTITION BY d.source_id ORDER BY d.ts)
@@ -242,20 +243,11 @@ $BODY$
 'use strict';
 var runningAvgDiff,
 	runningAvgMax = 5,
-	toleranceMs = intervalMs(tolerance),
+	toleranceMs = sn.util.intervalMs(tolerance),
 	hourFill = {'watts' : 'wattHours'},
 	slotMode = (slotsecs > 0 && slotsecs < 3600),
-	ignoreLogMessages = (slotMode === true || intervalMs(span) !== 3600000),
+	ignoreLogMessages = (slotMode === true || sn.util.intervalMs(span) !== 3600000),
 	logInsertStmt;
-
-function intervalMs(intervalValue) {
-	// calculate the number of milliseconds in the tolerance interval, which plv8 gives us as a string which we look for HH:MM:SS format
-	var hms = intervalValue.match(/(\d{2}):(\d{2}):(\d{2})$/);
-	if ( hms && hms.length === 4 ) {
-		return ((hms[1] * 60 * 60 * 1000) + (hms[2] * 60 * 1000) + (hms[3] * 1000));
-	}
-	return null;
-}
 
 function logMessage(nodeId, sourceId, ts, msg) {
 	if ( ignoreLogMessages ) {
@@ -277,7 +269,7 @@ function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
 		minutes;
 	diff = (val - prevVal);
 	minutes = ms / 60000;
-	diffT = Math.abs(diff / minutes);
+	diffT = (diff / minutes);
 	maintainAccumulatingRunningAverageDifference(r.accAvg, prop, diffT)
 	return diff;
 }
@@ -312,13 +304,13 @@ function maintainAccumulatingRunningAverageDifference(accAvg, prop, diff) {
 	}
 }
 
-function finishResultObject(r) {
+function finishResultObject(r, endts) {
 	var prop,
 		robj,
 		ri,
 		ra;
-	if ( r.tsms < start_ts.getTime() ) {
-		// not included in output because before time start
+	if ( r.tsms < start_ts.getTime() || (slotMode && r.tsms >= endts) ) {
+		// not included in output because before time start, or end time >= end time
 		return;
 	}
 	robj = {
@@ -413,7 +405,8 @@ function handleFractionalAccumulatingResult(rec, result) {
 		prop,
 		stmt,
 		cur,
-		spanMs = intervalMs(span);
+		spanMs = sn.util.intervalMs(span),
+		endts = start_ts.getTime() + spanMs;
 	
 	if ( slotMode ) {
 		stmt = plv8.prepare('SELECT source_id, tsms, percent, tdiffms, jdata FROM solaragg.find_loc_datum_for_minute_time_slots($1, $2, $3, $4, $5, $6)', 
@@ -447,7 +440,7 @@ function handleFractionalAccumulatingResult(rec, result) {
 				// add 1-rec.percent to the previous time slot results
 				handleFractionalAccumulatingResult(rec, result);
 			}
-			finishResultObject(result);
+			finishResultObject(result, endts);
 			result.tsms = rec.tsms;
 			result.aobj = {};
 			result.iobj = {};
@@ -466,7 +459,7 @@ function handleFractionalAccumulatingResult(rec, result) {
 	stmt.free();
 
 	for ( prop in results ) {
-		finishResultObject(results[prop]);
+		finishResultObject(results[prop], endts);
 	}
 	
 	if ( logInsertStmt ) {

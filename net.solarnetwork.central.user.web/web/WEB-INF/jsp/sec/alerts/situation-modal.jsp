@@ -36,6 +36,18 @@
 		 					<th><fmt:message key="alert.options.sourceIds.label"/></th>
 		 					<td class="alert-situation-sources"></td>
 		 				</tr>
+		 				<tr>
+		 					<th><fmt:message key="alert.situation.info.label"/></th>
+		 					<td class="alert-situation-info">
+		 						<dl class="dl-horizontal">
+		 							<dt><fmt:message key="alert.situation.info.nodeId.label"/></dt>
+		 							<dd class="alert-situation-info-nodeId"></dd>
+		 							
+		 							<dt><fmt:message key="alert.situation.info.sourceId.label"/></dt>
+		 							<dd class="alert-situation-info-sourceId"></dd>
+		 						</dl>
+		 					</td>
+		 				</tr>
 		 				<tr class="notified">
 		 					<th><fmt:message key="alert.situation.notified.label"/></th>
 		 					<td>

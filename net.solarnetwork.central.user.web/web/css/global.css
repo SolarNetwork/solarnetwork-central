@@ -103,3 +103,18 @@ section + section {
 .alert-situation-count {
 	margin-left: 4px;
 }
+
+.alert-situation-info dl {
+	margin-bottom: 0;
+}
+
+.alert-situation-info .dl-horizontal dt {
+	width: 80px;
+}
+
+.alert-situation-info .dl-horizontal dt:after {
+	content: ":";
+}
+.alert-situation-info .dl-horizontal dd {
+	margin-left: 90px;
+}

@@ -11,11 +11,13 @@
 			(id, alert_id, status
 			<if test="created != null">,created</if>
 			<if test="notified != null">,notified</if>
+			<if test="infoJson != null">,info</if>
 			)
 		VALUES
 			(#{id}, #{alert.id}, CAST(#{status} AS solaruser.user_alert_sit_status)
 			<if test="created != null">,#{created}</if>
 			<if test="notified != null">,#{notified}</if>
+			<if test="infoJson != null">,CAST(#{infoJson} AS json)</if>
 			)
 	</insert>
 
@@ -23,6 +25,7 @@
 		UPDATE solaruser.user_alert_sit SET
 			notified = #{notified}, 
 			status = CAST(#{status} AS solaruser.user_alert_sit_status)
+			<if test="infoJson != null">, info = CAST(#{infoJson} AS json)</if>
 		WHERE
 			id = #{id}
 	</update>
@@ -32,7 +35,8 @@
 		uas.created AS user_alert_sit_created,
 		uas.alert_id AS user_alert_alert_id,
 		uas.notified AS user_alert_sit_notified,
-		uas.status AS user_alert_sit_status
+		uas.status AS user_alert_sit_status,
+		uas.info AS user_alert_sit_info
 	</sql>
 
 	<resultMap id="UserAlertSituationResult" type="UserAlertSituation">
@@ -40,6 +44,7 @@
 		<result property="created" column="user_alert_sit_created"/>
 		<result property="notified" column="user_alert_sit_notified"/>
 		<result property="status" column="user_alert_sit_status"/>
+		<result property="infoJson" column="user_alert_sit_info"/>
 	</resultMap>
 	
 	<resultMap id="UserAlertSituationFullResult" type="UserAlertSituation" extends="UserAlertSituationResult">

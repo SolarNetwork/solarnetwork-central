@@ -59,6 +59,7 @@ public class ClasspathResourceMessageTemplateDataSource implements MessageTempla
 	private final String resource;
 	private final Map<String, ?> model;
 	private ClassLoader classLoader;
+	private Integer wordWrapCharacterIndex;
 
 	/**
 	 * Construct with values.
@@ -140,6 +141,23 @@ public class ClasspathResourceMessageTemplateDataSource implements MessageTempla
 	 */
 	public void setClassLoader(ClassLoader classLoader) {
 		this.classLoader = classLoader;
+	}
+
+	@Override
+	public Integer getWordWrapCharacterIndex() {
+		return wordWrapCharacterIndex;
+	}
+
+	/**
+	 * Set the word wrap character index.
+	 * 
+	 * @param wordWrapCharacterIndex
+	 *        The word wrap character index to set.
+	 * @see MessageTemplateDataSource#getWordWrapCharacterIndex()
+	 * @since 1.1
+	 */
+	public void setWordWrapCharacterIndex(Integer wordWrapCharacterIndex) {
+		this.wordWrapCharacterIndex = wordWrapCharacterIndex;
 	}
 
 }

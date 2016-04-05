@@ -17,7 +17,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.mail" rev="[1.2.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.9.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.18.0,2.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.15.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.17.0,2.0.0)"/>
 		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="[1.28.0,2.0.0)"/>
     	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.2"/>
 		<dependency org="org.springframework" name="spring-context" rev="3.1.3.RELEASE"/>

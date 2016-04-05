@@ -69,7 +69,7 @@ import org.springframework.context.MessageSource;
  * Process stale data alerts for nodes.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor {
 
@@ -81,6 +81,29 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 	/** The default value for {@link #getMailTemplateResolvedResource()}. */
 	public static final String DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE = "/net/solarnetwork/central/user/alerts/user-alert-NodeStaleData-Resolved.txt";
+
+	/**
+	 * A {@code UserAlertSituation} {@code info} key for an associated node ID.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String SITUATION_INFO_NODE_ID = "nodeId";
+
+	/**
+	 * A {@code UserAlertSituation} {@code info} key for an associated source
+	 * ID.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String SITUATION_INFO_SOURCE_ID = "sourceId";
+
+	/**
+	 * A {@code UserAlertSituation} {@code info} key for an associated datum
+	 * creation date.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String SITUATION_INFO_DATUM_CREATED = "datumCreated";
 
 	private final SolarNodeDao solarNodeDao;
 	private final UserDao userDao;
@@ -141,6 +164,16 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		this.messageSource = messageSource;
 	}
 
+	/**
+	 * Get the current system time. Exposed to support testing.
+	 * 
+	 * @return The current system time.
+	 * @since 1.2
+	 */
+	protected long getCurrentTime() {
+		return System.currentTimeMillis();
+	}
+
 	@Override
 	public Long processAlerts(Long lastProcessedAlertId, DateTime validDate) {
 		if ( validDate == null ) {
@@ -149,7 +182,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		List<UserAlert> alerts = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
 				lastProcessedAlertId, validDate, batchSize);
 		Long lastAlertId = null;
-		final long now = System.currentTimeMillis();
+		final long now = getCurrentTime();
 		final DateTime nowDateTime = new DateTime(now);
 		final DateTimeFormatter timeFormatter = DateTimeFormat.forPattern("H:mm");
 		try {
@@ -163,7 +196,6 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				// extract options
 				Number age;
 				String[] sourceIds = null;
-				List<Interval> timePeriods = null;
 				try {
 					age = (Number) alertOptions.get(UserAlertOptions.AGE_THRESHOLD);
 					@SuppressWarnings("unchecked")
@@ -171,7 +203,6 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					if ( sources != null ) {
 						sourceIds = sources.toArray(new String[sources.size()]);
 					}
-					timePeriods = parseAlertTimeWindows(nowDateTime, timeFormatter, alert);
 				} catch ( ClassCastException e ) {
 					log.warn("Unexpected option data type in alert {}: {}", alert, e.getMessage());
 					continue;
@@ -189,8 +220,17 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				}
 
 				// look for first stale data matching age + source criteria
-				GeneralNodeDatumFilterMatch stale = getFirstStaleDatum(alert, now, age, sourceIds,
-						timePeriods);
+				final List<Interval> timePeriods = new ArrayList<Interval>(2);
+				GeneralNodeDatumFilterMatch stale = getFirstStaleDatum(alert, nowDateTime, age,
+						sourceIds, timeFormatter, timePeriods);
+
+				Map<String, Object> staleInfo = new HashMap<String, Object>(4);
+				if ( stale != null ) {
+					staleInfo.put(SITUATION_INFO_DATUM_CREATED,
+							Long.valueOf(stale.getId().getCreated().getMillis()));
+					staleInfo.put(SITUATION_INFO_NODE_ID, stale.getId().getNodeId());
+					staleInfo.put(SITUATION_INFO_SOURCE_ID, stale.getId().getSourceId());
+				}
 
 				// get UserAlertSitutation for this alert
 				UserAlertSituation sit = userAlertSituationDao.getActiveAlertSituationForAlert(alert
@@ -203,6 +243,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 						sit.setAlert(alert);
 						sit.setStatus(UserAlertSituationStatus.Active);
 						sit.setNotified(new DateTime(now));
+						sit.setInfo(staleInfo);
+
 					} else if ( sit.getNotified().equals(sit.getCreated()) ) {
 						notifyOffset = (initialAlertReminderDelayMinutes * 60L * 1000L);
 					} else {
@@ -215,14 +257,15 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 								mailTemplateResource, stale);
 						sit.setNotified(new DateTime(now));
 					}
-					if ( sit.getNotified().getMillis() == now ) {
+					if ( sit.getNotified().getMillis() == now || sit.getInfo() == null
+							|| !staleInfo.equals(sit.getInfo()) ) {
 						userAlertSituationDao.store(sit);
 					}
 				} else {
 					// not stale, so mark valid for age span
 					final boolean withinTimePeriods = withinIntervals(now, timePeriods);
 					DateTime newValidTo;
-					if ( timePeriods != null && !withinTimePeriods ) {
+					if ( !timePeriods.isEmpty() && !withinTimePeriods ) {
 						// we're not in valid to the start of the next time period
 						newValidTo = startOfNextTimePeriod(now, timePeriods);
 					} else {
@@ -265,7 +308,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	}
 
 	private List<Interval> parseAlertTimeWindows(final DateTime nowDateTime,
-			final DateTimeFormatter timeFormatter, UserAlert alert) {
+			final DateTimeFormatter timeFormatter, final UserAlert alert, final Long nodeId) {
 		Map<String, Object> alertOptions = alert.getOptions();
 		if ( alertOptions == null ) {
 			return null;
@@ -276,7 +319,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		if ( windows == null ) {
 			return null;
 		}
-
+		final Long intervalNodeId = (nodeId != null ? nodeId : alert.getNodeId());
 		List<Interval> timePeriods = new ArrayList<Interval>(windows.size());
 		for ( Map<String, Object> window : windows ) {
 			Object s = window.get("timeStart");
@@ -285,7 +328,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				try {
 					LocalTime start = timeFormatter.parseLocalTime(s.toString());
 					LocalTime end = timeFormatter.parseLocalTime(e.toString());
-					SolarNode node = nodeCache.get(alert.getNodeId());
+					SolarNode node = nodeCache.get(intervalNodeId);
 					DateTimeZone tz = DateTimeZone.UTC;
 					if ( node != null ) {
 						TimeZone nodeTz = node.getTimeZone();
@@ -293,7 +336,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 							tz = DateTimeZone.forTimeZone(nodeTz);
 						}
 					} else {
-						log.warn("Node {} not available, defaulting to UTC time zone", alert.getNodeId());
+						log.warn("Node {} not available, defaulting to UTC time zone", intervalNodeId);
 					}
 					DateTime startTimeToday = start.toDateTime(nowDateTime.toDateTime(tz));
 					DateTime endTimeToday = end.toDateTime(nowDateTime.toDateTime(tz));
@@ -440,27 +483,68 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		if ( intervals == null || intervals.size() < 1 ) {
 			return new DateTime();
 		}
+		Interval found = null;
+		Interval earliest = null;
 		for ( Interval i : intervals ) {
-			if ( i.isAfter(now) ) {
+			if ( i.isAfter(now) && (found == null || found.isAfter(i.getStartMillis())) ) {
 				// this time period starts later than now, so that is the next period to work with
-				return i.getStart();
+				found = i;
+			}
+			if ( earliest == null || earliest.isAfter(i.getStartMillis()) ) {
+				earliest = i;
 			}
 		}
-		// no time period later than now, so make the next period the start of the first interval, tomorrow
-		return intervals.get(0).getStart().plusDays(1);
+
+		if ( found != null ) {
+			return found.getStart();
+		}
+
+		// no time period later than now, so make the next period the start of the earliest interval, tomorrow
+		return earliest.getStart().plusDays(1);
 	}
 
-	private GeneralNodeDatumFilterMatch getFirstStaleDatum(final UserAlert alert, final long now,
-			final Number age, final String[] sourceIds, final List<Interval> intervals) {
+	private GeneralNodeDatumFilterMatch getFirstStaleDatum(final UserAlert alert, final DateTime now,
+			final Number age, final String[] sourceIds, final DateTimeFormatter timeFormatter,
+			final List<Interval> outputIntervals) {
 		GeneralNodeDatumFilterMatch stale = null;
 		List<GeneralNodeDatumFilterMatch> latestNodeData = getLatestNodeData(alert);
+		List<Interval> intervals = new ArrayList<Interval>(2);
+		if ( alert.getNodeId() != null ) {
+			try {
+				intervals = parseAlertTimeWindows(now, timeFormatter, alert, alert.getNodeId());
+			} catch ( ClassCastException e ) {
+				log.warn("Unexpected option data type in alert {}: {}", alert, e.getMessage());
+			}
+		}
+
 		for ( GeneralNodeDatumFilterMatch datum : latestNodeData ) {
+			List<Interval> nodeIntervals = intervals;
+			if ( alert.getNodeId() == null ) {
+				try {
+					nodeIntervals = parseAlertTimeWindows(now, timeFormatter, alert, datum.getId()
+							.getNodeId());
+					if ( nodeIntervals != null ) {
+						for ( Interval interval : nodeIntervals ) {
+							if ( !intervals.contains(interval) ) {
+								intervals.add(interval);
+							}
+						}
+					}
+				} catch ( ClassCastException e ) {
+					log.warn("Unexpected option data type in alert {}: {}", alert, e.getMessage());
+					continue;
+				}
+			}
 			if ( datum.getId().getCreated().getMillis() + (long) (age.doubleValue() * 1000) < now
+					.getMillis()
 					&& (sourceIds == null || Arrays.binarySearch(sourceIds, datum.getId().getSourceId()) >= 0)
-					&& withinIntervals(now, intervals) ) {
+					&& withinIntervals(now.getMillis(), nodeIntervals) ) {
 				stale = datum;
 				break;
 			}
+		}
+		if ( intervals != null && outputIntervals != null ) {
+			outputIntervals.addAll(intervals);
 		}
 		return stale;
 	}

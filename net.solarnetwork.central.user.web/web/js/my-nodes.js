@@ -422,18 +422,23 @@ $(document).ready(function() {
 		}
 	});
 	
-	// show active aelrt situations
-	$.getJSON(SolarReg.solarUserURL('/sec/alerts/user/situations'), function(json) {
-		var i, alert;
-		if ( json && json.data && Array.isArray(json.data) ) {
-			for ( i = 0; i < json.data.length; i++ ) {
-				alert = json.data[i];
-				if ( alert.nodeId ) {
-					$('.node-row[data-node-id='+alert.nodeId+'] button.view-situation').each(function(idx, el) {
-						$(el).data('alert-id', alert.id);
-					}).removeClass('hidden');
+	(function() {
+		var nodeRows = $('.node-row');
+		if ( nodeRows.length > 0 ) {
+			// show active alert situations
+			$.getJSON(SolarReg.solarUserURL('/sec/alerts/user/situations'), function(json) {
+				var i, alert;
+				if ( json && json.data && Array.isArray(json.data) ) {
+					for ( i = 0; i < json.data.length; i++ ) {
+						alert = json.data[i];
+						if ( alert.nodeId ) {
+							nodeRows.filter('[data-node-id='+alert.nodeId+']').find('button.view-situation').each(function(idx, el) {
+								$(el).data('alert-id', alert.id);
+							}).removeClass('hidden');
+						}
+					}
 				}
-			}
+			});
 		}
-	});
+	}());
 });
