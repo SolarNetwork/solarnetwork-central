@@ -41,7 +41,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class WebServiceControllerSupport {
 
@@ -96,7 +96,24 @@ public abstract class WebServiceControllerSupport {
 	}
 
 	/**
-	 * Handle an {@link RuntimeException}.
+	 * Handle an {@link IllegalArgumentException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 * @since 1.3
+	 */
+	@ExceptionHandler(IllegalArgumentException.class)
+	@ResponseBody
+	public Response<?> handleRuntimeException(IllegalArgumentException e, HttpServletResponse response) {
+		log.error("IllegalArgumentException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
+	}
+
+	/**
+	 * Handle a {@link RuntimeException}.
 	 * 
 	 * @param e
 	 *        the exception
