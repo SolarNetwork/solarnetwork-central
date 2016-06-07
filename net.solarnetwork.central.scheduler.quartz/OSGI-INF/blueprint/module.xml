@@ -54,7 +54,11 @@
 		</service-properties>
 	</service>
 	
-	<service ref="schedulerManager" interface="org.osgi.service.event.EventHandler">
+	<service ref="schedulerManager">
+		<interfaces>
+			<value>org.osgi.service.event.EventHandler</value>
+			<value>net.solarnetwork.central.domain.PingTest</value>
+		</interfaces>
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
 				<array value-type="java.lang.String">

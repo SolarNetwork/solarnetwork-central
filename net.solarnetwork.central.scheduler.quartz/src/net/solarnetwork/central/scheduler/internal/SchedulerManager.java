@@ -26,6 +26,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.solarnetwork.central.domain.PingTest;
+import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.scheduler.EventHandlerSupport;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.central.scheduler.SchedulerUtils;
@@ -46,12 +48,13 @@ import org.springframework.context.event.ContextRefreshedEvent;
  * @version 1.1
  */
 public class SchedulerManager extends EventHandlerSupport implements
-		ApplicationListener<ContextRefreshedEvent>, EventHandler {
+		ApplicationListener<ContextRefreshedEvent>, EventHandler, PingTest {
 
 	private static final String TEST_TOPIC = "net/solarnetwork/central/scheduler/TEST";
 
 	private final Scheduler scheduler;
 	private final EventAdmin eventAdmin;
+	private long blockedJobMaxSeconds = 300;
 
 	/**
 	 * Constructor.
@@ -130,6 +133,83 @@ public class SchedulerManager extends EventHandlerSupport implements
 		}
 		log.warn("Running job {} in group {} not found", jobId, jobGroup);
 		return null;
+	}
+
+	// PingTest support
+
+	@Override
+	public String getPingTestId() {
+		return getClass().getName();
+	}
+
+	@Override
+	public String getPingTestName() {
+		return "Job Scheduler";
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 2000;
+	}
+
+	@Override
+	public PingTestResult performPingTest() throws Exception {
+		Scheduler s = scheduler;
+		if ( s.isInStandbyMode() ) {
+			return new PingTestResult(false, "Scheduler is in standby mode");
+		}
+		if ( s.isShutdown() ) {
+			return new PingTestResult(false, "Scheduler is shut down");
+		}
+
+		int triggerCount = 0;
+		long now = System.currentTimeMillis();
+		final String stateErrorTemplate = "Trigger %s.%s is in the %s state, since %tc";
+		for ( String triggerGroup : s.getTriggerGroupNames() ) {
+			for ( String triggerName : s.getTriggerNames(triggerGroup) ) {
+				triggerCount += 1;
+				int triggerState = s.getTriggerState(triggerName, triggerGroup);
+				Date lastFireTime = null;
+				Trigger trigger = null;
+				switch (triggerState) {
+					case Trigger.STATE_BLOCKED:
+						trigger = s.getTrigger(triggerName, triggerGroup);
+						lastFireTime = trigger.getPreviousFireTime();
+						if ( lastFireTime != null
+								&& lastFireTime.getTime() + (blockedJobMaxSeconds * 1000) < now ) {
+							return new PingTestResult(false, String.format(stateErrorTemplate,
+									triggerGroup, triggerName, "BLOCKED", lastFireTime));
+						}
+
+					case Trigger.STATE_ERROR:
+						trigger = s.getTrigger(triggerName, triggerGroup);
+						lastFireTime = trigger.getPreviousFireTime();
+						return new PingTestResult(false, String.format(stateErrorTemplate, triggerGroup,
+								triggerName, "ERROR", lastFireTime));
+
+					default:
+						// no error
+				}
+			}
+		}
+
+		String msg = String.format("Scheduler is running as expected; %d triggers configured.",
+				triggerCount);
+		return new PingTestResult(true, msg);
+	}
+
+	public long getBlockedJobMaxSeconds() {
+		return blockedJobMaxSeconds;
+	}
+
+	/**
+	 * A minimum amount of seconds before a blocked job results in an error.
+	 * 
+	 * @param blockedJobMaxSeconds
+	 *        The number of seconds.
+	 */
+	public void setBlockedJobMaxSeconds(long blockedJobMaxSeconds) {
+		this.blockedJobMaxSeconds = blockedJobMaxSeconds;
 	}
 
 }
