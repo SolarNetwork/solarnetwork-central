@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.pki.dogtag;
 
+import java.math.BigInteger;
+import java.net.URL;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
@@ -35,6 +37,7 @@ import javax.xml.xpath.XPathExpressionException;
 import net.solarnetwork.central.domain.PingTest;
 import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.CachedResult;
@@ -50,6 +53,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestOperations;
 import org.w3c.dom.Node;
 
@@ -57,7 +61,7 @@ import org.w3c.dom.Node;
  * Dogtag implementation of {@link NodePKIBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 
@@ -71,6 +75,7 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 	public static final String DOGTAG_10_PROFILE_ENABLED_XPATH = "/ProfileData/isEnabled";
 
 	public static final String DOGTAG_10_CERT_GET_PATH = "/ca/rest/certs/{id}";
+	public static final String DOGTAG_10_CERTREG_RENEW_PATH = "/ca/rest/certrequests";
 	public static final String DOGTAG_10_CERTREG_GET_PATH = "/ca/rest/certrequests/{id}";
 	public static final String DOGTAG_10_AGENT_CERTREQ_GET_PATH = "/ca/rest/agent/certrequests/{id}";
 	public static final String DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH = "/ca/rest/agent/certrequests/{id}/approve";
@@ -83,8 +88,10 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 	private CertificateService certificateService;
 	private RestOperations restOps;
 	private String dogtagProfileId = "SolarNode";
+	private String dogtagRenewalProfileId = "caManualRenewal";
 	private XPathExpression csrRequestIdXPath;
 	private Map<String, XPathExpression> csrInfoMapping;
+	private Map<String, XPathExpression> renewalInfoMapping;
 	private Map<String, XPathExpression> certDetailMapping;
 	private Map<String, XPathExpression> agentCsrInfoMapping;
 	private int pingResultsCacheSeconds = 300;
@@ -147,6 +154,39 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 	}
 
 	@Override
+	public String submitRenewalRequest(X509Certificate certificate) throws SecurityException {
+		BigInteger serialNumber = certificate.getSerialNumber();
+
+		MultiValueMap<String, Object> params = new LinkedMultiValueMap<String, Object>(6);
+		params.add("profileId", dogtagRenewalProfileId);
+		params.add("renewal", "true");
+		params.add("serial_num", serialNumber.toString());
+
+		ResponseEntity<DOMSource> result = restOps.postForEntity(baseUrl + DOGTAG_10_CERTREG_RENEW_PATH,
+				params, DOMSource.class);
+		DOMSource xmlResult = result.getBody();
+		if ( log.isDebugEnabled() ) {
+			log.debug("Got XML response: {}", xmlSupport.getXmlAsString(xmlResult, true));
+		}
+
+		final DogtagCertRequestInfo requestInfo = getRenewalRequestInfo(result.getBody().getNode());
+
+		// the request ID is the last path value of the requestURL
+		final URL requestURL = requestInfo.getRequestURL();
+		String requestID = null;
+		if ( requestURL != null ) {
+			requestID = StringUtils.getFilename(requestURL.getPath());
+		}
+		if ( requestID == null ) {
+			log.error("Renewal request ID not found in CA response: {}",
+					xmlSupport.getXmlAsString(xmlResult, true));
+			throw new CertificateException(
+					"No certificate request ID could be extracted from CA renewal submit response");
+		}
+		return requestID;
+	}
+
+	@Override
 	public X509Certificate[] approveCSR(String requestID) {
 		if ( requestID == null ) {
 			throw new IllegalArgumentException("The request ID argument must be provided.");
@@ -204,6 +244,13 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 		return info;
 	}
 
+	private DogtagCertRequestInfo getRenewalRequestInfo(Node node) {
+		DogtagCertRequestInfo info = new DogtagCertRequestInfo();
+		PropertyAccessor bean = PropertyAccessorFactory.forBeanPropertyAccess(info);
+		xmlSupport.extractBeanDataFromXml(bean, node, getRenewalInfoMapping());
+		return info;
+	}
+
 	private DogtagCertificateData getCertData(Node node) {
 		DogtagCertificateData data = new DogtagCertificateData();
 		PropertyAccessor bean = PropertyAccessorFactory.forBeanPropertyAccess(data);
@@ -222,6 +269,27 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 					"//def[@id='User Supplied Subject Name Default']/policyAttribute[@name='name']/value");
 			result = xmlSupport.getXPathExpressionMap(map);
 			this.agentCsrInfoMapping = result;
+		}
+		return result;
+	}
+
+	//	<CertRequestInfos>
+	//	  <CertRequestInfo>
+	//	    <requestType>renewal</requestType>
+	//	    <requestStatus>pending</requestStatus>
+	//	    <requestURL>https://ca.solarnetworkdev.net:8443/ca/rest/73</requestURL>
+	//	    <certRequestType>pkcs10</certRequestType>
+	//	    <operationResult>success</operationResult>
+	//	  </CertRequestInfo>
+	//	</CertRequestInfos>
+	private Map<String, XPathExpression> getRenewalInfoMapping() {
+		Map<String, XPathExpression> result = this.renewalInfoMapping;
+		if ( result == null ) {
+			Map<String, String> map = new LinkedHashMap<String, String>(3);
+			map.put("requestURL", "//CertRequestInfo[1]/requestURL");
+			map.put("requestStatus", "//CertRequestInfo[1]/requestStatus");
+			result = xmlSupport.getXPathExpressionMap(map);
+			this.renewalInfoMapping = result;
 		}
 		return result;
 	}
@@ -382,6 +450,14 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 
 	public void setPingResultsCacheSeconds(int pingResultsCacheSeconds) {
 		this.pingResultsCacheSeconds = pingResultsCacheSeconds;
+	}
+
+	public String getDogtagRenewalProfileId() {
+		return dogtagRenewalProfileId;
+	}
+
+	public void setDogtagRenewalProfileId(String dogtagRenewalProfileId) {
+		this.dogtagRenewalProfileId = dogtagRenewalProfileId;
 	}
 
 }
