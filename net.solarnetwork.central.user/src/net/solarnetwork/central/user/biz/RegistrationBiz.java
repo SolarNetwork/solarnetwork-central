@@ -26,6 +26,7 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.PasswordEntry;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.NetworkCertificate;
@@ -35,7 +36,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
  * API for user registration tasks.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface RegistrationBiz {
 
@@ -225,6 +226,47 @@ public interface RegistrationBiz {
 	 * @since 1.3
 	 */
 	NetworkCertificate getNodeCertificate(NetworkAssociation association);
+
+	/**
+	 * Renew a certificate generated and signed by SolarUser by a previous call
+	 * to {@link #confirmNodeAssociation(NetworkAssociation)} where a
+	 * {@code keystorePassword} was also supplied. The {@code username},
+	 * {@code confirmationKey}, and {@code keystorePassword} are required in
+	 * this call, and must match the values previously used in
+	 * {@link #confirmNodeAssociation(NetworkAssociation)}.
+	 * 
+	 * This method is meant to support renewing certificates via a SolarNode.
+	 * 
+	 * @param association
+	 *        the association details
+	 * @return the network certificate
+	 * @throws AuthorizationException
+	 *         if the details do not match those returned from a previous call
+	 *         to {@link #confirmNodeAssociation(NetworkAssociation)}
+	 * @since 1.4
+	 * @see #renewNodeCertificate(UserNode, String)
+	 */
+	NetworkCertificate renewNodeCertificate(NetworkAssociation association);
+
+	/**
+	 * Renew a certificate generated and signed by SolarUser by a previous call
+	 * to {@link #confirmNodeAssociation(NetworkAssociation)} where a
+	 * {@code keystorePassword} was also supplied.
+	 *
+	 * This method is meant to support renewing certificates via SolarUser.
+	 *
+	 * @param userNode
+	 *        the user node to renew the certificate for
+	 * @param keystorePassword
+	 *        the password used to encrypt the certificate store
+	 * @return the network certificate
+	 * @throws AuthorizationException
+	 *         if the details do not match those returned from a previous call
+	 *         to {@link #confirmNodeAssociation(NetworkAssociation)}
+	 * @since 1.4
+	 * @see #renewNodeCertificate(NetworkAssociation)
+	 */
+	NetworkCertificate renewNodeCertificate(UserNode userNode, String keystorePassword);
 
 	/**
 	 * Update the details of a user entity.

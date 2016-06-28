@@ -31,14 +31,21 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Locale;
 import java.util.Map;
@@ -78,7 +85,9 @@ import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.NetworkCertificate;
 import net.solarnetwork.domain.RegistrationReceipt;
 import net.solarnetwork.pki.bc.BCCertificateService;
+import net.solarnetwork.support.CertificateException;
 import net.solarnetwork.util.JavaBeanXmlSerializer;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Base64InputStream;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
@@ -98,6 +107,7 @@ public class DaoRegistrationBizTest {
 	private static final Long TEST_NODE_ID = -3L;
 	private static final Long TEST_LOC_ID = -4L;
 	private static final UserNodePK TEST_CERT_ID = new UserNodePK(TEST_USER_ID, TEST_NODE_ID);
+	private static final String TEST_CA_DN = "CN=Test CA, O=SolarTest";
 	private static final String TEST_ENC_PASSWORD = "encoded.password";
 	private static final String TEST_EMAIL = "test@localhost";
 	private static final String TEST_SECURITY_PHRASE = "test phrase";
@@ -105,6 +115,7 @@ public class DaoRegistrationBizTest {
 	private static final String TEST_DN_FORMAT = "UID=%s, OU=Unit Test, O=SolarNetwork";
 	private static final String TEST_KEYSTORE_PASS = "test password";
 	private static final String TEST_CERT_REQ_ID = "test req ID";
+	private static final String TEST_CERT_RENEWAL_ID = "test renewal ID";
 
 	private SolarLocationDao solarLocationDao;
 	private SolarNodeDao nodeDao;
@@ -710,5 +721,196 @@ public class DaoRegistrationBizTest {
 		assertNotNull(conf.getConfirmationDate());
 		assertNotNull(conf.getNodeId());
 		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+	}
+
+	private KeyStore loadKeyStore(String password, InputStream in) {
+		KeyStore keyStore = null;
+		try {
+			keyStore = KeyStore.getInstance("pkcs12");
+			keyStore.load(in, password.toCharArray());
+			return keyStore;
+		} catch ( KeyStoreException e ) {
+			throw new CertificateException("Error loading certificate key store", e);
+		} catch ( NoSuchAlgorithmException e ) {
+			throw new CertificateException("Error loading certificate key store", e);
+		} catch ( java.security.cert.CertificateException e ) {
+			throw new CertificateException("Error loading certificate key store", e);
+		} catch ( IOException e ) {
+			String msg;
+			if ( e.getCause() instanceof UnrecoverableKeyException ) {
+				msg = "Invalid password loading key store";
+			} else {
+				msg = "Error loading certificate key store";
+			}
+			throw new CertificateException(msg, e);
+		} finally {
+			if ( in != null ) {
+				try {
+					in.close();
+				} catch ( IOException e ) {
+					// ignore this one
+				}
+			}
+		}
+	}
+
+	private void storeKeyStore(KeyStore keystore, String password, OutputStream out) {
+		final char[] pass = (password == null ? new char[0] : password.toCharArray());
+		try {
+			keystore.store(out, pass);
+		} catch ( IOException e ) {
+			throw new CertificateException("Unable to serialize keystore", e);
+		} catch ( GeneralSecurityException e ) {
+			throw new CertificateException("Unable to serialize keystore", e);
+		} finally {
+			try {
+				out.flush();
+				out.close();
+			} catch ( IOException e ) {
+				// ignore this one
+			}
+		}
+	}
+
+	private UserNodeCertificate createTestSignedUserNodeCertificate(KeyPair keypair,
+			X509Certificate caCert, KeyPair caKeypair, KeyStore keystore) throws KeyStoreException {
+		final String nodeSubjectDN = String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString());
+
+		final X509Certificate certificate = certificateService.generateCertificate(nodeSubjectDN,
+				keypair.getPublic(), keypair.getPrivate());
+
+		// save self-signed cert
+		keystore.setKeyEntry(UserNodeCertificate.KEYSTORE_NODE_ALIAS, keypair.getPrivate(),
+				TEST_KEYSTORE_PASS.toCharArray(), new Certificate[] { certificate });
+
+		// create signed cert
+		X509Certificate signedCert = certificateService.signCertificate(
+				certificateService.generatePKCS10CertificateRequestString(certificate,
+						keypair.getPrivate()), caCert, caKeypair.getPrivate());
+
+		try {
+			keystore.setKeyEntry(UserNodeCertificate.KEYSTORE_NODE_ALIAS, keypair.getPrivate(),
+					TEST_KEYSTORE_PASS.toCharArray(), new X509Certificate[] { signedCert, caCert });
+		} catch ( KeyStoreException e ) {
+			throw new CertificateException("Error opening node certificate", e);
+		}
+
+		ByteArrayOutputStream byos = new ByteArrayOutputStream();
+		storeKeyStore(keystore, TEST_KEYSTORE_PASS, byos);
+
+		final UserNodeCertificate userNodeCertificate = new UserNodeCertificate();
+		userNodeCertificate.setUser(testUser);
+		userNodeCertificate.setStatus(UserNodeCertificateStatus.a);
+		userNodeCertificate.setKeystoreData(byos.toByteArray());
+		return userNodeCertificate;
+	}
+
+	private UserNodeCertificate createTestRenewedUserNodeCertificate(KeyPair keypair,
+			X509Certificate caCert, KeyPair caKeypair, KeyStore keystore) throws KeyStoreException {
+		final X509Certificate certificate = (X509Certificate) keystore
+				.getCertificate(UserNodeCertificate.KEYSTORE_NODE_ALIAS);
+
+		// create signed cert
+		X509Certificate signedCert = certificateService.signCertificate(
+				certificateService.generatePKCS10CertificateRequestString(certificate,
+						keypair.getPrivate()), caCert, caKeypair.getPrivate());
+
+		try {
+			keystore.setKeyEntry(UserNodeCertificate.KEYSTORE_NODE_ALIAS, keypair.getPrivate(),
+					TEST_KEYSTORE_PASS.toCharArray(), new X509Certificate[] { signedCert, caCert });
+		} catch ( KeyStoreException e ) {
+			throw new CertificateException("Error opening node certificate", e);
+		}
+
+		ByteArrayOutputStream byos = new ByteArrayOutputStream();
+		storeKeyStore(keystore, TEST_KEYSTORE_PASS, byos);
+
+		final UserNodeCertificate userNodeCertificate = new UserNodeCertificate();
+		userNodeCertificate.setUser(testUser);
+		userNodeCertificate.setStatus(UserNodeCertificateStatus.a);
+		userNodeCertificate.setKeystoreData(byos.toByteArray());
+		return userNodeCertificate;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void renewCertificateForUserNode() throws Exception {
+		final KeyStore keystore = loadKeyStore(TEST_KEYSTORE_PASS, null);
+		final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+		keyGen.initialize(1024, new SecureRandom());
+		final KeyPair keypair = keyGen.generateKeyPair();
+		final KeyPair caKeypair = keyGen.generateKeyPair();
+		final X509Certificate caCert = certificateService.generateCertificationAuthorityCertificate(
+				TEST_CA_DN, caKeypair.getPublic(), caKeypair.getPrivate());
+
+		final UserNode userNode = new UserNode();
+		userNode.setId(TEST_NODE_ID);
+		userNode.setUser(testUser);
+
+		final UserNodePK userNodePK = new UserNodePK(TEST_USER_ID, TEST_NODE_ID);
+
+		final UserNodeCertificate originalCertificate = createTestSignedUserNodeCertificate(keypair,
+				caCert, caKeypair, keystore);
+
+		final KeyStore renewedKeystore = loadKeyStore(TEST_KEYSTORE_PASS, new ByteArrayInputStream(
+				originalCertificate.getKeystoreData()));
+		final UserNodeCertificate renewedCertificate = createTestRenewedUserNodeCertificate(keypair,
+				caCert, caKeypair, renewedKeystore);
+		renewedCertificate.setUser(originalCertificate.getUser());
+		renewedCertificate.setStatus(UserNodeCertificateStatus.v);
+
+		// get the original cert
+		expect(userNodeCertificateDao.get(userNodePK)).andReturn(originalCertificate);
+
+		// renew the cert
+		expect(nodePKIBiz.submitRenewalRequest(originalCertificate.getNodeCertificate(keystore)))
+				.andReturn(TEST_CERT_RENEWAL_ID);
+
+		expect(executorService.submit(EasyMock.anyObject(Callable.class))).andReturn(
+				new Future<UserNodeCertificate>() {
+
+					@Override
+					public boolean cancel(boolean mayInterruptIfRunning) {
+						return false;
+					}
+
+					@Override
+					public boolean isCancelled() {
+						return false;
+					}
+
+					@Override
+					public boolean isDone() {
+						return true;
+					}
+
+					@Override
+					public UserNodeCertificate get() throws InterruptedException, ExecutionException {
+						return renewedCertificate;
+					}
+
+					@Override
+					public UserNodeCertificate get(long timeout, TimeUnit unit)
+							throws InterruptedException, ExecutionException, TimeoutException {
+						return renewedCertificate;
+					}
+				});
+
+		expect(userNodeCertificateDao.store(originalCertificate)).andReturn(TEST_CERT_ID);
+
+		replayAll();
+
+		NetworkCertificate cert = registrationBiz.renewNodeCertificate(userNode, TEST_KEYSTORE_PASS);
+
+		verifyAll();
+
+		assertNotNull(cert);
+		assertNull(cert.getConfirmationKey());
+		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
+				cert.getNetworkCertificateSubjectDN());
+		assertEquals(UserNodeCertificateStatus.v.getValue(), cert.getNetworkCertificateStatus());
+		assertEquals(TEST_NODE_ID, cert.getNetworkId());
+		assertEquals(Base64.encodeBase64String(renewedCertificate.getKeystoreData()),
+				cert.getNetworkCertificate());
 	}
 }
