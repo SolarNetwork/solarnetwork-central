@@ -149,6 +149,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	private int approveCSRMaximumWaitSecs = 15;
 
 	private Period invitationExpirationPeriod = new Period(0, 0, 1, 0, 0, 0, 0, 0); // 1 week
+	private Period nodeCertificateRenewalPeriod = new Period(0, 3, 0, 0, 0, 0, 0, 0); // 3 months
 	private String defaultSolarLocationName = "Unknown";
 	private String networkCertificateSubjectDNFormat = "UID=%s,O=SolarNetwork";
 
@@ -518,6 +519,13 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		final X509Certificate certificate = cert.getNodeCertificate(keystore);
 		if ( certificate == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+
+		if ( nodeCertificateRenewalPeriod != null ) {
+			if ( new DateTime(certificate.getNotAfter()).minus(nodeCertificateRenewalPeriod)
+					.isAfterNow() ) {
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+			}
 		}
 
 		String renewRequestID = nodePKIBiz.submitRenewalRequest(certificate);
@@ -1119,6 +1127,15 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	public void setApproveCSRMaximumWaitSecs(int approveCSRMaximumWaitSecs) {
 		this.approveCSRMaximumWaitSecs = approveCSRMaximumWaitSecs;
+	}
+
+	@Override
+	public Period getNodeCertificateRenewalPeriod() {
+		return nodeCertificateRenewalPeriod;
+	}
+
+	public void setNodeCertificateRenewalPeriod(Period nodeCertificateRenewalPeriod) {
+		this.nodeCertificateRenewalPeriod = nodeCertificateRenewalPeriod;
 	}
 
 }

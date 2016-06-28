@@ -10,6 +10,7 @@
 	/js-lib/jquery.form.js
 	/js-lib/jquery.maphilight.js
 	/js-lib/jquery.timezone-picker.js
+	/js-lib/moment.js
 	/js-lib/bootstrap.js
 	/js/global.js
 	/js/login.js

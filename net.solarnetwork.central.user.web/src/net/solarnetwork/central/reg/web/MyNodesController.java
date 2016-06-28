@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import javax.servlet.http.HttpServletResponse;
+import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
 import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
@@ -51,8 +53,12 @@ import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.domain.NetworkAssociation;
+import net.solarnetwork.domain.NetworkCertificate;
+import net.solarnetwork.support.CertificateException;
 import net.solarnetwork.support.CertificateService;
 import net.solarnetwork.web.domain.Response;
+import org.joda.time.DateTime;
+import org.joda.time.ReadablePeriod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpHeaders;
@@ -62,6 +68,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -75,7 +82,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * Controller for "my nodes".
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Controller
 @RequestMapping("/sec/my-nodes")
@@ -257,12 +264,17 @@ public class MyNodesController extends ControllerSupport {
 
 		if ( !Boolean.TRUE.equals(download) ) {
 			String pkcs7 = "";
+			X509Certificate nodeCert = null;
 			if ( data != null ) {
 				KeyStore keystore = cert.getKeyStore(password);
 				X509Certificate[] chain = cert.getNodeCertificateChain(keystore);
+				if ( chain != null && chain.length > 0 ) {
+					nodeCert = chain[0];
+				}
 				pkcs7 = certificateService.generatePKCS7CertificateChainString(chain);
 			}
-			return new UserNodeCertificateDecoded(cert, pkcs7);
+			return new UserNodeCertificateDecoded(cert, nodeCert, pkcs7,
+					registrationBiz.getNodeCertificateRenewalPeriod());
 		}
 
 		HttpHeaders headers = new HttpHeaders();
@@ -277,13 +289,52 @@ public class MyNodesController extends ControllerSupport {
 		return new ResponseEntity<byte[]>(data, headers, HttpStatus.OK);
 	}
 
+	/**
+	 * AuthorizationException handler.
+	 * 
+	 * <p>
+	 * Logs a WARN log and returns HTTP 403 (Forbidden).
+	 * </p>
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param res
+	 *        the servlet response
+	 */
+	@ExceptionHandler(CertificateException.class)
+	public void handleCertificateException(CertificateException e, HttpServletResponse res) {
+		if ( log.isWarnEnabled() ) {
+			log.warn("Certificate exception: " + e.getMessage());
+		}
+		res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+	}
+
+	@RequestMapping(value = "/cert/renew/{nodeId}", method = RequestMethod.POST)
+	@ResponseBody
+	public Object renewCert(@PathVariable("nodeId") final Long nodeId,
+			@RequestParam("password") final String password) {
+		SecurityUser actor = SecurityUtils.getCurrentUser();
+		UserNode userNode = userBiz.getUserNode(actor.getUserId(), nodeId);
+		if ( userNode == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+		}
+		NetworkCertificate renewed = registrationBiz.renewNodeCertificate(userNode, password);
+		if ( renewed != null && renewed.getNetworkCertificate() != null ) {
+			return viewCert(nodeId, password, Boolean.FALSE);
+		}
+		throw new RepeatableTaskException("Certificate renewal processing");
+	}
+
 	public static class UserNodeCertificateDecoded extends UserNodeCertificate {
 
-		private static final long serialVersionUID = 4591637182934678849L;
+		private static final long serialVersionUID = -2314002517991208690L;
 
 		private final String pemValue;
+		private final X509Certificate nodeCert;
+		private final DateTime renewAfter;
 
-		private UserNodeCertificateDecoded(UserNodeCertificate cert, String pkcs7) {
+		private UserNodeCertificateDecoded(UserNodeCertificate cert, X509Certificate nodeCert,
+				String pkcs7, ReadablePeriod renewPeriod) {
 			super();
 			setCreated(cert.getCreated());
 			setId(cert.getId());
@@ -291,10 +342,74 @@ public class MyNodesController extends ControllerSupport {
 			setRequestId(cert.getRequestId());
 			setUserId(cert.getUserId());
 			this.pemValue = pkcs7;
+			this.nodeCert = nodeCert;
+			if ( nodeCert != null ) {
+				if ( renewPeriod != null ) {
+					this.renewAfter = new DateTime(nodeCert.getNotAfter()).minus(renewPeriod);
+				} else {
+					this.renewAfter = new DateTime();
+				}
+			} else {
+				this.renewAfter = null;
+			}
 		}
 
 		public String getPemValue() {
 			return pemValue;
+		}
+
+		/**
+		 * Get a hexidecimal string value of the certificate serial number.
+		 * 
+		 * @return The certificate serial number.
+		 */
+		public String getCertificateSerialNumber() {
+			return (nodeCert != null ? "0x" + nodeCert.getSerialNumber().toString(16) : null);
+		}
+
+		/**
+		 * Get the date the certificate is valid from.
+		 * 
+		 * @return The valid from date.
+		 */
+		public DateTime getCertificateValidFromDate() {
+			return (nodeCert != null ? new DateTime(nodeCert.getNotBefore()) : null);
+		}
+
+		/**
+		 * Get the date the certificate is valid until.
+		 * 
+		 * @return The valid until date.
+		 */
+		public DateTime getCertificateValidUntilDate() {
+			return (nodeCert != null ? new DateTime(nodeCert.getNotAfter()) : null);
+		}
+
+		/**
+		 * Get the certificate subject DN.
+		 * 
+		 * @return The certificate subject DN.
+		 */
+		public String getCertificateSubjectDN() {
+			return (nodeCert != null ? nodeCert.getSubjectDN().getName() : null);
+		}
+
+		/**
+		 * Get the certificate issuer DN.
+		 * 
+		 * @return The certificate issuer DN.
+		 */
+		public String getCertificateIssuerDN() {
+			return (nodeCert != null ? nodeCert.getIssuerDN().getName() : null);
+		}
+
+		/**
+		 * Get a date after which the certificate may be renewed.
+		 * 
+		 * @return A renewal minimum date.
+		 */
+		public DateTime getCertificateRenewAfterDate() {
+			return renewAfter;
 		}
 
 	}

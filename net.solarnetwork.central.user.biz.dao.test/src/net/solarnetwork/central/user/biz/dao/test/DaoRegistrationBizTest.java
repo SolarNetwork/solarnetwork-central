@@ -163,6 +163,7 @@ public class DaoRegistrationBizTest {
 		registrationBiz.setPasswordEncoder(passwordEncoder);
 		registrationBiz.setNodePKIBiz(nodePKIBiz);
 		registrationBiz.setExecutorService(executorService);
+		registrationBiz.setNodeCertificateRenewalPeriod(null); // disable renew period check
 	}
 
 	private void replayAll() {

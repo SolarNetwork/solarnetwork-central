@@ -11,9 +11,11 @@ $(document).ready(function() {
 		var id = btn.parents('.node-row').data('node-id');
 		var form = $('#view-cert-modal');
 		var downLink = $('#modal-cert-download').get(0);
+		var renewLink = $('#modal-cert-renew').get(0);
 
 		form.attr('action', form.attr('action').replace(/\d+$/, id));
 		downLink.pathname = downLink.pathname.replace(/\d+$/, id);
+		renewLink.pathname = renewLink.pathname.replace(/\d+$/, id);
 
 		form.modal('show');
 	}).on('click', 'a.transfer-ownership', function(event) {
@@ -75,13 +77,52 @@ $(document).ready(function() {
 	$('#view-cert-modal').ajaxForm({
 		dataType: 'json',
 		success: function(json, status, xhr, form) {
-			$('#modal-cert-container').text(json.pemValue).removeClass('hidden');
+			var dateFormat = 'dddd, D MMM YYYY, h:mm a',
+				validUtil = moment(json.certificateValidUntilDate),
+				renewAfter = moment(json.certificateRenewAfterDate),
+				renewAfterMsg;
+			
+			$('#modal-cert-container').text(json.pemValue);
+			$('#view-cert-serial-number').text(json.certificateSerialNumber);
+			$('#view-cert-subject').text(json.certificateSubjectDN);
+			$('#view-cert-issuer').text(json.certificateIssuerDN);
+			$('#view-cert-valid-from').text(moment(json.certificateValidFromDate).format(dateFormat));
+			$('#view-cert-valid-until').text(validUtil.format(dateFormat));
+			
+			renewAfterMsg = renewAfter.format(dateFormat);
+			if ( renewAfter.isAfter() ) {
+				renewAfterMsg += ' (in ' +renewAfter.diff(moment(), 'days') + ' days)';
+			} else if ( validUntil.isAfter() ) {
+				renewAfterMsg += ' (' +moment().diff(validUtil, 'days') +' days left)';
+			}
+			$('#view-cert-renew-after').text(renewAfterMsg);
+			
+			$('#view-cert-modal .cert').removeClass('hidden');
+			$('#view-cert-modal .nocert').addClass('hidden');
 		},
 		error: function(xhr, status, statusText) {
 			SolarReg.showAlertBefore('#view-cert-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		}
 	}).on('hidden.bs.modal', function() {
 		document.location.reload(true);
+	});
+	
+	$('#modal-cert-renew').on('click', function(event) {
+		event.preventDefault();
+		var url = $(event.target).attr('href');
+		var pass = $('#view-cert-password').val();
+		$.ajax({
+			type: 'POST',
+			url: url,
+			data: {password:pass},
+			dataType: 'json',
+			success: function(json, status, xhr) {
+				$('#view-cert-modal').modal('hide');
+			},
+			error: function(xhr, status, statusText){
+				SolarReg.showAlertBefore('#view-cert-modal .modal-body > *:first-child', 'alert-warning', statusText);
+			}
+		});
 	});
 	
 	$('#transfer-ownership-modal').ajaxForm({

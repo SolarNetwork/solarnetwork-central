@@ -220,6 +220,9 @@
 											<a href="#" class="view-cert">
 												<fmt:message key="user.node.certificate.action.view"/>
 											</a>
+											<a href="#" class="view-cert">
+												<fmt:message key="user.node.certificate.action.renew"/>
+											</a>
 										</c:if>
 										<a href="#" class="transfer-ownership">
 											<fmt:message key="user.node.action.transferOwnership"/>
@@ -293,20 +296,54 @@
 		 		<h4 class="modal-title"><fmt:message key='my-nodes.cert.view.title'/></h4>
 		 	</div>
 		 	<div class="modal-body">
-		 		<p><fmt:message key='my-nodes-cert.view.intro'/></p>
-		 		<fieldset class="form-inline">
+		 		<p class="nocert"><fmt:message key='my-nodes.cert.view.intro'/></p>
+		 		<p class="cert hidden"><fmt:message key='my-nodes.cert.view.cert-intro'/></p>
+		 		<fieldset class="form-inline nocert">
 		 			<label for="view-cert-password"><fmt:message key='my-nodes.cert.view.password.label'/></label>
 					<input class="span3 form-control" type="password" name="password" id="view-cert-password" />
 		 		</fieldset>
-		 		<pre class="cert hidden" id="modal-cert-container"></pre>
+		 		<fieldset class="cert hidden">
+			 		<table class="table">
+			 			<tbody>
+			 				<tr>
+			 					<th><fmt:message key='my-nodes.cert.view.serialNumber.label'/></th>
+			 					<td id="view-cert-serial-number"></td>
+			 				</tr>
+			 				<tr>
+			 					<th><fmt:message key='my-nodes.cert.view.subject.label'/></th>
+			 					<td id="view-cert-subject"></td>
+			 				</tr>
+			 				<tr>
+			 					<th><fmt:message key='my-nodes.cert.view.issuer.label'/></th>
+			 					<td id="view-cert-issuer"></td>
+			 				</tr>
+			 				<tr>
+			 					<th><fmt:message key='my-nodes.cert.view.validFrom.label'/></th>
+			 					<td id="view-cert-valid-from"></td>
+			 				</tr>
+			 				<tr>
+			 					<th><fmt:message key='my-nodes.cert.view.validUntil.label'/></th>
+			 					<td id="view-cert-valid-until"></td>
+			 				</tr>
+			 				<tr>
+			 					<th><fmt:message key='my-nodes.cert.view.renewAfter.label'/></th>
+			 					<td id="view-cert-renew-after"></td>
+			 				</tr>
+			 			</tbody>
+			 		</table>
+			 		<pre class="cert" id="modal-cert-container"></pre>
+		 		</fieldset>
 		 	</div>
 		 	<div class="modal-footer">
 		 		<a href="#" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></a>
 		 		<a href="<c:url value='/u/sec/my-nodes/cert/0'/>?download=true" id="modal-cert-download" class="btn btn-default">
 		 			<fmt:message key='my-nodes.cert.action.download'/>
 		 		</a>
-		 		<button type="submit" class="btn btn-primary">
-		 			<fmt:message key='my-nodes-cert.action.view'/>
+		 		<a href="<c:url value='/u/sec/my-nodes/cert/renew/0'/>" id="modal-cert-renew" class="btn btn-primary cert hidden">
+		 			<fmt:message key='my-nodes.cert.action.renew'/>
+		 		</a>
+		 		<button type="submit" class="btn btn-primary nocert">
+		 			<fmt:message key='my-nodes.cert.action.view'/>
 		 		</button>
 		 	</div>
 		 </div>

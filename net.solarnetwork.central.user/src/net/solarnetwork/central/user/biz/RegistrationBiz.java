@@ -31,6 +31,7 @@ import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.NetworkCertificate;
 import net.solarnetwork.domain.RegistrationReceipt;
+import org.joda.time.ReadablePeriod;
 
 /**
  * API for user registration tasks.
@@ -247,6 +248,15 @@ public interface RegistrationBiz {
 	 * @see #renewNodeCertificate(UserNode, String)
 	 */
 	NetworkCertificate renewNodeCertificate(NetworkAssociation association);
+
+	/**
+	 * Get the period, ending at a node certificate's expiration date, that a
+	 * node's certificate may be renewed.
+	 * 
+	 * @return The node certificate renewal period.
+	 * @since 1.4
+	 */
+	ReadablePeriod getNodeCertificateRenewalPeriod();
 
 	/**
 	 * Renew a certificate generated and signed by SolarUser by a previous call
