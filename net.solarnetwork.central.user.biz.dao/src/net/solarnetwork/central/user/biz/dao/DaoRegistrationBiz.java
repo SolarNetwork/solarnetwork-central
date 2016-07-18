@@ -52,6 +52,21 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Base64OutputStream;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.joda.time.DateTime;
+import org.joda.time.Period;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.solarnetwork.central.ValidationException;
@@ -60,6 +75,8 @@ import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
+import net.solarnetwork.central.instructor.biz.InstructorBiz;
+import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.PasswordEncoder;
@@ -85,22 +102,8 @@ import net.solarnetwork.domain.NetworkCertificate;
 import net.solarnetwork.domain.NetworkIdentity;
 import net.solarnetwork.domain.RegistrationReceipt;
 import net.solarnetwork.support.CertificateException;
+import net.solarnetwork.support.CertificateService;
 import net.solarnetwork.util.JavaBeanXmlSerializer;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Base64OutputStream;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-import org.springframework.validation.BindException;
-import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
 
 /**
  * DAO-based implementation of {@link RegistrationBiz}.
@@ -121,12 +124,35 @@ import org.springframework.validation.Validator;
  * </dl>
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class DaoRegistrationBiz implements RegistrationBiz {
 
 	public static final SortedSet<String> DEFAULT_CONFIRMED_USER_ROLES = Collections
 			.unmodifiableSortedSet(new TreeSet<String>(Arrays.asList("ROLE_USER")));
+
+	/**
+	 * Instruction topic for sending a renewed certificate to a node.
+	 * 
+	 * @since 1.8
+	 */
+	public static final String INSTRUCTION_TOPIC_RENEW_CERTIFICATE = "RenewCertificate";
+
+	/**
+	 * Instruction parameter for certificate data. Since instruction parameters
+	 * are limited in length, there can be more than one parameter of the same
+	 * key, with the full data being the concatenation of all parameter values.
+	 * 
+	 * @since 1.8
+	 */
+	public static final String INSTRUCTION_PARAM_CERTIFICATE = "Certificate";
+
+	/**
+	 * The default maximum length for instruction parameter values.
+	 * 
+	 * @since 1.8
+	 */
+	public static final int INSTRUCTION_PARAM_DEFAULT_MAX_LENGTH = 256;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -142,11 +168,14 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	private Set<String> confirmedUserRoles = DEFAULT_CONFIRMED_USER_ROLES;
 	private JavaBeanXmlSerializer xmlSerializer = new JavaBeanXmlSerializer();
 	private Ehcache emailThrottleCache;
+	private CertificateService certificateService;
 	private NodePKIBiz nodePKIBiz;
 	private int nodePrivateKeySize = 2048;
 	private String nodeKeystoreAlias = "node";
 	private ExecutorService executorService = Executors.newCachedThreadPool();
 	private int approveCSRMaximumWaitSecs = 15;
+	private InstructorBiz instructorBiz;
+	private int instructionParamMaxLength = INSTRUCTION_PARAM_DEFAULT_MAX_LENGTH;
 
 	private Period invitationExpirationPeriod = new Period(0, 0, 1, 0, 0, 0, 0, 0); // 1 week
 	private Period nodeCertificateRenewalPeriod = new Period(0, 3, 0, 0, 0, 0, 0, 0); // 3 months
@@ -254,8 +283,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	}
 
 	private String calculateConfirmationCode(User user) {
-		return DigestUtils.sha256Hex(user.getCreated().getMillis() + user.getId() + user.getEmail()
-				+ user.getPassword());
+		return DigestUtils.sha256Hex(
+				user.getCreated().getMillis() + user.getId() + user.getEmail() + user.getPassword());
 	}
 
 	private void prepareUserForStorage(User user) throws AuthorizationException {
@@ -345,9 +374,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		details.setUsername(user.getEmail());
 		details.setExpiration(now.plus(invitationExpirationPeriod).toDate());
 
-		String confKey = DigestUtils.sha256Hex(String.valueOf(now.getMillis())
-				+ details.getIdentityKey() + details.getTermsOfService() + details.getUsername()
-				+ details.getExpiration() + request.getSecurityPhrase());
+		String confKey = DigestUtils.sha256Hex(
+				String.valueOf(now.getMillis()) + details.getIdentityKey() + details.getTermsOfService()
+						+ details.getUsername() + details.getExpiration() + request.getSecurityPhrase());
 		details.setConfirmationKey(confKey);
 
 		String xml = encodeNetworkAssociationDetails(details);
@@ -415,7 +444,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public NetworkCertificate confirmNodeAssociation(final String username, final String confirmationKey) {
+	public NetworkCertificate confirmNodeAssociation(final String username,
+			final String confirmationKey) {
 		assert username != null;
 		assert confirmationKey != null;
 		return confirmNodeAssociation(new NetworkAssociationDetails(username, confirmationKey, null));
@@ -477,7 +507,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			details.setNetworkCertificateSubjectDN(certificate.getSubjectX500Principal().getName());
 
 			// if the certificate has been signed by a CA, then include the entire .p12 in the response (Base 64 encoded)
-			if ( certificate.getIssuerX500Principal().equals(certificate.getSubjectX500Principal()) == false ) {
+			if ( certificate.getIssuerX500Principal()
+					.equals(certificate.getSubjectX500Principal()) == false ) {
 				details.setNetworkCertificate(Base64.encodeBase64String(cert.getKeystoreData()));
 			}
 		}
@@ -490,7 +521,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public NetworkCertificate renewNodeCertificate(final UserNode userNode, final String keystorePassword) {
+	public NetworkCertificate renewNodeCertificate(final UserNode userNode,
+			final String keystorePassword) {
 		if ( userNode == null ) {
 			throw new IllegalArgumentException("UserNode must be provided.");
 		}
@@ -503,8 +535,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
 		}
 
-		final UserNodeCertificate cert = userNodeCertificateDao.get(new UserNodePK(userNode.getUser()
-				.getId(), nodeId));
+		final UserNodeCertificate cert = userNodeCertificateDao
+				.get(new UserNodePK(userNode.getUser().getId(), nodeId));
 		if ( cert == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
 		}
@@ -539,8 +571,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		cert.setStatus(UserNodeCertificateStatus.a);
 
 		// we must become the User now for renewal to be generated
-		SecurityUtils.becomeUser(userNode.getUser().getEmail(), userNode.getUser().getName(), userNode
-				.getUser().getId());
+		SecurityUtils.becomeUser(userNode.getUser().getEmail(), userNode.getUser().getName(),
+				userNode.getUser().getId());
 
 		final String certSubjectDN = String.format(networkCertificateSubjectDNFormat, nodeId.toString());
 
@@ -551,6 +583,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			cert.setStatus(renewedCert.getStatus());
 			cert.setCreated(renewedCert.getCreated());
 			cert.setKeystoreData(renewedCert.getKeystoreData());
+			queueRenewedNodeCertificateInstruction(renewedCert, keystorePassword);
 		} catch ( TimeoutException e ) {
 			log.debug("Timeout waiting for {} cert renewal approval", certSubjectDN);
 			// save to DB when we do get our reply
@@ -564,6 +597,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 						cert.setCreated(renewedCert.getCreated());
 						cert.setKeystoreData(renewedCert.getKeystoreData());
 						userNodeCertificateDao.store(cert);
+						queueRenewedNodeCertificateInstruction(renewedCert, keystorePassword);
 					} catch ( Exception e ) {
 						log.error("Error approving cert {}", certSubjectDN, e);
 					}
@@ -589,6 +623,52 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 		details.setNetworkCertificateSubjectDN(certSubjectDN);
 		return details;
+	}
+
+	/**
+	 * Create a new node instruction with the renewed node certificate. Only the
+	 * certificate will be queued, not the private key.
+	 * 
+	 * @param cert
+	 *        The renewed certificate the node should download.
+	 * @param keystorePassword
+	 *        The password to read the keystore with.
+	 */
+	private void queueRenewedNodeCertificateInstruction(final UserNodeCertificate cert,
+			final String keystorePassword) {
+		final InstructorBiz instructor = instructorBiz;
+		final CertificateService certService = certificateService;
+		if ( instructor == null || certService == null ) {
+			log.debug(
+					"Either InstructorBiz or CertificateService are null, cannot queue cert renewal instruction.");
+			return;
+		}
+		if ( keystorePassword == null ) {
+			throw new IllegalArgumentException("Keystore password must be provided.");
+		}
+		final KeyStore keystore;
+		try {
+			keystore = cert.getKeyStore(keystorePassword);
+		} catch ( CertificateException e ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		}
+
+		final X509Certificate certificate = cert.getNodeCertificate(keystore);
+		if ( certificate == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+		String pem = certService
+				.generatePKCS7CertificateChainString(new X509Certificate[] { certificate });
+		Instruction instr = new Instruction(INSTRUCTION_TOPIC_RENEW_CERTIFICATE, new DateTime());
+		final int max = instructionParamMaxLength;
+		int i = 0, len = pem.length();
+		while ( i < len ) {
+			int end = i + (i + max < len ? max : (len - i));
+			String val = pem.substring(i, end);
+			instr.addParameter(INSTRUCTION_PARAM_CERTIFICATE, val);
+			i += max;
+		}
+		instructor.queueInstruction(cert.getNodeId(), instr);
 	}
 
 	@Override
@@ -636,8 +716,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				association.getKeystorePassword());
 		if ( details != null ) {
 			// add our confirmation code into result
-			details.setConfirmationKey(calculateNodeAssociationConfirmationCode(
-					conf.getConfirmationDate(), nodeId));
+			details.setConfirmationKey(
+					calculateNodeAssociationConfirmationCode(conf.getConfirmationDate(), nodeId));
 		}
 		return details;
 	}
@@ -673,8 +753,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		// security check: user must be the same that invited node
 		if ( !user.equals(conf.getUser()) ) {
-			log.info("Association failed: confirmation user {} != confirming user {}", conf.getUser()
-					.getId(), user.getId());
+			log.info("Association failed: confirmation user {} != confirming user {}",
+					conf.getUser().getId(), user.getId());
 			throw new AuthorizationException(username,
 					AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED);
 		}
@@ -709,8 +789,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		assert loc != null;
 
 		// create SolarNode now, and allow using a pre-populated node ID, and possibly pre-existing
-		final Long nodeId = (conf.getNodeId() == null ? solarNodeDao.getUnusedNodeId() : conf
-				.getNodeId());
+		final Long nodeId = (conf.getNodeId() == null ? solarNodeDao.getUnusedNodeId()
+				: conf.getNodeId());
 		SolarNode node = solarNodeDao.get(nodeId);
 		if ( node == null ) {
 			node = new SolarNode();
@@ -782,8 +862,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		NetworkAssociationDetails details = new NetworkAssociationDetails();
 		details.setNetworkId(nodeId);
-		details.setConfirmationKey(calculateNodeAssociationConfirmationCode(conf.getConfirmationDate(),
-				nodeId));
+		details.setConfirmationKey(
+				calculateNodeAssociationConfirmationCode(conf.getConfirmationDate(), nodeId));
 		if ( cert != null ) {
 			details.setNetworkCertificateStatus(cert.getStatus().getValue());
 			if ( cert.getStatus() == UserNodeCertificateStatus.v ) {
@@ -815,8 +895,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	private void saveNodeSignedCertificate(final String keystorePassword, UserNodeCertificate cert,
 			X509Certificate[] chain) throws CertificateException {
-		log.debug("Saving approved certificate {}", (chain != null && chain.length > 0 ? chain[0]
-				.getSubjectDN().getName() : null));
+		log.debug("Saving approved certificate {}",
+				(chain != null && chain.length > 0 ? chain[0].getSubjectDN().getName() : null));
 		KeyStore keyStore = cert.getKeyStore(keystorePassword);
 		Key key;
 		try {
@@ -827,8 +907,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 		X509Certificate nodeCert = cert.getNodeCertificate(keyStore);
 		if ( nodeCert == null ) {
-			throw new CertificateException("UserNodeCertificate " + cert.getId()
-					+ " does not have a private key.");
+			throw new CertificateException(
+					"UserNodeCertificate " + cert.getId() + " does not have a private key.");
 		}
 
 		log.info("Installing node certificate reply {} issued by {}",
@@ -858,8 +938,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			KeyPair keypair = keyGen.generateKeyPair();
 			X509Certificate certificate = nodePKIBiz.generateCertificate(certSubjectDN,
 					keypair.getPublic(), keypair.getPrivate());
-			keystore.setKeyEntry(nodeKeystoreAlias, keypair.getPrivate(), association
-					.getKeystorePassword().toCharArray(), new Certificate[] { certificate });
+			keystore.setKeyEntry(nodeKeystoreAlias, keypair.getPrivate(),
+					association.getKeystorePassword().toCharArray(), new Certificate[] { certificate });
 
 			log.debug("Submitting CSR {} to CA", certSubjectDN);
 
@@ -1136,6 +1216,40 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	public void setNodeCertificateRenewalPeriod(Period nodeCertificateRenewalPeriod) {
 		this.nodeCertificateRenewalPeriod = nodeCertificateRenewalPeriod;
+	}
+
+	/**
+	 * Set the InstructorBiz to use for queuing instructions.
+	 * 
+	 * @param instructorBiz
+	 *        The service to use.
+	 * @since 1.8
+	 */
+	public void setInstructorBiz(InstructorBiz instructorBiz) {
+		this.instructorBiz = instructorBiz;
+	}
+
+	/**
+	 * Set the {@link CertificateService} to use.
+	 * 
+	 * @param certificateService
+	 *        The service to use.
+	 * @since 1.8
+	 */
+	public void setCertificateService(CertificateService certificateService) {
+		this.certificateService = certificateService;
+	}
+
+	/**
+	 * The maximum length to use for instruction parameter values.
+	 * 
+	 * @param instructionParamMaxLength
+	 *        The maximum length.
+	 * 
+	 * @since 1.8
+	 */
+	public void setInstructionParamMaxLength(int instructionParamMaxLength) {
+		this.instructionParamMaxLength = instructionParamMaxLength;
 	}
 
 }
