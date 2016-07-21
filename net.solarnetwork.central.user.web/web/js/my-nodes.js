@@ -78,7 +78,7 @@ $(document).ready(function() {
 		dataType: 'json',
 		success: function(json, status, xhr, form) {
 			var dateFormat = 'dddd, D MMM YYYY, h:mm a',
-				validUtil = moment(json.certificateValidUntilDate),
+				validUntil = moment(json.certificateValidUntilDate),
 				renewAfter = moment(json.certificateRenewAfterDate),
 				renewAfterMsg;
 			
@@ -87,15 +87,23 @@ $(document).ready(function() {
 			$('#view-cert-subject').text(json.certificateSubjectDN);
 			$('#view-cert-issuer').text(json.certificateIssuerDN);
 			$('#view-cert-valid-from').text(moment(json.certificateValidFromDate).format(dateFormat));
-			$('#view-cert-valid-until').text(validUtil.format(dateFormat));
+			$('#view-cert-valid-until').text(validUntil.format(dateFormat));
 			
-			renewAfterMsg = renewAfter.format(dateFormat);
-			if ( renewAfter.isAfter() ) {
-				renewAfterMsg += ' (in ' +renewAfter.diff(moment(), 'days') + ' days)';
-			} else if ( validUntil.isAfter() ) {
-				renewAfterMsg += ' (' +moment().diff(validUtil, 'days') +' days left)';
+			if ( json.certificateRenewAfterDate ) {
+				renewAfterMsg = renewAfter.format(dateFormat);
+				if ( renewAfter.isAfter() ) {
+					renewAfterMsg += ' (in ' +renewAfter.diff(moment(), 'days') + ' days)';
+				} else if ( validUntil.isAfter() ) {
+					renewAfterMsg += ' (' +moment().diff(validUntil, 'days') +' days left)';
+				}
+				$('#view-cert-renew-after').text(renewAfterMsg).parent().show();
+			} else {
+				$('#view-cert-renew-after').parent().hide();
 			}
-			$('#view-cert-renew-after').text(renewAfterMsg);
+			
+			if ( renewAfter.isAfter() === false ) {
+				$('#modal-cert-renew').removeClass('hidden');
+			}
 			
 			$('#view-cert-modal .cert').removeClass('hidden');
 			$('#view-cert-modal .nocert').addClass('hidden');
@@ -103,6 +111,8 @@ $(document).ready(function() {
 		error: function(xhr, status, statusText) {
 			SolarReg.showAlertBefore('#view-cert-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		}
+	}).on('shown.bs.modal', function() {
+		$('#view-cert-password').focus();
 	}).on('hidden.bs.modal', function() {
 		document.location.reload(true);
 	});

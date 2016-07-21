@@ -77,6 +77,8 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.instructor.domain.InstructionParameter;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.PasswordEncoder;
@@ -87,11 +89,14 @@ import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.BasicUserNodeCertificateRenewal;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.PasswordEntry;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import net.solarnetwork.central.user.domain.UserNodeCertificateInstallationStatus;
+import net.solarnetwork.central.user.domain.UserNodeCertificateRenewal;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodePK;
@@ -521,7 +526,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public NetworkCertificate renewNodeCertificate(final UserNode userNode,
+	public UserNodeCertificateRenewal renewNodeCertificate(final UserNode userNode,
 			final String keystorePassword) {
 		if ( userNode == null ) {
 			throw new IllegalArgumentException("UserNode must be provided.");
@@ -578,12 +583,13 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		final Future<UserNodeCertificate> approval = approveCSR(certSubjectDN, keystorePassword,
 				userNode.getUser(), cert);
+		Instruction installInstruction = null;
 		try {
 			UserNodeCertificate renewedCert = approval.get(approveCSRMaximumWaitSecs, TimeUnit.SECONDS);
 			cert.setStatus(renewedCert.getStatus());
 			cert.setCreated(renewedCert.getCreated());
 			cert.setKeystoreData(renewedCert.getKeystoreData());
-			queueRenewedNodeCertificateInstruction(renewedCert, keystorePassword);
+			installInstruction = queueRenewedNodeCertificateInstruction(renewedCert, keystorePassword);
 		} catch ( TimeoutException e ) {
 			log.debug("Timeout waiting for {} cert renewal approval", certSubjectDN);
 			// save to DB when we do get our reply
@@ -611,9 +617,15 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			throw new CertificateException("Error approving cert renewal", e);
 		}
 
+		// update the request ID to the instruction ID, if available; then we can query for 
+		// the instruction later
+		if ( installInstruction != null && installInstruction.getId() != null ) {
+			cert.setRequestId(installInstruction.getId().toString());
+		}
+
 		userNodeCertificateDao.store(cert);
 
-		NetworkAssociationDetails details = new NetworkAssociationDetails();
+		BasicUserNodeCertificateRenewal details = new BasicUserNodeCertificateRenewal();
 		details.setNetworkId(nodeId);
 		if ( cert != null ) {
 			details.setNetworkCertificateStatus(cert.getStatus().getValue());
@@ -622,6 +634,82 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			}
 		}
 		details.setNetworkCertificateSubjectDN(certSubjectDN);
+
+		// provide the instruction ID as the confirmation ID
+		if ( installInstruction != null && installInstruction.getId() != null ) {
+			details.setConfirmationKey(installInstruction.getId().toString());
+		}
+
+		return details;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public UserNodeCertificateRenewal getPendingNodeCertificateRenewal(UserNode userNode,
+			String confirmationKey) {
+		Long instructionId;
+		try {
+			instructionId = Long.valueOf(confirmationKey);
+		} catch ( RuntimeException e ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT,
+					confirmationKey);
+		}
+		NodeInstruction instruction = instructorBiz.getInstruction(instructionId);
+		if ( instruction == null ) {
+			return null;
+		}
+
+		// verify the node ID matches
+		Long nodeId = userNode.getId();
+		if ( nodeId == null && userNode.getNode() != null ) {
+			nodeId = userNode.getNode().getId();
+		}
+		if ( !instruction.getNodeId().equals(nodeId) ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
+					confirmationKey);
+		}
+
+		BasicUserNodeCertificateRenewal details = new BasicUserNodeCertificateRenewal();
+		details.setNetworkId(userNode.getId());
+		details.setConfirmationKey(instructionId.toString());
+
+		UserNodeCertificateInstallationStatus installStatus;
+		switch (instruction.getState()) {
+			case Queued:
+				installStatus = UserNodeCertificateInstallationStatus.RequestQueued;
+				break;
+
+			case Received:
+			case Executing:
+				installStatus = UserNodeCertificateInstallationStatus.RequestReceived;
+				break;
+
+			case Completed:
+				installStatus = UserNodeCertificateInstallationStatus.Installed;
+				break;
+
+			case Declined:
+				installStatus = UserNodeCertificateInstallationStatus.Declined;
+				break;
+
+			default:
+				installStatus = null;
+		}
+
+		details.setInstallationStatus(installStatus);
+
+		if ( instruction.getParameters() != null ) {
+			StringBuilder buf = new StringBuilder();
+			for ( InstructionParameter param : instruction.getParameters() ) {
+				if ( INSTRUCTION_PARAM_CERTIFICATE.equals(param.getName()) ) {
+					buf.append(param.getValue());
+				}
+			}
+			if ( buf.length() > 0 ) {
+				details.setNetworkCertificate(buf.toString());
+			}
+		}
+
 		return details;
 	}
 
@@ -634,14 +722,14 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	 * @param keystorePassword
 	 *        The password to read the keystore with.
 	 */
-	private void queueRenewedNodeCertificateInstruction(final UserNodeCertificate cert,
+	private Instruction queueRenewedNodeCertificateInstruction(final UserNodeCertificate cert,
 			final String keystorePassword) {
 		final InstructorBiz instructor = instructorBiz;
 		final CertificateService certService = certificateService;
 		if ( instructor == null || certService == null ) {
 			log.debug(
 					"Either InstructorBiz or CertificateService are null, cannot queue cert renewal instruction.");
-			return;
+			return null;
 		}
 		if ( keystorePassword == null ) {
 			throw new IllegalArgumentException("Keystore password must be provided.");
@@ -668,7 +756,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			instr.addParameter(INSTRUCTION_PARAM_CERTIFICATE, val);
 			i += max;
 		}
-		instructor.queueInstruction(cert.getNodeId(), instr);
+		return instructor.queueInstruction(cert.getNodeId(), instr);
 	}
 
 	@Override
@@ -1216,6 +1304,23 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	public void setNodeCertificateRenewalPeriod(Period nodeCertificateRenewalPeriod) {
 		this.nodeCertificateRenewalPeriod = nodeCertificateRenewalPeriod;
+	}
+
+	/**
+	 * Configure the node certificate renewal period as a number of months.
+	 * 
+	 * This is a convenience method that simply calls
+	 * {@link #setNodeCertificateRenewalPeriod(Period)} with an appropriate
+	 * {@code Period} for the provided months, or {@code null} if {@code months}
+	 * is less than {@code 1}.
+	 * 
+	 * @param months
+	 *        The number of months to set the renewal period to, or {@code 0} to
+	 *        not enforce any limit.
+	 * @since 1.8
+	 */
+	public void setNodeCertificateRenewalPeriodMonths(int months) {
+		setNodeCertificateRenewalPeriod(months > 0 ? new Period(0, months, 0, 0, 0, 0, 0, 0) : null);
 	}
 
 	/**

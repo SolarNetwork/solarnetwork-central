@@ -34,29 +34,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import javax.servlet.http.HttpServletResponse;
-import net.solarnetwork.central.RepeatableTaskException;
-import net.solarnetwork.central.mail.MailService;
-import net.solarnetwork.central.mail.support.BasicMailAddress;
-import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
-import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.SecurityUser;
-import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
-import net.solarnetwork.central.user.biz.RegistrationBiz;
-import net.solarnetwork.central.user.biz.UserBiz;
-import net.solarnetwork.central.user.domain.NewNodeRequest;
-import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserAlertStatus;
-import net.solarnetwork.central.user.domain.UserAlertType;
-import net.solarnetwork.central.user.domain.UserNode;
-import net.solarnetwork.central.user.domain.UserNodeCertificate;
-import net.solarnetwork.central.user.domain.UserNodeConfirmation;
-import net.solarnetwork.central.user.domain.UserNodeTransfer;
-import net.solarnetwork.domain.NetworkAssociation;
-import net.solarnetwork.domain.NetworkCertificate;
-import net.solarnetwork.support.CertificateException;
-import net.solarnetwork.support.CertificateService;
-import net.solarnetwork.web.domain.Response;
 import org.joda.time.DateTime;
 import org.joda.time.ReadablePeriod;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +54,31 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
+import net.solarnetwork.central.RepeatableTaskException;
+import net.solarnetwork.central.mail.MailService;
+import net.solarnetwork.central.mail.support.BasicMailAddress;
+import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityUser;
+import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
+import net.solarnetwork.central.user.biz.RegistrationBiz;
+import net.solarnetwork.central.user.biz.UserBiz;
+import net.solarnetwork.central.user.domain.NewNodeRequest;
+import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserAlertStatus;
+import net.solarnetwork.central.user.domain.UserAlertType;
+import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import net.solarnetwork.central.user.domain.UserNodeCertificateInstallationStatus;
+import net.solarnetwork.central.user.domain.UserNodeCertificateRenewal;
+import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.central.user.domain.UserNodeTransfer;
+import net.solarnetwork.domain.NetworkAssociation;
+import net.solarnetwork.domain.NetworkCertificate;
+import net.solarnetwork.support.CertificateException;
+import net.solarnetwork.support.CertificateService;
+import net.solarnetwork.web.domain.Response;
 
 /**
  * Controller for "my nodes".
@@ -202,10 +204,9 @@ public class MyNodesController extends ControllerSupport {
 	 * @return model and view
 	 */
 	@RequestMapping("/new")
-	public ModelAndView newNodeAssociation(
-			@RequestParam(value = "userId", required = false) Long userId,
-			@RequestParam("phrase") String securityPhrase,
-			@RequestParam("timeZone") String timeZoneName, @RequestParam("country") String countryCode) {
+	public ModelAndView newNodeAssociation(@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam("phrase") String securityPhrase, @RequestParam("timeZone") String timeZoneName,
+			@RequestParam("country") String countryCode) {
 		if ( userId == null ) {
 			userId = SecurityUtils.getCurrentUser().getUserId();
 		}
@@ -217,8 +218,8 @@ public class MyNodesController extends ControllerSupport {
 			}
 		}
 		final Locale locale = new Locale(lang, countryCode);
-		final NetworkAssociation details = registrationBiz.createNodeAssociation(new NewNodeRequest(
-				userId, securityPhrase, timeZone, locale));
+		final NetworkAssociation details = registrationBiz
+				.createNodeAssociation(new NewNodeRequest(userId, securityPhrase, timeZone, locale));
 		return new ModelAndView("my-nodes/invitation", "details", details);
 	}
 
@@ -263,6 +264,17 @@ public class MyNodesController extends ControllerSupport {
 		final byte[] data = cert.getKeystoreData();
 
 		if ( !Boolean.TRUE.equals(download) ) {
+			// see if a renewal is pending
+			UserNodeCertificateInstallationStatus installationStatus = null;
+			if ( cert.getRequestId() != null ) {
+				UserNode userNode = new UserNode(cert.getUser(), cert.getNode());
+				UserNodeCertificateRenewal renewal = registrationBiz
+						.getPendingNodeCertificateRenewal(userNode, cert.getRequestId());
+				if ( renewal != null ) {
+					installationStatus = renewal.getInstallationStatus();
+				}
+			}
+
 			String pkcs7 = "";
 			X509Certificate nodeCert = null;
 			if ( data != null ) {
@@ -273,7 +285,7 @@ public class MyNodesController extends ControllerSupport {
 				}
 				pkcs7 = certificateService.generatePKCS7CertificateChainString(chain);
 			}
-			return new UserNodeCertificateDecoded(cert, nodeCert, pkcs7,
+			return new UserNodeCertificateDecoded(cert, installationStatus, nodeCert, pkcs7,
 					registrationBiz.getNodeCertificateRenewalPeriod());
 		}
 
@@ -283,8 +295,8 @@ public class MyNodesController extends ControllerSupport {
 		headers.setLastModified(System.currentTimeMillis());
 		headers.setCacheControl("no-cache");
 
-		headers.set("Content-Disposition", "attachment; filename=solarnode-" + cert.getNode().getId()
-				+ ".p12");
+		headers.set("Content-Disposition",
+				"attachment; filename=solarnode-" + cert.getNode().getId() + ".p12");
 
 		return new ResponseEntity<byte[]>(data, headers, HttpStatus.OK);
 	}
@@ -329,11 +341,13 @@ public class MyNodesController extends ControllerSupport {
 
 		private static final long serialVersionUID = -2314002517991208690L;
 
+		private final UserNodeCertificateInstallationStatus installationStatus;
 		private final String pemValue;
 		private final X509Certificate nodeCert;
 		private final DateTime renewAfter;
 
-		private UserNodeCertificateDecoded(UserNodeCertificate cert, X509Certificate nodeCert,
+		private UserNodeCertificateDecoded(UserNodeCertificate cert,
+				UserNodeCertificateInstallationStatus installationStatus, X509Certificate nodeCert,
 				String pkcs7, ReadablePeriod renewPeriod) {
 			super();
 			setCreated(cert.getCreated());
@@ -341,13 +355,14 @@ public class MyNodesController extends ControllerSupport {
 			setNodeId(cert.getNodeId());
 			setRequestId(cert.getRequestId());
 			setUserId(cert.getUserId());
+			this.installationStatus = installationStatus;
 			this.pemValue = pkcs7;
 			this.nodeCert = nodeCert;
 			if ( nodeCert != null ) {
 				if ( renewPeriod != null ) {
 					this.renewAfter = new DateTime(nodeCert.getNotAfter()).minus(renewPeriod);
 				} else {
-					this.renewAfter = new DateTime();
+					this.renewAfter = null;
 				}
 			} else {
 				this.renewAfter = null;
@@ -412,6 +427,15 @@ public class MyNodesController extends ControllerSupport {
 			return renewAfter;
 		}
 
+		/**
+		 * Get the status of the installation process, if available.
+		 * 
+		 * @return The installation status, or <em>null</em>.
+		 */
+		public UserNodeCertificateInstallationStatus getInstallationStatus() {
+			return installationStatus;
+		}
+
 	}
 
 	@RequestMapping(value = "/editNode", method = RequestMethod.GET)
@@ -467,10 +491,10 @@ public class MyNodesController extends ControllerSupport {
 				mailModel.put("nodeId", nodeId);
 				mailModel.put("url", uriBuilder.build().toUriString());
 
-				mailService.sendMail(
-						new BasicMailAddress(null, email),
-						new ClasspathResourceMessageTemplateDataSource(locale, messageSource.getMessage(
-								"my-nodes.transferOwnership.mail.subject", null, locale),
+				mailService.sendMail(new BasicMailAddress(null, email),
+						new ClasspathResourceMessageTemplateDataSource(locale,
+								messageSource.getMessage("my-nodes.transferOwnership.mail.subject", null,
+										locale),
 								"/net/solarnetwork/central/reg/web/transfer-ownership.txt", mailModel));
 			} catch ( RuntimeException e ) {
 				// ignore this other than log
@@ -497,16 +521,13 @@ public class MyNodesController extends ControllerSupport {
 					mailModel.put("actor", actor);
 					mailModel.put("transfer", xfer);
 
-					mailService
-							.sendMail(
-									new BasicMailAddress(null, xfer.getEmail()),
-									new ClasspathResourceMessageTemplateDataSource(
-											locale,
-											messageSource.getMessage(
-													"my-nodes.transferOwnership.mail.subject.cancelled",
-													null, locale),
-											"/net/solarnetwork/central/reg/web/transfer-ownership-cancelled.txt",
-											mailModel));
+					mailService.sendMail(new BasicMailAddress(null, xfer.getEmail()),
+							new ClasspathResourceMessageTemplateDataSource(locale,
+									messageSource.getMessage(
+											"my-nodes.transferOwnership.mail.subject.cancelled", null,
+											locale),
+									"/net/solarnetwork/central/reg/web/transfer-ownership-cancelled.txt",
+									mailModel));
 				} catch ( RuntimeException e ) {
 					// ignore this other than log
 					log.warn("Error sending ownership transfer mail message to {}: {}", xfer.getEmail(),
@@ -533,14 +554,12 @@ public class MyNodesController extends ControllerSupport {
 					mailModel.put("transfer", xfer);
 
 					mailService
-							.sendMail(
-									new BasicMailAddress(null, xfer.getUser().getEmail()),
-									new ClasspathResourceMessageTemplateDataSource(
-											locale,
-											messageSource
-													.getMessage(
-															("my-nodes.transferOwnership.mail.subject." + (accept ? "accepted"
-																	: "declined")), null, locale),
+							.sendMail(new BasicMailAddress(null, xfer.getUser().getEmail()),
+									new ClasspathResourceMessageTemplateDataSource(locale,
+											messageSource.getMessage(
+													("my-nodes.transferOwnership.mail.subject."
+															+ (accept ? "accepted" : "declined")),
+													null, locale),
 											("/net/solarnetwork/central/reg/web/transfer-ownership-"
 													+ (accept ? "accepted" : "declined") + ".txt"),
 											mailModel));

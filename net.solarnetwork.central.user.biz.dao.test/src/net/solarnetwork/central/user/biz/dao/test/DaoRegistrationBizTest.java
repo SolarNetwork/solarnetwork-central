@@ -72,6 +72,7 @@ import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
+import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -87,6 +88,8 @@ import net.solarnetwork.central.user.domain.PasswordEntry;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import net.solarnetwork.central.user.domain.UserNodeCertificateInstallationStatus;
+import net.solarnetwork.central.user.domain.UserNodeCertificateRenewal;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodePK;
@@ -111,6 +114,7 @@ public class DaoRegistrationBizTest {
 	private static final Long TEST_CONF_ID = -2L;
 	private static final Long TEST_NODE_ID = -3L;
 	private static final Long TEST_LOC_ID = -4L;
+	private static final Long TEST_INSTRUCTION_ID = -5L;
 	private static final UserNodePK TEST_CERT_ID = new UserNodePK(TEST_USER_ID, TEST_NODE_ID);
 	private static final String TEST_CA_DN = "CN=Test CA, O=SolarTest";
 	private static final String TEST_ENC_PASSWORD = "encoded.password";
@@ -909,17 +913,19 @@ public class DaoRegistrationBizTest {
 
 		Capture<Instruction> instrCap = new Capture<Instruction>();
 		NodeInstruction nodeInstr = new NodeInstruction();
+		nodeInstr.setId(TEST_INSTRUCTION_ID);
 		expect(instructorBiz.queueInstruction(EasyMock.eq(originalCertificate.getNodeId()),
 				EasyMock.capture(instrCap))).andReturn(nodeInstr);
 
 		replayAll();
 
-		NetworkCertificate cert = registrationBiz.renewNodeCertificate(userNode, TEST_KEYSTORE_PASS);
+		UserNodeCertificateRenewal cert = registrationBiz.renewNodeCertificate(userNode,
+				TEST_KEYSTORE_PASS);
 
 		verifyAll();
 
 		assertNotNull(cert);
-		assertNull(cert.getConfirmationKey());
+		assertEquals(TEST_INSTRUCTION_ID.toString(), cert.getConfirmationKey());
 		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
 				cert.getNetworkCertificateSubjectDN());
 		assertEquals(UserNodeCertificateStatus.v.getValue(), cert.getNetworkCertificateStatus());
@@ -940,5 +946,161 @@ public class DaoRegistrationBizTest {
 		String expectedPem = certificateService.generatePKCS7CertificateChainString(
 				new X509Certificate[] { renewedCertificate.getNodeCertificate(renewedKeystore) });
 		assertEquals(expectedPem, generatedPem.toString());
+
+		// our stored certificate should have the request ID set to the instruction ID
+		assertEquals(TEST_INSTRUCTION_ID.toString(), originalCertificate.getRequestId());
 	}
+
+	@Test
+	public void checkRenewalStatusQueued() throws Exception {
+
+		final String confirmationKey = TEST_INSTRUCTION_ID.toString();
+
+		final UserNode userNode = new UserNode();
+		userNode.setId(TEST_NODE_ID);
+		userNode.setUser(testUser);
+
+		NodeInstruction instr = new NodeInstruction(
+				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, new DateTime(),
+				userNode.getId());
+		instr.setId(TEST_INSTRUCTION_ID);
+		instr.setState(InstructionState.Queued);
+		instr.addParameter(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, "1");
+		instr.addParameter(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, "2");
+		instr.addParameter(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, "3");
+
+		expect(instructorBiz.getInstruction(TEST_INSTRUCTION_ID)).andReturn(instr);
+
+		replayAll();
+
+		UserNodeCertificateRenewal status = registrationBiz.getPendingNodeCertificateRenewal(userNode,
+				confirmationKey);
+
+		verifyAll();
+
+		assertNotNull(status);
+		assertEquals(confirmationKey, status.getConfirmationKey());
+		assertEquals(UserNodeCertificateInstallationStatus.RequestQueued,
+				status.getInstallationStatus());
+		assertEquals("123", status.getNetworkCertificate());
+	}
+
+	@Test
+	public void checkRenewalStatusReceived() throws Exception {
+
+		final String confirmationKey = TEST_INSTRUCTION_ID.toString();
+
+		final UserNode userNode = new UserNode();
+		userNode.setId(TEST_NODE_ID);
+		userNode.setUser(testUser);
+
+		NodeInstruction instr = new NodeInstruction(
+				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, new DateTime(),
+				userNode.getId());
+		instr.setId(TEST_INSTRUCTION_ID);
+		instr.setState(InstructionState.Received);
+
+		expect(instructorBiz.getInstruction(TEST_INSTRUCTION_ID)).andReturn(instr);
+
+		replayAll();
+
+		UserNodeCertificateRenewal status = registrationBiz.getPendingNodeCertificateRenewal(userNode,
+				confirmationKey);
+
+		verifyAll();
+
+		assertNotNull(status);
+		assertEquals(confirmationKey, status.getConfirmationKey());
+		assertEquals(UserNodeCertificateInstallationStatus.RequestReceived,
+				status.getInstallationStatus());
+	}
+
+	@Test
+	public void checkRenewalStatusExecuting() throws Exception {
+
+		final String confirmationKey = TEST_INSTRUCTION_ID.toString();
+
+		final UserNode userNode = new UserNode();
+		userNode.setId(TEST_NODE_ID);
+		userNode.setUser(testUser);
+
+		NodeInstruction instr = new NodeInstruction(
+				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, new DateTime(),
+				userNode.getId());
+		instr.setId(TEST_INSTRUCTION_ID);
+		instr.setState(InstructionState.Executing);
+
+		expect(instructorBiz.getInstruction(TEST_INSTRUCTION_ID)).andReturn(instr);
+
+		replayAll();
+
+		UserNodeCertificateRenewal status = registrationBiz.getPendingNodeCertificateRenewal(userNode,
+				confirmationKey);
+
+		verifyAll();
+
+		assertNotNull(status);
+		assertEquals(confirmationKey, status.getConfirmationKey());
+		assertEquals(UserNodeCertificateInstallationStatus.RequestReceived,
+				status.getInstallationStatus());
+	}
+
+	@Test
+	public void checkRenewalStatusCompleted() throws Exception {
+
+		final String confirmationKey = TEST_INSTRUCTION_ID.toString();
+
+		final UserNode userNode = new UserNode();
+		userNode.setId(TEST_NODE_ID);
+		userNode.setUser(testUser);
+
+		NodeInstruction instr = new NodeInstruction(
+				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, new DateTime(),
+				userNode.getId());
+		instr.setId(TEST_INSTRUCTION_ID);
+		instr.setState(InstructionState.Completed);
+
+		expect(instructorBiz.getInstruction(TEST_INSTRUCTION_ID)).andReturn(instr);
+
+		replayAll();
+
+		UserNodeCertificateRenewal status = registrationBiz.getPendingNodeCertificateRenewal(userNode,
+				confirmationKey);
+
+		verifyAll();
+
+		assertNotNull(status);
+		assertEquals(confirmationKey, status.getConfirmationKey());
+		assertEquals(UserNodeCertificateInstallationStatus.Installed, status.getInstallationStatus());
+	}
+
+	@Test
+	public void checkRenewalStatusDeclined() throws Exception {
+
+		final String confirmationKey = TEST_INSTRUCTION_ID.toString();
+
+		final UserNode userNode = new UserNode();
+		userNode.setId(TEST_NODE_ID);
+		userNode.setUser(testUser);
+
+		NodeInstruction instr = new NodeInstruction(
+				DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, new DateTime(),
+				userNode.getId());
+		instr.setId(TEST_INSTRUCTION_ID);
+		instr.setState(InstructionState.Declined);
+
+		expect(instructorBiz.getInstruction(TEST_INSTRUCTION_ID)).andReturn(instr);
+
+		replayAll();
+
+		UserNodeCertificateRenewal status = registrationBiz.getPendingNodeCertificateRenewal(userNode,
+				confirmationKey);
+
+		verifyAll();
+
+		assertNotNull(status);
+		assertEquals(confirmationKey, status.getConfirmationKey());
+		assertEquals(UserNodeCertificateInstallationStatus.Declined, status.getInstallationStatus());
+	}
+
 }

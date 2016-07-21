@@ -339,7 +339,7 @@
 		 		<a href="<c:url value='/u/sec/my-nodes/cert/0'/>?download=true" id="modal-cert-download" class="btn btn-default">
 		 			<fmt:message key='my-nodes.cert.action.download'/>
 		 		</a>
-		 		<a href="<c:url value='/u/sec/my-nodes/cert/renew/0'/>" id="modal-cert-renew" class="btn btn-primary cert hidden">
+		 		<a href="<c:url value='/u/sec/my-nodes/cert/renew/0'/>" id="modal-cert-renew" class="btn btn-primary renew hidden">
 		 			<fmt:message key='my-nodes.cert.action.renew'/>
 		 		</a>
 		 		<button type="submit" class="btn btn-primary nocert">
