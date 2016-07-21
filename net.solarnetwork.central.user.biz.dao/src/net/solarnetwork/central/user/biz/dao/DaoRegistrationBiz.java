@@ -575,10 +575,6 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		cert.setRequestId(renewRequestID);
 		cert.setStatus(UserNodeCertificateStatus.a);
 
-		// we must become the User now for renewal to be generated
-		SecurityUtils.becomeUser(userNode.getUser().getEmail(), userNode.getUser().getName(),
-				userNode.getUser().getId());
-
 		final String certSubjectDN = String.format(networkCertificateSubjectDNFormat, nodeId.toString());
 
 		final Future<UserNodeCertificate> approval = approveCSR(certSubjectDN, keystorePassword,
