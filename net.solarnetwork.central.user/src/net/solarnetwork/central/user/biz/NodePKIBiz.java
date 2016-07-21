@@ -30,7 +30,7 @@ import net.solarnetwork.support.CertificateService;
  * API for managing SolarNode PKI from within SolarUser.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface NodePKIBiz extends CertificateService {
 
@@ -58,6 +58,23 @@ public interface NodePKIBiz extends CertificateService {
 	 * @param requestID
 	 *        the request ID to approve
 	 * @return the certificate, and the rest of the certificates in the chain
+	 * @throws net.solarnetwork.central.security.SecurityException
+	 *         if the active user is not available
 	 */
-	X509Certificate[] approveCSR(String requestID);
+	X509Certificate[] approveCSR(String requestID)
+			throws net.solarnetwork.central.security.SecurityException;
+
+	/**
+	 * Submit a request to renew a certificate. The active security user details
+	 * must match the certificate details.
+	 * 
+	 * @param certificate
+	 *        The certificate to renew.
+	 * @return a unique ID from the CA
+	 * @throws net.solarnetwork.central.security.SecurityException
+	 *         if the active user is not available
+	 */
+	String submitRenewalRequest(final X509Certificate certificate)
+			throws net.solarnetwork.central.security.SecurityException;
+
 }

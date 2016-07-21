@@ -1,8 +1,8 @@
-Manifest-Version: 1.0
+dManifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Dogtag CA
 Bundle-SymbolicName: net.solarnetwork.central.user.pki.dogtag
-Bundle-Version: 1.1.1
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
@@ -11,7 +11,7 @@ Import-Package:
  net.solarnetwork.central.domain;version="1.18.0",
  net.solarnetwork.central.security;version="1.5.0",
  net.solarnetwork.central.support;version="1.11.0",
- net.solarnetwork.central.user.biz;version="1.6.0",
+ net.solarnetwork.central.user.biz;version="1.11.0",
  net.solarnetwork.support;version="1.2.0",
  org.apache.http.client;version="[4.4,5.0)",
  org.apache.http.client.config;version="[4.4,5.0)",

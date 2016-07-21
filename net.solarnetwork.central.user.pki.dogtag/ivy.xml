@@ -13,7 +13,7 @@
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.28.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.6.0,2.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.11.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.18.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="[1.21.0,2.0.0)"/>
  		<dependency org="org.apache.httpcomponents" name="httpclient-osgi" rev="4.5.2" />
 		<dependency org="org.osgi" name="org.osgi.core" rev="5.0.0"/>
