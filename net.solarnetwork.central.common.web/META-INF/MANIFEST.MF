@@ -2,13 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Common Web
 Bundle-SymbolicName: net.solarnetwork.central.common.web
-Bundle-Version: 1.11.0
+Bundle-Version: 1.11.1
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
  net.solarnetwork.central.web;version="1.3.0",
  net.solarnetwork.central.web.domain;version="1.0.0",
- net.solarnetwork.central.web.support;version="1.6.0"
+ net.solarnetwork.central.web.support;version="1.6.1"
 Import-Package: 
  javax.servlet;version="2.5.0",
  javax.servlet.http;version="2.4.0",

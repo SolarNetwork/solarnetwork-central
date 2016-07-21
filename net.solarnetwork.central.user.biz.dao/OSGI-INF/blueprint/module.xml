@@ -20,7 +20,9 @@
 	<!-- Service References -->
 	
 	<reference id="nodePKIBiz" interface="net.solarnetwork.central.user.biz.NodePKIBiz"/>
-
+	<reference id="instructorBiz" interface="net.solarnetwork.central.instructor.biz.InstructorBiz"/>
+	<reference id="certificateService" interface="net.solarnetwork.support.CertificateService"/>
+	
 	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
 	<reference id="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao"/>
 	<reference id="userAlertSituationDao" interface="net.solarnetwork.central.user.dao.UserAlertSituationDao"/>
@@ -94,6 +96,8 @@
 		<property name="passwordEncoder" ref="passwordEncoder"/>
 		<property name="emailThrottleCache" ref="emailThrottleCache"/>
 		<property name="nodePKIBiz" ref="nodePKIBiz"/>
+		<property name="instructorBiz" ref="instructorBiz"/>
+		<property name="certificateService" ref="certificateService"/>
 	</bean>
 	
 	<bean id="daoUserBiz" class="net.solarnetwork.central.user.biz.dao.DaoUserBiz">

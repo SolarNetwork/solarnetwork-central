@@ -44,9 +44,9 @@ import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContexts;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.ssl.SSLContexts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -59,7 +59,7 @@ import org.springframework.web.client.RestTemplate;
  * key/trust store.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SSLContextFactory implements PingTest {
 
@@ -81,7 +81,7 @@ public class SSLContextFactory implements PingTest {
 		SSLContext ctx;
 		try {
 			KeyStore keyStore = loadKeyStore();
-			ctx = SSLContexts.custom().useTLS().loadTrustMaterial(keyStore)
+			ctx = SSLContexts.custom().loadTrustMaterial(keyStore, null)
 					.loadKeyMaterial(keyStore, keystorePassword.toCharArray()).build();
 		} catch ( GeneralSecurityException e ) {
 			throw new CertificateException("Error creating SSLContext from "
