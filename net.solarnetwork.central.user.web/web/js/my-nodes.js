@@ -74,32 +74,38 @@ $(document).ready(function() {
 		form.modal('show');
 	});
 	
+	function updateCertDisplayDetails(json) {
+		var dateFormat = 'dddd, D MMM YYYY, h:mm a',
+			validUntil = moment(json.certificateValidUntilDate),
+			renewAfter = moment(json.certificateRenewAfterDate),
+			renewAfterMsg;
+		
+		$('#modal-cert-container').text(json.pemValue);
+		$('#view-cert-serial-number').text(json.certificateSerialNumber);
+		$('#view-cert-subject').text(json.certificateSubjectDN);
+		$('#view-cert-issuer').text(json.certificateIssuerDN);
+		$('#view-cert-valid-from').text(moment(json.certificateValidFromDate).format(dateFormat));
+		$('#view-cert-valid-until').text(validUntil.format(dateFormat));
+		
+		if ( json.certificateRenewAfterDate ) {
+			renewAfterMsg = renewAfter.format(dateFormat);
+			if ( renewAfter.isAfter() ) {
+				renewAfterMsg += ' (in ' +renewAfter.diff(moment(), 'days') + ' days)';
+			} else if ( validUntil.isAfter() ) {
+				renewAfterMsg += ' (' +moment().diff(validUntil, 'days') +' days left)';
+			}
+			$('#view-cert-renew-after').text(renewAfterMsg).parent().show();
+		} else {
+			$('#view-cert-renew-after').parent().hide();
+		}
+	}
+	
 	$('#view-cert-modal').ajaxForm({
 		dataType: 'json',
 		success: function(json, status, xhr, form) {
-			var dateFormat = 'dddd, D MMM YYYY, h:mm a',
-				validUntil = moment(json.certificateValidUntilDate),
-				renewAfter = moment(json.certificateRenewAfterDate),
-				renewAfterMsg;
+			var renewAfter = moment(json.certificateRenewAfterDate);
 			
-			$('#modal-cert-container').text(json.pemValue);
-			$('#view-cert-serial-number').text(json.certificateSerialNumber);
-			$('#view-cert-subject').text(json.certificateSubjectDN);
-			$('#view-cert-issuer').text(json.certificateIssuerDN);
-			$('#view-cert-valid-from').text(moment(json.certificateValidFromDate).format(dateFormat));
-			$('#view-cert-valid-until').text(validUntil.format(dateFormat));
-			
-			if ( json.certificateRenewAfterDate ) {
-				renewAfterMsg = renewAfter.format(dateFormat);
-				if ( renewAfter.isAfter() ) {
-					renewAfterMsg += ' (in ' +renewAfter.diff(moment(), 'days') + ' days)';
-				} else if ( validUntil.isAfter() ) {
-					renewAfterMsg += ' (' +moment().diff(validUntil, 'days') +' days left)';
-				}
-				$('#view-cert-renew-after').text(renewAfterMsg).parent().show();
-			} else {
-				$('#view-cert-renew-after').parent().hide();
-			}
+			updateCertDisplayDetails(json);
 			
 			if ( renewAfter.isAfter() === false ) {
 				$('#modal-cert-renew').removeClass('hidden');
@@ -127,7 +133,9 @@ $(document).ready(function() {
 			data: {password:pass},
 			dataType: 'json',
 			success: function(json, status, xhr) {
-				$('#view-cert-modal').modal('hide');
+				$('#view-cert-modal .renewed').removeClass('hidden');
+				$('#modal-cert-renew').addClass('hidden');
+				updateCertDisplayDetails(json);
 			},
 			error: function(xhr, status, statusText){
 				SolarReg.showAlertBefore('#view-cert-modal .modal-body > *:first-child', 'alert-warning', statusText);

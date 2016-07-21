@@ -298,6 +298,7 @@
 		 	<div class="modal-body">
 		 		<p class="nocert"><fmt:message key='my-nodes.cert.view.intro'/></p>
 		 		<p class="cert hidden"><fmt:message key='my-nodes.cert.view.cert-intro'/></p>
+		 		<div class="alert alert-info renewed hidden"><fmt:message key='my-nodes.cert.renewed.queued'/></div>
 		 		<fieldset class="form-inline nocert">
 		 			<label for="view-cert-password"><fmt:message key='my-nodes.cert.view.password.label'/></label>
 					<input class="span3 form-control" type="password" name="password" id="view-cert-password" />
