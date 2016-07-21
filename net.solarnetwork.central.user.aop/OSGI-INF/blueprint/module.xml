@@ -15,6 +15,10 @@
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 	<reference id="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao"/>
 
+	<reference id="registrationBiz"
+		interface="net.solarnetwork.central.user.biz.RegistrationBiz"
+		filter="(!(aop=true))"/>
+	
 	<reference id="userBiz"
 		interface="net.solarnetwork.central.user.biz.UserBiz"
 		filter="(!(aop=true))"/>
@@ -28,6 +32,12 @@
 		filter="(!(aop=true))"/>
 	
 	<!-- Published Services -->
+
+	<service ref="aopRegistrationBiz" interface="net.solarnetwork.central.user.biz.RegistrationBiz" ranking="10">
+		<service-properties>
+			<entry key="aop" value="true"/>
+		</service-properties>
+	</service>
 
 	<service ref="aopUserBiz" interface="net.solarnetwork.central.user.biz.UserBiz" ranking="10">
 		<service-properties>
@@ -51,6 +61,10 @@
 
 	<aop:aspectj-autoproxy/>
 
+	<bean id="registrationSecurityAspect" class="net.solarnetwork.central.user.aop.RegistrationSecurityAspect">
+		<argument ref="userNodeDao"/>
+	</bean>
+	
 	<bean id="userSecurityAspect" class="net.solarnetwork.central.user.aop.UserSecurityAspect">
 		<argument ref="userNodeDao"/>
 		<argument ref="userAuthTokenDao"/>
@@ -66,6 +80,10 @@
 		<argument ref="userAlertDao"/>
 	</bean>
 	
+	<bean id="aopRegistrationBiz" class="net.solarnetwork.central.user.support.DelegatingRegistrationBiz">
+		<argument ref="registrationBiz"/>
+	</bean>
+
 	<bean id="aopUserBiz" class="net.solarnetwork.central.user.support.DelegatingUserBiz">
 		<argument ref="userBiz"/>
 	</bean>
