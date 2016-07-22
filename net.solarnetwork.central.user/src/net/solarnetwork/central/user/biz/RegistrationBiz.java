@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.biz;
 
+import java.io.IOException;
+import java.io.InputStream;
 import org.joda.time.ReadablePeriod;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
@@ -38,7 +40,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
  * API for user registration tasks.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface RegistrationBiz {
 
@@ -231,24 +233,22 @@ public interface RegistrationBiz {
 
 	/**
 	 * Renew a certificate generated and signed by SolarUser by a previous call
-	 * to {@link #confirmNodeAssociation(NetworkAssociation)} where a
-	 * {@code keystorePassword} was also supplied. The {@code username},
-	 * {@code confirmationKey}, and {@code keystorePassword} are required in
-	 * this call, and must match the values previously used in
-	 * {@link #confirmNodeAssociation(NetworkAssociation)}.
+	 * to {@link #confirmNodeAssociation(NetworkAssociation)}. The provided
+	 * certificate itself must be valid for the active {@code SecurityActor}.
 	 * 
 	 * This method is meant to support renewing certificates via a SolarNode.
 	 * 
-	 * @param association
-	 *        the association details
-	 * @return the network certificate
+	 * @param pkcs12InputStream
+	 *        the PKCS12 keystore data containing the node's existing
+	 *        private/public key public/private key
+	 * @return the renewed network certificate
 	 * @throws AuthorizationException
-	 *         if the details do not match those returned from a previous call
-	 *         to {@link #confirmNodeAssociation(NetworkAssociation)}
-	 * @since 1.4
+	 *         if the details do not match the active {@code SecurityActor}
+	 * @since 1.5
 	 * @see #renewNodeCertificate(UserNode, String)
 	 */
-	NetworkCertificate renewNodeCertificate(NetworkAssociation association);
+	NetworkCertificate renewNodeCertificate(InputStream pkcs12InputStream, String keystorePassword)
+			throws IOException;
 
 	/**
 	 * Get the period, ending at a node certificate's expiration date, that a
@@ -282,7 +282,6 @@ public interface RegistrationBiz {
 	 *         if the details do not match those returned from a previous call
 	 *         to {@link #confirmNodeAssociation(NetworkAssociation)}
 	 * @since 1.4
-	 * @see #renewNodeCertificate(NetworkAssociation)
 	 */
 	UserNodeCertificateRenewal renewNodeCertificate(UserNode userNode, String keystorePassword);
 
