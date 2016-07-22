@@ -797,6 +797,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		if ( userNodeCert == null ) {
 			userNodeCert = new UserNodeCertificate();
 			userNodeCert.setId(userNodePK);
+			userNodeCert.setUser(userNode.getUser());
+			userNodeCert.setNode(userNode.getNode());
 			userNodeCert.setCreated(new DateTime());
 			userNodeCert.setStatus(UserNodeCertificateStatus.a);
 		}
