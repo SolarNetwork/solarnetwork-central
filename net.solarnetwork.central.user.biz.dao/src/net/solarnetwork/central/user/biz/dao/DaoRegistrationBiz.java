@@ -63,6 +63,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -82,6 +83,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.PasswordEncoder;
+import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
@@ -539,10 +541,22 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		if ( nodeId == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
 		}
-
 		final UserNodeCertificate cert = userNodeCertificateDao
 				.get(new UserNodePK(userNode.getUser().getId(), nodeId));
+		return renewNodeCertificate(cert, keystorePassword);
+	}
+
+	private UserNodeCertificateRenewal renewNodeCertificate(final UserNodeCertificate cert,
+			final String keystorePassword) {
 		if ( cert == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+		final User user = cert.getUser();
+		if ( user == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+		final Long nodeId = cert.getNodeId();
+		if ( nodeId == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
 		}
 
@@ -577,8 +591,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		final String certSubjectDN = String.format(networkCertificateSubjectDNFormat, nodeId.toString());
 
-		final Future<UserNodeCertificate> approval = approveCSR(certSubjectDN, keystorePassword,
-				userNode.getUser(), cert);
+		final Future<UserNodeCertificate> approval = approveCSR(certSubjectDN, keystorePassword, user,
+				cert);
 		Instruction installInstruction = null;
 		try {
 			UserNodeCertificate renewedCert = approval.get(approveCSRMaximumWaitSecs, TimeUnit.SECONDS);
@@ -757,53 +771,42 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public NetworkCertificate renewNodeCertificate(NetworkAssociation association) {
-		if ( association == null ) {
-			throw new IllegalArgumentException("NetworkAssociation must be provided.");
-		}
-		final String username = association.getUsername();
-		final String confirmationKey = association.getConfirmationKey();
-		final String keystorePassword = association.getKeystorePassword();
-		if ( username == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
-		}
-		if ( confirmationKey == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+	public NetworkCertificate renewNodeCertificate(final InputStream pkcs12InputStream,
+			final String keystorePassword) throws IOException {
+		if ( pkcs12InputStream == null ) {
+			throw new IllegalArgumentException("Keystore must be provided.");
 		}
 		if ( keystorePassword == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
 		}
 
-		final User user = userDao.getUserByEmail(username);
-		if ( user == null ) {
-			throw new AuthorizationException(Reason.UNKNOWN_EMAIL, username);
-		}
-
-		final UserNodeConfirmation conf = userNodeConfirmationDao.getConfirmationForKey(user.getId(),
-				confirmationKey);
-		if ( conf == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT,
-					confirmationKey);
-		}
-
-		final Long nodeId = conf.getNodeId();
+		SecurityNode actor = SecurityUtils.getCurrentNode();
+		final Long nodeId = actor.getNodeId();
 		if ( nodeId == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
 		}
 
 		final UserNode userNode = userNodeDao.get(nodeId);
-		if ( !user.equals(userNode.getUser()) ) {
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		if ( userNode == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
 		}
 
-		NetworkAssociationDetails details = (NetworkAssociationDetails) renewNodeCertificate(userNode,
-				association.getKeystorePassword());
-		if ( details != null ) {
-			// add our confirmation code into result
-			details.setConfirmationKey(
-					calculateNodeAssociationConfirmationCode(conf.getConfirmationDate(), nodeId));
+		// get existing UserNodeCertificate, else create a new one
+		final UserNodePK userNodePK = new UserNodePK(userNode.getUser().getId(), nodeId);
+		UserNodeCertificate userNodeCert = userNodeCertificateDao.get(userNodePK);
+		if ( userNodeCert == null ) {
+			userNodeCert = new UserNodeCertificate();
+			userNodeCert.setId(userNodePK);
+			userNodeCert.setUser(userNode.getUser());
+			userNodeCert.setNode(userNode.getNode());
+			userNodeCert.setCreated(new DateTime());
+			userNodeCert.setStatus(UserNodeCertificateStatus.a);
 		}
-		return details;
+
+		// extract the existing node certificate
+		userNodeCert.setKeystoreData(FileCopyUtils.copyToByteArray(pkcs12InputStream));
+
+		return renewNodeCertificate(userNodeCert, keystorePassword);
 	}
 
 	@Override

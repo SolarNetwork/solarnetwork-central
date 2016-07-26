@@ -13,6 +13,9 @@
 	<osgi:reference id="dataCollectorBiz" sticky="false"
 		interface="net.solarnetwork.central.in.biz.DataCollectorBiz"/>
 	
+	<osgi:reference id="registrationBiz" sticky="false"
+		interface="net.solarnetwork.central.user.biz.RegistrationBiz"/>
+	
 	<osgi:reference id="networkIdentityBiz" sticky="false"
 		interface="net.solarnetwork.central.in.biz.NetworkIdentityBiz"/>
 	

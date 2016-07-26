@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.support;
 
+import java.io.IOException;
+import java.io.InputStream;
 import org.joda.time.ReadablePeriod;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
@@ -39,7 +41,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
  * AOP.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelegatingRegistrationBiz implements RegistrationBiz {
 
@@ -106,8 +108,9 @@ public class DelegatingRegistrationBiz implements RegistrationBiz {
 	}
 
 	@Override
-	public NetworkCertificate renewNodeCertificate(NetworkAssociation association) {
-		return delegate.renewNodeCertificate(association);
+	public NetworkCertificate renewNodeCertificate(InputStream pkcs12InputStream,
+			String keystorePassword) throws IOException {
+		return delegate.renewNodeCertificate(pkcs12InputStream, keystorePassword);
 	}
 
 	@Override

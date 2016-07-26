@@ -78,7 +78,8 @@ $(document).ready(function() {
 		var dateFormat = 'dddd, D MMM YYYY, h:mm a',
 			validUntil = moment(json.certificateValidUntilDate),
 			renewAfter = moment(json.certificateRenewAfterDate),
-			renewAfterMsg;
+			renewAfterMsg,
+			timeLeft;
 		
 		$('#modal-cert-container').text(json.pemValue);
 		$('#view-cert-serial-number').text(json.certificateSerialNumber);
@@ -92,7 +93,13 @@ $(document).ready(function() {
 			if ( renewAfter.isAfter() ) {
 				renewAfterMsg += ' (in ' +renewAfter.diff(moment(), 'days') + ' days)';
 			} else if ( validUntil.isAfter() ) {
-				renewAfterMsg += ' (' +moment().diff(validUntil, 'days') +' days left)';
+				timeLeft = validUntil.diff(moment(), 'days');
+				if ( timeLeft > 0 ) {
+					renewAfterMsg +=  ' (' + timeLeft + ' days left before expires)';
+				} else {
+					timeLeft = validUntil.diff(moment(), 'hours');
+					renewAfterMsg +=  ' (' + timeLeft + ' hours left before expires)';
+				}
 			}
 			$('#view-cert-renew-after').text(renewAfterMsg).parent().show();
 		} else {
