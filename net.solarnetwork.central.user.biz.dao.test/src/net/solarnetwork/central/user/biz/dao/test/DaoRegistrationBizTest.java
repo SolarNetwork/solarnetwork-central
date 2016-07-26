@@ -64,6 +64,8 @@ import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -74,6 +76,7 @@ import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.PasswordEncoder;
@@ -106,7 +109,7 @@ import net.solarnetwork.util.JavaBeanXmlSerializer;
  * Unit tests for the {@link DaoRegistrationBiz}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DaoRegistrationBizTest {
 
@@ -949,6 +952,111 @@ public class DaoRegistrationBizTest {
 
 		// our stored certificate should have the request ID set to the instruction ID
 		assertEquals(TEST_INSTRUCTION_ID.toString(), originalCertificate.getRequestId());
+	}
+
+	private AuthenticatedNode setAuthenticatedNode(final Long nodeId) {
+		AuthenticatedNode node = new AuthenticatedNode(nodeId, null, false);
+		TestingAuthenticationToken auth = new TestingAuthenticationToken(node, "foobar", "ROLE_NODE");
+		SecurityContextHolder.getContext().setAuthentication(auth);
+		return node;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void renewCertificateForNode() throws Exception {
+		final KeyStore keystore = loadKeyStore(TEST_KEYSTORE_PASS, null);
+		final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+		keyGen.initialize(1024, new SecureRandom());
+		final KeyPair keypair = keyGen.generateKeyPair();
+		final KeyPair caKeypair = keyGen.generateKeyPair();
+		final X509Certificate caCert = certificateService.generateCertificationAuthorityCertificate(
+				TEST_CA_DN, caKeypair.getPublic(), caKeypair.getPrivate());
+
+		final UserNodeCertificate originalCertificate = createTestSignedUserNodeCertificate(keypair,
+				caCert, caKeypair, keystore);
+
+		final KeyStore renewedKeystore = loadKeyStore(TEST_KEYSTORE_PASS,
+				new ByteArrayInputStream(originalCertificate.getKeystoreData()));
+		final UserNodeCertificate renewedCertificate = createTestRenewedUserNodeCertificate(keypair,
+				caCert, caKeypair, renewedKeystore);
+		renewedCertificate.setNodeId(originalCertificate.getNodeId());
+		renewedCertificate.setUser(originalCertificate.getUser());
+		renewedCertificate.setStatus(UserNodeCertificateStatus.v);
+
+		setAuthenticatedNode(TEST_NODE_ID);
+
+		final SolarNode testNode = new SolarNode(TEST_NODE_ID, TEST_LOC_ID);
+		final UserNode userNode = new UserNode(testUser, testNode);
+		final UserNodePK userNodePK = new UserNodePK(TEST_USER_ID, TEST_NODE_ID);
+
+		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(userNode);
+		expect(userNodeCertificateDao.get(userNodePK)).andReturn(null); // no cert in DB
+		expect(nodePKIBiz.submitRenewalRequest(originalCertificate.getNodeCertificate(keystore)))
+				.andReturn(TEST_CERT_RENEWAL_ID);
+
+		expect(executorService.submit(EasyMock.anyObject(Callable.class)))
+				.andReturn(new Future<UserNodeCertificate>() {
+
+					@Override
+					public boolean cancel(boolean mayInterruptIfRunning) {
+						return false;
+					}
+
+					@Override
+					public boolean isCancelled() {
+						return false;
+					}
+
+					@Override
+					public boolean isDone() {
+						return true;
+					}
+
+					@Override
+					public UserNodeCertificate get() throws InterruptedException, ExecutionException {
+						return renewedCertificate;
+					}
+
+					@Override
+					public UserNodeCertificate get(long timeout, TimeUnit unit)
+							throws InterruptedException, ExecutionException, TimeoutException {
+						return renewedCertificate;
+					}
+				});
+
+		Capture<UserNodeCertificate> userNodeCertCap = new Capture<UserNodeCertificate>();
+		expect(userNodeCertificateDao.store(EasyMock.capture(userNodeCertCap))).andReturn(TEST_CERT_ID);
+
+		Capture<Instruction> instrCap = new Capture<Instruction>();
+		NodeInstruction nodeInstr = new NodeInstruction();
+		nodeInstr.setId(TEST_INSTRUCTION_ID);
+		expect(instructorBiz.queueInstruction(EasyMock.eq(originalCertificate.getNodeId()),
+				EasyMock.capture(instrCap))).andReturn(nodeInstr);
+
+		replayAll();
+
+		NetworkCertificate result = registrationBiz.renewNodeCertificate(
+				new ByteArrayInputStream(originalCertificate.getKeystoreData()), TEST_KEYSTORE_PASS);
+
+		verifyAll();
+
+		assertNotNull(result);
+
+		Instruction instr = instrCap.getValue();
+		assertEquals(DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, instr.getTopic());
+		assertNotNull(instr.getParameters());
+		assertEquals(4, instr.getParameters().size());
+		StringBuilder generatedPem = new StringBuilder();
+		for ( InstructionParameter param : instr.getParameters() ) {
+			assertEquals(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, param.getName());
+			generatedPem.append(param.getValue());
+		}
+
+		UserNodeCertificate userNodeCert = userNodeCertCap.getValue();
+		assertNotNull(userNodeCert);
+
+		// our stored certificate should have the request ID set to the instruction ID
+		assertEquals(TEST_INSTRUCTION_ID.toString(), userNodeCert.getRequestId());
 	}
 
 	@Test
