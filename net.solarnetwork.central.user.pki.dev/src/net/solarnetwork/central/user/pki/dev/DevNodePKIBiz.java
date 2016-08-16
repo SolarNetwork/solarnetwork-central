@@ -58,12 +58,13 @@ import net.solarnetwork.support.CertificationAuthorityService;
  * Developer implementation of {@link NodePKIBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DevNodePKIBiz implements NodePKIBiz {
 
+	private static final String WEBSERVER_KEYSTORE_PASSWORD = "dev123";
 	private static final String CA_ALIAS = "ca";
-	private static final String WEBSERVER_ALIAS = "central";
+	private static final String WEBSERVER_ALIAS = "web";
 	private static final String DIR_REQUESTS = "requests";
 	private static final String PASSWORD_FILE = "secret";
 
@@ -89,9 +90,10 @@ public class DevNodePKIBiz implements NodePKIBiz {
 	 * 
 	 * <p>
 	 * Also, if a new CA certificate is generated, a {@code central-trust.jks}
-	 * keystore will be created that contains just the CA certificate. This is
-	 * designed to be configured as the developer node's trust store, to allow
-	 * posting to the development SolarIn service.
+	 * keystore will be created with a password {@code dev123} that contains
+	 * just the CA certificate. This is designed to be configured as the
+	 * developer node's trust store, to allow posting to the development SolarIn
+	 * service.
 	 * </p>
 	 */
 	public void init() {
@@ -106,7 +108,7 @@ public class DevNodePKIBiz implements NodePKIBiz {
 		InputStream in = null;
 
 		// create a webserver keystore if one does not exist
-		final String webserverKeystorePassword = "dev123";
+		final String webserverKeystorePassword = WEBSERVER_KEYSTORE_PASSWORD;
 		final File webserverKeyStoreFile = new File(getKeyStoreFile().getParentFile(), "central.jks");
 		final KeyStore webserverKeyStore;
 		try {
@@ -137,7 +139,7 @@ public class DevNodePKIBiz implements NodePKIBiz {
 					webserverKeyStore.setCertificateEntry(CA_ALIAS, caCert);
 
 					out = new BufferedOutputStream(new FileOutputStream(webserverKeyStoreFile));
-					webserverKeyStore.store(out, "dev123".toCharArray());
+					webserverKeyStore.store(out, WEBSERVER_KEYSTORE_PASSWORD.toCharArray());
 					log.info("Development webserver keystore saved to {}; password is dev123",
 							webserverKeyStoreFile.getAbsolutePath());
 				} catch ( Exception e ) {
@@ -174,14 +176,14 @@ public class DevNodePKIBiz implements NodePKIBiz {
 			} else {
 				in = null;
 			}
-			trustStore = loadKeyStore(KeyStore.getDefaultType(), in, "");
+			trustStore = loadKeyStore(KeyStore.getDefaultType(), in, WEBSERVER_KEYSTORE_PASSWORD);
 			X509Certificate trustCert = getCertificate(trustStore, CA_ALIAS);
 			if ( trustCert == null ) {
 				OutputStream out = null;
 				try {
 					trustStore.setCertificateEntry(CA_ALIAS, caCert);
 					out = new BufferedOutputStream(new FileOutputStream(trustKeyStoreFile));
-					trustStore.store(out, "".toCharArray());
+					trustStore.store(out, WEBSERVER_KEYSTORE_PASSWORD.toCharArray());
 					log.info("Development node trust keystore saved to {}",
 							trustKeyStoreFile.getAbsolutePath());
 				} catch ( Exception e ) {
