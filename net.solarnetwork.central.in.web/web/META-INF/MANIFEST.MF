@@ -74,6 +74,7 @@ Import-Package:
  org.springframework.security.web.authentication.preauth;version="[4.1,5.0)",
  org.springframework.security.web.context;version="[4.1,5.0)",
  org.springframework.security.web.savedrequest;version="[4.1,5.0)",
+ org.springframework.security.web.util.matcher;version="[4.1,5.0)",
  org.springframework.stereotype;version="[4.2,5.0)",
  org.springframework.ui;version="[4.2,5.0)",
  org.springframework.util;version="[4.2,5.0)",
