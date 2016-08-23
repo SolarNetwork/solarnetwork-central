@@ -101,13 +101,6 @@ public class NotificationScheduler extends EventHandlerSupport {
 		final Map<String, ?> jobProps = (Map<String, ?>) event
 				.getProperty(SchedulerConstants.JOB_PROPERTIES);
 		JobKey jobKey = new JobKey(jobName, NOTIFICATION_JOB_GROUP);
-		JobDetail job = scheduler.getJobDetail(jobKey);
-		if ( job == null ) {
-			job = JobBuilder
-					.newJob((jobCron != null ? StatefulNotificationJob.class : NotificationJob.class))
-					.withIdentity(jobKey).requestRecovery().storeDurably(false).build();
-			scheduler.addJob(job, false);
-		}
 
 		// set up trigger properties, copying all job request properties
 		final JobDataMap jobMap = new JobDataMap();
@@ -134,7 +127,7 @@ public class NotificationScheduler extends EventHandlerSupport {
 						.forJob(jobKey).usingJobData(jobMap).withSchedule(cronBuilder).build();
 				trigger = cronTrigger;
 			} catch ( ParseException e ) {
-				log.error("Bad cron expression [{}]: {}", jobCron, e.getMessage());
+				log.error("Bad cron expression [{}] for job {}: {}", jobName, jobCron, e.getMessage());
 				return;
 			}
 		}
@@ -160,7 +153,10 @@ public class NotificationScheduler extends EventHandlerSupport {
 		} else {
 			log.debug("Scheduling job {}.{} for {}", new Object[] { jobGroup, jobId,
 					(jobCron != null ? jobCron : new Date(jobDate).toString()) });
-			scheduler.scheduleJob(trigger);
+			JobDetail job = JobBuilder
+					.newJob((jobCron != null ? StatefulNotificationJob.class : NotificationJob.class))
+					.withIdentity(jobKey).requestRecovery().storeDurably(false).build();
+			scheduler.scheduleJob(job, trigger);
 		}
 	}
 
