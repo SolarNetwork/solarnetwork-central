@@ -26,6 +26,7 @@ Import-Package:
  org.slf4j;version="[1.5.0,2.0.0)",
  org.springframework.aop;version="[4.2,5.0)",
  org.springframework.aop.framework;version="[4.2,5.0)",
+ org.springframework.aop.aspectj.annotation;version="[4.2,5.0)",
  org.springframework.aop.aspectj.autoproxy;version="[4.2,5.0)",
  org.springframework.beans;version="[4.2,5.0)",
  org.springframework.beans.factory.annotation;version="[4.2,5.0)",
