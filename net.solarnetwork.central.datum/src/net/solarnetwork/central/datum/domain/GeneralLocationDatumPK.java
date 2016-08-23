@@ -30,10 +30,10 @@ import org.joda.time.DateTime;
  * Primary key for a general location datum.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class GeneralLocationDatumPK implements Serializable, Cloneable,
-		Comparable<GeneralLocationDatumPK> {
+public class GeneralLocationDatumPK
+		implements Serializable, Cloneable, Comparable<GeneralLocationDatumPK> {
 
 	private static final long serialVersionUID = 8888712105726539385L;
 
@@ -62,7 +62,7 @@ public class GeneralLocationDatumPK implements Serializable, Cloneable,
 		if ( sourceId != null ) {
 			builder.append(sourceId);
 		}
-		return DigestUtils.shaHex(builder.toString());
+		return DigestUtils.sha1Hex(builder.toString());
 	}
 
 	/**

@@ -38,7 +38,7 @@ import org.springframework.mail.SimpleMailMessage;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MockMailSender implements MailSender {
 
@@ -58,7 +58,7 @@ public class MockMailSender implements MailSender {
 	}
 
 	@Override
-	public void send(SimpleMailMessage[] msgs) throws MailException {
+	public void send(SimpleMailMessage... msgs) throws MailException {
 		if ( msgs == null ) {
 			return;
 		}

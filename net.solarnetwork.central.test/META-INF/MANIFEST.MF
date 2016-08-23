@@ -2,10 +2,10 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Test
 Bundle-SymbolicName: net.solarnetwork.central.test
-Bundle-Version: 1.6.0
+Bundle-Version: 1.7.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: net.solarnetwork.central.test;version="1.5.0"
+Export-Package: net.solarnetwork.central.test;version="1.6.0"
 Import-Package: 
  javax.sql,
  net.solarnetwork.central.security;version="1.5.0",
@@ -18,23 +18,24 @@ Import-Package:
  org.osgi.service.jdbc;version="[1.0,2.0)",
  org.postgresql;version="8.4";resolution:=optional,
  org.slf4j;version="[1.6.1,2.0.0)",
- org.springframework.asm;version="[3.1,4.0)",
- org.springframework.beans;version="[3.1,4.0)",
- org.springframework.beans.factory.annotation;version="[3.1,4.0)",
- org.springframework.context;version="[3.1,4.0)",
- org.springframework.core;version="[3.1,4.0)",
- org.springframework.dao;version="[3.1,4.0)",
- org.springframework.expression;version="[3.1,4.0)",
- org.springframework.jdbc.core;version="[3.1,4.0)",
- org.springframework.jdbc.datasource;version="[3.1,4.0)",
- org.springframework.security.authentication;version="[3.1,4.0)",
- org.springframework.security.core;version="[3.1,4.0)",
- org.springframework.security.core.authority;version="[3.1,4.0)",
- org.springframework.security.core.context;version="[3.1,4.0)",
- org.springframework.security.core.userdetails;version="[3.1,4.0)",
- org.springframework.test.annotation;version="[3.1,4.0)",
- org.springframework.test.context;version="[3.1,4.0)",
- org.springframework.test.context.junit4;version="[3.1,4.0)",
- org.springframework.test.context.support;version="[3.1,4.0)",
- org.springframework.test.context.transaction;version="[3.1,4.0)",
- org.springframework.transaction.annotation;version="[3.1,4.0)"
+ org.springframework.aop;version="[4.2,5.0)",
+ org.springframework.asm;version="[4.2,5.0)",
+ org.springframework.beans;version="[4.2,5.0)",
+ org.springframework.beans.factory.annotation;version="[4.2,5.0)",
+ org.springframework.context;version="[4.2,5.0)",
+ org.springframework.core;version="[4.2,5.0)",
+ org.springframework.dao;version="[4.2,5.0)",
+ org.springframework.expression;version="[4.2,5.0)",
+ org.springframework.jdbc.core;version="[4.2,5.0)",
+ org.springframework.jdbc.datasource;version="[4.2,5.0)",
+ org.springframework.security.authentication;version="[4.1,5.0)",
+ org.springframework.security.core;version="[4.1,5.0)",
+ org.springframework.security.core.authority;version="[4.1,5.0)",
+ org.springframework.security.core.context;version="[4.1,5.0)",
+ org.springframework.security.core.userdetails;version="[4.1,5.0)",
+ org.springframework.test.annotation;version="[4.2,5.0)",
+ org.springframework.test.context;version="[4.2,5.0)",
+ org.springframework.test.context.junit4;version="[4.2,5.0)",
+ org.springframework.test.context.support;version="[4.2,5.0)",
+ org.springframework.test.context.transaction;version="[4.2,5.0)",
+ org.springframework.transaction.annotation;version="[4.2,5.0)"

@@ -29,7 +29,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import javax.sql.DataSource;
-import net.solarnetwork.central.security.AuthenticatedNode;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -39,11 +38,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.transaction.BeforeTransaction;
-import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.security.AuthenticatedNode;
 
 /**
  * Base test class for transactional unit tests.
@@ -53,10 +53,10 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml",
 		"classpath:/net/solarnetwork/central/test/test-tx-context.xml" })
-@TransactionConfiguration(transactionManager = "txManager", defaultRollback = true)
-@Transactional
-public abstract class AbstractCentralTransactionalTest extends
-		AbstractTransactionalJUnit4SpringContextTests implements CentralTestConstants {
+@Transactional(transactionManager = "txManager")
+@Rollback
+public abstract class AbstractCentralTransactionalTest
+		extends AbstractTransactionalJUnit4SpringContextTests implements CentralTestConstants {
 
 	/** A date + time format. */
 	public final DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -156,9 +156,9 @@ public abstract class AbstractCentralTransactionalTest extends
 	 * sn_weather_loc table.
 	 */
 	protected void setupTestLocation(Long id, Long weatherLocId) {
-		jdbcTemplate
-				.update("insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
-						id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, TEST_TZ);
+		jdbcTemplate.update(
+				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
+				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, TEST_TZ);
 		jdbcTemplate.update("insert into solarnet.sn_weather_source (id,sname) values (?,?)",
 				TEST_WEATHER_SOURCE_ID, TEST_WEATHER_SOURCE_NAME);
 		jdbcTemplate.update("insert into solarnet.sn_weather_loc (id,loc_id,source_id) values (?,?,?)",
@@ -188,9 +188,9 @@ public abstract class AbstractCentralTransactionalTest extends
 	protected void setupTestPriceLocation(Long id, String name, Long sourceId, String sourceName) {
 		jdbcTemplate.update("insert into solarnet.sn_price_source (id,sname) values (?,?)", sourceId,
 				sourceName);
-		jdbcTemplate
-				.update("insert into solarnet.sn_price_loc (id,loc_name,source_id,currency,unit,loc_id) values (?,?,?,?,?,?)",
-						id, name, sourceId, TEST_CURRENCY, "MWh", id);
+		jdbcTemplate.update(
+				"insert into solarnet.sn_price_loc (id,loc_name,source_id,currency,unit,loc_id) values (?,?,?,?,?,?)",
+				id, name, sourceId, TEST_CURRENCY, "MWh", id);
 	}
 
 	/**
@@ -255,8 +255,8 @@ public abstract class AbstractCentralTransactionalTest extends
 		}, new CallableStatementCallback<Object>() {
 
 			@Override
-			public Object doInCallableStatement(CallableStatement cs) throws SQLException,
-					DataAccessException {
+			public Object doInCallableStatement(CallableStatement cs)
+					throws SQLException, DataAccessException {
 				cs.setString(1, "h");
 				cs.setInt(2, -1);
 				cs.execute();
@@ -278,8 +278,8 @@ public abstract class AbstractCentralTransactionalTest extends
 		}, new CallableStatementCallback<Object>() {
 
 			@Override
-			public Object doInCallableStatement(CallableStatement cs) throws SQLException,
-					DataAccessException {
+			public Object doInCallableStatement(CallableStatement cs)
+					throws SQLException, DataAccessException {
 				cs.setString(1, "h");
 				cs.setInt(2, -1);
 				cs.execute();
