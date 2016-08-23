@@ -88,6 +88,7 @@
 		<property name="startupDelay" value="${scheduler.startupDelay}"/>
 		<property name="schedulerName" value="SolarNet"/>
 		<property name="dataSource" ref="dataSource"/>
+		<property name="transactionManager" ref="txManager"/>
 		<property name="quartzProperties">
 			<props>
 				<prop key="org.quartz.jobStore.tablePrefix">${scheduler.jobStore.tablePrefix}</prop>
