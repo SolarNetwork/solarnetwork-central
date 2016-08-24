@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork JDBC
 Bundle-SymbolicName: net.solarnetwork.central.common.dao.jdbc
-Bundle-Version: 1.3.0
+Bundle-Version: 1.4.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
