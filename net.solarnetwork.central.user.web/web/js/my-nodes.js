@@ -48,8 +48,11 @@ $(document).ready(function() {
 	$('#pending-transfer').on('click', 'button.cancel-ownership-transfer', function(event) {
 		event.preventDefault();
 		var btn = $(this);
-		var url = btn.data('action');
-		$.post(url, function(json) {
+		var url = btn.data('action'),
+			userId = btn.data('user-id'),
+			nodeId = btn.data('node-id'),
+			csrf = btn.data('csrf');
+		$.post(url, { userId:userId, nodeId:nodeId, _csrf:csrf }, function(json) {
 			document.location.reload(true);
 		}).fail(function(data, statusText, xhr) {
 			SolarReg.showAlertBefore('#top', 'alert-warning', statusText);
@@ -132,13 +135,18 @@ $(document).ready(function() {
 	
 	$('#modal-cert-renew').on('click', function(event) {
 		event.preventDefault();
-		var url = $(event.target).attr('href');
-		var pass = $('#view-cert-password').val();
+		var btn = $(event.target),
+			url = btn.attr('href'),
+			csrf = btn.data('csrf'),
+			pass = $('#view-cert-password').val();
 		$.ajax({
 			type: 'POST',
 			url: url,
 			data: {password:pass},
 			dataType: 'json',
+			beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-CSRF-TOKEN', csrf);
+            },
 			success: function(json, status, xhr) {
 				$('#view-cert-modal .renewed').removeClass('hidden');
 				$('#modal-cert-renew').addClass('hidden');

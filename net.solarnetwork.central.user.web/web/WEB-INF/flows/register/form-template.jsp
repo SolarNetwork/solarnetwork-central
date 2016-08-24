@@ -19,6 +19,7 @@
 
 <form:form modelAttribute="user" cssClass="form-horizontal registration-form">
 	<tiles:insertAttribute name="detail" />
+	<sec:csrfInput/>
 </form:form>
 
 <tiles:insertAttribute name="conclusion" />

@@ -61,6 +61,7 @@
 							<button type="button" class="btn btn-small btn-default user-token-delete" title="<fmt:message key='auth-tokens.action.delete'/>">
 								<i class="glyphicon glyphicon-trash"></i>
 							</button>
+							<sec:csrfInput/>
 						</form>
 					</td>
 				</tr>
@@ -130,6 +131,7 @@
 								<button type="button" class="btn btn-small btn-default data-token-delete" title="<fmt:message key='auth-tokens.action.delete'/>">
 									<i class="glyphicon glyphicon-trash"></i>
 								</button>
+								<sec:csrfInput/>
 							</form>
 						</td>
 					</tr>
@@ -180,6 +182,7 @@
 		 	</div>
 		</div>
 	</div>
+	<sec:csrfInput/>
 </form>
 
 <form id="delete-user-auth-token" class="modal fade" action="<c:url value='/u/sec/auth-tokens/delete'/>" method="post">
@@ -208,6 +211,7 @@
 		 	</div>
 		</div>
 	</div>
+	<sec:csrfInput/>
 </form>
 
 <c:if test="${not empty userNodes}">
@@ -259,6 +263,7 @@
 			 	</div>
 			</div>
 		</div>
+		<sec:csrfInput/>
 	</form>
 	
 	<form id="delete-data-auth-token" class="modal fade" action="<c:url value='/u/sec/auth-tokens/delete'/>" method="post">
@@ -287,5 +292,6 @@
 				</div>
 			</div>
 		</div>
+		<sec:csrfInput/>
 	</form>
 </c:if>

@@ -217,6 +217,7 @@
 		</div>
 	</div>
 	<input type="hidden" name="id" value=""/>
+	<sec:csrfInput/>
 </form>
 
 <%@include file="/WEB-INF/jsp/sec/alerts/situation-modal.jsp" %>

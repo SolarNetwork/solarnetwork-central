@@ -26,6 +26,7 @@ $(document).ready(function() {
 		event.preventDefault();
 		var button = $(this);
 		var tokenId = button[0].form.elements['id'].value;
+		var csrf = button[0].form.elements['_csrf'].value;
 		if ( button.hasClass('user-token-delete') ) {
 			var form = $('#delete-user-auth-token');
 			form[0].elements['id'].value = tokenId;
@@ -33,7 +34,7 @@ $(document).ready(function() {
 			form.modal('show');
 		} else if ( button.hasClass('user-token-change-status') ) {
 			var newStatus = (button.data('status') === 'Active' ? 'Disabled' : 'Active');
-			$.post(button.data('action'), {id:tokenId, status:newStatus}, function(data) {
+			$.post(button.data('action'), {id:tokenId, status:newStatus, '_csrf':csrf}, function(data) {
 				document.location.reload(true);
 			}, 'json');
 		}
@@ -65,6 +66,7 @@ $(document).ready(function() {
 		event.preventDefault();
 		var button = $(this);
 		var tokenId = button[0].form.elements['id'].value;
+		var csrf = button[0].form.elements['_csrf'].value;
 		if ( button.hasClass('data-token-delete') ) {
 			var form = $('#delete-data-auth-token');
 			form[0].elements['id'].value = tokenId;
@@ -72,7 +74,7 @@ $(document).ready(function() {
 			form.modal('show');
 		} else if ( button.hasClass('data-token-change-status') ) {
 			var newStatus = (button.data('status') === 'Active' ? 'Disabled' : 'Active');
-			$.post(button.data('action'), {id:tokenId, status:newStatus}, function(data) {
+			$.post(button.data('action'), {id:tokenId, status:newStatus, '_csrf':csrf}, function(data) {
 				document.location.reload(true);
 			}, 'json');
 		}
