@@ -22,6 +22,6 @@ Import-Package:
  net.solarnetwork.domain;version="1.7.0",
  net.solarnetwork.util;version="1.18.0",
  org.apache.commons.codec.digest;version="[1.7,2.0)",
- org.joda.time;version="[1.6,3.0)",
- org.joda.time.base;version="[1.6,3.0)",
+ org.joda.time;version="[2.4,3.0)",
+ org.joda.time.base;version="[2.4,3.0)",
  org.slf4j;version="[1.5.0,2.0.0)"

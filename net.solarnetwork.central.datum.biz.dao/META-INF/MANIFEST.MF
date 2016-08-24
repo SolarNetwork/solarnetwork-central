@@ -13,7 +13,7 @@ Import-Package:
  net.solarnetwork.central.domain;version="1.14.0",
  net.solarnetwork.domain;version="1.4.0",
  org.aopalliance.aop;version="1.0.0",
- org.joda.time;version="[1.6,3.0)",
+ org.joda.time;version="[2.4,3.0)",
  org.slf4j;version="[1.7,2.0)",
  org.springframework.aop;version="[4.2,5.0)",
  org.springframework.aop.framework;version="[4.2,5.0)",

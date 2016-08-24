@@ -14,6 +14,6 @@ Import-Package:
  net.solarnetwork.central.datum.domain;version="1.15.0",
  net.solarnetwork.central.domain;version="1.16.0",
  net.solarnetwork.util;version="1.18.0",
- org.joda.time;version="[1.6,3.0)",
- org.joda.time.base;version="[1.6,3.0)",
- org.joda.time.field;version="[1.6,3.0)"
+ org.joda.time;version="[2.4,3.0)",
+ org.joda.time.base;version="[2.4,3.0)",
+ org.joda.time.field;version="[2.4,3.0)"
