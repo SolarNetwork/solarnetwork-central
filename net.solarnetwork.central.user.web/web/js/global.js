@@ -21,7 +21,7 @@ var SolarReg = {
 /**
  * Get the CSRF token value or set the token as a request header on an XHR object.
  * 
- * @param {XmlHttpRequest} [xhr] The XHR object to set the CSR request header on.
+ * @param {XMLHttpRequest} [xhr] The XHR object to set the CSR request header on.
  * @return The CSRF value.
  */
 SolarReg.csrf = function(xhr) {
