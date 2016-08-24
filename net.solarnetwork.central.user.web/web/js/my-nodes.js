@@ -50,9 +50,8 @@ $(document).ready(function() {
 		var btn = $(this);
 		var url = btn.data('action'),
 			userId = btn.data('user-id'),
-			nodeId = btn.data('node-id'),
-			csrf = btn.data('csrf');
-		$.post(url, { userId:userId, nodeId:nodeId, _csrf:csrf }, function(json) {
+			nodeId = btn.data('node-id');
+		$.post(url, { userId:userId, nodeId:nodeId, _csrf:SolarReg.csrf() }, function(json) {
 			document.location.reload(true);
 		}).fail(function(data, statusText, xhr) {
 			SolarReg.showAlertBefore('#top', 'alert-warning', statusText);
@@ -137,7 +136,6 @@ $(document).ready(function() {
 		event.preventDefault();
 		var btn = $(event.target),
 			url = btn.attr('href'),
-			csrf = btn.data('csrf'),
 			pass = $('#view-cert-password').val();
 		$.ajax({
 			type: 'POST',
@@ -145,7 +143,7 @@ $(document).ready(function() {
 			data: {password:pass},
 			dataType: 'json',
 			beforeSend: function(xhr) {
-                xhr.setRequestHeader('X-CSRF-TOKEN', csrf);
+				SolarReg.csrf(xhr);
             },
 			success: function(json, status, xhr) {
 				$('#view-cert-modal .renewed').removeClass('hidden');

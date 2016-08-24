@@ -44,7 +44,6 @@ $(document).ready(function() {
 		var form = this;
 		var url = $(form).attr('action');
 		var data = {};
-		var csrf = form.elements['_csrf'].value;
 		data.id = form.elements['id'].value;
 		data.nodeId = $(form.elements['nodeId']).val();
 		data.type = $(form.elements['type']).val();
@@ -66,7 +65,7 @@ $(document).ready(function() {
 			contentType : 'application/json',
 			data : JSON.stringify(data),
 			beforeSend: function(xhr) {
-                xhr.setRequestHeader('X-CSRF-TOKEN', csrf);
+				SolarReg.csrf(xhr);
             },
 			success: function(json, status, xhr) {
 				document.location.reload(true);
@@ -80,14 +79,13 @@ $(document).ready(function() {
 	}).on('click', 'button.action-delete', function(event) {
 		var form = $('#create-node-data-alert-modal').get(0),
 			alertId = form.elements['id'].value,
-			url = SolarReg.solarUserURL('/sec/alerts/') + alertId,
-			csrf = form.elements['_csrf'].value;
+			url = SolarReg.solarUserURL('/sec/alerts/') + alertId;
 		$.ajax({
 			type : 'DELETE',
 			url : url,
 			dataType : 'json',
 			beforeSend: function(xhr) {
-                xhr.setRequestHeader('X-CSRF-TOKEN', csrf);
+				SolarReg.csrf(xhr);
             },
 			success : function(json, status, xhr) {
 				document.location.reload(true);
@@ -213,11 +211,10 @@ $(document).ready(function() {
 	$('#alert-situation-resolve').on('click', function(event) {
 		event.preventDefault();
 		var me = $(this),
-			alertId = me.data('alert-id'),
-			csrf = me.data('csrf');
+			alertId = me.data('alert-id');
 		if ( alertId !== undefined ) {
 			var url = alertSituationBaseURL() + '/' + encodeURIComponent(alertId) + '/resolve';
-			$.post(url, {status:'Resolved', _csrf:csrf}, function(data) {
+			$.post(url, {status:'Resolved', _csrf:SolarReg.csrf()}, function(data) {
 				document.location.reload(true);
 			}, 'json');
 		}

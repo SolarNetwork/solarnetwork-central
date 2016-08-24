@@ -137,7 +137,6 @@
 							<button type="button" data-action="<c:url value='/u/sec/my-nodes/cancelNodeTransferRequest'/>"
 								data-user-id="${userNode.user.id}"
 								data-node-id="${userNode.node.id}"
-								data-csrf="${_csrf.token}"
 								title="<fmt:message key='my-nodes.transferOwnership.action.cancel'/>"
 								class="btn btn-small btn-danger cancel-ownership-transfer"><i class="glyphicon glyphicon-remove"></i></button>
 						</td>
@@ -344,7 +343,7 @@
 		 		<a href="<c:url value='/u/sec/my-nodes/cert/0'/>" id="modal-cert-download" class="btn btn-default">
 		 			<fmt:message key='my-nodes.cert.action.download'/>
 		 		</a>
-		 		<a href="<c:url value='/u/sec/my-nodes/cert/renew/0'/>" id="modal-cert-renew" class="btn btn-primary renew hidden" data-csrf="${_csrf.token}">
+		 		<a href="<c:url value='/u/sec/my-nodes/cert/renew/0'/>" id="modal-cert-renew" class="btn btn-primary renew hidden">
 		 			<fmt:message key='my-nodes.cert.action.renew'/>
 		 		</a>
 		 		<button type="submit" class="btn btn-primary nocert">

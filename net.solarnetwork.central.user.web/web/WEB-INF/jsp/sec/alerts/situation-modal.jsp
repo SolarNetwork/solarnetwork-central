@@ -60,7 +60,7 @@
 		 		<p class="alert-type alert-type-NodeStaleData"><fmt:message key='alerts.situation.resolve.caption'/></p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left" id="alert-situation-resolve" data-csrf="${_csrf.token}">
+		 		<button type="button" class="btn btn-danger pull-left" id="alert-situation-resolve">
 		 			<span class="glyphicon glyphicon-trash"></span>
 		 			<fmt:message key='alerts.action.resolve'/>
 		 		</button>
