@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork User Web
 Bundle-SymbolicName: net.solarnetwork.central.user.web
-Bundle-Version: 1.13.1
+Bundle-Version: 1.14.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: WEB-INF/classes/
@@ -78,7 +78,7 @@ Import-Package:
  org.eclipse.gemini.blueprint.compendium.cm;version="[2.0,3.0)",
  org.joda.time;version="[2.4,3.0)",
  org.joda.time.chrono;version="[2.4,3.0)",
- org.joda.time.contrib.jsptag;version="[2.4,3.0)",
+ org.joda.time.contrib.jsptag;version="[1.1,2.0)",
  org.joda.time.format;version="[2.4,3.0)",
  org.mortbay.servlet;version="[6.1,7.0)",
  org.osgi.framework;version="1.2.0",
