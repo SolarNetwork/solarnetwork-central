@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork In Biz
 Bundle-SymbolicName: net.solarnetwork.central.in.biz
-Bundle-Version: 1.14.0
+Bundle-Version: 1.15.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
