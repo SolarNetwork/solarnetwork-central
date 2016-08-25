@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet MyBatis Instructor DAO Test
 Bundle-SymbolicName: net.solarnetwork.central.instructor.dao.mybatis.test
-Bundle-Version: 1.1.0
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
