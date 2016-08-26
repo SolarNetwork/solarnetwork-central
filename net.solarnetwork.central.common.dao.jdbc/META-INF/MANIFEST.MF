@@ -9,7 +9,7 @@ Import-Package:
  javax.sql,
  net.solarnetwork.central.domain;version="1.18.0",
  net.solarnetwork.dao.jdbc;version="1.0.0",
- org.apache.commons.logging;version="[1.1,1.2)",
+ org.apache.commons.logging;version="[1.1,2.0)",
  org.apache.tomcat.jdbc.pool;version="1.0.9.3",
  org.eclipse.gemini.blueprint.compendium.cm;version="[2.0,3.0)",
  org.osgi.service.cm;version="1.2.0",
