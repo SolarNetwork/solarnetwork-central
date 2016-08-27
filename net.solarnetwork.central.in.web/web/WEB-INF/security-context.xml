@@ -13,10 +13,11 @@
 	<http security="none" pattern="/api/v1/pub/**" create-session="stateless"/>
 
 	<!-- Configure Spring Security -->
-	<http auto-config="false" create-session="never">
+	<http auto-config="false" create-session="never" use-expressions="false">
 	    <intercept-url pattern="/**/*Collector.do" access="ROLE_NODE" requires-channel="https"/>
 	    <intercept-url pattern="/api/v1/sec/**" access="ROLE_NODE" requires-channel="https"/>
 		<x509 subject-principal-regex="UID=(.*?)," user-service-ref="nodeUserService"/>
+		<csrf disabled="true"/>
 	</http>
 
 	<authentication-manager>
