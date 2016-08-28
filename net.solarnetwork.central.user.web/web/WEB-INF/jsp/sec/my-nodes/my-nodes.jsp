@@ -134,7 +134,9 @@
 							</joda:dateTimeZone>
 						</td>
 						<td>
-							<button type="button" data-action="<c:url value='/u/sec/my-nodes/cancelNodeTransferRequest'/>?userId=${userNode.user.id}&nodeId=${userNode.node.id}"
+							<button type="button" data-action="<c:url value='/u/sec/my-nodes/cancelNodeTransferRequest'/>"
+								data-user-id="${userNode.user.id}"
+								data-node-id="${userNode.node.id}"
 								title="<fmt:message key='my-nodes.transferOwnership.action.cancel'/>"
 								class="btn btn-small btn-danger cancel-ownership-transfer"><i class="glyphicon glyphicon-remove"></i></button>
 						</td>
@@ -287,8 +289,9 @@
 		 	</div>
 		 </div>
  	</div>
+ 	<sec:csrfInput/>
 </form>
-<form id="view-cert-modal" class="modal fade" action="<c:url value='/u/sec/my-nodes/cert'/>/0">
+<form id="view-cert-modal" class="modal fade" action="<c:url value='/u/sec/my-nodes/cert'/>/0" method="post">
 	<div class="modal-dialog">
 		<div class="modal-content">
 		 	<div class="modal-header">
@@ -337,7 +340,7 @@
 		 	</div>
 		 	<div class="modal-footer">
 		 		<a href="#" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></a>
-		 		<a href="<c:url value='/u/sec/my-nodes/cert/0'/>?download=true" id="modal-cert-download" class="btn btn-default">
+		 		<a href="<c:url value='/u/sec/my-nodes/cert/0'/>" id="modal-cert-download" class="btn btn-default">
 		 			<fmt:message key='my-nodes.cert.action.download'/>
 		 		</a>
 		 		<a href="<c:url value='/u/sec/my-nodes/cert/renew/0'/>" id="modal-cert-renew" class="btn btn-primary renew hidden">
@@ -349,6 +352,7 @@
 		 	</div>
 		 </div>
 	</div>
+ 	<sec:csrfInput/>
 </form>
 <form id="edit-node-modal" class="modal fade page1" action="<c:url value='/u/sec/my-nodes/updateNode'/>" method="post">
 	<div class="modal-dialog">
@@ -521,6 +525,7 @@
 	<input type="hidden" name="node.id"/>
 	<input type="hidden" name="user.id"/>
 	<input type="hidden" name="node.locationId"/>
+ 	<sec:csrfInput/>
 </form>
 <form id="transfer-ownership-modal" class="modal fade" action="<c:url value='/u/sec/my-nodes/requestNodeTransfer'/>" method="post">
 	<div class="modal-dialog">
@@ -559,6 +564,7 @@
 	</div>
 	<input type="hidden" name="nodeId"/>
 	<input type="hidden" name="userId"/>
+ 	<sec:csrfInput/>
 </form>
 <form id="decide-transfer-ownership-modal" class="modal fade" action="<c:url value='/u/sec/my-nodes/confirmNodeTransferRequest'/>" method="post">
 	<div class="modal-dialog">
@@ -596,6 +602,7 @@
 	<input type="hidden" name="nodeId"/>
 	<input type="hidden" name="userId"/>
 	<input type="hidden" name="accept" value="false"/>
+ 	<sec:csrfInput/>
 </form>
 <%@include file="/WEB-INF/jsp/sec/alerts/situation-modal.jsp" %>
 <%@include file="/WEB-INF/jsp/sec/alerts/alert-enums.jsp" %>

@@ -26,15 +26,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
-import net.solarnetwork.central.mail.MailService;
-import net.solarnetwork.central.mail.support.BasicMailAddress;
-import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
-import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.biz.RegistrationBiz;
-import net.solarnetwork.central.user.domain.PasswordEntry;
-import net.solarnetwork.domain.BasicRegistrationReceipt;
-import net.solarnetwork.domain.RegistrationReceipt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -44,12 +35,21 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
+import net.solarnetwork.central.mail.MailService;
+import net.solarnetwork.central.mail.support.BasicMailAddress;
+import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.biz.RegistrationBiz;
+import net.solarnetwork.central.user.domain.PasswordEntry;
+import net.solarnetwork.domain.BasicRegistrationReceipt;
+import net.solarnetwork.domain.RegistrationReceipt;
 
 /**
  * Controller for managing the reset password functionality.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller
 @RequestMapping("/resetPassword")
@@ -72,7 +72,7 @@ public class ResetPasswordController extends ControllerSupport {
 		return "resetpass/start";
 	}
 
-	@RequestMapping(value = "/generate", method = RequestMethod.GET)
+	@RequestMapping(value = "/generate", method = RequestMethod.POST)
 	public ModelAndView generateResetCode(@RequestParam("email") String email, Locale locale,
 			UriComponentsBuilder uriBuilder) {
 		RegistrationReceipt receipt;
@@ -89,10 +89,9 @@ public class ResetPasswordController extends ControllerSupport {
 			mailModel.put("receipt", receipt);
 			mailModel.put("url", uriBuilder.build().toUriString());
 
-			mailService.sendMail(
-					new BasicMailAddress(null, receipt.getUsername()),
-					new ClasspathResourceMessageTemplateDataSource(locale, messageSource.getMessage(
-							"user.resetpassword.mail.subject", null, locale),
+			mailService.sendMail(new BasicMailAddress(null, receipt.getUsername()),
+					new ClasspathResourceMessageTemplateDataSource(locale,
+							messageSource.getMessage("user.resetpassword.mail.subject", null, locale),
 							"/net/solarnetwork/central/reg/web/reset-password.txt", mailModel));
 		} catch ( AuthorizationException e ) {
 			// don't want to let anyone know about failures here... just pretend nothing happened

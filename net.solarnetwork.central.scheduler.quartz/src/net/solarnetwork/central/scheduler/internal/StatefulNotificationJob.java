@@ -22,14 +22,17 @@
 
 package net.solarnetwork.central.scheduler.internal;
 
-import org.quartz.StatefulJob;
+import org.quartz.DisallowConcurrentExecution;
+import org.quartz.PersistJobDataAfterExecution;
 
 /**
  * A stateful variation of {@link NotificationJob}.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class StatefulNotificationJob extends NotificationJob implements StatefulJob {
+@PersistJobDataAfterExecution
+@DisallowConcurrentExecution
+public class StatefulNotificationJob extends NotificationJob {
 
 }

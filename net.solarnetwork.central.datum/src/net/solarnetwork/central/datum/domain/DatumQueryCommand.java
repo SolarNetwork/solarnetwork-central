@@ -20,8 +20,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ===================================================================
- * $Id$
- * ===================================================================
  */
 
 package net.solarnetwork.central.datum.domain;
@@ -29,16 +27,16 @@ package net.solarnetwork.central.datum.domain;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.util.Cachable;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
+import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.util.Cachable;
 
 /**
  * Command object for specifying datum query criteria.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DatumQueryCommand implements Cachable, AggregateNodeDatumFilter {
 
@@ -58,9 +56,9 @@ public class DatumQueryCommand implements Cachable, AggregateNodeDatumFilter {
 	@Override
 	public String getCacheKey() {
 		String data = Arrays.toString(nodeIds) + Arrays.toString(sourceIds)
-				+ Arrays.toString(locationIds) + startDate + endDate + aggregate + mostRecent
-				+ precision + resultOffset + resultMax + datumType + properties;
-		return DigestUtils.shaHex(data);
+				+ Arrays.toString(locationIds) + startDate + endDate + aggregate + mostRecent + precision
+				+ resultOffset + resultMax + datumType + properties;
+		return DigestUtils.sha1Hex(data);
 	}
 
 	@Override

@@ -84,7 +84,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for "my nodes".
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Controller
 @RequestMapping("/sec/my-nodes")
@@ -250,11 +250,9 @@ public class MyNodesController extends ControllerSupport {
 	 *        if TRUE, then download the certificate as a PEM file
 	 * @return the response data
 	 */
-	@RequestMapping("/cert/{nodeId}")
+	@RequestMapping(value = "/cert/{nodeId}", method = RequestMethod.GET)
 	@ResponseBody
-	public Object viewCert(@PathVariable("nodeId") Long nodeId,
-			@RequestParam(value = "password", required = false) String password,
-			@RequestParam(value = "download", required = false) Boolean download) {
+	public ResponseEntity<byte[]> viewCert(@PathVariable("nodeId") Long nodeId) {
 		SecurityUser actor = SecurityUtils.getCurrentUser();
 		UserNodeCertificate cert = userBiz.getUserNodeCertificate(actor.getUserId(), nodeId);
 		if ( cert == null ) {
@@ -262,32 +260,6 @@ public class MyNodesController extends ControllerSupport {
 		}
 
 		final byte[] data = cert.getKeystoreData();
-
-		if ( !Boolean.TRUE.equals(download) ) {
-			// see if a renewal is pending
-			UserNodeCertificateInstallationStatus installationStatus = null;
-			if ( cert.getRequestId() != null ) {
-				UserNode userNode = new UserNode(cert.getUser(), cert.getNode());
-				UserNodeCertificateRenewal renewal = registrationBiz
-						.getPendingNodeCertificateRenewal(userNode, cert.getRequestId());
-				if ( renewal != null ) {
-					installationStatus = renewal.getInstallationStatus();
-				}
-			}
-
-			String pkcs7 = "";
-			X509Certificate nodeCert = null;
-			if ( data != null ) {
-				KeyStore keystore = cert.getKeyStore(password);
-				X509Certificate[] chain = cert.getNodeCertificateChain(keystore);
-				if ( chain != null && chain.length > 0 ) {
-					nodeCert = chain[0];
-				}
-				pkcs7 = certificateService.generatePKCS7CertificateChainString(chain);
-			}
-			return new UserNodeCertificateDecoded(cert, installationStatus, nodeCert, pkcs7,
-					registrationBiz.getNodeCertificateRenewalPeriod());
-		}
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentLength(data.length);
@@ -299,6 +271,54 @@ public class MyNodesController extends ControllerSupport {
 				"attachment; filename=solarnode-" + cert.getNode().getId() + ".p12");
 
 		return new ResponseEntity<byte[]>(data, headers, HttpStatus.OK);
+	}
+
+	/**
+	 * Get a certificate as a {@link UserNodeCertificate} object or the PEM
+	 * encoded value file attachment.
+	 * 
+	 * @param certId
+	 *        the ID of the certificate to get
+	 * @param password
+	 *        the password to decrypt the certificate store with
+	 * @return the response data
+	 * @since 1.3
+	 */
+	@RequestMapping(value = "/cert/{nodeId}", method = RequestMethod.POST)
+	@ResponseBody
+	public UserNodeCertificate viewCert(@PathVariable("nodeId") Long nodeId,
+			@RequestParam(value = "password") String password) {
+		SecurityUser actor = SecurityUtils.getCurrentUser();
+		UserNodeCertificate cert = userBiz.getUserNodeCertificate(actor.getUserId(), nodeId);
+		if ( cert == null ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+		}
+
+		final byte[] data = cert.getKeystoreData();
+
+		// see if a renewal is pending
+		UserNodeCertificateInstallationStatus installationStatus = null;
+		if ( cert.getRequestId() != null ) {
+			UserNode userNode = new UserNode(cert.getUser(), cert.getNode());
+			UserNodeCertificateRenewal renewal = registrationBiz
+					.getPendingNodeCertificateRenewal(userNode, cert.getRequestId());
+			if ( renewal != null ) {
+				installationStatus = renewal.getInstallationStatus();
+			}
+		}
+
+		String pkcs7 = "";
+		X509Certificate nodeCert = null;
+		if ( data != null ) {
+			KeyStore keystore = cert.getKeyStore(password);
+			X509Certificate[] chain = cert.getNodeCertificateChain(keystore);
+			if ( chain != null && chain.length > 0 ) {
+				nodeCert = chain[0];
+			}
+			pkcs7 = certificateService.generatePKCS7CertificateChainString(chain);
+		}
+		return new UserNodeCertificateDecoded(cert, installationStatus, nodeCert, pkcs7,
+				registrationBiz.getNodeCertificateRenewalPeriod());
 	}
 
 	/**
@@ -323,7 +343,7 @@ public class MyNodesController extends ControllerSupport {
 
 	@RequestMapping(value = "/cert/renew/{nodeId}", method = RequestMethod.POST)
 	@ResponseBody
-	public Object renewCert(@PathVariable("nodeId") final Long nodeId,
+	public UserNodeCertificate renewCert(@PathVariable("nodeId") final Long nodeId,
 			@RequestParam("password") final String password) {
 		SecurityUser actor = SecurityUtils.getCurrentUser();
 		UserNode userNode = userBiz.getUserNode(actor.getUserId(), nodeId);
@@ -332,7 +352,7 @@ public class MyNodesController extends ControllerSupport {
 		}
 		NetworkCertificate renewed = registrationBiz.renewNodeCertificate(userNode, password);
 		if ( renewed != null && renewed.getNetworkCertificate() != null ) {
-			return viewCert(nodeId, password, Boolean.FALSE);
+			return viewCert(nodeId, password);
 		}
 		throw new RepeatableTaskException("Certificate renewal processing");
 	}

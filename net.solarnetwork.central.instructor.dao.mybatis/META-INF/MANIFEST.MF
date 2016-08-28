@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet MyBatis Instructor DAO
 Bundle-SymbolicName: net.solarnetwork.central.instructor.dao.mybatis
-Bundle-Version: 1.1.0
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
@@ -24,16 +24,16 @@ Import-Package:
  org.apache.ibatis.session;version="[3.2,4.0)",
  org.apache.ibatis.transaction;version="[3.2,4.0)",
  org.apache.ibatis.type;version="[3.2,4.0)",
- org.joda.time;version="[1.6,3.0)",
- org.joda.time.base;version="[1.6,3.0)",
+ org.joda.time;version="[2.4,3.0)",
+ org.joda.time.base;version="[2.4,3.0)",
  org.mybatis.spring;version="[1.2,2.0)",
  org.mybatis.spring.support;version="[1.2,2.0)",
- org.slf4j;version="[1.5.0,2.0.0)",
- org.springframework.aop;version="[3.1,4.0)",
- org.springframework.aop.framework;version="[3.1,4.0)",
- org.springframework.beans;version="[3.1,4.0)",
- org.springframework.context;version="[3.1,4.0)",
- org.springframework.core;version="[3.1,4.0)",
- org.springframework.jdbc.support;version="[3.1,4.0)",
- org.springframework.transaction;version="[3.1,4.0)",
- org.springframework.transaction.annotation;version="[3.1,4.0)"
+ org.slf4j;version="[1.7,2.0)",
+ org.springframework.aop;version="[4.2,5.0)",
+ org.springframework.aop.framework;version="[4.2,5.0)",
+ org.springframework.beans;version="[4.2,5.0)",
+ org.springframework.context;version="[4.2,5.0)",
+ org.springframework.core;version="[4.2,5.0)",
+ org.springframework.jdbc.support;version="[4.2,5.0)",
+ org.springframework.transaction;version="[4.2,5.0)",
+ org.springframework.transaction.annotation;version="[4.2,5.0)"

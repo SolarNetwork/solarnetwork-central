@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet User
 Bundle-SymbolicName: net.solarnetwork.central.user
-Bundle-Version: 1.19.0
+Bundle-Version: 1.20.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
@@ -19,6 +19,6 @@ Import-Package:
  net.solarnetwork.domain;version="1.7",
  net.solarnetwork.support;version="1.2",
  net.solarnetwork.util;version="1.18",
- org.apache.commons.codec.binary;version="[1.4,2.0)",
- org.joda.time;version="[1.6,3.0)",
+ org.apache.commons.codec.binary;version="[1.7,2.0)",
+ org.joda.time;version="[2.4,3.0)",
  org.slf4j;version="[1.7.0,2.0.0)"

@@ -32,4 +32,5 @@
 
 	<form:hidden path="confirmationCode"/>
 	<form:hidden path="username"/>
+	<sec:csrfInput/>
 </form:form>
