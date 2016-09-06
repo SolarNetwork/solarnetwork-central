@@ -17,6 +17,9 @@
 	<http security="none" pattern="/css/**"/>
 	
 	<http security="none" pattern="/api/v1/pub/**"/>
+	
+	<http security="none" pattern="/associate.*"/>
+	<http security="none" pattern="/cert.*"/>
 
 	<!-- Stateless BASIC authentication realm for web services. -->
 	<http pattern="/api/v1/sec/**" create-session="stateless" entry-point-ref="authTokenEntryPoint" use-expressions="true">
