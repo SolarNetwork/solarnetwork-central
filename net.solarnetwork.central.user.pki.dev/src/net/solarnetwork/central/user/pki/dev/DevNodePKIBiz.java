@@ -44,26 +44,27 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.UUID;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.support.CertificateException;
 import net.solarnetwork.support.CertificateService;
 import net.solarnetwork.support.CertificationAuthorityService;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.FileCopyUtils;
 
 /**
  * Developer implementation of {@link NodePKIBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public class DevNodePKIBiz implements NodePKIBiz {
 
+	private static final String WEBSERVER_KEYSTORE_PASSWORD = "dev123";
 	private static final String CA_ALIAS = "ca";
-	private static final String WEBSERVER_ALIAS = "central";
+	private static final String WEBSERVER_ALIAS = "web";
 	private static final String DIR_REQUESTS = "requests";
 	private static final String PASSWORD_FILE = "secret";
 
@@ -89,9 +90,10 @@ public class DevNodePKIBiz implements NodePKIBiz {
 	 * 
 	 * <p>
 	 * Also, if a new CA certificate is generated, a {@code central-trust.jks}
-	 * keystore will be created that contains just the CA certificate. This is
-	 * designed to be configured as the developer node's trust store, to allow
-	 * posting to the development SolarIn service.
+	 * keystore will be created with a password {@code dev123} that contains
+	 * just the CA certificate. This is designed to be configured as the
+	 * developer node's trust store, to allow posting to the development SolarIn
+	 * service.
 	 * </p>
 	 */
 	public void init() {
@@ -106,7 +108,7 @@ public class DevNodePKIBiz implements NodePKIBiz {
 		InputStream in = null;
 
 		// create a webserver keystore if one does not exist
-		final String webserverKeystorePassword = "dev123";
+		final String webserverKeystorePassword = WEBSERVER_KEYSTORE_PASSWORD;
 		final File webserverKeyStoreFile = new File(getKeyStoreFile().getParentFile(), "central.jks");
 		final KeyStore webserverKeyStore;
 		try {
@@ -125,19 +127,19 @@ public class DevNodePKIBiz implements NodePKIBiz {
 					webserverCert = certificateService.generateCertificate(
 							"CN=solarnetworkdev.net, O=SolarDev", webserverKeyPair.getPublic(),
 							webserverKeyPair.getPrivate());
-					String csr = certificateService.generatePKCS10CertificateRequestString(
-							webserverCert, webserverKeyPair.getPrivate());
+					String csr = certificateService.generatePKCS10CertificateRequestString(webserverCert,
+							webserverKeyPair.getPrivate());
 					X509Certificate signedWebserverCert = caService.signCertificate(csr, caCert,
 							getPrivateKey(keyStore, CA_ALIAS));
 					webserverKeyStore.setKeyEntry(WEBSERVER_ALIAS, webserverKeyPair.getPrivate(),
-							webserverKeystorePassword.toCharArray(), new X509Certificate[] {
-									signedWebserverCert, caCert });
+							webserverKeystorePassword.toCharArray(),
+							new X509Certificate[] { signedWebserverCert, caCert });
 
 					// add the CA cert as a trusted cert
 					webserverKeyStore.setCertificateEntry(CA_ALIAS, caCert);
 
 					out = new BufferedOutputStream(new FileOutputStream(webserverKeyStoreFile));
-					webserverKeyStore.store(out, "dev123".toCharArray());
+					webserverKeyStore.store(out, WEBSERVER_KEYSTORE_PASSWORD.toCharArray());
 					log.info("Development webserver keystore saved to {}; password is dev123",
 							webserverKeyStoreFile.getAbsolutePath());
 				} catch ( Exception e ) {
@@ -174,14 +176,14 @@ public class DevNodePKIBiz implements NodePKIBiz {
 			} else {
 				in = null;
 			}
-			trustStore = loadKeyStore(KeyStore.getDefaultType(), in, "");
+			trustStore = loadKeyStore(KeyStore.getDefaultType(), in, WEBSERVER_KEYSTORE_PASSWORD);
 			X509Certificate trustCert = getCertificate(trustStore, CA_ALIAS);
 			if ( trustCert == null ) {
 				OutputStream out = null;
 				try {
 					trustStore.setCertificateEntry(CA_ALIAS, caCert);
 					out = new BufferedOutputStream(new FileOutputStream(trustKeyStoreFile));
-					trustStore.store(out, "".toCharArray());
+					trustStore.store(out, WEBSERVER_KEYSTORE_PASSWORD.toCharArray());
 					log.info("Development node trust keystore saved to {}",
 							trustKeyStoreFile.getAbsolutePath());
 				} catch ( Exception e ) {
@@ -211,9 +213,31 @@ public class DevNodePKIBiz implements NodePKIBiz {
 	}
 
 	@Override
-	public String submitCSR(X509Certificate certificate, PrivateKey privateKey) throws SecurityException {
+	public String submitCSR(X509Certificate certificate, PrivateKey privateKey)
+			throws SecurityException {
 		final String csr = certificateService.generatePKCS10CertificateRequestString(certificate,
 				privateKey);
+		final String csrID = DigestUtils.md5Hex(csr);
+		final File csrDir = new File(baseDir, DIR_REQUESTS);
+		if ( !csrDir.isDirectory() ) {
+			csrDir.mkdirs();
+		}
+		final File csrFile = new File(csrDir, csrID);
+		try {
+			FileCopyUtils.copy(csr.getBytes("US-ASCII"), csrFile);
+		} catch ( UnsupportedEncodingException e ) {
+			throw new CertificateException("Error saving CSR: " + e.getMessage());
+		} catch ( IOException e ) {
+			log.error("Error saving CSR to [{}]", csrFile, e);
+			throw new CertificateException("Error saving CSR data");
+		}
+		return csrID;
+	}
+
+	@Override
+	public String submitRenewalRequest(X509Certificate certificate) throws SecurityException {
+		final String csr = certificateService
+				.generatePKCS7CertificateChainString(new X509Certificate[] { certificate });
 		final String csrID = DigestUtils.md5Hex(csr);
 		final File csrDir = new File(baseDir, DIR_REQUESTS);
 		if ( !csrDir.isDirectory() ) {
@@ -328,11 +352,11 @@ public class DevNodePKIBiz implements NodePKIBiz {
 			try {
 				return new String(FileCopyUtils.copyToByteArray(pwFile), "US-ASCII");
 			} catch ( UnsupportedEncodingException e ) {
-				throw new CertificateException("Error decoding keystore secret file "
-						+ pwFile.getAbsolutePath(), e);
+				throw new CertificateException(
+						"Error decoding keystore secret file " + pwFile.getAbsolutePath(), e);
 			} catch ( IOException e ) {
-				throw new CertificateException("Error reading keystore secret file"
-						+ pwFile.getAbsolutePath(), e);
+				throw new CertificateException(
+						"Error reading keystore secret file" + pwFile.getAbsolutePath(), e);
 			}
 		}
 
@@ -344,8 +368,8 @@ public class DevNodePKIBiz implements NodePKIBiz {
 		try {
 			FileCopyUtils.copy(pw.getBytes(), pwFile);
 		} catch ( IOException e ) {
-			throw new CertificateException("Unable to save keystore secret file "
-					+ pwFile.getAbsolutePath(), e);
+			throw new CertificateException(
+					"Unable to save keystore secret file " + pwFile.getAbsolutePath(), e);
 		}
 		return pw;
 	}
@@ -426,7 +450,8 @@ public class DevNodePKIBiz implements NodePKIBiz {
 					out.flush();
 					out.close();
 				} catch ( IOException e ) {
-					throw new CertificateException("Error closing KeyStore file: " + ksFile.getPath(), e);
+					throw new CertificateException("Error closing KeyStore file: " + ksFile.getPath(),
+							e);
 				}
 			}
 		}

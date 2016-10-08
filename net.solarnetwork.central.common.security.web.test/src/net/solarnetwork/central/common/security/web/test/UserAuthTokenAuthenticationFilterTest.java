@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.security.web.test;
 
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.same;
@@ -45,9 +46,8 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint;
-import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter;
 import org.apache.commons.codec.binary.Base64;
 import org.easymock.EasyMock;
 import org.junit.Before;
@@ -60,12 +60,14 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint;
+import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter;
 
 /**
  * Unit tests for the {@link UserAuthTokenAuthenticationFilter} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UserAuthTokenAuthenticationFilterTest {
 
@@ -97,7 +99,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 	@Test
 	public void noAuthorizationHeader() throws ServletException, IOException {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
-		filterChain.doFilter(same(request), same(response));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
@@ -144,20 +146,17 @@ public class UserAuthTokenAuthenticationFilterTest {
 	}
 
 	private void setupAuthorizationHeader(MockHttpServletRequest request, String value) {
-		request.addHeader(HTTP_HEADER_AUTH, UserAuthTokenAuthenticationFilter.AUTHORIZATION_SCHEME + ' '
-				+ value);
+		request.addHeader(HTTP_HEADER_AUTH,
+				UserAuthTokenAuthenticationFilter.AUTHORIZATION_SCHEME + ' ' + value);
 	}
 
 	@Test
 	public void invalidScheme() throws ServletException, IOException {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
-		filterChain.doFilter(same(request), same(response));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		replay(filterChain, userDetailsService);
-		request.addHeader(
-				HTTP_HEADER_AUTH,
-				"FooScheme "
-						+ createAuthorizationHeaderValue(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
-								new Date()));
+		request.addHeader(HTTP_HEADER_AUTH, "FooScheme "
+				+ createAuthorizationHeaderValue(TEST_AUTH_TOKEN, TEST_PASSWORD, request, new Date()));
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
 
@@ -168,8 +167,8 @@ public class UserAuthTokenAuthenticationFilterTest {
 		assertEquals(UserAuthTokenAuthenticationFilter.AUTHORIZATION_SCHEME,
 				response.getHeader("WWW-Authenticate"));
 		assertNotNull(response.getErrorMessage());
-		assertTrue("Error message must match [" + expectedMessage + "]", response.getErrorMessage()
-				.matches(expectedMessage));
+		assertTrue("Error message must match [" + expectedMessage + "]",
+				response.getErrorMessage().matches(expectedMessage));
 		assertEquals(expectedMessage, response.getErrorMessage());
 	}
 
@@ -226,7 +225,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request,
 				createAuthorizationHeaderValue(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
-		filterChain.doFilter(same(request), same(response));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
@@ -242,7 +241,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 		request.addHeader("X-SN-Date", now);
 		setupAuthorizationHeader(request,
 				createAuthorizationHeaderValue(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
-		filterChain.doFilter(same(request), same(response));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
@@ -263,7 +262,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request,
 				createAuthorizationHeaderValue(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
-		filterChain.doFilter(same(request), same(response));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);

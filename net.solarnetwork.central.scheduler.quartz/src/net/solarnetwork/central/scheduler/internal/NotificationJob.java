@@ -23,7 +23,6 @@
 package net.solarnetwork.central.scheduler.internal;
 
 import java.util.Map;
-import net.solarnetwork.central.scheduler.SchedulerConstants;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.quartz.Job;
@@ -34,6 +33,7 @@ import org.quartz.SchedulerContext;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.solarnetwork.central.scheduler.SchedulerConstants;
 
 /**
  * Quartz Job that sends out an OSGi Event notification based on the data in the
@@ -45,11 +45,13 @@ import org.slf4j.LoggerFactory;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class NotificationJob implements Job {
 
-	/** The {@link org.quartz.SchedulerContext} key for the {@link EventAdmin}. */
+	/**
+	 * The {@link org.quartz.SchedulerContext} key for the {@link EventAdmin}.
+	 */
 	public static final String EVENT_ADMIN_CONTEXT_KEY = "EventAdmin";
 
 	/** The default amount of time to wait for a job to complete or fail. */
@@ -78,15 +80,14 @@ public class NotificationJob implements Job {
 		final JobDataMap jobDataMap = jobContext.getMergedJobDataMap();
 		final String jobTopic = jobDataMap.getString(SchedulerConstants.JOB_TOPIC);
 
-		@SuppressWarnings("unchecked")
 		final Event event = new Event(jobTopic, jobContext.getMergedJobDataMap());
 
 		// save a ref to jobContext for finished callback
 		ctx = jobContext;
 
 		final long start = System.currentTimeMillis();
-		final long maxWait = (jobDataMap.containsKey(SchedulerConstants.JOB_MAX_WAIT) ? (Long) jobDataMap
-				.get(SchedulerConstants.JOB_MAX_WAIT) : DEFAULT_MAX_JOB_WAIT);
+		final long maxWait = (jobDataMap.containsKey(SchedulerConstants.JOB_MAX_WAIT)
+				? (Long) jobDataMap.get(SchedulerConstants.JOB_MAX_WAIT) : DEFAULT_MAX_JOB_WAIT);
 		try {
 			synchronized ( this ) {
 				// post the job event now, waiting for our acknowledgment event
@@ -95,8 +96,8 @@ public class NotificationJob implements Job {
 				while ( !complete ) {
 					this.wait(maxWait);
 					if ( !complete && (System.currentTimeMillis() - start) > maxWait ) {
-						throw new JobExecutionException("Timeout waiting for job to complete ("
-								+ maxWait + "ms)");
+						throw new JobExecutionException(
+								"Timeout waiting for job to complete (" + maxWait + "ms)");
 					}
 				}
 			}
@@ -130,7 +131,8 @@ public class NotificationJob implements Job {
 		final Map<String, ?> jobProps = (Map<String, ?>) event
 				.getProperty(SchedulerConstants.JOB_PROPERTIES);
 		if ( jobProps != null && ctx != null ) {
-			log.debug("Saving {} job result properties: {}", ctx.getJobDetail().getName(), jobProps);
+			log.debug("Saving {} job result properties: {}", ctx.getJobDetail().getKey().getName(),
+					jobProps);
 			ctx.getJobDetail().getJobDataMap().put(SchedulerConstants.JOB_PROPERTIES, jobProps);
 		}
 		throwable = (Throwable) event.getProperty(SchedulerConstants.JOB_EXCEPTION);

@@ -4,7 +4,7 @@
 		xmlns:p="http://www.springframework.org/schema/p"
 		xsi:schemaLocation="
 			http://www.springframework.org/schema/beans
-			http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+			http://www.springframework.org/schema/beans/spring-beans-4.2.xsd">
 
 	<!-- Note: we use ReloadableResourceBundleMessageSource with no reloading because
 	           ResourceBundleMessageSource doesn't resolve the messages properly. -->

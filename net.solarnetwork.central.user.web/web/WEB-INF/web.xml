@@ -143,6 +143,10 @@
 		<servlet-name>solaruser</servlet-name>
 		<url-pattern>/api/*</url-pattern>
 	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>solaruser</servlet-name>
+		<url-pattern>/logout</url-pattern>
+	</servlet-mapping>
 	
 	<!-- pack:tag servlet for packed, cached resources -->
 	<servlet>

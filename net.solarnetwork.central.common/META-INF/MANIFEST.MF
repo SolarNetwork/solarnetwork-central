@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Common Central
 Bundle-SymbolicName: net.solarnetwork.central.common
-Bundle-Version: 1.29.0
+Bundle-Version: 1.30.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
@@ -24,10 +24,10 @@ Import-Package:
  net.solarnetwork.domain;version="1.7.0",
  net.solarnetwork.util;version="1.18.0",
  org.hibernate.validator;version="[5.0,6.0)";resolution:=optional,
- org.joda.time;version="[1.6,3.0)",
+ org.joda.time;version="[2.4,3.0)",
  org.osgi.service.event;version="[1.2,2.0)",
  org.slf4j;version="[1.6.0,2.0.0)",
- org.springframework.context;version="[3.1,4.0)",
- org.springframework.util;version="[3.1,4.0)",
- org.springframework.validation;version="[3.1,4.0)",
- org.springframework.validation.beanvalidation;version="[3.1,4.0)"
+ org.springframework.context;version="[4.2,5.0)",
+ org.springframework.util;version="[4.2,5.0)",
+ org.springframework.validation;version="[4.2,5.0)",
+ org.springframework.validation.beanvalidation;version="[4.2,5.0)"

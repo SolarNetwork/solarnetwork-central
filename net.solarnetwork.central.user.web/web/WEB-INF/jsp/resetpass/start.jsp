@@ -2,7 +2,7 @@
 	<fmt:message key="user.resetpassword.intro"/>
 </p>
 
-<form class="form-horizontal" method="get" action="<c:url value='/u/resetPassword/generate'/>">
+<form class="form-horizontal" method="post" action="<c:url value='/u/resetPassword/generate'/>">
 
 	<fieldset>
 		<div class="form-group">
@@ -22,5 +22,5 @@
 			<input type="submit" class="btn btn-primary" value="<fmt:message key='user.resetpassword.submit.label'/>"/>
 		</div>
 	</div>
-
+	<sec:csrfInput/>
 </form>

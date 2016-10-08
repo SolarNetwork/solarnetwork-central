@@ -24,13 +24,7 @@ package net.solarnetwork.central.scheduler.internal;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import net.solarnetwork.central.domain.PingTest;
-import net.solarnetwork.central.domain.PingTestResult;
-import net.solarnetwork.central.scheduler.EventHandlerSupport;
-import net.solarnetwork.central.scheduler.SchedulerConstants;
-import net.solarnetwork.central.scheduler.SchedulerUtils;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventHandler;
@@ -38,17 +32,24 @@ import org.quartz.JobExecutionContext;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
+import org.quartz.TriggerKey;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import net.solarnetwork.central.domain.PingTest;
+import net.solarnetwork.central.domain.PingTestResult;
+import net.solarnetwork.central.scheduler.EventHandlerSupport;
+import net.solarnetwork.central.scheduler.SchedulerConstants;
+import net.solarnetwork.central.scheduler.SchedulerUtils;
 
 /**
  * Manage the lifecycle of the Quartz Scheduler.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class SchedulerManager extends EventHandlerSupport implements
-		ApplicationListener<ContextRefreshedEvent>, EventHandler, PingTest {
+public class SchedulerManager extends EventHandlerSupport
+		implements ApplicationListener<ContextRefreshedEvent>, EventHandler, PingTest {
 
 	private static final String TEST_TOPIC = "net/solarnetwork/central/scheduler/TEST";
 
@@ -71,8 +72,9 @@ public class SchedulerManager extends EventHandlerSupport implements
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		try {
 			for ( String triggerGroup : scheduler.getTriggerGroupNames() ) {
-				for ( String triggerName : scheduler.getTriggerNames(triggerGroup) ) {
-					Trigger t = scheduler.getTrigger(triggerName, triggerGroup);
+				for ( TriggerKey triggerKey : scheduler
+						.getTriggerKeys(GroupMatcher.triggerGroupEquals(triggerGroup)) ) {
+					Trigger t = scheduler.getTrigger(triggerKey);
 					log.debug("Found trigger: " + t);
 				}
 			}
@@ -116,7 +118,6 @@ public class SchedulerManager extends EventHandlerSupport implements
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private NotificationJob getRunningJob(Event event) throws SchedulerException {
 		final String jobId = (String) event.getProperty(SchedulerConstants.JOB_ID);
 		if ( jobId == null ) {
@@ -124,10 +125,10 @@ public class SchedulerManager extends EventHandlerSupport implements
 			return null;
 		}
 		final String jobGroup = (String) event.getProperty(SchedulerConstants.JOB_GROUP);
-		for ( JobExecutionContext jec : (List<JobExecutionContext>) scheduler
-				.getCurrentlyExecutingJobs() ) {
+		for ( JobExecutionContext jec : scheduler.getCurrentlyExecutingJobs() ) {
 			Trigger t = jec.getTrigger();
-			if ( jobId.equals(t.getName()) && (jobGroup == null || jobGroup.equals(t.getGroup())) ) {
+			if ( jobId.equals(t.getKey().getName())
+					&& (jobGroup == null || jobGroup.equals(t.getKey().getGroup())) ) {
 				return (NotificationJob) jec.getJobInstance();
 			}
 		}
@@ -166,26 +167,27 @@ public class SchedulerManager extends EventHandlerSupport implements
 		long now = System.currentTimeMillis();
 		final String stateErrorTemplate = "Trigger %s.%s is in the %s state, since %tc";
 		for ( String triggerGroup : s.getTriggerGroupNames() ) {
-			for ( String triggerName : s.getTriggerNames(triggerGroup) ) {
+			for ( TriggerKey triggerKey : scheduler
+					.getTriggerKeys(GroupMatcher.triggerGroupEquals(triggerGroup)) ) {
 				triggerCount += 1;
-				int triggerState = s.getTriggerState(triggerName, triggerGroup);
+				Trigger.TriggerState triggerState = s.getTriggerState(triggerKey);
 				Date lastFireTime = null;
 				Trigger trigger = null;
 				switch (triggerState) {
-					case Trigger.STATE_BLOCKED:
-						trigger = s.getTrigger(triggerName, triggerGroup);
+					case BLOCKED:
+						trigger = s.getTrigger(triggerKey);
 						lastFireTime = trigger.getPreviousFireTime();
 						if ( lastFireTime != null
 								&& lastFireTime.getTime() + (blockedJobMaxSeconds * 1000) < now ) {
 							return new PingTestResult(false, String.format(stateErrorTemplate,
-									triggerGroup, triggerName, "BLOCKED", lastFireTime));
+									triggerGroup, triggerKey.getName(), "BLOCKED", lastFireTime));
 						}
 
-					case Trigger.STATE_ERROR:
-						trigger = s.getTrigger(triggerName, triggerGroup);
+					case ERROR:
+						trigger = s.getTrigger(triggerKey);
 						lastFireTime = trigger.getPreviousFireTime();
 						return new PingTestResult(false, String.format(stateErrorTemplate, triggerGroup,
-								triggerName, "ERROR", lastFireTime));
+								triggerKey.getName(), "ERROR", lastFireTime));
 
 					default:
 						// no error

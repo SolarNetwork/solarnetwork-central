@@ -26,25 +26,29 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
 import java.util.TimeZone;
-import net.solarnetwork.central.scheduler.EventHandlerSupport;
-import net.solarnetwork.central.scheduler.SchedulerConstants;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
+import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
+import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
+import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
+import org.quartz.TriggerKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.solarnetwork.central.scheduler.EventHandlerSupport;
+import net.solarnetwork.central.scheduler.SchedulerConstants;
 
 /**
  * OSGi {@link EventHandler} that schedules job requests.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class NotificationScheduler extends EventHandlerSupport {
 
@@ -96,65 +100,63 @@ public class NotificationScheduler extends EventHandlerSupport {
 		@SuppressWarnings("unchecked")
 		final Map<String, ?> jobProps = (Map<String, ?>) event
 				.getProperty(SchedulerConstants.JOB_PROPERTIES);
-
-		JobDetail job = scheduler.getJobDetail(jobName, NOTIFICATION_JOB_GROUP);
-		if ( job == null ) {
-			job = new JobDetail(jobName, NOTIFICATION_JOB_GROUP,
-					(jobCron != null ? StatefulNotificationJob.class : NotificationJob.class), false,
-					true, false);
-			scheduler.addJob(job, false);
-		}
-
-		final Trigger trigger;
-		if ( jobDate != null ) {
-			trigger = new SimpleTrigger(jobId, jobGroup, new Date(jobDate));
-		} else {
-			try {
-				CronTrigger cronTrigger = new CronTrigger(jobId, jobGroup, jobCron);
-				if ( cronTimeZoneId != null ) {
-					cronTrigger.setTimeZone(TimeZone.getTimeZone(cronTimeZoneId));
-				}
-				trigger = cronTrigger;
-			} catch ( ParseException e ) {
-				log.error("Bad cron expression [{}]: {}", jobCron, e.getMessage());
-				return;
-			}
-		}
-		trigger.setJobName(jobName);
-		trigger.setJobGroup(NOTIFICATION_JOB_GROUP);
+		JobKey jobKey = new JobKey(jobName, NOTIFICATION_JOB_GROUP);
 
 		// set up trigger properties, copying all job request properties
-		JobDataMap jobMap = new JobDataMap();
+		final JobDataMap jobMap = new JobDataMap();
 		for ( String propName : event.getPropertyNames() ) {
 			jobMap.put(propName, event.getProperty(propName));
 		}
 		if ( jobProps != null ) {
 			jobMap.putAll(jobProps);
 		}
-		trigger.setJobDataMap(jobMap);
 
-		Trigger t = scheduler.getTrigger(jobId, jobGroup);
+		final TriggerKey triggerKey = new TriggerKey(jobId, jobGroup);
+		final Trigger trigger;
+		if ( jobDate != null ) {
+			trigger = TriggerBuilder.newTrigger().withIdentity(triggerKey).forJob(jobKey)
+					.usingJobData(jobMap).startAt(new Date(jobDate)).build();
+		} else {
+			try {
+				CronScheduleBuilder cronBuilder = CronScheduleBuilder
+						.cronScheduleNonvalidatedExpression(jobCron);
+				if ( cronTimeZoneId != null ) {
+					cronBuilder.inTimeZone(TimeZone.getTimeZone(cronTimeZoneId));
+				}
+				CronTrigger cronTrigger = TriggerBuilder.newTrigger().withIdentity(triggerKey)
+						.forJob(jobKey).usingJobData(jobMap).withSchedule(cronBuilder).build();
+				trigger = cronTrigger;
+			} catch ( ParseException e ) {
+				log.error("Bad cron expression [{}] for job {}: {}", jobName, jobCron, e.getMessage());
+				return;
+			}
+		}
+
+		Trigger t = scheduler.getTrigger(triggerKey);
 		if ( t != null ) {
 			// job already scheduled, check for same time to re-schedule
 			if ( t instanceof CronTrigger ) {
 				CronTrigger ct = (CronTrigger) t;
 				if ( !ct.getCronExpression().equals(jobCron) ) {
-					log.debug("Re-scheduling cron job {}.{} for {}", new Object[] { jobGroup, jobId,
-							jobCron });
-					scheduler.rescheduleJob(jobId, jobGroup, trigger);
+					log.debug("Re-scheduling cron job {}.{} for {}",
+							new Object[] { jobGroup, jobId, jobCron });
+					scheduler.rescheduleJob(triggerKey, trigger);
 				}
 			} else {
 				Date d = t.getStartTime();
 				if ( d.getTime() != jobDate ) {
-					log.debug("Re-scheduling job {}.{} for {}", new Object[] { jobGroup, jobId,
-							new Date(jobDate) });
-					scheduler.rescheduleJob(jobId, jobGroup, trigger);
+					log.debug("Re-scheduling job {}.{} for {}",
+							new Object[] { jobGroup, jobId, new Date(jobDate) });
+					scheduler.rescheduleJob(triggerKey, trigger);
 				}
 			}
 		} else {
 			log.debug("Scheduling job {}.{} for {}", new Object[] { jobGroup, jobId,
 					(jobCron != null ? jobCron : new Date(jobDate).toString()) });
-			scheduler.scheduleJob(trigger);
+			JobDetail job = JobBuilder
+					.newJob((jobCron != null ? StatefulNotificationJob.class : NotificationJob.class))
+					.withIdentity(jobKey).requestRecovery().storeDurably(false).build();
+			scheduler.scheduleJob(job, trigger);
 		}
 	}
 
