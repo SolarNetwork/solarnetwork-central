@@ -26,18 +26,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import org.joda.time.DateTime;
+import org.junit.Before;
+import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
-import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test cases for the {@link MyBatisUserAuthTokenDao} class.
@@ -102,7 +104,8 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setAuthToken(TEST_TOKEN);
 		authToken.setStatus(UserAuthTokenStatus.Active);
 		authToken.setType(UserAuthTokenType.ReadNodeData);
-		authToken.setNodeIds(new HashSet<Long>(Arrays.asList(Long.valueOf(node.getId()))));
+		authToken.setPolicy(new BasicSecurityPolicy.Builder()
+				.withNodeIds(Collections.singleton(node.getId())).build());
 		String id = userAuthTokenDao.store(authToken);
 		assertNotNull(id);
 		this.userAuthToken = authToken;
@@ -119,7 +122,8 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setAuthToken(TEST_TOKEN);
 		authToken.setStatus(UserAuthTokenStatus.Active);
 		authToken.setType(UserAuthTokenType.ReadNodeData);
-		authToken.setNodeIds(new HashSet<Long>(Arrays.asList(Long.valueOf(node.getId()), nodeId2)));
+		authToken.setPolicy(new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<Long>(Arrays.asList(node.getId(), nodeId2))).build());
 		String id = userAuthTokenDao.store(authToken);
 		assertNotNull(id);
 		this.userAuthToken = authToken;

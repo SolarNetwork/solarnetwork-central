@@ -39,14 +39,9 @@
 	<beans:bean id="jdbcUserService" class="net.solarnetwork.central.security.jdbc.JdbcUserDetailsService">
 		<beans:property name="dataSource" ref="dataSource"/>
 			<beans:property name="usersByUsernameQuery" 
-					value="SELECT username, password, enabled, user_id, display_name, TRUE AS is_token,
-								token_type, node_ids
-							FROM solaruser.user_auth_token_login 
-							WHERE username = ?"/>
+					value="#{T(net.solarnetwork.central.security.jdbc.JdbcUserDetailsService).DEFAULT_TOKEN_USERS_BY_USERNAME_SQL}"/>
 			<beans:property name="authoritiesByUsernameQuery" 
-					value="SELECT username, authority
-							FROM solaruser.user_auth_token_role
-							WHERE username = ?"/>
+					value="#{T(net.solarnetwork.central.security.jdbc.JdbcUserDetailsService).DEFAULT_TOKEN_AUTHORITIES_BY_USERNAME_SQL}"/>
 	</beans:bean>
 	
 	<beans:bean id="authTokenEntryPoint" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint"/>

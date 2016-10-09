@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.support;
 import java.util.List;
 import java.util.Set;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
@@ -38,8 +39,9 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * Delegating implementation of {@link UserBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
+@SuppressWarnings("deprecation")
 public class DelegatingUserBiz implements UserBiz {
 
 	private final UserBiz delegate;
@@ -93,6 +95,12 @@ public class DelegatingUserBiz implements UserBiz {
 	@Override
 	public UserAuthToken generateUserAuthToken(Long userId, UserAuthTokenType type, Set<Long> nodeIds) {
 		return delegate.generateUserAuthToken(userId, type, nodeIds);
+	}
+
+	@Override
+	public UserAuthToken generateUserAuthToken(Long userId, UserAuthTokenType type,
+			SecurityPolicy policy) {
+		return delegate.generateUserAuthToken(userId, type, policy);
 	}
 
 	@Override

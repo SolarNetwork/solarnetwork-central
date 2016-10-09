@@ -46,31 +46,19 @@
 
 	<beans:bean id="jdbcUserService" class="net.solarnetwork.central.security.jdbc.JdbcUserDetailsService">
 		<beans:property name="dataSource" ref="dataSource"/>
-		<beans:property name="usersByUsernameQuery" 
-				value="SELECT username, password, enabled, user_id, display_name, FALSE AS is_token
-						FROM solaruser.user_login 
-						WHERE username = ?"/>
-		<beans:property name="authoritiesByUsernameQuery" 
-				value="SELECT username, authority
-						FROM solaruser.user_login_role
-						WHERE username = ?"/>
 	</beans:bean>
 
 	<beans:bean id="authTokenEntryPoint" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint"/>
 
 	<beans:bean id="authTokenFilter" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter">
 		<beans:property name="userDetailsService">
-			<beans:bean parent="jdbcUserService">
+			<beans:bean class="net.solarnetwork.central.security.jdbc.JdbcUserDetailsService">
+				<beans:property name="dataSource" ref="dataSource"/>
 				<beans:property name="usersByUsernameQuery" 
-						value="SELECT username, password, enabled, user_id, display_name, TRUE AS is_token,
-									token_type, node_ids
-								FROM solaruser.user_auth_token_login 
-								WHERE username = ?"/>
+						value="#{T(net.solarnetwork.central.security.jdbc.JdbcUserDetailsService).DEFAULT_TOKEN_USERS_BY_USERNAME_SQL}"/>
 				<beans:property name="authoritiesByUsernameQuery" 
-						value="SELECT username, authority
-								FROM solaruser.user_auth_token_role
-								WHERE username = ?"/>
-				</beans:bean>
+						value="#{T(net.solarnetwork.central.security.jdbc.JdbcUserDetailsService).DEFAULT_TOKEN_AUTHORITIES_BY_USERNAME_SQL}"/>
+			</beans:bean>
 		</beans:property>
 		<beans:property name="authenticationEntryPoint" ref="authTokenEntryPoint"/>
 	</beans:bean>

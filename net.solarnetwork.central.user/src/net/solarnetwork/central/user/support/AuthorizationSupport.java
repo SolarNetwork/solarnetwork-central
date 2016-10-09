@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.support;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityException;
@@ -32,14 +34,12 @@ import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Helper class for authorization needs, e.g. aspect impelmentations.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class AuthorizationSupport {
 
@@ -195,7 +195,8 @@ public abstract class AuthorizationSupport {
 			}
 			if ( UserAuthTokenType.ReadNodeData.toString().equals(token.getTokenType()) ) {
 				// data token, so token must include the requested node ID
-				if ( token.getTokenIds() == null || !token.getTokenIds().contains(nodeId) ) {
+				if ( token.getPolicy() == null || token.getPolicy().getNodeIds() == null
+						|| !token.getPolicy().getNodeIds().contains(nodeId) ) {
 					log.warn("Access DENIED to node {} for token {}; node not included", nodeId,
 							token.getToken());
 					throw new AuthorizationException(token.getToken(),
@@ -245,7 +246,8 @@ public abstract class AuthorizationSupport {
 				if ( !token.getUserId().equals(userId) ) {
 					log.warn("Access DENIED to user {} for token {}; wrong user", userId,
 							token.getToken());
-					throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+					throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
+							userId);
 				}
 				return;
 			}

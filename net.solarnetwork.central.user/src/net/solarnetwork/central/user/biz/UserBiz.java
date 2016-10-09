@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
@@ -38,7 +39,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * API for registered user tasks.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface UserBiz {
 
@@ -129,8 +130,26 @@ public interface UserBiz {
 	 * @param nodeIds
 	 *        an optional set of node IDs to include with the token
 	 * @return the generated token
+	 * @deprecated use
+	 *             {@link #generateUserAuthToken(Long, UserAuthTokenType, SecurityPolicy)}
+	 *             with node IDs applied
 	 */
+	@Deprecated
 	UserAuthToken generateUserAuthToken(Long userId, UserAuthTokenType type, Set<Long> nodeIds);
+
+	/**
+	 * Generate a new, unique {@link UserAuthToken} entity and return it.
+	 * 
+	 * @param userId
+	 *        the user ID to generate the token for
+	 * @param type
+	 *        the type of token to create
+	 * @param policy
+	 *        an optional policy to attach, or {@code null} for no restrictions
+	 * @return the generated token
+	 * @since 1.3
+	 */
+	UserAuthToken generateUserAuthToken(Long userId, UserAuthTokenType type, SecurityPolicy policy);
 
 	/**
 	 * Get all {@link UserAuthToken} entities for a given user.

@@ -28,13 +28,10 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
-import javax.sql.DataSource;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -49,7 +46,7 @@ import net.solarnetwork.central.security.AuthenticatedNode;
  * Base test class for transactional unit tests.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml",
 		"classpath:/net/solarnetwork/central/test/test-tx-context.xml" })
@@ -63,15 +60,6 @@ public abstract class AbstractCentralTransactionalTest
 
 	/** A class-level logger. */
 	protected final Logger log = Logger.getLogger(getClass());
-
-	protected JdbcTemplate jdbcTemplate;
-
-	@Override
-	@Autowired
-	public void setDataSource(DataSource dataSource) {
-		super.setDataSource(dataSource);
-		jdbcTemplate = new JdbcTemplate(dataSource);
-	}
 
 	/**
 	 * Setup the {@link #dateTimeFormat} timezone.

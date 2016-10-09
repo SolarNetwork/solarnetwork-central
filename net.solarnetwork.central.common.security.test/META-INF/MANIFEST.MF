@@ -21,6 +21,7 @@ Import-Package:
  org.springframework.context;version="[4.2,5.0)",
  org.springframework.core;version="[4.2,5.0)",
  org.springframework.expression;version="[4.2,5.0)",
+ org.springframework.jdbc.support;version="[4.2,5.0)",
  org.springframework.test.annotation;version="[4.2,5.0)",
  org.springframework.test.context;version="[4.2,5.0)",
  org.springframework.test.context.junit4;version="[4.2,5.0)",

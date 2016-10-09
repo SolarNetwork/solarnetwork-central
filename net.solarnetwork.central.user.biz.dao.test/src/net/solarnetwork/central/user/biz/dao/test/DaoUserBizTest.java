@@ -32,11 +32,18 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import java.util.HashSet;
 import java.util.Set;
+import org.easymock.EasyMock;
+import org.easymock.IArgumentMatcher;
+import org.joda.time.DateTime;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -46,12 +53,6 @@ import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
-import org.easymock.EasyMock;
-import org.easymock.IArgumentMatcher;
-import org.joda.time.DateTime;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test cases for the {@link DaoUserBiz} class.
@@ -124,10 +125,11 @@ public class DaoUserBizTest {
 		expect(userAuthTokenDao.store(anyObject(UserAuthToken.class))).andReturn(TEST_AUTH_TOKEN);
 		replayProperties();
 		UserAuthToken generated = userBiz.generateUserAuthToken(TEST_USER_ID, UserAuthTokenType.User,
-				null);
+				(SecurityPolicy) null);
 		assertNotNull(generated);
 		assertNotNull(generated.getAuthToken());
-		assertEquals("Auth token should be exactly 20 characters", 20, generated.getAuthToken().length());
+		assertEquals("Auth token should be exactly 20 characters", 20,
+				generated.getAuthToken().length());
 		assertNotNull(generated.getAuthSecret());
 		assertEquals(TEST_USER_ID, generated.getUserId());
 		assertEquals(UserAuthTokenStatus.Active, generated.getStatus());
@@ -245,8 +247,8 @@ public class DaoUserBizTest {
 		locMatch.setName("bar");
 
 		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
-		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass()))).andReturn(
-				locMatch);
+		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass())))
+				.andReturn(locMatch);
 		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), -9L))).andReturn(testNode.getId());
 		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
 
@@ -279,12 +281,12 @@ public class DaoUserBizTest {
 		newLoc.setId(-99L);
 
 		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
-		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass()))).andReturn(
-				null);
+		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass())))
+				.andReturn(null);
 		expect(solarLocationDao.store(EasyMock.isA(loc.getClass()))).andReturn(newLoc.getId());
 		expect(solarLocationDao.get(newLoc.getId())).andReturn(newLoc);
-		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), newLoc.getId()))).andReturn(
-				testNode.getId());
+		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), newLoc.getId())))
+				.andReturn(testNode.getId());
 		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
 
 		replayProperties();
