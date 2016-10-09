@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.LocationPrecision;
 
@@ -39,6 +40,7 @@ import net.solarnetwork.central.domain.LocationPrecision;
  * @version 1.0
  */
 @JsonDeserialize(builder = net.solarnetwork.central.security.BasicSecurityPolicy.Builder.class)
+@JsonSerialize(using = SecurityPolicySerializer.class)
 public class BasicSecurityPolicy implements SecurityPolicy {
 
 	/**
@@ -61,8 +63,19 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 		private Set<String> sourceIds;
 		private Set<Aggregation> aggregations;
 		private Set<LocationPrecision> locationPrecisions;
-		private boolean minAggregation = true;
-		private boolean minLocationPrecision = true;
+		private Aggregation minAggregation;
+		private LocationPrecision minLocationPrecision;
+
+		public Builder withPolicy(SecurityPolicy policy) {
+			if ( policy != null ) {
+				return this.withAggregations(policy.getAggregations())
+						.withMinAggregation(policy.getMinAggregation())
+						.withLocationPrecisions(policy.getLocationPrecisions())
+						.withMinLocationPrecision(policy.getMinLocationPrecision())
+						.withNodeIds(policy.getNodeIds()).withSourceIds(policy.getSourceIds());
+			}
+			return this;
+		}
 
 		public Builder withNodeIds(Set<Long> nodeIds) {
 			this.nodeIds = (nodeIds == null || nodeIds.isEmpty() ? null
@@ -104,31 +117,29 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 		 *        {@code true} to treat as a minimum threshold
 		 * @return The builder.
 		 */
-		public Builder withMinAggregation(boolean minAggregation) {
+		public Builder withMinAggregation(Aggregation minAggregation) {
 			this.minAggregation = minAggregation;
 			return this;
 		}
 
 		private Set<Aggregation> buildAggregations() {
-			if ( aggregations == null || aggregations.isEmpty() ) {
+			if ( aggregations != null && !aggregations.isEmpty() ) {
+				return Collections.unmodifiableSet(aggregations);
+			} else if ( minAggregation == null ) {
 				return null;
 			}
-			if ( !minAggregation || aggregations.size() > 1 ) {
-				return Collections.unmodifiableSet(aggregations);
-			}
-			Aggregation min = aggregations.iterator().next();
-			Set<Aggregation> result = MAX_AGGREGATION_CACHE.get(min);
+			Set<Aggregation> result = MAX_AGGREGATION_CACHE.get(minAggregation);
 			if ( result != null ) {
 				return result;
 			}
 			result = new HashSet<Aggregation>(16);
 			for ( Aggregation agg : Aggregation.values() ) {
-				if ( agg.compareLevel(min) > -1 ) {
+				if ( agg.compareLevel(minAggregation) > -1 ) {
 					result.add(agg);
 				}
 			}
 			result = Collections.unmodifiableSet(EnumSet.copyOf(result));
-			MAX_AGGREGATION_CACHE.put(min, result);
+			MAX_AGGREGATION_CACHE.put(minAggregation, result);
 			return result;
 		}
 
@@ -151,37 +162,35 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 		 *        as-is, {@code true} to treat as a minimum threshold
 		 * @return The builder.
 		 */
-		public Builder withMinLocationPrecision(boolean minLocationPrecision) {
+		public Builder withMinLocationPrecision(LocationPrecision minLocationPrecision) {
 			this.minLocationPrecision = minLocationPrecision;
 			return this;
 		}
 
 		private Set<LocationPrecision> buildLocationPrecisions() {
-			if ( locationPrecisions == null || locationPrecisions.isEmpty() ) {
+			if ( locationPrecisions != null && !locationPrecisions.isEmpty() ) {
+				return Collections.unmodifiableSet(locationPrecisions);
+			} else if ( minLocationPrecision == null ) {
 				return null;
 			}
-			if ( !minLocationPrecision || locationPrecisions.size() > 1 ) {
-				return Collections.unmodifiableSet(locationPrecisions);
-			}
-			LocationPrecision min = locationPrecisions.iterator().next();
-			Set<LocationPrecision> result = MAX_LOCATION_PRECISION_CACHE.get(min);
+			Set<LocationPrecision> result = MAX_LOCATION_PRECISION_CACHE.get(minLocationPrecision);
 			if ( result != null ) {
 				return result;
 			}
 			result = new HashSet<LocationPrecision>(16);
 			for ( LocationPrecision agg : LocationPrecision.values() ) {
-				if ( agg.comparePrecision(min) > -1 ) {
+				if ( agg.comparePrecision(minLocationPrecision) > -1 ) {
 					result.add(agg);
 				}
 			}
 			result = Collections.unmodifiableSet(EnumSet.copyOf(result));
-			MAX_LOCATION_PRECISION_CACHE.put(min, result);
+			MAX_LOCATION_PRECISION_CACHE.put(minLocationPrecision, result);
 			return result;
 		}
 
 		public BasicSecurityPolicy build() {
-			return new BasicSecurityPolicy(nodeIds, sourceIds, buildAggregations(),
-					buildLocationPrecisions());
+			return new BasicSecurityPolicy(nodeIds, sourceIds, buildAggregations(), minAggregation,
+					buildLocationPrecisions(), minLocationPrecision);
 		}
 
 	}
@@ -190,6 +199,8 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 	private final Set<String> sourceIds;
 	private final Set<Aggregation> aggregations;
 	private final Set<LocationPrecision> locationPrecisions;
+	private final Aggregation minAggregation;
+	private final LocationPrecision minLocationPrecision;
 
 	/**
 	 * Constructor.
@@ -201,17 +212,24 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 	 * @param aggregations
 	 *        The aggregations to restrict to, or {@code null} for no
 	 *        restriction.
+	 * @param minAggregation
+	 *        If specified, a minimum aggregation level that is allowed.
 	 * @param locationPrecisions
 	 *        The location precisions to restrict to, or {@code null} for no
 	 *        restriction.
+	 * @param minALocationPrecision
+	 *        If specified, a minimum location precision that is allowed.
 	 */
 	public BasicSecurityPolicy(Set<Long> nodeIds, Set<String> sourceIds, Set<Aggregation> aggregations,
-			Set<LocationPrecision> locationPrecisions) {
+			Aggregation minAggregation, Set<LocationPrecision> locationPrecisions,
+			LocationPrecision minLocationPrecision) {
 		super();
 		this.nodeIds = nodeIds;
 		this.sourceIds = sourceIds;
 		this.aggregations = aggregations;
+		this.minAggregation = minAggregation;
 		this.locationPrecisions = locationPrecisions;
+		this.minLocationPrecision = minLocationPrecision;
 	}
 
 	@Override
@@ -232,6 +250,16 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 	@Override
 	public Set<LocationPrecision> getLocationPrecisions() {
 		return locationPrecisions;
+	}
+
+	@Override
+	public Aggregation getMinAggregation() {
+		return minAggregation;
+	}
+
+	@Override
+	public LocationPrecision getMinLocationPrecision() {
+		return minLocationPrecision;
 	}
 
 }

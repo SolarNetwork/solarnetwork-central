@@ -56,10 +56,24 @@ public interface SecurityPolicy {
 	Set<Aggregation> getAggregations();
 
 	/**
+	 * Get a minimum aggregation level this policy applies to.
+	 * 
+	 * @return The minimum aggregation level.
+	 */
+	Aggregation getMinAggregation();
+
+	/**
 	 * Get a location precision this policy applies to.
 	 * 
 	 * @return set of precisions
 	 */
 	Set<LocationPrecision> getLocationPrecisions();
+
+	/**
+	 * Get a minimum location precision this policy applies to.
+	 * 
+	 * @return The minimum location precision.
+	 */
+	LocationPrecision getMinLocationPrecision();
 
 }

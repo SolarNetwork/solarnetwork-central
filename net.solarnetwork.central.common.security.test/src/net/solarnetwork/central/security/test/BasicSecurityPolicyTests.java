@@ -70,7 +70,7 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void buildMinAggregationPolicy() {
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withAggregations(EnumSet.of(Aggregation.Month)).build();
+				.withMinAggregation(Aggregation.Month).build();
 		Assert.assertEquals("Minimum aggregation set",
 				EnumSet.of(Aggregation.Month, Aggregation.RunningTotal), policy.getAggregations());
 		try {
@@ -84,9 +84,9 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void buildMinAggregationPolicyWithCache() {
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withAggregations(EnumSet.of(Aggregation.Month)).build();
+				.withMinAggregation(Aggregation.Month).build();
 		BasicSecurityPolicy policy2 = new BasicSecurityPolicy.Builder()
-				.withAggregations(EnumSet.of(Aggregation.Month)).build();
+				.withMinAggregation(Aggregation.Month).build();
 		Assert.assertSame("Cached minimum aggregation set", policy.getAggregations(),
 				policy2.getAggregations());
 	}
@@ -94,7 +94,7 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void buildMinLocationPrecisionPolicy() {
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withLocationPrecisions(EnumSet.of(LocationPrecision.PostalCode)).build();
+				.withMinLocationPrecision(LocationPrecision.PostalCode).build();
 		Assert.assertEquals("Minimum location precision set",
 				EnumSet.of(LocationPrecision.PostalCode, LocationPrecision.Locality,
 						LocationPrecision.Region, LocationPrecision.StateOrProvince,
@@ -111,9 +111,9 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void buildMinLocationPrecisionPolicyWithCache() {
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withLocationPrecisions(EnumSet.of(LocationPrecision.PostalCode)).build();
+				.withMinLocationPrecision(LocationPrecision.PostalCode).build();
 		BasicSecurityPolicy policy2 = new BasicSecurityPolicy.Builder()
-				.withLocationPrecisions(EnumSet.of(LocationPrecision.PostalCode)).build();
+				.withMinLocationPrecision(LocationPrecision.PostalCode).build();
 		Assert.assertSame("Cached minimum location precision set", policy.getLocationPrecisions(),
 				policy2.getLocationPrecisions());
 	}
@@ -139,7 +139,7 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void parseJsonMinAggregationPolicy() throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
-		BasicSecurityPolicy policy = mapper.readValue("{\"aggregations\":[\"Month\"]}",
+		BasicSecurityPolicy policy = mapper.readValue("{\"minAggregation\":\"Month\"}",
 				BasicSecurityPolicy.class);
 		Assert.assertEquals("Minimum aggregation set",
 				EnumSet.of(Aggregation.Month, Aggregation.RunningTotal), policy.getAggregations());
@@ -148,8 +148,8 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void parseJsonAggregationPolicy() throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
-		BasicSecurityPolicy policy = mapper.readValue(
-				"{\"aggregations\":[\"Month\"], \"minAggregation\":false}", BasicSecurityPolicy.class);
+		BasicSecurityPolicy policy = mapper.readValue("{\"aggregations\":[\"Month\"]}",
+				BasicSecurityPolicy.class);
 		Assert.assertEquals("Exact aggregation set", EnumSet.of(Aggregation.Month),
 				policy.getAggregations());
 	}
@@ -157,7 +157,7 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void parseJsonMinLocationPrecisionPolicy() throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
-		BasicSecurityPolicy policy = mapper.readValue("{\"locationPrecisions\":[\"TimeZone\"]}",
+		BasicSecurityPolicy policy = mapper.readValue("{\"minLocationPrecision\":\"TimeZone\"}",
 				BasicSecurityPolicy.class);
 		Assert.assertEquals("Minimum location precision set",
 				EnumSet.of(LocationPrecision.TimeZone, LocationPrecision.Country),
@@ -167,8 +167,7 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void parseJsonLocationPrecisionPolicy() throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
-		BasicSecurityPolicy policy = mapper.readValue(
-				"{\"locationPrecisions\":[\"TimeZone\"], \"minLocationPrecision\":false}",
+		BasicSecurityPolicy policy = mapper.readValue("{\"locationPrecisions\":[\"TimeZone\"]}",
 				BasicSecurityPolicy.class);
 		Assert.assertEquals("Exact location precision set", EnumSet.of(LocationPrecision.TimeZone),
 				policy.getLocationPrecisions());
