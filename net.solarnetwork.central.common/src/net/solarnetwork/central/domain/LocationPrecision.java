@@ -30,23 +30,23 @@ package net.solarnetwork.central.domain;
  */
 public enum LocationPrecision {
 
-	Country(70),
-
-	TimeZone(60),
-
-	Region(50),
-
-	StateOrProvince(40),
-
-	Locality(30),
-
-	PostalCode(20),
-
-	Street(10),
+	LatLong(1),
 
 	Block(5),
 
-	LatLong(1);
+	Street(10),
+
+	PostalCode(20),
+
+	Locality(30),
+
+	StateOrProvince(40),
+
+	Region(50),
+
+	TimeZone(60),
+
+	Country(70);
 
 	private final Integer precision;
 
