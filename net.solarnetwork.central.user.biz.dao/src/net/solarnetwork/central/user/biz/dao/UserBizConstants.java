@@ -83,7 +83,8 @@ public final class UserBizConstants {
 		if ( isUnconfirmedEmail(unconfirmedEmail) ) {
 			return unconfirmedEmail.substring(UNCONFIRMED_EMAIL_PREFIX_LENGTH);
 		}
-		throw new IllegalArgumentException("[" + unconfirmedEmail + "] is not a valid unconfirmed email");
+		throw new IllegalArgumentException(
+				"[" + unconfirmedEmail + "] is not a valid unconfirmed email");
 	}
 
 	/**
