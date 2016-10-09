@@ -128,6 +128,13 @@ public class BasicSecurityPolicyTests {
 	}
 
 	@Test
+	public void parseJsonEmptyNodeIdPolicy() throws Exception {
+		ObjectMapper mapper = new ObjectMapper();
+		BasicSecurityPolicy policy = mapper.readValue("{\"nodeIds\":[]}", BasicSecurityPolicy.class);
+		Assert.assertNull("Node ID set", policy.getNodeIds());
+	}
+
+	@Test
 	public void parseJsonSourceIdPolicy() throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
 		BasicSecurityPolicy policy = mapper.readValue("{\"sourceIds\":[\"one\",\"two\",\"three\"]}",
