@@ -86,12 +86,12 @@ public class UserAuthToken extends BaseStringEntity {
 	/**
 	 * Get the ID value.
 	 * 
-	 * <p>
 	 * This is just an alias for {@link BaseStringEntity#getId()}.
-	 * </p>
 	 * 
 	 * @return the auth token
 	 */
+	@SerializeIgnore
+	@JsonIgnore
 	public String getAuthToken() {
 		return getId();
 	}
@@ -99,9 +99,7 @@ public class UserAuthToken extends BaseStringEntity {
 	/**
 	 * Set the ID value.
 	 * 
-	 * <p>
 	 * This is just an alias for {@link BaseStringEntity#setId(String)}.
-	 * </p>
 	 * 
 	 * @param authToken
 	 *        the auth token
@@ -134,6 +132,13 @@ public class UserAuthToken extends BaseStringEntity {
 		this.type = type;
 	}
 
+	/**
+	 * Get the node IDs included in the policy, if available.
+	 * 
+	 * @return node IDs, or {@code null}
+	 */
+	@SerializeIgnore
+	@JsonIgnore
 	public Set<Long> getNodeIds() {
 		BasicSecurityPolicy p = getPolicy();
 		return (p == null ? null : p.getNodeIds());
