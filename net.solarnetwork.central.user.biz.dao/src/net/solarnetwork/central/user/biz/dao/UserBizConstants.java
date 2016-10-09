@@ -23,12 +23,11 @@
 package net.solarnetwork.central.user.biz.dao;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.UUID;
-import net.solarnetwork.io.RFC1924OutputStream;
+import java.security.SecureRandom;
 import org.springframework.util.FileCopyUtils;
+import net.solarnetwork.io.RFC1924OutputStream;
 
 /**
  * Constants for common user items.
@@ -93,17 +92,12 @@ public final class UserBizConstants {
 	 * @return the random token
 	 */
 	public static String generateRandomAuthToken() {
-		UUID uuid = UUID.randomUUID();
-		ByteArrayOutputStream byos = new ByteArrayOutputStream(20);
-		DataOutputStream dos = new DataOutputStream(byos);
 		try {
-			dos.writeLong(uuid.getMostSignificantBits());
-			dos.writeLong(uuid.getLeastSignificantBits());
-			dos.flush();
-			dos.close();
-			byte[] uuidBytes = byos.toByteArray();
-			byos.reset();
-			FileCopyUtils.copy(uuidBytes, new RFC1924OutputStream(byos));
+			SecureRandom rand = new SecureRandom();
+			byte[] randomBytes = new byte[16];
+			rand.nextBytes(randomBytes);
+			ByteArrayOutputStream byos = new ByteArrayOutputStream(20);
+			FileCopyUtils.copy(randomBytes, new RFC1924OutputStream(byos));
 			return byos.toString("US-ASCII");
 		} catch ( UnsupportedEncodingException e ) {
 			throw new RuntimeException(e);
