@@ -22,12 +22,10 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
-import static net.solarnetwork.central.user.biz.dao.UserBizConstants.generateRandomAuthToken;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
@@ -62,7 +60,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * DAO-based implementation of {@link UserBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
@@ -187,19 +185,17 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			SecurityPolicy policy) {
 		assert userId != null;
 		assert type != null;
-		SecureRandom rnd;
+		SecureRandom rng;
 		try {
-			rnd = SecureRandom.getInstance("SHA1PRNG");
+			rng = SecureRandom.getInstance("SHA1PRNG");
 		} catch ( NoSuchAlgorithmException e ) {
 			throw new RuntimeException("Unable to generate auth token", e);
 		}
-		int randomLength = 8 + rnd.nextInt(8);
-		byte[] secret = new byte[randomLength];
-		rnd.nextBytes(secret);
-		String secretString = new String(Hex.encodeHex(secret));
+		final int randomLength = 16 + rng.nextInt(8);
+		final String secretString = UserBizConstants.generateRandomToken(rng, randomLength);
 		final int maxAttempts = 50;
 		for ( int i = maxAttempts; i > 0; i-- ) {
-			String tok = generateRandomAuthToken();
+			String tok = UserBizConstants.generateRandomAuthToken(rng);
 			// verify token doesn't already exist
 			if ( userAuthTokenDao.get(tok) == null ) {
 				UserAuthToken authToken = new UserAuthToken(tok, userId, secretString, type);

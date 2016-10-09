@@ -33,7 +33,7 @@ import net.solarnetwork.io.RFC1924OutputStream;
  * Constants for common user items.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class UserBizConstants {
 
@@ -49,7 +49,7 @@ public final class UserBizConstants {
 	 * @return the encoded "unconfirmed" value
 	 */
 	public static String getUnconfirmedEmail(String email) {
-		return generateRandomAuthToken() + UNCONFIRMED_EMAIL_DELIMITER + email;
+		return generateRandomAuthToken(new SecureRandom()) + UNCONFIRMED_EMAIL_DELIMITER + email;
 	}
 
 	/**
@@ -92,12 +92,23 @@ public final class UserBizConstants {
 	 * 
 	 * @return the random token
 	 */
-	public static String generateRandomAuthToken() {
+	public static String generateRandomAuthToken(SecureRandom rng) {
+		return generateRandomToken(rng, 16);
+	}
+
+	/**
+	 * Generate a random token string.
+	 * 
+	 * @param byteCount
+	 *        The number of random bytes to use.
+	 * @return the random token, encoded in a base-85 form
+	 * @since 1.3
+	 */
+	public static String generateRandomToken(SecureRandom rng, int byteCount) {
 		try {
-			SecureRandom rand = new SecureRandom();
-			byte[] randomBytes = new byte[16];
-			rand.nextBytes(randomBytes);
-			ByteArrayOutputStream byos = new ByteArrayOutputStream(20);
+			byte[] randomBytes = new byte[byteCount];
+			rng.nextBytes(randomBytes);
+			ByteArrayOutputStream byos = new ByteArrayOutputStream((int) Math.ceil(byteCount * 1.25));
 			FileCopyUtils.copy(randomBytes, new RFC1924OutputStream(byos));
 			return byos.toString("US-ASCII");
 		} catch ( UnsupportedEncodingException e ) {
