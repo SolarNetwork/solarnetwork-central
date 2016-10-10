@@ -121,7 +121,9 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 			Set<Long> set = nodeIds;
 			if ( this.nodeIds != null && !this.nodeIds.isEmpty() ) {
 				set = new LinkedHashSet<Long>(this.nodeIds);
-				set.addAll(nodeIds);
+				if ( nodeIds != null ) {
+					set.addAll(nodeIds);
+				}
 			}
 			return withNodeIds(set);
 		}
@@ -130,7 +132,9 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 			Set<String> set = sourceIds;
 			if ( this.sourceIds != null && !this.sourceIds.isEmpty() ) {
 				set = new LinkedHashSet<String>(this.sourceIds);
-				set.addAll(sourceIds);
+				if ( sourceIds != null ) {
+					set.addAll(sourceIds);
+				}
 			}
 			return withSourceIds(set);
 		}
