@@ -24,23 +24,27 @@ package net.solarnetwork.central.query.aop;
 
 import java.util.Map;
 import java.util.Set;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.security.core.Authentication;
 import net.solarnetwork.central.datum.domain.DatumFilter;
-import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 
 /**
  * Security enforcing AOP aspect for {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Aspect
 public class QuerySecurityAspect extends AuthorizationSupport {
@@ -72,30 +76,29 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public void nodeMostRecentWeatherConditions(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAggregatedDatum(..)) && args(criteria,..)")
-	public void nodeDatumQuery(DatumQueryCommand criteria) {
-	}
-
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.findFiltered*(..)) && args(filter,..)")
 	public void nodeDatumFilter(Filter filter) {
 	}
 
+	@Around("nodeDatumFilter(filter)")
+	public Object userNodeFilterAccessCheck(ProceedingJoinPoint pjp, Filter filter) throws Throwable {
+		Filter f = userNodeAccessCheck(filter);
+		if ( f == filter ) {
+			return pjp.proceed();
+		}
+		return pjp.proceed(new Object[] { f });
+	}
+
 	/**
-	 * Allow the current actor access to aggregated datum data.
+	 * Enforce security policies on a {@link Filter}.
 	 * 
-	 * @param criteria
+	 * @param filter
+	 *        The filter to verify.
+	 * @return A possibly modified filter based on security policies.
+	 * @throws AuthorizationException
+	 *         if any authorization error occurs
 	 */
-	@Before("nodeDatumQuery(criteria)")
-	public void userNodeDatumAccessCheck(DatumQueryCommand criteria) {
-		userNodeAccessCheck(criteria);
-	}
-
-	@Before("nodeDatumFilter(filter)")
-	public void userNodeFilterAccessCheck(Filter filter) {
-		userNodeAccessCheck(filter);
-	}
-
-	private void userNodeAccessCheck(Filter filter) {
+	public <T extends Filter> T userNodeAccessCheck(T filter) {
 		Long[] nodeIds = null;
 		boolean nodeIdRequired = true;
 		if ( filter instanceof NodeDatumFilter ) {
@@ -114,7 +117,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			}
 		}
 		if ( !nodeIdRequired ) {
-			return;
+			return filter;
 		}
 		if ( nodeIds == null || nodeIds.length < 1 ) {
 			log.warn("Access DENIED; no node ID provided");
@@ -123,6 +126,19 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		for ( Long nodeId : nodeIds ) {
 			userNodeAccessCheck(nodeId);
 		}
+
+		return policyCheck(filter);
+	}
+
+	private <T extends Filter> T policyCheck(T filter) {
+		Authentication authentication = SecurityUtils.getCurrentAuthentication();
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return filter;
+		}
+
+		return SecurityPolicyEnforcer.createSecurityPolicyProxy(new SecurityPolicyEnforcer(policy,
+				(authentication != null ? authentication.getPrincipal() : null), filter));
 	}
 
 	/**
@@ -135,8 +151,8 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 * @return <em>true</em> if a node ID is required for the given filter
 	 */
 	private boolean isNodeIdRequired(DatumFilter filter) {
-		final String type = (filter == null || filter.getType() == null ? null : filter.getType()
-				.toLowerCase());
+		final String type = (filter == null || filter.getType() == null ? null
+				: filter.getType().toLowerCase());
 		return (nodeIdNotRequiredSet == null || !nodeIdNotRequiredSet.contains(type));
 	}
 
