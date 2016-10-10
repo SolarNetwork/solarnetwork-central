@@ -26,6 +26,7 @@
 		<intercept-url pattern='/**' method="OPTIONS" access="permitAll" />
 		<intercept-url pattern='/**' access="hasRole('ROLE_USER')" />
 		<custom-filter position="PRE_AUTH_FILTER" ref="authTokenFilter" />
+		<csrf disabled="true"/>
 	</http>
 	
 	<!-- Configure Spring Security -->
