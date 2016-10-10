@@ -200,9 +200,6 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			if ( userAuthTokenDao.get(tok) == null ) {
 				UserAuthToken authToken = new UserAuthToken(tok, userId, secretString, type);
 
-				BasicSecurityPolicy.Builder policyBuilder = new BasicSecurityPolicy.Builder()
-						.withPolicy(policy);
-
 				// verify user account has access to requested node IDs
 				Set<Long> nodeIds = (policy == null ? null : policy.getNodeIds());
 				if ( nodeIds != null ) {
@@ -217,7 +214,11 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 					}
 				}
 
-				authToken.setPolicy(policyBuilder.build());
+				if ( policy != null ) {
+					BasicSecurityPolicy.Builder policyBuilder = new BasicSecurityPolicy.Builder()
+							.withPolicy(policy);
+					authToken.setPolicy(policyBuilder.build());
+				}
 
 				userAuthTokenDao.store(authToken);
 				return authToken;
