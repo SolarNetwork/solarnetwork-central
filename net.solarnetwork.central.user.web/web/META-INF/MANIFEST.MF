@@ -42,7 +42,7 @@ Import-Package:
  net.solarnetwork.central.user.domain;version="1.12",
  net.solarnetwork.central.web;version="1.3",
  net.solarnetwork.central.web.domain;version="1.0",
- net.solarnetwork.central.web.support;version="1.5",
+ net.solarnetwork.central.web.support;version="1.7",
  net.solarnetwork.domain;version="1.9",
  net.solarnetwork.support;version="1.2",
  net.solarnetwork.util;version="1.18",
