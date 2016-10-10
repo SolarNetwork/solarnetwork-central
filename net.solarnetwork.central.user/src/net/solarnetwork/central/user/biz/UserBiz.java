@@ -182,4 +182,22 @@ public interface UserBiz {
 	 * @return the updated token
 	 */
 	UserAuthToken updateUserAuthTokenStatus(Long userId, String tokenId, UserAuthTokenStatus newStatus);
+
+	/**
+	 * Update the policy of a UserAuthToken.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param tokenId
+	 *        the UserAuthToken ID to delete
+	 * @param newPolicy
+	 *        the new policy to apply
+	 * @param replace
+	 *        {@code true} to replace the token's policy with the provided one,
+	 *        or {@code false} to merge the provided policy properties into the
+	 *        existing policy
+	 * @return the updated token
+	 */
+	UserAuthToken updateUserAuthTokenPolicy(Long userId, String tokenId, SecurityPolicy newPolicy,
+			boolean replace);
 }

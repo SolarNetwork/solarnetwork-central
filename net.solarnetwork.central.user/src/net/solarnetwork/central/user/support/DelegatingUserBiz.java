@@ -119,4 +119,10 @@ public class DelegatingUserBiz implements UserBiz {
 		return delegate.updateUserAuthTokenStatus(userId, tokenId, newStatus);
 	}
 
+	@Override
+	public UserAuthToken updateUserAuthTokenPolicy(Long userId, String tokenId, SecurityPolicy newPolicy,
+			boolean replace) {
+		return delegate.updateUserAuthTokenPolicy(userId, tokenId, newPolicy, replace);
+	}
+
 }

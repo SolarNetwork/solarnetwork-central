@@ -268,6 +268,32 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public UserAuthToken updateUserAuthTokenPolicy(Long userId, String tokenId, SecurityPolicy newPolicy,
+			boolean replace) {
+		assert userId != null;
+		UserAuthToken token = userAuthTokenDao.get(tokenId);
+		if ( token == null ) {
+			return null;
+		}
+		if ( !userId.equals(token.getUserId()) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
+		}
+		BasicSecurityPolicy.Builder policyBuilder = new BasicSecurityPolicy.Builder();
+		if ( replace ) {
+			policyBuilder = policyBuilder.withPolicy(newPolicy);
+		} else {
+			policyBuilder = policyBuilder.withPolicy(token.getPolicy()).withMergedPolicy(newPolicy);
+		}
+		BasicSecurityPolicy newBasicPolicy = policyBuilder.build();
+		if ( !newBasicPolicy.equals(token.getPolicy()) ) {
+			token.setPolicy(newBasicPolicy);
+			userAuthTokenDao.store(token);
+		}
+		return token;
+	}
+
+	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNodeTransfer> pendingNodeOwnershipTransfersForEmail(String email) {
 		return userNodeDao.findUserNodeTransferRequestsForEmail(email);

@@ -55,10 +55,42 @@ public class BasicSecurityPolicyTests {
 	}
 
 	@Test
+	public void buildMergedNodeIdsPolicy() {
+		Set<Long> nodeIds = new HashSet<Long>(Arrays.asList(1L, 2L, 3L));
+		Set<Long> additionalNodeIds = new HashSet<Long>(Arrays.asList(3L, 4L, 5L));
+		Set<Long> merged = new HashSet<Long>(Arrays.asList(1L, 2L, 3L, 4L, 5L));
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(nodeIds)
+				.withMergedNodeIds(additionalNodeIds).build();
+		Assert.assertEquals("Node ID set", merged, policy.getNodeIds());
+		try {
+			policy.getNodeIds().add(-1L);
+			Assert.fail("Node ID set should be immutable");
+		} catch ( UnsupportedOperationException e ) {
+			// expected
+		}
+	}
+
+	@Test
 	public void buildSourceIdsPolicy() {
 		Set<String> sourceIds = new HashSet<String>(Arrays.asList("one", "two", "three"));
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withSourceIds(sourceIds).build();
 		Assert.assertEquals("Source ID set", sourceIds, policy.getSourceIds());
+		try {
+			policy.getSourceIds().add("no");
+			Assert.fail("Source ID set should be immutable");
+		} catch ( UnsupportedOperationException e ) {
+			// expected
+		}
+	}
+
+	@Test
+	public void buildMergedSourceIdsPolicy() {
+		Set<String> sourceIds = new HashSet<String>(Arrays.asList("one", "two", "three"));
+		Set<String> additionalSourceIds = new HashSet<String>(Arrays.asList("three", "four", "five"));
+		Set<String> merged = new HashSet<String>(Arrays.asList("one", "two", "three", "four", "five"));
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withSourceIds(sourceIds)
+				.withMergedSourceIds(additionalSourceIds).build();
+		Assert.assertEquals("Source ID set", merged, policy.getSourceIds());
 		try {
 			policy.getSourceIds().add("no");
 			Assert.fail("Source ID set should be immutable");
@@ -73,6 +105,28 @@ public class BasicSecurityPolicyTests {
 				.withMinAggregation(Aggregation.Month).build();
 		Assert.assertEquals("Minimum aggregation set",
 				EnumSet.of(Aggregation.Month, Aggregation.RunningTotal), policy.getAggregations());
+		try {
+			policy.getAggregations().add(Aggregation.Minute);
+			Assert.fail("Aggregation set should be immutable");
+		} catch ( UnsupportedOperationException e ) {
+			// expected
+		}
+	}
+
+	@Test
+	public void buildMergedMinAggregationPolicy() {
+		BasicSecurityPolicy orig = new BasicSecurityPolicy.Builder()
+				.withMinAggregation(Aggregation.Month).build();
+		BasicSecurityPolicy patch = new BasicSecurityPolicy.Builder().withMinAggregation(Aggregation.Day)
+				.build();
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withPolicy(orig)
+				.withMergedPolicy(patch).build();
+		Assert.assertEquals("Minimum aggregation", Aggregation.Day, policy.getMinAggregation());
+		Assert.assertEquals("Minimum aggregation set",
+				EnumSet.of(Aggregation.Day, Aggregation.DayOfWeek, Aggregation.SeasonalDayOfWeek,
+						Aggregation.Week, Aggregation.WeekOfYear, Aggregation.Month,
+						Aggregation.RunningTotal),
+				policy.getAggregations());
 		try {
 			policy.getAggregations().add(Aggregation.Minute);
 			Assert.fail("Aggregation set should be immutable");

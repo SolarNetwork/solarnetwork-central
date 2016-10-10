@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -77,6 +78,23 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 			return this;
 		}
 
+		public Builder withMergedPolicy(SecurityPolicy policy) {
+			if ( policy != null ) {
+				Builder b = this.withMergedAggregations(policy.getAggregations())
+						.withMergedLocationPrecisions(policy.getLocationPrecisions())
+						.withMergedNodeIds(policy.getNodeIds())
+						.withMergedSourceIds(policy.getSourceIds());
+				if ( policy.getMinAggregation() != null ) {
+					b = b.withMinAggregation(policy.getMinAggregation());
+				}
+				if ( policy.getMinLocationPrecision() != null ) {
+					b = b.withMinLocationPrecision(policy.getMinLocationPrecision());
+				}
+				return b;
+			}
+			return this;
+		}
+
 		public Builder withNodeIds(Set<Long> nodeIds) {
 			this.nodeIds = (nodeIds == null || nodeIds.isEmpty() ? null
 					: Collections.unmodifiableSet(nodeIds));
@@ -97,6 +115,50 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 		public Builder withLocationPrecisions(Set<LocationPrecision> locationPrecisions) {
 			this.locationPrecisions = locationPrecisions;
 			return this;
+		}
+
+		public Builder withMergedNodeIds(Set<Long> nodeIds) {
+			Set<Long> set = nodeIds;
+			if ( this.nodeIds != null && !this.nodeIds.isEmpty() ) {
+				set = new LinkedHashSet<Long>(this.nodeIds);
+				set.addAll(nodeIds);
+			}
+			return withNodeIds(set);
+		}
+
+		public Builder withMergedSourceIds(Set<String> sourceIds) {
+			Set<String> set = sourceIds;
+			if ( this.sourceIds != null && !this.sourceIds.isEmpty() ) {
+				set = new LinkedHashSet<String>(this.sourceIds);
+				set.addAll(sourceIds);
+			}
+			return withSourceIds(set);
+		}
+
+		public Builder withMergedAggregations(Set<Aggregation> aggregations) {
+			Set<Aggregation> set = aggregations;
+			if ( this.aggregations != null && !this.aggregations.isEmpty() ) {
+				if ( aggregations != null ) {
+					set = new LinkedHashSet<Aggregation>(this.aggregations);
+					set.addAll(aggregations);
+				} else {
+					set = this.aggregations;
+				}
+			}
+			return withAggregations(set);
+		}
+
+		public Builder withMergedLocationPrecisions(Set<LocationPrecision> locationPrecisions) {
+			Set<LocationPrecision> set = locationPrecisions;
+			if ( this.locationPrecisions != null && !this.locationPrecisions.isEmpty() ) {
+				if ( locationPrecisions != null ) {
+					set = new LinkedHashSet<LocationPrecision>(this.locationPrecisions);
+					set.addAll(locationPrecisions);
+				} else {
+					set = this.locationPrecisions;
+				}
+			}
+			return withLocationPrecisions(set);
 		}
 
 		/**
@@ -123,7 +185,7 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 		}
 
 		private Set<Aggregation> buildAggregations() {
-			if ( aggregations != null && !aggregations.isEmpty() ) {
+			if ( minAggregation == null && aggregations != null && !aggregations.isEmpty() ) {
 				return Collections.unmodifiableSet(aggregations);
 			} else if ( minAggregation == null ) {
 				return null;
@@ -168,7 +230,8 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 		}
 
 		private Set<LocationPrecision> buildLocationPrecisions() {
-			if ( locationPrecisions != null && !locationPrecisions.isEmpty() ) {
+			if ( minLocationPrecision == null && locationPrecisions != null
+					&& !locationPrecisions.isEmpty() ) {
 				return Collections.unmodifiableSet(locationPrecisions);
 			} else if ( minLocationPrecision == null ) {
 				return null;
@@ -260,6 +323,68 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 	@Override
 	public LocationPrecision getMinLocationPrecision() {
 		return minLocationPrecision;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((aggregations == null) ? 0 : aggregations.hashCode());
+		result = prime * result + ((locationPrecisions == null) ? 0 : locationPrecisions.hashCode());
+		result = prime * result + ((minAggregation == null) ? 0 : minAggregation.hashCode());
+		result = prime * result + ((minLocationPrecision == null) ? 0 : minLocationPrecision.hashCode());
+		result = prime * result + ((nodeIds == null) ? 0 : nodeIds.hashCode());
+		result = prime * result + ((sourceIds == null) ? 0 : sourceIds.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( obj == null ) {
+			return false;
+		}
+		if ( !(obj instanceof BasicSecurityPolicy) ) {
+			return false;
+		}
+		BasicSecurityPolicy other = (BasicSecurityPolicy) obj;
+		if ( aggregations == null ) {
+			if ( other.aggregations != null ) {
+				return false;
+			}
+		} else if ( !aggregations.equals(other.aggregations) ) {
+			return false;
+		}
+		if ( locationPrecisions == null ) {
+			if ( other.locationPrecisions != null ) {
+				return false;
+			}
+		} else if ( !locationPrecisions.equals(other.locationPrecisions) ) {
+			return false;
+		}
+		if ( minAggregation != other.minAggregation ) {
+			return false;
+		}
+		if ( minLocationPrecision != other.minLocationPrecision ) {
+			return false;
+		}
+		if ( nodeIds == null ) {
+			if ( other.nodeIds != null ) {
+				return false;
+			}
+		} else if ( !nodeIds.equals(other.nodeIds) ) {
+			return false;
+		}
+		if ( sourceIds == null ) {
+			if ( other.sourceIds != null ) {
+				return false;
+			}
+		} else if ( !sourceIds.equals(other.sourceIds) ) {
+			return false;
+		}
+		return true;
 	}
 
 }
