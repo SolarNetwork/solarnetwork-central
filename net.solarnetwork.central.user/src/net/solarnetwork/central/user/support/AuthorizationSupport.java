@@ -28,6 +28,7 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityNode;
+import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -39,7 +40,7 @@ import net.solarnetwork.central.user.domain.UserNode;
  * Helper class for authorization needs, e.g. aspect impelmentations.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class AuthorizationSupport {
 
@@ -255,6 +256,28 @@ public abstract class AuthorizationSupport {
 
 		log.warn("Access DENIED to user {} for actor {}", userId, actor);
 		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+	}
+
+	/**
+	 * Get a {@link SecurityPolicy} for the active user, if avaiable.
+	 * 
+	 * @return The active user's policy, or {@code null}.
+	 * @since 1.3
+	 */
+	protected SecurityPolicy getActiveSecurityPolicy() {
+		final SecurityActor actor;
+		try {
+			actor = SecurityUtils.getCurrentActor();
+		} catch ( SecurityException e ) {
+			return null;
+		}
+
+		if ( actor instanceof SecurityToken ) {
+			SecurityToken token = (SecurityToken) actor;
+			return token.getPolicy();
+		}
+
+		return null;
 	}
 
 	/**
