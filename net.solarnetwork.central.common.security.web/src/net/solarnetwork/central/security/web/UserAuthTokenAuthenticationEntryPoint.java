@@ -46,7 +46,9 @@ public class UserAuthTokenAuthenticationEntryPoint implements AuthenticationEntr
 	private static Map<String, String> defaultHttpHeaders() {
 		Map<String, String> headers = new HashMap<String, String>(2);
 		headers.put("Access-Control-Allow-Origin", "*");
-		headers.put("Access-Control-Allow-Headers", "Authorization, X-SN-Date");
+		headers.put("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH");
+		headers.put("Access-Control-Allow-Headers",
+				"Authorization, Content-MD5, Content-Type, X-SN-Date");
 		return headers;
 	}
 

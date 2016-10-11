@@ -37,7 +37,9 @@ import net.solarnetwork.util.Cachable;
  * 
  * @author matt
  * @version 1.2
+ * @deprecated use {@link DatumFilterCommand}
  */
+@Deprecated
 public class DatumQueryCommand implements Cachable, AggregateNodeDatumFilter {
 
 	private Long[] nodeIds;

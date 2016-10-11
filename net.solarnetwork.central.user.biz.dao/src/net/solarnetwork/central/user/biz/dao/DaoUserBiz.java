@@ -22,17 +22,22 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
-import static net.solarnetwork.central.user.biz.dao.UserBizConstants.generateRandomAuthToken;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserAlertDao;
@@ -50,17 +55,12 @@ import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
-import org.apache.commons.codec.binary.Hex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * DAO-based implementation of {@link UserBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
@@ -175,24 +175,33 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public UserAuthToken generateUserAuthToken(final Long userId, final UserAuthTokenType type,
 			final Set<Long> nodeIds) {
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).build();
+		return generateUserAuthToken(userId, type, policy);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public UserAuthToken generateUserAuthToken(Long userId, UserAuthTokenType type,
+			SecurityPolicy policy) {
 		assert userId != null;
 		assert type != null;
-		SecureRandom rnd;
+		SecureRandom rng;
 		try {
-			rnd = SecureRandom.getInstance("SHA1PRNG");
+			rng = SecureRandom.getInstance("SHA1PRNG");
 		} catch ( NoSuchAlgorithmException e ) {
 			throw new RuntimeException("Unable to generate auth token", e);
 		}
-		int randomLength = 8 + rnd.nextInt(8);
-		byte[] secret = new byte[randomLength];
-		rnd.nextBytes(secret);
-		String secretString = new String(Hex.encodeHex(secret));
+		final int randomLength = 16 + rng.nextInt(8);
+		final String secretString = UserBizConstants.generateRandomToken(rng, randomLength);
 		final int maxAttempts = 50;
 		for ( int i = maxAttempts; i > 0; i-- ) {
-			String tok = generateRandomAuthToken();
+			String tok = UserBizConstants.generateRandomAuthToken(rng);
 			// verify token doesn't already exist
 			if ( userAuthTokenDao.get(tok) == null ) {
 				UserAuthToken authToken = new UserAuthToken(tok, userId, secretString, type);
+
+				// verify user account has access to requested node IDs
+				Set<Long> nodeIds = (policy == null ? null : policy.getNodeIds());
 				if ( nodeIds != null ) {
 					for ( Long nodeId : nodeIds ) {
 						UserNode userNode = userNodeDao.get(nodeId);
@@ -203,8 +212,14 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 							throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 						}
 					}
-					authToken.setNodeIds(nodeIds);
 				}
+
+				if ( policy != null ) {
+					BasicSecurityPolicy.Builder policyBuilder = new BasicSecurityPolicy.Builder()
+							.withPolicy(policy);
+					authToken.setPolicy(policyBuilder.build());
+				}
+
 				userAuthTokenDao.store(authToken);
 				return authToken;
 			}
@@ -248,6 +263,32 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		}
 		if ( token.getStatus() != newStatus ) {
 			token.setStatus(newStatus);
+			userAuthTokenDao.store(token);
+		}
+		return token;
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public UserAuthToken updateUserAuthTokenPolicy(Long userId, String tokenId, SecurityPolicy newPolicy,
+			boolean replace) {
+		assert userId != null;
+		UserAuthToken token = userAuthTokenDao.get(tokenId);
+		if ( token == null ) {
+			return null;
+		}
+		if ( !userId.equals(token.getUserId()) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
+		}
+		BasicSecurityPolicy.Builder policyBuilder = new BasicSecurityPolicy.Builder();
+		if ( replace ) {
+			policyBuilder = policyBuilder.withPolicy(newPolicy);
+		} else {
+			policyBuilder = policyBuilder.withPolicy(token.getPolicy()).withMergedPolicy(newPolicy);
+		}
+		BasicSecurityPolicy newBasicPolicy = policyBuilder.build();
+		if ( !newBasicPolicy.equals(token.getPolicy()) ) {
+			token.setPolicy(newBasicPolicy);
 			userAuthTokenDao.store(token);
 		}
 		return token;
@@ -319,7 +360,8 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 					token.getNodeIds().remove(nodeId);
 					if ( token.getNodeIds().size() == 0 ) {
 						// only node ID associated, so delete token
-						log.debug("Deleting UserAuthToken {} for node ownership transfer", token.getId());
+						log.debug("Deleting UserAuthToken {} for node ownership transfer",
+								token.getId());
 						userAuthTokenDao.delete(token);
 					} else {
 						// other node IDs associated, so remove this token

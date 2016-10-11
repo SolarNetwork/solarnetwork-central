@@ -22,25 +22,30 @@
 
 package net.solarnetwork.central.user.domain;
 
-import java.util.HashSet;
 import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.domain.BaseStringEntity;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.util.SerializeIgnore;
 
 /**
  * A user authorization token.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UserAuthToken extends BaseStringEntity {
 
-	private static final long serialVersionUID = 899722294031488962L;
+	private static final long serialVersionUID = -2125712171325565247L;
 
 	private Long userId;
 	private String authSecret;
 	private UserAuthTokenStatus status;
 	private UserAuthTokenType type;
-	private Set<Long> nodeIds = new HashSet<Long>(5);
+	private BasicSecurityPolicy policy;
+	private String policyJson;
 
 	/**
 	 * Default constructor.
@@ -81,12 +86,12 @@ public class UserAuthToken extends BaseStringEntity {
 	/**
 	 * Get the ID value.
 	 * 
-	 * <p>
 	 * This is just an alias for {@link BaseStringEntity#getId()}.
-	 * </p>
 	 * 
 	 * @return the auth token
 	 */
+	@SerializeIgnore
+	@JsonIgnore
 	public String getAuthToken() {
 		return getId();
 	}
@@ -94,9 +99,7 @@ public class UserAuthToken extends BaseStringEntity {
 	/**
 	 * Set the ID value.
 	 * 
-	 * <p>
 	 * This is just an alias for {@link BaseStringEntity#setId(String)}.
-	 * </p>
 	 * 
 	 * @param authToken
 	 *        the auth token
@@ -129,12 +132,76 @@ public class UserAuthToken extends BaseStringEntity {
 		this.type = type;
 	}
 
+	/**
+	 * Get the node IDs included in the policy, if available.
+	 * 
+	 * @return node IDs, or {@code null}
+	 */
+	@SerializeIgnore
+	@JsonIgnore
 	public Set<Long> getNodeIds() {
-		return nodeIds;
+		BasicSecurityPolicy p = getPolicy();
+		return (p == null ? null : p.getNodeIds());
 	}
 
-	public void setNodeIds(Set<Long> nodeIds) {
-		this.nodeIds = nodeIds;
+	/**
+	 * Get the {@link BasicSecurityPolicy}.
+	 * 
+	 * If {@link #setPolicyJson(String)} has been previously called, this will
+	 * parse that JSON into a {@code BasicSecurityPolicy} instance and return
+	 * that.
+	 * 
+	 * @return the policy
+	 */
+	public BasicSecurityPolicy getPolicy() {
+		if ( policy == null && policyJson != null ) {
+			policy = JsonUtils.getObjectFromJSON(policyJson, BasicSecurityPolicy.class);
+		}
+		return policy;
 	}
 
+	/**
+	 * Set the {@link BasicSecurityPolicy} instance to use.
+	 * 
+	 * This will replace any value set previously via
+	 * {@link #setPolicyJson(String)} as well.
+	 * 
+	 * @param policy
+	 *        the policy instance to set
+	 */
+	public void setPolicy(BasicSecurityPolicy policy) {
+		this.policy = policy;
+		policyJson = null;
+	}
+
+	/**
+	 * Get the {@link BasicSecurityPolicy} object as a JSON string.
+	 * 
+	 * This method will ignore <em>null</em> values.
+	 * 
+	 * @return a JSON encoded string, or {@code null}
+	 */
+	@SerializeIgnore
+	@JsonIgnore
+	public String getPolicyJson() {
+		if ( policyJson == null ) {
+			policyJson = JsonUtils.getJSONString(policy, null);
+		}
+		return policyJson;
+	}
+
+	/**
+	 * Set the {@link BasicSecurityPolicy} object via a JSON string.
+	 * 
+	 * This method will remove any previously set {@code BasicSecurityPolicy}
+	 * and replace it with the values parsed from the JSON.
+	 * 
+	 * @param json
+	 *        The policy JSON to set.
+	 */
+	@JsonProperty // @JsonProperty needed because of @JsonIgnore on getter
+	public void setPolicyJson(String json) {
+		policyJson = json;
+		policy = null;
+	}
 }

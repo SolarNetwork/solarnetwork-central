@@ -22,38 +22,24 @@
 
 package net.solarnetwork.central.user.dao.mybatis;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.domain.UserAuthToken;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link UserAuthTokenDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken, String> implements
-		UserAuthTokenDao {
+public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken, String>
+		implements UserAuthTokenDao {
 
 	/** The query name used for {@link #findUserAuthTokensForUser(Long)}. */
 	public static final String QUERY_FOR_USER_ID = "find-UserAuthToken-for-UserID";
-
-	/**
-	 * The delete statement name used by to delete all node IDs for a given
-	 * token during {@link #store(Long)}.
-	 */
-	public static final String DELETE_NODES_FOR_TOKEN = "delete-UserAuthToken-nodes";
-
-	/**
-	 * The insert statement name used by to insert a single node ID for a given
-	 * token during {@link #store(Long)}.
-	 */
-	public static final String INSERT_NODE_ID_FOR_TOKEN = "insert-UserAuthToken-node";
 
 	/**
 	 * Default constructor.
@@ -72,15 +58,6 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public String store(final UserAuthToken datum) {
 		final String pk = handleAssignedPrimaryKeyStore(datum);
-		getSqlSession().delete(DELETE_NODES_FOR_TOKEN, pk);
-		if ( datum.getNodeIds() != null ) {
-			Map<String, Object> params = new HashMap<String, Object>(2);
-			params.put("id", pk);
-			for ( Long nodeId : datum.getNodeIds() ) {
-				params.put("nodeId", nodeId);
-				getSqlSession().insert(INSERT_NODE_ID_FOR_TOKEN, params);
-			}
-		}
 		return pk;
 	}
 

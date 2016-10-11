@@ -24,11 +24,9 @@ package net.solarnetwork.central.web.support;
 
 import java.util.Locale;
 import javax.servlet.http.HttpServletResponse;
-import net.solarnetwork.central.ValidationException;
-import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.web.domain.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.validation.BindException;
@@ -36,12 +34,15 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.web.domain.Response;
 
 /**
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public abstract class WebServiceControllerSupport {
 
@@ -96,6 +97,24 @@ public abstract class WebServiceControllerSupport {
 	}
 
 	/**
+	 * Handle an {@link TypeMismatchException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 * @since 1.4
+	 */
+	@ExceptionHandler(TypeMismatchException.class)
+	@ResponseBody
+	public Response<?> handleTypeMismatchException(TypeMismatchException e,
+			HttpServletResponse response) {
+		log.error("TypeMismatchException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
+	}
+
+	/**
 	 * Handle an {@link IllegalArgumentException}.
 	 * 
 	 * @param e
@@ -107,7 +126,8 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(IllegalArgumentException.class)
 	@ResponseBody
-	public Response<?> handleRuntimeException(IllegalArgumentException e, HttpServletResponse response) {
+	public Response<?> handleIllegalArgumentException(IllegalArgumentException e,
+			HttpServletResponse response) {
 		log.error("IllegalArgumentException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
 	}
@@ -139,7 +159,8 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(BindException.class)
 	@ResponseBody
-	public Response<?> handleBindException(BindException e, HttpServletResponse response, Locale locale) {
+	public Response<?> handleBindException(BindException e, HttpServletResponse response,
+			Locale locale) {
 		log.debug("BindException in {} controller", getClass().getSimpleName(), e);
 		response.setStatus(422);
 		String msg = generateErrorsMessage(e, locale, messageSource);
@@ -147,8 +168,8 @@ public abstract class WebServiceControllerSupport {
 	}
 
 	private String generateErrorsMessage(Errors e, Locale locale, MessageSource msgSrc) {
-		String msg = (msgSrc == null ? "Validation error" : msgSrc.getMessage("error.validation", null,
-				"Validation error", locale));
+		String msg = (msgSrc == null ? "Validation error"
+				: msgSrc.getMessage("error.validation", null, "Validation error", locale));
 		if ( msgSrc != null && e.hasErrors() ) {
 			StringBuilder buf = new StringBuilder();
 			for ( ObjectError error : e.getAllErrors() ) {

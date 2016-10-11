@@ -92,33 +92,6 @@
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>	
 	
-	<!-- XHR support filter -->
-	<filter>
-		<filter-name>xhrFilter</filter-name>
-		<filter-class>net.solarnetwork.web.support.ResponseHeaderFilter</filter-class>
-		<init-param>
-			<param-name>Access-Control-Allow-Origin</param-name>
-			<param-value>*</param-value>
-		</init-param>
-		<init-param>
-			<param-name>Access-Control-Allow-Headers</param-name>
-			<param-value>Authorization, X-SN-Date</param-value>
-		</init-param>
-		<init-param>
-			<param-name>Access-Control-Max-Age</param-name>
-			<param-value>86400</param-value><!--  24 hours -->
-		</init-param>
-	</filter>
-	
-	<filter-mapping>
-		<filter-name>xhrFilter</filter-name>
-		<url-pattern>*.json</url-pattern>
-	</filter-mapping>
-	<filter-mapping>
-		<filter-name>xhrFilter</filter-name>
-		<url-pattern>/api/*</url-pattern>
-	</filter-mapping>
-
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
 	</listener>

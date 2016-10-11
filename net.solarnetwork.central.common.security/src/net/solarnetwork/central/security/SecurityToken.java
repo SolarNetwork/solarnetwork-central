@@ -22,13 +22,11 @@
 
 package net.solarnetwork.central.security;
 
-import java.util.Set;
-
 /**
  * A token based actor.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface SecurityToken extends SecurityActor {
 
@@ -54,13 +52,9 @@ public interface SecurityToken extends SecurityActor {
 	String getTokenType();
 
 	/**
-	 * Get an optional set of IDs associated with the token.
+	 * Get an optional security policy.
 	 * 
-	 * <p>
-	 * The meaning of the ID values depends on the token type.
-	 * </p>
-	 * 
-	 * @return optional set of token IDs
+	 * @return optional security policy
 	 */
-	Set<?> getTokenIds();
+	SecurityPolicy getPolicy();
 }
