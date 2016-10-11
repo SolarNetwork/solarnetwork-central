@@ -37,20 +37,7 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
 
 /**
- * FIXME
- * 
- * <p>
- * TODO
- * </p>
- * 
- * <p>
- * The configurable properties of this class are:
- * </p>
- * 
- * <dl class="class-properties">
- * <dt></dt>
- * <dd></dd>
- * </dl>
+ * Support for enforcing a {@link SecurityPolicy} on domain objects.
  * 
  * @author matt
  * @version 1.0
@@ -61,8 +48,21 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	private final SecurityPolicy policy;
 	private final Object principal;
 
+	private Long[] cachedNodeIds;
+	private String[] cachedSourceIds;
+
 	private static final Logger LOG = LoggerFactory.getLogger(SecurityPolicyEnforcer.class);
 
+	/**
+	 * Construct a new enforcer.
+	 * 
+	 * @param policy
+	 *        The policy to enforce.
+	 * @param principal
+	 *        The active principal.
+	 * @param delegate
+	 *        The domain object to enforce the policy on.
+	 */
 	public SecurityPolicyEnforcer(SecurityPolicy policy, Object principal, Object delegate) {
 		super();
 		this.delegate = delegate;
@@ -71,20 +71,41 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	}
 
 	/**
-	 * Wrap a filter with a {@link SecurityPolicyEnforcer}, enforcing policy
+	 * Wrap an object with a {@link SecurityPolicyEnforcer}, enforcing policy
 	 * properties.
 	 * 
-	 * @param filter
-	 *        The filter object to wrap.
-	 * @param handler
-	 *        The policy handler.
+	 * This will return a proxy object that implements all interfaces on the
+	 * provided enforder's {@code delegate} property.
+	 * 
+	 * @param enforcer
+	 *        The policy enforcer.
 	 * @return A new wrapped object.
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> T createSecurityPolicyProxy(SecurityPolicyEnforcer handler) {
-		Class<?>[] interfaces = ClassUtils.getAllInterfaces(handler.getDelgate());
-		return (T) Proxy.newProxyInstance(handler.getDelgate().getClass().getClassLoader(), interfaces,
-				handler);
+	public static <T> T createSecurityPolicyProxy(SecurityPolicyEnforcer enforcer) {
+		Class<?>[] interfaces = ClassUtils.getAllInterfaces(enforcer.getDelgate());
+		return (T) Proxy.newProxyInstance(enforcer.getDelgate().getClass().getClassLoader(), interfaces,
+				enforcer);
+	}
+
+	/**
+	 * Verify the security policy on all supported properties immediately.
+	 * 
+	 * @throws AuthorizationException
+	 *         if any policy fails
+	 */
+	public void verify() {
+		String[] getters = new String[] { "getNodeIds", "getSourceIds", "getAggregation" };
+		for ( String methodName : getters ) {
+			try {
+				Method m = delegate.getClass().getMethod(methodName);
+				invoke(null, m, null);
+			} catch ( AuthorizationException e ) {
+				throw e;
+			} catch ( Throwable e ) {
+				// ignore this
+			}
+		}
 	}
 
 	@Override
@@ -128,6 +149,9 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		if ( policyNodeIds == null || policyNodeIds.isEmpty() ) {
 			return nodeIds;
 		}
+		if ( cachedNodeIds != null ) {
+			return (cachedNodeIds.length == 0 ? null : cachedNodeIds);
+		}
 		if ( nodeIds != null && nodeIds.length > 0 ) {
 			// remove any source IDs not in the policy
 			Set<Long> nodeIdsSet = new LinkedHashSet<Long>(Arrays.asList(nodeIds));
@@ -149,6 +173,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 			LOG.info("Access RESTRICTED to nodes {} for {}", policyNodeIds, principal);
 			nodeIds = policyNodeIds.toArray(new Long[policyNodeIds.size()]);
 		}
+		cachedNodeIds = (nodeIds == null ? new Long[0] : nodeIds);
 		return nodeIds;
 	}
 
@@ -157,6 +182,9 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		// verify source IDs
 		if ( policySourceIds == null || policySourceIds.isEmpty() ) {
 			return sourceIds;
+		}
+		if ( cachedSourceIds != null ) {
+			return (cachedSourceIds.length == 0 ? null : cachedSourceIds);
 		}
 		if ( sourceIds != null && sourceIds.length > 0 ) {
 			// remove any source IDs not in the policy
@@ -180,6 +208,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 			LOG.info("Access RESTRICTED to sources {} for {}", policySourceIds, principal);
 			sourceIds = policySourceIds.toArray(new String[policySourceIds.size()]);
 		}
+		cachedSourceIds = (sourceIds == null ? new String[0] : sourceIds);
 		return sourceIds;
 	}
 

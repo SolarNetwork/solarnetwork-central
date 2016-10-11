@@ -86,7 +86,9 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		if ( f == filter ) {
 			return pjp.proceed();
 		}
-		return pjp.proceed(new Object[] { f });
+		Object[] args = pjp.getArgs();
+		args[0] = f;
+		return pjp.proceed(args);
 	}
 
 	/**
@@ -137,8 +139,10 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			return filter;
 		}
 
-		return SecurityPolicyEnforcer.createSecurityPolicyProxy(new SecurityPolicyEnforcer(policy,
-				(authentication != null ? authentication.getPrincipal() : null), filter));
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
+				(authentication != null ? authentication.getPrincipal() : null), filter);
+		enforcer.verify();
+		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 	}
 
 	/**
