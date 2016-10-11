@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.aop;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -64,8 +65,8 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		super(userNodeDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,..)")
-	public void nodeReportableInterval(Long nodeId) {
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,sourceId,..)")
+	public void nodeReportableInterval(Long nodeId, String sourceId) {
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(nodeId,..)")
@@ -89,6 +90,117 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		Object[] args = pjp.getArgs();
 		args[0] = f;
 		return pjp.proceed(args);
+	}
+
+	/**
+	 * Enforce node ID and source ID policy restrictions when requesting the
+	 * available sources of a node.
+	 * 
+	 * First the node ID is verified. Then, for all returned source ID values,
+	 * if the active policy has no source ID restrictions return all values,
+	 * otherwise remove any value not included in the policy.
+	 * 
+	 * @param pjp
+	 *        The join point.
+	 * @param nodeId
+	 *        The node ID.
+	 * @return The set of String source IDs.
+	 * @throws Throwable
+	 */
+	@Around("nodeReportableSources(nodeId)")
+	public Object reportableSourcesAccessCheck(ProceedingJoinPoint pjp, Long nodeId) throws Throwable {
+		// verify node ID
+		requireNodeReadAccess(nodeId);
+
+		// verify source IDs in result
+		@SuppressWarnings("unchecked")
+		Set<String> result = (Set<String>) pjp.proceed();
+		if ( result == null || result.isEmpty() ) {
+			return result;
+		}
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return result;
+		}
+		Set<String> allowedSourceIds = policy.getSourceIds();
+		if ( allowedSourceIds == null || allowedSourceIds.isEmpty() ) {
+			return result;
+		}
+		Authentication authentication = SecurityUtils.getCurrentAuthentication();
+		Object principal = (authentication != null ? authentication.getPrincipal() : null);
+		for ( Iterator<String> itr = result.iterator(); itr.hasNext(); ) {
+			String s = itr.next();
+			if ( !allowedSourceIds.contains(s) ) {
+				log.debug("Access DENIED to source {} for {}: policy restriction", s, principal);
+				itr.remove();
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Enforce node ID and source ID policy restrictions when requesting a
+	 * reportable interval.
+	 * 
+	 * If the active policy has source ID restrictions, then if no
+	 * {@code sourceId} is provided fill in the first available value from the
+	 * policy. Otherwise, if {@code sourceId} is provided, check that value is
+	 * allowed by the policy.
+	 * 
+	 * @param pjp
+	 *        The join point.
+	 * @param nodeId
+	 *        The node ID.
+	 * @param sourceId
+	 *        The source ID, or {@code null}.
+	 * @return The reportable interval.
+	 * @throws Throwable
+	 *         If any error occurs.
+	 */
+	@Around("nodeReportableInterval(nodeId, sourceId)")
+	public Object reportableIntervalAccessCheck(ProceedingJoinPoint pjp, Long nodeId, String sourceId)
+			throws Throwable {
+		// verify node ID
+		requireNodeReadAccess(nodeId);
+
+		// now verify source ID
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return pjp.proceed();
+		}
+
+		Set<String> allowedSourceIds = policy.getSourceIds();
+		if ( allowedSourceIds != null && !allowedSourceIds.isEmpty() ) {
+			Authentication authentication = SecurityUtils.getCurrentAuthentication();
+			Object principal = (authentication != null ? authentication.getPrincipal() : null);
+			if ( sourceId == null ) {
+				// force the first allowed source ID
+				sourceId = allowedSourceIds.iterator().next();
+				log.info("Access RESTRICTED to source {} for {}", sourceId, principal);
+				Object[] args = pjp.getArgs();
+				args[1] = sourceId;
+				return pjp.proceed(args);
+			} else if ( !allowedSourceIds.contains(sourceId) ) {
+				log.warn("Access DENIED to source {} for {}", sourceId, principal);
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, sourceId);
+			}
+		}
+
+		return pjp.proceed();
+	}
+
+	/**
+	 * Allow the current user (or current node) access to node data.
+	 * 
+	 * @param nodeId
+	 *        the ID of the node to verify
+	 */
+	@Before("nodeMostRecentWeatherConditions(nodeId)")
+	public void userNodeAccessCheck(Long nodeId) {
+		if ( nodeId == null ) {
+			return;
+		}
+		requireNodeReadAccess(nodeId);
 	}
 
 	/**
@@ -132,15 +244,15 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		return policyCheck(filter);
 	}
 
-	private <T extends Filter> T policyCheck(T filter) {
+	private <T> T policyCheck(T domainObject) {
 		Authentication authentication = SecurityUtils.getCurrentAuthentication();
 		SecurityPolicy policy = getActiveSecurityPolicy();
 		if ( policy == null ) {
-			return filter;
+			return domainObject;
 		}
 
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
-				(authentication != null ? authentication.getPrincipal() : null), filter);
+				(authentication != null ? authentication.getPrincipal() : null), domainObject);
 		enforcer.verify();
 		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 	}
@@ -171,20 +283,6 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * Allow the current user (or current node) access to node data.
-	 * 
-	 * @param nodeId
-	 *        the ID of the node to verify
-	 */
-	@Before("nodeReportableInterval(nodeId) || nodeReportableSources(nodeId) || nodeMostRecentWeatherConditions(nodeId)")
-	public void userNodeAccessCheck(Long nodeId) {
-		if ( nodeId == null ) {
-			return;
-		}
-		requireNodeReadAccess(nodeId);
 	}
 
 	public Set<String> getNodeIdNotRequiredSet() {
