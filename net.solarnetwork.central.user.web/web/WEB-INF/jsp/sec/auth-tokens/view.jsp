@@ -164,7 +164,7 @@
 			 			<tbody>
 			 				<tr>
 			 					<td class="monospace result-token"></td>
-			 					<td class="result-secret text-danger"></td>
+			 					<td class="monospace result-secret text-danger"></td>
 			 				</tr>
 			 			</tbody>
 			 		</table>
@@ -245,7 +245,7 @@
 				 			<tbody>
 				 				<tr>
 				 					<td class="monospace result-token"></td>
-				 					<td class="result-secret text-danger"></td>
+				 					<td class="monospace result-secret text-danger"></td>
 				 				</tr>
 				 			</tbody>
 				 		</table>
