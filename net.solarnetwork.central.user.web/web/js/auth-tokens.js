@@ -4,7 +4,7 @@ $(document).ready(function() {
 			document.location.reload(true);
 		});
 		if ( json.success === true && json.data ) {
-			form.find('.result-token').text(json.data.authToken);
+			form.find('.result-token').text(json.data.id);
 			form.find('.result-secret').text(json.data.authSecret);
 		}
 		form.find('.before').hide();
