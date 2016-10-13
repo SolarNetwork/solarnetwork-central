@@ -22,7 +22,8 @@ SNAPI.shouldIncludeContentMD5 = function(contentType) {
 SNAPI.generateAuthorizationMessage = function(params) {
 	var msg =
 		(params.method === undefined ? 'GET' : params.method.toUpperCase()) + '\n'
-		+(params.data !== undefined && SNAPI.shouldIncludeContentMD5(params.contentType) ? CryptoJS.MD5(params.data) : '') + '\n'
+		+(params.data !== undefined && SNAPI.shouldIncludeContentMD5(params.contentType) 
+				? CryptoJS.enc.Base64.stringify(CryptoJS.MD5(params.data)) : '') + '\n'
 		+(params.contentType === undefined ? '' : params.contentType) + '\n'
 		+params.date +'\n'
 		+params.path;
@@ -210,7 +211,7 @@ SNAPI.request  = function(url, dataType, method, data, contentType) {
 			xhr.setRequestHeader('X-SN-Date', date);
 			xhr.setRequestHeader('Authorization', 'SolarNetworkWS ' +auth);
 			if ( data !== undefined && SNAPI.shouldIncludeContentMD5(cType) ) {
-				xhr.setRequestHeader('Content-MD5', CryptoJS.MD5(data));
+				xhr.setRequestHeader('Content-MD5', CryptoJS.enc.Base64.stringify(CryptoJS.MD5(data)));
 			}
 		}
 	});
