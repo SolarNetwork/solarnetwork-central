@@ -40,7 +40,9 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
@@ -83,7 +85,8 @@ import org.springframework.web.filter.GenericFilterBean;
  * usernames (email addresses) and plain-text authorization token secret
  * passwords via {@link UserDetails#getUsername()} and
  * {@link UserDetails#getPassword()}. After validating the request
- * authorization, this filter will authenticate the user with Spring Security.</dd>
+ * authorization, this filter will authenticate the user with Spring
+ * Security.</dd>
  * 
  * <dt>maxDateSkew</dt>
  * <dd>The maximum amount of difference in the supplied HTTP {@code Date} (or
@@ -123,8 +126,8 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 	}
 
 	@Override
-	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException,
-			ServletException {
+	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+			throws IOException, ServletException {
 		SecurityHttpServletRequestWrapper request = new SecurityHttpServletRequestWrapper(
 				(HttpServletRequest) req, 65536);
 		HttpServletResponse response = (HttpServletResponse) res;
@@ -151,8 +154,21 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		if ( providedMD5 != null && providedMD5.length() > 0 ) {
 			// compute the MD5 and validate now
 			try {
-				String computedMD5 = request.getContentMD5();
-				if ( providedMD5.equals(computedMD5) == false ) {
+				byte[] computedMD5 = request.getContentMD5();
+				byte[] requestMD5;
+				try {
+					if ( providedMD5.length() == 32 ) {
+						// treat as hex
+						requestMD5 = Hex.decodeHex(providedMD5.toCharArray());
+					} else {
+						// treat as Base64
+						requestMD5 = Base64.decodeBase64(providedMD5);
+					}
+				} catch ( DecoderException e ) {
+					fail(request, response, new BadCredentialsException("Invalid Content-MD5 encoding"));
+					return;
+				}
+				if ( !Arrays.equals(computedMD5, requestMD5) ) {
 					fail(request, response, new BadCredentialsException("Invalid Content-MD5 value"));
 					return;
 				}
@@ -172,7 +188,8 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		}
 		final String computedDigest = computeDigest(data, user.getPassword());
 		if ( !computedDigest.equals(data.signatureDigest) ) {
-			log.debug("Expected response: '{}' but received: '{}'", computedDigest, data.signatureDigest);
+			log.debug("Expected response: '{}' but received: '{}'", computedDigest,
+					data.signatureDigest);
 			fail(request, response, new BadCredentialsException("Bad credentials"));
 			return;
 		}
@@ -185,8 +202,8 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 
 		log.debug("Authentication success for user: '{}'", user.getUsername());
 
-		SecurityContextHolder.getContext().setAuthentication(
-				createSuccessfulAuthentication(request, user));
+		SecurityContextHolder.getContext()
+				.setAuthentication(createSuccessfulAuthentication(request, user));
 
 		chain.doFilter(request, response);
 	}

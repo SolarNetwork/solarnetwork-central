@@ -129,7 +129,14 @@ public class UserAuthTokenAuthenticationFilterTest {
 
 	private String createAuthorizationHeaderValue(String token, String secret,
 			MockHttpServletRequest request, Date date) {
-		String msg = request.getMethod() + "\n\n\n" + httpDate(date) + "\n" + request.getRequestURI();
+		return createAuthorizationHeaderValue(token, secret, request, date, null, null);
+	}
+
+	private String createAuthorizationHeaderValue(String token, String secret,
+			MockHttpServletRequest request, Date date, String contentType, String contentMD5) {
+		String msg = request.getMethod() + "\n" + (contentMD5 != null ? contentMD5 : "") + "\n"
+				+ (contentType != null ? contentType : "") + "\n" + httpDate(date) + "\n"
+				+ request.getRequestURI();
 		String[] keys = request.getParameterMap().keySet().toArray(new String[0]);
 		Arrays.sort(keys);
 		boolean first = true;
@@ -271,4 +278,69 @@ public class UserAuthTokenAuthenticationFilterTest {
 		verify(filterChain, userDetailsService);
 	}
 
+	@Test
+	public void contentType() throws ServletException, IOException {
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
+		request.setContentType("application/x-www-form-urlencoded; charset=UTF-8");
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("foo", "bar");
+		params.put("bar", "foo");
+		params.put("zog", "dog");
+		request.setParameters(params);
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request, createAuthorizationHeaderValue(TEST_AUTH_TOKEN, TEST_PASSWORD,
+				request, now, "application/x-www-form-urlencoded; charset=UTF-8", null));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		validateAuthentication();
+		verify(filterChain, userDetailsService);
+	}
+
+	@Test
+	public void contentMD5Hex() throws ServletException, IOException {
+		final String contentType = "application/json; charset=UTF-8";
+		final String content = "{\"foo\":\"bar\"}";
+		final String contentMD5 = "9bb58f26192e4ba00f01e2e7b136bbd8";
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
+		request.setContentType(contentType);
+		request.setContent(content.getBytes("UTF-8"));
+		request.addHeader("Content-MD5", contentMD5);
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request, createAuthorizationHeaderValue(TEST_AUTH_TOKEN, TEST_PASSWORD,
+				request, now, contentType, contentMD5));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		validateAuthentication();
+		verify(filterChain, userDetailsService);
+	}
+
+	@Test
+	public void contentMD5Base64() throws ServletException, IOException {
+		final String contentType = "application/json; charset=UTF-8";
+		final String content = "{\"foo\":\"bar\"}";
+		final String contentMD5 = "m7WPJhkuS6APAeLnsTa72A==";
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
+		request.setContentType(contentType);
+		request.setContent(content.getBytes("UTF-8"));
+		request.addHeader("Content-MD5", contentMD5);
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request, createAuthorizationHeaderValue(TEST_AUTH_TOKEN, TEST_PASSWORD,
+				request, now, contentType, contentMD5));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		validateAuthentication();
+		verify(filterChain, userDetailsService);
+	}
 }
