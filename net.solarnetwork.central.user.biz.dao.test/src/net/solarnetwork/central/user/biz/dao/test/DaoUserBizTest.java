@@ -29,14 +29,26 @@ import static org.easymock.EasyMock.same;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 import java.util.HashSet;
 import java.util.Set;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.easymock.IArgumentMatcher;
+import org.joda.time.DateTime;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.domain.LocationPrecision;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -46,12 +58,6 @@ import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
-import org.easymock.EasyMock;
-import org.easymock.IArgumentMatcher;
-import org.joda.time.DateTime;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test cases for the {@link DaoUserBiz} class.
@@ -124,10 +130,11 @@ public class DaoUserBizTest {
 		expect(userAuthTokenDao.store(anyObject(UserAuthToken.class))).andReturn(TEST_AUTH_TOKEN);
 		replayProperties();
 		UserAuthToken generated = userBiz.generateUserAuthToken(TEST_USER_ID, UserAuthTokenType.User,
-				null);
+				(SecurityPolicy) null);
 		assertNotNull(generated);
 		assertNotNull(generated.getAuthToken());
-		assertEquals("Auth token should be exactly 20 characters", 20, generated.getAuthToken().length());
+		assertEquals("Auth token should be exactly 20 characters", 20,
+				generated.getAuthToken().length());
 		assertNotNull(generated.getAuthSecret());
 		assertEquals(TEST_USER_ID, generated.getUserId());
 		assertEquals(UserAuthTokenStatus.Active, generated.getStatus());
@@ -167,6 +174,100 @@ public class DaoUserBizTest {
 			assertEquals(TEST_AUTH_TOKEN, e.getId());
 		}
 		verifyProperties();
+	}
+
+	@Test
+	public void updateUserAuthTokenStatus() {
+		final UserAuthToken token = new UserAuthToken(TEST_AUTH_TOKEN, TEST_USER_ID, TEST_AUTH_SECRET,
+				UserAuthTokenType.User);
+		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(token);
+
+		Capture<UserAuthToken> tokenCapture = new Capture<UserAuthToken>();
+		expect(userAuthTokenDao.store(EasyMock.capture(tokenCapture))).andReturn(TEST_AUTH_TOKEN);
+
+		replayProperties();
+
+		UserAuthToken updated = userBiz.updateUserAuthTokenStatus(TEST_USER_ID, TEST_AUTH_TOKEN,
+				UserAuthTokenStatus.Disabled);
+
+		verifyProperties();
+
+		assertNotNull("Updated token", updated);
+		assertEquals("Updated token ID", TEST_AUTH_TOKEN, updated.getAuthToken());
+		assertEquals("Token secret", TEST_AUTH_SECRET, updated.getAuthSecret());
+		assertEquals("Token user", TEST_USER_ID, updated.getUserId());
+		assertEquals("Token state", UserAuthTokenStatus.Disabled, updated.getStatus());
+
+		assertSame("Persisted token", updated, tokenCapture.getValue());
+	}
+
+	@Test
+	public void replaceUserAuthTokenPolicy() {
+		final UserAuthToken token = new UserAuthToken(TEST_AUTH_TOKEN, TEST_USER_ID, TEST_AUTH_SECRET,
+				UserAuthTokenType.User);
+		final BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withMinAggregation(Aggregation.Day).withMinLocationPrecision(LocationPrecision.Block)
+				.build();
+		token.setPolicy(policy);
+
+		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(token);
+
+		Capture<UserAuthToken> tokenCapture = new Capture<UserAuthToken>();
+		expect(userAuthTokenDao.store(EasyMock.capture(tokenCapture))).andReturn(TEST_AUTH_TOKEN);
+
+		replayProperties();
+
+		final BasicSecurityPolicy newPolicy = new BasicSecurityPolicy.Builder()
+				.withMinAggregation(Aggregation.Month).build();
+		UserAuthToken updated = userBiz.updateUserAuthTokenPolicy(TEST_USER_ID, TEST_AUTH_TOKEN,
+				newPolicy, true);
+
+		verifyProperties();
+
+		assertNotNull("Updated token", updated);
+		assertEquals("Updated token ID", TEST_AUTH_TOKEN, updated.getAuthToken());
+		assertEquals("Token secret", TEST_AUTH_SECRET, updated.getAuthSecret());
+		assertEquals("Token user", TEST_USER_ID, updated.getUserId());
+		assertEquals("Token policy", newPolicy, updated.getPolicy());
+
+		assertSame("Persisted token", updated, tokenCapture.getValue());
+	}
+
+	@Test
+	public void mergeUserAuthTokenPolicy() {
+		final UserAuthToken token = new UserAuthToken(TEST_AUTH_TOKEN, TEST_USER_ID, TEST_AUTH_SECRET,
+				UserAuthTokenType.User);
+		final BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withMinAggregation(Aggregation.Day).withMinLocationPrecision(LocationPrecision.Block)
+				.build();
+		token.setPolicy(policy);
+
+		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(token);
+
+		Capture<UserAuthToken> tokenCapture = new Capture<UserAuthToken>();
+		expect(userAuthTokenDao.store(EasyMock.capture(tokenCapture))).andReturn(TEST_AUTH_TOKEN);
+
+		replayProperties();
+
+		final BasicSecurityPolicy policyPatch = new BasicSecurityPolicy.Builder()
+				.withMinAggregation(Aggregation.Month).build();
+		UserAuthToken updated = userBiz.updateUserAuthTokenPolicy(TEST_USER_ID, TEST_AUTH_TOKEN,
+				policyPatch, false);
+
+		verifyProperties();
+
+		assertNotNull("Updated token", updated);
+		assertEquals("Updated token ID", TEST_AUTH_TOKEN, updated.getAuthToken());
+		assertEquals("Token secret", TEST_AUTH_SECRET, updated.getAuthSecret());
+		assertEquals("Token user", TEST_USER_ID, updated.getUserId());
+
+		BasicSecurityPolicy expectedPolicy = new BasicSecurityPolicy.Builder()
+				.withMinAggregation(Aggregation.Month).withMinLocationPrecision(LocationPrecision.Block)
+				.build();
+
+		assertEquals("Token policy", expectedPolicy, updated.getPolicy());
+
+		assertSame("Persisted token", updated, tokenCapture.getValue());
 	}
 
 	@Test
@@ -245,8 +346,8 @@ public class DaoUserBizTest {
 		locMatch.setName("bar");
 
 		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
-		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass()))).andReturn(
-				locMatch);
+		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass())))
+				.andReturn(locMatch);
 		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), -9L))).andReturn(testNode.getId());
 		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
 
@@ -279,12 +380,12 @@ public class DaoUserBizTest {
 		newLoc.setId(-99L);
 
 		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
-		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass()))).andReturn(
-				null);
+		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass())))
+				.andReturn(null);
 		expect(solarLocationDao.store(EasyMock.isA(loc.getClass()))).andReturn(newLoc.getId());
 		expect(solarLocationDao.get(newLoc.getId())).andReturn(newLoc);
-		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), newLoc.getId()))).andReturn(
-				testNode.getId());
+		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), newLoc.getId())))
+				.andReturn(testNode.getId());
 		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
 
 		replayProperties();

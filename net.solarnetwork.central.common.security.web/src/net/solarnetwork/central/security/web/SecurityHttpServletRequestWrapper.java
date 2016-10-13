@@ -29,21 +29,21 @@ import java.io.InputStream;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
-import net.solarnetwork.central.security.SecurityException;
 import org.apache.commons.codec.digest.DigestUtils;
+import net.solarnetwork.central.security.SecurityException;
 
 /**
  * {@link HttpServletRequestWrapper} to aid in computing hash values for the
  * request content.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SecurityHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
 	private final int maximumLength;
 	private boolean requestBodyCached;
-	private byte[] cachedRequestBody;
+	private byte[] cachedRequestBody; // TODO: support writing to temp file if body > maximumLength!
 
 	/**
 	 * Construct from a request.
@@ -62,7 +62,7 @@ public class SecurityHttpServletRequestWrapper extends HttpServletRequestWrapper
 		}
 		requestBodyCached = true;
 		InputStream in = super.getInputStream();
-		ByteArrayOutputStream out = new ByteArrayOutputStream(this.maximumLength);
+		ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
 		try {
 			int byteCount = 0;
 			byte[] buffer = new byte[4096];
@@ -99,12 +99,12 @@ public class SecurityHttpServletRequestWrapper extends HttpServletRequestWrapper
 	 *         if the request content length is larger than the configured
 	 *         {@code maximumLength}
 	 */
-	public String getContentMD5() throws IOException {
+	public byte[] getContentMD5() throws IOException {
 		cacheRequestBody();
 		if ( cachedRequestBody == null || cachedRequestBody.length < 1 ) {
 			return null;
 		}
-		return DigestUtils.md5Hex(cachedRequestBody);
+		return DigestUtils.md5(cachedRequestBody);
 	}
 
 	@Override

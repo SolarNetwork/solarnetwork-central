@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.security;
 
-import java.util.Collections;
-import java.util.Set;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -31,15 +29,15 @@ import org.springframework.security.core.userdetails.UserDetails;
  * {@link SecurityUser} implementation for authenticated tokens.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AuthenticatedToken extends User implements SecurityToken {
 
-	private static final long serialVersionUID = 7007705113771545111L;
+	private static final long serialVersionUID = -4857188995583662187L;
 
 	private final String tokenType;
 	private final Long userId;
-	private final Set<?> tokenIds;
+	private final SecurityPolicy policy;
 
 	/**
 	 * Construct with values.
@@ -48,15 +46,15 @@ public class AuthenticatedToken extends User implements SecurityToken {
 	 *        the token type
 	 * @param userId
 	 *        the user ID (that the token belongs to)
-	 * @param tokenIds
-	 *        optional set of IDs associated with the token
+	 * @param policy
+	 *        optional policy associated with the token
 	 */
-	public AuthenticatedToken(UserDetails user, String tokenType, Long userId, Set<?> tokenIds) {
-		super(user.getUsername(), user.getPassword(), user.isEnabled(), user.isAccountNonExpired(), user
-				.isCredentialsNonExpired(), user.isAccountNonLocked(), user.getAuthorities());
+	public AuthenticatedToken(UserDetails user, String tokenType, Long userId, SecurityPolicy policy) {
+		super(user.getUsername(), user.getPassword(), user.isEnabled(), user.isAccountNonExpired(),
+				user.isCredentialsNonExpired(), user.isAccountNonLocked(), user.getAuthorities());
 		this.tokenType = tokenType;
 		this.userId = userId;
-		this.tokenIds = (tokenIds == null ? null : Collections.unmodifiableSet(tokenIds));
+		this.policy = policy;
 	}
 
 	@Override
@@ -80,8 +78,8 @@ public class AuthenticatedToken extends User implements SecurityToken {
 	}
 
 	@Override
-	public Set<?> getTokenIds() {
-		return tokenIds;
+	public SecurityPolicy getPolicy() {
+		return policy;
 	}
 
 }

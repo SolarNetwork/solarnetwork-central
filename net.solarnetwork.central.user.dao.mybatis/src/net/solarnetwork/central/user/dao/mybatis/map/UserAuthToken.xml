@@ -7,7 +7,7 @@
 		INSERT INTO solaruser.user_auth_token 
 			(auth_token
 			<if test="created != null">,created</if>
-			, user_id, auth_secret, status, token_type
+			, user_id, auth_secret, status, token_type, jpolicy
 			)
 		VALUES
 			(#{id}
@@ -15,6 +15,7 @@
 			, #{userId}, #{authSecret}
 			, CAST(#{status} AS solaruser.user_auth_token_status)
 			, CAST(#{type} AS solaruser.user_auth_token_type)
+			, CAST(#{policyJson} AS json)
 			)
 	</insert>
 
@@ -24,7 +25,8 @@
 	     write over each other! -->
 	<update id="update-UserAuthToken" parameterType="UserAuthToken">
 		UPDATE solaruser.user_auth_token SET
-			status = CAST(#{status} AS solaruser.user_auth_token_status)
+			status = CAST(#{status} AS solaruser.user_auth_token_status),
+			jpolicy = CAST(#{policyJson} AS json)
 		WHERE
 			auth_token = #{id}
 			AND user_id = #{userId}
@@ -36,19 +38,6 @@
 			auth_token = #{id}
 	</update>
 	
-	<insert id="insert-UserAuthToken-node" parameterType="map">
-		INSERT INTO solaruser.user_auth_token_node
-			(auth_token, node_id)
-		VALUES
-			(#{id}, #{nodeId})
-	</insert>
-
-	<update id="delete-UserAuthToken-nodes" parameterType="string">
-		DELETE FROM solaruser.user_auth_token_node
-		WHERE
-			auth_token = #{id}
-	</update>
-
 	<sql id="fragment-UserAuthToken-full-result">
 		uat.auth_token AS uat_auth_token,
 		uat.created AS uat_created,
@@ -56,7 +45,7 @@
 		uat.auth_secret AS uat_auth_secret,
 		uat.status AS uat_status,
 		uat.token_type AS uat_token_type,
-		uatn.node_id AS uatn_node_id
+		uat.jpolicy AS uat_jpolicy
 	</sql>
 
 	<resultMap id="UserAuthTokenFullResult" type="UserAuthToken">
@@ -65,24 +54,14 @@
 		<result property="userId" column="uat_user_id"/>
 		<result property="status" column="uat_status"/>
 		<result property="type" column="uat_token_type"/>
-		<collection property="nodeIds" resultMap="net.solarnetwork.central.user.dao.mybatis.UserAuthToken.UserAuthTokenNodeResult" />
+		<result property="policyJson" column="uat_jpolicy"/>
 	</resultMap>
 	
-	<!--resultMap id="UserAuthTokenFullResultWithSecret" extends="UserAuthToken.UserAuthTokenNormalResult">
-		<result column="uat_auth_secret" property="authSecret"/>
-	</resultMap-->
-	
-	<resultMap id="UserAuthTokenNodeResult" type="long">
-		<result property="nodeIds" column="uatn_node_id"/> 
-	</resultMap>
-
 	<select id="get-UserAuthToken-for-id" resultMap="UserAuthTokenFullResult">
 		SELECT
 			<include refid="fragment-UserAuthToken-full-result"/>
 		FROM
 			solaruser.user_auth_token uat
-		LEFT OUTER JOIN
-			solaruser.user_auth_token_node uatn ON uatn.auth_token = uat.auth_token
 		WHERE
 			uat.auth_token = #{id}
 	</select>
@@ -92,8 +71,6 @@
 			<include refid="fragment-UserAuthToken-full-result"/>
 		FROM
 			solaruser.user_auth_token uat
-		LEFT OUTER JOIN
-			solaruser.user_auth_token_node uatn ON uatn.auth_token = uat.auth_token
 		WHERE
 			uat.user_id = #{id}
 		ORDER BY

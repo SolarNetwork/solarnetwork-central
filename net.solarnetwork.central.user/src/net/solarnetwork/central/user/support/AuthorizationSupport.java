@@ -22,24 +22,25 @@
 
 package net.solarnetwork.central.user.support;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityNode;
+import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Helper class for authorization needs, e.g. aspect impelmentations.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 public abstract class AuthorizationSupport {
 
@@ -195,7 +196,8 @@ public abstract class AuthorizationSupport {
 			}
 			if ( UserAuthTokenType.ReadNodeData.toString().equals(token.getTokenType()) ) {
 				// data token, so token must include the requested node ID
-				if ( token.getTokenIds() == null || !token.getTokenIds().contains(nodeId) ) {
+				if ( token.getPolicy() == null || token.getPolicy().getNodeIds() == null
+						|| !token.getPolicy().getNodeIds().contains(nodeId) ) {
 					log.warn("Access DENIED to node {} for token {}; node not included", nodeId,
 							token.getToken());
 					throw new AuthorizationException(token.getToken(),
@@ -245,7 +247,8 @@ public abstract class AuthorizationSupport {
 				if ( !token.getUserId().equals(userId) ) {
 					log.warn("Access DENIED to user {} for token {}; wrong user", userId,
 							token.getToken());
-					throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+					throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
+							userId);
 				}
 				return;
 			}
@@ -253,6 +256,28 @@ public abstract class AuthorizationSupport {
 
 		log.warn("Access DENIED to user {} for actor {}", userId, actor);
 		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+	}
+
+	/**
+	 * Get a {@link SecurityPolicy} for the active user, if avaiable.
+	 * 
+	 * @return The active user's policy, or {@code null}.
+	 * @since 1.3
+	 */
+	protected SecurityPolicy getActiveSecurityPolicy() {
+		final SecurityActor actor;
+		try {
+			actor = SecurityUtils.getCurrentActor();
+		} catch ( SecurityException e ) {
+			return null;
+		}
+
+		if ( actor instanceof SecurityToken ) {
+			SecurityToken token = (SecurityToken) actor;
+			return token.getPolicy();
+		}
+
+		return null;
 	}
 
 	/**

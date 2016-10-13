@@ -25,11 +25,13 @@
 		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_READNODEDATA')" method="GET"/>
 		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_READNODEDATA')" method="HEAD"/>
 		
+		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_WRITENODEDATA')" method="PATCH"/>
 		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_WRITENODEDATA')" method="POST"/>
 		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_WRITENODEDATA')" method="PUT"/>
 		<intercept-url pattern='/**' access="hasAnyRole('ROLE_USER', 'ROLE_NODE', 'ROLE_WRITENODEDATA')" method="DELETE"/>
 		
 		<custom-filter position="PRE_AUTH_FILTER" ref="authTokenFilter" />
+		<csrf disabled="true"/>
 	</http>
 	
 	<authentication-manager>
@@ -39,14 +41,9 @@
 	<beans:bean id="jdbcUserService" class="net.solarnetwork.central.security.jdbc.JdbcUserDetailsService">
 		<beans:property name="dataSource" ref="dataSource"/>
 			<beans:property name="usersByUsernameQuery" 
-					value="SELECT username, password, enabled, user_id, display_name, TRUE AS is_token,
-								token_type, node_ids
-							FROM solaruser.user_auth_token_login 
-							WHERE username = ?"/>
+					value="#{T(net.solarnetwork.central.security.jdbc.JdbcUserDetailsService).DEFAULT_TOKEN_USERS_BY_USERNAME_SQL}"/>
 			<beans:property name="authoritiesByUsernameQuery" 
-					value="SELECT username, authority
-							FROM solaruser.user_auth_token_role
-							WHERE username = ?"/>
+					value="#{T(net.solarnetwork.central.security.jdbc.JdbcUserDetailsService).DEFAULT_TOKEN_AUTHORITIES_BY_USERNAME_SQL}"/>
 	</beans:bean>
 	
 	<beans:bean id="authTokenEntryPoint" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint"/>

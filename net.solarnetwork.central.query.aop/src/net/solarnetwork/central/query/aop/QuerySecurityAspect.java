@@ -22,25 +22,30 @@
 
 package net.solarnetwork.central.query.aop;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.security.core.Authentication;
 import net.solarnetwork.central.datum.domain.DatumFilter;
-import net.solarnetwork.central.datum.domain.DatumQueryCommand;
 import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 
 /**
  * Security enforcing AOP aspect for {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Aspect
 public class QuerySecurityAspect extends AuthorizationSupport {
@@ -60,8 +65,8 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		super(userNodeDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,..)")
-	public void nodeReportableInterval(Long nodeId) {
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,sourceId,..)")
+	public void nodeReportableInterval(Long nodeId, String sourceId) {
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(nodeId,..)")
@@ -72,30 +77,142 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public void nodeMostRecentWeatherConditions(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAggregatedDatum(..)) && args(criteria,..)")
-	public void nodeDatumQuery(DatumQueryCommand criteria) {
-	}
-
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.findFiltered*(..)) && args(filter,..)")
 	public void nodeDatumFilter(Filter filter) {
 	}
 
+	@Around("nodeDatumFilter(filter)")
+	public Object userNodeFilterAccessCheck(ProceedingJoinPoint pjp, Filter filter) throws Throwable {
+		Filter f = userNodeAccessCheck(filter);
+		if ( f == filter ) {
+			return pjp.proceed();
+		}
+		Object[] args = pjp.getArgs();
+		args[0] = f;
+		return pjp.proceed(args);
+	}
+
 	/**
-	 * Allow the current actor access to aggregated datum data.
+	 * Enforce node ID and source ID policy restrictions when requesting the
+	 * available sources of a node.
 	 * 
-	 * @param criteria
+	 * First the node ID is verified. Then, for all returned source ID values,
+	 * if the active policy has no source ID restrictions return all values,
+	 * otherwise remove any value not included in the policy.
+	 * 
+	 * @param pjp
+	 *        The join point.
+	 * @param nodeId
+	 *        The node ID.
+	 * @return The set of String source IDs.
+	 * @throws Throwable
 	 */
-	@Before("nodeDatumQuery(criteria)")
-	public void userNodeDatumAccessCheck(DatumQueryCommand criteria) {
-		userNodeAccessCheck(criteria);
+	@Around("nodeReportableSources(nodeId)")
+	public Object reportableSourcesAccessCheck(ProceedingJoinPoint pjp, Long nodeId) throws Throwable {
+		// verify node ID
+		requireNodeReadAccess(nodeId);
+
+		// verify source IDs in result
+		@SuppressWarnings("unchecked")
+		Set<String> result = (Set<String>) pjp.proceed();
+		if ( result == null || result.isEmpty() ) {
+			return result;
+		}
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return result;
+		}
+		Set<String> allowedSourceIds = policy.getSourceIds();
+		if ( allowedSourceIds == null || allowedSourceIds.isEmpty() ) {
+			return result;
+		}
+		Authentication authentication = SecurityUtils.getCurrentAuthentication();
+		Object principal = (authentication != null ? authentication.getPrincipal() : null);
+		for ( Iterator<String> itr = result.iterator(); itr.hasNext(); ) {
+			String s = itr.next();
+			if ( !allowedSourceIds.contains(s) ) {
+				log.debug("Access DENIED to source {} for {}: policy restriction", s, principal);
+				itr.remove();
+			}
+		}
+		return result;
 	}
 
-	@Before("nodeDatumFilter(filter)")
-	public void userNodeFilterAccessCheck(Filter filter) {
-		userNodeAccessCheck(filter);
+	/**
+	 * Enforce node ID and source ID policy restrictions when requesting a
+	 * reportable interval.
+	 * 
+	 * If the active policy has source ID restrictions, then if no
+	 * {@code sourceId} is provided fill in the first available value from the
+	 * policy. Otherwise, if {@code sourceId} is provided, check that value is
+	 * allowed by the policy.
+	 * 
+	 * @param pjp
+	 *        The join point.
+	 * @param nodeId
+	 *        The node ID.
+	 * @param sourceId
+	 *        The source ID, or {@code null}.
+	 * @return The reportable interval.
+	 * @throws Throwable
+	 *         If any error occurs.
+	 */
+	@Around("nodeReportableInterval(nodeId, sourceId)")
+	public Object reportableIntervalAccessCheck(ProceedingJoinPoint pjp, Long nodeId, String sourceId)
+			throws Throwable {
+		// verify node ID
+		requireNodeReadAccess(nodeId);
+
+		// now verify source ID
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return pjp.proceed();
+		}
+
+		Set<String> allowedSourceIds = policy.getSourceIds();
+		if ( allowedSourceIds != null && !allowedSourceIds.isEmpty() ) {
+			Authentication authentication = SecurityUtils.getCurrentAuthentication();
+			Object principal = (authentication != null ? authentication.getPrincipal() : null);
+			if ( sourceId == null ) {
+				// force the first allowed source ID
+				sourceId = allowedSourceIds.iterator().next();
+				log.info("Access RESTRICTED to source {} for {}", sourceId, principal);
+				Object[] args = pjp.getArgs();
+				args[1] = sourceId;
+				return pjp.proceed(args);
+			} else if ( !allowedSourceIds.contains(sourceId) ) {
+				log.warn("Access DENIED to source {} for {}", sourceId, principal);
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, sourceId);
+			}
+		}
+
+		return pjp.proceed();
 	}
 
-	private void userNodeAccessCheck(Filter filter) {
+	/**
+	 * Allow the current user (or current node) access to node data.
+	 * 
+	 * @param nodeId
+	 *        the ID of the node to verify
+	 */
+	@Before("nodeMostRecentWeatherConditions(nodeId)")
+	public void userNodeAccessCheck(Long nodeId) {
+		if ( nodeId == null ) {
+			return;
+		}
+		requireNodeReadAccess(nodeId);
+	}
+
+	/**
+	 * Enforce security policies on a {@link Filter}.
+	 * 
+	 * @param filter
+	 *        The filter to verify.
+	 * @return A possibly modified filter based on security policies.
+	 * @throws AuthorizationException
+	 *         if any authorization error occurs
+	 */
+	public <T extends Filter> T userNodeAccessCheck(T filter) {
 		Long[] nodeIds = null;
 		boolean nodeIdRequired = true;
 		if ( filter instanceof NodeDatumFilter ) {
@@ -114,7 +231,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			}
 		}
 		if ( !nodeIdRequired ) {
-			return;
+			return filter;
 		}
 		if ( nodeIds == null || nodeIds.length < 1 ) {
 			log.warn("Access DENIED; no node ID provided");
@@ -123,6 +240,21 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		for ( Long nodeId : nodeIds ) {
 			userNodeAccessCheck(nodeId);
 		}
+
+		return policyCheck(filter);
+	}
+
+	private <T> T policyCheck(T domainObject) {
+		Authentication authentication = SecurityUtils.getCurrentAuthentication();
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return domainObject;
+		}
+
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
+				(authentication != null ? authentication.getPrincipal() : null), domainObject);
+		enforcer.verify();
+		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 	}
 
 	/**
@@ -135,8 +267,8 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 * @return <em>true</em> if a node ID is required for the given filter
 	 */
 	private boolean isNodeIdRequired(DatumFilter filter) {
-		final String type = (filter == null || filter.getType() == null ? null : filter.getType()
-				.toLowerCase());
+		final String type = (filter == null || filter.getType() == null ? null
+				: filter.getType().toLowerCase());
 		return (nodeIdNotRequiredSet == null || !nodeIdNotRequiredSet.contains(type));
 	}
 
@@ -151,20 +283,6 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * Allow the current user (or current node) access to node data.
-	 * 
-	 * @param nodeId
-	 *        the ID of the node to verify
-	 */
-	@Before("nodeReportableInterval(nodeId) || nodeReportableSources(nodeId) || nodeMostRecentWeatherConditions(nodeId)")
-	public void userNodeAccessCheck(Long nodeId) {
-		if ( nodeId == null ) {
-			return;
-		}
-		requireNodeReadAccess(nodeId);
 	}
 
 	public Set<String> getNodeIdNotRequiredSet() {
