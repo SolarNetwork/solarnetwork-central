@@ -32,6 +32,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
@@ -40,13 +41,14 @@ import net.solarnetwork.central.security.SecurityPolicy;
  * Support for enforcing a {@link SecurityPolicy} on domain objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SecurityPolicyEnforcer implements InvocationHandler {
 
 	private final Object delegate;
 	private final SecurityPolicy policy;
 	private final Object principal;
+	private final PathMatcher pathMatcher;
 
 	private Long[] cachedNodeIds;
 	private String[] cachedSourceIds;
@@ -64,10 +66,29 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 *        The domain object to enforce the policy on.
 	 */
 	public SecurityPolicyEnforcer(SecurityPolicy policy, Object principal, Object delegate) {
+		this(policy, principal, delegate, (PathMatcher) null);
+	}
+
+	/**
+	 * Construct a new enforcer with patch matching support.
+	 * 
+	 * @param policy
+	 *        The policy to enforce.
+	 * @param principal
+	 *        The active principal.
+	 * @param delegate
+	 *        The domain object to enforce the policy on.
+	 * @param pathMatcher
+	 *        The path matcher to use.
+	 * @since 1.1
+	 */
+	public SecurityPolicyEnforcer(SecurityPolicy policy, Object principal, Object delegate,
+			PathMatcher pathMatcher) {
 		super();
 		this.delegate = delegate;
 		this.policy = policy;
 		this.principal = principal;
+		this.pathMatcher = pathMatcher;
 	}
 
 	/**
@@ -131,7 +152,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 			} else {
 				sourceIds = (delegateResult != null ? new String[] { (String) delegateResult } : null);
 			}
-			String[] result = verifySourceIds(sourceIds);
+			String[] result = verifySourceIds(sourceIds, true);
 			if ( result == null || result.length < 1 || methodName.endsWith("s") ) {
 				return result;
 			}
@@ -143,7 +164,16 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		return delegateResult;
 	}
 
-	private Long[] verifyNodeIds(Long[] nodeIds) {
+	/**
+	 * Verify an arbitrary list of node IDs against the configured policy.
+	 * 
+	 * @param nodeIds
+	 *        The node IDs to verify.
+	 * @return The allowed node IDs.
+	 * @throws AuthorizationException
+	 *         if no node IDs are allowed
+	 */
+	public Long[] verifyNodeIds(Long[] nodeIds) {
 		Set<Long> policyNodeIds = policy.getNodeIds();
 		// verify source IDs
 		if ( policyNodeIds == null || policyNodeIds.isEmpty() ) {
@@ -177,25 +207,72 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		return nodeIds;
 	}
 
-	private String[] verifySourceIds(String[] sourceIds) {
-		final Set<String> policySourceIds = policy.getSourceIds();
+	private boolean matchesPattern(Set<String> patterns, String sourceId) {
+		for ( String pattern : patterns ) {
+			if ( pathMatcher.match(pattern, sourceId) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Verify an arbitrary list of source IDs against the configured policy.
+	 * 
+	 * @param sourceIds
+	 *        The source IDs to verify.
+	 * @return The allowed source IDs.
+	 * @throws AuthorizationException
+	 *         if no source IDs are allowed
+	 */
+	public String[] verifySourceIds(String[] sourceIds) {
+		return verifySourceIds(sourceIds, false);
+	}
+
+	private String[] verifySourceIds(String[] sourceIds, final boolean cacheResults) {
+		Set<String> policySourceIds = policy.getSourceIds();
+
 		// verify source IDs
 		if ( policySourceIds == null || policySourceIds.isEmpty() ) {
 			return sourceIds;
 		}
-		if ( cachedSourceIds != null ) {
+		if ( cacheResults && cachedSourceIds != null ) {
 			return (cachedSourceIds.length == 0 ? null : cachedSourceIds);
 		}
+
 		if ( sourceIds != null && sourceIds.length > 0 ) {
-			// remove any source IDs not in the policy
+			// extract policy source ID patterns
+			Set<String> policySourceIdPatterns = null;
+			if ( pathMatcher != null ) {
+				Set<String> mutableSourceIds = null;
+				for ( String policySourceId : policySourceIds ) {
+					if ( pathMatcher.isPattern(policySourceId) ) {
+						if ( policySourceIdPatterns == null ) {
+							policySourceIdPatterns = new LinkedHashSet<String>(policySourceIds.size());
+							mutableSourceIds = new LinkedHashSet<String>(policySourceIds.size());
+						}
+						policySourceIdPatterns.add(policySourceId);
+						mutableSourceIds.add(policySourceId);
+					}
+				}
+				if ( mutableSourceIds != null ) {
+					policySourceIds = mutableSourceIds;
+				}
+			}
+
+			// remove any source IDs not in the policy (or not matching a pattern)
 			Set<String> sourceIdsSet = new LinkedHashSet<String>(Arrays.asList(sourceIds));
 			for ( Iterator<String> itr = sourceIdsSet.iterator(); itr.hasNext(); ) {
 				String sourceId = itr.next();
-				if ( !policySourceIds.contains(sourceId) ) {
-					LOG.warn("Access DENIED to source {} for {}: policy restriction", sourceId,
-							principal);
-					itr.remove();
+				if ( policySourceIds.contains(sourceId) ) {
+					continue;
 				}
+				if ( policySourceIdPatterns != null
+						&& matchesPattern(policySourceIdPatterns, sourceId) ) {
+					continue;
+				}
+				LOG.warn("Access DENIED to source {} for {}: policy restriction", sourceId, principal);
+				itr.remove();
 			}
 			if ( sourceIdsSet.size() < 1 ) {
 				LOG.warn("Access DENIED to sources {} for {}", sourceIds, principal);
@@ -208,7 +285,9 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 			LOG.info("Access RESTRICTED to sources {} for {}", policySourceIds, principal);
 			sourceIds = policySourceIds.toArray(new String[policySourceIds.size()]);
 		}
-		cachedSourceIds = (sourceIds == null ? new String[0] : sourceIds);
+		if ( cacheResults ) {
+			cachedSourceIds = (sourceIds == null ? new String[0] : sourceIds);
+		}
 		return sourceIds;
 	}
 

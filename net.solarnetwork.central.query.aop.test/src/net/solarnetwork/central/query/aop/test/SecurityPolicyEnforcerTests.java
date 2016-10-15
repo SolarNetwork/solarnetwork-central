@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
@@ -39,7 +40,7 @@ import net.solarnetwork.central.security.BasicSecurityPolicy;
  * Test cases for the {@link SecurityPolicyEnforcer} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SecurityPolicyEnforcerTests {
 
@@ -126,6 +127,58 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 		filter.getSourceIds();
+	}
+
+	private static final String TEST_SOURCE_PAT_ONELEVEL = "/Main/*";
+	private static final String TEST_SOURCE_PAT_MULTILEVEL = "/Main2/**";
+	private static final String TEST_SOURCE_PAT_MULTILEVEL_MIDDLE = "/Main2/**/Meter";
+	private static final String TEST_SOURCE_ID_ONELEVEL = "/Main/1";
+	private static final String TEST_SOURCE_ID_MULTILEVEL = "/Main2/One/Two";
+
+	@Test
+	public void verifySourceIdsWithPathMatcher() {
+		String[] policySourceIds = new String[] { TEST_SOURCE_PAT_ONELEVEL, TEST_SOURCE_PAT_MULTILEVEL };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher());
+		String[] result = enforcer.verifySourceIds(new String[] { TEST_SOURCE_ID_ONELEVEL });
+		Assert.assertArrayEquals("Verify source IDs", new String[] { TEST_SOURCE_ID_ONELEVEL }, result);
+	}
+
+	@Test
+	public void verifySourceIdsWithPathMatcherRestricted() {
+		String[] policySourceIds = new String[] { TEST_SOURCE_PAT_ONELEVEL, TEST_SOURCE_PAT_MULTILEVEL };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher());
+		String[] result = enforcer.verifySourceIds(
+				new String[] { TEST_SOURCE_ID_ONELEVEL, TEST_SOURCE_ID_MULTILEVEL, "/some/other" });
+		Assert.assertArrayEquals("Restricted source IDs",
+				new String[] { TEST_SOURCE_ID_ONELEVEL, TEST_SOURCE_ID_MULTILEVEL }, result);
+	}
+
+	@Test(expected = AuthorizationException.class)
+	public void verifySourceIdsWithPathMatcherDenied() {
+		String[] policySourceIds = new String[] { TEST_SOURCE_PAT_ONELEVEL, TEST_SOURCE_PAT_MULTILEVEL };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher());
+		enforcer.verifySourceIds(new String[] { "/not/accepted", "/some/other" });
+	}
+
+	@Test
+	public void verifySourceIdsWithPathMatcherMiddle() {
+		String[] policySourceIds = new String[] { TEST_SOURCE_PAT_MULTILEVEL_MIDDLE };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher());
+		String[] inputSourceIds = new String[] { "/Main2/foo/bar/bam/Meter", "/Main2/Meter" };
+		String[] result = enforcer.verifySourceIds(inputSourceIds);
+		Assert.assertArrayEquals("Restricted source IDs", inputSourceIds, result);
 	}
 
 	@Test

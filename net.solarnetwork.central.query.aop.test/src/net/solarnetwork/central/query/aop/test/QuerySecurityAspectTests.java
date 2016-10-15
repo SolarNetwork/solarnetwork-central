@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Set;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Assert;
@@ -339,6 +341,35 @@ public class QuerySecurityAspectTests {
 		GeneralNodeDatumFilter result = service.userNodeAccessCheck(criteria);
 		Assert.assertEquals(nodeId, result.getNodeId());
 		Assert.assertArrayEquals("Filled in source IDs", policySourceIds, result.getSourceIds());
+	}
+
+	@Test
+	public void availableSourceIdsFilteredFromPattern() throws Throwable {
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final String[] policySourceIds = new String[] { "/A/**/watts" };
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
+				.withNodeIds(Collections.singleton(nodeId)).build();
+		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
+		final Set<String> availableSourceIds = new LinkedHashSet<String>(
+				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
+		setAuthenticatedReadNodeDataToken(userId, policy);
+		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
+		userNode.setRequiresAuthorization(true);
+
+		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
+
+		EasyMock.replay(pjp);
+		EasyMock.replay(userNodeDao);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(nodeId);
+		@SuppressWarnings("unchecked")
+		Set<String> result = (Set<String>) service.reportableSourcesAccessCheck(pjp, nodeId);
+		Assert.assertEquals("Filtered source IDs",
+				new LinkedHashSet<String>(Arrays.asList("/A/B/watts", "/A/C/watts")), result);
 	}
 
 	@Test
