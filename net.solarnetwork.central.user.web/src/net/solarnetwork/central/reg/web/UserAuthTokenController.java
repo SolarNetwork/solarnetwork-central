@@ -114,11 +114,12 @@ public class UserAuthTokenController extends ControllerSupport {
 	@RequestMapping(value = "/generateData", method = RequestMethod.POST)
 	@ResponseBody
 	public Response<UserAuthToken> generateDataToken(
-			@RequestParam(value = "nodeId", required = false) Set<Long> nodeIds) {
+			@RequestParam(value = "nodeId", required = false) Set<Long> nodeIds,
+			@RequestParam(value = "sourceId", required = false) Set<String> sourceIds) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId(),
 				UserAuthTokenType.ReadNodeData,
-				new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).build());
+				new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).withSourceIds(sourceIds).build());
 		return new Response<UserAuthToken>(token);
 	}
 

@@ -224,14 +224,16 @@
 			 	</div>
 			 	<div class="modal-body">
 			 		<p class="before"><fmt:message key='auth-tokens.data.create.intro'/></p>
-			 		<div class="before checkbox">
+			 		<div id="create-data-auth-token-policy-nodeids" class="before toggle-buttons">
 			 			<c:forEach items="${userNodes}" var="userNode" varStatus="status">
-			 				<label>
-			 					<input type="checkbox" name="nodeId" value="${userNode.node.id}" />
-			 					${userNode.node.id}
-			 					<c:if test="${fn:length(userNode.name) gt 0}"> - ${userNode.name}</c:if>
-			 				</label>
+			 				<button type="button" class="toggle btn btn-sm btn-default" data-node-id="${userNode.node.id}">${userNode.node.id}<c:if test="${fn:length(userNode.name) gt 0}"> - ${userNode.name}</c:if></button>
 			 			</c:forEach>
+			 		</div>
+			 		<div class="before">
+			 			<label for="create-data-auth-token-policy-sourceids"><fmt:message key='auth-tokens.policy.sourceIds.label'/></label>
+			 			<textarea id="create-data-auth-token-policy-sourceids" class="form-control" name="sourceIds" rows="2" 
+			 				placeholder="<fmt:message key='auth-tokens.policy.sourceIds.placeholder'/>"></textarea>
+			 			<div id="create-data-auth-token-policy-sourceids-hint" class="toggle-buttons"></div>
 			 		</div>
 			 		<div class="after">
 			 			<p><fmt:message key='auth-tokens.created.intro'/></p>
