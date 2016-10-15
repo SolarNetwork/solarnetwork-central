@@ -93,7 +93,7 @@
 				<thead>
 					<tr>
 						<th><fmt:message key='auth-tokens.label.token'/></th>
-						<th><fmt:message key='auth-tokens.label.nodes'/></th>
+						<th><fmt:message key='auth-tokens.label.policy'/></th>
 						<th><fmt:message key='auth-tokens.label.created'/></th>
 						<th><fmt:message key='auth-tokens.label.status'/></th>
 						<th></th>
@@ -104,9 +104,26 @@
 					<tr>
 						<td class="monospace"><c:out value='${token.authToken}'/></td>
 						<td>
-							<c:forEach items="${token.nodeIds}" var="nodeId" varStatus="nodeIdStatus">
-								${nodeId}<c:if test="${not nodeIdStatus.last}">, </c:if>
-							</c:forEach>
+							<c:if test="${not empty token.policy}">
+								<dl>
+									<c:if test="${fn:length(token.policy.nodeIds) gt 0}">
+										<dt><fmt:message key='auth-tokens.label.nodes'/></dt>
+										<dd>
+											<c:forEach items="${token.policy.nodeIds}" var="nodeId" varStatus="nodeIdStatus">
+												${nodeId}<c:if test="${not nodeIdStatus.last}">, </c:if>
+											</c:forEach>
+										</dd>
+									</c:if>
+									<c:if test="${fn:length(token.policy.sourceIds) gt 0}">
+										<dt><fmt:message key='auth-tokens.label.sources'/></dt>
+										<dd>
+											<c:forEach items="${token.policy.sourceIds}" var="sourceId" varStatus="sourceIdStatus">
+												${sourceId}<c:if test="${not sourceIdStatus.last}">, </c:if>
+											</c:forEach>
+										</dd>
+									</c:if>
+								</dl>
+							</c:if>
 						</td>
 						<td>
 							<joda:dateTimeZone value="GMT">

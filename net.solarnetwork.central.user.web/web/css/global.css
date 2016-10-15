@@ -129,3 +129,7 @@ section + section {
 	margin-bottom: 4px;
 	margin-right: 2px;
 }
+
+dd + dt {
+	margin-top: 12px;
+}
