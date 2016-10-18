@@ -24,15 +24,15 @@ package net.solarnetwork.central.mail.support;
 
 import java.io.IOException;
 import java.util.Arrays;
-import net.solarnetwork.central.mail.MailAddress;
-import net.solarnetwork.central.mail.MailService;
-import net.solarnetwork.central.mail.MessageTemplateDataSource;
-import net.solarnetwork.util.StringMerger;
 import org.apache.commons.lang3.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
+import net.solarnetwork.central.mail.MailAddress;
+import net.solarnetwork.central.mail.MailService;
+import net.solarnetwork.central.mail.MessageTemplateDataSource;
+import net.solarnetwork.util.StringMerger;
 
 /**
  * Default implementation of {@link MailService} that uses Spring's mail classes
@@ -53,7 +53,7 @@ import org.springframework.mail.SimpleMailMessage;
  * </dl>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DefaultMailService implements MailService {
 
@@ -118,7 +118,21 @@ public class DefaultMailService implements MailService {
 		if ( log.isDebugEnabled() ) {
 			log.debug("Sending mail [" + msg.getSubject() + "] to " + Arrays.toString(msg.getTo()));
 		}
-		mailSender.send(msg);
+
+		// work around class loading issues re:
+		// javax.mail.NoSuchProviderException: Unable to load class for provider: protocol=smtp; 
+		//   class=org.apache.geronimo.javamail.transport.smtp.SMTPTransport
+		ClassLoader oldCCL = Thread.currentThread().getContextClassLoader();
+		if ( oldCCL != null ) {
+			Thread.currentThread().setContextClassLoader(null);
+		}
+		try {
+			mailSender.send(msg);
+		} finally {
+			if ( oldCCL != null ) {
+				Thread.currentThread().setContextClassLoader(oldCCL);
+			}
+		}
 	}
 
 	public SimpleMailMessage getTemplateMessage() {
