@@ -27,7 +27,7 @@
 
 	<context-param>
 		<param-name>contextClass</param-name>
-		<param-value>net.solarnetwork.web.gemini.NonValidatingServerOsgiBundleXmlWebApplicationContext</param-value>
+		<param-value>net.solarnetwork.web.gemini.ServerOsgiBundleXmlWebApplicationContext</param-value>
 	</context-param>
 	
 	<context-param>
