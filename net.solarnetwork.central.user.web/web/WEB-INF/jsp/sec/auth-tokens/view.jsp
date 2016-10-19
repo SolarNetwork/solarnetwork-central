@@ -122,6 +122,12 @@
 											</c:forEach>
 										</dd>
 									</c:if>
+									<c:if test="${not empty token.policy.minAggregation}">
+										<dt><fmt:message key='auth-tokens.label.minAggregation'/></dt>
+										<dd>
+											<fmt:message key='aggregation.${token.policy.minAggregation}.label'/>
+										</dd>
+									</c:if>
 								</dl>
 							</c:if>
 						</td>
@@ -246,11 +252,21 @@
 			 				<button type="button" class="toggle btn btn-sm btn-default" data-node-id="${userNode.node.id}">${userNode.node.id}<c:if test="${fn:length(userNode.name) gt 0}"> - ${userNode.name}</c:if></button>
 			 			</c:forEach>
 			 		</div>
-			 		<div class="before">
+			 		<div class="before form-group">
 			 			<label for="create-data-auth-token-policy-sourceids"><fmt:message key='auth-tokens.policy.sourceIds.label'/></label>
 			 			<textarea id="create-data-auth-token-policy-sourceids" class="form-control" name="sourceIds" rows="2" 
 			 				placeholder="<fmt:message key='auth-tokens.policy.sourceIds.placeholder'/>"></textarea>
 			 			<div id="create-data-auth-token-policy-sourceids-hint" class="toggle-buttons"></div>
+			 		</div>
+			 		<div class="before form-group">
+			 			<label for="create-data-auth-token-policy-minagg"><fmt:message key='auth-tokens.policy.minAggregation.label'/></label>
+			 			<select id="create-data-auth-token-policy-minagg" name="minAggregation">
+							<option value=""><fmt:message key='auth-tokens.policy.minAggregation.none'/></option>
+							<c:forEach items="${policyAggregations}" var="agg" varStatus="itr">
+								<option value="${agg}"><fmt:message key='aggregation.${agg}.label'/></option>
+							</c:forEach>
+			 			</select>
+						<div class="help-block"><fmt:message key='auth-tokens.policy.minAggregation.caption'/></div>
 			 		</div>
 			 		<div class="after">
 			 			<p><fmt:message key='auth-tokens.created.intro'/></p>
