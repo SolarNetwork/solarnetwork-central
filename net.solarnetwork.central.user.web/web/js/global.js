@@ -15,8 +15,8 @@ var SolarReg = {
 		var csrf = $("meta[name='csrf']").attr("content"),
 			header = $("meta[name='csrf_header']").attr("content");
 		return {token:csrf,headerName:header};
-	}())
-};
+	}()),
+	};
 
 /**
  * Get the CSRF token value or set the token as a request header on an XHR object.
