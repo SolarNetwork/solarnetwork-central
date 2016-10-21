@@ -84,7 +84,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for "my nodes".
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Controller
 @RequestMapping("/sec/my-nodes")
@@ -187,6 +187,39 @@ public class MyNodesController extends ControllerSupport {
 		mv.addObject("pendingUserNodeTransferList", pendingTransferNodes);
 		mv.addObject("pendingNodeOwnershipRequests", pendingNodeOwnershipRequests);
 		return mv;
+	}
+
+	/**
+	 * Get a list of all archived nodes.
+	 * 
+	 * @return All archived nodes.
+	 * @since 1.4
+	 */
+	@RequestMapping(value = "/archived", method = RequestMethod.GET)
+	@ResponseBody
+	public Response<List<UserNode>> getArchivedNodes() {
+		final SecurityUser actor = SecurityUtils.getCurrentUser();
+		List<UserNode> nodes = userBiz.getArchivedUserNodes(actor.getUserId());
+		return Response.response(nodes);
+	}
+
+	/**
+	 * Update the archived status of a set of nodes.
+	 * 
+	 * @param nodeIds
+	 *        The node IDs to update the archived status of.
+	 * @param archived
+	 *        {@code true} to archive, {@code false} to un-archive
+	 * @return A success response.
+	 * @since 1.4
+	 */
+	@RequestMapping(value = "/archived", method = RequestMethod.POST)
+	@ResponseBody
+	public Response<Object> updateArchivedStatus(@RequestParam("nodeIds") Long[] nodeIds,
+			@RequestParam("archived") boolean archived) {
+		final SecurityUser actor = SecurityUtils.getCurrentUser();
+		userBiz.updateUserNodeArchivedStatus(actor.getUserId(), nodeIds, archived);
+		return Response.response(null);
 	}
 
 	/**

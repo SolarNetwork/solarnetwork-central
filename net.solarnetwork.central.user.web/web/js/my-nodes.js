@@ -34,6 +34,19 @@ $(document).ready(function() {
 		$('#transfer-ownership-node').text(nodeId + (nodeName ? ' - ' + nodeName : ''));
 		
 		form.modal('show');
+	}).on('click', 'a.archive', function(event) {
+		event.preventDefault();
+		
+		var btn = $(this);
+		var nodeRow = btn.parents('.node-row').first();
+		var nodeId = nodeRow.data('node-id');
+		var nodeName = nodeRow.data('node-name');
+		var form = $('#archive-node-modal');
+
+		form.find("input[name='nodeIds']").val(nodeId || '');
+		form.find(".node-name-label").text(nodeId + (nodeName ? ' - ' + nodeName : ''));
+		
+		form.modal('show');
 	}).on('click', 'button.view-situation', function(event) {
 		// use call(this) to preserve button as 'this' object
 		var nodeRow = $(this).parents('.node-row').first();
@@ -185,6 +198,16 @@ $(document).ready(function() {
 		var form = $('#decide-transfer-ownership-modal');
 		form.find('input[name="accept"]').val(btn.data('accept') ? 'true' : 'false');
 		form.submit();
+	});
+	
+	$('#archive-node-modal').ajaxForm({
+		dataType: 'json',
+		success: function(json, status, xhr, form) {
+			document.location.reload(true);
+		},
+		error: function(xhr, status, statusText) {
+			SolarReg.showAlertBefore('#archive-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
+		}
 	});
 	
 	function setupEditUserNodeLocationDisplay(loc) {
