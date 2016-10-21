@@ -23,6 +23,9 @@
 package net.solarnetwork.central.user.aop;
 
 import java.util.Set;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
@@ -31,9 +34,6 @@ import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 
 /**
  * Security enforcing AOP aspect for {@link UserBiz}.
@@ -75,6 +75,14 @@ public class UserSecurityAspect extends AuthorizationSupport {
 	public void readUserNode(Long userId, Long nodeId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserBiz.getArchivedUserNodes(..)) && args(userId)")
+	public void readArchivedUserNodes(Long userId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserBiz.updateUserNodeArchivedStatus(..)) && args(userId,nodeIds,..)")
+	public void updateArchivedUserNodes(Long userId, Long[] nodeIds) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserBiz.generateUserAuthToken(..)) && args(userId,type,nodeIds)")
 	public void generateAuthToken(Long userId, UserAuthTokenType type, Set<Long> nodeIds) {
 	}
@@ -91,7 +99,7 @@ public class UserSecurityAspect extends AuthorizationSupport {
 	public void updateUserNode(UserNode entry) {
 	}
 
-	@Before("readUser(userId) || readUserNodeConfirmations(userId) || readerUserAuthTokens(userId)")
+	@Before("readUser(userId) || readUserNodeConfirmations(userId) || readerUserAuthTokens(userId) || readArchivedUserNodes(userId)")
 	public void userReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
@@ -137,6 +145,22 @@ public class UserSecurityAspect extends AuthorizationSupport {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
 		}
 		requireNodeWriteAccess(entry.getNode().getId());
+	}
+
+	@Before("updateArchivedUserNodes(userId, nodeIds)")
+	public void updateArchivedUserNodesAccessCheck(Long userId, Long[] nodeIds) {
+		if ( userId == null ) {
+			log.warn("Access DENIED to user node; no user ID");
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+		if ( nodeIds == null || nodeIds.length < 1 ) {
+			log.warn("Access DENIED to user nodes; no node IDs");
+			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, null);
+		}
+		requireUserWriteAccess(userId);
+		for ( Long nodeId : nodeIds ) {
+			requireNodeWriteAccess(nodeId);
+		}
 	}
 
 }

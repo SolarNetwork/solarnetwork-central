@@ -36,12 +36,15 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * DAO API for UserNode objects.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
 	/**
 	 * Find a list of all UserNode objects for a particular user.
+	 * 
+	 * This will not return archived nodes (see
+	 * {@link #findArchivedUserNodesForUser(Long)}).
 	 * 
 	 * @param user
 	 *        the user to get all nodes for
@@ -64,6 +67,30 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 	 * @return the nodes
 	 */
 	List<UserNode> findUserNodesAndCertificatesForUser(Long userId);
+
+	/**
+	 * Find a list of all archived UserNode objects for a particular user.
+	 * 
+	 * @param userId
+	 *        the user ID to get all archived nodes for
+	 * @return list of {@link UserNode} objects, or an empty list if none found
+	 * @since 1.3
+	 */
+	List<UserNode> findArchivedUserNodesForUser(Long userId);
+
+	/**
+	 * Update the archived status of a set of node IDs.
+	 * 
+	 * @param userId
+	 *        The user ID of the nodes to update the status for.
+	 * @param nodeIds
+	 *        The IDs of the nodes to update the archived status for.
+	 * @param archived
+	 *        {@code true} to archive the nodes, {@code false} to un-archive
+	 *        them.
+	 * @since 1.3
+	 */
+	void updateUserNodeArchivedStatus(Long userId, Long[] nodeIds, boolean archived);
 
 	/**
 	 * Store a {@link UserNodeTransfer}.
