@@ -28,6 +28,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
+import org.joda.time.ReadableInterval;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
@@ -42,21 +48,15 @@ import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Interval;
-import org.joda.time.ReadableInterval;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class MyBatisGeneralNodeDatumDao extends
-		BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
+public class MyBatisGeneralNodeDatumDao
+		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
 		GeneralNodeDatumDao {
 
@@ -81,6 +81,9 @@ public class MyBatisGeneralNodeDatumDao extends
 	/** The query parameter for an ending date value. */
 	public static final String PARAM_END_DATE = "end";
 
+	/** The query parameter for an {@code Aggregation} string value. */
+	public static final String PARAM_AGGREGATION = "aggregation";
+
 	/** The query parameter for a general {@link Filter} object value. */
 	public static final String PARAM_FILTER = "filter";
 
@@ -101,9 +104,20 @@ public class MyBatisGeneralNodeDatumDao extends
 	 */
 	public static final String QUERY_FOR_MOST_RECENT = "find-general-most-recent";
 
+	/**
+	 * The default query name used for
+	 * {@link #findFiltered(GeneralNodeDatumFilter, List, Integer, Integer)}
+	 * where {@link GeneralNodeDatumFilter#isMostRecent()} is set to
+	 * <em>true</em> and {@link AggregationFilter#getAggregation()} is used.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String QUERY_FOR_MOST_RECENT_REPORTING = "find-general-reporting-most-recent";
+
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
 	private String queryForMostRecent;
+	private String queryForMostRecentReporting;
 
 	/**
 	 * Default constructor.
@@ -113,6 +127,7 @@ public class MyBatisGeneralNodeDatumDao extends
 		this.queryForReportableInterval = QUERY_FOR_REPORTABLE_INTERVAL;
 		this.queryForDistinctSources = QUERY_FOR_DISTINCT_SOURCES;
 		this.queryForMostRecent = QUERY_FOR_MOST_RECENT;
+		this.queryForMostRecentReporting = QUERY_FOR_MOST_RECENT_REPORTING;
 	}
 
 	/**
@@ -123,12 +138,15 @@ public class MyBatisGeneralNodeDatumDao extends
 	 * @return query name
 	 */
 	protected String getQueryForFilter(GeneralNodeDatumFilter filter) {
-		if ( filter.isMostRecent() ) {
-			return queryForMostRecent;
-		}
 		Aggregation aggregation = null;
 		if ( filter instanceof AggregationFilter ) {
 			aggregation = ((AggregationFilter) filter).getAggregation();
+		}
+		if ( filter.isMostRecent() ) {
+			if ( aggregation != null ) {
+				return queryForMostRecentReporting;
+			}
+			return queryForMostRecent;
 		}
 		if ( aggregation == null ) {
 			return getQueryForAll() + "-GeneralNodeDatumMatch";
@@ -137,6 +155,20 @@ public class MyBatisGeneralNodeDatumDao extends
 			aggregation = Aggregation.Minute;
 		}
 		return (getQueryForAll() + "-ReportingGeneralNodeDatum-" + aggregation.toString());
+	}
+
+	private void setupAggregationParam(GeneralNodeDatumFilter filter, Map<String, Object> sqlProps) {
+		if ( filter.isMostRecent() && filter instanceof net.solarnetwork.central.domain.AggregationFilter
+				&& ((AggregationFilter) filter).getAggregation() != null ) {
+			Aggregation aggregation = ((AggregationFilter) filter).getAggregation();
+			if ( aggregation.compareLevel(Aggregation.Hour) < 1 ) {
+				sqlProps.put(PARAM_AGGREGATION, Aggregation.Hour.name());
+			} else if ( aggregation.compareLevel(Aggregation.Day) < 1 ) {
+				sqlProps.put(PARAM_AGGREGATION, Aggregation.Day.name());
+			} else {
+				sqlProps.put(PARAM_AGGREGATION, Aggregation.Month.name());
+			}
+		}
 	}
 
 	@Override
@@ -149,6 +181,11 @@ public class MyBatisGeneralNodeDatumDao extends
 		sqlProps.put(PARAM_FILTER, filter);
 		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
 			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
+		}
+		if ( filter.isMostRecent() && filter instanceof net.solarnetwork.central.domain.AggregationFilter
+				&& ((AggregationFilter) filter).getAggregation() != null ) {
+			throw new IllegalArgumentException(
+					"Aggregation not allowed on a filter for most recent datum");
 		}
 		//postProcessFilterProperties(filter, sqlProps);
 
@@ -163,7 +200,8 @@ public class MyBatisGeneralNodeDatumDao extends
 		//rows = postProcessFilterQuery(filter, rows);
 
 		BasicFilterResults<GeneralNodeDatumFilterMatch> results = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
-				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
+				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset,
+				rows.size());
 
 		return results;
 	}
@@ -172,24 +210,25 @@ public class MyBatisGeneralNodeDatumDao extends
 	// Propagation.REQUIRED for server-side cursors
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public FilterResults<ReportingGeneralNodeDatumMatch> findAggregationFiltered(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
 		final String query = getQueryForFilter(filter);
 		final Map<String, Object> sqlProps = new HashMap<String, Object>(1);
 		sqlProps.put(PARAM_FILTER, filter);
 		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
 			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
 		}
+		setupAggregationParam(filter, sqlProps);
 		//postProcessAggregationFilterProperties(filter, sqlProps);
 
-		// attempt count first, if max NOT specified as -1
+		// attempt count first, if NOT mostRecent query and max NOT specified as -1
 		// and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
 		Long totalCount = null;
 		final Aggregation agg = filter.getAggregation();
-		if ( max != null && max.intValue() != -1 && agg.compareTo(Aggregation.Hour) >= 0
-				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
-				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
-				&& agg != Aggregation.RunningTotal ) {
+		if ( !filter.isMostRecent() && max != null && max.intValue() != -1
+				&& agg.compareTo(Aggregation.Hour) >= 0 && agg != Aggregation.DayOfWeek
+				&& agg != Aggregation.SeasonalDayOfWeek && agg != Aggregation.HourOfDay
+				&& agg != Aggregation.SeasonalHourOfDay && agg != Aggregation.RunningTotal ) {
 			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
 
@@ -198,7 +237,8 @@ public class MyBatisGeneralNodeDatumDao extends
 		// rows = postProcessAggregationFilterQuery(filter, rows);
 
 		BasicFilterResults<ReportingGeneralNodeDatumMatch> results = new BasicFilterResults<ReportingGeneralNodeDatumMatch>(
-				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
+				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset,
+				rows.size());
 
 		return results;
 	}
@@ -277,6 +317,14 @@ public class MyBatisGeneralNodeDatumDao extends
 
 	public void setQueryForMostRecent(String queryForMostRecent) {
 		this.queryForMostRecent = queryForMostRecent;
+	}
+
+	public String getQueryForMostRecentReporting() {
+		return queryForMostRecentReporting;
+	}
+
+	public void setQueryForMostRecentReporting(String queryForMostRecentReporting) {
+		this.queryForMostRecentReporting = queryForMostRecentReporting;
 	}
 
 }

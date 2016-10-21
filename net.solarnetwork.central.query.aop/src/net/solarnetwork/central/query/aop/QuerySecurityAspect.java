@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.query.aop;
 
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -31,9 +34,13 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.security.core.Authentication;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.PathMatcher;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
@@ -45,7 +52,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * Security enforcing AOP aspect for {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Aspect
 public class QuerySecurityAspect extends AuthorizationSupport {
@@ -54,6 +61,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public static final String FILTER_KEY_NODE_IDS = "nodeIds";
 
 	private Set<String> nodeIdNotRequiredSet;
+	private PathMatcher sourceIdPathMatcher;
 
 	/**
 	 * Constructor.
@@ -63,6 +71,10 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 */
 	public QuerySecurityAspect(UserNodeDao userNodeDao) {
 		super(userNodeDao);
+		AntPathMatcher antMatch = new AntPathMatcher();
+		antMatch.setCachePatterns(false);
+		antMatch.setCaseSensitive(true);
+		sourceIdPathMatcher = antMatch;
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,sourceId,..)")
@@ -81,11 +93,28 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public void nodeDatumFilter(Filter filter) {
 	}
 
-	@Around("nodeDatumFilter(filter)")
+	@Around(value = "nodeDatumFilter(filter)")
 	public Object userNodeFilterAccessCheck(ProceedingJoinPoint pjp, Filter filter) throws Throwable {
 		Filter f = userNodeAccessCheck(filter);
 		if ( f == filter ) {
 			return pjp.proceed();
+		}
+
+		// if an aggregate was injected (enforced) on the filter, then the join point method
+		// might need to change to an aggregate one, e.g. from findFilteredGeneralNodeDatum
+		// to findFilteredAggregateGeneralNodeDatum. This _could_ break the calling code if
+		// it is expecting a specific result type, but in many cases it is simply returning
+		// the result as JSON to some HTTP client and the difference does not matter.
+		if ( pjp.getTarget() instanceof QueryBiz && f instanceof AggregateGeneralNodeDatumFilter
+				&& ((AggregateGeneralNodeDatumFilter) f).getAggregation() != null
+				&& pjp.getSignature().getName().equals("findFilteredGeneralNodeDatum") ) {
+			// redirect this to findFilteredAggregateGeneralNodeDatum
+			QueryBiz target = (QueryBiz) pjp.getTarget();
+			Object[] args = pjp.getArgs();
+			@SuppressWarnings("unchecked")
+			List<SortDescriptor> sorts = (List<SortDescriptor>) args[1];
+			return target.findFilteredAggregateGeneralNodeDatum((AggregateGeneralNodeDatumFilter) f,
+					sorts, (Integer) args[2], (Integer) args[3]);
 		}
 		Object[] args = pjp.getArgs();
 		args[0] = f;
@@ -128,12 +157,15 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		}
 		Authentication authentication = SecurityUtils.getCurrentAuthentication();
 		Object principal = (authentication != null ? authentication.getPrincipal() : null);
-		for ( Iterator<String> itr = result.iterator(); itr.hasNext(); ) {
-			String s = itr.next();
-			if ( !allowedSourceIds.contains(s) ) {
-				log.debug("Access DENIED to source {} for {}: policy restriction", s, principal);
-				itr.remove();
-			}
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, null,
+				sourceIdPathMatcher);
+		try {
+			String[] resultSourceIds = enforcer
+					.verifySourceIds(result.toArray(new String[result.size()]));
+			result = new LinkedHashSet<String>(Arrays.asList(resultSourceIds));
+		} catch ( AuthorizationException e ) {
+			// ignore, and just  map to empty set
+			result = Collections.emptySet();
 		}
 		return result;
 	}
@@ -252,7 +284,8 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		}
 
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
-				(authentication != null ? authentication.getPrincipal() : null), domainObject);
+				(authentication != null ? authentication.getPrincipal() : null), domainObject,
+				sourceIdPathMatcher);
 		enforcer.verify();
 		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 	}
@@ -291,6 +324,14 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 
 	public void setNodeIdNotRequiredSet(Set<String> nodeIdNotRequiredSet) {
 		this.nodeIdNotRequiredSet = nodeIdNotRequiredSet;
+	}
+
+	public PathMatcher getSourceIdPathMatcher() {
+		return sourceIdPathMatcher;
+	}
+
+	public void setSourceIdPathMatcher(PathMatcher sourceIdPathMatcher) {
+		this.sourceIdPathMatcher = sourceIdPathMatcher;
 	}
 
 }

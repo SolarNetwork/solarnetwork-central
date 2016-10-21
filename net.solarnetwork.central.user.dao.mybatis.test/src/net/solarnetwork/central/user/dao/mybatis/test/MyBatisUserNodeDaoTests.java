@@ -26,6 +26,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import java.util.List;
+import org.joda.time.DateTime;
+import org.junit.Before;
+import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeCertificateDao;
@@ -36,9 +39,6 @@ import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
-import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test cases for the {@link MyBatisUserNodeDao} class.
@@ -170,6 +170,93 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertNull("Certificate", n1.getCertificate());
 	}
 
+	@Test
+	public void archiveNode() {
+		storeNewUserNode();
+		userNodeDao.updateUserNodeArchivedStatus(user.getId(), new Long[] { node.getId() }, true);
+	}
+
+	@Test
+	public void unArchiveNode() {
+		archiveNode();
+		userNodeDao.updateUserNodeArchivedStatus(user.getId(), new Long[] { node.getId() }, false);
+	}
+
+	@Test
+	public void findArchivedForUser() {
+		archiveNode();
+
+		// create 2nd node for user
+		setupTestNode(TEST_ID_2);
+		UserNode newUserNode = new UserNode();
+		newUserNode.setCreated(new DateTime());
+		newUserNode.setDescription(TEST_DESC);
+		newUserNode.setName(TEST_NAME);
+		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
+		newUserNode.setUser(this.user);
+		Long userNode2 = userNodeDao.store(newUserNode);
+		assertNotNull(userNode2);
+
+		List<UserNode> results = userNodeDao.findArchivedUserNodesForUser(this.user.getId());
+		assertNotNull(results);
+		assertEquals(1, results.size());
+
+		UserNode n1 = results.get(0);
+		assertNotNull(n1);
+		assertEquals(this.node.getId(), n1.getId());
+		assertEquals(this.node, n1.getNode());
+		assertEquals(this.user, n1.getUser());
+		assertNull("Certificate", n1.getCertificate());
+	}
+
+	@Test
+	public void findForUserNoArchived() {
+		archiveNode();
+
+		// create 2nd node for user
+		setupTestNode(TEST_ID_2);
+		UserNode newUserNode = new UserNode();
+		newUserNode.setCreated(new DateTime());
+		newUserNode.setDescription(TEST_DESC);
+		newUserNode.setName(TEST_NAME);
+		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
+		newUserNode.setUser(this.user);
+		Long userNode2 = userNodeDao.store(newUserNode);
+		assertNotNull(userNode2);
+
+		List<UserNode> results = userNodeDao.findUserNodesForUser(this.user);
+		assertNotNull(results);
+		assertEquals(1, results.size());
+
+		UserNode n1 = results.get(0);
+		assertNotNull(n1);
+		assertEquals(TEST_ID_2, n1.getId());
+		assertEquals(this.user, n1.getUser());
+		assertNull("Certificate", n1.getCertificate());
+	}
+
+	@Test
+	public void findForUserUnArchived() {
+		archiveNode();
+
+		List<UserNode> results = userNodeDao.findUserNodesForUser(this.user);
+		assertNotNull(results);
+		assertEquals(0, results.size());
+
+		userNodeDao.updateUserNodeArchivedStatus(this.user.getId(), new Long[] { this.node.getId() },
+				false);
+
+		results = userNodeDao.findUserNodesForUser(this.user);
+		assertNotNull(results);
+		assertEquals(1, results.size());
+
+		UserNode n1 = results.get(0);
+		assertNotNull(n1);
+		assertEquals(this.user, n1.getUser());
+		assertEquals(this.node, n1.getNode());
+		assertNull("Certificate", n1.getCertificate());
+	}
+
 	private void storeNewUser() {
 		this.user = createNewUser(TEST_EMAIL);
 	}
@@ -232,8 +319,8 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	@Test
 	public void updateUserNodeTransfer() {
 		insertUserNodeTransfer();
-		UserNodeTransfer xfer1 = userNodeDao.getUserNodeTransfer(new UserNodePK(this.user.getId(),
-				this.node.getId()));
+		UserNodeTransfer xfer1 = userNodeDao
+				.getUserNodeTransfer(new UserNodePK(this.user.getId(), this.node.getId()));
 		xfer1.setEmail("test.email.3@localhost");
 		userNodeDao.storeUserNodeTransfer(xfer1);
 
@@ -247,8 +334,8 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	@Test
 	public void deleteUserNodeTransfer() {
 		insertUserNodeTransfer();
-		UserNodeTransfer xfer1 = userNodeDao.getUserNodeTransfer(new UserNodePK(this.user.getId(),
-				this.node.getId()));
+		UserNodeTransfer xfer1 = userNodeDao
+				.getUserNodeTransfer(new UserNodePK(this.user.getId(), this.node.getId()));
 		userNodeDao.deleteUserNodeTrasnfer(xfer1);
 		xfer1 = userNodeDao.getUserNodeTransfer(xfer1.getId());
 		assertNull("UserNodeTransfer deleted", xfer1);
@@ -256,8 +343,8 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	@Test
 	public void findUserNodeTransferForEmailNoMatch() {
-		List<UserNodeTransfer> results = userNodeDao.findUserNodeTransferRequestsForEmail(this.user
-				.getEmail());
+		List<UserNodeTransfer> results = userNodeDao
+				.findUserNodeTransferRequestsForEmail(this.user.getEmail());
 		assertNotNull("UserNodeTransfers for email results", results);
 		assertEquals(0, results.size());
 	}

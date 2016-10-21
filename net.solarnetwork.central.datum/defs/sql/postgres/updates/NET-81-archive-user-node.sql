@@ -1,0 +1,2 @@
+ALTER TABLE solaruser.user_node 
+ADD COLUMN archived BOOLEAN NOT NULL DEFAULT FALSE;

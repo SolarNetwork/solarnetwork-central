@@ -165,24 +165,6 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 			return withLocationPrecisions(set);
 		}
 
-		/**
-		 * Treat the configured {@code aggregations} set as a single minimum
-		 * value or a list of exact values.
-		 * 
-		 * By default if {@code aggregations} is configured with a single value
-		 * it will be treated as a <em>minimum</em> value, and any
-		 * {@link Aggregation} with a {@link Aggregation#getLevel()} equal to or
-		 * higher than that value's level will be included in the generated
-		 * {@link BasicSecurityPolicy#getAggregations()} set. Set this to
-		 * {@code false} to disable that behavior and treat {@code aggregations}
-		 * as the exact values to include in the generated
-		 * {@link BasicSecurityPolicy#getAggregations()} set.
-		 * 
-		 * @param minAggregation
-		 *        {@code false} to treat configured aggregation values as-is,
-		 *        {@code true} to treat as a minimum threshold
-		 * @return The builder.
-		 */
 		public Builder withMinAggregation(Aggregation minAggregation) {
 			this.minAggregation = minAggregation;
 			return this;

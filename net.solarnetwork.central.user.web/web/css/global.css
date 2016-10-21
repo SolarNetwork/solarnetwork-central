@@ -119,3 +119,17 @@ section + section {
 .alert-situation-info .dl-horizontal dd {
 	margin-left: 90px;
 }
+
+.toggle-buttons {
+	margin-bottom: 10px;
+}
+
+.toggle-buttons .toggle {
+	margin-top: 4px;
+	margin-bottom: 4px;
+	margin-right: 2px;
+}
+
+dd + dt {
+	margin-top: 12px;
+}

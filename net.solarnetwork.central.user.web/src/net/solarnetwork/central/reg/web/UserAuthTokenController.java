@@ -23,15 +23,18 @@
 package net.solarnetwork.central.reg.web;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityUser;
@@ -58,6 +61,13 @@ public class UserAuthTokenController extends ControllerSupport {
 	public UserAuthTokenController(UserBiz userBiz) {
 		super();
 		this.userBiz = userBiz;
+	}
+
+	@ModelAttribute("policyAggregations")
+	public Set<Aggregation> policyAggregations() {
+		return EnumSet.of(Aggregation.FiveMinute, Aggregation.TenMinute, Aggregation.FifteenMinute,
+				Aggregation.ThirtyMinute, Aggregation.Hour, Aggregation.Day, Aggregation.Week,
+				Aggregation.Month, Aggregation.RunningTotal);
 	}
 
 	@RequestMapping(value = "", method = RequestMethod.GET)
@@ -114,11 +124,13 @@ public class UserAuthTokenController extends ControllerSupport {
 	@RequestMapping(value = "/generateData", method = RequestMethod.POST)
 	@ResponseBody
 	public Response<UserAuthToken> generateDataToken(
-			@RequestParam(value = "nodeId", required = false) Set<Long> nodeIds) {
+			@RequestParam(value = "nodeId", required = false) Set<Long> nodeIds,
+			@RequestParam(value = "sourceId", required = false) Set<String> sourceIds,
+			@RequestParam(value = "minAggregation", required = false) Aggregation minAggregation) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId(),
-				UserAuthTokenType.ReadNodeData,
-				new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).build());
+				UserAuthTokenType.ReadNodeData, new BasicSecurityPolicy.Builder().withNodeIds(nodeIds)
+						.withSourceIds(sourceIds).withMinAggregation(minAggregation).build());
 		return new Response<UserAuthToken>(token);
 	}
 

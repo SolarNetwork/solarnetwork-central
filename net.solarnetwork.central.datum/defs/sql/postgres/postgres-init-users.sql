@@ -107,6 +107,7 @@ CREATE TABLE solaruser.user_node (
 	disp_name		CHARACTER VARYING(128),
 	description		CHARACTER VARYING(512),
 	private 		BOOLEAN NOT NULL DEFAULT FALSE,
+	archived		BOOLEAN NOT NULL DEFAULT FALSE,
 	CONSTRAINT user_node_pkey PRIMARY KEY (node_id),
 	CONSTRAINT user_node_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE

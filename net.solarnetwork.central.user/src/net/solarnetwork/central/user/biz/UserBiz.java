@@ -39,7 +39,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * API for registered user tasks.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface UserBiz {
 
@@ -54,6 +54,9 @@ public interface UserBiz {
 
 	/**
 	 * Get a list of nodes belonging to a specific user.
+	 * 
+	 * Archived nodes will not be returned (see
+	 * {@link #getArchivedUserNodes(Long)} for that).
 	 * 
 	 * @param userId
 	 *        the ID of the user to get the nodes for
@@ -89,6 +92,36 @@ public interface UserBiz {
 	 *         if the user is not authorized to access the given node
 	 */
 	UserNode saveUserNode(UserNode userNodeEntry) throws AuthorizationException;
+
+	/**
+	 * Archive, or un-archive a user node.
+	 * 
+	 * An archived node will not be returned from {@link #getUserNodes(Long)}.
+	 * Its data will remain intact and the node can be un-archived at a future
+	 * date.
+	 * 
+	 * @param userId
+	 *        the ID of the user to update the node for
+	 * @param nodeIds
+	 *        the IDs of the nodes to update
+	 * @param boolean
+	 *        {@code true} to archive the nodes, {@code false} to un-archive
+	 * @throws AuthorizationException
+	 *         if the user is not authorized to access a given node
+	 * @since 1.4
+	 */
+	void updateUserNodeArchivedStatus(Long userId, Long[] nodeIds, boolean archived)
+			throws AuthorizationException;
+
+	/**
+	 * Get a list of archived nodes belonging to a specific user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the nodes for
+	 * @return list of UserNode objects, or an empty list if none found
+	 * @since 1.4
+	 */
+	List<UserNode> getArchivedUserNodes(Long userId) throws AuthorizationException;
 
 	/**
 	 * Get a list of pending node confirmations belonging to a specific user.

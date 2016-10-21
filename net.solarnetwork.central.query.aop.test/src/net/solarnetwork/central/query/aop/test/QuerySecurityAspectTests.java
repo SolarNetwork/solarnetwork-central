@@ -22,10 +22,19 @@
 
 package net.solarnetwork.central.query.aop.test;
 
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertSame;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.Signature;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Assert;
@@ -35,12 +44,17 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.query.aop.QuerySecurityAspect;
+import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -48,6 +62,7 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.support.PriceLocationFilter;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
@@ -342,6 +357,35 @@ public class QuerySecurityAspectTests {
 	}
 
 	@Test
+	public void availableSourceIdsFilteredFromPattern() throws Throwable {
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final String[] policySourceIds = new String[] { "/A/**/watts" };
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
+				.withNodeIds(Collections.singleton(nodeId)).build();
+		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
+		final Set<String> availableSourceIds = new LinkedHashSet<String>(
+				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
+		setAuthenticatedReadNodeDataToken(userId, policy);
+		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
+		userNode.setRequiresAuthorization(true);
+
+		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
+
+		EasyMock.replay(pjp);
+		EasyMock.replay(userNodeDao);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(nodeId);
+		@SuppressWarnings("unchecked")
+		Set<String> result = (Set<String>) service.reportableSourcesAccessCheck(pjp, nodeId);
+		Assert.assertEquals("Filtered source IDs",
+				new LinkedHashSet<String>(Arrays.asList("/A/B/watts", "/A/C/watts")), result);
+	}
+
+	@Test
 	public void weatherFilterAsAnonymous() {
 		EasyMock.replay(userNodeDao);
 
@@ -361,6 +405,54 @@ public class QuerySecurityAspectTests {
 		criteria.setCurrency("NZD");
 		Filter result = service.userNodeAccessCheck(criteria);
 		Assert.assertSame(criteria, result);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void findFilteredGeneralNodeDatumRedirectMinAggregateEnforement() throws Throwable {
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final Aggregation policyMinAgg = Aggregation.Day;
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(Collections.singleton(nodeId)).withMinAggregation(policyMinAgg).build();
+		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
+		setAuthenticatedReadNodeDataToken(userId, policy);
+		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
+		userNode.setRequiresAuthorization(true);
+
+		final DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(nodeId);
+
+		final QueryBiz queryBiz = EasyMock.createMock(QueryBiz.class);
+		final Signature methodSig = EasyMock.createMock(Signature.class);
+
+		expect(userNodeDao.get(nodeId)).andReturn(userNode);
+
+		// setup join point conditions to mimic call to findFilteredGeneralNodeDatum()
+		expect(pjp.getTarget()).andReturn(queryBiz).anyTimes();
+		expect(pjp.getSignature()).andReturn(methodSig).anyTimes();
+		expect(methodSig.getName()).andReturn("findFilteredGeneralNodeDatum").anyTimes();
+		expect(pjp.getArgs()).andReturn(new Object[] { criteria, null, null, null }).anyTimes();
+
+		// findFilteredGeneralNodeDatum should be redirected to findFilteredAggregateGeneralNodeDatum()
+		final Capture<AggregateGeneralNodeDatumFilter> filterCapture = new Capture<AggregateGeneralNodeDatumFilter>();
+		final FilterResults<ReportingGeneralNodeDatumMatch> filterResults = new BasicFilterResults<ReportingGeneralNodeDatumMatch>(
+				Collections.<ReportingGeneralNodeDatumMatch> emptyList(), Long.valueOf(0L),
+				Integer.valueOf(0), Integer.valueOf(0));
+		expect(queryBiz.findFilteredAggregateGeneralNodeDatum(EasyMock.capture(filterCapture),
+				EasyMock.isNull(List.class), EasyMock.isNull(Integer.class),
+				EasyMock.isNull(Integer.class))).andReturn(filterResults);
+
+		replay(userNodeDao, pjp, methodSig, queryBiz);
+
+		Object result = service.userNodeFilterAccessCheck(pjp, criteria);
+		assertSame("Filtered results", filterResults, result);
+		AggregateGeneralNodeDatumFilter redirectedFilter = filterCapture.getValue();
+		Assert.assertEquals("Redirected filter node ID", nodeId, redirectedFilter.getNodeId());
+		Assert.assertEquals("Redirected filter aggregation", policyMinAgg,
+				redirectedFilter.getAggregation());
+
+		verify(userNodeDao, pjp, methodSig, queryBiz);
 	}
 
 }
