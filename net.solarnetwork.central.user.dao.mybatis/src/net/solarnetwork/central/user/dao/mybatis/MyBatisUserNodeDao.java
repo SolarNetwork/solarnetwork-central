@@ -22,26 +22,43 @@
 
 package net.solarnetwork.central.user.dao.mybatis;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link UserNodeDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> implements UserNodeDao {
 
 	/** The query name used for {@link #findUserNodesForUser(User)}. */
 	public static final String QUERY_FOR_USER = "find-UserNode-for-User";
+
+	/**
+	 * The query name used for {@link #findArchivedUserNodesForUser(Long)}.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String QUERY_FOR_USER_ARCHIVED = "find-archived-UserNode-for-User";
+
+	/**
+	 * The query name used for
+	 * {@link #updateUserNodeArchivedStatus(Long, Long[], boolean)}.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String UPDATE_ARCHIVED_STATUS = "update-archived-UserNode-status";
 
 	/**
 	 * The query name used for
@@ -123,6 +140,32 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNodeTransfer> findUserNodeTransferRequestsForEmail(String email) {
 		return getSqlSession().selectList(QUERY_USER_NODE_TRANSFERS_FOR_EMAIL, email);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.1
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public List<UserNode> findArchivedUserNodesForUser(Long userId) {
+		return getSqlSession().selectList(QUERY_FOR_USER_ARCHIVED, userId);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.1
+	 */
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void updateUserNodeArchivedStatus(Long userId, Long[] nodeIds, boolean archived) {
+		Map<String, Object> sqlProperties = new HashMap<String, Object>(3);
+		sqlProperties.put("userId", userId);
+		sqlProperties.put("nodeIds", nodeIds);
+		sqlProperties.put("archived", archived);
+		getSqlSession().update(UPDATE_ARCHIVED_STATUS, sqlProperties);
 	}
 
 }

@@ -45,13 +45,12 @@
 		<association property="user" resultMap="net.solarnetwork.central.user.dao.mybatis.User.UserFullResult"/>
 	</resultMap>
 	
-	<select id="get-UserNode-for-id" parameterType="long" resultMap="UserNodeFullResult">
+	<sql id="fragment-UserNode-select-full">
 		SELECT
 			<include refid="fragment-UserNode-full-result"/>,
 			<include refid="net.solarnetwork.central.dao.mybatis.SolarNode.fragment-SolarNode-full-result"/>,
 			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-full-result"/>,
 			<include refid="net.solarnetwork.central.user.dao.mybatis.User.fragment-User-full-result"/>
-		
 		FROM
 			solaruser.user_node un
 		INNER JOIN
@@ -60,29 +59,41 @@
 			solarnet.sn_loc l ON l.id = n.loc_id
 		INNER JOIN
 			solaruser.user_user u ON u.id = un.user_id
+	</sql>
+	
+	<select id="get-UserNode-for-id" parameterType="long" resultMap="UserNodeFullResult">
+		<include refid="fragment-UserNode-select-full"/>
 		WHERE
 			un.node_id = #{id}
 	</select>
 	
 	<select id="find-UserNode-for-User" parameterType="long" resultMap="UserNodeFullResult">
-		SELECT
-			<include refid="fragment-UserNode-full-result"/>,
-			<include refid="net.solarnetwork.central.dao.mybatis.SolarNode.fragment-SolarNode-full-result"/>,
-			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-full-result"/>,
-			<include refid="net.solarnetwork.central.user.dao.mybatis.User.fragment-User-full-result"/>
-		FROM
-			solaruser.user_node un
-		INNER JOIN
-			solarnet.sn_node n ON n.node_id = un.node_id
-		INNER JOIN
-			solarnet.sn_loc l ON l.id = n.loc_id
-		INNER JOIN
-			solaruser.user_user u ON u.id = un.user_id
+		<include refid="fragment-UserNode-select-full"/>
 		WHERE
 			u.id = #{id}
+			AND un.archived = FALSE
 		ORDER BY
 			un.created
 	</select>
+	
+	<select id="find-archived-UserNode-for-User" parameterType="long" resultMap="UserNodeFullResult">
+		<include refid="fragment-UserNode-select-full"/>
+		WHERE
+			u.id = #{id}
+			AND un.archived = TRUE
+		ORDER BY
+			un.created
+	</select>
+
+	<update id="update-archived-UserNode-status" parameterType="map">
+		UPDATE
+			solaruser.user_node 
+		SET
+			archived = #{archived}
+		WHERE
+			user_id = #{userId}
+			AND node_id = ANY (#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+	</update>
 	
 	<resultMap id="UserNodeWithCertificates" type="UserNode" extends="UserNodeFullResult">
 		<association property="certificate" notNullColumn="uncert_user_id,uncert_node_id" resultMap="net.solarnetwork.central.user.dao.mybatis.UserNodeCertificate.UserNodeCertificateFullResult"/>
@@ -111,6 +122,7 @@
 			solaruser.user_node_xfer unxfer ON unxfer.user_id = un.user_id AND unxfer.node_id = un.node_id
 		WHERE
 			un.user_id = #{id}
+			AND un.archived = FALSE
 		ORDER BY
 			un.node_id ASC
 	</select>

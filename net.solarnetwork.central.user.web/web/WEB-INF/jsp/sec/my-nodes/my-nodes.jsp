@@ -217,17 +217,27 @@
 									<span class="sr-only"><fmt:message key='toggle.dropdown.label'/></span>
 								</button>
 								<ul class="dropdown-menu dropdown-menu-right" role="menu">
-									<li>
-										<c:if test='${userNode.certificate.status.value eq "Active"}'>
+									<c:if test='${userNode.certificate.status.value eq "Active"}'>
+										<li>
 											<a href="#" class="view-cert">
 												<fmt:message key="user.node.certificate.action.view"/>
 											</a>
+										</li>
+										<li>
 											<a href="#" class="view-cert">
 												<fmt:message key="user.node.certificate.action.renew"/>
 											</a>
-										</c:if>
+										</li>
+									</c:if>
+									<li>
 										<a href="#" class="transfer-ownership">
 											<fmt:message key="user.node.action.transferOwnership"/>
+										</a>
+									</li>
+									<li role="separator" class="divider"></li>
+									<li>
+										<a href="#" class="archive">
+											<fmt:message key="user.node.action.archive"/>
 										</a>
 									</li>
 								</ul>
@@ -604,5 +614,34 @@
 	<input type="hidden" name="accept" value="false"/>
  	<sec:csrfInput/>
 </form>
+<form id="archive-node-modal" class="modal fade" action="<c:url value='/u/sec/my-nodes/archived'/>" method="post">
+	<div class="modal-dialog">
+		<div class="modal-content">
+		 	<div class="modal-header">
+		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
+		 		<h4 class="modal-title"><fmt:message key='my-nodes.archive.title'/></h4>
+		 	</div>
+		 	<div class="modal-body form-horizontal">
+		 		<p><fmt:message key='my-nodes.archive.intro'/></p>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="archive-node"><fmt:message key="user.node.id.label"/></label>
+					<div class="col-sm-10">
+						<p class="form-control-static node-name-label"></p>
+					</div>
+				</div>
+		 	</div>
+		 	<div class="modal-footer">
+		 		<a href="#" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></a>
+		 		<button type="submit" class="btn btn-danger submit">
+		 			<fmt:message key='my-nodes.archive.action.archive'/>
+		 		</button>
+		 	</div>
+		 </div>
+	</div>
+	<input type="hidden" name="archived" value="true"/>
+	<input type="hidden" name="nodeIds"/>
+ 	<sec:csrfInput/>
+</form>
+
 <%@include file="/WEB-INF/jsp/sec/alerts/situation-modal.jsp" %>
 <%@include file="/WEB-INF/jsp/sec/alerts/alert-enums.jsp" %>

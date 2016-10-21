@@ -2,10 +2,10 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central DAO User Biz
 Bundle-SymbolicName: net.solarnetwork.central.user.biz.dao
-Bundle-Version: 1.14.0
+Bundle-Version: 1.15.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: net.solarnetwork.central.user.biz.dao;version="1.5.0"
+Export-Package: net.solarnetwork.central.user.biz.dao;version="1.6.0"
 Import-Package: 
  net.sf.ehcache;version="[2.7,3.0)",
  net.solarnetwork.central;version="1.0",
@@ -15,8 +15,8 @@ Import-Package:
  net.solarnetwork.central.instructor.biz;version="1.2.0",
  net.solarnetwork.central.instructor.domain;version="1.1.1",
  net.solarnetwork.central.security;version="1.8",
- net.solarnetwork.central.user.biz;version="1.13",
- net.solarnetwork.central.user.dao;version="1.5",
+ net.solarnetwork.central.user.biz;version="1.14",
+ net.solarnetwork.central.user.dao;version="1.6",
  net.solarnetwork.central.user.domain;version="1.12",
  net.solarnetwork.domain;version="1.5",
  net.solarnetwork.io;version="1.1.0",

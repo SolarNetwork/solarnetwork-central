@@ -39,7 +39,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * Delegating implementation of {@link UserBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @SuppressWarnings("deprecation")
 public class DelegatingUserBiz implements UserBiz {
@@ -123,6 +123,17 @@ public class DelegatingUserBiz implements UserBiz {
 	public UserAuthToken updateUserAuthTokenPolicy(Long userId, String tokenId, SecurityPolicy newPolicy,
 			boolean replace) {
 		return delegate.updateUserAuthTokenPolicy(userId, tokenId, newPolicy, replace);
+	}
+
+	@Override
+	public void updateUserNodeArchivedStatus(Long userId, Long[] nodeIds, boolean archived)
+			throws AuthorizationException {
+		delegate.updateUserNodeArchivedStatus(userId, nodeIds, archived);
+	}
+
+	@Override
+	public List<UserNode> getArchivedUserNodes(Long userId) throws AuthorizationException {
+		return delegate.getArchivedUserNodes(userId);
 	}
 
 }

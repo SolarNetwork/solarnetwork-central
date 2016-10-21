@@ -151,6 +151,19 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void updateUserNodeArchivedStatus(Long userId, Long[] nodeIds, boolean archived)
+			throws AuthorizationException {
+		userNodeDao.updateUserNodeArchivedStatus(userId, nodeIds, archived);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public List<UserNode> getArchivedUserNodes(Long userId) throws AuthorizationException {
+		return userNodeDao.findArchivedUserNodesForUser(userId);
+	}
+
+	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNodeConfirmation> getPendingUserNodeConfirmations(Long userId) {
 		User user = userDao.get(userId);
