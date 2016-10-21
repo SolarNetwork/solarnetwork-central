@@ -87,7 +87,7 @@
 					#{filter.userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
 				)}
 			</when>
-			<when test="filter.nodeIds.length > 1">
+			<when test="filter.nodeIds.length > 1 and filter.sourceId == null">
 				{call solardatum.find_most_recent(
 					CAST(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler} AS solarcommon.node_ids)
 				)}
@@ -169,6 +169,13 @@
 		<result property="sampleJson" column="r_datum_jdata"/>
 	</resultMap>
 
+	<resultMap id="ReportingGeneralNodeDatumDirectResult" type="ReportingGeneralNodeDatum">
+		<id property="nodeId" column="node_id"/>
+		<id property="created" column="ts_start"/>
+		<id property="sourceId" column="source_id"/>
+		<result property="sampleJson" column="jdata"/>
+	</resultMap>
+
 	<sql id="fragment-GeneralNodeDatum-aggregation-result">
 		datum.node_id AS r_datum_node_id,
 		datum.ts_start AS r_datum_ts_start,
@@ -176,6 +183,29 @@
 		datum.source_id AS r_datum_source_id,
 		datum.jdata AS r_datum_jdata
 	</sql>
+
+	<select id="find-general-reporting-most-recent" resultMap="ReportingGeneralNodeDatumDirectResult" statementType="CALLABLE">
+		<choose>
+			<when test="aggregation == 'Hour'">
+				{call solaragg.find_most_recent_hourly(
+					#{filter.nodeId,jdbcType=BIGINT}, 
+					#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+				)}
+			</when>
+			<when test="aggregation == 'Day'">
+				{call solaragg.find_most_recent_daily(
+					#{filter.nodeId,jdbcType=BIGINT}, 
+					#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+				)}
+			</when>
+			<otherwise>
+				{call solaragg.find_most_recent_monthly(
+					#{filter.nodeId,jdbcType=BIGINT}, 
+					#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+				)}
+			</otherwise>
+		</choose>
+	</select>
 
 	<sql id="fragment-findall-ReportingGeneralNodeDatum-where">
 		<where>

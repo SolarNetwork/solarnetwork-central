@@ -28,6 +28,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.ReadableInstant;
+import org.joda.time.ReadableInterval;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.SolarLocationDao;
@@ -56,15 +65,6 @@ import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.domain.WeatherLocation;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.ReadableInstant;
-import org.joda.time.ReadableInterval;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of {@link QueryBiz}.
@@ -129,8 +129,8 @@ public class DaoQueryBiz implements QueryBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
 		return generalNodeDatumDao.findAggregationFiltered(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
 	}
@@ -149,8 +149,8 @@ public class DaoQueryBiz implements QueryBiz {
 			// treat end date as now for purposes of this calculating query range
 			e = new DateTime();
 		}
-		long diffDays = (s != null && e != null ? (e.getMillis() - s.getMillis())
-				/ (1000L * 60L * 60L * 24L) : 0);
+		long diffDays = (s != null && e != null
+				? (e.getMillis() - s.getMillis()) / (1000L * 60L * 60L * 24L) : 0);
 		if ( s == null && e == null && (agg == null || agg.compareTo(Aggregation.Day) < 0)
 				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
 				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek ) {
@@ -190,6 +190,9 @@ public class DaoQueryBiz implements QueryBiz {
 
 	private AggregateGeneralNodeDatumFilter enforceGeneralAggregateLevel(
 			AggregateGeneralNodeDatumFilter filter) {
+		if ( filter.isMostRecent() ) {
+			return filter;
+		}
 		Aggregation forced = enforceAggregation(filter.getAggregation(), filter.getStartDate(),
 				filter.getEndDate(), filter);
 		if ( forced != null ) {

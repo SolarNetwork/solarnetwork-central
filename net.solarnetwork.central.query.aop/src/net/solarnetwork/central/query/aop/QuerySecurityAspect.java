@@ -25,6 +25,7 @@ package net.solarnetwork.central.query.aop;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -35,9 +36,11 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
@@ -90,11 +93,28 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public void nodeDatumFilter(Filter filter) {
 	}
 
-	@Around("nodeDatumFilter(filter)")
+	@Around(value = "nodeDatumFilter(filter)")
 	public Object userNodeFilterAccessCheck(ProceedingJoinPoint pjp, Filter filter) throws Throwable {
 		Filter f = userNodeAccessCheck(filter);
 		if ( f == filter ) {
 			return pjp.proceed();
+		}
+
+		// if an aggregate was injected (enforced) on the filter, then the join point method
+		// might need to change to an aggregate one, e.g. from findFilteredGeneralNodeDatum
+		// to findFilteredAggregateGeneralNodeDatum. This _could_ break the calling code if
+		// it is expecting a specific result type, but in many cases it is simply returning
+		// the result as JSON to some HTTP client and the difference does not matter.
+		if ( pjp.getTarget() instanceof QueryBiz && f instanceof AggregateGeneralNodeDatumFilter
+				&& ((AggregateGeneralNodeDatumFilter) f).getAggregation() != null
+				&& pjp.getSignature().getName().equals("findFilteredGeneralNodeDatum") ) {
+			// redirect this to findFilteredAggregateGeneralNodeDatum
+			QueryBiz target = (QueryBiz) pjp.getTarget();
+			Object[] args = pjp.getArgs();
+			@SuppressWarnings("unchecked")
+			List<SortDescriptor> sorts = (List<SortDescriptor>) args[1];
+			return target.findFilteredAggregateGeneralNodeDatum((AggregateGeneralNodeDatumFilter) f,
+					sorts, (Integer) args[2], (Integer) args[3]);
 		}
 		Object[] args = pjp.getArgs();
 		args[0] = f;
