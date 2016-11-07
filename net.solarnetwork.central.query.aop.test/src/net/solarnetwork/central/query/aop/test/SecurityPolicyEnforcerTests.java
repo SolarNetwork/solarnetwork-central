@@ -182,6 +182,18 @@ public class SecurityPolicyEnforcerTests {
 	}
 
 	@Test
+	public void verifySourceIdsWithPathMatcherMixedPatterns() {
+		String[] policySourceIds = new String[] { "/A/BC/1", "/A/bc/*", "/A/bc/1/*" };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher());
+		String[] inputSourceIds = new String[] { "/A/BC/1" };
+		String[] result = enforcer.verifySourceIds(inputSourceIds);
+		Assert.assertArrayEquals("Restricted source IDs", inputSourceIds, result);
+	}
+
+	@Test
 	public void fillInPolicyNodeId() {
 		Long[] policyNodeIds = new Long[] { TEST_NODE_ID };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()

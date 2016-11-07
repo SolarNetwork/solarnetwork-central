@@ -244,19 +244,18 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 			// extract policy source ID patterns
 			Set<String> policySourceIdPatterns = null;
 			if ( pathMatcher != null ) {
-				Set<String> mutableSourceIds = null;
 				for ( String policySourceId : policySourceIds ) {
 					if ( pathMatcher.isPattern(policySourceId) ) {
 						if ( policySourceIdPatterns == null ) {
 							policySourceIdPatterns = new LinkedHashSet<String>(policySourceIds.size());
-							mutableSourceIds = new LinkedHashSet<String>(policySourceIds.size());
 						}
 						policySourceIdPatterns.add(policySourceId);
-						mutableSourceIds.add(policySourceId);
 					}
 				}
-				if ( mutableSourceIds != null ) {
-					policySourceIds = mutableSourceIds;
+				if ( policySourceIdPatterns != null ) {
+					Set<String> mutablePolicySourceIds = new LinkedHashSet<String>(policySourceIds);
+					mutablePolicySourceIds.removeAll(policySourceIdPatterns);
+					policySourceIds = mutablePolicySourceIds;
 				}
 			}
 
