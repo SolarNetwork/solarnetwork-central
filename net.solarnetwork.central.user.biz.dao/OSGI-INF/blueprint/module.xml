@@ -107,14 +107,7 @@
 	</bean>
 	
 	<bean id="daoUserMetadataBiz" class="net.solarnetwork.central.user.biz.dao.DaoUserMetadataBiz">
-		<property name="userDao" ref="userDao"/>
-		<property name="userAlertDao" ref="userAlertDao"/>
-		<property name="userNodeDao" ref="userNodeDao"/>
-		<property name="userNodeConfirmationDao" ref="userNodeConfirmationDao"/>
-		<property name="userNodeCertificateDao" ref="userNodeCertificateDao"/>
-		<property name="userAuthTokenDao" ref="userAuthTokenDao"/>
-		<property name="solarNodeDao" ref="solarNodeDao"/>
-		<property name="solarLocationDao" ref="solarLocationDao"/>
+		<argument ref="userMetadataDao"/>
 	</bean>
 	
 	<bean id="daoUserAlertBiz" class="net.solarnetwork.central.user.biz.dao.DaoUserAlertBiz">
