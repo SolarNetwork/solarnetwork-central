@@ -60,6 +60,8 @@
 	
 	<service ref="daoUserAlertBiz" ranking="1" interface="net.solarnetwork.central.user.biz.UserAlertBiz"/>
 	
+	<service ref="daoUserMetadataBiz" ranking="1" interface="net.solarnetwork.central.user.biz.UserMetadataBiz"/>
+	
 	<!-- Supporting Services -->
 	
 	<!-- Use Java @Transactional annotations to declare transactions. -->

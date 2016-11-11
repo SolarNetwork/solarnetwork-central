@@ -38,7 +38,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * @version 1.0
  * @since 1.23
  */
-public class DelegatingUserMetadataBiz {
+public class DelegatingUserMetadataBiz implements UserMetadataBiz {
 
 	private final UserMetadataBiz delegate;
 
@@ -53,18 +53,22 @@ public class DelegatingUserMetadataBiz {
 		this.delegate = delegate;
 	}
 
+	@Override
 	public void addUserMetadata(Long userId, GeneralDatumMetadata meta) {
 		delegate.addUserMetadata(userId, meta);
 	}
 
+	@Override
 	public void storeUserMetadata(Long userId, GeneralDatumMetadata meta) {
 		delegate.storeUserMetadata(userId, meta);
 	}
 
+	@Override
 	public void removeUserMetadata(Long userId) {
 		delegate.removeUserMetadata(userId);
 	}
 
+	@Override
 	public FilterResults<UserMetadataFilterMatch> findUserMetadata(UserMetadataFilter criteria,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		return delegate.findUserMetadata(criteria, sortDescriptors, offset, max);

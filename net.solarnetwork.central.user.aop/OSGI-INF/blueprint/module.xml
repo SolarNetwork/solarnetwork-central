@@ -11,6 +11,7 @@
 	<!-- Service References -->
 
 	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
+	<reference id="userMetadataDao" interface="net.solarnetwork.central.user.dao.UserMetadataDao"/>
 	<reference id="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao"/>
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 	<reference id="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao"/>
@@ -21,6 +22,10 @@
 	
 	<reference id="userBiz"
 		interface="net.solarnetwork.central.user.biz.UserBiz"
+		filter="(!(aop=true))"/>
+	
+	<reference id="userMetadataBiz"
+		interface="net.solarnetwork.central.user.biz.UserMetadataBiz"
 		filter="(!(aop=true))"/>
 	
 	<reference id="userAlertBiz"
@@ -40,6 +45,12 @@
 	</service>
 
 	<service ref="aopUserBiz" interface="net.solarnetwork.central.user.biz.UserBiz" ranking="10">
+		<service-properties>
+			<entry key="aop" value="true"/>
+		</service-properties>
+	</service>
+
+	<service ref="aopUserMetadataBiz" interface="net.solarnetwork.central.user.biz.UserMetadataBiz" ranking="10">
 		<service-properties>
 			<entry key="aop" value="true"/>
 		</service-properties>
@@ -70,6 +81,10 @@
 		<argument ref="userAuthTokenDao"/>
 	</bean>
 	
+	<bean id="userMetadataSecurityAspect" class="net.solarnetwork.central.user.aop.UserMetadataSecurityAspect">
+		<argument ref="userNodeDao"/>
+	</bean>
+	
 	<bean id="nodeOwnershipSecurityAspect" class="net.solarnetwork.central.user.aop.NodeOwnershipSecurityAspect">
 		<argument ref="userNodeDao"/>
 		<argument ref="userDao"/>
@@ -86,6 +101,10 @@
 
 	<bean id="aopUserBiz" class="net.solarnetwork.central.user.support.DelegatingUserBiz">
 		<argument ref="userBiz"/>
+	</bean>
+
+	<bean id="aopUserMetadataBiz" class="net.solarnetwork.central.user.support.DelegatingUserMetadataBiz">
+		<argument ref="userMetadataBiz"/>
 	</bean>
 
 	<bean id="aopNodeOwnershipBiz" class="net.solarnetwork.central.user.support.DelegatingNodeOwnershipBiz">
