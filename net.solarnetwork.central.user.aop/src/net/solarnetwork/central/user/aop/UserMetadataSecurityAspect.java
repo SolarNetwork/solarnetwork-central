@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.user.aop;
 
+import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.biz.UserMetadataBiz;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserMetadataFilter;
@@ -36,6 +38,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * @version 1.0
  * @since 1.7
  */
+@Aspect
 public class UserMetadataSecurityAspect extends AuthorizationSupport {
 
 	/**
@@ -84,10 +87,12 @@ public class UserMetadataSecurityAspect extends AuthorizationSupport {
 	@Before("findMetadata(filter)")
 	public void readMetadataCheck(UserMetadataFilter filter) {
 		Long[] userIds = (filter == null ? null : filter.getUserIds());
-		if ( userIds != null ) {
-			for ( Long userId : userIds ) {
-				requireUserReadAccess(userId);
-			}
+		if ( userIds == null ) {
+			log.warn("Access DENIED to metadata without user ID filter");
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		}
+		for ( Long userId : userIds ) {
+			requireUserReadAccess(userId);
 		}
 	}
 

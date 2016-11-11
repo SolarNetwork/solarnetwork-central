@@ -111,6 +111,16 @@ public class UserMetadataSecurityAspectTests extends AbstractCentralTransactiona
 		verifyAll();
 	}
 
+	@Test(expected = AuthorizationException.class)
+	public void findMetadataNoUser() {
+		UserFilterCommand filter = new UserFilterCommand();
+
+		becomeUser("ROLE_USER");
+		replayAll();
+		aspect.readMetadataCheck(filter);
+		verifyAll();
+	}
+
 	@Test
 	public void findMetadataAllowed() {
 		UserFilterCommand filter = new UserFilterCommand();

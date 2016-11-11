@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.aop;
 
+import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
 
@@ -35,6 +37,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * @author matt
  * @version 1.0
  */
+@Aspect
 public class SolarNodeMetadataSecurityAspect extends AuthorizationSupport {
 
 	/**
@@ -83,10 +86,12 @@ public class SolarNodeMetadataSecurityAspect extends AuthorizationSupport {
 	@Before("findMetadata(filter)")
 	public void readMetadataCheck(SolarNodeMetadataFilter filter) {
 		Long[] nodeIds = (filter == null ? null : filter.getNodeIds());
-		if ( nodeIds != null ) {
-			for ( Long nodeId : nodeIds ) {
-				requireNodeReadAccess(nodeId);
-			}
+		if ( nodeIds == null ) {
+			log.warn("Access DENIED to node metadata without node ID filter");
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		}
+		for ( Long nodeId : nodeIds ) {
+			requireNodeReadAccess(nodeId);
 		}
 	}
 

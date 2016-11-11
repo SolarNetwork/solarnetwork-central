@@ -27,24 +27,25 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.MutableSortDescriptor;
-import org.joda.time.DateTime;
 
 /**
  * Implementation of {@link LocationDatumFilter}, {@link NodeDatumFilter}, and
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
-		GeneralNodeDatumMetadataFilter {
+		GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter {
 
 	private final SolarLocation location;
 	private DateTime startDate;

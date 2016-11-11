@@ -129,6 +129,16 @@ public class SolarNodeMetadataSecurityAspectTests extends AbstractCentralTransac
 		verifyAll();
 	}
 
+	@Test(expected = AuthorizationException.class)
+	public void findMetadataNoNode() {
+		FilterSupport filter = new FilterSupport();
+
+		becomeUser("ROLE_USER");
+		replayAll();
+		aspect.readMetadataCheck(filter);
+		verifyAll();
+	}
+
 	@Test
 	public void findMetadataAllowed() {
 		UserNode userNode = new UserNode(new User(TEST_USER_ID, "test@localhost"),

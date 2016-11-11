@@ -22,7 +22,12 @@
 
 package net.solarnetwork.central.user.domain;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.FilterSupport;
+import net.solarnetwork.central.support.MutableSortDescriptor;
 
 /**
  * Filter support for user actions.
@@ -33,6 +38,41 @@ import net.solarnetwork.central.support.FilterSupport;
  */
 public class UserFilterCommand extends FilterSupport implements UserMetadataFilter {
 
-	private static final long serialVersionUID = -3977822933493822998L;
+	private static final long serialVersionUID = -728195107001585307L;
+
+	private List<MutableSortDescriptor> sorts;
+	private Integer offset = 0;
+	private Integer max;
+
+	public List<MutableSortDescriptor> getSorts() {
+		return sorts;
+	}
+
+	public void setSorts(List<MutableSortDescriptor> sorts) {
+		this.sorts = sorts;
+	}
+
+	public List<SortDescriptor> getSortDescriptors() {
+		if ( sorts == null ) {
+			return Collections.emptyList();
+		}
+		return new ArrayList<SortDescriptor>(sorts);
+	}
+
+	public Integer getOffset() {
+		return offset;
+	}
+
+	public void setOffset(Integer offset) {
+		this.offset = offset;
+	}
+
+	public Integer getMax() {
+		return max;
+	}
+
+	public void setMax(Integer max) {
+		this.max = max;
+	}
 
 }
