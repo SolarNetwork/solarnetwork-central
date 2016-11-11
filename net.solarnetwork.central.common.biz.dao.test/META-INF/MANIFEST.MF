@@ -1,0 +1,25 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SolarNet Central Common DAO Biz Tests
+Bundle-SymbolicName: net.solarnetwork.central.biz.dao.test
+Bundle-Version: 1.0.0
+Bundle-Vendor: SolarNetwork
+Fragment-Host: net.solarnetwork.central.biz.dao;bundle-version="1.0.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: 
+ org.junit;version="[4.5,5.0)",
+ org.junit.runner;version="[4.5,5.0)",
+ net.solarnetwork.central.support;version="[1.5.0,2.0.0)",
+ net.solarnetwork.central.test;version="[1.0,2.0)",
+ org.apache.commons.logging;version="[1.1,2.0)",
+ org.easymock;version="[3.1,4.0)",
+ org.joda.time;version="[2.4,3.0)",
+ org.mybatis.spring;version="[1.2,2.0)",
+ org.mybatis.spring.support;version="[1.2,2.0)",
+ org.slf4j;version="[1.7,2.0)",
+ org.springframework.test.annotation;version="[4.2,5.0)",
+ org.springframework.test.context;version="[4.2,5.0)",
+ org.springframework.test.context.junit4;version="[4.2,5.0)",
+ org.springframework.test.context.support;version="[4.2,5.0)",
+ org.springframework.test.context.transaction;version="[4.2,5.0)",
+ org.springframework.util;version="[4.2,5.0)"
