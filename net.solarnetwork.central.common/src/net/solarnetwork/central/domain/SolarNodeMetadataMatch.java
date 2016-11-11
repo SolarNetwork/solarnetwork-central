@@ -30,6 +30,7 @@ package net.solarnetwork.central.domain;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.32
  */
 public class SolarNodeMetadataMatch extends SolarNodeMetadata implements SolarNodeMetadataFilterMatch {
 
