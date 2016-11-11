@@ -1,7 +1,7 @@
 /* ==================================================================
- * AbstractMyBatisUserDaoTestSupport.java - Nov 11, 2014 6:41:43 AM
+ * UserMetadataMatch.java - 11/11/2016 5:40:31 PM
  * 
- * Copyright 2007-2014 SolarNetwork.net Dev Team
+ * Copyright 2007-2016 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,17 +20,20 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dao.mybatis.test;
+package net.solarnetwork.central.user.domain;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+/**
+ * A "match" to a {@link UserMetadata}.
+ * 
+ * Although this class extends {@link UserMetadata} that is merely an
+ * implementation detail.
+ * 
+ * @author matt
+ * @version 1.0
+ * @since 1.23
+ */
+public class UserMetadataMatch extends UserMetadata implements UserMetadataFilterMatch {
 
-@RunWith(Suite.class)
-@SuiteClasses({ MyBatisUserAuthTokenDaoTests.class, MyBatisUserDaoTests.class,
-		MyBatisUserNodeCertificateDaoTests.class, MyBatisUserNodeConfirmationDaoTests.class,
-		MyBatisUserNodeDaoTests.class, MyBatisUserAlertDaoTests.class,
-		MyBatisUserAlertSituationDaoTests.class, MyBatisUserMetadataDaoTests.class })
-public class AllTests {
+	private static final long serialVersionUID = -5455447804909429786L;
 
 }

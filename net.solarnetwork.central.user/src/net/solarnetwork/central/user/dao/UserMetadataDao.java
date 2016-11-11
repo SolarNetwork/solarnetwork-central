@@ -1,7 +1,7 @@
 /* ==================================================================
- * AbstractMyBatisUserDaoTestSupport.java - Nov 11, 2014 6:41:43 AM
+ * UserMetadataDao.java - 11/11/2016 11:10:41 AM
  * 
- * Copyright 2007-2014 SolarNetwork.net Dev Team
+ * Copyright 2007-2016 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,17 +20,22 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dao.mybatis.test;
+package net.solarnetwork.central.user.dao;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import net.solarnetwork.central.dao.FilterableDao;
+import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.user.domain.UserMetadata;
+import net.solarnetwork.central.user.domain.UserMetadataFilter;
+import net.solarnetwork.central.user.domain.UserMetadataFilterMatch;
 
-@RunWith(Suite.class)
-@SuiteClasses({ MyBatisUserAuthTokenDaoTests.class, MyBatisUserDaoTests.class,
-		MyBatisUserNodeCertificateDaoTests.class, MyBatisUserNodeConfirmationDaoTests.class,
-		MyBatisUserNodeDaoTests.class, MyBatisUserAlertDaoTests.class,
-		MyBatisUserAlertSituationDaoTests.class, MyBatisUserMetadataDaoTests.class })
-public class AllTests {
+/**
+ * DAO API for {@link UserMetadata}.
+ * 
+ * @author matt
+ * @version 1.0
+ * @since 1.23
+ */
+public interface UserMetadataDao extends GenericDao<UserMetadata, Long>,
+		FilterableDao<UserMetadataFilterMatch, Long, UserMetadataFilter> {
 
 }

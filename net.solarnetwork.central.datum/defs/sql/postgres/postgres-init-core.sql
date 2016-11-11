@@ -113,6 +113,14 @@ CREATE TABLE solarnet.sn_node (
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
+CREATE TABLE solarnet.sn_node_meta (
+  node_id 			solarcommon.node_id NOT NULL,
+  created 			solarcommon.ts NOT NULL,
+  updated 			solarcommon.ts NOT NULL,
+  jdata 			json NOT NULL,
+  CONSTRAINT sn_node_meta_pkey PRIMARY KEY (node_id)
+);
+
 CREATE OR REPLACE FUNCTION solarnet.get_node_local_timestamp(timestamp with time zone, bigint)
   RETURNS timestamp without time zone AS
 $BODY$
@@ -140,6 +148,12 @@ $BODY$
 	WHERE n.node_id = $1
 $BODY$
   LANGUAGE 'sql' STABLE;
+
+/* =========================================================================
+   =========================================================================
+   SEASON SUPPORT
+   =========================================================================
+   ========================================================================= */
 
 /**************************************************************************************************
  * FUNCTION solarnet.get_season(date)
