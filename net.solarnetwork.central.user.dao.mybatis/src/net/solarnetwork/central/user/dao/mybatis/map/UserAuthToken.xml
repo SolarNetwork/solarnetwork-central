@@ -3,6 +3,8 @@
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.user.dao.mybatis.UserAuthToken">
 
+	<cache/>
+
 	<insert id="insert-UserAuthToken" parameterType="UserAuthToken">
 		INSERT INTO solaruser.user_auth_token 
 			(auth_token
