@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarNodeMetadataFilterMatch.java - 11/11/2016 11:04:32 AM
+ * GeneralDatumMetadataSerializer.java - 13/11/2016 12:25:06 PM
  * 
  * Copyright 2007-2016 SolarNetwork.net Dev Team
  * 
@@ -20,15 +20,31 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.domain;
+package net.solarnetwork.central.support;
+
+import java.io.IOException;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 
 /**
- * API for a {@link SolarNodeMetadata} search or filter match result.
+ * JSON serializer for {@link GeneralDatumMetadata}.
  * 
  * @author matt
  * @version 1.0
- * @since 1.32
  */
-public interface SolarNodeMetadataFilterMatch extends NodeMetadata, FilterMatch<Long> {
+public class GeneralDatumMetadataSerializer extends StdSerializer<GeneralDatumMetadata> {
+
+	public GeneralDatumMetadataSerializer() {
+		super(GeneralDatumMetadata.class);
+	}
+
+	@Override
+	public void serialize(GeneralDatumMetadata meta, JsonGenerator generator,
+			SerializerProvider provider) throws IOException, JsonGenerationException {
+		JsonUtils.writeMetadata(generator, meta);
+	}
 
 }

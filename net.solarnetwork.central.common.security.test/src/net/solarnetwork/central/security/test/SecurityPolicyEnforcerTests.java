@@ -22,23 +22,32 @@
 
 package net.solarnetwork.central.security.test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.util.AntPathMatcher;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.central.domain.SolarNodeMetadataMatch;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityPolicyMetadataType;
+import net.solarnetwork.central.support.NodeMetadataSerializer;
 import net.solarnetwork.domain.GeneralDatumMetadata;
+import net.solarnetwork.util.ObjectMapperFactoryBean;
 
 /**
  * Test cases for the {@link SecurityPolicyEnforcer} class.
@@ -397,6 +406,74 @@ public class SecurityPolicyEnforcerTests {
 		expected.putInfoValue("c", "bar", "yes");
 
 		Assert.assertEquals("Restricted metadata", expected, result);
+	}
+
+	@Test(expected = AuthorizationException.class)
+	public void denyFromPolicyNodeMetadataPaths() {
+		String[] policyMetadataPaths = new String[] { TEST_META_ONELEVEL, TEST_META_MULTILEVEL };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList(policyMetadataPaths)))
+				.build();
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("2", "two");
+
+		SolarNodeMetadataMatch src = new SolarNodeMetadataMatch();
+		src.setMeta(meta);
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", src,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+		SolarNodeMetadataFilterMatch match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+		match.getMetadata();
+	}
+
+	@Test
+	public void restrictToPolicyNodeMetadataPaths() {
+		String[] policyMetadataPaths = new String[] { TEST_META_PAT_MULTILEVEL_MIDDLE };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList(policyMetadataPaths)))
+				.build();
+
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bar", "bam");
+		meta.putInfoValue("meter", "yes");
+
+		GeneralDatumMetadata expected = new GeneralDatumMetadata(null, meta.getPropertyInfo());
+
+		SolarNodeMetadataMatch src = new SolarNodeMetadataMatch();
+		src.setMeta(meta);
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", src,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+		SolarNodeMetadataFilterMatch match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+		GeneralDatumMetadata result = match.getMetadata();
+		Assert.assertEquals("Restricted metadata", expected, result);
+	}
+
+	@Test
+	public void restrictToPolicyNodeMetadataPathsJSON() throws Exception {
+		String[] policyMetadataPaths = new String[] { TEST_META_PAT_MULTILEVEL_MIDDLE };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList(policyMetadataPaths)))
+				.build();
+
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bar", "bam");
+		meta.putInfoValue("meter", "yes");
+
+		SolarNodeMetadataMatch src = new SolarNodeMetadataMatch();
+		src.setNodeId(1L);
+		src.setMeta(meta);
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", src,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+		SolarNodeMetadataFilterMatch match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+
+		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
+		List<JsonSerializer<?>> list = new ArrayList<JsonSerializer<?>>(1);
+		list.add(new NodeMetadataSerializer());
+		factory.setSerializers(list);
+		ObjectMapper mapper = factory.getObject();
+		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		String json = mapper.writeValueAsString(match);
+		Assert.assertEquals("Restricted metadata JSON",
+				"{\"nodeId\":1,\"pm\":{\"foo\":{\"bar\":\"bam\"}}}", json);
 	}
 
 }

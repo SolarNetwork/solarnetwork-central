@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarNodeMetadataFilterMatch.java - 11/11/2016 11:04:32 AM
+ * NodeMetadata.java - 13/11/2016 12:05:32 PM
  * 
  * Copyright 2007-2016 SolarNetwork.net Dev Team
  * 
@@ -22,13 +22,43 @@
 
 package net.solarnetwork.central.domain;
 
+import org.joda.time.DateTime;
+import net.solarnetwork.domain.GeneralDatumMetadata;
+
 /**
- * API for a {@link SolarNodeMetadata} search or filter match result.
+ * API for node metadata.
  * 
  * @author matt
  * @version 1.0
- * @since 1.32
  */
-public interface SolarNodeMetadataFilterMatch extends NodeMetadata, FilterMatch<Long> {
+public interface NodeMetadata {
+
+	/**
+	 * Get the node ID.
+	 * 
+	 * @return the node ID
+	 */
+	Long getNodeId();
+
+	/**
+	 * Get the creation date.
+	 * 
+	 * @return the creation date
+	 */
+	DateTime getCreated();
+
+	/**
+	 * Get the updated date.
+	 * 
+	 * @return the updated date
+	 */
+	DateTime getUpdated();
+
+	/**
+	 * Get the metadata.
+	 * 
+	 * @return the metadata
+	 */
+	GeneralDatumMetadata getMetadata();
 
 }
