@@ -20,11 +20,13 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.query.aop.test;
+package net.solarnetwork.central.security.test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.util.AntPathMatcher;
@@ -35,12 +37,14 @@ import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
+import net.solarnetwork.central.security.SecurityPolicyMetadataType;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 
 /**
  * Test cases for the {@link SecurityPolicyEnforcer} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SecurityPolicyEnforcerTests {
 
@@ -294,6 +298,105 @@ public class SecurityPolicyEnforcerTests {
 		AggregateGeneralNodeDatumFilter filter = SecurityPolicyEnforcer
 				.createSecurityPolicyProxy(enforcer);
 		Assert.assertEquals("Filled in aggregation", min, filter.getAggregation());
+	}
+
+	private static final String TEST_META_PAT_ONELEVEL = "/m/*";
+	private static final String TEST_META_PAT_MULTILEVEL = "/pm/**";
+	private static final String TEST_META_PAT_MULTILEVEL_MIDDLE = "/pm/**/bar";
+	private static final String TEST_META_ONELEVEL = "/m/1";
+	private static final String TEST_META_MULTILEVEL = "/pm/one/two";
+
+	@Test
+	public void verifyMetadataPaths() {
+		String[] policyMetadataPaths = new String[] { TEST_META_PAT_ONELEVEL, TEST_META_PAT_MULTILEVEL };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList(policyMetadataPaths)))
+				.build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("1", "one");
+		GeneralDatumMetadata result = enforcer.verifyMetadata(meta);
+		Assert.assertSame("Verify metadata paths", meta, result);
+	}
+
+	@Test(expected = AuthorizationException.class)
+	public void verifyMetadataPathsDenied() {
+		String[] policyMetadataPaths = new String[] { TEST_META_ONELEVEL, TEST_META_MULTILEVEL };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList(policyMetadataPaths)))
+				.build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("2", "two");
+		enforcer.verifyMetadata(meta);
+	}
+
+	@Test
+	public void verifyMetadataPathsMiddle() {
+		String[] metaPaths = new String[] { TEST_META_PAT_MULTILEVEL_MIDDLE };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList(metaPaths))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bar", "bam");
+		meta.putInfoValue("meter", "yes");
+		GeneralDatumMetadata result = enforcer.verifyMetadata(meta);
+
+		GeneralDatumMetadata expected = new GeneralDatumMetadata(null, meta.getPropertyInfo());
+
+		Assert.assertEquals("Restricted metadata", expected, result);
+	}
+
+	@Test
+	public void verifyMetadataPathsMixedPatterns() {
+		String[] metaPaths = new String[] { "/pm/BC/1", "/pm/bc/*" };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList(metaPaths))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("BC", "1", "one");
+		meta.putInfoValue("BC", "2", "two");
+		meta.putInfoValue("bc", "a", "A");
+		meta.putInfoValue("bc", "b", "B");
+
+		GeneralDatumMetadata result = enforcer.verifyMetadata(meta);
+
+		GeneralDatumMetadata expected = new GeneralDatumMetadata();
+		expected.putInfoValue("BC", "1", "one");
+		expected.putInfoValue("bc", "a", "A");
+		expected.putInfoValue("bc", "b", "B");
+
+		Assert.assertEquals("Restricted metadata", expected, result);
+	}
+
+	@Test
+	public void verifyMetadataPathsDeepObject() {
+		String[] metaPaths = new String[] { TEST_META_PAT_MULTILEVEL_MIDDLE };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList(metaPaths))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+
+		Map<String, Object> nestedMap = Collections.singletonMap("bar", (Object) "yes");
+
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("a", "1", nestedMap);
+		meta.putInfoValue("b", "2", nestedMap);
+		meta.putInfoValue("c", "bar", "yes");
+		meta.putInfoValue("d", "foo", "no");
+
+		GeneralDatumMetadata result = enforcer.verifyMetadata(meta);
+
+		GeneralDatumMetadata expected = new GeneralDatumMetadata();
+		expected.putInfoValue("a", "1", nestedMap);
+		expected.putInfoValue("b", "2", nestedMap);
+		expected.putInfoValue("c", "bar", "yes");
+
+		Assert.assertEquals("Restricted metadata", expected, result);
 	}
 
 }

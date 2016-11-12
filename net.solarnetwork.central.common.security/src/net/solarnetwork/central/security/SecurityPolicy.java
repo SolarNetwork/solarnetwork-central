@@ -30,7 +30,7 @@ import net.solarnetwork.central.domain.LocationPrecision;
  * API for a security policy, that is rules defining access permissions.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface SecurityPolicy {
 
@@ -75,5 +75,21 @@ public interface SecurityPolicy {
 	 * @return The minimum location precision.
 	 */
 	LocationPrecision getMinLocationPrecision();
+
+	/**
+	 * Get a set of node metadata paths this policy applies to.
+	 * 
+	 * @return set of node metadata paths
+	 * @since 1.1
+	 */
+	Set<String> getNodeMetadataPaths();
+
+	/**
+	 * Get a set of user metadata paths this policy applies to.
+	 * 
+	 * @return set of user metadata paths
+	 * @since 1.1
+	 */
+	Set<String> getUserMetadataPaths();
 
 }

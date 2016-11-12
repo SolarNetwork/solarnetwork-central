@@ -12,9 +12,9 @@
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.20.0,2.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.11.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.12.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[2.0.0,3.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.21.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.24.0,2.0.0)"/>
  		<dependency org="org.aspectj" name="aspectjweaver" rev="1.7.1"/>
     	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
 	</dependencies>

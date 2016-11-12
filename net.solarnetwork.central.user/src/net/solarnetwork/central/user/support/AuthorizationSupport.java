@@ -24,11 +24,14 @@ package net.solarnetwork.central.user.support;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -37,14 +40,16 @@ import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 
 /**
- * Helper class for authorization needs, e.g. aspect impelmentations.
+ * Helper class for authorization needs, e.g. aspect implementations.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public abstract class AuthorizationSupport {
 
 	private final UserNodeDao userNodeDao;
+	private PathMatcher sourceIdPathMatcher;
+	private PathMatcher metadataPathMatcher;
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -293,6 +298,72 @@ public abstract class AuthorizationSupport {
 	 */
 	protected void requireUserReadAccess(Long userId) {
 		requireUserWriteAccess(userId);
+	}
+
+	/**
+	 * Enforce a security policy on a domain object.
+	 * 
+	 * @param domainObject
+	 *        The domain object to enforce the active policy on.
+	 * @return The domain object to use.
+	 * @throws AuthorizationException
+	 *         If the policy check fails.
+	 * @since 1.4
+	 */
+	protected <T> T policyEnforcerCheck(T domainObject) {
+		Authentication authentication = SecurityUtils.getCurrentAuthentication();
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return domainObject;
+		}
+
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
+				(authentication != null ? authentication.getPrincipal() : null), domainObject,
+				sourceIdPathMatcher);
+		enforcer.verify();
+		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+	}
+
+	/**
+	 * Get the path matcher to use for source ID matching.
+	 * 
+	 * @return the path matcher
+	 * @since 1.4
+	 */
+	public PathMatcher getSourceIdPathMatcher() {
+		return sourceIdPathMatcher;
+	}
+
+	/**
+	 * Set the path matcher to use for source ID matching.
+	 * 
+	 * @param sourceIdPathMatcher
+	 *        the matcher to use
+	 * @since 1.4
+	 */
+	public void setSourceIdPathMatcher(PathMatcher sourceIdPathMatcher) {
+		this.sourceIdPathMatcher = sourceIdPathMatcher;
+	}
+
+	/**
+	 * Get the path matcher to use for metadata matching.
+	 * 
+	 * @return the path matcher
+	 * @since 1.4
+	 */
+	public PathMatcher getMetadataPathMatcher() {
+		return metadataPathMatcher;
+	}
+
+	/**
+	 * Set the path matcher to use for metadata matching.
+	 * 
+	 * @param metadataPathMatcher
+	 *        the matcher to use
+	 * @since 1.4
+	 */
+	public void setMetadataPathMatcher(PathMatcher metadataPathMatcher) {
+		this.metadataPathMatcher = metadataPathMatcher;
 	}
 
 }

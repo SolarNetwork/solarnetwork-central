@@ -37,7 +37,7 @@ import net.solarnetwork.central.security.BasicSecurityPolicy;
  * Test cases for the {@link BasicSecurityPolicy} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicSecurityPolicyTests {
 
@@ -94,6 +94,66 @@ public class BasicSecurityPolicyTests {
 		try {
 			policy.getSourceIds().add("no");
 			Assert.fail("Source ID set should be immutable");
+		} catch ( UnsupportedOperationException e ) {
+			// expected
+		}
+	}
+
+	@Test
+	public void buildNodeMetadataPathsPolicy() {
+		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeMetadataPaths(paths)
+				.build();
+		Assert.assertEquals("Node metadata path set", paths, policy.getNodeMetadataPaths());
+		try {
+			policy.getNodeMetadataPaths().add("no");
+			Assert.fail("Node metadata path set should be immutable");
+		} catch ( UnsupportedOperationException e ) {
+			// expected
+		}
+	}
+
+	@Test
+	public void buildMergedNodeMetadataPathsPolicy() {
+		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
+		Set<String> additionalPaths = new HashSet<String>(Arrays.asList("three", "four", "five"));
+		Set<String> merged = new HashSet<String>(Arrays.asList("one", "two", "three", "four", "five"));
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeMetadataPaths(paths)
+				.withMergedNodeMetadataPaths(additionalPaths).build();
+		Assert.assertEquals("Node metadata path set", merged, policy.getNodeMetadataPaths());
+		try {
+			policy.getNodeMetadataPaths().add("no");
+			Assert.fail("Node metadata path set should be immutable");
+		} catch ( UnsupportedOperationException e ) {
+			// expected
+		}
+	}
+
+	@Test
+	public void buildUserMetadataPathsPolicy() {
+		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withUserMetadataPaths(paths)
+				.build();
+		Assert.assertEquals("User metadata path set", paths, policy.getUserMetadataPaths());
+		try {
+			policy.getUserMetadataPaths().add("no");
+			Assert.fail("User metadata path set should be immutable");
+		} catch ( UnsupportedOperationException e ) {
+			// expected
+		}
+	}
+
+	@Test
+	public void buildMergedUserMetadataPathsPolicy() {
+		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
+		Set<String> additionalPaths = new HashSet<String>(Arrays.asList("three", "four", "five"));
+		Set<String> merged = new HashSet<String>(Arrays.asList("one", "two", "three", "four", "five"));
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withUserMetadataPaths(paths)
+				.withMergedUserMetadataPaths(additionalPaths).build();
+		Assert.assertEquals("User metadata path set", merged, policy.getUserMetadataPaths());
+		try {
+			policy.getUserMetadataPaths().add("no");
+			Assert.fail("User metadata path set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
