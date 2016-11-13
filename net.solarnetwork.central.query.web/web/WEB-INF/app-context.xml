@@ -27,6 +27,7 @@
 				<bean class="net.solarnetwork.util.JodaLocalDateTimeSerializer"/>
 				<bean class="net.solarnetwork.util.JodaLocalTimeSerializer"/>
 				<bean class="net.solarnetwork.central.support.NodeMetadataSerializer"/>
+				<bean class="net.solarnetwork.central.user.support.UserMetadataSerializer"/>
 			</list>
 		</property>
 	</bean>
