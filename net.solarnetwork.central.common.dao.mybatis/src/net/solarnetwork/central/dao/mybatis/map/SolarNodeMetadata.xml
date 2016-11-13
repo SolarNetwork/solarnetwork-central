@@ -54,10 +54,7 @@
 	<sql id="fragment-findall-SolarNodeMetadata-SolarNodeMetadataMatch-where">
 		<where>
 			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
-				AND nmeta.node_id IN
-				<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
-					#{node,javaType=long,jdbcType=BIGINT}
-				</foreach>
+				AND nmeta.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
 			</if>
 		</where>
 	</sql>

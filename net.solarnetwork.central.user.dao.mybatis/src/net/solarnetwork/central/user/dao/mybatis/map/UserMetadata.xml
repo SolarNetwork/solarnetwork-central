@@ -54,10 +54,7 @@
 	<sql id="fragment-findall-UserMetadata-UserMetadataMatch-where">
 		<where>
 			<if test="filter.userIds != null and filter.userIds.length > 0">
-				AND umeta.user_id IN
-				<foreach collection="filter.userIds" open="(" close=")" separator="," item="user">
-					#{user,javaType=long,jdbcType=BIGINT}
-				</foreach>
+				AND umeta.user_id = ANY(#{filter.userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
 			</if>
 		</where>
 	</sql>
