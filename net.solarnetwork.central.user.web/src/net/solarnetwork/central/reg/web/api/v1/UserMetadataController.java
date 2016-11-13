@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
+import java.util.NoSuchElementException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -72,14 +73,14 @@ public class UserMetadataController extends WebServiceControllerSupport {
 	}
 
 	/**
-	 * Find all metadata for a user ID.
+	 * Find all metadata for a list of user IDs.
 	 * 
 	 * @param criteria
 	 *        any sort or limit criteria
 	 * @return the results
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
+	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = "userIds")
 	public Response<FilterResults<UserMetadataFilterMatch>> findMetadata(UserFilterCommand criteria) {
 		if ( criteria.getUserId() == null ) {
 			// default to current actor
@@ -88,6 +89,42 @@ public class UserMetadataController extends WebServiceControllerSupport {
 		FilterResults<UserMetadataFilterMatch> results = userMetadataBiz.findUserMetadata(criteria,
 				criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 		return response(results);
+	}
+
+	/**
+	 * Get metadata for the active user.
+	 * 
+	 * @return the result
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = { "!userIds", "!userId" })
+	public Response<UserMetadataFilterMatch> getMetadata() {
+		return getMetadata(SecurityUtils.getCurrentActorUserId());
+	}
+
+	/**
+	 * Get metadata for a specific user ID.
+	 * 
+	 * @param criteria
+	 *        any sort or limit criteria
+	 * @return the result
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/{userId}" }, method = RequestMethod.GET)
+	public Response<UserMetadataFilterMatch> getMetadata(@PathVariable("userId") Long userId) {
+		UserFilterCommand criteria = new UserFilterCommand();
+		criteria.setUserId(userId);
+		FilterResults<UserMetadataFilterMatch> results = userMetadataBiz.findUserMetadata(criteria, null,
+				null, null);
+		UserMetadataFilterMatch result = null;
+		if ( results != null ) {
+			try {
+				result = results.iterator().next();
+			} catch ( NoSuchElementException e ) {
+				// ignore
+			}
+		}
+		return response(result);
 	}
 
 	/**
