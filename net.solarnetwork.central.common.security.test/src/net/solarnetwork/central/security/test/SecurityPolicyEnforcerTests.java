@@ -32,7 +32,6 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.util.AntPathMatcher;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
@@ -470,7 +469,7 @@ public class SecurityPolicyEnforcerTests {
 		list.add(new NodeMetadataSerializer());
 		factory.setSerializers(list);
 		ObjectMapper mapper = factory.getObject();
-		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
 		String json = mapper.writeValueAsString(match);
 		Assert.assertEquals("Restricted metadata JSON",
 				"{\"nodeId\":1,\"pm\":{\"foo\":{\"bar\":\"bam\"}}}", json);

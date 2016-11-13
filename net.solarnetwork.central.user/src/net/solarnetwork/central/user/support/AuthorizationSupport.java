@@ -22,19 +22,25 @@
 
 package net.solarnetwork.central.user.support;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.PathMatcher;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
+import net.solarnetwork.central.security.SecurityPolicyMetadataType;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
@@ -48,8 +54,7 @@ import net.solarnetwork.central.user.domain.UserNode;
 public abstract class AuthorizationSupport {
 
 	private final UserNodeDao userNodeDao;
-	private PathMatcher sourceIdPathMatcher;
-	private PathMatcher metadataPathMatcher;
+	private PathMatcher pathMatcher;
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -301,7 +306,8 @@ public abstract class AuthorizationSupport {
 	}
 
 	/**
-	 * Enforce a security policy on a domain object.
+	 * Enforce a security policy on a domain object and
+	 * {@code SecurityPolicyMetadataType#Node} metadata type.
 	 * 
 	 * @param domainObject
 	 *        The domain object to enforce the active policy on.
@@ -311,59 +317,91 @@ public abstract class AuthorizationSupport {
 	 * @since 1.4
 	 */
 	protected <T> T policyEnforcerCheck(T domainObject) {
+		return policyEnforcerCheck(domainObject, SecurityPolicyMetadataType.Node);
+	}
+
+	/**
+	 * Enforce a security policy on a domain object or collection of domain
+	 * objects.
+	 * 
+	 * The {@link FilterResults} API is supported, as is {@link List}.
+	 * 
+	 * @param domainObject
+	 *        The domain object to enforce the active policy on.
+	 * @param metadataType
+	 *        The metadata type to enforce the active policy on.
+	 * @return The domain object to use.
+	 * @throws AuthorizationException
+	 *         If the policy check fails.
+	 * @since 1.4
+	 */
+	protected <T> T policyEnforcerCheck(T domainObject, SecurityPolicyMetadataType metadataType) {
 		Authentication authentication = SecurityUtils.getCurrentAuthentication();
 		SecurityPolicy policy = getActiveSecurityPolicy();
-		if ( policy == null ) {
+		if ( policy == null || domainObject == null ) {
 			return domainObject;
+		}
+
+		final Object principal = (authentication != null ? authentication.getPrincipal() : null);
+
+		if ( domainObject instanceof FilterResults ) {
+			FilterResults<?> filterResults = (FilterResults<?>) domainObject;
+			Collection<Object> filteredObjects = policyEnforcedCollection(filterResults, policy,
+					principal, metadataType);
+			@SuppressWarnings("unchecked")
+			T result = (T) new BasicFilterResults<Object>(filteredObjects,
+					filterResults.getTotalResults(), filterResults.getStartingOffset(),
+					filterResults.getReturnedResultCount());
+			return result;
+		} else if ( domainObject instanceof List ) {
+			List<?> collectionResults = (List<?>) domainObject;
+			@SuppressWarnings("unchecked")
+			T filteredObjects = (T) policyEnforcedCollection(collectionResults, policy, principal,
+					metadataType);
+			return filteredObjects;
 		}
 
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
 				(authentication != null ? authentication.getPrincipal() : null), domainObject,
-				sourceIdPathMatcher);
+				pathMatcher, metadataType);
 		enforcer.verify();
 		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 	}
 
+	private Collection<Object> policyEnforcedCollection(Iterable<?> input, SecurityPolicy policy,
+			Object principal, SecurityPolicyMetadataType metadataType) {
+		if ( input == null ) {
+			return null;
+		}
+		List<Object> enforced = new ArrayList<Object>();
+		for ( Object obj : input ) {
+			SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, obj,
+					pathMatcher, metadataType);
+			enforcer.verify();
+			enforced.add(SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer));
+		}
+		return enforced;
+	}
+
 	/**
-	 * Get the path matcher to use for source ID matching.
+	 * Get the path matcher to use.
 	 * 
 	 * @return the path matcher
 	 * @since 1.4
 	 */
-	public PathMatcher getSourceIdPathMatcher() {
-		return sourceIdPathMatcher;
+	public PathMatcher getPathMatcher() {
+		return pathMatcher;
 	}
 
 	/**
-	 * Set the path matcher to use for source ID matching.
+	 * Set the path matcher to use.
 	 * 
-	 * @param sourceIdPathMatcher
+	 * @param pathMatcher
 	 *        the matcher to use
 	 * @since 1.4
 	 */
-	public void setSourceIdPathMatcher(PathMatcher sourceIdPathMatcher) {
-		this.sourceIdPathMatcher = sourceIdPathMatcher;
-	}
-
-	/**
-	 * Get the path matcher to use for metadata matching.
-	 * 
-	 * @return the path matcher
-	 * @since 1.4
-	 */
-	public PathMatcher getMetadataPathMatcher() {
-		return metadataPathMatcher;
-	}
-
-	/**
-	 * Set the path matcher to use for metadata matching.
-	 * 
-	 * @param metadataPathMatcher
-	 *        the matcher to use
-	 * @since 1.4
-	 */
-	public void setMetadataPathMatcher(PathMatcher metadataPathMatcher) {
-		this.metadataPathMatcher = metadataPathMatcher;
+	public void setPathMatcher(PathMatcher pathMatcher) {
+		this.pathMatcher = pathMatcher;
 	}
 
 }

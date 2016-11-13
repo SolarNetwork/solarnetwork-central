@@ -22,12 +22,17 @@
 
 package net.solarnetwork.central.aop;
 
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicyMetadataType;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
 
@@ -48,6 +53,10 @@ public class SolarNodeMetadataSecurityAspect extends AuthorizationSupport {
 	 */
 	public SolarNodeMetadataSecurityAspect(UserNodeDao userNodeDao) {
 		super(userNodeDao);
+		AntPathMatcher antMatch = new AntPathMatcher();
+		antMatch.setCachePatterns(false);
+		antMatch.setCaseSensitive(true);
+		setPathMatcher(antMatch);
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.biz.SolarNodeMetadata*.addSolarNode*(..)) && args(nodeId,..)")
@@ -80,11 +89,14 @@ public class SolarNodeMetadataSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Check access to reading node metadata.
 	 * 
+	 * @param pjp
+	 *        the join point
 	 * @param filter
 	 *        the filter to verify
 	 */
-	@Before("findMetadata(filter)")
-	public void readMetadataCheck(SolarNodeMetadataFilter filter) {
+	@Around("findMetadata(filter)")
+	public Object readMetadataCheck(ProceedingJoinPoint pjp, SolarNodeMetadataFilter filter)
+			throws Throwable {
 		Long[] nodeIds = (filter == null ? null : filter.getNodeIds());
 		if ( nodeIds == null ) {
 			log.warn("Access DENIED to node metadata without node ID filter");
@@ -93,6 +105,17 @@ public class SolarNodeMetadataSecurityAspect extends AuthorizationSupport {
 		for ( Long nodeId : nodeIds ) {
 			requireNodeReadAccess(nodeId);
 		}
+
+		// node ID passes, execute query and then filter based on security policy if necessary
+		Object result = pjp.proceed();
+
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null || policy.getNodeMetadataPaths() == null
+				|| policy.getNodeMetadataPaths().isEmpty() ) {
+			return result;
+		}
+
+		return policyEnforcerCheck(result, SecurityPolicyMetadataType.Node);
 	}
 
 }

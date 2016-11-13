@@ -73,8 +73,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		AntPathMatcher antMatch = new AntPathMatcher();
 		antMatch.setCachePatterns(false);
 		antMatch.setCaseSensitive(true);
-		setSourceIdPathMatcher(antMatch);
-		setMetadataPathMatcher(antMatch);
+		setPathMatcher(antMatch);
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,sourceId,..)")
@@ -158,7 +157,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		Authentication authentication = SecurityUtils.getCurrentAuthentication();
 		Object principal = (authentication != null ? authentication.getPrincipal() : null);
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, null,
-				getSourceIdPathMatcher());
+				getPathMatcher());
 		try {
 			String[] resultSourceIds = enforcer
 					.verifySourceIds(result.toArray(new String[result.size()]));
