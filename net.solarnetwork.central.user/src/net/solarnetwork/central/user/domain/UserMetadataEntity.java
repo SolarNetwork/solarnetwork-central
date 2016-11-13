@@ -47,9 +47,9 @@ import net.solarnetwork.util.SerializeIgnore;
  */
 @JsonIgnoreProperties("id")
 @JsonPropertyOrder({ "userId", "created", "updated" })
-public class UserMetadataEntity extends BaseEntity implements Cloneable, Serializable {
+public class UserMetadataEntity extends BaseEntity implements UserMetadata, Cloneable, Serializable {
 
-	private static final long serialVersionUID = 4611626315868318897L;
+	private static final long serialVersionUID = 3344337449760914930L;
 
 	private DateTime updated;
 	private GeneralDatumMetadata meta;
@@ -60,6 +60,7 @@ public class UserMetadataEntity extends BaseEntity implements Cloneable, Seriali
 	 * 
 	 * @return the userId
 	 */
+	@Override
 	public Long getUserId() {
 		return getId();
 	}
@@ -82,6 +83,7 @@ public class UserMetadataEntity extends BaseEntity implements Cloneable, Seriali
 	 * 
 	 * @return GeneralDatumMetadata
 	 */
+	@Override
 	@JsonUnwrapped
 	public GeneralDatumMetadata getMetadata() {
 		return getMeta();
@@ -118,6 +120,7 @@ public class UserMetadataEntity extends BaseEntity implements Cloneable, Seriali
 		this.meta = null;
 	}
 
+	@Override
 	public DateTime getUpdated() {
 		return updated;
 	}

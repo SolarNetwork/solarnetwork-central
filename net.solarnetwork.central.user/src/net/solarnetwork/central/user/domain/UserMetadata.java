@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserMetadataFilterMatch.java - 11/11/2016 11:09:40 AM
+ * UserMetadata.java - 14/11/2016 11:09:42 AM
  * 
  * Copyright 2007-2016 SolarNetwork.net Dev Team
  * 
@@ -22,15 +22,43 @@
 
 package net.solarnetwork.central.user.domain;
 
-import net.solarnetwork.central.domain.FilterMatch;
+import org.joda.time.DateTime;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 
 /**
- * API for a {@link UserMetadataEntity} search or filter match result.
+ * API for user metadata.
  * 
  * @author matt
  * @version 1.0
- * @since 1.23
  */
-public interface UserMetadataFilterMatch extends UserMetadata, FilterMatch<Long> {
+public interface UserMetadata {
+
+	/**
+	 * Get the user ID.
+	 * 
+	 * @return the user ID
+	 */
+	Long getUserId();
+
+	/**
+	 * Get the creation date.
+	 * 
+	 * @return the creation date
+	 */
+	DateTime getCreated();
+
+	/**
+	 * Get the updated date.
+	 * 
+	 * @return the updated date
+	 */
+	DateTime getUpdated();
+
+	/**
+	 * Get the metadata.
+	 * 
+	 * @return the metadata
+	 */
+	GeneralDatumMetadata getMetadata();
 
 }
