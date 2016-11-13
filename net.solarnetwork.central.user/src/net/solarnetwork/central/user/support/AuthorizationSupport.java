@@ -302,7 +302,67 @@ public abstract class AuthorizationSupport {
 	 * @since 1.1
 	 */
 	protected void requireUserReadAccess(Long userId) {
-		requireUserWriteAccess(userId);
+		final SecurityActor actor;
+		try {
+			actor = SecurityUtils.getCurrentActor();
+		} catch ( SecurityException e ) {
+			log.warn("Access DENIED to user {} for non-authenticated user", userId);
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+		}
+
+		// node requires authentication
+		if ( actor instanceof SecurityNode ) {
+			SecurityNode node = (SecurityNode) actor;
+			UserNode userNode = (node.getNodeId() == null ? null : userNodeDao.get(node.getNodeId()));
+			if ( userNode == null ) {
+				log.warn("Access DENIED to user {} for node {}; not found", userId, node.getNodeId());
+				throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, userId);
+			}
+			if ( !userId.equals(userNode.getUser().getId()) ) {
+				log.warn("Access DENIED to user {} for node {}; wrong node", userId, node.getNodeId());
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+			}
+			return;
+		}
+
+		if ( actor instanceof SecurityUser ) {
+			SecurityUser user = (SecurityUser) actor;
+			if ( !user.getUserId().equals(userId) ) {
+				log.warn("Access DENIED to user {} for user {}; wrong user", userId, user.getEmail());
+				throw new AuthorizationException(user.getEmail(),
+						AuthorizationException.Reason.ACCESS_DENIED);
+			}
+			return;
+		}
+
+		if ( actor instanceof SecurityToken ) {
+			SecurityToken token = (SecurityToken) actor;
+			if ( UserAuthTokenType.User.toString().equals(token.getTokenType()) ) {
+				// user token, so user ID must match node user's ID
+				if ( !token.getUserId().equals(userId) ) {
+					log.warn("Access DENIED to user {} for token {}; wrong user", userId,
+							token.getToken());
+					throw new AuthorizationException(token.getToken(),
+							AuthorizationException.Reason.ACCESS_DENIED);
+				}
+				return;
+			}
+			if ( UserAuthTokenType.ReadNodeData.toString().equals(token.getTokenType()) ) {
+				// data token, so token must include a user metadata policy
+				if ( token.getPolicy() == null || token.getPolicy().getUserMetadataPaths() == null
+						|| token.getPolicy().getUserMetadataPaths().isEmpty() ) {
+					log.warn(
+							"Access DENIED to user {} for token {}; user metadata not included in policy",
+							userId, token.getToken());
+					throw new AuthorizationException(token.getToken(),
+							AuthorizationException.Reason.ACCESS_DENIED);
+				}
+				return;
+			}
+		}
+
+		log.warn("Access DENIED to user {} for actor {}", userId, actor);
+		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
 	}
 
 	/**

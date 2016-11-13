@@ -22,10 +22,15 @@
 
 package net.solarnetwork.central.user.aop;
 
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicyMetadataType;
 import net.solarnetwork.central.user.biz.UserMetadataBiz;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserMetadataFilter;
@@ -49,6 +54,10 @@ public class UserMetadataSecurityAspect extends AuthorizationSupport {
 	 */
 	public UserMetadataSecurityAspect(UserNodeDao userNodeDao) {
 		super(userNodeDao);
+		AntPathMatcher antMatch = new AntPathMatcher();
+		antMatch.setCachePatterns(false);
+		antMatch.setCaseSensitive(true);
+		setPathMatcher(antMatch);
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.UserMetadata*.addUser*(..)) && args(userId,..)")
@@ -84,8 +93,9 @@ public class UserMetadataSecurityAspect extends AuthorizationSupport {
 	 * @param filter
 	 *        the filter to verify
 	 */
-	@Before("findMetadata(filter)")
-	public void readMetadataCheck(UserMetadataFilter filter) {
+	@Around("findMetadata(filter)")
+	public Object readMetadataCheck(ProceedingJoinPoint pjp, UserMetadataFilter filter)
+			throws Throwable {
 		Long[] userIds = (filter == null ? null : filter.getUserIds());
 		if ( userIds == null ) {
 			log.warn("Access DENIED to metadata without user ID filter");
@@ -94,6 +104,17 @@ public class UserMetadataSecurityAspect extends AuthorizationSupport {
 		for ( Long userId : userIds ) {
 			requireUserReadAccess(userId);
 		}
+
+		// node ID passes, execute query and then filter based on security policy if necessary
+		Object result = pjp.proceed();
+
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null || policy.getUserMetadataPaths() == null
+				|| policy.getUserMetadataPaths().isEmpty() ) {
+			return result;
+		}
+
+		return policyEnforcerCheck(result, SecurityPolicyMetadataType.User);
 	}
 
 }
