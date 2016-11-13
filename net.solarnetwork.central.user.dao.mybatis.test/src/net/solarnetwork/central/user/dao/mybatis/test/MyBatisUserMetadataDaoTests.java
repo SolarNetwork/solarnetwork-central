@@ -35,7 +35,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserMetadataDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserFilterCommand;
-import net.solarnetwork.central.user.domain.UserMetadata;
+import net.solarnetwork.central.user.domain.UserMetadataEntity;
 import net.solarnetwork.central.user.domain.UserMetadataFilterMatch;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 
@@ -50,7 +50,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisUserDaoTestSuppo
 	private MyBatisUserMetadataDao dao;
 
 	private User testUser;
-	private UserMetadata lastDatum;
+	private UserMetadataEntity lastDatum;
 
 	@Override
 	@Before
@@ -62,8 +62,8 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisUserDaoTestSuppo
 		testUser = createNewUser(TEST_EMAIL);
 	}
 
-	private UserMetadata getTestInstance() {
-		UserMetadata datum = new UserMetadata();
+	private UserMetadataEntity getTestInstance() {
+		UserMetadataEntity datum = new UserMetadataEntity();
 		datum.setCreated(new DateTime());
 		datum.setUserId(testUser.getId());
 
@@ -79,13 +79,13 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisUserDaoTestSuppo
 
 	@Test
 	public void storeNew() {
-		UserMetadata datum = getTestInstance();
+		UserMetadataEntity datum = getTestInstance();
 		Long id = dao.store(datum);
 		assertNotNull(id);
 		lastDatum = datum;
 	}
 
-	private void validate(UserMetadata src, UserMetadata entity) {
+	private void validate(UserMetadataEntity src, UserMetadataEntity entity) {
 		assertNotNull("GeneralNodeDatum should exist", entity);
 		assertEquals(src.getUserId(), entity.getUserId());
 		assertEquals(src.getCreated(), entity.getCreated());
@@ -95,13 +95,13 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisUserDaoTestSuppo
 	@Test
 	public void getByPrimaryKey() {
 		storeNew();
-		UserMetadata datum = dao.get(lastDatum.getId());
+		UserMetadataEntity datum = dao.get(lastDatum.getId());
 		validate(lastDatum, datum);
 	}
 
 	@Test
 	public void storeVeryBigValues() {
-		UserMetadata datum = getTestInstance();
+		UserMetadataEntity datum = getTestInstance();
 		datum.getMeta().getInfo().put("watt_hours", 39309570293789380L);
 		datum.getMeta().getInfo().put("very_big", new BigInteger("93475092039478209375027350293523957"));
 		datum.getMeta().getInfo().put("watts", 498475890235787897L);
@@ -109,7 +109,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisUserDaoTestSuppo
 				new BigDecimal("293487590845639845728947589237.49087"));
 		dao.store(datum);
 
-		UserMetadata entity = dao.get(datum.getId());
+		UserMetadataEntity entity = dao.get(datum.getId());
 		validate(datum, entity);
 	}
 

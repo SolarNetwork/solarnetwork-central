@@ -25,7 +25,7 @@ package net.solarnetwork.central.user.domain;
 import net.solarnetwork.central.domain.FilterMatch;
 
 /**
- * API for a {@link UserMetadata} search or filter match result.
+ * API for a {@link UserMetadataEntity} search or filter match result.
  * 
  * @author matt
  * @version 1.0

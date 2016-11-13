@@ -24,18 +24,18 @@ package net.solarnetwork.central.user.dao;
 
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.GenericDao;
-import net.solarnetwork.central.user.domain.UserMetadata;
+import net.solarnetwork.central.user.domain.UserMetadataEntity;
 import net.solarnetwork.central.user.domain.UserMetadataFilter;
 import net.solarnetwork.central.user.domain.UserMetadataFilterMatch;
 
 /**
- * DAO API for {@link UserMetadata}.
+ * DAO API for {@link UserMetadataEntity}.
  * 
  * @author matt
  * @version 1.0
  * @since 1.23
  */
-public interface UserMetadataDao extends GenericDao<UserMetadata, Long>,
+public interface UserMetadataDao extends GenericDao<UserMetadataEntity, Long>,
 		FilterableDao<UserMetadataFilterMatch, Long, UserMetadataFilter> {
 
 }

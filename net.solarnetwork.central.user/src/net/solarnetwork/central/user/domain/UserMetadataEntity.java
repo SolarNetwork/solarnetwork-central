@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserMetadata.java - 11/11/2016 10:54:43 AM
+ * UserMetadataEntity.java - 11/11/2016 10:54:43 AM
  * 
  * Copyright 2007-2016 SolarNetwork.net Dev Team
  * 
@@ -47,7 +47,7 @@ import net.solarnetwork.util.SerializeIgnore;
  */
 @JsonIgnoreProperties("id")
 @JsonPropertyOrder({ "userId", "created", "updated" })
-public class UserMetadata extends BaseEntity implements Cloneable, Serializable {
+public class UserMetadataEntity extends BaseEntity implements Cloneable, Serializable {
 
 	private static final long serialVersionUID = 4611626315868318897L;
 

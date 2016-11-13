@@ -30,7 +30,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.biz.UserMetadataBiz;
 import net.solarnetwork.central.user.dao.UserMetadataDao;
-import net.solarnetwork.central.user.domain.UserMetadata;
+import net.solarnetwork.central.user.domain.UserMetadataEntity;
 import net.solarnetwork.central.user.domain.UserMetadataFilter;
 import net.solarnetwork.central.user.domain.UserMetadataFilterMatch;
 import net.solarnetwork.domain.GeneralDatumMetadata;
@@ -61,10 +61,10 @@ public class DaoUserMetadataBiz implements UserMetadataBiz {
 	public void addUserMetadata(Long userId, GeneralDatumMetadata meta) {
 		assert userId != null;
 		assert meta != null;
-		UserMetadata um = userMetadataDao.get(userId);
+		UserMetadataEntity um = userMetadataDao.get(userId);
 		GeneralDatumMetadata newMeta = meta;
 		if ( um == null ) {
-			um = new UserMetadata();
+			um = new UserMetadataEntity();
 			um.setCreated(new DateTime());
 			um.setId(userId);
 			newMeta = meta;
@@ -84,9 +84,9 @@ public class DaoUserMetadataBiz implements UserMetadataBiz {
 	public void storeUserMetadata(Long userId, GeneralDatumMetadata meta) {
 		assert userId != null;
 		assert meta != null;
-		UserMetadata um = userMetadataDao.get(userId);
+		UserMetadataEntity um = userMetadataDao.get(userId);
 		if ( um == null ) {
-			um = new UserMetadata();
+			um = new UserMetadataEntity();
 			um.setCreated(new DateTime());
 			um.setId(userId);
 			um.setMeta(meta);
@@ -99,7 +99,7 @@ public class DaoUserMetadataBiz implements UserMetadataBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void removeUserMetadata(Long userId) {
-		UserMetadata meta = userMetadataDao.get(userId);
+		UserMetadataEntity meta = userMetadataDao.get(userId);
 		if ( meta != null ) {
 			userMetadataDao.delete(meta);
 		}

@@ -23,16 +23,16 @@
 package net.solarnetwork.central.user.domain;
 
 /**
- * A "match" to a {@link UserMetadata}.
+ * A "match" to a {@link UserMetadataEntity}.
  * 
- * Although this class extends {@link UserMetadata} that is merely an
+ * Although this class extends {@link UserMetadataEntity} that is merely an
  * implementation detail.
  * 
  * @author matt
  * @version 1.0
  * @since 1.23
  */
-public class UserMetadataMatch extends UserMetadata implements UserMetadataFilterMatch {
+public class UserMetadataMatch extends UserMetadataEntity implements UserMetadataFilterMatch {
 
 	private static final long serialVersionUID = -5455447804909429786L;
 

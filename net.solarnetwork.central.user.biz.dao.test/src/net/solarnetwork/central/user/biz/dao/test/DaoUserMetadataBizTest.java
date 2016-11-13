@@ -34,7 +34,7 @@ import org.junit.Test;
 import net.solarnetwork.central.user.biz.dao.DaoUserMetadataBiz;
 import net.solarnetwork.central.user.dao.UserMetadataDao;
 import net.solarnetwork.central.user.domain.UserFilterCommand;
-import net.solarnetwork.central.user.domain.UserMetadata;
+import net.solarnetwork.central.user.domain.UserMetadataEntity;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 
 /**
@@ -69,7 +69,7 @@ public class DaoUserMetadataBizTest {
 		meta.putInfoValue("foo", "bar");
 		meta.addTag("bam");
 
-		Capture<UserMetadata> metaCap = new Capture<UserMetadata>();
+		Capture<UserMetadataEntity> metaCap = new Capture<UserMetadataEntity>();
 
 		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andReturn(null);
 		EasyMock.expect(userMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
@@ -78,7 +78,7 @@ public class DaoUserMetadataBizTest {
 		biz.addUserMetadata(TEST_USER_ID, meta);
 		verifyAll();
 
-		UserMetadata stored = metaCap.getValue();
+		UserMetadataEntity stored = metaCap.getValue();
 		assertEquals("Node", TEST_USER_ID, stored.getUserId());
 		assertTrue("Tag created", stored.getMeta().hasTag("bam"));
 		assertEquals("Info value", "bar", stored.getMeta().getInfoString("foo"));
@@ -91,7 +91,7 @@ public class DaoUserMetadataBizTest {
 		meta.putInfoValue("watts", "unit", "W");
 		meta.addTag("bam");
 
-		Capture<UserMetadata> metaCap = new Capture<UserMetadata>();
+		Capture<UserMetadataEntity> metaCap = new Capture<UserMetadataEntity>();
 
 		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andReturn(null);
 		EasyMock.expect(userMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
@@ -100,7 +100,7 @@ public class DaoUserMetadataBizTest {
 		biz.addUserMetadata(TEST_USER_ID, meta);
 		verifyAll();
 
-		UserMetadata stored = metaCap.getValue();
+		UserMetadataEntity stored = metaCap.getValue();
 		assertEquals("Node", TEST_USER_ID, stored.getUserId());
 		assertTrue("Tag created", stored.getMeta().hasTag("bam"));
 		assertEquals("Info value", "bar", stored.getMeta().getInfoString("foo"));
@@ -125,7 +125,7 @@ public class DaoUserMetadataBizTest {
 		meta.putInfoValue("foo", "bar");
 		meta.addTag("bam");
 
-		final Capture<UserMetadata> metaCap = new Capture<UserMetadata>();
+		final Capture<UserMetadataEntity> metaCap = new Capture<UserMetadataEntity>();
 
 		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andReturn(null);
 		EasyMock.expect(userMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
@@ -135,12 +135,12 @@ public class DaoUserMetadataBizTest {
 		meta2.putInfoValue("oof", "rab");
 		meta.addTag("mab");
 
-		Capture<UserMetadata> meta2Cap = new Capture<UserMetadata>();
+		Capture<UserMetadataEntity> meta2Cap = new Capture<UserMetadataEntity>();
 
-		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andAnswer(new IAnswer<UserMetadata>() {
+		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andAnswer(new IAnswer<UserMetadataEntity>() {
 
 			@Override
-			public UserMetadata answer() throws Throwable {
+			public UserMetadataEntity answer() throws Throwable {
 				return metaCap.getValue();
 			}
 		});
@@ -151,7 +151,7 @@ public class DaoUserMetadataBizTest {
 		biz.addUserMetadata(TEST_USER_ID, meta2);
 		verifyAll();
 
-		UserMetadata stored = meta2Cap.getValue();
+		UserMetadataEntity stored = meta2Cap.getValue();
 		assertEquals("Node", TEST_USER_ID, stored.getUserId());
 		assertTrue("Has original tag", stored.getMeta().hasTag("bam"));
 		assertTrue("Has new tag", stored.getMeta().hasTag("mab"));
@@ -166,7 +166,7 @@ public class DaoUserMetadataBizTest {
 		meta.putInfoValue("watts", "unit", "W");
 		meta.addTag("bam");
 
-		final Capture<UserMetadata> metaCap = new Capture<UserMetadata>();
+		final Capture<UserMetadataEntity> metaCap = new Capture<UserMetadataEntity>();
 
 		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andReturn(null);
 		EasyMock.expect(userMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
@@ -178,12 +178,12 @@ public class DaoUserMetadataBizTest {
 		meta2.putInfoValue("watts", "unitType", "SI");
 		meta2.addTag("mab");
 
-		Capture<UserMetadata> meta2Cap = new Capture<UserMetadata>();
+		Capture<UserMetadataEntity> meta2Cap = new Capture<UserMetadataEntity>();
 
-		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andAnswer(new IAnswer<UserMetadata>() {
+		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andAnswer(new IAnswer<UserMetadataEntity>() {
 
 			@Override
-			public UserMetadata answer() throws Throwable {
+			public UserMetadataEntity answer() throws Throwable {
 				return metaCap.getValue();
 			}
 		});
@@ -194,7 +194,7 @@ public class DaoUserMetadataBizTest {
 		biz.addUserMetadata(TEST_USER_ID, meta2);
 		verifyAll();
 
-		UserMetadata stored = metaCap.getValue();
+		UserMetadataEntity stored = metaCap.getValue();
 		assertEquals("Node", TEST_USER_ID, stored.getUserId());
 
 		assertTrue("Has original tag", stored.getMeta().hasTag("bam"));
@@ -209,7 +209,7 @@ public class DaoUserMetadataBizTest {
 
 	@Test
 	public void removeNode() {
-		UserMetadata gndm = new UserMetadata();
+		UserMetadataEntity gndm = new UserMetadataEntity();
 		gndm.setUserId(TEST_USER_ID);
 
 		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andReturn(gndm);

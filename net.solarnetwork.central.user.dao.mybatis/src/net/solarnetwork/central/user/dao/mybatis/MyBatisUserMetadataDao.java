@@ -32,7 +32,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.dao.UserMetadataDao;
-import net.solarnetwork.central.user.domain.UserMetadata;
+import net.solarnetwork.central.user.domain.UserMetadataEntity;
 import net.solarnetwork.central.user.domain.UserMetadataFilter;
 import net.solarnetwork.central.user.domain.UserMetadataFilterMatch;
 
@@ -43,7 +43,7 @@ import net.solarnetwork.central.user.domain.UserMetadataFilterMatch;
  * @version 1.0
  * @since 1.8
  */
-public class MyBatisUserMetadataDao extends BaseMyBatisGenericDao<UserMetadata, Long>
+public class MyBatisUserMetadataDao extends BaseMyBatisGenericDao<UserMetadataEntity, Long>
 		implements UserMetadataDao {
 
 	/** The query parameter for a general {@link Filter} object value. */
@@ -53,7 +53,7 @@ public class MyBatisUserMetadataDao extends BaseMyBatisGenericDao<UserMetadata, 
 	 * Default constructor.
 	 */
 	public MyBatisUserMetadataDao() {
-		super(UserMetadata.class, Long.class);
+		super(UserMetadataEntity.class, Long.class);
 	}
 
 	private Long executeCountQuery(final String countQueryName, final Map<String, ?> sqlProps) {
