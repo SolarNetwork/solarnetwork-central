@@ -34,6 +34,12 @@
 	<osgi:reference id="datumMetadtaBiz" sticky="false"
 		interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz"/>
 	
+	<osgi:reference id="userBiz" sticky="false"
+		interface="net.solarnetwork.central.user.biz.UserBiz" />
+
+	<osgi:reference id="solarNodeMetadataBiz" sticky="false"
+		interface="net.solarnetwork.central.biz.SolarNodeMetadataBiz" />
+
 	<osgi:list id="pingTests" availability="optional" interface="net.solarnetwork.central.domain.PingTest"/>
 
 </beans>

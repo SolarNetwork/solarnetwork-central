@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeMetadataController.java - 11/11/2016 7:40:39 PM
+ * NodeMetadataController.java - 14/11/2016 8:48:21 AM
  * 
  * Copyright 2007-2016 SolarNetwork.net Dev Team
  * 
@@ -20,18 +20,15 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.web.api.v1;
+package net.solarnetwork.central.query.web.api;
 
 import static net.solarnetwork.web.domain.Response.response;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -39,22 +36,18 @@ import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
-import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserBiz;
-import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
-import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.web.domain.Response;
 
 /**
- * Controller for node metadata.
+ * Controller for read-only node metadata access.
  * 
  * @author matt
  * @version 1.0
- * @since 1.18
  */
 @Controller("v1NodeMetadataController")
-@RequestMapping(value = "/v1/sec/nodes/meta")
+@RequestMapping({ "/api/v1/pub/nodes/meta", "/api/v1/sec/nodes/meta" })
 public class NodeMetadataController extends WebServiceControllerSupport {
 
 	private final UserBiz userBiz;
@@ -93,14 +86,7 @@ public class NodeMetadataController extends WebServiceControllerSupport {
 			DatumFilterCommand criteria) {
 		if ( criteria.getNodeId() == null ) {
 			// default to all nodes for actor
-			List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentActorUserId());
-			if ( nodes != null && !nodes.isEmpty() ) {
-				Long[] nodeIds = new Long[nodes.size()];
-				for ( ListIterator<UserNode> itr = nodes.listIterator(); itr.hasNext(); ) {
-					nodeIds[itr.nextIndex()] = itr.next().getId();
-				}
-				criteria.setNodeIds(nodeIds);
-			}
+			criteria.setNodeIds(authorizedNodeIdsForCurrentActor(userBiz));
 		}
 		FilterResults<SolarNodeMetadataFilterMatch> results = solarNodeMetadataBiz.findSolarNodeMetadata(
 				criteria, criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
@@ -128,56 +114,6 @@ public class NodeMetadataController extends WebServiceControllerSupport {
 			}
 		}
 		return response(result);
-	}
-
-	/**
-	 * Add metadata to a node. The metadata is merged only, and will not replace
-	 * existing values.
-	 * 
-	 * @param nodeId
-	 *        the node ID
-	 * @param meta
-	 *        the metadata to merge
-	 * @return the results
-	 */
-	@ResponseBody
-	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.POST)
-	public Response<Object> addMetadata(@PathVariable("nodeId") Long nodeId,
-			@RequestBody GeneralDatumMetadata meta) {
-		solarNodeMetadataBiz.addSolarNodeMetadata(nodeId, meta);
-		return response(null);
-	}
-
-	/**
-	 * Completely replace the metadata for a given node ID, or create it if it
-	 * doesn't already exist.
-	 * 
-	 * @param nodeId
-	 *        the node ID
-	 * @param meta
-	 *        the metadata to store
-	 * @return the results
-	 */
-	@ResponseBody
-	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.PUT)
-	public Response<Object> replaceMetadata(@PathVariable("nodeId") Long nodeId,
-			@RequestBody GeneralDatumMetadata meta) {
-		solarNodeMetadataBiz.storeSolarNodeMetadata(nodeId, meta);
-		return response(null);
-	}
-
-	/**
-	 * Completely remove the metadata for a given node ID.
-	 * 
-	 * @param nodeId
-	 *        the node ID
-	 * @return the results
-	 */
-	@ResponseBody
-	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.DELETE)
-	public Response<Object> deleteMetadata(@PathVariable("nodeId") Long nodeId) {
-		solarNodeMetadataBiz.removeSolarNodeMetadata(nodeId);
-		return response(null);
 	}
 
 }
