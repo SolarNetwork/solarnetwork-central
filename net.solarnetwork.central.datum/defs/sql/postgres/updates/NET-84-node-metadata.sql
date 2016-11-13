@@ -1,3 +1,8 @@
+/**************************************************************************************************
+ * TABLE solarnet.sn_node_meta
+ * 
+ * Stores JSON metadata specific to a node.
+ */
 CREATE TABLE solarnet.sn_node_meta (
   node_id 			solarcommon.node_id NOT NULL,
   created 			solarcommon.ts NOT NULL,

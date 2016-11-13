@@ -1,3 +1,8 @@
+/******************************************************************************
+ * TABLE solaruser.user_meta
+ * 
+ * JSON metadata specific to a user.
+ */
 CREATE TABLE solaruser.user_meta (
   user_id 			BIGINT NOT NULL,
   created 			solarcommon.ts NOT NULL,
@@ -9,7 +14,7 @@ CREATE TABLE solaruser.user_meta (
         ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-/**************************************************************************************************
+/******************************************************************************
  * FUNCTION solaruser.store_meta(timestamptz, bigint, text)
  * 
  * Add or update user metadata.
