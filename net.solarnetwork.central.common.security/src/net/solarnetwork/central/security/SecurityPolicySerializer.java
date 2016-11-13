@@ -100,6 +100,7 @@ public class SecurityPolicySerializer extends StdSerializer<SecurityPolicy> {
 			for ( String path : nodeMetadataPaths ) {
 				generator.writeString(path);
 			}
+			generator.writeEndArray();
 		}
 
 		Set<String> userMetadataPaths = policy.getUserMetadataPaths();
@@ -108,6 +109,7 @@ public class SecurityPolicySerializer extends StdSerializer<SecurityPolicy> {
 			for ( String path : userMetadataPaths ) {
 				generator.writeString(path);
 			}
+			generator.writeEndArray();
 		}
 
 		generator.writeEndObject();
