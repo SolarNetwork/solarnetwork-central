@@ -34,7 +34,7 @@ Import-Package:
  net.solarnetwork.central.mail;version="[1.0.0,2.0.0)",
  net.solarnetwork.central.mail.support;version="[1.0.0,2.0.0)",
  net.solarnetwork.central.query.biz;version="2.0.0",
- net.solarnetwork.central.security;version="1.9.0",
+ net.solarnetwork.central.security;version="1.10.0",
  net.solarnetwork.central.security.jdbc;version="1.4.0",
  net.solarnetwork.central.security.web;version="[1.0.0,2.0.0)",
  net.solarnetwork.central.support;version="1.9.0",
