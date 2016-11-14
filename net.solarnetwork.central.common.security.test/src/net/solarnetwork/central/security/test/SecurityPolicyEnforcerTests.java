@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security.test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +39,8 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.domain.NodeMetadata;
+import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.domain.SolarNodeMetadataMatch;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -446,6 +449,20 @@ public class SecurityPolicyEnforcerTests {
 		Assert.assertEquals("Restricted metadata", expected, result);
 	}
 
+	private ObjectMapper nodeMetadataObjectMapper() {
+		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
+		List<JsonSerializer<?>> list = new ArrayList<JsonSerializer<?>>(1);
+		list.add(new NodeMetadataSerializer());
+		factory.setSerializers(list);
+		ObjectMapper mapper;
+		try {
+			mapper = factory.getObject();
+		} catch ( Exception e ) {
+			throw new RuntimeException(e);
+		}
+		return mapper;
+	}
+
 	@Test
 	public void restrictToPolicyNodeMetadataPathsJSON() throws Exception {
 		String[] policyMetadataPaths = new String[] { TEST_META_PAT_MULTILEVEL_MIDDLE };
@@ -464,15 +481,100 @@ public class SecurityPolicyEnforcerTests {
 				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
 		SolarNodeMetadataFilterMatch match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 
-		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
-		List<JsonSerializer<?>> list = new ArrayList<JsonSerializer<?>>(1);
-		list.add(new NodeMetadataSerializer());
-		factory.setSerializers(list);
-		ObjectMapper mapper = factory.getObject();
-
+		ObjectMapper mapper = nodeMetadataObjectMapper();
 		String json = mapper.writeValueAsString(match);
 		Assert.assertEquals("Restricted metadata JSON",
 				"{\"nodeId\":1,\"pm\":{\"foo\":{\"bar\":\"bam\"}}}", json);
+	}
+
+	private <T> T objectFromJSONResource(String resourceName, Class<T> objectClass) {
+		ObjectMapper mapper = new ObjectMapper();
+		T result;
+		try {
+			result = mapper.readValue(getClass().getResourceAsStream(resourceName), objectClass);
+		} catch ( IOException e ) {
+			throw new RuntimeException(e);
+		}
+		return result;
+	}
+
+	@Test
+	public void restrictToM() throws Exception {
+		GeneralDatumMetadata metadata = objectFromJSONResource("metadata-01.json",
+				GeneralDatumMetadata.class);
+		SolarNodeMetadata nodeMetadata = new SolarNodeMetadata();
+		nodeMetadata.setMeta(metadata);
+
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList("/m/*"))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", nodeMetadata,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+		NodeMetadata proxy = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+
+		ObjectMapper mapper = nodeMetadataObjectMapper();
+		String json = mapper.writeValueAsString(proxy);
+		Assert.assertEquals("Restricted metadata JSON",
+				"{\"m\":{\"building\":\"Warehouse\",\"room\":\"Office\"}}", json);
+	}
+
+	@Test
+	public void restrictToNestedPM() throws Exception {
+		GeneralDatumMetadata metadata = objectFromJSONResource("metadata-01.json",
+				GeneralDatumMetadata.class);
+		SolarNodeMetadata nodeMetadata = new SolarNodeMetadata();
+		nodeMetadata.setMeta(metadata);
+
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList("/pm/hours/*"))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", nodeMetadata,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+		NodeMetadata proxy = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+
+		ObjectMapper mapper = nodeMetadataObjectMapper();
+		String json = mapper.writeValueAsString(proxy);
+		Assert.assertEquals("Restricted metadata JSON",
+				"{\"pm\":{\"hours\":{\"M-F\":\"08:00-18:00\",\"Sa-Su\":\"10:00-14:00\"}}}", json);
+	}
+
+	@Test
+	public void restrictToNestedNotMButPM() throws Exception {
+		GeneralDatumMetadata metadata = objectFromJSONResource("metadata-01.json",
+				GeneralDatumMetadata.class);
+		SolarNodeMetadata nodeMetadata = new SolarNodeMetadata();
+		nodeMetadata.setMeta(metadata);
+
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList("/**/building/*")))
+				.build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", nodeMetadata,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+		NodeMetadata proxy = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+
+		ObjectMapper mapper = nodeMetadataObjectMapper();
+		String json = mapper.writeValueAsString(proxy);
+		Assert.assertEquals("Restricted metadata JSON",
+				"{\"pm\":{\"building\":{\"floors\":3,\"employees\":48}}}", json);
+	}
+
+	@Test
+	public void restrictToNestedMAndPM() throws Exception {
+		GeneralDatumMetadata metadata = objectFromJSONResource("metadata-01.json",
+				GeneralDatumMetadata.class);
+		SolarNodeMetadata nodeMetadata = new SolarNodeMetadata();
+		nodeMetadata.setMeta(metadata);
+
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList("/**/building/**")))
+				.build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", nodeMetadata,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
+		NodeMetadata proxy = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+
+		ObjectMapper mapper = nodeMetadataObjectMapper();
+		String json = mapper.writeValueAsString(proxy);
+		Assert.assertEquals("Restricted metadata JSON",
+				"{\"m\":{\"building\":\"Warehouse\"},\"pm\":{\"building\":{\"floors\":3,\"employees\":48}}}",
+				json);
 	}
 
 }
