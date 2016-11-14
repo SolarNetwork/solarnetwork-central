@@ -337,18 +337,14 @@ public abstract class AuthorizationSupport {
 
 		if ( actor instanceof SecurityToken ) {
 			SecurityToken token = (SecurityToken) actor;
-			if ( UserAuthTokenType.User.toString().equals(token.getTokenType()) ) {
-				// user token, so user ID must match node user's ID
-				if ( !token.getUserId().equals(userId) ) {
-					log.warn("Access DENIED to user {} for token {}; wrong user", userId,
-							token.getToken());
-					throw new AuthorizationException(token.getToken(),
-							AuthorizationException.Reason.ACCESS_DENIED);
-				}
-				return;
+			// user token, so user ID must match token owner's ID
+			if ( !token.getUserId().equals(userId) ) {
+				log.warn("Access DENIED to user {} for token {}; wrong user", userId, token.getToken());
+				throw new AuthorizationException(token.getToken(),
+						AuthorizationException.Reason.ACCESS_DENIED);
 			}
 			if ( UserAuthTokenType.ReadNodeData.toString().equals(token.getTokenType()) ) {
-				// data token, so token must include a user metadata policy
+				// data token, the token must include a user metadata policy that can be enforced
 				if ( token.getPolicy() == null || token.getPolicy().getUserMetadataPaths() == null
 						|| token.getPolicy().getUserMetadataPaths().isEmpty() ) {
 					log.warn(
@@ -357,8 +353,8 @@ public abstract class AuthorizationSupport {
 					throw new AuthorizationException(token.getToken(),
 							AuthorizationException.Reason.ACCESS_DENIED);
 				}
-				return;
 			}
+			return;
 		}
 
 		log.warn("Access DENIED to user {} for actor {}", userId, actor);
