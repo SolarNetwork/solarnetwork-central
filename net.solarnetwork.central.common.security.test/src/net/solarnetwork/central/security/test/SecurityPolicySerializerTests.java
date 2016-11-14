@@ -45,7 +45,7 @@ import net.solarnetwork.util.ObjectMapperFactoryBean;
  * Test cases for the {@link SecurityPolicySerializer} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SecurityPolicySerializerTests {
 
@@ -117,15 +117,34 @@ public class SecurityPolicySerializerTests {
 	}
 
 	@Test
+	public void serializeNodeMetadataPathsPolicy() throws JsonProcessingException {
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList("1", "2", "3"))).build();
+		String json = objectMapper.writeValueAsString(policy);
+		Assert.assertEquals("JSON", "{\"nodeMetadataPaths\":[\"1\",\"2\",\"3\"]}", json);
+	}
+
+	@Test
+	public void serializeUserMetadataPathsPolicy() throws JsonProcessingException {
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withUserMetadataPaths(new LinkedHashSet<String>(Arrays.asList("1", "2", "3"))).build();
+		String json = objectMapper.writeValueAsString(policy);
+		Assert.assertEquals("JSON", "{\"userMetadataPaths\":[\"1\",\"2\",\"3\"]}", json);
+	}
+
+	@Test
 	public void serializeComplex() throws JsonProcessingException {
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withMinLocationPrecision(LocationPrecision.PostalCode)
 				.withMinAggregation(Aggregation.Day)
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList("three", "two", "one")))
-				.withNodeIds(new LinkedHashSet<Long>(Arrays.asList(1L, 2L, 3L))).build();
+				.withNodeIds(new LinkedHashSet<Long>(Arrays.asList(1L, 2L, 3L)))
+				.withNodeMetadataPaths(new LinkedHashSet<String>(Arrays.asList("1")))
+				.withUserMetadataPaths(new LinkedHashSet<String>(Arrays.asList("2", "3"))).build();
 		String json = objectMapper.writeValueAsString(policy);
 		Assert.assertEquals("JSON",
-				"{\"nodeIds\":[1,2,3],\"sourceIds\":[\"three\",\"two\",\"one\"],\"minAggregation\":\"Day\",\"minLocationPrecision\":\"PostalCode\"}",
+				"{\"nodeIds\":[1,2,3],\"sourceIds\":[\"three\",\"two\",\"one\"],\"minAggregation\":\"Day\",\"minLocationPrecision\":\"PostalCode\""
+						+ ",\"nodeMetadataPaths\":[\"1\"],\"userMetadataPaths\":[\"2\",\"3\"]}",
 				json);
 	}
 

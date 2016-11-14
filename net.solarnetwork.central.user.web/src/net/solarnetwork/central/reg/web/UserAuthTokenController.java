@@ -126,11 +126,15 @@ public class UserAuthTokenController extends ControllerSupport {
 	public Response<UserAuthToken> generateDataToken(
 			@RequestParam(value = "nodeId", required = false) Set<Long> nodeIds,
 			@RequestParam(value = "sourceId", required = false) Set<String> sourceIds,
-			@RequestParam(value = "minAggregation", required = false) Aggregation minAggregation) {
+			@RequestParam(value = "minAggregation", required = false) Aggregation minAggregation,
+			@RequestParam(value = "nodeMetadataPath", required = false) Set<String> nodeMetadataPaths,
+			@RequestParam(value = "userMetadataPath", required = false) Set<String> userMetadataPaths) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId(),
-				UserAuthTokenType.ReadNodeData, new BasicSecurityPolicy.Builder().withNodeIds(nodeIds)
-						.withSourceIds(sourceIds).withMinAggregation(minAggregation).build());
+				UserAuthTokenType.ReadNodeData,
+				new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).withSourceIds(sourceIds)
+						.withMinAggregation(minAggregation).withNodeMetadataPaths(nodeMetadataPaths)
+						.withUserMetadataPaths(userMetadataPaths).build());
 		return new Response<UserAuthToken>(token);
 	}
 

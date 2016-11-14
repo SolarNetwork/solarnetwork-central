@@ -2,20 +2,14 @@
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:osgix="http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium"
-	xmlns:beans="http://www.springframework.org/schema/beans"
 	xmlns:tx="http://www.springframework.org/schema/tx"
-	xmlns:util="http://www.springframework.org/schema/util"
 	xsi:schemaLocation="
 		http://www.osgi.org/xmlns/blueprint/v1.0.0
 		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
 		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
 		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
-		http://www.springframework.org/schema/beans
-		http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
 		http://www.springframework.org/schema/tx
-		http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
-		http://www.springframework.org/schema/util
-		http://www.springframework.org/schema/util/spring-util-4.2.xsd">
+		http://www.springframework.org/schema/tx/spring-tx-4.2.xsd">
 
 	<!-- Service References -->
 	
@@ -27,6 +21,7 @@
 	<reference id="userAlertDao" interface="net.solarnetwork.central.user.dao.UserAlertDao"/>
 	<reference id="userAlertSituationDao" interface="net.solarnetwork.central.user.dao.UserAlertSituationDao"/>
 	<reference id="userAuthTokenDao" interface="net.solarnetwork.central.user.dao.UserAuthTokenDao"/>
+	<reference id="userMetadataDao" interface="net.solarnetwork.central.user.dao.UserMetadataDao"/>
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 	<reference id="userNodeCertificateDao" interface="net.solarnetwork.central.user.dao.UserNodeCertificateDao"/>
 	<reference id="userNodeConfirmationDao" interface="net.solarnetwork.central.user.dao.UserNodeConfirmationDao"/>
@@ -64,6 +59,8 @@
 	</service>
 	
 	<service ref="daoUserAlertBiz" ranking="1" interface="net.solarnetwork.central.user.biz.UserAlertBiz"/>
+	
+	<service ref="daoUserMetadataBiz" ranking="1" interface="net.solarnetwork.central.user.biz.UserMetadataBiz"/>
 	
 	<!-- Supporting Services -->
 	
@@ -109,6 +106,10 @@
 		<property name="userAuthTokenDao" ref="userAuthTokenDao"/>
 		<property name="solarNodeDao" ref="solarNodeDao"/>
 		<property name="solarLocationDao" ref="solarLocationDao"/>
+	</bean>
+	
+	<bean id="daoUserMetadataBiz" class="net.solarnetwork.central.user.biz.dao.DaoUserMetadataBiz">
+		<argument ref="userMetadataDao"/>
 	</bean>
 	
 	<bean id="daoUserAlertBiz" class="net.solarnetwork.central.user.biz.dao.DaoUserAlertBiz">

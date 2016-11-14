@@ -16,6 +16,8 @@
 				<value>net.solarnetwork.central.domain.PriceSource</value>
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
+				<value>net.solarnetwork.central.domain.SolarNodeMetadata</value>
+				<value>net.solarnetwork.central.domain.SolarNodeMetadataMatch</value>
 				<value>net.solarnetwork.central.domain.WeatherLocation</value>
 				<value>net.solarnetwork.central.domain.WeatherSource</value>
 			</list>
@@ -35,6 +37,7 @@
 				
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNodeMetadata.xml</value>
 				
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/PriceSource.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/PriceLocation.xml</value>

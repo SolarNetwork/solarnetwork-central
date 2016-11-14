@@ -33,10 +33,10 @@ import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.LocationPrecision;
 
 /**
- * JSON serializer for {@link BasicSecurityPolicy}.
+ * JSON serializer for {@link SecurityPolicy}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SecurityPolicySerializer extends StdSerializer<SecurityPolicy> {
 
@@ -90,6 +90,24 @@ public class SecurityPolicySerializer extends StdSerializer<SecurityPolicy> {
 			generator.writeArrayFieldStart("locationPrecisions");
 			for ( LocationPrecision val : locationPrecisions ) {
 				generator.writeString(val.name());
+			}
+			generator.writeEndArray();
+		}
+
+		Set<String> nodeMetadataPaths = policy.getNodeMetadataPaths();
+		if ( nodeMetadataPaths != null && !nodeMetadataPaths.isEmpty() ) {
+			generator.writeArrayFieldStart("nodeMetadataPaths");
+			for ( String path : nodeMetadataPaths ) {
+				generator.writeString(path);
+			}
+			generator.writeEndArray();
+		}
+
+		Set<String> userMetadataPaths = policy.getUserMetadataPaths();
+		if ( userMetadataPaths != null && !userMetadataPaths.isEmpty() ) {
+			generator.writeArrayFieldStart("userMetadataPaths");
+			for ( String path : userMetadataPaths ) {
+				generator.writeString(path);
 			}
 			generator.writeEndArray();
 		}

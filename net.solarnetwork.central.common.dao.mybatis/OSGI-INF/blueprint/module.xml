@@ -36,6 +36,8 @@
 	
 	<service ref="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao" ranking="5"/>
 
+	<service ref="solarNodeMetadataDao" interface="net.solarnetwork.central.dao.SolarNodeMetadataDao" ranking="5"/>
+
 	<service ref="priceLocationDao" interface="net.solarnetwork.central.dao.PriceLocationDao" ranking="5"/>
 
 	<service ref="weatherLocationDao" interface="net.solarnetwork.central.dao.WeatherLocationDao" ranking="5"/>
@@ -74,6 +76,10 @@
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean>
 	
+	<bean id="solarNodeMetadataDao" class="net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
 	<bean id="priceLocationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisPriceLocationDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean>
@@ -99,6 +105,8 @@
 				<value>net.solarnetwork.central.domain.PriceSource</value>
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
+				<value>net.solarnetwork.central.domain.SolarNodeMetadata</value>
+				<value>net.solarnetwork.central.domain.SolarNodeMetadataMatch</value>
 				<value>net.solarnetwork.central.domain.WeatherLocation</value>
 				<value>net.solarnetwork.central.domain.WeatherSource</value>
 			</list>
@@ -118,6 +126,7 @@
 				
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNodeMetadata.xml</value>
 				
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/PriceSource.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/PriceLocation.xml</value>

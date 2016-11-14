@@ -128,6 +128,22 @@
 											<fmt:message key='aggregation.${token.policy.minAggregation}.label'/>
 										</dd>
 									</c:if>
+									<c:if test="${fn:length(token.policy.nodeMetadataPaths) gt 0}">
+										<dt><fmt:message key='auth-tokens.label.nodeMetadataPaths'/></dt>
+										<dd>
+											<c:forEach items="${token.policy.nodeMetadataPaths}" var="nodeMetadataPath" varStatus="nodeMetadataPathStatus">
+												${nodeMetadataPath}<c:if test="${not nodeMetadataPathStatus.last}">, </c:if>
+											</c:forEach>
+										</dd>
+									</c:if>
+									<c:if test="${fn:length(token.policy.userMetadataPaths) gt 0}">
+										<dt><fmt:message key='auth-tokens.label.userMetadataPaths'/></dt>
+										<dd>
+											<c:forEach items="${token.policy.userMetadataPaths}" var="userMetadataPath" varStatus="nodeMetadataPathStatus">
+												${userMetadataPath}<c:if test="${not userMetadataPathStatus.last}">, </c:if>
+											</c:forEach>
+										</dd>
+									</c:if>
 								</dl>
 							</c:if>
 						</td>
@@ -247,27 +263,49 @@
 			 	</div>
 			 	<div class="modal-body">
 			 		<p class="before"><fmt:message key='auth-tokens.data.create.intro'/></p>
-			 		<div id="create-data-auth-token-policy-nodeids" class="before toggle-buttons">
-			 			<c:forEach items="${userNodes}" var="userNode" varStatus="status">
-			 				<button type="button" class="toggle btn btn-sm btn-default" data-node-id="${userNode.node.id}">${userNode.node.id}<c:if test="${fn:length(userNode.name) gt 0}"> - ${userNode.name}</c:if></button>
-			 			</c:forEach>
-			 		</div>
-			 		<div class="before form-group">
-			 			<label for="create-data-auth-token-policy-sourceids"><fmt:message key='auth-tokens.policy.sourceIds.label'/></label>
-			 			<textarea id="create-data-auth-token-policy-sourceids" class="form-control" name="sourceIds" rows="2" 
-			 				placeholder="<fmt:message key='auth-tokens.policy.sourceIds.placeholder'/>"></textarea>
-			 			<div id="create-data-auth-token-policy-sourceids-hint" class="toggle-buttons"></div>
-			 		</div>
-			 		<div class="before form-group">
-			 			<label for="create-data-auth-token-policy-minagg"><fmt:message key='auth-tokens.policy.minAggregation.label'/></label>
-			 			<select id="create-data-auth-token-policy-minagg" name="minAggregation">
-							<option value=""><fmt:message key='auth-tokens.policy.minAggregation.none'/></option>
-							<c:forEach items="${policyAggregations}" var="agg" varStatus="itr">
-								<option value="${agg}"><fmt:message key='aggregation.${agg}.label'/></option>
-							</c:forEach>
-			 			</select>
-						<div class="help-block"><fmt:message key='auth-tokens.policy.minAggregation.caption'/></div>
-			 		</div>
+			 		<ul class="nav nav-pills form-group before">
+						<li class="active"><a data-toggle="pill" href="#create-data-auth-token-tab-ids"><fmt:message key='auth-tokens.data.create.group.ids'/></a></li>
+						<li><a data-toggle="pill" href="#create-data-auth-token-tab-agg"><fmt:message key='auth-tokens.data.create.group.agg'/></a></li>
+						<li><a data-toggle="pill" href="#create-data-auth-token-tab-node-meta"><fmt:message key='auth-tokens.data.create.group.node-meta'/></a></li>
+						<li><a data-toggle="pill" href="#create-data-auth-token-tab-user-meta"><fmt:message key='auth-tokens.data.create.group.user-meta'/></a></li>
+					</ul>
+					<div class="tab-content before">
+						<div id="create-data-auth-token-tab-ids" class="tab-pane fade in active">
+					 		<div id="create-data-auth-token-policy-nodeids" class="toggle-buttons">
+					 			<c:forEach items="${userNodes}" var="userNode" varStatus="status">
+					 				<button type="button" class="toggle btn btn-sm btn-default" data-node-id="${userNode.node.id}">${userNode.node.id}<c:if test="${fn:length(userNode.name) gt 0}"> - ${userNode.name}</c:if></button>
+					 			</c:forEach>
+					 		</div>
+					 		<div class="form-group">
+					 			<label for="create-data-auth-token-policy-sourceids"><fmt:message key='auth-tokens.policy.sourceIds.label'/></label>
+					 			<textarea id="create-data-auth-token-policy-sourceids" class="form-control" name="sourceIds" rows="2" 
+					 				placeholder="<fmt:message key='auth-tokens.policy.sourceIds.placeholder'/>"></textarea>
+					 			<div id="create-data-auth-token-policy-sourceids-hint" class="toggle-buttons"></div>
+					 		</div>
+						</div>
+						<div id="create-data-auth-token-tab-agg" class="tab-pane fade">
+				 			<label for="create-data-auth-token-policy-minagg"><fmt:message key='auth-tokens.policy.minAggregation.label'/></label>
+				 			<select id="create-data-auth-token-policy-minagg" name="minAggregation">
+								<option value=""><fmt:message key='auth-tokens.policy.minAggregation.none'/></option>
+								<c:forEach items="${policyAggregations}" var="agg" varStatus="itr">
+									<option value="${agg}"><fmt:message key='aggregation.${agg}.label'/></option>
+								</c:forEach>
+				 			</select>
+							<div class="help-block"><fmt:message key='auth-tokens.policy.minAggregation.caption'/></div>
+						</div>
+						<div id="create-data-auth-token-tab-node-meta" class="tab-pane fade">
+				 			<label for="create-data-auth-token-policy-nodemeta"><fmt:message key='auth-tokens.policy.nodeMetadataPaths.label'/></label>
+				 			<textarea id="create-data-auth-token-policy-nodemeta" class="form-control" name="nodeMetadataPaths" rows="2" 
+				 				placeholder="<fmt:message key='auth-tokens.policy.nodeMetadataPaths.placeholder'/>"></textarea>
+				 			<div class="help-block"><fmt:message key='auth-tokens.policy.nodeMetadataPaths.caption'/></div>
+						</div>
+						<div id="create-data-auth-token-tab-user-meta" class="tab-pane fade">
+				 			<label for="create-data-auth-token-policy-usermeta"><fmt:message key='auth-tokens.policy.userMetadataPaths.label'/></label>
+				 			<textarea id="create-data-auth-token-policy-usermeta" class="form-control" name="userMetadataPaths" rows="2" 
+				 				placeholder="<fmt:message key='auth-tokens.policy.userMetadataPaths.placeholder'/>"></textarea>
+				 			<div class="help-block"><fmt:message key='auth-tokens.policy.userMetadataPaths.caption'/></div>
+						</div>
+					</div>
 			 		<div class="after">
 			 			<p><fmt:message key='auth-tokens.created.intro'/></p>
 				 		<table class="table">

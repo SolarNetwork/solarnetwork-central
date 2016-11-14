@@ -22,25 +22,31 @@
 
 package net.solarnetwork.central.support;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 
 /**
  * Utilities for JSON data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class JsonUtils {
 
 	private static final Logger LOG = LoggerFactory.getLogger(JsonUtils.class);
 
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().setSerializationInclusion(
-			Include.NON_NULL).configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
+	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+			.setSerializationInclusion(Include.NON_NULL)
+			.configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
 
 	// don't construct me
 	private JsonUtils() {
@@ -59,7 +65,6 @@ public final class JsonUtils {
 	 *        a default value to use if {@code o} is <em>null</em> or if any
 	 *        error occurs serializing the object to JSON
 	 * @return the JSON string
-	 * @since 1.1
 	 */
 	public static String getJSONString(final Object o, final String defaultValue) {
 		String result = defaultValue;
@@ -97,6 +102,42 @@ public final class JsonUtils {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Write metadata to a JSON generator.
+	 * 
+	 * @param generator
+	 *        The generator to write to.
+	 * @param meta
+	 *        The metadata to write.
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 1.1
+	 */
+	public static void writeMetadata(JsonGenerator generator, GeneralDatumMetadata meta)
+			throws IOException {
+		if ( meta == null ) {
+			return;
+		}
+		Map<String, Object> m = meta.getM();
+		if ( m != null ) {
+			generator.writeObjectField("m", m);
+		}
+
+		Map<String, Map<String, Object>> pm = meta.getPm();
+		if ( pm != null ) {
+			generator.writeObjectField("pm", pm);
+		}
+
+		Set<String> t = meta.getT();
+		if ( t != null ) {
+			generator.writeArrayFieldStart("t");
+			for ( String tag : t ) {
+				generator.writeString(tag);
+			}
+			generator.writeEndArray();
+		}
 	}
 
 }

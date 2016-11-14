@@ -35,7 +35,6 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.NodeDatumFilter;
@@ -44,6 +43,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
@@ -52,7 +52,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * Security enforcing AOP aspect for {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @Aspect
 public class QuerySecurityAspect extends AuthorizationSupport {
@@ -61,7 +61,6 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public static final String FILTER_KEY_NODE_IDS = "nodeIds";
 
 	private Set<String> nodeIdNotRequiredSet;
-	private PathMatcher sourceIdPathMatcher;
 
 	/**
 	 * Constructor.
@@ -74,7 +73,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		AntPathMatcher antMatch = new AntPathMatcher();
 		antMatch.setCachePatterns(false);
 		antMatch.setCaseSensitive(true);
-		sourceIdPathMatcher = antMatch;
+		setPathMatcher(antMatch);
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,sourceId,..)")
@@ -158,7 +157,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		Authentication authentication = SecurityUtils.getCurrentAuthentication();
 		Object principal = (authentication != null ? authentication.getPrincipal() : null);
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, null,
-				sourceIdPathMatcher);
+				getPathMatcher());
 		try {
 			String[] resultSourceIds = enforcer
 					.verifySourceIds(result.toArray(new String[result.size()]));
@@ -273,21 +272,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			userNodeAccessCheck(nodeId);
 		}
 
-		return policyCheck(filter);
-	}
-
-	private <T> T policyCheck(T domainObject) {
-		Authentication authentication = SecurityUtils.getCurrentAuthentication();
-		SecurityPolicy policy = getActiveSecurityPolicy();
-		if ( policy == null ) {
-			return domainObject;
-		}
-
-		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
-				(authentication != null ? authentication.getPrincipal() : null), domainObject,
-				sourceIdPathMatcher);
-		enforcer.verify();
-		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+		return policyEnforcerCheck(filter);
 	}
 
 	/**
@@ -324,14 +309,6 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 
 	public void setNodeIdNotRequiredSet(Set<String> nodeIdNotRequiredSet) {
 		this.nodeIdNotRequiredSet = nodeIdNotRequiredSet;
-	}
-
-	public PathMatcher getSourceIdPathMatcher() {
-		return sourceIdPathMatcher;
-	}
-
-	public void setSourceIdPathMatcher(PathMatcher sourceIdPathMatcher) {
-		this.sourceIdPathMatcher = sourceIdPathMatcher;
 	}
 
 }

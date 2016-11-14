@@ -3,6 +3,8 @@
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.user.dao.mybatis.UserNode">
 
+	<cache/>
+
 	<insert id="insert-UserNode" parameterType="UserNode">
 		INSERT INTO solaruser.user_node 
 			(node_id
@@ -76,7 +78,7 @@
 			un.created
 	</select>
 	
-	<select id="find-archived-UserNode-for-User" parameterType="long" resultMap="UserNodeFullResult">
+	<select id="find-archived-UserNode-for-User" parameterType="long" resultMap="UserNodeFullResult" useCache="false">
 		<include refid="fragment-UserNode-select-full"/>
 		WHERE
 			u.id = #{id}

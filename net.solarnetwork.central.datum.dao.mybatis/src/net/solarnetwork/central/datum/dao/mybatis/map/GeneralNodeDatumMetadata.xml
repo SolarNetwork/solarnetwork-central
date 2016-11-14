@@ -59,16 +59,10 @@
 	<sql id="fragment-findall-GeneralNodeDatumMetadata-GeneralNodeDatumMetadataMatch-where">
 		<where>
 			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
-				AND meta.source_id IN
-				<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
-					#{source,javaType=string,jdbcType=VARCHAR}
-				</foreach>
+				AND meta.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
-				AND meta.node_id IN
-				<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
-					#{node,javaType=long,jdbcType=BIGINT}
-				</foreach>
+				AND meta.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
 			</if>
 		</where>
 	</sql>

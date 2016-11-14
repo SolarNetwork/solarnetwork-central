@@ -36,6 +36,9 @@
 	
 	<osgi:reference id="userBiz" sticky="false" depends-on="userValidator"
 		interface="net.solarnetwork.central.user.biz.UserBiz"/>
+		
+	<osgi:reference id="userMetadataBiz" sticky="false"
+		interface="net.solarnetwork.central.user.biz.UserMetadataBiz"/>
 	
 	<osgi:reference id="nodeOwnershipBiz" sticky="false"
 		interface="net.solarnetwork.central.user.biz.NodeOwnershipBiz"/>
@@ -43,6 +46,9 @@
 	<osgi:reference id="userAlertBiz" sticky="false"
 		interface="net.solarnetwork.central.user.biz.UserAlertBiz"/>
 	
+	<osgi:reference id="solarNodeMetadataBiz" sticky="false"
+		interface="net.solarnetwork.central.biz.SolarNodeMetadataBiz"/>
+
 	<osgi:reference id="mailSender" interface="org.springframework.mail.MailSender"/>
 	
 	<osgi:reference id="passwordEncoder" 
