@@ -169,7 +169,7 @@ CREATE OR REPLACE FUNCTION solaragg.find_datum_for_time_slot(
 	IN start_ts timestamp with time zone, 
 	IN span interval, 
 	IN tolerance interval DEFAULT interval '1 hour')
-  RETURNS TABLE(ts timestamp with time zone, source_id text, tsms bigint, percent real, tdiffms integer, jdata json) AS
+  RETURNS TABLE(ts timestamp with time zone, source_id text, tsms bigint, percent real, tdiffms bigint, jdata json) AS
 $BODY$
 SELECT * FROM (
 	SELECT 
@@ -189,7 +189,7 @@ SELECT * FROM (
 				THEN (EXTRACT('epoch' FROM (d.ts - start_ts)) / EXTRACT('epoch' FROM (d.ts - lag(d.ts) over win)))::real
 			ELSE 1::real
 		END AS percent,
-		COALESCE(CAST(EXTRACT(EPOCH FROM d.ts - lag(d.ts) over win) * 1000 AS INTEGER), 0) as tdiff,
+		COALESCE(CAST(EXTRACT(EPOCH FROM d.ts - lag(d.ts) over win) * 1000 AS BIGINT), 0) as tdiff,
 		d.jdata as jdata
 	FROM solardatum.da_datum d
 	WHERE d.node_id = node
