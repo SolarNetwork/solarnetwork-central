@@ -1,10 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Central Common DAO Biz Tests
-Bundle-SymbolicName: net.solarnetwork.central.biz.dao.test
+Bundle-SymbolicName: net.solarnetwork.central.common.biz.dao.test
 Bundle-Version: 1.0.0
 Bundle-Vendor: SolarNetwork
-Fragment-Host: net.solarnetwork.central.biz.dao;bundle-version="1.0.0"
+Fragment-Host: net.solarnetwork.central.common.biz.dao;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
  org.junit;version="[4.5,5.0)",
