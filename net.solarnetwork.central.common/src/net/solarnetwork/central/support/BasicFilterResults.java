@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.support;
@@ -27,6 +25,7 @@ package net.solarnetwork.central.support;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.FilterResults;
 
 /**
@@ -35,8 +34,9 @@ import net.solarnetwork.central.domain.FilterResults;
  * @param T
  *        the result type
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
+@JsonPropertyOrder({ "totalResults", "startingOffset", "returnedResultCount", "results" })
 public class BasicFilterResults<T> implements FilterResults<T> {
 
 	private Iterable<T> results;

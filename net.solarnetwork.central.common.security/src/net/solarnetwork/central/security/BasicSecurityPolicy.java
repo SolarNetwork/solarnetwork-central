@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -38,20 +39,19 @@ import net.solarnetwork.central.domain.LocationPrecision;
  * Basic implementation of {@link SecurityPolicy}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonDeserialize(builder = net.solarnetwork.central.security.BasicSecurityPolicy.Builder.class)
 @JsonSerialize(using = SecurityPolicySerializer.class)
-public class BasicSecurityPolicy implements SecurityPolicy {
+public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
+
+	private static final long serialVersionUID = -7842690205136252446L;
 
 	/**
 	 * A builder for {@link BasicSecurityPolicy} instances.
 	 * 
 	 * Configure properties on instances of this class, then call
 	 * {@link #build()} to get a {@link BasicSecurityPolicy} instance.
-	 * 
-	 * @author matt
-	 * @version 1.0
 	 */
 	public static class Builder {
 
@@ -66,6 +66,8 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 		private Set<LocationPrecision> locationPrecisions;
 		private Aggregation minAggregation;
 		private LocationPrecision minLocationPrecision;
+		private Set<String> nodeMetadataPaths;
+		private Set<String> userMetadataPaths;
 
 		public Builder withPolicy(SecurityPolicy policy) {
 			if ( policy != null ) {
@@ -73,7 +75,9 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 						.withMinAggregation(policy.getMinAggregation())
 						.withLocationPrecisions(policy.getLocationPrecisions())
 						.withMinLocationPrecision(policy.getMinLocationPrecision())
-						.withNodeIds(policy.getNodeIds()).withSourceIds(policy.getSourceIds());
+						.withNodeIds(policy.getNodeIds()).withSourceIds(policy.getSourceIds())
+						.withNodeMetadataPaths(policy.getNodeMetadataPaths())
+						.withUserMetadataPaths(policy.getUserMetadataPaths());
 			}
 			return this;
 		}
@@ -83,7 +87,9 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 				Builder b = this.withMergedAggregations(policy.getAggregations())
 						.withMergedLocationPrecisions(policy.getLocationPrecisions())
 						.withMergedNodeIds(policy.getNodeIds())
-						.withMergedSourceIds(policy.getSourceIds());
+						.withMergedSourceIds(policy.getSourceIds())
+						.withMergedNodeMetadataPaths(policy.getNodeMetadataPaths())
+						.withMergedUserMetadataPaths(policy.getUserMetadataPaths());
 				if ( policy.getMinAggregation() != null ) {
 					b = b.withMinAggregation(policy.getMinAggregation());
 				}
@@ -98,6 +104,18 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 		public Builder withNodeIds(Set<Long> nodeIds) {
 			this.nodeIds = (nodeIds == null || nodeIds.isEmpty() ? null
 					: Collections.unmodifiableSet(nodeIds));
+			return this;
+		}
+
+		public Builder withNodeMetadataPaths(Set<String> nodeMetadataPaths) {
+			this.nodeMetadataPaths = (nodeMetadataPaths == null || nodeMetadataPaths.isEmpty() ? null
+					: Collections.unmodifiableSet(nodeMetadataPaths));
+			return this;
+		}
+
+		public Builder withUserMetadataPaths(Set<String> userMetadataPaths) {
+			this.userMetadataPaths = (userMetadataPaths == null || userMetadataPaths.isEmpty() ? null
+					: Collections.unmodifiableSet(userMetadataPaths));
 			return this;
 		}
 
@@ -126,6 +144,28 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 				}
 			}
 			return withNodeIds(set);
+		}
+
+		public Builder withMergedNodeMetadataPaths(Set<String> nodeMetadataPaths) {
+			Set<String> set = nodeMetadataPaths;
+			if ( this.nodeMetadataPaths != null && !this.nodeMetadataPaths.isEmpty() ) {
+				set = new LinkedHashSet<String>(this.nodeMetadataPaths);
+				if ( nodeMetadataPaths != null ) {
+					set.addAll(nodeMetadataPaths);
+				}
+			}
+			return withNodeMetadataPaths(set);
+		}
+
+		public Builder withMergedUserMetadataPaths(Set<String> userMetadataPaths) {
+			Set<String> set = userMetadataPaths;
+			if ( this.userMetadataPaths != null && !this.userMetadataPaths.isEmpty() ) {
+				set = new LinkedHashSet<String>(this.userMetadataPaths);
+				if ( userMetadataPaths != null ) {
+					set.addAll(userMetadataPaths);
+				}
+			}
+			return withUserMetadataPaths(set);
 		}
 
 		public Builder withMergedSourceIds(Set<String> sourceIds) {
@@ -239,7 +279,8 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 
 		public BasicSecurityPolicy build() {
 			return new BasicSecurityPolicy(nodeIds, sourceIds, buildAggregations(), minAggregation,
-					buildLocationPrecisions(), minLocationPrecision);
+					buildLocationPrecisions(), minLocationPrecision, nodeMetadataPaths,
+					userMetadataPaths);
 		}
 
 	}
@@ -250,6 +291,8 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 	private final Set<LocationPrecision> locationPrecisions;
 	private final Aggregation minAggregation;
 	private final LocationPrecision minLocationPrecision;
+	private final Set<String> nodeMetadataPaths;
+	private final Set<String> userMetadataPaths;
 
 	/**
 	 * Constructor.
@@ -268,10 +311,17 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 	 *        restriction.
 	 * @param minALocationPrecision
 	 *        If specified, a minimum location precision that is allowed.
+	 * @param nodeMetadataPaths
+	 *        The {@code SolarNodeMetadata} paths to restrict to, or
+	 *        {@code null} for no restriction.
+	 * @param userMetadataPaths
+	 *        The {@code UserNodeMetadata} paths to restrict to, or {@code null}
+	 *        for no restriction.
 	 */
 	public BasicSecurityPolicy(Set<Long> nodeIds, Set<String> sourceIds, Set<Aggregation> aggregations,
 			Aggregation minAggregation, Set<LocationPrecision> locationPrecisions,
-			LocationPrecision minLocationPrecision) {
+			LocationPrecision minLocationPrecision, Set<String> nodeMetadataPaths,
+			Set<String> userMetadataPaths) {
 		super();
 		this.nodeIds = nodeIds;
 		this.sourceIds = sourceIds;
@@ -279,6 +329,8 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 		this.minAggregation = minAggregation;
 		this.locationPrecisions = locationPrecisions;
 		this.minLocationPrecision = minLocationPrecision;
+		this.nodeMetadataPaths = nodeMetadataPaths;
+		this.userMetadataPaths = userMetadataPaths;
 	}
 
 	@Override
@@ -312,6 +364,16 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 	}
 
 	@Override
+	public Set<String> getNodeMetadataPaths() {
+		return nodeMetadataPaths;
+	}
+
+	@Override
+	public Set<String> getUserMetadataPaths() {
+		return userMetadataPaths;
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -321,6 +383,8 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 		result = prime * result + ((minLocationPrecision == null) ? 0 : minLocationPrecision.hashCode());
 		result = prime * result + ((nodeIds == null) ? 0 : nodeIds.hashCode());
 		result = prime * result + ((sourceIds == null) ? 0 : sourceIds.hashCode());
+		result = prime * result + ((nodeMetadataPaths == null) ? 0 : nodeMetadataPaths.hashCode());
+		result = prime * result + ((userMetadataPaths == null) ? 0 : userMetadataPaths.hashCode());
 		return result;
 	}
 
@@ -368,6 +432,20 @@ public class BasicSecurityPolicy implements SecurityPolicy {
 				return false;
 			}
 		} else if ( !sourceIds.equals(other.sourceIds) ) {
+			return false;
+		}
+		if ( nodeMetadataPaths == null ) {
+			if ( other.nodeMetadataPaths != null ) {
+				return false;
+			}
+		} else if ( !nodeMetadataPaths.equals(other.nodeMetadataPaths) ) {
+			return false;
+		}
+		if ( userMetadataPaths == null ) {
+			if ( other.userMetadataPaths != null ) {
+				return false;
+			}
+		} else if ( !userMetadataPaths.equals(other.userMetadataPaths) ) {
 			return false;
 		}
 		return true;

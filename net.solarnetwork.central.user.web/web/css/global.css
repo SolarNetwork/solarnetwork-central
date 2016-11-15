@@ -133,3 +133,7 @@ section + section {
 dd + dt {
 	margin-top: 12px;
 }
+
+.nav-pills.form-group {
+	margin-bottom: 15px;
+}

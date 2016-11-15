@@ -30,7 +30,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({ MyBatisUserAuthTokenDaoTests.class, MyBatisUserDaoTests.class,
 		MyBatisUserNodeCertificateDaoTests.class, MyBatisUserNodeConfirmationDaoTests.class,
 		MyBatisUserNodeDaoTests.class, MyBatisUserAlertDaoTests.class,
-		MyBatisUserAlertSituationDaoTests.class })
+		MyBatisUserAlertSituationDaoTests.class, MyBatisUserMetadataDaoTests.class })
 public class AllTests {
 
 }

@@ -20,28 +20,31 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.query.aop;
+package net.solarnetwork.central.security;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 
 /**
  * Support for enforcing a {@link SecurityPolicy} on domain objects.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
+ * @since 1.12
  */
 public class SecurityPolicyEnforcer implements InvocationHandler {
 
@@ -49,9 +52,11 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	private final SecurityPolicy policy;
 	private final Object principal;
 	private final PathMatcher pathMatcher;
+	private final SecurityPolicyMetadataType metadataType;
 
 	private Long[] cachedNodeIds;
 	private String[] cachedSourceIds;
+	private GeneralDatumMetadata cachedMetadata;
 
 	private static final Logger LOG = LoggerFactory.getLogger(SecurityPolicyEnforcer.class);
 
@@ -84,11 +89,33 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 */
 	public SecurityPolicyEnforcer(SecurityPolicy policy, Object principal, Object delegate,
 			PathMatcher pathMatcher) {
+		this(policy, principal, delegate, pathMatcher, null);
+	}
+
+	/**
+	 * Construct a new enforcer with patch matching support.
+	 * 
+	 * @param policy
+	 *        The policy to enforce.
+	 * @param principal
+	 *        The active principal.
+	 * @param delegate
+	 *        The domain object to enforce the policy on.
+	 * @param pathMatcher
+	 *        The path matcher to use.
+	 * @param metadataType
+	 *        The type of metadata associated with {@code delegate}, or
+	 *        {@code null}.
+	 * @since 1.2
+	 */
+	public SecurityPolicyEnforcer(SecurityPolicy policy, Object principal, Object delegate,
+			PathMatcher pathMatcher, SecurityPolicyMetadataType metadataType) {
 		super();
 		this.delegate = delegate;
 		this.policy = policy;
 		this.principal = principal;
 		this.pathMatcher = pathMatcher;
+		this.metadataType = metadataType;
 	}
 
 	/**
@@ -116,7 +143,8 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 *         if any policy fails
 	 */
 	public void verify() {
-		String[] getters = new String[] { "getNodeIds", "getSourceIds", "getAggregation" };
+		String[] getters = new String[] { "getNodeIds", "getSourceIds", "getAggregation",
+				"getMetadata" };
 		for ( String methodName : getters ) {
 			try {
 				Method m = delegate.getClass().getMethod(methodName);
@@ -160,6 +188,9 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		} else if ( "getAggregation".equals(methodName) ) {
 			Aggregation agg = (Aggregation) delegateResult;
 			return verifyAggregation(agg);
+		} else if ( "getMetadata".equals(methodName) ) {
+			GeneralDatumMetadata meta = (GeneralDatumMetadata) delegateResult;
+			return verifyMetadata(meta, true);
 		}
 		return delegateResult;
 	}
@@ -207,9 +238,18 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		return nodeIds;
 	}
 
-	private boolean matchesPattern(Set<String> patterns, String sourceId) {
+	private boolean matchesPattern(Set<String> patterns, String value) {
 		for ( String pattern : patterns ) {
-			if ( pathMatcher.match(pattern, sourceId) ) {
+			if ( pathMatcher.match(pattern, value) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean matchesPatternStart(Set<String> patterns, String value) {
+		for ( String pattern : patterns ) {
+			if ( pathMatcher.matchStart(pattern, value) ) {
 				return true;
 			}
 		}
@@ -244,19 +284,18 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 			// extract policy source ID patterns
 			Set<String> policySourceIdPatterns = null;
 			if ( pathMatcher != null ) {
-				Set<String> mutableSourceIds = null;
 				for ( String policySourceId : policySourceIds ) {
 					if ( pathMatcher.isPattern(policySourceId) ) {
 						if ( policySourceIdPatterns == null ) {
 							policySourceIdPatterns = new LinkedHashSet<String>(policySourceIds.size());
-							mutableSourceIds = new LinkedHashSet<String>(policySourceIds.size());
 						}
 						policySourceIdPatterns.add(policySourceId);
-						mutableSourceIds.add(policySourceId);
 					}
 				}
-				if ( mutableSourceIds != null ) {
-					policySourceIds = mutableSourceIds;
+				if ( policySourceIdPatterns != null ) {
+					Set<String> mutablePolicySourceIds = new LinkedHashSet<String>(policySourceIds);
+					mutablePolicySourceIds.removeAll(policySourceIdPatterns);
+					policySourceIds = mutablePolicySourceIds;
 				}
 			}
 
@@ -306,6 +345,116 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		}
 		LOG.warn("Access DENIED to aggregation {} for {}", agg, principal);
 		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, agg);
+	}
+
+	/**
+	 * Verify an arbitrary metadata instance against the configured policy.
+	 * 
+	 * @param metadata
+	 *        The metadata to verify.
+	 * @return The allowed metadata.
+	 * @throws AuthorizationException
+	 *         if no metadata access is allowed
+	 */
+	public GeneralDatumMetadata verifyMetadata(GeneralDatumMetadata metadata) {
+		return verifyMetadata(metadata, false);
+	}
+
+	private GeneralDatumMetadata verifyMetadata(final GeneralDatumMetadata meta,
+			final boolean cacheResults) {
+		final Set<String> policyMetadataPaths;
+		switch (metadataType) {
+			case Node:
+				policyMetadataPaths = policy.getNodeMetadataPaths();
+				break;
+
+			case User:
+				policyMetadataPaths = policy.getUserMetadataPaths();
+				break;
+
+			default:
+				policyMetadataPaths = Collections.emptySet();
+				break;
+		}
+
+		// verify metadata
+		if ( meta == null || policyMetadataPaths == null || policyMetadataPaths.isEmpty() ) {
+			return meta;
+		}
+		if ( cacheResults && cachedMetadata != null ) {
+			return cachedMetadata;
+		}
+
+		Map<String, Object> infoMap = null;
+		if ( meta.getInfo() != null ) {
+			infoMap = enforceMetadataPaths(policyMetadataPaths, meta.getInfo(), "/m");
+		}
+
+		Map<String, Object> propMap = null;
+		if ( meta.getPropertyInfo() != null ) {
+			@SuppressWarnings({ "rawtypes", "unchecked" })
+			Map<String, Object> pm = (Map) meta.getPropertyInfo();
+			propMap = enforceMetadataPaths(policyMetadataPaths, pm, "/pm");
+		}
+
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		Map<String, Map<String, Object>> pm = (Map) propMap;
+		GeneralDatumMetadata result = new GeneralDatumMetadata(infoMap, pm);
+		result.setTags(meta.getTags());
+		if ( result.equals(meta) ) {
+			return meta;
+		}
+
+		if ( infoMap == null && propMap == null ) {
+			// no metadata matches any path, so throw exception
+			LOG.warn("Access DENIED to metadata {} on {} for {}", meta, delegate, principal);
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, meta);
+		}
+
+		if ( cacheResults ) {
+			cachedMetadata = result;
+		}
+		return result;
+	}
+
+	private Map<String, Object> enforceMetadataPaths(Set<String> policyPaths, Map<String, Object> meta,
+			String path) {
+		if ( meta == null ) {
+			return null;
+		}
+		Map<String, Object> result = null;
+		for ( Map.Entry<String, Object> me : meta.entrySet() ) {
+			String entryPath = path + "/" + me.getKey();
+			Object val = me.getValue();
+			if ( val instanceof Map ) {
+				// object node; try to remove entire trees from checking if the path start doesn't match
+				if ( !matchesPatternStart(policyPaths, entryPath) ) {
+					continue;
+				}
+				// descend into map path for verification
+				@SuppressWarnings("unchecked")
+				Map<String, Object> mapVal = (Map<String, Object>) val;
+				mapVal = enforceMetadataPaths(policyPaths, mapVal, entryPath);
+				if ( mapVal != null ) {
+					if ( result == null ) {
+						result = new LinkedHashMap<String, Object>(meta.size());
+					}
+					result.put(me.getKey(), mapVal);
+				}
+			} else {
+				// leaf node
+				if ( matchesPattern(policyPaths, entryPath) ) {
+					if ( result == null ) {
+						result = new LinkedHashMap<String, Object>(meta.size());
+					}
+					result.put(me.getKey(), val);
+				}
+			}
+		}
+		if ( result == null || result.isEmpty() ) {
+			return null;
+		}
+		return result;
 	}
 
 	public Object getDelgate() {

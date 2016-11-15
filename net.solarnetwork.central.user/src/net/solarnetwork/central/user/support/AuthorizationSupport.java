@@ -22,29 +22,39 @@
 
 package net.solarnetwork.central.user.support;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.util.PathMatcher;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicyEnforcer;
+import net.solarnetwork.central.security.SecurityPolicyMetadataType;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 
 /**
- * Helper class for authorization needs, e.g. aspect impelmentations.
+ * Helper class for authorization needs, e.g. aspect implementations.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public abstract class AuthorizationSupport {
 
 	private final UserNodeDao userNodeDao;
+	private PathMatcher pathMatcher;
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -292,7 +302,162 @@ public abstract class AuthorizationSupport {
 	 * @since 1.1
 	 */
 	protected void requireUserReadAccess(Long userId) {
-		requireUserWriteAccess(userId);
+		final SecurityActor actor;
+		try {
+			actor = SecurityUtils.getCurrentActor();
+		} catch ( SecurityException e ) {
+			log.warn("Access DENIED to user {} for non-authenticated user", userId);
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+		}
+
+		// node requires authentication
+		if ( actor instanceof SecurityNode ) {
+			SecurityNode node = (SecurityNode) actor;
+			UserNode userNode = (node.getNodeId() == null ? null : userNodeDao.get(node.getNodeId()));
+			if ( userNode == null ) {
+				log.warn("Access DENIED to user {} for node {}; not found", userId, node.getNodeId());
+				throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, userId);
+			}
+			if ( !userId.equals(userNode.getUser().getId()) ) {
+				log.warn("Access DENIED to user {} for node {}; wrong node", userId, node.getNodeId());
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+			}
+			return;
+		}
+
+		if ( actor instanceof SecurityUser ) {
+			SecurityUser user = (SecurityUser) actor;
+			if ( !user.getUserId().equals(userId) ) {
+				log.warn("Access DENIED to user {} for user {}; wrong user", userId, user.getEmail());
+				throw new AuthorizationException(user.getEmail(),
+						AuthorizationException.Reason.ACCESS_DENIED);
+			}
+			return;
+		}
+
+		if ( actor instanceof SecurityToken ) {
+			SecurityToken token = (SecurityToken) actor;
+			// user token, so user ID must match token owner's ID
+			if ( !token.getUserId().equals(userId) ) {
+				log.warn("Access DENIED to user {} for token {}; wrong user", userId, token.getToken());
+				throw new AuthorizationException(token.getToken(),
+						AuthorizationException.Reason.ACCESS_DENIED);
+			}
+			if ( UserAuthTokenType.ReadNodeData.toString().equals(token.getTokenType()) ) {
+				// data token, the token must include a user metadata policy that can be enforced
+				if ( token.getPolicy() == null || token.getPolicy().getUserMetadataPaths() == null
+						|| token.getPolicy().getUserMetadataPaths().isEmpty() ) {
+					log.warn(
+							"Access DENIED to user {} for token {}; user metadata not included in policy",
+							userId, token.getToken());
+					throw new AuthorizationException(token.getToken(),
+							AuthorizationException.Reason.ACCESS_DENIED);
+				}
+			}
+			return;
+		}
+
+		log.warn("Access DENIED to user {} for actor {}", userId, actor);
+		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+	}
+
+	/**
+	 * Enforce a security policy on a domain object and
+	 * {@code SecurityPolicyMetadataType#Node} metadata type.
+	 * 
+	 * @param domainObject
+	 *        The domain object to enforce the active policy on.
+	 * @return The domain object to use.
+	 * @throws AuthorizationException
+	 *         If the policy check fails.
+	 * @since 1.4
+	 */
+	protected <T> T policyEnforcerCheck(T domainObject) {
+		return policyEnforcerCheck(domainObject, SecurityPolicyMetadataType.Node);
+	}
+
+	/**
+	 * Enforce a security policy on a domain object or collection of domain
+	 * objects.
+	 * 
+	 * The {@link FilterResults} API is supported, as is {@link List}.
+	 * 
+	 * @param domainObject
+	 *        The domain object to enforce the active policy on.
+	 * @param metadataType
+	 *        The metadata type to enforce the active policy on.
+	 * @return The domain object to use.
+	 * @throws AuthorizationException
+	 *         If the policy check fails.
+	 * @since 1.4
+	 */
+	protected <T> T policyEnforcerCheck(T domainObject, SecurityPolicyMetadataType metadataType) {
+		Authentication authentication = SecurityUtils.getCurrentAuthentication();
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null || domainObject == null ) {
+			return domainObject;
+		}
+
+		final Object principal = (authentication != null ? authentication.getPrincipal() : null);
+
+		if ( domainObject instanceof FilterResults ) {
+			FilterResults<?> filterResults = (FilterResults<?>) domainObject;
+			Collection<Object> filteredObjects = policyEnforcedCollection(filterResults, policy,
+					principal, metadataType);
+			@SuppressWarnings("unchecked")
+			T result = (T) new BasicFilterResults<Object>(filteredObjects,
+					filterResults.getTotalResults(), filterResults.getStartingOffset(),
+					filterResults.getReturnedResultCount());
+			return result;
+		} else if ( domainObject instanceof List ) {
+			List<?> collectionResults = (List<?>) domainObject;
+			@SuppressWarnings("unchecked")
+			T filteredObjects = (T) policyEnforcedCollection(collectionResults, policy, principal,
+					metadataType);
+			return filteredObjects;
+		}
+
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
+				(authentication != null ? authentication.getPrincipal() : null), domainObject,
+				pathMatcher, metadataType);
+		enforcer.verify();
+		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+	}
+
+	private Collection<Object> policyEnforcedCollection(Iterable<?> input, SecurityPolicy policy,
+			Object principal, SecurityPolicyMetadataType metadataType) {
+		if ( input == null ) {
+			return null;
+		}
+		List<Object> enforced = new ArrayList<Object>();
+		for ( Object obj : input ) {
+			SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, obj,
+					pathMatcher, metadataType);
+			enforcer.verify();
+			enforced.add(SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer));
+		}
+		return enforced;
+	}
+
+	/**
+	 * Get the path matcher to use.
+	 * 
+	 * @return the path matcher
+	 * @since 1.4
+	 */
+	public PathMatcher getPathMatcher() {
+		return pathMatcher;
+	}
+
+	/**
+	 * Set the path matcher to use.
+	 * 
+	 * @param pathMatcher
+	 *        the matcher to use
+	 * @since 1.4
+	 */
+	public void setPathMatcher(PathMatcher pathMatcher) {
+		this.pathMatcher = pathMatcher;
 	}
 
 }

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central In Web
 Bundle-SymbolicName: net.solarnetwork.central.in.web
-Bundle-Version: 1.19.0
+Bundle-Version: 1.19.1
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: WEB-INF/classes/
@@ -42,6 +42,7 @@ Import-Package:
  net.solarnetwork.web.gemini;version="1.0.0",
  net.solarnetwork.web.support;version="1.7.0",
  org.apache.commons.codec.binary;version="[1.7,2.0)",
+ org.apache.commons.fileupload;version="[1.3,2.0)",
  org.apache.taglibs.response;version="1.0.1",
  org.apache.taglibs.standard.functions;version="[1.1.2,2.0.0)",
  org.apache.taglibs.standard.resources;version="[1.1.2,2.0.0)",

@@ -65,16 +65,10 @@
 		</if>
 		<where>
 			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
-				AND meta.source_id IN
-				<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
-					#{source,javaType=string,jdbcType=VARCHAR}
-				</foreach>
+				AND meta.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 			<if test="filter.locationIds != null and filter.locationIds.length > 0">
-				AND meta.loc_id IN
-				<foreach collection="filter.locationIds" open="(" close=")" separator="," item="loc">
-					#{loc,javaType=long,jdbcType=BIGINT}
-				</foreach>
+				AND meta.loc_id = ANY(#{filter.locationIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
 			</if>
 			<if test="fts != null">
 				l.address IS NULL

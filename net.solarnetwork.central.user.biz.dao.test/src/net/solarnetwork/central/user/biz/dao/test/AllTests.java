@@ -27,7 +27,8 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({ DaoRegistrationBizTest.class, DaoUserBizTest.class })
+@SuiteClasses({ DaoNodeOwnershipBizTest.class, DaoRegistrationBizTest.class, DaoUserBizTest.class,
+		DaoUserMetadataBizTest.class })
 public class AllTests {
 
 }

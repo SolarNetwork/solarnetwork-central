@@ -32,9 +32,9 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.query.aop.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 
 /**
  * Test cases for the {@link SecurityPolicyEnforcer} class.
@@ -177,6 +177,18 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
 				new AntPathMatcher());
 		String[] inputSourceIds = new String[] { "/Main2/foo/bar/bam/Meter", "/Main2/Meter" };
+		String[] result = enforcer.verifySourceIds(inputSourceIds);
+		Assert.assertArrayEquals("Restricted source IDs", inputSourceIds, result);
+	}
+
+	@Test
+	public void verifySourceIdsWithPathMatcherMixedPatterns() {
+		String[] policySourceIds = new String[] { "/A/BC/1", "/A/bc/*", "/A/bc/1/*" };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher());
+		String[] inputSourceIds = new String[] { "/A/BC/1" };
 		String[] result = enforcer.verifySourceIds(inputSourceIds);
 		Assert.assertArrayEquals("Restricted source IDs", inputSourceIds, result);
 	}

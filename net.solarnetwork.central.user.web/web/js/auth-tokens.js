@@ -139,16 +139,38 @@ $(document).ready(function() {
 		dataType: 'json',
 		beforeSerialize: function(form, options) {
 			var containerText = form.find('textarea[name=sourceIds]').val(),
-				containerSourceIds = (containerText ? containerText.split(/\s*,\s*/) : []);
+				containerSourceIds = (containerText ? containerText.split(/\s*,\s*/) : []),
+				containerNodeMetadataText = form.find('textarea[name=nodeMetadataPaths]').val(),
+				containerNodeMetadataPaths = (containerNodeMetadataText ? containerNodeMetadataText.split(/\s*,\s*/) : []),
+				containerUserMetadataText = form.find('textarea[name=userMetadataPaths]').val(),
+				containerUserMetadataPaths = (containerUserMetadataText ? containerUserMetadataText.split(/\s*,\s*/) : []);
 			activePolicy.sourceIds = containerSourceIds;
+			activePolicy.nodeMetadataPaths = containerNodeMetadataPaths;
+			activePolicy.userMetadataPaths = containerUserMetadataPaths;
 		},
 		beforeSubmit: function(array, form, options) {
 			var sourceIdsIdx = array.findIndex(function(obj) {
-				return obj.name === 'sourceIds';
-			});
+					return obj.name === 'sourceIds';
+				}),
+				nodeMetadataPathsIdx,
+				userMetadataPathsIdx;
+
 			if ( sourceIdsIdx >= 0 ) {
 				array.splice(sourceIdsIdx, 1);
 			}
+			nodeMetadataPathsIdx = array.findIndex(function(obj) {
+				return obj.name === 'nodeMetadataPaths';
+			});
+			if ( nodeMetadataPathsIdx >= 0 ) {
+				array.splice(nodeMetadataPathsIdx, 1);
+			}
+			userMetadataPathsIdx = array.findIndex(function(obj) {
+				return obj.name === 'userMetadataPaths';
+			});
+			if ( userMetadataPathsIdx >= 0 ) {
+				array.splice(userMetadataPathsIdx, 1);
+			}
+
 			activePolicy.sourceIds.forEach(function(sourceId) {
 				array.push({
 					name : 'sourceId',
@@ -163,6 +185,20 @@ $(document).ready(function() {
 					type : 'text'
 				});
 			});
+			activePolicy.nodeMetadataPaths.forEach(function(path) {
+				array.push({
+					name : 'nodeMetadataPath',
+					value : path,
+					type : 'text'
+				});
+			});
+			activePolicy.userMetadataPaths.forEach(function(path) {
+				array.push({
+					name : 'userMetadataPath',
+					value : path,
+					type : 'text'
+				});
+			});
 		},
 		success: function(json, status, xhr, form) {
 			handleAuthTokenCreated(json, status, xhr, form);
@@ -174,6 +210,7 @@ $(document).ready(function() {
 		var form = $(this);
 		updatePolicySourceIdsDisplay(form.find('textarea[name=sourceIds]'), []);
 		resetToggleButtons(form);
+		$('#create-data-auth-token .nav-pills > *:first').tab('show');
 		$('#create-data-auth-token-policy-sourceids-hint').empty();
 		reloadIfTokenCreated();
 	});
