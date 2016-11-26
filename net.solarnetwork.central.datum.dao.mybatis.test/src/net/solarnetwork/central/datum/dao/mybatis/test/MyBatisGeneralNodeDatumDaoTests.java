@@ -745,6 +745,47 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 	}
 
 	@Test
+	public void findFilteredAggregateFiveMinuteNoEndDate() {
+		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
+		DateTime startDate = new DateTime();
+		startDate = startDate.minusHours(1).withMinuteOfHour((startDate.getMinuteOfHour() / 5) * 5)
+				.minuteOfDay().roundFloorCopy();
+		for ( int i = 0; i < 12; i++ ) {
+			GeneralNodeDatum datum1 = new GeneralNodeDatum();
+			datum1.setCreated(startDate.plusMinutes(i * 5));
+			datum1.setNodeId(TEST_NODE_ID);
+			datum1.setSourceId(TEST_SOURCE_ID);
+			datum1.setSampleJson("{\"a\":{\"wattHours\":" + (i * 10) + "}}");
+			dao.store(datum1);
+			lastDatum = datum1;
+		}
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(startDate);
+		criteria.setAggregate(Aggregation.FiveMinute);
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertNotNull(results);
+		assertEquals("Minute query results", 12L, (long) results.getTotalResults());
+		assertEquals("Minute query results", 12, (int) results.getReturnedResultCount());
+
+		int i = 0;
+		for ( ReportingGeneralNodeDatumMatch match : results ) {
+			if ( i == 0 ) {
+				Assert.assertNull("First Wh not known", match.getSampleData());
+			} else {
+				assertEquals("Wh for minute slot " + i, Integer.valueOf(10),
+						match.getSampleData().get("wattHours"));
+			}
+			i++;
+		}
+	}
+
+	@Test
 	public void findFilteredAggregateFiveMinutePower() {
 		// populate 12 5 minute, 120 W segments, for a total of 110 Wh in 55 minutes
 		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);

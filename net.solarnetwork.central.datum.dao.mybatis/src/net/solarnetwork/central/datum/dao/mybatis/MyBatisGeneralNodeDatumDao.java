@@ -231,6 +231,19 @@ public class MyBatisGeneralNodeDatumDao
 				&& agg != Aggregation.SeasonalHourOfDay && agg != Aggregation.RunningTotal ) {
 			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
+		if ( agg != null && agg.compareLevel(Aggregation.Hour) < 1 ) {
+			// make sure start/end date provided for minute level aggregation queries as query expects it
+			DateTime forced = null;
+			if ( filter.getStartDate() == null || filter.getEndDate() == null ) {
+				forced = new DateTime();
+				int minutes = agg.getLevel() / 60;
+				forced = forced.withMinuteOfHour((forced.getMinuteOfHour() / minutes) * minutes)
+						.minuteOfHour().roundFloorCopy();
+			}
+			sqlProps.put(PARAM_START_DATE,
+					filter.getStartDate() != null ? filter.getStartDate() : forced);
+			sqlProps.put(PARAM_END_DATE, filter.getEndDate() != null ? filter.getEndDate() : forced);
+		}
 
 		List<ReportingGeneralNodeDatumMatch> rows = selectList(query, sqlProps, offset, max);
 

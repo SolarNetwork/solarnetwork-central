@@ -251,8 +251,8 @@
 		solaragg.find_agg_datum_minute(
 			#{filter.nodeId,jdbcType=BIGINT},
 			#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
-			#{filter.startDate,jdbcType=TIMESTAMP}::timestamptz,
-			#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz,
+			#{start,jdbcType=TIMESTAMP}::timestamptz,
+			#{end,jdbcType=TIMESTAMP}::timestamptz,
 			#{filter.aggregation.level}
 		) AS datum
 	</sql>
