@@ -37,6 +37,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -94,6 +96,26 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 
 	@Around(value = "nodeDatumFilter(filter)")
 	public Object userNodeFilterAccessCheck(ProceedingJoinPoint pjp, Filter filter) throws Throwable {
+		final boolean isQueryBiz = (pjp.getTarget() instanceof QueryBiz);
+		final SecurityPolicy policy = getActiveSecurityPolicy();
+
+		if ( policy != null && policy.getSourceIds() != null && !policy.getSourceIds().isEmpty()
+				&& filter instanceof GeneralNodeDatumFilter
+				&& ((GeneralNodeDatumFilter) filter).getSourceId() == null ) {
+			// no source IDs provided, but policy restricts source IDs.
+			// restrict the filter to the available source IDs if using a DatumFilterCommand,
+			// and let call to userNodeAccessCheck later on filter out restricted values
+			if ( isQueryBiz && filter instanceof DatumFilterCommand ) {
+				QueryBiz target = (QueryBiz) pjp.getTarget();
+				DatumFilterCommand f = (DatumFilterCommand) filter;
+				Set<String> availableSources = target.getAvailableSources(f.getNodeId(),
+						f.getStartDate(), f.getEndDate());
+				if ( availableSources != null && !availableSources.isEmpty() ) {
+					f.setSourceIds(availableSources.toArray(new String[availableSources.size()]));
+				}
+			}
+		}
+
 		Filter f = userNodeAccessCheck(filter);
 		if ( f == filter ) {
 			return pjp.proceed();
@@ -104,7 +126,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		// to findFilteredAggregateGeneralNodeDatum. This _could_ break the calling code if
 		// it is expecting a specific result type, but in many cases it is simply returning
 		// the result as JSON to some HTTP client and the difference does not matter.
-		if ( pjp.getTarget() instanceof QueryBiz && f instanceof AggregateGeneralNodeDatumFilter
+		if ( isQueryBiz && f instanceof AggregateGeneralNodeDatumFilter
 				&& ((AggregateGeneralNodeDatumFilter) f).getAggregation() != null
 				&& pjp.getSignature().getName().equals("findFilteredGeneralNodeDatum") ) {
 			// redirect this to findFilteredAggregateGeneralNodeDatum
