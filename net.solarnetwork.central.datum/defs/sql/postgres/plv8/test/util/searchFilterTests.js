@@ -15,6 +15,18 @@ test('util:searchFilter:parseSimple', t => {
 	t.deepEqual(root, {key:'foo', op:'=', val:'bar'});
 });
 
+test('util:searchFilter:parseJunk', t => {
+	const service = searchFilter('Hey! This is junk.');
+	const root = service.rootNode;
+	t.falsy(root);
+});
+
+test('util:searchFilter:nefarious', t => {
+	const service = searchFilter('Hey! This is junk. (Or is it?)');
+	const root = service.rootNode;
+	t.falsy(root);
+});
+
 test('util:searchFilter:parseMultiNoRootGroup', t => {
 	const service = searchFilter('(foo=bar)(bim=bam)');
 	const root = service.rootNode;

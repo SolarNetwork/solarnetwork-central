@@ -11,7 +11,7 @@ const kOpLTE = '<=';
 const kOpGT = '>';
 const kOpGTE = '>=';
 
-// RegExp to split a string into filter tokens
+/** RegExp to split a string into filter tokens. */
 const kTokenRegExp = /\s*(\([&|!]|\(|\))\s*/g;
 
 // RegExp to match key, op, val of a comparison token
@@ -21,6 +21,14 @@ function isLogicOp(text) {
 	return (text === kOpAnd || text === kOpOr || text === kOpNot);
 }
 
+/**
+ * Create a new logic node out of a logic operator.
+ *
+ * @param {String} op The logic operator, e.g. <code>&</code>.
+ *
+ * @returns {Object} A logic node.
+ * @constructor
+ */
 function logicNode(op) {
 	var self = {};
 	var children = [];
@@ -46,6 +54,14 @@ function logicNode(op) {
 	});
 }
 
+/**
+ * Parse a simple search filter like <code>(foo=bar)</code> into a node object.
+ *
+ * @param {String} text The simple search filter text to parse.
+ *
+ * @returns {Object} The parsed node object, or <code>undefined</code> if not parsable.
+ * @constructor
+ */
 function compNode(text) {
 	var self = {};
 
@@ -62,13 +78,30 @@ function compNode(text) {
 		}
 	}());
 
-	return Object.defineProperties(self, {
+	return (key === undefined ? undefined : Object.defineProperties(self, {
+		/** The property the search filter applies to. */
 		key		: { value : key, enumerable : true },
+
+		/** The comparison operation. */
 		op		: { value : op, enumerable : true },
+
+		/** The property value to compare with. */
 		val		: { value : val, enumerable : true },
-	});
+	}));
 }
 
+/**
+ * Create a new search filter.
+ *
+ * Search filters are expressed in LDAP search filter notation, for example
+ * <code>(name=Bob)</code> is described as "find objects whose name is Bob".
+ * Complex logic can be expressed using logical and, or, and not expressions.
+ * For example <code>(&(name=Bob)(age>20))</code> is described as "find objects
+ * whose name is Bob and age is greater than 20".
+ *
+ * @param {String} filterText The search filter to parse.
+ * @constructor
+ */
 export default function searchFilter(filterText) {
 	var self = {
 		version : '1'
@@ -76,6 +109,16 @@ export default function searchFilter(filterText) {
 
 	var rootNode;
 
+	/**
+	 * Parse an array of search filter tokens, as created via splitting a
+	 * string with the <code>kTokenRegExp</code> regular expression. For
+	 * example the simple filter <code>(foo=bar)</code> could be expressed
+	 * as the tokens <code>["(", "foo=bar", ")"]</code> while the complex
+	 * filter <code>(&(foo=bar)(bim>1))</code> could be expressed as the
+	 * tokens <code>["(&", "(", "foo=bar", ")", "(", "bim>1", ")", ")"]</code>.
+	 *
+	 * Note than empty string tokens are ignored.
+	 */
 	function parseTokens(tokens, start, end) {
 		var i,
 			c,
@@ -138,6 +181,7 @@ export default function searchFilter(filterText) {
 	rootNode = parseFilterText(filterText);
 
 	return Object.defineProperties(self, {
+		/** The root node, which could be either a comparison node or logic node. */
 		rootNode	: { value : rootNode },
 	});
 }
