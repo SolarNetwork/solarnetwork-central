@@ -27,6 +27,35 @@ test('util:searchFilter:nefarious', t => {
 	t.falsy(root);
 });
 
+test('util:searchFilter:simpleMissingEnd', t => {
+	const service = searchFilter('(foo=bar');
+	const root = service.rootNode;
+	t.deepEqual(root, {key:'foo', op:'=', val:'bar'});
+});
+
+test('util:searchFilter:complexMissingEnd', t => {
+	const service = searchFilter('(&(foo=bar)(bim=bam)');
+	const root = service.rootNode;
+	t.deepEqual(root, {op:'&', children:[
+		{key:'foo', op:'=', val:'bar'},
+		{key:'bim', op:'=', val:'bam'},
+	]});
+});
+
+test('util:searchFilter:emptyComplex', t => {
+	const service = searchFilter('(&)');
+	const root = service.rootNode;
+	t.deepEqual(root, {op:'&', children:[]});
+});
+
+test('util:searchFilter:simpleNestedMissingEnds', t => {
+	const service = searchFilter('(&(foo=bar');
+	const root = service.rootNode;
+	t.deepEqual(root, {op:'&', children:[
+		{key:'foo', op:'=', val:'bar'},
+	]});
+});
+
 test('util:searchFilter:parseMultiNoRootGroup', t => {
 	const service = searchFilter('(foo=bar)(bim=bam)');
 	const root = service.rootNode;
