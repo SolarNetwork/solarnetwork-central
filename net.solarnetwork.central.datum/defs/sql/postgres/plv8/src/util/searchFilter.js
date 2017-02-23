@@ -69,7 +69,7 @@ function compNode(text) {
 	});
 }
 
-export default function pathFilter(filterText) {
+export default function searchFilter(filterText) {
 	var self = {
 		version : '1'
 	};
@@ -129,11 +129,9 @@ export default function pathFilter(filterText) {
 
 	function parseFilterText(text) {
 		var tokens = (text ? text.split(kTokenRegExp) : undefined);
-
 		if ( !tokens ) {
 			return;
 		}
-
 		return parseTokens(tokens, 0, tokens.length);
 	}
 
