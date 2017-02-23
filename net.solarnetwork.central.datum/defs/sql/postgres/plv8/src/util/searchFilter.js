@@ -90,14 +90,14 @@ function compNode(text) {
 	}));
 }
 
-function walkNode(node, callback) {
+function walkNode(node, parent, callback) {
 	var i, len;
-	if ( callback(null, node) === false ) {
+	if ( callback(null, node, parent) === false ) {
 		return false;
 	}
 	if ( node.children !== undefined ) {
 		for ( i = 0, len = node.children.length; i < len; i += 1 ) {
-			if ( walkNode(node.children[i], callback) === false ) {
+			if ( walkNode(node.children[i], node, callback) === false ) {
 				return false;
 			}
 		}
@@ -127,12 +127,13 @@ export default function searchFilter(filterText) {
 	/**
 	 * Walk the node tree, invoking a callback function for each node.
 	 *
-	 * @param {Function} callback A callback function, which will be passed an error parameter
-	 *                            and the current node. If the callback returns <code>false</code>
-	 *                            the walking will stop.
+	 * @param {Function} callback A callback function, which will be passed an error parameter,
+	 *                            the current node, and the current node's parent (or
+	 *                            <code>undefined</code> for the root node). If the callback
+	 *                            returns <code>false</code> the walking will stop.
 	 */
 	function walk(callback) {
-		walkNode(rootNode, callback);
+		walkNode(rootNode, undefined, callback);
 	}
 
 	/**
