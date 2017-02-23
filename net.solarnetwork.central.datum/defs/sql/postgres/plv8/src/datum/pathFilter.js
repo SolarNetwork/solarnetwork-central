@@ -39,7 +39,10 @@ function logicNode(op) {
 	}
 
 	return Object.defineProperties(self, {
-		op		: { value : op },
+		op			: { value : op, enumerable : true },
+		children	: { value : children, enumerable : true },
+
+		addChild	: { value : addChild },
 	});
 }
 
@@ -60,9 +63,9 @@ function compNode(text) {
 	}());
 
 	return Object.defineProperties(self, {
-		key		: { value : key },
-		op		: { value : op },
-		val		: { value : val },
+		key		: { value : key, enumerable : true },
+		op		: { value : op, enumerable : true },
+		val		: { value : val, enumerable : true },
 	});
 }
 

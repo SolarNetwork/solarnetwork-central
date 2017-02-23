@@ -12,10 +12,35 @@ test('datum:pathFilter:createEmpty', t => {
 test('datum:pathFilter:parseSimple', t => {
 	const service = pathFilter('(foo=bar)');
 	const root = service.rootNode;
-	t.truthy(root);
-	t.is(root.key, 'foo');
-	t.is(root.op, '=');
-	t.is(root.val, 'bar');
+	t.deepEqual(root, {key:'foo', op:'=', val:'bar'});
 });
 
-//'(& (/m/foo=bar) (| (/pm/bam/pop=whiz) (/pm/boo/boo=cry) (!(/pm/bam/ding=dong))))'
+test('datum:pathFilter:parseMultiNoRootGroup', t => {
+	const service = pathFilter('(foo=bar)(bim=bam)');
+	const root = service.rootNode;
+	t.deepEqual(root, {key:'foo', op:'=', val:'bar'});
+});
+
+test('datum:pathFilter:parseSimpleNested', t => {
+	const service = pathFilter('(&(foo=bar))');
+	const root = service.rootNode;
+	t.deepEqual(root, {op:'&',
+		children: [{key:'foo', op:'=', val:'bar'}]
+	});
+});
+
+test('datum:pathFilter:parseNested', t => {
+	const service = pathFilter('(& (/m/foo=bar) (| (/pm/bam/pop~=whiz) (/pm/boo/boo>0) (!(/pm/bam/ding<=9))))');
+	const root = service.rootNode;
+	t.deepEqual(root, {op:'&', children:[
+		{key:'/m/foo', op:'=', val:'bar'},
+		{op:'|', children:[
+			{key:'/pm/bam/pop', op:'~=', val:'whiz'},
+			{key:'/pm/boo/boo', op:'>', val:'0'},
+			{op:'!', children:[
+				{key:'/pm/bam/ding', op:'<=', val:'9'},
+			]}
+		]}
+	]});
+});
+
