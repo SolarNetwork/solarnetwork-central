@@ -90,6 +90,21 @@ function compNode(text) {
 	}));
 }
 
+function walkNode(node, callback) {
+	var i, len;
+	if ( callback(null, node) === false ) {
+		return false;
+	}
+	if ( node.children !== undefined ) {
+		for ( i = 0, len = node.children.length; i < len; i += 1 ) {
+			if ( walkNode(node.children[i], callback) === false ) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 /**
  * Create a new search filter.
  *
@@ -108,6 +123,17 @@ export default function searchFilter(filterText) {
 	};
 
 	var rootNode;
+
+	/**
+	 * Walk the node tree, invoking a callback function for each node.
+	 *
+	 * @param {Function} callback A callback function, which will be passed an error parameter
+	 *                            and the current node. If the callback returns <code>false</code>
+	 *                            the walking will stop.
+	 */
+	function walk(callback) {
+		walkNode(rootNode, callback);
+	}
 
 	/**
 	 * Parse an array of search filter tokens, as created via splitting a
@@ -183,5 +209,7 @@ export default function searchFilter(filterText) {
 	return Object.defineProperties(self, {
 		/** The root node, which could be either a comparison node or logic node. */
 		rootNode	: { value : rootNode },
+
+		walk		: { value : walk },
 	});
 }

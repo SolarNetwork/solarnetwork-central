@@ -85,3 +85,56 @@ test('util:searchFilter:parseNested', t => {
 	]});
 });
 
+test('util:searchFilter:walkSimple', t => {
+	const service = searchFilter('(foo=bar)');
+	var nodes = [];
+	service.walk(function(err, node) {
+		if ( node ) {
+			nodes.push(node);
+		}
+	});
+	t.deepEqual(nodes, [{key:'foo', op:'=', val:'bar'}]);
+});
+
+test('util:searchFilter:walkComplex', t => {
+	const service = searchFilter('(& (/m/foo=bar) (| (/pm/bam/pop~=whiz) (/pm/boo/boo>0) (!(/pm/bam/ding<=9))))');
+	var nodes = [];
+	service.walk(function(err, node) {
+		if ( node ) {
+			if ( node.children ) {
+				nodes.push({op:node.op});
+			} else {
+				nodes.push(node);
+			}
+		}
+	});
+	t.deepEqual(nodes, [
+		{op:'&'},
+		{key:'/m/foo', op:'=', val:'bar'},
+		{op:'|'},
+		{key:'/pm/bam/pop', op:'~=', val:'whiz'},
+		{key:'/pm/boo/boo', op:'>', val:'0'},
+		{op:'!'},
+		{key:'/pm/bam/ding', op:'<=', val:'9'},
+	]);
+});
+
+test('util:searchFilter:walkAbortEarly', t => {
+	const service = searchFilter('(&(foo=bar)(bim=bam)');
+	var nodes = [];
+	service.walk(function(err, node) {
+		if ( node ) {
+			if ( node.children ) {
+				nodes.push({op:node.op});
+			} else {
+				nodes.push(node);
+				return false
+			}
+		}
+	});
+	t.deepEqual(nodes, [
+		{op:'&'},
+		{key:'foo', op:'=', val:'bar'},
+	]);
+});
+
