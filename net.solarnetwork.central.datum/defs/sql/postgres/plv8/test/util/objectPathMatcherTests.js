@@ -66,9 +66,22 @@ test('util:objectPathMatcher:nestedPathMultiAndNoMatch', t => {
 	t.false(service.matches('(&(/foo/ping=NO)(/bam=mab)'));
 });
 
+test('util:objectPathMatcher:wildPathMatch', t => {
+	const obj = {foo:{a:'boo', b:'bar', c:'nah'}};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(/foo/*=boo)'));
+	t.true(service.matches('(/foo/*=bar)'));
+	t.true(service.matches('(/foo/*=nah)'));
+	t.false(service.matches('(/foo/*=NO)'));
+});
+
 test('util:objectPathMatcher:nestedPathWildPathMatch', t => {
 	const obj = {foo:{a:{foo:'boo'}, b:{foo:'bar'}, c:{foo:'nah'}}};
 	const service = objectPathMatcher(obj);
 	t.is(service.obj, obj);
+	t.true(service.matches('(/**/foo=boo)'));
 	t.true(service.matches('(/**/foo=bar)'));
+	t.true(service.matches('(/**/foo=nah)'));
+	t.false(service.matches('(/**/foo=NO)'));
 });
