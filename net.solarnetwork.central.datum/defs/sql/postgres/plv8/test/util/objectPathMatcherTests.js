@@ -121,3 +121,12 @@ test('util:objectPathMatcher:andWithNestedOr', t => {
 	t.false(service.matches('(&(|(/foo/a/bim=NO)(/boo=NOPE))(/foo/c/foo=nah))'));
 	t.false(service.matches('(&(|(/foo/a/bim=bam)(/boo=NO))(/foo/c/foo=NO))'));
 });
+
+test('util:objectPathMatcher:andWithNestedOrNestedAnd', t => {
+	const obj = {boo:'ya', foo:{a:{foo:'boo', bim:'bam'}, b:{foo:'bar'}, c:{foo:'nah'}}};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(&(|(/foo/a/bim=NO)(&(/boo=ya)(/foo/a/foo=boo)))(/foo/c/foo=nah))'));
+	t.false(service.matches('(&(|(/foo/a/bim=NO)(&(/boo=ya)(/foo/a/foo=NO)))(/foo/c/foo=nah))'));
+	t.false(service.matches('(&(|(/foo/a/bim=NO)(&(/boo=ya)(/foo/a/foo=boo)))(/foo/c/foo=NO))'));
+});
