@@ -56,6 +56,10 @@ function walkObjectPathValues(obj, pathTokens, callback) {
 							}) === false ) {
 						return false;
 					}
+				} else if ( pathTokens[i+1] === '*' ) {
+					if ( callback(currPath, val) === false ) {
+						return false;
+					}
 				}
 			}
 			break;
@@ -82,6 +86,7 @@ function evaluateFilter(obj, filter) {
 		keepWalking = true;
 
 	filter.walk(function(err, node, parent) {
+		var match = false;
 		if ( parent !== undefined ) {
 			if ( parent !== logicStack[stackIdx].node ) {
 				while ( stackIdx >= 0 ) {
@@ -111,7 +116,6 @@ function evaluateFilter(obj, filter) {
 			stackIdx += 1;
 		} else if ( logicStackSatisfiedIdx === -1 ) {
 			walkObjectPathValues(obj, node.key.split('/'), function(path, value) {
-				var match = false;
 				if ( node.op === '=' ) {
 					// note using lax equality here for automatic coersion
 					if ( value == node.val ) {
@@ -138,43 +142,42 @@ function evaluateFilter(obj, filter) {
 						match = true;
 					}
 				}
-				if ( currLogicOp === '&' ) {
-					if ( match === false ) {
-						// as long as not a wildcard path, we can try to short-circuit the logic
-						if ( node.key.indexOf('*') < 0 ) {
-							if ( stackIdx >= 0 ) {
-								logicStack[stackIdx].result = false;
-							}
-							if ( stackIdx < 1 ) {
-								// top-level AND has failed; all done
-								foundMatch = false;
-								keepWalking = false;
-								return false;
-							}
-							logicStackSatisfiedIdx = stackIdx;
-						}
-					} else if ( stackIdx < 0 ) {
-						foundMatch = true;
-					} else {
-						logicStack[stackIdx].result = true;
-					}
-				} else if ( currLogicOp === '|' ) {
-					if ( match === true ) {
-						if ( stackIdx >= 0 ) {
-							logicStack[stackIdx].result = true;
-						}
-						if ( stackIdx < 1 ) {
-							// top-level OR has failed; all done
-							foundMatch = true;
-							keepWalking = false;
-						}
-						logicStackSatisfiedIdx = stackIdx;
-					}
-				}
-
 				// in case of wildcard path, only keep looking for more path matches if we haven't found a value match
 				return !match;
 			});
+
+			if ( currLogicOp === '&' ) {
+				if ( match === false ) {
+					if ( stackIdx >= 0 ) {
+						logicStack[stackIdx].result = false;
+					}
+					if ( stackIdx < 1 ) {
+						// top-level AND has failed; all done
+						foundMatch = false;
+						keepWalking = false;
+					} else {
+						logicStackSatisfiedIdx = stackIdx;
+					}
+				} else if ( stackIdx < 0 ) {
+					foundMatch = true;
+				} else {
+					logicStack[stackIdx].result = true;
+				}
+			} else if ( currLogicOp === '|' ) {
+				if ( match === true ) {
+					if ( stackIdx >= 0 ) {
+						logicStack[stackIdx].result = true;
+					}
+					if ( stackIdx < 1 ) {
+						// top-level OR has failed; all done
+						foundMatch = true;
+						keepWalking = false;
+					} else {
+						logicStackSatisfiedIdx = stackIdx;
+					}
+				}
+			}
+
 			if ( keepWalking === false ) {
 				return false;
 			}

@@ -76,7 +76,23 @@ test('util:objectPathMatcher:wildPathMatch', t => {
 	t.false(service.matches('(/foo/*=NO)'));
 });
 
-test('util:objectPathMatcher:nestedPathWildPathMatch', t => {
+test('util:objectPathMatcher:wildPathMatchWithAnd', t => {
+	const obj = {foo:{a:'boo', b:'bar', c:'nah'}};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(&(/foo/*=boo)(/foo/*=bar)(/foo/*=nah))'));
+	t.false(service.matches('(&(/foo/*=boo)(/foo/*=bar)(/foo/*=NO))'));
+});
+
+test('util:objectPathMatcher:wildPathMatchWithOr', t => {
+	const obj = {foo:{a:'boo', b:'bar', c:'nah'}};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(|(/foo/*=NO)(/foo/*=bar)(/foo/*=NOPE))'));
+	t.false(service.matches('(|(/foo/*=NO)(/foo/*=NADDA)(/foo/*=NOPE))'));
+});
+
+test('util:objectPathMatcher:anyPathWildMatch', t => {
 	const obj = {foo:{a:{foo:'boo'}, b:{foo:'bar'}, c:{foo:'nah'}}};
 	const service = objectPathMatcher(obj);
 	t.is(service.obj, obj);
@@ -84,4 +100,14 @@ test('util:objectPathMatcher:nestedPathWildPathMatch', t => {
 	t.true(service.matches('(/**/foo=bar)'));
 	t.true(service.matches('(/**/foo=nah)'));
 	t.false(service.matches('(/**/foo=NO)'));
+});
+
+test('util:objectPathMatcher:anyPathWildAndWildMatch', t => {
+	const obj = {foo:{a:{foo:'boo'}, b:{foo:'bar'}, c:{foo:'nah'}}};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(/**/*=boo)'));
+	t.true(service.matches('(/**/*=bar)'));
+	t.true(service.matches('(/**/*=nah)'));
+	t.false(service.matches('(/**/*=NO)'));
 });
