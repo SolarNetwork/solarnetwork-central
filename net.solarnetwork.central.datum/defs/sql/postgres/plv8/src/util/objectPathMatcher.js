@@ -82,26 +82,65 @@ function evaluateFilter(obj, filter) {
 		stackIdx = -1,
 		logicStackSatisfiedIdx = -1, // index in logicStack of OR that has been satisfied
 		currLogicOp = '&', // default is AND for simple filters
-		foundMatch = false,
-		keepWalking = true;
+		foundMatch = false;
+
+	function shortCircuitIfPossible(match) {
+		var keepWalking = true;
+		if ( currLogicOp === '&' ) {
+			if ( match === false ) {
+				if ( stackIdx >= 0 ) {
+					logicStack[stackIdx].result = false;
+				}
+				if ( stackIdx < 1 ) {
+					// top-level AND has failed; all done
+					foundMatch = false;
+					keepWalking = false;
+				} else {
+					logicStackSatisfiedIdx = stackIdx;
+				}
+			} else if ( stackIdx < 0 ) {
+				foundMatch = true;
+			} else {
+				logicStack[stackIdx].result = true;
+			}
+		} else if ( currLogicOp === '|' ) {
+			if ( match === true ) {
+				if ( stackIdx >= 0 ) {
+					logicStack[stackIdx].result = true;
+				}
+				if ( stackIdx < 1 ) {
+					// top-level OR has failed; all done
+					foundMatch = true;
+					keepWalking = false;
+				} else {
+					logicStackSatisfiedIdx = stackIdx;
+				}
+			}
+		}
+		return !keepWalking;
+	}
 
 	filter.walk(function(err, node, parent) {
 		var match = false;
 		if ( parent !== undefined ) {
 			if ( parent !== logicStack[stackIdx].node ) {
 				while ( stackIdx >= 0 ) {
-					stackIdx -= 1;
 					if ( logicStack[stackIdx].node === parent ) {
+						currLogicOp = logicStack[stackIdx].op;
+						if ( shortCircuitIfPossible(logicStack[logicStack.length - 1].result) ) {
+							return false;
+						}
 						break;
 					}
-				}
-				if ( stackIdx < 0 ) {
-					return false;
+					stackIdx -= 1;
 				}
 
 				// trim the stack to the current parent
 				logicStack.length = stackIdx + 1;
-				currLogicOp = logicStack[stackIdx].op;
+
+				if ( stackIdx < 0 ) {
+					return false;
+				}
 
 				// if we've popped back before a satisfied condition, reset that index
 				if ( logicStackSatisfiedIdx > stackIdx ) {
@@ -146,39 +185,7 @@ function evaluateFilter(obj, filter) {
 				return !match;
 			});
 
-			if ( currLogicOp === '&' ) {
-				if ( match === false ) {
-					if ( stackIdx >= 0 ) {
-						logicStack[stackIdx].result = false;
-					}
-					if ( stackIdx < 1 ) {
-						// top-level AND has failed; all done
-						foundMatch = false;
-						keepWalking = false;
-					} else {
-						logicStackSatisfiedIdx = stackIdx;
-					}
-				} else if ( stackIdx < 0 ) {
-					foundMatch = true;
-				} else {
-					logicStack[stackIdx].result = true;
-				}
-			} else if ( currLogicOp === '|' ) {
-				if ( match === true ) {
-					if ( stackIdx >= 0 ) {
-						logicStack[stackIdx].result = true;
-					}
-					if ( stackIdx < 1 ) {
-						// top-level OR has failed; all done
-						foundMatch = true;
-						keepWalking = false;
-					} else {
-						logicStackSatisfiedIdx = stackIdx;
-					}
-				}
-			}
-
-			if ( keepWalking === false ) {
+			if ( shortCircuitIfPossible(match) ) {
 				return false;
 			}
 		}
@@ -186,7 +193,7 @@ function evaluateFilter(obj, filter) {
 	});
 
 	if ( logicStack.length > 0 ) {
-		foundMatch = logicStack[0].result;
+		foundMatch = logicStack[stackIdx].result;
 	}
 
 	return foundMatch;
