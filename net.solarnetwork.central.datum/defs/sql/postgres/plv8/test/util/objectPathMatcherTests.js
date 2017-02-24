@@ -29,6 +29,20 @@ test('util:objectPathMatcher:simpleMatch', t => {
 	t.true(service.matches('(/foo=bar)'));
 });
 
+test('util:objectPathMatcher:simpleNoMatchingProp', t => {
+	const obj = {foo:'bar'};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.false(service.matches('(/bar=bam)'));
+});
+
+test('util:objectPathMatcher:simpleNoMatchingProp', t => {
+	const obj = {foo:{bim:{bam:'baz'}}};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.false(service.matches('(/foo/bim/no=bam)'));
+});
+
 test('util:objectPathMatcher:singleAndMatch', t => {
 	const obj = {foo:'bar'};
 	const service = objectPathMatcher(obj);
@@ -129,4 +143,49 @@ test('util:objectPathMatcher:andWithNestedOrNestedAnd', t => {
 	t.true(service.matches('(&(|(/foo/a/bim=NO)(&(/boo=ya)(/foo/a/foo=boo)))(/foo/c/foo=nah))'));
 	t.false(service.matches('(&(|(/foo/a/bim=NO)(&(/boo=ya)(/foo/a/foo=NO)))(/foo/c/foo=nah))'));
 	t.false(service.matches('(&(|(/foo/a/bim=NO)(&(/boo=ya)(/foo/a/foo=boo)))(/foo/c/foo=NO))'));
+});
+
+test('util:objectPathMatcher:arrayMatchSingle', t => {
+	const obj = {foo:['one', 'two', 'three']};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(/foo=one)'));
+	t.true(service.matches('(/foo=two)'));
+	t.true(service.matches('(/foo=three)'));
+	t.false(service.matches('(/foo=NO)'));
+});
+
+test('util:objectPathMatcher:arrayMatchNested', t => {
+	const obj = {foo:{bar:['one', 'two', 'three']}};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(/foo/bar=one)'));
+	t.true(service.matches('(/foo/bar=two)'));
+	t.true(service.matches('(/foo/bar=three)'));
+	t.false(service.matches('(/foo/bar=NO)'));
+});
+
+test('util:objectPathMatcher:arrayTryWalk', t => {
+	const obj = {foo:['one', 'two', 'three']};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.false(service.matches('(/foo/bar=one)'));
+});
+
+test('util:objectPathMatcher:arrayMatchAnd', t => {
+	const obj = {foo:['one', 'two', 'three']};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(&(/foo=one)(/foo=two))'));
+	t.true(service.matches('(&(/foo=one)(/foo=two)(/foo=three))'));
+	t.false(service.matches('(&(/foo=one)(/foo=NO)(/foo=three))'));
+});
+
+test('util:objectPathMatcher:arrayMatchOr', t => {
+	const obj = {foo:['one', 'two', 'three']};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(|(/foo=A)(/foo=two))'));
+	t.true(service.matches('(|(/foo=A)(/foo=two)(/foo=three))'));
+	t.false(service.matches('(|(/foo=A)(/foo=B)(/foo=C))'));
 });

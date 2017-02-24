@@ -10,6 +10,21 @@ function walkObjectPathValues(obj, pathTokens, callback) {
 		prop,
 		val,
 		currPathIdx;
+
+	function handleCallbackValue(value) {
+		var j, len;
+		if ( Array.isArray(value) ) {
+			for ( j = 0, len = value.length; j < len; j += 1 ) {
+				if ( callback(currPath, value[j]) === false ) {
+					return false;
+				}
+			}
+		} else if ( callback(currPath, value) === false ) {
+			return false;
+		}
+		return true;
+	}
+
 	for ( i = 0, end = pathTokens.length - 1; i <= end; i += 1 ) {
 		pathToken = pathTokens[i];
 		if ( pathToken.length < 1 ) {
@@ -21,7 +36,7 @@ function walkObjectPathValues(obj, pathTokens, callback) {
 			for ( prop in obj ) {
 				currPath[currPathIdx] = prop;
 				val = obj[prop];
-				if ( callback(currPath, val) === false ) {
+				if ( handleCallbackValue(val) === false ) {
 					return false;
 				}
 			}
@@ -36,7 +51,7 @@ function walkObjectPathValues(obj, pathTokens, callback) {
 					if ( val !== undefined ) {
 						if ( typeof val !== 'object' && i + 1 === end ) {
 							// looking for **/X and found X
-							if ( callback(currPath, val) === false ) {
+							if ( handleCallbackValue(val) === false ) {
 								return false;
 							}
 						} else if ( typeof val === 'object' ) {
@@ -57,14 +72,14 @@ function walkObjectPathValues(obj, pathTokens, callback) {
 						return false;
 					}
 				} else if ( pathTokens[i+1] === '*' ) {
-					if ( callback(currPath, val) === false ) {
+					if ( handleCallbackValue(val) === false ) {
 						return false;
 					}
 				}
 			}
 			break;
 		} else if ( i === end ) {
-			if ( callback(currPath, obj[pathToken]) === false ) {
+			if ( handleCallbackValue(obj[pathToken]) === false ) {
 				return false;
 			}
 		} else if ( obj[pathToken] !== undefined ) {
