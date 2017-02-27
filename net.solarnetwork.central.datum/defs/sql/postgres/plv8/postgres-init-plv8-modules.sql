@@ -11,3 +11,5 @@
 \i ./dist/util/addTo.sql
 \i ./dist/util/intervalMs.sql
 \i ./dist/util/mergeObjects.sql
+\i ./dist/util/objectPathMatcher.sql
+\i ./dist/util/searchFilter.sql
