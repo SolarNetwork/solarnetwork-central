@@ -245,6 +245,7 @@ export default function objectPathMatcher(obj) {
 		/** The object being compared to. */
 		obj			: { value : obj },
 
-		matches		: { value : matches },
+		matches			: { value : matches },
+		matchesFilter	: { value : matchesFilter },
 	});
 }
