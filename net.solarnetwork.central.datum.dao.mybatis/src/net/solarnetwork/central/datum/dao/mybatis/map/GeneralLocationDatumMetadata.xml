@@ -24,15 +24,25 @@
 			AND source_id = #{sourceId}
 	</delete>
 	
-	<sql id="fragment-GeneralLocationDatumMetadata-full-result">
+	<sql id="fragment-GeneralLocationDatumMetadata-pk-result">
 		meta.loc_id AS meta_loc_id,
-		meta.source_id AS meta_source_id,
+		meta.source_id AS meta_source_id
+	</sql>
+	
+	<sql id="fragment-GeneralLocationDatumMetadata-full-result">
+		<include refid="fragment-GeneralLocationDatumMetadata-pk-result"/>,		
 		meta.created AS meta_created,
 		meta.updated AS meta_updated,
 		meta.jdata AS meta_jdata
 	</sql>
 	
-	<resultMap id="GeneralLocationDatumMetadataFullResult" type="GeneralLocationDatumMetadata">
+	<resultMap id="GeneralLocationDatumMetadataPKResult" type="LocationSourcePK">
+		<id property="locationId" column="meta_loc_id"/>
+		<id property="sourceId" column="meta_source_id"/>
+	</resultMap>
+	
+	<resultMap id="GeneralLocationDatumMetadataFullResult" type="GeneralLocationDatumMetadata"
+		extends="net.solarnetwork.central.datum.dao.mybatis.GeneralLocationDatumMetadata.GeneralLocationDatumMetadataPKResult">
 		<id property="locationId" column="meta_loc_id"/>
 		<id property="sourceId" column="meta_source_id"/>
 		<id property="created" column="meta_created"/>
@@ -114,6 +124,16 @@
 		FROM
 			solardatum.da_loc_meta meta
 		<include refid="fragment-findall-GeneralLocationDatumMetadata-GeneralLocationDatumMetadataMatch-where"/>
+	</select>
+
+	<select id="find-loc-metadata-distinct-sources" resultMap="GeneralLocationDatumMetadataPKResult">
+		SELECT
+			<include refid="fragment-GeneralLocationDatumMetadata-pk-result"/>
+		FROM
+			solardatum.find_sources_for_loc_meta(
+				#{locationIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler},
+				#{filter})  meta
+		ORDER BY meta.loc_id, meta.source_id
 	</select>
 
 </mapper>
