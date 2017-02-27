@@ -189,3 +189,11 @@ test('util:searchFilter:walkNestedMiddle', t => {
 	]);
 });
 
+test('util:searchFilter:walkEmptyString', t => {
+	const service = searchFilter('');
+	t.falsy(service.rootNode);
+	service.walk(function(err, node, parent) {
+		t.fail('Should not have walked any nodes.');
+	});
+});
+

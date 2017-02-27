@@ -92,6 +92,9 @@ function compNode(text) {
 
 function walkNode(node, parent, callback) {
 	var i, len;
+	if ( node === undefined ) {
+		return;
+	}
 	if ( callback(null, node, parent) === false ) {
 		return false;
 	}
