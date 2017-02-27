@@ -100,10 +100,10 @@ INNER JOIN nodetz ON nodetz.node_id = d.node_id
 GROUP BY date_trunc('month', d.ts at time zone nodetz.tz) at time zone nodetz.tz, d.node_id, d.source_id;
 
 CREATE OR REPLACE FUNCTION solardatum.store_datum(
-	cdate solarcommon.ts, 
-	node solarcommon.node_id, 
-	src solarcommon.source_id, 
-	pdate solarcommon.ts, 
+	cdate solarcommon.ts,
+	node solarcommon.node_id,
+	src solarcommon.source_id,
+	pdate solarcommon.ts,
 	jdata text)
   RETURNS void AS
 $BODY$
@@ -117,8 +117,8 @@ BEGIN
 		VALUES (ts_crea, node, src, ts_post, jdata_json);
 	EXCEPTION WHEN unique_violation THEN
 		-- We mostly expect inserts, but we allow updates
-		UPDATE solardatum.da_datum SET 
-			jdata = jdata_json, 
+		UPDATE solardatum.da_datum SET
+			jdata = jdata_json,
 			posted = ts_post
 		WHERE
 			node_id = node
@@ -129,9 +129,9 @@ END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
 CREATE OR REPLACE FUNCTION solardatum.store_meta(
-	cdate solarcommon.ts, 
-	node solarcommon.node_id, 
-	src solarcommon.source_id, 
+	cdate solarcommon.ts,
+	node solarcommon.node_id,
+	src solarcommon.source_id,
 	jdata text)
   RETURNS void AS
 $BODY$
@@ -144,8 +144,8 @@ BEGIN
 		VALUES (node, src, cdate, udate, jdata_json);
 	EXCEPTION WHEN unique_violation THEN
 		-- We mostly expect inserts, but we allow updates
-		UPDATE solardatum.da_meta SET 
-			jdata = jdata_json, 
+		UPDATE solardatum.da_meta SET
+			jdata = jdata_json,
 			updated = udate
 		WHERE
 			node_id = node
@@ -155,8 +155,8 @@ END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
 CREATE OR REPLACE FUNCTION solardatum.find_available_sources(
-	IN node solarcommon.node_id, 
-	IN st solarcommon.ts DEFAULT NULL, 
+	IN node solarcommon.node_id,
+	IN st solarcommon.ts DEFAULT NULL,
 	IN en solarcommon.ts DEFAULT NULL)
   RETURNS TABLE(source_id solarcommon.source_id) AS
 $BODY$
@@ -175,28 +175,28 @@ BEGIN
 			node_tz := 'UTC';
 		END IF;
 	END IF;
-	
+
 	CASE
 		WHEN st IS NULL AND en IS NULL THEN
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_datum_daily d
 			WHERE d.node_id = node
 			ORDER BY d.source_id;
-		
+
 		WHEN en IS NULL THEN
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_datum_daily d
 			WHERE d.node_id = node
 				AND d.ts_start >= CAST(st at time zone node_tz AS DATE)
 			ORDER BY d.source_id;
-				
+
 		WHEN st IS NULL THEN
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_datum_daily d
 			WHERE d.node_id = node
 				AND d.ts_start <= CAST(en at time zone node_tz AS DATE)
 			ORDER BY d.source_id;
-				
+
 		ELSE
 			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_datum_daily d
@@ -204,14 +204,14 @@ BEGIN
 				AND d.ts_start >= CAST(st at time zone node_tz AS DATE)
 				AND d.ts_start <= CAST(en at time zone node_tz AS DATE)
 			ORDER BY d.source_id;
-	END CASE;	
+	END CASE;
 END;$BODY$
   LANGUAGE plpgsql STABLE ROWS 50;
 
 CREATE OR REPLACE FUNCTION solardatum.find_reportable_interval(
-	IN node solarcommon.node_id, 
+	IN node solarcommon.node_id,
 	IN src solarcommon.source_id DEFAULT NULL,
-	OUT ts_start solarcommon.ts, 
+	OUT ts_start solarcommon.ts,
 	OUT ts_end solarcommon.ts,
 	OUT node_tz TEXT,
 	OUT node_tz_offset INTEGER)
@@ -226,7 +226,7 @@ BEGIN
 			SELECT min(ts) FROM solardatum.da_datum WHERE node_id = node AND source_id = src
 			INTO ts_start;
 	END CASE;
-	
+
 	CASE
 		WHEN src IS NULL THEN
 			SELECT max(ts) FROM solardatum.da_datum WHERE node_id = node
@@ -235,16 +235,16 @@ BEGIN
 			SELECT max(ts) FROM solardatum.da_datum WHERE node_id = node AND source_id = src
 			INTO ts_end;
 	END CASE;
-	
-	SELECT 
-		l.time_zone, 
+
+	SELECT
+		l.time_zone,
 		CAST(EXTRACT(epoch FROM z.utc_offset) / 60 AS INTEGER)
 	FROM solarnet.sn_node n
 	INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 	INNER JOIN pg_timezone_names z ON z.name = l.time_zone
 	WHERE n.node_id = node
 	INTO node_tz, node_tz_offset;
-	
+
 	IF NOT FOUND THEN
 		node_tz := 'UTC';
 		node_tz_offset := 0;
@@ -254,7 +254,7 @@ END;$BODY$
   LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION solardatum.find_most_recent(
-	node solarcommon.node_id, 
+	node solarcommon.node_id,
 	sources solarcommon.source_ids DEFAULT NULL)
   RETURNS SETOF solardatum.da_datum AS
 $BODY$
@@ -263,16 +263,16 @@ BEGIN
 		RETURN QUERY
 		SELECT dd.* FROM solardatum.da_datum dd
 		INNER JOIN (
-			-- to speed up query for sources (which can be very slow when queried directly on da_datum), 
+			-- to speed up query for sources (which can be very slow when queried directly on da_datum),
 			-- we find the most recent hour time slot in agg_datum_hourly, and then join to da_datum with that narrow time range
 			WITH days AS (
-				SELECT max(d.ts_start) as ts_start, d.source_id FROM solaragg.agg_datum_hourly d 
+				SELECT max(d.ts_start) as ts_start, d.source_id FROM solaragg.agg_datum_hourly d
 				INNER JOIN (SELECT solardatum.find_available_sources(node) AS source_id) AS s ON s.source_id = d.source_id
 				WHERE d. node_id = node
 				GROUP BY d.source_id
 			)
-			SELECT max(d.ts) as ts, d.source_id FROM solardatum.da_datum d 
-			INNER JOIN days ON days.source_id = d.source_id 
+			SELECT max(d.ts) as ts, d.source_id FROM solardatum.da_datum d
+			INNER JOIN days ON days.source_id = d.source_id
 			WHERE d.node_id = node
 				AND d.ts >= days.ts_start
 				AND d.ts < days.ts_start + interval '1 hour'
@@ -284,13 +284,13 @@ BEGIN
 		SELECT dd.* FROM solardatum.da_datum dd
 		INNER JOIN (
 			WITH days AS (
-				SELECT max(d.ts_start) as ts_start, d.source_id FROM solaragg.agg_datum_hourly d 
+				SELECT max(d.ts_start) as ts_start, d.source_id FROM solaragg.agg_datum_hourly d
 				INNER JOIN (SELECT unnest(sources) AS source_id) AS s ON s.source_id = d.source_id
 				WHERE d. node_id = node
 				GROUP BY d.source_id
 			)
-			SELECT max(d.ts) as ts, d.source_id FROM solardatum.da_datum d 
-			INNER JOIN days ON days.source_id = d.source_id 
+			SELECT max(d.ts) as ts, d.source_id FROM solardatum.da_datum d
+			INNER JOIN days ON days.source_id = d.source_id
 			WHERE d.node_id = node
 				AND d.ts >= days.ts_start
 				AND d.ts < days.ts_start + interval '1 hour'
@@ -304,14 +304,14 @@ END;$BODY$
 
 /**
  * Return most recent datum records for all available sources for a given set of node IDs.
- * 
+ *
  * @param nodes An array of node IDs to return results for.
  * @returns Set of solardatum.da_datum records.
  */
 CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes solarcommon.node_ids)
   RETURNS SETOF solardatum.da_datum AS
 $BODY$
-	SELECT r.* 
+	SELECT r.*
 	FROM (SELECT unnest(nodes) AS node_id) AS n,
 	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
 	ORDER BY r.node_id, r.source_id;
