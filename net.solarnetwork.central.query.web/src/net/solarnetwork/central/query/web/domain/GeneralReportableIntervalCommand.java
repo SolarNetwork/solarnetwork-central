@@ -28,22 +28,68 @@ import org.joda.time.DateTime;
  * Command for general reportable interval queries.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class GeneralReportableIntervalCommand {
 
 	private Long locationId;
-	private Long nodeId;
+	private Long[] nodeIds;
 	private String sourceId;
 	private DateTime start;
 	private DateTime end;
+	private String metadataFilter;
 
-	public Long getNodeId() {
-		return nodeId;
+	/**
+	 * Set a single node ID.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single node ID at a
+	 * time. The node ID is still stored on the {@code nodeIds} array, just as
+	 * the first value. Calling this method replaces any existing
+	 * {@code nodeIds} value with a new array containing just the ID passed into
+	 * this method.
+	 * </p>
+	 * 
+	 * @param nodeId
+	 *        the ID of the node
+	 */
+	public void setNodeId(Long nodeId) {
+		this.nodeIds = new Long[] { nodeId };
 	}
 
-	public void setNodeId(Long nodeId) {
-		this.nodeId = nodeId;
+	/**
+	 * Get the first node ID.
+	 * 
+	 * <p>
+	 * This returns the first available node ID from the {@code nodeIds} array,
+	 * or <em>null</em> if not available.
+	 * </p>
+	 * 
+	 * @return the first node ID
+	 */
+	public Long getNodeId() {
+		return this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0];
+	}
+
+	/**
+	 * Get the node IDs.
+	 * 
+	 * @return The node IDs.
+	 * @since 1.2
+	 */
+	public Long[] getNodeIds() {
+		return nodeIds;
+	}
+
+	/**
+	 * Set the node IDs.
+	 * 
+	 * @param nodeIds
+	 *        The node IDs to set.
+	 * @since 1.2
+	 */
+	public void setNodeIds(Long[] nodeIds) {
+		this.nodeIds = nodeIds;
 	}
 
 	public String getSourceId() {
@@ -76,6 +122,27 @@ public class GeneralReportableIntervalCommand {
 
 	public void setLocationId(Long locationId) {
 		this.locationId = locationId;
+	}
+
+	/**
+	 * Get the LDAP style metadata filter.
+	 * 
+	 * @return The configured filter.
+	 * @since 1.2
+	 */
+	public String getMetadataFilter() {
+		return metadataFilter;
+	}
+
+	/**
+	 * Set the LDAP style metadata filter.
+	 * 
+	 * @param metadataFilter
+	 *        The filter to set.
+	 * @since 1.2
+	 */
+	public void setMetadataFilter(String metadataFilter) {
+		this.metadataFilter = metadataFilter;
 	}
 
 }

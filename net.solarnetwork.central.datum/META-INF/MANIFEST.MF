@@ -6,10 +6,10 @@ Bundle-Version: 1.21.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
- net.solarnetwork.central.datum.biz;version="1.1.0",
+ net.solarnetwork.central.datum.biz;version="1.2.0",
  net.solarnetwork.central.datum.dao;version="2.1.0",
  net.solarnetwork.central.datum.domain;version="1.18.0",
- net.solarnetwork.central.datum.support;version="1.5.1"
+ net.solarnetwork.central.datum.support;version="1.6.0"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.4,3.0)",
  com.fasterxml.jackson.core;version="[2.4,3.0)",
