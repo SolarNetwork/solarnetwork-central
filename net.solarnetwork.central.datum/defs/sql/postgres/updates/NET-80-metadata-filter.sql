@@ -8,7 +8,7 @@
  *
  * @returns All matching source IDs.
  */
-CREATE OR REPLACE FUNCTION find_solardatum.sources_for_meta(
+CREATE OR REPLACE FUNCTION solardatum.find_sources_for_meta(
     IN nodes bigint[],
     IN criteria text
   )
