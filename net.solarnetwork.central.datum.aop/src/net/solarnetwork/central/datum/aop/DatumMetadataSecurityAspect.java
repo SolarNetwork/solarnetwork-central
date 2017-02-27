@@ -22,23 +22,35 @@
 
 package net.solarnetwork.central.datum.aop;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
-import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
-import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.support.AuthorizationSupport;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.security.core.Authentication;
+import org.springframework.util.AntPathMatcher;
+import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicyEnforcer;
+import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.support.AuthorizationSupport;
 
 /**
  * Security AOP support for {@link DatumMetadataBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Aspect
 public class DatumMetadataSecurityAspect extends AuthorizationSupport {
@@ -60,6 +72,10 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 */
 	public DatumMetadataSecurityAspect(UserNodeDao userNodeDao) {
 		super(userNodeDao);
+		AntPathMatcher antMatch = new AntPathMatcher();
+		antMatch.setCachePatterns(false);
+		antMatch.setCaseSensitive(true);
+		setPathMatcher(antMatch);
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.addGeneralNode*(..)) && args(nodeId,..)")
@@ -76,6 +92,10 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.findGeneralNode*(..)) && args(filter,..)")
 	public void findMetadata(GeneralNodeDatumMetadataFilter filter) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.getGeneralNodeDatumMetadataFilteredSources(..)) && args(nodeIds,..)")
+	public void getMetadataFilteredSources(Long[] nodeIds) {
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.addGeneralLocation*(..)) && args(locationId,..)")
@@ -112,6 +132,72 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 		requireNodeReadAccess(filter == null ? null : filter.getNodeId());
 	}
 
+	/**
+	 * Enforce node ID and source ID policy restrictions when requesting the
+	 * available sources for node datum metadata.
+	 * 
+	 * First the node ID is verified. Then, for all returned source ID values,
+	 * if the active policy has no source ID restrictions return all values,
+	 * otherwise remove any value not included in the policy.
+	 * 
+	 * @param pjp
+	 *        The join point.
+	 * @param nodeIds
+	 *        The node IDs.
+	 * @return The set of NodeSourcePK results.
+	 * @throws Throwable
+	 * @since 1.2
+	 */
+	@Around("getMetadataFilteredSources(nodeIds)")
+	public Object filteredMetadataSourcesAccessCheck(ProceedingJoinPoint pjp, Long[] nodeIds)
+			throws Throwable {
+		// verify node IDs
+		if ( nodeIds != null ) {
+			for ( Long nodeId : nodeIds ) {
+				requireNodeReadAccess(nodeId);
+			}
+		}
+
+		// verify source IDs in result
+		@SuppressWarnings("unchecked")
+		Set<NodeSourcePK> result = (Set<NodeSourcePK>) pjp.proceed();
+		if ( result == null || result.isEmpty() ) {
+			return result;
+		}
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return result;
+		}
+		Set<String> allowedSourceIds = policy.getSourceIds();
+		if ( allowedSourceIds == null || allowedSourceIds.isEmpty() ) {
+			return result;
+		}
+		Authentication authentication = SecurityUtils.getCurrentAuthentication();
+		Object principal = (authentication != null ? authentication.getPrincipal() : null);
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, null,
+				getPathMatcher());
+		try {
+			List<String> inputSourceIds = new ArrayList<String>(result.size());
+			for ( NodeSourcePK pk : result ) {
+				inputSourceIds.add(pk.getSourceId());
+			}
+			String[] resultSourceIds = enforcer
+					.verifySourceIds(inputSourceIds.toArray(new String[inputSourceIds.size()]));
+			Set<String> allowedSourceIdSet = new HashSet<String>(Arrays.asList(resultSourceIds));
+			Set<NodeSourcePK> restricted = new LinkedHashSet<NodeSourcePK>(resultSourceIds.length);
+			for ( NodeSourcePK oneResult : result ) {
+				if ( allowedSourceIdSet.contains(oneResult.getSourceId()) ) {
+					restricted.add(oneResult);
+				}
+			}
+			result = restricted;
+		} catch ( AuthorizationException e ) {
+			// ignore, and just  map to empty set
+			result = Collections.emptySet();
+		}
+		return result;
+	}
+
 	@Before("addLocationMetadata(locationId) || storeLocationMetadata(locationId) || removeLocationMetadata(locationId)")
 	public void updateLocationMetadataCheck(Long locationId) {
 		SecurityUtils.requireAnyRole(locaitonMetadataAdminRoles);
@@ -133,8 +219,8 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 		}
 		Set<String> capitalized;
 		if ( locaitonMetadataAdminRoles.size() == 1 ) {
-			capitalized = Collections.singleton(locaitonMetadataAdminRoles.iterator().next()
-					.toUpperCase());
+			capitalized = Collections
+					.singleton(locaitonMetadataAdminRoles.iterator().next().toUpperCase());
 		} else {
 			capitalized = new HashSet<String>(locaitonMetadataAdminRoles.size());
 			for ( String role : locaitonMetadataAdminRoles ) {

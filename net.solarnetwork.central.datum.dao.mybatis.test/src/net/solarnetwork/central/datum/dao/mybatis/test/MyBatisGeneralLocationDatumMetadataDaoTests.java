@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.dao.mybatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -31,6 +32,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.joda.time.DateTime;
+import org.junit.Before;
+import org.junit.Test;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralLocationDatumMetadataDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
@@ -39,9 +44,6 @@ import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.domain.GeneralDatumMetadata;
-import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test cases for the {@link MyBatisGeneralLocationDatumMetadataDao}.
@@ -111,8 +113,8 @@ public class MyBatisGeneralLocationDatumMetadataDaoTests extends AbstractMyBatis
 		datum.getMeta().getInfo().put("watt_hours", 39309570293789380L);
 		datum.getMeta().getInfo().put("very_big", new BigInteger("93475092039478209375027350293523957"));
 		datum.getMeta().getInfo().put("watts", 498475890235787897L);
-		datum.getMeta().getInfo()
-				.put("floating", new BigDecimal("293487590845639845728947589237.49087"));
+		datum.getMeta().getInfo().put("floating",
+				new BigDecimal("293487590845639845728947589237.49087"));
 		dao.store(datum);
 
 		GeneralLocationDatumMetadata entity = dao.get(datum.getId());
@@ -126,8 +128,8 @@ public class MyBatisGeneralLocationDatumMetadataDaoTests extends AbstractMyBatis
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setLocationId(TEST_LOC_ID);
 
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria,
-				null, null, null);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria, null,
+				null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
 		assertEquals(1, (int) results.getReturnedResultCount());
@@ -171,8 +173,8 @@ public class MyBatisGeneralLocationDatumMetadataDaoTests extends AbstractMyBatis
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setLocationId(TEST_LOC_ID);
 
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria,
-				null, 0, 1);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria, null,
+				0, 1);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
 		assertEquals(1, (int) results.getReturnedResultCount());
@@ -199,8 +201,8 @@ public class MyBatisGeneralLocationDatumMetadataDaoTests extends AbstractMyBatis
 		loc.setRegion("NZ");
 		DatumFilterCommand criteria = new DatumFilterCommand(loc);
 
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria,
-				null, null, null);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria, null,
+				null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
 		assertEquals(1, (int) results.getReturnedResultCount());
@@ -213,8 +215,8 @@ public class MyBatisGeneralLocationDatumMetadataDaoTests extends AbstractMyBatis
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setTags(new String[] { "foo", "bar" });
 
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria,
-				null, null, null);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria, null,
+				null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
 		assertEquals(1, (int) results.getReturnedResultCount());
@@ -229,11 +231,33 @@ public class MyBatisGeneralLocationDatumMetadataDaoTests extends AbstractMyBatis
 		DatumFilterCommand criteria = new DatumFilterCommand(loc);
 		criteria.setTags(new String[] { "foo" });
 
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria,
-				null, null, null);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria, null,
+				null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
 		assertEquals(1, (int) results.getReturnedResultCount());
 	}
 
+	@Test
+	public void findSourcesForMetadataFilter() {
+		GeneralLocationDatumMetadata meta1 = getTestInstance();
+		meta1.getMeta().addTag("super");
+		dao.store(meta1);
+
+		GeneralLocationDatumMetadata meta2 = getTestInstance();
+		meta2.setSourceId(TEST_SOURCE_ID_2);
+		dao.store(meta2);
+
+		Set<LocationSourcePK> results = dao.getFilteredSources(new Long[] { TEST_LOC_ID },
+				"(&(/**/foo=bar)(t=super))");
+		assertNotNull(results);
+		assertEquals("Returned results", 1L, results.size());
+		assertEquals(new LocationSourcePK(TEST_LOC_ID, TEST_SOURCE_ID), results.iterator().next());
+
+		results = dao.getFilteredSources(new Long[] { TEST_LOC_ID }, "(/**/foo=bar)");
+		assertNotNull(results);
+		assertEquals("Returned results", 2L, results.size());
+		assertTrue(results.contains(new LocationSourcePK(TEST_LOC_ID, TEST_SOURCE_ID)));
+		assertTrue(results.contains(new LocationSourcePK(TEST_LOC_ID, TEST_SOURCE_ID_2)));
+	}
 }

@@ -3,7 +3,7 @@ import fs from 'fs';
 import moment from 'moment';
 
 export default function parseDatumCSV(filename) {
-	var data = fs.readFileSync(__dirname+'/'+filename, { encoding : 'utf8' });
+	var data = fs.readFileSync(__dirname+'/fixtures/'+filename, { encoding : 'utf8' });
 	var records = csvParse(data, {
 			auto_parse : true,
 			columns : true,

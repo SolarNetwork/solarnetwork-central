@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.dao.mybatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -31,6 +32,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.joda.time.DateTime;
+import org.junit.Before;
+import org.junit.Test;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumMetadataDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
@@ -38,15 +43,12 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.GeneralDatumMetadata;
-import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test cases for the {@link MyBatisGeneralNodeDatumMetadataDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisGeneralNodeDatumMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -108,8 +110,8 @@ public class MyBatisGeneralNodeDatumMetadataDaoTests extends AbstractMyBatisDaoT
 		datum.getMeta().getInfo().put("watt_hours", 39309570293789380L);
 		datum.getMeta().getInfo().put("very_big", new BigInteger("93475092039478209375027350293523957"));
 		datum.getMeta().getInfo().put("watts", 498475890235787897L);
-		datum.getMeta().getInfo()
-				.put("floating", new BigDecimal("293487590845639845728947589237.49087"));
+		datum.getMeta().getInfo().put("floating",
+				new BigDecimal("293487590845639845728947589237.49087"));
 		dao.store(datum);
 
 		GeneralNodeDatumMetadata entity = dao.get(datum.getId());
@@ -186,6 +188,29 @@ public class MyBatisGeneralNodeDatumMetadataDaoTests extends AbstractMyBatisDaoT
 		assertEquals("Returned results", 2L, (long) results.getTotalResults());
 		assertEquals("Returned result count", 1, (int) results.getReturnedResultCount());
 		assertEquals("Datum ID", lastDatum.getId(), results.iterator().next().getId());
+	}
+
+	@Test
+	public void findSourcesForMetadataFilter() {
+		GeneralNodeDatumMetadata meta1 = getTestInstance();
+		meta1.getMeta().addTag("super");
+		dao.store(meta1);
+
+		GeneralNodeDatumMetadata meta2 = getTestInstance();
+		meta2.setSourceId(TEST_SOURCE_ID_2);
+		dao.store(meta2);
+
+		Set<NodeSourcePK> results = dao.getFilteredSources(new Long[] { TEST_NODE_ID },
+				"(&(/**/foo=bar)(t=super))");
+		assertNotNull(results);
+		assertEquals("Returned results", 1L, results.size());
+		assertEquals(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), results.iterator().next());
+
+		results = dao.getFilteredSources(new Long[] { TEST_NODE_ID }, "(/**/foo=bar)");
+		assertNotNull(results);
+		assertEquals("Returned results", 2L, results.size());
+		assertTrue(results.contains(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID)));
+		assertTrue(results.contains(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID_2)));
 	}
 
 }

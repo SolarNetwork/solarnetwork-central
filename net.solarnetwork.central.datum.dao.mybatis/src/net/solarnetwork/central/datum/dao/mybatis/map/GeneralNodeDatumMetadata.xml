@@ -24,15 +24,25 @@
 			AND source_id = #{sourceId}
 	</delete>
 	
-	<sql id="fragment-GeneralNodeDatumMetadata-full-result">
+	<sql id="fragment-GeneralNodeDatumMetadata-pk-result">
 		meta.node_id AS meta_node_id,
-		meta.source_id AS meta_source_id,
+		meta.source_id AS meta_source_id
+	</sql>
+	
+	<sql id="fragment-GeneralNodeDatumMetadata-full-result">
+		<include refid="fragment-GeneralNodeDatumMetadata-pk-result"/>,		
 		meta.created AS meta_created,
 		meta.updated AS meta_updated,
 		meta.jdata AS meta_jdata
 	</sql>
 	
-	<resultMap id="GeneralNodeDatumMetadataFullResult" type="GeneralNodeDatumMetadata">
+	<resultMap id="GeneralNodeDatumMetadataPKResult" type="NodeSourcePK">
+		<id property="nodeId" column="meta_node_id"/>
+		<id property="sourceId" column="meta_source_id"/>
+	</resultMap>
+	
+	<resultMap id="GeneralNodeDatumMetadataFullResult" type="GeneralNodeDatumMetadata"
+		extends="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatumMetadata.GeneralNodeDatumMetadataPKResult">
 		<id property="nodeId" column="meta_node_id"/>
 		<id property="sourceId" column="meta_source_id"/>
 		<id property="created" column="meta_created"/>
@@ -96,6 +106,16 @@
 		FROM
 			solardatum.da_meta meta
 		<include refid="fragment-findall-GeneralNodeDatumMetadata-GeneralNodeDatumMetadataMatch-where"/>
+	</select>
+
+	<select id="find-metadata-distinct-sources" resultMap="GeneralNodeDatumMetadataPKResult">
+		SELECT
+			<include refid="fragment-GeneralNodeDatumMetadata-pk-result"/>
+		FROM
+			solardatum.find_sources_for_meta(
+				#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler},
+				#{filter}) meta
+		ORDER BY meta.node_id, meta.source_id
 	</select>
 
 </mapper>
