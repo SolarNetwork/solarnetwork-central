@@ -30,7 +30,9 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -209,6 +211,34 @@ public class AuthenticationDataV2Tests {
 	 */
 	static String createAuthorizationHeaderV2Value(String authTokenId, String authTokenSecret,
 			MockHttpServletRequest request, Date date, String contentType) throws IOException {
+		return createAuthorizationHeaderV2Value(authTokenId, authTokenSecret, request, date, date,
+				contentType);
+	}
+
+	/**
+	 * Create an {@code Authorization} HTTP header using the
+	 * {@link AuthenticationScheme#V2} scheme.
+	 * 
+	 * @param authTokenId
+	 *        The auth token ID.
+	 * @param authTokenSecret
+	 *        The auth token secret.
+	 * @param request
+	 *        The HTTP request.
+	 * @param date
+	 *        The request date to use.
+	 * @param signDate
+	 *        The signing date to use. If not provided, the {@code date} value
+	 *        will be used.
+	 * @param contentType
+	 *        The content type.
+	 * @return The {@code Authorization} HTTP header value.
+	 * @throws IOException
+	 *         If an IO error occurs.
+	 */
+	static String createAuthorizationHeaderV2Value(String authTokenId, String authTokenSecret,
+			MockHttpServletRequest request, Date date, Date signDate, String contentType)
+			throws IOException {
 		if ( request.getHeader(HTTP_HEADER_HOST) == null ) {
 			request.addHeader(HTTP_HEADER_HOST, TEST_HOST);
 		}
@@ -232,7 +262,7 @@ public class AuthenticationDataV2Tests {
 				headerNames.toArray(new String[headerNames.size()]));
 		final SecurityHttpServletRequestWrapper secRequest = new SecurityHttpServletRequestWrapper(
 				request, 1024);
-		final byte[] signingKey = computeSigningKey(authTokenSecret, date);
+		final byte[] signingKey = computeSigningKey(authTokenSecret, signDate != null ? signDate : date);
 		final String signatureData = computeSignatureData(computeCanonicalRequestData(secRequest,
 				headerNames.toArray(new String[headerNames.size()])), date);
 		final String signature = Hex.encodeHexString(computeHMACSHA256(signingKey, signatureData));
@@ -258,8 +288,8 @@ public class AuthenticationDataV2Tests {
 	@Test
 	public void missingDate() throws ServletException, IOException {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
-		final String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
-				new Date());
+		final String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD,
+				request, new Date());
 		try {
 			new AuthenticationDataV2(new SecurityHttpServletRequestWrapper(request, 1024), authHeader);
 			Assert.fail("Should have thrown BadCredentialsException");
@@ -288,7 +318,8 @@ public class AuthenticationDataV2Tests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
 		final Date now = new Date(System.currentTimeMillis() - 16L * 60L * 1000L);
 		request.addHeader("Date", now);
-		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now);
+		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
+				now);
 		request.addHeader(HTTP_HEADER_AUTH, authHeader);
 		AuthenticationDataV2 authData = new AuthenticationDataV2(
 				new SecurityHttpServletRequestWrapper(request, 1024),
@@ -301,9 +332,42 @@ public class AuthenticationDataV2Tests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
 		final Date now = new Date();
 		request.addHeader("Date", now);
-		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now);
+		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
+				now);
 		request.addHeader(HTTP_HEADER_AUTH, authHeader);
 		verifyRequest(request, TEST_PASSWORD);
+	}
+
+	@Test
+	public void simplePathSignedAcrossSevenDays() throws ServletException, IOException {
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		final Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+		final Date now = cal.getTime();
+		request.addHeader("Date", now);
+		for ( int i = 0; i < 7; i++, cal.add(Calendar.DATE, -1) ) {
+			String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
+					now, cal.getTime(), null);
+			request.addHeader(HTTP_HEADER_AUTH, authHeader);
+			verifyRequest(request, TEST_PASSWORD);
+		}
+	}
+
+	@Test
+	public void simplePathSignedMoreThanSevenDays() throws ServletException, IOException {
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		final Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+		final Date now = cal.getTime();
+		cal.add(Calendar.DATE, -8);
+		request.addHeader("Date", now);
+		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
+				now, cal.getTime(), null);
+		request.addHeader(HTTP_HEADER_AUTH, authHeader);
+		AuthenticationDataV2 authData = new AuthenticationDataV2(
+				new SecurityHttpServletRequestWrapper(request, 1024),
+				authHeader.substring(AuthenticationScheme.V2.getSchemeName().length() + 1));
+		Assert.assertTrue("The date skew is OK", authData.isDateValid(TEST_MAX_DATE_SKEW));
+		String computedDigest = authData.computeSignatureDigest(TEST_PASSWORD);
+		Assert.assertNotEquals(computedDigest, authData.getSignatureDigest());
 	}
 
 	@Test
@@ -311,7 +375,8 @@ public class AuthenticationDataV2Tests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
 		final Date now = new Date();
 		request.addHeader("X-SN-Date", now);
-		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now);
+		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
+				now);
 		request.addHeader(HTTP_HEADER_AUTH, authHeader);
 		verifyRequest(request, TEST_PASSWORD);
 	}
@@ -326,7 +391,8 @@ public class AuthenticationDataV2Tests {
 		request.setParameters(params);
 		final Date now = new Date();
 		request.addHeader("Date", now);
-		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now);
+		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
+				now);
 		request.addHeader(HTTP_HEADER_AUTH, authHeader);
 		verifyRequest(request, TEST_PASSWORD);
 	}
@@ -341,7 +407,8 @@ public class AuthenticationDataV2Tests {
 		request.setParameters(params);
 		final Date now = new Date();
 		request.addHeader("Date", now);
-		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now);
+		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
+				now);
 		request.addHeader(HTTP_HEADER_AUTH, authHeader);
 		verifyRequest(request, TEST_PASSWORD);
 	}
@@ -357,8 +424,8 @@ public class AuthenticationDataV2Tests {
 		request.setParameters(params);
 		final Date now = new Date();
 		request.addHeader("Date", now);
-		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now,
-				"application/x-www-form-urlencoded; charset=UTF-8");
+		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
+				now, "application/x-www-form-urlencoded; charset=UTF-8");
 		request.addHeader(HTTP_HEADER_AUTH, authHeader);
 		verifyRequest(request, TEST_PASSWORD);
 	}
@@ -374,8 +441,8 @@ public class AuthenticationDataV2Tests {
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
-		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now,
-				contentType);
+		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
+				now, contentType);
 		request.addHeader(HTTP_HEADER_AUTH, authHeader);
 		verifyRequest(request, TEST_PASSWORD);
 	}
@@ -391,8 +458,8 @@ public class AuthenticationDataV2Tests {
 		request.addHeader("Content-MD5", contentMD5);
 		final Date now = new Date();
 		request.addHeader("Date", now);
-		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now,
-				contentType);
+		String authHeader = createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request,
+				now, contentType);
 		request.addHeader(HTTP_HEADER_AUTH, authHeader);
 		verifyRequest(request, TEST_PASSWORD);
 	}

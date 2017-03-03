@@ -23,9 +23,10 @@
 package net.solarnetwork.central.security.web;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Enumeration;
+import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -38,6 +39,9 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * Version 2 authentication token scheme based on HMAC-SHA256.
+ * 
+ * Signing keys are treated valid for up to 7 days in the past from the time of
+ * the signature calculation in {@link #computeSignatureDigest(String)}.
  * 
  * @author matt
  * @version 1.0
@@ -118,19 +122,53 @@ public class AuthenticationDataV2 extends AuthenticationData {
 
 	@Override
 	public String computeSignatureDigest(String secretKey) {
-		final byte[] signingKey = computeSigningKey(secretKey);
-		return Hex.encodeHexString(computeMACDigest(signingKey, signatureData, "HmacSHA256"));
+		// signing keys are valid for 7 days, so starting with today work backwards at most
+		// 7 days to see if we get a match
+		Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		String result = null;
+		for ( int i = 0; i < 7; i += 1, cal.add(Calendar.DATE, -1) ) {
+			final byte[] signingKey = computeSigningKey(secretKey, cal);
+			String computed = Hex
+					.encodeHexString(computeMACDigest(signingKey, signatureData, "HmacSHA256"));
+			if ( computed.equals(signatureDigest) ) {
+				return computed;
+			} else if ( result == null ) {
+				// save 1st result as one we return if nothing matches
+				result = computed;
+			}
+		}
+		return result;
 	}
 
-	private byte[] computeSigningKey(String secretKey) {
+	private String formatSigningDate(Calendar cal) {
+		int year = cal.get(Calendar.YEAR);
+		int month = cal.get(Calendar.MONTH) + 1;
+		int day = cal.get(Calendar.DATE);
+		StringBuilder buf = new StringBuilder();
+		buf.append(year);
+		if ( month < 10 ) {
+			buf.append('0');
+		}
+		buf.append(month);
+		if ( day < 10 ) {
+			buf.append('0');
+		}
+		buf.append(day);
+		return buf.toString();
+	}
+
+	private byte[] computeSigningKey(String secretKey, Calendar cal) {
 		/*- signing key is like:
 		 
 		HMACSHA256(HMACSHA256("SNWS2"+secretKey, "20160301"), "snws2_request")
 		*/
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-		sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+		String dateStr = formatSigningDate(cal);
 		return computeMACDigest(computeMACDigest(AuthenticationScheme.V2.getSchemeName() + secretKey,
-				sdf.format(getDate()), "HmacSHA256"), "snws2_request", "HmacSHA256");
+				dateStr, "HmacSHA256"), "snws2_request", "HmacSHA256");
 	}
 
 	private String computeSignatureData(String canonicalRequestData) {
