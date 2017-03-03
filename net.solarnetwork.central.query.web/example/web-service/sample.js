@@ -446,8 +446,7 @@ $(document).ready(function() {
 		}
 	});
 
-	$('input[name=useAuth]').change(function(event) {
-		event.preventDefault();
+	function setupForUseAuth() {
 		var form = this.form,
 			val = form.elements['path'].value,
 			credForm = $('#credentials')[0];
@@ -464,7 +463,12 @@ $(document).ready(function() {
 			$('#auth-result').show();
 		}
 		form.elements['path'].value = val;
-	});
+	}
+
+	$('input[name=useAuth]').change(function(event) {
+		event.preventDefault();
+		setupForUseAuth.call(this);
+	}).filter(':checked').first().each(setupForUseAuth);
 
 	function setupForMethod() {
 		var val = $(this).val();
