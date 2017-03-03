@@ -1,7 +1,7 @@
 /* ==================================================================
- * WebConstants.java - Nov 27, 2012 2:23:07 PM
+ * AuthenticationScheme.java - 1/03/2017 5:14:54 PM
  * 
- * Copyright 2007-2012 SolarNetwork.net Dev Team
+ * Copyright 2007-2017 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,35 +23,32 @@
 package net.solarnetwork.central.security.web;
 
 /**
- * Global web constants for the central SolarNetwork applications.
+ * Authentication scheme constants.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.8
  */
-public final class WebConstants {
+public enum AuthenticationScheme {
 
-	/** The prefix used for all custom HTTP headers. */
-	public static final String HEADER_PREFIX = "X-SN-";
+	/** The original scheme. */
+	V1("SolarNetworkWS"),
 
-	/** An error message header. */
-	public static final String HEADER_ERROR_MESSAGE = HEADER_PREFIX + "ErrorMessage";
+	/** The version 2 scheme. */
+	V2("SNWS2");
 
-	/**
-	 * A date header, e.g. for clients that don't have direct access to standard
-	 * HTTP Date header.
-	 */
-	public static final String HEADER_DATE = HEADER_PREFIX + "Date";
+	private String schemeName;
 
-	/**
-	 * The hex-encoded SHA256 value of an empty string.
-	 * 
-	 * @since 1.1
-	 */
-	public static final String EMPTY_STRING_SHA256_HEX = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-
-	// can't construct me
-	private WebConstants() {
-		super();
+	private AuthenticationScheme(String schemeName) {
+		this.schemeName = schemeName;
 	}
 
+	/**
+	 * Get the scheme name.
+	 * 
+	 * @return the scheme name
+	 */
+	public String getSchemeName() {
+		return schemeName;
+	}
 }

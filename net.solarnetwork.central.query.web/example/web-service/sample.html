@@ -6,9 +6,13 @@
 	<script src="js-lib/jquery.form.js"></script>
 	<script src="js-lib/bootstrap.js"></script>
 	<script src="js-lib/prettify.js"></script>
-	<script src="js-lib/hmac-sha1.js"></script>
-	<script src="js-lib/enc-base64-min.js"></script>
+	<script src="js-lib/core-min.js"></script>
+	<script src="js-lib/cipher-core-min.js"></script>
+	<script src="js-lib/hmac-min.js"></script>
 	<script src="js-lib/md5-min.js"></script>
+	<script src="js-lib/sha1-min.js"></script>
+	<script src="js-lib/sha256-min.js"></script>
+	<script src="js-lib/enc-base64-min.js"></script>
 	<script src="sample.js"></script>
 	<link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
 	<link rel="stylesheet" type="text/css" href="css/bootstrap-responsive.css" />
@@ -180,10 +184,13 @@
 					<label class="control-label">Auth</label>
 					<div class="controls">
 					    <label class="radio inline">
-   							<input type="radio" name="useAuth" value="true" checked="checked"> Token
+   							<input type="radio" name="useAuth" value="2" checked="checked"> Token V2
    						</label>
 					    <label class="radio inline">
-   							<input type="radio" name="useAuth" value="false"> None
+   							<input type="radio" name="useAuth" value="1" checked="checked"> Token V1
+   						</label>
+					    <label class="radio inline">
+   							<input type="radio" name="useAuth" value="0"> None
    						</label>
 					</div>
 				</div>
@@ -241,10 +248,13 @@
 		<div class="span12">
 			<h4><i class="fa fa-caret-right clickable" id="auth-result-toggle"></i>Auth Support</h4>
 			<div id="auth-result-container" style="display: none;">
-				<p>This shows the the computed SolarNetworkWS HTTP authorization header.</p>
+				<p>This shows the the computed HTTP <code>Authorization</code> header.</p>
 				<pre id="auth-header"></pre>
+				<h5 class="V2">Canonical request data</h5>
+				<p class="V2">This shows the raw request data that is hashed and included in the authorization message.</p>
+				<pre class="V2" id="req-message"></pre>
 				<h5>Authorization message</h5>
-				<p>This shows the raw data that is hashed to form the authorization header value.</p>
+				<p>This shows the raw data that is hashed to form the authorization signature value.</p>
 				<pre id="auth-message"></pre>
 				<h5>Curl command</h5>
 				<p>This is a <code>curl</code> command to make the same HTTP request.</p>

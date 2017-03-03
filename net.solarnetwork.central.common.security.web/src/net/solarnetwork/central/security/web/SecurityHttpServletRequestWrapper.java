@@ -37,13 +37,17 @@ import net.solarnetwork.central.security.SecurityException;
  * request content.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SecurityHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
 	private final int maximumLength;
 	private boolean requestBodyCached;
 	private byte[] cachedRequestBody; // TODO: support writing to temp file if body > maximumLength!
+
+	private byte[] cachedMD5 = null;
+	private byte[] cachedSHA1 = null;
+	private byte[] cachedSHA256 = null;
 
 	/**
 	 * Construct from a request.
@@ -100,11 +104,67 @@ public class SecurityHttpServletRequestWrapper extends HttpServletRequestWrapper
 	 *         {@code maximumLength}
 	 */
 	public byte[] getContentMD5() throws IOException {
+		byte[] digest = cachedMD5;
+		if ( digest != null ) {
+			return digest;
+		}
 		cacheRequestBody();
 		if ( cachedRequestBody == null || cachedRequestBody.length < 1 ) {
 			return null;
 		}
-		return DigestUtils.md5(cachedRequestBody);
+		digest = DigestUtils.md5(cachedRequestBody);
+		cachedMD5 = digest;
+		return digest;
+	}
+
+	/**
+	 * Compute the SHA1 hash of the request body.
+	 * 
+	 * @return the SHA1 hash, or <em>null</em> if there is no request content
+	 * @throws IOException
+	 *         if an IO exception occurs
+	 * @throws SecurityException
+	 *         if the request content length is larger than the configured
+	 *         {@code maximumLength}
+	 * @since 1.2
+	 */
+	public byte[] getContentSHA1() throws IOException {
+		byte[] digest = cachedSHA1;
+		if ( digest != null ) {
+			return digest;
+		}
+		cacheRequestBody();
+		if ( cachedRequestBody == null || cachedRequestBody.length < 1 ) {
+			return null;
+		}
+		digest = DigestUtils.sha1(cachedRequestBody);
+		cachedSHA1 = digest;
+		return digest;
+	}
+
+	/**
+	 * Compute the SHA256 hash of the request body.
+	 * 
+	 * @return the SHA256 hash, or <em>null</em> if there is no request content
+	 * @throws IOException
+	 *         if an IO exception occurs
+	 * @throws SecurityException
+	 *         if the request content length is larger than the configured
+	 *         {@code maximumLength}
+	 * @since 1.2
+	 */
+	public byte[] getContentSHA256() throws IOException {
+		byte[] digest = cachedSHA256;
+		if ( digest != null ) {
+			return digest;
+		}
+		cacheRequestBody();
+		if ( cachedRequestBody == null || cachedRequestBody.length < 1 ) {
+			return null;
+		}
+		digest = DigestUtils.sha256(cachedRequestBody);
+		cachedSHA256 = digest;
+		return digest;
 	}
 
 	@Override
