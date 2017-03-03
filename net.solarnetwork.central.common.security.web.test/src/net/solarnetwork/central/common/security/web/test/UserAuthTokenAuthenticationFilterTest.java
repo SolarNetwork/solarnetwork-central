@@ -243,6 +243,40 @@ public class UserAuthTokenAuthenticationFilterTest {
 	}
 
 	@Test
+	public void tokenWithEqualSignV1() throws ServletException, IOException {
+		final String tokenId = "2^=3^rz}fgu0twxj;*fb";
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV1Value(tokenId, TEST_PASSWORD, request, now));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(tokenId)).andReturn(userDetails);
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+		verify(filterChain, userDetailsService);
+		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		validateAuthentication();
+	}
+
+	@Test
+	public void tokenWithEqualSignV2() throws ServletException, IOException {
+		final String tokenId = "2^=3^rz}fgu0twxj;*fb";
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(tokenId, TEST_PASSWORD, request, now));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(tokenId)).andReturn(userDetails);
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+		verify(filterChain, userDetailsService);
+		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		validateAuthentication();
+	}
+
+	@Test
 	public void simplePathWithXDateV1() throws ServletException, IOException {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
 		final Date now = new Date();

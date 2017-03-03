@@ -101,10 +101,11 @@ public abstract class AuthenticationData {
 		// try Digest HTTP header first
 		String headerValue = request.getHeader("Digest");
 		if ( headerValue != null ) {
+			final String delimitedString = headerValue + ",";
 			int prevDelimIdx = 0;
 			int delimIdx = 0;
-			for ( delimIdx = (headerValue + ",").indexOf(',',
-					delimIdx); delimIdx >= 0; prevDelimIdx = delimIdx ) {
+			for ( delimIdx = delimitedString.indexOf(','); delimIdx >= 0; prevDelimIdx = delimIdx
+					+ 1, delimIdx = delimitedString.indexOf(',', prevDelimIdx) ) {
 				String oneDigest = headerValue.substring(prevDelimIdx, delimIdx);
 				int splitIdx = oneDigest.indexOf('=');
 				if ( splitIdx > 0 ) {

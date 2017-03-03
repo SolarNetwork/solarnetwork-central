@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
@@ -44,6 +45,8 @@ import net.solarnetwork.util.StringUtils;
  */
 public class AuthenticationDataV2 extends AuthenticationData {
 
+	private static final int SIGNATURE_HEX_LENGTH = 64;
+
 	public static final String TOKEN_COMPONENT_KEY_CREDENTIAL = "Credential";
 	public static final String TOKEN_COMPONENT_KEY_SIGNED_HEADERS = "SignedHeaders";
 	public static final String TOKEN_COMPONENT_KEY_SIGNATURE = "Signature";
@@ -60,15 +63,23 @@ public class AuthenticationDataV2 extends AuthenticationData {
 
 		// the header must be in the form Credential=TOKEN-ID,SignedHeaders=x;y;z,Signature=HMAC-SHA1-SIGNATURE
 
-		Map<String, String> tokenData = StringUtils.commaDelimitedStringToMap(headerValue);
-		if ( AUTH_TOKEN_ID_LENGTH + 2 >= headerValue.length() ) {
-			throw new BadCredentialsException("Invalid Authorization header value");
-		}
+		Map<String, String> tokenData = tokenStringToMap(headerValue);
 		authTokenId = tokenData.get(TOKEN_COMPONENT_KEY_CREDENTIAL);
+		if ( authTokenId == null || authTokenId.length() != AUTH_TOKEN_ID_LENGTH ) {
+			throw new BadCredentialsException("Invalid " + TOKEN_COMPONENT_KEY_CREDENTIAL + " value");
+		}
 		signatureDigest = tokenData.get(TOKEN_COMPONENT_KEY_SIGNATURE);
+		if ( signatureDigest == null || signatureDigest.length() != SIGNATURE_HEX_LENGTH ) {
+			throw new BadCredentialsException("Invalid " + TOKEN_COMPONENT_KEY_SIGNATURE + " value");
+		}
 
 		String signedHeaders = tokenData.get(TOKEN_COMPONENT_KEY_SIGNED_HEADERS);
 		signedHeaderNames = StringUtils.delimitedStringToSet(signedHeaders, ";");
+		if ( signedHeaderNames == null || signedHeaderNames.size() < 2 ) {
+			// a minimum of Host + (Date | X-SN-Date) must be provided
+			throw new BadCredentialsException(
+					"Invalid " + TOKEN_COMPONENT_KEY_SIGNED_HEADERS + " value");
+		}
 
 		sortedSignedHeaderNames = signedHeaderNames.toArray(new String[signedHeaderNames.size()]);
 		for ( int i = 0; i < sortedSignedHeaderNames.length; i++ ) {
@@ -81,6 +92,28 @@ public class AuthenticationDataV2 extends AuthenticationData {
 		validateContentDigest(request);
 
 		signatureData = computeSignatureData(computeCanonicalRequestData(request));
+	}
+
+	private static Map<String, String> tokenStringToMap(final String headerValue) {
+		if ( headerValue == null || headerValue.length() < 1 ) {
+			return null;
+		}
+		final Map<String, String> map = new LinkedHashMap<String, String>();
+		final String delimitedString = headerValue + ',';
+		int prevDelimIdx = 0;
+		int delimIdx;
+		int splitIdx;
+		for ( delimIdx = delimitedString.indexOf(','); delimIdx >= 0; prevDelimIdx = delimIdx
+				+ 1, delimIdx = delimitedString.indexOf(',', prevDelimIdx) ) {
+			String component = delimitedString.substring(prevDelimIdx, delimIdx);
+			splitIdx = component.indexOf('=');
+			if ( splitIdx > 0 ) {
+				String componentKey = component.substring(0, splitIdx);
+				String componentValue = component.substring(splitIdx + 1);
+				map.put(componentKey, componentValue);
+			}
+		}
+		return map;
 	}
 
 	@Override
