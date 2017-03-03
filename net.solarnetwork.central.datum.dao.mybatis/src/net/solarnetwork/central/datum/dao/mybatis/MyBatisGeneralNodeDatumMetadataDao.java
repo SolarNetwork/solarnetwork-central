@@ -23,8 +23,12 @@
 package net.solarnetwork.central.datum.dao.mybatis;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
@@ -34,21 +38,27 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link GeneralNodeDatumMetadataDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class MyBatisGeneralNodeDatumMetadataDao extends
-		BaseMyBatisGenericDao<GeneralNodeDatumMetadata, NodeSourcePK> implements
-		GeneralNodeDatumMetadataDao {
+public class MyBatisGeneralNodeDatumMetadataDao
+		extends BaseMyBatisGenericDao<GeneralNodeDatumMetadata, NodeSourcePK>
+		implements GeneralNodeDatumMetadataDao {
 
 	/** The query parameter for a general {@link Filter} object value. */
 	public static final String PARAM_FILTER = "filter";
+
+	/**
+	 * The default query name used for
+	 * {@link #getFilteredSources(Long[], String)}.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String QUERY_FOR_SOURCES = "find-metadata-distinct-sources";
 
 	/**
 	 * Default constructor.
@@ -90,9 +100,20 @@ public class MyBatisGeneralNodeDatumMetadataDao extends
 		List<GeneralNodeDatumMetadataFilterMatch> rows = selectList(query, sqlProps, offset, max);
 
 		BasicFilterResults<GeneralNodeDatumMetadataFilterMatch> results = new BasicFilterResults<GeneralNodeDatumMetadataFilterMatch>(
-				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
+				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset,
+				rows.size());
 
 		return results;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<NodeSourcePK> getFilteredSources(Long[] nodeIds, String metadataFilter) {
+		Map<String, Object> sqlProps = new HashMap<String, Object>(2);
+		sqlProps.put("nodeIds", nodeIds);
+		sqlProps.put(PARAM_FILTER, metadataFilter);
+		List<NodeSourcePK> rows = selectList(QUERY_FOR_SOURCES, sqlProps, null, null);
+		return new LinkedHashSet<NodeSourcePK>(rows);
 	}
 
 }

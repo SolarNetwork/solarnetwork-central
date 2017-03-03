@@ -22,20 +22,33 @@
 
 package net.solarnetwork.central.datum.aop.test;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import net.solarnetwork.central.datum.aop.DatumMetadataSecurityAspect;
-import net.solarnetwork.central.security.AuthenticatedUser;
-import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
-import net.solarnetwork.central.user.dao.UserNodeDao;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.easymock.EasyMock;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import net.solarnetwork.central.datum.aop.DatumMetadataSecurityAspect;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.security.AuthenticatedToken;
+import net.solarnetwork.central.security.AuthenticatedUser;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.central.user.domain.UserNode;
 
 /**
  * Test cases for the {@link DatumMetadataSecurityAspect} class.
@@ -63,11 +76,26 @@ public class DatumMetadataSecurityAspectTests extends AbstractCentralTransaction
 		EasyMock.verify(userNodeDao);
 	}
 
+	private void setUser(Authentication auth) {
+		SecurityContextHolder.getContext().setAuthentication(auth);
+	}
+
 	private void becomeUser(String... roles) {
 		User userDetails = new User("test@localhost", "foobar", AuthorityUtils.NO_AUTHORITIES);
 		AuthenticatedUser user = new AuthenticatedUser(userDetails, -1L, "Test User", false);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(user, "foobar", roles);
-		SecurityContextHolder.getContext().setAuthentication(auth);
+		setUser(auth);
+	}
+
+	private SecurityToken setAuthenticatedReadNodeDataToken(final Long userId,
+			final SecurityPolicy policy) {
+		AuthenticatedToken token = new AuthenticatedToken(
+				new org.springframework.security.core.userdetails.User("user", "pass", true, true, true,
+						true, AuthorityUtils.NO_AUTHORITIES),
+				UserAuthTokenType.ReadNodeData.toString(), userId, policy);
+		TestingAuthenticationToken auth = new TestingAuthenticationToken(token, "123", "ROLE_USER");
+		setUser(auth);
+		return token;
 	}
 
 	@Before
@@ -99,6 +127,39 @@ public class DatumMetadataSecurityAspectTests extends AbstractCentralTransaction
 		replayAll();
 		aspect.updateLocationMetadataCheck(TEST_LOC_ID);
 		verifyAll();
+	}
+
+	@Test
+	public void availableSourceIdsFilteredFromPattern() throws Throwable {
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final String[] policySourceIds = new String[] { "/A/**/watts" };
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
+				.withNodeIds(Collections.singleton(nodeId)).build();
+		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
+		final Set<NodeSourcePK> availableSourceIds = new LinkedHashSet<NodeSourcePK>(Arrays.asList(
+				new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"),
+				new NodeSourcePK(nodeId, "/B/B/watts"), new NodeSourcePK(nodeId, "Foo bar")));
+		setAuthenticatedReadNodeDataToken(userId, policy);
+		UserNode userNode = new UserNode(new net.solarnetwork.central.user.domain.User(userId, null),
+				new SolarNode(nodeId, null));
+		userNode.setRequiresAuthorization(true);
+
+		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
+
+		EasyMock.replay(pjp);
+		EasyMock.replay(userNodeDao);
+
+		DatumMetadataSecurityAspect service = getTestInstance(null);
+
+		@SuppressWarnings("unchecked")
+		Set<NodeSourcePK> result = (Set<NodeSourcePK>) service.filteredMetadataSourcesAccessCheck(pjp,
+				new Long[] { nodeId });
+		Assert.assertEquals("Filtered source IDs", new LinkedHashSet<NodeSourcePK>(Arrays
+				.asList(new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"))),
+				result);
 	}
 
 }

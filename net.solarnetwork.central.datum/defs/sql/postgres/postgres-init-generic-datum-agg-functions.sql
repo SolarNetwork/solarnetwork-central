@@ -2,18 +2,18 @@
  * Return a valid minute-level time slot seconds value for an arbitrary input value.
  * This function is meant to validate and correct inappropriate input for minute level
  * time slot second values, which must be between 60 and 1800 and evenly divide into 1800.
- * 
+ *
  * @param secs the seconds to validate
  * @returns integer seconds value, possibly different than the input seconds value
  */
 CREATE OR REPLACE FUNCTION solaragg.slot_seconds(secs integer default 600)
-  RETURNS integer 
-  LANGUAGE sql 
+  RETURNS integer
+  LANGUAGE sql
   IMMUTABLE AS
 $BODY$
-	SELECT 
-	CASE 
-		WHEN secs < 60 OR secs > 1800 OR 1800 % secs <> 0 THEN 600 
+	SELECT
+	CASE
+		WHEN secs < 60 OR secs > 1800 OR 1800 % secs <> 0 THEN 600
 	ELSE
 		secs
 	END
@@ -21,32 +21,32 @@ $BODY$;
 
 /**
  * Return a normalized minute time-slot timestamp for a given timestamp and slot interval.
- * This function returns the appropriate minute-level time aggregate <code>ts_start</code> 
+ * This function returns the appropriate minute-level time aggregate <code>ts_start</code>
  * value for a given timestamp. For example passing <b>600</b> for <code>sec</code> will
- * return a timestamp who is truncated to <code>:00</code>, <code>:10</code>, <code>:20</code>, 
+ * return a timestamp who is truncated to <code>:00</code>, <code>:10</code>, <code>:20</code>,
  * <code>:30</code>, <code>:40</code>, or <code>:50</code>.
- * 
+ *
  * @param ts the timestamp to normalize
  * @param sec the slot seconds
  * @returns normalized timestamp
  */
 CREATE OR REPLACE FUNCTION solaragg.minute_time_slot(ts timestamp with time zone, sec integer default 600)
-  RETURNS timestamp with time zone 
-  LANGUAGE sql 
+  RETURNS timestamp with time zone
+  LANGUAGE sql
   IMMUTABLE AS
 $BODY$
 	SELECT date_trunc('hour', ts) + (
-		ceil(extract('epoch' from ts) - extract('epoch' from date_trunc('hour', ts))) 
+		ceil(extract('epoch' from ts) - extract('epoch' from date_trunc('hour', ts)))
 		- ceil(extract('epoch' from ts))::bigint % sec
 	) * interval '1 second'
 $BODY$;
 
 /**
  * Trigger that inserts a row into the <b>solaragg.agg_stale_datum<b> table based on
- * a change to a <b>solardatum.da_datum</b> type row. The <b>agg_kind</b> column is 
+ * a change to a <b>solardatum.da_datum</b> type row. The <b>agg_kind</b> column is
  * set to <code>h</code> and the <b>ts_start</b> column to the changed row's <b>ts</b>
- * timestamp, truncated to the <b>hour</b>. The changed row's <b>node_id</b> and 
- * <b>source_id</b> columns are copied as-is. The trigger ignores any 
+ * timestamp, truncated to the <b>hour</b>. The changed row's <b>node_id</b> and
+ * <b>source_id</b> columns are copied as-is. The trigger ignores any
  * a <code>unique_violation</code> exception thrown by the <code>INSERT</code>.
  */
 CREATE OR REPLACE FUNCTION solardatum.trigger_agg_stale_datum()
@@ -65,9 +65,9 @@ BEGIN
 			EXCEPTION WHEN unique_violation THEN
 				-- Nothing to do, just continue
 			END;
-			
+
 			SELECT * FROM solardatum.da_datum d
-			WHERE d.ts < datum_ts 
+			WHERE d.ts < datum_ts
 				AND d.ts > datum_ts - interval '1 hour'
 				AND d.node_id = NEW.node_id
 				AND d.source_id = NEW.source_id
@@ -82,9 +82,9 @@ BEGIN
 			EXCEPTION WHEN unique_violation THEN
 				-- Nothing to do, just continue
 			END;
-			
+
 			SELECT * FROM solardatum.da_datum d
-			WHERE d.ts < datum_ts 
+			WHERE d.ts < datum_ts
 				AND d.ts > datum_ts - interval '1 hour'
 				AND d.node_id = OLD.node_id
 				AND d.source_id = OLD.source_id
@@ -104,7 +104,7 @@ BEGIN
 	CASE TG_OP
 		WHEN 'INSERT', 'UPDATE' THEN
 			SELECT * FROM solardatum.da_datum d
-			WHERE d.ts > datum_ts 
+			WHERE d.ts > datum_ts
 				AND d.ts < datum_ts + interval '1 hour'
 				AND d.node_id = NEW.node_id
 				AND d.source_id = NEW.source_id
@@ -113,7 +113,7 @@ BEGIN
 			INTO neighbor;
 		ELSE
 			SELECT * FROM solardatum.da_datum d
-			WHERE d.ts > datum_ts 
+			WHERE d.ts > datum_ts
 				AND d.ts < datum_ts + interval '1 hour'
 				AND d.node_id = OLD.node_id
 				AND d.source_id = OLD.source_id
@@ -139,408 +139,94 @@ BEGIN
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
-/**
- * Find rows in the <b>solardatum.da_datum</b> table necessary to calculate an hour or more level of
- * aggregate data for a specific duration of time, node, and set of sources. This function will return
- * all available rows within the specified duration, possibly with some rows <em>before</em> or
- * <em>after</em> the duration to enable calculating the actual aggregate over the duration.
- * Each returned row contains a <b>percent</b> value of 0 - 1 that represents the percentage 
- * of time that row falls within the specified duration.
- * 
- * @param node The ID of the node to search for.
- * @param sources An array of one or more source IDs to search for, any of which may match.
- * @param start_ts The start time of the desired time duration.
- * @param span The interval of the time duration, which starts from <b>start_ts</b>.
- * @param tolerance An interval representing the maximum amount of time before between, and after
- *                  rows with the same source ID are allowed to be considered <em>consecutive</em>
- *                  for the purposes of calculating the overall aggregate of the time duration.
- * @out ts The <b>solardatum.da_datum.ts</b> value.
- * @out source_id The <b>solardatum.da_datum.source_id</b> value.
- * @out tsms The <b>solardatum.da_datum.ts</b> value represented as milliseconds since the Unix epoch.
- * @out percent The percent of time this row falls within the specified time duration, from 0 to 1.
- * @out tdiffms The number of milliseconds between this row and the next earliest consecutive row 
- *              (i.e. with a matching <b>source_id</b>).
- * @out jdata The <b>solardatum.da_datum.jdata</b> value.
- * @returns one or more rows of aggregated data
- */
-CREATE OR REPLACE FUNCTION solaragg.find_datum_for_time_slot(
-	IN node bigint, 
-	IN sources text[], 
-	IN start_ts timestamp with time zone, 
-	IN span interval, 
-	IN tolerance interval DEFAULT interval '1 hour')
-  RETURNS TABLE(ts timestamp with time zone, source_id text, tsms bigint, percent real, tdiffms bigint, jdata json) AS
-$BODY$
-SELECT * FROM (
-	SELECT 
-		d.ts,
-		d.source_id,
-		CAST(EXTRACT(EPOCH FROM d.ts) * 1000 AS BIGINT) as tsms,
-		CASE 
-			WHEN lead(d.ts) over win < start_ts OR lag(d.ts) over win > (start_ts + span)
-				THEN -1::real
-			WHEN d.ts < start_ts
-				THEN 0::real
-			WHEN d.ts > (start_ts + span) AND lag(d.ts) over win IS NULL
-				THEN 0::real
-			WHEN d.ts > (start_ts + span)
-				THEN (1.0::real - EXTRACT('epoch' FROM (d.ts - (start_ts + span))) / EXTRACT('epoch' FROM (d.ts - lag(d.ts) over win)))::real
-			WHEN lag(d.ts) over win < start_ts
-				THEN (EXTRACT('epoch' FROM (d.ts - start_ts)) / EXTRACT('epoch' FROM (d.ts - lag(d.ts) over win)))::real
-			ELSE 1::real
-		END AS percent,
-		COALESCE(CAST(EXTRACT(EPOCH FROM d.ts - lag(d.ts) over win) * 1000 AS BIGINT), 0) as tdiff,
-		d.jdata as jdata
-	FROM solardatum.da_datum d
-	WHERE d.node_id = node
-		AND d.source_id = ANY(sources)
-		AND d.ts >= start_ts - tolerance
-		AND d.ts <= start_ts + span + tolerance
-	WINDOW win AS (PARTITION BY d.source_id ORDER BY d.ts)
-	ORDER BY d.ts, d.source_id
-) AS sub
-WHERE 
-	sub.percent > -1
-$BODY$
-  LANGUAGE sql STABLE;
 
 /**
- * Find rows in the <b>solardatum.da_datum</b> table necessary to calculate minute-level aggregate
- * data for a specific duration of time, node, and set of sources. This function will return
- * all available rows within the specified duration, possibly with some rows <em>before</em> or
- * <em>after</em> the duration to enable calculating the actual aggregate over the duration.
- * All rows are assigned to <b>slotsecs</b> second time slots, and contain a <b>percent</b> 
- * value of 0 - 1 that represents the percentage of time that row falls within the specified 
- * time slot.
- * 
- * @param node The ID of the node to search for.
- * @param sources An array of one or more source IDs to search for, any of which may match.
- * @param start_ts The start time of the desired time duration.
- * @param span The interval of the time duration, which starts from <b>start_ts</b>.
- * @param slotsecs The number of seconds per minute time slot to assign output rows to. Must be
- *                 between 60 and 1800 and evenly divide into 1800.
- * @param tolerance An interval representing the maximum amount of time before between, and after
- *                  rows with the same source ID are allowed to be considered <em>consecutive</em>
- *                  for the purposes of calculating the overall aggregate of the time duration.
- * @out ts The <b>solardatum.da_datum.ts</b> value.
- * @out ts_start The minute-level timestamp.
- * @out source_id The <b>solardatum.da_datum.source_id</b> value.
- * @out tsms The <b>solardatum.da_datum.ts</b> value represented as milliseconds since the Unix epoch.
- * @out percent The percent of time this row falls within the specified time duration, from 0 to 1.
- * @out tdiffms The number of milliseconds between this row and the next earliest consecutive row 
- *              (i.e. with a matching <b>source_id</b>).
- * @out jdata The <b>solardatum.da_datum.jdata</b> value.
- * @returns one or more rows of aggregated data
+ * Dynamically calculate time slot aggregate values for a node and set of source IDs.
+ * If <code>slotsecs</code> is between 60 and 1800 then the the results will include
+ * corresponding minute-level time slots per source ID. Otherwise at most a single
+ * row per source ID will be returned.
+ *
+ * @param node				node ID
+ * @param sources			array of source IDs
+ * @param start_ts			the start timestamp
+ * @param span				the length of time from start_ts to use as the end timestamp
+ * @param slotsecs			the number of seconds per time slot, between 60 and 1800, e.g.
+ *                          600 == 10 minutes (the default), 0 == disable
+ * @param tolerance			the number of milliseconds tolerance before/after time slots to
+ *                          look for adjacent rows
  */
-CREATE OR REPLACE FUNCTION solaragg.find_datum_for_minute_time_slots(
-	IN node bigint, 
-	IN sources text[], 
-	IN start_ts timestamp with time zone, 
-	IN span interval, 
-	IN slotsecs integer DEFAULT 600,
-	IN tolerance interval DEFAULT interval '1 hour')
-  RETURNS TABLE(ts timestamp with time zone, ts_start timestamp with time zone, source_id text, tsms bigint, percent real, tdiffms integer, jdata json) AS
-$BODY$
-SELECT * FROM (
-	SELECT 
-		d.ts,
-		solaragg.minute_time_slot(d.ts, slotsecs) as ts_start,
-		d.source_id,
-		CAST(EXTRACT(EPOCH FROM solaragg.minute_time_slot(d.ts, slotsecs)) * 1000 AS BIGINT) as tsms,
-		CASE 
-			WHEN lead(d.ts) over win < start_ts OR lag(d.ts) over win > (start_ts + span)
-				THEN -1::real
-			WHEN d.ts < start_ts
-				THEN 0::real
-			WHEN d.ts > (start_ts + span) AND lag(d.ts) over win IS NULL
-				THEN 0::real
-			WHEN solaragg.minute_time_slot(lag(d.ts) over win, slotsecs) < solaragg.minute_time_slot(d.ts, slotsecs)
-					AND EXTRACT('epoch' FROM d.ts - lag(d.ts) over win) < slotsecs
-				THEN (1::real - EXTRACT('epoch' FROM solaragg.minute_time_slot(d.ts, slotsecs) - lag(d.ts) over win) / EXTRACT('epoch' FROM d.ts - lag(d.ts) over win))::real
-			ELSE 1::real
-		END AS percent,
-		COALESCE(CAST(EXTRACT(EPOCH FROM d.ts - lag(d.ts) over win) * 1000 AS INTEGER), 0) as tdiff,
-		d.jdata as jdata
-	FROM solardatum.da_datum d
-	WHERE d.node_id = node
-		AND d.source_id = ANY(sources)
-		AND d.ts >= start_ts - tolerance
-		AND d.ts <= start_ts + span + tolerance
-	WINDOW win AS (PARTITION BY d.source_id ORDER BY d.ts)
-	ORDER BY d.ts, d.source_id
-) AS sub
-WHERE 
-	sub.percent > -1
-$BODY$
-  LANGUAGE sql STABLE;
-
 CREATE OR REPLACE FUNCTION solaragg.calc_datum_time_slots(
-	IN node bigint, 
-	IN sources text[], 
-	IN start_ts timestamp with time zone, 
-	IN span interval, 
+	IN node bigint,
+	IN sources text[],
+	IN start_ts timestamp with time zone,
+	IN span interval,
 	IN slotsecs integer DEFAULT 600,
 	IN tolerance interval DEFAULT interval '1 hour')
-  RETURNS TABLE(ts_start timestamp with time zone, source_id text, jdata json)  LANGUAGE plv8 AS
+  RETURNS TABLE(ts_start timestamp with time zone, source_id text, jdata json) LANGUAGE plv8 AS
 $BODY$
 'use strict';
-var runningAvgDiff,
-	runningAvgMax = 5,
-	toleranceMs = sn.util.intervalMs(tolerance),
-	hourFill = {'watts' : 'wattHours'},
-	slotMode = (slotsecs > 0 && slotsecs < 3600),
-	ignoreLogMessages = (slotMode === true || sn.util.intervalMs(span) !== 3600000),
-	logInsertStmt;
 
-function logMessage(nodeId, sourceId, ts, msg) {
-	if ( ignoreLogMessages ) {
-		return;
-	}
-	var msg;
-	if ( !logInsertStmt ) {
-		logInsertStmt = plv8.prepare('INSERT INTO solaragg.agg_messages (node_id, source_id, ts, msg) VALUES ($1, $2, $3, $4)', 
-			['bigint', 'text', 'timestamp with time zone', 'text']);
-	}
-	var dbMsg = Array.prototype.slice.call(arguments, 3).join(' ');
-	logInsertStmt.execute([nodeId, sourceId, ts, dbMsg]);
+var intervalMs = require('util/intervalMs').default;
+var aggregator = require('datum/aggregator').default;
+var slotAggregator = require('datum/slotAggregator').default;
+
+var spanMs = intervalMs(span),
+	endTs = start_ts.getTime() + spanMs,
+	slotMode = (slotsecs >= 60 && slotsecs <= 1800),
+	ignoreLogMessages = (slotMode === true || spanMs !== 3600000),
+	stmt,
+	cur,
+	rec,
+	helper,
+	aggResult,
+	i;
+
+if ( slotMode ) {
+	stmt = plv8.prepare(
+		'SELECT ts, solaragg.minute_time_slot(ts, '+slotsecs+') as ts_start, source_id, jdata FROM solaragg.find_datum_for_time_span($1, $2, $3, $4, $5)',
+		['bigint', 'text[]', 'timestamp with time zone', 'interval', 'interval']);
+	helper = slotAggregator({
+		startTs : start_ts.getTime(),
+		endTs : endTs,
+		slotSecs : slotsecs
+	});
+} else {
+	stmt = plv8.prepare(
+		'SELECT ts, source_id, jdata FROM solaragg.find_datum_for_time_span($1, $2, $3, $4, $5)',
+		['bigint', 'text[]', 'timestamp with time zone', 'interval', 'interval']);
+	helper = aggregator({
+		startTs : start_ts.getTime(),
+		endTs : endTs,
+	});
 }
 
-function calculateAccumulatingValue(rec, r, val, prevVal, prop, ms) {
-	var avgObj = r.accAvg[prop],
-		offsetT = 0,
-		diff,
-		diffT,
-		minutes;
-	if ( 
-			// disallow negative values for records tagged 'power', e.g. inverters that reset each night their reported accumulated energy
-			(val < prevVal * 0.5 && rec.jdata.t && Array.isArray(rec.jdata.t) && rec.jdata.t.indexOf('power') >= 0)
-			||
-			// the running average is 0, the previous value > 0, and the current val <= 1.5% of previous value (i.e. close to 0);
-			// don't treat this as a negative accumulation in this case if diff non trivial;
-			(prevVal > 0 && (!avgObj || avgObj.average < 1) && val < (prevVal * 0.015))
-			) {
-		logMessage(node, r.source_id, new Date(rec.tsms), 'Forcing node prevVal', prevVal, 'to 0, val =', val);
-		prevVal = 0;
-	}
-	diff = (val - prevVal);
-	minutes = ms / 60000;
-	diffT = (diff / minutes);
-	if ( avgObj ) {
-		if ( avgObj.average > 0 ) {
-			offsetT = (diffT / avgObj.average) 
-				* (avgObj.next < runningAvgMax ? Math.pow(avgObj.next / runningAvgMax, 2) : 1)
-				* (minutes > 2 ? 4 : Math.pow(minutes, 2));
-		} else {
-			offsetT = (diffT * (minutes > 5 ? 25 : Math.pow(minutes, 2)));
-		}
-	}
-	if ( offsetT > 1000 ) {
-		logMessage(node, r.source_id, new Date(rec.tsms), 'Rejecting diff', diff, 'offset(t)', offsetT.toFixed(1), 
-			'diff(t)', sn.math.util.fixPrecision(diffT, 100), '; ravg', (avgObj ? sn.math.util.fixPrecision(avgObj.average, 100) : 'N/A'), 
-			(avgObj ? JSON.stringify(avgObj.samples.map(function(e) { return sn.math.util.fixPrecision(e, 100); })) : 'N/A'));
-		return 0;
-	}
-	maintainAccumulatingRunningAverageDifference(r.accAvg, prop, diffT)
-	return diff;
-}
+cur = stmt.cursor([node, sources, start_ts, span, tolerance]);
 
-function maintainAccumulatingRunningAverageDifference(accAvg, prop, diff) {
-	var i,
-		avg = 0,
-		avgObj = accAvg[prop],
-		val,
-		samples;
-	if ( avgObj === undefined ) {
-		avgObj = { samples : new Array(runningAvgMax), average : diff, next : 1 }; // wanted Float32Array, but not available in plv8
-		avgObj.samples[0] = diff;
-		for ( i = 1; i < runningAvgMax; i += 1 ) {
-			avgObj.samples[i] = 0x7FC00000;
-		}
-		accAvg[prop] = avgObj;
-		avg = diff;
-	} else {
-		samples = avgObj.samples;
-		samples[avgObj.next % runningAvgMax] = diff;
-		avgObj.next += 1;
-		for ( i = 0; i < runningAvgMax; i += 1 ) {
-			val = samples[i];
-			if ( val === 0x7FC00000 ) {
-				break;
-			}
-			avg += val;
-		}
-		avg /= i;
-		avgObj.average = avg;
+while ( rec = cur.fetch() ) {
+	if ( !rec.jdata ) {
+		continue;
+	}
+	aggResult = helper.addDatumRecord(rec);
+	if ( aggResult ) {
+		plv8.return_next(aggResult);
+	}
+}
+aggResult = helper.finish();
+if ( Array.isArray(aggResult) ) {
+	for ( i = 0; i < aggResult.length; i += 1 ) {
+		plv8.return_next(aggResult[i]);
 	}
 }
 
-function finishResultObject(r, endts) {
-	var prop,
-		robj,
-		ri,
-		ra;
-	if ( r.tsms < start_ts.getTime() || (slotMode && r.tsms >= endts) ) {
-		// not included in output because before time start, or end time >= end time
-		return;
-	}
-	robj = {
-		ts_start : new Date(r.tsms),
-		source_id : r.source_id,
-		jdata : {}
-	};
-	ri = sn.math.util.calculateAverages(r.iobj, r.iobjCounts);
-	ra = r.aobj;
-	
-	for ( prop in ri ) {
-		robj.jdata.i = ri;
-		break;
-	}
-	for ( prop in ra ) {
-		robj.jdata.a = sn.util.merge({}, ra); // call merge() to pick up sn.math.util.fixPrecision
-		break;
-	}
+cur.close();
+stmt.free();
 
-	if ( r.prevRec && r.prevRec.percent > 0 ) {
-		// merge last record s obj into results, but not overwriting any existing properties
-		if ( r.prevRec.jdata.s ) {
-			for ( prop in r.prevRec.jdata.s ) {
-				robj.jdata.s = r.prevRec.jdata.s;
-				break;
-			}
-		}
-		if ( Array.isArray(r.prevRec.jdata.t) && r.prevRec.jdata.t.length > 0 ) {
-			robj.jdata.t = r.prevRec.jdata.t;
-		}
-	}
-	plv8.return_next(robj);
-}
-
-function handleAccumulatingResult(rec, result) {
-	var acc = rec.jdata.a,
-		prevAcc = result.prevAcc,
-		aobj = result.aobj,
-		prop;
-	if ( acc && prevAcc && rec.tdiffms <= toleranceMs ) {
-		// accumulating data
-		for ( prop in acc ) {
-			if ( prevAcc[prop] !== undefined ) {				
-				sn.math.util.addto(prop, calculateAccumulatingValue(rec, result, acc[prop], prevAcc[prop], prop, rec.tdiffms), aobj, rec.percent);
-			}
-		}
-	}
-}
-
-function handleInstantaneousResult(rec, result, onlyHourFill) {
-	var inst = rec.jdata.i,
-		prevInst = result.prevInst,
-		iobj = result.iobj,
-		iobjCounts = result.iobjCounts,
-		prop,
-		propHour;
-	if ( inst && rec.percent > 0 && rec.tdiffms <= toleranceMs ) {
-		// instant data
-		for ( prop in inst ) {
-			if ( onlyHourFill !== true ) {
-				// only add instantaneous average values for 100% records; we may have to use percent to hour-fill below
-				sn.math.util.addto(prop, inst[prop], iobj, 1, iobjCounts);
-			}
-			if ( result.prevRec && hourFill[prop] ) {
-				// calculate hour value, if not already defined for given property
-				propHour = hourFill[prop];
-				if ( !(rec.jdata.a && rec.jdata.a[propHour]) && prevInst && prevInst[prop] !== undefined ) {
-					sn.math.util.addto(propHour, sn.math.util.calculateAverageOverHours(inst[prop], prevInst[prop], rec.tdiffms), result.aobj, rec.percent);
-				}
-			}
-		}
-	}
-}
-
-function handleFractionalAccumulatingResult(rec, result) {
-	var fracRec = {
-		source_id 	: rec.source_id,
-		tsms		: result.prevRec.tsms,
-		percent		: (1 - rec.percent),
-		tdiffms		: rec.tdiffms,
-		jdata		: rec.jdata
-	};
-	handleAccumulatingResult(fracRec, result);
-	handleInstantaneousResult(fracRec, result, true);
-}
-
-(function() {
-	var results = {}, // { ts_start : 123, source_id : 'A', aobj : {}, iobj : {}, iobjCounts : {}, sobj : {} ...}
-		sourceId,
-		result,
-		rec,
-		prop,
-		stmt,
-		cur,
-		spanMs = sn.util.intervalMs(span),
-		endts = start_ts.getTime() + spanMs;
-	
-	if ( slotMode ) {
-		stmt = plv8.prepare('SELECT source_id, tsms, percent, tdiffms, jdata FROM solaragg.find_datum_for_minute_time_slots($1, $2, $3, $4, $5, $6)', 
-				['bigint', 'text[]', 'timestamp with time zone', 'interval', 'integer', 'interval']);
-		cur = stmt.cursor([node, sources, start_ts, span, slotsecs, tolerance]);
-	} else {
-		stmt = plv8.prepare('SELECT source_id, tsms, percent, tdiffms, jdata FROM solaragg.find_datum_for_time_slot($1, $2, $3, $4, $5)', 
-				['bigint', 'text[]', 'timestamp with time zone', 'interval', 'interval']);
-		cur = stmt.cursor([node, sources, start_ts, span, tolerance]);
-	}
-
-	while ( rec = cur.fetch() ) {
-		if ( !rec.jdata ) {
-			continue;
-		}
-		sourceId = rec.source_id;
-		result = results[sourceId];
-		if ( result === undefined ) {
-			result = { 
-				tsms : (slotMode ? rec.tsms : start_ts.getTime()), 
-				source_id : sourceId, 
-				aobj : {}, 
-				iobj : {}, 
-				iobjCounts : {}, 
-				sobj: {}, 
-				accAvg : {}
-			};
-			results[sourceId] = result;
-		} else if ( slotMode && rec.tsms !== result.tsms ) {
-			if ( rec.percent < 1 && result.prevRec && result.prevRec.tsms >= start_ts.getTime() ) {
-				// add 1-rec.percent to the previous time slot results
-				handleFractionalAccumulatingResult(rec, result);
-			}
-			finishResultObject(result, endts);
-			result.tsms = rec.tsms;
-			result.aobj = {};
-			result.iobj = {};
-			result.iobjCounts = {};
-			result.sobj = {};
-		}
-	
-		handleAccumulatingResult(rec, result);
-		handleInstantaneousResult(rec, result);
-	
-		result.prevRec = rec;
-		result.prevAcc = rec.jdata.a;
-		result.prevInst = rec.jdata.i;
-	}
-	cur.close();
-	stmt.free();
-
-	for ( prop in results ) {
-		finishResultObject(results[prop], endts);
-	}
-	
-	if ( logInsertStmt ) {
-		logInsertStmt.free();
-	}
-}());
 $BODY$ STABLE;
+
 
 /**
  * Dynamically calculate minute-level time slot aggregate values for a node and set of source IDs.
- * 
+ *
  * @param node				node ID
  * @param source			array of source IDs
  * @param start_ts			the start timestamp
@@ -548,25 +234,25 @@ $BODY$ STABLE;
  * @param slotsecs			the number of seconds per time slot, e.g. 600 == 10 minutes.
  */
 CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_minute(
-	IN node bigint, 
-	IN source text[], 
-	IN start_ts timestamp with time zone, 
-	IN end_ts timestamp with time zone, 
+	IN node bigint,
+	IN source text[],
+	IN start_ts timestamp with time zone,
+	IN end_ts timestamp with time zone,
 	IN slotsecs integer DEFAULT 600,
 	IN tolerance interval DEFAULT interval '1 hour')
   RETURNS TABLE(
-	node_id solarcommon.node_id, 
-	ts_start timestamp with time zone, 
-	local_date timestamp without time zone, 
+	node_id solarcommon.node_id,
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
 	source_id solarcommon.source_id,
 	jdata json)
-  LANGUAGE sql 
+  LANGUAGE sql
   STABLE AS
 $BODY$
-SELECT 
+SELECT
 	n.node_id::solarcommon.node_Id,
 	d.ts_start,
-	d.ts_start AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_date, 
+	d.ts_start AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_date,
 	d.source_id::solarcommon.source_id,
 	d.jdata
  FROM solaragg.calc_datum_time_slots(
@@ -583,10 +269,64 @@ $BODY$;
 
 
 /**
+ * Find rows in the <b>solardatum.da_datum</b> table necessary to calculate aggregate
+ * data for a specific duration of time, node, and set of sources. This function will return
+ * all available rows within the specified duration, possibly with some rows <em>before</em> or
+ * <em>after</em> the duration to enable calculating the actual aggregate over the duration.
+ *
+ * @param node The ID of the node to search for.
+ * @param sources An array of one or more source IDs to search for, any of which may match.
+ * @param start_ts The start time of the desired time duration.
+ * @param span The interval of the time duration, which starts from <b>start_ts</b>.
+ * @param slotsecs The number of seconds per minute time slot to assign output rows to. Must be
+ *                 between 60 and 1800 and evenly divide into 1800.
+ * @param tolerance An interval representing the maximum amount of time before between, and after
+ *                  rows with the same source ID are allowed to be considered <em>consecutive</em>
+ *                  for the purposes of calculating the overall aggregate of the time duration.
+ *
+ * @out ts The <b>solardatum.da_datum.ts</b> value.
+ * @out source_id The <b>solardatum.da_datum.source_id</b> value.
+ * @out jdata The <b>solardatum.da_datum.jdata</b> value.
+ * @returns one or more records
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_datum_for_time_span(
+    IN node bigint,
+    IN sources text[],
+    IN start_ts timestamp with time zone,
+    IN span interval,
+    IN tolerance interval DEFAULT '01:00:00'::interval)
+  RETURNS TABLE(ts timestamp with time zone, source_id text, jdata json) AS
+$BODY$
+SELECT sub.ts, sub.source_id, sub.jdata FROM (
+	-- subselect filters out "extra" leading/lagging rows from results
+	SELECT
+		d.ts,
+		d.source_id,
+		CASE
+			WHEN lead(d.ts) over win < start_ts OR lag(d.ts) over win > (start_ts + span)
+				THEN TRUE
+			ELSE FALSE
+		END AS outside,
+		d.jdata as jdata
+	FROM solardatum.da_datum d
+	WHERE d.node_id = node
+		AND d.source_id = ANY(sources)
+		AND d.ts >= start_ts - tolerance
+		AND d.ts <= start_ts + span + tolerance
+	WINDOW win AS (PARTITION BY d.source_id ORDER BY d.ts)
+	ORDER BY d.ts, d.source_id
+) AS sub
+WHERE
+	sub.outside = FALSE
+$BODY$
+  LANGUAGE sql STABLE;
+
+
+/**
  * Calculate hour-of-day aggregate values for a node and set of source IDs
  * and one specific general data value. Note that the `path` parameter currently only
- * supports an array with exactly two elements. 
- * 
+ * supports an array with exactly two elements.
+ *
  * @param node				node ID
  * @param source			array of source IDs
  * @param path				the JSON path to the value to extract, e.g. ['i','watts']
@@ -594,18 +334,18 @@ $BODY$;
  * @param end_ts			the end timestamp (defaults to CURRENT_TIMESTAMP)
  */
 CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_hod(
-	IN node bigint, 
-	IN source text[], 
+	IN node bigint,
+	IN source text[],
 	IN path text[],
-	IN start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz, 
+	IN start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	node_id solarcommon.node_id, 
-	ts_start timestamp with time zone, 
-	local_date timestamp without time zone, 
+	node_id solarcommon.node_id,
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
 	source_id solarcommon.source_id,
 	jdata json)
-  LANGUAGE sql 
+  LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
@@ -613,7 +353,7 @@ SELECT
 	(CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AT TIME ZONE 'UTC' AS ts_start,
 	(CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AS local_date,
 	d.source_id,
-	('{"' || path[1] || '":{"' || path[2] || '":' 
+	('{"' || path[1] || '":{"' || path[2] || '":'
 		|| ROUND(AVG(CAST(json_extract_path_text(jdata, VARIADIC path) AS double precision)) * 1000) / 1000
 		|| '}}')::json as jdata
 FROM solaragg.agg_datum_hourly d
@@ -622,8 +362,8 @@ WHERE
 	AND d.source_id = ANY(source)
 	AND d.ts_start >= start_ts
 	AND d.ts_start < end_ts
-GROUP BY 
-	EXTRACT(hour FROM d.local_date), 
+GROUP BY
+	EXTRACT(hour FROM d.local_date),
 	d.source_id
 $BODY$;
 
@@ -632,7 +372,7 @@ $BODY$;
  * Calculate seasonal hour-of-day aggregate values for a node and set of source IDs
  * and one specific general data value. Note that the `path` parameter currently only
  * supports an array with exactly two elements.
- * 
+ *
  * @param node				node ID
  * @param source			array of source IDs
  * @param path				the JSON path to the value to extract, e.g. ['i','watts']
@@ -640,28 +380,28 @@ $BODY$;
  * @param end_ts			the end timestamp (defaults to CURRENT_TIMESTAMP)
  */
 CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_seasonal_hod(
-	IN node bigint, 
-	IN source text[], 
+	IN node bigint,
+	IN source text[],
 	IN path text[],
-	IN start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz, 
+	IN start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	node_id solarcommon.node_id, 
-	ts_start timestamp with time zone, 
-	local_date timestamp without time zone, 
+	node_id solarcommon.node_id,
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
 	source_id solarcommon.source_id,
 	jdata json)
-  LANGUAGE sql 
+  LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
 	node::solarcommon.node_id,
-	(solarnet.get_season_monday_start(CAST(d.local_date AS DATE)) 
+	(solarnet.get_season_monday_start(CAST(d.local_date AS DATE))
 		+ CAST(EXTRACT(hour FROM d.local_date) || ' hour' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
-	solarnet.get_season_monday_start(CAST(d.local_date AS DATE)) 
+	solarnet.get_season_monday_start(CAST(d.local_date AS DATE))
 		+ CAST(EXTRACT(hour FROM d.local_date) || ' hour' AS INTERVAL) AS local_date,
 	d.source_id,
-	('{"' || path[1] || '":{"' || path[2] || '":' 
+	('{"' || path[1] || '":{"' || path[2] || '":'
 		|| ROUND(AVG(CAST(json_extract_path_text(jdata, VARIADIC path) AS double precision)) * 1000) / 1000
 		|| '}}')::json as jdata
 FROM solaragg.agg_datum_hourly d
@@ -670,9 +410,9 @@ WHERE
 	AND d.source_id = ANY(source)
 	AND d.ts_start >= start_ts
 	AND d.ts_start < end_ts
-GROUP BY 
-	solarnet.get_season_monday_start(CAST(d.local_date AS date)), 
-	EXTRACT(hour FROM d.local_date), 
+GROUP BY
+	solarnet.get_season_monday_start(CAST(d.local_date AS date)),
+	EXTRACT(hour FROM d.local_date),
 	d.source_id
 $BODY$;
 
@@ -680,8 +420,8 @@ $BODY$;
 /**
  * Calculate day-of-week aggregate values for a node and set of source IDs
  * and one specific general data value. Note that the `path` parameter currently only
- * supports an array with exactly two elements. 
- * 
+ * supports an array with exactly two elements.
+ *
  * @param node				node ID
  * @param source			array of source IDs
  * @param path				the JSON path to the value to extract, e.g. ['i','watts']
@@ -689,18 +429,18 @@ $BODY$;
  * @param end_ts			the end timestamp (defaults to CURRENT_TIMESTAMP)
  */
 CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_dow(
-	IN node bigint, 
-	IN source text[], 
+	IN node bigint,
+	IN source text[],
 	IN path text[],
-	IN start_ts timestamp with time zone DEFAULT '2001-01-01 00:00+0'::timestamptz, 
+	IN start_ts timestamp with time zone DEFAULT '2001-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	node_id solarcommon.node_id, 
-	ts_start timestamp with time zone, 
-	local_date timestamp without time zone, 
+	node_id solarcommon.node_id,
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
 	source_id solarcommon.source_id,
 	jdata json)
-  LANGUAGE sql 
+  LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
@@ -708,7 +448,7 @@ SELECT
 	(DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
 	(DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AS local_date,
 	d.source_id,
-	('{"' || path[1] || '":{"' || path[2] || '":' 
+	('{"' || path[1] || '":{"' || path[2] || '":'
 		|| ROUND(AVG(CAST(json_extract_path_text(jdata, VARIADIC path) AS double precision)) * 1000) / 1000
 		|| '}}')::json as jdata
 FROM solaragg.agg_datum_daily d
@@ -717,8 +457,8 @@ WHERE
 	AND d.source_id = ANY(source)
 	AND d.ts_start >= start_ts
 	AND d.ts_start < end_ts
-GROUP BY 
-	EXTRACT(isodow FROM d.local_date), 
+GROUP BY
+	EXTRACT(isodow FROM d.local_date),
 	d.source_id
 $BODY$;
 
@@ -726,8 +466,8 @@ $BODY$;
 /**
  * Calculate seasonal day-of-week aggregate values for a node and set of source IDs
  * and one specific general data value. Note that the `path` parameter currently only
- * supports an array with exactly two elements. 
- * 
+ * supports an array with exactly two elements.
+ *
  * @param node				node ID
  * @param source			array of source IDs
  * @param path				the JSON path to the value to extract, e.g. ['i','watts']
@@ -735,28 +475,28 @@ $BODY$;
  * @param end_ts			the end timestamp (defaults to CURRENT_TIMESTAMP)
  */
 CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_seasonal_dow(
-	IN node bigint, 
-	IN source text[], 
+	IN node bigint,
+	IN source text[],
 	IN path text[],
-	IN start_ts timestamp with time zone DEFAULT '2001-01-01 00:00+0'::timestamptz, 
+	IN start_ts timestamp with time zone DEFAULT '2001-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	node_id solarcommon.node_id, 
-	ts_start timestamp with time zone, 
-	local_date timestamp without time zone, 
+	node_id solarcommon.node_id,
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
 	source_id solarcommon.source_id,
 	jdata json)
-  LANGUAGE sql 
+  LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
 	node::solarcommon.node_id,
-	(solarnet.get_season_monday_start(d.local_date) 
+	(solarnet.get_season_monday_start(d.local_date)
 		+ CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
-	(solarnet.get_season_monday_start(d.local_date) 
+	(solarnet.get_season_monday_start(d.local_date)
 		+ CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AS local_date,
 	d.source_id,
-	('{"' || path[1] || '":{"' || path[2] || '":' 
+	('{"' || path[1] || '":{"' || path[2] || '":'
 		|| ROUND(AVG(CAST(json_extract_path_text(jdata, VARIADIC path) AS double precision)) * 1000) / 1000
 		|| '}}')::json as jdata
 FROM solaragg.agg_datum_daily d
@@ -765,9 +505,9 @@ WHERE
 	AND d.source_id = ANY(source)
 	AND d.ts_start >= start_ts
 	AND d.ts_start < end_ts
-GROUP BY 
-	solarnet.get_season_monday_start(CAST(d.local_date AS date)), 
-	EXTRACT(isodow FROM d.local_date), 
+GROUP BY
+	solarnet.get_season_monday_start(CAST(d.local_date AS date)),
+	EXTRACT(isodow FROM d.local_date),
 	d.source_id
 $BODY$;
 
@@ -777,7 +517,7 @@ CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
 $BODY$
 DECLARE
 	stale record;
-	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum 
+	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum
 			WHERE agg_kind = kind
 			--ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
 			LIMIT 1
@@ -795,10 +535,10 @@ BEGIN
 		ELSE
 			agg_span := interval '1 month';
 	END CASE;
-	
+
 	OPEN curs;
 	FETCH NEXT FROM curs INTO stale;
-	
+
 	IF FOUND THEN
 		-- get the node TZ for local date/time
 		SELECT l.time_zone  FROM solarnet.sn_node n
@@ -811,7 +551,7 @@ BEGIN
 			node_tz := 'UTC';
 		END IF;
 
-		SELECT jdata FROM solaragg.calc_datum_time_slots(stale.node_id, ARRAY[stale.source_id::text], 
+		SELECT jdata FROM solaragg.calc_datum_time_slots(stale.node_id, ARRAY[stale.source_id::text],
 			stale.ts_start, agg_span, 0, interval '1 hour')
 		INTO agg_json;
 		IF agg_json IS NULL THEN
@@ -838,7 +578,7 @@ BEGIN
 					<<update_hourly>>
 					LOOP
 						UPDATE solaragg.agg_datum_hourly SET jdata = agg_json
-						WHERE 
+						WHERE
 							node_id = stale.node_id
 							AND source_id = stale.source_id
 							AND ts_start = stale.ts_start;
@@ -848,7 +588,7 @@ BEGIN
 						INSERT INTO solaragg.agg_datum_hourly (
 							ts_start, local_date, node_id, source_id, jdata)
 						VALUES (
-							stale.ts_start, 
+							stale.ts_start,
 							stale.ts_start at time zone node_tz,
 							stale.node_id,
 							stale.source_id,
@@ -860,7 +600,7 @@ BEGIN
 					<<update_daily>>
 					LOOP
 						UPDATE solaragg.agg_datum_daily SET jdata = agg_json
-						WHERE 
+						WHERE
 							node_id = stale.node_id
 							AND source_id = stale.source_id
 							AND ts_start = stale.ts_start;
@@ -870,7 +610,7 @@ BEGIN
 						INSERT INTO solaragg.agg_datum_daily (
 							ts_start, local_date, node_id, source_id, jdata)
 						VALUES (
-							stale.ts_start, 
+							stale.ts_start,
 							CAST(stale.ts_start at time zone node_tz AS DATE),
 							stale.node_id,
 							stale.source_id,
@@ -882,7 +622,7 @@ BEGIN
 					<<update_monthly>>
 					LOOP
 						UPDATE solaragg.agg_datum_monthly SET jdata = agg_json
-						WHERE 
+						WHERE
 							node_id = stale.node_id
 							AND source_id = stale.source_id
 							AND ts_start = stale.ts_start;
@@ -892,7 +632,7 @@ BEGIN
 						INSERT INTO solaragg.agg_datum_monthly (
 							ts_start, local_date, node_id, source_id, jdata)
 						VALUES (
-							stale.ts_start, 
+							stale.ts_start,
 							CAST(stale.ts_start at time zone node_tz AS DATE),
 							stale.node_id,
 							stale.source_id,
@@ -1046,3 +786,158 @@ BEGIN
 END;$BODY$
   LANGUAGE plpgsql STABLE
   ROWS 20;
+
+
+/**
+ * Find aggregated data for a given node over all time up to an optional end date (else the current date).
+ * The purpose of this function is to find as few as possible records of already aggregated data
+ * so they can be combined into a single running total aggregate result. Each result row includes a
+ * <b>weight</b> column that represents the number of hours the given row spans. This number can be
+ * used to calculate a weighted average for all values over the entire result set.
+ *
+ * @param node    The ID of the node to query for.
+ * @param sources An array of source IDs to query for.
+ * @param end_ts  An optional date to limit the results to. If not provided the current date is used.
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_running_datum(
+    IN node bigint,
+    IN sources text[],
+    IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
+  RETURNS TABLE(ts_start timestamp with time zone, local_date timestamp without time zone, node_id bigint, source_id text, jdata json, weight integer)
+LANGUAGE sql
+STABLE AS
+$BODY$
+	-- get the node TZ, falling back to UTC if not available so we always have a time zone even if node not found
+	WITH nodetz AS (
+		SELECT n.node_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM solarnet.sn_node n
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE n.node_id = node
+		UNION ALL
+		SELECT node::bigint AS node_id, 'UTC'::character varying AS tz
+		WHERE NOT EXISTS (SELECT node_id FROM solarnet.sn_node WHERE node_id = node)
+	)
+	SELECT d.ts_start, d.local_date, d.node_id, d.source_id, d.jdata, CAST(extract(epoch from (local_date + interval '1 month') - local_date) / 3600 AS integer) AS weight
+	FROM solaragg.agg_datum_monthly d
+	INNER JOIN nodetz ON nodetz.node_id = d.node_id
+	WHERE d.ts_start < date_trunc('month', end_ts AT TIME ZONE nodetz.tz) AT TIME ZONE nodetz.tz
+		AND d.source_id = ANY(sources)
+	UNION ALL
+	SELECT d.ts_start, d.local_date, d.node_id, d.source_id, d.jdata, 24::integer as weight
+	FROM solaragg.agg_datum_daily d
+	INNER JOIN nodetz ON nodetz.node_id = d.node_id
+	WHERE ts_start < date_trunc('day', end_ts AT TIME ZONE nodetz.tz) AT TIME ZONE nodetz.tz
+		AND d.ts_start >= date_trunc('month', end_ts AT TIME ZONE nodetz.tz) AT TIME ZONE nodetz.tz
+		AND d.source_id = ANY(sources)
+	UNION ALL
+	SELECT d.ts_start, d.local_date, d.node_id, d.source_id, d.jdata, 1::INTEGER as weight
+	FROM solaragg.agg_datum_hourly d
+	INNER JOIN nodetz ON nodetz.node_id = d.node_id
+	WHERE d.ts_start < date_trunc('hour', end_ts AT TIME ZONE nodetz.tz) AT TIME ZONE nodetz.tz
+		AND d.ts_start >= date_trunc('day', end_ts AT TIME ZONE nodetz.tz) AT TIME ZONE nodetz.tz
+		AND d.source_id = ANY(sources)
+	UNION ALL
+	SELECT ts_start, ts_start at time zone nodetz.tz AS local_date, nodetz.node_id, source_id, jdata, 1::integer as weight
+	FROM solaragg.calc_datum_time_slots(
+		node,
+		sources,
+		date_trunc('hour', end_ts),
+		interval '1 hour',
+		0,
+		interval '1 hour')
+	INNER JOIN nodetz ON nodetz.node_id = node_id
+	ORDER BY ts_start, source_id
+$BODY$;
+
+
+/**
+ * Calculate a running total for either a node or location ID. There will
+ * be at most one result row per source ID in the returned data.
+ *
+ * @param pk       The ID of the node or location to query for.
+ * @param sources  An array of source IDs to query for.
+ * @param end_ts   An optional date to limit the results to. If not provided the current date is used.
+ * @param loc_mode If TRUE then location datum are queried, otherwise node datum. Defaults to FALSE.
+ */
+CREATE OR REPLACE FUNCTION solaragg.calc_running_total(
+	IN pk bigint,
+	IN sources text[],
+	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+	IN loc_mode boolean DEFAULT FALSE)
+RETURNS TABLE(source_id text, jdata json)
+LANGUAGE plv8
+STABLE
+ROWS 10 AS
+$BODY$
+'use strict';
+
+var totalor = require('datum/totalor').default;
+
+var query = (loc_mode === true
+		? 'SELECT * FROM solaragg.find_running_loc_datum($1, $2, $3)'
+		: 'SELECT * FROM solaragg.find_running_datum($1, $2, $3)'),
+	stmt,
+	cur,
+	rec,
+	helper = totalor(),
+	aggResult,
+	i;
+
+stmt = plv8.prepare(query, ['bigint', 'text[]', 'timestamp with time zone']);
+cur = stmt.cursor([pk, sources, end_ts]);
+
+while ( rec = cur.fetch() ) {
+	if ( !rec.jdata ) {
+		continue;
+	}
+	helper.addDatumRecord(rec);
+}
+
+aggResult = helper.finish();
+if ( Array.isArray(aggResult) ) {
+	for ( i = 0; i < aggResult.length; i += 1 ) {
+		plv8.return_next(aggResult[i]);
+	}
+}
+
+cur.close();
+stmt.free();
+
+$BODY$;
+
+
+/**
+ * Calculate a running average of datum up to a specific end date. There will
+ * be at most one result row per source ID in the returned data.
+ *
+ * @param node    The ID of the node to query for.
+ * @param sources An array of source IDs to query for.
+ * @param end_ts  An optional date to limit the results to. If not provided the current date is used.
+ */
+CREATE OR REPLACE FUNCTION solaragg.calc_running_datum_total(
+	IN node bigint,
+	IN sources text[],
+	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
+RETURNS TABLE(ts_start timestamp with time zone, local_date timestamp without time zone, node_id bigint, source_id text, jdata json)
+LANGUAGE sql
+STABLE
+ROWS 10 AS
+$BODY$
+	WITH nodetz AS (
+		SELECT n.node_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM solarnet.sn_node n
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE n.node_id = node
+		UNION ALL
+		SELECT node::bigint AS node_id, 'UTC'::character varying AS tz
+		WHERE NOT EXISTS (SELECT node_id FROM solarnet.sn_node WHERE node_id = node)
+	)
+	SELECT end_ts, end_ts AT TIME ZONE nodetz.tz AS local_date, node, r.source_id, r.jdata
+	FROM solaragg.calc_running_total(
+		node,
+		sources,
+		end_ts,
+		FALSE
+	) AS r
+	INNER JOIN nodetz ON nodetz.node_id = node;
+$BODY$;

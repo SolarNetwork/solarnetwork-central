@@ -729,19 +729,19 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				null, null, null);
 
 		assertNotNull(results);
-		assertEquals("Minute query results", 12L, (long) results.getTotalResults());
-		assertEquals("Minute query results", 12, (int) results.getReturnedResultCount());
+		assertEquals("Minute query results", 11L, (long) results.getTotalResults());
+		assertEquals("Minute query results", 11, (int) results.getReturnedResultCount());
 
 		int i = 0;
 		for ( ReportingGeneralNodeDatumMatch match : results ) {
 			if ( i == 0 ) {
-				Assert.assertNull("First Wh not known", match.getSampleData());
 			} else {
 				assertEquals("Wh for minute slot " + i, Integer.valueOf(10),
 						match.getSampleData().get("wattHours"));
 			}
 			i++;
 		}
+		assertEquals("Processed result count", 11, i);
 	}
 
 	@Test
@@ -770,19 +770,16 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				null, null, null);
 
 		assertNotNull(results);
-		assertEquals("Minute query results", 12L, (long) results.getTotalResults());
-		assertEquals("Minute query results", 12, (int) results.getReturnedResultCount());
+		assertEquals("Minute query results", 11L, (long) results.getTotalResults());
+		assertEquals("Minute query results", 11, (int) results.getReturnedResultCount());
 
 		int i = 0;
 		for ( ReportingGeneralNodeDatumMatch match : results ) {
-			if ( i == 0 ) {
-				Assert.assertNull("First Wh not known", match.getSampleData());
-			} else {
-				assertEquals("Wh for minute slot " + i, Integer.valueOf(10),
-						match.getSampleData().get("wattHours"));
-			}
+			assertEquals("Wh for minute slot " + i, Integer.valueOf(10),
+					match.getSampleData().get("wattHours"));
 			i++;
 		}
+		assertEquals("Processed result count", 11, i);
 	}
 
 	@Test
@@ -815,14 +812,70 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 
 		int i = 0;
 		for ( ReportingGeneralNodeDatumMatch match : results ) {
-			if ( i == 0 ) {
-				Assert.assertNull("First Wh not known", match.getSampleData().get("wattHours"));
+			if ( i == 11 ) {
+				Assert.assertNull("Last Wh not known", match.getSampleData().get("wattHours"));
 			} else {
 				assertEquals("Wh for minute slot " + i, Integer.valueOf(10),
 						match.getSampleData().get("wattHours"));
 			}
 			assertEquals("W for minute slot " + i, Integer.valueOf(120),
 					match.getSampleData().get("watts"));
+			i++;
+		}
+		assertEquals("Processed result count", 12, i);
+	}
+
+	@Test
+	public void findFilteredAggregateFiveMinutePowerWithMinMax() {
+		// populate 12 5 minute, segments
+		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
+		for ( int i = 0; i < 12; i++ ) {
+			GeneralNodeDatum datum1 = new GeneralNodeDatum();
+			datum1.setCreated(startDate.plusMinutes(i * 5));
+			datum1.setNodeId(TEST_NODE_ID);
+			datum1.setSourceId(TEST_SOURCE_ID);
+			datum1.setSampleJson("{\"i\":{\"watts\":" + ((1 + i) * 10) + "}}");
+			dao.store(datum1);
+			lastDatum = datum1;
+		}
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(1));
+		criteria.setAggregate(Aggregation.FifteenMinute);
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertNotNull(results);
+		assertEquals("Minute query results", 4L, (long) results.getTotalResults());
+		assertEquals("Minute query results", 4, (int) results.getReturnedResultCount());
+
+		/*-
+		 * 2014-02-02 01:00:00+13, 2014-02-02 01:00:00, test.source, {"i":{"watts":20,"watts_min":10,"watts_max":30}}
+		 * 2014-02-02 01:15:00+13, 2014-02-02 01:15:00, test.source, {"i":{"watts":50,"watts_min":40,"watts_max":60}}
+		 * 2014-02-02 01:30:00+13, 2014-02-02 01:30:00, test.source, {"i":{"watts":80,"watts_min":70,"watts_max":90}}
+		 * 2014-02-02 01:45:00+13, 2014-02-02 01:45:00, test.source, {"i":{"watts":110,"watts_min":100,"watts_max":120}}
+		 */
+		int i = 0;
+		for ( ReportingGeneralNodeDatumMatch match : results ) {
+			int expectedMin = (10 + (i * 30));
+			int expectedMax = expectedMin + 20;
+			int expected = (expectedMin + 10);
+			BigDecimal expectedWh = BigDecimal.valueOf(6.25 + (7.5 * i));
+			if ( i == 3 ) {
+				expectedWh = new BigDecimal("18.333");
+			}
+			assertEquals("W for minute slot " + i, Integer.valueOf(expected),
+					match.getSampleData().get("watts"));
+			assertEquals("Wmin for minute slot " + i, Integer.valueOf(expectedMin),
+					match.getSampleData().get("watts_min"));
+			assertEquals("Wmax for minute slot " + i, Integer.valueOf(expectedMax),
+					match.getSampleData().get("watts_max"));
+
+			assertEquals("Wh for minute slot " + i, expectedWh, match.getSampleData().get("wattHours"));
 			i++;
 		}
 	}
@@ -857,8 +910,8 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 
 		int i = 0;
 		for ( ReportingGeneralNodeDatumMatch match : results ) {
-			if ( i == 0 ) {
-				Assert.assertNull("First Wh not known", match.getSampleData().get("wattHours"));
+			if ( i == 5 ) {
+				Assert.assertNull("Last Wh not known", match.getSampleData().get("wattHours"));
 			} else {
 				assertEquals("Wh for minute slot " + i, Integer.valueOf(20),
 						match.getSampleData().get("wattHours"));
@@ -867,6 +920,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 					match.getSampleData().get("watts"));
 			i++;
 		}
+		assertEquals("Processed result count", 6, i);
 	}
 
 	@Test

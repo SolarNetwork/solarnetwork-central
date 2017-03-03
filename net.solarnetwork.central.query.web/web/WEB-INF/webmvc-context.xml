@@ -44,7 +44,7 @@
 		<mvc:mapping path="/api/**"
 			allowed-origins="*"
 			allowed-methods="GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH"
-			allowed-headers="Authorization, Content-MD5, Content-Type, X-SN-Date"
+			allowed-headers="Authorization, Content-MD5, Content-Type, Digest, X-SN-Date"
 			allow-credentials="false"
 			max-age="86400"/>
 	</mvc:cors>

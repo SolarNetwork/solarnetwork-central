@@ -23,8 +23,12 @@
 package net.solarnetwork.central.datum.dao.mybatis;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
@@ -35,21 +39,27 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link GeneralLocationDatumMetadataDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class MyBatisGeneralLocationDatumMetadataDao extends
-		BaseMyBatisGenericDao<GeneralLocationDatumMetadata, LocationSourcePK> implements
-		GeneralLocationDatumMetadataDao {
+public class MyBatisGeneralLocationDatumMetadataDao
+		extends BaseMyBatisGenericDao<GeneralLocationDatumMetadata, LocationSourcePK>
+		implements GeneralLocationDatumMetadataDao {
 
 	/** The query parameter for a general {@link Filter} object value. */
 	public static final String PARAM_FILTER = "filter";
+
+	/**
+	 * The default query name used for
+	 * {@link #getFilteredSources(Long[], String)}.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String QUERY_FOR_SOURCES = "find-loc-metadata-distinct-sources";
 
 	/**
 	 * Default constructor.
@@ -94,7 +104,8 @@ public class MyBatisGeneralLocationDatumMetadataDao extends
 		List<GeneralLocationDatumMetadataFilterMatch> rows = selectList(query, sqlProps, offset, max);
 
 		BasicFilterResults<GeneralLocationDatumMetadataFilterMatch> results = new BasicFilterResults<GeneralLocationDatumMetadataFilterMatch>(
-				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
+				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset,
+				rows.size());
 
 		return results;
 	}
@@ -114,6 +125,16 @@ public class MyBatisGeneralLocationDatumMetadataDao extends
 				sqlProps.put("fts", fts.toString());
 			}
 		}
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<LocationSourcePK> getFilteredSources(Long[] locationIds, String metadataFilter) {
+		Map<String, Object> sqlProps = new HashMap<String, Object>(2);
+		sqlProps.put("locationIds", locationIds);
+		sqlProps.put(PARAM_FILTER, metadataFilter);
+		List<LocationSourcePK> rows = selectList(QUERY_FOR_SOURCES, sqlProps, null, null);
+		return new LinkedHashSet<LocationSourcePK>(rows);
 	}
 
 }

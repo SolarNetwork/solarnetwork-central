@@ -26,7 +26,7 @@ package net.solarnetwork.central.security.web;
  * Global web constants for the central SolarNetwork applications.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class WebConstants {
 
@@ -41,6 +41,13 @@ public final class WebConstants {
 	 * HTTP Date header.
 	 */
 	public static final String HEADER_DATE = HEADER_PREFIX + "Date";
+
+	/**
+	 * The hex-encoded SHA256 value of an empty string.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String EMPTY_STRING_SHA256_HEX = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
 	// can't construct me
 	private WebConstants() {

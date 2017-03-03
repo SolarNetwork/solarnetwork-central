@@ -23,16 +23,6 @@
 package net.solarnetwork.central.security.web;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Set;
-import java.util.TimeZone;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -40,9 +30,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
@@ -100,17 +87,12 @@ import org.springframework.web.filter.GenericFilterBean;
  * </dl>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UserAuthTokenAuthenticationFilter extends GenericFilterBean implements Filter {
 
-	/** The HTTP Authorization scheme used by this filter. */
-	public static final String AUTHORIZATION_SCHEME = "SolarNetworkWS";
-
 	/** The fixed length of the auth token. */
 	public static final int AUTH_TOKEN_LENGTH = 20;
-
-	private static final String AUTH_HEADER_PREFIX = AUTHORIZATION_SCHEME + " ";
 
 	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
 	private UserAuthTokenAuthenticationEntryPoint authenticationEntryPoint;
@@ -134,7 +116,19 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 
 		final String header = request.getHeader("Authorization");
 
-		if ( header == null || !header.startsWith(AUTH_HEADER_PREFIX) ) {
+		AuthenticationScheme scheme = null;
+		String headerData = null;
+		if ( header != null ) {
+			for ( AuthenticationScheme aScheme : AuthenticationScheme.values() ) {
+				if ( header.startsWith(aScheme.getSchemeName()) ) {
+					scheme = aScheme;
+					headerData = header.substring(scheme.getSchemeName().length() + 1);
+					break;
+				}
+			}
+		}
+
+		if ( scheme == null ) {
 			log.trace("Missing Authorization header or unsupported scheme");
 			chain.doFilter(request, response);
 			return;
@@ -142,60 +136,45 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 
 		log.debug("Digest Authorization header received from user agent: {}", header);
 
-		AuthData data;
+		AuthenticationData data;
 		try {
-			data = new AuthData(request, header.substring(AUTH_HEADER_PREFIX.length()));
+			switch (scheme) {
+				case V1:
+					data = new AuthenticationDataV1(request, headerData);
+					break;
+
+				case V2:
+					data = new AuthenticationDataV2(request, headerData);
+					break;
+
+				default:
+					fail(request, response,
+							new BadCredentialsException("Authentication scheme not supported."));
+					return;
+			}
 		} catch ( AuthenticationException e ) {
 			fail(request, response, e);
 			return;
 		}
 
-		final String providedMD5 = request.getHeader("Content-MD5");
-		if ( providedMD5 != null && providedMD5.length() > 0 ) {
-			// compute the MD5 and validate now
-			try {
-				byte[] computedMD5 = request.getContentMD5();
-				byte[] requestMD5;
-				try {
-					if ( providedMD5.length() == 32 ) {
-						// treat as hex
-						requestMD5 = Hex.decodeHex(providedMD5.toCharArray());
-					} else {
-						// treat as Base64
-						requestMD5 = Base64.decodeBase64(providedMD5);
-					}
-				} catch ( DecoderException e ) {
-					fail(request, response, new BadCredentialsException("Invalid Content-MD5 encoding"));
-					return;
-				}
-				if ( !Arrays.equals(computedMD5, requestMD5) ) {
-					fail(request, response, new BadCredentialsException("Invalid Content-MD5 value"));
-					return;
-				}
-			} catch ( net.solarnetwork.central.security.SecurityException e ) {
-				fail(request, response, new BadCredentialsException("Content too large", e));
-				return;
-			}
-		}
-
 		final UserDetails user;
 		try {
-			user = userDetailsService.loadUserByUsername(data.authToken);
+			user = userDetailsService.loadUserByUsername(data.getAuthTokenId());
 		} catch ( AuthenticationException e ) {
-			log.debug("Auth token {} exception: {}", data.authToken, e.getMessage());
+			log.debug("Auth token {} exception: {}", data.getAuthTokenId(), e.getMessage());
 			fail(request, response, new BadCredentialsException("Bad credentials"));
 			return;
 		}
-		final String computedDigest = computeDigest(data, user.getPassword());
-		if ( !computedDigest.equals(data.signatureDigest) ) {
+		final String computedDigest = data.computeSignatureDigest(user.getPassword());
+		if ( !computedDigest.equals(data.getSignatureDigest()) ) {
 			log.debug("Expected response: '{}' but received: '{}'", computedDigest,
-					data.signatureDigest);
+					data.getSignatureDigest());
 			fail(request, response, new BadCredentialsException("Bad credentials"));
 			return;
 		}
 
-		if ( !data.isDateValid() ) {
-			log.debug("Request date '{}' diff too large: {}", data.date, data.dateSkew);
+		if ( !data.isDateValid(maxDateSkew) ) {
+			log.debug("Request date '{}' diff too large: {}", data.getDate(), data.getDateSkew());
 			fail(request, response, new BadCredentialsException("Date skew too large"));
 			return;
 		}
@@ -220,96 +199,6 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 			AuthenticationException failed) throws IOException, ServletException {
 		SecurityContextHolder.getContext().setAuthentication(null);
 		authenticationEntryPoint.commence(request, response, failed);
-	}
-
-	final String computeDigest(final AuthData data, final String password) {
-		Mac hmacSha1;
-		try {
-			hmacSha1 = Mac.getInstance("HmacSHA1");
-			hmacSha1.init(new SecretKeySpec(password.getBytes("UTF-8"), "HmacSHA1"));
-			byte[] result = hmacSha1.doFinal(data.signature.getBytes("UTF-8"));
-			return Base64.encodeBase64String(result).trim();
-		} catch ( NoSuchAlgorithmException e ) {
-			throw new SecurityException("Error loading HmaxSHA1 crypto function", e);
-		} catch ( InvalidKeyException e ) {
-			throw new SecurityException("Error loading HmaxSHA1 crypto function", e);
-		} catch ( UnsupportedEncodingException e ) {
-			throw new SecurityException("Error loading HmaxSHA1 crypto function", e);
-		}
-	}
-
-	private class AuthData {
-
-		private final String authToken;
-		private final String signatureDigest;
-		private final String signature;
-		private final Date date;
-		private final long dateSkew;
-
-		private String httpDate(Date date) {
-			SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-			sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-			return sdf.format(date);
-		}
-
-		private void appendQueryParameters(HttpServletRequest request, StringBuilder buf) {
-			Set<String> paramKeys = request.getParameterMap().keySet();
-			if ( paramKeys.size() < 1 ) {
-				return;
-			}
-			String[] keys = paramKeys.toArray(new String[paramKeys.size()]);
-			Arrays.sort(keys);
-			boolean first = true;
-			for ( String key : keys ) {
-				if ( first ) {
-					buf.append('?');
-					first = false;
-				} else {
-					buf.append('&');
-				}
-				buf.append(key).append('=').append(request.getParameter(key));
-			}
-		}
-
-		private AuthData(HttpServletRequest request, String headerValue) {
-			String dateHeader = WebConstants.HEADER_DATE;
-			long dateValue = request.getDateHeader(dateHeader);
-			if ( dateValue < 0 ) {
-				dateHeader = "Date";
-				dateValue = request.getDateHeader(dateHeader);
-				if ( dateValue < 0 ) {
-					throw new BadCredentialsException("Missing or invalid HTTP Date header value");
-				}
-			}
-			date = new Date(dateValue);
-			if ( AUTH_TOKEN_LENGTH + 2 >= headerValue.length() ) {
-				throw new BadCredentialsException("Invalid Authorization header value");
-			}
-			authToken = headerValue.substring(0, AUTH_TOKEN_LENGTH);
-			signatureDigest = headerValue.substring(AUTH_TOKEN_LENGTH + 1);
-
-			StringBuilder buf = new StringBuilder(request.getMethod());
-			buf.append("\n");
-			buf.append(nullSafeHeaderValue(request, "Content-MD5")).append("\n");
-			buf.append(nullSafeHeaderValue(request, "Content-Type")).append("\n");
-			buf.append(httpDate(date)).append("\n");
-			buf.append(request.getRequestURI());
-			appendQueryParameters(request, buf);
-
-			signature = buf.toString();
-
-			dateSkew = Math.abs(System.currentTimeMillis() - date.getTime());
-		}
-
-		private boolean isDateValid() {
-			return dateSkew < maxDateSkew;
-		}
-
-	}
-
-	private static String nullSafeHeaderValue(HttpServletRequest request, String headerName) {
-		final String result = request.getHeader(headerName);
-		return (result == null ? "" : result);
 	}
 
 	public void setUserDetailsService(UserDetailsService userDetailsService) {

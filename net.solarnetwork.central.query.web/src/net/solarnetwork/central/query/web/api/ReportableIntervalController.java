@@ -22,15 +22,9 @@
 
 package net.solarnetwork.central.query.web.api;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TimeZone;
-import net.solarnetwork.central.query.biz.QueryBiz;
-import net.solarnetwork.central.query.domain.ReportableInterval;
-import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
-import net.solarnetwork.util.JodaDateFormatEditor;
-import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
-import net.solarnetwork.web.domain.Response;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +34,15 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.central.query.domain.ReportableInterval;
+import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
+import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.util.JodaDateFormatEditor;
+import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
+import net.solarnetwork.web.domain.Response;
 
 /**
  * Controller for querying for reportable interval values.
@@ -50,13 +53,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
 public class ReportableIntervalController extends WebServiceControllerSupport {
 
 	private final QueryBiz queryBiz;
+	private final DatumMetadataBiz datumMetadataBiz;
 
 	/**
 	 * Constructor.
@@ -65,9 +69,10 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	 *        the QueryBiz to use
 	 */
 	@Autowired
-	public ReportableIntervalController(QueryBiz queryBiz) {
+	public ReportableIntervalController(QueryBiz queryBiz, DatumMetadataBiz datumMetadataBiz) {
 		super();
 		this.queryBiz = queryBiz;
+		this.datumMetadataBiz = datumMetadataBiz;
 	}
 
 	/**
@@ -83,10 +88,11 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	 */
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
-		binder.registerCustomEditor(LocalDate.class, new JodaDateFormatEditor(DEFAULT_DATE_FORMAT,
-				ParseMode.LocalDate));
-		binder.registerCustomEditor(DateTime.class, new JodaDateFormatEditor(new String[] {
-				DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT }, TimeZone.getTimeZone("UTC")));
+		binder.registerCustomEditor(LocalDate.class,
+				new JodaDateFormatEditor(DEFAULT_DATE_FORMAT, ParseMode.LocalDate));
+		binder.registerCustomEditor(DateTime.class,
+				new JodaDateFormatEditor(new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT },
+						TimeZone.getTimeZone("UTC")));
 	}
 
 	/**
@@ -156,10 +162,60 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	 * @return the available sources
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = "!types")
+	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
+			"!metadataFilter" })
 	public Response<Set<String>> getAvailableSources(GeneralReportableIntervalCommand cmd) {
 		Set<String> data = queryBiz.getAvailableSources(cmd.getNodeId(), cmd.getStart(), cmd.getEnd());
 		return new Response<Set<String>>(data);
+	}
+
+	/**
+	 * Get all available node+source ID pairs that match a node datum metadata
+	 * search filter.
+	 * 
+	 * <p>
+	 * Example URL:
+	 * <code>/api/v1/sec/range/sources?nodeIds=1,2&metadataFilter=(/m/foo=bar)</code>
+	 * </p>
+	 *
+	 * <p>
+	 * Example JSON response:
+	 * </p>
+	 * 
+	 * <pre>
+	 * {
+	 *   "success": true,
+	 *   "data": [
+	 *     { nodeId: 1, sourceId: "A" },
+	 *     { nodeId: 2, "sourceId: "B" }
+	 *   ]
+	 * }
+	 * </pre>
+	 * 
+	 * <p>
+	 * If only a single node ID is specified, then the results will be
+	 * simplified to just an array of strings for the source IDs, omitting the
+	 * node ID which is redundant.
+	 * </p>
+	 * 
+	 * @param cmd
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
+			"metadataFilter" })
+	public Response<Set<?>> getMetadataFilteredAvailableSources(GeneralReportableIntervalCommand cmd) {
+		Set<NodeSourcePK> data = datumMetadataBiz
+				.getGeneralNodeDatumMetadataFilteredSources(cmd.getNodeIds(), cmd.getMetadataFilter());
+		if ( cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
+			// at most 1 node ID, so simplify results to just source ID values
+			Set<String> sourceIds = new LinkedHashSet<String>(data.size());
+			for ( NodeSourcePK pk : data ) {
+				sourceIds.add(pk.getSourceId());
+			}
+			return new Response<Set<?>>(sourceIds);
+		}
+		return new Response<Set<?>>(data);
 	}
 
 }

@@ -34,6 +34,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.ReadableInterval;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralLocationDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumMappingInfo;
@@ -47,12 +53,6 @@ import net.solarnetwork.central.datum.domain.WeatherDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.ReadableInterval;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test cases for the {@link MyBatisGeneralLocationDatumDao} class.
@@ -128,11 +128,11 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 	public void storeVeryBigValues() {
 		GeneralLocationDatum datum = getTestInstance();
 		datum.getSamples().getAccumulating().put("watt_hours", 39309570293789380L);
-		datum.getSamples().getAccumulating()
-				.put("very_big", new BigInteger("93475092039478209375027350293523957"));
+		datum.getSamples().getAccumulating().put("very_big",
+				new BigInteger("93475092039478209375027350293523957"));
 		datum.getSamples().getInstantaneous().put("watts", 498475890235787897L);
-		datum.getSamples().getInstantaneous()
-				.put("floating", new BigDecimal("293487590845639845728947589237.49087"));
+		datum.getSamples().getInstantaneous().put("floating",
+				new BigDecimal("293487590845639845728947589237.49087"));
 		dao.store(datum);
 
 		GeneralLocationDatum entity = dao.get(datum.getId());
@@ -444,8 +444,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		criteria.setEndDate(datum3.getCreated());
 		criteria.setAggregate(Aggregation.Hour);
 
-		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(
-				criteria, null, null, null);
+		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
 
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
@@ -470,8 +470,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		criteria.setEndDate(lastDatum.getCreated().plusDays(1));
 		criteria.setAggregate(Aggregation.Day);
 
-		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(
-				criteria, null, null, null);
+		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
 
 		assertNotNull(results);
 		assertEquals("Daily query results", 1L, (long) results.getTotalResults());
@@ -549,23 +549,20 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		criteria.setEndDate(startDate.plusHours(1));
 		criteria.setAggregate(Aggregation.FiveMinute);
 
-		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(
-				criteria, null, null, null);
+		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
 
 		assertNotNull(results);
-		assertEquals("Minute query results", 12L, (long) results.getTotalResults());
-		assertEquals("Minute query results", 12, (int) results.getReturnedResultCount());
+		assertEquals("Minute query results", 11L, (long) results.getTotalResults());
+		assertEquals("Minute query results", 11, (int) results.getReturnedResultCount());
 
 		int i = 0;
 		for ( ReportingGeneralLocationDatumMatch match : results ) {
-			if ( i == 0 ) {
-				Assert.assertNull("First Wh not known", match.getSampleData());
-			} else {
-				assertEquals("Wh for minute slot " + i, Integer.valueOf(10),
-						match.getSampleData().get("wattHours"));
-			}
+			assertEquals("Wh for minute slot " + i, Integer.valueOf(10),
+					match.getSampleData().get("wattHours"));
 			i++;
 		}
+		assertEquals("Processed result count", 11, i);
 	}
 
 	@Test
@@ -589,8 +586,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		criteria.setEndDate(startDate.plusHours(1));
 		criteria.setAggregate(Aggregation.FiveMinute);
 
-		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(
-				criteria, null, null, null);
+		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
 
 		assertNotNull(results);
 		assertEquals("Minute query results", 12L, (long) results.getTotalResults());
@@ -598,8 +595,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 
 		int i = 0;
 		for ( ReportingGeneralLocationDatumMatch match : results ) {
-			if ( i == 0 ) {
-				Assert.assertNull("First Wh not known", match.getSampleData().get("wattHours"));
+			if ( i == 11 ) {
+				Assert.assertNull("Last Wh not known", match.getSampleData().get("wattHours"));
 			} else {
 				assertEquals("Wh for minute slot " + i, Integer.valueOf(10),
 						match.getSampleData().get("wattHours"));
@@ -631,8 +628,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		criteria.setEndDate(startDate.plusHours(1));
 		criteria.setAggregate(Aggregation.TenMinute);
 
-		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(
-				criteria, null, null, null);
+		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
 
 		assertNotNull(results);
 		assertEquals("Minute query results", 6L, (long) results.getTotalResults());
@@ -640,8 +637,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 
 		int i = 0;
 		for ( ReportingGeneralLocationDatumMatch match : results ) {
-			assertEquals("Wh for minute slot", Integer.valueOf(i < 5 ? 20 : 10), match.getSampleData()
-					.get("wattHours"));
+			assertEquals("Wh for minute slot", Integer.valueOf(i < 5 ? 20 : 10),
+					match.getSampleData().get("wattHours"));
 			i++;
 		}
 	}
@@ -667,8 +664,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		criteria.setEndDate(startDate.plusHours(1));
 		criteria.setAggregate(Aggregation.TenMinute);
 
-		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(
-				criteria, null, null, null);
+		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
 
 		assertNotNull(results);
 		assertEquals("Minute query results", 6L, (long) results.getTotalResults());
@@ -676,10 +673,59 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 
 		int i = 0;
 		for ( ReportingGeneralLocationDatumMatch match : results ) {
-			assertEquals("Wh for minute slot", Integer.valueOf(i < 5 ? 20 : 10), match.getSampleData()
-					.get("wattHours"));
+			assertEquals("Wh for minute slot", Integer.valueOf(i < 5 ? 20 : 10),
+					match.getSampleData().get("wattHours"));
 			assertEquals("W for minute slot " + i, Integer.valueOf(120),
 					match.getSampleData().get("watts"));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFilteredAggregateWithMinMax() {
+		// populate 12 5 minute, 10x W segments
+		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
+		for ( int i = 0; i < 12; i++ ) {
+			GeneralLocationDatum datum1 = new GeneralLocationDatum();
+			datum1.setCreated(startDate.plusMinutes(i * 5));
+			datum1.setLocationId(TEST_LOC_ID);
+			datum1.setSourceId(TEST_SOURCE_ID);
+			datum1.setSampleJson("{\"i\":{\"watts\":" + ((1 + i) * 10) + "}}");
+			dao.store(datum1);
+			lastDatum = datum1;
+		}
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setLocationId(TEST_LOC_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(1));
+		criteria.setAggregate(Aggregation.FifteenMinute);
+
+		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertNotNull(results);
+		assertEquals("Minute query results", 4L, (long) results.getTotalResults());
+		assertEquals("Minute query results", 4, (int) results.getReturnedResultCount());
+
+		/*-
+		 * 2014-02-02 01:00:00+13, 2014-02-02 01:00:00, test.source, {"i":{"watts":20,"watts_min":10,"watts_max":30}}
+		 * 2014-02-02 01:15:00+13, 2014-02-02 01:15:00, test.source, {"i":{"watts":50,"watts_min":40,"watts_max":60}}
+		 * 2014-02-02 01:30:00+13, 2014-02-02 01:30:00, test.source, {"i":{"watts":80,"watts_min":70,"watts_max":90}}
+		 * 2014-02-02 01:45:00+13, 2014-02-02 01:45:00, test.source, {"i":{"watts":110,"watts_min":100,"watts_max":120}}
+		 */
+		int i = 0;
+		for ( ReportingGeneralLocationDatumMatch match : results ) {
+			int expectedMin = (10 + (i * 30));
+			int expectedMax = expectedMin + 20;
+			int expected = (expectedMin + 10);
+			assertEquals("W for minute slot " + i, Integer.valueOf(expected),
+					match.getSampleData().get("watts"));
+			assertEquals("Wmin for minute slot " + i, Integer.valueOf(expectedMin),
+					match.getSampleData().get("watts_min"));
+			assertEquals("Wmax for minute slot " + i, Integer.valueOf(expectedMax),
+					match.getSampleData().get("watts_max"));
 			i++;
 		}
 	}
@@ -705,8 +751,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		criteria.setEndDate(startDate.plusHours(1));
 		criteria.setAggregate(Aggregation.FifteenMinute);
 
-		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(
-				criteria, null, null, null);
+		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
 
 		assertNotNull(results);
 		// this query fills in empty slots, so we have :00, :15, :30, :45
@@ -715,8 +761,8 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 
 		int i = 0;
 		for ( ReportingGeneralLocationDatumMatch match : results ) {
-			assertEquals("Wh for minute slot", Integer.valueOf(i < 3 ? 30 : 20), match.getSampleData()
-					.get("watt_hours"));
+			assertEquals("Wh for minute slot", Integer.valueOf(i < 3 ? 30 : 20),
+					match.getSampleData().get("watt_hours"));
 			i++;
 		}
 	}

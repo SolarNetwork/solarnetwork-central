@@ -23,10 +23,13 @@
 package net.solarnetwork.central.datum.biz;
 
 import java.util.List;
+import java.util.Set;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.domain.LocationSourcePK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.domain.GeneralDatumMetadata;
@@ -35,7 +38,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * API for manipulating general datum metadata.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface DatumMetadataBiz {
 
@@ -150,5 +153,40 @@ public interface DatumMetadataBiz {
 	FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
 			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
+
+	/**
+	 * Find available datum source IDs that match a datum metadata filter.
+	 * 
+	 * The metadata filter must be expressed in LDAP search filter style, using
+	 * JSON pointer style paths for keys, for example {@code (/m/foo=bar)},
+	 * {@code (t=foo)}, or {@code (&(&#47;**&#47;foo=bar)(t=special))}.
+	 * 
+	 * @param nodeIds
+	 *        the node IDs to search for
+	 * @param metadataFilter
+	 *        A metadata search filter, in LDAP search filter syntax.
+	 * @return the distinct node ID and source IDs combinations that match the
+	 *         given filter (never <em>null</em>)
+	 * @since 1.2
+	 */
+	Set<NodeSourcePK> getGeneralNodeDatumMetadataFilteredSources(Long[] nodeIds, String metadataFilter);
+
+	/**
+	 * Find available location source IDs that match a location metadata filter.
+	 * 
+	 * The metadata filter must be expressed in LDAP search filter style, using
+	 * JSON pointer style paths for keys, for example {@code (/m/foo=bar)},
+	 * {@code (t=foo)}, or {@code (&(&#47;**&#47;foo=bar)(t=special))}.
+	 * 
+	 * @param locationIds
+	 *        the node IDs to search for
+	 * @param metadataFilter
+	 *        A metadata search filter, in LDAP search filter syntax.
+	 * @return the distinct node ID and source IDs combinations that match the
+	 *         given filter (never <em>null</em>)
+	 * @since 1.2
+	 */
+	Set<LocationSourcePK> getGeneralLocationDatumMetadataFilteredSources(Long[] locationIds,
+			String metadataFilter);
 
 }

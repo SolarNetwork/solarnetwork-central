@@ -34,16 +34,16 @@ CREATE TABLE solaruser.user_meta (
 
 /******************************************************************************
  * FUNCTION solaruser.store_meta(timestamptz, bigint, text)
- * 
+ *
  * Add or update user metadata.
- * 
+ *
  * @param cdate the creation date to use
  * @param userid the user ID
  * @param jdata the metadata to store
  */
 CREATE OR REPLACE FUNCTION solaruser.store_user_meta(
-	cdate solarcommon.ts, 
-	userid BIGINT, 
+	cdate solarcommon.ts,
+	userid BIGINT,
 	jdata text)
   RETURNS void AS
 $BODY$
@@ -55,8 +55,8 @@ BEGIN
 	-- In 9.5 we can do upsert with ON CONFLICT.
 	LOOP
 		-- first try to update
-		UPDATE solaruser.user_meta SET 
-			jdata = jdata_json, 
+		UPDATE solaruser.user_meta SET
+			jdata = jdata_json,
 			updated = udate
 		WHERE
 			user_id = userid;
@@ -65,7 +65,7 @@ BEGIN
 		IF FOUND THEN
 			RETURN;
 		END IF;
-		
+
 		-- not found so insert the row
 		BEGIN
 			INSERT INTO solaruser.user_meta(user_id, created, updated, jdata)
@@ -96,8 +96,8 @@ CREATE TABLE solaruser.user_role (
  */
 CREATE VIEW solaruser.user_login AS
 	SELECT
-		email::text AS username, 
-		password AS password, 
+		email::text AS username,
+		password AS password,
 		enabled AS enabled,
 		id AS user_id,
 		disp_name AS display_name
@@ -113,10 +113,10 @@ CREATE VIEW solaruser.user_login_role AS
 
 /* === USER AUTH TOKEN ===================================================== */
 
-CREATE TYPE solaruser.user_auth_token_status AS ENUM 
+CREATE TYPE solaruser.user_auth_token_status AS ENUM
 	('Active', 'Disabled');
 
-CREATE TYPE solaruser.user_auth_token_type AS ENUM 
+CREATE TYPE solaruser.user_auth_token_type AS ENUM
 	('User', 'ReadNodeData');
 
 CREATE TABLE solaruser.user_auth_token (
@@ -133,27 +133,25 @@ CREATE TABLE solaruser.user_auth_token (
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-CREATE VIEW solaruser.user_auth_token_login  AS
-	SELECT
-		t.auth_token AS username,
-		t.auth_secret AS password, 
-		u.enabled AS enabled,
+CREATE OR REPLACE VIEW solaruser.user_auth_token_login AS
+	SELECT t.auth_token AS username,
+		t.auth_secret AS password,
+		u.enabled,
 		u.id AS user_id,
 		u.disp_name AS display_name,
-		CAST(t.token_type AS character varying) AS token_type,
-		t.policy AS policy,
-	FROM solaruser.user_auth_token t
-	INNER JOIN solaruser.user_user u ON u.id = t.user_id
-	WHERE 
-		t.status = CAST('Active' AS solaruser.user_auth_token_status);
+		t.token_type::character varying AS token_type,
+		t.jpolicy
+	 FROM solaruser.user_auth_token t
+		 JOIN solaruser.user_user u ON u.id = t.user_id
+	WHERE t.status = 'Active'::solaruser.user_auth_token_status;
 
 CREATE VIEW solaruser.user_auth_token_role AS
-	SELECT 
+	SELECT
 		t.auth_token AS username,
 		'ROLE_'::text || upper(t.token_type::character varying::text) AS authority
 	FROM solaruser.user_auth_token t
 	UNION
-	SELECT 
+	SELECT
 		t.auth_token AS username,
 		r.role_name AS authority
 	FROM solaruser.user_auth_token t
@@ -236,10 +234,10 @@ CREATE TABLE solaruser.user_node_cert (
 );
 
 CREATE OR REPLACE FUNCTION solaruser.store_user_node_cert(
-	created solarcommon.ts, 
-	node solarcommon.node_id, 
-	userid bigint, 
-	stat char, 
+	created solarcommon.ts,
+	node solarcommon.node_id,
+	userid bigint,
+	stat char,
 	request text,
 	keydata bytea)
   RETURNS void AS
@@ -251,8 +249,8 @@ BEGIN
 		INSERT INTO solaruser.user_node_cert(created, node_id, user_id, status, request_id, keystore)
 		VALUES (ts, node, userid, stat, request, keydata);
 	EXCEPTION WHEN unique_violation THEN
-		UPDATE solaruser.user_node_cert SET 
-			keystore = keydata, 
+		UPDATE solaruser.user_node_cert SET
+			keystore = keydata,
 			status = stat,
 			request_id = request
 		WHERE
@@ -281,16 +279,16 @@ CREATE INDEX user_node_xfer_recipient_idx ON solaruser.user_node_xfer (recipient
 
 /**************************************************************************************************
  * FUNCTION solaruser.store_user_node_xfer(solarcommon.node_id, bigint, varchar, varchar)
- * 
+ *
  * Insert or update a user node transfer record.
- * 
+ *
  * @param node The ID of the node.
  * @param userid The ID of the user.
  * @param recip The recipient email of the requested owner.
  */
 CREATE OR REPLACE FUNCTION solaruser.store_user_node_xfer(
-	node solarcommon.node_id, 
-	userid BIGINT, 
+	node solarcommon.node_id,
+	userid BIGINT,
 	recip CHARACTER VARYING(255))
   RETURNS void AS
 $BODY$
@@ -299,7 +297,7 @@ BEGIN
 		INSERT INTO solaruser.user_node_xfer(node_id, user_id, recipient)
 		VALUES (node, userid, recip);
 	EXCEPTION WHEN unique_violation THEN
-		UPDATE solaruser.user_node_xfer SET 
+		UPDATE solaruser.user_node_xfer SET
 			recipient = recip
 		WHERE
 			node_id = node
@@ -310,14 +308,14 @@ END;$BODY$
 
 /**
  * Return most recent datum records for all available sources for all nodes owned by a given user ID.
- * 
+ *
  * @param users An array of user IDs to return results for.
  * @returns Set of solardatum.da_datum records.
  */
 CREATE OR REPLACE FUNCTION solaruser.find_most_recent_datum_for_user(users bigint[])
   RETURNS SETOF solardatum.da_datum AS
 $BODY$
-	SELECT r.* 
+	SELECT r.*
 	FROM (SELECT node_id FROM solaruser.user_node WHERE user_id = ANY(users)) AS n,
 	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
 	ORDER BY r.node_id, r.source_id;
@@ -325,7 +323,7 @@ $BODY$
   LANGUAGE sql STABLE;
 
 /**
- * TRIGGER function that automatically transfers rows related to a user_node to 
+ * TRIGGER function that automatically transfers rows related to a user_node to
  * the new owner when the user_id value is changed. Expected record is solaruser.uesr_node.
  */
 CREATE OR REPLACE FUNCTION solaruser.node_ownership_transfer()
@@ -336,12 +334,12 @@ BEGIN
 	SET user_id = NEW.user_id
 	WHERE user_id = OLD.user_id
 		AND node_id = NEW.node_id;
-	
+
 	UPDATE solaruser.user_node_conf
 	SET user_id = NEW.user_id
 	WHERE user_id = OLD.user_id
 		AND node_id = NEW.node_id;
-	
+
 	RETURN NEW;
 END;$BODY$
   LANGUAGE 'plpgsql' VOLATILE;

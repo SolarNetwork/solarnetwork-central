@@ -23,6 +23,10 @@
 package net.solarnetwork.central.daum.biz.dao;
 
 import java.util.List;
+import java.util.Set;
+import org.joda.time.DateTime;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao;
@@ -37,9 +41,6 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.domain.GeneralDatumMetadata;
-import org.joda.time.DateTime;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * DAO-based implementation of {@link DatumMetadataBiz}.
@@ -57,7 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
  * </dl>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
@@ -111,8 +112,8 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void removeGeneralNodeDatumMetadata(Long nodeId, String sourceId) {
-		GeneralNodeDatumMetadata meta = generalNodeDatumMetadataDao.get(new NodeSourcePK(nodeId,
-				sourceId));
+		GeneralNodeDatumMetadata meta = generalNodeDatumMetadataDao
+				.get(new NodeSourcePK(nodeId, sourceId));
 		if ( meta != null ) {
 			generalNodeDatumMetadataDao.delete(meta);
 		}
@@ -175,8 +176,8 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void removeGeneralLocationDatumMetadata(Long locationId, String sourceId) {
-		GeneralLocationDatumMetadata meta = generalLocationDatumMetadataDao.get(new LocationSourcePK(
-				locationId, sourceId));
+		GeneralLocationDatumMetadata meta = generalLocationDatumMetadataDao
+				.get(new LocationSourcePK(locationId, sourceId));
 		if ( meta != null ) {
 			generalLocationDatumMetadataDao.delete(meta);
 		}
@@ -188,6 +189,20 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
 		return generalLocationDatumMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Set<NodeSourcePK> getGeneralNodeDatumMetadataFilteredSources(Long[] nodeIds,
+			String metadataFilter) {
+		return generalNodeDatumMetadataDao.getFilteredSources(nodeIds, metadataFilter);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Set<LocationSourcePK> getGeneralLocationDatumMetadataFilteredSources(Long[] locationIds,
+			String metadataFilter) {
+		return generalLocationDatumMetadataDao.getFilteredSources(locationIds, metadataFilter);
 	}
 
 	public GeneralNodeDatumMetadataDao getGeneralNodeDatumMetadataDao() {
