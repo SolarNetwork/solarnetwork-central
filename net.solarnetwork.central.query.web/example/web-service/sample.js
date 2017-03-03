@@ -403,6 +403,7 @@ $(document).ready(function() {
 		$('#auth-header').text('Authorization: ' +authHeader);
 		$('#req-message').text(authType > 1 ? msgData : '');
 		$('#auth-message').text(authType < 2 ? msgData : SNAPI.generateAuthorizationMessageV2(submitParams, msgData));
+		$('#sign-key').text(authType < 2 ? params.secret : CryptoJS.enc.Hex.stringify(SNAPI.signingSecretKey(submitParams)));
 		$('#curl-command').text('curl '
 				+'-H \'Accept: ' +(params.output === 'xml' ? 'text/xml'
 						: params.output === 'csv' ? 'text/csv' : 'application/json') +'\' '
