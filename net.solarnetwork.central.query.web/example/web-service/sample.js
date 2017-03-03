@@ -466,15 +466,19 @@ $(document).ready(function() {
 		form.elements['path'].value = val;
 	});
 
-	$('input[name=method]').change(function(event) {
-		event.preventDefault();
+	function setupForMethod() {
 		var val = $(this).val();
 		if ( val === 'POST' || val === 'PUT' || val === 'PATCH' ) {
 			$('#upload').show();
 		} else {
 			$('#upload').hide();
 		}
-	});
+	}
+
+	$('input[name=method]').change(function(event) {
+		event.preventDefault();
+		setupForMethod.call(this);
+	}).filter(':checked').first().each(setupForMethod);
 
 	var formatXml = function(xml) {
 		var formatted = '';
