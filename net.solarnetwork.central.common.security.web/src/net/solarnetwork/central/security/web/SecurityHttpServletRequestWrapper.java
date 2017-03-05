@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
@@ -177,6 +178,21 @@ public class SecurityHttpServletRequestWrapper extends HttpServletRequestWrapper
 				@Override
 				public int read() throws IOException {
 					return byis.read();
+				}
+
+				@Override
+				public boolean isFinished() {
+					return byis.available() < 1;
+				}
+
+				@Override
+				public boolean isReady() {
+					return true;
+				}
+
+				@Override
+				public void setReadListener(ReadListener listener) {
+					// ignore
 				}
 			};
 		}
