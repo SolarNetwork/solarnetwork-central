@@ -4,7 +4,7 @@ CREATE TABLE solardatum.da_loc_datum (
   source_id solarcommon.source_id NOT NULL,
   posted solarcommon.ts NOT NULL,
   jdata json NOT NULL,
-  CONSTRAINT da_loc_datum_pkey PRIMARY KEY (loc_id, ts, source_id)
+  CONSTRAINT da_loc_datum_pkey PRIMARY KEY (loc_id, ts, source_id) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 CREATE TABLE solardatum.da_loc_meta (
@@ -41,7 +41,7 @@ CREATE TABLE solaragg.agg_loc_datum_hourly (
   loc_id solarcommon.loc_id NOT NULL,
   source_id solarcommon.source_id NOT NULL,
   jdata json NOT NULL,
- CONSTRAINT agg_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
+  CONSTRAINT agg_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
 CREATE TABLE solaragg.agg_loc_datum_daily (
@@ -50,7 +50,7 @@ CREATE TABLE solaragg.agg_loc_datum_daily (
   loc_id solarcommon.loc_id NOT NULL,
   source_id solarcommon.source_id NOT NULL,
   jdata json NOT NULL,
- CONSTRAINT agg_loc_datum_daily_pkey PRIMARY KEY (loc_id, ts_start, source_id)
+  CONSTRAINT agg_loc_datum_daily_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
 CREATE TABLE solaragg.agg_loc_datum_monthly (
@@ -59,7 +59,7 @@ CREATE TABLE solaragg.agg_loc_datum_monthly (
   loc_id solarcommon.loc_id NOT NULL,
   source_id solarcommon.source_id NOT NULL,
   jdata json NOT NULL,
- CONSTRAINT agg_loc_datum_monthly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
+  CONSTRAINT agg_loc_datum_monthly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
 CREATE VIEW solaragg.da_loc_datum_avail_hourly AS
