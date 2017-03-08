@@ -250,7 +250,7 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_minute(
   STABLE AS
 $BODY$
 SELECT
-	n.node_id::solarcommon.node_Id,
+	n.node_id::solarcommon.node_id,
 	d.ts_start,
 	d.ts_start AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_date,
 	d.source_id::solarcommon.source_id,
