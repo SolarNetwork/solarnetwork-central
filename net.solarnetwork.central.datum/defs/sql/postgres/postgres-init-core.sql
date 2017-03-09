@@ -22,7 +22,7 @@ CREATE DOMAIN solarnet.pk_i
 CREATE TABLE solarnet.sn_loc (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	country			CHARACTER(2) NOT NULL,
+	country			CHARACTER VARYING(2) NOT NULL,
 	time_zone		CHARACTER VARYING(64) NOT NULL,
 	region			CHARACTER VARYING(128),
 	state_prov		CHARACTER VARYING(128),
