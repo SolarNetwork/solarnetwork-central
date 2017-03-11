@@ -19,6 +19,3 @@
 \i postgres-init-user-alerts.sql
 \i postgres-init-controls.sql
 \i postgres-init-quartz.sql
-
-\cd plv8
-\i postgres-init-plv8-modules.sql
