@@ -1,6 +1,6 @@
 # SolarNet PostgreSQL Database Setup
 
-SolarNet requires a [PostgreSQL][pgsql] database, version 9.6 or higher, to operate. Please note that only version 9.6 has been extensively tested. It also requires the [plv8][plv8] extension and a related configuration setting added to **postgresql.conf**.
+SolarNet requires a [PostgreSQL][pgsql] database, version 9.6 or higher, to operate. Please note that only version 9.6 has been extensively tested. It also requires the [plv8][plv8] extension.
 
 ## Requirements
 
