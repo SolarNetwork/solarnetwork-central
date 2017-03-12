@@ -1,6 +1,8 @@
 # SolarNet PostgreSQL Database Setup
 
-SolarNet requires a [PostgreSQL][pgsql] database, version 9.6 or higher, to operate. Please note that only version 9.6 has been extensively tested. It also requires the [plv8][plv8] extension.
+SolarNet requires a [PostgreSQL][pgsql] database, version 9.6 or higher, to
+operate. Please note that only version 9.6 has been extensively tested. It also
+requires the [plv8][plv8] extension.
 
 ## Requirements
 
@@ -16,7 +18,9 @@ The `postgres-create.sql` script can be used to
  2. Create a **solarnetwork** database, owned by the **solarnet** user.
  3. Install the **citext** extension.
 
-This script should be run as a database superuser, for example **postgres**. Assuming Postgres is available on the same machine you are are, the script can be executed similarly to this:
+This script should be run as a database superuser, for example **postgres**.
+Assuming Postgres is available on the same machine you are are, the script can
+be executed similarly to this:
 
 ```shell
 $ psql -U postgres -d tempalte0 -f postgres-create.sql
@@ -33,21 +37,26 @@ $ psql -U postgres -d solarnetwork \
 
 ## Setup plv8
 
-The plv8 configuration will be owned by the database superuser in this setup, not the SolarNet database user, as it contains cluster-wide elements. Run the `postgres-init-plv8.sql` script as the superuser:
+The plv8 configuration will be owned by the database superuser in this setup,
+not the SolarNet database user, as it contains cluster-wide elements. Run the
+`postgres-init-plv8.sql` script as the superuser:
 
 ```shell
 $ psql -U postgres -d solarnetwork -f postgres-init-plv8.sql
 ```
 
-Now the `postgresql.conf` configuration must be updated to add the plv8 global context. Add a line like the following:
+Now the `postgresql.conf` configuration must be updated to add the plv8 global
+context. Add a line like the following:
 
 	plv8.start_proc = 'plv8_startup'
 
-For more information on how plv8 is used in SolarNet, see the [plv8 module project][plv8-proj].
+For more information on how plv8 is used in SolarNet, see the [plv8 module
+project][plv8-proj].
 
 ## Setup database
 
-Now the SolarNet database schemas and tables can be created, this time as the normal database user:
+Now the SolarNet database schemas and tables can be created, this time as the
+normal database user:
 
 ```shell
 $ psql -U solarnet -d solarnetwork -f postgres-init.sql
