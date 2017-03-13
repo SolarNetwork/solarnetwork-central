@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS public.plv8_modules (
     source text NOT NULL,
     CONSTRAINT plv8_modules_pkey PRIMARY KEY(module)
 );
+GRANT SELECT ON TABLE public.plv8_modules TO public;
 
 CREATE EXTENSION IF NOT EXISTS plv8 with SCHEMA pg_catalog;
 
