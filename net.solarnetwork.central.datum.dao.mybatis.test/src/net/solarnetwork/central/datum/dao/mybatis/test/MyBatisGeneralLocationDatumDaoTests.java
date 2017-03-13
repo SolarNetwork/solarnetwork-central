@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeFieldType;
 import org.joda.time.DateTimeZone;
 import org.joda.time.ReadableInterval;
 import org.junit.Assert;
@@ -137,6 +138,56 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 
 		GeneralLocationDatum entity = dao.get(datum.getId());
 		validate(datum, entity);
+	}
+
+	private int getAuditDatumHourlyPropCount(GeneralLocationDatum datum) {
+		DateTime tsStart = datum.getPosted().property(DateTimeFieldType.hourOfDay()).roundFloorCopy();
+		Integer propCount = this.jdbcTemplate.queryForObject(
+				"SELECT prop_count FROM solaragg.aud_loc_datum_hourly WHERE ts_start = ? AND loc_id = ? AND source_id = ?",
+				new Object[] { new java.sql.Timestamp(tsStart.getMillis()), datum.getLocationId(),
+						datum.getSourceId() },
+				Integer.class);
+		return (propCount == null ? 0 : propCount.intValue());
+	}
+
+	@Test
+	public void storeNewCreatesHourAuditRecord() {
+		storeNew();
+		int propCount = getAuditDatumHourlyPropCount(lastDatum);
+		assertEquals(3, propCount);
+	}
+
+	@Test
+	public void storeMultiWithinHourUpdatesHourAuditRecord() {
+		final DateTime now = new DateTime();
+
+		GeneralLocationDatum datum1 = new GeneralLocationDatum();
+		datum1.setCreated(new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC));
+		datum1.setPosted(now);
+		datum1.setLocationId(TEST_LOC_ID);
+		datum1.setSourceId(TEST_SOURCE_ID);
+		datum1.setSampleJson("{\"a\":{\"watt_hours\":0}, \"t\":[\"foo\"]}");
+		dao.store(datum1);
+		lastDatum = datum1;
+
+		GeneralLocationDatum datum2 = new GeneralLocationDatum();
+		datum2.setCreated(datum1.getCreated().plusMinutes(20));
+		datum2.setPosted(now);
+		datum2.setLocationId(TEST_LOC_ID);
+		datum2.setSourceId(TEST_SOURCE_ID);
+		datum2.setSampleJson("{\"a\":{\"watt_hours\":5}}");
+		dao.store(datum2);
+
+		GeneralLocationDatum datum3 = new GeneralLocationDatum();
+		datum3.setCreated(datum2.getCreated().plusMinutes(20));
+		datum3.setPosted(now);
+		datum3.setLocationId(TEST_LOC_ID);
+		datum3.setSourceId(TEST_SOURCE_ID);
+		datum3.setSampleJson("{\"a\":{\"watt_hours\":10}}");
+		dao.store(datum3);
+
+		int propCount = getAuditDatumHourlyPropCount(datum1);
+		assertEquals(4, propCount);
 	}
 
 	@Test
