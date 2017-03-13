@@ -10,7 +10,7 @@ DROP TABLE if exists quartz.PAUSED_TRIGGER_GRPS;
 DROP TABLE if exists quartz.SCHEDULER_STATE;
 DROP TABLE if exists quartz.LOCKS;
 drop table if exists quartz.simple_triggers;
-drop table if exists quartz.cron_triggers;
+drop table if exists quartz.cron_triggers CASCADE;
 drop table if exists quartz.simprop_triggers;
 DROP TABLE if exists quartz.BLOB_TRIGGERS;
 drop table if exists quartz.triggers;
