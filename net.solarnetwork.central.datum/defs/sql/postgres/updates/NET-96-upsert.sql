@@ -349,8 +349,7 @@ DECLARE
 BEGIN
 	INSERT INTO solaruser.user_meta(user_id, created, updated, jdata)
 	VALUES (userid, cdate, udate, jdata_json)
-	ON CONFLICT (user_id)
-	DO UPDATE DO UPDATE
+	ON CONFLICT (user_id) DO UPDATE
 	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
 END;
 $BODY$;
