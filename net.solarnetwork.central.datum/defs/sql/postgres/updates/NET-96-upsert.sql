@@ -70,8 +70,8 @@ BEGIN
 						stale.source_id,
 						agg_json
 					)
-					ON CONFLICT (node_id, ts_start, source_id)
-					DO UPDATE SET jdata = EXCLUDED.jdata;
+					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+					SET jdata = EXCLUDED.jdata;
 				WHEN 'd' THEN
 					INSERT INTO solaragg.agg_datum_daily (
 						ts_start, local_date, node_id, source_id, jdata)
@@ -82,8 +82,8 @@ BEGIN
 						stale.source_id,
 						agg_json
 					)
-					ON CONFLICT (node_id, ts_start, source_id)
-					DO UPDATE SET jdata = EXCLUDED.jdata;
+					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+					SET jdata = EXCLUDED.jdata;
 				ELSE
 					INSERT INTO solaragg.agg_datum_monthly (
 						ts_start, local_date, node_id, source_id, jdata)
@@ -94,8 +94,8 @@ BEGIN
 						stale.source_id,
 						agg_json
 					)
-					ON CONFLICT (node_id, ts_start, source_id)
-					DO UPDATE SET jdata = EXCLUDED.jdata;
+					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+					SET jdata = EXCLUDED.jdata;
 			END CASE;
 		END IF;
 		DELETE FROM solaragg.agg_stale_datum WHERE CURRENT OF curs;
@@ -106,13 +106,11 @@ BEGIN
 			WHEN 'h' THEN
 				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
 				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'd')
-				ON CONFLICT (agg_kind, node_id, ts_start, source_id)
-				DO NOTHING;
+				ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 			WHEN 'd' THEN
 				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
 				VALUES (date_trunc('month', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'm')
-				ON CONFLICT (agg_kind, node_id, ts_start, source_id)
-				DO NOTHING;
+				ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 			ELSE
 				-- nothing
 		END CASE;
@@ -193,8 +191,8 @@ BEGIN
 						stale.source_id,
 						agg_json
 					)
-					ON CONFLICT (loc_id, ts_start, source_id)
-					DO UPDATE SET jdata = EXCLUDED.jdata;
+					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
+					SET jdata = EXCLUDED.jdata;
 				WHEN 'd' THEN
 					INSERT INTO solaragg.agg_loc_datum_daily (
 						ts_start, local_date, loc_id, source_id, jdata)
@@ -205,8 +203,8 @@ BEGIN
 						stale.source_id,
 						agg_json
 					)
-					ON CONFLICT (loc_id, ts_start, source_id)
-					DO UPDATE SET jdata = EXCLUDED.jdata;
+					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
+					SET jdata = EXCLUDED.jdata;
 				ELSE
 					INSERT INTO solaragg.agg_loc_datum_monthly (
 						ts_start, local_date, loc_id, source_id, jdata)
@@ -217,8 +215,8 @@ BEGIN
 						stale.source_id,
 						agg_json
 					)
-					ON CONFLICT (loc_id, ts_start, source_id)
-					DO UPDATE SET jdata = EXCLUDED.jdata;
+					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
+					SET jdata = EXCLUDED.jdata;
 			END CASE;
 		END IF;
 		DELETE FROM solaragg.agg_stale_loc_datum WHERE CURRENT OF curs;
@@ -229,13 +227,11 @@ BEGIN
 			WHEN 'h' THEN
 				INSERT INTO solaragg.agg_stale_loc_datum (ts_start, loc_id, source_id, agg_kind)
 				VALUES (date_trunc('day', stale.ts_start at time zone loc_tz) at time zone loc_tz, stale.loc_id, stale.source_id, 'd')
-				ON CONFLICT (agg_kind, loc_id, ts_start, source_id)
-				DO NOTHING;
+				ON CONFLICT (agg_kind, loc_id, ts_start, source_id) DO NOTHING;
 			WHEN 'd' THEN
 				INSERT INTO solaragg.agg_stale_loc_datum (ts_start, loc_id, source_id, agg_kind)
 				VALUES (date_trunc('month', stale.ts_start at time zone loc_tz) at time zone loc_tz, stale.loc_id, stale.source_id, 'm')
-				ON CONFLICT (agg_kind, loc_id, ts_start, source_id)
-				DO NOTHING;
+				ON CONFLICT (agg_kind, loc_id, ts_start, source_id) DO NOTHING;
 			ELSE
 				-- nothing
 		END CASE;
@@ -271,14 +267,14 @@ DECLARE
 BEGIN
 	INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata)
 	VALUES (ts_crea, node, src, ts_post, jdata_json)
-	ON CONFLICT (node_id, ts, source_id)
-	DO UPDATE SET jdata = EXCLUDED.jdata, posted = EXCLUDED.posted;
+	ON CONFLICT (node_id, ts, source_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, posted = EXCLUDED.posted;
 
 	INSERT INTO solaragg.aud_datum_hourly (
 		ts_start, node_id, source_id, prop_count)
 	VALUES (ts_post_hour, node, src, jdata_prop_count)
-	ON CONFLICT (node_id, ts_start, source_id)
-	DO UPDATE SET prop_count = aud_datum_hourly.prop_count + EXCLUDED.prop_count;
+	ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+	SET prop_count = aud_datum_hourly.prop_count + EXCLUDED.prop_count;
 END;
 $BODY$;
 
@@ -308,13 +304,89 @@ DECLARE
 BEGIN
 	INSERT INTO solardatum.da_loc_datum(ts, loc_id, source_id, posted, jdata)
 	VALUES (ts_crea, loc, src, ts_post, jdata_json)
-	ON CONFLICT (loc_id, ts, source_id)
-	DO UPDATE SET jdata = EXCLUDED.jdata, posted = EXCLUDED.posted;
+	ON CONFLICT (loc_id, ts, source_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, posted = EXCLUDED.posted;
 
 	INSERT INTO solaragg.aud_loc_datum_hourly (
 		ts_start, loc_id, source_id, prop_count)
 	VALUES (ts_post_hour, loc, src, jdata_prop_count)
-	ON CONFLICT (loc_id, ts_start, source_id)
-	DO UPDATE SET prop_count = aud_loc_datum_hourly.prop_count + EXCLUDED.prop_count;
+	ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
+	SET prop_count = aud_loc_datum_hourly.prop_count + EXCLUDED.prop_count;
+END;
+$BODY$;
+
+-- upsert does not work on deferrable constraints, so make new non-deferrable ones
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS sn_node_meta_pkey_new ON solarnet.sn_node_meta (node_id);
+ALTER TABLE solarnet.sn_node_meta DROP CONSTRAINT sn_node_meta_pkey;
+ALTER TABLE solarnet.sn_node_meta ADD CONSTRAINT sn_node_meta_pkey PRIMARY KEY USING INDEX sn_node_meta_pkey_new NOT DEFERRABLE;
+
+CREATE OR REPLACE FUNCTION solarnet.store_node_meta(
+	cdate solarcommon.ts,
+	node solarcommon.node_id,
+	jdata text)
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
+$BODY$
+DECLARE
+	udate solarcommon.ts := now();
+	jdata_json json := jdata::json;
+BEGIN
+	INSERT INTO solarnet.sn_node_meta(node_id, created, updated, jdata)
+	VALUES (node, cdate, udate, jdata_json)
+	ON CONFLICT (node_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
+END;
+$BODY$;
+
+CREATE OR REPLACE FUNCTION solaruser.store_user_meta(
+	cdate solarcommon.ts,
+	userid BIGINT,
+	jdata text)
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
+$BODY$
+DECLARE
+	udate solarcommon.ts := now();
+	jdata_json json := jdata::json;
+BEGIN
+	INSERT INTO solaruser.user_meta(user_id, created, updated, jdata)
+	VALUES (userid, cdate, udate, jdata_json)
+	ON CONFLICT (user_id)
+	DO UPDATE DO UPDATE
+	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
+END;
+$BODY$;
+
+CREATE OR REPLACE FUNCTION solardatum.store_meta(
+	cdate solarcommon.ts,
+	node solarcommon.node_id,
+	src solarcommon.source_id,
+	jdata text)
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
+$BODY$
+DECLARE
+	udate solarcommon.ts := now();
+	jdata_json json := jdata::json;
+BEGIN
+	INSERT INTO solardatum.da_meta(node_id, source_id, created, updated, jdata)
+	VALUES (node, src, cdate, udate, jdata_json)
+	ON CONFLICT (node_id, source_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
+END;
+$BODY$;
+
+CREATE OR REPLACE FUNCTION solardatum.store_loc_meta(
+	cdate solarcommon.ts,
+	loc solarcommon.loc_id,
+	src solarcommon.source_id,
+	jdata text)
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
+$BODY$
+DECLARE
+	udate solarcommon.ts := now();
+	jdata_json json := jdata::json;
+BEGIN
+	INSERT INTO solardatum.da_loc_meta(loc_id, source_id, created, updated, jdata)
+	VALUES (loc, src, cdate, udate, jdata_json)
+	ON CONFLICT (loc_id, source_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
 END;
 $BODY$;
