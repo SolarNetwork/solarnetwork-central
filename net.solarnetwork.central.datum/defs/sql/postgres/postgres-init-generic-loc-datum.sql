@@ -105,26 +105,18 @@ CREATE OR REPLACE FUNCTION solardatum.store_loc_meta(
 	loc solarcommon.loc_id,
 	src solarcommon.source_id,
 	jdata text)
-  RETURNS void AS
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
 	udate solarcommon.ts := now();
 	jdata_json json := jdata::json;
 BEGIN
-	BEGIN
-		INSERT INTO solardatum.da_loc_meta(loc_id, source_id, created, updated, jdata)
-		VALUES (loc, src, cdate, udate, jdata_json);
-	EXCEPTION WHEN unique_violation THEN
-		-- We mostly expect inserts, but we allow updates
-		UPDATE solardatum.da_loc_meta SET
-			jdata = jdata_json,
-			updated = udate
-		WHERE
-			loc_id = loc
-			AND source_id = src;
-	END;
-END;$BODY$
-  LANGUAGE plpgsql VOLATILE;
+	INSERT INTO solardatum.da_loc_meta(loc_id, source_id, created, updated, jdata)
+	VALUES (loc, src, cdate, udate, jdata_json)
+	ON CONFLICT (loc_id, source_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
+END;
+$BODY$;
 
 CREATE OR REPLACE FUNCTION solardatum.find_loc_available_sources(
 	IN loc solarcommon.loc_id,

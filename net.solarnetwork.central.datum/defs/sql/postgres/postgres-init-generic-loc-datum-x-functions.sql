@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION solardatum.store_loc_datum(
 	src solarcommon.source_id,
 	pdate solarcommon.ts,
 	jdata text)
-  RETURNS void AS
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
 	ts_crea solarcommon.ts := COALESCE(cdate, now());
@@ -24,42 +24,15 @@ DECLARE
 	jdata_prop_count integer := solardatum.datum_prop_count(jdata_json);
 	ts_post_hour timestamp with time zone := date_trunc('hour', ts_post);
 BEGIN
-	BEGIN
-		INSERT INTO solardatum.da_loc_datum(ts, loc_id, source_id, posted, jdata)
-		VALUES (ts_crea, loc, src, ts_post, jdata_json);
-	EXCEPTION WHEN unique_violation THEN
-		-- We mostly expect inserts, but we allow updates
-		UPDATE solardatum.da_loc_datum SET
-			jdata = jdata_json,
-			posted = ts_post
-		WHERE
-			loc_id = loc
-			AND ts = ts_crea
-			AND source_id = src;
-	END;
+	INSERT INTO solardatum.da_loc_datum(ts, loc_id, source_id, posted, jdata)
+	VALUES (ts_crea, loc, src, ts_post, jdata_json)
+	ON CONFLICT (loc_id, ts, source_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, posted = EXCLUDED.posted;
 
-	-- for auditing we mostly expect updates
-	<<update_audit>>
-	LOOP
-		UPDATE solaragg.aud_loc_datum_hourly
-		SET prop_count = prop_count + jdata_prop_count
-		WHERE
-			loc_id = loc
-			AND source_id = src
-			AND ts_start = ts_post_hour;
-
-		EXIT update_audit WHEN FOUND;
-
-		INSERT INTO solaragg.aud_loc_datum_hourly (
-			ts_start, loc_id, source_id, prop_count)
-		VALUES (
-			ts_post_hour,
-			loc,
-			src,
-			jdata_prop_count
-		);
-		EXIT update_audit;
-	END LOOP update_audit;
+	INSERT INTO solaragg.aud_loc_datum_hourly (
+		ts_start, loc_id, source_id, prop_count)
+	VALUES (ts_post_hour, loc, src, jdata_prop_count)
+	ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
+	SET prop_count = aud_loc_datum_hourly.prop_count + EXCLUDED.prop_count;
 END;
-$BODY$
-  LANGUAGE plpgsql VOLATILE;
+$BODY$;

@@ -112,26 +112,18 @@ CREATE OR REPLACE FUNCTION solardatum.store_meta(
 	node solarcommon.node_id,
 	src solarcommon.source_id,
 	jdata text)
-  RETURNS void AS
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
 	udate solarcommon.ts := now();
 	jdata_json json := jdata::json;
 BEGIN
-	BEGIN
-		INSERT INTO solardatum.da_meta(node_id, source_id, created, updated, jdata)
-		VALUES (node, src, cdate, udate, jdata_json);
-	EXCEPTION WHEN unique_violation THEN
-		-- We mostly expect inserts, but we allow updates
-		UPDATE solardatum.da_meta SET
-			jdata = jdata_json,
-			updated = udate
-		WHERE
-			node_id = node
-			AND source_id = src;
-	END;
-END;$BODY$
-  LANGUAGE plpgsql VOLATILE;
+	INSERT INTO solardatum.da_meta(node_id, source_id, created, updated, jdata)
+	VALUES (node, src, cdate, udate, jdata_json)
+	ON CONFLICT (node_id, source_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
+END;
+$BODY$;
 
 CREATE OR REPLACE FUNCTION solardatum.find_available_sources(
 	IN node solarcommon.node_id,

@@ -460,7 +460,7 @@ $BODY$;
 
 
 CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_loc_datum(kind char)
-  RETURNS integer AS
+  RETURNS integer LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
 	stale record;
@@ -521,71 +521,41 @@ BEGIN
 		ELSE
 			CASE kind
 				WHEN 'h' THEN
-					<<update_hourly>>
-					LOOP
-						UPDATE solaragg.agg_loc_datum_hourly SET jdata = agg_json
-						WHERE
-							loc_id = stale.loc_id
-							AND source_id = stale.source_id
-							AND ts_start = stale.ts_start;
-
-						EXIT update_hourly WHEN FOUND;
-
-						INSERT INTO solaragg.agg_loc_datum_hourly (
-							ts_start, local_date, loc_id, source_id, jdata)
-						VALUES (
-							stale.ts_start,
-							stale.ts_start at time zone loc_tz,
-							stale.loc_id,
-							stale.source_id,
-							agg_json
-						);
-						EXIT update_hourly;
-					END LOOP update_hourly;
+					INSERT INTO solaragg.agg_loc_datum_hourly (
+						ts_start, local_date, loc_id, source_id, jdata)
+					VALUES (
+						stale.ts_start,
+						stale.ts_start at time zone loc_tz,
+						stale.loc_id,
+						stale.source_id,
+						agg_json
+					)
+					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
+					SET jdata = EXCLUDED.jdata;
 				WHEN 'd' THEN
-					<<update_daily>>
-					LOOP
-						UPDATE solaragg.agg_loc_datum_daily SET jdata = agg_json
-						WHERE
-							loc_id = stale.loc_id
-							AND source_id = stale.source_id
-							AND ts_start = stale.ts_start;
-
-						EXIT update_daily WHEN FOUND;
-
-						INSERT INTO solaragg.agg_loc_datum_daily (
-							ts_start, local_date, loc_id, source_id, jdata)
-						VALUES (
-							stale.ts_start,
-							CAST(stale.ts_start at time zone loc_tz AS DATE),
-							stale.loc_id,
-							stale.source_id,
-							agg_json
-						);
-						EXIT update_daily;
-					END LOOP update_daily;
+					INSERT INTO solaragg.agg_loc_datum_daily (
+						ts_start, local_date, loc_id, source_id, jdata)
+					VALUES (
+						stale.ts_start,
+						CAST(stale.ts_start at time zone loc_tz AS DATE),
+						stale.loc_id,
+						stale.source_id,
+						agg_json
+					)
+					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
+					SET jdata = EXCLUDED.jdata;
 				ELSE
-					<<update_monthly>>
-					LOOP
-						UPDATE solaragg.agg_loc_datum_monthly SET jdata = agg_json
-						WHERE
-							loc_id = stale.loc_id
-							AND source_id = stale.source_id
-							AND ts_start = stale.ts_start;
-
-						EXIT update_monthly WHEN FOUND;
-
-						INSERT INTO solaragg.agg_loc_datum_monthly (
-							ts_start, local_date, loc_id, source_id, jdata)
-						VALUES (
-							stale.ts_start,
-							CAST(stale.ts_start at time zone loc_tz AS DATE),
-							stale.loc_id,
-							stale.source_id,
-							agg_json
-						);
-						EXIT update_monthly;
-					END LOOP update_monthly;
+					INSERT INTO solaragg.agg_loc_datum_monthly (
+						ts_start, local_date, loc_id, source_id, jdata)
+					VALUES (
+						stale.ts_start,
+						CAST(stale.ts_start at time zone loc_tz AS DATE),
+						stale.loc_id,
+						stale.source_id,
+						agg_json
+					)
+					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
+					SET jdata = EXCLUDED.jdata;
 			END CASE;
 		END IF;
 		DELETE FROM solaragg.agg_stale_loc_datum WHERE CURRENT OF curs;
@@ -594,27 +564,21 @@ BEGIN
 		-- now make sure we recalculate the next aggregate level by submitting a stale record for the next level
 		CASE kind
 			WHEN 'h' THEN
-				BEGIN
-					INSERT INTO solaragg.agg_stale_loc_datum (ts_start, loc_id, source_id, agg_kind)
-					VALUES (date_trunc('day', stale.ts_start at time zone loc_tz) at time zone loc_tz, stale.loc_id, stale.source_id, 'd');
-				EXCEPTION WHEN unique_violation THEN
-					-- Nothing to do, just continue
-				END;
+				INSERT INTO solaragg.agg_stale_loc_datum (ts_start, loc_id, source_id, agg_kind)
+				VALUES (date_trunc('day', stale.ts_start at time zone loc_tz) at time zone loc_tz, stale.loc_id, stale.source_id, 'd')
+				ON CONFLICT (agg_kind, loc_id, ts_start, source_id) DO NOTHING;
 			WHEN 'd' THEN
-				BEGIN
-					INSERT INTO solaragg.agg_stale_loc_datum (ts_start, loc_id, source_id, agg_kind)
-					VALUES (date_trunc('month', stale.ts_start at time zone loc_tz) at time zone loc_tz, stale.loc_id, stale.source_id, 'm');
-				EXCEPTION WHEN unique_violation THEN
-					-- Nothing to do, just continue
-				END;
+				INSERT INTO solaragg.agg_stale_loc_datum (ts_start, loc_id, source_id, agg_kind)
+				VALUES (date_trunc('month', stale.ts_start at time zone loc_tz) at time zone loc_tz, stale.loc_id, stale.source_id, 'm')
+				ON CONFLICT (agg_kind, loc_id, ts_start, source_id) DO NOTHING;
 			ELSE
 				-- nothing
 		END CASE;
 	END IF;
 	CLOSE curs;
 	RETURN result;
-END;$BODY$
-  LANGUAGE plpgsql VOLATILE;
+END;
+$BODY$;
 
 CREATE OR REPLACE FUNCTION solaragg.process_agg_stale_loc_datum(kind char, max integer)
   RETURNS INTEGER AS
