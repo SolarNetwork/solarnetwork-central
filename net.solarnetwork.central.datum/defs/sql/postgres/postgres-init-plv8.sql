@@ -4,6 +4,9 @@ CREATE TABLE IF NOT EXISTS public.plv8_modules (
     source text NOT NULL,
     CONSTRAINT plv8_modules_pkey PRIMARY KEY(module)
 );
+GRANT SELECT ON TABLE public.plv8_modules TO public;
+
+CREATE EXTENSION IF NOT EXISTS plv8 with SCHEMA pg_catalog;
 
 CREATE OR REPLACE FUNCTION public.plv8_startup()
   RETURNS void LANGUAGE plv8 AS
@@ -69,3 +72,7 @@ this.resetRequireCache = function() {
 	});
 }());
 $BODY$;
+
+
+\cd plv8
+\i postgres-init-plv8-modules.sql

@@ -4,7 +4,7 @@ CREATE TABLE solardatum.da_loc_datum (
   source_id solarcommon.source_id NOT NULL,
   posted solarcommon.ts NOT NULL,
   jdata json NOT NULL,
-  CONSTRAINT da_loc_datum_pkey PRIMARY KEY (loc_id, ts, source_id)
+  CONSTRAINT da_loc_datum_pkey PRIMARY KEY (loc_id, ts, source_id) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 CREATE TABLE solardatum.da_loc_meta (
@@ -41,7 +41,15 @@ CREATE TABLE solaragg.agg_loc_datum_hourly (
   loc_id solarcommon.loc_id NOT NULL,
   source_id solarcommon.source_id NOT NULL,
   jdata json NOT NULL,
- CONSTRAINT agg_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
+  CONSTRAINT agg_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
+);
+
+CREATE TABLE solaragg.aud_loc_datum_hourly (
+  ts_start timestamp with time zone NOT NULL,
+  loc_id solarcommon.loc_id NOT NULL,
+  source_id solarcommon.source_id NOT NULL,
+  prop_count integer NOT NULL,
+  CONSTRAINT aud_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id) DEFERRABLE INITIALLY IMMEDIATE
 );
 
 CREATE TABLE solaragg.agg_loc_datum_daily (
@@ -50,7 +58,7 @@ CREATE TABLE solaragg.agg_loc_datum_daily (
   loc_id solarcommon.loc_id NOT NULL,
   source_id solarcommon.source_id NOT NULL,
   jdata json NOT NULL,
- CONSTRAINT agg_loc_datum_daily_pkey PRIMARY KEY (loc_id, ts_start, source_id)
+  CONSTRAINT agg_loc_datum_daily_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
 CREATE TABLE solaragg.agg_loc_datum_monthly (
@@ -59,7 +67,7 @@ CREATE TABLE solaragg.agg_loc_datum_monthly (
   loc_id solarcommon.loc_id NOT NULL,
   source_id solarcommon.source_id NOT NULL,
   jdata json NOT NULL,
- CONSTRAINT agg_loc_datum_monthly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
+  CONSTRAINT agg_loc_datum_monthly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
 CREATE VIEW solaragg.da_loc_datum_avail_hourly AS
@@ -92,60 +100,23 @@ FROM solardatum.da_loc_datum d
 INNER JOIN loctz ON loctz.loc_id = d.loc_id
 GROUP BY date_trunc('month', d.ts at time zone loctz.tz) at time zone loctz.tz, d.loc_id, d.source_id;
 
-CREATE OR REPLACE FUNCTION solardatum.store_loc_datum(
-	cdate solarcommon.ts,
-	loc solarcommon.loc_id,
-	src solarcommon.source_id,
-	pdate solarcommon.ts,
-	jdata text)
-  RETURNS void AS
-$BODY$
-DECLARE
-	ts_post solarcommon.ts := COALESCE(pdate, now());
-	ts_crea solarcommon.ts := COALESCE(cdate, now());
-	jdata_json json := jdata::json;
-BEGIN
-	BEGIN
-		INSERT INTO solardatum.da_loc_datum(ts, loc_id, source_id, posted, jdata)
-		VALUES (ts_crea, loc, src, ts_post, jdata_json);
-	EXCEPTION WHEN unique_violation THEN
-		-- We mostly expect inserts, but we allow updates
-		UPDATE solardatum.da_loc_datum SET
-			jdata = jdata_json,
-			posted = ts_post
-		WHERE
-			loc_id = loc
-			AND ts = ts_crea
-			AND source_id = src;
-	END;
-END;$BODY$
-  LANGUAGE plpgsql VOLATILE;
-
 CREATE OR REPLACE FUNCTION solardatum.store_loc_meta(
 	cdate solarcommon.ts,
 	loc solarcommon.loc_id,
 	src solarcommon.source_id,
 	jdata text)
-  RETURNS void AS
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
 	udate solarcommon.ts := now();
 	jdata_json json := jdata::json;
 BEGIN
-	BEGIN
-		INSERT INTO solardatum.da_loc_meta(loc_id, source_id, created, updated, jdata)
-		VALUES (loc, src, cdate, udate, jdata_json);
-	EXCEPTION WHEN unique_violation THEN
-		-- We mostly expect inserts, but we allow updates
-		UPDATE solardatum.da_loc_meta SET
-			jdata = jdata_json,
-			updated = udate
-		WHERE
-			loc_id = loc
-			AND source_id = src;
-	END;
-END;$BODY$
-  LANGUAGE plpgsql VOLATILE;
+	INSERT INTO solardatum.da_loc_meta(loc_id, source_id, created, updated, jdata)
+	VALUES (loc, src, cdate, udate, jdata_json)
+	ON CONFLICT (loc_id, source_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
+END;
+$BODY$;
 
 CREATE OR REPLACE FUNCTION solardatum.find_loc_available_sources(
 	IN loc solarcommon.loc_id,

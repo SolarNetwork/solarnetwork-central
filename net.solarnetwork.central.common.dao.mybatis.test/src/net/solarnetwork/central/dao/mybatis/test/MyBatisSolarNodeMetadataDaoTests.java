@@ -80,6 +80,15 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 		lastDatum = datum;
 	}
 
+	@Test
+	public void storeUpdate() {
+		storeNew();
+		SolarNodeMetadata datum = lastDatum;
+		datum.getMeta().putInfoValue("bim", "bam");
+		Long id = dao.store(datum);
+		assertEquals(lastDatum.getId(), id);
+	}
+
 	private void validate(SolarNodeMetadata src, SolarNodeMetadata entity) {
 		assertNotNull("GeneralNodeDatum should exist", entity);
 		assertEquals(src.getNodeId(), entity.getNodeId());

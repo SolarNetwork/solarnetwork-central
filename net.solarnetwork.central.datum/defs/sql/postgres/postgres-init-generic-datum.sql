@@ -48,6 +48,14 @@ CREATE TABLE solaragg.agg_datum_hourly (
  CONSTRAINT agg_datum_hourly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
+CREATE TABLE solaragg.aud_datum_hourly (
+  ts_start timestamp with time zone NOT NULL,
+  node_id solarcommon.node_id NOT NULL,
+  source_id solarcommon.source_id NOT NULL,
+  prop_count integer NOT NULL,
+  CONSTRAINT aud_datum_hourly_pkey PRIMARY KEY (node_id, ts_start, source_id) DEFERRABLE INITIALLY IMMEDIATE
+);
+
 CREATE TABLE solaragg.agg_datum_daily (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
@@ -99,60 +107,23 @@ FROM solardatum.da_datum d
 INNER JOIN nodetz ON nodetz.node_id = d.node_id
 GROUP BY date_trunc('month', d.ts at time zone nodetz.tz) at time zone nodetz.tz, d.node_id, d.source_id;
 
-CREATE OR REPLACE FUNCTION solardatum.store_datum(
-	cdate solarcommon.ts,
-	node solarcommon.node_id,
-	src solarcommon.source_id,
-	pdate solarcommon.ts,
-	jdata text)
-  RETURNS void AS
-$BODY$
-DECLARE
-	ts_post solarcommon.ts := COALESCE(pdate, now());
-	ts_crea solarcommon.ts := COALESCE(cdate, now());
-	jdata_json json := jdata::json;
-BEGIN
-	BEGIN
-		INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata)
-		VALUES (ts_crea, node, src, ts_post, jdata_json);
-	EXCEPTION WHEN unique_violation THEN
-		-- We mostly expect inserts, but we allow updates
-		UPDATE solardatum.da_datum SET
-			jdata = jdata_json,
-			posted = ts_post
-		WHERE
-			node_id = node
-			AND ts = ts_crea
-			AND source_id = src;
-	END;
-END;$BODY$
-  LANGUAGE plpgsql VOLATILE;
-
 CREATE OR REPLACE FUNCTION solardatum.store_meta(
 	cdate solarcommon.ts,
 	node solarcommon.node_id,
 	src solarcommon.source_id,
 	jdata text)
-  RETURNS void AS
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
 	udate solarcommon.ts := now();
 	jdata_json json := jdata::json;
 BEGIN
-	BEGIN
-		INSERT INTO solardatum.da_meta(node_id, source_id, created, updated, jdata)
-		VALUES (node, src, cdate, udate, jdata_json);
-	EXCEPTION WHEN unique_violation THEN
-		-- We mostly expect inserts, but we allow updates
-		UPDATE solardatum.da_meta SET
-			jdata = jdata_json,
-			updated = udate
-		WHERE
-			node_id = node
-			AND source_id = src;
-	END;
-END;$BODY$
-  LANGUAGE plpgsql VOLATILE;
+	INSERT INTO solardatum.da_meta(node_id, source_id, created, updated, jdata)
+	VALUES (node, src, cdate, udate, jdata_json)
+	ON CONFLICT (node_id, source_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
+END;
+$BODY$;
 
 CREATE OR REPLACE FUNCTION solardatum.find_available_sources(
 	IN node solarcommon.node_id,
@@ -253,71 +224,6 @@ BEGIN
 END;$BODY$
   LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION solardatum.find_most_recent(
-	node solarcommon.node_id,
-	sources solarcommon.source_ids DEFAULT NULL)
-  RETURNS SETOF solardatum.da_datum AS
-$BODY$
-BEGIN
-	IF sources IS NULL OR array_length(sources, 1) < 1 THEN
-		RETURN QUERY
-		SELECT dd.* FROM solardatum.da_datum dd
-		INNER JOIN (
-			-- to speed up query for sources (which can be very slow when queried directly on da_datum),
-			-- we find the most recent hour time slot in agg_datum_hourly, and then join to da_datum with that narrow time range
-			WITH days AS (
-				SELECT max(d.ts_start) as ts_start, d.source_id FROM solaragg.agg_datum_hourly d
-				INNER JOIN (SELECT solardatum.find_available_sources(node) AS source_id) AS s ON s.source_id = d.source_id
-				WHERE d. node_id = node
-				GROUP BY d.source_id
-			)
-			SELECT max(d.ts) as ts, d.source_id FROM solardatum.da_datum d
-			INNER JOIN days ON days.source_id = d.source_id
-			WHERE d.node_id = node
-				AND d.ts >= days.ts_start
-				AND d.ts < days.ts_start + interval '1 hour'
-			GROUP BY d.source_id
-		) AS r ON r.ts = dd.ts AND r.source_id = dd.source_id AND dd.node_id = node
-		ORDER BY dd.source_id ASC;
-	ELSE
-		RETURN QUERY
-		SELECT dd.* FROM solardatum.da_datum dd
-		INNER JOIN (
-			WITH days AS (
-				SELECT max(d.ts_start) as ts_start, d.source_id FROM solaragg.agg_datum_hourly d
-				INNER JOIN (SELECT unnest(sources) AS source_id) AS s ON s.source_id = d.source_id
-				WHERE d. node_id = node
-				GROUP BY d.source_id
-			)
-			SELECT max(d.ts) as ts, d.source_id FROM solardatum.da_datum d
-			INNER JOIN days ON days.source_id = d.source_id
-			WHERE d.node_id = node
-				AND d.ts >= days.ts_start
-				AND d.ts < days.ts_start + interval '1 hour'
-			GROUP BY d.source_id
-		) AS r ON r.ts = dd.ts AND r.source_id = dd.source_id AND dd.node_id = node
-		ORDER BY dd.source_id ASC;
-	END IF;
-END;$BODY$
-  LANGUAGE plpgsql STABLE
-  ROWS 20;
-
-/**
- * Return most recent datum records for all available sources for a given set of node IDs.
- *
- * @param nodes An array of node IDs to return results for.
- * @returns Set of solardatum.da_datum records.
- */
-CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes solarcommon.node_ids)
-  RETURNS SETOF solardatum.da_datum AS
-$BODY$
-	SELECT r.*
-	FROM (SELECT unnest(nodes) AS node_id) AS n,
-	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
-	ORDER BY r.node_id, r.source_id;
-$BODY$
-  LANGUAGE sql STABLE;
-
 CREATE OR REPLACE FUNCTION solardatum.populate_updated()
   RETURNS "trigger" AS
 $BODY$
@@ -387,4 +293,31 @@ while ( rec = curs.fetch() ) {
 curs.close();
 stmt.free();
 
+$BODY$;
+
+/**
+ * Count the properties in a datum JSON object.
+ *
+ * @param jdata				the datum JSON
+ *
+ * @returns The property count.
+ */
+CREATE OR REPLACE FUNCTION solardatum.datum_prop_count(IN jdata json)
+  RETURNS INTEGER
+  LANGUAGE plv8
+  IMMUTABLE AS
+$BODY$
+'use strict';
+var count = 0, prop, val;
+if ( jdata ) {
+	for ( prop in jdata ) {
+		val = jdata[prop];
+		if ( Array.isArray(val) ) {
+			count += val.length;
+		} else {
+			count += Object.keys(val).length;
+		}
+	}
+}
+return count;
 $BODY$;

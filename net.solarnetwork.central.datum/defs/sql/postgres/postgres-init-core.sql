@@ -22,7 +22,7 @@ CREATE DOMAIN solarnet.pk_i
 CREATE TABLE solarnet.sn_loc (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	country			CHARACTER(2) NOT NULL,
+	country			CHARACTER VARYING(2) NOT NULL,
 	time_zone		CHARACTER VARYING(64) NOT NULL,
 	region			CHARACTER VARYING(128),
 	state_prov		CHARACTER VARYING(128),
@@ -40,8 +40,8 @@ CREATE INDEX sn_loc_fts_default_idx ON solarnet.sn_loc USING gin(fts_default);
 
 CREATE TRIGGER maintain_fts
   BEFORE INSERT OR UPDATE ON solarnet.sn_loc
-  FOR EACH ROW EXECUTE PROCEDURE 
-  tsvector_update_trigger(fts_default, 'pg_catalog.english', 
+  FOR EACH ROW EXECUTE PROCEDURE
+  tsvector_update_trigger(fts_default, 'pg_catalog.english',
   	country, region, state_prov, locality, postal_code, address);
 
 /* =========================================================================
@@ -51,7 +51,7 @@ CREATE TRIGGER maintain_fts
    ========================================================================= */
 
 CREATE SEQUENCE solarnet.weather_seq;
-  	
+
 CREATE TABLE solarnet.sn_weather_source (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -62,7 +62,7 @@ CREATE TABLE solarnet.sn_weather_source (
 
 CREATE TRIGGER maintain_fts
   BEFORE INSERT OR UPDATE ON solarnet.sn_weather_source
-  FOR EACH ROW EXECUTE PROCEDURE 
+  FOR EACH ROW EXECUTE PROCEDURE
   tsvector_update_trigger(fts_default, 'pg_catalog.english', sname);
 
 CREATE INDEX sn_weather_source_fts_default_idx ON solarnet.sn_weather_source USING gin(fts_default);
@@ -87,7 +87,7 @@ CREATE TABLE solarnet.sn_weather_loc (
 
 CREATE TRIGGER maintain_fts
   BEFORE INSERT OR UPDATE ON solarnet.sn_weather_loc
-  FOR EACH ROW EXECUTE PROCEDURE 
+  FOR EACH ROW EXECUTE PROCEDURE
   tsvector_update_trigger(fts_default, 'pg_catalog.english', source_data);
 
 CREATE INDEX sn_weather_loc_fts_default_idx ON solarnet.sn_weather_loc USING gin(fts_default);
@@ -109,13 +109,13 @@ CREATE TABLE solarnet.sn_node (
 		REFERENCES solarnet.sn_loc (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT sn_node_weather_loc_fk FOREIGN KEY (wloc_id)
-		REFERENCES solarnet.sn_weather_loc (id) 
+		REFERENCES solarnet.sn_weather_loc (id)
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
 /******************************************************************************
  * TABLE solarnet.sn_node_meta
- * 
+ *
  * Stores JSON metadata specific to a node.
  */
 CREATE TABLE solarnet.sn_node_meta (
@@ -131,50 +131,29 @@ CREATE TABLE solarnet.sn_node_meta (
 
 /******************************************************************************
  * FUNCTION solarnet.store_node_meta(timestamptz, bigint, text)
- * 
+ *
  * Add or update node metadata.
- * 
+ *
  * @param cdate the creation date to use
  * @param node the node ID
  * @param jdata the metadata to store
  */
 CREATE OR REPLACE FUNCTION solarnet.store_node_meta(
-	cdate solarcommon.ts, 
-	node solarcommon.node_id, 
+	cdate solarcommon.ts,
+	node solarcommon.node_id,
 	jdata text)
-  RETURNS void AS
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
 	udate solarcommon.ts := now();
 	jdata_json json := jdata::json;
 BEGIN
-	-- We mostly expect updates, so try that first, then insert
-	-- In 9.5 we can do upsert with ON CONFLICT.
-	LOOP
-		-- first try to update
-		UPDATE solarnet.sn_node_meta SET 
-			jdata = jdata_json, 
-			updated = udate
-		WHERE
-			node_id = node;
-
-		-- check if the row is found
-		IF FOUND THEN
-			RETURN;
-		END IF;
-		
-		-- not found so insert the row
-		BEGIN
-			INSERT INTO solarnet.sn_node_meta(node_id, created, updated, jdata)
-			VALUES (node, cdate, udate, jdata_json);
-			RETURN;
-		EXCEPTION WHEN unique_violation THEN
-			-- do nothing and loop
-		END;
-	END LOOP;
+	INSERT INTO solarnet.sn_node_meta(node_id, created, updated, jdata)
+	VALUES (node, cdate, udate, jdata_json)
+	ON CONFLICT (node_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
 END;
-$BODY$
-  LANGUAGE plpgsql VOLATILE;
+$BODY$;
 
 CREATE OR REPLACE FUNCTION solarnet.get_node_local_timestamp(timestamp with time zone, bigint)
   RETURNS timestamp without time zone AS
@@ -188,16 +167,16 @@ $BODY$
 
 /******************************************************************************
  * FUNCTION solarnet.get_node_timezone(bigint)
- * 
+ *
  * Return a node's time zone.
- * 
+ *
  * @param bigint the node ID
  * @return time zone name, e.g. 'Pacific/Auckland'
  */
 CREATE OR REPLACE FUNCTION solarnet.get_node_timezone(bigint)
   RETURNS text AS
 $BODY$
-	SELECT l.time_zone 
+	SELECT l.time_zone
 	FROM solarnet.sn_node n
 	INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 	WHERE n.node_id = $1
@@ -212,14 +191,14 @@ $BODY$
 
 /**************************************************************************************************
  * FUNCTION solarnet.get_season(date)
- * 
- * Assign a "season" number to a date. Seasons are defined as: 
- * 
+ *
+ * Assign a "season" number to a date. Seasons are defined as:
+ *
  * Dec,Jan,Feb = 0
  * Mar,Apr,May = 1
  * Jun,Jul,Aug = 2
  * Sep,Oct,Nov = 3
- * 
+ *
  * @param date the date to calcualte the season for
  * @returns integer season constant
  */
@@ -227,7 +206,7 @@ CREATE OR REPLACE FUNCTION solarnet.get_season(date)
 RETURNS INTEGER AS
 $BODY$
 	SELECT
-	CASE EXTRACT(MONTH FROM $1) 
+	CASE EXTRACT(MONTH FROM $1)
 		WHEN 12 THEN 0
 		WHEN 1 THEN 0
 		WHEN 2 THEN 0
@@ -247,11 +226,11 @@ $BODY$
 
 /**************************************************************************************************
  * FUNCTION solarnet.get_season_monday_start(date)
- * 
+ *
  * Returns a date representing the first Monday within the provide date's season, where season
- * is defined by the solarnet.get_season(date) function. The actual returned date is meaningless 
+ * is defined by the solarnet.get_season(date) function. The actual returned date is meaningless
  * other than it will be a Monday and will be within the appropriate season.
- * 
+ *
  * @param date the date to calcualte the Monday season date for
  * @returns date representing the first Monday within the season
  * @see solarnet.get_season(date)
@@ -288,7 +267,7 @@ CREATE TABLE solarnet.sn_price_source (
 
 CREATE TRIGGER maintain_fts
   BEFORE INSERT OR UPDATE ON solarnet.sn_price_source
-  FOR EACH ROW EXECUTE PROCEDURE 
+  FOR EACH ROW EXECUTE PROCEDURE
   tsvector_update_trigger(fts_default, 'pg_catalog.english', sname);
 
 CREATE INDEX sn_price_source_fts_default_idx ON solarnet.sn_price_source USING gin(fts_default);
@@ -314,7 +293,7 @@ CREATE TABLE solarnet.sn_price_loc (
 
 CREATE TRIGGER maintain_fts
   BEFORE INSERT OR UPDATE ON solarnet.sn_price_loc
-  FOR EACH ROW EXECUTE PROCEDURE 
+  FOR EACH ROW EXECUTE PROCEDURE
   tsvector_update_trigger(fts_default, 'pg_catalog.english', loc_name, source_data, currency);
 
 CREATE INDEX sn_price_loc_fts_default_idx ON solarnet.sn_price_loc USING gin(fts_default);

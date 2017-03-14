@@ -15,10 +15,9 @@
 \i postgres-init-generic-loc-datum.sql
 \i postgres-init-generic-loc-datum-agg-functions.sql
 \i postgres-init-generic-loc-datum-agg-triggers.sql
+\i postgres-init-generic-datum-x-functions.sql
+\i postgres-init-generic-loc-datum-x-functions.sql
 \i postgres-init-users.sql
 \i postgres-init-user-alerts.sql
 \i postgres-init-controls.sql
 \i postgres-init-quartz.sql
-
-\cd plv8
-\i postgres-init-plv8-modules.sql

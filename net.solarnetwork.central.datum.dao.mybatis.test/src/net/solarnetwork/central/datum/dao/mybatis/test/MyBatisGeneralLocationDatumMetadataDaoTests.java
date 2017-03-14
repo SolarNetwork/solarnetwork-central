@@ -92,6 +92,15 @@ public class MyBatisGeneralLocationDatumMetadataDaoTests extends AbstractMyBatis
 		lastDatum = datum;
 	}
 
+	@Test
+	public void storeUpdated() {
+		storeNew();
+		GeneralLocationDatumMetadata datum = lastDatum;
+		datum.getMeta().putInfoValue("bim", "bam");
+		LocationSourcePK id = dao.store(datum);
+		assertEquals(datum.getId(), id);
+	}
+
 	private void validate(GeneralLocationDatumMetadata src, GeneralLocationDatumMetadata entity) {
 		assertNotNull("GeneralLocationDatum should exist", entity);
 		assertEquals(src.getLocationId(), entity.getLocationId());

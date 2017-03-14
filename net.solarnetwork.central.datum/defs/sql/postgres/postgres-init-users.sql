@@ -45,39 +45,18 @@ CREATE OR REPLACE FUNCTION solaruser.store_user_meta(
 	cdate solarcommon.ts,
 	userid BIGINT,
 	jdata text)
-  RETURNS void AS
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
 	udate solarcommon.ts := now();
 	jdata_json json := jdata::json;
 BEGIN
-	-- We mostly expect updates, so try that first, then insert
-	-- In 9.5 we can do upsert with ON CONFLICT.
-	LOOP
-		-- first try to update
-		UPDATE solaruser.user_meta SET
-			jdata = jdata_json,
-			updated = udate
-		WHERE
-			user_id = userid;
-
-		-- check if the row is found
-		IF FOUND THEN
-			RETURN;
-		END IF;
-
-		-- not found so insert the row
-		BEGIN
-			INSERT INTO solaruser.user_meta(user_id, created, updated, jdata)
-			VALUES (userid, cdate, udate, jdata_json);
-			RETURN;
-		EXCEPTION WHEN unique_violation THEN
-			-- do nothing and loop
-		END;
-	END LOOP;
+	INSERT INTO solaruser.user_meta(user_id, created, updated, jdata)
+	VALUES (userid, cdate, udate, jdata_json)
+	ON CONFLICT (user_id) DO UPDATE
+	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
 END;
-$BODY$
-  LANGUAGE plpgsql VOLATILE;
+$BODY$;
 
  /**
  * user_role: user granted login roles

@@ -2,13 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Viz Web
 Bundle-SymbolicName: net.solarnetwork.central.viz.web
-Bundle-Version: 1.7.0
+Bundle-Version: 1.7.1
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-Classpath: .,build/eclipse
 Web-ContextPath: solarviz
 Import-Package: 
- javax.el;version="[1.0,3.0)",
+ javax.el;version="[1.0,4.0)",
  javax.servlet;version="2.5.0",
  javax.servlet.http;version="2.5.0",
  javax.servlet.jsp;version="2.1.0",
@@ -29,10 +29,10 @@ Import-Package:
  net.solarnetwork.web.gemini;version="1.0.0",
  net.solarnetwork.web.support;version="[1.0.0,2.0.0)",
  org.aopalliance.aop;version="[1.0,2.0)",
- org.apache.el;version="[7.0,8.0)";resolution:=optional,
- org.apache.el.lang;version="[7.0,8.0)";resolution:=optional,
- org.apache.el.parser;version="[7.0,8.0)";resolution:=optional,
- org.apache.el.util;version="[7.0,8.0)";resolution:=optional,
+ org.apache.el;version="[7.0,9.0)";resolution:=optional,
+ org.apache.el.lang;version="[7.0,9.0)";resolution:=optional,
+ org.apache.el.parser;version="[7.0,9.0)";resolution:=optional,
+ org.apache.el.util;version="[7.0,9.0)";resolution:=optional,
  org.apache.taglibs.standard.resources;version="[1.1.2,2.0.0)",
  org.apache.taglibs.standard.tag.common.core;version="[1.1.2,2.0.0)",
  org.apache.taglibs.standard.tag.common.fmt;version="[1.1.2,2.0.0)",

@@ -89,6 +89,15 @@ public class MyBatisGeneralNodeDatumMetadataDaoTests extends AbstractMyBatisDaoT
 		lastDatum = datum;
 	}
 
+	@Test
+	public void storeUpdated() {
+		storeNew();
+		GeneralNodeDatumMetadata meta = lastDatum;
+		meta.getMeta().putInfoValue("bim", "bam");
+		NodeSourcePK id = dao.store(meta);
+		assertEquals(meta.getId(), id);
+	}
+
 	private void validate(GeneralNodeDatumMetadata src, GeneralNodeDatumMetadata entity) {
 		assertNotNull("GeneralNodeDatum should exist", entity);
 		assertEquals(src.getNodeId(), entity.getNodeId());
