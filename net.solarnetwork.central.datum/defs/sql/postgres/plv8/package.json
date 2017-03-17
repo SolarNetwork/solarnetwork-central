@@ -10,7 +10,8 @@
   "license": "Apache-2.0",
   "scripts": {
     "build": "node cmd.js src/**/*.js",
-    "test": "./node_modules/.bin/ava"
+    "test": "./node_modules/.bin/nyc ./node_modules/.bin/ava",
+    "coverage": "./node_modules/.bin/nyc --reporter=html ./node_modules/.bin/ava"
   },
   "ava": {
     "source": [
@@ -45,7 +46,9 @@
   "devDependencies": {
     "ava": "^0.18.1",
     "csv": "^1.1.1",
+    "istanbul": "^0.4.5",
     "moment": "^2.17.1",
+    "nyc": "^10.1.2",
     "sinon": "^1.17.7"
   }
 }
