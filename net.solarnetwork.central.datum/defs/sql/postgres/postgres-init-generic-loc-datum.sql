@@ -22,7 +22,7 @@ CREATE TABLE solaragg.agg_stale_loc_datum (
   source_id solarcommon.source_id NOT NULL,
   agg_kind char(1) NOT NULL,
   created timestamp NOT NULL DEFAULT now(),
-  CONSTRAINT agg_stale_loc_datum_pkey PRIMARY KEY (agg_kind, loc_id, ts_start, source_id)
+  CONSTRAINT agg_stale_loc_datum_pkey PRIMARY KEY (agg_kind, ts_start, loc_id, source_id)
 );
 
 CREATE TABLE solaragg.agg_loc_messages (

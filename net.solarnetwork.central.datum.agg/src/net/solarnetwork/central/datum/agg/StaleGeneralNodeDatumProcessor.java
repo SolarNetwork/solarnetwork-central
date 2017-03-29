@@ -26,6 +26,10 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
@@ -35,33 +39,21 @@ import org.springframework.jdbc.core.JdbcOperations;
 /**
  * Job to process "stale" general node datum reporting aggregate data.
  * 
- * <p>
  * This job executes a JDBC procedure, which is expected to return an Integer
  * result representing the number of rows processed by the call. If the
  * procedure returns zero, the job stops immediately.
- * </p>
  * 
- * <p>
- * The configurable properties of this class are:
- * </p>
- * 
- * <dl class="class-properties">
- * <dt>aggregateProcessType</dt>
- * <dd>The type of aggregate data to process. This is the first parameter passed
- * to the JDBC procedure.</dd>
- * 
- * <dt>aggregateProcessMax</dt>
- * <dd>The maximum number of aggregate rows to process. This is the second
- * parameter passed to the JDBC procedure.</dd>
- * </dl>
+ * If {@code taskCount} is higher than {@code 1} then {@code taskCount} threads
+ * will be spawned and each process {@code maximumRowCount / taskCount} rows.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class StaleGeneralNodeDatumProcessor extends StaleDatumProcessor {
 
 	private String aggregateProcessType = "h";
 	private int aggregateProcessMax = 1;
+	private int taskCount = 1;
 
 	/**
 	 * Construct with properties.
@@ -76,46 +68,139 @@ public class StaleGeneralNodeDatumProcessor extends StaleDatumProcessor {
 		setJdbcCall("{? = call solaragg.process_agg_stale_datum(?, ?)}");
 	}
 
-	@Override
-	protected boolean handleJob(Event job) throws Exception {
-		log.debug("Processing at most {} stale general data for aggregate '{}' with call {}",
-				aggregateProcessMax, aggregateProcessType, getJdbcCall());
-		getJdbcOps().execute(new ConnectionCallback<Object>() {
+	private int execute(final AtomicInteger remainingCount) {
+		return getJdbcOps().execute(new ConnectionCallback<Integer>() {
 
 			@Override
-			public Object doInConnection(Connection con) throws SQLException, DataAccessException {
+			public Integer doInConnection(Connection con) throws SQLException, DataAccessException {
 				CallableStatement call = con.prepareCall(getJdbcCall());
 				call.registerOutParameter(1, Types.INTEGER);
 				call.setString(2, aggregateProcessType);
 				call.setInt(3, aggregateProcessMax);
 				con.setAutoCommit(true); // we want every execution of our loop to commit immediately
-				int i = 0;
 				int resultCount = 0;
+				int processedCount = 0;
 				do {
 					call.execute();
 					resultCount = call.getInt(1);
-					i += resultCount;
-				} while ( i < getMaximumRowCount() && resultCount > 0 );
-				return null;
+					processedCount += resultCount;
+					remainingCount.addAndGet(-resultCount);
+				} while ( resultCount > 0 && remainingCount.get() > 0 );
+				return processedCount;
 			}
 		});
-		return true;
 	}
 
+	@Override
+	protected boolean handleJob(Event job) throws Exception {
+		final int tCount = taskCount;
+		log.debug(
+				"Processing at most {} stale general data for aggregate '{}' using {} tasks with call {}",
+				aggregateProcessMax * getMaximumRowCount(), aggregateProcessType, tCount, getJdbcCall());
+		final AtomicInteger remainingCount = new AtomicInteger(getMaximumRowCount());
+		boolean allDone = false;
+		if ( tCount > 1 ) {
+			final ExecutorService executorService = getExecutorService();
+			final CountDownLatch latch = new CountDownLatch(tCount);
+			for ( int i = 0; i < tCount; i++ ) {
+				executorService.submit(new Runnable() {
+
+					@Override
+					public void run() {
+						log.debug("Task {} processing at most {} stale general data for aggregate '{}'",
+								Thread.currentThread().getName(),
+								aggregateProcessMax * getMaximumRowCount(), aggregateProcessType);
+						try {
+							int processedCount = execute(remainingCount);
+							log.debug("Task {} processed {} stale general data for aggregate '{}'",
+									Thread.currentThread().getName(), processedCount,
+									aggregateProcessType);
+						} catch ( Exception e ) {
+							log.error(
+									"Error processing stale general data for aggregate '{}' with call {}",
+									aggregateProcessType, getJdbcCall(), e);
+						} finally {
+							latch.countDown();
+						}
+					}
+				});
+			}
+			allDone = latch.await(getMaximumWaitMs(), TimeUnit.MILLISECONDS);
+			if ( !allDone ) {
+				log.warn(
+						"Timeout processing stale general data for aggregate '{}'; {}/{} tasks completed",
+						aggregateProcessType, (tCount - latch.getCount()), tCount);
+			}
+		} else {
+			execute(remainingCount);
+			allDone = true;
+		}
+		return allDone;
+	}
+
+	/**
+	 * Get the aggregate process type.
+	 * 
+	 * @return the type
+	 */
 	public String getAggregateProcessType() {
 		return aggregateProcessType;
 	}
 
+	/**
+	 * Set the type of aggregate data to process. This is the first parameter
+	 * passed to the JDBC procedure.
+	 * 
+	 * @param aggregateProcessType
+	 *        the type to set
+	 */
 	public void setAggregateProcessType(String aggregateProcessType) {
 		this.aggregateProcessType = aggregateProcessType;
 	}
 
+	/**
+	 * Get the maximum aggregate rows to process per procedure call.
+	 * 
+	 * @return the maximum row count
+	 */
 	public int getAggregateProcessMax() {
 		return aggregateProcessMax;
 	}
 
+	/**
+	 * Set the maximum number of aggregate rows to process per procedure call.
+	 * This is the second parameter passed to the JDBC procedure. Default is
+	 * {@code 1}.
+	 * 
+	 * @param aggregateProcessMax
+	 *        the maximum number of rows
+	 */
 	public void setAggregateProcessMax(int aggregateProcessMax) {
 		this.aggregateProcessMax = aggregateProcessMax;
+	}
+
+	/**
+	 * Get the maximum number of parallel tasks to allow.
+	 * 
+	 * @return the numJobs the maximum task count
+	 */
+	public int getTaskCount() {
+		return taskCount;
+	}
+
+	/**
+	 * Set the maximum number of parallel tasks to allow.
+	 * 
+	 * Any value less than 1 will be treated as 1.
+	 * 
+	 * @param taskCount
+	 *        the maximum number of tasks to allow
+	 */
+	public void setTaskCount(int taskCount) {
+		if ( taskCount < 1 ) {
+			taskCount = 1;
+		}
+		this.taskCount = taskCount;
 	}
 
 }

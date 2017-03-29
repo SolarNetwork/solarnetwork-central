@@ -519,9 +519,9 @@ DECLARE
 	stale record;
 	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum
 			WHERE agg_kind = kind
-			--ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
+			ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
 			LIMIT 1
-			FOR UPDATE;
+			FOR UPDATE SKIP LOCKED;
 	agg_span interval;
 	agg_json json := NULL;
 	node_tz text := 'UTC';
