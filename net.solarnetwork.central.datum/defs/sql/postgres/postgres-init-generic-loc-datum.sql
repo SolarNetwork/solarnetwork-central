@@ -4,7 +4,7 @@ CREATE TABLE solardatum.da_loc_datum (
   source_id solarcommon.source_id NOT NULL,
   posted solarcommon.ts NOT NULL,
   jdata json NOT NULL,
-  CONSTRAINT da_loc_datum_pkey PRIMARY KEY (loc_id, ts, source_id) DEFERRABLE INITIALLY IMMEDIATE
+  CONSTRAINT da_loc_datum_pkey PRIMARY KEY (loc_id, ts, source_id)
 );
 
 CREATE TABLE solardatum.da_loc_meta (
@@ -49,7 +49,7 @@ CREATE TABLE solaragg.aud_loc_datum_hourly (
   loc_id solarcommon.loc_id NOT NULL,
   source_id solarcommon.source_id NOT NULL,
   prop_count integer NOT NULL,
-  CONSTRAINT aud_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id) DEFERRABLE INITIALLY IMMEDIATE
+  CONSTRAINT aud_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
 CREATE TABLE solaragg.agg_loc_datum_daily (
