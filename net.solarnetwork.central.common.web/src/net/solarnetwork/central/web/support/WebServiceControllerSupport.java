@@ -32,11 +32,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.fasterxml.jackson.core.JsonParseException;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
@@ -54,7 +56,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public abstract class WebServiceControllerSupport {
 
@@ -145,6 +147,46 @@ public abstract class WebServiceControllerSupport {
 	}
 
 	/**
+	 * Handle a {@link JsonParseException}, presuming from malformed JSON input.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 * @since 1.6
+	 */
+	@ExceptionHandler(JsonParseException.class)
+	@ResponseBody
+	public Response<?> handleJsonParseException(JsonParseException e, HttpServletResponse response) {
+		log.error("JsonParseException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getMessage(), null);
+	}
+
+	/**
+	 * Handle a {@link HttpMessageNotReadableException}, from malformed JSON
+	 * input.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 * @since 1.6
+	 */
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	@ResponseBody
+	public Response<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e,
+			HttpServletResponse response) {
+		Throwable t = e.getMostSpecificCause();
+		if ( t instanceof JsonParseException ) {
+			return handleJsonParseException((JsonParseException) t, response);
+		}
+		log.error("HttpMessageNotReadableException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getMessage(), null);
+	}
+
+	/**
 	 * Handle a {@link RuntimeException}.
 	 * 
 	 * @param e
@@ -218,9 +260,12 @@ public abstract class WebServiceControllerSupport {
 	/**
 	 * Get all node IDs the current actor is authorized to access.
 	 * 
-	 * @param userBiz The UserBiz to use to fill in all available nodes for user-based actors, or {@code null} to to fill in nodes.
+	 * @param userBiz
+	 *        The UserBiz to use to fill in all available nodes for user-based
+	 *        actors, or {@code null} to to fill in nodes.
 	 * @return The allowed node IDs.
-	 * @throws AuthorizationException if no node IDs are allowed or there is no actor 
+	 * @throws AuthorizationException
+	 *         if no node IDs are allowed or there is no actor
 	 * @since 1.5
 	 */
 	protected Long[] authorizedNodeIdsForCurrentActor(UserBiz userBiz) {
