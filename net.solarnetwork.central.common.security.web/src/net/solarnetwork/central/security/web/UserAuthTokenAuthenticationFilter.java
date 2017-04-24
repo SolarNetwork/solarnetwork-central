@@ -43,6 +43,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.GenericFilterBean;
+import net.solarnetwork.web.security.AuthenticationData;
+import net.solarnetwork.web.security.AuthenticationDataFactory;
+import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
 
 /**
  * Authentication filter for "SolarNetworkWS" style authentication.
@@ -87,7 +90,7 @@ import org.springframework.web.filter.GenericFilterBean;
  * </dl>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UserAuthTokenAuthenticationFilter extends GenericFilterBean implements Filter {
 
@@ -114,46 +117,17 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 				(HttpServletRequest) req, 65536);
 		HttpServletResponse response = (HttpServletResponse) res;
 
-		final String header = request.getHeader("Authorization");
-
-		AuthenticationScheme scheme = null;
-		String headerData = null;
-		if ( header != null ) {
-			for ( AuthenticationScheme aScheme : AuthenticationScheme.values() ) {
-				if ( header.startsWith(aScheme.getSchemeName()) ) {
-					scheme = aScheme;
-					headerData = header.substring(scheme.getSchemeName().length() + 1);
-					break;
-				}
-			}
-		}
-
-		if ( scheme == null ) {
-			log.trace("Missing Authorization header or unsupported scheme");
-			chain.doFilter(request, response);
+		AuthenticationData data;
+		try {
+			data = AuthenticationDataFactory.authenticationDataForAuthorizationHeader(request);
+		} catch ( AuthenticationException e ) {
+			fail(request, response, e);
 			return;
 		}
 
-		log.debug("Digest Authorization header received from user agent: {}", header);
-
-		AuthenticationData data;
-		try {
-			switch (scheme) {
-				case V1:
-					data = new AuthenticationDataV1(request, headerData);
-					break;
-
-				case V2:
-					data = new AuthenticationDataV2(request, headerData);
-					break;
-
-				default:
-					fail(request, response,
-							new BadCredentialsException("Authentication scheme not supported."));
-					return;
-			}
-		} catch ( AuthenticationException e ) {
-			fail(request, response, e);
+		if ( data == null ) {
+			log.trace("Missing Authorization header or unsupported scheme");
+			chain.doFilter(request, response);
 			return;
 		}
 

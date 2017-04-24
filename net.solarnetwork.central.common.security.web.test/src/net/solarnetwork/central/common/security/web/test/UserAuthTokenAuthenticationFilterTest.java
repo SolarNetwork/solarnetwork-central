@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.common.security.web.test;
 
-import static net.solarnetwork.central.common.security.web.test.AuthenticationDataV1Tests.createAuthorizationHeaderV1Value;
-import static net.solarnetwork.central.common.security.web.test.AuthenticationDataV2Tests.createAuthorizationHeaderV2Value;
+import static net.solarnetwork.central.common.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV1Value;
+import static net.solarnetwork.central.common.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV2Value;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -53,9 +53,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import net.solarnetwork.central.security.web.AuthenticationScheme;
 import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint;
 import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter;
+import net.solarnetwork.web.security.AuthenticationScheme;
 
 /**
  * Unit tests for the {@link UserAuthTokenAuthenticationFilter} class.
