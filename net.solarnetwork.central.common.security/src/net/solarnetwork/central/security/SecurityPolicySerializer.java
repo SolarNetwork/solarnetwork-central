@@ -36,9 +36,11 @@ import net.solarnetwork.central.domain.LocationPrecision;
  * JSON serializer for {@link SecurityPolicy}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SecurityPolicySerializer extends StdSerializer<SecurityPolicy> {
+
+	private static final long serialVersionUID = -5542903806671694581L;
 
 	public SecurityPolicySerializer() {
 		super(SecurityPolicy.class);
