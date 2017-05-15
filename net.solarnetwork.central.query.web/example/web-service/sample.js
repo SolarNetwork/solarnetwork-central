@@ -93,7 +93,7 @@ SNAPI.setupHeaderNamesToSign = function(params) {
 		params.signedHeaderNames.push('digest');
 		params.signedHeaders['digest'] = 'sha-256='+CryptoJS.enc.Base64.stringify(CryptoJS.SHA256(params.data));
 	}
-	Array.sort(params.signedHeaderNames);
+	params.signedHeaderNames.sort();
 };
 
 SNAPI.iso8601Date = function(date, includeTime) {
