@@ -87,9 +87,11 @@ SNAPI.setupHeaderNamesToSign = function(params) {
 	}
 	params.signedHeaderNames = ['host', 'x-sn-date'];
 	params.signedHeaders = { host : SNAPI.hostHeaderValue(params.host), 'x-sn-date' : params.date.toUTCString() };
-	if ( SNAPI.shouldIncludeContentDigest(params.contentType) ) {
+	if ( params.contentType ) {
 		params.signedHeaderNames.push('content-type');
 		params.signedHeaders['content-type'] = params.contentType;
+	}
+	if ( SNAPI.shouldIncludeContentDigest(params.contentType) ) {
 		params.signedHeaderNames.push('digest');
 		params.signedHeaders['digest'] = 'sha-256='+CryptoJS.enc.Base64.stringify(CryptoJS.SHA256(params.data));
 	}
