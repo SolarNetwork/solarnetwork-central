@@ -384,7 +384,7 @@ $(document).ready(function() {
 		var cType = (params.data && params.contentType === undefined
 				? 'application/x-www-form-urlencoded; charset=UTF-8' : params.contentType);
 		var query = SNAPI.normalizedQueryTermsString(authType, url,
-			(cType !== undefined && cType.indexOf('application/x-www-form-urlencoded') === 0 ? data : undefined));
+			(cType !== undefined && cType.indexOf('application/x-www-form-urlencoded') === 0 ? params.data : undefined));
 		var path = SNAPI.authURLPath(authType, url, query);
 		var submitParams = {
 			authType: authType,
