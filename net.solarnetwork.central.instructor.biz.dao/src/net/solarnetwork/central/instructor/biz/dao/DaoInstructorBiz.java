@@ -24,7 +24,14 @@ package net.solarnetwork.central.instructor.biz.dao;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
@@ -34,17 +41,12 @@ import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
-import org.joda.time.DateTime;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * DAO based implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 @Service
 public class DaoInstructorBiz implements InstructorBiz {
@@ -109,6 +111,27 @@ public class DaoInstructorBiz implements InstructorBiz {
 		if ( instr != null ) {
 			if ( !state.equals(instr.getState()) ) {
 				instr.setState(state);
+				nodeInstructionDao.store(instr);
+			}
+		}
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void updateInstructionState(Long instructionId, InstructionState state,
+			Map<String, ?> resultParameters) {
+		NodeInstruction instr = nodeInstructionDao.get(instructionId);
+		if ( instr != null ) {
+			if ( !state.equals(instr.getState()) ) {
+				instr.setState(state);
+				if ( resultParameters != null ) {
+					Map<String, Object> params = instr.getResultParameters();
+					if ( params == null ) {
+						params = new LinkedHashMap<String, Object>();
+					}
+					params.putAll(resultParameters);
+					instr.setResultParameters(params);
+				}
 				nodeInstructionDao.store(instr);
 			}
 		}

@@ -21,7 +21,9 @@
 	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.agg">
 		<beans:prop key="staleNodeDatumProcessor.maximumRowCount">200</beans:prop>
+		<beans:prop key="staleNodeDatumProcessor.taskCount">4</beans:prop>
 		<beans:prop key="staleLocationDatumProcessor.maximumRowCount">200</beans:prop>
+		<beans:prop key="staleLocationDatumProcessor.taskCount">2</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.hourly.jobCron">15 0/1 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.daily.jobCron">30 0/5 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.monthly.jobCron">45 0/20 * * * ?</beans:prop>
@@ -44,6 +46,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.hourly.jobCron}"/>
 		<property name="jobId" value="StaleGeneralNodeDatumProcessorHourly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
@@ -54,6 +57,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.daily.jobCron}"/>
 		<property name="jobId" value="StaleGeneralNodeDatumProcessorDaily"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
@@ -64,6 +68,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.monthly.jobCron}"/>
 		<property name="jobId" value="StaleGeneralNodeDatumProcessorMonthly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
@@ -74,6 +79,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="maximumRowCount" value="${staleLocationDatumProcessor.maximumRowCount}"/>
+		<property name="taskCount" value="${staleLocationDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.hourly.jobCron}"/>
 		<property name="jobId" value="StaleGeneralLocationDatumProcessorHourly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
@@ -84,6 +90,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="maximumRowCount" value="${staleLocationDatumProcessor.maximumRowCount}"/>
+		<property name="taskCount" value="${staleLocationDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.daily.jobCron}"/>
 		<property name="jobId" value="StaleGeneralLocationDatumProcessorDaily"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
@@ -94,6 +101,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="maximumRowCount" value="${staleLocationDatumProcessor.maximumRowCount}"/>
+		<property name="taskCount" value="${staleLocationDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.monthly.jobCron}"/>
 		<property name="jobId" value="StaleGeneralLocationDatumProcessorMonthly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>

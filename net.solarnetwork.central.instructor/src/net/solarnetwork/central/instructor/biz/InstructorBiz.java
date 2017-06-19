@@ -25,6 +25,7 @@
 package net.solarnetwork.central.instructor.biz;
 
 import java.util.List;
+import java.util.Map;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -33,7 +34,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  * API for central instruction service.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface InstructorBiz {
 
@@ -96,5 +97,24 @@ public interface InstructorBiz {
 	 *        the new state
 	 */
 	void updateInstructionState(Long instructionId, InstructionState state);
+
+	/**
+	 * Update the state of a specific instruction.
+	 * 
+	 * <p>
+	 * As an instruction is processed, for example by a node, the state should
+	 * be updated by that processor.
+	 * </p>
+	 * 
+	 * @param instructionId
+	 *        the instruction ID
+	 * @param state
+	 *        the new state
+	 * @param resultParameters
+	 *        optional result parameters to include
+	 * @since 1.2
+	 */
+	void updateInstructionState(Long instructionId, InstructionState state,
+			Map<String, ?> resultParameters);
 
 }

@@ -2,11 +2,11 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Security
 Bundle-SymbolicName: net.solarnetwork.central.common.security
-Bundle-Version: 1.12.0
+Bundle-Version: 1.13.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
- net.solarnetwork.central.security;version="1.10.0",
+ net.solarnetwork.central.security;version="1.11.0",
  net.solarnetwork.central.security.jdbc;version="1.4.0"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.4,3.0)",
@@ -17,6 +17,7 @@ Import-Package:
  com.fasterxml.jackson.databind.type;version="[2.4,3.0)",
  net.solarnetwork.central.domain;version="1.20.0",
  net.solarnetwork.domain;version="1.10.0",
+ net.solarnetwork.support;version="1.5.0",
  org.apache.commons.codec.binary;version="[1.7,2.0)",
  org.apache.commons.codec.digest;version="[1.7,2.0)",
  org.joda.time;version="[2.4,3.0)",

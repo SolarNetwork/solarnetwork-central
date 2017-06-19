@@ -27,18 +27,19 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import org.joda.time.DateTime;
+import org.junit.Before;
+import org.junit.Test;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.dao.mybatis.MyBatisNodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
-import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test cases for the {@link MyBatisNodeInstructionDao} class.
@@ -86,6 +87,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		assertEquals(src.getState(), entity.getState());
 		assertEquals(src.getTopic(), entity.getTopic());
 		assertEquals(src.getParameters(), entity.getParameters());
+		assertEquals(src.getResultParameters(), entity.getResultParameters());
 	}
 
 	@Test
@@ -100,6 +102,18 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		storeNew();
 		NodeInstruction datum = dao.get(lastDatum.getId());
 		datum.setState(InstructionState.Declined);
+		Long newId = dao.store(datum);
+		assertEquals(datum.getId(), newId);
+		NodeInstruction datum2 = dao.get(datum.getId());
+		validate(datum, datum2);
+	}
+
+	@Test
+	public void updateWithResultParameters() {
+		storeNew();
+		NodeInstruction datum = dao.get(lastDatum.getId());
+		datum.setState(InstructionState.Completed);
+		datum.setResultParameters(Collections.singletonMap("foo", (Object) "bar"));
 		Long newId = dao.store(datum);
 		assertEquals(datum.getId(), newId);
 		NodeInstruction datum2 = dao.get(datum.getId());

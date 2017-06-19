@@ -26,8 +26,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.domain.Datum;
@@ -39,24 +50,15 @@ import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.security.AuthenticatedNode;
+import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.domain.NodeControlPropertyType;
 import net.solarnetwork.web.domain.Response;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * JSON implementation of bulk upload service.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Controller
 @RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" }, consumes = "application/json")
@@ -136,8 +138,8 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	@ResponseBody
 	@RequestMapping(method = RequestMethod.POST)
 	public Response<BulkUploadResult> postData(
-			@RequestHeader(value = "Content-Encoding", required = false) String encoding,
-			InputStream in, Model model) throws IOException {
+			@RequestHeader(value = "Content-Encoding", required = false) String encoding, InputStream in,
+			Model model) throws IOException {
 		AuthenticatedNode authNode = getAuthenticatedNode(true);
 
 		InputStream input = in;
@@ -208,8 +210,8 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		// add instructions for the node
 		InstructorBiz instructorBiz = (getInstructorBiz() == null ? null : getInstructorBiz().service());
 		if ( instructorBiz != null ) {
-			List<Instruction> instructions = instructorBiz.getActiveInstructionsForNode(authNode
-					.getNodeId());
+			List<Instruction> instructions = instructorBiz
+					.getActiveInstructionsForNode(authNode.getNodeId());
 			if ( instructions != null && instructions.size() > 0 ) {
 				result.setInstructions(instructions);
 			}
@@ -253,9 +255,8 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			NodeControlPropertyType t = NodeControlPropertyType.valueOf(type);
 			switch (t) {
 				case Boolean:
-					if ( value.length() > 0
-							&& (value.equals("1") || value.equalsIgnoreCase("yes") || value
-									.equalsIgnoreCase("true")) ) {
+					if ( value.length() > 0 && (value.equals("1") || value.equalsIgnoreCase("yes")
+							|| value.equalsIgnoreCase("true")) ) {
 						datum.setIntegerValue(Integer.valueOf(1));
 					} else {
 						datum.setIntegerValue(Integer.valueOf(0));
@@ -285,15 +286,17 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	private Instruction handleInstructionStatus(JsonNode node) {
 		String instructionId = getStringFieldValue(node, "instructionId", null);
 		String status = getStringFieldValue(node, "status", null);
+		Map<String, Object> resultParams = JsonUtils.getStringMapFromTree(node.get("resultParameters"));
 		Instruction result = null;
 		InstructorBiz biz = getInstructorBiz().service();
 		if ( instructionId != null && status != null && biz != null ) {
 			Long id = Long.valueOf(instructionId);
 			InstructionState state = InstructionState.valueOf(status);
-			biz.updateInstructionState(id, state);
+			biz.updateInstructionState(id, state, resultParams);
 			result = new Instruction();
 			result.setId(id);
 			result.setState(state);
+			result.setResultParameters(resultParams);
 			return result;
 		}
 		return result;

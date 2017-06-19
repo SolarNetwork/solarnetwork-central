@@ -35,9 +35,11 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * JSON serializer for {@link NodeMetadata}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class NodeMetadataSerializer extends StdSerializer<NodeMetadata> {
+
+	private static final long serialVersionUID = 6524627619550315956L;
 
 	public NodeMetadataSerializer() {
 		super(NodeMetadata.class);

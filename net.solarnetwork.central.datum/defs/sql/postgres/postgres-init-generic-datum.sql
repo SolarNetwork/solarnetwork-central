@@ -8,7 +8,7 @@ CREATE TABLE solardatum.da_datum (
   source_id solarcommon.source_id NOT NULL,
   posted solarcommon.ts NOT NULL,
   jdata json NOT NULL,
-  CONSTRAINT da_datum_pkey PRIMARY KEY (node_id, ts, source_id) DEFERRABLE INITIALLY IMMEDIATE
+  CONSTRAINT da_datum_pkey PRIMARY KEY (node_id, ts, source_id)
 );
 
 CREATE TABLE solardatum.da_meta (
@@ -26,7 +26,7 @@ CREATE TABLE solaragg.agg_stale_datum (
   source_id solarcommon.source_id NOT NULL,
   agg_kind char(1) NOT NULL,
   created timestamp NOT NULL DEFAULT now(),
-  CONSTRAINT agg_stale_datum_pkey PRIMARY KEY (agg_kind, node_id, ts_start, source_id)
+  CONSTRAINT agg_stale_datum_pkey PRIMARY KEY (agg_kind, ts_start, node_id, source_id)
 );
 
 CREATE TABLE solaragg.agg_messages (
@@ -53,7 +53,7 @@ CREATE TABLE solaragg.aud_datum_hourly (
   node_id solarcommon.node_id NOT NULL,
   source_id solarcommon.source_id NOT NULL,
   prop_count integer NOT NULL,
-  CONSTRAINT aud_datum_hourly_pkey PRIMARY KEY (node_id, ts_start, source_id) DEFERRABLE INITIALLY IMMEDIATE
+  CONSTRAINT aud_datum_hourly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
 CREATE TABLE solaragg.agg_datum_daily (

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.instructor.support;
 
 import java.util.List;
+import java.util.Map;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
@@ -32,7 +33,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  * Delegates to another InstructorBiz, designed for AOP use.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DelegatingInstructorBiz implements InstructorBiz {
 
@@ -72,6 +73,12 @@ public class DelegatingInstructorBiz implements InstructorBiz {
 	@Override
 	public List<Instruction> getPendingInstructionsForNode(Long nodeId) {
 		return delegate.getPendingInstructionsForNode(nodeId);
+	}
+
+	@Override
+	public void updateInstructionState(Long instructionId, InstructionState state,
+			Map<String, ?> resultParameters) {
+		delegate.updateInstructionState(instructionId, state, resultParameters);
 	}
 
 }

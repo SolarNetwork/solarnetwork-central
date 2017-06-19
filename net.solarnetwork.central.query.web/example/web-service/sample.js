@@ -87,13 +87,15 @@ SNAPI.setupHeaderNamesToSign = function(params) {
 	}
 	params.signedHeaderNames = ['host', 'x-sn-date'];
 	params.signedHeaders = { host : SNAPI.hostHeaderValue(params.host), 'x-sn-date' : params.date.toUTCString() };
-	if ( SNAPI.shouldIncludeContentDigest(params.contentType) ) {
+	if ( params.contentType ) {
 		params.signedHeaderNames.push('content-type');
 		params.signedHeaders['content-type'] = params.contentType;
+	}
+	if ( SNAPI.shouldIncludeContentDigest(params.contentType) ) {
 		params.signedHeaderNames.push('digest');
 		params.signedHeaders['digest'] = 'sha-256='+CryptoJS.enc.Base64.stringify(CryptoJS.SHA256(params.data));
 	}
-	Array.sort(params.signedHeaderNames);
+	params.signedHeaderNames.sort();
 };
 
 SNAPI.iso8601Date = function(date, includeTime) {
@@ -382,7 +384,7 @@ $(document).ready(function() {
 		var cType = (params.data && params.contentType === undefined
 				? 'application/x-www-form-urlencoded; charset=UTF-8' : params.contentType);
 		var query = SNAPI.normalizedQueryTermsString(authType, url,
-			(cType !== undefined && cType.indexOf('application/x-www-form-urlencoded') === 0 ? data : undefined));
+			(cType !== undefined && cType.indexOf('application/x-www-form-urlencoded') === 0 ? params.data : undefined));
 		var path = SNAPI.authURLPath(authType, url, query);
 		var submitParams = {
 			authType: authType,

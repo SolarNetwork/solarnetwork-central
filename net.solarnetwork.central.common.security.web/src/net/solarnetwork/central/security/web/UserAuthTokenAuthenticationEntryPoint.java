@@ -31,12 +31,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.core.Ordered;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import net.solarnetwork.web.security.AuthenticationScheme;
+import net.solarnetwork.web.security.WebConstants;
 
 /**
  * Entry point for SolarNetworkWS authentication.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class UserAuthTokenAuthenticationEntryPoint implements AuthenticationEntryPoint, Ordered {
 

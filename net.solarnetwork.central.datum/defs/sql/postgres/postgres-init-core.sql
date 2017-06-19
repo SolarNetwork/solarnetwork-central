@@ -123,7 +123,7 @@ CREATE TABLE solarnet.sn_node_meta (
   created 			solarcommon.ts NOT NULL,
   updated 			solarcommon.ts NOT NULL,
   jdata 			json NOT NULL,
-  CONSTRAINT sn_node_meta_pkey PRIMARY KEY (node_id)  DEFERRABLE INITIALLY IMMEDIATE,
+  CONSTRAINT sn_node_meta_pkey PRIMARY KEY (node_id),
   CONSTRAINT sn_node_meta_node_fk FOREIGN KEY (node_id)
         REFERENCES solarnet.sn_node (node_id) MATCH SIMPLE
         ON UPDATE NO ACTION ON DELETE CASCADE

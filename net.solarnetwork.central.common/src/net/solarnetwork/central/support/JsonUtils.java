@@ -24,13 +24,16 @@ package net.solarnetwork.central.support;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 
@@ -38,15 +41,27 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * Utilities for JSON data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class JsonUtils {
+
+	/** A type reference for a Map with string keys. */
+	public static final TypeReference<LinkedHashMap<String, Object>> STRING_MAP_TYPE = new StringMapTypeReference();
 
 	private static final Logger LOG = LoggerFactory.getLogger(JsonUtils.class);
 
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
 			.setSerializationInclusion(Include.NON_NULL)
 			.configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
+
+	private static final class StringMapTypeReference
+			extends TypeReference<LinkedHashMap<String, Object>> {
+
+		public StringMapTypeReference() {
+			super();
+		}
+
+	}
 
 	// don't construct me
 	private JsonUtils() {
@@ -102,6 +117,34 @@ public final class JsonUtils {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Convert a JSON tree object to a Map with string keys.
+	 * 
+	 * <p>
+	 * This is designed for simple values. An internal {@link ObjectMapper} will
+	 * be used, and all floating point values will be converted to
+	 * {@link BigDecimal} values to faithfully represent the data. All
+	 * exceptions while deserializing the object are caught and ignored.
+	 * </p>
+	 * 
+	 * @param node
+	 *        the JSON object to convert
+	 * @return the map, or {@literal null} if {@code node} is not a JSON object,
+	 *         is {@literal null}, or any exception occurs generating the JSON
+	 * @since 1.2
+	 */
+	public static Map<String, Object> getStringMapFromTree(final JsonNode node) {
+		if ( node == null || !node.isObject() ) {
+			return null;
+		}
+		try {
+			return OBJECT_MAPPER.readValue(OBJECT_MAPPER.treeAsTokens(node), STRING_MAP_TYPE);
+		} catch ( Exception e ) {
+			LOG.error("Exception deserialzing JSON node {} to Map<String, Object>", node, e);
+		}
+		return null;
 	}
 
 	/**
