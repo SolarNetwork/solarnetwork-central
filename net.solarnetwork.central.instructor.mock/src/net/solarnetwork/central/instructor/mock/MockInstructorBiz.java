@@ -24,19 +24,20 @@ package net.solarnetwork.central.instructor.mock;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import org.joda.time.DateTime;
 
 /**
  * Mock implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MockInstructorBiz implements InstructorBiz {
 
@@ -73,6 +74,12 @@ public class MockInstructorBiz implements InstructorBiz {
 
 	@Override
 	public void updateInstructionState(Long instructionId, InstructionState state) {
+		// nothing to do here
+	}
+
+	@Override
+	public void updateInstructionState(Long instructionId, InstructionState state,
+			Map<String, ?> resultParameters) {
 		// nothing to do here
 	}
 

@@ -10,6 +10,7 @@ CREATE TABLE solarnet.sn_node_instruction (
 	topic			CHARACTER VARYING(128) NOT NULL,
 	instr_date		TIMESTAMP WITH TIME ZONE NOT NULL,
 	deliver_state	solarnet.instruction_delivery_state NOT NULL,
+	jresult_params	json,
 	CONSTRAINT sn_node_instruction_pkey PRIMARY KEY (id),
 	CONSTRAINT sn_node_instruction_node_fk
 		FOREIGN KEY (node_id) REFERENCES solarnet.sn_node (node_id)
