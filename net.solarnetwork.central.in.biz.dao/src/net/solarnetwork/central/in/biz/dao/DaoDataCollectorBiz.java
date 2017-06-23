@@ -24,6 +24,17 @@ package net.solarnetwork.central.in.biz.dao;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.joda.time.DateTime;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.PropertyAccessor;
+import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
@@ -52,6 +63,8 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
+import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
@@ -62,16 +75,6 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.util.ClassUtils;
-import org.joda.time.DateTime;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.PropertyAccessor;
-import org.springframework.beans.PropertyAccessorFactory;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of {@link DataCollectorBiz} using {@link GeneralNodeDatumDao}
@@ -88,20 +91,8 @@ import org.springframework.transaction.annotation.Transactional;
  * node ID to the authenticated node ID automatically.
  * </p>
  * 
- * <p>
- * The configurable properties of this class are:
- * </p>
- * 
- * <dl class="class-properties">
- * <dt>solarNodeDao</dt>
- * <dd>The {@link SolarNodeDao} so location information can be added to
- * {@link DayDatum} and {@link WeatherDatum} objects if they are missing that
- * information when passed to {@link #postDatum(Datum)}.</dd>
- * 
- * </dl>
- * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -109,6 +100,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private PriceLocationDao priceLocationDao = null;
 	private WeatherLocationDao weatherLocationDao = null;
 	private SolarLocationDao solarLocationDao = null;
+	private SolarNodeMetadataBiz solarNodeMetadataBiz;
 	private GeneralNodeDatumDao generalNodeDatumDao = null;
 	private GeneralLocationDatumDao generalLocationDatumDao = null;
 	private DatumMetadataBiz datumMetadataBiz = null;
@@ -196,8 +188,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			}
 		} catch ( DataIntegrityViolationException e ) {
 			if ( log.isDebugEnabled() ) {
-				log.debug("DataIntegretyViolation on store of " + datum.getClass().getSimpleName()
-						+ ": " + ClassUtils.getBeanProperties(datum, null), e);
+				log.debug("DataIntegretyViolation on store of " + datum.getClass().getSimpleName() + ": "
+						+ ClassUtils.getBeanProperties(datum, null), e);
 			} else if ( log.isWarnEnabled() ) {
 				log.warn("DataIntegretyViolation on store of " + datum.getClass().getSimpleName() + ": "
 						+ ClassUtils.getBeanProperties(datum, null));
@@ -278,10 +270,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	@Override
 	public void addGeneralNodeDatumMetadata(Long nodeId, final String sourceId,
 			final GeneralDatumMetadata meta) {
-		if ( sourceId == null
-				|| meta == null
-				|| ((meta.getTags() == null || meta.getTags().isEmpty()) && (meta.getInfo() == null || meta
-						.getInfo().isEmpty())) ) {
+		if ( sourceId == null || meta == null || ((meta.getTags() == null || meta.getTags().isEmpty())
+				&& (meta.getInfo() == null || meta.getInfo().isEmpty())) ) {
 			return;
 		}
 
@@ -300,6 +290,58 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 		}
 		datumMetadataBiz.addGeneralNodeDatumMetadata(nodeId, sourceId, meta);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void addSolarNodeMetadata(Long nodeId, GeneralDatumMetadata meta) {
+		if ( meta == null || ((meta.getTags() == null || meta.getTags().isEmpty())
+				&& (meta.getInfo() == null || meta.getInfo().isEmpty())) ) {
+			return;
+		}
+
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		if ( nodeId == null ) {
+			nodeId = authNode.getNodeId();
+		} else if ( nodeId.equals(authNode.getNodeId()) == false ) {
+			if ( log.isWarnEnabled() ) {
+				log.warn("Illegal node metadata post by node " + authNode.getNodeId() + " as node "
+						+ nodeId);
+			}
+			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+		}
+		solarNodeMetadataBiz.addSolarNodeMetadata(nodeId, meta);
+	}
+
+	private SolarNodeMetadataFilter solarNodeMetadataCriteriaForcedToAuthenticatedNode(
+			final SolarNodeMetadataFilter criteria) {
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		if ( criteria.getNodeId() != null && authNode.getNodeId().equals(criteria.getNodeId()) ) {
+			return criteria;
+		}
+		if ( !(criteria instanceof DatumFilterCommand) ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		DatumFilterCommand dfc = (DatumFilterCommand) criteria;
+		dfc.setNodeId(authNode.getNodeId());
+		return dfc;
+	}
+
+	@Override
+	public FilterResults<SolarNodeMetadataFilterMatch> findSolarNodeMetadata(
+			SolarNodeMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
+			final Integer offset, final Integer max) {
+		return solarNodeMetadataBiz.findSolarNodeMetadata(
+				solarNodeMetadataCriteriaForcedToAuthenticatedNode(criteria), sortDescriptors, offset,
+				max);
 	}
 
 	private GeneralNodeDatumMetadataFilter metadataCriteriaForcedToAuthenticatedNode(
@@ -484,6 +526,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		return solarNodeDao;
 	}
 
+	/**
+	 * Set the {@link SolarNodeDao} so location information can be added to
+	 * {@link DayDatum} and {@link WeatherDatum} objects if they are missing
+	 * that information when passed to {@link #postDatum(Datum)}.
+	 * 
+	 * @param solarNodeDao
+	 *        the DAO to use
+	 */
 	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
 		this.solarNodeDao = solarNodeDao;
 	}
@@ -542,6 +592,27 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	public void setGeneralLocationDatumDao(GeneralLocationDatumDao generalLocationDatumDao) {
 		this.generalLocationDatumDao = generalLocationDatumDao;
+	}
+
+	/**
+	 * Get the configured node metadata biz.
+	 * 
+	 * @return the service, or {@literal null} if not configured
+	 * @since 2.1
+	 */
+	public SolarNodeMetadataBiz getSolarNodeMetadataBiz() {
+		return solarNodeMetadataBiz;
+	}
+
+	/**
+	 * Set the node metadata biz to use.
+	 * 
+	 * @param solarNodeMetadataBiz
+	 *        the service to set
+	 * @since 2.1
+	 */
+	public void setSolarNodeMetadataBiz(SolarNodeMetadataBiz solarNodeMetadataBiz) {
+		this.solarNodeMetadataBiz = solarNodeMetadataBiz;
 	}
 
 }

@@ -35,6 +35,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
+import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
+import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
@@ -48,7 +50,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * </p>
  * 
  * @author matt.magoffin
- * @version 1.4
+ * @version 1.5
  */
 public interface DataCollectorBiz {
 
@@ -108,6 +110,40 @@ public interface DataCollectorBiz {
 	 *        the metadata to add
 	 */
 	void addGeneralNodeDatumMetadata(Long nodeId, String sourceId, GeneralDatumMetadata meta);
+
+	/**
+	 * Add metadata to a specific node.
+	 * 
+	 * <p>
+	 * If metadata already exists for the given node and source, the values will
+	 * be merged such that tags are only added and only new info values will be
+	 * added.
+	 * </p>
+	 * 
+	 * @param nodeId
+	 *        the node ID to add to
+	 * @param meta
+	 *        the metadata to add
+	 * @since 1.5
+	 */
+	void addSolarNodeMetadata(Long nodeId, GeneralDatumMetadata meta);
+
+	/**
+	 * Search for node metadata.
+	 * 
+	 * @param criteria
+	 *        the search criteria
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never <em>null</em>
+	 * @since 1.5
+	 */
+	FilterResults<SolarNodeMetadataFilterMatch> findSolarNodeMetadata(SolarNodeMetadataFilter criteria,
+			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max);
 
 	/**
 	 * Search for datum metadata.

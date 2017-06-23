@@ -48,6 +48,8 @@
 	
 	<reference id="datumMetadataBiz" interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz" />
 	
+	<reference id="solarNodeMetadataBiz" interface="net.solarnetwork.central.biz.SolarNodeMetadataBiz"/>
+	
 	<!-- Published Services -->
 	
 	<service ref="networkIdentityBiz" 
@@ -73,6 +75,7 @@
 		<property name="solarNodeDao" ref="solarNodeDao"/>
 		<property name="weatherLocationDao" ref="weatherLocationDao"/>
 		<property name="datumMetadataBiz" ref="datumMetadataBiz"/>
+		<property name="solarNodeMetadataBiz" ref="solarNodeMetadataBiz"/>
 	</bean>
 
 	<bean id="networkIdentityBiz" class="net.solarnetwork.central.in.biz.dao.SimpleNetworkIdentityBiz">
