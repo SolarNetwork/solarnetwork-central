@@ -22,8 +22,19 @@
 
 package net.solarnetwork.central.query.web.api;
 
+import static net.solarnetwork.central.query.web.api.ReportableIntervalController.filterSources;
 import java.util.Set;
 import java.util.TimeZone;
+import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.util.PathMatcher;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
@@ -32,38 +43,46 @@ import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalComman
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.JodaDateFormatEditor;
 import net.solarnetwork.web.domain.Response;
-import org.joda.time.DateTime;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * Controller for location-based data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller("v1LocationDatumController")
 @RequestMapping({ "/api/v1/sec/location/datum", "/api/v1/pub/location/datum" })
 public class LocationDatumController extends WebServiceControllerSupport {
 
 	private final QueryBiz queryBiz;
+	private final PathMatcher pathMatcher;
 	private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT };
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param queryBiz
-	 *        the QueryBiz
+	 *        the QueryBiz to use
+	 */
+	public LocationDatumController(QueryBiz queryBiz) {
+		this(queryBiz, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param queryBiz
+	 *        the QueryBiz to use
+	 * @param pathMatcher
+	 *        the source ID path matcher to use
+	 * @since 1.1
 	 */
 	@Autowired
-	public LocationDatumController(QueryBiz queryBiz) {
+	public LocationDatumController(QueryBiz queryBiz,
+			@Qualifier("sourceIdPathMatcher") PathMatcher pathMatcher) {
 		super();
 		this.queryBiz = queryBiz;
+		this.pathMatcher = pathMatcher;
 	}
 
 	/**
@@ -74,14 +93,19 @@ public class LocationDatumController extends WebServiceControllerSupport {
 	 */
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
-		binder.registerCustomEditor(DateTime.class, new JodaDateFormatEditor(this.requestDateFormats,
-				TimeZone.getTimeZone("UTC")));
+		binder.registerCustomEditor(DateTime.class,
+				new JodaDateFormatEditor(this.requestDateFormats, TimeZone.getTimeZone("UTC")));
 	}
 
 	/**
 	 * Get the set of source IDs available for the available
 	 * GeneralLocationDatum for a single location, optionally constrained within
 	 * a date range.
+	 * 
+	 * <p>
+	 * A <code>sourceId</code> path pattern may also be provided, to restrict
+	 * the resulting source ID set to.
+	 * </p>
 	 * 
 	 * <p>
 	 * Example URL: <code>/api/v1/sec/location/datum/sources?locationId=1</code>
@@ -107,8 +131,12 @@ public class LocationDatumController extends WebServiceControllerSupport {
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET)
 	public Response<Set<String>> getAvailableSources(GeneralReportableIntervalCommand cmd) {
-		Set<String> data = queryBiz.getLocationAvailableSources(cmd.getLocationId(), cmd.getStart(),
-				cmd.getEnd());
+		Set<String> data = queryBiz.getLocationAvailableSources(cmd.getLocationId(), cmd.getStartDate(),
+				cmd.getEndDate());
+
+		// support filtering based on sourceId path pattern
+		data = filterSources(data, this.pathMatcher, cmd.getSourceId());
+
 		return new Response<Set<String>>(data);
 	}
 

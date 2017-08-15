@@ -28,15 +28,15 @@ import org.joda.time.DateTime;
  * Command for general reportable interval queries.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class GeneralReportableIntervalCommand {
 
 	private Long locationId;
 	private Long[] nodeIds;
 	private String sourceId;
-	private DateTime start;
-	private DateTime end;
+	private DateTime startDate;
+	private DateTime endDate;
 	private String metadataFilter;
 
 	/**
@@ -100,20 +100,70 @@ public class GeneralReportableIntervalCommand {
 		this.sourceId = sourceId;
 	}
 
-	public DateTime getStart() {
-		return start;
-	}
-
+	/**
+	 * Set the start date.
+	 * 
+	 * @param start
+	 *        the start date
+	 * @deprecated use {@link #setStartDate(DateTime)}
+	 */
+	@Deprecated
 	public void setStart(DateTime start) {
-		this.start = start;
+		setStartDate(start);
 	}
 
-	public DateTime getEnd() {
-		return end;
-	}
-
+	/**
+	 * Set the end date.
+	 * 
+	 * @param end
+	 *        the end date
+	 * @deprecated use {@link #setEndDate(DateTime)}
+	 */
+	@Deprecated
 	public void setEnd(DateTime end) {
-		this.end = end;
+		setEndDate(end);
+	}
+
+	/**
+	 * Get the start date.
+	 * 
+	 * @return the start date
+	 * @since 1.3
+	 */
+	public DateTime getStartDate() {
+		return startDate;
+	}
+
+	/**
+	 * Set the start date.
+	 * 
+	 * @param startDate
+	 *        the start date to set
+	 * @since 1.3
+	 */
+	public void setStartDate(DateTime startDate) {
+		this.startDate = startDate;
+	}
+
+	/**
+	 * Get the end date.
+	 * 
+	 * @return the end date
+	 * @since 1.3
+	 */
+	public DateTime getEndDate() {
+		return endDate;
+	}
+
+	/**
+	 * Set the end date.
+	 * 
+	 * @param endDate
+	 *        the end date to set
+	 * @since 1.3
+	 */
+	public void setEndDate(DateTime endDate) {
+		this.endDate = endDate;
 	}
 
 	public Long getLocationId() {
