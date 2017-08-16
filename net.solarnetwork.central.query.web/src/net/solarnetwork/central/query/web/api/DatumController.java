@@ -22,33 +22,39 @@
 
 package net.solarnetwork.central.query.web.api;
 
+import static net.solarnetwork.central.query.web.api.ReportableIntervalController.filterSources;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.TimeZone;
+import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.util.PathMatcher;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.JodaDateFormatEditor;
 import net.solarnetwork.web.domain.Response;
-import org.joda.time.DateTime;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
 public class DatumController extends WebServiceControllerSupport {
 
 	private final QueryBiz queryBiz;
+	private final PathMatcher pathMatcher;
 
 	private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT };
 
@@ -58,10 +64,25 @@ public class DatumController extends WebServiceControllerSupport {
 	 * @param queryBiz
 	 *        the QueryBiz to use
 	 */
-	@Autowired
 	public DatumController(QueryBiz queryBiz) {
+		this(queryBiz, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param queryBiz
+	 *        the QueryBiz to use
+	 * @param pathMatcher
+	 *        the source ID path matcher to use
+	 * @since 2.1
+	 */
+	@Autowired
+	public DatumController(QueryBiz queryBiz,
+			@Qualifier("sourceIdPathMatcher") PathMatcher pathMatcher) {
 		super();
 		this.queryBiz = queryBiz;
+		this.pathMatcher = pathMatcher;
 	}
 
 	/**
@@ -72,13 +93,38 @@ public class DatumController extends WebServiceControllerSupport {
 	 */
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
-		binder.registerCustomEditor(DateTime.class, new JodaDateFormatEditor(this.requestDateFormats,
-				TimeZone.getTimeZone("UTC")));
+		binder.registerCustomEditor(DateTime.class,
+				new JodaDateFormatEditor(this.requestDateFormats, TimeZone.getTimeZone("UTC")));
+	}
+
+	private void resolveSourceIdPattern(DatumFilterCommand cmd) {
+		if ( cmd == null || pathMatcher == null || queryBiz == null ) {
+			return;
+		}
+		String sourceId = cmd.getSourceId();
+		if ( sourceId != null && pathMatcher.isPattern(sourceId) && cmd.getNodeIds() != null ) {
+			Set<String> allSources = new LinkedHashSet<String>();
+			for ( Long nodeId : cmd.getNodeIds() ) {
+				Set<String> data = queryBiz.getAvailableSources(nodeId, cmd.getStartDate(),
+						cmd.getEndDate());
+				if ( data != null ) {
+					allSources.addAll(data);
+				}
+			}
+			allSources = filterSources(allSources, pathMatcher, sourceId);
+			if ( !allSources.isEmpty() ) {
+				cmd.setSourceIds(allSources.toArray(new String[allSources.size()]));
+			}
+		}
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
 	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd) {
+
+		// support filtering based on sourceId path pattern, by simply finding the sources that match first
+		resolveSourceIdPattern(cmd);
+
 		FilterResults<?> results;
 		if ( cmd.getAggregation() != null ) {
 			results = queryBiz.findFilteredAggregateGeneralNodeDatum(cmd, cmd.getSortDescriptors(),

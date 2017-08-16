@@ -23,6 +23,7 @@
 package net.solarnetwork.central.query.web.api;
 
 import static net.solarnetwork.central.query.web.api.ReportableIntervalController.filterSources;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TimeZone;
 import org.joda.time.DateTime;
@@ -183,9 +184,34 @@ public class LocationDatumController extends WebServiceControllerSupport {
 		return new Response<ReportableInterval>(data);
 	}
 
+	private void resolveSourceIdPattern(DatumFilterCommand cmd) {
+		if ( cmd == null || pathMatcher == null || queryBiz == null ) {
+			return;
+		}
+		String sourceId = cmd.getSourceId();
+		if ( sourceId != null && pathMatcher.isPattern(sourceId) && cmd.getLocationIds() != null ) {
+			Set<String> allSources = new LinkedHashSet<String>();
+			for ( Long locationId : cmd.getLocationIds() ) {
+				Set<String> data = queryBiz.getLocationAvailableSources(locationId, cmd.getStartDate(),
+						cmd.getEndDate());
+				if ( data != null ) {
+					allSources.addAll(data);
+				}
+			}
+			allSources = filterSources(allSources, pathMatcher, sourceId);
+			if ( !allSources.isEmpty() ) {
+				cmd.setSourceIds(allSources.toArray(new String[allSources.size()]));
+			}
+		}
+	}
+
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
 	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd) {
+
+		// support filtering based on sourceId path pattern, by simply finding the sources that match first
+		resolveSourceIdPattern(cmd);
+
 		FilterResults<?> results;
 		if ( cmd.getAggregation() != null ) {
 			results = queryBiz.findAggregateGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
