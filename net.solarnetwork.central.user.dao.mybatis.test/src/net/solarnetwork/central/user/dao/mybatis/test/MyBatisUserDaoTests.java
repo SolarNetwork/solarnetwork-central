@@ -25,7 +25,9 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -52,6 +54,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	private static final String TEST_EMAIL = "foo@localhost.localdomain";
 	private static final String TEST_ROLE_1 = "ROLE_TEST1";
 	private static final String TEST_ROLE_2 = "ROLE_TEST2";
+	private static final String BILLING_ACCOUNT_ID_KEY = "accountId";
 	private static final String TEST_BILLING_ACCOUNT_ID = "test.account";
 
 	private Long userId = null;
@@ -179,7 +182,11 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		setupTestLocation();
 		User user = userDao.get(this.userId);
 		user.setLocationId(TEST_LOC_ID);
-		user.setBillingAccountId(TEST_BILLING_ACCOUNT_ID);
+
+		Map<String, Object> billingData = new HashMap<String, Object>();
+		billingData.put(BILLING_ACCOUNT_ID_KEY, TEST_BILLING_ACCOUNT_ID);
+		user.setBillingData(billingData);
+
 		Long id = userDao.store(user);
 		assertEquals(this.userId, id);
 		User updatedUser = userDao.get(id);
@@ -190,7 +197,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertEquals(user.getPassword(), updatedUser.getPassword());
 		assertEquals(user.getEnabled(), updatedUser.getEnabled());
 		assertEquals(TEST_LOC_ID, updatedUser.getLocationId());
-		assertEquals(TEST_BILLING_ACCOUNT_ID, updatedUser.getBillingAccountId());
+		assertEquals(billingData, updatedUser.getBillingData());
 	}
 
 }

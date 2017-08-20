@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.user.domain;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.domain.BaseEntity;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.util.JsonUtils;
 import net.solarnetwork.util.SerializeIgnore;
 
 /**
@@ -37,17 +40,16 @@ import net.solarnetwork.util.SerializeIgnore;
  */
 public class User extends BaseEntity {
 
-	private static final long serialVersionUID = -7168814392834455096L;
+	private static final long serialVersionUID = -5263837292482322016L;
 
 	private String name;
 	private String email;
 	private String password;
 	private Boolean enabled;
-	private String billingAccountId;
+	private Map<String, Object> billingData;
 	private Long locationId = null;
 
-	@SerializeIgnore
-	@JsonIgnore
+	private String billingDataJson;
 	private SolarLocation location;
 
 	private Set<String> roles;
@@ -176,6 +178,7 @@ public class User extends BaseEntity {
 	 * @return the location, or {@literal null}
 	 * @since 1.4
 	 */
+	@SerializeIgnore
 	@JsonIgnore
 	public SolarLocation getLocation() {
 		return location;
@@ -201,24 +204,68 @@ public class User extends BaseEntity {
 	}
 
 	/**
-	 * Set the billing account ID.
+	 * Get the billing data.
 	 * 
-	 * @return the account ID, or {@literal null} if not available
+	 * <p>
+	 * This data object is arbitrary information needed to integrate with an
+	 * external billing system. Expected use would be things like external
+	 * billing account IDs.
+	 * </p>
+	 * 
+	 * @return the billing data
 	 * @since 1.4
 	 */
-	public String getBillingAccountId() {
-		return billingAccountId;
+	public Map<String, Object> getBillingData() {
+		if ( billingData == null && billingDataJson != null ) {
+			billingData = JsonUtils.getStringMap(billingDataJson);
+		}
+		return billingData;
 	}
 
 	/**
-	 * Set the billing account ID.
+	 * Set the billing data.
 	 * 
-	 * @param billingAccountId
-	 *        the account ID to set
+	 * @param billingData
+	 *        the billing data to set
 	 * @since 1.4
 	 */
-	public void setBillingAccountId(String billingAccountId) {
-		this.billingAccountId = billingAccountId;
+	public void setBillingData(Map<String, Object> billingData) {
+		this.billingData = billingData;
+	}
+
+	/**
+	 * Get the billing data as a JSON string.
+	 * 
+	 * @return a JSON encoded string, or {@literal null}
+	 * @since 1.4
+	 */
+	@SerializeIgnore
+	@JsonIgnore
+	public String getBillingDataJson() {
+		if ( billingDataJson == null ) {
+			billingDataJson = JsonUtils.getJSONString(billingData, null);
+		}
+		return billingDataJson;
+	}
+
+	/**
+	 * Set the billing data object via a JSON string.
+	 * 
+	 * <p>
+	 * This method will remove any previously created {@code billingData} value
+	 * and replace it with the values parsed from the provided JSON. The JSON is
+	 * expected to be a JSON object with string keys.
+	 * </p>
+	 * 
+	 * @param json
+	 *        the billing data to set
+	 * @since 1.4
+	 */
+	@JsonProperty
+	// @JsonProperty needed because of @JsonIgnore on getter
+	public void setBillingDataJson(String json) {
+		billingDataJson = json;
+		billingData = null;
 	}
 
 }

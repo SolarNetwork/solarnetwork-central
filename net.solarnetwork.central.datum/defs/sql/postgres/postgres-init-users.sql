@@ -15,7 +15,7 @@ CREATE TABLE solaruser.user_user (
 	password			CHARACTER VARYING(128) NOT NULL,
 	enabled				BOOLEAN NOT NULL DEFAULT TRUE,
 	loc_id				BIGINT,
-	billing_account_id	CHARACTER VARYING(36),
+	billing_jdata		jsonb,
 	CONSTRAINT user_user_pkey PRIMARY KEY (id),
 	CONSTRAINT user_user_email_unq UNIQUE (email),
 	CONSTRAINT user_user_loc_fk FOREIGN KEY (loc_id)

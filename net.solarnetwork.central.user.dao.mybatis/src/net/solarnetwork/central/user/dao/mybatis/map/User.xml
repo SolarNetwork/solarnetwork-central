@@ -11,10 +11,10 @@
 		</selectKey>
 		INSERT INTO solaruser.user_user 
 			(id, created, disp_name, email, password, enabled,
-			loc_id, billing_account_id)
+			loc_id, billing_jdata)
 		VALUES
 			(#{id}, #{created}, #{name}, #{email}, #{password}, #{enabled},
-			#{locationId}, #{billingAccountId})
+			#{locationId}, #{billingDataJson}::jsonb)
 	</insert>
 
 	<update id="update-User" parameterType="User">
@@ -24,7 +24,7 @@
 			password = #{password},
 			enabled = #{enabled},
 			loc_id = #{locationId},
-			billing_account_id = #{billingAccountId}
+			billing_jdata = #{billingDataJson}::jsonb
 		WHERE
 			id = #{id}
 	</update>
@@ -37,7 +37,7 @@
 		u.password AS user_password,
 		u.enabled AS user_enabled,
 		u.loc_id AS user_loc_id,
-		u.billing_account_id AS user_billing_account_id
+		u.billing_jdata AS user_billing_jdata
 	</sql>
 
 	<sql id="fragment-User-share-result">
@@ -54,7 +54,7 @@
 		<result property="password" column="user_password"/>
 		<result property="enabled" column="user_enabled"/>
 		<result property="locationId" column="user_loc_id"/>
-		<result property="billingAccountId" column="user_billing_account_id"/>
+		<result property="billingDataJson" column="user_billing_jdata"/>
 	</resultMap>
 	
 	<select id="get-User-for-id" parameterType="long" resultMap="UserFullResult">
