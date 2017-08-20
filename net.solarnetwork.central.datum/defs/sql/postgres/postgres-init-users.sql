@@ -14,11 +14,11 @@ CREATE TABLE solaruser.user_user (
 	email				citext NOT NULL,
 	password			CHARACTER VARYING(128) NOT NULL,
 	enabled				BOOLEAN NOT NULL DEFAULT TRUE,
+	loc_id				BIGINT,
 	billing_account_id	CHARACTER VARYING(36),
-	billing_loc_id		BIGINT,
 	CONSTRAINT user_user_pkey PRIMARY KEY (id),
 	CONSTRAINT user_user_email_unq UNIQUE (email),
-	CONSTRAINT user_user_billing_loc_fk FOREIGN KEY (billing_loc_id)
+	CONSTRAINT user_user_loc_fk FOREIGN KEY (loc_id)
 		REFERENCES solarnet.sn_loc (id)
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
