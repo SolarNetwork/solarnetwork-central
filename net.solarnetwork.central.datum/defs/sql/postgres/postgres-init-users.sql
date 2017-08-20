@@ -8,14 +8,19 @@ CREATE SEQUENCE solaruser.solaruser_seq;
  * user_user: main table for user information.
  */
 CREATE TABLE solaruser.user_user (
-	id				BIGINT NOT NULL DEFAULT nextval('solaruser.solaruser_seq'),
-	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	disp_name		CHARACTER VARYING(128) NOT NULL,
-	email			citext NOT NULL,
-	password		CHARACTER VARYING(128) NOT NULL,
-	enabled			BOOLEAN NOT NULL DEFAULT TRUE,
+	id					BIGINT NOT NULL DEFAULT nextval('solaruser.solaruser_seq'),
+	created				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	disp_name			CHARACTER VARYING(128) NOT NULL,
+	email				citext NOT NULL,
+	password			CHARACTER VARYING(128) NOT NULL,
+	enabled				BOOLEAN NOT NULL DEFAULT TRUE,
+	billing_account_id	CHARACTER VARYING(36),
+	billing_loc_id		BIGINT,
 	CONSTRAINT user_user_pkey PRIMARY KEY (id),
-	CONSTRAINT user_user_email_unq UNIQUE (email)
+	CONSTRAINT user_user_email_unq UNIQUE (email),
+	CONSTRAINT user_user_billing_loc_fk FOREIGN KEY (billing_loc_id)
+		REFERENCES solarnet.sn_loc (id)
+		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
 /**
