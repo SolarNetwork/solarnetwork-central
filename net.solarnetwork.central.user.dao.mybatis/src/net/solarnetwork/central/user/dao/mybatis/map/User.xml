@@ -10,9 +10,11 @@
               SELECT nextval('solaruser.solaruser_seq') AS id 
 		</selectKey>
 		INSERT INTO solaruser.user_user 
-			(id, created, disp_name, email, password, enabled)
+			(id, created, disp_name, email, password, enabled,
+			loc_id, billing_account_id)
 		VALUES
-			(#{id}, #{created}, #{name}, #{email}, #{password}, #{enabled})
+			(#{id}, #{created}, #{name}, #{email}, #{password}, #{enabled},
+			#{locationId}, #{billingAccountId})
 	</insert>
 
 	<update id="update-User" parameterType="User">
@@ -20,7 +22,9 @@
 			disp_name = #{name}, 
 			email = #{email}, 
 			password = #{password},
-			enabled = #{enabled}
+			enabled = #{enabled},
+			loc_id = #{locationId},
+			billing_account_id = #{billingAccountId}
 		WHERE
 			id = #{id}
 	</update>
@@ -31,7 +35,9 @@
 		u.disp_name AS user_disp_name,
 		u.email AS user_email,
 		u.password AS user_password,
-		u.enabled AS user_enabled
+		u.enabled AS user_enabled,
+		u.loc_id AS user_loc_id,
+		u.billing_account_id AS user_billing_account_id
 	</sql>
 
 	<sql id="fragment-User-share-result">
@@ -47,6 +53,8 @@
 		<result property="email" column="user_email"/>
 		<result property="password" column="user_password"/>
 		<result property="enabled" column="user_enabled"/>
+		<result property="locationId" column="user_loc_id"/>
+		<result property="billingAccountId" column="user_billing_account_id"/>
 	</resultMap>
 	
 	<select id="get-User-for-id" parameterType="long" resultMap="UserFullResult">

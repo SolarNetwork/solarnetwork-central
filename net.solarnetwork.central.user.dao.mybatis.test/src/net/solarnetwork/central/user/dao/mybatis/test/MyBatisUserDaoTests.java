@@ -27,17 +27,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import java.util.HashSet;
 import java.util.Set;
-import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
-import net.solarnetwork.central.user.domain.User;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
+import net.solarnetwork.central.user.domain.User;
 
 /**
  * Test cases for the {@link MyBatisUserDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -52,6 +52,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	private static final String TEST_EMAIL = "foo@localhost.localdomain";
 	private static final String TEST_ROLE_1 = "ROLE_TEST1";
 	private static final String TEST_ROLE_2 = "ROLE_TEST2";
+	private static final String TEST_BILLING_ACCOUNT_ID = "test.account";
 
 	private Long userId = null;
 
@@ -170,6 +171,26 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertEquals(2, roles.size());
 		assertTrue(roles.contains(TEST_ROLE_1));
 		assertTrue(roles.contains(TEST_ROLE_2));
+	}
+
+	@Test
+	public void addBillingAccountId() {
+		storeNewUser();
+		setupTestLocation();
+		User user = userDao.get(this.userId);
+		user.setLocationId(TEST_LOC_ID);
+		user.setBillingAccountId(TEST_BILLING_ACCOUNT_ID);
+		Long id = userDao.store(user);
+		assertEquals(this.userId, id);
+		User updatedUser = userDao.get(id);
+		assertNotNull(updatedUser);
+		assertEquals(this.userId, updatedUser.getId());
+		assertEquals(user.getEmail(), updatedUser.getEmail());
+		assertEquals(user.getName(), updatedUser.getName());
+		assertEquals(user.getPassword(), updatedUser.getPassword());
+		assertEquals(user.getEnabled(), updatedUser.getEnabled());
+		assertEquals(TEST_LOC_ID, updatedUser.getLocationId());
+		assertEquals(TEST_BILLING_ACCOUNT_ID, updatedUser.getBillingAccountId());
 	}
 
 }
