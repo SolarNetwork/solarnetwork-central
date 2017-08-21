@@ -104,7 +104,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 		// attempt count first, if max NOT specified as -1
 		Long totalCount = null;
 		if ( max != null && max.intValue() != -1 ) {
-			Number n = executeQueryForLong(query + "-count", sqlProps);
+			Number n = selectLong(query + "-count", sqlProps);
 			if ( n != null ) {
 				totalCount = n.longValue();
 			}
