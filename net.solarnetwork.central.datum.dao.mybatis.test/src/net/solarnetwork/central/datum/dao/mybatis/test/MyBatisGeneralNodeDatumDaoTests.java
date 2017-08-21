@@ -1113,4 +1113,21 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertEquals("Two hours across both sources", 12, count);
 	}
 
+	@Test
+	public void getAuditIntervalNoDatum() {
+		ReadableInterval result = dao.getAuditInterval(TEST_NODE_ID, null);
+		Assert.assertNull(result);
+	}
+
+	@Test
+	public void getAuditIntervalForNode() {
+		final DateTime expectedStartDate = new DateTime(2017, 1, 1, 12, 0, 0, DateTimeZone.UTC);
+		executeSqlScript("/net/solarnetwork/central/datum/dao/mybatis/test/insert-audit-data-01.sql",
+				false);
+		ReadableInterval result = dao.getAuditInterval(TEST_NODE_ID, null);
+		assertNotNull(result);
+		assertEquals(expectedStartDate.getMillis(), result.getStart().getMillis());
+		assertEquals(expectedStartDate.plusHours(2).getMillis(), result.getEnd().getMillis());
+	}
+
 }

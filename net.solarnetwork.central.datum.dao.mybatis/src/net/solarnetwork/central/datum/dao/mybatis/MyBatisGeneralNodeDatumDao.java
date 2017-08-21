@@ -115,6 +115,13 @@ public class MyBatisGeneralNodeDatumDao
 	public static final String QUERY_FOR_MOST_RECENT_REPORTING = "find-general-reporting-most-recent";
 
 	/**
+	 * The default query name for {@link #getAuditInterval(Long)}.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String QUERY_FOR_AUDIT_INTERVAL = "find-general-audit-interval";
+
+	/**
 	 * The default query name for
 	 * {@link #getAuditPropertyCountTotal(GeneralNodeDatumFilter)}.
 	 * 
@@ -126,6 +133,7 @@ public class MyBatisGeneralNodeDatumDao
 	private String queryForDistinctSources;
 	private String queryForMostRecent;
 	private String queryForMostRecentReporting;
+	private String queryForAuditInterval;
 	private String queryForAuditHourlyPropertyCount;
 
 	/**
@@ -137,6 +145,7 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForDistinctSources = QUERY_FOR_DISTINCT_SOURCES;
 		this.queryForMostRecent = QUERY_FOR_MOST_RECENT;
 		this.queryForMostRecentReporting = QUERY_FOR_MOST_RECENT_REPORTING;
+		this.queryForAuditInterval = QUERY_FOR_AUDIT_INTERVAL;
 		this.queryForAuditHourlyPropertyCount = QUERY_FOR_AUDIT_HOURLY_PROP_COUNT;
 	}
 
@@ -277,28 +286,7 @@ public class MyBatisGeneralNodeDatumDao
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReadableInterval getReportableInterval(Long nodeId, String sourceId) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		if ( nodeId != null ) {
-			params.put(PARAM_NODE_ID, nodeId);
-		}
-		if ( sourceId != null ) {
-			params.put(PARAM_SOURCE_ID, sourceId);
-		}
-		getSqlSession().selectOne(this.queryForReportableInterval, params);
-		Timestamp start = (Timestamp) params.get("ts_start");
-		Timestamp end = (Timestamp) params.get("ts_end");
-		if ( start == null || end == null ) {
-			return null;
-		}
-		long d1 = start.getTime();
-		long d2 = end.getTime();
-		DateTimeZone tz = null;
-		if ( params.containsKey("node_tz") ) {
-			tz = DateTimeZone.forID(params.get("node_tz").toString());
-		}
-		Interval interval = new Interval(d1 < d2 ? d1 : d2, d2 > d1 ? d2 : d1, tz);
-		return interval;
-
+		return selectInterval(this.queryForReportableInterval, nodeId, sourceId);
 	}
 
 	@Override
@@ -318,6 +306,46 @@ public class MyBatisGeneralNodeDatumDao
 		return new LinkedHashSet<String>(results);
 	}
 
+	private ReadableInterval selectInterval(String statement, Long nodeId, String sourceId) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		if ( nodeId != null ) {
+			params.put(PARAM_NODE_ID, nodeId);
+		}
+		if ( sourceId != null ) {
+			params.put(PARAM_SOURCE_ID, sourceId);
+		}
+		getSqlSession().selectOne(statement, params);
+		Timestamp start = (Timestamp) params.get("ts_start");
+		Timestamp end = (Timestamp) params.get("ts_end");
+		if ( start == null || end == null ) {
+			return null;
+		}
+		long d1 = start.getTime();
+		long d2 = end.getTime();
+		DateTimeZone tz = null;
+		if ( params.containsKey("node_tz") ) {
+			tz = DateTimeZone.forID(params.get("node_tz").toString());
+		}
+		Interval interval = new Interval(d1 < d2 ? d1 : d2, d2 > d1 ? d2 : d1, tz);
+		return interval;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.2
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public ReadableInterval getAuditInterval(Long nodeId, String sourceId) {
+		return selectInterval(this.queryForAuditInterval, nodeId, sourceId);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.2
+	 */
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public long getAuditPropertyCountTotal(GeneralNodeDatumFilter filter) {
@@ -367,6 +395,17 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setQueryForAuditHourlyPropertyCount(String statementName) {
 		this.queryForAuditHourlyPropertyCount = statementName;
+	}
+
+	/**
+	 * Set the statement name for the {@link #getAuditInterval(Long)} method.
+	 * 
+	 * @param statementName
+	 *        the statement name
+	 * @since 1.2
+	 */
+	public void setQueryForAuditInterval(String statementName) {
+		this.queryForAuditInterval = statementName;
 	}
 
 }

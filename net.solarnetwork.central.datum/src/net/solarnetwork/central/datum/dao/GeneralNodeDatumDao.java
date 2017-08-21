@@ -74,6 +74,19 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end);
 
 	/**
+	 * Find the earliest date audit data is available for a given node.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        an optional source ID to limit the results to, or {@literal null}
+	 *        for all sources
+	 * @return the interval, or {@literal null} if no data available
+	 * @since 1.1
+	 */
+	ReadableInterval getAuditInterval(Long nodeId, String sourceId);
+
+	/**
 	 * Get the total audit count of datum property updates for a search
 	 * criteria.
 	 * 
