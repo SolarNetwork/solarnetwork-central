@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.dao;
 
 import java.util.Set;
+import org.joda.time.DateTime;
+import org.joda.time.ReadableInterval;
 import net.solarnetwork.central.dao.AggregationFilterableDao;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.GenericDao;
@@ -32,14 +34,12 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
-import org.joda.time.DateTime;
-import org.joda.time.ReadableInterval;
 
 /**
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -72,5 +72,21 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @return the distinct source IDs available (never <em>null</em>)
 	 */
 	Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end);
+
+	/**
+	 * Get the total audit count of datum property updates for a search
+	 * criteria.
+	 * 
+	 * <p>
+	 * The {@code nodeId}, {@code startDate}, and {@code endDate} values are
+	 * required at a minimum. The {@code sourceId} can also be provided.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the filter criteria
+	 * @return the total count
+	 * @since 1.1
+	 */
+	long getAuditPropertyCountTotal(GeneralNodeDatumFilter filter);
 
 }

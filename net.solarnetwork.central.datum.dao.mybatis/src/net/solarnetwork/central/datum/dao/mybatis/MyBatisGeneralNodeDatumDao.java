@@ -53,7 +53,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -114,10 +114,19 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String QUERY_FOR_MOST_RECENT_REPORTING = "find-general-reporting-most-recent";
 
+	/**
+	 * The default query name for
+	 * {@link #getAuditPropertyCountTotal(GeneralNodeDatumFilter)}.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String QUERY_FOR_AUDIT_HOURLY_PROP_COUNT = "find-general-audit-hourly-prop-count";
+
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
 	private String queryForMostRecent;
 	private String queryForMostRecentReporting;
+	private String queryForAuditHourlyPropertyCount;
 
 	/**
 	 * Default constructor.
@@ -128,6 +137,7 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForDistinctSources = QUERY_FOR_DISTINCT_SOURCES;
 		this.queryForMostRecent = QUERY_FOR_MOST_RECENT;
 		this.queryForMostRecentReporting = QUERY_FOR_MOST_RECENT_REPORTING;
+		this.queryForAuditHourlyPropertyCount = QUERY_FOR_AUDIT_HOURLY_PROP_COUNT;
 	}
 
 	/**
@@ -308,6 +318,13 @@ public class MyBatisGeneralNodeDatumDao
 		return new LinkedHashSet<String>(results);
 	}
 
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public long getAuditPropertyCountTotal(GeneralNodeDatumFilter filter) {
+		Long result = selectLong(queryForAuditHourlyPropertyCount, filter);
+		return (result != null ? result : 0L);
+	}
+
 	public String getQueryForReportableInterval() {
 		return queryForReportableInterval;
 	}
@@ -338,6 +355,18 @@ public class MyBatisGeneralNodeDatumDao
 
 	public void setQueryForMostRecentReporting(String queryForMostRecentReporting) {
 		this.queryForMostRecentReporting = queryForMostRecentReporting;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #getAuditPropertyCountTotal(GeneralNodeDatumFilter)} method.
+	 * 
+	 * @param statementName
+	 *        the statement name
+	 * @since 1.2
+	 */
+	public void setQueryForAuditHourlyPropertyCount(String statementName) {
+		this.queryForAuditHourlyPropertyCount = statementName;
 	}
 
 }
