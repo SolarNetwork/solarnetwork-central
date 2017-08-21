@@ -22,76 +22,37 @@
 
 package net.solarnetwork.central.user.dao.mybatis;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.SortDescriptor;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.user.dao.UserMetadataDao;
 import net.solarnetwork.central.user.domain.UserMetadataEntity;
 import net.solarnetwork.central.user.domain.UserMetadataFilter;
 import net.solarnetwork.central.user.domain.UserMetadataFilterMatch;
+import net.solarnetwork.central.user.domain.UserMetadataMatch;
 
 /**
  * MyBatis implementation of {@link UserMetadataDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.8
  */
-public class MyBatisUserMetadataDao extends BaseMyBatisGenericDao<UserMetadataEntity, Long>
+public class MyBatisUserMetadataDao extends
+		BaseMyBatisFilterableDao<UserMetadataEntity, UserMetadataFilterMatch, UserMetadataFilter, Long>
 		implements UserMetadataDao {
 
-	/** The query parameter for a general {@link Filter} object value. */
-	public static final String PARAM_FILTER = "filter";
+	/**
+	 * The query parameter for a general {@link Filter} object value.
+	 * 
+	 * @deprecated use {@link BaseMyBatisFilterableDao#FILTER_PROPERTY}
+	 */
+	@Deprecated
+	public static final String PARAM_FILTER = BaseMyBatisFilterableDao.FILTER_PROPERTY;
 
 	/**
 	 * Default constructor.
 	 */
 	public MyBatisUserMetadataDao() {
-		super(UserMetadataEntity.class, Long.class);
-	}
-
-	private Long executeCountQuery(final String countQueryName, final Map<String, ?> sqlProps) {
-		Number n = getSqlSession().selectOne(countQueryName, sqlProps);
-		if ( n != null ) {
-			return n.longValue();
-		}
-		return null;
-	}
-
-	private String getQueryForFilter(UserMetadataFilter filter) {
-		return getQueryForAll() + "-UserMetadataMatch";
-	}
-
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	@Override
-	public FilterResults<UserMetadataFilterMatch> findFiltered(UserMetadataFilter filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		final String query = getQueryForFilter(filter);
-		Map<String, Object> sqlProps = new HashMap<String, Object>(1);
-		sqlProps.put(PARAM_FILTER, filter);
-		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
-			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
-		}
-
-		// attempt count first, if max NOT specified as -1
-		Long totalCount = null;
-		if ( max != null && max.intValue() != -1 ) {
-			totalCount = executeCountQuery(query + "-count", sqlProps);
-		}
-
-		List<UserMetadataFilterMatch> rows = selectList(query, sqlProps, offset, max);
-
-		BasicFilterResults<UserMetadataFilterMatch> results = new BasicFilterResults<UserMetadataFilterMatch>(
-				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset,
-				rows.size());
-
-		return results;
+		super(UserMetadataEntity.class, Long.class, UserMetadataMatch.class);
 	}
 
 }

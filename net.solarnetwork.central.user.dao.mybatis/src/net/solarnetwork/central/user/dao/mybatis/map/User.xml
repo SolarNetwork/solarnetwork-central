@@ -90,4 +90,58 @@
 		VALUES (#{userId}, #{role})
 	</insert>
 	
+	<update id="update-billing-data-property">
+		UPDATE solaruser.user_user
+		SET billing_jdata = jsonb_set(billing_jdata, ARRAY[#{key}], #{value}::jsonb, true)
+		WHERE id = #{userId}
+	</update>
+	
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="UserMatchResult" type="UserMatch" extends="net.solarnetwork.central.user.dao.mybatis.User.UserFullResult"/>
+
+	<sql id="fragment-findall-User-UserMatch-where">
+		<where>
+			<if test="filter.email != null">
+				AND u.email = #{filter.email}::citext
+			</if>
+			<if test="filter.billingData != null and filter.billingData.size &gt; 0">
+				AND u.billing_jdata @> #{filter.billingDataJson}::jsonb
+			</if>
+		</where>
+	</sql>
+
+
+	<select id="findall-User-UserMatch" resultMap="UserMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-User-full-result"/>
+		FROM
+			solaruser.user_user u
+		<include refid="fragment-findall-User-UserMatch-where"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item.sortKey == &quot;created&quot;">u.created</if>
+					<if test="item.sortKey == &quot;email&quot;">u.email</if>
+					<if test="item.sortKey == &quot;name&quot;">u.disp_name</if>
+					<if test="item.sortKey == &quot;user&quot;">u.id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				u.id
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findall-User-UserMatch-count" resultType="long">
+		SELECT count(u.created)
+		FROM
+			solaruser.user_user u
+		<include refid="fragment-findall-User-UserMatch-where"/>
+	</select>
+
 </mapper>

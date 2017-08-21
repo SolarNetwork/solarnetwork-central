@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,8 +33,11 @@ import java.util.Set;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserFilterCommand;
+import net.solarnetwork.central.user.domain.UserFilterMatch;
 
 /**
  * Test cases for the {@link MyBatisUserDao} class.
@@ -198,6 +202,135 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertEquals(user.getEnabled(), updatedUser.getEnabled());
 		assertEquals(TEST_LOC_ID, updatedUser.getLocationId());
 		assertEquals(billingData, updatedUser.getBillingData());
+	}
+
+	private Long storeTestUser(String email) {
+		User newUser = new User();
+		newUser.setCreated(new DateTime());
+		newUser.setEmail(email);
+		newUser.setName(TEST_NAME);
+		newUser.setPassword(TEST_PASSWORD);
+		newUser.setEnabled(Boolean.TRUE);
+		return userDao.store(newUser);
+	}
+
+	@Test
+	public void findFilteredForEmail() {
+		storeNewUser();
+		storeTestUser("bar@example.com");
+
+		UserFilterCommand criteria = new UserFilterCommand();
+		criteria.setEmail(TEST_EMAIL);
+
+		FilterResults<UserFilterMatch> results = userDao.findFiltered(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals(1L, (long) results.getTotalResults());
+		assertEquals(1, (int) results.getReturnedResultCount());
+		UserFilterMatch match = results.getResults().iterator().next();
+		assertEquals("Match ID", userId, match.getId());
+	}
+
+	@Test
+	public void findFilteredForBillingProperty() {
+		storeNewUser();
+		User user1 = userDao.get(userId);
+		Map<String, Object> billingData1 = new HashMap<String, Object>();
+		billingData1.put(BILLING_ACCOUNT_ID_KEY, TEST_BILLING_ACCOUNT_ID);
+		user1.setBillingData(billingData1);
+		user1 = userDao.get(userDao.store(user1));
+
+		Long userId2 = storeTestUser("bar@example.com");
+		User user2 = userDao.get(userId2);
+		Map<String, Object> billingData2 = new HashMap<String, Object>();
+		billingData2.put(BILLING_ACCOUNT_ID_KEY, "foo-bar");
+		user2.setBillingData(billingData2);
+		user2 = userDao.get(userDao.store(user2));
+
+		UserFilterCommand criteria = new UserFilterCommand();
+		criteria.setBillingData(billingData1);
+
+		FilterResults<UserFilterMatch> results = userDao.findFiltered(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals(1L, (long) results.getTotalResults());
+		assertEquals(1, (int) results.getReturnedResultCount());
+		UserFilterMatch match = results.getResults().iterator().next();
+		assertEquals("Match ID", userId, match.getId());
+
+		criteria.setBillingData(billingData2);
+		results = userDao.findFiltered(criteria, null, null, null);
+		assertNotNull(results);
+		assertEquals(1L, (long) results.getTotalResults());
+		assertEquals(1, (int) results.getReturnedResultCount());
+		match = results.getResults().iterator().next();
+		assertEquals("Match ID", userId2, match.getId());
+	}
+
+	@Test
+	public void storeBillingPropertyNullColumn() {
+		storeNewUser();
+
+		int count = userDao.storeBillingDataProperty(userId, "foo", "bar");
+		assertEquals(1, count);
+
+		User user = userDao.get(userId);
+		assertNull("Can't update null billing data", user.getBillingData());
+	}
+
+	@Test
+	public void storeBillingPropertyAdd() {
+		storeNewUser();
+		User user = userDao.get(userId);
+
+		Map<String, Object> billingData = new HashMap<String, Object>();
+		billingData.put(BILLING_ACCOUNT_ID_KEY, TEST_BILLING_ACCOUNT_ID);
+		user.setBillingData(billingData);
+		userDao.store(user);
+
+		int count = userDao.storeBillingDataProperty(userId, "foo", "bar");
+		assertEquals(1, count);
+
+		user = userDao.get(userId);
+		Map<String, Object> expected = new HashMap<String, Object>(billingData);
+		expected.put("foo", "bar");
+		assertEquals("Billing data updated", expected, user.getBillingData());
+	}
+
+	@Test
+	public void storeBillingPropertyReplace() {
+		storeNewUser();
+		User user = userDao.get(userId);
+
+		Map<String, Object> billingData = new HashMap<String, Object>();
+		billingData.put(BILLING_ACCOUNT_ID_KEY, TEST_BILLING_ACCOUNT_ID);
+		user.setBillingData(billingData);
+		userDao.store(user);
+
+		int count = userDao.storeBillingDataProperty(userId, BILLING_ACCOUNT_ID_KEY, "bar");
+		assertEquals(1, count);
+
+		user = userDao.get(userId);
+		Map<String, Object> expected = new HashMap<String, Object>();
+		expected.put(BILLING_ACCOUNT_ID_KEY, "bar");
+		assertEquals("Billing data updated", expected, user.getBillingData());
+	}
+
+	@Test
+	public void storeBillingPropertyNullValue() {
+		storeNewUser();
+		User user = userDao.get(userId);
+
+		Map<String, Object> billingData = new HashMap<String, Object>();
+		billingData.put(BILLING_ACCOUNT_ID_KEY, TEST_BILLING_ACCOUNT_ID);
+		user.setBillingData(billingData);
+		userDao.store(user);
+
+		int count = userDao.storeBillingDataProperty(userId, BILLING_ACCOUNT_ID_KEY, null);
+		assertEquals(1, count);
+
+		user = userDao.get(userId);
+		Map<String, Object> expected = new HashMap<String, Object>();
+		expected.put(BILLING_ACCOUNT_ID_KEY, null);
+		assertEquals("Billing data updated", expected, user.getBillingData());
 	}
 
 }

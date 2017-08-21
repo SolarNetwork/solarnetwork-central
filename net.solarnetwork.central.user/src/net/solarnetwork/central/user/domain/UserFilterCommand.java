@@ -25,24 +25,28 @@ package net.solarnetwork.central.user.domain;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.FilterSupport;
 import net.solarnetwork.central.support.MutableSortDescriptor;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * Filter support for user actions.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.23
  */
-public class UserFilterCommand extends FilterSupport implements UserMetadataFilter {
+public class UserFilterCommand extends FilterSupport implements UserMetadataFilter, UserFilter {
 
-	private static final long serialVersionUID = -728195107001585307L;
+	private static final long serialVersionUID = -7815908932742535345L;
 
 	private List<MutableSortDescriptor> sorts;
 	private Integer offset = 0;
 	private Integer max;
+	private String email;
+	private Map<String, Object> billingData;
 
 	public List<MutableSortDescriptor> getSorts() {
 		return sorts;
@@ -73,6 +77,60 @@ public class UserFilterCommand extends FilterSupport implements UserMetadataFilt
 
 	public void setMax(Integer max) {
 		this.max = max;
+	}
+
+	/**
+	 * Get the email criteria.
+	 * 
+	 * @return the email criteria
+	 * @since 1.1
+	 */
+	@Override
+	public String getEmail() {
+		return email;
+	}
+
+	/**
+	 * Set the email criteria.
+	 * 
+	 * @param email
+	 *        the email to set
+	 * @since 1.1
+	 */
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	/**
+	 * Get the billing data criteria.
+	 * 
+	 * @return the billing data criteria
+	 * @since 1.1
+	 */
+	@Override
+	public Map<String, Object> getBillingData() {
+		return billingData;
+	}
+
+	/**
+	 * Set the billing data criteria.
+	 * 
+	 * @param billingData
+	 *        the billing data criteria to set
+	 * @since 1.1
+	 */
+	public void setBillingData(Map<String, Object> billingData) {
+		this.billingData = billingData;
+	}
+
+	/**
+	 * Get the billing data criteria as a JSON string.
+	 * 
+	 * @return the billing data criteria, as JSON
+	 * @since 1.1
+	 */
+	public String getBillingDataJson() {
+		return JsonUtils.getJSONString(this.billingData, null);
 	}
 
 }

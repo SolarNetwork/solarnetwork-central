@@ -38,9 +38,9 @@ import net.solarnetwork.util.SerializeIgnore;
  * @author matt
  * @version 1.4
  */
-public class User extends BaseEntity {
+public class User extends BaseEntity implements UserInfo {
 
-	private static final long serialVersionUID = -5263837292482322016L;
+	private static final long serialVersionUID = -1743895965082396469L;
 
 	private String name;
 	private String email;
@@ -80,6 +80,7 @@ public class User extends BaseEntity {
 		return "User{email=" + email + '}';
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}
@@ -88,6 +89,7 @@ public class User extends BaseEntity {
 		this.name = name;
 	}
 
+	@Override
 	public String getEmail() {
 		return email;
 	}
@@ -106,6 +108,7 @@ public class User extends BaseEntity {
 		this.password = password;
 	}
 
+	@Override
 	public Boolean getEnabled() {
 		return enabled;
 	}
