@@ -23,6 +23,9 @@ CREATE TABLE solaruser.user_user (
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
+CREATE INDEX user_user_billing_jdata_idx ON solaruser.user_user
+	USING GIN (billing_jdata jsonb_path_ops);
+
 /**
  * user_meta: JSON metadata specific to a user.
  */
