@@ -25,16 +25,16 @@ package net.solarnetwork.central.datum.domain;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Map;
-import net.solarnetwork.central.datum.support.DatumUtils;
-import net.solarnetwork.central.domain.Entity;
-import net.solarnetwork.domain.GeneralNodeDatumSamples;
-import net.solarnetwork.util.SerializeIgnore;
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import net.solarnetwork.central.datum.support.DatumUtils;
+import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.util.SerializeIgnore;
 
 /**
  * Generalized node-based datum.
@@ -268,7 +268,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("GeneralLocationDatum{id=");
+		builder.append("GeneralNodeDatum{id=");
 		builder.append(id);
 		builder.append(", samples=");
 		builder.append(samples == null ? "null" : samples.getSampleData());
