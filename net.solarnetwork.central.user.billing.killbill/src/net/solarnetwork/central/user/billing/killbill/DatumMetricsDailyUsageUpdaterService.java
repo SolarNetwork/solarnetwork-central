@@ -61,7 +61,54 @@ import net.solarnetwork.central.user.domain.UserNode;
  * service.
  * 
  * <p>
- * TODO
+ * To be subscribed to this service, a {@link User} must have billing data with
+ * the following:
+ * </p>
+ * 
+ * <dl>
+ * <dt><code>accounting</code></dt>
+ * <dd><code>kb</code></dd>
+ * <dt><code>kb_datumMetricsDailyUsage</code></dt>
+ * <dd><code>true</code></dd>
+ * </dl>
+ * 
+ * <p>
+ * For users meeting that criteria, a billing data key
+ * <code>kb_accountKey</code> will be used as the Killbill account external key
+ * value to associate with the user. If <code>kb_accountKey</code> does not
+ * exist, a new Killbill account will be created for the user, and an external
+ * key will be assigned and saved to the billing data key
+ * <code>kb_accountKey</code> for future use (e.g. {@literal SN_123}, see
+ * {@link #setAccountKeyTemplate(String)}).
+ * </p>
+ * 
+ * <p>
+ * All nodes associated with their SolarNetwork account will be subscribed to a
+ * Killbill bundle using a bundle external key based on the node's ID (e.g.
+ * {@literal IN_234}, see {@link #setBundleKeyTemplate(String)}). The bundle is
+ * expected to contain a subscription to the {@code basePlanName} configured on
+ * this service. If the bundle does not exist, it will be created with a single
+ * subscription to {@code basePlanName}. The subscription
+ * <code>requestedDate</code> will be set to the earliest available datum date
+ * for the node, essentially starting the plan when the node first posts data.
+ * The subscription billing day will be set to the {@code billCycleDay}
+ * configured on this service.
+ * </p>
+ * 
+ * <p>
+ * For each node, daily aggregate usage data will be posted to Killbill using
+ * the <code>property_count</code> datum audit data available for that node (see
+ * {@link GeneralNodeDatumDao#getAuditPropertyCountTotal()}). This service will
+ * calculate the usage for all days before the current one and post the usage
+ * records to Killbill. The usage unit will be the {@code usageUnitName}
+ * configured on this service.
+ * </p>
+ * 
+ * <p>
+ * When all nodes for a given user have been processed, the current date is
+ * saved in the user's billing data key {@code kb_mrUsageDate}. The next time
+ * this service runs it will use that date as the earliest day to upload usage
+ * data for.
  * </p>
  * 
  * @author matt
@@ -69,25 +116,25 @@ import net.solarnetwork.central.user.domain.UserNode;
  */
 public class DatumMetricsDailyUsageUpdaterService {
 
-	/** The default currency map. */
+	/** The default currency map of country codes to currency codes. */
 	public static final Map<String, String> DEFAULT_CURRENCY_MAP = defaultCurrencyMap();
 
-	/** The default payment method data. */
+	/** The default payment method data to add to new accounts. */
 	public static final Map<String, Object> DEFAULT_PAMENT_METHOD_DATA = defaultPaymentMethodData();
 
 	/** The {@literal accounting} billing data value for Killbill. */
 	public static final String KILLBILL_ACCOUNTING_VALUE = "kb";
 
 	/**
-	 * The billing data key that holds the Killbill account external key to use.
-	 */
-	public static final String KILLBILL_ACCOUNT_KEY_DATA_PROP = "kb_accountKey";
-
-	/**
 	 * The billing data key that signals this updater service should be used via
 	 * a boolean flag.
 	 */
 	public static final String KILLBILL_DAILY_USAGE_PLAN_DATA_PROP = "kb_datumMetricsDailyUsage";
+
+	/**
+	 * The billing data key that holds the Killbill account external key to use.
+	 */
+	public static final String KILLBILL_ACCOUNT_KEY_DATA_PROP = "kb_accountKey";
 
 	/**
 	 * The billing data key that holds the "most recent usage date" to start
@@ -377,17 +424,28 @@ public class DatumMetricsDailyUsageUpdaterService {
 	}
 
 	/**
-	 * Set the batch size.
+	 * Set the batch size to process users with.
+	 * 
+	 * <p>
+	 * This is the maximum number of user records to fetch from the database and
+	 * process at a time, e.g. a result page size. The service will iterate over
+	 * all result pages to process all users.
+	 * </p>
 	 * 
 	 * @param batchSize
-	 *        the batch size to set
+	 *        the user record batch size to set
 	 */
 	public void setBatchSize(int batchSize) {
 		this.batchSize = batchSize;
 	}
 
 	/**
-	 * Set a mapping of country keys to currency keys.
+	 * Set a mapping of country codes to currency codes.
+	 * 
+	 * <p>
+	 * This is used to assign a currency to new accounts, using the country of
+	 * the SolarNetwork user.
+	 * </p>
 	 * 
 	 * @param countryCurrencyMap
 	 *        the map to set; defaults to {@link #DEFAULT_CURRENCY_MAP}
@@ -410,7 +468,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 	}
 
 	/**
-	 * Set the default payment method data to use.
+	 * Set the default payment method data to use when creating one for an
+	 * account that does not already have a payment method set.
 	 * 
 	 * @param paymentMethodData
 	 *        the payment method data to set; defaults to
@@ -421,7 +480,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 	}
 
 	/**
-	 * Set the base Killbill plan name to use.
+	 * Set the base Killbill plan name to use when creating a bundle for an
+	 * account.
 	 * 
 	 * @param basePlanName
 	 *        the base plan name to set
@@ -439,7 +499,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 * </p>
 	 * 
 	 * @param template
-	 *        the account key template to set
+	 *        the account key template to set; defaults to
+	 *        {@link #DEFAULT_ACCOUNT_KEY_TEMPLATE}
 	 */
 	public void setAccountKeyTemplate(String template) {
 		this.accountKeyTemplate = template;
@@ -454,7 +515,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 * </p>
 	 * 
 	 * @param template
-	 *        the bundle key template to set
+	 *        the bundle key template to set; Defaults to
+	 *        {@link #DEFAULT_BUNDLE_KEY_TEMPLATE}
 	 */
 	public void setBundleKeyTemplate(String template) {
 		this.bundleKeyTemplate = template;
@@ -464,17 +526,18 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 * Set the bill cycle day to use.
 	 * 
 	 * @param billCycleDay
-	 *        the bill cycle day to set
+	 *        the bill cycle day to set; defaults to
+	 *        {@link #DEFAULT_BILL_CYCLE_DAY}
 	 */
 	public void setBillCycleDay(Integer billCycleDay) {
 		this.billCycleDay = billCycleDay;
 	}
 
 	/**
-	 * Set the Killbill usage unit name to use.
+	 * Set the Killbill usage unit name to use when posting usage records.
 	 * 
 	 * @param usageUnitName
-	 *        the usage unit name
+	 *        the usage unit name; defaults to {@link #DEFAULT_USAGE_UNIT_NAME}
 	 */
 	public void setUsageUnitName(String usageUnitName) {
 		this.usageUnitName = usageUnitName;
