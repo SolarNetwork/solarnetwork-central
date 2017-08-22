@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SolarUser Billing
+Bundle-SymbolicName: net.solarnetwork.central.user.billing
+Bundle-Version: 0.1.0
+Bundle-Vendor: SolarNetwork
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: 
+ net.solarnetwork.central.user.billing.domain;version="0.1.0"
+Import-Package: net.solarnetwork.central.support;version="1.13.0",
+ net.solarnetwork.central.user.domain;version="1.14.0"
