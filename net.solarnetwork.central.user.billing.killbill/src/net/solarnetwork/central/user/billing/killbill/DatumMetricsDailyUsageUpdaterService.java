@@ -84,6 +84,9 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The default time zone offset (milliseconds from UTC) to use. */
 	public static final int DEFAULT_TIMEZONE_OFFSET = 12 * 60 * 60 * 1000;
 
+	/** The default account key template to use. */
+	public static final String DEFAULT_ACCOUNT_KEY_TEMPLATE = "SN_%s";
+
 	/** The default bundle key template to use. */
 	public static final String DEFAULT_BUNDLE_KEY_TEMPLATE = "IN_%s";
 
@@ -108,6 +111,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 	private int timeZoneOffset = DEFAULT_TIMEZONE_OFFSET;
 	private Map<String, Object> paymentMethodData = DEFAULT_PAMENT_METHOD_DATA;
 	private String basePlanName = DEFAULT_BASE_PLAN_NAME;
+	private String accountKeyTemplate = DEFAULT_ACCOUNT_KEY_TEMPLATE;
 	private String bundleKeyTemplate = DEFAULT_BUNDLE_KEY_TEMPLATE;
 	private Integer billCycleDay = DEFAULT_BILL_CYCLE_DAY;
 	private String usageUnitName = DEFAULT_USAGE_UNIT_NAME;
@@ -169,7 +173,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 					accountKey = (String) billingData.get(KILLBILL_ACCOUNT_KEY_DATA_PROP);
 				} else {
 					// assign account key
-					accountKey = "SN" + match.getId();
+					accountKey = String.format(accountKeyTemplate, match.getId());
 					userDao.storeBillingDataProperty(match.getId(), KILLBILL_ACCOUNT_KEY_DATA_PROP,
 							accountKey);
 				}
@@ -225,9 +229,6 @@ public class DatumMetricsDailyUsageUpdaterService {
 	}
 
 	private void processOneUserNode(Account account, UserNode userNode, DateTimeZone timeZone) {
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setNodeId(userNode.getNode().getId());
-
 		DateTime usageStartDay = null;
 		DateTime usageEndDay = new DateTime(timeZone).dayOfMonth().roundFloorCopy();
 
@@ -241,7 +242,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 			usageStartDay = mrDate.toDateTimeAtStartOfDay(timeZone);
 		} else if ( auditInterval != null ) {
 			usageStartDay = auditInterval.getStart().withZone(timeZone).dayOfMonth().roundFloorCopy();
-			usageEndDay = auditInterval.getEnd().withZone(timeZone).dayOfMonth().roundFloorCopy();
+			usageEndDay = auditInterval.getEnd().withZone(timeZone).dayOfMonth().roundCeilingCopy();
 		}
 		if ( usageStartDay == null ) {
 			log.debug("No usage start date available for user {} node {}", userNode.getUser().getEmail(),
@@ -251,40 +252,45 @@ public class DatumMetricsDailyUsageUpdaterService {
 
 		// got usage start date; get the bundle for this node
 		List<UsageRecord> recordsToAdd = new ArrayList<>();
-		while ( usageStartDay.isBefore(usageEndDay) ) {
-			DateTime nextDay = usageStartDay.plusDays(1);
-			criteria.setStartDate(usageStartDay);
+		DateTime usageCurrDay = new DateTime(usageStartDay);
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(userNode.getNode().getId());
+		while ( usageCurrDay.isBefore(usageEndDay) ) {
+			DateTime nextDay = usageCurrDay.plusDays(1);
+			criteria.setStartDate(usageCurrDay);
 			criteria.setEndDate(nextDay);
 			long dayUsage = nodeDatumDao.getAuditPropertyCountTotal(criteria);
 			if ( dayUsage > 0 ) {
 				UsageRecord record = new UsageRecord();
-				record.setRecordDate(usageStartDay.toLocalDate());
+				record.setRecordDate(usageCurrDay.toLocalDate());
 				record.setAmount(new BigDecimal(dayUsage));
 				recordsToAdd.add(record);
 			}
-			usageStartDay = nextDay;
+			usageCurrDay = nextDay;
 		}
 
 		if ( !recordsToAdd.isEmpty() ) {
 			Bundle bundle = bundleForUserNode(userNode, account);
 			if ( bundle != null && bundle.getSubscriptions() != null
 					&& !bundle.getSubscriptions().isEmpty() ) {
-				log.info("Adding {} usage to user {} node {} between {}-{}",
-						userNode.getUser().getEmail(), this.usageUnitName, userNode.getNode().getId(),
-						recordsToAdd.get(0).getRecordDate(),
-						recordsToAdd.get(recordsToAdd.size() - 1).getRecordDate());
+				if ( log.isInfoEnabled() ) {
+					log.info("Adding {} {} usage to user {} node {} between {} and {}",
+							recordsToAdd.size(), this.usageUnitName, userNode.getUser().getEmail(),
+							userNode.getNode().getId(), usageStartDay.toLocalDate(),
+							usageEndDay.toLocalDate());
+				}
 				client.addUsage(bundle.getSubscriptions().get(0), this.usageUnitName, recordsToAdd);
 			}
-		} else {
-			log.debug("No {} usage to add for user {} node {} between {}-{}",
-					userNode.getUser().getEmail(), this.usageUnitName, userNode.getNode().getId(),
-					recordsToAdd.get(recordsToAdd.size() - 1).getRecordDate());
+		} else if ( log.isDebugEnabled() ) {
+			log.debug("No {} usage to add for user {} node {} between {} and {}", this.usageUnitName,
+					userNode.getUser().getEmail(), userNode.getNode().getId(),
+					usageStartDay.toLocalDate(), usageEndDay.toLocalDate());
 		}
 
 		// store the last processed date so we can pick up there next time
+		String nextStartDate = ISO_DATE_FORMATTER.print(usageEndDay.toLocalDate());
 		userDao.storeBillingDataProperty(userNode.getUser().getId(),
-				KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
-				ISO_DATE_FORMATTER.print(usageStartDay.toLocalDate()));
+				KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP, nextStartDate);
 	}
 
 	private Bundle bundleForUserNode(UserNode userNode, Account account) {
@@ -401,18 +407,33 @@ public class DatumMetricsDailyUsageUpdaterService {
 	}
 
 	/**
-	 * Set the string format template to use when generating the bundle key.
+	 * Set the string format template to use when generating an account key.
+	 * 
+	 * <p>
+	 * This template is expected to accept a single string parameter (a user's
+	 * ID).
+	 * </p>
+	 * 
+	 * @param template
+	 *        the account key template to set
+	 */
+	public void setAccountKeyTemplate(String template) {
+		this.accountKeyTemplate = template;
+	}
+
+	/**
+	 * Set the string format template to use when generating a bundle key.
 	 * 
 	 * <p>
 	 * This template is expected to accept a single string parameter (a node's
 	 * ID).
 	 * </p>
 	 * 
-	 * @param bundleKeyTemplate
+	 * @param template
 	 *        the bundle key template to set
 	 */
-	public void setBundleKeyTemplate(String bundleKeyTemplate) {
-		this.bundleKeyTemplate = bundleKeyTemplate;
+	public void setBundleKeyTemplate(String template) {
+		this.bundleKeyTemplate = template;
 	}
 
 	/**
