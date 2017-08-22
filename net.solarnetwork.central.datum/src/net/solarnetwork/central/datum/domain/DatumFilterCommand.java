@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,7 +41,7 @@ import net.solarnetwork.central.support.MutableSortDescriptor;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
@@ -406,6 +407,130 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	public void setUserIds(Long[] userIds) {
 		this.userIds = userIds;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.8
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((aggregation == null) ? 0 : aggregation.hashCode());
+		result = prime * result + ((dataPath == null) ? 0 : dataPath.hashCode());
+		result = prime * result + ((endDate == null) ? 0 : endDate.hashCode());
+		result = prime * result + ((location == null) ? 0 : location.hashCode());
+		result = prime * result + Arrays.hashCode(locationIds);
+		result = prime * result + ((max == null) ? 0 : max.hashCode());
+		result = prime * result + (mostRecent ? 1231 : 1237);
+		result = prime * result + Arrays.hashCode(nodeIds);
+		result = prime * result + ((offset == null) ? 0 : offset.hashCode());
+		result = prime * result + ((sorts == null) ? 0 : sorts.hashCode());
+		result = prime * result + Arrays.hashCode(sourceIds);
+		result = prime * result + ((startDate == null) ? 0 : startDate.hashCode());
+		result = prime * result + Arrays.hashCode(tags);
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + Arrays.hashCode(userIds);
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.8
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( obj == null ) {
+			return false;
+		}
+		if ( !(obj instanceof DatumFilterCommand) ) {
+			return false;
+		}
+		DatumFilterCommand other = (DatumFilterCommand) obj;
+		if ( aggregation != other.aggregation ) {
+			return false;
+		}
+		if ( dataPath == null ) {
+			if ( other.dataPath != null ) {
+				return false;
+			}
+		} else if ( !dataPath.equals(other.dataPath) ) {
+			return false;
+		}
+		if ( endDate == null ) {
+			if ( other.endDate != null ) {
+				return false;
+			}
+		} else if ( !endDate.isEqual(other.endDate) ) {
+			return false;
+		}
+		if ( location == null ) {
+			if ( other.location != null ) {
+				return false;
+			}
+		} else if ( !location.equals(other.location) ) {
+			return false;
+		}
+		if ( !Arrays.equals(locationIds, other.locationIds) ) {
+			return false;
+		}
+		if ( max == null ) {
+			if ( other.max != null ) {
+				return false;
+			}
+		} else if ( !max.equals(other.max) ) {
+			return false;
+		}
+		if ( mostRecent != other.mostRecent ) {
+			return false;
+		}
+		if ( !Arrays.equals(nodeIds, other.nodeIds) ) {
+			return false;
+		}
+		if ( offset == null ) {
+			if ( other.offset != null ) {
+				return false;
+			}
+		} else if ( !offset.equals(other.offset) ) {
+			return false;
+		}
+		if ( sorts == null ) {
+			if ( other.sorts != null ) {
+				return false;
+			}
+		} else if ( !sorts.equals(other.sorts) ) {
+			return false;
+		}
+		if ( !Arrays.equals(sourceIds, other.sourceIds) ) {
+			return false;
+		}
+		if ( startDate == null ) {
+			if ( other.startDate != null ) {
+				return false;
+			}
+		} else if ( !startDate.isEqual(other.startDate) ) {
+			return false;
+		}
+		if ( !Arrays.equals(tags, other.tags) ) {
+			return false;
+		}
+		if ( type == null ) {
+			if ( other.type != null ) {
+				return false;
+			}
+		} else if ( !type.equals(other.type) ) {
+			return false;
+		}
+		if ( !Arrays.equals(userIds, other.userIds) ) {
+			return false;
+		}
+		return true;
 	}
 
 }

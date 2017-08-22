@@ -30,17 +30,17 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.util.StringUtils;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.util.SerializeIgnore;
-import org.springframework.util.StringUtils;
 
 /**
  * Criteria for location data tied to a source.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SourceLocationFilter implements Serializable, SourceLocation {
 
@@ -197,6 +197,86 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.3
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((location == null) ? 0 : location.hashCode());
+		result = prime * result + ((max == null) ? 0 : max.hashCode());
+		result = prime * result + ((offset == null) ? 0 : offset.hashCode());
+		result = prime * result + ((sorts == null) ? 0 : sorts.hashCode());
+		result = prime * result + ((source == null) ? 0 : source.hashCode());
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.3
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( obj == null ) {
+			return false;
+		}
+		if ( !(obj instanceof SourceLocationFilter) ) {
+			return false;
+		}
+		SourceLocationFilter other = (SourceLocationFilter) obj;
+		if ( id == null ) {
+			if ( other.id != null ) {
+				return false;
+			}
+		} else if ( !id.equals(other.id) ) {
+			return false;
+		}
+		if ( location == null ) {
+			if ( other.location != null ) {
+				return false;
+			}
+		} else if ( !location.equals(other.location) ) {
+			return false;
+		}
+		if ( max == null ) {
+			if ( other.max != null ) {
+				return false;
+			}
+		} else if ( !max.equals(other.max) ) {
+			return false;
+		}
+		if ( offset == null ) {
+			if ( other.offset != null ) {
+				return false;
+			}
+		} else if ( !offset.equals(other.offset) ) {
+			return false;
+		}
+		if ( sorts == null ) {
+			if ( other.sorts != null ) {
+				return false;
+			}
+		} else if ( !sorts.equals(other.sorts) ) {
+			return false;
+		}
+		if ( source == null ) {
+			if ( other.source != null ) {
+				return false;
+			}
+		} else if ( !source.equals(other.source) ) {
+			return false;
+		}
+		return true;
 	}
 
 }

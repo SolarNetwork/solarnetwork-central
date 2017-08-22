@@ -133,4 +133,76 @@ public class UserFilterCommand extends FilterSupport implements UserMetadataFilt
 		return JsonUtils.getJSONString(this.billingData, null);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.1
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((billingData == null) ? 0 : billingData.hashCode());
+		result = prime * result + ((email == null) ? 0 : email.hashCode());
+		result = prime * result + ((max == null) ? 0 : max.hashCode());
+		result = prime * result + ((offset == null) ? 0 : offset.hashCode());
+		result = prime * result + ((sorts == null) ? 0 : sorts.hashCode());
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.1
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !super.equals(obj) ) {
+			return false;
+		}
+		if ( !(obj instanceof UserFilterCommand) ) {
+			return false;
+		}
+		UserFilterCommand other = (UserFilterCommand) obj;
+		if ( billingData == null ) {
+			if ( other.billingData != null ) {
+				return false;
+			}
+		} else if ( !billingData.equals(other.billingData) ) {
+			return false;
+		}
+		if ( email == null ) {
+			if ( other.email != null ) {
+				return false;
+			}
+		} else if ( !email.equals(other.email) ) {
+			return false;
+		}
+		if ( max == null ) {
+			if ( other.max != null ) {
+				return false;
+			}
+		} else if ( !max.equals(other.max) ) {
+			return false;
+		}
+		if ( offset == null ) {
+			if ( other.offset != null ) {
+				return false;
+			}
+		} else if ( !offset.equals(other.offset) ) {
+			return false;
+		}
+		if ( sorts == null ) {
+			if ( other.sorts != null ) {
+				return false;
+			}
+		} else if ( !sorts.equals(other.sorts) ) {
+			return false;
+		}
+		return true;
+	}
+
 }
