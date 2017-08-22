@@ -229,20 +229,23 @@ public class DatumMetricsDailyUsageUpdaterService {
 	}
 
 	private void processOneUserNode(Account account, UserNode userNode, DateTimeZone timeZone) {
-		DateTime usageStartDay = null;
-		DateTime usageEndDay = new DateTime(timeZone).dayOfMonth().roundFloorCopy();
-
 		// get the range of available audit data for this node, to help know when to start/stop
 		ReadableInterval auditInterval = nodeDatumDao.getAuditInterval(userNode.getNode().getId(), null);
 
 		String mostRecentUsageDate = (String) userNode.getUser().getBillingData()
 				.get(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP);
+		DateTime usageStartDay = null;
 		if ( mostRecentUsageDate != null ) {
 			LocalDate mrDate = ISO_DATE_FORMATTER.parseLocalDate(mostRecentUsageDate);
 			usageStartDay = mrDate.toDateTimeAtStartOfDay(timeZone);
 		} else if ( auditInterval != null ) {
 			usageStartDay = auditInterval.getStart().withZone(timeZone).dayOfMonth().roundFloorCopy();
+		}
+		DateTime usageEndDay;
+		if ( auditInterval != null ) {
 			usageEndDay = auditInterval.getEnd().withZone(timeZone).dayOfMonth().roundCeilingCopy();
+		} else {
+			usageEndDay = new DateTime(timeZone).dayOfMonth().roundCeilingCopy();
 		}
 		if ( usageStartDay == null ) {
 			log.debug("No usage start date available for user {} node {}", userNode.getUser().getEmail(),
