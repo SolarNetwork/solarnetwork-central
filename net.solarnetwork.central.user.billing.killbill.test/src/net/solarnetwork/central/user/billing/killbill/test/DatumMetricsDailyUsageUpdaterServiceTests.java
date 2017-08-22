@@ -101,8 +101,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	private static final String TEST_NODE_TZ = "Pacific/Auckland";
 	private static final String TEST_NODE_TZ_OFFSET = "+12:00";
 	private static final String TEST_ACCOUNT_ID = "abc-123";
-	private static final String TEST_PAYMENT_METHOD_ID = "def-234";
 	private static final String TEST_ACCOUNT_CURRENCY = "NZD";
+	private static final String TEST_PAYMENT_METHOD_ID = "def-234";
 	private static final String TEST_BUNDLE_KEY = "IN_" + TEST_NODE_ID;
 	private static final String TEST_BUNDLE_ID = "efg-345";
 
@@ -154,6 +154,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	private Account createTestAccount() {
 		Account account = new Account();
 		account.setAccountId(TEST_ACCOUNT_ID);
+		account.setBillCycleDayLocal(DEFAULT_BILL_CYCLE_DAY);
 		account.setCountry(TEST_LOCATION_COUNTRY);
 		account.setCurrency(TEST_ACCOUNT_CURRENCY);
 		account.setEmail(TEST_USER_EMAIL);
@@ -166,6 +167,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	private Account createTestAccount2() {
 		Account account = new Account();
 		account.setAccountId(TEST_ACCOUNT2_ID);
+		account.setBillCycleDayLocal(DEFAULT_BILL_CYCLE_DAY);
 		account.setCountry(TEST_LOCATION2_COUNTRY);
 		account.setCurrency(TEST_ACCOUNT2_CURRENCY);
 		account.setEmail(TEST_USER2_EMAIL);
@@ -267,6 +269,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 			assertSame(accounts.get(0), account);
 		}
 		assertEquals("Account ID", TEST_ACCOUNT_ID, account.getAccountId());
+		assertEquals("Bill cycle day", DEFAULT_BILL_CYCLE_DAY, account.getBillCycleDayLocal());
 		assertEquals("Country", TEST_LOCATION_COUNTRY, account.getCountry());
 		assertEquals("Currency", TEST_ACCOUNT_CURRENCY, account.getCurrency());
 		assertEquals("Email", TEST_USER_EMAIL, account.getEmail());

@@ -270,6 +270,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 			}
 			log.info("Creating new account in Killbill for user {}", user.getEmail());
 			account = new Account();
+			account.setBillCycleDayLocal(billCycleDay);
 			account.setCountry(loc.getCountry());
 			account.setCurrency(this.countryCurrencyMap.get(loc.getCountry()));
 			account.setEmail(user.getEmail());
