@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.billing.killbill;
 
-import static net.solarnetwork.central.user.billing.domain.BillingDataConstants.filterForAccountingType;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +43,7 @@ import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
@@ -57,7 +57,8 @@ import net.solarnetwork.central.user.domain.UserInfo;
 import net.solarnetwork.central.user.domain.UserNode;
 
 /**
- * FIXME
+ * Post daily usage data to Killbill for SolarNetwork users subscribed to this
+ * service.
  * 
  * <p>
  * TODO
@@ -74,9 +75,25 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The default payment method data. */
 	public static final Map<String, Object> DEFAULT_PAMENT_METHOD_DATA = defaultPaymentMethodData();
 
-	public static final String KILLBILL_ACCOUNTING_VALUE = "killbill";
-	public static final String KILLBILL_ACCOUNT_KEY_DATA_PROP = "accountKey";
-	public static final String KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP = "mrUsageDate";
+	/** The {@literal accounting} billing data value for Killbill. */
+	public static final String KILLBILL_ACCOUNTING_VALUE = "kb";
+
+	/**
+	 * The billing data key that holds the Killbill account external key to use.
+	 */
+	public static final String KILLBILL_ACCOUNT_KEY_DATA_PROP = "kb_accountKey";
+
+	/**
+	 * The billing data key that signals this updater service should be used via
+	 * a boolean flag.
+	 */
+	public static final String KILLBILL_DAILY_USAGE_PLAN_DATA_PROP = "kb_datumMetricsDailyUsage";
+
+	/**
+	 * The billing data key that holds the "most recent usage date" to start
+	 * from.
+	 */
+	public static final String KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP = "kb_mrUsageDate";
 
 	/** The default base plan name. */
 	public static final String DEFAULT_BASE_PLAN_NAME = "api-posted-datum-metric-monthly-usage";
@@ -160,7 +177,11 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 */
 	public void execute() {
 		// iterate over users configured to use Killbill
-		UserFilterCommand criteria = filterForAccountingType(KILLBILL_ACCOUNTING_VALUE);
+		Map<String, Object> billingDataFilter = new HashMap<>();
+		billingDataFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP, KILLBILL_ACCOUNTING_VALUE);
+		billingDataFilter.put(KILLBILL_DAILY_USAGE_PLAN_DATA_PROP, true);
+		UserFilterCommand criteria = new UserFilterCommand();
+		criteria.setBillingData(billingDataFilter);
 		final int max = this.batchSize;
 		int offset = 0;
 		FilterResults<UserFilterMatch> userResults;

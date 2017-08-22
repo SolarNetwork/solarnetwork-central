@@ -28,6 +28,7 @@ import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUs
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_PAMENT_METHOD_DATA;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_USAGE_UNIT_NAME;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP;
+import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_DAILY_USAGE_PLAN_DATA_PROP;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -174,6 +175,14 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		return account;
 	}
 
+	private Map<String, Object> userSearchBillingData() {
+		Map<String, Object> killbillAccountFilter = new HashMap<>();
+		killbillAccountFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP,
+				DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNTING_VALUE);
+		killbillAccountFilter.put(KILLBILL_DAILY_USAGE_PLAN_DATA_PROP, true);
+		return killbillAccountFilter;
+	}
+
 	@Test
 	public void noUsersConfiguredForKillbill() {
 		// search for users configured to use killbill; but find none
@@ -188,14 +197,16 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		replayAll();
 
 		service.execute();
+
+		// verify filter
+		assertEquals("Search filter", userSearchBillingData(),
+				filterCapture.getValue().getBillingData());
 	}
 
 	@Test
 	public void oneUserNoAccountNoData() {
 		// search for users configured to use killbill; find one
-		Map<String, Object> userBillingData = new HashMap<>(4);
-		userBillingData.put(BillingDataConstants.ACCOUNTING_DATA_PROP,
-				DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNTING_VALUE);
+		Map<String, Object> userBillingData = userSearchBillingData();
 		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
 		user.setBillingData(userBillingData);
 		user.setLocationId(TEST_LOCATION_ID);
@@ -267,9 +278,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	@Test
 	public void oneUserNoData() {
 		// search for users configured to use killbill; find one
-		Map<String, Object> killbillAccountFilter = new HashMap<>();
-		killbillAccountFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP,
-				DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNTING_VALUE);
+		Map<String, Object> killbillAccountFilter = userSearchBillingData();
 
 		Map<String, Object> userBillingData = new HashMap<>(killbillAccountFilter);
 		userBillingData.put(DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP,
@@ -314,9 +323,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	@Test
 	public void oneUserCatchupData() {
 		// search for users configured to use killbill; find one
-		Map<String, Object> killbillAccountFilter = new HashMap<>();
-		killbillAccountFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP,
-				DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNTING_VALUE);
+		Map<String, Object> killbillAccountFilter = userSearchBillingData();
 
 		Map<String, Object> userBillingData = new HashMap<>(killbillAccountFilter);
 		userBillingData.put(DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP,
@@ -429,9 +436,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	@Test
 	public void oneUserAddOneMoreDayDataMultipleUsersDifferentTimeZones() {
 		// search for users configured to use killbill; find one
-		Map<String, Object> killbillAccountFilter = new HashMap<>();
-		killbillAccountFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP,
-				DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNTING_VALUE);
+		Map<String, Object> killbillAccountFilter = userSearchBillingData();
 
 		Map<String, Object> userBillingData = new HashMap<>(killbillAccountFilter);
 		userBillingData.put(DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP,
