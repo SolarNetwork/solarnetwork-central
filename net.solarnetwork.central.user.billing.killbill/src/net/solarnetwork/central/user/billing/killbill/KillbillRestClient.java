@@ -24,7 +24,6 @@ package net.solarnetwork.central.user.billing.killbill;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +43,9 @@ import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
+import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsage;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
+import net.solarnetwork.central.user.billing.killbill.domain.UsageUnitRecord;
 
 /**
  * REST implementation of {@link KillbillClient}.
@@ -177,9 +178,11 @@ public class KillbillRestClient implements KillbillClient {
 	}
 
 	@Override
-	public void addUsage(Subscription subscription, String unit, Collection<UsageRecord> usage) {
-		// TODO Auto-generated method stub
-
+	public void addUsage(Subscription subscription, String unit, List<UsageRecord> usage) {
+		SubscriptionUsage su = new SubscriptionUsage(subscription,
+				Collections.singletonList(new UsageUnitRecord(unit, usage)));
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/usages")).build().toUri();
+		client.postForObject(uri, su, Void.class);
 	}
 
 	/**

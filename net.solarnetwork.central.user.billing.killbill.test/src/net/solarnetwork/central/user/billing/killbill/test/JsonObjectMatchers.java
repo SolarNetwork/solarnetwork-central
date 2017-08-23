@@ -25,8 +25,11 @@ package net.solarnetwork.central.user.billing.killbill.test;
 import static org.springframework.test.util.AssertionErrors.assertEquals;
 import java.util.Map;
 import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.mock.http.client.MockClientHttpRequest;
 import org.springframework.test.web.client.RequestMatcher;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.util.JsonUtils;
 
 /**
@@ -37,6 +40,46 @@ import net.solarnetwork.util.JsonUtils;
  */
 public final class JsonObjectMatchers {
 
+	private final ObjectMapper objectMapper;
+
+	/**
+	 * Get a matchers instance using the default ObjectMapper.
+	 * 
+	 * @return the new instance
+	 */
+	public static JsonObjectMatchers json() {
+		return new JsonObjectMatchers();
+	}
+
+	/**
+	 * Get a matchers instance using a specific ObjectMapper.
+	 * 
+	 * @param objectMapper
+	 *        the mapper to use
+	 * @return the new instance
+	 */
+	public static JsonObjectMatchers json(ObjectMapper objectMapper) {
+		return new JsonObjectMatchers(objectMapper);
+	}
+
+	/**
+	 * Default constructor.
+	 */
+	public JsonObjectMatchers() {
+		this(Jackson2ObjectMapperBuilder.json().build());
+	}
+
+	/**
+	 * Construct with an ObjectMapper.
+	 * 
+	 * @param mapper
+	 *        the mapper to use
+	 */
+	public JsonObjectMatchers(ObjectMapper mapper) {
+		super();
+		this.objectMapper = mapper;
+	}
+
 	/**
 	 * Get a matcher for the request body as a JSON object.
 	 * 
@@ -46,12 +89,16 @@ public final class JsonObjectMatchers {
 	 * @return the matcher
 	 */
 	@SuppressWarnings("unchecked")
-	public static RequestMatcher jsonBodyObject(final Object obj) {
+	public RequestMatcher bodyObject(final Object obj) {
 		final Map<String, Object> objMap;
 		if ( obj instanceof Map ) {
 			objMap = (Map<String, Object>) obj;
 		} else {
-			objMap = JsonUtils.getStringMap(JsonUtils.getJSONString(obj, "{}"));
+			try {
+				objMap = JsonUtils.getStringMap(objectMapper.writeValueAsString(obj));
+			} catch ( JsonProcessingException e ) {
+				throw new RuntimeException(e);
+			}
 		}
 		return new RequestMatcher() {
 

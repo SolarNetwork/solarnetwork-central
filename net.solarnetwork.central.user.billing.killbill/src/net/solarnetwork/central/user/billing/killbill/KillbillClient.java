@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.user.billing.killbill;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
@@ -120,5 +120,5 @@ public interface KillbillClient {
 	 * @param usage
 	 *        the usage records
 	 */
-	void addUsage(Subscription subscription, String unit, Collection<UsageRecord> usage);
+	void addUsage(Subscription subscription, String unit, List<UsageRecord> usage);
 }

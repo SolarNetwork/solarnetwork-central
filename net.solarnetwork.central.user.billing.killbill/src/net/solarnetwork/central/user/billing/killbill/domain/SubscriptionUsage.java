@@ -1,5 +1,5 @@
 /* ==================================================================
- * UsageRecord.java - 22/08/2017 11:32:09 AM
+ * SubscriptionUsage.java - 23/08/2017 3:20:38 PM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -22,57 +22,60 @@
 
 package net.solarnetwork.central.user.billing.killbill.domain;
 
-import java.math.BigDecimal;
-import org.joda.time.LocalDate;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * A record of usage for a day.
+ * Object to associate usage with a subscription.
  * 
  * @author matt
  * @version 1.0
  */
-public class UsageRecord {
+public class SubscriptionUsage {
 
-	private LocalDate recordDate;
-	private BigDecimal amount;
-
-	/**
-	 * Default constructor.
-	 */
-	public UsageRecord() {
-		super();
-	}
+	private final Subscription subscription;
+	private final List<UsageUnitRecord> unitUsageRecords;
 
 	/**
-	 * Construct with values.
+	 * Constructor.
 	 * 
-	 * @param recordDate
-	 *        the record date
-	 * @param amount
-	 *        the amount
+	 * @param subscription
+	 *        the subscription
+	 * @param usage
+	 *        the usage
 	 */
-	public UsageRecord(LocalDate recordDate, BigDecimal amount) {
+	public SubscriptionUsage(Subscription subscription, List<UsageUnitRecord> unitUsageRecords) {
 		super();
-		this.recordDate = recordDate;
-		this.amount = amount;
+		this.subscription = subscription;
+		this.unitUsageRecords = unitUsageRecords;
 	}
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-	public LocalDate getRecordDate() {
-		return recordDate;
+	/**
+	 * Get the subscription.
+	 * 
+	 * @return the subscription
+	 */
+	@JsonIgnore
+	public Subscription getSubscription() {
+		return subscription;
 	}
 
-	public void setRecordDate(LocalDate recordDate) {
-		this.recordDate = recordDate;
+	/**
+	 * Get the subscription ID.
+	 * 
+	 * @return the subscription ID
+	 */
+	public String getSubscriptionId() {
+		return subscription.getSubscriptionId();
 	}
 
-	public BigDecimal getAmount() {
-		return amount;
-	}
-
-	public void setAmount(BigDecimal amount) {
-		this.amount = amount;
+	/**
+	 * Get the unit usage records.
+	 * 
+	 * @return the unitUsageRecords
+	 */
+	public List<UsageUnitRecord> getUnitUsageRecords() {
+		return unitUsageRecords;
 	}
 
 }

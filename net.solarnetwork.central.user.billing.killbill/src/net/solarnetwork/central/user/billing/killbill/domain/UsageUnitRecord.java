@@ -1,5 +1,5 @@
 /* ==================================================================
- * UsageRecord.java - 22/08/2017 11:32:09 AM
+ * UsageUnitRecord.java - 23/08/2017 3:24:04 PM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -22,57 +22,44 @@
 
 package net.solarnetwork.central.user.billing.killbill.domain;
 
-import java.math.BigDecimal;
-import org.joda.time.LocalDate;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import java.util.List;
 
 /**
- * A record of usage for a day.
+ * Usage records of a specific type.
  * 
  * @author matt
  * @version 1.0
  */
-public class UsageRecord {
+public class UsageUnitRecord {
 
-	private LocalDate recordDate;
-	private BigDecimal amount;
+	private final String unitType;
+	private final List<UsageRecord> usageRecords;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
 	 */
-	public UsageRecord() {
+	public UsageUnitRecord(String unitType, List<UsageRecord> usageRecords) {
 		super();
+		this.unitType = unitType;
+		this.usageRecords = usageRecords;
 	}
 
 	/**
-	 * Construct with values.
+	 * Get the unit type.
 	 * 
-	 * @param recordDate
-	 *        the record date
-	 * @param amount
-	 *        the amount
+	 * @return the unitType
 	 */
-	public UsageRecord(LocalDate recordDate, BigDecimal amount) {
-		super();
-		this.recordDate = recordDate;
-		this.amount = amount;
+	public String getUnitType() {
+		return unitType;
 	}
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-	public LocalDate getRecordDate() {
-		return recordDate;
-	}
-
-	public void setRecordDate(LocalDate recordDate) {
-		this.recordDate = recordDate;
-	}
-
-	public BigDecimal getAmount() {
-		return amount;
-	}
-
-	public void setAmount(BigDecimal amount) {
-		this.amount = amount;
+	/**
+	 * Get the usage records.
+	 * 
+	 * @return the usageRecords
+	 */
+	public List<UsageRecord> getUsageRecords() {
+		return usageRecords;
 	}
 
 }

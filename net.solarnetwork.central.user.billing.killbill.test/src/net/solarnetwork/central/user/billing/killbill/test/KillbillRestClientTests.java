@@ -26,7 +26,7 @@ import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizati
 import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizationInterceptor.API_SECRET_HEADER_NAME;
 import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizationInterceptor.CREATED_BY_HEADER_NAME;
 import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizationInterceptor.DEFAULT_CREATED_BY;
-import static net.solarnetwork.central.user.billing.killbill.test.JsonObjectMatchers.jsonBodyObject;
+import static net.solarnetwork.central.user.billing.killbill.test.JsonObjectMatchers.json;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -39,10 +39,12 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withCreatedEntity;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.ListIterator;
+import java.util.List;
 import java.util.Map;
 import org.joda.time.LocalDate;
 import org.junit.Before;
@@ -59,13 +61,14 @@ import org.springframework.test.web.client.ResponseActions;
 import org.springframework.util.Base64Utils;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.user.billing.killbill.KillbillRestClient;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
+import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * Test cases for the {@link KillbillRestClient} class.
@@ -90,25 +93,20 @@ public class KillbillRestClientTests {
 	private static final String TEST_BASIC_AUTH_HEADER = "Basic " + Base64Utils
 			.encodeToString((TEST_USERNAME + ":" + TEST_PASSWORD).getBytes(Charset.forName("UTF-8")));
 
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-			.setSerializationInclusion(Include.NON_NULL)
-			.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-			.configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
-
 	private MockRestServiceServer server;
 	private KillbillRestClient client;
+	private ObjectMapper objectMapper;
 
 	@Before
 	public void setup() {
 		// setup RestTemplate's ObjectMapper so we know exactly what we are converting
 		RestTemplate restTemplate = new RestTemplate();
-		for ( ListIterator<HttpMessageConverter<?>> itr = restTemplate.getMessageConverters()
-				.listIterator(); itr.hasNext(); ) {
-			if ( itr.next() instanceof MappingJackson2HttpMessageConverter ) {
-				MappingJackson2HttpMessageConverter messageConverter = new MappingJackson2HttpMessageConverter();
-				messageConverter.setPrettyPrint(false);
-				messageConverter.setObjectMapper(OBJECT_MAPPER);
-				itr.set(messageConverter);
+		for ( HttpMessageConverter<?> converter : restTemplate.getMessageConverters() ) {
+			if ( converter instanceof MappingJackson2HttpMessageConverter ) {
+				MappingJackson2HttpMessageConverter messageConverter = (MappingJackson2HttpMessageConverter) converter;
+				ObjectMapper mapper = messageConverter.getObjectMapper();
+				mapper.setSerializationInclusion(Include.NON_NULL);
+				this.objectMapper = mapper;
 				break;
 			}
 		}
@@ -183,7 +181,7 @@ public class KillbillRestClientTests {
 		// @formatter:off
 		serverExpect("/1.0/kb/accounts", HttpMethod.POST)
 		.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
-		.andExpect(jsonBodyObject(account))
+		.andExpect(json(objectMapper).bodyObject(account))
 		.andRespond(withCreatedEntity(new URI("http://localhost:8080/1.0/kb/accounts/" 
 				+TEST_ACCOUNT_ID)));
 	    // @formatter:on
@@ -203,7 +201,7 @@ public class KillbillRestClientTests {
 		// @formatter:off
 		serverExpect("/1.0/kb/accounts/"+TEST_ACCOUNT_ID+"/paymentMethods?isDefault=true", HttpMethod.POST)
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
-			.andExpect(jsonBodyObject(paymentData))
+			.andExpect(json(objectMapper).bodyObject(paymentData))
 			.andRespond(withCreatedEntity(new URI("http://localhost:8080/1.0/kb/paymentMethods/" 
 					+TEST_PAYMENT_METHOD_ID)));
 	    // @formatter:on
@@ -275,7 +273,7 @@ public class KillbillRestClientTests {
 		// @formatter:off
 		serverExpect("/1.0/kb/subscriptions?requestedDate=2017-01-01", HttpMethod.POST)
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
-			.andExpect(jsonBodyObject(bs))
+			.andExpect(json(objectMapper).bodyObject(bs))
 			.andRespond(withCreatedEntity(new URI("http://localhost:8080/1.0/kb/subscriptions/" 
 					+TEST_SUBSCRIPTION_ID)));
 	    // @formatter:on
@@ -287,6 +285,38 @@ public class KillbillRestClientTests {
 
 		// then
 		assertThat("Subscription ID", subscriptionId, equalTo(TEST_SUBSCRIPTION_ID));
+	}
+
+	@Test
+	public void addUsage() {
+		// given
+		Subscription subscription = new Subscription(TEST_SUBSCRIPTION_ID);
+
+		LocalDate date = new LocalDate(2017, 1, 1);
+		List<UsageRecord> usageRecords = Arrays.asList(new UsageRecord(date, new BigDecimal(1)),
+				new UsageRecord(date.plusDays(1), new BigDecimal(2)),
+				new UsageRecord(date.plusDays(2), new BigDecimal(3)));
+
+		// using the SubscriptionUsage to verify the request JSON structure
+		Map<String, Object> expected = JsonUtils
+				.getStringMap("{\"subscriptionId\":\"" + TEST_SUBSCRIPTION_ID
+						+ "\",\"unitUsageRecords\":[{\"unitType\":\"test-unit\",\"usageRecords\":["
+						+ "{\"recordDate\":\"2017-01-01\",\"amount\":1},"
+						+ "{\"recordDate\":\"2017-01-02\",\"amount\":2},"
+						+ "{\"recordDate\":\"2017-01-03\",\"amount\":3}]}]}");
+
+		// @formatter:off
+		serverExpect("/1.0/kb/usages", HttpMethod.POST)
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+			.andExpect(json(objectMapper).bodyObject(expected))
+			.andRespond(withStatus(HttpStatus.CREATED));
+	    // @formatter:on
+
+		// when
+		client.addUsage(subscription, "test-unit", usageRecords);
+
+		// then
+		// no exception thrown
 	}
 
 }
