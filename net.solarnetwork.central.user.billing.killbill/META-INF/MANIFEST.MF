@@ -19,6 +19,7 @@ Import-Package:
  net.solarnetwork.central.user.billing.domain;version="0.1.0",
  net.solarnetwork.central.user.dao;version="1.7.0",
  net.solarnetwork.central.user.domain;version="1.14.0",
+ net.solarnetwork.web.support;version="1.9.0",
  org.joda.time;version="[2.4,3.0)",
  org.joda.time.base;version="[2.4,3.0)",
  org.joda.time.format;version="[2.4,3.0)",

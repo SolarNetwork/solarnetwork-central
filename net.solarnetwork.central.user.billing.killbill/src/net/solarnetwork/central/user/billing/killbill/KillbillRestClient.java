@@ -33,8 +33,10 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
@@ -50,6 +52,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsage;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageUnitRecord;
+import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
 
 /**
  * REST implementation of {@link KillbillClient}.
@@ -73,11 +76,21 @@ public class KillbillRestClient implements KillbillClient {
 
 	private final RestOperations client;
 
+	private static RestTemplate defaultRestTemplate() {
+		// note this does not handle dynamic logging level changes, but this is just for development
+		ClientHttpRequestFactory reqFactory = LoggingHttpRequestInterceptor.requestFactory();
+		RestTemplate restTemplate = new RestTemplate(reqFactory);
+		if ( LoggingHttpRequestInterceptor.supportsLogging(reqFactory) ) {
+			restTemplate.getInterceptors().add(new LoggingHttpRequestInterceptor());
+		}
+		return restTemplate;
+	}
+
 	/**
 	 * Default constructor.
 	 */
 	public KillbillRestClient() {
-		this(new RestTemplate());
+		this(defaultRestTemplate());
 	}
 
 	/**
