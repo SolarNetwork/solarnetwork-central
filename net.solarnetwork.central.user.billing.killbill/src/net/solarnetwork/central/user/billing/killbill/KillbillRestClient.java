@@ -96,12 +96,14 @@ public class KillbillRestClient implements KillbillClient {
 		super();
 		client = template;
 
-		// force NON_NULL serial inclusion
+		// set to our own ObjectMapper to ensure we have Joda support and NON_NULL inclusion
 		for ( HttpMessageConverter<?> converter : template.getMessageConverters() ) {
 			if ( converter instanceof MappingJackson2HttpMessageConverter ) {
 				MappingJackson2HttpMessageConverter messageConverter = (MappingJackson2HttpMessageConverter) converter;
-				ObjectMapper mapper = messageConverter.getObjectMapper();
+				ObjectMapper mapper = Jackson2ObjectMapperBuilder.json()
+						.moduleClassLoader(getClass().getClassLoader()).build();
 				mapper.setSerializationInclusion(Include.NON_NULL);
+				messageConverter.setObjectMapper(mapper);
 			}
 		}
 
