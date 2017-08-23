@@ -47,6 +47,8 @@ public class DatumMetricsDailyUsageUpdaterJob extends JobSupport {
 	public DatumMetricsDailyUsageUpdaterJob(EventAdmin eventAdmin,
 			DatumMetricsDailyUsageUpdaterService service) {
 		super(eventAdmin);
+		setJobGroup("Billing");
+		setMaximumWaitMs(3600000L);
 		this.service = service;
 	}
 
