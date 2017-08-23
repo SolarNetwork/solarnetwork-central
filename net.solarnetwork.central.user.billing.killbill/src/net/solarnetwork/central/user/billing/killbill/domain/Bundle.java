@@ -30,7 +30,7 @@ import java.util.List;
  * @author matt
  * @version 1.0
  */
-public class Bundle {
+public class Bundle implements Cloneable {
 
 	private String accountId;
 	private String bundleId;
@@ -53,6 +53,25 @@ public class Bundle {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Clone the bundle.
+	 * 
+	 * <p>
+	 * <b>Note</b> the {@code subscriptions} list is <b>not</b> cloned, so the
+	 * returned instance shares the same list as this object.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch ( CloneNotSupportedException e ) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**

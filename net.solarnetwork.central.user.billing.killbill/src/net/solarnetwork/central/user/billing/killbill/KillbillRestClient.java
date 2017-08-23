@@ -42,6 +42,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
+import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 
@@ -164,8 +165,15 @@ public class KillbillRestClient implements KillbillClient {
 
 	@Override
 	public String createBundle(Account account, LocalDate requestedDate, Bundle info) {
-		// TODO Auto-generated method stub
-		return null;
+		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/subscriptions"));
+		if ( requestedDate != null ) {
+			builder.queryParam("requestedDate", ISO_DATE_FORMATTER.print(requestedDate));
+		}
+		Bundle bundle = (Bundle) info.clone();
+		bundle.setAccountId(account.getAccountId());
+		URI uri = builder.build().toUri();
+		URI loc = client.postForLocation(uri, new BundleSubscription(bundle));
+		return idFromLocation(loc);
 	}
 
 	@Override

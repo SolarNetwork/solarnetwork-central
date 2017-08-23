@@ -44,6 +44,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.ListIterator;
 import java.util.Map;
+import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -63,6 +64,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.user.billing.killbill.KillbillRestClient;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
+import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 
 /**
@@ -251,6 +253,40 @@ public class KillbillRestClientTests {
 		Subscription subscription = bundle.getSubscriptions().get(0);
 		assertThat("Subscription ID", subscription.getSubscriptionId(), equalTo(TEST_SUBSCRIPTION_ID));
 		assertThat("Plan name", subscription.getPlanName(), equalTo(TEST_SUBSCRIPTION_PLAN_NAME));
+	}
+
+	@Test
+	public void createBundle() throws Exception {
+		// given
+		Bundle bundle = new Bundle();
+		bundle.setExternalKey(TEST_BUNDLE_KEY);
+
+		Subscription subscription = new Subscription();
+		subscription.setBillCycleDayLocal(1);
+		subscription.setPlanName(TEST_SUBSCRIPTION_PLAN_NAME);
+		subscription.setProductCategory(Subscription.BASE_PRODUCT_CATEGORY);
+
+		bundle.setSubscriptions(Collections.singletonList(subscription));
+
+		// using the BundleSubscription to verify the request JSON structure
+		BundleSubscription bs = new BundleSubscription((Bundle) bundle.clone());
+		bs.getBundle().setAccountId(TEST_ACCOUNT_ID); // should be copied from Account
+
+		// @formatter:off
+		serverExpect("/1.0/kb/subscriptions?requestedDate=2017-01-01", HttpMethod.POST)
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+			.andExpect(jsonBodyObject(bs))
+			.andRespond(withCreatedEntity(new URI("http://localhost:8080/1.0/kb/subscriptions/" 
+					+TEST_SUBSCRIPTION_ID)));
+	    // @formatter:on
+
+		// when
+		Account account = new Account(TEST_ACCOUNT_ID);
+		LocalDate date = new LocalDate(2017, 1, 1);
+		String subscriptionId = client.createBundle(account, date, bundle);
+
+		// then
+		assertThat("Subscription ID", subscriptionId, equalTo(TEST_SUBSCRIPTION_ID));
 	}
 
 }

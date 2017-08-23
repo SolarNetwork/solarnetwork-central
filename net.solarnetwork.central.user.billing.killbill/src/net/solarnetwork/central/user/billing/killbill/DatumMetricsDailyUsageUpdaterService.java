@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.killbill;
 
+import static net.solarnetwork.central.user.billing.killbill.KillbillClient.ISO_DATE_FORMATTER;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,8 +35,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.ReadableInterval;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.dao.SolarLocationDao;
@@ -162,8 +161,6 @@ public class DatumMetricsDailyUsageUpdaterService {
 
 	/** The default usage unit name. */
 	public static final String DEFAULT_USAGE_UNIT_NAME = "DatumMetrics";
-
-	private static final DateTimeFormatter ISO_DATE_FORMATTER = ISODateTimeFormat.date();
 
 	private final SolarLocationDao locationDao;
 	private final GeneralNodeDatumDao nodeDatumDao;

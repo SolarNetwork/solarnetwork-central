@@ -25,6 +25,8 @@ package net.solarnetwork.central.user.billing.killbill;
 import java.util.Collection;
 import java.util.Map;
 import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
@@ -37,6 +39,9 @@ import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
  * @version 1.0
  */
 public interface KillbillClient {
+
+	/** A date formatter suitable for Killbill. */
+	static DateTimeFormatter ISO_DATE_FORMATTER = ISODateTimeFormat.date();
 
 	/**
 	 * Get the account associated with an external key.
@@ -84,13 +89,24 @@ public interface KillbillClient {
 	/**
 	 * Create a bundle for an account.
 	 * 
+	 * <p>
+	 * The bundle is expected to contain a {@link Subscription} to define the
+	 * plan to add to the bundle. The desired {@code externalKey} should be
+	 * defined on the bundle.
+	 * </p>
+	 * 
+	 * <p>
+	 * <b>Note</b> that the <em>subscription ID</em> is returned by this method,
+	 * not the bundle ID.
+	 * </p>
+	 * 
 	 * @param account
 	 *        the account to update
 	 * @param requestedDate
 	 *        the request date, or {@code null} for the current date
 	 * @param info
 	 *        the bundle info to create
-	 * @return the bundle ID
+	 * @return the subscription ID
 	 */
 	String createBundle(Account account, LocalDate requestedDate, Bundle info);
 

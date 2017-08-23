@@ -30,6 +30,7 @@ import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUs
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_DAILY_USAGE_PLAN_DATA_PROP;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP;
+import static net.solarnetwork.central.user.billing.killbill.KillbillClient.ISO_DATE_FORMATTER;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -53,8 +54,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.ReadableInterval;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -88,8 +87,6 @@ import net.solarnetwork.central.user.domain.UserNode;
  * @version 1.0
  */
 public class DatumMetricsDailyUsageUpdaterServiceTests {
-
-	private static final DateTimeFormatter ISO_DATE_FORMATTER = ISODateTimeFormat.date();
 
 	private static final Long TEST_USER_ID = -1L;
 	private static final String TEST_USER_EMAIL = "test@localhost";
