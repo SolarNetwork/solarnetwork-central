@@ -307,16 +307,17 @@ public class DatumMetricsDailyUsageUpdaterService {
 		} else if ( auditInterval != null ) {
 			usageStartDay = auditInterval.getStart().withZone(timeZone).dayOfMonth().roundFloorCopy();
 		}
+		if ( usageStartDay == null ) {
+			log.debug("No usage start date available for user {} node {}", userNode.getUser().getEmail(),
+					userNode.getNode().getId());
+			return;
+		}
+
 		DateTime usageEndDay;
 		if ( auditInterval != null ) {
 			usageEndDay = auditInterval.getEnd().withZone(timeZone).dayOfMonth().roundCeilingCopy();
 		} else {
 			usageEndDay = new DateTime(timeZone).dayOfMonth().roundCeilingCopy();
-		}
-		if ( usageStartDay == null ) {
-			log.debug("No usage start date available for user {} node {}", userNode.getUser().getEmail(),
-					userNode.getNode().getId());
-			return;
 		}
 
 		// got usage start date; get the bundle for this node
