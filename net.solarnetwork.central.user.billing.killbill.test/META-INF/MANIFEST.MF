@@ -7,8 +7,6 @@ Bundle-Vendor: SolarNetwork
 Fragment-Host: net.solarnetwork.central.user.billing.killbill
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
- com.fasterxml.jackson.core;version="[2.8,3.0)",
- com.fasterxml.jackson.databind;version="[2.8,3.0)",
  net.solarnetwork.central.support;version="1.14.0",
  net.solarnetwork.central.test;version="1.0",
  net.solarnetwork.util;version="1.24.0",
@@ -20,8 +18,6 @@ Import-Package:
  org.junit.runners;version="[4.5,5.0)",
  org.slf4j;version="[1.7,2.0)",
  org.springframework.core.io;version="[4.2,5.0)",
- org.springframework.http.converter;version="4.2.9.RELEASE",
- org.springframework.http.converter.json;version="[4.2,5.0)",
  org.springframework.mock.http;version="[4.2,5.0)",
  org.springframework.mock.http.client;version="[4.2,5.0)",
  org.springframework.test.annotation;version="[4.2,5.0)",

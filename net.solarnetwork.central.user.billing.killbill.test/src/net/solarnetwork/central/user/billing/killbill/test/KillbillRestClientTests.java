@@ -60,7 +60,6 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseActions;
 import org.springframework.util.Base64Utils;
 import org.springframework.web.client.RestTemplate;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.user.billing.killbill.KillbillRestClient;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
@@ -101,16 +100,6 @@ public class KillbillRestClientTests {
 	public void setup() {
 		// setup RestTemplate's ObjectMapper so we know exactly what we are converting
 		RestTemplate restTemplate = new RestTemplate();
-		for ( HttpMessageConverter<?> converter : restTemplate.getMessageConverters() ) {
-			if ( converter instanceof MappingJackson2HttpMessageConverter ) {
-				MappingJackson2HttpMessageConverter messageConverter = (MappingJackson2HttpMessageConverter) converter;
-				ObjectMapper mapper = messageConverter.getObjectMapper();
-				mapper.setSerializationInclusion(Include.NON_NULL);
-				this.objectMapper = mapper;
-				break;
-			}
-		}
-
 		server = MockRestServiceServer.createServer(restTemplate);
 		client = new KillbillRestClient(restTemplate);
 		client.setApiKey(TEST_API_KEY);
@@ -118,6 +107,15 @@ public class KillbillRestClientTests {
 		client.setBaseUrl(TEST_BASE_URL);
 		client.setUsername(TEST_USERNAME);
 		client.setPassword(TEST_PASSWORD);
+
+		// snag the ObjectMapper out of RestTemplate so we have the same one for our tests
+		for ( HttpMessageConverter<?> converter : restTemplate.getMessageConverters() ) {
+			if ( converter instanceof MappingJackson2HttpMessageConverter ) {
+				MappingJackson2HttpMessageConverter messageConverter = (MappingJackson2HttpMessageConverter) converter;
+				this.objectMapper = messageConverter.getObjectMapper();
+				break;
+			}
+		}
 	}
 
 	private ResponseActions serverExpect(String url, HttpMethod method) {

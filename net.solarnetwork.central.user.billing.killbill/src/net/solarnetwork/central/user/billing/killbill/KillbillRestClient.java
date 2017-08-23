@@ -34,11 +34,15 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
@@ -62,10 +66,10 @@ public class KillbillRestClient implements KillbillClient {
 	};
 
 	private String baseUrl = DEFAULT_BASE_URL;
-	private String username = "tester";
+	private String username = "solaruser";
 	private String password = "changeit";
 	private String apiKey = "solarnetwork";
-	private String apiSecret = "solarnetwork";
+	private String apiSecret = "changeit";
 
 	private final RestOperations client;
 
@@ -79,12 +83,28 @@ public class KillbillRestClient implements KillbillClient {
 	/**
 	 * Construct with a RestTemplate.
 	 * 
+	 * <p>
+	 * The {@link ObjectMapper} configured on any
+	 * {@link MappingJackson2HttpMessageConverter} will have the serial
+	 * inclusion setting set to {@link Include#NON_NULL}.
+	 * </p>
+	 * 
 	 * @param template
 	 *        the template to use
 	 */
 	public KillbillRestClient(RestTemplate template) {
 		super();
 		client = template;
+
+		// force NON_NULL serial inclusion
+		for ( HttpMessageConverter<?> converter : template.getMessageConverters() ) {
+			if ( converter instanceof MappingJackson2HttpMessageConverter ) {
+				MappingJackson2HttpMessageConverter messageConverter = (MappingJackson2HttpMessageConverter) converter;
+				ObjectMapper mapper = messageConverter.getObjectMapper();
+				mapper.setSerializationInclusion(Include.NON_NULL);
+			}
+		}
+
 		setupRestTemplateInterceptors();
 	}
 
