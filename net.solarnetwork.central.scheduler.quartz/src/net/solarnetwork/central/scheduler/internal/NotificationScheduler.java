@@ -48,7 +48,7 @@ import net.solarnetwork.central.scheduler.SchedulerConstants;
  * OSGi {@link EventHandler} that schedules job requests.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class NotificationScheduler extends EventHandlerSupport {
 
@@ -119,7 +119,8 @@ public class NotificationScheduler extends EventHandlerSupport {
 		} else {
 			try {
 				CronScheduleBuilder cronBuilder = CronScheduleBuilder
-						.cronScheduleNonvalidatedExpression(jobCron);
+						.cronScheduleNonvalidatedExpression(jobCron)
+						.withMisfireHandlingInstructionDoNothing();
 				if ( cronTimeZoneId != null ) {
 					cronBuilder.inTimeZone(TimeZone.getTimeZone(cronTimeZoneId));
 				}
