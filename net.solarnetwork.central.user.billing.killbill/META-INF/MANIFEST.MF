@@ -11,6 +11,7 @@ Import-Package:
  net.solarnetwork.central.datum.domain;version="1.19.0",
  net.solarnetwork.central.domain;version="1.21.0",
  net.solarnetwork.central.scheduler;version="1.4.0",
+ net.solarnetwork.central.security;version="1.11.0",
  net.solarnetwork.central.user.billing.domain;version="0.1.0",
  net.solarnetwork.central.user.dao;version="1.7.0",
  net.solarnetwork.central.user.domain;version="1.14.0",
@@ -20,8 +21,12 @@ Import-Package:
  org.osgi.framework;version="[1.7,2.0)",
  org.osgi.service.event;version="[1.2,2.0)",
  org.slf4j;version="[1.7,2.0)",
+ org.springframework.core;version="[4.2,5.0)",
  org.springframework.http;version="[4.2,5.0)",
  org.springframework.http.client;version="[4.2,5.0)",
  org.springframework.http.client.support;version="[4.2,5.0)",
+ org.springframework.security.core;version="[4.1,5.0)",
+ org.springframework.security.core.context;version="[4.1,5.0)",
  org.springframework.util;version="[4.2,5.0)",
- org.springframework.web.client;version="[4.2,5.0)"
+ org.springframework.web.client;version="[4.2,5.0)",
+ org.springframework.web.util;version="4.2.9.RELEASE"

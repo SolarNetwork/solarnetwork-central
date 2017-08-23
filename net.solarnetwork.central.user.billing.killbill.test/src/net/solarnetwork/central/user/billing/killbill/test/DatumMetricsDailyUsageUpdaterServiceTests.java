@@ -381,7 +381,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		}
 
 		// get the Bundle for this node, but it doesn't exist yet so it will be created
-		expect(client.bundleForExternalKey(TEST_BUNDLE_KEY)).andReturn(null);
+		expect(client.bundleForExternalKey(account, TEST_BUNDLE_KEY)).andReturn(null);
 
 		// to decide the requestedDate, find the earliest date with node data and use that
 		DateTime nodeDataStart = new DateTime(2015, 1, 1, 0, 0, DateTimeZone.forOffsetHours(12));
@@ -390,8 +390,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		expect(nodeDatumDao.getReportableInterval(TEST_NODE_ID, null)).andReturn(nodeDataInterval);
 
 		Capture<Bundle> bundleCapture = new Capture<>();
-		expect(client.createAccountBundle(eq(account), eq(nodeDataStart.toLocalDate()),
-				capture(bundleCapture))).andReturn(TEST_BUNDLE_ID);
+		expect(client.createBundle(eq(account), eq(nodeDataStart.toLocalDate()), capture(bundleCapture)))
+				.andReturn(TEST_BUNDLE_ID);
 
 		Capture<Subscription> subscriptionCapture = new Capture<>();
 		Capture<List<UsageRecord>> usageCapture = new Capture<>();
@@ -483,7 +483,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		bundle.setBundleId(TEST_BUNDLE_ID);
 		bundle.setAccountId(TEST_ACCOUNT_ID);
 		bundle.setExternalKey(TEST_BUNDLE_KEY);
-		bundle.setSubscriptions(Collections.singletonList(new Subscription()));
+		bundle.setSubscriptions(
+				Collections.singletonList(Subscription.withPlanName(DEFAULT_BASE_PLAN_NAME)));
 		Capture<Subscription> subscriptionCapture = new Capture<>();
 		Capture<List<UsageRecord>> usageCapture = new Capture<>();
 		List<DateTime> dayList = new ArrayList<>();
@@ -500,7 +501,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		bundle2.setBundleId(TEST_BUNDLE2_ID);
 		bundle2.setAccountId(TEST_ACCOUNT2_ID);
 		bundle2.setExternalKey(TEST_BUNDLE2_KEY);
-		bundle2.setSubscriptions(Collections.singletonList(new Subscription()));
+		bundle2.setSubscriptions(
+				Collections.singletonList(Subscription.withPlanName(DEFAULT_BASE_PLAN_NAME)));
 		Capture<Subscription> subscription2Capture = new Capture<>();
 		Capture<List<UsageRecord>> usage2Capture = new Capture<>();
 		List<DateTime> day2List = new ArrayList<>();
@@ -579,7 +581,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		}
 
 		// get the Bundle for this node
-		expect(client.bundleForExternalKey(bundle.getExternalKey())).andReturn(bundle);
+		expect(client.bundleForExternalKey(account, bundle.getExternalKey())).andReturn(bundle);
 
 		client.addUsage(capture(subscriptionCapture), eq(DEFAULT_USAGE_UNIT_NAME),
 				capture(usageCapture));

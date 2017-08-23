@@ -34,10 +34,56 @@ public class Subscription {
 
 	public static final String ADDON_PRODUCT_CATEGORY = "ADD_ON";
 
+	private String subscriptionId;
 	private String productCategory;
 	private String planName;
 	private Integer billCycleDayLocal;
 	private String phaseType;
+
+	/**
+	 * Create with a plan name.
+	 * 
+	 * @param planName
+	 *        the plan name
+	 */
+	public static Subscription withPlanName(String planName) {
+		Subscription s = new Subscription();
+		s.setPlanName(planName);
+		return s;
+	}
+
+	/**
+	 * Default constructor.
+	 */
+	public Subscription() {
+		super();
+	}
+
+	/**
+	 * Construct with an ID.
+	 * 
+	 * @param subscriptionId
+	 *        the ID
+	 */
+	public Subscription(String subscriptionId) {
+		super();
+		this.subscriptionId = subscriptionId;
+	}
+
+	/**
+	 * @return the subscriptionId
+	 */
+	public String getSubscriptionId() {
+		return subscriptionId;
+	}
+
+	/**
+	 * @param subscriptionId
+	 *        the subscriptionId to set
+	 */
+	public void setSubscriptionId(String subscriptionId) {
+		this.subscriptionId = subscriptionId;
+	}
 
 	/**
 	 * @return the productCategory

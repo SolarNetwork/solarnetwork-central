@@ -38,6 +38,24 @@ public class Bundle {
 	private List<Subscription> subscriptions;
 
 	/**
+	 * Get a subscription based on a plan name.
+	 * 
+	 * @param planName
+	 *        the plan name to look for
+	 * @return the first matching subscription, or {@literal null} if not found
+	 */
+	public Subscription subscriptionWithPlanName(String planName) {
+		if ( subscriptions != null ) {
+			for ( Subscription subscription : subscriptions ) {
+				if ( planName.equals(subscription.getPlanName()) ) {
+					return subscription;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * @return the bundleId
 	 */
 	public String getBundleId() {

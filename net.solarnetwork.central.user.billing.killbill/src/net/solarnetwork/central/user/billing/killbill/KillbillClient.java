@@ -73,11 +73,13 @@ public interface KillbillClient {
 	/**
 	 * Get a bundle for an external key.
 	 * 
+	 * @param account
+	 *        the account that owns the bundle
 	 * @param key
 	 *        the external key of the bundle to get
 	 * @return the bundle, or {@literal null} if not available
 	 */
-	Bundle bundleForExternalKey(String key);
+	Bundle bundleForExternalKey(Account account, String key);
 
 	/**
 	 * Create a bundle for an account.
@@ -90,7 +92,7 @@ public interface KillbillClient {
 	 *        the bundle info to create
 	 * @return the bundle ID
 	 */
-	String createAccountBundle(Account account, LocalDate requestedDate, Bundle info);
+	String createBundle(Account account, LocalDate requestedDate, Bundle info);
 
 	/**
 	 * Add usage records to a subscription.

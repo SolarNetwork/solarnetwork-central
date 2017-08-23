@@ -38,6 +38,25 @@ public class Account {
 	private String country;
 	private String currency;
 	private String paymentMethodId;
+	private Integer billCycleDayLocal;
+
+	/**
+	 * Default constructor.
+	 */
+	public Account() {
+		super();
+	}
+
+	/**
+	 * Construct with an ID.
+	 * 
+	 * @param accountId
+	 *        the account ID
+	 */
+	public Account(String accountId) {
+		super();
+		this.accountId = accountId;
+	}
 
 	/**
 	 * @return the externalKey
@@ -157,6 +176,21 @@ public class Account {
 	 */
 	public void setPaymentMethodId(String paymentMethodId) {
 		this.paymentMethodId = paymentMethodId;
+	}
+
+	/**
+	 * @return the billCycleDayLocal
+	 */
+	public Integer getBillCycleDayLocal() {
+		return billCycleDayLocal;
+	}
+
+	/**
+	 * @param billCycleDayLocal
+	 *        the billCycleDayLocal to set
+	 */
+	public void setBillCycleDayLocal(Integer billCycleDayLocal) {
+		this.billCycleDayLocal = billCycleDayLocal;
 	}
 
 }

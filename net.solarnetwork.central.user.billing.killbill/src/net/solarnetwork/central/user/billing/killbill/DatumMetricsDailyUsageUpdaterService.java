@@ -343,15 +343,16 @@ public class DatumMetricsDailyUsageUpdaterService {
 
 		if ( !recordsToAdd.isEmpty() ) {
 			Bundle bundle = bundleForUserNode(userNode, account);
-			if ( bundle != null && bundle.getSubscriptions() != null
-					&& !bundle.getSubscriptions().isEmpty() ) {
+			Subscription subscription = (bundle != null ? bundle.subscriptionWithPlanName(basePlanName)
+					: null);
+			if ( subscription != null ) {
 				if ( log.isInfoEnabled() ) {
 					log.info("Adding {} {} usage to user {} node {} between {} and {}",
 							recordsToAdd.size(), this.usageUnitName, userNode.getUser().getEmail(),
 							userNode.getNode().getId(), usageStartDay.toLocalDate(),
 							usageEndDay.toLocalDate());
 				}
-				client.addUsage(bundle.getSubscriptions().get(0), this.usageUnitName, recordsToAdd);
+				client.addUsage(subscription, this.usageUnitName, recordsToAdd);
 			}
 		} else if ( log.isDebugEnabled() ) {
 			log.debug("No {} usage to add for user {} node {} between {} and {}", this.usageUnitName,
@@ -367,7 +368,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 
 	private Bundle bundleForUserNode(UserNode userNode, Account account) {
 		final String bundleKey = String.format(this.bundleKeyTemplate, userNode.getNode().getId());
-		Bundle bundle = client.bundleForExternalKey(bundleKey);
+		Bundle bundle = client.bundleForExternalKey(account, bundleKey);
 		if ( bundle == null ) {
 			// create it now
 			bundle = new Bundle();
@@ -392,7 +393,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 			LocalDate requestedDate = (oldestPostedDatumDate != null ? oldestPostedDatumDate
 					.withZone(DateTimeZone.forTimeZone(timeZoneForAccount(account))).toLocalDate()
 					: null);
-			String bundleId = client.createAccountBundle(account, requestedDate, bundle);
+			String bundleId = client.createBundle(account, requestedDate, bundle);
 			bundle.setBundleId(bundleId);
 		}
 		return bundle;

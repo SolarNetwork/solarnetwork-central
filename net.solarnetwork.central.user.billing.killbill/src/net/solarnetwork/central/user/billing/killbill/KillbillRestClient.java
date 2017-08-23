@@ -22,12 +22,27 @@
 
 package net.solarnetwork.central.user.billing.killbill;
 
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import org.joda.time.LocalDate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+import net.solarnetwork.central.user.billing.killbill.domain.Account;
+import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
+import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
+import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 
 /**
  * REST implementation of {@link KillbillClient}.
@@ -35,10 +50,13 @@ import org.springframework.web.client.RestTemplate;
  * @author matt
  * @version 1.0
  */
-public class KillbillRestClient {
+public class KillbillRestClient implements KillbillClient {
 
 	/** The default base URL for the production service. */
 	public static final String DEFAULT_BASE_URL = "https://billing.solarnetwork.net";
+
+	private static final ParameterizedTypeReference<List<Bundle>> BUNDLE_LIST_TYPE = new ParameterizedTypeReference<List<Bundle>>() {
+	};
 
 	private String baseUrl = DEFAULT_BASE_URL;
 	private String username = "tester";
@@ -79,6 +97,75 @@ public class KillbillRestClient {
 		restTemplate.setInterceptors(interceptors);
 	}
 
+	private String kbUrl(String path) {
+		return baseUrl + path;
+	}
+
+	private <T> T getForObjectOrNull(URI uri, Class<T> responseType) throws RestClientException {
+		try {
+			return client.getForObject(uri, responseType);
+		} catch ( HttpStatusCodeException e ) {
+			if ( HttpStatus.NOT_FOUND.equals(e.getStatusCode()) ) {
+				return null;
+			}
+			throw e;
+		}
+	}
+
+	private <T> T getForObjectOrNull(URI uri, ParameterizedTypeReference<T> responseType)
+			throws RestClientException {
+		try {
+			ResponseEntity<T> result = client.exchange(uri, HttpMethod.GET, null, responseType);
+			return result.getBody();
+		} catch ( HttpStatusCodeException e ) {
+			if ( HttpStatus.NOT_FOUND.equals(e.getStatusCode()) ) {
+				return null;
+			}
+			throw e;
+		}
+	}
+
+	@Override
+	public Account accountForExternalKey(String key) {
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts"))
+				.queryParam("externalKey", key).build().toUri();
+		return getForObjectOrNull(uri, Account.class);
+	}
+
+	@Override
+	public String createAccount(Account info) {
+		URI loc = client.postForLocation(kbUrl("/1.0/kb/accounts"), info);
+		String path = loc.getPath();
+		return path.substring(path.lastIndexOf('/') + 1);
+	}
+
+	@Override
+	public String addPaymentMethodToAccount(Account account, Map<String, Object> paymentData,
+			boolean defaultMethod) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Bundle bundleForExternalKey(Account account, String key) {
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/bundles"))
+				.queryParam("externalKey", key).build().toUri();
+		List<Bundle> results = getForObjectOrNull(uri, BUNDLE_LIST_TYPE);
+		return (results != null && !results.isEmpty() ? results.get(0) : null);
+	}
+
+	@Override
+	public String createBundle(Account account, LocalDate requestedDate, Bundle info) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void addUsage(Subscription subscription, String unit, Collection<UsageRecord> usage) {
+		// TODO Auto-generated method stub
+
+	}
+
 	/**
 	 * The Killbill base URL for REST operations.
 	 * 
@@ -96,7 +183,10 @@ public class KillbillRestClient {
 	 *        the username to set
 	 */
 	public void setUsername(String username) {
-		this.username = username;
+		if ( username != null && !username.equals(this.username) ) {
+			this.username = username;
+			setupRestTemplateInterceptors();
+		}
 	}
 
 	/**
@@ -106,7 +196,10 @@ public class KillbillRestClient {
 	 *        the password to set
 	 */
 	public void setPassword(String password) {
-		this.password = password;
+		if ( password != null && !password.equals(this.password) ) {
+			this.password = password;
+			setupRestTemplateInterceptors();
+		}
 	}
 
 	/**
@@ -116,7 +209,10 @@ public class KillbillRestClient {
 	 *        the apiKey to set
 	 */
 	public void setApiKey(String apiKey) {
-		this.apiKey = apiKey;
+		if ( apiKey != null && !apiKey.equals(this.apiKey) ) {
+			this.apiKey = apiKey;
+			setupRestTemplateInterceptors();
+		}
 	}
 
 	/**
@@ -126,7 +222,10 @@ public class KillbillRestClient {
 	 *        the apiSecret to set
 	 */
 	public void setApiSecret(String apiSecret) {
-		this.apiSecret = apiSecret;
+		if ( apiSecret != null && !apiSecret.equals(this.apiSecret) ) {
+			this.apiSecret = apiSecret;
+			setupRestTemplateInterceptors();
+		}
 	}
 
 }
