@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xmlns:osgi="http://www.eclipse.org/gemini/blueprint/schema/blueprint"
+	xmlns:osgix="http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xsi:schemaLocation="
+		http://www.osgi.org/xmlns/blueprint/v1.0.0
+		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint/gemini-blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.billing.killbill">
+		<beans:prop key="datumMetricsDailyUsageUpdater.jobCron">0 3 * * * ?</beans:prop>
+		<beans:prop key="datumMetricsDailyUsageUpdater.maximumWaitMs">3600000</beans:prop>
+		
+	</osgix:cm-properties>
+
+	<ctx:property-placeholder properties-ref="cfg"/>
+
+	<!-- Service references -->
+
+	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
+
+	<reference id="locationDao" interface="net.solarnetwork.central.dao.SolarLocationDao"/>
+	<reference id="nodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
+	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
+	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
+	
+	<!-- Supporting Services -->
+	
+	<bean id="killbillClient" class="net.solarnetwork.central.user.billing.killbill.KillbillRestClient">
+		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.billing.killbill.KillbillRestClient" 
+			autowire-on-update="true"/>
+	</bean>
+	
+	<bean id="datumMetricsDailyUsageUpdaterService" class="net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService">
+		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService" 
+			autowire-on-update="true"/>
+		<argument ref="locationDao"/>
+		<argument ref="userDao"/>
+		<argument ref="userNodeDao"/>
+		<argument ref="nodeDatumDao"/>
+		<argument ref="killbillClient"/>
+	</bean>
+	
+	<bean id="datumMetricsDailyUsageUpdaterJob" class="net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterJob">
+		<argument ref="eventAdmin"/>
+		<argument ref="datumMetricsDailyUsageUpdaterService"/>
+		<property name="jobCron" value="${datumMetricsDailyUsageUpdater.jobCron}"/>
+		<property name="maximumWaitMs" value="${datumMetricsDailyUsageUpdater.maximumWaitMs}"/>
+		<property name="jobId" value="DatumMetricsDailyUsageUpdater"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/billing/killbill/DatumMetricsDailyUsageUpdater"/>
+	</bean>
+	
+	<!-- Published Services -->
+
+	<service ref="datumMetricsDailyUsageUpdaterJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{datumMetricsDailyUsageUpdaterJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+</blueprint>
