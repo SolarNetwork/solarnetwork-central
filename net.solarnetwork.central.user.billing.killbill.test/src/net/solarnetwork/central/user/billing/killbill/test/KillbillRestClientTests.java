@@ -26,17 +26,24 @@ import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizati
 import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizationInterceptor.API_SECRET_HEADER_NAME;
 import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizationInterceptor.CREATED_BY_HEADER_NAME;
 import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizationInterceptor.DEFAULT_CREATED_BY;
+import static net.solarnetwork.central.user.billing.killbill.test.JsonObjectMatchers.jsonBodyObject;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withCreatedEntity;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.ListIterator;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -44,10 +51,15 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseActions;
 import org.springframework.util.Base64Utils;
 import org.springframework.web.client.RestTemplate;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.user.billing.killbill.KillbillRestClient;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
@@ -63,6 +75,7 @@ public class KillbillRestClientTests {
 
 	private static final String TEST_ACCOUNT_KEY = "test.key";
 	private static final String TEST_ACCOUNT_ID = "e7be50d7-63f1-429b-a5ce-5f950733c2a7";
+	private static final String TEST_PAYMENT_METHOD_ID = "a25e4f73-ac51-45d0-a150-3bb7eec30ade";
 	private static final String TEST_BUNDLE_KEY = "test.bundle.key";
 	private static final String TEST_BUNDLE_ID = "db4fde26-9094-4a2c-8520-96455ab35201";
 	private static final String TEST_SUBSCRIPTION_ID = "e791cb82-2363-4c77-86a7-770dd7aaf3c9";
@@ -75,12 +88,29 @@ public class KillbillRestClientTests {
 	private static final String TEST_BASIC_AUTH_HEADER = "Basic " + Base64Utils
 			.encodeToString((TEST_USERNAME + ":" + TEST_PASSWORD).getBytes(Charset.forName("UTF-8")));
 
+	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+			.setSerializationInclusion(Include.NON_NULL)
+			.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			.configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
+
 	private MockRestServiceServer server;
 	private KillbillRestClient client;
 
 	@Before
 	public void setup() {
+		// setup RestTemplate's ObjectMapper so we know exactly what we are converting
 		RestTemplate restTemplate = new RestTemplate();
+		for ( ListIterator<HttpMessageConverter<?>> itr = restTemplate.getMessageConverters()
+				.listIterator(); itr.hasNext(); ) {
+			if ( itr.next() instanceof MappingJackson2HttpMessageConverter ) {
+				MappingJackson2HttpMessageConverter messageConverter = new MappingJackson2HttpMessageConverter();
+				messageConverter.setPrettyPrint(false);
+				messageConverter.setObjectMapper(OBJECT_MAPPER);
+				itr.set(messageConverter);
+				break;
+			}
+		}
+
 		server = MockRestServiceServer.createServer(restTemplate);
 		client = new KillbillRestClient(restTemplate);
 		client.setApiKey(TEST_API_KEY);
@@ -133,6 +163,52 @@ public class KillbillRestClientTests {
 		// then
 		assertThat("Account found", account, notNullValue());
 		assertThat("Account ID", account.getAccountId(), equalTo(TEST_ACCOUNT_ID));
+	}
+
+	@Test
+	public void createAccount() throws Exception {
+		// given
+		Account account = new Account();
+		account.setAccountId(TEST_ACCOUNT_ID);
+		account.setBillCycleDayLocal(1);
+		account.setCountry("NZ");
+		account.setCurrency("NZD");
+		account.setEmail("foo@localhost");
+		account.setExternalKey("bar");
+		account.setName("John Doe");
+		account.setTimeZone("+00:00");
+
+		// @formatter:off
+		serverExpect("/1.0/kb/accounts", HttpMethod.POST)
+		.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+		.andExpect(jsonBodyObject(account))
+		.andRespond(withCreatedEntity(new URI("http://localhost:8080/1.0/kb/accounts/" 
+				+TEST_ACCOUNT_ID)));
+	    // @formatter:on
+
+		// when
+		String accountId = client.createAccount(account);
+
+		// then
+		assertThat("Account ID", accountId, equalTo(TEST_ACCOUNT_ID));
+	}
+
+	@Test
+	public void addPaymentMethod() throws Exception {
+		// given
+		Map<String, Object> paymentData = Collections.singletonMap("foo", "bar");
+
+		// @formatter:off
+		serverExpect("/1.0/kb/accounts/"+TEST_ACCOUNT_ID+"/paymentMethods?isDefault=true", HttpMethod.POST)
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+			.andExpect(jsonBodyObject(paymentData))
+			.andRespond(withCreatedEntity(new URI("http://localhost:8080/1.0/kb/paymentMethods/" 
+					+TEST_PAYMENT_METHOD_ID)));
+	    // @formatter:on
+
+		String paymentId = client.addPaymentMethodToAccount(new Account(TEST_ACCOUNT_ID), paymentData,
+				true);
+		assertThat("Payment ID", paymentId, equalTo(TEST_PAYMENT_METHOD_ID));
 	}
 
 	@Test

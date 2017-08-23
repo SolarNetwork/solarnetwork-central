@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.killbill;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -132,18 +133,25 @@ public class KillbillRestClient implements KillbillClient {
 		return getForObjectOrNull(uri, Account.class);
 	}
 
-	@Override
-	public String createAccount(Account info) {
-		URI loc = client.postForLocation(kbUrl("/1.0/kb/accounts"), info);
+	private static String idFromLocation(URI loc) {
 		String path = loc.getPath();
 		return path.substring(path.lastIndexOf('/') + 1);
 	}
 
 	@Override
+	public String createAccount(Account info) {
+		URI loc = client.postForLocation(kbUrl("/1.0/kb/accounts"), info);
+		return idFromLocation(loc);
+	}
+
+	@Override
 	public String addPaymentMethodToAccount(Account account, Map<String, Object> paymentData,
 			boolean defaultMethod) {
-		// TODO Auto-generated method stub
-		return null;
+		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts/{accountId}/paymentMethods"))
+				.queryParam("isDefault", defaultMethod).buildAndExpand(uriVariables).toUri();
+		URI loc = client.postForLocation(uri, paymentData);
+		return idFromLocation(loc);
 	}
 
 	@Override
