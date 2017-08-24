@@ -11,10 +11,10 @@
 		</selectKey>
 		INSERT INTO solaruser.user_user 
 			(id, created, disp_name, email, password, enabled,
-			loc_id, billing_jdata)
+			loc_id, jdata)
 		VALUES
 			(#{id}, #{created}, #{name}, #{email}, #{password}, #{enabled},
-			#{locationId}, #{billingDataJson}::jsonb)
+			#{locationId}, #{internalDataJson}::jsonb)
 	</insert>
 
 	<update id="update-User" parameterType="User">
@@ -23,8 +23,7 @@
 			email = #{email}, 
 			password = #{password},
 			enabled = #{enabled},
-			loc_id = #{locationId},
-			billing_jdata = #{billingDataJson}::jsonb
+			loc_id = #{locationId}
 		WHERE
 			id = #{id}
 	</update>
@@ -37,7 +36,7 @@
 		u.password AS user_password,
 		u.enabled AS user_enabled,
 		u.loc_id AS user_loc_id,
-		u.billing_jdata AS user_billing_jdata
+		u.jdata AS user_jdata
 	</sql>
 
 	<sql id="fragment-User-share-result">
@@ -54,7 +53,7 @@
 		<result property="password" column="user_password"/>
 		<result property="enabled" column="user_enabled"/>
 		<result property="locationId" column="user_loc_id"/>
-		<result property="billingDataJson" column="user_billing_jdata"/>
+		<result property="internalDataJson" column="user_jdata"/>
 	</resultMap>
 	
 	<select id="get-User-for-id" parameterType="long" resultMap="UserFullResult">
@@ -90,12 +89,15 @@
 		VALUES (#{userId}, #{role})
 	</insert>
 	
-	<update id="update-billing-data-property">
-		UPDATE solaruser.user_user
-		SET billing_jdata = jsonb_set(billing_jdata, ARRAY[#{key}], #{value}::jsonb, true)
-		WHERE id = #{userId}
+	<parameterMap id="pmap-store-user-data" type="map">
+		<parameter property="userId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="dataJson" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+	<update id="update-internal-data" parameterMap="pmap-store-user-data" statementType="CALLABLE">
+		{call solaruser.store_user_data(?, ?::jsonb)}
 	</update>
-	
+
 	<!-- 
 		FilterableDao support 
 	-->
@@ -107,8 +109,8 @@
 			<if test="filter.email != null">
 				AND u.email = #{filter.email}::citext
 			</if>
-			<if test="filter.billingData != null and filter.billingData.size &gt; 0">
-				AND u.billing_jdata @> #{filter.billingDataJson}::jsonb
+			<if test="filter.internalData != null and filter.internalData.size &gt; 0">
+				AND u.jdata @> #{filter.internalDataJson}::jsonb
 			</if>
 		</where>
 	</sql>

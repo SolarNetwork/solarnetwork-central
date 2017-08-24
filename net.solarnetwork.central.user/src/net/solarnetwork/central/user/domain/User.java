@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
@@ -40,16 +41,16 @@ import net.solarnetwork.util.SerializeIgnore;
  */
 public class User extends BaseEntity implements UserInfo {
 
-	private static final long serialVersionUID = -1743895965082396469L;
+	private static final long serialVersionUID = -1968822608256484455L;
 
 	private String name;
 	private String email;
 	private String password;
 	private Boolean enabled;
-	private Map<String, Object> billingData;
+	private Map<String, Object> internalData;
 	private Long locationId = null;
 
-	private String billingDataJson;
+	private String internalDataJson;
 	private SolarLocation location;
 
 	private Set<String> roles;
@@ -142,11 +143,11 @@ public class User extends BaseEntity implements UserInfo {
 	}
 
 	/**
-	 * Get the user's location ID.
+	 * {@inheritDoc}
 	 * 
-	 * @return the location ID, or {@literal null} if not available
 	 * @since 1.4
 	 */
+	@Override
 	public Long getLocationId() {
 		return locationId;
 	}
@@ -207,68 +208,90 @@ public class User extends BaseEntity implements UserInfo {
 	}
 
 	/**
-	 * Get the billing data.
+	 * {@inheritDoc}
 	 * 
-	 * <p>
-	 * This data object is arbitrary information needed to integrate with an
-	 * external billing system. Expected use would be things like external
-	 * billing account IDs.
-	 * </p>
-	 * 
-	 * @return the billing data
 	 * @since 1.4
 	 */
-	public Map<String, Object> getBillingData() {
-		if ( billingData == null && billingDataJson != null ) {
-			billingData = JsonUtils.getStringMap(billingDataJson);
+	@Override
+	public Map<String, Object> getInternalData() {
+		if ( internalData == null && internalDataJson != null ) {
+			internalData = JsonUtils.getStringMap(internalDataJson);
+			internalDataJson = null;
 		}
-		return billingData;
+		return internalData;
 	}
 
 	/**
-	 * Set the billing data.
+	 * Set the internal data.
 	 * 
-	 * @param billingData
-	 *        the billing data to set
+	 * @param internalData
+	 *        the internal data to set
 	 * @since 1.4
 	 */
-	public void setBillingData(Map<String, Object> billingData) {
-		this.billingData = billingData;
+	public void setInternalData(Map<String, Object> internalData) {
+		this.internalData = internalData;
 	}
 
 	/**
-	 * Get the billing data as a JSON string.
+	 * Add or remove one internal data element.
+	 * 
+	 * @param key
+	 *        the key to update
+	 * @param data
+	 *        the data to store, or if {@literal null} the key to delete
+	 * @return the value previously associated with {@code key}, or
+	 *         {@literal null} if none
+	 * @since 1.4
+	 */
+	public Object putInternalData(String key, Object data) {
+		Map<String, Object> map = getInternalData();
+		if ( map == null ) {
+			if ( data == null ) {
+				return null;
+			}
+			map = new LinkedHashMap<String, Object>(4);
+			setInternalData(map);
+		}
+		if ( data == null ) {
+			return map.remove(key);
+		} else {
+			return map.put(key, data);
+		}
+	}
+
+	/**
+	 * Get the internal data as a JSON string.
 	 * 
 	 * @return a JSON encoded string, or {@literal null}
 	 * @since 1.4
 	 */
 	@SerializeIgnore
 	@JsonIgnore
-	public String getBillingDataJson() {
-		if ( billingDataJson == null ) {
-			billingDataJson = JsonUtils.getJSONString(billingData, null);
+	public String getInternalDataJson() {
+		if ( internalDataJson == null ) {
+			internalDataJson = JsonUtils.getJSONString(internalData, null);
 		}
-		return billingDataJson;
+		return internalDataJson;
 	}
 
 	/**
-	 * Set the billing data object via a JSON string.
+	 * Set the internal data object via a JSON string.
 	 * 
 	 * <p>
-	 * This method will remove any previously created {@code billingData} value
+	 * This method will remove any previously created {@code internalData} value
 	 * and replace it with the values parsed from the provided JSON. The JSON is
 	 * expected to be a JSON object with string keys.
 	 * </p>
 	 * 
 	 * @param json
-	 *        the billing data to set
+	 *        the internal data to set
 	 * @since 1.4
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setBillingDataJson(String json) {
-		billingDataJson = json;
-		billingData = null;
+	public void setInternalDataJson(String json) {
+		internalDataJson = json;
+		internalData = null;
 	}
 
 }

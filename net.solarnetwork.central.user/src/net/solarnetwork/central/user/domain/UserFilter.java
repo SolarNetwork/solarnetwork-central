@@ -41,10 +41,10 @@ public interface UserFilter extends Filter {
 	public String getEmail();
 
 	/**
-	 * Get arbitrary billing data criteria.
+	 * Get arbitrary internal data criteria.
 	 * 
-	 * @return the billing data criteria
+	 * @return the internal data criteria
 	 */
-	public Map<String, Object> getBillingData();
+	public Map<String, Object> getInternalData();
 
 }

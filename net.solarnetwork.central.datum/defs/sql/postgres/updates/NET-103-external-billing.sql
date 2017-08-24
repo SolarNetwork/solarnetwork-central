@@ -2,14 +2,30 @@ ALTER TABLE solaruser.user_user
   ADD COLUMN loc_id bigint;
 
 ALTER TABLE solaruser.user_user
-  ADD COLUMN billing_jdata jsonb;
+  ADD COLUMN jdata jsonb;
 
-CREATE INDEX user_user_billing_jdata_idx ON solaruser.user_user
-	USING GIN (billing_jdata jsonb_path_ops);
+CREATE INDEX user_user_jdata_idx ON solaruser.user_user
+	USING GIN (jdata jsonb_path_ops);
 
 ALTER TABLE solaruser.user_user
   ADD CONSTRAINT user_user_loc_fk FOREIGN KEY (loc_id) REFERENCES solarnet.sn_loc (id)
   ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+/**
+ * Add or update the internal data for a user.
+ *
+ * @param user_id The ID of the user to update.
+ * @param json_obj The JSON object to add. All <code>null</code> values will be removed from the resulting object.
+ */
+CREATE OR REPLACE FUNCTION solaruser.store_user_data(
+	user_id bigint,
+	json_obj jsonb)
+  RETURNS void LANGUAGE sql VOLATILE AS
+$BODY$
+	UPDATE solaruser.user_user
+	SET jdata = jsonb_strip_nulls(COALESCE(jdata, '{}'::jsonb) || json_obj)
+	WHERE id = user_id
+$BODY$;
 
 CREATE OR REPLACE FUNCTION solaragg.find_audit_datum_interval(
 	IN node solarcommon.node_id,

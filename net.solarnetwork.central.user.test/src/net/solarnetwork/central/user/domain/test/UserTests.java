@@ -22,6 +22,10 @@
 
 package net.solarnetwork.central.user.domain.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import java.util.Collections;
 import java.util.TimeZone;
 import org.junit.Assert;
 import org.junit.Test;
@@ -53,7 +57,7 @@ public class UserTests {
 		user.setLocation(loc);
 		Assert.assertSame(loc, user.getLocation());
 		user.setLocationId(-2L);
-		Assert.assertNull("Location reset", user.getLocation());
+		assertNull("Location reset", user.getLocation());
 	}
 
 	@Test
@@ -62,7 +66,7 @@ public class UserTests {
 		User user = new User();
 		user.setLocation(loc);
 		user.setLocationId(TEST_LOCATION_ID);
-		Assert.assertSame("Location preserved", loc, user.getLocation());
+		assertSame("Location preserved", loc, user.getLocation());
 	}
 
 	@Test
@@ -71,7 +75,7 @@ public class UserTests {
 		User user = new User();
 		user.setLocationId(-2L);
 		user.setLocation(loc);
-		Assert.assertEquals("Location ID set", TEST_LOCATION_ID, user.getLocationId());
+		assertEquals("Location ID set", TEST_LOCATION_ID, user.getLocationId());
 	}
 
 	@Test
@@ -79,14 +83,14 @@ public class UserTests {
 		SolarLocation loc = testLocation();
 		User user = new User();
 		user.setLocation(loc);
-		Assert.assertEquals("TimeZone extracted", TimeZone.getTimeZone(loc.getTimeZoneId()),
+		assertEquals("TimeZone extracted", TimeZone.getTimeZone(loc.getTimeZoneId()),
 				user.getTimeZone());
 	}
 
 	@Test
 	public void timeZoneFromNullLocation() {
 		User user = new User();
-		Assert.assertNull("No location", user.getTimeZone());
+		assertNull("No location", user.getTimeZone());
 	}
 
 	@Test
@@ -95,7 +99,36 @@ public class UserTests {
 		loc.setTimeZoneId(null);
 		User user = new User();
 		user.setLocation(loc);
-		Assert.assertNull("No time zone ID", user.getTimeZone());
+		assertNull("No time zone ID", user.getTimeZone());
+	}
+
+	@Test
+	public void putInternalDataInitial() {
+		User u = new User();
+		Object prev = u.putInternalData("foo", "bar");
+		assertEquals("Internal data", Collections.singletonMap("foo", "bar"), u.getInternalData());
+		assertNull("Previous value", prev);
+		assertEquals("Internal data JSON", "{\"foo\":\"bar\"}", u.getInternalDataJson());
+	}
+
+	@Test
+	public void putInternalDataReplace() {
+		User u = new User();
+		u.setInternalDataJson("{\"foo\":\"bim\"}");
+		Object prev = u.putInternalData("foo", "bar");
+		assertEquals("Internal data", Collections.singletonMap("foo", "bar"), u.getInternalData());
+		assertEquals("Previous value", "bim", prev);
+		assertEquals("Internal data JSON", "{\"foo\":\"bar\"}", u.getInternalDataJson());
+	}
+
+	@Test
+	public void putInternalDataRemove() {
+		User u = new User();
+		u.setInternalDataJson("{\"foo\":\"bim\"}");
+		Object prev = u.putInternalData("foo", null);
+		assertEquals("Internal data", Collections.emptyMap(), u.getInternalData());
+		assertEquals("Previous value", "bim", prev);
+		assertEquals("Internal data JSON", "{}", u.getInternalDataJson());
 	}
 
 }

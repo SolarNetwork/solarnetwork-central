@@ -60,14 +60,13 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 
 	/**
 	 * The update query name used in
-	 * {@link #storeBillingDataProperty(Long, String, Object)}.
+	 * {@link #storeInternalData(Long, Map)}.
 	 * 
-	 * The statement is passed {@code userId}, {@code key}, and {@code value}
-	 * parameters.
+	 * The statement is passed {@code userId} and {@code dataJson} parameters.
 	 * 
 	 * @since 1.2
 	 */
-	public static final String UPDATE_BILLING_DATA_PROP = "update-billing-data-property";
+	public static final String UPDATE_INTERNAL_DATA = "update-internal-data";
 
 	/**
 	 * The query parameter for a general {@link Filter} object value.
@@ -110,14 +109,18 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.2
+	 */
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public int storeBillingDataProperty(Long userId, String name, Object value) {
+	public void storeInternalData(Long userId, Map<String, Object> data) {
 		Map<String, Object> sqlParams = new HashMap<String, Object>(3);
 		sqlParams.put("userId", userId);
-		sqlParams.put("key", name);
-		sqlParams.put("value", JsonUtils.getJSONString(value, "null"));
-		return getSqlSession().update(UPDATE_BILLING_DATA_PROP, sqlParams);
+		sqlParams.put("dataJson", JsonUtils.getJSONString(data, "{}"));
+		getSqlSession().update(UPDATE_INTERNAL_DATA, sqlParams);
 	}
 
 }

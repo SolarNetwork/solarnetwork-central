@@ -69,16 +69,16 @@ public interface UserInfo {
 	Long getLocationId();
 
 	/**
-	 * Get the billing data.
+	 * Get the internal data.
 	 * 
 	 * <p>
-	 * This data object is arbitrary information needed to integrate with an
-	 * external billing system. Expected use would be things like external
-	 * billing account IDs.
+	 * This data object is arbitrary information needed for internal use, for
+	 * example metadata like external billing account IDs to integrate with an
+	 * external billing system.
 	 * </p>
 	 * 
-	 * @return the billing data
+	 * @return the internal data
 	 */
-	Map<String, Object> getBillingData();
+	Map<String, Object> getInternalData();
 
 }

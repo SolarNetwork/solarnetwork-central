@@ -24,6 +24,7 @@
 
 package net.solarnetwork.central.user.dao;
 
+import java.util.Map;
 import java.util.Set;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.GenericDao;
@@ -76,22 +77,18 @@ public interface UserDao
 	void storeUserRoles(User user, Set<String> roles);
 
 	/**
-	 * Set a single property value on the billing data of a user.
+	 * Add, update, or remove properties from the internal data of a user.
 	 * 
 	 * <p>
-	 * Note this method can only update billing data. If the billing data is
-	 * {@literal null} for the given user, the property will <b>not</b> be
-	 * added.
+	 * To remove properties, pass in {@literal null} values.
 	 * </p>
 	 * 
 	 * @param userId
 	 *        the ID if the user to update
-	 * @param name
-	 *        the property name to insert or update
-	 * @param value
-	 *        the value to store
-	 * @return the number of updated rows
+	 * @param data
+	 *        the properties to add, update, or remove
+	 * @since 1.1
 	 */
-	int storeBillingDataProperty(Long userId, String name, Object value);
+	void storeInternalData(Long userId, Map<String, Object> data);
 
 }

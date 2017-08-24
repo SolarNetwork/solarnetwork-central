@@ -24,8 +24,8 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -58,8 +58,6 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	private static final String TEST_EMAIL = "foo@localhost.localdomain";
 	private static final String TEST_ROLE_1 = "ROLE_TEST1";
 	private static final String TEST_ROLE_2 = "ROLE_TEST2";
-	private static final String BILLING_ACCOUNT_ID_KEY = "accountId";
-	private static final String TEST_BILLING_ACCOUNT_ID = "test.account";
 
 	private Long userId = null;
 
@@ -128,6 +126,18 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertEquals(created, updatedUser.getCreated());
 	}
 
+	@Test
+	public void updateInternalDataUnchanged() {
+		storeInternalPropertyNullColumn();
+		User user = userDao.get(this.userId);
+		user.putInternalData("bim", "bam");
+		Long userId = userDao.store(user);
+		assertEquals(user.getId(), userId);
+		User updated = userDao.get(user.getId());
+		assertEquals("Intenral data not changed by update", Collections.singletonMap("foo", "bar"),
+				updated.getInternalData());
+	}
+
 	/**
 	 * Test able to persist a single role.
 	 */
@@ -181,18 +191,17 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	}
 
 	@Test
-	public void addBillingAccountId() {
+	public void addInternalAccountId() {
 		storeNewUser();
 		setupTestLocation();
 		User user = userDao.get(this.userId);
 		user.setLocationId(TEST_LOC_ID);
-
-		Map<String, Object> billingData = new HashMap<String, Object>();
-		billingData.put(BILLING_ACCOUNT_ID_KEY, TEST_BILLING_ACCOUNT_ID);
-		user.setBillingData(billingData);
-
 		Long id = userDao.store(user);
 		assertEquals(this.userId, id);
+
+		Map<String, Object> data = Collections.singletonMap("bim", (Object) "bam");
+		userDao.storeInternalData(id, data);
+
 		User updatedUser = userDao.get(id);
 		assertNotNull(updatedUser);
 		assertEquals(this.userId, updatedUser.getId());
@@ -201,7 +210,8 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertEquals(user.getPassword(), updatedUser.getPassword());
 		assertEquals(user.getEnabled(), updatedUser.getEnabled());
 		assertEquals(TEST_LOC_ID, updatedUser.getLocationId());
-		assertEquals(billingData, updatedUser.getBillingData());
+
+		assertEquals(data, updatedUser.getInternalData());
 	}
 
 	private Long storeTestUser(String email) {
@@ -231,23 +241,21 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	}
 
 	@Test
-	public void findFilteredForBillingProperty() {
+	public void findFilteredForInternalProperty() {
 		storeNewUser();
 		User user1 = userDao.get(userId);
-		Map<String, Object> billingData1 = new HashMap<String, Object>();
-		billingData1.put(BILLING_ACCOUNT_ID_KEY, TEST_BILLING_ACCOUNT_ID);
-		user1.setBillingData(billingData1);
-		user1 = userDao.get(userDao.store(user1));
+		Map<String, Object> billingData1 = Collections.singletonMap("bim", (Object) "bam");
+		user1.setInternalData(billingData1);
+		userDao.storeInternalData(user1.getId(), billingData1);
 
 		Long userId2 = storeTestUser("bar@example.com");
 		User user2 = userDao.get(userId2);
-		Map<String, Object> billingData2 = new HashMap<String, Object>();
-		billingData2.put(BILLING_ACCOUNT_ID_KEY, "foo-bar");
-		user2.setBillingData(billingData2);
-		user2 = userDao.get(userDao.store(user2));
+		Map<String, Object> billingData2 = Collections.singletonMap("bim", (Object) "baz");
+		user2.setInternalData(billingData2);
+		userDao.storeInternalData(user2.getId(), billingData2);
 
 		UserFilterCommand criteria = new UserFilterCommand();
-		criteria.setBillingData(billingData1);
+		criteria.setInternalData(billingData1);
 
 		FilterResults<UserFilterMatch> results = userDao.findFiltered(criteria, null, null, null);
 		assertNotNull(results);
@@ -256,7 +264,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		UserFilterMatch match = results.getResults().iterator().next();
 		assertEquals("Match ID", userId, match.getId());
 
-		criteria.setBillingData(billingData2);
+		criteria.setInternalData(billingData2);
 		results = userDao.findFiltered(criteria, null, null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
@@ -266,71 +274,51 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	}
 
 	@Test
-	public void storeBillingPropertyNullColumn() {
+	public void storeInternalPropertyNullColumn() {
 		storeNewUser();
 
-		int count = userDao.storeBillingDataProperty(userId, "foo", "bar");
-		assertEquals(1, count);
+		Map<String, Object> data = Collections.singletonMap("foo", (Object) "bar");
+		userDao.storeInternalData(userId, data);
 
 		User user = userDao.get(userId);
-		assertNull("Can't update null billing data", user.getBillingData());
+		assertEquals("Internal data", data, user.getInternalData());
 	}
 
 	@Test
-	public void storeBillingPropertyAdd() {
-		storeNewUser();
+	public void storeInternalPropertyAdd() {
+		storeInternalPropertyNullColumn();
 		User user = userDao.get(userId);
 
-		Map<String, Object> billingData = new HashMap<String, Object>();
-		billingData.put(BILLING_ACCOUNT_ID_KEY, TEST_BILLING_ACCOUNT_ID);
-		user.setBillingData(billingData);
-		userDao.store(user);
+		Map<String, Object> billingData = Collections.singletonMap("bim", (Object) "bam");
+		userDao.storeInternalData(user.getId(), billingData);
 
-		int count = userDao.storeBillingDataProperty(userId, "foo", "bar");
-		assertEquals(1, count);
-
-		user = userDao.get(userId);
-		Map<String, Object> expected = new HashMap<String, Object>(billingData);
-		expected.put("foo", "bar");
-		assertEquals("Billing data updated", expected, user.getBillingData());
+		User updated = userDao.get(userId);
+		Map<String, Object> expected = new HashMap<String, Object>(user.getInternalData());
+		expected.put("bim", "bam");
+		assertEquals("Internal data updated", expected, updated.getInternalData());
 	}
 
 	@Test
-	public void storeBillingPropertyReplace() {
-		storeNewUser();
+	public void storeInternalPropertyReplace() {
+		storeInternalPropertyNullColumn();
 		User user = userDao.get(userId);
 
-		Map<String, Object> billingData = new HashMap<String, Object>();
-		billingData.put(BILLING_ACCOUNT_ID_KEY, TEST_BILLING_ACCOUNT_ID);
-		user.setBillingData(billingData);
-		userDao.store(user);
+		Map<String, Object> billingData = Collections.singletonMap("foo", (Object) "bam");
+		userDao.storeInternalData(user.getId(), billingData);
 
-		int count = userDao.storeBillingDataProperty(userId, BILLING_ACCOUNT_ID_KEY, "bar");
-		assertEquals(1, count);
-
-		user = userDao.get(userId);
-		Map<String, Object> expected = new HashMap<String, Object>();
-		expected.put(BILLING_ACCOUNT_ID_KEY, "bar");
-		assertEquals("Billing data updated", expected, user.getBillingData());
+		User updated = userDao.get(userId);
+		assertEquals("Internal data updated", billingData, updated.getInternalData());
 	}
 
 	@Test
-	public void storeBillingPropertyNullValue() {
+	public void storeInternalPropertyNullValue() {
 		storeNewUser();
-		User user = userDao.get(userId);
 
-		Map<String, Object> billingData = new HashMap<String, Object>();
-		billingData.put(BILLING_ACCOUNT_ID_KEY, TEST_BILLING_ACCOUNT_ID);
-		user.setBillingData(billingData);
-		userDao.store(user);
+		Map<String, Object> billingData = Collections.singletonMap("foo", null);
+		userDao.storeInternalData(userId, billingData);
 
-		int count = userDao.storeBillingDataProperty(userId, BILLING_ACCOUNT_ID_KEY, null);
-		assertEquals(1, count);
-
-		user = userDao.get(userId);
-		Map<String, Object> expected = new HashMap<String, Object>();
-		expected.put(BILLING_ACCOUNT_ID_KEY, null);
-		assertEquals("Billing data updated", expected, user.getBillingData());
+		User updated = userDao.get(userId);
+		assertEquals("Internal data updated", Collections.emptyMap(), updated.getInternalData());
 	}
 
 }

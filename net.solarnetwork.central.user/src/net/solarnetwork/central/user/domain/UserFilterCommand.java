@@ -40,13 +40,13 @@ import net.solarnetwork.util.JsonUtils;
  */
 public class UserFilterCommand extends FilterSupport implements UserMetadataFilter, UserFilter {
 
-	private static final long serialVersionUID = -7815908932742535345L;
+	private static final long serialVersionUID = 915646548230356302L;
 
 	private List<MutableSortDescriptor> sorts;
 	private Integer offset = 0;
 	private Integer max;
 	private String email;
-	private Map<String, Object> billingData;
+	private Map<String, Object> internalData;
 
 	public List<MutableSortDescriptor> getSorts() {
 		return sorts;
@@ -102,35 +102,35 @@ public class UserFilterCommand extends FilterSupport implements UserMetadataFilt
 	}
 
 	/**
-	 * Get the billing data criteria.
+	 * Get the internal data criteria.
 	 * 
-	 * @return the billing data criteria
+	 * @return the internal data criteria
 	 * @since 1.1
 	 */
 	@Override
-	public Map<String, Object> getBillingData() {
-		return billingData;
+	public Map<String, Object> getInternalData() {
+		return internalData;
 	}
 
 	/**
-	 * Set the billing data criteria.
+	 * Set the internal data criteria.
 	 * 
-	 * @param billingData
-	 *        the billing data criteria to set
+	 * @param internalData
+	 *        the internal data criteria to set
 	 * @since 1.1
 	 */
-	public void setBillingData(Map<String, Object> billingData) {
-		this.billingData = billingData;
+	public void setInternalData(Map<String, Object> internalData) {
+		this.internalData = internalData;
 	}
 
 	/**
-	 * Get the billing data criteria as a JSON string.
+	 * Get the internal data criteria as a JSON string.
 	 * 
-	 * @return the billing data criteria, as JSON
+	 * @return the internal data criteria, as JSON
 	 * @since 1.1
 	 */
-	public String getBillingDataJson() {
-		return JsonUtils.getJSONString(this.billingData, null);
+	public String getInternalDataJson() {
+		return JsonUtils.getJSONString(this.internalData, null);
 	}
 
 	/**
@@ -142,7 +142,7 @@ public class UserFilterCommand extends FilterSupport implements UserMetadataFilt
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((billingData == null) ? 0 : billingData.hashCode());
+		result = prime * result + ((internalData == null) ? 0 : internalData.hashCode());
 		result = prime * result + ((email == null) ? 0 : email.hashCode());
 		result = prime * result + ((max == null) ? 0 : max.hashCode());
 		result = prime * result + ((offset == null) ? 0 : offset.hashCode());
@@ -167,11 +167,11 @@ public class UserFilterCommand extends FilterSupport implements UserMetadataFilt
 			return false;
 		}
 		UserFilterCommand other = (UserFilterCommand) obj;
-		if ( billingData == null ) {
-			if ( other.billingData != null ) {
+		if ( internalData == null ) {
+			if ( other.internalData != null ) {
 				return false;
 			}
-		} else if ( !billingData.equals(other.billingData) ) {
+		} else if ( !internalData.equals(other.internalData) ) {
 			return false;
 		}
 		if ( email == null ) {

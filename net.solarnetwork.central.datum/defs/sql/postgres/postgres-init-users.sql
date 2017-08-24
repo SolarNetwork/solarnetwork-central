@@ -15,7 +15,7 @@ CREATE TABLE solaruser.user_user (
 	password			CHARACTER VARYING(128) NOT NULL,
 	enabled				BOOLEAN NOT NULL DEFAULT TRUE,
 	loc_id				BIGINT,
-	billing_jdata		jsonb,
+	jdata				jsonb,
 	CONSTRAINT user_user_pkey PRIMARY KEY (id),
 	CONSTRAINT user_user_email_unq UNIQUE (email),
 	CONSTRAINT user_user_loc_fk FOREIGN KEY (loc_id)
@@ -23,8 +23,24 @@ CREATE TABLE solaruser.user_user (
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
-CREATE INDEX user_user_billing_jdata_idx ON solaruser.user_user
-	USING GIN (billing_jdata jsonb_path_ops);
+CREATE INDEX user_user_jdata_idx ON solaruser.user_user
+	USING GIN (jdata jsonb_path_ops);
+
+/**
+ * Add or update the internal data for a user.
+ *
+ * @param user_id The ID of the user to update.
+ * @param json_obj The JSON object to add. All <code>null</code> values will be removed from the resulting object.
+ */
+CREATE OR REPLACE FUNCTION solaruser.store_user_data(
+	user_id bigint,
+	json_obj jsonb)
+  RETURNS void LANGUAGE sql VOLATILE AS
+$BODY$
+	UPDATE solaruser.user_user
+	SET jdata = jsonb_strip_nulls(COALESCE(jdata, '{}'::jsonb) || json_obj)
+	WHERE id = user_id
+$BODY$;
 
 /**
  * user_meta: JSON metadata specific to a user.

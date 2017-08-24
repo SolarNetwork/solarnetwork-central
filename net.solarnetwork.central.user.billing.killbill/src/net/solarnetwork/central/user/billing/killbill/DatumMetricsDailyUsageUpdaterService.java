@@ -225,22 +225,22 @@ public class DatumMetricsDailyUsageUpdaterService {
 		billingDataFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP, KILLBILL_ACCOUNTING_VALUE);
 		billingDataFilter.put(KILLBILL_DAILY_USAGE_PLAN_DATA_PROP, true);
 		UserFilterCommand criteria = new UserFilterCommand();
-		criteria.setBillingData(billingDataFilter);
+		criteria.setInternalData(billingDataFilter);
 		final int max = this.batchSize;
 		int offset = 0;
 		FilterResults<UserFilterMatch> userResults;
 		do {
 			userResults = userDao.findFiltered(criteria, null, offset, max);
 			for ( UserFilterMatch match : userResults ) {
-				Map<String, Object> billingData = match.getBillingData();
+				Map<String, Object> billingData = match.getInternalData();
 				String accountKey;
 				if ( billingData.get(KILLBILL_ACCOUNT_KEY_DATA_PROP) instanceof String ) {
 					accountKey = (String) billingData.get(KILLBILL_ACCOUNT_KEY_DATA_PROP);
 				} else {
 					// assign account key
 					accountKey = String.format(accountKeyTemplate, match.getId());
-					userDao.storeBillingDataProperty(match.getId(), KILLBILL_ACCOUNT_KEY_DATA_PROP,
-							accountKey);
+					userDao.storeInternalData(match.getId(),
+							Collections.singletonMap(KILLBILL_ACCOUNT_KEY_DATA_PROP, accountKey));
 				}
 				processOneAccount(match, accountKey);
 			}
@@ -298,7 +298,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 		// get the range of available audit data for this node, to help know when to start/stop
 		ReadableInterval auditInterval = nodeDatumDao.getAuditInterval(userNode.getNode().getId(), null);
 
-		String mostRecentUsageDate = (String) userNode.getUser().getBillingData()
+		String mostRecentUsageDate = (String) userNode.getUser().getInternalData()
 				.get(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP);
 		DateTime usageStartDay = null;
 		if ( mostRecentUsageDate != null ) {
@@ -360,8 +360,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 
 		// store the last processed date so we can pick up there next time
 		String nextStartDate = ISO_DATE_FORMATTER.print(usageEndDay.toLocalDate());
-		userDao.storeBillingDataProperty(userNode.getUser().getId(),
-				KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP, nextStartDate);
+		userDao.storeInternalData(userNode.getUser().getId(),
+				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP, nextStartDate));
 	}
 
 	private Bundle bundleForUserNode(UserNode userNode, Account account) {

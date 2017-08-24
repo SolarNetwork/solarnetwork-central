@@ -49,7 +49,7 @@ public final class BillingDataConstants {
 	 */
 	public static UserFilterCommand filterForAccountingType(String type) {
 		UserFilterCommand criteria = new UserFilterCommand();
-		criteria.setBillingData(singletonMap(ACCOUNTING_DATA_PROP, type));
+		criteria.setInternalData(singletonMap(ACCOUNTING_DATA_PROP, type));
 		return criteria;
 	}
 }

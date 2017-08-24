@@ -199,7 +199,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 
 		// verify filter
 		assertEquals("Search filter", userSearchBillingData(),
-				filterCapture.getValue().getBillingData());
+				filterCapture.getValue().getInternalData());
 	}
 
 	@Test
@@ -207,12 +207,12 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		// search for users configured to use killbill; find one
 		Map<String, Object> userBillingData = userSearchBillingData();
 		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
-		user.setBillingData(userBillingData);
+		user.setInternalData(userBillingData);
 		user.setLocationId(TEST_LOCATION_ID);
 		Capture<UserFilterCommand> filterCapture = new Capture<>();
 		List<UserFilterMatch> usersWithAccounting = new ArrayList<>();
 		UserMatch userMatch = new UserMatch(TEST_USER_ID, TEST_USER_EMAIL);
-		userMatch.setBillingData(userBillingData);
+		userMatch.setInternalData(userBillingData);
 		userMatch.setLocationId(TEST_LOCATION_ID);
 		userMatch.setName(TEST_USER_NAME);
 		usersWithAccounting.add(userMatch);
@@ -222,8 +222,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 				.andReturn(userAccountingSearchResults);
 
 		// configure the account key based on user ID because it's not already configured
-		expect(userDao.storeBillingDataProperty(TEST_USER_ID, KILLBILL_ACCOUNT_KEY_DATA_PROP,
-				TEST_USER_ACCOUNT_KEY)).andReturn(1);
+		userDao.storeInternalData(TEST_USER_ID,
+				Collections.singletonMap(KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER_ACCOUNT_KEY));
 
 		// look for Killbill Account
 		expect(client.accountForExternalKey(TEST_USER_ACCOUNT_KEY)).andReturn(null);
@@ -256,7 +256,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 
 		// verify search for users
 		assertNotNull(filterCapture.getValue());
-		assertEquals(userBillingData, filterCapture.getValue().getBillingData());
+		assertEquals(userBillingData, filterCapture.getValue().getInternalData());
 
 		// verify created account
 		List<Account> accounts = accountCapture.getValues();
@@ -284,12 +284,12 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		userBillingData.put(DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP,
 				TEST_USER_ACCOUNT_KEY);
 		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
-		user.setBillingData(userBillingData);
+		user.setInternalData(userBillingData);
 		user.setLocationId(TEST_LOCATION_ID);
 		Capture<UserFilterCommand> filterCapture = new Capture<>();
 		List<UserFilterMatch> usersWithAccounting = new ArrayList<>();
 		UserMatch userMatch = new UserMatch(TEST_USER_ID, TEST_USER_EMAIL);
-		userMatch.setBillingData(userBillingData);
+		userMatch.setInternalData(userBillingData);
 		userMatch.setLocationId(TEST_LOCATION_ID);
 		userMatch.setName(TEST_USER_NAME);
 		usersWithAccounting.add(userMatch);
@@ -317,7 +317,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 
 		// verify search for users
 		assertNotNull(filterCapture.getValue());
-		assertEquals(killbillAccountFilter, filterCapture.getValue().getBillingData());
+		assertEquals(killbillAccountFilter, filterCapture.getValue().getInternalData());
 	}
 
 	@Test
@@ -329,12 +329,12 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		userBillingData.put(DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP,
 				TEST_USER_ACCOUNT_KEY);
 		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
-		user.setBillingData(userBillingData);
+		user.setInternalData(userBillingData);
 		user.setLocationId(TEST_LOCATION_ID);
 		Capture<UserFilterCommand> filterCapture = new Capture<>();
 		List<UserFilterMatch> usersWithAccounting = new ArrayList<>();
 		UserMatch userMatch = new UserMatch(TEST_USER_ID, TEST_USER_EMAIL);
-		userMatch.setBillingData(userBillingData);
+		userMatch.setInternalData(userBillingData);
 		userMatch.setLocationId(TEST_LOCATION_ID);
 		userMatch.setName(TEST_USER_NAME);
 		usersWithAccounting.add(userMatch);
@@ -396,8 +396,9 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 				capture(usageCapture));
 
 		// finally, store the "most recent usage" date for future processing
-		expect(userDao.storeBillingDataProperty(TEST_USER_ID, KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
-				ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate()))).andReturn(1);
+		userDao.storeInternalData(TEST_USER_ID,
+				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
+						ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())));
 
 		replayAll();
 
@@ -405,7 +406,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 
 		// verify search for users
 		assertNotNull(filterCapture.getValue());
-		assertEquals(killbillAccountFilter, filterCapture.getValue().getBillingData());
+		assertEquals(killbillAccountFilter, filterCapture.getValue().getInternalData());
 
 		// verify bundle
 		Bundle bundle = bundleCapture.getValue();
@@ -444,7 +445,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 
 		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
 		user.setLocationId(TEST_LOCATION_ID);
-		user.setBillingData(userBillingData);
+		user.setInternalData(userBillingData);
 
 		Map<String, Object> user2BillingData = new HashMap<>(killbillAccountFilter);
 		user2BillingData.put(DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP,
@@ -452,19 +453,19 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 
 		User user2 = new User(TEST_USER2_ID, TEST_USER2_EMAIL);
 		user2.setLocationId(TEST_LOCATION2_ID);
-		user2.setBillingData(user2BillingData);
+		user2.setInternalData(user2BillingData);
 
 		Capture<UserFilterCommand> filterCapture = new Capture<>();
 		List<UserFilterMatch> usersWithAccounting = new ArrayList<>();
 
 		UserMatch userMatch = new UserMatch(TEST_USER_ID, TEST_USER_EMAIL);
-		userMatch.setBillingData(userBillingData);
+		userMatch.setInternalData(userBillingData);
 		userMatch.setLocationId(TEST_LOCATION_ID);
 		userMatch.setName(TEST_USER_NAME);
 		usersWithAccounting.add(userMatch);
 
 		UserMatch user2Match = new UserMatch(TEST_USER2_ID, TEST_USER2_EMAIL);
-		user2Match.setBillingData(user2BillingData);
+		user2Match.setInternalData(user2BillingData);
 		user2Match.setLocationId(TEST_LOCATION2_ID);
 		user2Match.setName(TEST_USER2_NAME);
 		usersWithAccounting.add(user2Match);
@@ -516,7 +517,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 
 		// verify search for users
 		assertNotNull(filterCapture.getValue());
-		assertEquals(killbillAccountFilter, filterCapture.getValue().getBillingData());
+		assertEquals(killbillAccountFilter, filterCapture.getValue().getInternalData());
 
 		// verify usage
 		List<UsageRecord> usage = usageCapture.getValue();
@@ -584,8 +585,9 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 				capture(usageCapture));
 
 		// finally, store the "most recent usage" date for future processing
-		expect(userDao.storeBillingDataProperty(user.getId(), KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
-				ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate()))).andReturn(1);
+		userDao.storeInternalData(user.getId(),
+				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
+						ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())));
 
 	}
 
