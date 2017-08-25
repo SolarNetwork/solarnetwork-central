@@ -90,7 +90,7 @@ import net.solarnetwork.central.user.domain.UserNode;
  * subscription to {@code basePlanName}. The subscription
  * <code>requestedDate</code> will be set to the earliest available datum date
  * for the node, essentially starting the plan when the node first posts data.
- * The subscription billing day will be set to the {@code billCycleDay}
+ * The subscription billing day will be set to the {@code accountBillCycleDay}
  * configured on this service.
  * </p>
  * 
@@ -118,9 +118,6 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The default currency map of country codes to currency codes. */
 	public static final Map<String, String> DEFAULT_CURRENCY_MAP = defaultCurrencyMap();
 
-	/** The default payment method data to add to new accounts. */
-	public static final Map<String, Object> DEFAULT_PAMENT_METHOD_DATA = defaultPaymentMethodData();
-
 	/** The {@literal accounting} billing data value for Killbill. */
 	public static final String KILLBILL_ACCOUNTING_VALUE = "kb";
 
@@ -144,8 +141,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The default base plan name. */
 	public static final String DEFAULT_BASE_PLAN_NAME = "api-posted-datum-metric-monthly-usage";
 
-	/** The default time zone offset (milliseconds from UTC) to use. */
-	public static final int DEFAULT_TIMEZONE_OFFSET = 12 * 60 * 60 * 1000;
+	/** The default time zone. */
+	public static final String DEFAULT_TIMEZONE = "Pacific/Auckland";
 
 	/** The default account key template to use. */
 	public static final String DEFAULT_ACCOUNT_KEY_TEMPLATE = "SN_%s";
@@ -153,8 +150,11 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The default bundle key template to use. */
 	public static final String DEFAULT_BUNDLE_KEY_TEMPLATE = "IN_%s";
 
-	/** The default bill cycle day. */
-	public static final Integer DEFAULT_BILL_CYCLE_DAY = 5;
+	/** The default account bill cycle day. */
+	public static final Integer DEFAULT_ACCOUNT_BILL_CYCLE_DAY = 5;
+
+	/** The default usage subscription bill cycle day. */
+	public static final Integer DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY = 1;
 
 	/** The default batch size. */
 	public static final int DEFAULT_BATCH_SIZE = 50;
@@ -169,12 +169,13 @@ public class DatumMetricsDailyUsageUpdaterService {
 	private final KillbillClient client;
 	private int batchSize = DEFAULT_BATCH_SIZE;
 	private Map<String, String> countryCurrencyMap = DEFAULT_CURRENCY_MAP;
-	private int timeZoneOffset = DEFAULT_TIMEZONE_OFFSET;
-	private Map<String, Object> paymentMethodData = DEFAULT_PAMENT_METHOD_DATA;
+	private String timeZone = DEFAULT_TIMEZONE;
+	private Map<String, Object> paymentMethodData;
 	private String basePlanName = DEFAULT_BASE_PLAN_NAME;
 	private String accountKeyTemplate = DEFAULT_ACCOUNT_KEY_TEMPLATE;
 	private String bundleKeyTemplate = DEFAULT_BUNDLE_KEY_TEMPLATE;
-	private Integer billCycleDay = DEFAULT_BILL_CYCLE_DAY;
+	private Integer accountBillCycleDay = DEFAULT_ACCOUNT_BILL_CYCLE_DAY;
+	private Integer subscriptionBillCycleDay = DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
 	private String usageUnitName = DEFAULT_USAGE_UNIT_NAME;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -183,13 +184,6 @@ public class DatumMetricsDailyUsageUpdaterService {
 		Map<String, String> map = new HashMap<>();
 		map.put("US", "USD");
 		map.put("NZ", "NZD");
-		return Collections.unmodifiableMap(map);
-	}
-
-	private static final Map<String, Object> defaultPaymentMethodData() {
-		Map<String, Object> map = new HashMap<>();
-		map.put("pluginName", "__EXTERNAL_PAYMENT__");
-		map.put("pluginInfo", new HashMap<String, Object>());
 		return Collections.unmodifiableMap(map);
 	}
 
@@ -267,7 +261,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 			}
 			log.info("Creating new account in Killbill for user {}", user.getEmail());
 			account = new Account();
-			account.setBillCycleDayLocal(billCycleDay);
+			account.setBillCycleDayLocal(accountBillCycleDay);
 			account.setCountry(loc.getCountry());
 			account.setCurrency(this.countryCurrencyMap.get(loc.getCountry()));
 			account.setEmail(user.getEmail());
@@ -278,8 +272,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 			account.setAccountId(accountId);
 		}
 
-		// verify payment method is configured on account
-		if ( account.getPaymentMethodId() == null ) {
+		// verify payment method is configured on account if configured on this service
+		if ( account.getPaymentMethodId() == null && paymentMethodData != null ) {
 			account.setPaymentMethodId(
 					client.addPaymentMethodToAccount(account, paymentMethodData, true));
 		}
@@ -374,7 +368,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 			bundle.setExternalKey(bundleKey);
 
 			Subscription base = new Subscription();
-			base.setBillCycleDayLocal(this.billCycleDay);
+			base.setBillCycleDayLocal(this.subscriptionBillCycleDay);
 			base.setPlanName(basePlanName);
 			base.setProductCategory(Subscription.BASE_PRODUCT_CATEGORY);
 
@@ -398,12 +392,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 	}
 
 	private String accountTimeZoneString(String timeZoneId) {
-		// killbill uses absolute offsets; get the non-DST time zone for the location
 		TimeZone tz = accountTimeZone(timeZoneId);
-		int tzOffset = tz.getRawOffset();
-		int tzOffsetHours = tzOffset / (60 * 60 * 1000);
-		int tzOffsetMins = Math.abs((tzOffset - (tzOffsetHours * 60 * 60 * 1000)) / (60 * 1000));
-		return String.format("%+02d:%02d", tzOffsetHours, tzOffsetMins);
+		return tz.getID();
 	}
 
 	private TimeZone accountTimeZone(String timeZoneId) {
@@ -411,16 +401,16 @@ public class DatumMetricsDailyUsageUpdaterService {
 		if ( timeZoneId != null ) {
 			tz = TimeZone.getTimeZone(timeZoneId);
 		} else {
-			tz = TimeZone.getTimeZone(TimeZone.getAvailableIDs(timeZoneOffset)[0]);
+			tz = TimeZone.getTimeZone(this.timeZone);
 		}
 		return tz;
 	}
 
 	private TimeZone timeZoneForAccount(Account account) {
 		if ( account != null && account.getTimeZone() != null ) {
-			return TimeZone.getTimeZone("GMT" + account.getTimeZone());
+			return TimeZone.getTimeZone(account.getTimeZone());
 		}
-		return accountTimeZone(null);
+		return TimeZone.getTimeZone(this.timeZone);
 	}
 
 	/**
@@ -456,15 +446,13 @@ public class DatumMetricsDailyUsageUpdaterService {
 	}
 
 	/**
-	 * Set a time zone offset to use for users without a time zone in their
-	 * location.
+	 * Set a time zone to use for users without a time zone in their location.
 	 * 
-	 * @param timeZoneOffset
-	 *        the milliseconds offset from UTC to use; defaults to
-	 *        {@link #DEFAULT_TIMEZONE_OFFSET} (UTC+12:00)
+	 * @param timeZone
+	 *        the time zone to use; defaults to {@link #DEFAULT_TIMEZONE}
 	 */
-	public void setTimeZoneOffset(int timeZoneOffset) {
-		this.timeZoneOffset = timeZoneOffset;
+	public void setTimeZone(String timeZone) {
+		this.timeZone = timeZone != null ? timeZone : DEFAULT_TIMEZONE;
 	}
 
 	/**
@@ -472,8 +460,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 * account that does not already have a payment method set.
 	 * 
 	 * @param paymentMethodData
-	 *        the payment method data to set; defaults to
-	 *        {@link #DEFAULT_PAMENT_METHOD_DATA}
+	 *        the payment method data to set
 	 */
 	public void setPaymentMethodData(Map<String, Object> paymentMethodData) {
 		this.paymentMethodData = paymentMethodData;
@@ -526,11 +513,22 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 * Set the bill cycle day to use.
 	 * 
 	 * @param billCycleDay
-	 *        the bill cycle day to set; defaults to
-	 *        {@link #DEFAULT_BILL_CYCLE_DAY}
+	 *        the account bill cycle day to set; defaults to
+	 *        {@link #DEFAULT_ACCOUNT_BILL_CYCLE_DAY}
 	 */
-	public void setBillCycleDay(Integer billCycleDay) {
-		this.billCycleDay = billCycleDay;
+	public void setAccountBillCycleDay(Integer billCycleDay) {
+		this.accountBillCycleDay = billCycleDay;
+	}
+
+	/**
+	 * Set the bill cycle day to use.
+	 * 
+	 * @param billCycleDay
+	 *        the subscription bill cycle day to set; defaults to
+	 *        {@link #DEFAULT_ACCOUNT_BILL_CYCLE_DAY}
+	 */
+	public void setSubscriptionBillCycleDay(Integer billCycleDay) {
+		this.subscriptionBillCycleDay = billCycleDay;
 	}
 
 	/**

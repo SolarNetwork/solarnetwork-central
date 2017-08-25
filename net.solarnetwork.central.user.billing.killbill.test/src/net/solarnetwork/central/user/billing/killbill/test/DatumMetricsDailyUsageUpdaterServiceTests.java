@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.user.billing.killbill.test;
 
+import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_ACCOUNT_BILL_CYCLE_DAY;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_BASE_PLAN_NAME;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_BATCH_SIZE;
-import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_BILL_CYCLE_DAY;
-import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_PAMENT_METHOD_DATA;
+import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_USAGE_UNIT_NAME;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_DAILY_USAGE_PLAN_DATA_PROP;
@@ -96,7 +96,6 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	private static final Long TEST_LOCATION_ID = -3L;
 	private static final String TEST_LOCATION_COUNTRY = "NZ";
 	private static final String TEST_NODE_TZ = "Pacific/Auckland";
-	private static final String TEST_NODE_TZ_OFFSET = "+12:00";
 	private static final String TEST_ACCOUNT_ID = "abc-123";
 	private static final String TEST_ACCOUNT_CURRENCY = "NZD";
 	private static final String TEST_PAYMENT_METHOD_ID = "def-234";
@@ -110,7 +109,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	private static final Long TEST_NODE2_ID = -5L;
 	private static final Long TEST_LOCATION2_ID = -6L;
 	private static final String TEST_LOCATION2_COUNTRY = "US";
-	private static final String TEST_NODE2_TZ_OFFSET = "-08:00";
+	private static final String TEST_NODE2_TZ = "America/Los_Angeles";
 	private static final String TEST_ACCOUNT2_ID = "hij-456";
 	private static final String TEST_ACCOUNT2_CURRENCY = "USD";
 	private static final String TEST_BUNDLE2_KEY = "IN_" + TEST_NODE2_ID;
@@ -151,26 +150,26 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	private Account createTestAccount() {
 		Account account = new Account();
 		account.setAccountId(TEST_ACCOUNT_ID);
-		account.setBillCycleDayLocal(DEFAULT_BILL_CYCLE_DAY);
+		account.setBillCycleDayLocal(DEFAULT_ACCOUNT_BILL_CYCLE_DAY);
 		account.setCountry(TEST_LOCATION_COUNTRY);
 		account.setCurrency(TEST_ACCOUNT_CURRENCY);
 		account.setEmail(TEST_USER_EMAIL);
 		account.setExternalKey(TEST_USER_ACCOUNT_KEY);
 		account.setPaymentMethodId(TEST_PAYMENT_METHOD_ID);
-		account.setTimeZone(TEST_NODE_TZ_OFFSET);
+		account.setTimeZone(TEST_NODE_TZ);
 		return account;
 	}
 
 	private Account createTestAccount2() {
 		Account account = new Account();
 		account.setAccountId(TEST_ACCOUNT2_ID);
-		account.setBillCycleDayLocal(DEFAULT_BILL_CYCLE_DAY);
+		account.setBillCycleDayLocal(DEFAULT_ACCOUNT_BILL_CYCLE_DAY);
 		account.setCountry(TEST_LOCATION2_COUNTRY);
 		account.setCurrency(TEST_ACCOUNT2_CURRENCY);
 		account.setEmail(TEST_USER2_EMAIL);
 		account.setExternalKey(TEST_USER2_ACCOUNT_KEY);
 		account.setPaymentMethodId(TEST_PAYMENT_METHOD_ID);
-		account.setTimeZone(TEST_NODE2_TZ_OFFSET);
+		account.setTimeZone(TEST_NODE2_TZ);
 		return account;
 	}
 
@@ -237,10 +236,6 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		Capture<Account> accountCapture = new Capture<>(CaptureType.ALL);
 		expect(client.createAccount(capture(accountCapture))).andReturn(TEST_ACCOUNT_ID);
 
-		// add payment method to account, as not configured yet
-		expect(client.addPaymentMethodToAccount(capture(accountCapture), eq(DEFAULT_PAMENT_METHOD_DATA),
-				eq(true))).andReturn(TEST_PAYMENT_METHOD_ID);
-
 		// now iterate over all user's nodes to look for usage
 		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);
 		UserNode userNode = new UserNode(user, node);
@@ -266,13 +261,13 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 			assertSame(accounts.get(0), account);
 		}
 		assertEquals("Account ID", TEST_ACCOUNT_ID, account.getAccountId());
-		assertEquals("Bill cycle day", DEFAULT_BILL_CYCLE_DAY, account.getBillCycleDayLocal());
+		assertEquals("Bill cycle day", DEFAULT_ACCOUNT_BILL_CYCLE_DAY, account.getBillCycleDayLocal());
 		assertEquals("Country", TEST_LOCATION_COUNTRY, account.getCountry());
 		assertEquals("Currency", TEST_ACCOUNT_CURRENCY, account.getCurrency());
 		assertEquals("Email", TEST_USER_EMAIL, account.getEmail());
 		assertEquals("ExternalKey", TEST_USER_ACCOUNT_KEY, account.getExternalKey());
 		assertEquals("Name", TEST_USER_NAME, account.getName());
-		assertEquals("TimeZone", TEST_NODE_TZ_OFFSET, account.getTimeZone());
+		assertEquals("TimeZone", TEST_NODE_TZ, account.getTimeZone());
 	}
 
 	@Test
@@ -354,7 +349,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		expect(userNodeDao.findUserNodesForUser(userMatch)).andReturn(allUserNodes);
 
 		// FOR EACH UserNode here; we have just one node
-		DateTime auditDataStart = new DateTime(2017, 1, 1, 0, 0, DateTimeZone.forOffsetHours(12));
+		DateTime auditDataStart = new DateTime(2017, 1, 1, 0, 0, DateTimeZone.forID(TEST_NODE_TZ));
 		DateTime auditDataEnd = auditDataStart.plusDays(3);
 		ReadableInterval auditInterval = new Interval(auditDataStart, auditDataEnd);
 		expect(nodeDatumDao.getAuditInterval(TEST_NODE_ID, null)).andReturn(auditInterval);
@@ -381,7 +376,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		expect(client.bundleForExternalKey(account, TEST_BUNDLE_KEY)).andReturn(null);
 
 		// to decide the requestedDate, find the earliest date with node data and use that
-		DateTime nodeDataStart = new DateTime(2015, 1, 1, 0, 0, DateTimeZone.forOffsetHours(12));
+		DateTime nodeDataStart = new DateTime(2015, 1, 1, 0, 0, DateTimeZone.forID(TEST_NODE_TZ));
 		DateTime nodeDataEnd = auditDataEnd.plusMinutes(15);
 		ReadableInterval nodeDataInterval = new Interval(nodeDataStart, nodeDataEnd);
 		expect(nodeDatumDao.getReportableInterval(TEST_NODE_ID, null)).andReturn(nodeDataInterval);
@@ -417,7 +412,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		assertNotNull("Subscriptions", bundle.getSubscriptions());
 		assertEquals("Subscription count", 1, bundle.getSubscriptions().size());
 		Subscription subscription = bundle.getSubscriptions().get(0);
-		assertEquals("Bill cycle day", DEFAULT_BILL_CYCLE_DAY, subscription.getBillCycleDayLocal());
+		assertEquals("Subscription bill cycle day", DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY,
+				subscription.getBillCycleDayLocal());
 		assertEquals("Plan name", DEFAULT_BASE_PLAN_NAME, subscription.getPlanName());
 		assertEquals("Plan name", Subscription.BASE_PRODUCT_CATEGORY, subscription.getProductCategory());
 
