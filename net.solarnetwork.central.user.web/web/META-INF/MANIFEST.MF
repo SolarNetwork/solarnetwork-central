@@ -38,6 +38,8 @@ Import-Package:
  net.solarnetwork.central.security.jdbc;version="1.4.0",
  net.solarnetwork.central.security.web;version="[1.0.0,2.0.0)",
  net.solarnetwork.central.support;version="1.9.0",
+ net.solarnetwork.central.user.billing.biz;version="0.1.0",
+ net.solarnetwork.central.user.billing.domain;version="0.1.0",
  net.solarnetwork.central.user.biz;version="1.14",
  net.solarnetwork.central.user.dao;version="1.6",
  net.solarnetwork.central.user.domain;version="1.12",
