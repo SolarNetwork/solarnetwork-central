@@ -1,5 +1,5 @@
 /* ==================================================================
- * BillingDataConstants.java - 22/08/2017 2:00:21 PM
+ * InvoiceFilter.java - 25/08/2017 2:37:09 PM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -22,34 +22,21 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
-import java.util.Collections;
-import net.solarnetwork.central.user.domain.UserFilterCommand;
+import net.solarnetwork.central.domain.Filter;
 
 /**
- * Constants related to billing data.
+ * Filter for Invoice.
  * 
  * @author matt
  * @version 1.0
  */
-public final class BillingDataConstants {
-
-	private BillingDataConstants() {
-		// don't construct me
-	}
-
-	/** The billing data property that holds the accounting integration name. */
-	public static final String ACCOUNTING_DATA_PROP = "accounting";
+public interface InvoiceFilter extends Filter {
 
 	/**
-	 * Create a new filter for searching for a specific accounting type.
+	 * Get the ID of the user to find invoices for.
 	 * 
-	 * @param type
-	 *        the type of accounting to search for
-	 * @return the filter
+	 * @return the user ID
 	 */
-	public static UserFilterCommand filterForAccountingType(String type) {
-		UserFilterCommand criteria = new UserFilterCommand();
-		criteria.setInternalData(Collections.singletonMap(ACCOUNTING_DATA_PROP, type));
-		return criteria;
-	}
+	Long getUserId();
+
 }

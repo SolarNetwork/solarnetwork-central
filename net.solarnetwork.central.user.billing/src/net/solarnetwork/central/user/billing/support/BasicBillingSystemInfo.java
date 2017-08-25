@@ -1,5 +1,5 @@
 /* ==================================================================
- * BillingDataConstants.java - 22/08/2017 2:00:21 PM
+ * BasicBillingSystemInfo.java - 25/08/2017 4:04:42 PM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -20,36 +20,34 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.billing.domain;
+package net.solarnetwork.central.user.billing.support;
 
-import java.util.Collections;
-import net.solarnetwork.central.user.domain.UserFilterCommand;
+import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 
 /**
- * Constants related to billing data.
+ * Basic implementation of {@link BillingSystemInfo}.
  * 
  * @author matt
  * @version 1.0
  */
-public final class BillingDataConstants {
+public class BasicBillingSystemInfo implements BillingSystemInfo {
 
-	private BillingDataConstants() {
-		// don't construct me
-	}
-
-	/** The billing data property that holds the accounting integration name. */
-	public static final String ACCOUNTING_DATA_PROP = "accounting";
+	private final String accountingSystemKey;
 
 	/**
-	 * Create a new filter for searching for a specific accounting type.
+	 * Constructor.
 	 * 
-	 * @param type
-	 *        the type of accounting to search for
-	 * @return the filter
+	 * @param accountingSystemKey
+	 *        the accounting system key to use
 	 */
-	public static UserFilterCommand filterForAccountingType(String type) {
-		UserFilterCommand criteria = new UserFilterCommand();
-		criteria.setInternalData(Collections.singletonMap(ACCOUNTING_DATA_PROP, type));
-		return criteria;
+	public BasicBillingSystemInfo(String accountingSystemKey) {
+		super();
+		this.accountingSystemKey = accountingSystemKey;
 	}
+
+	@Override
+	public String getAccountingSystemKey() {
+		return accountingSystemKey;
+	}
+
 }

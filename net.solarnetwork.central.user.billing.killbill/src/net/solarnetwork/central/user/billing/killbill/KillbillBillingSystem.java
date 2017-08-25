@@ -1,5 +1,5 @@
 /* ==================================================================
- * BillingDataConstants.java - 22/08/2017 2:00:21 PM
+ * KillbillBillingSystem.java - 25/08/2017 3:12:30 PM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -20,36 +20,39 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.billing.domain;
+package net.solarnetwork.central.user.billing.killbill;
 
-import java.util.Collections;
-import net.solarnetwork.central.user.domain.UserFilterCommand;
+import java.util.Locale;
+import net.solarnetwork.central.user.billing.biz.BillingSystem;
+import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
+import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 
 /**
- * Constants related to billing data.
+ * Killbill implementation of {@link BillingSystem}.
  * 
  * @author matt
  * @version 1.0
  */
-public final class BillingDataConstants {
+public class KillbillBillingSystem implements BillingSystem {
 
-	private BillingDataConstants() {
-		// don't construct me
+	/** The {@literal accounting} billing data value for Killbill. */
+	public static final String ACCOUNTING_SYSTEM_KEY = "kb";
+
+	@Override
+	public String getAccountingSystemKey() {
+		return ACCOUNTING_SYSTEM_KEY;
 	}
 
-	/** The billing data property that holds the accounting integration name. */
-	public static final String ACCOUNTING_DATA_PROP = "accounting";
-
-	/**
-	 * Create a new filter for searching for a specific accounting type.
-	 * 
-	 * @param type
-	 *        the type of accounting to search for
-	 * @return the filter
-	 */
-	public static UserFilterCommand filterForAccountingType(String type) {
-		UserFilterCommand criteria = new UserFilterCommand();
-		criteria.setInternalData(Collections.singletonMap(ACCOUNTING_DATA_PROP, type));
-		return criteria;
+	@Override
+	public boolean supportsAccountingSystemKey(String key) {
+		return ACCOUNTING_SYSTEM_KEY.equals(key);
 	}
+
+	@Override
+	public BillingSystemInfo getInfo(Locale locale) {
+		return new BasicBillingSystemInfo(getAccountingSystemKey());
+	}
+
+	// TODO
+
 }

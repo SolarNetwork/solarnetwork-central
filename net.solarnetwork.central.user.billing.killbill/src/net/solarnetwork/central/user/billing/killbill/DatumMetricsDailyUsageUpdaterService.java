@@ -118,9 +118,6 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The default currency map of country codes to currency codes. */
 	public static final Map<String, String> DEFAULT_CURRENCY_MAP = defaultCurrencyMap();
 
-	/** The {@literal accounting} billing data value for Killbill. */
-	public static final String KILLBILL_ACCOUNTING_VALUE = "kb";
-
 	/**
 	 * The billing data key that signals this updater service should be used via
 	 * a boolean flag.
@@ -216,7 +213,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 	public void execute() {
 		// iterate over users configured to use Killbill
 		Map<String, Object> billingDataFilter = new HashMap<>();
-		billingDataFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP, KILLBILL_ACCOUNTING_VALUE);
+		billingDataFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP,
+				KillbillBillingSystem.ACCOUNTING_SYSTEM_KEY);
 		billingDataFilter.put(KILLBILL_DAILY_USAGE_PLAN_DATA_PROP, true);
 		UserFilterCommand criteria = new UserFilterCommand();
 		criteria.setInternalData(billingDataFilter);

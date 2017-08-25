@@ -67,6 +67,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
 import net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterJob;
 import net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService;
+import net.solarnetwork.central.user.billing.killbill.KillbillBillingSystem;
 import net.solarnetwork.central.user.billing.killbill.KillbillClient;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
@@ -176,7 +177,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	private Map<String, Object> userSearchBillingData() {
 		Map<String, Object> killbillAccountFilter = new HashMap<>();
 		killbillAccountFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP,
-				DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNTING_VALUE);
+				KillbillBillingSystem.ACCOUNTING_SYSTEM_KEY);
 		killbillAccountFilter.put(KILLBILL_DAILY_USAGE_PLAN_DATA_PROP, true);
 		return killbillAccountFilter;
 	}

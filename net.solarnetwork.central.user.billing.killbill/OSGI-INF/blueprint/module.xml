@@ -64,6 +64,11 @@
 	
 	<!-- Published Services -->
 
+	<service interface="net.solarnetwork.central.user.billing.biz.BillingSystem">
+		<bean class="net.solarnetwork.central.user.billing.killbill.KillbillBillingSystem">
+		</bean>
+	</service>
+
 	<service ref="datumMetricsDailyUsageUpdaterJob" interface="org.osgi.service.event.EventHandler">
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">

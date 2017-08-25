@@ -1,5 +1,5 @@
 /* ==================================================================
- * BillingDataConstants.java - 22/08/2017 2:00:21 PM
+ * Invoice.java - 25/08/2017 2:30:33 PM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -22,34 +22,49 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
-import java.util.Collections;
-import net.solarnetwork.central.user.domain.UserFilterCommand;
+import java.math.BigDecimal;
+import java.util.UUID;
+import net.solarnetwork.central.domain.Entity;
 
 /**
- * Constants related to billing data.
+ * API for an invoice.
  * 
  * @author matt
  * @version 1.0
  */
-public final class BillingDataConstants {
-
-	private BillingDataConstants() {
-		// don't construct me
-	}
-
-	/** The billing data property that holds the accounting integration name. */
-	public static final String ACCOUNTING_DATA_PROP = "accounting";
+public interface Invoice extends Entity<UUID> {
 
 	/**
-	 * Create a new filter for searching for a specific accounting type.
+	 * Get the amount charged on this invoice.
 	 * 
-	 * @param type
-	 *        the type of accounting to search for
-	 * @return the filter
+	 * @return the amount
 	 */
-	public static UserFilterCommand filterForAccountingType(String type) {
-		UserFilterCommand criteria = new UserFilterCommand();
-		criteria.setInternalData(Collections.singletonMap(ACCOUNTING_DATA_PROP, type));
-		return criteria;
-	}
+	BigDecimal getChargedAmount();
+
+	/**
+	 * Get the total amount recorded paid on this invoice.
+	 * 
+	 * @return the paid amount
+	 */
+	BigDecimal getPaidAmount();
+
+	/**
+	 * Get the current invoice balance.
+	 * 
+	 * <p>
+	 * If this is positive then the invoice has outstanding payment due.
+	 * </p>
+	 * 
+	 * @return the invoice balance
+	 */
+	BigDecimal getBalance();
+
+	/**
+	 * Get the currency this invoice is in, as a string currency code like
+	 * {@literal NZD} or {@literal USD}.
+	 * 
+	 * @return the currency code
+	 */
+	String getCurrencyCode();
+
 }

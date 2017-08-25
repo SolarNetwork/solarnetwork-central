@@ -1,5 +1,5 @@
 /* ==================================================================
- * BillingDataConstants.java - 22/08/2017 2:00:21 PM
+ * DaoBillingBizTests.java - 25/08/2017 3:28:09 PM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -20,36 +20,16 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.billing.domain;
+package net.solarnetwork.central.user.billing.biz.dao.test;
 
-import java.util.Collections;
-import net.solarnetwork.central.user.domain.UserFilterCommand;
+import net.solarnetwork.central.user.billing.biz.dao.DaoBillingBiz;
 
 /**
- * Constants related to billing data.
+ * Test cases for the {@link DaoBillingBiz} class.
  * 
  * @author matt
  * @version 1.0
  */
-public final class BillingDataConstants {
+public class DaoBillingBizTests {
 
-	private BillingDataConstants() {
-		// don't construct me
-	}
-
-	/** The billing data property that holds the accounting integration name. */
-	public static final String ACCOUNTING_DATA_PROP = "accounting";
-
-	/**
-	 * Create a new filter for searching for a specific accounting type.
-	 * 
-	 * @param type
-	 *        the type of accounting to search for
-	 * @return the filter
-	 */
-	public static UserFilterCommand filterForAccountingType(String type) {
-		UserFilterCommand criteria = new UserFilterCommand();
-		criteria.setInternalData(Collections.singletonMap(ACCOUNTING_DATA_PROP, type));
-		return criteria;
-	}
 }
