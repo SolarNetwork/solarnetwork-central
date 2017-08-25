@@ -233,6 +233,19 @@ public class User extends BaseEntity implements UserInfo {
 	}
 
 	/**
+	 * Get an internal data property.
+	 * 
+	 * @param key
+	 *        the key of the internal data property to get
+	 * @return the value, or {@literal null} if not available
+	 * @since 1.4
+	 */
+	public Object getInternalDataValue(String key) {
+		Map<String, Object> map = getInternalData();
+		return (map != null ? map.get(key) : null);
+	}
+
+	/**
 	 * Add or remove one internal data element.
 	 * 
 	 * @param key
@@ -243,7 +256,7 @@ public class User extends BaseEntity implements UserInfo {
 	 *         {@literal null} if none
 	 * @since 1.4
 	 */
-	public Object putInternalData(String key, Object data) {
+	public Object putInternalDataValue(String key, Object data) {
 		Map<String, Object> map = getInternalData();
 		if ( map == null ) {
 			if ( data == null ) {

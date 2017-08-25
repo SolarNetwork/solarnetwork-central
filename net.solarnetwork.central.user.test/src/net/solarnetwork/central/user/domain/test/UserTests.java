@@ -105,7 +105,7 @@ public class UserTests {
 	@Test
 	public void putInternalDataInitial() {
 		User u = new User();
-		Object prev = u.putInternalData("foo", "bar");
+		Object prev = u.putInternalDataValue("foo", "bar");
 		assertEquals("Internal data", Collections.singletonMap("foo", "bar"), u.getInternalData());
 		assertNull("Previous value", prev);
 		assertEquals("Internal data JSON", "{\"foo\":\"bar\"}", u.getInternalDataJson());
@@ -115,7 +115,7 @@ public class UserTests {
 	public void putInternalDataReplace() {
 		User u = new User();
 		u.setInternalDataJson("{\"foo\":\"bim\"}");
-		Object prev = u.putInternalData("foo", "bar");
+		Object prev = u.putInternalDataValue("foo", "bar");
 		assertEquals("Internal data", Collections.singletonMap("foo", "bar"), u.getInternalData());
 		assertEquals("Previous value", "bim", prev);
 		assertEquals("Internal data JSON", "{\"foo\":\"bar\"}", u.getInternalDataJson());
@@ -125,7 +125,7 @@ public class UserTests {
 	public void putInternalDataRemove() {
 		User u = new User();
 		u.setInternalDataJson("{\"foo\":\"bim\"}");
-		Object prev = u.putInternalData("foo", null);
+		Object prev = u.putInternalDataValue("foo", null);
 		assertEquals("Internal data", Collections.emptyMap(), u.getInternalData());
 		assertEquals("Previous value", "bim", prev);
 		assertEquals("Internal data JSON", "{}", u.getInternalDataJson());

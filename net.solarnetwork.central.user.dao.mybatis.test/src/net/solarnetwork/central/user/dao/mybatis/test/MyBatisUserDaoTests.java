@@ -130,7 +130,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void updateInternalDataUnchanged() {
 		storeInternalPropertyNullColumn();
 		User user = userDao.get(this.userId);
-		user.putInternalData("bim", "bam");
+		user.putInternalDataValue("bim", "bam");
 		Long userId = userDao.store(user);
 		assertEquals(user.getId(), userId);
 		User updated = userDao.get(user.getId());
