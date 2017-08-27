@@ -143,7 +143,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 	public static final String DEFAULT_BUNDLE_KEY_TEMPLATE = "IN_%s";
 
 	/** The default account bill cycle day. */
-	public static final Integer DEFAULT_ACCOUNT_BILL_CYCLE_DAY = 5;
+	public static final Integer DEFAULT_ACCOUNT_BILL_CYCLE_DAY = 1;
 
 	/** The default usage subscription bill cycle day. */
 	public static final Integer DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY = 1;
