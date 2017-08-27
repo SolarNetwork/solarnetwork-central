@@ -28,12 +28,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
+import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
+import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.web.domain.Response;
@@ -79,6 +83,29 @@ public class BillingController extends WebServiceControllerSupport {
 			info = (system != null ? system.getInfo(locale) : null);
 		}
 		return response(info);
+	}
+
+	/**
+	 * Find matching invoices.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @return the search results
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/invoices/list", method = RequestMethod.GET)
+	public Response<FilterResults<InvoiceMatch>> findFilteredInvoices(InvoiceFilterCommand filter) {
+		BillingBiz biz = billingBiz.service();
+		FilterResults<InvoiceMatch> results = null;
+		if ( biz != null ) {
+			if ( filter.getUserId() == null ) {
+				SecurityUser actor = SecurityUtils.getCurrentUser();
+				filter.setUserId(actor.getUserId());
+			}
+			results = biz.findFilteredInvoices(filter, filter.getSortDescriptors(), filter.getOffset(),
+					filter.getMax());
+		}
+		return response(results);
 	}
 
 }

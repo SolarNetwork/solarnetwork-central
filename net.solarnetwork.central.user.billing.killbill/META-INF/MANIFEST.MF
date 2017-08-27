@@ -16,6 +16,7 @@ Import-Package:
  net.solarnetwork.central.domain;version="1.22.0",
  net.solarnetwork.central.scheduler;version="1.4.0",
  net.solarnetwork.central.security;version="1.11.0",
+ net.solarnetwork.central.support;version="1.14.0",
  net.solarnetwork.central.user.billing.biz;version="0.1.0",
  net.solarnetwork.central.user.billing.domain;version="0.1.0",
  net.solarnetwork.central.user.billing.support;version="0.1.0",

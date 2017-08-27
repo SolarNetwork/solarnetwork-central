@@ -125,11 +125,6 @@ public class DatumMetricsDailyUsageUpdaterService {
 	public static final String KILLBILL_DAILY_USAGE_PLAN_DATA_PROP = "kb_datumMetricsDailyUsage";
 
 	/**
-	 * The billing data key that holds the Killbill account external key to use.
-	 */
-	public static final String KILLBILL_ACCOUNT_KEY_DATA_PROP = "kb_accountKey";
-
-	/**
 	 * The billing data key that holds the "most recent usage date" to start
 	 * from.
 	 */
@@ -226,13 +221,15 @@ public class DatumMetricsDailyUsageUpdaterService {
 			for ( UserFilterMatch match : userResults ) {
 				Map<String, Object> billingData = match.getInternalData();
 				String accountKey;
-				if ( billingData.get(KILLBILL_ACCOUNT_KEY_DATA_PROP) instanceof String ) {
-					accountKey = (String) billingData.get(KILLBILL_ACCOUNT_KEY_DATA_PROP);
+				if ( billingData
+						.get(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP) instanceof String ) {
+					accountKey = (String) billingData
+							.get(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP);
 				} else {
 					// assign account key
 					accountKey = String.format(accountKeyTemplate, match.getId());
-					userDao.storeInternalData(match.getId(),
-							Collections.singletonMap(KILLBILL_ACCOUNT_KEY_DATA_PROP, accountKey));
+					userDao.storeInternalData(match.getId(), Collections.singletonMap(
+							UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, accountKey));
 				}
 				processOneAccount(match, accountKey);
 			}

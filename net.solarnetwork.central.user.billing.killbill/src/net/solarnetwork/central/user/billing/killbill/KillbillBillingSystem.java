@@ -26,11 +26,17 @@ import java.util.List;
 import java.util.Locale;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
+import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.domain.User;
 
 /**
  * Killbill implementation of {@link BillingSystem}.
@@ -42,6 +48,23 @@ public class KillbillBillingSystem implements BillingSystem {
 
 	/** The {@literal accounting} billing data value for Killbill. */
 	public static final String ACCOUNTING_SYSTEM_KEY = "kb";
+
+	private final UserDao userDao;
+	private final KillbillClient client;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param client
+	 *        the client to use
+	 * @param userDao
+	 *        the User DAO to use
+	 */
+	public KillbillBillingSystem(KillbillClient client, UserDao userDao) {
+		super();
+		this.userDao = userDao;
+		this.client = client;
+	}
 
 	@Override
 	public String getAccountingSystemKey() {
@@ -61,8 +84,29 @@ public class KillbillBillingSystem implements BillingSystem {
 	@Override
 	public FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		// TODO Auto-generated method stub
-		return null;
+		User user = userDao.get(filter.getUserId());
+		if ( user == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, filter.getUserId());
+		}
+		String accountKey = (String) user
+				.getInternalDataValue(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP);
+		if ( accountKey == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, filter.getUserId());
+		}
+		Account account = client.accountForExternalKey(accountKey);
+		if ( account == null ) {
+			return new BasicFilterResults<InvoiceMatch>(null);
+		}
+		FilterResults<InvoiceMatch> results;
+		if ( filter.getUnpaid() != null && filter.getUnpaid().booleanValue() ) {
+			@SuppressWarnings({ "rawtypes", "unchecked" })
+			List<InvoiceMatch> invoices = (List) client.listInvoices(account, true);
+			results = new BasicFilterResults<>(invoices, (long) invoices.size(), 0, invoices.size());
+		} else {
+			// TODO
+			results = null;
+		}
+		return results;
 	}
 
 }

@@ -95,8 +95,7 @@ public class DaoBillingBiz implements BillingBiz {
 		if ( system == null ) {
 			return new BasicFilterResults<>(null, 0L, 0, 0);
 		}
-		// TODO
-		return null;
+		return system.findFilteredInvoices(filter, sortDescriptors, offset, max);
 	}
 
 }

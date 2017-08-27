@@ -1,5 +1,5 @@
 /* ==================================================================
- * InvoiceFilter.java - 25/08/2017 2:37:09 PM
+ * UserDataProperties.java - 27/08/2017 3:41:08 PM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -20,31 +20,25 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.billing.domain;
+package net.solarnetwork.central.user.billing.killbill;
 
-import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.user.domain.User;
 
 /**
- * Filter for Invoice.
+ * Constants for {@link User} internal properties.
  * 
  * @author matt
  * @version 1.0
  */
-public interface InvoiceFilter extends Filter {
+public final class UserDataProperties {
 
 	/**
-	 * Get the ID of the user to find invoices for.
-	 * 
-	 * @return the user ID
+	 * The billing data key that holds the Killbill account external key to use.
 	 */
-	Long getUserId();
+	public static final String KILLBILL_ACCOUNT_KEY_DATA_PROP = "kb_accountKey";
 
-	/**
-	 * Flag to filter based on the invoice being unpaid or not.
-	 * 
-	 * @return {@literal true} for only unpaid invoices; {@literal false} for
-	 *         only fully paid invoices; {@code null} for both
-	 */
-	Boolean getUnpaid();
+	private UserDataProperties() {
+		// don't constrcut me
+	}
 
 }

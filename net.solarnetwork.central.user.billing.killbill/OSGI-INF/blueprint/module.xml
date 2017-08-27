@@ -66,6 +66,8 @@
 
 	<service interface="net.solarnetwork.central.user.billing.biz.BillingSystem">
 		<bean class="net.solarnetwork.central.user.billing.killbill.KillbillBillingSystem">
+			<argument ref="killbillClient"/>
+			<argument ref="userDao"/>
 		</bean>
 	</service>
 

@@ -37,11 +37,12 @@ import net.solarnetwork.central.support.MutableSortDescriptor;
  */
 public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter {
 
-	private static final long serialVersionUID = 915646548230356302L;
+	private static final long serialVersionUID = -6127206654609364990L;
 
 	private List<MutableSortDescriptor> sorts;
 	private Integer offset = 0;
 	private Integer max;
+	private Boolean unpaid;
 
 	/**
 	 * Get the mutable sort descriptors.
@@ -115,6 +116,21 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 */
 	public void setMax(Integer max) {
 		this.max = max;
+	}
+
+	@Override
+	public Boolean getUnpaid() {
+		return unpaid;
+	}
+
+	/**
+	 * Set the unpaid criteria.
+	 * 
+	 * @param unpaid
+	 *        the unpaid value to limit the results to
+	 */
+	public void setUnpaid(Boolean unpaid) {
+		this.unpaid = unpaid;
 	}
 
 }

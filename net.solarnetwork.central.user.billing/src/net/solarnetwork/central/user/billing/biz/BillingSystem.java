@@ -22,8 +22,13 @@
 
 package net.solarnetwork.central.user.billing.biz;
 
+import java.util.List;
 import java.util.Locale;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
+import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
+import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 
 /**
  * API for interacting with a billing system.
@@ -59,4 +64,19 @@ public interface BillingSystem {
 	 */
 	BillingSystemInfo getInfo(Locale locale);
 
+	/**
+	 * Search for invoices.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never {@literal null}
+	 */
+	FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
 }
