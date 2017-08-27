@@ -61,6 +61,7 @@
 	<bean id="objectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
 		<property name="serializers">
 			<list>
+				<bean class="net.solarnetwork.util.BigDecimalStringSerializer"/>
 				<bean class="net.solarnetwork.util.JodaDateTimeSerializer"/>
 				<bean class="net.solarnetwork.util.JodaLocalDateSerializer"/>
 				<bean class="net.solarnetwork.util.JodaLocalDateTimeSerializer"/>

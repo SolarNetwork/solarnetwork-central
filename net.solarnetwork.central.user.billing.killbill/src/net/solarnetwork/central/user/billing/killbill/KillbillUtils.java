@@ -29,6 +29,7 @@ import java.util.Map;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 import net.solarnetwork.util.BigDecimalStringSerializer;
 
 /**
@@ -56,7 +57,7 @@ public final class KillbillUtils {
 	 * @return an ObjectMapper
 	 */
 	public static final ObjectMapper defaultObjectMapper() {
-		return Jackson2ObjectMapperBuilder.json()
+		return Jackson2ObjectMapperBuilder.json().modules(new JodaModule())
 				.serializerByType(BigDecimal.class, BigDecimalStringSerializer.INSTANCE)
 				.serializationInclusion(Include.NON_NULL).build();
 	}

@@ -302,9 +302,9 @@ public class KillbillRestClientTests {
 		Map<String, Object> expected = JsonUtils
 				.getStringMap("{\"subscriptionId\":\"" + TEST_SUBSCRIPTION_ID
 						+ "\",\"unitUsageRecords\":[{\"unitType\":\"test-unit\",\"usageRecords\":["
-						+ "{\"recordDate\":\"2017-01-01\",\"amount\":1},"
-						+ "{\"recordDate\":\"2017-01-02\",\"amount\":2},"
-						+ "{\"recordDate\":\"2017-01-03\",\"amount\":3}]}]}");
+						+ "{\"recordDate\":\"2017-01-01\",\"amount\":\"1\"},"
+						+ "{\"recordDate\":\"2017-01-02\",\"amount\":\"2\"},"
+						+ "{\"recordDate\":\"2017-01-03\",\"amount\":\"3\"}]}]}");
 
 		// @formatter:off
 		serverExpect("/1.0/kb/usages", HttpMethod.POST)
