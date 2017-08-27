@@ -27,8 +27,12 @@ import java.util.Map;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
+import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 
@@ -121,4 +125,35 @@ public interface KillbillClient {
 	 *        the usage records
 	 */
 	void addUsage(Subscription subscription, String unit, List<UsageRecord> usage);
+
+	/**
+	 * Get all account invoices, optionally limited to just unpaid ones.
+	 * 
+	 * @param account
+	 *        the account to get invoices for
+	 * @param unpaidOnly
+	 *        {@literal true} for just invoices with an outstanding balance;
+	 *        {@code false} for all invoices
+	 * @return the invoices, never {@literal null}
+	 */
+	List<Invoice> listInvoices(Account account, boolean unpaidOnly);
+
+	/**
+	 * Search for invoices.
+	 * 
+	 * @param account
+	 *        the account to get invoices for
+	 * @param filter
+	 *        the query filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never {@literal null}
+	 */
+	FilterResults<Invoice> findInvoices(Account account, InvoiceFilter filter,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+
 }

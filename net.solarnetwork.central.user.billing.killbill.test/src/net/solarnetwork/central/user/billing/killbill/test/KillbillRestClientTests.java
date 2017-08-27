@@ -46,6 +46,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,6 +67,7 @@ import net.solarnetwork.central.user.billing.killbill.KillbillRestClient;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
+import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.util.JsonUtils;
@@ -91,6 +94,7 @@ public class KillbillRestClientTests {
 	private static final String TEST_PASSWORD = "test.password";
 	private static final String TEST_BASIC_AUTH_HEADER = "Basic " + Base64Utils
 			.encodeToString((TEST_USERNAME + ":" + TEST_PASSWORD).getBytes(Charset.forName("UTF-8")));
+	private static final String TEST_TIME_ZONE = "Pacific/Auckland";
 
 	private MockRestServiceServer server;
 	private KillbillRestClient client;
@@ -315,6 +319,38 @@ public class KillbillRestClientTests {
 
 		// then
 		// no exception thrown
+	}
+
+	@Test
+	public void unpaidInvoices() {
+		// given
+		Account account = new Account(TEST_ACCOUNT_ID);
+		account.setTimeZone(TEST_TIME_ZONE);
+
+		// @formatter:off
+		serverExpect("/1.0/kb/accounts/"+TEST_ACCOUNT_ID+"/invoices?unpaidInvoicesOnly=true", HttpMethod.GET)
+			.andRespond(withSuccess()
+				.body(new ClassPathResource("account-invoices-01.json", getClass()))
+				.contentType(MediaType.APPLICATION_JSON_UTF8));
+	    // @formatter:on
+
+		//when
+		List<Invoice> results = client.listInvoices(account, true);
+
+		// then
+		assertThat("Result count", results, hasSize(1));
+
+		Invoice invoice = results.get(0);
+		assertThat("Invoice ID", invoice.getId(),
+				equalTo(UUID.fromString("31b3c76a-3b6a-46ad-b30b-98f21a4e76cd")));
+		assertThat("Invoice balance", invoice.getBalance(), equalTo(new BigDecimal("18.59")));
+		assertThat("Invoice amount", invoice.getAmount(), equalTo(new BigDecimal("18.59")));
+		assertThat("Invoice currency", invoice.getCurrencyCode(), equalTo("NZD"));
+		assertThat("Invoice date", invoice.getInvoiceDate(), equalTo(new LocalDate(2017, 12, 6)));
+		assertThat("Invoice created", invoice.getCreated(), equalTo(
+				invoice.getInvoiceDate().toDateTimeAtStartOfDay(DateTimeZone.forID(TEST_TIME_ZONE))));
+		assertThat("Invoice time zone", invoice.getTimeZoneId(), equalTo(TEST_TIME_ZONE));
+
 	}
 
 }

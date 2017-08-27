@@ -13,7 +13,7 @@ Import-Package:
  net.solarnetwork.central.dao;version="1.14.0",
  net.solarnetwork.central.datum.dao;version="2.2.0",
  net.solarnetwork.central.datum.domain;version="1.19.0",
- net.solarnetwork.central.domain;version="1.21.0",
+ net.solarnetwork.central.domain;version="1.22.0",
  net.solarnetwork.central.scheduler;version="1.4.0",
  net.solarnetwork.central.security;version="1.11.0",
  net.solarnetwork.central.user.billing.biz;version="0.1.0",

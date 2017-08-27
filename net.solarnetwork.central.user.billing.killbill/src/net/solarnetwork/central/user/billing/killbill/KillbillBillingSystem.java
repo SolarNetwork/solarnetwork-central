@@ -22,9 +22,14 @@
 
 package net.solarnetwork.central.user.billing.killbill;
 
+import java.util.List;
 import java.util.Locale;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
+import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
+import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 
 /**
@@ -53,6 +58,11 @@ public class KillbillBillingSystem implements BillingSystem {
 		return new BasicBillingSystemInfo(getAccountingSystemKey());
 	}
 
-	// TODO
+	@Override
+	public FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

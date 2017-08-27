@@ -45,9 +45,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
+import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsage;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
@@ -66,6 +70,9 @@ public class KillbillRestClient implements KillbillClient {
 	public static final String DEFAULT_BASE_URL = "https://billing.solarnetwork.net";
 
 	private static final ParameterizedTypeReference<List<Bundle>> BUNDLE_LIST_TYPE = new ParameterizedTypeReference<List<Bundle>>() {
+	};
+
+	private static final ParameterizedTypeReference<List<Invoice>> INVOICE_LIST_TYPE = new ParameterizedTypeReference<List<Invoice>>() {
 	};
 
 	private String baseUrl = DEFAULT_BASE_URL;
@@ -218,6 +225,29 @@ public class KillbillRestClient implements KillbillClient {
 				Collections.singletonList(new UsageUnitRecord(unit, usage)));
 		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/usages")).build().toUri();
 		client.postForObject(uri, su, Void.class);
+	}
+
+	@Override
+	public List<Invoice> listInvoices(Account account, boolean unpaidOnly) {
+		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts/{accountId}/invoices"))
+				.queryParam("unpaidInvoicesOnly", unpaidOnly).buildAndExpand(uriVariables).toUri();
+		List<Invoice> results = getForObjectOrNull(uri, INVOICE_LIST_TYPE);
+
+		// make sure invoice time zone set to account time zone
+		if ( results != null && account.getTimeZone() != null ) {
+			final String tz = account.getTimeZone();
+			results.parallelStream().forEach(invoice -> invoice.setTimeZoneId(tz));
+		}
+
+		return (results != null ? results : Collections.emptyList());
+	}
+
+	@Override
+	public FilterResults<Invoice> findInvoices(Account account, InvoiceFilter filter,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**

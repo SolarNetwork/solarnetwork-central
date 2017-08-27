@@ -39,17 +39,10 @@ public interface Invoice extends Entity<UUID> {
 	 * 
 	 * @return the amount
 	 */
-	BigDecimal getChargedAmount();
+	BigDecimal getAmount();
 
 	/**
-	 * Get the total amount recorded paid on this invoice.
-	 * 
-	 * @return the paid amount
-	 */
-	BigDecimal getPaidAmount();
-
-	/**
-	 * Get the current invoice balance.
+	 * Get the current invoice balance (unpaid amount).
 	 * 
 	 * <p>
 	 * If this is positive then the invoice has outstanding payment due.
