@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.killbill.domain;
 import java.math.BigDecimal;
 import org.joda.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * A record of usage for a day.
@@ -32,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
  * @author matt
  * @version 1.0
  */
+@JsonPropertyOrder({ "recordDate", "amount" })
 public class UsageRecord {
 
 	private LocalDate recordDate;

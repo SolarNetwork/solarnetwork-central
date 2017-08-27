@@ -1,5 +1,5 @@
 /* ==================================================================
- * BundleSubscriptionTests.java - 23/08/2017 2:57:00 PM
+ * InvoiceTests.java - 28/08/2017 7:08:02 AM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -24,25 +24,25 @@ package net.solarnetwork.central.user.billing.killbill.domain.test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
-import java.util.Collections;
-import java.util.HashMap;
+import java.math.BigDecimal;
 import java.util.Map;
+import java.util.UUID;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.user.billing.killbill.KillbillUtils;
-import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
-import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
-import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
+import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.util.JsonUtils;
 
 /**
- * Test cases for the {@link BundleSubscription} class.
+ * Test cases for the {@link Invoice} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class BundleSubscriptionTests {
+public class InvoiceTests {
 
 	private ObjectMapper objectMapper;
 
@@ -53,29 +53,25 @@ public class BundleSubscriptionTests {
 
 	@Test
 	public void serializeToJson() throws Exception {
-		Bundle bundle = new Bundle();
-		bundle.setAccountId("a");
-		bundle.setBundleId("b"); // this should be ignored
-		bundle.setExternalKey("c");
+		Invoice invoice = new Invoice(UUID.randomUUID().toString());
+		invoice.setAmount(new BigDecimal("1.20"));
+		invoice.setBalance(new BigDecimal("0.12"));
+		invoice.setCurrencyCode("NZD");
+		invoice.setInvoiceDate(new LocalDate(2017, 1, 1));
+		invoice.setTimeZoneId("Pacific/Auckland");
 
-		Subscription sub = new Subscription();
-		sub.setBillCycleDayLocal(1);
-		sub.setPlanName("d");
-		sub.setProductCategory(Subscription.BASE_PRODUCT_CATEGORY);
-
-		bundle.setSubscriptions(Collections.singletonList(sub));
-
-		String json = objectMapper.writeValueAsString(new BundleSubscription(bundle));
+		String json = objectMapper.writeValueAsString(invoice);
 		Map<String, Object> data = JsonUtils.getStringMap(json);
 
-		Map<String, Object> expected = new HashMap<>(5);
-		expected.put("accountId", "a");
-		expected.put("externalKey", "c");
-		expected.put("billCycleDayLocal", 1);
-		expected.put("planName", "d");
-		expected.put("productCategory", Subscription.BASE_PRODUCT_CATEGORY);
+		Map<String, Object> expected = JsonUtils.getStringMap("{\"id\":\"" + invoice.getId()
+				+ "\",\"currency\":\"NZD\",\"amount\":\"1.20\",\"balance\":\"0.12\""
+				+ ",\"invoiceDate\":\"2017-01-01\",\"timeZoneId\":\"Pacific/Auckland\",\"created\":"
+				+ invoice.getInvoiceDate()
+						.toDateTimeAtStartOfDay(DateTimeZone.forID(invoice.getTimeZoneId())).getMillis()
+				+ "}");
 
 		assertThat(data, equalTo(expected));
+
 	}
 
 }

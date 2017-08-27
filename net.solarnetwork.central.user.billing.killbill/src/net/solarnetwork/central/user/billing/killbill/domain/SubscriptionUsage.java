@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.killbill.domain;
 
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Object to associate usage with a subscription.
@@ -31,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author matt
  * @version 1.0
  */
+@JsonPropertyOrder({ "subscriptionId", "unitUsageRecords" })
 public class SubscriptionUsage {
 
 	private final Subscription subscription;

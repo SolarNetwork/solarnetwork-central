@@ -36,7 +36,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
@@ -120,10 +119,7 @@ public class KillbillRestClient implements KillbillClient {
 		for ( HttpMessageConverter<?> converter : template.getMessageConverters() ) {
 			if ( converter instanceof MappingJackson2HttpMessageConverter ) {
 				MappingJackson2HttpMessageConverter messageConverter = (MappingJackson2HttpMessageConverter) converter;
-				ObjectMapper mapper = Jackson2ObjectMapperBuilder.json()
-						.moduleClassLoader(getClass().getClassLoader()).build();
-				mapper.setSerializationInclusion(Include.NON_NULL);
-				messageConverter.setObjectMapper(mapper);
+				messageConverter.setObjectMapper(KillbillUtils.defaultObjectMapper());
 			}
 		}
 

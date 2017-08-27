@@ -46,7 +46,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Before;
@@ -341,8 +340,7 @@ public class KillbillRestClientTests {
 		assertThat("Result count", results, hasSize(1));
 
 		Invoice invoice = results.get(0);
-		assertThat("Invoice ID", invoice.getId(),
-				equalTo(UUID.fromString("31b3c76a-3b6a-46ad-b30b-98f21a4e76cd")));
+		assertThat("Invoice ID", invoice.getId(), equalTo("31b3c76a-3b6a-46ad-b30b-98f21a4e76cd"));
 		assertThat("Invoice balance", invoice.getBalance(), equalTo(new BigDecimal("18.59")));
 		assertThat("Invoice amount", invoice.getAmount(), equalTo(new BigDecimal("18.59")));
 		assertThat("Invoice currency", invoice.getCurrencyCode(), equalTo("NZD"));

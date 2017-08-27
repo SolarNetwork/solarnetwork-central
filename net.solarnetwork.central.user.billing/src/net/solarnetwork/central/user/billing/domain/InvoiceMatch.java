@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
-import java.util.UUID;
 import net.solarnetwork.central.domain.FilterMatch;
 
 /**
@@ -31,6 +30,6 @@ import net.solarnetwork.central.domain.FilterMatch;
  * @author matt
  * @version 1.0
  */
-public interface InvoiceMatch extends FilterMatch<UUID> {
+public interface InvoiceMatch extends FilterMatch<String> {
 
 }

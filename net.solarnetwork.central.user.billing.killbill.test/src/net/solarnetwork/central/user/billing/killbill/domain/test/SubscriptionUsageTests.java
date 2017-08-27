@@ -30,9 +30,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.joda.time.LocalDate;
+import org.junit.Before;
 import org.junit.Test;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.user.billing.killbill.KillbillUtils;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsage;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
@@ -47,9 +48,12 @@ import net.solarnetwork.util.JsonUtils;
  */
 public class SubscriptionUsageTests {
 
-	// use MappingJackson2HttpMessageConverter's ObjectMapper to pick up Joda support
-	private static final ObjectMapper OBJECT_MAPPER = new MappingJackson2HttpMessageConverter()
-			.getObjectMapper();
+	private ObjectMapper objectMapper;
+
+	@Before
+	public void setup() {
+		objectMapper = KillbillUtils.defaultObjectMapper();
+	}
 
 	@Test
 	public void serializeToJson() throws Exception {
@@ -64,15 +68,15 @@ public class SubscriptionUsageTests {
 				.singletonList(new UsageUnitRecord("b", usageRecords));
 		SubscriptionUsage usage = new SubscriptionUsage(subscription, usageUnitRecords);
 
-		String json = OBJECT_MAPPER.writeValueAsString(usage);
+		String json = objectMapper.writeValueAsString(usage);
 		Map<String, Object> data = JsonUtils.getStringMap(json);
 
 		Map<String, Object> expected = JsonUtils
 				.getStringMap("{\"subscriptionId\":\"a\",\"unitUsageRecords\":["
 						+ "{\"unitType\":\"b\",\"usageRecords\":["
-						+ "{\"recordDate\":\"2017-01-01\",\"amount\":1},"
-						+ "{\"recordDate\":\"2017-01-02\",\"amount\":2},"
-						+ "{\"recordDate\":\"2017-01-03\",\"amount\":3}]}]}");
+						+ "{\"recordDate\":\"2017-01-01\",\"amount\":\"1\"},"
+						+ "{\"recordDate\":\"2017-01-02\",\"amount\":\"2\"},"
+						+ "{\"recordDate\":\"2017-01-03\",\"amount\":\"3\"}]}]}");
 
 		assertThat(data, equalTo(expected));
 

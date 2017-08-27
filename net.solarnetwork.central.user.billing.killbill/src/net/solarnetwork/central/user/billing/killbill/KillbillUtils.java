@@ -22,9 +22,14 @@
 
 package net.solarnetwork.central.user.billing.killbill;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.util.BigDecimalStringSerializer;
 
 /**
  * Global Killbill helpers.
@@ -42,6 +47,18 @@ public final class KillbillUtils {
 		map.put("pluginName", "__EXTERNAL_PAYMENT__");
 		map.put("pluginInfo", Collections.emptyMap());
 		return Collections.unmodifiableMap(map);
+	}
+
+	/**
+	 * Get an {@link ObjectMapper} instance configured with standard support for
+	 * Killbill interaction.
+	 * 
+	 * @return an ObjectMapper
+	 */
+	public static final ObjectMapper defaultObjectMapper() {
+		return Jackson2ObjectMapperBuilder.json()
+				.serializerByType(BigDecimal.class, BigDecimalStringSerializer.INSTANCE)
+				.serializationInclusion(Include.NON_NULL).build();
 	}
 
 }

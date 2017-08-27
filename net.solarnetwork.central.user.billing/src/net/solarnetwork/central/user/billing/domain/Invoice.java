@@ -23,7 +23,6 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 import net.solarnetwork.central.domain.Entity;
 
 /**
@@ -32,7 +31,7 @@ import net.solarnetwork.central.domain.Entity;
  * @author matt
  * @version 1.0
  */
-public interface Invoice extends Entity<UUID> {
+public interface Invoice extends Entity<String> {
 
 	/**
 	 * Get the amount charged on this invoice.

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.killbill.domain;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Usage records of a specific type.
@@ -30,6 +31,7 @@ import java.util.List;
  * @author matt
  * @version 1.0
  */
+@JsonPropertyOrder({ "unitType", "usageRecords" })
 public class UsageUnitRecord {
 
 	private final String unitType;

@@ -27,6 +27,7 @@ import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.BaseObjectEntity;
@@ -38,7 +39,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
  * @author matt
  * @version 1.0
  */
-public class Invoice extends BaseObjectEntity<UUID>
+public class Invoice extends BaseObjectEntity<String>
 		implements net.solarnetwork.central.user.billing.domain.Invoice, InvoiceMatch {
 
 	private static final long serialVersionUID = -6377572949534534745L;
@@ -50,17 +51,36 @@ public class Invoice extends BaseObjectEntity<UUID>
 	private String currencyCode;
 
 	/**
+	 * Default constructor.
+	 */
+	public Invoice() {
+		super();
+	}
+
+	/**
+	 * Construct with an ID.
+	 * 
+	 * @param id
+	 *        the ID
+	 */
+	public Invoice(String id) {
+		super();
+		setId(id);
+	}
+
+	/**
 	 * Set the invoice ID.
 	 * 
 	 * <p>
-	 * This is an alias for {@link #setId(UUID)}.
+	 * This is an alias for {@link #setId(String)} passing
+	 * {@link UUID#toString()}.
 	 * </p>
 	 * 
 	 * @param invoiceId
 	 *        the invoice ID to set
 	 */
 	public void setInvoiceId(UUID invoiceId) {
-		setId(invoiceId);
+		setId(invoiceId.toString());
 	}
 
 	/**
@@ -92,6 +112,7 @@ public class Invoice extends BaseObjectEntity<UUID>
 	 * 
 	 * @return the invoice date
 	 */
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	public LocalDate getInvoiceDate() {
 		return invoiceDate;
 	}
