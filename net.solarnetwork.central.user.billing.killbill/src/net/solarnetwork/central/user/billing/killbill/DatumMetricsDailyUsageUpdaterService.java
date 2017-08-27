@@ -384,7 +384,11 @@ public class DatumMetricsDailyUsageUpdaterService {
 					.withZone(DateTimeZone.forTimeZone(timeZoneForAccount(account))).toLocalDate()
 					: null);
 			String bundleId = client.createBundle(account, requestedDate, bundle);
-			bundle.setBundleId(bundleId);
+			log.info("Created bundle {} with ID {} with plan {} for user {} node {}", bundleKey,
+					bundleId, basePlanName, userNode.getUser().getEmail(), userNode.getNode().getId());
+
+			// to pick up subscription ID; re-get bundle now
+			bundle = client.bundleForExternalKey(account, bundleKey);
 		}
 		return bundle;
 	}

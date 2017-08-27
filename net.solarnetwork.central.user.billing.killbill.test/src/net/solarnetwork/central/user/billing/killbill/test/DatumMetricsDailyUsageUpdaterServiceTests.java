@@ -27,7 +27,6 @@ import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUs
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_BATCH_SIZE;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_USAGE_UNIT_NAME;
-import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_DAILY_USAGE_PLAN_DATA_PROP;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP;
 import static net.solarnetwork.central.user.billing.killbill.KillbillClient.ISO_DATE_FORMATTER;
@@ -36,6 +35,7 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isNull;
 import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.same;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -55,6 +55,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.ReadableInterval;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.SolarLocationDao;
@@ -69,6 +70,7 @@ import net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpda
 import net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService;
 import net.solarnetwork.central.user.billing.killbill.KillbillBillingSystem;
 import net.solarnetwork.central.user.billing.killbill.KillbillClient;
+import net.solarnetwork.central.user.billing.killbill.UserDataProperties;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
@@ -102,6 +104,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	private static final String TEST_PAYMENT_METHOD_ID = "def-234";
 	private static final String TEST_BUNDLE_KEY = "IN_" + TEST_NODE_ID;
 	private static final String TEST_BUNDLE_ID = "efg-345";
+	private static final String TEST_SUBSCRIPTION_ID = "efg-345-678";
 
 	private static final Long TEST_USER2_ID = -4L;
 	private static final String TEST_USER2_EMAIL = "test2@localhost";
@@ -222,8 +225,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 				.andReturn(userAccountingSearchResults);
 
 		// configure the account key based on user ID because it's not already configured
-		userDao.storeInternalData(TEST_USER_ID,
-				Collections.singletonMap(KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER_ACCOUNT_KEY));
+		userDao.storeInternalData(TEST_USER_ID, Collections
+				.singletonMap(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER_ACCOUNT_KEY));
 
 		// look for Killbill Account
 		expect(client.accountForExternalKey(TEST_USER_ACCOUNT_KEY)).andReturn(null);
@@ -277,8 +280,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		Map<String, Object> killbillAccountFilter = userSearchBillingData();
 
 		Map<String, Object> userBillingData = new HashMap<>(killbillAccountFilter);
-		userBillingData.put(DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP,
-				TEST_USER_ACCOUNT_KEY);
+		userBillingData.put(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER_ACCOUNT_KEY);
 		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
 		user.setInternalData(userBillingData);
 		user.setLocationId(TEST_LOCATION_ID);
@@ -322,8 +324,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		Map<String, Object> killbillAccountFilter = userSearchBillingData();
 
 		Map<String, Object> userBillingData = new HashMap<>(killbillAccountFilter);
-		userBillingData.put(DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP,
-				TEST_USER_ACCOUNT_KEY);
+		userBillingData.put(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER_ACCOUNT_KEY);
 		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
 		user.setInternalData(userBillingData);
 		user.setLocationId(TEST_LOCATION_ID);
@@ -386,10 +387,18 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		expect(client.createBundle(eq(account), eq(nodeDataStart.toLocalDate()), capture(bundleCapture)))
 				.andReturn(TEST_BUNDLE_ID);
 
-		Capture<Subscription> subscriptionCapture = new Capture<>();
+		// immediately after creation, get the Bundle so we have the subscription ID
+		Bundle bundle = new Bundle();
+		bundle.setAccountId(TEST_ACCOUNT_ID);
+		bundle.setBundleId(TEST_BUNDLE_ID);
+		bundle.setExternalKey(TEST_BUNDLE_KEY);
+		Subscription subscription = new Subscription(TEST_SUBSCRIPTION_ID);
+		subscription.setPlanName(DEFAULT_BASE_PLAN_NAME);
+		bundle.setSubscriptions(Collections.singletonList(subscription));
+		expect(client.bundleForExternalKey(account, TEST_BUNDLE_KEY)).andReturn(bundle);
+
 		Capture<List<UsageRecord>> usageCapture = new Capture<>();
-		client.addUsage(capture(subscriptionCapture), eq(DEFAULT_USAGE_UNIT_NAME),
-				capture(usageCapture));
+		client.addUsage(same(subscription), eq(DEFAULT_USAGE_UNIT_NAME), capture(usageCapture));
 
 		// finally, store the "most recent usage" date for future processing
 		userDao.storeInternalData(TEST_USER_ID,
@@ -405,18 +414,19 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		assertEquals(killbillAccountFilter, filterCapture.getValue().getInternalData());
 
 		// verify bundle
-		Bundle bundle = bundleCapture.getValue();
-		assertNotNull(bundle);
-		assertEquals("Account ID", TEST_ACCOUNT_ID, bundle.getAccountId());
-		assertEquals("Bundle ID", TEST_BUNDLE_ID, bundle.getBundleId());
-		assertEquals("External key", TEST_BUNDLE_KEY, bundle.getExternalKey());
-		assertNotNull("Subscriptions", bundle.getSubscriptions());
-		assertEquals("Subscription count", 1, bundle.getSubscriptions().size());
-		Subscription subscription = bundle.getSubscriptions().get(0);
+		Bundle capturedBundle = bundleCapture.getValue();
+		assertNotNull(capturedBundle);
+		assertEquals("Account ID", TEST_ACCOUNT_ID, capturedBundle.getAccountId());
+		Assert.assertNull("Bundle ID", capturedBundle.getBundleId());
+		assertEquals("External key", TEST_BUNDLE_KEY, capturedBundle.getExternalKey());
+		assertNotNull("Subscriptions", capturedBundle.getSubscriptions());
+		assertEquals("Subscription count", 1, capturedBundle.getSubscriptions().size());
+		Subscription capturedSubscription = capturedBundle.getSubscriptions().get(0);
 		assertEquals("Subscription bill cycle day", DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY,
-				subscription.getBillCycleDayLocal());
-		assertEquals("Plan name", DEFAULT_BASE_PLAN_NAME, subscription.getPlanName());
-		assertEquals("Plan name", Subscription.BASE_PRODUCT_CATEGORY, subscription.getProductCategory());
+				capturedSubscription.getBillCycleDayLocal());
+		assertEquals("Plan name", DEFAULT_BASE_PLAN_NAME, capturedSubscription.getPlanName());
+		assertEquals("Plan name", Subscription.BASE_PRODUCT_CATEGORY,
+				capturedSubscription.getProductCategory());
 
 		// verify usage
 		List<UsageRecord> usage = usageCapture.getValue();
@@ -437,16 +447,14 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		Map<String, Object> killbillAccountFilter = userSearchBillingData();
 
 		Map<String, Object> userBillingData = new HashMap<>(killbillAccountFilter);
-		userBillingData.put(DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP,
-				TEST_USER_ACCOUNT_KEY);
+		userBillingData.put(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER_ACCOUNT_KEY);
 
 		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
 		user.setLocationId(TEST_LOCATION_ID);
 		user.setInternalData(userBillingData);
 
 		Map<String, Object> user2BillingData = new HashMap<>(killbillAccountFilter);
-		user2BillingData.put(DatumMetricsDailyUsageUpdaterService.KILLBILL_ACCOUNT_KEY_DATA_PROP,
-				TEST_USER2_ACCOUNT_KEY);
+		user2BillingData.put(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER2_ACCOUNT_KEY);
 
 		User user2 = new User(TEST_USER2_ID, TEST_USER2_EMAIL);
 		user2.setLocationId(TEST_LOCATION2_ID);
@@ -480,12 +488,10 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		bundle.setExternalKey(TEST_BUNDLE_KEY);
 		bundle.setSubscriptions(
 				Collections.singletonList(Subscription.withPlanName(DEFAULT_BASE_PLAN_NAME)));
-		Capture<Subscription> subscriptionCapture = new Capture<>();
 		Capture<List<UsageRecord>> usageCapture = new Capture<>();
 		List<DateTime> dayList = new ArrayList<>();
 		List<Long> countList = new ArrayList<>();
-		processUser(user, userMatch, node, account, bundle, 1, subscriptionCapture, usageCapture,
-				dayList, countList);
+		processUser(user, userMatch, node, account, bundle, 1, usageCapture, dayList, countList);
 		// update the "most recent usage" date to the last day, to start processing there
 		userBillingData.put(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
 				ISO_DATE_FORMATTER.print(dayList.get(0).toLocalDate()));
@@ -498,12 +504,10 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		bundle2.setExternalKey(TEST_BUNDLE2_KEY);
 		bundle2.setSubscriptions(
 				Collections.singletonList(Subscription.withPlanName(DEFAULT_BASE_PLAN_NAME)));
-		Capture<Subscription> subscription2Capture = new Capture<>();
 		Capture<List<UsageRecord>> usage2Capture = new Capture<>();
 		List<DateTime> day2List = new ArrayList<>();
 		List<Long> count2List = new ArrayList<>();
-		processUser(user2, user2Match, node2, account2, bundle2, 1, subscription2Capture, usage2Capture,
-				day2List, count2List);
+		processUser(user2, user2Match, node2, account2, bundle2, 1, usage2Capture, day2List, count2List);
 		// update the "most recent usage" date to the last day, to start processing there
 		user2BillingData.put(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
 				ISO_DATE_FORMATTER.print(day2List.get(0).toLocalDate()));
@@ -541,8 +545,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	}
 
 	private void processUser(User user, UserMatch userMatch, SolarNode node, Account account,
-			Bundle bundle, int numDays, Capture<Subscription> subscriptionCapture,
-			Capture<List<UsageRecord>> usageCapture, List<DateTime> dayList, List<Long> countList) {
+			Bundle bundle, int numDays, Capture<List<UsageRecord>> usageCapture, List<DateTime> dayList,
+			List<Long> countList) {
 		// get Killbill Account #1
 		expect(client.accountForExternalKey(account.getExternalKey())).andReturn(account);
 
@@ -578,7 +582,7 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		// get the Bundle for this node
 		expect(client.bundleForExternalKey(account, bundle.getExternalKey())).andReturn(bundle);
 
-		client.addUsage(capture(subscriptionCapture), eq(DEFAULT_USAGE_UNIT_NAME),
+		client.addUsage(same(bundle.getSubscriptions().get(0)), eq(DEFAULT_USAGE_UNIT_NAME),
 				capture(usageCapture));
 
 		// finally, store the "most recent usage" date for future processing
