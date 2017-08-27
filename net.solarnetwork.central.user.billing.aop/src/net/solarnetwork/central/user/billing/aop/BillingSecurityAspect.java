@@ -26,6 +26,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
+import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
 
@@ -52,8 +53,18 @@ public class BillingSecurityAspect extends AuthorizationSupport {
 	public void forUserAccess(Long userId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.billing.biz.*BillingBiz.findFilteredInvoices(..)) && args(filter, ..)")
+	public void findFilteredInvoices(InvoiceFilter filter) {
+	}
+
 	@Before("forUserAccess(userId)")
 	public void checkForUserAccess(Long userId) {
+		requireUserReadAccess(userId);
+	}
+
+	@Before("findFilteredInvoices(filter)")
+	public void checkFindFilteredInvoices(InvoiceFilter filter) {
+		Long userId = (filter != null ? filter.getUserId() : null);
 		requireUserReadAccess(userId);
 	}
 
