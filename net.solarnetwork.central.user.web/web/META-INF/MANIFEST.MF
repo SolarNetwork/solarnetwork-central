@@ -4,7 +4,7 @@ Bundle-Name: SolarNetwork User Web
 Bundle-SymbolicName: net.solarnetwork.central.user.web
 Bundle-Version: 1.20.0
 Bundle-Vendor: SolarNetwork
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: WEB-INF/classes/
 Web-ContextPath: /solaruser
 Import-Package: 
@@ -13,6 +13,8 @@ Import-Package:
  javax.activation,
  javax.el;version="[1.0,4.0)",
  javax.mail;version="[1.4,2.0)";resolution:=optional,
+ javax.money;version="[1.0,2.0)",
+ javax.money.format;version="[1.0,2.0)",
  javax.servlet;version="2.5.0",
  javax.servlet.http;version="2.5.0",
  javax.servlet.jsp;version="2.1.0",
@@ -40,6 +42,7 @@ Import-Package:
  net.solarnetwork.central.support;version="1.9.0",
  net.solarnetwork.central.user.billing.biz;version="0.1.0",
  net.solarnetwork.central.user.billing.domain;version="0.1.0",
+ net.solarnetwork.central.user.billing.support;version="0.1.0",
  net.solarnetwork.central.user.biz;version="1.14",
  net.solarnetwork.central.user.dao;version="1.6",
  net.solarnetwork.central.user.domain;version="1.12",
