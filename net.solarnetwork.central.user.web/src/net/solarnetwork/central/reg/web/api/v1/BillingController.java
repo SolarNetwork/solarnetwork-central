@@ -23,6 +23,8 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,11 +35,13 @@ import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.support.LocalizedInvoiceMatch;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.web.domain.Response;
@@ -94,7 +98,8 @@ public class BillingController extends WebServiceControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/list", method = RequestMethod.GET)
-	public Response<FilterResults<InvoiceMatch>> findFilteredInvoices(InvoiceFilterCommand filter) {
+	public Response<FilterResults<InvoiceMatch>> findFilteredInvoices(InvoiceFilterCommand filter,
+			Locale locale) {
 		BillingBiz biz = billingBiz.service();
 		FilterResults<InvoiceMatch> results = null;
 		if ( biz != null ) {
@@ -105,6 +110,21 @@ public class BillingController extends WebServiceControllerSupport {
 			results = biz.findFilteredInvoices(filter, filter.getSortDescriptors(), filter.getOffset(),
 					filter.getMax());
 		}
+
+		// localize the response
+		if ( results.getReturnedResultCount() != null && results.getReturnedResultCount() > 0 ) {
+			if ( locale == null ) {
+				locale = Locale.getDefault();
+			}
+			List<InvoiceMatch> localizedMatches = new ArrayList<InvoiceMatch>(
+					results.getReturnedResultCount());
+			for ( InvoiceMatch match : results ) {
+				localizedMatches.add(LocalizedInvoiceMatch.of(match, locale));
+			}
+			results = new BasicFilterResults<InvoiceMatch>(localizedMatches, results.getTotalResults(),
+					results.getStartingOffset(), results.getReturnedResultCount());
+		}
+
 		return response(results);
 	}
 
