@@ -13,4 +13,5 @@ Import-Package:
  net.solarnetwork.central.domain;version="1.21.0",
  net.solarnetwork.central.support;version="1.13.0",
  net.solarnetwork.central.user.domain;version="1.14.0",
+ net.solarnetwork.javax.money;version="1.0.0",
  org.joda.time;version="[2.4,3.0)"
