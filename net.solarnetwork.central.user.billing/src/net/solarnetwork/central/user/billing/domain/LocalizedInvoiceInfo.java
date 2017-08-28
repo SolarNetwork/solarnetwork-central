@@ -37,6 +37,13 @@ package net.solarnetwork.central.user.billing.domain;
 public interface LocalizedInvoiceInfo {
 
 	/**
+	 * Get the invoice date, as a formatted and localized string.
+	 * 
+	 * @return the invoice creation date
+	 */
+	String getLocalizedDate();
+
+	/**
 	 * Get the amount charged on this invoice, as a formatted and localized
 	 * string.
 	 * 

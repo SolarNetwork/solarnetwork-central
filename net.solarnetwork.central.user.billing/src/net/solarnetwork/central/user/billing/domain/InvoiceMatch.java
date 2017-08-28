@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.domain.FilterMatch;
 
 /**
@@ -32,6 +33,20 @@ import net.solarnetwork.central.domain.FilterMatch;
  * @version 1.0
  */
 public interface InvoiceMatch extends FilterMatch<String> {
+
+	/**
+	 * Get the date this invoice was created.
+	 * 
+	 * @return the created date
+	 */
+	public DateTime getCreated();
+
+	/**
+	 * Get the time zone this invoice was created in.
+	 * 
+	 * @return the time zone ID
+	 */
+	public String getTimeZoneId();
 
 	/**
 	 * Get the amount charged on this invoice.
