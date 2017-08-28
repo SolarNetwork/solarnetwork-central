@@ -1,61 +1,55 @@
 <a id="top"></a>
 
+<p class="intro">
+	<fmt:message key='billing.intro'/>
+</p>
+
 <section id="outstanding-invoices" class="hidden">
 	<h2>
 		<fmt:message key='billing.outstandingInvoiceList.header'/>
 	</h2>
 	<p class="intro">
 		<fmt:message key='billing.outstandingInvoiceList.intro'>
-			<fmt:param value="${fn:length(outstandingInvoiceList)}"/>
+			<fmt:param value="0"/>
 		</fmt:message>
 	</p>
-	<c:if test="${fn:length(outstandingInvoiceList) > 0}">
-		<table class="table" id="outstanding-invoice-list-table">
-			<thead>
-				<tr>
-					<th><fmt:message key="user.node.id.label"/></th>
-					<th><fmt:message key="user.node.created.label"/></th>
-					<th><fmt:message key="user.node.name.label"/></th>
-					<th><fmt:message key="user.node.description.label"/></th>
-					<th><fmt:message key="user.node.private.label"/></th>
-					<th><fmt:message key="user.node.certificate.label"/></th>
-					<th></th>
-				</tr>
-				<tr class="template">
-				</tr>
-			</thead>
-			<tbody>
-			</tbody>
-		</table>
-	</c:if>
+	<table class="table unpaid" id="outstanding-invoice-list-table">
+		<thead>
+			<tr>
+				<th><fmt:message key="billing.invoice.date.label"/></th>
+				<th><fmt:message key="billing.invoice.balance.label"/></th>
+			</tr>
+			<tr class="template">
+				<td data-tprop="localizedDate"></td>
+				<td><span class="label label-danger" data-tprop="localizedBalance"></span></td>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
 </section>
 
-<section id="invoices">
+<section id="invoices" class="hidden">
 	<h2>
 		<fmt:message key='billing.invoiceList.header'/>
 	</h2>
 	<p class="intro">
 		<fmt:message key='billing.invoiceList.intro'>
-			<fmt:param value="${fn:length(invoiceList)}"/>
+			<fmt:param value="0"/>
 		</fmt:message>
 	</p>
-	<c:if test="${fn:length(invoiceList) > 0}">
-		<table class="table" id="invoice-list-table">
-			<thead>
-				<tr>
-					<th><fmt:message key="user.node.id.label"/></th>
-					<th><fmt:message key="user.node.created.label"/></th>
-					<th><fmt:message key="user.node.name.label"/></th>
-					<th><fmt:message key="user.node.description.label"/></th>
-					<th><fmt:message key="user.node.private.label"/></th>
-					<th><fmt:message key="user.node.certificate.label"/></th>
-					<th></th>
-				</tr>
-				<tr class="template">
-				</tr>
-			</thead>
-			<tbody>
-			</tbody>
-		</table>
-	</c:if>
+	<table class="table" id="invoice-list-table">
+		<thead>
+			<tr>
+				<th><fmt:message key="billing.invoice.date.label"/></th>
+				<th><fmt:message key="billing.invoice.balance.label"/></th>
+			</tr>
+			<tr class="template">
+				<td data-tprop="localizedDate"></td>
+				<td><span class="label label-danger" data-tprop="localizedBalance"></span></td>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
 </section>
