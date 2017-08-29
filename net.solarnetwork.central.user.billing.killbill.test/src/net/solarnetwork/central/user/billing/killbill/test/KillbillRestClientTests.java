@@ -27,6 +27,7 @@ import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizati
 import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizationInterceptor.CREATED_BY_HEADER_NAME;
 import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizationInterceptor.DEFAULT_CREATED_BY;
 import static net.solarnetwork.central.user.billing.killbill.test.JsonObjectMatchers.json;
+import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -69,6 +70,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
+import net.solarnetwork.central.user.billing.killbill.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.util.JsonUtils;
@@ -96,6 +98,7 @@ public class KillbillRestClientTests {
 	private static final String TEST_BASIC_AUTH_HEADER = "Basic " + Base64Utils
 			.encodeToString((TEST_USERNAME + ":" + TEST_PASSWORD).getBytes(Charset.forName("UTF-8")));
 	private static final String TEST_TIME_ZONE = "Pacific/Auckland";
+	private static final String TEST_INVOICE_ID = "2b717636-56b0-4967-aaab-68d83ba1a455";
 
 	private MockRestServiceServer server;
 	private KillbillRestClient client;
@@ -459,5 +462,109 @@ public class KillbillRestClientTests {
 	}
 
 	// TODO: pagination with unpaidOnly=(true|false)
+
+	@Test
+	public void invoiceForIdNotFound() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/kb/invoices/" +TEST_INVOICE_ID +"?withItems=false&withChildrenItems=false",
+				HttpMethod.GET)
+			.andRespond(withStatus(HttpStatus.NOT_FOUND)
+				.body(new ClassPathResource("invoice-00.json", getClass()))
+				.contentType(MediaType.APPLICATION_JSON_UTF8));
+	    // @formatter:on
+
+		// when
+		Account account = new Account(TEST_ACCOUNT_ID, TEST_TIME_ZONE);
+		Invoice invoice = client.getInvoice(account, TEST_INVOICE_ID, false, false);
+
+		// then
+		assertThat("Invoice not found", invoice, nullValue());
+	}
+
+	@Test
+	public void invoiceForId() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/kb/invoices/" +TEST_INVOICE_ID +"?withItems=false&withChildrenItems=false",
+				HttpMethod.GET)
+			.andRespond(withSuccess()
+				.body(new ClassPathResource("invoice-01.json", getClass()))
+				.contentType(MediaType.APPLICATION_JSON_UTF8));
+	    // @formatter:on
+
+		// when
+		Account account = new Account(TEST_ACCOUNT_ID, TEST_TIME_ZONE);
+		Invoice invoice = client.getInvoice(account, TEST_INVOICE_ID, false, false);
+
+		// then
+		assertThat("Invoice found", invoice, notNullValue());
+		assertThat("Invoice ID", invoice.getId(), equalTo(TEST_INVOICE_ID));
+		assertThat("Invoice created", invoice.getCreated(), equalTo(
+				new LocalDate(2017, 8, 28).toDateTimeAtStartOfDay(DateTimeZone.forID(TEST_TIME_ZONE))));
+		assertThat("Invoice amount", invoice.getAmount(), equalTo(new BigDecimal("0.14")));
+		assertThat("Invoice balance", invoice.getBalance(), equalTo(new BigDecimal("0.14")));
+		assertThat("Invoice currency code", invoice.getCurrencyCode(), equalTo("NZD"));
+		assertThat("Invoice date", invoice.getInvoiceDate(), equalTo(new LocalDate(2017, 8, 28)));
+		assertThat("Invoice number", invoice.getInvoiceNumber(), equalTo("3"));
+		assertThat("Invoice time zone", invoice.getTimeZoneId(), equalTo(TEST_TIME_ZONE));
+
+		assertThat("Invoice items empty", invoice.getItems(), emptyCollectionOf(InvoiceItem.class));
+	}
+
+	@Test
+	public void invoiceForIdWithItems() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/kb/invoices/" +TEST_INVOICE_ID +"?withItems=true&withChildrenItems=false",
+				HttpMethod.GET)
+			.andRespond(withSuccess()
+				.body(new ClassPathResource("invoice-02.json", getClass()))
+				.contentType(MediaType.APPLICATION_JSON_UTF8));
+	    // @formatter:on
+
+		// when
+		Account account = new Account(TEST_ACCOUNT_ID, TEST_TIME_ZONE);
+		Invoice invoice = client.getInvoice(account, TEST_INVOICE_ID, true, false);
+
+		// then
+		assertThat("Invoice found", invoice, notNullValue());
+		assertThat("Invoice ID", invoice.getId(), equalTo(TEST_INVOICE_ID));
+		assertThat("Invoice created", invoice.getCreated(), equalTo(
+				new LocalDate(2017, 8, 28).toDateTimeAtStartOfDay(DateTimeZone.forID(TEST_TIME_ZONE))));
+		assertThat("Invoice amount", invoice.getAmount(), equalTo(new BigDecimal("0.14")));
+		assertThat("Invoice balance", invoice.getBalance(), equalTo(new BigDecimal("0.14")));
+		assertThat("Invoice currency code", invoice.getCurrencyCode(), equalTo("NZD"));
+		assertThat("Invoice date", invoice.getInvoiceDate(), equalTo(new LocalDate(2017, 8, 28)));
+		assertThat("Invoice number", invoice.getInvoiceNumber(), equalTo("3"));
+		assertThat("Invoice time zone", invoice.getTimeZoneId(), equalTo(TEST_TIME_ZONE));
+
+		assertThat("Invoice items count", invoice.getItems(), hasSize(1));
+
+		InvoiceItem item = invoice.getItems().get(0);
+		assertThat("Item ID", item.getId(), equalTo("6ddf02a0-729a-4922-bfb5-571138d1eec1"));
+		assertThat("Item created", item.getCreated(), equalTo(
+				new LocalDate(2017, 3, 5).toDateTimeAtStartOfDay(DateTimeZone.forID(TEST_TIME_ZONE))));
+		assertThat("Item ended", item.getEnded(), equalTo(
+				new LocalDate(2017, 4, 5).toDateTimeAtStartOfDay(DateTimeZone.forID(TEST_TIME_ZONE))));
+		assertThat("Item start date", item.getStartDate(), equalTo(new LocalDate(2017, 3, 5)));
+		assertThat("Item end date", item.getEndDate(), equalTo(new LocalDate(2017, 4, 5)));
+
+		assertThat("Item amount", item.getAmount(), equalTo(new BigDecimal("0.14")));
+		assertThat("Item bundle ID", item.getBundleId(),
+				equalTo("f5632c7d-bc89-4c88-aef2-ee52571e6793"));
+		assertThat("Item currency code", item.getCurrencyCode(), equalTo("NZD"));
+		assertThat("Item description", item.getDescription(),
+				equalTo("posted-datum-metric-daily-usage"));
+		assertThat("Item type", item.getItemType(), equalTo("USAGE"));
+		assertThat("Item phase name", item.getPhaseName(),
+				equalTo("api-posted-datum-metric-monthly-usage-evergreen"));
+		assertThat("Item plan name", item.getPlanName(),
+				equalTo("api-posted-datum-metric-monthly-usage"));
+		assertThat("Item subscription ID", item.getSubscriptionId(),
+				equalTo("f7ec79f7-02ff-4f91-b6ef-f0571ac69baf"));
+		assertThat("Item subscription ID", item.getTimeZoneId(), equalTo(TEST_TIME_ZONE));
+		assertThat("Item usage name", item.getUsageName(), equalTo("posted-datum-metric-daily-usage"));
+	}
 
 }

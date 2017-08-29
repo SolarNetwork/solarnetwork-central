@@ -127,6 +127,21 @@ public interface KillbillClient {
 	void addUsage(Subscription subscription, String unit, List<UsageRecord> usage);
 
 	/**
+	 * Get an invoice by ID.
+	 * 
+	 * @param account
+	 *        the account to get invoices for
+	 * @param invoiceId
+	 *        the ID of the invoice to get
+	 * @param withItems
+	 *        {@literal true} to return invoice items as well
+	 * @param withChildrenItems
+	 *        {@literal true} to return child invoice items as well
+	 * @return the invoice, or {@literal null} if not available
+	 */
+	Invoice getInvoice(Account account, String invoiceId, boolean withItems, boolean withChildrenItems);
+
+	/**
 	 * Get all account invoices, optionally limited to just unpaid ones.
 	 * 
 	 * @param account

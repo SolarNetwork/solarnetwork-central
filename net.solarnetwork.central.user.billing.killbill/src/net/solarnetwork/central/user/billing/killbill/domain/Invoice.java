@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.killbill.domain;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -42,7 +43,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 public class Invoice extends BaseObjectEntity<String>
 		implements net.solarnetwork.central.user.billing.domain.Invoice, InvoiceMatch {
 
-	private static final long serialVersionUID = 4449006509536567435L;
+	private static final long serialVersionUID = -9188893829597927136L;
 
 	private String timeZoneId = "UTC";
 	private LocalDate invoiceDate;
@@ -50,6 +51,8 @@ public class Invoice extends BaseObjectEntity<String>
 	private BigDecimal amount;
 	private BigDecimal balance;
 	private String currencyCode;
+
+	private List<InvoiceItem> items;
 
 	/**
 	 * Default constructor.
@@ -89,6 +92,7 @@ public class Invoice extends BaseObjectEntity<String>
 	 * 
 	 * @return the invoice number
 	 */
+	@Override
 	public String getInvoiceNumber() {
 		return invoiceNumber;
 	}
@@ -122,8 +126,20 @@ public class Invoice extends BaseObjectEntity<String>
 	public void setTimeZoneId(String timeZoneId) {
 		if ( timeZoneId != null && !timeZoneId.equals(this.timeZoneId) ) {
 			this.timeZoneId = timeZoneId;
-			if ( this.invoiceDate != null ) {
-				setCreated(invoiceDate.toDateTimeAtStartOfDay(DateTimeZone.forID(this.timeZoneId)));
+			applyTimeZone(timeZoneId);
+		}
+	}
+
+	private void applyTimeZone(String timeZoneId) {
+		if ( timeZoneId == null ) {
+			timeZoneId = "UTC";
+		}
+		if ( this.invoiceDate != null ) {
+			setCreated(invoiceDate.toDateTimeAtStartOfDay(DateTimeZone.forID(this.timeZoneId)));
+		}
+		if ( this.items != null ) {
+			for ( InvoiceItem item : this.items ) {
+				item.setTimeZoneId(timeZoneId);
 			}
 		}
 	}
@@ -198,6 +214,25 @@ public class Invoice extends BaseObjectEntity<String>
 	@JsonSetter("currency")
 	public void setCurrencyCode(String currencyCode) {
 		this.currencyCode = currencyCode;
+	}
+
+	/**
+	 * Get the invoice items.
+	 * 
+	 * @return the invoice items
+	 */
+	public List<InvoiceItem> getItems() {
+		return items;
+	}
+
+	/**
+	 * Set the invoice items
+	 * 
+	 * @param items
+	 *        the invoice items to set
+	 */
+	public void setItems(List<InvoiceItem> items) {
+		this.items = items;
 	}
 
 }

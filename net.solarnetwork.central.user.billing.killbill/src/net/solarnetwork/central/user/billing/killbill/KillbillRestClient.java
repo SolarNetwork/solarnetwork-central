@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.killbill;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -230,6 +231,30 @@ public class KillbillRestClient implements KillbillClient {
 		client.postForObject(uri, su, Void.class);
 	}
 
+	private void applyAccountSettings(Account account, Collection<Invoice> invoices) {
+		if ( account == null || invoices == null || invoices.isEmpty() ) {
+			return;
+		}
+		if ( account.getTimeZone() != null ) {
+			final String tz = account.getTimeZone();
+			invoices.parallelStream().forEach(invoice -> invoice.setTimeZoneId(tz));
+		}
+	}
+
+	@Override
+	public Invoice getInvoice(Account account, String invoiceId, boolean withItems,
+			boolean withChildrenItems) {
+		Map<String, Object> uriVariables = Collections.singletonMap("invoiceId", invoiceId);
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/invoices/{invoiceId}"))
+				.queryParam("withItems", withItems).queryParam("withChildrenItems", withChildrenItems)
+				.buildAndExpand(uriVariables).toUri();
+		Invoice result = getForObjectOrNull(uri, Invoice.class);
+		if ( result != null ) {
+			applyAccountSettings(account, Collections.singleton(result));
+		}
+		return result;
+	}
+
 	@Override
 	public List<Invoice> listInvoices(Account account, boolean unpaidOnly) {
 		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
@@ -238,10 +263,7 @@ public class KillbillRestClient implements KillbillClient {
 		List<Invoice> results = getForObjectOrNull(uri, INVOICE_LIST_TYPE);
 
 		// make sure invoice time zone set to account time zone
-		if ( results != null && account.getTimeZone() != null ) {
-			final String tz = account.getTimeZone();
-			results.parallelStream().forEach(invoice -> invoice.setTimeZoneId(tz));
-		}
+		applyAccountSettings(account, results);
 
 		// reverse
 		if ( results != null ) {
@@ -312,10 +334,7 @@ public class KillbillRestClient implements KillbillClient {
 		List<Invoice> invoices = response.getBody();
 
 		// make sure invoice time zone set to account time zone
-		if ( invoices != null && account.getTimeZone() != null ) {
-			final String tz = account.getTimeZone();
-			invoices.parallelStream().forEach(invoice -> invoice.setTimeZoneId(tz));
-		}
+		applyAccountSettings(account, invoices);
 
 		// reverse results
 		Collections.reverse(invoices);
