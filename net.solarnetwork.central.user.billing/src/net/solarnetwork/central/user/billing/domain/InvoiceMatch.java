@@ -39,14 +39,14 @@ public interface InvoiceMatch extends FilterMatch<String> {
 	 * 
 	 * @return the created date
 	 */
-	public DateTime getCreated();
+	DateTime getCreated();
 
 	/**
 	 * Get the time zone this invoice was created in.
 	 * 
 	 * @return the time zone ID
 	 */
-	public String getTimeZoneId();
+	String getTimeZoneId();
 
 	/**
 	 * Get the amount charged on this invoice.
