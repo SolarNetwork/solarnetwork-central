@@ -7,6 +7,26 @@ $(document).ready(function() {
 		pageSize: 10,
 	};
 	
+	function showInvoiceDetails(event) {
+		var invoice = $(this).closest('tr').data('invoice');
+		console.log('Showing invoice %o', invoice);
+		
+		var modal = $('#invoice-details-modal');
+		var prop, cell;
+		for ( prop in invoice ) {
+			if ( invoice.hasOwnProperty(prop) ) {
+				cell = modal.find("[data-tprop='" +prop +"']");
+				cell.text(invoice[prop]);
+				if ( prop === 'localizedAmount' ) {
+					cell.toggleClass('label-danger', invoice.balance > 0);
+					cell.toggleClass('label-success', !(invoice.balance > 0));
+				}
+			}
+		}
+		
+		modal.modal('show');
+	}
+	
 	function renderInvoiceTableRows(tbody, templateRow, results) {
 		var i, len, tr, invoice, prop, cell;
 		tbody.empty();
@@ -19,6 +39,9 @@ $(document).ready(function() {
 				for ( prop in invoice ) {
 					if ( invoice.hasOwnProperty(prop) ) {
 						cell = tr.find("[data-tprop='" +prop +"']");
+						if ( cell.is('a') ) {
+							cell.on('click', showInvoiceDetails);
+						}
 						cell.text(invoice[prop]);
 					}
 				}
