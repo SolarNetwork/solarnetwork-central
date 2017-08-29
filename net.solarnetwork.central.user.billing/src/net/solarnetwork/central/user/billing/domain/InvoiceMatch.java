@@ -49,6 +49,13 @@ public interface InvoiceMatch extends FilterMatch<String> {
 	String getTimeZoneId();
 
 	/**
+	 * Get a reference invoice "number".
+	 * 
+	 * @return the invoice number
+	 */
+	String getInvoiceNumber();
+
+	/**
 	 * Get the amount charged on this invoice.
 	 * 
 	 * @return the amount

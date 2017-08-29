@@ -42,10 +42,11 @@ import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 public class Invoice extends BaseObjectEntity<String>
 		implements net.solarnetwork.central.user.billing.domain.Invoice, InvoiceMatch {
 
-	private static final long serialVersionUID = -6377572949534534745L;
+	private static final long serialVersionUID = 4449006509536567435L;
 
 	private String timeZoneId = "UTC";
 	private LocalDate invoiceDate;
+	private String invoiceNumber;
 	private BigDecimal amount;
 	private BigDecimal balance;
 	private String currencyCode;
@@ -84,10 +85,30 @@ public class Invoice extends BaseObjectEntity<String>
 	}
 
 	/**
+	 * Get the invoice number.
+	 * 
+	 * @return the invoice number
+	 */
+	public String getInvoiceNumber() {
+		return invoiceNumber;
+	}
+
+	/**
+	 * Set the invoice number.
+	 * 
+	 * @param invoiceNumber
+	 *        the invoiceNumber to set
+	 */
+	public void setInvoiceNumber(String invoiceNumber) {
+		this.invoiceNumber = invoiceNumber;
+	}
+
+	/**
 	 * Get the invoice time zone.
 	 * 
 	 * @return the invoice time zone
 	 */
+	@Override
 	public String getTimeZoneId() {
 		return timeZoneId;
 	}

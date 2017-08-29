@@ -103,6 +103,11 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceInfo
 	}
 
 	@Override
+	public String getInvoiceNumber() {
+		return match.getInvoiceNumber();
+	}
+
+	@Override
 	public BigDecimal getAmount() {
 		return match.getAmount();
 	}
