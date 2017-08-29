@@ -103,8 +103,10 @@ public class KillbillBillingSystem implements BillingSystem {
 			List<InvoiceMatch> invoices = (List) client.listInvoices(account, true);
 			results = new BasicFilterResults<>(invoices, (long) invoices.size(), 0, invoices.size());
 		} else {
-			// TODO
-			results = null;
+			@SuppressWarnings({ "rawtypes", "unchecked" })
+			FilterResults<InvoiceMatch> filterResults = (FilterResults) client.findInvoices(account,
+					filter, sortDescriptors, offset, max);
+			results = filterResults;
 		}
 		return results;
 	}

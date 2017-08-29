@@ -1,0 +1,20 @@
+[
+  {
+    "amount": 18.59,
+    "currency": "NZD",
+    "status": "COMMITTED",
+    "creditAdj": 0,
+    "refundAdj": 0,
+    "invoiceId": "185c0653-4876-4ddb-bb09-2b17d385359d",
+    "invoiceDate": "2017-12-06",
+    "targetDate": "2017-12-05",
+    "invoiceNumber": "1",
+    "balance": 18.59,
+    "accountId": "e7be50d7-63f1-429b-a5ce-5f950733c2a7",
+    "bundleKeys": null,
+    "credits": null,
+    "items": [],
+    "isParentInvoice": false,
+    "auditLogs": []
+  }
+]

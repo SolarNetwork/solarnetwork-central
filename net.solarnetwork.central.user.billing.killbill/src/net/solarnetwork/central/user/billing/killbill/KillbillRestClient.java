@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.killbill;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.joda.time.LocalDate;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +48,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
@@ -67,6 +70,10 @@ public class KillbillRestClient implements KillbillClient {
 
 	/** The default base URL for the production service. */
 	public static final String DEFAULT_BASE_URL = "https://billing.solarnetwork.net";
+
+	public static final String HEADER_PAGINATION_OFFSET = "X-Killbill-Pagination-CurrentOffset";
+	public static final String HEADER_PAGINATION_TOTAL_COUNT = "X-Killbill-Pagination-TotalNbRecords";
+	public static final String HEADER_PAGINATION_MAX_COUNT = "X-Killbill-Pagination-MaxNbRecords";
 
 	private static final ParameterizedTypeReference<List<Bundle>> BUNDLE_LIST_TYPE = new ParameterizedTypeReference<List<Bundle>>() {
 	};
@@ -236,14 +243,91 @@ public class KillbillRestClient implements KillbillClient {
 			results.parallelStream().forEach(invoice -> invoice.setTimeZoneId(tz));
 		}
 
+		// reverse
+		if ( results != null ) {
+			Collections.reverse(results);
+		}
+
 		return (results != null ? results : Collections.emptyList());
 	}
+
+	private static final BigDecimal ZERO = new BigDecimal(0);
 
 	@Override
 	public FilterResults<Invoice> findInvoices(Account account, InvoiceFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		// TODO Auto-generated method stub
-		return null;
+
+		final int origOffset = (offset != null ? offset.intValue() : 0);
+		int pageSize = (max != null ? max.intValue() : 0);
+
+		// the /search endpoint does not return amounts; if paid flag specified then resort to
+		// calling listInvoices() and just manually filtering the results
+		if ( filter != null && filter.getUnpaid() != null ) {
+			List<Invoice> allInvoices = listInvoices(account, filter.getUnpaid());
+			if ( filter.getUnpaid() == false ) {
+				// KB returns paid/unpaid mixed; filter to just paid here (balance <= 0)
+				allInvoices = allInvoices.parallelStream()
+						.filter(invoice -> invoice.getBalance().compareTo(ZERO) < 1)
+						.collect(Collectors.toList());
+			}
+			List<Invoice> resultInvoices;
+			if ( origOffset > allInvoices.size() ) {
+				resultInvoices = Collections.emptyList();
+			} else {
+				resultInvoices = allInvoices.subList(origOffset,
+						Math.min(origOffset + pageSize, allInvoices.size()));
+			}
+			return new BasicFilterResults<>(resultInvoices, (long) allInvoices.size(), origOffset,
+					resultInvoices.size());
+		}
+
+		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
+
+		// we need to sort the results in reverse; so have to find total results first to flip query
+		UriComponentsBuilder uriBuilder = UriComponentsBuilder
+				.fromHttpUrl(kbUrl("/1.0/kb/invoices/search/{accountId}")).queryParam("withItems", false)
+				.queryParam("offset", 0).queryParam("limit", 0);
+		HttpHeaders headers = client.headForHeaders(uriBuilder.buildAndExpand(uriVariables).toUri());
+		String paginationTotal = headers.getFirst(HEADER_PAGINATION_TOTAL_COUNT);
+
+		long totalCount = 0;
+		if ( paginationTotal != null ) {
+			totalCount = Long.parseLong(paginationTotal);
+		}
+
+		long rOffset = totalCount - origOffset - pageSize;
+		if ( rOffset < 0 ) {
+			if ( totalCount > pageSize ) {
+				pageSize = (int) (pageSize + rOffset);
+			}
+			rOffset = 0;
+		}
+
+		uriBuilder.replaceQueryParam("offset", rOffset).replaceQueryParam("limit", pageSize);
+
+		ResponseEntity<List<Invoice>> response = client.exchange(
+				uriBuilder.buildAndExpand(uriVariables).toUri(), HttpMethod.GET, null,
+				INVOICE_LIST_TYPE);
+
+		List<Invoice> invoices = response.getBody();
+
+		// make sure invoice time zone set to account time zone
+		if ( invoices != null && account.getTimeZone() != null ) {
+			final String tz = account.getTimeZone();
+			invoices.parallelStream().forEach(invoice -> invoice.setTimeZoneId(tz));
+		}
+
+		// reverse results
+		Collections.reverse(invoices);
+
+		paginationTotal = response.getHeaders().getFirst(HEADER_PAGINATION_TOTAL_COUNT);
+
+		BasicFilterResults<Invoice> results = new BasicFilterResults<>(invoices,
+				paginationTotal != null ? Long.valueOf(paginationTotal)
+						: invoices != null ? invoices.size() : 0L,
+				origOffset, invoices != null ? invoices.size() : 0);
+
+		return results;
 	}
 
 	/**

@@ -42,6 +42,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -62,6 +63,7 @@ import org.springframework.test.web.client.ResponseActions;
 import org.springframework.util.Base64Utils;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.user.billing.killbill.KillbillRestClient;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
@@ -350,5 +352,112 @@ public class KillbillRestClientTests {
 		assertThat("Invoice time zone", invoice.getTimeZoneId(), equalTo(TEST_TIME_ZONE));
 
 	}
+
+	@Test
+	public void findInvoicesPaginated() {
+		// given
+		Account account = new Account(TEST_ACCOUNT_ID);
+		account.setTimeZone(TEST_TIME_ZONE);
+
+		for ( int queryNum = 0; queryNum < 3; queryNum++ ) {
+			// HEAD query to get total result count
+			HttpHeaders paginationHeaders = new HttpHeaders();
+			paginationHeaders.set(KillbillRestClient.HEADER_PAGINATION_OFFSET, "0");
+			paginationHeaders.set(KillbillRestClient.HEADER_PAGINATION_MAX_COUNT, "12");
+			paginationHeaders.set(KillbillRestClient.HEADER_PAGINATION_TOTAL_COUNT, "5");
+			serverExpect(
+					"/1.0/kb/invoices/search/" + TEST_ACCOUNT_ID + "?withItems=false&offset=0&limit=0",
+					HttpMethod.HEAD).andRespond(withSuccess().headers(paginationHeaders));
+
+			// GET query to get results
+			int offset = Math.max(0, (5 - ((queryNum + 1) * 2)));
+			HttpHeaders paginationHeaders2 = new HttpHeaders();
+			paginationHeaders2.set(KillbillRestClient.HEADER_PAGINATION_OFFSET, String.valueOf(offset));
+			paginationHeaders2.set(KillbillRestClient.HEADER_PAGINATION_MAX_COUNT, "12");
+			paginationHeaders2.set(KillbillRestClient.HEADER_PAGINATION_TOTAL_COUNT, "5");
+
+			// @formatter:off
+			serverExpect("/1.0/kb/invoices/search/" + TEST_ACCOUNT_ID 
+					+ "?withItems=false&offset="+ offset +"&limit=" +(queryNum == 2 ? 1 : 2),
+					HttpMethod.GET).andRespond(withSuccess()
+							.headers(paginationHeaders2)
+							.body(new ClassPathResource("invoices-0" +(queryNum + 1) +".json", getClass()))
+							.contentType(MediaType.APPLICATION_JSON_UTF8));
+			// @formatter:on
+		}
+
+		//when
+		List<FilterResults<Invoice>> results = new ArrayList<>(3);
+		results.add(client.findInvoices(account, null, null, 0, 2));
+		results.add(client.findInvoices(account, null, null, 2, 2));
+		results.add(client.findInvoices(account, null, null, 4, 2));
+
+		// then
+		int invoiceNum = 5; // invoices should be in reverse order
+		for ( int queryNum = 0; queryNum < 3; queryNum++ ) {
+			FilterResults<Invoice> result = results.get(queryNum);
+			assertThat("Total count " + queryNum, result.getTotalResults(), equalTo(5L));
+			assertThat("Returned count " + queryNum, result.getReturnedResultCount(),
+					equalTo(queryNum == 2 ? 1 : 2));
+			assertThat("Starting offset " + queryNum, result.getStartingOffset(), equalTo(queryNum * 2));
+
+			for ( Invoice invoice : result ) {
+				assertThat("Invoice " + invoiceNum, invoice.getInvoiceNumber(),
+						equalTo(String.valueOf(invoiceNum)));
+				assertThat("Invoice time zone " + invoiceNum, invoice.getTimeZoneId(),
+						equalTo(TEST_TIME_ZONE));
+				invoiceNum--;
+			}
+		}
+	}
+
+	@Test
+	public void findInvoicesPaginatedOnePageTotal() {
+		// given
+		Account account = new Account(TEST_ACCOUNT_ID);
+		account.setTimeZone(TEST_TIME_ZONE);
+
+		// HEAD query to get total result count
+		HttpHeaders paginationHeaders = new HttpHeaders();
+		paginationHeaders.set(KillbillRestClient.HEADER_PAGINATION_OFFSET, "0");
+		paginationHeaders.set(KillbillRestClient.HEADER_PAGINATION_MAX_COUNT, "12");
+		paginationHeaders.set(KillbillRestClient.HEADER_PAGINATION_TOTAL_COUNT, "2");
+		serverExpect("/1.0/kb/invoices/search/" + TEST_ACCOUNT_ID + "?withItems=false&offset=0&limit=0",
+				HttpMethod.HEAD).andRespond(withSuccess().headers(paginationHeaders));
+
+		// GET query to get results
+		HttpHeaders paginationHeaders2 = new HttpHeaders();
+		paginationHeaders2.set(KillbillRestClient.HEADER_PAGINATION_OFFSET, "0");
+		paginationHeaders2.set(KillbillRestClient.HEADER_PAGINATION_MAX_COUNT, "12");
+		paginationHeaders2.set(KillbillRestClient.HEADER_PAGINATION_TOTAL_COUNT, "2");
+
+		// @formatter:off
+			serverExpect(
+					"/1.0/kb/invoices/search/" + TEST_ACCOUNT_ID + "?withItems=false&offset=0&limit=10",
+					HttpMethod.GET).andRespond(withSuccess()
+							.headers(paginationHeaders2)
+							.body(new ClassPathResource("invoices-01.json", getClass()))
+							.contentType(MediaType.APPLICATION_JSON_UTF8));
+			// @formatter:on
+
+		//when
+		FilterResults<Invoice> result = client.findInvoices(account, null, null, 0, 10);
+
+		// then
+		assertThat("Total count", result.getTotalResults(), equalTo(2L));
+		assertThat("Returned count", result.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", result.getStartingOffset(), equalTo(0));
+
+		int invoiceNum = 5; // invoice numbers in data are 4,5
+		for ( Invoice invoice : result ) {
+			assertThat("Invoice " + invoiceNum, invoice.getInvoiceNumber(),
+					equalTo(String.valueOf(invoiceNum)));
+			assertThat("Invoice time zone " + invoiceNum, invoice.getTimeZoneId(),
+					equalTo(TEST_TIME_ZONE));
+			invoiceNum--;
+		}
+	}
+
+	// TODO: pagination with unpaidOnly=(true|false)
 
 }
