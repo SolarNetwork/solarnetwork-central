@@ -67,7 +67,7 @@ section + section {
 
 .hidden,
 .template {
-	display: none;
+	display: none !important;
 }
 
 #create-data-auth-token .checkbox label {
