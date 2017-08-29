@@ -59,6 +59,20 @@ public class Account {
 	}
 
 	/**
+	 * Construct with an ID and time zone.
+	 * 
+	 * @param accountId
+	 *        the account ID
+	 * @param timeZone
+	 *        the account time zone
+	 */
+	public Account(String accountId, String timeZone) {
+		super();
+		this.accountId = accountId;
+		this.timeZone = timeZone;
+	}
+
+	/**
 	 * @return the externalKey
 	 */
 	public String getExternalKey() {
