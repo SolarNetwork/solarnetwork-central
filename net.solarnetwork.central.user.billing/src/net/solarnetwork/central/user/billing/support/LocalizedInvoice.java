@@ -1,5 +1,5 @@
 /* ==================================================================
- * LocalizedInvoiceMatch.java - 28/08/2017 2:44:02 PM
+ * LocalizedInvoice.java - 30/08/2017 7:24:09 AM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -23,50 +23,55 @@
 package net.solarnetwork.central.user.billing.support;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
-import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceMatchInfo;
+import net.solarnetwork.central.user.billing.domain.Invoice;
+import net.solarnetwork.central.user.billing.domain.InvoiceItem;
+import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceInfo;
+import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemInfo;
 import net.solarnetwork.javax.money.MoneyUtils;
 
 /**
- * Localized version of {@link InvoiceMatch}.
+ * Localized version of {@link Invoice}.
  * 
  * @author matt
  * @version 1.0
  */
-public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatchInfo {
+public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 
-	private final InvoiceMatch match;
+	private final Invoice invoice;
 	private final Locale locale;
 
 	/**
 	 * Convenience builder.
 	 * 
-	 * @param match
-	 *        the match to localize
+	 * @param invoice
+	 *        the invoice to localize
 	 * @param locale
 	 *        the locale to localize to
-	 * @return the localized match
+	 * @return the localized invoice
 	 */
-	public static LocalizedInvoiceMatch of(InvoiceMatch match, Locale locale) {
-		return new LocalizedInvoiceMatch(match, locale);
+	public static LocalizedInvoice of(Invoice invoice, Locale locale) {
+		return new LocalizedInvoice(invoice, locale);
 	}
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param match
-	 *        the match to localize
+	 * @param invoice
+	 *        the invoice to localize
 	 * @param locale
 	 *        the locale to localize to
 	 */
-	public LocalizedInvoiceMatch(InvoiceMatch match, Locale locale) {
+	public LocalizedInvoice(Invoice invoice, Locale locale) {
 		super();
-		this.match = match;
+		this.invoice = invoice;
 		this.locale = locale;
 	}
 
@@ -94,42 +99,63 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatc
 
 	@Override
 	public DateTime getCreated() {
-		return match.getCreated();
+		return invoice.getCreated();
 	}
 
 	@Override
 	public String getTimeZoneId() {
-		return match.getTimeZoneId();
+		return invoice.getTimeZoneId();
 	}
 
 	@Override
 	public String getInvoiceNumber() {
-		return match.getInvoiceNumber();
+		return invoice.getInvoiceNumber();
 	}
 
 	@Override
 	public BigDecimal getAmount() {
-		return match.getAmount();
+		return invoice.getAmount();
 	}
 
 	@Override
 	public String getId() {
-		return match.getId();
+		return invoice.getId();
 	}
 
 	@Override
 	public BigDecimal getBalance() {
-		return match.getBalance();
+		return invoice.getBalance();
 	}
 
 	@Override
 	public String getCurrencyCode() {
-		return match.getCurrencyCode();
+		return invoice.getCurrencyCode();
 	}
 
 	@Override
 	public int compareTo(String o) {
-		return match.compareTo(o);
+		return invoice.compareTo(o);
+	}
+
+	@Override
+	public List<InvoiceItem> getInvoiceItems() {
+		return invoice.getInvoiceItems();
+	}
+
+	@Override
+	public List<LocalizedInvoiceItemInfo> getLocalizedInvoiceItems() {
+		List<InvoiceItem> items = getInvoiceItems();
+		if ( items == null ) {
+			return null;
+		} else if ( items.isEmpty() ) {
+			return Collections.emptyList();
+		}
+		return items.stream().map(item -> {
+			if ( item instanceof LocalizedInvoiceItemInfo ) {
+				return (LocalizedInvoiceItemInfo) item;
+			}
+			return new LocalizedInvoiceItem(item, locale);
+		}).collect(Collectors.toList());
 	}
 
 }

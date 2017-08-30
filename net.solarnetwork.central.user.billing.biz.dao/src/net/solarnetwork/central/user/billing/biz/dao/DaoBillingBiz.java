@@ -31,6 +31,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
+import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -96,6 +97,15 @@ public class DaoBillingBiz implements BillingBiz {
 			return new BasicFilterResults<>(null, 0L, 0, 0);
 		}
 		return system.findFilteredInvoices(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public Invoice getInvoice(Long userId, String invoiceId) {
+		BillingSystem system = billingSystemForUser(userId);
+		if ( system == null ) {
+			return null;
+		}
+		return system.getInvoice(userId, invoiceId);
 	}
 
 }

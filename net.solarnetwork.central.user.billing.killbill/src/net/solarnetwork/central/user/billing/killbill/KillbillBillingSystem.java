@@ -31,6 +31,7 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
+import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
@@ -81,19 +82,23 @@ public class KillbillBillingSystem implements BillingSystem {
 		return new BasicBillingSystemInfo(getAccountingSystemKey());
 	}
 
-	@Override
-	public FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		User user = userDao.get(filter.getUserId());
+	private Account accountForUser(Long userId) {
+		User user = userDao.get(userId);
 		if ( user == null ) {
-			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, filter.getUserId());
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
 		}
 		String accountKey = (String) user
 				.getInternalDataValue(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP);
 		if ( accountKey == null ) {
-			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, filter.getUserId());
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
 		}
-		Account account = client.accountForExternalKey(accountKey);
+		return client.accountForExternalKey(accountKey);
+	}
+
+	@Override
+	public FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		Account account = accountForUser(filter.getUserId());
 		if ( account == null ) {
 			return new BasicFilterResults<InvoiceMatch>(null);
 		}
@@ -109,6 +114,12 @@ public class KillbillBillingSystem implements BillingSystem {
 			results = filterResults;
 		}
 		return results;
+	}
+
+	@Override
+	public Invoice getInvoice(Long userId, String invoiceId) {
+		Account account = accountForUser(userId);
+		return client.getInvoice(account, invoiceId, true, false);
 	}
 
 }

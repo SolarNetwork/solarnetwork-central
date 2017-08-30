@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.biz;
 import java.util.List;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 
@@ -45,6 +46,17 @@ public interface BillingBiz {
 	 *         or available
 	 */
 	BillingSystem billingSystemForUser(Long userId);
+
+	/**
+	 * Get an invoice by ID.
+	 * 
+	 * @param userId
+	 *        the user ID to get the invoice for
+	 * @param invoiceId
+	 *        the invoice ID to get
+	 * @return the invoice, or {@literal null} if not available
+	 */
+	Invoice getInvoice(Long userId, String invoiceId);
 
 	/**
 	 * Search for invoices.

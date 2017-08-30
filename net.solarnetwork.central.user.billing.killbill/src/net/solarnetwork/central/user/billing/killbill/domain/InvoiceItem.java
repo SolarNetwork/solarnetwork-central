@@ -38,7 +38,8 @@ import net.solarnetwork.central.domain.BaseObjectEntity;
  * @author matt
  * @version 1.0
  */
-public class InvoiceItem extends BaseObjectEntity<String> {
+public class InvoiceItem extends BaseObjectEntity<String>
+		implements net.solarnetwork.central.user.billing.domain.InvoiceItem {
 
 	private static final long serialVersionUID = -2905307143638318134L;
 
@@ -94,6 +95,7 @@ public class InvoiceItem extends BaseObjectEntity<String> {
 	 * 
 	 * @return the invoice time zone
 	 */
+	@Override
 	public String getTimeZoneId() {
 		return timeZoneId;
 	}
@@ -166,6 +168,7 @@ public class InvoiceItem extends BaseObjectEntity<String> {
 	 * 
 	 * @return the plan name
 	 */
+	@Override
 	public String getPlanName() {
 		return planName;
 	}
@@ -223,6 +226,7 @@ public class InvoiceItem extends BaseObjectEntity<String> {
 	 * 
 	 * @return the item type
 	 */
+	@Override
 	public String getItemType() {
 		return itemType;
 	}
@@ -242,6 +246,7 @@ public class InvoiceItem extends BaseObjectEntity<String> {
 	 * 
 	 * @return the description
 	 */
+	@Override
 	public String getDescription() {
 		return description;
 	}
@@ -261,6 +266,7 @@ public class InvoiceItem extends BaseObjectEntity<String> {
 	 * 
 	 * @return the start date
 	 */
+	@Override
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	public LocalDate getStartDate() {
 		return startDate;
@@ -286,6 +292,7 @@ public class InvoiceItem extends BaseObjectEntity<String> {
 	 * 
 	 * @return the ended date
 	 */
+	@Override
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	public LocalDate getEndDate() {
 		return endDate;
@@ -306,6 +313,7 @@ public class InvoiceItem extends BaseObjectEntity<String> {
 	 * 
 	 * @return the amount
 	 */
+	@Override
 	public BigDecimal getAmount() {
 		return amount;
 	}
@@ -325,6 +333,7 @@ public class InvoiceItem extends BaseObjectEntity<String> {
 	 * 
 	 * @return the currencyCode
 	 */
+	@Override
 	@JsonGetter("currency")
 	public String getCurrencyCode() {
 		return currencyCode;
@@ -346,6 +355,7 @@ public class InvoiceItem extends BaseObjectEntity<String> {
 	 * 
 	 * @return the ended date
 	 */
+	@Override
 	public DateTime getEnded() {
 		return ended;
 	}

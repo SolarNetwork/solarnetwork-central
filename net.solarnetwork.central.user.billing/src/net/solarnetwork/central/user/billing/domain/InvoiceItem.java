@@ -1,5 +1,5 @@
 /* ==================================================================
- * Invoice.java - 25/08/2017 2:30:33 PM
+ * InvoiceItem.java - 30/08/2017 7:26:58 AM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -23,61 +23,85 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
-import java.util.List;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import net.solarnetwork.central.domain.Entity;
 
 /**
- * API for an invoice.
+ * A line item on an invoice.
+ * 
+ * <p>
+ * The {@link #getCreated()} value on this API represents the start date of the
+ * invoice item, i.e. the time-zone specific equivalent of
+ * {@link #getStartDate()}.
+ * </p>
  * 
  * @author matt
  * @version 1.0
  */
-public interface Invoice extends Entity<String> {
+public interface InvoiceItem extends Entity<String> {
 
 	/**
-	 * Get the time zone this invoice was created in.
+	 * Get the time zone of the invoice item.
 	 * 
 	 * @return the time zone ID
 	 */
 	String getTimeZoneId();
 
 	/**
-	 * Get a reference invoice "number".
+	 * Get the plan name.
 	 * 
-	 * @return the invoice number
+	 * @return the plan name
 	 */
-	String getInvoiceNumber();
+	String getPlanName();
 
 	/**
-	 * Get the amount charged on this invoice.
+	 * Get the item type.
+	 * 
+	 * @return the item type
+	 */
+	String getItemType();
+
+	/**
+	 * Get the description.
+	 * 
+	 * @return the description
+	 */
+	String getDescription();
+
+	/**
+	 * Get the start date.
+	 * 
+	 * @return the start date
+	 */
+	LocalDate getStartDate();
+
+	/**
+	 * Get the ended date.
+	 * 
+	 * @return the ended date
+	 */
+	LocalDate getEndDate();
+
+	/**
+	 * Get the amount.
 	 * 
 	 * @return the amount
 	 */
 	BigDecimal getAmount();
 
 	/**
-	 * Get the current invoice balance (unpaid amount).
+	 * Get the currency code.
 	 * 
-	 * <p>
-	 * If this is positive then the invoice has outstanding payment due.
-	 * </p>
-	 * 
-	 * @return the invoice balance
-	 */
-	BigDecimal getBalance();
-
-	/**
-	 * Get the currency this invoice is in, as a string currency code like
-	 * {@literal NZD} or {@literal USD}.
-	 * 
-	 * @return the currency code
+	 * @return the currencyCode
 	 */
 	String getCurrencyCode();
 
 	/**
-	 * Get the invoice items.
+	 * Get the item ended date (with time zone).
 	 * 
-	 * @return the invoice items
+	 * @return the ended date
 	 */
-	List<InvoiceItem> getInvoiceItems();
+	DateTime getEnded();
+
 }

@@ -27,6 +27,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
+import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 
@@ -60,6 +61,11 @@ public class DelegatingBillingBiz implements BillingBiz {
 	public FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		return delegate.findFilteredInvoices(filter, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public Invoice getInvoice(Long userId, String invoiceId) {
+		return delegate.getInvoice(userId, invoiceId);
 	}
 
 }

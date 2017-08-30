@@ -30,6 +30,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.BaseObjectEntity;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
@@ -214,6 +215,13 @@ public class Invoice extends BaseObjectEntity<String>
 	@JsonSetter("currency")
 	public void setCurrencyCode(String currencyCode) {
 		this.currencyCode = currencyCode;
+	}
+
+	@JsonIgnore
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public List<net.solarnetwork.central.user.billing.domain.InvoiceItem> getInvoiceItems() {
+		return (List) getItems();
 	}
 
 	/**

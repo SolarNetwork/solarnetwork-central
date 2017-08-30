@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.killbill.test;
 
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.util.Collection;
@@ -133,6 +134,29 @@ public class KillbillBillingSystemTests {
 
 		// then
 		assertFilterResults(results, 1, 0, 1L, invoices);
+	}
+
+	@Test
+	public void getInvoice() {
+		// given
+		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
+		user.putInternalDataValue(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_ACCOUNT_KEY);
+		expect(userDao.get(TEST_USER_ID)).andReturn(user);
+
+		Account account = new Account(TEST_ACCOUNT_ID);
+		expect(client.accountForExternalKey(TEST_ACCOUNT_KEY)).andReturn(account);
+
+		Invoice invoice = new Invoice(TEST_INVOICE_ID);
+		expect(client.getInvoice(account, TEST_INVOICE_ID, true, false)).andReturn(invoice);
+
+		// when
+		replayAll();
+
+		net.solarnetwork.central.user.billing.domain.Invoice result = system.getInvoice(TEST_USER_ID,
+				TEST_INVOICE_ID);
+
+		// then
+		assertThat("Invoice class", result, instanceOf(Invoice.class));
 	}
 
 }

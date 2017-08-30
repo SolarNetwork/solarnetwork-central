@@ -1,5 +1,5 @@
 /* ==================================================================
- * LocalizedInvoiceMatch.java - 28/08/2017 2:44:02 PM
+ * LocalizedInvoiceItem.java - 30/08/2017 8:24:31 AM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -26,58 +26,69 @@ import java.math.BigDecimal;
 import java.util.Locale;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
-import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceMatchInfo;
+import net.solarnetwork.central.user.billing.domain.InvoiceItem;
+import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemInfo;
 import net.solarnetwork.javax.money.MoneyUtils;
 
 /**
- * Localized version of {@link InvoiceMatch}.
+ * Localized version of {@link InvoiceItem}.
  * 
  * @author matt
  * @version 1.0
  */
-public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatchInfo {
+public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemInfo {
 
-	private final InvoiceMatch match;
+	private final InvoiceItem item;
 	private final Locale locale;
 
 	/**
 	 * Convenience builder.
 	 * 
-	 * @param match
-	 *        the match to localize
+	 * @param item
+	 *        the item to localize
 	 * @param locale
 	 *        the locale to localize to
-	 * @return the localized match
+	 * @return the localized invoice
 	 */
-	public static LocalizedInvoiceMatch of(InvoiceMatch match, Locale locale) {
-		return new LocalizedInvoiceMatch(match, locale);
+	public static LocalizedInvoiceItem of(InvoiceItem item, Locale locale) {
+		return new LocalizedInvoiceItem(item, locale);
 	}
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param match
-	 *        the match to localize
+	 * @param item
+	 *        the item to localize
 	 * @param locale
 	 *        the locale to localize to
 	 */
-	public LocalizedInvoiceMatch(InvoiceMatch match, Locale locale) {
+	public LocalizedInvoiceItem(InvoiceItem item, Locale locale) {
 		super();
-		this.match = match;
+		this.item = item;
 		this.locale = locale;
 	}
 
 	@Override
-	public String getLocalizedDate() {
-		DateTimeFormatter fmt = DateTimeFormat.fullDate().withLocale(locale);
+	public String getLocalizedStartDate() {
+		DateTimeFormatter fmt = DateTimeFormat.mediumDate().withLocale(locale);
 		String tz = getTimeZoneId();
 		if ( tz != null ) {
 			fmt = fmt.withZone(DateTimeZone.forID(tz));
 		}
 		return fmt.print(getCreated());
+	}
+
+	@Override
+	public String getLocalizedEndDate() {
+		DateTimeFormatter fmt = DateTimeFormat.mediumDate().withLocale(locale);
+		String tz = getTimeZoneId();
+		if ( tz != null ) {
+			fmt = fmt.withZone(DateTimeZone.forID(tz));
+		}
+		return fmt.print(getEnded());
 	}
 
 	@Override
@@ -87,49 +98,63 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatc
 	}
 
 	@Override
-	public String getLocalizedBalance() {
-		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
-				getBalance());
-	}
-
-	@Override
 	public DateTime getCreated() {
-		return match.getCreated();
+		return item.getCreated();
 	}
 
 	@Override
 	public String getTimeZoneId() {
-		return match.getTimeZoneId();
-	}
-
-	@Override
-	public String getInvoiceNumber() {
-		return match.getInvoiceNumber();
-	}
-
-	@Override
-	public BigDecimal getAmount() {
-		return match.getAmount();
+		return item.getTimeZoneId();
 	}
 
 	@Override
 	public String getId() {
-		return match.getId();
+		return item.getId();
 	}
 
 	@Override
-	public BigDecimal getBalance() {
-		return match.getBalance();
+	public String getPlanName() {
+		return item.getPlanName();
+	}
+
+	@Override
+	public String getItemType() {
+		return item.getItemType();
+	}
+
+	@Override
+	public String getDescription() {
+		return item.getDescription();
+	}
+
+	@Override
+	public LocalDate getStartDate() {
+		return item.getStartDate();
+	}
+
+	@Override
+	public LocalDate getEndDate() {
+		return item.getEndDate();
+	}
+
+	@Override
+	public BigDecimal getAmount() {
+		return item.getAmount();
 	}
 
 	@Override
 	public String getCurrencyCode() {
-		return match.getCurrencyCode();
+		return item.getCurrencyCode();
+	}
+
+	@Override
+	public DateTime getEnded() {
+		return item.getEnded();
 	}
 
 	@Override
 	public int compareTo(String o) {
-		return match.compareTo(o);
+		return item.compareTo(o);
 	}
 
 }

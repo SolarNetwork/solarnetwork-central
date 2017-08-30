@@ -27,6 +27,7 @@ import java.util.Locale;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
+import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 
@@ -79,4 +80,15 @@ public interface BillingSystem {
 	 */
 	FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+
+	/**
+	 * Get an invoice by ID.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the invoice for
+	 * @param invoiceId
+	 *        the ID of the invoice to get
+	 * @return the invoice, or {@literal null} if not available
+	 */
+	Invoice getInvoice(Long userId, String invoiceId);
 }

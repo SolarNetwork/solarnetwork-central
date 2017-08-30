@@ -1,5 +1,5 @@
 /* ==================================================================
- * Invoice.java - 25/08/2017 2:30:33 PM
+ * LocalizedInvoiceMatchInfo.java - 28/08/2017 2:40:17 PM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -22,41 +22,38 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
-import java.math.BigDecimal;
-import java.util.List;
-import net.solarnetwork.central.domain.Entity;
-
 /**
- * API for an invoice.
+ * API for invoice match information that has been localized.
+ * 
+ * <p>
+ * This API does not provide a way to localize an invoice instance. Rather, it
+ * is a marker for an instance that has already been localized. This is designed
+ * to support APIs that can localize objects based on a requested locale.
+ * </p>
  * 
  * @author matt
  * @version 1.0
  */
-public interface Invoice extends Entity<String> {
+public interface LocalizedInvoiceMatchInfo {
 
 	/**
-	 * Get the time zone this invoice was created in.
+	 * Get the invoice date, as a formatted and localized string.
 	 * 
-	 * @return the time zone ID
+	 * @return the invoice creation date
 	 */
-	String getTimeZoneId();
+	String getLocalizedDate();
 
 	/**
-	 * Get a reference invoice "number".
-	 * 
-	 * @return the invoice number
-	 */
-	String getInvoiceNumber();
-
-	/**
-	 * Get the amount charged on this invoice.
+	 * Get the amount charged on this invoice, as a formatted and localized
+	 * string.
 	 * 
 	 * @return the amount
 	 */
-	BigDecimal getAmount();
+	String getLocalizedAmount();
 
 	/**
-	 * Get the current invoice balance (unpaid amount).
+	 * Get the current invoice balance (unpaid amount), as a formatted and
+	 * localized string.
 	 * 
 	 * <p>
 	 * If this is positive then the invoice has outstanding payment due.
@@ -64,20 +61,6 @@ public interface Invoice extends Entity<String> {
 	 * 
 	 * @return the invoice balance
 	 */
-	BigDecimal getBalance();
+	String getLocalizedBalance();
 
-	/**
-	 * Get the currency this invoice is in, as a string currency code like
-	 * {@literal NZD} or {@literal USD}.
-	 * 
-	 * @return the currency code
-	 */
-	String getCurrencyCode();
-
-	/**
-	 * Get the invoice items.
-	 * 
-	 * @return the invoice items
-	 */
-	List<InvoiceItem> getInvoiceItems();
 }

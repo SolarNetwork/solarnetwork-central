@@ -1,5 +1,5 @@
 /* ==================================================================
- * LocalizedInvoiceInfo.java - 28/08/2017 2:40:17 PM
+ * LocalizedInvoiceInfo.java - 30/08/2017 8:20:45 AM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -21,6 +21,8 @@
  */
 
 package net.solarnetwork.central.user.billing.domain;
+
+import java.util.List;
 
 /**
  * API for invoice information that has been localized.
@@ -62,5 +64,12 @@ public interface LocalizedInvoiceInfo {
 	 * @return the invoice balance
 	 */
 	String getLocalizedBalance();
+
+	/**
+	 * Get the localized invoice items.
+	 * 
+	 * @return the localized items
+	 */
+	List<LocalizedInvoiceItemInfo> getLocalizedInvoiceItems();
 
 }
