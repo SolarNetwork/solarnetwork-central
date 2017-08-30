@@ -72,6 +72,8 @@ import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
+import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
+import net.solarnetwork.central.user.billing.killbill.domain.UnitRecord;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.util.JsonUtils;
 
@@ -565,6 +567,35 @@ public class KillbillRestClientTests {
 				equalTo("f7ec79f7-02ff-4f91-b6ef-f0571ac69baf"));
 		assertThat("Item subscription ID", item.getTimeZoneId(), equalTo(TEST_TIME_ZONE));
 		assertThat("Item usage name", item.getUsageName(), equalTo("posted-datum-metric-daily-usage"));
+	}
+
+	@Test
+	public void usagesForSubscription() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/kb/usages/" +TEST_SUBSCRIPTION_ID +"?startDate=2017-01-01&endDate=2017-02-01",
+				HttpMethod.GET)
+			.andRespond(withSuccess()
+				.body(new ClassPathResource("usages-01.json", getClass()))
+				.contentType(MediaType.APPLICATION_JSON_UTF8));
+	    // @formatter:on
+
+		// when
+		SubscriptionUsageRecords records = client.usageRecordsForSubscription(TEST_SUBSCRIPTION_ID,
+				new LocalDate(2017, 1, 1), new LocalDate(2017, 2, 1));
+
+		// then
+		assertThat("Records found", records, notNullValue());
+		assertThat("Subscription ID", records.getSubscriptionId(),
+				equalTo("f7ec79f7-02ff-4f91-b6ef-f0571ac69baf"));
+		assertThat("Start date", records.getStartDate(), equalTo(new LocalDate(2017, 3, 5)));
+		assertThat("End date", records.getEndDate(), equalTo(new LocalDate(2017, 4, 5)));
+
+		assertThat("Rolled up units count", records.getRolledUpUnits(), hasSize(1));
+
+		UnitRecord unitRec = records.getRolledUpUnits().get(0);
+		assertThat("Unit type", unitRec.getUnitType(), equalTo("DatumMetrics"));
+		assertThat("Amount", unitRec.getAmount(), equalTo(new BigDecimal("14079")));
 	}
 
 }

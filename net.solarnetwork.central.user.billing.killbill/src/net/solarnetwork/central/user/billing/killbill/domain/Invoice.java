@@ -217,7 +217,6 @@ public class Invoice extends BaseObjectEntity<String>
 		this.currencyCode = currencyCode;
 	}
 
-	@JsonIgnore
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public List<net.solarnetwork.central.user.billing.domain.InvoiceItem> getInvoiceItems() {
@@ -229,6 +228,7 @@ public class Invoice extends BaseObjectEntity<String>
 	 * 
 	 * @return the invoice items
 	 */
+	@JsonIgnore
 	public List<InvoiceItem> getItems() {
 		return items;
 	}
@@ -239,6 +239,7 @@ public class Invoice extends BaseObjectEntity<String>
 	 * @param items
 	 *        the invoice items to set
 	 */
+	@JsonSetter("items")
 	public void setItems(List<InvoiceItem> items) {
 		this.items = items;
 	}

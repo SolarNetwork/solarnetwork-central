@@ -1,5 +1,5 @@
 /* ==================================================================
- * LocalizedInvoiceItemInfo.java - 30/08/2017 7:23:56 AM
+ * LocalizedInvoiceItemUsageRecordInfo.java - 30/08/2017 3:22:54 PM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
-import java.util.List;
-
 /**
  * API for invoice item information that has been localized.
  * 
@@ -36,34 +34,13 @@ import java.util.List;
  * @author matt
  * @version 1.0
  */
-public interface LocalizedInvoiceItemInfo {
+public interface LocalizedInvoiceItemUsageRecordInfo {
 
 	/**
-	 * Get the invoice item start date, as a formatted and localized string.
-	 * 
-	 * @return the invoice creation date
-	 */
-	String getLocalizedStartDate();
-
-	/**
-	 * Get the invoice item end date, as a formatted and localized string.
-	 * 
-	 * @return the invoice creation date
-	 */
-	String getLocalizedEndDate();
-
-	/**
-	 * Get the amount charged on this invoice item, as a formatted and localized
-	 * string.
+	 * Get the usage amount, as a formatted and localized string.
 	 * 
 	 * @return the amount
 	 */
 	String getLocalizedAmount();
 
-	/**
-	 * Get the localized invoice item usage records.
-	 * 
-	 * @return the localized usage records
-	 */
-	List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedInvoiceItemUsageRecords();
 }

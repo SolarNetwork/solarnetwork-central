@@ -23,12 +23,14 @@
 package net.solarnetwork.central.user.billing.killbill.domain;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.BaseObjectEntity;
 
@@ -41,7 +43,7 @@ import net.solarnetwork.central.domain.BaseObjectEntity;
 public class InvoiceItem extends BaseObjectEntity<String>
 		implements net.solarnetwork.central.user.billing.domain.InvoiceItem {
 
-	private static final long serialVersionUID = -2905307143638318134L;
+	private static final long serialVersionUID = -6524183885997666544L;
 
 	private String bundleId;
 	private String subscriptionId;
@@ -56,6 +58,8 @@ public class InvoiceItem extends BaseObjectEntity<String>
 	private BigDecimal amount;
 	private String currencyCode;
 	private String timeZoneId = "UTC";
+
+	private List<UnitRecord> usageRecords;
 
 	/**
 	 * Default constructor.
@@ -368,6 +372,32 @@ public class InvoiceItem extends BaseObjectEntity<String>
 	 */
 	public void setEnded(DateTime end) {
 		this.ended = end;
+	}
+
+	/**
+	 * Get the usage records.
+	 * 
+	 * @return the usage records
+	 */
+	@JsonIgnore
+	public List<UnitRecord> getUsageRecords() {
+		return usageRecords;
+	}
+
+	/**
+	 * Set the usage records.
+	 * 
+	 * @param usageRecords
+	 *        the usage records to set
+	 */
+	public void setUsageRecords(List<UnitRecord> usageRecords) {
+		this.usageRecords = usageRecords;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public List<net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord> getItemUsageRecords() {
+		return (List) getUsageRecords();
 	}
 
 }

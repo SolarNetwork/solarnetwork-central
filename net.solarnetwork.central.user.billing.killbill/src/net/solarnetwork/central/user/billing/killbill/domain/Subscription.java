@@ -36,6 +36,7 @@ public class Subscription {
 
 	private String subscriptionId;
 	private String productCategory;
+	private String productName;
 	private String planName;
 	private Integer billCycleDayLocal;
 	private String phaseType;
@@ -143,6 +144,25 @@ public class Subscription {
 	 */
 	public void setPhaseType(String phaseType) {
 		this.phaseType = phaseType;
+	}
+
+	/**
+	 * Get the product name.
+	 * 
+	 * @return the product name
+	 */
+	public String getProductName() {
+		return productName;
+	}
+
+	/**
+	 * Set the product name.
+	 * 
+	 * @param productName
+	 *        the product name to set
+	 */
+	public void setProductName(String productName) {
+		this.productName = productName;
 	}
 
 }

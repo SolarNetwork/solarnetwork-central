@@ -34,6 +34,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
+import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 
 /**
@@ -140,6 +141,20 @@ public interface KillbillClient {
 	 * @return the invoice, or {@literal null} if not available
 	 */
 	Invoice getInvoice(Account account, String invoiceId, boolean withItems, boolean withChildrenItems);
+
+	/**
+	 * Get usage records for a subscription time range.
+	 * 
+	 * @param subscriptionId
+	 *        the ID of the subscription
+	 * @param startDate
+	 *        the start date
+	 * @param endDate
+	 *        the end date
+	 * @return the usage records
+	 */
+	SubscriptionUsageRecords usageRecordsForSubscription(String subscriptionId, LocalDate startDate,
+			LocalDate endDate);
 
 	/**
 	 * Get all account invoices, optionally limited to just unpaid ones.

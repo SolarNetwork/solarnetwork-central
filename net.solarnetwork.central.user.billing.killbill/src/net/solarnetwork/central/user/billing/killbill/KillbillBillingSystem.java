@@ -35,6 +35,8 @@ import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
+import net.solarnetwork.central.user.billing.killbill.domain.InvoiceItem;
+import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
@@ -119,7 +121,22 @@ public class KillbillBillingSystem implements BillingSystem {
 	@Override
 	public Invoice getInvoice(Long userId, String invoiceId) {
 		Account account = accountForUser(userId);
-		return client.getInvoice(account, invoiceId, true, false);
+		net.solarnetwork.central.user.billing.killbill.domain.Invoice invoice = client
+				.getInvoice(account, invoiceId, true, false);
+
+		// populate usage records for appropriate items
+		if ( invoice.getInvoiceItems() != null ) {
+			for ( InvoiceItem item : invoice.getItems() ) {
+				if ( "USAGE".equals(item.getItemType()) && item.getSubscriptionId() != null ) {
+					SubscriptionUsageRecords records = client.usageRecordsForSubscription(
+							item.getSubscriptionId(), item.getStartDate(), item.getEndDate());
+					if ( records != null ) {
+						item.setUsageRecords(records.getRolledUpUnits());
+					}
+				}
+			}
+		}
+		return invoice;
 	}
 
 }

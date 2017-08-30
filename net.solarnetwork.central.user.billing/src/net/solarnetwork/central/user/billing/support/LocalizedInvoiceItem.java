@@ -23,14 +23,19 @@
 package net.solarnetwork.central.user.billing.support;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
+import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemInfo;
+import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRecordInfo;
 import net.solarnetwork.javax.money.MoneyUtils;
 
 /**
@@ -155,6 +160,27 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	@Override
 	public int compareTo(String o) {
 		return item.compareTo(o);
+	}
+
+	@Override
+	public List<InvoiceItemUsageRecord> getItemUsageRecords() {
+		return item.getItemUsageRecords();
+	}
+
+	@Override
+	public List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedInvoiceItemUsageRecords() {
+		List<InvoiceItemUsageRecord> recs = getItemUsageRecords();
+		if ( recs == null ) {
+			return null;
+		} else if ( recs.isEmpty() ) {
+			return Collections.emptyList();
+		}
+		return recs.stream().map(record -> {
+			if ( record instanceof LocalizedInvoiceItemUsageRecordInfo ) {
+				return (LocalizedInvoiceItemUsageRecordInfo) record;
+			}
+			return new LocalizedInvoiceItemUsageRecord(record, locale);
+		}).collect(Collectors.toList());
 	}
 
 }

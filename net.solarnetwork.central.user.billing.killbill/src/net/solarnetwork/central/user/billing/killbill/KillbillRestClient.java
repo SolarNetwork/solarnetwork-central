@@ -57,6 +57,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsage;
+import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageUnitRecord;
 import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
@@ -347,6 +348,17 @@ public class KillbillRestClient implements KillbillClient {
 				origOffset, invoices != null ? invoices.size() : 0);
 
 		return results;
+	}
+
+	@Override
+	public SubscriptionUsageRecords usageRecordsForSubscription(String subscriptionId,
+			LocalDate startDate, LocalDate endDate) {
+		Map<String, Object> uriVariables = Collections.singletonMap("subscriptionId", subscriptionId);
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/usages/{subscriptionId}"))
+				.queryParam("startDate", ISO_DATE_FORMATTER.print(startDate))
+				.queryParam("endDate", ISO_DATE_FORMATTER.print(endDate)).buildAndExpand(uriVariables)
+				.toUri();
+		return getForObjectOrNull(uri, SubscriptionUsageRecords.class);
 	}
 
 	/**
