@@ -7,22 +7,62 @@ $(document).ready(function() {
 		pageSize: 10,
 	};
 	
+	function resetInvoiceDetails(modal) {
+		$(modal).find('tbody').empty();
+	}
+	
+	function populateInvoiceItemDetails(table, invoice) {
+		var i, len,
+			items = (invoice ? invoice.localizedInvoiceItems : null),
+			haveItems = (Array.isArray(items) && items.length > 0),
+			tbody = table.find('tbody'),
+			templateRow = table.find('tr.template'),
+			tr, 
+			item,
+			prop,
+			cell;
+		tbody.empty();
+		if ( haveItems ) {
+			for ( i = 0, len = items.length; i < len; i += 1 ) {
+				item = items[i];
+				tr = templateRow.clone(true);
+				tr.removeClass('template');
+				tr.data('invoiceItem', item);
+				for ( prop in item ) {
+					if ( item.hasOwnProperty(prop) ) {
+						cell = tr.find("[data-tprop='" +prop +"']");
+						cell.text(item[prop]);
+					}
+				}
+				tbody.append(tr);
+			}
+		}
+		table.toggleClass('hidden', !haveItems);
+	}
+	
 	function showInvoiceDetails(event) {
+		event.preventDefault();
+		
 		var invoice = $(this).closest('tr').data('invoice');
 		console.log('Showing invoice %o', invoice);
 		
 		var modal = $('#invoice-details-modal');
+		var container = modal.find('.invoice-details');
 		var prop, cell;
 		for ( prop in invoice ) {
 			if ( invoice.hasOwnProperty(prop) ) {
-				cell = modal.find("[data-tprop='" +prop +"']");
-				cell.text(invoice[prop]);
+				cell = container.find("[data-tprop='" +prop +"']").text(invoice[prop]);
 				if ( prop === 'localizedAmount' ) {
 					cell.toggleClass('label-danger', invoice.balance > 0);
 					cell.toggleClass('label-success', !(invoice.balance > 0));
 				}
 			}
 		}
+		
+		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/' +invoice.id), function(json) {
+			console.log('Got invoice detail: %o', json);
+			populateInvoiceItemDetails(modal.find('table.invoice-items'), (json ? json.data : null));
+		});
 		
 		modal.modal('show');
 	}
@@ -127,6 +167,12 @@ $(document).ready(function() {
 			event.preventDefault();
 			loadInvoicePage(invoicePagination.page + 1);
 		});
+		
+		// reset invoice details modal on close
+		$('#invoice-details-modal').on('hidden.bs.modal', function(event) {
+			resetInvoiceDetails(this);
+		});
+
 		
 		/*
 		$.getJSON(SolarReg.solarUserURL('/sec/billing/systemInfo'), function(json) {

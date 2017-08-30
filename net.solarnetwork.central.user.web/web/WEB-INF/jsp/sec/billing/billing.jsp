@@ -86,18 +86,38 @@
 		 				<p><b><fmt:message key='billing.invoice.amount.label'/></b></p>
 			 		</div>
 		 		</div>
-		 		<div class="row">
+		 		<div class="row invoice-details">
 		 			<div class="col-xs-2">
-		 				<p data-tprop="invoiceNumber">123</p>
+		 				<p data-tprop="invoiceNumber"></p>
 			 		</div>
 		 			<div class="col-xs-6">
-		 				<p data-tprop="localizedDate">Monday, August 28, 2017</p>
+		 				<p data-tprop="localizedDate"></p>
 			 		</div>
 		 			<div class="col-xs-4">
-		 				<p><span class="label" data-tprop="localizedAmount">$1.23</span></p>
+		 				<p><span class="label" data-tprop="localizedAmount"></span></p>
 			 		</div>
 		 		</div>
 			</div>
+			<table class="invoice-items hidden table table-striped">
+				<thead>
+					<tr>
+						<th><fmt:message key='billing.invoice.item.planName.label'/></th>
+						<th><fmt:message key='billing.invoice.item.startDate.label'/></th>
+						<th><fmt:message key='billing.invoice.item.endDate.label'/></th>
+						<th><fmt:message key='billing.invoice.item.amount.label'/></th>
+						<th><fmt:message key='billing.invoice.item.info.label'/></th>
+					</tr>
+					<tr class="template">
+						<td data-tprop="planName"></td>
+						<td data-tprop="localizedStartDate"></td>
+						<td data-tprop="localizedEndDate"></td>
+						<td><span class="label label-default" data-tprop="localizedAmount"></span></td>
+						<td data-tprop="localizedInfo"></td>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></button>
 			</div>

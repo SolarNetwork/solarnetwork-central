@@ -28,8 +28,10 @@ import java.util.List;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.domain.FilterResults;
@@ -39,8 +41,10 @@ import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
+import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceMatch;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.OptionalService;
@@ -87,6 +91,43 @@ public class BillingController extends WebServiceControllerSupport {
 			info = (system != null ? system.getInfo(locale) : null);
 		}
 		return response(info);
+	}
+
+	/**
+	 * Get a single invoice with full details.
+	 * 
+	 * @param invoiceId
+	 *        the ID of the invoice to get
+	 * @param userId
+	 *        the optional user ID to get the invoice for; if not provided the
+	 *        current actor's ID is used
+	 * @param locale
+	 *        the request locale
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/invoices/{invoiceId}", method = RequestMethod.GET)
+	public Response<Invoice> getInvoice(@PathVariable("invoiceId") String invoiceId,
+			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
+		BillingBiz biz = billingBiz.service();
+		Invoice result = null;
+		if ( biz != null ) {
+			if ( userId == null ) {
+				SecurityUser actor = SecurityUtils.getCurrentUser();
+				userId = actor.getUserId();
+			}
+			result = biz.getInvoice(userId, invoiceId);
+		}
+
+		// localize the response
+		if ( result != null ) {
+			if ( locale == null ) {
+				locale = Locale.getDefault();
+			}
+			result = new LocalizedInvoice(result, locale);
+		}
+
+		return response(result);
 	}
 
 	/**
