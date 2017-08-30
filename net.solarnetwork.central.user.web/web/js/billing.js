@@ -8,7 +8,7 @@ $(document).ready(function() {
 	};
 	
 	function resetInvoiceDetails(modal) {
-		$(modal).find('tbody').empty();
+		$(modal).find('table.invoice-items').addClass('hidden').find('tbody').empty();
 	}
 	
 	function populateInvoiceItemDetails(table, invoice) {
