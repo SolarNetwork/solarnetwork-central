@@ -48,6 +48,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Before;
@@ -596,6 +597,23 @@ public class KillbillRestClientTests {
 		UnitRecord unitRec = records.getRolledUpUnits().get(0);
 		assertThat("Unit type", unitRec.getUnitType(), equalTo("DatumMetrics"));
 		assertThat("Amount", unitRec.getAmount(), equalTo(new BigDecimal("14079")));
+	}
+
+	@Test
+	public void catalogTranslation_en_NZ() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/kb/invoices/catalogTranslation/en_NZ", HttpMethod.GET)
+			.andRespond(withSuccess()
+				.body(new ClassPathResource("catalog-translation-01_en_NZ.properties", getClass()))
+				.contentType(MediaType.TEXT_PLAIN));
+	    // @formatter:on
+
+		// when
+		Properties props = client.invoiceCatalogTranslation("en_NZ");
+
+		// then
+		assertThat(props, equalTo(Collections.singletonMap("greeting", "G'day, mate!")));
 	}
 
 }

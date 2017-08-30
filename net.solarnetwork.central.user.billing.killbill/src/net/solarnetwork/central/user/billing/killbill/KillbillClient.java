@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.killbill;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -185,5 +186,14 @@ public interface KillbillClient {
 	 */
 	FilterResults<Invoice> findInvoices(Account account, InvoiceFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+
+	/**
+	 * Get the invoice catalog translation properties for a locale.
+	 * 
+	 * @param locale
+	 *        the locale to get
+	 * @return the properties, or {@literal null} if not available
+	 */
+	Properties invoiceCatalogTranslation(String locale);
 
 }

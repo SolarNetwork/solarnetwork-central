@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.killbill;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
@@ -29,9 +30,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import org.joda.time.LocalDate;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -359,6 +362,24 @@ public class KillbillRestClient implements KillbillClient {
 				.queryParam("endDate", ISO_DATE_FORMATTER.print(endDate)).buildAndExpand(uriVariables)
 				.toUri();
 		return getForObjectOrNull(uri, SubscriptionUsageRecords.class);
+	}
+
+	@Override
+	public Properties invoiceCatalogTranslation(String locale) {
+		Map<String, Object> uriVariables = Collections.singletonMap("locale", locale);
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/invoices/catalogTranslation/{locale}"))
+				.buildAndExpand(uriVariables).toUri();
+		Resource data = getForObjectOrNull(uri, Resource.class);
+		Properties props = null;
+		if ( data != null ) {
+			props = new Properties();
+			try {
+				props.load(data.getInputStream());
+			} catch ( IOException e ) {
+				throw new RuntimeException(e);
+			}
+		}
+		return props;
 	}
 
 	/**
