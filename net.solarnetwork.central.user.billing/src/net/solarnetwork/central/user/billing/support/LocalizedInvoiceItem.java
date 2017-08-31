@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -134,6 +135,11 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	@Override
 	public String getId() {
 		return item.getId();
+	}
+
+	@Override
+	public Map<String, Object> getMetadata() {
+		return item.getMetadata();
 	}
 
 	@Override

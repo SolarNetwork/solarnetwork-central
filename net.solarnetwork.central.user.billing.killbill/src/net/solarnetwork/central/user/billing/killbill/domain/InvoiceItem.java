@@ -23,8 +23,12 @@
 package net.solarnetwork.central.user.billing.killbill.domain;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -43,7 +47,7 @@ import net.solarnetwork.central.domain.BaseObjectEntity;
 public class InvoiceItem extends BaseObjectEntity<String>
 		implements net.solarnetwork.central.user.billing.domain.InvoiceItem {
 
-	private static final long serialVersionUID = -6524183885997666544L;
+	private static final long serialVersionUID = 8438942092302679074L;
 
 	private String bundleId;
 	private String subscriptionId;
@@ -59,7 +63,9 @@ public class InvoiceItem extends BaseObjectEntity<String>
 	private String currencyCode;
 	private String timeZoneId = "UTC";
 
+	// internal fields not explicit in KB API
 	private List<UnitRecord> usageRecords;
+	private Map<String, CustomField> customFields;
 
 	/**
 	 * Default constructor.
@@ -91,6 +97,7 @@ public class InvoiceItem extends BaseObjectEntity<String>
 		setBundleId(item.getBundleId());
 		setCreated(item.getCreated());
 		setCurrencyCode(item.getCurrencyCode());
+		setCustomFields(item.getCustomFields());
 		setDescription(item.getDescription());
 		setEndDate(item.getEndDate());
 		setEnded(item.getEnded());
@@ -425,6 +432,40 @@ public class InvoiceItem extends BaseObjectEntity<String>
 	@Override
 	public List<net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord> getItemUsageRecords() {
 		return (List) getUsageRecords();
+	}
+
+	@Override
+	public Map<String, Object> getMetadata() {
+		Map<String, CustomField> fieldMap = customFields;
+		return (fieldMap != null
+				? fieldMap.entrySet().stream().collect(
+						Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue().getValue()))
+				: null);
+	}
+
+	/**
+	 * Get all available custom fields.
+	 * 
+	 * @return the custom fields
+	 */
+	@JsonIgnore
+	public Collection<CustomField> getCustomFields() {
+		return (customFields != null ? customFields.values() : null);
+	}
+
+	/**
+	 * Set all custom fields.
+	 * 
+	 * @param fields
+	 *        the fields to set
+	 */
+	public void setCustomFields(Collection<CustomField> fields) {
+		Map<String, CustomField> fieldMap = null;
+		if ( fields != null ) {
+			fieldMap = fields.stream()
+					.collect(Collectors.toMap(CustomField::getName, Function.identity()));
+		}
+		this.customFields = fieldMap;
 	}
 
 }

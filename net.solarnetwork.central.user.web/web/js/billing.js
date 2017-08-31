@@ -11,11 +11,11 @@ $(document).ready(function() {
 		$(modal).find('table.invoice-items').addClass('hidden').find('tbody').empty();
 	}
 	
-	function replaceTemplateProperties(el, obj) {
+	function replaceTemplateProperties(el, obj, prefix) {
 		var prop, sel;
 		for ( prop in obj ) {
 			if ( obj.hasOwnProperty(prop) ) {
-				sel = "[data-tprop='" +prop +"']";
+				sel = "[data-tprop='" +(prefix || '') +prop +"']";
 				el.find(sel).addBack(sel).text(obj[prop]);
 			}
 		}
@@ -44,6 +44,11 @@ $(document).ready(function() {
 				tr.removeClass('template');
 				tr.data('invoiceItem', item);
 				replaceTemplateProperties(tr, item);
+				
+				// look for metadata
+				if ( item.metadata ) {
+					replaceTemplateProperties(tr, item.metadata, 'metadata.');
+				}
 				
 				usageRecords = item.localizedInvoiceItemUsageRecords;
 				haveUsageRecords = (Array.isArray(usageRecords) && usageRecords.length > 0);

@@ -22,6 +22,13 @@
 
 package net.solarnetwork.central.user.billing.killbill.domain;
 
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 /**
  * A subscription.
  * 
@@ -40,6 +47,8 @@ public class Subscription {
 	private String planName;
 	private Integer billCycleDayLocal;
 	private String phaseType;
+
+	private Map<String, CustomField> customFields;
 
 	/**
 	 * Create with a plan name.
@@ -163,6 +172,58 @@ public class Subscription {
 	 */
 	public void setProductName(String productName) {
 		this.productName = productName;
+	}
+
+	/**
+	 * Get all available custom fields.
+	 * 
+	 * @return the custom fields
+	 */
+	public Collection<CustomField> getCustomFields() {
+		return (customFields != null ? customFields.values() : null);
+	}
+
+	/**
+	 * Set all custom fields.
+	 * 
+	 * @param fields
+	 *        the fields to set
+	 */
+	public void setCustomFields(List<CustomField> fields) {
+		Map<String, CustomField> fieldMap = null;
+		if ( fields != null ) {
+			fieldMap = fields.stream()
+					.collect(Collectors.toMap(CustomField::getName, Function.identity()));
+		}
+		this.customFields = fieldMap;
+	}
+
+	/**
+	 * Get a custom field by its name.
+	 * 
+	 * @param name
+	 *        the name of the field to get
+	 * @return the field, or {@literal null} if not available
+	 */
+	public CustomField getCustomField(String name) {
+		return (customFields != null ? customFields.get(name) : null);
+	}
+
+	/**
+	 * Add a single custom field.
+	 * 
+	 * @param field
+	 *        the field to add
+	 */
+	public void addCustomField(CustomField field) {
+		Map<String, CustomField> fieldMap = this.customFields;
+		if ( fieldMap == null && field != null ) {
+			fieldMap = new LinkedHashMap<>(4);
+			this.customFields = fieldMap;
+		}
+		if ( field != null ) {
+			fieldMap.put(field.getName(), field);
+		}
 	}
 
 }

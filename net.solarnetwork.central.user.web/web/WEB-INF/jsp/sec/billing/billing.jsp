@@ -102,15 +102,15 @@
 				<thead>
 					<tr>
 						<th><fmt:message key='billing.invoice.item.planName.label'/></th>
-						<th><fmt:message key='billing.invoice.item.startDate.label'/></th>
-						<th><fmt:message key='billing.invoice.item.endDate.label'/></th>
+						<th><fmt:message key='billing.invoice.item.node.label'/></th>
+						<th><fmt:message key='billing.invoice.item.dateRange.label'/></th>
 						<th><fmt:message key='billing.invoice.item.usage.label'/></th>
 						<th><fmt:message key='billing.invoice.item.amount.label'/></th>
 					</tr>
 					<tr class="invoice-item template">
 						<td data-tprop="localizedDescription"></td>
-						<td data-tprop="localizedStartDate"></td>
-						<td data-tprop="localizedEndDate"></td>
+						<td data-tprop="metadata.nodeId"></td>
+						<td><span  data-tprop="localizedStartDate"></span> - <span data-tprop="localizedEndDate"></span></td>
 						<td>
 							<dl class="usage-records hidden">
 								<dt class="usage-record template" data-tprop="localizedUnitType"></dt>

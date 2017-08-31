@@ -57,6 +57,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
+import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsage;
@@ -84,6 +85,9 @@ public class KillbillRestClient implements KillbillClient {
 	};
 
 	private static final ParameterizedTypeReference<List<Invoice>> INVOICE_LIST_TYPE = new ParameterizedTypeReference<List<Invoice>>() {
+	};
+
+	private static final ParameterizedTypeReference<List<CustomField>> CUSTOM_FIELD_LIST_TYPE = new ParameterizedTypeReference<List<CustomField>>() {
 	};
 
 	private String baseUrl = DEFAULT_BASE_URL;
@@ -381,6 +385,34 @@ public class KillbillRestClient implements KillbillClient {
 			}
 		}
 		return props;
+	}
+
+	@Override
+	public String createSubscriptionCustomFields(String subscriptionId, List<CustomField> fields) {
+		Map<String, Object> uriVariables = Collections.singletonMap("subscriptionId", subscriptionId);
+		URI uri = UriComponentsBuilder
+				.fromHttpUrl(kbUrl("/1.0/kb/subscriptions/{subscriptionId}/customFields"))
+				.buildAndExpand(uriVariables).toUri();
+		URI loc = client.postForLocation(uri, fields);
+		return idFromLocation(loc);
+	}
+
+	@Override
+	public List<CustomField> customFieldsForSubscription(String subscriptionId) {
+		Map<String, Object> uriVariables = Collections.singletonMap("subscriptionId", subscriptionId);
+		URI uri = UriComponentsBuilder
+				.fromHttpUrl(kbUrl("/1.0/kb/subscriptions/{subscriptionId}/customFields"))
+				.buildAndExpand(uriVariables).toUri();
+		List<CustomField> results = getForObjectOrNull(uri, CUSTOM_FIELD_LIST_TYPE);
+		return (results != null ? results : Collections.emptyList());
+	}
+
+	@Override
+	public Subscription getSubscription(String subscriptionId) {
+		Map<String, Object> uriVariables = Collections.singletonMap("subscriptionId", subscriptionId);
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/subscriptions/{subscriptionId}"))
+				.buildAndExpand(uriVariables).toUri();
+		return getForObjectOrNull(uri, Subscription.class);
 	}
 
 	/**

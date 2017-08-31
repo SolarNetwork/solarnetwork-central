@@ -24,9 +24,13 @@ package net.solarnetwork.central.user.billing.killbill.test;
 
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +38,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.easymock.EasyMock;
+import org.joda.time.LocalDate;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,7 +51,12 @@ import net.solarnetwork.central.user.billing.killbill.KillbillBillingSystem;
 import net.solarnetwork.central.user.billing.killbill.KillbillClient;
 import net.solarnetwork.central.user.billing.killbill.UserDataProperties;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
+import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
+import net.solarnetwork.central.user.billing.killbill.domain.InvoiceItem;
+import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
+import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
+import net.solarnetwork.central.user.billing.killbill.domain.UnitRecord;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
 
@@ -160,6 +170,59 @@ public class KillbillBillingSystemTests {
 
 		// then
 		assertThat("Invoice class", result, instanceOf(Invoice.class));
+	}
+
+	@Test
+	public void getInvoiceWithItemsSubscriptionUsage() {
+		// given
+		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
+		user.putInternalDataValue(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_ACCOUNT_KEY);
+		expect(userDao.get(TEST_USER_ID)).andReturn(user);
+
+		Account account = new Account(TEST_ACCOUNT_ID);
+		expect(client.accountForExternalKey(TEST_ACCOUNT_KEY)).andReturn(account);
+
+		Subscription subscription = new Subscription("test-subscription-id");
+
+		Invoice invoice = new Invoice(TEST_INVOICE_ID);
+		InvoiceItem item = new InvoiceItem("test-invoice-item-id");
+		item.setItemType("USAGE");
+		item.setSubscriptionId(subscription.getSubscriptionId());
+		item.setStartDate(new LocalDate(2017, 1, 1));
+		item.setEndDate(new LocalDate(2017, 2, 1));
+		invoice.setItems(Arrays.asList(item));
+		expect(client.getInvoice(account, TEST_INVOICE_ID, true, false)).andReturn(invoice);
+
+		// get usage records for subscription
+		SubscriptionUsageRecords usage = new SubscriptionUsageRecords();
+		usage.setStartDate(item.getStartDate());
+		usage.setEndDate(item.getEndDate());
+		usage.setSubscriptionId(subscription.getSubscriptionId());
+		usage.setRolledUpUnits(Arrays.asList(new UnitRecord("FooUnits", new BigDecimal("123456789"))));
+		expect(client.usageRecordsForSubscription(subscription.getSubscriptionId(), item.getStartDate(),
+				item.getEndDate())).andReturn(usage);
+
+		// get the subscription
+		expect(client.getSubscription(subscription.getSubscriptionId())).andReturn(subscription);
+
+		// get the custom fields for subscription
+		List<CustomField> subCustomFields = Collections.singletonList(new CustomField("foo", "bar"));
+		expect(client.customFieldsForSubscription(subscription.getSubscriptionId()))
+				.andReturn(subCustomFields);
+
+		// when
+		replayAll();
+
+		net.solarnetwork.central.user.billing.domain.Invoice result = system.getInvoice(TEST_USER_ID,
+				TEST_INVOICE_ID, null);
+
+		// then
+		assertThat("Invoice class", result, sameInstance(invoice));
+
+		assertThat("Invoice item usage set", item.getUsageRecords(), equalTo(usage.getRolledUpUnits()));
+
+		assertThat("Invoice item custom fields set", item.getCustomFields(),
+				hasItems(subCustomFields.get(0)));
 	}
 
 }

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import net.solarnetwork.central.domain.Entity;
@@ -41,6 +42,13 @@ import net.solarnetwork.central.domain.Entity;
  * @version 1.0
  */
 public interface InvoiceItem extends Entity<String> {
+
+	/**
+	 * Get metadata associated with this item.
+	 * 
+	 * @return the metadata, or {@literal null} if none
+	 */
+	Map<String, Object> getMetadata();
 
 	/**
 	 * Get the time zone of the invoice item.

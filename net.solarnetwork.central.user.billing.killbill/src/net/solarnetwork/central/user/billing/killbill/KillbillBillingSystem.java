@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.killbill;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
+import javax.cache.Cache;
 import org.springframework.context.MessageSource;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -39,9 +40,11 @@ import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemInfo;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRecordInfo;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
+import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.killbill.domain.LocalizedInvoiceItem;
 import net.solarnetwork.central.user.billing.killbill.domain.LocalizedUnitRecord;
+import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
 import net.solarnetwork.central.user.billing.killbill.domain.UnitRecord;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
@@ -63,6 +66,8 @@ public class KillbillBillingSystem implements BillingSystem {
 	private final UserDao userDao;
 	private final KillbillClient client;
 	private final MessageSource messageSource;
+
+	private Cache<String, Subscription> subscriptionCache;
 
 	/**
 	 * Constructor.
@@ -128,6 +133,26 @@ public class KillbillBillingSystem implements BillingSystem {
 		return results;
 	}
 
+	private Subscription getSubscription(String subscriptionId) {
+		Subscription result = null;
+		Cache<String, Subscription> cache = subscriptionCache;
+		if ( cache != null ) {
+			result = cache.get(subscriptionId);
+		}
+		if ( result == null ) {
+			result = client.getSubscription(subscriptionId);
+			if ( result != null ) {
+				// populate custom fields
+				List<CustomField> fields = client.customFieldsForSubscription(subscriptionId);
+				result.setCustomFields(fields);
+				if ( cache != null ) {
+					cache.putIfAbsent(subscriptionId, result);
+				}
+			}
+		}
+		return result;
+	}
+
 	@Override
 	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
 		Account account = accountForUser(userId);
@@ -138,6 +163,8 @@ public class KillbillBillingSystem implements BillingSystem {
 		if ( invoice.getInvoiceItems() != null ) {
 			for ( ListIterator<InvoiceItem> itr = invoice.getItems().listIterator(); itr.hasNext(); ) {
 				InvoiceItem item = itr.next();
+
+				// populate usage
 				if ( "USAGE".equals(item.getItemType()) && item.getSubscriptionId() != null ) {
 					SubscriptionUsageRecords records = client.usageRecordsForSubscription(
 							item.getSubscriptionId(), item.getStartDate(), item.getEndDate());
@@ -157,6 +184,13 @@ public class KillbillBillingSystem implements BillingSystem {
 						}
 					}
 				}
+
+				// poplate metadata
+				Subscription subscription = getSubscription(item.getSubscriptionId());
+				if ( subscription != null ) {
+					item.setCustomFields(subscription.getCustomFields());
+				}
+
 				if ( locale != null ) {
 					String desc = messageSource.getMessage(item.getPlanName(), null, null, locale);
 					LocalizedInvoiceItemInfo locInfo = new net.solarnetwork.central.user.billing.support.LocalizedInvoiceItem(
@@ -167,6 +201,16 @@ public class KillbillBillingSystem implements BillingSystem {
 			}
 		}
 		return invoice;
+	}
+
+	/**
+	 * Set a cache to use for subscriptions.
+	 * 
+	 * @param subscriptionCache
+	 *        the cache to set
+	 */
+	public void setSubscriptionCache(Cache<String, Subscription> subscriptionCache) {
+		this.subscriptionCache = subscriptionCache;
 	}
 
 }

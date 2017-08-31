@@ -70,6 +70,7 @@ import net.solarnetwork.central.user.billing.killbill.KillbillRestClient;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
+import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
@@ -294,6 +295,51 @@ public class KillbillRestClientTests {
 
 		// then
 		assertThat("Subscription ID", subscriptionId, equalTo(TEST_SUBSCRIPTION_ID));
+	}
+
+	@Test
+	public void createCustomFields() throws Exception {
+		// given
+		CustomField field = new CustomField("foo", "bar");
+
+		// using the SubscriptionUsage to verify the request JSON structure
+		String expected = "[{\"name\":\"foo\",\"value\":\"bar\"}]";
+
+		URI loc = new URI("http://localhost/custom-field-list-id");
+
+		// @formatter:off
+		serverExpect("/1.0/kb/subscriptions/"+TEST_SUBSCRIPTION_ID+"/customFields", HttpMethod.POST)
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+			.andExpect(content().string(expected))
+			.andRespond(withStatus(HttpStatus.CREATED).location(loc));
+	    // @formatter:on
+
+		// when
+		String id = client.createSubscriptionCustomFields(TEST_SUBSCRIPTION_ID,
+				Collections.singletonList(field));
+
+		// then
+		assertThat(id, equalTo("custom-field-list-id"));
+	}
+
+	@Test
+	public void getCustomFields() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/kb/subscriptions/"+TEST_SUBSCRIPTION_ID+"/customFields", HttpMethod.GET)
+			.andRespond(withStatus(HttpStatus.CREATED)
+					.contentType(MediaType.APPLICATION_JSON_UTF8)
+					.body("[{\"name\":\"foo\",\"value\":\"bar\"}]"));
+	    // @formatter:on
+
+		// when
+		List<CustomField> fields = client.customFieldsForSubscription(TEST_SUBSCRIPTION_ID);
+
+		// then
+		assertThat(fields, hasSize(1));
+		CustomField field = fields.get(0);
+		assertThat("Name", field.getName(), equalTo("foo"));
+		assertThat("Value", field.getValue(), equalTo("bar"));
 	}
 
 	@Test
@@ -597,6 +643,31 @@ public class KillbillRestClientTests {
 		UnitRecord unitRec = records.getRolledUpUnits().get(0);
 		assertThat("Unit type", unitRec.getUnitType(), equalTo("DatumMetrics"));
 		assertThat("Amount", unitRec.getAmount(), equalTo(new BigDecimal("14079")));
+	}
+
+	@Test
+	public void getSubscription() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/kb/subscriptions/" +TEST_SUBSCRIPTION_ID, HttpMethod.GET)
+			.andRespond(withSuccess()
+				.body(new ClassPathResource("subscription-01.json", getClass()))
+				.contentType(MediaType.APPLICATION_JSON_UTF8));
+	    // @formatter:on
+
+		// when
+		Subscription result = client.getSubscription(TEST_SUBSCRIPTION_ID);
+
+		// then
+		assertThat("Subscription", result, notNullValue());
+		assertThat("Subscription BCD", result.getBillCycleDayLocal(), equalTo(5));
+		assertThat("Subscription BCD", result.getPhaseType(), equalTo("EVERGREEN"));
+		assertThat("Subscription BCD", result.getPlanName(),
+				equalTo("api-posted-datum-metric-monthly-usage"));
+		assertThat("Subscription BCD", result.getProductCategory(), equalTo("BASE"));
+		assertThat("Subscription BCD", result.getProductName(), equalTo("PostedDatumMetrics"));
+		assertThat("Subscription ID", result.getSubscriptionId(),
+				equalTo("4d944d7c-43fb-4ae5-9eb0-8774e904c943"));
 	}
 
 	@Test

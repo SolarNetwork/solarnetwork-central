@@ -33,6 +33,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
+import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
@@ -115,6 +116,35 @@ public interface KillbillClient {
 	 * @return the subscription ID
 	 */
 	String createBundle(Account account, LocalDate requestedDate, Bundle info);
+
+	/**
+	 * Create custom field values associated with a subscription.
+	 * 
+	 * @param subscriptionId
+	 *        the subscription ID to attach the custom field to
+	 * @param fields
+	 *        the fields to create
+	 * @return the custom field list ID
+	 */
+	String createSubscriptionCustomFields(String subscriptionId, List<CustomField> fields);
+
+	/**
+	 * Get the custom fields associated with a subscription.
+	 * 
+	 * @param subscriptionId
+	 *        the subscription ID to get the custom fields for
+	 * @return the custom fields, never {@literal null}
+	 */
+	List<CustomField> customFieldsForSubscription(String subscriptionId);
+
+	/**
+	 * Get a subscription.
+	 * 
+	 * @param subscriptionId
+	 *        the ID of the subscription to get
+	 * @return the subscription, or {@literal null} if not available
+	 */
+	Subscription getSubscription(String subscriptionId);
 
 	/**
 	 * Add usage records to a subscription.

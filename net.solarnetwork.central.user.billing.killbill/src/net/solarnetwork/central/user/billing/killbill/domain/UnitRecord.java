@@ -44,6 +44,20 @@ public class UnitRecord implements InvoiceItemUsageRecord {
 	}
 
 	/**
+	 * Construct with values.
+	 * 
+	 * @param unitType
+	 *        the unit type
+	 * @param amount
+	 *        the amount
+	 */
+	public UnitRecord(String unitType, BigDecimal amount) {
+		super();
+		setUnitType(unitType);
+		setAmount(amount);
+	}
+
+	/**
 	 * Copy constructor.
 	 * 
 	 * @param record
@@ -52,6 +66,44 @@ public class UnitRecord implements InvoiceItemUsageRecord {
 	public UnitRecord(UnitRecord record) {
 		setAmount(record.getAmount());
 		setUnitType(record.getUnitType());
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((amount == null) ? 0 : amount.hashCode());
+		result = prime * result + ((unitType == null) ? 0 : unitType.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( obj == null ) {
+			return false;
+		}
+		if ( !(obj instanceof UnitRecord) ) {
+			return false;
+		}
+		UnitRecord other = (UnitRecord) obj;
+		if ( amount == null ) {
+			if ( other.amount != null ) {
+				return false;
+			}
+		} else if ( !amount.equals(other.amount) ) {
+			return false;
+		}
+		if ( unitType == null ) {
+			if ( other.unitType != null ) {
+				return false;
+			}
+		} else if ( !unitType.equals(other.unitType) ) {
+			return false;
+		}
+		return true;
 	}
 
 	@Override
