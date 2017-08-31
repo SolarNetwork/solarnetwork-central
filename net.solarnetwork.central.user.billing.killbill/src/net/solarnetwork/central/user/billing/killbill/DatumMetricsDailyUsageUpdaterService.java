@@ -45,6 +45,7 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
+import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -153,6 +154,9 @@ public class DatumMetricsDailyUsageUpdaterService {
 
 	/** The default usage unit name. */
 	public static final String DEFAULT_USAGE_UNIT_NAME = "DatumMetrics";
+
+	/** The custom field name for a SolarNode ID. */
+	public static final String CUSTOM_FIELD_NODE_ID = "nodeId";
 
 	private final SolarLocationDao locationDao;
 	private final GeneralNodeDatumDao nodeDatumDao;
@@ -386,6 +390,24 @@ public class DatumMetricsDailyUsageUpdaterService {
 
 			// to pick up subscription ID; re-get bundle now
 			bundle = client.bundleForExternalKey(account, bundleKey);
+
+			// add node ID as metadata to the subscription
+			Subscription sub = (bundle != null && bundle.getSubscriptions() != null
+					&& !bundle.getSubscriptions().isEmpty() ? bundle.getSubscriptions().get(0) : null);
+			if ( sub != null ) {
+				CustomField field = new CustomField(CUSTOM_FIELD_NODE_ID,
+						userNode.getNode().getId().toString());
+				String fieldListId = client.createSubscriptionCustomFields(
+						bundle.getSubscriptions().get(0).getSubscriptionId(),
+						Collections.singletonList(field));
+				log.debug("Added user {} node ID {} custom field {} to subscription {}",
+						userNode.getUser().getEmail(), userNode.getNode().getId(), fieldListId);
+			} else {
+				log.warn(
+						"Subscription ID not available for bundle {}; cannot add nodeId {} custom field",
+						bundleId, userNode.getNode().getId());
+			}
+
 		}
 		return bundle;
 	}

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.billing.killbill.test;
 
+import static java.util.Collections.singletonList;
+import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.CUSTOM_FIELD_NODE_ID;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_ACCOUNT_BILL_CYCLE_DAY;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_BASE_PLAN_NAME;
 import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_BATCH_SIZE;
@@ -73,6 +75,7 @@ import net.solarnetwork.central.user.billing.killbill.KillbillClient;
 import net.solarnetwork.central.user.billing.killbill.UserDataProperties;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
+import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -396,6 +399,11 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		subscription.setPlanName(DEFAULT_BASE_PLAN_NAME);
 		bundle.setSubscriptions(Collections.singletonList(subscription));
 		expect(client.bundleForExternalKey(account, TEST_BUNDLE_KEY)).andReturn(bundle);
+
+		// then add the custom field for the node ID
+		expect(client.createSubscriptionCustomFields(TEST_SUBSCRIPTION_ID,
+				singletonList(new CustomField(CUSTOM_FIELD_NODE_ID, TEST_NODE_ID.toString()))))
+						.andReturn("test-field-list-id");
 
 		Capture<List<UsageRecord>> usageCapture = new Capture<>();
 		client.addUsage(same(subscription), eq(ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())),
