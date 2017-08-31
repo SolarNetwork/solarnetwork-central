@@ -307,12 +307,12 @@ public class KillbillRestClientTests {
 				new UsageRecord(date.plusDays(2), new BigDecimal(3)));
 
 		// using the SubscriptionUsage to verify the request JSON structure
-		Map<String, Object> expected = JsonUtils
-				.getStringMap("{\"subscriptionId\":\"" + TEST_SUBSCRIPTION_ID
-						+ "\",\"unitUsageRecords\":[{\"unitType\":\"test-unit\",\"usageRecords\":["
-						+ "{\"recordDate\":\"2017-01-01\",\"amount\":\"1\"},"
-						+ "{\"recordDate\":\"2017-01-02\",\"amount\":\"2\"},"
-						+ "{\"recordDate\":\"2017-01-03\",\"amount\":\"3\"}]}]}");
+		Map<String, Object> expected = JsonUtils.getStringMap("{\"subscriptionId\":\""
+				+ TEST_SUBSCRIPTION_ID + "\",\"trackingId\":\"test-tracking-id\""
+				+ ",\"unitUsageRecords\":[{\"unitType\":\"test-unit\",\"usageRecords\":["
+				+ "{\"recordDate\":\"2017-01-01\",\"amount\":\"1\"},"
+				+ "{\"recordDate\":\"2017-01-02\",\"amount\":\"2\"},"
+				+ "{\"recordDate\":\"2017-01-03\",\"amount\":\"3\"}]}]}");
 
 		// @formatter:off
 		serverExpect("/1.0/kb/usages", HttpMethod.POST)
@@ -322,7 +322,7 @@ public class KillbillRestClientTests {
 	    // @formatter:on
 
 		// when
-		client.addUsage(subscription, "test-unit", usageRecords);
+		client.addUsage(subscription, "test-tracking-id", "test-unit", usageRecords);
 
 		// then
 		// no exception thrown

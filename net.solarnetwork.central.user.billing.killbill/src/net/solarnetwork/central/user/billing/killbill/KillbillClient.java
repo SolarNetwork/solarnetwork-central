@@ -121,12 +121,14 @@ public interface KillbillClient {
 	 * 
 	 * @param subscription
 	 *        the subscription to add usage to
+	 * @param trackingId
+	 *        a unique key to prevent duplicate usage records from being stored
 	 * @param unit
 	 *        the usage unit name
 	 * @param usage
 	 *        the usage records
 	 */
-	void addUsage(Subscription subscription, String unit, List<UsageRecord> usage);
+	void addUsage(Subscription subscription, String trackingId, String unit, List<UsageRecord> usage);
 
 	/**
 	 * Get an invoice by ID.

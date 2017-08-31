@@ -66,13 +66,14 @@ public class SubscriptionUsageTests {
 
 		List<UsageUnitRecord> usageUnitRecords = Collections
 				.singletonList(new UsageUnitRecord("b", usageRecords));
-		SubscriptionUsage usage = new SubscriptionUsage(subscription, usageUnitRecords);
+		SubscriptionUsage usage = new SubscriptionUsage(subscription, "test-tracking-id",
+				usageUnitRecords);
 
 		String json = objectMapper.writeValueAsString(usage);
 		Map<String, Object> data = JsonUtils.getStringMap(json);
 
-		Map<String, Object> expected = JsonUtils
-				.getStringMap("{\"subscriptionId\":\"a\",\"unitUsageRecords\":["
+		Map<String, Object> expected = JsonUtils.getStringMap(
+				"{\"subscriptionId\":\"a\",\"trackingId\":\"test-tracking-id\",\"unitUsageRecords\":["
 						+ "{\"unitType\":\"b\",\"usageRecords\":["
 						+ "{\"recordDate\":\"2017-01-01\",\"amount\":\"1\"},"
 						+ "{\"recordDate\":\"2017-01-02\",\"amount\":\"2\"},"

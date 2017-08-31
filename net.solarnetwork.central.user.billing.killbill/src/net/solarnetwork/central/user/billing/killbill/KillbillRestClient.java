@@ -228,8 +228,9 @@ public class KillbillRestClient implements KillbillClient {
 	}
 
 	@Override
-	public void addUsage(Subscription subscription, String unit, List<UsageRecord> usage) {
-		SubscriptionUsage su = new SubscriptionUsage(subscription,
+	public void addUsage(Subscription subscription, String trackingId, String unit,
+			List<UsageRecord> usage) {
+		SubscriptionUsage su = new SubscriptionUsage(subscription, trackingId,
 				Collections.singletonList(new UsageUnitRecord(unit, usage)));
 		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/usages")).build().toUri();
 		client.postForObject(uri, su, Void.class);

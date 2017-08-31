@@ -32,10 +32,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @author matt
  * @version 1.0
  */
-@JsonPropertyOrder({ "subscriptionId", "unitUsageRecords" })
+@JsonPropertyOrder({ "subscriptionId", "trackingId", "unitUsageRecords" })
 public class SubscriptionUsage {
 
 	private final Subscription subscription;
+	private final String trackingId;
 	private final List<UsageUnitRecord> unitUsageRecords;
 
 	/**
@@ -46,9 +47,11 @@ public class SubscriptionUsage {
 	 * @param usage
 	 *        the usage
 	 */
-	public SubscriptionUsage(Subscription subscription, List<UsageUnitRecord> unitUsageRecords) {
+	public SubscriptionUsage(Subscription subscription, String trackingId,
+			List<UsageUnitRecord> unitUsageRecords) {
 		super();
 		this.subscription = subscription;
+		this.trackingId = trackingId;
 		this.unitUsageRecords = unitUsageRecords;
 	}
 
@@ -74,10 +77,19 @@ public class SubscriptionUsage {
 	/**
 	 * Get the unit usage records.
 	 * 
-	 * @return the unitUsageRecords
+	 * @return the unit usage records
 	 */
 	public List<UsageUnitRecord> getUnitUsageRecords() {
 		return unitUsageRecords;
+	}
+
+	/**
+	 * Get the tracking ID.
+	 * 
+	 * @return the tracking ID
+	 */
+	public String getTrackingId() {
+		return trackingId;
 	}
 
 }

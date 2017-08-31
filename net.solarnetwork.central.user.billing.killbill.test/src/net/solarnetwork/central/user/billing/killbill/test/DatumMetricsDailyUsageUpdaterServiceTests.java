@@ -398,7 +398,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		expect(client.bundleForExternalKey(account, TEST_BUNDLE_KEY)).andReturn(bundle);
 
 		Capture<List<UsageRecord>> usageCapture = new Capture<>();
-		client.addUsage(same(subscription), eq(DEFAULT_USAGE_UNIT_NAME), capture(usageCapture));
+		client.addUsage(same(subscription), eq(ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())),
+				eq(DEFAULT_USAGE_UNIT_NAME), capture(usageCapture));
 
 		// finally, store the "most recent usage" date for future processing
 		userDao.storeInternalData(TEST_USER_ID,
@@ -582,7 +583,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		// get the Bundle for this node
 		expect(client.bundleForExternalKey(account, bundle.getExternalKey())).andReturn(bundle);
 
-		client.addUsage(same(bundle.getSubscriptions().get(0)), eq(DEFAULT_USAGE_UNIT_NAME),
+		client.addUsage(same(bundle.getSubscriptions().get(0)),
+				eq(ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())), eq(DEFAULT_USAGE_UNIT_NAME),
 				capture(usageCapture));
 
 		// finally, store the "most recent usage" date for future processing

@@ -328,6 +328,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 			usageCurrDay = nextDay;
 		}
 
+		String nextStartDate = ISO_DATE_FORMATTER.print(usageEndDay.toLocalDate());
 		if ( !recordsToAdd.isEmpty() ) {
 			Bundle bundle = bundleForUserNode(userNode, account);
 			Subscription subscription = (bundle != null ? bundle.subscriptionWithPlanName(basePlanName)
@@ -339,7 +340,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 							userNode.getNode().getId(), usageStartDay.toLocalDate(),
 							usageEndDay.toLocalDate());
 				}
-				client.addUsage(subscription, this.usageUnitName, recordsToAdd);
+				client.addUsage(subscription, nextStartDate, this.usageUnitName, recordsToAdd);
 			}
 		} else if ( log.isDebugEnabled() ) {
 			log.debug("No {} usage to add for user {} node {} between {} and {}", this.usageUnitName,
@@ -348,7 +349,6 @@ public class DatumMetricsDailyUsageUpdaterService {
 		}
 
 		// store the last processed date so we can pick up there next time
-		String nextStartDate = ISO_DATE_FORMATTER.print(usageEndDay.toLocalDate());
 		userDao.storeInternalData(userNode.getUser().getId(),
 				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP, nextStartDate));
 	}
