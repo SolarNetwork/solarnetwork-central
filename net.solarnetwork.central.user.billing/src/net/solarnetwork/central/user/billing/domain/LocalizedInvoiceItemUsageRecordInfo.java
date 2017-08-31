@@ -37,6 +37,13 @@ package net.solarnetwork.central.user.billing.domain;
 public interface LocalizedInvoiceItemUsageRecordInfo {
 
 	/**
+	 * Get a localized unit type of this usage record.
+	 * 
+	 * @return the localized unit type
+	 */
+	String getLocalizedUnitType();
+
+	/**
 	 * Get the usage amount, as a formatted and localized string.
 	 * 
 	 * @return the amount

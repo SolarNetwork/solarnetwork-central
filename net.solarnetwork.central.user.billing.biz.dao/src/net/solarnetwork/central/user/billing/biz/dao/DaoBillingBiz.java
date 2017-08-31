@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.biz.dao;
 
 import java.util.List;
+import java.util.Locale;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.domain.FilterResults;
@@ -100,12 +101,12 @@ public class DaoBillingBiz implements BillingBiz {
 	}
 
 	@Override
-	public Invoice getInvoice(Long userId, String invoiceId) {
+	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
 		BillingSystem system = billingSystemForUser(userId);
 		if ( system == null ) {
 			return null;
 		}
-		return system.getInvoice(userId, invoiceId);
+		return system.getInvoice(userId, invoiceId, locale);
 	}
 
 }

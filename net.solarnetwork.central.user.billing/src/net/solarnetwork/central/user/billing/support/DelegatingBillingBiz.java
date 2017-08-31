@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.support;
 
 import java.util.List;
+import java.util.Locale;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
@@ -64,8 +65,8 @@ public class DelegatingBillingBiz implements BillingBiz {
 	}
 
 	@Override
-	public Invoice getInvoice(Long userId, String invoiceId) {
-		return delegate.getInvoice(userId, invoiceId);
+	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
+		return delegate.getInvoice(userId, invoiceId, locale);
 	}
 
 }

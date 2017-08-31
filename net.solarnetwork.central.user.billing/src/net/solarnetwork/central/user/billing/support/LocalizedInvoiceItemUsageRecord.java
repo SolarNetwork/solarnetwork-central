@@ -38,6 +38,7 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRec
 public class LocalizedInvoiceItemUsageRecord
 		implements InvoiceItemUsageRecord, LocalizedInvoiceItemUsageRecordInfo {
 
+	private final String localizedUnitType;
 	private final InvoiceItemUsageRecord item;
 	private final Locale locale;
 
@@ -51,7 +52,7 @@ public class LocalizedInvoiceItemUsageRecord
 	 * @return the localized invoice
 	 */
 	public static LocalizedInvoiceItemUsageRecord of(InvoiceItemUsageRecord item, Locale locale) {
-		return new LocalizedInvoiceItemUsageRecord(item, locale);
+		return new LocalizedInvoiceItemUsageRecord(item, locale, null);
 	}
 
 	/**
@@ -62,10 +63,17 @@ public class LocalizedInvoiceItemUsageRecord
 	 * @param locale
 	 *        the locale to localize to
 	 */
-	public LocalizedInvoiceItemUsageRecord(InvoiceItemUsageRecord item, Locale locale) {
+	public LocalizedInvoiceItemUsageRecord(InvoiceItemUsageRecord item, Locale locale,
+			String localizedUnitType) {
 		super();
 		this.item = item;
 		this.locale = locale;
+		this.localizedUnitType = localizedUnitType;
+	}
+
+	@Override
+	public String getLocalizedUnitType() {
+		return localizedUnitType;
 	}
 
 	@Override

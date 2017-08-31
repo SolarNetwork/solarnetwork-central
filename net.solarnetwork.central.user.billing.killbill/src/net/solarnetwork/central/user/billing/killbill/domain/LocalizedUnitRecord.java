@@ -1,5 +1,5 @@
 /* ==================================================================
- * UnitRecord.java - 30/08/2017 3:08:31 PM
+ * LocalizedUnitRecord.java - 31/08/2017 11:54:26 AM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -22,66 +22,39 @@
 
 package net.solarnetwork.central.user.billing.killbill.domain;
 
-import java.math.BigDecimal;
-import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
+import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRecordInfo;
 
 /**
- * A unit usage record.
+ * Localized {@link UnitRecord}.
  * 
  * @author matt
  * @version 1.0
  */
-public class UnitRecord implements InvoiceItemUsageRecord {
+public class LocalizedUnitRecord extends UnitRecord implements LocalizedInvoiceItemUsageRecordInfo {
 
-	private String unitType;
-	private BigDecimal amount;
-
-	/**
-	 * Default constructor.
-	 */
-	public UnitRecord() {
-		super();
-	}
+	private final LocalizedInvoiceItemUsageRecordInfo delegate;
 
 	/**
-	 * Copy constructor.
+	 * Constructor.
 	 * 
 	 * @param record
-	 *        the record to copy
+	 *        to record to initialize from
+	 * @param delegate
+	 *        the delegate to delegate localization to
 	 */
-	public UnitRecord(UnitRecord record) {
-		setAmount(record.getAmount());
-		setUnitType(record.getUnitType());
+	public LocalizedUnitRecord(UnitRecord record, LocalizedInvoiceItemUsageRecordInfo delegate) {
+		super(record);
+		this.delegate = delegate;
 	}
 
 	@Override
-	public String getUnitType() {
-		return unitType;
-	}
-
-	/**
-	 * Set the usage unit type.
-	 * 
-	 * @param unitType
-	 *        the unitType to set
-	 */
-	public void setUnitType(String unitType) {
-		this.unitType = unitType;
+	public String getLocalizedUnitType() {
+		return delegate.getLocalizedUnitType();
 	}
 
 	@Override
-	public BigDecimal getAmount() {
-		return amount;
-	}
-
-	/**
-	 * Set the amount.
-	 * 
-	 * @param amount
-	 *        the amount to set
-	 */
-	public void setAmount(BigDecimal amount) {
-		this.amount = amount;
+	public String getLocalizedAmount() {
+		return delegate.getLocalizedAmount();
 	}
 
 }

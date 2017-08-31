@@ -613,7 +613,7 @@ public class KillbillRestClientTests {
 		Properties props = client.invoiceCatalogTranslation("en_NZ");
 
 		// then
-		assertThat(props, equalTo(Collections.singletonMap("greeting", "G'day, mate!")));
+		assertThat(props, equalTo(Collections.singletonMap("greeting", "G''day, mate!")));
 	}
 
 }

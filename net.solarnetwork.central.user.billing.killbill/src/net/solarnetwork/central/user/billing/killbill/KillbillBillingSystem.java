@@ -23,7 +23,9 @@
 package net.solarnetwork.central.user.billing.killbill;
 
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
+import org.springframework.context.MessageSource;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -34,10 +36,16 @@ import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemInfo;
+import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRecordInfo;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.InvoiceItem;
+import net.solarnetwork.central.user.billing.killbill.domain.LocalizedInvoiceItem;
+import net.solarnetwork.central.user.billing.killbill.domain.LocalizedUnitRecord;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
+import net.solarnetwork.central.user.billing.killbill.domain.UnitRecord;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
+import net.solarnetwork.central.user.billing.support.LocalizedInvoiceItemUsageRecord;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
 
@@ -54,6 +62,7 @@ public class KillbillBillingSystem implements BillingSystem {
 
 	private final UserDao userDao;
 	private final KillbillClient client;
+	private final MessageSource messageSource;
 
 	/**
 	 * Constructor.
@@ -63,10 +72,11 @@ public class KillbillBillingSystem implements BillingSystem {
 	 * @param userDao
 	 *        the User DAO to use
 	 */
-	public KillbillBillingSystem(KillbillClient client, UserDao userDao) {
+	public KillbillBillingSystem(KillbillClient client, UserDao userDao, MessageSource messageSource) {
 		super();
 		this.userDao = userDao;
 		this.client = client;
+		this.messageSource = messageSource;
 	}
 
 	@Override
@@ -119,20 +129,40 @@ public class KillbillBillingSystem implements BillingSystem {
 	}
 
 	@Override
-	public Invoice getInvoice(Long userId, String invoiceId) {
+	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
 		Account account = accountForUser(userId);
 		net.solarnetwork.central.user.billing.killbill.domain.Invoice invoice = client
 				.getInvoice(account, invoiceId, true, false);
 
 		// populate usage records for appropriate items
 		if ( invoice.getInvoiceItems() != null ) {
-			for ( InvoiceItem item : invoice.getItems() ) {
+			for ( ListIterator<InvoiceItem> itr = invoice.getItems().listIterator(); itr.hasNext(); ) {
+				InvoiceItem item = itr.next();
 				if ( "USAGE".equals(item.getItemType()) && item.getSubscriptionId() != null ) {
 					SubscriptionUsageRecords records = client.usageRecordsForSubscription(
 							item.getSubscriptionId(), item.getStartDate(), item.getEndDate());
 					if ( records != null ) {
 						item.setUsageRecords(records.getRolledUpUnits());
+						if ( locale != null ) {
+							for ( ListIterator<UnitRecord> recItr = item.getUsageRecords()
+									.listIterator(); recItr.hasNext(); ) {
+								UnitRecord rec = recItr.next();
+								String unitType = messageSource.getMessage(rec.getUnitType(), null, null,
+										locale);
+								LocalizedInvoiceItemUsageRecordInfo locInfo = new LocalizedInvoiceItemUsageRecord(
+										rec, locale, unitType);
+								rec = new LocalizedUnitRecord(rec, locInfo);
+								recItr.set(rec);
+							}
+						}
 					}
+				}
+				if ( locale != null ) {
+					String desc = messageSource.getMessage(item.getPlanName(), null, null, locale);
+					LocalizedInvoiceItemInfo locInfo = new net.solarnetwork.central.user.billing.support.LocalizedInvoiceItem(
+							item, locale, desc);
+					item = new LocalizedInvoiceItem(item, locInfo);
+					itr.set(item);
 				}
 			}
 		}

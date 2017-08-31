@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.biz;
 
 import java.util.List;
+import java.util.Locale;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.domain.Invoice;
@@ -56,7 +57,7 @@ public interface BillingBiz {
 	 *        the invoice ID to get
 	 * @return the invoice, or {@literal null} if not available
 	 */
-	Invoice getInvoice(Long userId, String invoiceId);
+	Invoice getInvoice(Long userId, String invoiceId, Locale locale);
 
 	/**
 	 * Search for invoices.

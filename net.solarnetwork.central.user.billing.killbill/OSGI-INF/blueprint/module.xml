@@ -36,6 +36,8 @@
 	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 	
+	<reference id="cacheManager" interface="javax.cache.CacheManager" filter="(app=user)"/>
+	
 	<!-- Supporting Services -->
 	
 	<bean id="killbillClient" class="net.solarnetwork.central.user.billing.killbill.KillbillRestClient">
@@ -62,12 +64,27 @@
 		<property name="jobTopic" value="net/solarnetwork/central/user/billing/killbill/DatumMetricsDailyUsageUpdater"/>
 	</bean>
 	
+	<bean id="catalogMessageSourceCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
+		<argument ref="cacheManager"/>
+		<argument value="java.lang.String"/>
+		<argument value="java.util.Properties"/>
+		<property name="name" value="catalog-message-source"/>
+		<property name="expiryPolicy" value="Created"/>
+		<property name="expiryDuration" value="#{T(javax.cache.expiry.Duration).ONE_DAY}"/>
+	</bean>
+	
+	<bean id="catalogMessageSource" class="net.solarnetwork.central.user.billing.killbill.KillbillCatalogMessageSource">
+		<argument ref="killbillClient"/>
+		<argument ref="catalogMessageSourceCache"/>
+	</bean>
+	
 	<!-- Published Services -->
 
 	<service interface="net.solarnetwork.central.user.billing.biz.BillingSystem">
 		<bean class="net.solarnetwork.central.user.billing.killbill.KillbillBillingSystem">
 			<argument ref="killbillClient"/>
 			<argument ref="userDao"/>
+			<argument ref="catalogMessageSource"/>
 		</bean>
 	</service>
 

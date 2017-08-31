@@ -80,6 +80,33 @@ public class InvoiceItem extends BaseObjectEntity<String>
 	}
 
 	/**
+	 * Copy constructor.
+	 * 
+	 * @param item
+	 *        the item to copy
+	 */
+	public InvoiceItem(InvoiceItem item) {
+		super();
+		setAmount(item.getAmount());
+		setBundleId(item.getBundleId());
+		setCreated(item.getCreated());
+		setCurrencyCode(item.getCurrencyCode());
+		setDescription(item.getDescription());
+		setEndDate(item.getEndDate());
+		setEnded(item.getEnded());
+		setId(item.getId());
+		setItemType(item.getItemType());
+		setModified(item.getModified());
+		setPhaseName(item.getPhaseName());
+		setPlanName(item.getPlanName());
+		setStartDate(item.getStartDate());
+		setSubscriptionId(item.getSubscriptionId());
+		setTimeZoneId(item.getTimeZoneId());
+		setUsageName(item.getUsageName());
+		setUsageRecords(item.getUsageRecords());
+	}
+
+	/**
 	 * Set the invoice item ID.
 	 * 
 	 * <p>

@@ -88,7 +88,9 @@ public interface BillingSystem {
 	 *        the ID of the user to get the invoice for
 	 * @param invoiceId
 	 *        the ID of the invoice to get
+	 * @param locale
+	 *        a locale to show the invoice details in
 	 * @return the invoice, or {@literal null} if not available
 	 */
-	Invoice getInvoice(Long userId, String invoiceId);
+	Invoice getInvoice(Long userId, String invoiceId, Locale locale);
 }

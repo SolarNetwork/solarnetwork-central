@@ -170,8 +170,8 @@ public class KillbillCatalogMessageSourceTests {
 		// fall back to just lang
 		expect(cache.get("en")).andReturn(null);
 		Properties props = loadProps("en");
-		expect(client.invoiceCatalogTranslation("foo")).andReturn(props);
-		expect(cache.putIfAbsent(eq("en"), props)).andReturn(true);
+		expect(client.invoiceCatalogTranslation("en")).andReturn(props);
+		expect(cache.putIfAbsent("en", props)).andReturn(true);
 
 		// when
 		replayAll();

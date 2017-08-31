@@ -39,6 +39,13 @@ import java.util.List;
 public interface LocalizedInvoiceItemInfo {
 
 	/**
+	 * Get a localized description of the invoice item.
+	 * 
+	 * @return the description
+	 */
+	String getLocalizedDescription();
+
+	/**
 	 * Get the invoice item start date, as a formatted and localized string.
 	 * 
 	 * @return the invoice creation date

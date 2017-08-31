@@ -46,6 +46,7 @@ import net.solarnetwork.javax.money.MoneyUtils;
  */
 public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemInfo {
 
+	private final String localizedDescription;
 	private final InvoiceItem item;
 	private final Locale locale;
 
@@ -71,9 +72,27 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	 *        the locale to localize to
 	 */
 	public LocalizedInvoiceItem(InvoiceItem item, Locale locale) {
+		this(item, locale, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param item
+	 *        the item to localize
+	 * @param locale
+	 *        the locale to localize to
+	 */
+	public LocalizedInvoiceItem(InvoiceItem item, Locale locale, String localizedDescription) {
 		super();
 		this.item = item;
 		this.locale = locale;
+		this.localizedDescription = localizedDescription;
+	}
+
+	@Override
+	public String getLocalizedDescription() {
+		return localizedDescription;
 	}
 
 	@Override
@@ -179,7 +198,7 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 			if ( record instanceof LocalizedInvoiceItemUsageRecordInfo ) {
 				return (LocalizedInvoiceItemUsageRecordInfo) record;
 			}
-			return new LocalizedInvoiceItemUsageRecord(record, locale);
+			return LocalizedInvoiceItemUsageRecord.of(record, locale);
 		}).collect(Collectors.toList());
 	}
 

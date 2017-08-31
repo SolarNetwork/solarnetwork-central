@@ -37,6 +37,7 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.context.MessageSource;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
@@ -65,13 +66,15 @@ public class KillbillBillingSystemTests {
 
 	private KillbillClient client;
 	private UserDao userDao;
+	private MessageSource messageSource;
 	private KillbillBillingSystem system;
 
 	@Before
 	public void setup() {
 		client = EasyMock.createMock(KillbillClient.class);
 		userDao = EasyMock.createMock(UserDao.class);
-		system = new KillbillBillingSystem(client, userDao);
+		messageSource = EasyMock.createMock(MessageSource.class);
+		system = new KillbillBillingSystem(client, userDao, messageSource);
 	}
 
 	@After
@@ -153,7 +156,7 @@ public class KillbillBillingSystemTests {
 		replayAll();
 
 		net.solarnetwork.central.user.billing.domain.Invoice result = system.getInvoice(TEST_USER_ID,
-				TEST_INVOICE_ID);
+				TEST_INVOICE_ID, null);
 
 		// then
 		assertThat("Invoice class", result, instanceOf(Invoice.class));
