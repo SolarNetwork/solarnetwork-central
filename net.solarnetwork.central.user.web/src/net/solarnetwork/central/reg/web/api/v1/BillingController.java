@@ -44,6 +44,7 @@ import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceMatch;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -116,11 +117,11 @@ public class BillingController extends WebServiceControllerSupport {
 				SecurityUser actor = SecurityUtils.getCurrentUser();
 				userId = actor.getUserId();
 			}
-			result = biz.getInvoice(userId, invoiceId);
+			result = biz.getInvoice(userId, invoiceId, locale);
 		}
 
 		// localize the response
-		if ( result != null ) {
+		if ( result != null && !(result instanceof LocalizedInvoiceInfo) ) {
 			if ( locale == null ) {
 				locale = Locale.getDefault();
 			}

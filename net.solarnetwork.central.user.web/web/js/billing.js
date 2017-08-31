@@ -11,16 +11,31 @@ $(document).ready(function() {
 		$(modal).find('table.invoice-items').addClass('hidden').find('tbody').empty();
 	}
 	
+	function replaceTemplateProperties(el, obj) {
+		var prop, sel;
+		for ( prop in obj ) {
+			if ( obj.hasOwnProperty(prop) ) {
+				sel = "[data-tprop='" +prop +"']";
+				el.find(sel).addBack(sel).text(obj[prop]);
+			}
+		}
+	}
+	
 	function populateInvoiceItemDetails(table, invoice) {
-		var i, len,
+		var i, len, j, len2,
 			items = (invoice ? invoice.localizedInvoiceItems : null),
 			haveItems = (Array.isArray(items) && items.length > 0),
 			tbody = table.find('tbody'),
-			templateRow = table.find('tr.template'),
+			templateRow = table.find('.invoice-item.template'),
 			tr, 
 			item,
 			prop,
-			cell;
+			usageList,
+			usageTemplateRow,
+			usageRecords,
+			haveUsageRecords,
+			usageRecord,
+			li;
 		tbody.empty();
 		if ( haveItems ) {
 			for ( i = 0, len = items.length; i < len; i += 1 ) {
@@ -28,12 +43,24 @@ $(document).ready(function() {
 				tr = templateRow.clone(true);
 				tr.removeClass('template');
 				tr.data('invoiceItem', item);
-				for ( prop in item ) {
-					if ( item.hasOwnProperty(prop) ) {
-						cell = tr.find("[data-tprop='" +prop +"']");
-						cell.text(item[prop]);
+				replaceTemplateProperties(tr, item);
+				
+				usageRecords = item.localizedInvoiceItemUsageRecords;
+				haveUsageRecords = (Array.isArray(usageRecords) && usageRecords.length > 0);
+				if ( haveUsageRecords ) {
+					usageList = tr.find('.usage-records');
+					usageTemplateRow = usageList.find('.usage-record.template');
+					for ( j = 0, len2 = usageRecords.length; j < len2; j += 1 ) {
+						usageRecord = usageRecords[j];
+						li = usageTemplateRow.clone(true);
+						li.removeClass('template');
+						replaceTemplateProperties(li, usageRecord);
+						usageList.append(li);
 					}
+					usageTemplateRow.remove();
+					usageList.removeClass('hidden');
 				}
+				
 				tbody.append(tr);
 			}
 		}
