@@ -19,6 +19,7 @@
 		<dependency org="net.solarnetwork.central.test" name="net.solarnetwork.central.test" rev="1.7.0"/>
 		
 		<!-- Testing support -->
+		<dependency org="org.javamoney" name="moneta" rev="1.1" />
 		
 		<!-- SolarNetwork -->
     </dependencies>
