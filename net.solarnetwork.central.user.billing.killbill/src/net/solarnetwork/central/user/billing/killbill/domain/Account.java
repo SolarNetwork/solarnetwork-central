@@ -37,6 +37,7 @@ public class Account {
 	private String timeZone;
 	private String country;
 	private String currency;
+	private String locale;
 	private String paymentMethodId;
 	private Integer billCycleDayLocal;
 
@@ -205,6 +206,25 @@ public class Account {
 	 */
 	public void setBillCycleDayLocal(Integer billCycleDayLocal) {
 		this.billCycleDayLocal = billCycleDayLocal;
+	}
+
+	/**
+	 * Get the locale.
+	 * 
+	 * @return the locale
+	 */
+	public String getLocale() {
+		return locale;
+	}
+
+	/**
+	 * Set the locale.
+	 * 
+	 * @param locale
+	 *        the locale to set
+	 */
+	public void setLocale(String locale) {
+		this.locale = locale;
 	}
 
 }

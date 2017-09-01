@@ -27,10 +27,13 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -146,6 +149,9 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The default account bill cycle day. */
 	public static final Integer DEFAULT_ACCOUNT_BILL_CYCLE_DAY = 1;
 
+	/** The default account locale to use. */
+	public static final String DEFAULT_ACCOUNT_LOCALE = "en_NZ";
+
 	/** The default usage subscription bill cycle day. */
 	public static final Integer DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY = 1;
 
@@ -171,6 +177,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 	private String accountKeyTemplate = DEFAULT_ACCOUNT_KEY_TEMPLATE;
 	private String bundleKeyTemplate = DEFAULT_BUNDLE_KEY_TEMPLATE;
 	private Integer accountBillCycleDay = DEFAULT_ACCOUNT_BILL_CYCLE_DAY;
+	private String accountDefaultLocale = DEFAULT_ACCOUNT_LOCALE;
 	private Integer subscriptionBillCycleDay = DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
 	private String usageUnitName = DEFAULT_USAGE_UNIT_NAME;
 
@@ -242,6 +249,42 @@ public class DatumMetricsDailyUsageUpdaterService {
 						+ userResults.getReturnedResultCount() < userResults.getTotalResults()) );
 	}
 
+	private Locale localeForUser(UserInfo user, SolarLocation loc) {
+		String country = loc.getCountry();
+		String[] defaultLangCountry = accountDefaultLocale.split("_");
+		assert defaultLangCountry.length > 1;
+		Locale defaultLocale = new Locale(defaultLangCountry[0], defaultLangCountry[1]);
+		List<Locale> localesForCountry = Arrays.stream(Locale.getAvailableLocales())
+				.filter(locale -> country.equals(locale.getCountry())).collect(Collectors.toList());
+		if ( localesForCountry.isEmpty() ) {
+			return defaultLocale;
+		}
+		localesForCountry.sort(new Comparator<Locale>() {
+
+			@Override
+			public int compare(Locale l, Locale r) {
+				// sort those for just language first
+				int a = l.getVariant().length();
+				int b = r.getVariant().length();
+				if ( a == 0 && b > 0 ) {
+					return -1;
+				} else if ( b == 0 && a > 0 ) {
+					return 1;
+				}
+				a = l.getLanguage().length();
+				b = r.getLanguage().length();
+				if ( a == 0 && b > 0 ) {
+					return -1;
+				} else if ( b == 0 && a > 0 ) {
+					return 1;
+				}
+				return l.getCountry().compareTo(r.getCountry());
+			}
+
+		});
+		return localesForCountry.get(0);
+	}
+
 	private void processOneAccount(UserInfo user, String accountKey) {
 		log.debug("Processing account {} for user {}", accountKey, user.getEmail());
 		Account account = client.accountForExternalKey(accountKey);
@@ -267,6 +310,14 @@ public class DatumMetricsDailyUsageUpdaterService {
 			account.setExternalKey(accountKey);
 			account.setName(user.getName());
 			account.setTimeZone(accountTimeZoneString(loc.getTimeZoneId()));
+
+			Locale userLocale = localeForUser(user, loc);
+			String locale = userLocale.getLanguage();
+			if ( userLocale.getCountry().length() > 0 ) {
+				locale += "_" + userLocale.getCountry();
+			}
+			account.setLocale(locale);
+
 			String accountId = client.createAccount(account);
 			account.setAccountId(accountId);
 		}
@@ -560,6 +611,17 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 */
 	public void setUsageUnitName(String usageUnitName) {
 		this.usageUnitName = usageUnitName;
+	}
+
+	/**
+	 * Set the locale ID to use by default if one cannot be determined from a
+	 * {@link User}.
+	 * 
+	 * @param accountDefaultLocale
+	 *        the account default locale to set
+	 */
+	public void setAccountDefaultLocale(String accountDefaultLocale) {
+		this.accountDefaultLocale = accountDefaultLocale;
 	}
 
 }

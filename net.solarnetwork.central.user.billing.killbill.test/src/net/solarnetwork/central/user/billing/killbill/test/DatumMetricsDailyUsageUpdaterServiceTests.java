@@ -275,6 +275,82 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		assertEquals("ExternalKey", TEST_USER_ACCOUNT_KEY, account.getExternalKey());
 		assertEquals("Name", TEST_USER_NAME, account.getName());
 		assertEquals("TimeZone", TEST_NODE_TZ, account.getTimeZone());
+		assertEquals("Locale", "en_NZ", account.getLocale());
+	}
+
+	@Test
+	public void oneUserNoAccountNoDataBelgium() {
+
+		Map<String, String> currencyMap = new HashMap<>();
+		currencyMap.put("BE", "EUR");
+		service.setCountryCurrencyMap(currencyMap);
+
+		// search for users configured to use killbill; find one
+		Map<String, Object> userBillingData = userSearchBillingData();
+		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
+		user.setInternalData(userBillingData);
+		user.setLocationId(TEST_LOCATION_ID);
+		Capture<UserFilterCommand> filterCapture = new Capture<>();
+		List<UserFilterMatch> usersWithAccounting = new ArrayList<>();
+		UserMatch userMatch = new UserMatch(TEST_USER_ID, TEST_USER_EMAIL);
+		userMatch.setInternalData(userBillingData);
+		userMatch.setLocationId(TEST_LOCATION_ID);
+		userMatch.setName(TEST_USER_NAME);
+		usersWithAccounting.add(userMatch);
+		FilterResults<UserFilterMatch> userAccountingSearchResults = new BasicFilterResults<>(
+				usersWithAccounting, 1L, 0, 1);
+		expect(userDao.findFiltered(capture(filterCapture), isNull(), eq(0), eq(DEFAULT_BATCH_SIZE)))
+				.andReturn(userAccountingSearchResults);
+
+		// configure the account key based on user ID because it's not already configured
+		userDao.storeInternalData(TEST_USER_ID, Collections
+				.singletonMap(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER_ACCOUNT_KEY));
+
+		// look for Killbill Account
+		expect(client.accountForExternalKey(TEST_USER_ACCOUNT_KEY)).andReturn(null);
+
+		// because Account not found, create one now, using the user's location for time zone
+		SolarLocation location = new SolarLocation();
+		location.setId(TEST_LOCATION_ID);
+		location.setCountry("BE");
+		location.setTimeZoneId("Europe/Brussels");
+		expect(locationDao.get(TEST_LOCATION_ID)).andReturn(location);
+		Capture<Account> accountCapture = new Capture<>(CaptureType.ALL);
+		expect(client.createAccount(capture(accountCapture))).andReturn(TEST_ACCOUNT_ID);
+
+		// now iterate over all user's nodes to look for usage
+		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);
+		UserNode userNode = new UserNode(user, node);
+		List<UserNode> allUserNodes = Collections.singletonList(userNode);
+		expect(userNodeDao.findUserNodesForUser(userMatch)).andReturn(allUserNodes);
+
+		// FOR EACH UserNode here; we have just one node; but no audit data
+		expect(nodeDatumDao.getAuditInterval(TEST_NODE_ID, null)).andReturn(null);
+
+		replayAll();
+
+		service.execute();
+
+		// verify search for users
+		assertNotNull(filterCapture.getValue());
+		assertEquals(userBillingData, filterCapture.getValue().getInternalData());
+
+		// verify created account
+		List<Account> accounts = accountCapture.getValues();
+		assertNotNull("Created account", accounts);
+		Account account = accounts.get(0);
+		for ( int i = 0; i < accounts.size(); i++ ) {
+			assertSame(accounts.get(0), account);
+		}
+		assertEquals("Account ID", TEST_ACCOUNT_ID, account.getAccountId());
+		assertEquals("Bill cycle day", DEFAULT_ACCOUNT_BILL_CYCLE_DAY, account.getBillCycleDayLocal());
+		assertEquals("Country", "BE", account.getCountry());
+		assertEquals("Currency", "EUR", account.getCurrency());
+		assertEquals("Email", TEST_USER_EMAIL, account.getEmail());
+		assertEquals("ExternalKey", TEST_USER_ACCOUNT_KEY, account.getExternalKey());
+		assertEquals("Name", TEST_USER_NAME, account.getName());
+		assertEquals("TimeZone", "Europe/Brussels", account.getTimeZone());
+		assertEquals("Locale", "fr_BE", account.getLocale());
 	}
 
 	@Test
