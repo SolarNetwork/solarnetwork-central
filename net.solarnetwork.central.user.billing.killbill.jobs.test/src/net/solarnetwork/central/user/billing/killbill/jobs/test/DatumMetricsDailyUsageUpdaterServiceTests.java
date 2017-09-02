@@ -20,18 +20,18 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.billing.killbill.test;
+package net.solarnetwork.central.user.billing.killbill.jobs.test;
 
 import static java.util.Collections.singletonList;
-import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.CUSTOM_FIELD_NODE_ID;
-import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_ACCOUNT_BILL_CYCLE_DAY;
-import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_BASE_PLAN_NAME;
-import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_BATCH_SIZE;
-import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
-import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.DEFAULT_USAGE_UNIT_NAME;
-import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_DAILY_USAGE_PLAN_DATA_PROP;
-import static net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService.KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP;
 import static net.solarnetwork.central.user.billing.killbill.KillbillClient.ISO_DATE_FORMATTER;
+import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.CUSTOM_FIELD_NODE_ID;
+import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_ACCOUNT_BILL_CYCLE_DAY;
+import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_BASE_PLAN_NAME;
+import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_BATCH_SIZE;
+import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
+import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_USAGE_UNIT_NAME;
+import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.KILLBILL_DAILY_USAGE_PLAN_DATA_PROP;
+import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -68,8 +68,6 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
-import net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterJob;
-import net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService;
 import net.solarnetwork.central.user.billing.killbill.KillbillBillingSystem;
 import net.solarnetwork.central.user.billing.killbill.KillbillClient;
 import net.solarnetwork.central.user.billing.killbill.UserDataProperties;
@@ -78,6 +76,8 @@ import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
+import net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterJob;
+import net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;

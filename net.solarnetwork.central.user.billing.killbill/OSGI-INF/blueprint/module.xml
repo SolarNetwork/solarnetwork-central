@@ -17,24 +17,9 @@
 		http://www.springframework.org/schema/context
 		http://www.springframework.org/schema/context/spring-context-4.2.xsd">
 
-	<!-- Configuration -->
-	
-	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.billing.killbill">
-		<beans:prop key="datumMetricsDailyUsageUpdater.jobCron">0 3 * * * ?</beans:prop>
-		<beans:prop key="datumMetricsDailyUsageUpdater.maximumWaitMs">3600000</beans:prop>
-		
-	</osgix:cm-properties>
-
-	<ctx:property-placeholder properties-ref="cfg"/>
-
 	<!-- Service references -->
 
-	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
-
-	<reference id="locationDao" interface="net.solarnetwork.central.dao.SolarLocationDao"/>
-	<reference id="nodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
-	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 	
 	<reference id="cacheManager" interface="javax.cache.CacheManager" filter="(app=user)"/>
 	
@@ -44,26 +29,7 @@
 		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.billing.killbill.KillbillRestClient" 
 			autowire-on-update="true"/>
 	</bean>
-	
-	<bean id="datumMetricsDailyUsageUpdaterService" class="net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService">
-		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterService" 
-			autowire-on-update="true"/>
-		<argument ref="locationDao"/>
-		<argument ref="userDao"/>
-		<argument ref="userNodeDao"/>
-		<argument ref="nodeDatumDao"/>
-		<argument ref="killbillClient"/>
-	</bean>
-	
-	<bean id="datumMetricsDailyUsageUpdaterJob" class="net.solarnetwork.central.user.billing.killbill.DatumMetricsDailyUsageUpdaterJob">
-		<argument ref="eventAdmin"/>
-		<argument ref="datumMetricsDailyUsageUpdaterService"/>
-		<property name="jobCron" value="${datumMetricsDailyUsageUpdater.jobCron}"/>
-		<property name="maximumWaitMs" value="${datumMetricsDailyUsageUpdater.maximumWaitMs}"/>
-		<property name="jobId" value="DatumMetricsDailyUsageUpdater"/>
-		<property name="jobTopic" value="net/solarnetwork/central/user/billing/killbill/DatumMetricsDailyUsageUpdater"/>
-	</bean>
-	
+		
 	<bean id="catalogMessageSourceCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
 		<argument ref="cacheManager"/>
 		<argument value="java.lang.String"/>
@@ -88,6 +54,8 @@
 	</bean>
 	
 	<!-- Published Services -->
+	
+	<service ref="killbillClient" interface="net.solarnetwork.central.user.billing.killbill.KillbillClient"/>
 
 	<service interface="net.solarnetwork.central.user.billing.biz.BillingSystem">
 		<bean class="net.solarnetwork.central.user.billing.killbill.KillbillBillingSystem">
@@ -96,17 +64,6 @@
 			<argument ref="catalogMessageSource"/>
 			<property name="subscriptionCache" ref="subscriptionCache"/>
 		</bean>
-	</service>
-
-	<service ref="datumMetricsDailyUsageUpdaterJob" interface="org.osgi.service.event.EventHandler">
-		<service-properties>
-			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
-				<array value-type="java.lang.String">
-					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{datumMetricsDailyUsageUpdaterJob.jobTopic}</value>
-				</array>
-			</entry>
-		</service-properties>
 	</service>
 
 </blueprint>
