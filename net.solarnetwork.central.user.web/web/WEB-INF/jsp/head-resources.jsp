@@ -18,4 +18,5 @@
 	/js/my-nodes.js
 	/js/auth-tokens.js
 	/js/alerts.js
+	/js/billing.js
 </pack:script>

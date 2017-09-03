@@ -56,7 +56,7 @@ import org.osgi.service.event.EventAdmin;
  * </dl>
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public abstract class JobSupport extends EventHandlerSupport {
 
@@ -65,7 +65,7 @@ public abstract class JobSupport extends EventHandlerSupport {
 	private String jobId;
 	private String jobTopic;
 	private String jobGroup;
-	public String jobCron = "0 0/1 * * * ?";
+	private String jobCron = "0 0/1 * * * ?";
 	private ExecutorService executorService = Executors.newCachedThreadPool();
 
 	/**

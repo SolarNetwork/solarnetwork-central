@@ -8,15 +8,39 @@ CREATE SEQUENCE solaruser.solaruser_seq;
  * user_user: main table for user information.
  */
 CREATE TABLE solaruser.user_user (
-	id				BIGINT NOT NULL DEFAULT nextval('solaruser.solaruser_seq'),
-	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	disp_name		CHARACTER VARYING(128) NOT NULL,
-	email			citext NOT NULL,
-	password		CHARACTER VARYING(128) NOT NULL,
-	enabled			BOOLEAN NOT NULL DEFAULT TRUE,
+	id					BIGINT NOT NULL DEFAULT nextval('solaruser.solaruser_seq'),
+	created				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	disp_name			CHARACTER VARYING(128) NOT NULL,
+	email				citext NOT NULL,
+	password			CHARACTER VARYING(128) NOT NULL,
+	enabled				BOOLEAN NOT NULL DEFAULT TRUE,
+	loc_id				BIGINT,
+	jdata				jsonb,
 	CONSTRAINT user_user_pkey PRIMARY KEY (id),
-	CONSTRAINT user_user_email_unq UNIQUE (email)
+	CONSTRAINT user_user_email_unq UNIQUE (email),
+	CONSTRAINT user_user_loc_fk FOREIGN KEY (loc_id)
+		REFERENCES solarnet.sn_loc (id)
+		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
+
+CREATE INDEX user_user_jdata_idx ON solaruser.user_user
+	USING GIN (jdata jsonb_path_ops);
+
+/**
+ * Add or update the internal data for a user.
+ *
+ * @param user_id The ID of the user to update.
+ * @param json_obj The JSON object to add. All <code>null</code> values will be removed from the resulting object.
+ */
+CREATE OR REPLACE FUNCTION solaruser.store_user_data(
+	user_id bigint,
+	json_obj jsonb)
+  RETURNS void LANGUAGE sql VOLATILE AS
+$BODY$
+	UPDATE solaruser.user_user
+	SET jdata = jsonb_strip_nulls(COALESCE(jdata, '{}'::jsonb) || json_obj)
+	WHERE id = user_id
+$BODY$;
 
 /**
  * user_meta: JSON metadata specific to a user.

@@ -1,0 +1,8 @@
+{
+  "className": "org.killbill.billing.util.callcontext.InternalCallContextFactory$ObjectDoesNotExist",
+  "code": null,
+  "message": "Object id=2b717636-56b0-4967-aaab-68d83ba1a45d type=INVOICE doesn't exist!",
+  "causeClassName": null,
+  "causeMessage": null,
+  "stackTrace": []
+}

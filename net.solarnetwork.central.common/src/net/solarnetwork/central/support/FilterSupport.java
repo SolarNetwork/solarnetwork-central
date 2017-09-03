@@ -23,6 +23,7 @@
 package net.solarnetwork.central.support;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.solarnetwork.central.domain.Filter;
@@ -32,7 +33,7 @@ import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
  * Supporting base class for {@link Filter} implementations.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.32
  */
 public class FilterSupport implements Filter, Serializable, SolarNodeMetadataFilter {
@@ -294,6 +295,58 @@ public class FilterSupport implements Filter, Serializable, SolarNodeMetadataFil
 	 */
 	public void setUserIds(Long[] userIds) {
 		this.userIds = userIds;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.1
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(locationIds);
+		result = prime * result + Arrays.hashCode(nodeIds);
+		result = prime * result + Arrays.hashCode(sourceIds);
+		result = prime * result + Arrays.hashCode(tags);
+		result = prime * result + Arrays.hashCode(userIds);
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.1
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( obj == null ) {
+			return false;
+		}
+		if ( !(obj instanceof FilterSupport) ) {
+			return false;
+		}
+		FilterSupport other = (FilterSupport) obj;
+		if ( !Arrays.equals(locationIds, other.locationIds) ) {
+			return false;
+		}
+		if ( !Arrays.equals(nodeIds, other.nodeIds) ) {
+			return false;
+		}
+		if ( !Arrays.equals(sourceIds, other.sourceIds) ) {
+			return false;
+		}
+		if ( !Arrays.equals(tags, other.tags) ) {
+			return false;
+		}
+		if ( !Arrays.equals(userIds, other.userIds) ) {
+			return false;
+		}
+		return true;
 	}
 
 }

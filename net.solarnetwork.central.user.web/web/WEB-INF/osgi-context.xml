@@ -58,6 +58,12 @@
 	
 	<osgi:list id="pingTests" availability="optional" interface="net.solarnetwork.central.domain.PingTest"/>
 
+	<bean id="billingBiz" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.user.billing.biz.BillingBiz"/>
+		<property name="serviceFilter" value="(secured=true)"/>
+	</bean>
+
 	<!-- Published Services -->
 	
 	<osgi:service ref="userValidator" 

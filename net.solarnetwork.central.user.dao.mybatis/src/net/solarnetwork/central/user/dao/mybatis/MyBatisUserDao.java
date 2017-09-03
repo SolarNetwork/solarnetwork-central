@@ -27,19 +27,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
-import net.solarnetwork.central.user.dao.UserDao;
-import net.solarnetwork.central.user.domain.User;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
+import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserFilter;
+import net.solarnetwork.central.user.domain.UserFilterMatch;
+import net.solarnetwork.central.user.domain.UserMatch;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * MyBatis implementation of {@link UserDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class MyBatisUserDao extends BaseMyBatisGenericDao<User, Long> implements UserDao {
+public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMatch, UserFilter, Long>
+		implements UserDao {
 
 	/** The query name used for {@link #getUserByEmail(String)}. */
 	public static final String QUERY_FOR_EMAIL = "get-User-for-email";
@@ -54,10 +59,27 @@ public class MyBatisUserDao extends BaseMyBatisGenericDao<User, Long> implements
 	public static final String INSERT_ROLE_FOR_USER = "insert-role-for-User";
 
 	/**
+	 * The update query name used in
+	 * {@link #storeInternalData(Long, Map)}.
+	 * 
+	 * The statement is passed {@code userId} and {@code dataJson} parameters.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String UPDATE_INTERNAL_DATA = "update-internal-data";
+
+	/**
+	 * The query parameter for a general {@link Filter} object value.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String PARAM_FILTER = "filter";
+
+	/**
 	 * Default constructor.
 	 */
 	public MyBatisUserDao() {
-		super(User.class, Long.class);
+		super(User.class, Long.class, UserMatch.class);
 	}
 
 	@Override
@@ -85,6 +107,20 @@ public class MyBatisUserDao extends BaseMyBatisGenericDao<User, Long> implements
 				getSqlSession().insert(INSERT_ROLE_FOR_USER, params);
 			}
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.2
+	 */
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void storeInternalData(Long userId, Map<String, Object> data) {
+		Map<String, Object> sqlParams = new HashMap<String, Object>(3);
+		sqlParams.put("userId", userId);
+		sqlParams.put("dataJson", JsonUtils.getJSONString(data, "{}"));
+		getSqlSession().update(UPDATE_INTERNAL_DATA, sqlParams);
 	}
 
 }

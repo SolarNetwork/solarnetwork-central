@@ -1,7 +1,7 @@
 /* ==================================================================
- * AllTests.java - Nov 14, 2014 10:30:24 AM
+ * InvoiceItemUsageRecord.java - 30/08/2017 3:21:31 PM
  * 
- * Copyright 2007-2014 SolarNetwork.net Dev Team
+ * Copyright 2017 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,16 +20,30 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.dao.mybatis.test;
+package net.solarnetwork.central.user.billing.domain;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import java.math.BigDecimal;
 
-@RunWith(Suite.class)
-@SuiteClasses({ MyBatisGeneralLocationDatumDaoTests.class,
-		MyBatisGeneralLocationDatumMetadataDaoTests.class, MyBatisGeneralNodeDatumDaoTests.class,
-		MyBatisGeneralNodeDatumMetadataDaoTests.class })
-public class AllTests {
+/**
+ * A usage record attached to an invoice item.
+ * 
+ * @author matt
+ * @version 1.0
+ */
+public interface InvoiceItemUsageRecord {
+
+	/**
+	 * Get the usage unit type.
+	 * 
+	 * @return the usage unit type
+	 */
+	String getUnitType();
+
+	/**
+	 * Get the usage amount.
+	 * 
+	 * @return the amount
+	 */
+	BigDecimal getAmount();
 
 }

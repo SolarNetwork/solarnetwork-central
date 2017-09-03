@@ -55,7 +55,7 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  * Test cases for the {@link MyBatisGeneralNodeDatumDao} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -1084,4 +1084,50 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 			i++;
 		}
 	}
+
+	@Test
+	public void findAuditCountNoData() {
+		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(6));
+
+		long count = dao.getAuditPropertyCountTotal(criteria);
+		assertEquals(0, count);
+	}
+
+	@Test
+	public void findAuditCountNodeIdMultiSourceIds() {
+		executeSqlScript("/net/solarnetwork/central/datum/dao/mybatis/test/insert-audit-data-01.sql",
+				false);
+
+		DateTime startDate = new DateTime(2017, 1, 1, 12, 0, 0, DateTimeZone.UTC);
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(2)); // exclusive
+
+		long count = dao.getAuditPropertyCountTotal(criteria);
+		assertEquals("Two hours across both sources", 12, count);
+	}
+
+	@Test
+	public void getAuditIntervalNoDatum() {
+		ReadableInterval result = dao.getAuditInterval(TEST_NODE_ID, null);
+		Assert.assertNull(result);
+	}
+
+	@Test
+	public void getAuditIntervalForNode() {
+		final DateTime expectedStartDate = new DateTime(2017, 1, 1, 12, 0, 0, DateTimeZone.UTC);
+		executeSqlScript("/net/solarnetwork/central/datum/dao/mybatis/test/insert-audit-data-01.sql",
+				false);
+		ReadableInterval result = dao.getAuditInterval(TEST_NODE_ID, null);
+		assertNotNull(result);
+		assertEquals(expectedStartDate.getMillis(), result.getStart().getMillis());
+		assertEquals(expectedStartDate.plusHours(2).getMillis(), result.getEnd().getMillis());
+	}
+
 }

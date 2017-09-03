@@ -22,13 +22,16 @@
 
 package net.solarnetwork.central.query.web.api;
 
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TimeZone;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.PathMatcher;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,7 +56,7 @@ import net.solarnetwork.web.domain.Response;
  * </p>
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
@@ -61,18 +64,38 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 
 	private final QueryBiz queryBiz;
 	private final DatumMetadataBiz datumMetadataBiz;
+	private final PathMatcher pathMatcher;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param queryBiz
 	 *        the QueryBiz to use
+	 * @param datumMetadataBiz
+	 *        the DatumMetadataBiz to use
+	 */
+	public ReportableIntervalController(QueryBiz queryBiz, DatumMetadataBiz datumMetadataBiz) {
+		this(queryBiz, datumMetadataBiz, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param queryBiz
+	 *        the QueryBiz to use
+	 * @param datumMetadataBiz
+	 *        the DatumMetadataBiz to use
+	 * @param pathMatcher
+	 *        the PathMatcher to use
+	 * @since 2.2
 	 */
 	@Autowired
-	public ReportableIntervalController(QueryBiz queryBiz, DatumMetadataBiz datumMetadataBiz) {
+	public ReportableIntervalController(QueryBiz queryBiz, DatumMetadataBiz datumMetadataBiz,
+			@Qualifier("sourceIdPathMatcher") PathMatcher pathMatcher) {
 		super();
 		this.queryBiz = queryBiz;
 		this.datumMetadataBiz = datumMetadataBiz;
+		this.pathMatcher = pathMatcher;
 	}
 
 	/**
@@ -141,6 +164,11 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	 * a single node, optionally constrained within a date range.
 	 * 
 	 * <p>
+	 * A <code>sourceId</code> path pattern may also be provided, to restrict
+	 * the resulting source ID set to.
+	 * </p>
+	 * 
+	 * <p>
 	 * Example URL: <code>/api/v1/sec/range/sources?nodeId=1</code>
 	 * </p>
 	 * 
@@ -165,13 +193,23 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
 			"!metadataFilter" })
 	public Response<Set<String>> getAvailableSources(GeneralReportableIntervalCommand cmd) {
-		Set<String> data = queryBiz.getAvailableSources(cmd.getNodeId(), cmd.getStart(), cmd.getEnd());
+		Set<String> data = queryBiz.getAvailableSources(cmd.getNodeId(), cmd.getStartDate(),
+				cmd.getEndDate());
+
+		// support filtering based on sourceId path pattern
+		data = filterSources(data, this.pathMatcher, cmd.getSourceId());
+
 		return new Response<Set<String>>(data);
 	}
 
 	/**
 	 * Get all available node+source ID pairs that match a node datum metadata
 	 * search filter.
+	 * 
+	 * <p>
+	 * A <code>sourceId</code> path pattern may also be provided, to restrict
+	 * the resulting source ID set to.
+	 * </p>
 	 * 
 	 * <p>
 	 * Example URL:
@@ -207,6 +245,10 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	public Response<Set<?>> getMetadataFilteredAvailableSources(GeneralReportableIntervalCommand cmd) {
 		Set<NodeSourcePK> data = datumMetadataBiz
 				.getGeneralNodeDatumMetadataFilteredSources(cmd.getNodeIds(), cmd.getMetadataFilter());
+
+		// support filtering based on sourceId path pattern
+		data = filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
+
 		if ( cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
 			// at most 1 node ID, so simplify results to just source ID values
 			Set<String> sourceIds = new LinkedHashSet<String>(data.size());
@@ -216,6 +258,68 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 			return new Response<Set<?>>(sourceIds);
 		}
 		return new Response<Set<?>>(data);
+	}
+
+	/**
+	 * Filter a set of node sources using a source ID path pattern.
+	 * 
+	 * <p>
+	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
+	 * path pattern, then {@code sources} will be returned without filtering.
+	 * </p>
+	 * 
+	 * @param sources
+	 *        the sources to filter
+	 * @param pathMatcher
+	 *        the path matcher to use
+	 * @param pattern
+	 *        the pattern to test
+	 * @return the filtered sources
+	 */
+	public static Set<NodeSourcePK> filterNodeSources(Set<NodeSourcePK> sources, PathMatcher pathMatcher,
+			String pattern) {
+		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
+				|| !pathMatcher.isPattern(pattern) ) {
+			return sources;
+		}
+		for ( Iterator<NodeSourcePK> itr = sources.iterator(); itr.hasNext(); ) {
+			NodeSourcePK pk = itr.next();
+			if ( !pathMatcher.match(pattern, pk.getSourceId()) ) {
+				itr.remove();
+			}
+		}
+		return sources;
+	}
+
+	/**
+	 * Filter a set of sources using a source ID path pattern.
+	 * 
+	 * <p>
+	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
+	 * path pattern, then {@code sources} will be returned without filtering.
+	 * </p>
+	 * 
+	 * @param sources
+	 *        the sources to filter
+	 * @param pathMatcher
+	 *        the path matcher to use
+	 * @param pattern
+	 *        the pattern to test
+	 * @return the filtered sources
+	 */
+	public static Set<String> filterSources(Set<String> sources, PathMatcher pathMatcher,
+			String pattern) {
+		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
+				|| !pathMatcher.isPattern(pattern) ) {
+			return sources;
+		}
+		for ( Iterator<String> itr = sources.iterator(); itr.hasNext(); ) {
+			String source = itr.next();
+			if ( !pathMatcher.match(pattern, source) ) {
+				itr.remove();
+			}
+		}
+		return sources;
 	}
 
 }

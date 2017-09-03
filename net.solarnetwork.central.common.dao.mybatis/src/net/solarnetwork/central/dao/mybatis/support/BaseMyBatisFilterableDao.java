@@ -26,6 +26,8 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.Filter;
@@ -33,13 +35,12 @@ import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
-import org.apache.ibatis.session.RowBounds;
 
 /**
  * Base MyBatis {@link FilterableDao} implementation.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends FilterMatch<PK>, F extends Filter, PK extends Serializable>
 		extends BaseMyBatisGenericDao<T, PK> implements FilterableDao<M, PK, F> {
@@ -87,6 +88,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 		// nothing here, extending classes can implement
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<M> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
@@ -102,23 +104,16 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 		// attempt count first, if max NOT specified as -1
 		Long totalCount = null;
 		if ( max != null && max.intValue() != -1 ) {
-			final String countQuery = query + "-count";
-			Number n = null;
-			n = getSqlSession().selectOne(countQuery, sqlProps);
+			Number n = selectLong(query + "-count", sqlProps);
 			if ( n != null ) {
 				totalCount = n.longValue();
 			}
 		}
 
-		List<M> rows = null;
-		if ( offset != null && offset >= 0 && max != null && max > 0 ) {
-			rows = getSqlSession().selectList(query, sqlProps, new RowBounds(offset, max));
-		} else {
-			rows = getSqlSession().selectList(query, sqlProps);
-		}
+		List<M> rows = selectList(query, sqlProps, offset, max);
 
-		BasicFilterResults<M> results = new BasicFilterResults<M>(rows, (totalCount != null ? totalCount
-				: Long.valueOf(rows.size())), offset, rows.size());
+		BasicFilterResults<M> results = new BasicFilterResults<M>(rows,
+				(totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
 
 		return results;
 	}

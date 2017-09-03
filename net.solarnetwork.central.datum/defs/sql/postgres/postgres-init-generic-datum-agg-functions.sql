@@ -905,3 +905,59 @@ $BODY$
 	) AS r
 	INNER JOIN nodetz ON nodetz.node_id = node;
 $BODY$;
+
+
+/**
+ * Find the minimum/maximum available dates for audit datum.
+ *
+ * The returned parameters include <code>ts_start</code> and <code>ts_end</code> values
+ * for the date range. Additionally the <code>node_tz</code> and <code>node_tz_offset</code>
+ * values will provide the time zone of the node, which defaults to UTC if not available.
+ *
+ * @param node The ID of the node to query for.
+ * @param src  An optional source ID to query for. Pass <code>NULL</code> for all sources.
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_audit_datum_interval(
+	IN node solarcommon.node_id,
+	IN src solarcommon.source_id DEFAULT NULL,
+	OUT ts_start solarcommon.ts,
+	OUT ts_end solarcommon.ts,
+	OUT node_tz TEXT,
+	OUT node_tz_offset INTEGER)
+  RETURNS RECORD AS
+$BODY$
+BEGIN
+	CASE
+		WHEN src IS NULL THEN
+			SELECT min(a.ts_start) FROM solaragg.aud_datum_hourly a WHERE node_id = node
+			INTO ts_start;
+		ELSE
+			SELECT min(a.ts_start) FROM solaragg.aud_datum_hourly a WHERE node_id = node AND source_id = src
+			INTO ts_start;
+	END CASE;
+
+	CASE
+		WHEN src IS NULL THEN
+			SELECT max(a.ts_start) FROM solaragg.aud_datum_hourly a WHERE node_id = node
+			INTO ts_end;
+		ELSE
+			SELECT max(a.ts_start) FROM solaragg.aud_datum_hourly a WHERE node_id = node AND source_id = src
+			INTO ts_end;
+	END CASE;
+
+	SELECT
+		l.time_zone,
+		CAST(EXTRACT(epoch FROM z.utc_offset) / 60 AS INTEGER)
+	FROM solarnet.sn_node n
+	INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	INNER JOIN pg_timezone_names z ON z.name = l.time_zone
+	WHERE n.node_id = node
+	INTO node_tz, node_tz_offset;
+
+	IF NOT FOUND THEN
+		node_tz := 'UTC';
+		node_tz_offset := 0;
+	END IF;
+
+END;$BODY$
+  LANGUAGE plpgsql STABLE;
