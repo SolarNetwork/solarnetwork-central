@@ -1,0 +1,11 @@
+{
+  "subscriptionId": "f7ec79f7-02ff-4f91-b6ef-f0571ac69baf",
+  "startDate": "2017-03-05",
+  "endDate": "2017-04-05",
+  "rolledUpUnits": [
+    {
+      "unitType": "DatumMetrics",
+      "amount": 14079
+    }
+  ]
+}

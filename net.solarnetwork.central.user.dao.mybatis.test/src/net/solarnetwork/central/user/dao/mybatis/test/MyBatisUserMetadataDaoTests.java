@@ -117,6 +117,11 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisUserDaoTestSuppo
 	public void findFiltered() {
 		storeNew();
 
+		User user2 = createNewUser("bar@example.com");
+		UserMetadataEntity user2Meta = getTestInstance();
+		user2Meta.setUserId(user2.getId());
+		dao.store(user2Meta);
+
 		UserFilterCommand criteria = new UserFilterCommand();
 		criteria.setUserId(testUser.getId());
 

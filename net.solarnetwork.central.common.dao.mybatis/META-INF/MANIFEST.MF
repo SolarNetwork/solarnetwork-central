@@ -2,13 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Core MyBatis
 Bundle-SymbolicName: net.solarnetwork.central.common.dao.mybatis
-Bundle-Version: 1.4.0
+Bundle-Version: 1.5.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
  net.solarnetwork.central.dao.mybatis;version="1.1.0",
  net.solarnetwork.central.dao.mybatis.map;version="1.2.0",
- net.solarnetwork.central.dao.mybatis.support;version="1.0.0",
+ net.solarnetwork.central.dao.mybatis.support;version="1.1.0",
  net.solarnetwork.central.dao.mybatis.type;version="1.1.0"
 Import-Package: 
  javax.sql,

@@ -36,6 +36,11 @@
 					<li ${navloc == 'auth-tokens' ? 'class="active"' : ''}>
 						<a href="<c:url value='/u/sec/auth-tokens'/>"><fmt:message key="link.auth-tokens"/></a>
 					</li>
+					<sec:authorize access="hasRole('ROLE_BILLING')">
+						<li ${navloc == 'billing' ? 'class="active"' : ''}>
+							<a href="<c:url value='/u/sec/billing'/>"><fmt:message key="link.billing"/></a>
+						</li>
+					</sec:authorize>
 				</sec:authorize>
 	 		</ul>
 	        

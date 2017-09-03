@@ -1,0 +1,8 @@
+{
+  "className": "org.killbill.billing.account.api.AccountApiException",
+  "code": 3003,
+  "message": "Account does not exist for key foo",
+  "causeClassName": null,
+  "causeMessage": null,
+  "stackTrace": []
+}

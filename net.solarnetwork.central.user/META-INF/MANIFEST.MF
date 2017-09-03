@@ -2,23 +2,24 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet User
 Bundle-SymbolicName: net.solarnetwork.central.user
-Bundle-Version: 1.24.0
+Bundle-Version: 1.25.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
  net.solarnetwork.central.user.biz;version="1.15.0",
- net.solarnetwork.central.user.dao;version="1.7.0",
- net.solarnetwork.central.user.domain;version="1.13.0",
+ net.solarnetwork.central.user.dao;version="1.8.0",
+ net.solarnetwork.central.user.domain;version="1.14.0",
  net.solarnetwork.central.user.support;version="1.11.0"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.4,3.0)",
  com.fasterxml.jackson.core;version="[2.4,3.0)",
  com.fasterxml.jackson.databind;version="[2.4,3.0)",
  com.fasterxml.jackson.databind.ser.std;version="[2.4,3.0)",
- net.solarnetwork.central.dao;version="1.13",
- net.solarnetwork.central.domain;version="1.16",
+ javax.cache;version="[1.0,2.0)",
+ net.solarnetwork.central.dao;version="1.14",
+ net.solarnetwork.central.domain;version="1.21",
  net.solarnetwork.central.security;version="1.10",
- net.solarnetwork.central.support;version="1.10",
+ net.solarnetwork.central.support;version="1.14",
  net.solarnetwork.domain;version="1.7",
  net.solarnetwork.support;version="1.2",
  net.solarnetwork.util;version="1.18",
