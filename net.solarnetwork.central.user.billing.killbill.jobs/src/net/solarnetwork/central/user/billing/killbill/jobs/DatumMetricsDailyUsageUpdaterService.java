@@ -313,6 +313,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 			account.setExternalKey(accountKey);
 			account.setName(user.getName());
 			account.setTimeZone(accountTimeZoneString(loc.getTimeZoneId()));
+			account.setIsNotifiedForInvoices(true);
 
 			Locale userLocale = localeForUser(user, loc);
 			String locale = userLocale.getLanguage();

@@ -187,13 +187,14 @@ public class KillbillRestClientTests {
 		account.setExternalKey("bar");
 		account.setName("John Doe");
 		account.setTimeZone("+00:00");
+		account.setIsNotifiedForInvoices(true);
 
 		// @formatter:off
 		serverExpect("/1.0/kb/accounts", HttpMethod.POST)
-		.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
-		.andExpect(json(objectMapper).bodyObject(account))
-		.andRespond(withCreatedEntity(new URI("http://localhost:8080/1.0/kb/accounts/" 
-				+TEST_ACCOUNT_ID)));
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+			.andExpect(json(objectMapper).bodyObject(account))
+			.andRespond(withCreatedEntity(new URI("http://localhost:8080/1.0/kb/accounts/" 
+					+TEST_ACCOUNT_ID)));
 	    // @formatter:on
 
 		// when

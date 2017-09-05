@@ -40,6 +40,7 @@ public class Account {
 	private String locale;
 	private String paymentMethodId;
 	private Integer billCycleDayLocal;
+	private Boolean isNotifiedForInvoices;
 
 	/**
 	 * Default constructor.
@@ -225,6 +226,25 @@ public class Account {
 	 */
 	public void setLocale(String locale) {
 		this.locale = locale;
+	}
+
+	/**
+	 * Get the invoice notification flag.
+	 * 
+	 * @return the notifiedForInvoices
+	 */
+	public Boolean getIsNotifiedForInvoices() {
+		return isNotifiedForInvoices;
+	}
+
+	/**
+	 * Set the invoice notification flag.
+	 * 
+	 * @param notifiedForInvoices
+	 *        the notifiedForInvoices to set
+	 */
+	public void setIsNotifiedForInvoices(Boolean notifiedForInvoices) {
+		this.isNotifiedForInvoices = notifiedForInvoices;
 	}
 
 }
