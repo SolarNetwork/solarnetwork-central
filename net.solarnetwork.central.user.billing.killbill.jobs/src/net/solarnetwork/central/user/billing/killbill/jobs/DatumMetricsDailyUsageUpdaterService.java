@@ -130,6 +130,9 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The default currency map of country codes to currency codes. */
 	public static final Map<String, String> DEFAULT_CURRENCY_MAP = defaultCurrencyMap();
 
+	/** A {@code paymentMethodData} object for the external payment method. */
+	public static final Map<String, Object> EXTERNAL_PAYMENT_METHOD_DATA = externalPaymentMethodData();
+
 	/**
 	 * The billing data key that signals this updater service should be used via
 	 * a boolean flag.
@@ -183,7 +186,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 	private int batchSize = DEFAULT_BATCH_SIZE;
 	private Map<String, String> countryCurrencyMap = DEFAULT_CURRENCY_MAP;
 	private String timeZone = DEFAULT_TIMEZONE;
-	private Map<String, Object> paymentMethodData;
+	private Map<String, Object> paymentMethodData = EXTERNAL_PAYMENT_METHOD_DATA;
 	private String basePlanName = DEFAULT_BASE_PLAN_NAME;
 	private String accountKeyTemplate = DEFAULT_ACCOUNT_KEY_TEMPLATE;
 	private String bundleKeyTemplate = DEFAULT_BUNDLE_KEY_TEMPLATE;
@@ -201,6 +204,13 @@ public class DatumMetricsDailyUsageUpdaterService {
 		Map<String, String> map = new HashMap<>();
 		map.put("US", "USD");
 		map.put("NZ", "NZD");
+		return Collections.unmodifiableMap(map);
+	}
+
+	private static final Map<String, Object> externalPaymentMethodData() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("pluginName", "__EXTERNAL_PAYMENT__");
+		map.put("pluginInfo", new HashMap<String, Object>());
 		return Collections.unmodifiableMap(map);
 	}
 
@@ -591,7 +601,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 * account that does not already have a payment method set.
 	 * 
 	 * @param paymentMethodData
-	 *        the payment method data to set
+	 *        the payment method data to set; defaults to
+	 *        {@link #EXTERNAL_PAYMENT_METHOD_DATA}
 	 */
 	public void setPaymentMethodData(Map<String, Object> paymentMethodData) {
 		this.paymentMethodData = paymentMethodData;

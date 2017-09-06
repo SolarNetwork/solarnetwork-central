@@ -30,6 +30,7 @@ import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDa
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_BATCH_SIZE;
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_USAGE_UNIT_NAME;
+import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.EXTERNAL_PAYMENT_METHOD_DATA;
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.KILLBILL_DAILY_USAGE_PLAN_DATA_PROP;
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP;
 import static org.easymock.EasyMock.capture;
@@ -269,6 +270,10 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 
 		client.addTagsToAccount(capture(accountCapture), eq(Collections.singleton("234-345-456")));
 
+		// add external payment method
+		expect(client.addPaymentMethodToAccount(capture(accountCapture),
+				eq(EXTERNAL_PAYMENT_METHOD_DATA), eq(true))).andReturn(TEST_PAYMENT_METHOD_ID);
+
 		// now iterate over all user's nodes to look for usage
 		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);
 		UserNode userNode = new UserNode(user, node);
@@ -361,6 +366,10 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		}
 
 		client.addTagsToAccount(capture(accountCapture), eq(Collections.singleton("234-345-456")));
+
+		// add external payment method
+		expect(client.addPaymentMethodToAccount(capture(accountCapture),
+				eq(EXTERNAL_PAYMENT_METHOD_DATA), eq(true))).andReturn(TEST_PAYMENT_METHOD_ID);
 
 		// now iterate over all user's nodes to look for usage
 		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);
