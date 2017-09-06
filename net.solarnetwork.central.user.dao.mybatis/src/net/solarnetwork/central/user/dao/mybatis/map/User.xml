@@ -45,6 +45,10 @@
 		u.email AS user_email
 	</sql>
 
+	<resultMap id="UserInternalDataResult" type="User">
+		<result property="internalDataJson" column="user_jdata"/>
+	</resultMap>
+	
 	<resultMap id="UserFullResult" type="User">
 		<id property="id" column="user_id"/>
 		<result property="created" column="user_created"/>
@@ -59,6 +63,15 @@
 	<select id="get-User-for-id" parameterType="long" resultMap="UserFullResult">
 		SELECT
 			<include refid="fragment-User-full-result"/>
+		FROM
+			solaruser.user_user u
+		WHERE
+			u.id = #{id}
+	</select>
+	
+	<select id="get-User-internal-data" parameterType="long" resultMap="UserInternalDataResult" useCache="false">
+		SELECT
+			u.jdata AS user_jdata
 		FROM
 			solaruser.user_user u
 		WHERE

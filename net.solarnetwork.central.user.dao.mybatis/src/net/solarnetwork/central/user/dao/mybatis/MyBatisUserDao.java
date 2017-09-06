@@ -59,8 +59,16 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	public static final String INSERT_ROLE_FOR_USER = "insert-role-for-User";
 
 	/**
-	 * The update query name used in
-	 * {@link #storeInternalData(Long, Map)}.
+	 * The select query name used in {@link #getInternalData(Long)}.
+	 * 
+	 * The statement is passed a {@code userId} parameter.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String QUERY_INTERNAL_DATA = "get-User-internal-data";
+
+	/**
+	 * The update query name used in {@link #storeInternalData(Long, Map)}.
 	 * 
 	 * The statement is passed {@code userId} and {@code dataJson} parameters.
 	 * 
@@ -107,6 +115,17 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 				getSqlSession().insert(INSERT_ROLE_FOR_USER, params);
 			}
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.2
+	 */
+	@Override
+	public Map<String, Object> getInternalData(Long userId) {
+		User user = selectFirst(QUERY_INTERNAL_DATA, userId);
+		return (user != null ? user.getInternalData() : null);
 	}
 
 	/**

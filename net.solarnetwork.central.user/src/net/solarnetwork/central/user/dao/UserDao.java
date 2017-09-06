@@ -77,6 +77,15 @@ public interface UserDao
 	void storeUserRoles(User user, Set<String> roles);
 
 	/**
+	 * Get internal data for a user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get
+	 * @return the internal data, or {@literal null} if none available
+	 */
+	Map<String, Object> getInternalData(Long userId);
+
+	/**
 	 * Add, update, or remove properties from the internal data of a user.
 	 * 
 	 * <p>

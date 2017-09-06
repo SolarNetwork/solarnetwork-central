@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import java.util.Collections;
 import java.util.HashMap;
@@ -319,6 +320,20 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		User updated = userDao.get(userId);
 		assertEquals("Internal data updated", Collections.emptyMap(), updated.getInternalData());
+	}
+
+	@Test
+	public void getInternalPropertiesNull() {
+		storeNewUser();
+		Map<String, Object> result = userDao.getInternalData(userId);
+		assertNull(result);
+	}
+
+	@Test
+	public void getInternalProperties() {
+		storeInternalPropertyNullColumn();
+		Map<String, Object> result = userDao.getInternalData(userId);
+		assertEquals(Collections.singletonMap("foo", (Object) "bar"), result);
 	}
 
 }
