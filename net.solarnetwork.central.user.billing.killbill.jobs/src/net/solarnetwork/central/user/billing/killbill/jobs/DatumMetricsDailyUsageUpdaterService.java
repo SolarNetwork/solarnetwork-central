@@ -29,11 +29,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -53,6 +56,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
+import net.solarnetwork.central.user.billing.killbill.domain.TagDefinition;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -61,6 +65,7 @@ import net.solarnetwork.central.user.domain.UserFilterCommand;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
 import net.solarnetwork.central.user.domain.UserInfo;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Post daily usage data to Killbill for SolarNetwork users subscribed to this
@@ -167,6 +172,9 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The custom field name for a SolarNode ID. */
 	public static final String CUSTOM_FIELD_NODE_ID = "nodeId";
 
+	/** The default value for the account tags property. */
+	public static final Set<String> DEFAULT_ACCOUNT_TAGS = Collections.singleton("MANUAL_PAY");
+
 	private final SolarLocationDao locationDao;
 	private final GeneralNodeDatumDao nodeDatumDao;
 	private final UserDao userDao;
@@ -183,6 +191,9 @@ public class DatumMetricsDailyUsageUpdaterService {
 	private String accountDefaultLocale = DEFAULT_ACCOUNT_LOCALE;
 	private Integer subscriptionBillCycleDay = DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
 	private String usageUnitName = DEFAULT_USAGE_UNIT_NAME;
+	private Set<String> accountTags = DEFAULT_ACCOUNT_TAGS;
+
+	private Cache<String, TagDefinition> tagDefinitionCache;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -324,6 +335,20 @@ public class DatumMetricsDailyUsageUpdaterService {
 
 			String accountId = client.createAccount(account);
 			account.setAccountId(accountId);
+
+			// add tags, if configured
+			if ( accountTags != null && !accountTags.isEmpty() ) {
+				Set<String> tagIds = new LinkedHashSet<>(accountTags.size());
+				for ( String tagName : accountTags ) {
+					TagDefinition tagDef = tagDefinitionForName(tagName);
+					if ( tagDef != null && tagDef.getId() != null ) {
+						tagIds.add(tagDef.getId());
+					}
+				}
+				if ( !tagIds.isEmpty() ) {
+					client.addTagsToAccount(account, tagIds);
+				}
+			}
 		}
 
 		// verify payment method is configured on account if configured on this service
@@ -490,6 +515,36 @@ public class DatumMetricsDailyUsageUpdaterService {
 	}
 
 	/**
+	 * Get a tag definition by name.
+	 * 
+	 * @param name
+	 *        the name of the tag definition to get
+	 * @return the tag definition, or {@literal null} if not available
+	 */
+	private TagDefinition tagDefinitionForName(String name) {
+		TagDefinition result = null;
+		Cache<String, TagDefinition> cache = this.tagDefinitionCache;
+		if ( cache != null ) {
+			result = cache.get(name);
+		}
+		if ( result == null ) {
+			List<TagDefinition> defs = client.getTagDefinitions();
+			for ( TagDefinition def : defs ) {
+				if ( result == null && name.equals(def.getName()) ) {
+					result = def;
+					if ( cache == null ) {
+						break;
+					}
+				}
+				if ( cache != null ) {
+					cache.putIfAbsent(def.getName(), def);
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Set the batch size to process users with.
 	 * 
 	 * <p>
@@ -626,6 +681,37 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 */
 	public void setAccountDefaultLocale(String accountDefaultLocale) {
 		this.accountDefaultLocale = accountDefaultLocale;
+	}
+
+	/**
+	 * Set a cache to use for tag definitions.
+	 * 
+	 * @param tagDefinitionCache
+	 *        the cache to set
+	 */
+	public void setTagDefinitionCache(Cache<String, TagDefinition> tagDefinitionCache) {
+		this.tagDefinitionCache = tagDefinitionCache;
+	}
+
+	/**
+	 * Set the account tags as a comma-delimited list value.
+	 * 
+	 * @param list
+	 *        the comma-delimited list of tags to set
+	 */
+	public void setAccountTagList(String list) {
+		Set<String> tags = StringUtils.commaDelimitedStringToSet(list);
+		setAccountTags(tags);
+	}
+
+	/**
+	 * Set a list of tag names to apply to newly created accounts.
+	 * 
+	 * @param accountTags
+	 *        the set of tag names to apply to new accounts
+	 */
+	public void setAccountTags(Set<String> accountTags) {
+		this.accountTags = accountTags;
 	}
 
 }

@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.killbill;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -37,6 +38,8 @@ import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
+import net.solarnetwork.central.user.billing.killbill.domain.Tag;
+import net.solarnetwork.central.user.billing.killbill.domain.TagDefinition;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 
 /**
@@ -145,6 +148,42 @@ public interface KillbillClient {
 	 * @return the subscription, or {@literal null} if not available
 	 */
 	Subscription getSubscription(String subscriptionId);
+
+	/**
+	 * Get all available tag definitions.
+	 * 
+	 * @return the available tag definitions
+	 */
+	List<TagDefinition> getTagDefinitions();
+
+	/**
+	 * Get all available tags set on an account.
+	 * 
+	 * @param account
+	 *        the account to get the tags for
+	 * @return the tags, never {@literal null}
+	 */
+	List<Tag> tagsForAccount(Account account);
+
+	/**
+	 * Add a set of tags to an account.
+	 * 
+	 * @param account
+	 *        the account to add the tags to
+	 * @param tagIds
+	 *        the IDs of the tags to add
+	 */
+	void addTagsToAccount(Account account, Set<String> tagIds);
+
+	/**
+	 * Remove a set of tags from an account.
+	 * 
+	 * @param account
+	 *        the account to remove the tags from
+	 * @param tagIds
+	 *        the IDs of the tags to remove
+	 */
+	void removeTagsFromAccount(Account account, Set<String> tagIds);
 
 	/**
 	 * Add usage records to a subscription.

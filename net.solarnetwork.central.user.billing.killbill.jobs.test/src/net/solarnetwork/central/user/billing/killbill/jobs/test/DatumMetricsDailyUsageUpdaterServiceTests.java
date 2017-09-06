@@ -44,11 +44,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import javax.cache.Cache;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
@@ -75,6 +77,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
+import net.solarnetwork.central.user.billing.killbill.domain.TagDefinition;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterJob;
 import net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService;
@@ -129,7 +132,9 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	private UserNodeDao userNodeDao;
 	private GeneralNodeDatumDao nodeDatumDao;
 	private KillbillClient client;
+	private Cache<String, TagDefinition> tagDefinitionCache;
 
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() {
 		locationDao = EasyMock.createMock(SolarLocationDao.class);
@@ -139,14 +144,17 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		client = EasyMock.createMock(KillbillClient.class);
 		service = new DatumMetricsDailyUsageUpdaterService(locationDao, userDao, userNodeDao,
 				nodeDatumDao, client);
+
+		tagDefinitionCache = EasyMock.createMock(Cache.class);
+		service.setTagDefinitionCache(tagDefinitionCache);
 	}
 
 	private void replayAll() {
-		replay(locationDao, userDao, userNodeDao, nodeDatumDao, client);
+		replay(locationDao, userDao, userNodeDao, nodeDatumDao, client, tagDefinitionCache);
 	}
 
 	private void verifyAll() {
-		verify(locationDao, userDao, userNodeDao, nodeDatumDao, client);
+		verify(locationDao, userDao, userNodeDao, nodeDatumDao, client, tagDefinitionCache);
 	}
 
 	@After
@@ -243,6 +251,24 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		Capture<Account> accountCapture = new Capture<>(CaptureType.ALL);
 		expect(client.createAccount(capture(accountCapture))).andReturn(TEST_ACCOUNT_ID);
 
+		// assign tags to account; have to look up definitions first
+
+		// each tag definition should be looked for in cache; when not found call to get all definitions
+		expect(tagDefinitionCache.get("MANUAL_PAY")).andReturn(null);
+
+		List<TagDefinition> tagDefinitions = Arrays.asList(
+				new TagDefinition("123-456-789", "AUTO_PAY_OFF"),
+				new TagDefinition("234-345-456", "MANUAL_PAY"),
+				new TagDefinition("345-456-567", "PARTNER"));
+		expect(client.getTagDefinitions()).andReturn(tagDefinitions);
+
+		for ( TagDefinition tagDef : tagDefinitions ) {
+			// cache every definition for later user
+			expect(tagDefinitionCache.putIfAbsent(tagDef.getName(), tagDef)).andReturn(true);
+		}
+
+		client.addTagsToAccount(capture(accountCapture), eq(Collections.singleton("234-345-456")));
+
 		// now iterate over all user's nodes to look for usage
 		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);
 		UserNode userNode = new UserNode(user, node);
@@ -317,6 +343,24 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		expect(locationDao.get(TEST_LOCATION_ID)).andReturn(location);
 		Capture<Account> accountCapture = new Capture<>(CaptureType.ALL);
 		expect(client.createAccount(capture(accountCapture))).andReturn(TEST_ACCOUNT_ID);
+
+		// assign tags to account; have to look up definitions first
+
+		// each tag definition should be looked for in cache; when not found call to get all definitions
+		expect(tagDefinitionCache.get("MANUAL_PAY")).andReturn(null);
+
+		List<TagDefinition> tagDefinitions = Arrays.asList(
+				new TagDefinition("123-456-789", "AUTO_PAY_OFF"),
+				new TagDefinition("234-345-456", "MANUAL_PAY"),
+				new TagDefinition("345-456-567", "PARTNER"));
+		expect(client.getTagDefinitions()).andReturn(tagDefinitions);
+
+		for ( TagDefinition tagDef : tagDefinitions ) {
+			// cache every definition for later user
+			expect(tagDefinitionCache.putIfAbsent(tagDef.getName(), tagDef)).andReturn(true);
+		}
+
+		client.addTagsToAccount(capture(accountCapture), eq(Collections.singleton("234-345-456")));
 
 		// now iterate over all user's nodes to look for usage
 		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);

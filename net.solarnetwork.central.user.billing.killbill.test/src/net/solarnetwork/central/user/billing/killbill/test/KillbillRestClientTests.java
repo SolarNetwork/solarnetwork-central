@@ -46,6 +46,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -75,6 +76,8 @@ import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
+import net.solarnetwork.central.user.billing.killbill.domain.Tag;
+import net.solarnetwork.central.user.billing.killbill.domain.TagDefinition;
 import net.solarnetwork.central.user.billing.killbill.domain.UnitRecord;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.util.JsonUtils;
@@ -328,7 +331,7 @@ public class KillbillRestClientTests {
 		// given
 		// @formatter:off
 		serverExpect("/1.0/kb/subscriptions/"+TEST_SUBSCRIPTION_ID+"/customFields", HttpMethod.GET)
-			.andRespond(withStatus(HttpStatus.CREATED)
+			.andRespond(withStatus(HttpStatus.OK)
 					.contentType(MediaType.APPLICATION_JSON_UTF8)
 					.body("[{\"name\":\"foo\",\"value\":\"bar\"}]"));
 	    // @formatter:on
@@ -686,6 +689,88 @@ public class KillbillRestClientTests {
 
 		// then
 		assertThat(props, equalTo(Collections.singletonMap("greeting", "G''day, mate!")));
+	}
+
+	@Test
+	public void getTagDefinitions() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/kb/tagDefinitions", HttpMethod.GET)
+			.andRespond(withStatus(HttpStatus.OK)
+					.contentType(MediaType.APPLICATION_JSON_UTF8)
+					.body(new ClassPathResource("tag-definitions-01.json", getClass())));
+	    // @formatter:on
+
+		// when
+		List<TagDefinition> tagDefs = client.getTagDefinitions();
+
+		// then
+		assertThat(tagDefs, hasSize(7));
+		TagDefinition def = tagDefs.get(0);
+		assertThat("ID", def.getId(), equalTo("00000000-0000-0000-0000-000000000001"));
+		assertThat("Object types", def.getApplicableObjectTypes(),
+				equalTo(Collections.singleton("ACCOUNT")));
+		assertThat("ID", def.getDescription(), equalTo("Suspends payments until removed."));
+		assertThat("Control tag", def.getIsControlTag(), equalTo(true));
+		assertThat("Name", def.getName(), equalTo("AUTO_PAY_OFF"));
+	}
+
+	@Test
+	public void tagsForAccount() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/kb/accounts/" +TEST_ACCOUNT_ID +"/tags", HttpMethod.GET)
+			.andRespond(withStatus(HttpStatus.OK)
+					.contentType(MediaType.APPLICATION_JSON_UTF8)
+					.body(new ClassPathResource("tags-01.json", getClass())));
+	    // @formatter:on
+
+		// when
+		Account account = new Account(TEST_ACCOUNT_ID, TEST_TIME_ZONE);
+		List<Tag> tags = client.tagsForAccount(account);
+
+		// then
+		assertThat(tags, hasSize(2));
+		Tag tag = tags.get(0);
+		assertThat("ID", tag.getTagId(), equalTo("0664180b-9abd-4a47-ab3b-118d77f91f89"));
+		assertThat("Object type", tag.getObjectType(), equalTo("ACCOUNT"));
+		assertThat("Object ID", tag.getObjectId(), equalTo("61e7f412-1b8a-4920-be2d-4a8ddd4c1096"));
+		assertThat("Tag definition ID", tag.getTagDefinitionId(),
+				equalTo("00000000-0000-0000-0000-000000000003"));
+		assertThat("Tag definition name", tag.getTagDefinitionName(),
+				equalTo("OVERDUE_ENFORCEMENT_OFF"));
+	}
+
+	@Test
+	public void addTagsToAccount() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/kb/accounts/" +TEST_ACCOUNT_ID +"/tags?tagList=foo,bar", HttpMethod.POST)
+			.andRespond(withStatus(HttpStatus.CREATED));
+	    // @formatter:on
+
+		// when
+		Account account = new Account(TEST_ACCOUNT_ID, TEST_TIME_ZONE);
+		client.addTagsToAccount(account, new LinkedHashSet<>(Arrays.asList("foo", "bar")));
+
+		// then
+		// no exception thrown
+	}
+
+	@Test
+	public void removeTagsFromAccount() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/kb/accounts/" +TEST_ACCOUNT_ID +"/tags?tagList=foo,bar", HttpMethod.DELETE)
+			.andRespond(withStatus(HttpStatus.OK));
+	    // @formatter:on
+
+		// when
+		Account account = new Account(TEST_ACCOUNT_ID, TEST_TIME_ZONE);
+		client.removeTagsFromAccount(account, new LinkedHashSet<>(Arrays.asList("foo", "bar")));
+
+		// then
+		// no exception thrown
 	}
 
 }

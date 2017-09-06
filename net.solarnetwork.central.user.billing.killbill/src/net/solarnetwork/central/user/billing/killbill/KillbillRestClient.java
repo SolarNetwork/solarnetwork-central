@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.joda.time.LocalDate;
 import org.springframework.core.ParameterizedTypeReference;
@@ -62,6 +63,8 @@ import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsage;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
+import net.solarnetwork.central.user.billing.killbill.domain.Tag;
+import net.solarnetwork.central.user.billing.killbill.domain.TagDefinition;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageUnitRecord;
 import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
@@ -84,10 +87,16 @@ public class KillbillRestClient implements KillbillClient {
 	private static final ParameterizedTypeReference<List<Bundle>> BUNDLE_LIST_TYPE = new ParameterizedTypeReference<List<Bundle>>() {
 	};
 
+	private static final ParameterizedTypeReference<List<CustomField>> CUSTOM_FIELD_LIST_TYPE = new ParameterizedTypeReference<List<CustomField>>() {
+	};
+
 	private static final ParameterizedTypeReference<List<Invoice>> INVOICE_LIST_TYPE = new ParameterizedTypeReference<List<Invoice>>() {
 	};
 
-	private static final ParameterizedTypeReference<List<CustomField>> CUSTOM_FIELD_LIST_TYPE = new ParameterizedTypeReference<List<CustomField>>() {
+	private static final ParameterizedTypeReference<List<Tag>> TAG_LIST_TYPE = new ParameterizedTypeReference<List<Tag>>() {
+	};
+
+	private static final ParameterizedTypeReference<List<TagDefinition>> TAG_DEFINITION_LIST_TYPE = new ParameterizedTypeReference<List<TagDefinition>>() {
 	};
 
 	private String baseUrl = DEFAULT_BASE_URL;
@@ -413,6 +422,41 @@ public class KillbillRestClient implements KillbillClient {
 		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/subscriptions/{subscriptionId}"))
 				.buildAndExpand(uriVariables).toUri();
 		return getForObjectOrNull(uri, Subscription.class);
+	}
+
+	@Override
+	public List<TagDefinition> getTagDefinitions() {
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/tagDefinitions")).build().toUri();
+		List<TagDefinition> results = getForObjectOrNull(uri, TAG_DEFINITION_LIST_TYPE);
+		return (results != null ? results : Collections.emptyList());
+	}
+
+	@Override
+	public List<Tag> tagsForAccount(Account account) {
+		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts/{accountId}/tags"))
+				.buildAndExpand(uriVariables).toUri();
+		List<Tag> results = getForObjectOrNull(uri, TAG_LIST_TYPE);
+		return (results != null ? results : Collections.emptyList());
+	}
+
+	@Override
+	public void addTagsToAccount(Account account, Set<String> tagIds) {
+		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
+		String tagList = tagIds.stream().collect(Collectors.joining(","));
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts/{accountId}/tags"))
+				.queryParam("tagList", tagList).buildAndExpand(uriVariables).toUri();
+		client.postForObject(uri, null, Void.class);
+
+	}
+
+	@Override
+	public void removeTagsFromAccount(Account account, Set<String> tagIds) {
+		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
+		String tagList = tagIds.stream().collect(Collectors.joining(","));
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts/{accountId}/tags"))
+				.queryParam("tagList", tagList).buildAndExpand(uriVariables).toUri();
+		client.delete(uri);
 	}
 
 	/**
