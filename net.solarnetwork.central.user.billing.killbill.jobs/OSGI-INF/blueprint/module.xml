@@ -28,6 +28,8 @@
 
 	<!-- Service references -->
 
+	<reference id="cacheManager" interface="javax.cache.CacheManager" filter="(app=user)"/>
+
 	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
 
 	<reference id="locationDao" interface="net.solarnetwork.central.dao.SolarLocationDao"/>
@@ -39,6 +41,15 @@
 	
 	<!-- Supporting Services -->
 	
+	<bean id="tagDefinitionCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
+		<argument ref="cacheManager"/>
+		<argument value="java.lang.String"/>
+		<argument value="net.solarnetwork.central.user.billing.killbill.domain.TagDefinition"/>
+		<property name="name" value="tagDefinitions"/>
+		<property name="expiryPolicy" value="Touched"/>
+		<property name="expiryDuration" value="#{T(javax.cache.expiry.Duration).ONE_DAY}"/>
+	</bean>
+	
 	<bean id="datumMetricsDailyUsageUpdaterService" class="net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService">
 		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService" 
 			autowire-on-update="true"/>
@@ -47,6 +58,7 @@
 		<argument ref="userNodeDao"/>
 		<argument ref="nodeDatumDao"/>
 		<argument ref="killbillClient"/>
+		<property name="tagDefinitionCache" ref="tagDefinitionCache"/>
 	</bean>
 	
 	<bean id="datumMetricsDailyUsageUpdaterJob" class="net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterJob">

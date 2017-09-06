@@ -48,15 +48,6 @@
 		<property name="expiryDuration" value="#{T(javax.cache.expiry.Duration).ONE_DAY}"/>
 	</bean>
 	
-	<bean id="tagDefinitionCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
-		<argument ref="cacheManager"/>
-		<argument value="java.lang.String"/>
-		<argument value="net.solarnetwork.central.user.billing.killbill.domain.TagDefinition"/>
-		<property name="name" value="tagDefinitions"/>
-		<property name="expiryPolicy" value="Touched"/>
-		<property name="expiryDuration" value="#{T(javax.cache.expiry.Duration).ONE_DAY}"/>
-	</bean>
-	
 	<bean id="catalogMessageSource" class="net.solarnetwork.central.user.billing.killbill.KillbillCatalogMessageSource">
 		<argument ref="killbillClient"/>
 		<argument ref="catalogMessageSourceCache"/>
@@ -72,7 +63,6 @@
 			<argument ref="userDao"/>
 			<argument ref="catalogMessageSource"/>
 			<property name="subscriptionCache" ref="subscriptionCache"/>
-			<property name="tagDefinitionCache" ref="tagDefinitionCache"/>
 		</bean>
 	</service>
 
