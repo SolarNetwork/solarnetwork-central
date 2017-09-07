@@ -676,6 +676,62 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	}
 
 	@Test
+	public void oneUserAddMoreDataToday() {
+		// search for users configured to use killbill; find one
+		Map<String, Object> killbillAccountFilter = userSearchBillingData();
+
+		Map<String, Object> userBillingData = new HashMap<>(killbillAccountFilter);
+		userBillingData.put(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER_ACCOUNT_KEY);
+
+		// we have usage data published up to start of TODAY
+		DateTime auditDataStart = new DateTime(DateTimeZone.forID(TEST_NODE_TZ)).dayOfMonth()
+				.roundFloorCopy();
+		userBillingData.put(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
+				ISO_DATE_FORMATTER.print(auditDataStart.toLocalDate()));
+
+		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
+		user.setInternalData(userBillingData);
+		user.setLocationId(TEST_LOCATION_ID);
+		Capture<UserFilterCommand> filterCapture = new Capture<>();
+		List<UserFilterMatch> usersWithAccounting = new ArrayList<>();
+		UserMatch userMatch = new UserMatch(TEST_USER_ID, TEST_USER_EMAIL);
+		userMatch.setInternalData(userBillingData);
+		userMatch.setLocationId(TEST_LOCATION_ID);
+		userMatch.setName(TEST_USER_NAME);
+		usersWithAccounting.add(userMatch);
+		FilterResults<UserFilterMatch> userAccountingSearchResults = new BasicFilterResults<>(
+				usersWithAccounting, 1L, 0, 1);
+		expect(userDao.findFiltered(capture(filterCapture), isNull(), eq(0), eq(DEFAULT_BATCH_SIZE)))
+				.andReturn(userAccountingSearchResults);
+
+		// get Killbill Account
+		Account account = createTestAccount();
+		expect(client.accountForExternalKey(TEST_USER_ACCOUNT_KEY)).andReturn(account);
+
+		// now iterate over all user's nodes to look for usage
+		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);
+		UserNode userNode = new UserNode(user, node);
+		List<UserNode> allUserNodes = Collections.singletonList(userNode);
+		expect(userNodeDao.findUserNodesForUser(userMatch)).andReturn(allUserNodes);
+
+		// we have partial audit data available for today
+		DateTime auditDataEnd = new DateTime(DateTimeZone.forID(TEST_NODE_TZ)).hourOfDay()
+				.roundCeilingCopy();
+		ReadableInterval auditInterval = new Interval(auditDataStart, auditDataEnd);
+		expect(nodeDatumDao.getAuditInterval(TEST_NODE_ID, null)).andReturn(auditInterval);
+
+		// since we are still on TODAY, there can be NO usage to add, so just skip
+
+		replayAll();
+
+		service.execute();
+
+		// verify search for users
+		assertNotNull(filterCapture.getValue());
+		assertEquals(killbillAccountFilter, filterCapture.getValue().getInternalData());
+	}
+
+	@Test
 	public void oneUserAddOneMoreDayDataMultipleUsersDifferentTimeZones() {
 		// search for users configured to use killbill; find one
 		Map<String, Object> killbillAccountFilter = userSearchBillingData();

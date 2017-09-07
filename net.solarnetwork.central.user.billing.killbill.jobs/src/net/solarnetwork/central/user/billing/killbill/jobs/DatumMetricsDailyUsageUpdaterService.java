@@ -448,8 +448,10 @@ public class DatumMetricsDailyUsageUpdaterService {
 		}
 
 		// store the last processed date so we can pick up there next time
-		userDao.storeInternalData(userNode.getUser().getId(),
-				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP, nextStartDate));
+		if ( mostRecentUsageDate == null || !mostRecentUsageDate.equals(nextStartDate) ) {
+			userDao.storeInternalData(userNode.getUser().getId(),
+					Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP, nextStartDate));
+		}
 	}
 
 	private Bundle bundleForUserNode(UserNode userNode, Account account) {
