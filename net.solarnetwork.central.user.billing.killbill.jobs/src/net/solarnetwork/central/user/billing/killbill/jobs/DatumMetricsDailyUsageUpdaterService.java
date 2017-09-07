@@ -400,7 +400,12 @@ public class DatumMetricsDailyUsageUpdaterService {
 		if ( auditInterval != null ) {
 			usageEndDay = auditInterval.getEnd().withZone(timeZone).dayOfMonth().roundCeilingCopy();
 		} else {
-			usageEndDay = new DateTime(timeZone).dayOfMonth().roundCeilingCopy();
+			usageEndDay = new DateTime(timeZone).dayOfMonth().roundFloorCopy();
+		}
+
+		if ( usageEndDay.isAfterNow() ) {
+			// round down to start of today (don't include today which is probably partial data)
+			usageEndDay = usageEndDay.minusDays(1);
 		}
 
 		// got usage start date; get the bundle for this node
