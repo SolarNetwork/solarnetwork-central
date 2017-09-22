@@ -52,6 +52,7 @@ import net.solarnetwork.javax.money.MoneyUtils;
  * 
  * @author matt
  * @version 1.0
+ * @since 0.2
  */
 public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 

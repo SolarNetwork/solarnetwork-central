@@ -131,6 +131,7 @@
 				</tfoot>
 			</table>
 			<div class="modal-footer">
+				<a target="sn_invoice_print" class="btn btn-info pull-left invoice-render" href="<c:url value='/u/sec/billing/invoices/{invoiceId}/render'/>"><fmt:message key='print.label'/></a>
 				<button type="button" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></button>
 			</div>
 		</div>

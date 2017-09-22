@@ -24,8 +24,10 @@ package net.solarnetwork.central.user.billing.biz.dao;
 
 import java.util.List;
 import java.util.Locale;
+import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
@@ -44,7 +46,7 @@ import net.solarnetwork.util.OptionalServiceCollection;
  * to the {@link BillingSystem} configured for each user.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoBillingBiz implements BillingBiz {
 
@@ -91,6 +93,7 @@ public class DaoBillingBiz implements BillingBiz {
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		BillingSystem system = billingSystemForUser(filter.getUserId());
@@ -101,12 +104,23 @@ public class DaoBillingBiz implements BillingBiz {
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
 		BillingSystem system = billingSystemForUser(userId);
 		if ( system == null ) {
 			return null;
 		}
 		return system.getInvoice(userId, invoiceId, locale);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale) {
+		BillingSystem system = billingSystemForUser(userId);
+		if ( system == null ) {
+			return null;
+		}
+		return system.renderInvoice(userId, invoiceId, outputType, locale);
 	}
 
 }

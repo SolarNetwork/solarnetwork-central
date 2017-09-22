@@ -34,7 +34,7 @@ import java.util.List;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface LocalizedInvoiceInfo {
 
@@ -70,6 +70,7 @@ public interface LocalizedInvoiceInfo {
 	 * and localized string.
 	 * 
 	 * @return the formatted total tax amount
+	 * @since 1.1
 	 */
 	String getLocalizedTaxAmount();
 
@@ -95,6 +96,7 @@ public interface LocalizedInvoiceInfo {
 	 * 
 	 * @return tax invoice items grouped by description
 	 * @see #getTaxInvoiceItems()
+	 * @since 1.1
 	 */
 	List<LocalizedInvoiceItemInfo> getLocalizedTaxInvoiceItemsGroupedByDescription();
 

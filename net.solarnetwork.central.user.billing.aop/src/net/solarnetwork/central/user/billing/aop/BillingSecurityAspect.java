@@ -34,7 +34,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * Security enforcing AOP aspect for {@link BillingBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 public class BillingSecurityAspect extends AuthorizationSupport {
@@ -57,11 +57,15 @@ public class BillingSecurityAspect extends AuthorizationSupport {
 	public void getInvoice(Long userId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.billing.biz.*BillingBiz.renderInvoice(..)) && args(userId, ..)")
+	public void renderInvoice(Long userId) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.billing.biz.*BillingBiz.findFilteredInvoices(..)) && args(filter, ..)")
 	public void findFilteredInvoices(InvoiceFilter filter) {
 	}
 
-	@Before("forUserAccess(userId) || getInvoice(userId)")
+	@Before("forUserAccess(userId) || getInvoice(userId) || renderInvoice(userId)")
 	public void checkForUserAccess(Long userId) {
 		requireUserReadAccess(userId);
 	}

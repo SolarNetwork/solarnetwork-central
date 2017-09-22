@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -39,11 +40,14 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.util.MimeType;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
@@ -73,7 +77,7 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
  * REST implementation of {@link KillbillClient}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class KillbillRestClient implements KillbillClient {
 
@@ -268,6 +272,9 @@ public class KillbillRestClient implements KillbillClient {
 				.buildAndExpand(uriVariables).toUri();
 		Invoice result = getForObjectOrNull(uri, Invoice.class);
 		if ( result != null ) {
+			if ( !account.getAccountId().equals(result.getAccountId()) ) {
+				return null;
+			}
 			applyAccountSettings(account, Collections.singleton(result));
 		}
 		return result;
@@ -457,6 +464,26 @@ public class KillbillRestClient implements KillbillClient {
 		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts/{accountId}/tags"))
 				.queryParam("tagList", tagList).buildAndExpand(uriVariables).toUri();
 		client.delete(uri);
+	}
+
+	@Override
+	public Resource renderInvoice(String invoiceId, MimeType outputType, Locale locale) {
+		// we only support HTML
+		if ( !MediaType.TEXT_HTML.isCompatibleWith(outputType) ) {
+			throw new IllegalArgumentException("The " + outputType + " output type is not supported");
+		}
+		Map<String, Object> uriVariables = Collections.singletonMap("invoiceId", invoiceId);
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/invoices/{invoiceId}/html"))
+				.buildAndExpand(uriVariables).toUri();
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.add(HttpHeaders.ACCEPT_LANGUAGE, locale.toLanguageTag());
+		RequestEntity<Object> req = new RequestEntity<Object>(null, headers, HttpMethod.GET, uri);
+		ResponseEntity<Resource> res = client.exchange(req, Resource.class);
+		if ( res.getStatusCode() == HttpStatus.OK ) {
+			return res.getBody();
+		}
+		return null;
 	}
 
 	/**

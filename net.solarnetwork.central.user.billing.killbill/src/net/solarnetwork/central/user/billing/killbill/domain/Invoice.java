@@ -45,8 +45,9 @@ import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 public class Invoice extends BaseObjectEntity<String>
 		implements net.solarnetwork.central.user.billing.domain.Invoice, InvoiceMatch {
 
-	private static final long serialVersionUID = -9188893829597927136L;
+	private static final long serialVersionUID = -8352526186945752646L;
 
+	private String accountId;
 	private String timeZoneId = "UTC";
 	private LocalDate invoiceDate;
 	private String invoiceNumber;
@@ -253,6 +254,25 @@ public class Invoice extends BaseObjectEntity<String>
 	@JsonSetter("items")
 	public void setItems(List<InvoiceItem> items) {
 		this.items = items;
+	}
+
+	/**
+	 * Get the account ID that owns the invoice.
+	 * 
+	 * @return the account ID
+	 */
+	public String getAccountId() {
+		return accountId;
+	}
+
+	/**
+	 * Set the account ID that owns the invoice.
+	 * 
+	 * @param accountId
+	 *        the account ID to set
+	 */
+	public void setAccountId(String accountId) {
+		this.accountId = accountId;
 	}
 
 }

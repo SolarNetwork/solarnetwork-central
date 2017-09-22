@@ -113,6 +113,8 @@ $(document).ready(function() {
 		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/' +invoice.id), function(json) {
 			console.log('Got invoice detail: %o', json);
 			populateInvoiceItemDetails(modal.find('table.invoice-items'), (json ? json.data : null));
+			modal.find('a.invoice-render')
+				.attr('href', SolarReg.solarUserURL('/sec/billing/invoices/' +invoice.id +'/render'));
 		});
 		
 		modal.modal('show');

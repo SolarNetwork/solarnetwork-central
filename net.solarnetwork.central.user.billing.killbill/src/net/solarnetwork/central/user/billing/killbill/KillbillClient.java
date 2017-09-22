@@ -23,12 +23,15 @@
 package net.solarnetwork.central.user.billing.killbill;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.springframework.core.io.Resource;
+import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
@@ -46,7 +49,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
  * API for interaction with Killbill.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface KillbillClient {
 
@@ -266,5 +269,22 @@ public interface KillbillClient {
 	 * @return the properties, or {@literal null} if not available
 	 */
 	Properties invoiceCatalogTranslation(String locale);
+
+	/**
+	 * Render an invoice.
+	 * 
+	 * @param invoiceId
+	 *        the ID of the invoice to render
+	 * @param outputType
+	 *        the desired output type, e.g. {@literal text/html}
+	 * @param locale
+	 *        the desired output locale
+	 * @return a resource with the result data, or {@literal null} if the
+	 *         invoice is not available
+	 * @throws IllegalArgumentException
+	 *         if {@code outputType} is not supported
+	 * @since 1.1
+	 */
+	Resource renderInvoice(String invoiceId, MimeType outputType, Locale locale);
 
 }

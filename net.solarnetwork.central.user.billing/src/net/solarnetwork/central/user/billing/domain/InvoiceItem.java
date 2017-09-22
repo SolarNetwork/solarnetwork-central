@@ -39,11 +39,15 @@ import net.solarnetwork.central.domain.Entity;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface InvoiceItem extends Entity<String> {
 
-	/** The invoice item type for tax items. */
+	/**
+	 * The invoice item type for tax items.
+	 * 
+	 * @since 1.1
+	 */
 	public static final String TYPE_TAX = "TAX";
 
 	/**
