@@ -23,11 +23,15 @@
 package net.solarnetwork.central.user.billing.killbill;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.springframework.core.io.Resource;
+import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
@@ -37,13 +41,15 @@ import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
+import net.solarnetwork.central.user.billing.killbill.domain.Tag;
+import net.solarnetwork.central.user.billing.killbill.domain.TagDefinition;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 
 /**
  * API for interaction with Killbill.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface KillbillClient {
 
@@ -147,6 +153,42 @@ public interface KillbillClient {
 	Subscription getSubscription(String subscriptionId);
 
 	/**
+	 * Get all available tag definitions.
+	 * 
+	 * @return the available tag definitions
+	 */
+	List<TagDefinition> getTagDefinitions();
+
+	/**
+	 * Get all available tags set on an account.
+	 * 
+	 * @param account
+	 *        the account to get the tags for
+	 * @return the tags, never {@literal null}
+	 */
+	List<Tag> tagsForAccount(Account account);
+
+	/**
+	 * Add a set of tags to an account.
+	 * 
+	 * @param account
+	 *        the account to add the tags to
+	 * @param tagIds
+	 *        the IDs of the tags to add
+	 */
+	void addTagsToAccount(Account account, Set<String> tagIds);
+
+	/**
+	 * Remove a set of tags from an account.
+	 * 
+	 * @param account
+	 *        the account to remove the tags from
+	 * @param tagIds
+	 *        the IDs of the tags to remove
+	 */
+	void removeTagsFromAccount(Account account, Set<String> tagIds);
+
+	/**
 	 * Add usage records to a subscription.
 	 * 
 	 * @param subscription
@@ -227,5 +269,22 @@ public interface KillbillClient {
 	 * @return the properties, or {@literal null} if not available
 	 */
 	Properties invoiceCatalogTranslation(String locale);
+
+	/**
+	 * Render an invoice.
+	 * 
+	 * @param invoiceId
+	 *        the ID of the invoice to render
+	 * @param outputType
+	 *        the desired output type, e.g. {@literal text/html}
+	 * @param locale
+	 *        the desired output locale
+	 * @return a resource with the result data, or {@literal null} if the
+	 *         invoice is not available
+	 * @throws IllegalArgumentException
+	 *         if {@code outputType} is not supported
+	 * @since 1.1
+	 */
+	Resource renderInvoice(String invoiceId, MimeType outputType, Locale locale);
 
 }

@@ -30,6 +30,7 @@ import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDa
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_BATCH_SIZE;
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_USAGE_UNIT_NAME;
+import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.EXTERNAL_PAYMENT_METHOD_DATA;
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.KILLBILL_DAILY_USAGE_PLAN_DATA_PROP;
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP;
 import static org.easymock.EasyMock.capture;
@@ -44,11 +45,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import javax.cache.Cache;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
@@ -75,6 +78,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
+import net.solarnetwork.central.user.billing.killbill.domain.TagDefinition;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterJob;
 import net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService;
@@ -129,7 +133,9 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 	private UserNodeDao userNodeDao;
 	private GeneralNodeDatumDao nodeDatumDao;
 	private KillbillClient client;
+	private Cache<String, TagDefinition> tagDefinitionCache;
 
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() {
 		locationDao = EasyMock.createMock(SolarLocationDao.class);
@@ -139,14 +145,17 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		client = EasyMock.createMock(KillbillClient.class);
 		service = new DatumMetricsDailyUsageUpdaterService(locationDao, userDao, userNodeDao,
 				nodeDatumDao, client);
+
+		tagDefinitionCache = EasyMock.createMock(Cache.class);
+		service.setTagDefinitionCache(tagDefinitionCache);
 	}
 
 	private void replayAll() {
-		replay(locationDao, userDao, userNodeDao, nodeDatumDao, client);
+		replay(locationDao, userDao, userNodeDao, nodeDatumDao, client, tagDefinitionCache);
 	}
 
 	private void verifyAll() {
-		verify(locationDao, userDao, userNodeDao, nodeDatumDao, client);
+		verify(locationDao, userDao, userNodeDao, nodeDatumDao, client, tagDefinitionCache);
 	}
 
 	@After
@@ -243,6 +252,28 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		Capture<Account> accountCapture = new Capture<>(CaptureType.ALL);
 		expect(client.createAccount(capture(accountCapture))).andReturn(TEST_ACCOUNT_ID);
 
+		// assign tags to account; have to look up definitions first
+
+		// each tag definition should be looked for in cache; when not found call to get all definitions
+		expect(tagDefinitionCache.get("MANUAL_PAY")).andReturn(null);
+
+		List<TagDefinition> tagDefinitions = Arrays.asList(
+				new TagDefinition("123-456-789", "AUTO_PAY_OFF"),
+				new TagDefinition("234-345-456", "MANUAL_PAY"),
+				new TagDefinition("345-456-567", "PARTNER"));
+		expect(client.getTagDefinitions()).andReturn(tagDefinitions);
+
+		for ( TagDefinition tagDef : tagDefinitions ) {
+			// cache every definition for later user
+			expect(tagDefinitionCache.putIfAbsent(tagDef.getName(), tagDef)).andReturn(true);
+		}
+
+		client.addTagsToAccount(capture(accountCapture), eq(Collections.singleton("234-345-456")));
+
+		// add external payment method
+		expect(client.addPaymentMethodToAccount(capture(accountCapture),
+				eq(EXTERNAL_PAYMENT_METHOD_DATA), eq(true))).andReturn(TEST_PAYMENT_METHOD_ID);
+
 		// now iterate over all user's nodes to look for usage
 		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);
 		UserNode userNode = new UserNode(user, node);
@@ -317,6 +348,28 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		expect(locationDao.get(TEST_LOCATION_ID)).andReturn(location);
 		Capture<Account> accountCapture = new Capture<>(CaptureType.ALL);
 		expect(client.createAccount(capture(accountCapture))).andReturn(TEST_ACCOUNT_ID);
+
+		// assign tags to account; have to look up definitions first
+
+		// each tag definition should be looked for in cache; when not found call to get all definitions
+		expect(tagDefinitionCache.get("MANUAL_PAY")).andReturn(null);
+
+		List<TagDefinition> tagDefinitions = Arrays.asList(
+				new TagDefinition("123-456-789", "AUTO_PAY_OFF"),
+				new TagDefinition("234-345-456", "MANUAL_PAY"),
+				new TagDefinition("345-456-567", "PARTNER"));
+		expect(client.getTagDefinitions()).andReturn(tagDefinitions);
+
+		for ( TagDefinition tagDef : tagDefinitions ) {
+			// cache every definition for later user
+			expect(tagDefinitionCache.putIfAbsent(tagDef.getName(), tagDef)).andReturn(true);
+		}
+
+		client.addTagsToAccount(capture(accountCapture), eq(Collections.singleton("234-345-456")));
+
+		// add external payment method
+		expect(client.addPaymentMethodToAccount(capture(accountCapture),
+				eq(EXTERNAL_PAYMENT_METHOD_DATA), eq(true))).andReturn(TEST_PAYMENT_METHOD_ID);
 
 		// now iterate over all user's nodes to look for usage
 		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);
@@ -524,6 +577,158 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 			assertEquals("Usage date " + itr.previousIndex(),
 					dayList.get(itr.previousIndex()).toLocalDate(), rec.getRecordDate());
 		}
+	}
+
+	@Test
+	public void oneUserCatchupDataToday() {
+		// search for users configured to use killbill; find one
+		Map<String, Object> killbillAccountFilter = userSearchBillingData();
+
+		Map<String, Object> userBillingData = new HashMap<>(killbillAccountFilter);
+		userBillingData.put(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER_ACCOUNT_KEY);
+		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
+		user.setInternalData(userBillingData);
+		user.setLocationId(TEST_LOCATION_ID);
+		Capture<UserFilterCommand> filterCapture = new Capture<>();
+		List<UserFilterMatch> usersWithAccounting = new ArrayList<>();
+		UserMatch userMatch = new UserMatch(TEST_USER_ID, TEST_USER_EMAIL);
+		userMatch.setInternalData(userBillingData);
+		userMatch.setLocationId(TEST_LOCATION_ID);
+		userMatch.setName(TEST_USER_NAME);
+		usersWithAccounting.add(userMatch);
+		FilterResults<UserFilterMatch> userAccountingSearchResults = new BasicFilterResults<>(
+				usersWithAccounting, 1L, 0, 1);
+		expect(userDao.findFiltered(capture(filterCapture), isNull(), eq(0), eq(DEFAULT_BATCH_SIZE)))
+				.andReturn(userAccountingSearchResults);
+
+		// get Killbill Account
+		Account account = createTestAccount();
+		expect(client.accountForExternalKey(TEST_USER_ACCOUNT_KEY)).andReturn(account);
+
+		// now iterate over all user's nodes to look for usage
+		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);
+		UserNode userNode = new UserNode(user, node);
+		List<UserNode> allUserNodes = Collections.singletonList(userNode);
+		expect(userNodeDao.findUserNodesForUser(userMatch)).andReturn(allUserNodes);
+
+		// we have audit data starting 2 days ago at start of day, through now
+		DateTime auditDataStart = new DateTime(DateTimeZone.forID(TEST_NODE_TZ)).dayOfMonth()
+				.roundFloorCopy().minusDays(2);
+		DateTime auditDataEnd = new DateTime(DateTimeZone.forID(TEST_NODE_TZ)).hourOfDay()
+				.roundCeilingCopy();
+		ReadableInterval auditInterval = new Interval(auditDataStart, auditDataEnd);
+		expect(nodeDatumDao.getAuditInterval(TEST_NODE_ID, null)).andReturn(auditInterval);
+
+		List<DateTime> dayList = new ArrayList<>(3);
+		List<Long> countList = new ArrayList<>(3);
+		for ( int i = 0; i < 3; i++ ) {
+			dayList.add(auditDataStart.plusDays(i));
+			countList.add((long) (Math.random() * 100000));
+		}
+
+		// now iterate over each DAY in audit interval EXCEPT today, gathering usage values
+		for ( int i = 0; i < 2; i++ ) {
+			DateTime day = dayList.get(i);
+			DatumFilterCommand filter = new DatumFilterCommand();
+			filter.setNodeId(TEST_NODE_ID);
+			filter.setStartDate(day);
+			filter.setEndDate(day.plusDays(1));
+			expect(nodeDatumDao.getAuditPropertyCountTotal(filter)).andReturn(countList.get(i));
+		}
+
+		// get the Bundle for this node
+		Bundle bundle = new Bundle();
+		bundle.setBundleId(TEST_BUNDLE_ID);
+		bundle.setAccountId(TEST_ACCOUNT_ID);
+		bundle.setExternalKey(TEST_BUNDLE_KEY);
+		bundle.setSubscriptions(
+				Collections.singletonList(Subscription.withPlanName(DEFAULT_BASE_PLAN_NAME)));
+		expect(client.bundleForExternalKey(account, TEST_BUNDLE_KEY)).andReturn(bundle);
+
+		Capture<List<UsageRecord>> usageCapture = new Capture<>();
+		client.addUsage(same(bundle.getSubscriptions().get(0)),
+				eq(ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())), eq(DEFAULT_USAGE_UNIT_NAME),
+				capture(usageCapture));
+
+		// finally, store the "most recent usage" date for future processing
+		userDao.storeInternalData(TEST_USER_ID,
+				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
+						ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())));
+
+		replayAll();
+
+		service.execute();
+
+		// verify search for users
+		assertNotNull(filterCapture.getValue());
+		assertEquals(killbillAccountFilter, filterCapture.getValue().getInternalData());
+
+		// verify usage
+		List<UsageRecord> usage = usageCapture.getValue();
+		assertNotNull("Usage", usage);
+		assertEquals("Usage count", 2, usage.size());
+		for ( int i = 0; i < 2; i++ ) {
+			BigDecimal expectedCount = new BigDecimal(countList.get(i));
+			UsageRecord rec = usage.get(i);
+			assertEquals("Usage amount " + i, expectedCount, rec.getAmount());
+			assertEquals("Usage date " + i, dayList.get(i).toLocalDate(), rec.getRecordDate());
+		}
+	}
+
+	@Test
+	public void oneUserAddMoreDataToday() {
+		// search for users configured to use killbill; find one
+		Map<String, Object> killbillAccountFilter = userSearchBillingData();
+
+		Map<String, Object> userBillingData = new HashMap<>(killbillAccountFilter);
+		userBillingData.put(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER_ACCOUNT_KEY);
+
+		// we have usage data published up to start of TODAY
+		DateTime auditDataStart = new DateTime(DateTimeZone.forID(TEST_NODE_TZ)).dayOfMonth()
+				.roundFloorCopy();
+		userBillingData.put(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
+				ISO_DATE_FORMATTER.print(auditDataStart.toLocalDate()));
+
+		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
+		user.setInternalData(userBillingData);
+		user.setLocationId(TEST_LOCATION_ID);
+		Capture<UserFilterCommand> filterCapture = new Capture<>();
+		List<UserFilterMatch> usersWithAccounting = new ArrayList<>();
+		UserMatch userMatch = new UserMatch(TEST_USER_ID, TEST_USER_EMAIL);
+		userMatch.setInternalData(userBillingData);
+		userMatch.setLocationId(TEST_LOCATION_ID);
+		userMatch.setName(TEST_USER_NAME);
+		usersWithAccounting.add(userMatch);
+		FilterResults<UserFilterMatch> userAccountingSearchResults = new BasicFilterResults<>(
+				usersWithAccounting, 1L, 0, 1);
+		expect(userDao.findFiltered(capture(filterCapture), isNull(), eq(0), eq(DEFAULT_BATCH_SIZE)))
+				.andReturn(userAccountingSearchResults);
+
+		// get Killbill Account
+		Account account = createTestAccount();
+		expect(client.accountForExternalKey(TEST_USER_ACCOUNT_KEY)).andReturn(account);
+
+		// now iterate over all user's nodes to look for usage
+		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);
+		UserNode userNode = new UserNode(user, node);
+		List<UserNode> allUserNodes = Collections.singletonList(userNode);
+		expect(userNodeDao.findUserNodesForUser(userMatch)).andReturn(allUserNodes);
+
+		// we have partial audit data available for today
+		DateTime auditDataEnd = new DateTime(DateTimeZone.forID(TEST_NODE_TZ)).hourOfDay()
+				.roundCeilingCopy();
+		ReadableInterval auditInterval = new Interval(auditDataStart, auditDataEnd);
+		expect(nodeDatumDao.getAuditInterval(TEST_NODE_ID, null)).andReturn(auditInterval);
+
+		// since we are still on TODAY, there can be NO usage to add, so just skip
+
+		replayAll();
+
+		service.execute();
+
+		// verify search for users
+		assertNotNull(filterCapture.getValue());
+		assertEquals(killbillAccountFilter, filterCapture.getValue().getInternalData());
 	}
 
 	@Test

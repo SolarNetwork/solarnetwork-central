@@ -24,6 +24,8 @@ package net.solarnetwork.central.user.billing.biz;
 
 import java.util.List;
 import java.util.Locale;
+import org.springframework.core.io.Resource;
+import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.domain.Invoice;
@@ -75,4 +77,21 @@ public interface BillingBiz {
 	FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
 
+	/**
+	 * Render an invoice.
+	 * 
+	 * @param userId
+	 *        the ID of the user to render the invoice for
+	 * @param invoiceId
+	 *        the ID of the invoice to render
+	 * @param outputType
+	 *        the desired output type, e.g. {@literal text/html}
+	 * @param locale
+	 *        the desired output locale
+	 * @return a resource with the result data, or {@literal null} if the
+	 *         invoice is not available
+	 * @throws IllegalArgumentException
+	 *         if {@code outputType} is not supported
+	 */
+	Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale);
 }

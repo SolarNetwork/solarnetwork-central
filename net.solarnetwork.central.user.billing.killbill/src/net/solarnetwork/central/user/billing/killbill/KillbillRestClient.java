@@ -29,8 +29,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.joda.time.LocalDate;
 import org.springframework.core.ParameterizedTypeReference;
@@ -38,11 +40,14 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.util.MimeType;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
@@ -62,6 +67,8 @@ import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsage;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
+import net.solarnetwork.central.user.billing.killbill.domain.Tag;
+import net.solarnetwork.central.user.billing.killbill.domain.TagDefinition;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageUnitRecord;
 import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
@@ -70,7 +77,7 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
  * REST implementation of {@link KillbillClient}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class KillbillRestClient implements KillbillClient {
 
@@ -84,10 +91,16 @@ public class KillbillRestClient implements KillbillClient {
 	private static final ParameterizedTypeReference<List<Bundle>> BUNDLE_LIST_TYPE = new ParameterizedTypeReference<List<Bundle>>() {
 	};
 
+	private static final ParameterizedTypeReference<List<CustomField>> CUSTOM_FIELD_LIST_TYPE = new ParameterizedTypeReference<List<CustomField>>() {
+	};
+
 	private static final ParameterizedTypeReference<List<Invoice>> INVOICE_LIST_TYPE = new ParameterizedTypeReference<List<Invoice>>() {
 	};
 
-	private static final ParameterizedTypeReference<List<CustomField>> CUSTOM_FIELD_LIST_TYPE = new ParameterizedTypeReference<List<CustomField>>() {
+	private static final ParameterizedTypeReference<List<Tag>> TAG_LIST_TYPE = new ParameterizedTypeReference<List<Tag>>() {
+	};
+
+	private static final ParameterizedTypeReference<List<TagDefinition>> TAG_DEFINITION_LIST_TYPE = new ParameterizedTypeReference<List<TagDefinition>>() {
 	};
 
 	private String baseUrl = DEFAULT_BASE_URL;
@@ -259,6 +272,9 @@ public class KillbillRestClient implements KillbillClient {
 				.buildAndExpand(uriVariables).toUri();
 		Invoice result = getForObjectOrNull(uri, Invoice.class);
 		if ( result != null ) {
+			if ( !account.getAccountId().equals(result.getAccountId()) ) {
+				return null;
+			}
 			applyAccountSettings(account, Collections.singleton(result));
 		}
 		return result;
@@ -413,6 +429,61 @@ public class KillbillRestClient implements KillbillClient {
 		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/subscriptions/{subscriptionId}"))
 				.buildAndExpand(uriVariables).toUri();
 		return getForObjectOrNull(uri, Subscription.class);
+	}
+
+	@Override
+	public List<TagDefinition> getTagDefinitions() {
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/tagDefinitions")).build().toUri();
+		List<TagDefinition> results = getForObjectOrNull(uri, TAG_DEFINITION_LIST_TYPE);
+		return (results != null ? results : Collections.emptyList());
+	}
+
+	@Override
+	public List<Tag> tagsForAccount(Account account) {
+		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts/{accountId}/tags"))
+				.buildAndExpand(uriVariables).toUri();
+		List<Tag> results = getForObjectOrNull(uri, TAG_LIST_TYPE);
+		return (results != null ? results : Collections.emptyList());
+	}
+
+	@Override
+	public void addTagsToAccount(Account account, Set<String> tagIds) {
+		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
+		String tagList = tagIds.stream().collect(Collectors.joining(","));
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts/{accountId}/tags"))
+				.queryParam("tagList", tagList).buildAndExpand(uriVariables).toUri();
+		client.postForObject(uri, null, Void.class);
+
+	}
+
+	@Override
+	public void removeTagsFromAccount(Account account, Set<String> tagIds) {
+		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
+		String tagList = tagIds.stream().collect(Collectors.joining(","));
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts/{accountId}/tags"))
+				.queryParam("tagList", tagList).buildAndExpand(uriVariables).toUri();
+		client.delete(uri);
+	}
+
+	@Override
+	public Resource renderInvoice(String invoiceId, MimeType outputType, Locale locale) {
+		// we only support HTML
+		if ( !MediaType.TEXT_HTML.isCompatibleWith(outputType) ) {
+			throw new IllegalArgumentException("The " + outputType + " output type is not supported");
+		}
+		Map<String, Object> uriVariables = Collections.singletonMap("invoiceId", invoiceId);
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/invoices/{invoiceId}/html"))
+				.buildAndExpand(uriVariables).toUri();
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.add(HttpHeaders.ACCEPT_LANGUAGE, locale.toLanguageTag());
+		RequestEntity<Object> req = new RequestEntity<Object>(null, headers, HttpMethod.GET, uri);
+		ResponseEntity<Resource> res = client.exchange(req, Resource.class);
+		if ( res.getStatusCode() == HttpStatus.OK ) {
+			return res.getBody();
+		}
+		return null;
 	}
 
 	/**

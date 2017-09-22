@@ -28,7 +28,13 @@ import java.util.List;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -55,7 +61,7 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for billing management.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestController("v1BillingController")
 @RequestMapping(value = { "/sec/billing", "/v1/sec/user/billing" })
@@ -129,6 +135,44 @@ public class BillingController extends WebServiceControllerSupport {
 		}
 
 		return response(result);
+	}
+
+	/**
+	 * Render an invoice.
+	 * 
+	 * @param invoiceId
+	 *        the invoice ID to render
+	 * @param accept
+	 *        an optional output type, defaults to {@literal text/html}
+	 * @param userId
+	 *        the optional user ID to get the invoice for; if not provided the
+	 *        current actor's ID is used
+	 * @param locale
+	 *        the request locale
+	 * @return the rendered invoice entity
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/invoices/{invoiceId}/render", method = RequestMethod.GET)
+	public ResponseEntity<Resource> renderInvoice(@PathVariable("invoiceId") String invoiceId,
+			@RequestHeader(value = HttpHeaders.ACCEPT, defaultValue = "text/html") String accept,
+			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
+		BillingBiz biz = billingBiz.service();
+		if ( biz != null ) {
+			if ( userId == null ) {
+				SecurityUser actor = SecurityUtils.getCurrentUser();
+				userId = actor.getUserId();
+			}
+			List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+			MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
+					: acceptTypes.get(0).removeQualityValue();
+			Resource result = biz.renderInvoice(userId, invoiceId, outputType, locale);
+			if ( result != null ) {
+				HttpHeaders headers = new HttpHeaders();
+				headers.setContentType(outputType);
+				return new ResponseEntity<Resource>(result, headers, HttpStatus.OK);
+			}
+		}
+		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
 
 	/**

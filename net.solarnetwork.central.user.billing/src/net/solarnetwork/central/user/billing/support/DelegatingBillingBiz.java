@@ -24,6 +24,8 @@ package net.solarnetwork.central.user.billing.support;
 
 import java.util.List;
 import java.util.Locale;
+import org.springframework.core.io.Resource;
+import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
@@ -36,7 +38,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
  * Delegating implementation of {@link BillingBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelegatingBillingBiz implements BillingBiz {
 
@@ -67,6 +69,11 @@ public class DelegatingBillingBiz implements BillingBiz {
 	@Override
 	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
 		return delegate.getInvoice(userId, invoiceId, locale);
+	}
+
+	@Override
+	public Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale) {
+		return delegate.renderInvoice(userId, invoiceId, outputType, locale);
 	}
 
 }

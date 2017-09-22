@@ -29,11 +29,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -53,6 +56,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
+import net.solarnetwork.central.user.billing.killbill.domain.TagDefinition;
 import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -61,6 +65,7 @@ import net.solarnetwork.central.user.domain.UserFilterCommand;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
 import net.solarnetwork.central.user.domain.UserInfo;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Post daily usage data to Killbill for SolarNetwork users subscribed to this
@@ -125,6 +130,9 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The default currency map of country codes to currency codes. */
 	public static final Map<String, String> DEFAULT_CURRENCY_MAP = defaultCurrencyMap();
 
+	/** A {@code paymentMethodData} object for the external payment method. */
+	public static final Map<String, Object> EXTERNAL_PAYMENT_METHOD_DATA = externalPaymentMethodData();
+
 	/**
 	 * The billing data key that signals this updater service should be used via
 	 * a boolean flag.
@@ -167,6 +175,9 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The custom field name for a SolarNode ID. */
 	public static final String CUSTOM_FIELD_NODE_ID = "nodeId";
 
+	/** The default value for the account tags property. */
+	public static final Set<String> DEFAULT_ACCOUNT_TAGS = Collections.singleton("MANUAL_PAY");
+
 	private final SolarLocationDao locationDao;
 	private final GeneralNodeDatumDao nodeDatumDao;
 	private final UserDao userDao;
@@ -175,7 +186,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 	private int batchSize = DEFAULT_BATCH_SIZE;
 	private Map<String, String> countryCurrencyMap = DEFAULT_CURRENCY_MAP;
 	private String timeZone = DEFAULT_TIMEZONE;
-	private Map<String, Object> paymentMethodData;
+	private Map<String, Object> paymentMethodData = EXTERNAL_PAYMENT_METHOD_DATA;
 	private String basePlanName = DEFAULT_BASE_PLAN_NAME;
 	private String accountKeyTemplate = DEFAULT_ACCOUNT_KEY_TEMPLATE;
 	private String bundleKeyTemplate = DEFAULT_BUNDLE_KEY_TEMPLATE;
@@ -183,6 +194,9 @@ public class DatumMetricsDailyUsageUpdaterService {
 	private String accountDefaultLocale = DEFAULT_ACCOUNT_LOCALE;
 	private Integer subscriptionBillCycleDay = DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
 	private String usageUnitName = DEFAULT_USAGE_UNIT_NAME;
+	private Set<String> accountTags = DEFAULT_ACCOUNT_TAGS;
+
+	private Cache<String, TagDefinition> tagDefinitionCache;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -190,6 +204,13 @@ public class DatumMetricsDailyUsageUpdaterService {
 		Map<String, String> map = new HashMap<>();
 		map.put("US", "USD");
 		map.put("NZ", "NZD");
+		return Collections.unmodifiableMap(map);
+	}
+
+	private static final Map<String, Object> externalPaymentMethodData() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("pluginName", "__EXTERNAL_PAYMENT__");
+		map.put("pluginInfo", new HashMap<String, Object>());
 		return Collections.unmodifiableMap(map);
 	}
 
@@ -313,6 +334,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 			account.setExternalKey(accountKey);
 			account.setName(user.getName());
 			account.setTimeZone(accountTimeZoneString(loc.getTimeZoneId()));
+			account.setIsNotifiedForInvoices(true);
 
 			Locale userLocale = localeForUser(user, loc);
 			String locale = userLocale.getLanguage();
@@ -323,6 +345,20 @@ public class DatumMetricsDailyUsageUpdaterService {
 
 			String accountId = client.createAccount(account);
 			account.setAccountId(accountId);
+
+			// add tags, if configured
+			if ( accountTags != null && !accountTags.isEmpty() ) {
+				Set<String> tagIds = new LinkedHashSet<>(accountTags.size());
+				for ( String tagName : accountTags ) {
+					TagDefinition tagDef = tagDefinitionForName(tagName);
+					if ( tagDef != null && tagDef.getId() != null ) {
+						tagIds.add(tagDef.getId());
+					}
+				}
+				if ( !tagIds.isEmpty() ) {
+					client.addTagsToAccount(account, tagIds);
+				}
+			}
 		}
 
 		// verify payment method is configured on account if configured on this service
@@ -364,7 +400,12 @@ public class DatumMetricsDailyUsageUpdaterService {
 		if ( auditInterval != null ) {
 			usageEndDay = auditInterval.getEnd().withZone(timeZone).dayOfMonth().roundCeilingCopy();
 		} else {
-			usageEndDay = new DateTime(timeZone).dayOfMonth().roundCeilingCopy();
+			usageEndDay = new DateTime(timeZone).dayOfMonth().roundFloorCopy();
+		}
+
+		if ( usageEndDay.isAfterNow() ) {
+			// round down to start of today (don't include today which is probably partial data)
+			usageEndDay = usageEndDay.minusDays(1);
 		}
 
 		// got usage start date; get the bundle for this node
@@ -407,8 +448,10 @@ public class DatumMetricsDailyUsageUpdaterService {
 		}
 
 		// store the last processed date so we can pick up there next time
-		userDao.storeInternalData(userNode.getUser().getId(),
-				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP, nextStartDate));
+		if ( mostRecentUsageDate == null || !mostRecentUsageDate.equals(nextStartDate) ) {
+			userDao.storeInternalData(userNode.getUser().getId(),
+					Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP, nextStartDate));
+		}
 	}
 
 	private Bundle bundleForUserNode(UserNode userNode, Account account) {
@@ -489,6 +532,36 @@ public class DatumMetricsDailyUsageUpdaterService {
 	}
 
 	/**
+	 * Get a tag definition by name.
+	 * 
+	 * @param name
+	 *        the name of the tag definition to get
+	 * @return the tag definition, or {@literal null} if not available
+	 */
+	private TagDefinition tagDefinitionForName(String name) {
+		TagDefinition result = null;
+		Cache<String, TagDefinition> cache = this.tagDefinitionCache;
+		if ( cache != null ) {
+			result = cache.get(name);
+		}
+		if ( result == null ) {
+			List<TagDefinition> defs = client.getTagDefinitions();
+			for ( TagDefinition def : defs ) {
+				if ( result == null && name.equals(def.getName()) ) {
+					result = def;
+					if ( cache == null ) {
+						break;
+					}
+				}
+				if ( cache != null ) {
+					cache.putIfAbsent(def.getName(), def);
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Set the batch size to process users with.
 	 * 
 	 * <p>
@@ -535,7 +608,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 * account that does not already have a payment method set.
 	 * 
 	 * @param paymentMethodData
-	 *        the payment method data to set
+	 *        the payment method data to set; defaults to
+	 *        {@link #EXTERNAL_PAYMENT_METHOD_DATA}
 	 */
 	public void setPaymentMethodData(Map<String, Object> paymentMethodData) {
 		this.paymentMethodData = paymentMethodData;
@@ -625,6 +699,37 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 */
 	public void setAccountDefaultLocale(String accountDefaultLocale) {
 		this.accountDefaultLocale = accountDefaultLocale;
+	}
+
+	/**
+	 * Set a cache to use for tag definitions.
+	 * 
+	 * @param tagDefinitionCache
+	 *        the cache to set
+	 */
+	public void setTagDefinitionCache(Cache<String, TagDefinition> tagDefinitionCache) {
+		this.tagDefinitionCache = tagDefinitionCache;
+	}
+
+	/**
+	 * Set the account tags as a comma-delimited list value.
+	 * 
+	 * @param list
+	 *        the comma-delimited list of tags to set
+	 */
+	public void setAccountTagList(String list) {
+		Set<String> tags = StringUtils.commaDelimitedStringToSet(list);
+		setAccountTags(tags);
+	}
+
+	/**
+	 * Set a list of tag names to apply to newly created accounts.
+	 * 
+	 * @param accountTags
+	 *        the set of tag names to apply to new accounts
+	 */
+	public void setAccountTags(Set<String> accountTags) {
+		this.accountTags = accountTags;
 	}
 
 }

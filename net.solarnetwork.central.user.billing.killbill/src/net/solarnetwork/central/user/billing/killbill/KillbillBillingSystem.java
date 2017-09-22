@@ -27,6 +27,8 @@ import java.util.ListIterator;
 import java.util.Locale;
 import javax.cache.Cache;
 import org.springframework.context.MessageSource;
+import org.springframework.core.io.Resource;
+import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -56,7 +58,7 @@ import net.solarnetwork.central.user.domain.User;
  * Killbill implementation of {@link BillingSystem}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class KillbillBillingSystem implements BillingSystem {
 
@@ -201,6 +203,18 @@ public class KillbillBillingSystem implements BillingSystem {
 			}
 		}
 		return invoice;
+	}
+
+	@Override
+	public Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale) {
+		// verify first that account owns the requested invoice
+		Account account = accountForUser(userId);
+		net.solarnetwork.central.user.billing.killbill.domain.Invoice invoice = client
+				.getInvoice(account, invoiceId, false, false);
+		if ( invoice == null || !account.getAccountId().equals(invoice.getAccountId()) ) {
+			return null;
+		}
+		return client.renderInvoice(invoiceId, outputType, locale);
 	}
 
 	/**

@@ -1,0 +1,18 @@
+[
+  {
+    "tagId": "0664180b-9abd-4a47-ab3b-118d77f91f89",
+    "objectType": "ACCOUNT",
+    "objectId": "61e7f412-1b8a-4920-be2d-4a8ddd4c1096",
+    "tagDefinitionId": "00000000-0000-0000-0000-000000000003",
+    "tagDefinitionName": "OVERDUE_ENFORCEMENT_OFF",
+    "auditLogs": []
+  },
+  {
+    "tagId": "99b818e8-3a83-42aa-8cd2-eec00f1bcdb0",
+    "objectType": "ACCOUNT",
+    "objectId": "61e7f412-1b8a-4920-be2d-4a8ddd4c1096",
+    "tagDefinitionId": "00000000-0000-0000-0000-000000000005",
+    "tagDefinitionName": "MANUAL_PAY",
+    "auditLogs": []
+  }
+]

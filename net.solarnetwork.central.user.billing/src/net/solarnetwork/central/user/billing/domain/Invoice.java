@@ -30,7 +30,7 @@ import net.solarnetwork.central.domain.Entity;
  * API for an invoice.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface Invoice extends Entity<String> {
 
@@ -67,6 +67,14 @@ public interface Invoice extends Entity<String> {
 	BigDecimal getBalance();
 
 	/**
+	 * Get the total amount of all tax invoice items.
+	 * 
+	 * @return the total tax amount
+	 * @since 1.1
+	 */
+	BigDecimal getTaxAmount();
+
+	/**
 	 * Get the currency this invoice is in, as a string currency code like
 	 * {@literal NZD} or {@literal USD}.
 	 * 
@@ -80,4 +88,5 @@ public interface Invoice extends Entity<String> {
 	 * @return the invoice items
 	 */
 	List<InvoiceItem> getInvoiceItems();
+
 }
