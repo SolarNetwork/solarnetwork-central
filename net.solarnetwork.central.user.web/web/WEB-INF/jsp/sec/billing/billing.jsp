@@ -119,9 +119,16 @@
 						</td>
 						<td><span class="label label-default" data-tprop="localizedAmount"></span></td>
 					</tr>
+					<tr class="invoice-item-tax template">
+						<td colspan="3"></td>
+						<td data-tprop="localizedDescription"></td>
+						<td><span class="label label-default" data-tprop="localizedAmount"></span></td>
+					</tr>
 				</thead>
 				<tbody>
 				</tbody>
+				<tfoot>
+				</tfoot>
 			</table>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></button>

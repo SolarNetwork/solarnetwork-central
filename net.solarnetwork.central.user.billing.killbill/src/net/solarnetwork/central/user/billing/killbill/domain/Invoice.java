@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.killbill.domain;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.joda.time.DateTime;
@@ -173,6 +174,16 @@ public class Invoice extends BaseObjectEntity<String>
 	@Override
 	public BigDecimal getAmount() {
 		return amount;
+	}
+
+	@Override
+	public BigDecimal getTaxAmount() {
+		List<InvoiceItem> list = this.items;
+		if ( list == null ) {
+			list = Collections.emptyList();
+		}
+		return list.stream().filter(i -> "TAX".equals(i.getItemType())).map(i -> i.getAmount())
+				.reduce(BigDecimal.ZERO, (a, n) -> a.add(n));
 	}
 
 	/**

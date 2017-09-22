@@ -43,6 +43,9 @@ import net.solarnetwork.central.domain.Entity;
  */
 public interface InvoiceItem extends Entity<String> {
 
+	/** The invoice item type for tax items. */
+	public static final String TYPE_TAX = "TAX";
+
 	/**
 	 * Get metadata associated with this item.
 	 * 

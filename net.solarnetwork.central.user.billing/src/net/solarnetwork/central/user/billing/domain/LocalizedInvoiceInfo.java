@@ -66,10 +66,36 @@ public interface LocalizedInvoiceInfo {
 	String getLocalizedBalance();
 
 	/**
+	 * Get the total tax amount (sum of all tax item amounts), as a formatted
+	 * and localized string.
+	 * 
+	 * @return the formatted total tax amount
+	 */
+	String getLocalizedTaxAmount();
+
+	/**
 	 * Get the localized invoice items.
 	 * 
 	 * @return the localized items
 	 */
 	List<LocalizedInvoiceItemInfo> getLocalizedInvoiceItems();
+
+	/**
+	 * Get a set of localized tax invoice items that are grouped by their
+	 * descriptions into aggregate items that sum the amount of the grouped
+	 * items.
+	 * 
+	 * <p>
+	 * This can be used to display a single line item of all similar tax items
+	 * on the invoice. For example if there are two {@literal Sales Tax} items
+	 * with respective amounts of {@literal 1.25} and {@literal 4.75} this
+	 * method would return a single invoice item with an amount of
+	 * {@literal 6.00}.
+	 * </p>
+	 * 
+	 * @return tax invoice items grouped by description
+	 * @see #getTaxInvoiceItems()
+	 */
+	List<LocalizedInvoiceItemInfo> getLocalizedTaxInvoiceItemsGroupedByDescription();
 
 }

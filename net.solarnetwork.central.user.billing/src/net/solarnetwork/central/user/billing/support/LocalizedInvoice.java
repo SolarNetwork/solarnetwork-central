@@ -24,9 +24,12 @@ package net.solarnetwork.central.user.billing.support;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -98,6 +101,12 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	}
 
 	@Override
+	public String getLocalizedTaxAmount() {
+		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
+				getTaxAmount());
+	}
+
+	@Override
 	public DateTime getCreated() {
 		return invoice.getCreated();
 	}
@@ -143,6 +152,11 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	}
 
 	@Override
+	public BigDecimal getTaxAmount() {
+		return invoice.getTaxAmount();
+	}
+
+	@Override
 	public List<LocalizedInvoiceItemInfo> getLocalizedInvoiceItems() {
 		List<InvoiceItem> items = getInvoiceItems();
 		if ( items == null ) {
@@ -156,6 +170,35 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 			}
 			return new LocalizedInvoiceItem(item, locale);
 		}).collect(Collectors.toList());
+	}
+
+	private Stream<InvoiceItem> getTaxInvoiceItemsStream() {
+		List<InvoiceItem> items = getInvoiceItems();
+		if ( items == null ) {
+			items = Collections.emptyList();
+		}
+		return items.stream().filter(item -> InvoiceItem.TYPE_TAX.equals(item.getItemType()));
+	}
+
+	@Override
+	public List<LocalizedInvoiceItemInfo> getLocalizedTaxInvoiceItemsGroupedByDescription() {
+		List<InvoiceItem> taxItems = getTaxInvoiceItemsStream().collect(Collectors.toList());
+		if ( taxItems.isEmpty() ) {
+			return null;
+		}
+
+		// maintain ordering based on original invoice items
+		List<String> ordering = taxItems.stream().map(item -> item.getId()).collect(Collectors.toList());
+
+		// return list of AggregateInvoiceItem, grouped by InvoiceItem::getDescription
+		return taxItems.stream()
+				.collect(Collectors.groupingBy(InvoiceItem::getDescription,
+						Collector.of(AggregateLocalizedInvoiceItem.itemOfLocale(locale),
+								(agg, item) -> agg.addItem(item), (agg1, agg2) -> {
+									return agg1.addItems(agg2);
+								})))
+				.values().stream().sorted(Comparator.comparing(item -> ordering.indexOf(item.getId())))
+				.collect(Collectors.toList());
 	}
 
 }

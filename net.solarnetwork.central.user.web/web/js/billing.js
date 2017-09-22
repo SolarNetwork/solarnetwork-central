@@ -25,8 +25,12 @@ $(document).ready(function() {
 		var i, len, j, len2,
 			items = (invoice ? invoice.localizedInvoiceItems : null),
 			haveItems = (Array.isArray(items) && items.length > 0),
+			taxItems = (invoice ? invoice.localizedTaxInvoiceItemsGroupedByDescription : null),
+			haveTaxItems = (Array.isArray(taxItems) && taxItems.length > 0),
 			tbody = table.find('tbody'),
+			tfoot = table.find('tfoot'),
 			templateRow = table.find('.invoice-item.template'),
+			taxTemplateRow = table.find('.invoice-item-tax.template'),
 			tr, 
 			item,
 			prop,
@@ -37,9 +41,14 @@ $(document).ready(function() {
 			usageRecord,
 			li;
 		tbody.empty();
+		tfoot.empty();
 		if ( haveItems ) {
 			for ( i = 0, len = items.length; i < len; i += 1 ) {
 				item = items[i];
+				if ( item.itemType === 'TAX' ) {
+					// display overall tax later
+					continue;
+				}
 				tr = templateRow.clone(true);
 				tr.removeClass('template');
 				tr.data('invoiceItem', item);
@@ -67,6 +76,16 @@ $(document).ready(function() {
 				}
 				
 				tbody.append(tr);
+			}
+		}
+		if ( haveTaxItems ) {
+			for ( i = 0, len = taxItems.length; i < len; i += 1 ) {
+				item = taxItems[i];
+				tr = taxTemplateRow.clone(true);
+				tr.removeClass('template');
+				tr.data('invoiceItem', item);
+				replaceTemplateProperties(tr, item);
+				tfoot.append(tr);
 			}
 		}
 		table.toggleClass('hidden', !haveItems);
