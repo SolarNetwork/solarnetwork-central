@@ -64,7 +64,7 @@ public class InvoiceTests {
 		Map<String, Object> data = JsonUtils.getStringMap(json);
 
 		Map<String, Object> expected = JsonUtils.getStringMap("{\"id\":\"" + invoice.getId()
-				+ "\",\"currency\":\"NZD\",\"amount\":\"1.20\",\"balance\":\"0.12\""
+				+ "\",\"currency\":\"NZD\",\"amount\":\"1.20\",\"taxAmount\":\"0\",\"balance\":\"0.12\""
 				+ ",\"invoiceDate\":\"2017-01-01\",\"timeZoneId\":\"Pacific/Auckland\",\"created\":"
 				+ invoice.getInvoiceDate()
 						.toDateTimeAtStartOfDay(DateTimeZone.forID(invoice.getTimeZoneId())).getMillis()
