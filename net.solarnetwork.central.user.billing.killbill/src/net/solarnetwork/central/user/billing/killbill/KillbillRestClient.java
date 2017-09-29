@@ -63,6 +63,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
 import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
+import net.solarnetwork.central.user.billing.killbill.domain.HealthCheckResult;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsage;
@@ -77,7 +78,7 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
  * REST implementation of {@link KillbillClient}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class KillbillRestClient implements KillbillClient {
 
@@ -101,6 +102,9 @@ public class KillbillRestClient implements KillbillClient {
 	};
 
 	private static final ParameterizedTypeReference<List<TagDefinition>> TAG_DEFINITION_LIST_TYPE = new ParameterizedTypeReference<List<TagDefinition>>() {
+	};
+
+	private static final ParameterizedTypeReference<Map<String, Object>> STRING_MAP_TYPE = new ParameterizedTypeReference<Map<String, Object>>() {
 	};
 
 	private String baseUrl = DEFAULT_BASE_URL;
@@ -193,6 +197,33 @@ public class KillbillRestClient implements KillbillClient {
 			}
 			throw e;
 		}
+	}
+
+	@Override
+	public String getUniqueId() {
+		return baseUrl;
+	}
+
+	@Override
+	public Collection<HealthCheckResult> healthCheck() {
+		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/healthcheck")).build().toUri();
+		Map<String, Object> results = getForObjectOrNull(uri, STRING_MAP_TYPE);
+		if ( results == null || results.isEmpty() ) {
+			return Collections.emptyList();
+		}
+		List<HealthCheckResult> checks = new ArrayList<>(results.size());
+		for ( Map.Entry<String, Object> me : results.entrySet() ) {
+			if ( me.getValue() instanceof Map ) {
+				Map<?, ?> checkMap = (Map<?, ?>) me.getValue();
+				Object healthy = checkMap.get("healthy");
+				if ( healthy instanceof Boolean ) {
+					Object msg = checkMap.get("message");
+					checks.add(new HealthCheckResult(me.getKey(), (Boolean) healthy,
+							msg != null ? msg.toString() : null));
+				}
+			}
+		}
+		return checks;
 	}
 
 	@Override
