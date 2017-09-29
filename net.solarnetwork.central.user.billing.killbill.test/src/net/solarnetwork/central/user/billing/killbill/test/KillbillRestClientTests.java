@@ -27,6 +27,7 @@ import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizati
 import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizationInterceptor.CREATED_BY_HEADER_NAME;
 import static net.solarnetwork.central.user.billing.killbill.KillbillAuthorizationInterceptor.DEFAULT_CREATED_BY;
 import static net.solarnetwork.central.user.billing.killbill.test.JsonObjectMatchers.json;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -45,6 +46,7 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -72,6 +74,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.BundleSubscription;
 import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
+import net.solarnetwork.central.user.billing.killbill.domain.HealthCheckResult;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
@@ -771,6 +774,26 @@ public class KillbillRestClientTests {
 
 		// then
 		// no exception thrown
+	}
+
+	@Test
+	public void healthCheck() {
+		// given
+		// @formatter:off
+		serverExpect("/1.0/healthcheck", HttpMethod.GET)
+			.andRespond(withStatus(HttpStatus.OK)
+					.contentType(MediaType.APPLICATION_JSON_UTF8)
+					.body(new ClassPathResource("healthcheck-01.json", getClass())));
+	    // @formatter:on
+
+		// when
+		Collection<HealthCheckResult> results = client.healthCheck();
+
+		// then
+		assertThat(results,
+				containsInAnyOrder(new HealthCheckResult("main.pool.ConnectivityCheck", true),
+						new HealthCheckResult(
+								"org.killbill.billing.server.healthchecks.KillbillHealthcheck", true)));
 	}
 
 }

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.killbill;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -38,6 +39,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.killbill.domain.Account;
 import net.solarnetwork.central.user.billing.killbill.domain.Bundle;
 import net.solarnetwork.central.user.billing.killbill.domain.CustomField;
+import net.solarnetwork.central.user.billing.killbill.domain.HealthCheckResult;
 import net.solarnetwork.central.user.billing.killbill.domain.Invoice;
 import net.solarnetwork.central.user.billing.killbill.domain.Subscription;
 import net.solarnetwork.central.user.billing.killbill.domain.SubscriptionUsageRecords;
@@ -49,12 +51,29 @@ import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
  * API for interaction with Killbill.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface KillbillClient {
 
 	/** A date formatter suitable for Killbill. */
 	static DateTimeFormatter ISO_DATE_FORMATTER = ISODateTimeFormat.date();
+
+	/**
+	 * Get a unique ID for the Kill Bill system this client is configured to
+	 * integrate with.
+	 * 
+	 * @return the unique ID
+	 * @since 1.2
+	 */
+	String getUniqueId();
+
+	/**
+	 * Get a health check status report.
+	 * 
+	 * @return a collection of health check results, never {@literal null}
+	 * @since 1.2
+	 */
+	Collection<HealthCheckResult> healthCheck();
 
 	/**
 	 * Get the account associated with an external key.
