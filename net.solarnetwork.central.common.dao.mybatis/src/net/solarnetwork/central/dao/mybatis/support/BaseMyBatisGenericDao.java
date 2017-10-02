@@ -27,11 +27,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import net.solarnetwork.central.ValidationException;
-import net.solarnetwork.central.dao.GenericDao;
-import net.solarnetwork.central.domain.Entity;
-import net.solarnetwork.central.domain.Identity;
-import net.solarnetwork.central.domain.SortDescriptor;
 import org.joda.time.DateTime;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.slf4j.Logger;
@@ -42,6 +37,11 @@ import org.springframework.context.MessageSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Errors;
+import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.central.domain.Identity;
+import net.solarnetwork.central.domain.SortDescriptor;
 
 /**
  * Base implementation of {@link GenericDao} using MyBatis via
@@ -137,10 +137,10 @@ import org.springframework.validation.Errors;
  * @param <PK>
  *        The primary key type this DAO supports.
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Serializable> extends
-		BaseMyBatisDao implements GenericDao<T, PK> {
+public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Serializable>
+		extends BaseMyBatisDao implements GenericDao<T, PK> {
 
 	/** Error code to report that a named query was not found. */
 	public static final int ERROR_CODE_INVALID_QUERY = 1101;
@@ -375,7 +375,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 		if ( result < 1 ) {
 			log.warn("Delete [" + domainObject + "] did not affect any rows");
 		} else if ( log.isInfoEnabled() ) {
-			log.info("Deleted [" + domainObject + ']');
+			log.debug("Deleted [" + domainObject + ']');
 		}
 	}
 
