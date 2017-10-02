@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.biz.dao;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -370,17 +371,22 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			// but if it contains other node IDs, just remove this node ID from it
 			for ( UserAuthToken token : userAuthTokenDao.findUserAuthTokensForUser(userId) ) {
 				if ( token.getNodeIds() != null && token.getNodeIds().contains(nodeId) ) {
-					token.getNodeIds().remove(nodeId);
-					if ( token.getNodeIds().size() == 0 ) {
-						// only node ID associated, so delete token
+					if ( token.getNodeIds().size() == 1 ) {
+						// only this node ID associated, so delete token
 						log.debug("Deleting UserAuthToken {} for node ownership transfer",
 								token.getId());
 						userAuthTokenDao.delete(token);
 					} else {
-						// other node IDs associated, so remove this token
+						// other node IDs associated, so remove the node ID from this token
 						log.debug(
 								"Removing node ID {} from UserAuthToken {} for node ownership transfer",
 								nodeId, token.getId());
+						Set<Long> nodeIds = new LinkedHashSet<Long>(token.getNodeIds()); // get mutable set
+						nodeIds.remove(nodeId);
+						BasicSecurityPolicy.Builder secPolicyBuilder = new BasicSecurityPolicy.Builder()
+								.withPolicy(token.getPolicy()).withNodeIds(nodeIds);
+						token.setPolicy(secPolicyBuilder.build());
+
 						userAuthTokenDao.store(token);
 					}
 				}
