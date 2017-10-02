@@ -27,11 +27,16 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.same;
 import static org.easymock.EasyMock.verify;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -50,6 +55,7 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
+import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -58,6 +64,8 @@ import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.user.domain.UserNodePK;
+import net.solarnetwork.central.user.domain.UserNodeTransfer;
 
 /**
  * Test cases for the {@link DaoUserBiz} class.
@@ -74,6 +82,10 @@ public class DaoUserBizTest {
 	private static final String TEST_ROLE = "ROLE_TEST";
 	private static final String TEST_AUTH_TOKEN = "12345678901234567890";
 	private static final String TEST_AUTH_SECRET = "123";
+	private static final Long TEST_LOC_ID = -2L;
+	private static final Long TEST_NODE_ID = -3L;
+	private static final Long TEST_NODE_ID_2 = -4L;
+	private static final Long TEST_USER_ID_2 = -5L;
 
 	private SolarNode testNode;
 	private User testUser;
@@ -84,6 +96,7 @@ public class DaoUserBizTest {
 	private UserDao userDao;
 	private UserAuthTokenDao userAuthTokenDao;
 	private UserNodeDao userNodeDao;
+	private UserAlertDao userAlertDao;
 
 	private DaoUserBiz userBiz;
 
@@ -96,8 +109,8 @@ public class DaoUserBizTest {
 		testUser.setPassword(TEST_ENC_PASSWORD);
 
 		testNode = new SolarNode();
-		testNode.setId(-1L);
-		testNode.setLocationId(-2L);
+		testNode.setId(TEST_NODE_ID);
+		testNode.setLocationId(TEST_LOC_ID);
 
 		testUserRoles = new HashSet<String>();
 		testUserRoles.add(TEST_ROLE);
@@ -107,6 +120,7 @@ public class DaoUserBizTest {
 		userDao = EasyMock.createMock(UserDao.class);
 		userAuthTokenDao = EasyMock.createMock(UserAuthTokenDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
+		userAlertDao = EasyMock.createMock(UserAlertDao.class);
 
 		userBiz = new DaoUserBiz();
 		userBiz.setSolarLocationDao(solarLocationDao);
@@ -114,14 +128,15 @@ public class DaoUserBizTest {
 		userBiz.setUserDao(userDao);
 		userBiz.setUserAuthTokenDao(userAuthTokenDao);
 		userBiz.setUserNodeDao(userNodeDao);
+		userBiz.setUserAlertDao(userAlertDao);
 	}
 
 	private void replayProperties() {
-		replay(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao);
+		replay(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao, userAlertDao);
 	}
 
 	private void verifyProperties() {
-		verify(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao);
+		verify(solarLocationDao, solarNodeDao, userAuthTokenDao, userDao, userNodeDao, userAlertDao);
 	}
 
 	@Test
@@ -397,6 +412,99 @@ public class DaoUserBizTest {
 		Assert.assertEquals(userNode, result);
 
 		verifyProperties();
+	}
+
+	@Test
+	public void confirmTransferWithAuthTokenMatchingNodeId() {
+		// lookup required user/node data
+		UserNodeTransfer userNodeXfer = new UserNodeTransfer(TEST_USER_ID, TEST_NODE_ID,
+				"recipient@localhost");
+		UserNodePK userNodePk = new UserNodePK(TEST_USER_ID, TEST_NODE_ID);
+		expect(userNodeDao.getUserNodeTransfer(userNodePk)).andReturn(userNodeXfer);
+
+		UserNode userNode = new UserNode(testUser, testNode);
+		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(userNode);
+
+		User recipient = new User(TEST_USER_ID_2, userNodeXfer.getEmail());
+		expect(userDao.getUserByEmail(userNodeXfer.getEmail())).andReturn(recipient);
+
+		// delete the xfer
+		userNodeDao.deleteUserNodeTrasnfer(userNodeXfer);
+
+		// delete alerts associated with node
+		expect(userAlertDao.deleteAllAlertsForNode(TEST_USER_ID, TEST_NODE_ID)).andReturn(0);
+
+		// find auth token that has multiple node IDs in policy
+		UserAuthToken userAuthToken = new UserAuthToken("abc123", TEST_USER_ID, "secret",
+				UserAuthTokenType.ReadNodeData);
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(new LinkedHashSet<Long>(Arrays.asList(TEST_NODE_ID))).build();
+		userAuthToken.setPolicy(policy);
+		expect(userAuthTokenDao.findUserAuthTokensForUser(TEST_USER_ID))
+				.andReturn(Arrays.asList(userAuthToken));
+
+		// then delete the token
+		userAuthTokenDao.delete(EasyMock.same(userAuthToken));
+
+		// then store the updated UserNode
+		expect(userNodeDao.store(userNode)).andReturn(TEST_NODE_ID);
+
+		replayProperties();
+
+		UserNodeTransfer xfer = userBiz.confirmNodeOwnershipTransfer(TEST_USER_ID, TEST_NODE_ID, true);
+
+		verifyProperties();
+
+		assertThat(xfer, sameInstance(userNodeXfer));
+		assertThat("UserNode now owned by recipient", userNode.getUser(), sameInstance(recipient));
+	}
+
+	@Test
+	public void confirmTransferWithAuthTokenContainingOtherNodeId() {
+		// lookup required user/node data
+		UserNodeTransfer userNodeXfer = new UserNodeTransfer(TEST_USER_ID, TEST_NODE_ID,
+				"recipient@localhost");
+		UserNodePK userNodePk = new UserNodePK(TEST_USER_ID, TEST_NODE_ID);
+		expect(userNodeDao.getUserNodeTransfer(userNodePk)).andReturn(userNodeXfer);
+
+		UserNode userNode = new UserNode(testUser, testNode);
+		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(userNode);
+
+		User recipient = new User(TEST_USER_ID_2, userNodeXfer.getEmail());
+		expect(userDao.getUserByEmail(userNodeXfer.getEmail())).andReturn(recipient);
+
+		// delete the xfer
+		userNodeDao.deleteUserNodeTrasnfer(userNodeXfer);
+
+		// delete alerts associated with node
+		expect(userAlertDao.deleteAllAlertsForNode(TEST_USER_ID, TEST_NODE_ID)).andReturn(0);
+
+		// find auth token that has multiple node IDs in policy
+		UserAuthToken userAuthToken = new UserAuthToken("abc123", TEST_USER_ID, "secret",
+				UserAuthTokenType.ReadNodeData);
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(new LinkedHashSet<Long>(Arrays.asList(TEST_NODE_ID, TEST_NODE_ID_2)))
+				.build();
+		userAuthToken.setPolicy(policy);
+		expect(userAuthTokenDao.findUserAuthTokensForUser(TEST_USER_ID))
+				.andReturn(Arrays.asList(userAuthToken));
+
+		// then store the updated token
+		expect(userAuthTokenDao.store(EasyMock.same(userAuthToken))).andReturn("abc123");
+
+		// then store the updated UserNode
+		expect(userNodeDao.store(userNode)).andReturn(TEST_NODE_ID);
+
+		replayProperties();
+
+		UserNodeTransfer xfer = userBiz.confirmNodeOwnershipTransfer(TEST_USER_ID, TEST_NODE_ID, true);
+
+		verifyProperties();
+
+		assertThat(xfer, sameInstance(userNodeXfer));
+		assertThat("UserNode now owned by recipient", userNode.getUser(), sameInstance(recipient));
+		assertThat("Auth token no longer contains transferred node", userAuthToken.getNodeIds(),
+				hasItems(TEST_NODE_ID_2));
 	}
 
 }
