@@ -16,29 +16,21 @@
 
 	<!-- Configuration -->
 	
-	<osgix:cm-properties id="central.user.cfg" persistent-id="net.solarnetwork.central.user">
+	<osgix:cm-properties id="central.query.cfg" persistent-id="net.solarnetwork.central.query">
 		<beans:prop key="BasicAppConfigurationBiz.serviceUrls">
-			solaruser = http://localhost/solaruser
+			solarquery = http://localhost/solarquery,
+			node-dashboard = http://localhost/node-dashboard,
+			node-dataview = http://localhost/node-dataview?nodeId={nodeId}
 		</beans:prop>
 	</osgix:cm-properties>
 
-	<ctx:property-placeholder properties-ref="central.user.cfg"/>
+	<ctx:property-placeholder properties-ref="central.query.cfg"/>
 
 	<!-- Published Services -->
 	
-	<service ref="cacheManager" interface="javax.cache.CacheManager">
-		<service-properties>
-			<entry key="app" value="user"/>
-		</service-properties>
-	</service>
-	
-	<bean id="cacheManager" class="net.solarnetwork.central.support.JCacheManagerFactoryBean">
-		<property name="cacheManagerUri" value="classpath:/net/solarnetwork/central/user/ehcache.xml"/>
-	</bean>
-	
 	<service interface="net.solarnetwork.central.biz.AppConfigurationBiz">
 		<service-properties>
-			<entry key="app" value="user"/>
+			<entry key="app" value="query"/>
 		</service-properties>
 		<bean class="net.solarnetwork.central.support.BasicAppConfigurationBiz">
 			<property name="serviceUrlMapping" value="${BasicAppConfigurationBiz.serviceUrls}"/>
