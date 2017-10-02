@@ -40,7 +40,7 @@ import net.solarnetwork.web.domain.Response;
  * @version 1.0
  */
 @RestController("v1ConfigurationController")
-@RequestMapping(value = { "/config", "/v1/pub/config" })
+@RequestMapping(value = { "/config", "/v1/pub/config", "/v1/sec/config" })
 public class ConfigurationController extends WebServiceControllerSupport {
 
 	private final AppConfigurationBiz appConfigurationBiz;
