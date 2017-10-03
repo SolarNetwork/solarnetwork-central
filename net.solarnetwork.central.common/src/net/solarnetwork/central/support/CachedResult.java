@@ -28,15 +28,13 @@ import java.util.concurrent.TimeUnit;
  * A cached object holder.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @param <T>
  *        The type of object that is cached.
+ * @deprecated use {@link net.solarnetwork.util.CachedResult} directly
  */
-public class CachedResult<T> {
-
-	private final long created;
-	private final long expires;
-	private final T result;
+@Deprecated
+public class CachedResult<T> extends net.solarnetwork.util.CachedResult<T> {
 
 	/**
 	 * Constructor. The current time will be used for the {@code created}
@@ -51,7 +49,7 @@ public class CachedResult<T> {
 	 *        The time unit for the {@code expiration}.
 	 */
 	public CachedResult(T result, long ttl, TimeUnit unit) {
-		this(result, System.currentTimeMillis(), ttl, unit);
+		super(result, System.currentTimeMillis(), ttl, unit);
 	}
 
 	/**
@@ -68,46 +66,7 @@ public class CachedResult<T> {
 	 *        The time unit for the {@code expiration}.
 	 */
 	public CachedResult(T result, long created, long ttl, TimeUnit unit) {
-		super();
-		this.result = result;
-		this.created = created;
-		this.expires = created + unit.toMillis(ttl);
-	}
-
-	/**
-	 * Test if this result has not expired.
-	 * 
-	 * @return <em>true</em> if the result has not expired.
-	 */
-	public boolean isValid() {
-		return (System.currentTimeMillis() < expires);
-	}
-
-	/**
-	 * Get the system time this object was created.
-	 * 
-	 * @return The system time this object was created.
-	 */
-	public long getCreated() {
-		return created;
-	}
-
-	/**
-	 * Get the system time this object expires at.
-	 * 
-	 * @return The system time this object expires at.
-	 */
-	public long getExpires() {
-		return expires;
-	}
-
-	/**
-	 * Get the cached result object.
-	 * 
-	 * @return The result object.
-	 */
-	public T getResult() {
-		return result;
+		super(result, created, ttl, unit);
 	}
 
 }
