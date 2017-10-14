@@ -270,8 +270,10 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	@Override
 	public void addGeneralNodeDatumMetadata(Long nodeId, final String sourceId,
 			final GeneralDatumMetadata meta) {
-		if ( sourceId == null || meta == null || ((meta.getTags() == null || meta.getTags().isEmpty())
-				&& (meta.getInfo() == null || meta.getInfo().isEmpty())) ) {
+		if ( sourceId == null || meta == null
+				|| ((meta.getTags() == null || meta.getTags().isEmpty())
+						&& (meta.getInfo() == null || meta.getInfo().isEmpty())
+						&& (meta.getPropertyInfo() == null || meta.getPropertyInfo().isEmpty())) ) {
 			return;
 		}
 
@@ -296,7 +298,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	@Override
 	public void addSolarNodeMetadata(Long nodeId, GeneralDatumMetadata meta) {
 		if ( meta == null || ((meta.getTags() == null || meta.getTags().isEmpty())
-				&& (meta.getInfo() == null || meta.getInfo().isEmpty())) ) {
+				&& (meta.getInfo() == null || meta.getInfo().isEmpty())
+				&& (meta.getPropertyInfo() == null || meta.getPropertyInfo().isEmpty())) ) {
 			return;
 		}
 
