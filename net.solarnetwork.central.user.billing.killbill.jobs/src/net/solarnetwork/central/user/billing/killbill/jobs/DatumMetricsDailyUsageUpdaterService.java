@@ -117,9 +117,10 @@ import net.solarnetwork.util.StringUtils;
  * 
  * <p>
  * When all nodes for a given user have been processed, the current date is
- * saved in the user's billing data key {@code kb_mrUsageDate}. The next time
- * this service runs it will use that date as the earliest day to upload usage
- * data for.
+ * saved in the user's billing data key
+ * {@link #KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP}. The next time this
+ * service runs it will use that date as the earliest day to upload usage data
+ * for.
  * </p>
  * 
  * @author matt
@@ -140,10 +141,11 @@ public class DatumMetricsDailyUsageUpdaterService {
 	public static final String KILLBILL_DAILY_USAGE_PLAN_DATA_PROP = "kb_datumMetricsDailyUsage";
 
 	/**
-	 * The billing data key that holds the "most recent usage date" to start
-	 * from.
+	 * The billing data key that holds a {@code Map} of "most recent usage date"
+	 * to start from, using node IDs as keys and {@literal YYYY-MM-DD} formatted
+	 * date values.
 	 */
-	public static final String KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP = "kb_mrUsageDate";
+	public static final String KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP = "kb_mrUsageDates";
 
 	/** The default base plan name. */
 	public static final String DEFAULT_BASE_PLAN_NAME = "api-posted-datum-metric-monthly-usage";
@@ -372,17 +374,29 @@ public class DatumMetricsDailyUsageUpdaterService {
 		List<UserNode> userNodes = userNodeDao
 				.findUserNodesForUser((user instanceof User ? (User) user : userDao.get(user.getId())));
 
+		Map<String, String> nodeMostRecentUsagekeys = mostRecentUsageKeys(user);
 		for ( UserNode userNode : userNodes ) {
-			processOneUserNode(account, userNode, timeZone);
+			processOneUserNode(account, userNode, timeZone, nodeMostRecentUsagekeys);
 		}
 	}
 
-	private void processOneUserNode(Account account, UserNode userNode, DateTimeZone timeZone) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Map<String, String> mostRecentUsageKeys(UserInfo user) {
+		Map<String, String> map = (Map) user.getInternalData()
+				.get(KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP);
+		if ( map == null ) {
+			map = new HashMap<>();
+		}
+		return map;
+	}
+
+	private void processOneUserNode(Account account, UserNode userNode, DateTimeZone timeZone,
+			Map<String, String> nodeMostRecentUsageDateKeys) {
 		// get the range of available audit data for this node, to help know when to start/stop
 		ReadableInterval auditInterval = nodeDatumDao.getAuditInterval(userNode.getNode().getId(), null);
+		String mostRecentUsageDate = nodeMostRecentUsageDateKeys
+				.get(userNode.getNode().getId().toString());
 
-		String mostRecentUsageDate = (String) userNode.getUser().getInternalData()
-				.get(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP);
 		DateTime usageStartDay = null;
 		if ( mostRecentUsageDate != null ) {
 			LocalDate mrDate = ISO_DATE_FORMATTER.parseLocalDate(mostRecentUsageDate);
@@ -432,15 +446,15 @@ public class DatumMetricsDailyUsageUpdaterService {
 			Bundle bundle = bundleForUserNode(userNode, account);
 			Subscription subscription = (bundle != null ? bundle.subscriptionWithPlanName(basePlanName)
 					: null);
-			if ( subscription != null ) {
-				if ( log.isInfoEnabled() ) {
-					log.info("Adding {} {} usage to user {} node {} between {} and {}",
-							recordsToAdd.size(), this.usageUnitName, userNode.getUser().getEmail(),
-							userNode.getNode().getId(), usageStartDay.toLocalDate(),
-							usageEndDay.toLocalDate());
-				}
-				client.addUsage(subscription, nextStartDate, this.usageUnitName, recordsToAdd);
+			if ( subscription == null ) {
+				return;
 			}
+			if ( log.isInfoEnabled() ) {
+				log.info("Adding {} {} usage to user {} node {} between {} and {}", recordsToAdd.size(),
+						this.usageUnitName, userNode.getUser().getEmail(), userNode.getNode().getId(),
+						usageStartDay.toLocalDate(), usageEndDay.toLocalDate());
+			}
+			client.addUsage(subscription, nextStartDate, this.usageUnitName, recordsToAdd);
 		} else if ( log.isDebugEnabled() ) {
 			log.debug("No {} usage to add for user {} node {} between {} and {}", this.usageUnitName,
 					userNode.getUser().getEmail(), userNode.getNode().getId(),
@@ -449,8 +463,9 @@ public class DatumMetricsDailyUsageUpdaterService {
 
 		// store the last processed date so we can pick up there next time
 		if ( mostRecentUsageDate == null || !mostRecentUsageDate.equals(nextStartDate) ) {
-			userDao.storeInternalData(userNode.getUser().getId(),
-					Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP, nextStartDate));
+			nodeMostRecentUsageDateKeys.put(userNode.getNode().getId().toString(), nextStartDate);
+			userDao.storeInternalData(userNode.getUser().getId(), Collections.singletonMap(
+					KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP, nodeMostRecentUsageDateKeys));
 		}
 	}
 
