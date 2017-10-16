@@ -32,7 +32,7 @@ import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDa
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.DEFAULT_USAGE_UNIT_NAME;
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.EXTERNAL_PAYMENT_METHOD_DATA;
 import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.KILLBILL_DAILY_USAGE_PLAN_DATA_PROP;
-import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP;
+import static net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterService.KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -43,6 +43,7 @@ import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,9 +56,11 @@ import javax.cache.Cache;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.joda.time.LocalDate;
 import org.joda.time.ReadableInterval;
 import org.junit.After;
 import org.junit.Assert;
@@ -540,8 +543,9 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 
 		// finally, store the "most recent usage" date for future processing
 		userDao.storeInternalData(TEST_USER_ID,
-				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
-						ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())));
+				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP,
+						Collections.singletonMap(TEST_NODE_ID.toString(),
+								ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate()))));
 
 		replayAll();
 
@@ -652,8 +656,9 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 
 		// finally, store the "most recent usage" date for future processing
 		userDao.storeInternalData(TEST_USER_ID,
-				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
-						ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())));
+				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP,
+						Collections.singletonMap(TEST_NODE_ID.toString(),
+								ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate()))));
 
 		replayAll();
 
@@ -686,8 +691,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		// we have usage data published up to start of TODAY
 		DateTime auditDataStart = new DateTime(DateTimeZone.forID(TEST_NODE_TZ)).dayOfMonth()
 				.roundFloorCopy();
-		userBillingData.put(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
-				ISO_DATE_FORMATTER.print(auditDataStart.toLocalDate()));
+		userBillingData.put(KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP, Collections.singletonMap(
+				TEST_NODE_ID.toString(), ISO_DATE_FORMATTER.print(auditDataStart.toLocalDate())));
 
 		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
 		user.setInternalData(userBillingData);
@@ -729,6 +734,99 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		// verify search for users
 		assertNotNull(filterCapture.getValue());
 		assertEquals(killbillAccountFilter, filterCapture.getValue().getInternalData());
+	}
+
+	@Test
+	public void oneUserAddMoreDataMultipleNodes() {
+		// search for users configured to use killbill; find one
+		Map<String, Object> killbillAccountFilter = userSearchBillingData();
+
+		Map<String, Object> userBillingData = new HashMap<>(killbillAccountFilter);
+		userBillingData.put(UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, TEST_USER_ACCOUNT_KEY);
+		Map<String, String> userNodeMostRecentKeys = new HashMap<>();
+		userBillingData.put(KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP, userNodeMostRecentKeys);
+
+		// we have usage data published up to 2017-01-01, for TWO nodes
+		userNodeMostRecentKeys.put(TEST_NODE_ID.toString(),
+				ISO_DATE_FORMATTER.print(new LocalDate(2017, 1, 1)));
+		userNodeMostRecentKeys.put(TEST_NODE2_ID.toString(),
+				ISO_DATE_FORMATTER.print(new LocalDate(2017, 1, 1)));
+
+		User user = new User(TEST_USER_ID, TEST_USER_EMAIL);
+		user.setInternalData(userBillingData);
+		user.setLocationId(TEST_LOCATION_ID);
+		Capture<UserFilterCommand> filterCapture = new Capture<>();
+		List<UserFilterMatch> usersWithAccounting = new ArrayList<>();
+		UserMatch userMatch = new UserMatch(TEST_USER_ID, TEST_USER_EMAIL);
+		userMatch.setInternalData(userBillingData);
+		userMatch.setLocationId(TEST_LOCATION_ID);
+		userMatch.setName(TEST_USER_NAME);
+		usersWithAccounting.add(userMatch);
+		FilterResults<UserFilterMatch> userAccountingSearchResults = new BasicFilterResults<>(
+				usersWithAccounting, 1L, 0, 1);
+		expect(userDao.findFiltered(capture(filterCapture), isNull(), eq(0), eq(DEFAULT_BATCH_SIZE)))
+				.andReturn(userAccountingSearchResults);
+
+		// get Killbill Account
+		Account account = createTestAccount();
+
+		// now iterate over all user's nodes to look for usage
+		SolarNode node = new SolarNode(TEST_NODE_ID, TEST_LOCATION_ID);
+		SolarNode node2 = new SolarNode(TEST_NODE2_ID, TEST_LOCATION2_ID);
+
+		Bundle bundle = new Bundle();
+		bundle.setBundleId(TEST_BUNDLE_ID);
+		bundle.setAccountId(TEST_ACCOUNT_ID);
+		bundle.setExternalKey(TEST_BUNDLE_KEY);
+		bundle.setSubscriptions(
+				Collections.singletonList(Subscription.withPlanName(DEFAULT_BASE_PLAN_NAME)));
+
+		Bundle bundle2 = new Bundle();
+		bundle2.setBundleId(TEST_BUNDLE2_ID);
+		bundle2.setAccountId(TEST_ACCOUNT_ID);
+		bundle2.setExternalKey(TEST_BUNDLE2_KEY);
+		bundle2.setSubscriptions(
+				Collections.singletonList(Subscription.withPlanName(DEFAULT_BASE_PLAN_NAME)));
+
+		Capture<List<UsageRecord>> usageCapture = new Capture<>(CaptureType.ALL);
+		List<List<DateTime>> dayLists = new ArrayList<>();
+		List<List<Long>> countLists = new ArrayList<>();
+
+		// update the "most recent usage" date to the last day, to start processing there
+		processUser(user, userMatch, Arrays.asList(node, node2), userNodeMostRecentKeys, account,
+				Arrays.asList(bundle, bundle2), 1, usageCapture, dayLists, countLists);
+
+		// reset the "most recent usage" date to the last day for start of replay, to start processing there
+		userNodeMostRecentKeys.put(TEST_NODE_ID.toString(),
+				ISO_DATE_FORMATTER.print(dayLists.get(0).get(0).toLocalDate()));
+		userNodeMostRecentKeys.put(TEST_NODE2_ID.toString(),
+				ISO_DATE_FORMATTER.print(dayLists.get(0).get(0).toLocalDate()));
+
+		replayAll();
+
+		service.execute();
+
+		// verify search for users
+		assertNotNull(filterCapture.getValue());
+		assertEquals(killbillAccountFilter, filterCapture.getValue().getInternalData());
+
+		// verify usage
+		List<List<UsageRecord>> usages = usageCapture.getValues();
+		assertThat(usages, Matchers.hasSize(2));
+		int idx = 0;
+		for ( List<UsageRecord> usage : usages ) {
+			assertEquals("Usage count", 1, usage.size());
+			List<Long> countList = countLists.get(idx);
+			List<DateTime> dayList = dayLists.get(idx);
+			for ( ListIterator<Long> itr = countList.listIterator(); itr.hasNext(); ) {
+				BigDecimal expectedCount = new BigDecimal(itr.next());
+				UsageRecord rec = usage.get(itr.previousIndex());
+				assertEquals("Usage amount " + itr.previousIndex(), expectedCount, rec.getAmount());
+				assertEquals("Usage date " + itr.previousIndex(),
+						dayList.get(itr.previousIndex()).toLocalDate(), rec.getRecordDate());
+			}
+			idx++;
+		}
 	}
 
 	@Test
@@ -779,12 +877,16 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		bundle.setSubscriptions(
 				Collections.singletonList(Subscription.withPlanName(DEFAULT_BASE_PLAN_NAME)));
 		Capture<List<UsageRecord>> usageCapture = new Capture<>();
-		List<DateTime> dayList = new ArrayList<>();
-		List<Long> countList = new ArrayList<>();
-		processUser(user, userMatch, node, account, bundle, 1, usageCapture, dayList, countList);
+		List<List<DateTime>> dayLists = new ArrayList<>();
+		List<List<Long>> countLists = new ArrayList<>();
+
 		// update the "most recent usage" date to the last day, to start processing there
-		userBillingData.put(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
-				ISO_DATE_FORMATTER.print(dayList.get(0).toLocalDate()));
+		Map<String, String> userNodeMostRecentKeys = new HashMap<>();
+		processUser(user, userMatch, Collections.singletonList(node), userNodeMostRecentKeys, account,
+				Collections.singletonList(bundle), 1, usageCapture, dayLists, countLists);
+		userNodeMostRecentKeys.put(TEST_NODE_ID.toString(),
+				ISO_DATE_FORMATTER.print(dayLists.get(0).get(0).toLocalDate()));
+		userBillingData.put(KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP, userNodeMostRecentKeys);
 
 		SolarNode node2 = new SolarNode(TEST_NODE2_ID, TEST_LOCATION2_ID);
 		Account account2 = createTestAccount2();
@@ -795,12 +897,16 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		bundle2.setSubscriptions(
 				Collections.singletonList(Subscription.withPlanName(DEFAULT_BASE_PLAN_NAME)));
 		Capture<List<UsageRecord>> usage2Capture = new Capture<>();
-		List<DateTime> day2List = new ArrayList<>();
-		List<Long> count2List = new ArrayList<>();
-		processUser(user2, user2Match, node2, account2, bundle2, 1, usage2Capture, day2List, count2List);
+		List<List<DateTime>> day2Lists = new ArrayList<>();
+		List<List<Long>> count2Lists = new ArrayList<>();
+
+		Map<String, String> user2NodeMostRecentKeys = new HashMap<>();
+		processUser(user2, user2Match, Collections.singletonList(node2), user2NodeMostRecentKeys,
+				account2, Collections.singletonList(bundle2), 1, usage2Capture, day2Lists, count2Lists);
 		// update the "most recent usage" date to the last day, to start processing there
-		user2BillingData.put(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
-				ISO_DATE_FORMATTER.print(day2List.get(0).toLocalDate()));
+		user2NodeMostRecentKeys.put(TEST_NODE2_ID.toString(),
+				ISO_DATE_FORMATTER.print(day2Lists.get(0).get(0).toLocalDate()));
+		user2BillingData.put(KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP, user2NodeMostRecentKeys);
 
 		replayAll();
 
@@ -814,6 +920,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		List<UsageRecord> usage = usageCapture.getValue();
 		assertNotNull("Usage", usage);
 		assertEquals("Usage count", 1, usage.size());
+		List<Long> countList = countLists.get(0);
+		List<DateTime> dayList = dayLists.get(0);
 		for ( ListIterator<Long> itr = countList.listIterator(); itr.hasNext(); ) {
 			BigDecimal expectedCount = new BigDecimal(itr.next());
 			UsageRecord rec = usage.get(itr.previousIndex());
@@ -825,6 +933,8 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		usage = usage2Capture.getValue();
 		assertNotNull("Usage", usage);
 		assertEquals("Usage count", 1, usage.size());
+		List<Long> count2List = count2Lists.get(0);
+		List<DateTime> day2List = day2Lists.get(0);
 		for ( ListIterator<Long> itr = count2List.listIterator(); itr.hasNext(); ) {
 			BigDecimal expectedCount = new BigDecimal(itr.next());
 			UsageRecord rec = usage.get(itr.previousIndex());
@@ -834,53 +944,68 @@ public class DatumMetricsDailyUsageUpdaterServiceTests {
 		}
 	}
 
-	private void processUser(User user, UserMatch userMatch, SolarNode node, Account account,
-			Bundle bundle, int numDays, Capture<List<UsageRecord>> usageCapture, List<DateTime> dayList,
-			List<Long> countList) {
+	private void processUser(User user, UserMatch userMatch, List<SolarNode> nodes,
+			Map<String, String> userNodeMostRecentKeys, Account account, List<Bundle> bundles,
+			int numDays, Capture<List<UsageRecord>> usageCapture, List<List<DateTime>> dayLists,
+			List<List<Long>> countLists) {
 		// get Killbill Account #1
 		expect(client.accountForExternalKey(account.getExternalKey())).andReturn(account);
 
 		// now iterate over all user's nodes to look for usage
-		UserNode userNode = new UserNode(user, node);
-		List<UserNode> allUserNodes = Collections.singletonList(userNode);
+		List<UserNode> allUserNodes = new ArrayList<>(nodes.size());
+		for ( SolarNode node : nodes ) {
+			UserNode userNode = new UserNode(user, node);
+			allUserNodes.add(userNode);
+		}
 		expect(userNodeDao.findUserNodesForUser(userMatch)).andReturn(allUserNodes);
 
 		DateTimeZone timeZone = DateTimeZone.forID(account.getTimeZone());
 
-		// FOR EACH UserNode here; we have just one node
-		DateTime auditDataStart = new DateTime(2017, 1, 1, 0, 0, timeZone);
-		DateTime auditDataEnd = auditDataStart.plusDays(numDays);
-		ReadableInterval auditInterval = new Interval(auditDataStart, auditDataEnd);
-		expect(nodeDatumDao.getAuditInterval(node.getId(), null)).andReturn(auditInterval);
+		// FOR EACH UserNode here
+		int idx = 0;
+		for ( UserNode userNode : allUserNodes ) {
+			SolarNode node = userNode.getNode();
+			Bundle bundle = bundles.get(idx);
+			DateTime auditDataStart = new DateTime(2017, 1, 1, 0, 0, timeZone);
+			DateTime auditDataEnd = auditDataStart.plusDays(numDays);
+			ReadableInterval auditInterval = new Interval(auditDataStart, auditDataEnd);
+			expect(nodeDatumDao.getAuditInterval(node.getId(), null)).andReturn(auditInterval);
 
-		for ( int i = 0; i < numDays; i++ ) {
-			dayList.add(auditDataStart.plusDays(i));
-			countList.add((long) (Math.random() * 100000));
+			List<Long> countList = new ArrayList<>(numDays);
+			List<DateTime> dayList = new ArrayList<>(numDays);
+			for ( int i = 0; i < numDays; i++ ) {
+				dayList.add(auditDataStart.plusDays(i));
+				countList.add((long) (Math.random() * 100000));
+			}
+			countLists.add(countList);
+			dayLists.add(dayList);
+
+			// now iterate over each DAY in audit interval, gathering usage values
+			for ( ListIterator<DateTime> itr = dayList.listIterator(); itr.hasNext(); ) {
+				DateTime day = itr.next();
+				DatumFilterCommand filter = new DatumFilterCommand();
+				filter.setNodeId(node.getId());
+				filter.setStartDate(day);
+				filter.setEndDate(day.plusDays(1));
+				expect(nodeDatumDao.getAuditPropertyCountTotal(filter))
+						.andReturn(countList.get(itr.previousIndex()));
+			}
+
+			// get the Bundle for this node
+			expect(client.bundleForExternalKey(account, bundle.getExternalKey())).andReturn(bundle);
+
+			client.addUsage(same(bundle.getSubscriptions().get(0)),
+					eq(ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())),
+					eq(DEFAULT_USAGE_UNIT_NAME), capture(usageCapture));
+
+			// finally, store the "most recent usage" date for future processing
+			userNodeMostRecentKeys.put(node.getId().toString(),
+					ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate()));
+			userDao.storeInternalData(user.getId(),
+					Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP,
+							new HashMap<String, String>(userNodeMostRecentKeys)));
+			idx++;
 		}
-
-		// now iterate over each DAY in audit interval, gathering usage values
-		for ( ListIterator<DateTime> itr = dayList.listIterator(); itr.hasNext(); ) {
-			DateTime day = itr.next();
-			DatumFilterCommand filter = new DatumFilterCommand();
-			filter.setNodeId(node.getId());
-			filter.setStartDate(day);
-			filter.setEndDate(day.plusDays(1));
-			expect(nodeDatumDao.getAuditPropertyCountTotal(filter))
-					.andReturn(countList.get(itr.previousIndex()));
-		}
-
-		// get the Bundle for this node
-		expect(client.bundleForExternalKey(account, bundle.getExternalKey())).andReturn(bundle);
-
-		client.addUsage(same(bundle.getSubscriptions().get(0)),
-				eq(ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())), eq(DEFAULT_USAGE_UNIT_NAME),
-				capture(usageCapture));
-
-		// finally, store the "most recent usage" date for future processing
-		userDao.storeInternalData(user.getId(),
-				Collections.singletonMap(KILLBILL_MOST_RECENT_USAGE_KEY_DATA_PROP,
-						ISO_DATE_FORMATTER.print(auditDataEnd.toLocalDate())));
-
 	}
 
 }

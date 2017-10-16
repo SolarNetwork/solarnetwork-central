@@ -4,7 +4,7 @@ Bundle-Name: SolarUser Killbill Billing Jobs Tests
 Bundle-SymbolicName: net.solarnetwork.central.user.billing.killbill.jobs.test
 Bundle-Version: 0.1.0
 Bundle-Vendor: SolarNetwork
-Fragment-Host: net.solarnetwork.central.user.billing.killbill.jobs;bundle-version="0.1.0"
+Fragment-Host: net.solarnetwork.central.user.billing.killbill.jobs;bundle-version="0.2.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
  net.solarnetwork.central.support;version="1.14.0",
