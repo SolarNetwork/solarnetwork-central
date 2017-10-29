@@ -24,6 +24,7 @@ package net.solarnetwork.central.instructor.support;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
@@ -33,7 +34,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  * Delegates to another InstructorBiz, designed for AOP use.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DelegatingInstructorBiz implements InstructorBiz {
 
@@ -56,18 +57,8 @@ public class DelegatingInstructorBiz implements InstructorBiz {
 	}
 
 	@Override
-	public NodeInstruction queueInstruction(Long nodeId, Instruction instruction) {
-		return delegate.queueInstruction(nodeId, instruction);
-	}
-
-	@Override
-	public NodeInstruction getInstruction(Long instructionId) {
-		return delegate.getInstruction(instructionId);
-	}
-
-	@Override
-	public void updateInstructionState(Long instructionId, InstructionState state) {
-		delegate.updateInstructionState(instructionId, state);
+	public List<NodeInstruction> getActiveInstructionsForNodes(Set<Long> nodeIds) {
+		return delegate.getActiveInstructionsForNodes(nodeIds);
 	}
 
 	@Override
@@ -76,9 +67,50 @@ public class DelegatingInstructorBiz implements InstructorBiz {
 	}
 
 	@Override
+	public List<NodeInstruction> getPendingInstructionsForNodes(Set<Long> nodeIds) {
+		return delegate.getPendingInstructionsForNodes(nodeIds);
+	}
+
+	@Override
+	public NodeInstruction queueInstruction(Long nodeId, Instruction instruction) {
+		return delegate.queueInstruction(nodeId, instruction);
+	}
+
+	@Override
+	public List<NodeInstruction> queueInstructions(Set<Long> nodeIds, Instruction instruction) {
+		return delegate.queueInstructions(nodeIds, instruction);
+	}
+
+	@Override
+	public NodeInstruction getInstruction(Long instructionId) {
+		return delegate.getInstruction(instructionId);
+	}
+
+	@Override
+	public List<NodeInstruction> getInstructions(Set<Long> instructionIds) {
+		return delegate.getInstructions(instructionIds);
+	}
+
+	@Override
+	public void updateInstructionState(Long instructionId, InstructionState state) {
+		delegate.updateInstructionState(instructionId, state);
+	}
+
+	@Override
+	public void updateInstructionsState(Set<Long> instructionIds, InstructionState state) {
+		delegate.updateInstructionsState(instructionIds, state);
+	}
+
+	@Override
 	public void updateInstructionState(Long instructionId, InstructionState state,
 			Map<String, ?> resultParameters) {
 		delegate.updateInstructionState(instructionId, state, resultParameters);
+	}
+
+	@Override
+	public void updateInstructionsState(Set<Long> instructionIds, InstructionState state,
+			Map<Long, Map<String, ?>> resultParameters) {
+		delegate.updateInstructionsState(instructionIds, state, resultParameters);
 	}
 
 }

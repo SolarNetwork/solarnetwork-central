@@ -29,7 +29,7 @@ import net.solarnetwork.central.domain.Filter;
  * Filter for Instruction entities.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface InstructionFilter extends Filter {
 
@@ -39,6 +39,22 @@ public interface InstructionFilter extends Filter {
 	 * @return the node ID
 	 */
 	Long getNodeId();
+
+	/**
+	 * Get an array of node IDs.
+	 * 
+	 * @return array of node IDs (may be {@literal null})
+	 * @since 1.2
+	 */
+	public Long[] getNodeIds();
+
+	/**
+	 * Get an array of instruction IDs.
+	 * 
+	 * @return array of instruction IDs (may be {@literal null})
+	 * @since 1.2
+	 */
+	public Long[] getInstructionIds();
 
 	/**
 	 * Filter based on state.

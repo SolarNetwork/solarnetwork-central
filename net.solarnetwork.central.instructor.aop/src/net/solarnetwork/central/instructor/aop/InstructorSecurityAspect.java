@@ -22,15 +22,17 @@
 
 package net.solarnetwork.central.instructor.aop;
 
+import java.util.List;
+import java.util.Set;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
-import org.aspectj.lang.annotation.AfterReturning;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 
 /**
  * Security aspect for {@link InstructorBiz}.
@@ -64,16 +66,32 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	public void instructionsForNode(Long nodeId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.get*ForNodes(..)) && args(nodeIds)")
+	public void instructionsForNodes(Set<Long> nodeIds) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.queueInstruction(..)) && args(nodeId,..)")
 	public void queueInstruction(Long nodeId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.queueInstructions(..)) && args(nodeIds,..)")
+	public void queueInstructions(Set<Long> nodeIds) {
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.getInstruction(..)) && args(instructionId,..)")
 	public void viewInstruction(Long instructionId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.updateInstruction*(..)) && args(instructionId,..)")
-	public void updateInstruction(Long instructionId) {
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.getInstructions(..)) && args(instructionIds,..)")
+	public void viewInstructions(Set<Long> instructionIds) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.updateInstructionState(..)) && args(instructionId,..)")
+	public void updateInstructionState(Long instructionId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.updateInstructionsState(..)) && args(instructionIds,..)")
+	public void updateInstructionsState(Set<Long> instructionIds) {
 	}
 
 	/**
@@ -88,6 +106,22 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 			return;
 		}
 		requireNodeWriteAccess(nodeId);
+	}
+
+	/**
+	 * Allow the current user (or current node) access to node instructions.
+	 * 
+	 * @param nodeIds
+	 *        the IDs of the nodes to verify
+	 */
+	@Before("instructionsForNodes(nodeIds) || queueInstructions(nodeIds)")
+	public void instructionsForNodesCheck(Set<Long> nodeIds) {
+		if ( nodeIds == null ) {
+			return;
+		}
+		for ( Long nodeId : nodeIds ) {
+			instructionsForNodeCheck(nodeId);
+		}
 	}
 
 	/**
@@ -112,13 +146,33 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
+	 * Allow the current user (or current node) access to viewing instructions
+	 * by IDs.
+	 * 
+	 * @param instructionIds
+	 *        the instruction IDs
+	 * @param instruction
+	 *        the instruction
+	 */
+	@AfterReturning(pointcut = "viewInstructions(instructionIds)", returning = "instructions")
+	public void viewInstructionsAccessCheck(Set<Long> instructionIds,
+			List<NodeInstruction> instructions) {
+		if ( instructionIds == null || instructions == null ) {
+			return;
+		}
+		for ( NodeInstruction instr : instructions ) {
+			viewInstructionAccessCheck(instr.getNodeId(), instr);
+		}
+	}
+
+	/**
 	 * Allow the current user (or current node) access to updating instructions
 	 * by ID.
 	 * 
 	 * @param instructionId
 	 *        the ID of the instruction being updated
 	 */
-	@Before("updateInstruction(instructionId)")
+	@Before("updateInstructionState(instructionId)")
 	public void updateInstructionAccessCheck(Long instructionId) {
 		if ( instructionId == null ) {
 			return;
@@ -132,5 +186,22 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 			return;
 		}
 		requireNodeWriteAccess(nodeId);
+	}
+
+	/**
+	 * Allow the current user (or current node) access to updating instructions
+	 * by ID.
+	 * 
+	 * @param instructionId
+	 *        the ID of the instruction being updated
+	 */
+	@Before("updateInstructionsState(instructionIds)")
+	public void updateInstructionsAccessCheck(Set<Long> instructionIds) {
+		if ( instructionIds == null ) {
+			return;
+		}
+		for ( Long instructionId : instructionIds ) {
+			updateInstructionAccessCheck(instructionId);
+		}
 	}
 }
