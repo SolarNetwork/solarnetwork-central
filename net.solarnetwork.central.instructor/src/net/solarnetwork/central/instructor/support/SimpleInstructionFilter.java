@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.instructor.support;
@@ -39,19 +37,24 @@ import net.solarnetwork.util.SerializeIgnore;
  * Simple implementation of {@link InstructionFilter}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public class SimpleInstructionFilter implements InstructionFilter {
 
-	private Long nodeId;
+	private Long[] nodeIds;
+	private Long[] instructionIds;
 	private List<InstructionState> states;
 
 	@Override
 	@SerializeIgnore
 	public Map<String, ?> getFilter() {
 		Map<String, Object> f = new LinkedHashMap<String, Object>(2);
-		if ( nodeId != null ) {
-			f.put("nodeId", nodeId);
+		if ( nodeIds != null && nodeIds.length > 0 ) {
+			f.put("nodeId", nodeIds[0]); // backwards compatibility
+			f.put("nodeIds", nodeIds);
+		}
+		if ( instructionIds != null && instructionIds.length > 0 ) {
+			f.put("instructionIds", instructionIds);
 		}
 		if ( states != null && states.isEmpty() == false ) {
 			f.put("state", states.iterator().next().toString());
@@ -62,18 +65,51 @@ public class SimpleInstructionFilter implements InstructionFilter {
 		return f;
 	}
 
+	/**
+	 * Set a single node ID.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single node ID at a
+	 * time. The node ID is still stored on the {@code nodeIds} array, just as
+	 * the first value. Calling this method replaces any existing
+	 * {@code nodeIds} value with a new array containing just the ID passed into
+	 * this method.
+	 * </p>
+	 * 
+	 * @param nodeId
+	 *        the ID of the node
+	 */
+	public void setNodeId(Long nodeId) {
+		this.nodeIds = new Long[] { nodeId };
+	}
+
+	/**
+	 * Get the first node ID.
+	 * 
+	 * <p>
+	 * This returns the first available node ID from the {@code nodeIds} array,
+	 * or <em>null</em> if not available.
+	 * </p>
+	 * 
+	 * @return the first node ID
+	 */
 	@Override
 	public Long getNodeId() {
-		return nodeId;
+		return this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0];
+	}
+
+	@Override
+	public Long[] getNodeIds() {
+		return nodeIds;
+	}
+
+	public void setNodeIds(Long[] nodeIds) {
+		this.nodeIds = nodeIds;
 	}
 
 	@Override
 	public InstructionState getState() {
 		return (states != null && states.isEmpty() == false ? states.iterator().next() : null);
-	}
-
-	public void setNodeId(Long nodeId) {
-		this.nodeId = nodeId;
 	}
 
 	public void setState(InstructionState state) {
@@ -113,6 +149,27 @@ public class SimpleInstructionFilter implements InstructionFilter {
 			Set<InstructionState> set = EnumSet.copyOf(states);
 			this.states = new ArrayList<InstructionState>(set);
 		}
+	}
+
+	/**
+	 * Get a set of instruction IDs.
+	 * 
+	 * @since 1.1
+	 */
+	@Override
+	public Long[] getInstructionIds() {
+		return instructionIds;
+	}
+
+	/**
+	 * Set an instruction IDs list.
+	 * 
+	 * @param instructionIds
+	 *        the IDs to set
+	 * @since 1.1
+	 */
+	public void setInstructionIds(Long[] instructionIds) {
+		this.instructionIds = instructionIds;
 	}
 
 }

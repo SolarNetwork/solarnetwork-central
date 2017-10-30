@@ -144,11 +144,11 @@
 								<option value="/solarquery/api/v1/sec/users/meta/{userId}">View specific user metadata</option>
 							</optgroup>
 							<optgroup label="Instructions">
-								<option value="/solaruser/api/v1/sec/instr/add?nodeId={nodeId}&topic=SetControlParameter&parameters%5B0%5D.name={controlId}&parameters%5B0%5D.value={controlValue}" data-method="POST">Set control parameter</option>
-								<option value="/solaruser/api/v1/sec/instr/viewActive?nodeId={nodeId}">View active instructions</option>
-								<option value="/solaruser/api/v1/sec/instr/viewPending?nodeId={nodeId}">View pending instructions</option>
-								<option value="/solaruser/api/v1/sec/instr/view?id={instructionId}">View instruction</option>
-								<option value="/solaruser/api/v1/sec/instr/updateState?id={instructionId}&state={instructionState:(Received|Executing|Declined|Completed)}" data-method="POST">Update instruction state</option>
+								<option value="/solaruser/api/v1/sec/instr/add?nodeIds={nodeIds}&topic=SetControlParameter&parameters%5B0%5D.name={controlId}&parameters%5B0%5D.value={controlValue}" data-method="POST">Set control parameter</option>
+								<option value="/solaruser/api/v1/sec/instr/viewActive?nodeIds={nodeIds}">View active instructions</option>
+								<option value="/solaruser/api/v1/sec/instr/viewPending?nodeIds={nodeIds}">View pending instructions</option>
+								<option value="/solaruser/api/v1/sec/instr/view?ids={instructionIds}">View instructions</option>
+								<option value="/solaruser/api/v1/sec/instr/updateState?ids={instructionIds}&state={instructionState:(Received|Executing|Declined|Completed)}" data-method="POST">Update instructions state</option>
 							</optgroup>
 							<optgroup label="Auth Tokens">
 								<option value="/solaruser/api/v1/sec/user/auth-tokens">List all tokens</option>

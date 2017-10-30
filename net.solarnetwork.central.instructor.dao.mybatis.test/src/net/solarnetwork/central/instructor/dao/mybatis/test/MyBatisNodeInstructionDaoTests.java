@@ -22,14 +22,18 @@
 
 package net.solarnetwork.central.instructor.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -45,28 +49,29 @@ import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
  * Test cases for the {@link MyBatisNodeInstructionDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private MyBatisNodeInstructionDao dao;
 
 	private NodeInstruction lastDatum;
+	private List<NodeInstruction> addedInstructions;
 
 	@Before
 	public void setUp() throws Exception {
 		dao = new MyBatisNodeInstructionDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
 		lastDatum = null;
+		addedInstructions = new ArrayList<NodeInstruction>(4);
 		setupTestNode();
 	}
 
-	@Test
-	public void storeNew() {
+	private NodeInstruction storeNewInstruction(Long nodeId) {
 		NodeInstruction datum = new NodeInstruction();
 		datum.setCreated(new DateTime());
 		datum.setInstructionDate(new DateTime());
-		datum.setNodeId(TEST_NODE_ID);
+		datum.setNodeId(nodeId);
 		datum.setState(InstructionState.Queued);
 		datum.setTopic("Test Topic");
 
@@ -76,7 +81,13 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		Long id = dao.store(datum);
 		assertNotNull(id);
 		datum.setId(id);
-		lastDatum = datum;
+		addedInstructions.add(datum);
+		return datum;
+	}
+
+	@Test
+	public void storeNew() {
+		lastDatum = storeNewInstruction(TEST_NODE_ID);
 	}
 
 	private void validate(NodeInstruction src, NodeInstruction entity) {
@@ -156,6 +167,67 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	}
 
 	@Test
+	public void findByNodeIds() {
+		storeNew();
+
+		final List<Long> instructionIds = new ArrayList<Long>(2);
+
+		final Long node2Id = TEST_NODE_ID - 1L;
+		setupTestNode(node2Id);
+		NodeInstruction instr2 = storeNewInstruction(node2Id);
+		instructionIds.add(instr2.getId());
+
+		final Long node3Id = TEST_NODE_ID - 2L;
+		setupTestNode(node3Id);
+		NodeInstruction instr3 = storeNewInstruction(node3Id);
+		instructionIds.add(instr3.getId());
+
+		SimpleInstructionFilter filter = new SimpleInstructionFilter();
+		filter.setNodeIds(new Long[] { node2Id, node3Id });
+		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		assertNotNull(matches);
+		assertEquals(Long.valueOf(2L), matches.getTotalResults());
+		assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
+		assertNotNull(matches.getResults());
+		int count = 0;
+		for ( EntityMatch one : matches.getResults() ) {
+			assertThat(one.getId(), equalTo(instructionIds.get(count)));
+			count++;
+		}
+		assertEquals(2, count);
+	}
+
+	@Test
+	public void findByInstructionIds() {
+		storeNew();
+
+		final Long node2Id = TEST_NODE_ID - 1L;
+		setupTestNode(node2Id);
+		storeNewInstruction(node2Id);
+
+		final Long node3Id = TEST_NODE_ID - 2L;
+		setupTestNode(node3Id);
+		storeNewInstruction(node3Id);
+
+		final Long[] instructionIds = new Long[] { addedInstructions.get(0).getId(),
+				addedInstructions.get(2).getId() };
+
+		SimpleInstructionFilter filter = new SimpleInstructionFilter();
+		filter.setInstructionIds(instructionIds);
+		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		assertNotNull(matches);
+		assertEquals(Long.valueOf(2L), matches.getTotalResults());
+		assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
+		assertNotNull(matches.getResults());
+		int count = 0;
+		for ( EntityMatch one : matches.getResults() ) {
+			assertThat(one.getId(), equalTo(instructionIds[count]));
+			count++;
+		}
+		assertEquals(2, count);
+	}
+
+	@Test
 	public void findActive() {
 		findByNodeId();
 
@@ -175,6 +247,33 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		}
 		assertEquals(1, count);
 		assertEquals(lastDatum.getId(), m.getId());
+	}
+
+	@Test
+	public void findActiveForNodes() {
+		storeNew();
+		final Long node2Id = TEST_NODE_ID - 1L;
+		setupTestNode(node2Id);
+		storeNewInstruction(node2Id);
+
+		final Long node3Id = TEST_NODE_ID - 2L;
+		setupTestNode(node3Id);
+		storeNewInstruction(node3Id);
+
+		SimpleInstructionFilter filter = new SimpleInstructionFilter();
+		filter.setNodeIds(new Long[] { node2Id, node3Id });
+		filter.setState(InstructionState.Queued);
+		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		assertNotNull(matches);
+		assertEquals(Long.valueOf(2L), matches.getTotalResults());
+		assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
+		assertNotNull(matches.getResults());
+		int count = 0;
+		for ( EntityMatch one : matches.getResults() ) {
+			count++;
+			assertThat(one.getId(), equalTo(addedInstructions.get(count).getId()));
+		}
+		assertEquals(2, count);
 	}
 
 	@Test

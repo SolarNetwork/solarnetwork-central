@@ -83,8 +83,17 @@
 			solarnet.sn_node_instruction_param nip ON nip.instr_id = ni.id
 		<where>
 			<if test="filter != null">
-				<if test="filter.nodeId != null">
-					AND ni.node_id = #{filter.nodeId,javaType=long,jdbcType=BIGINT}
+				<if test="filter.instructionIds != null">
+					AND ni.id IN
+					<foreach item="item" collection="filter.instructionIds" open="(" separator="," close=")">
+					       #{item,javaType=long,jdbcType=BIGINT}
+					</foreach>
+				</if>
+				<if test="filter.nodeIds != null">
+					AND ni.node_id IN
+					<foreach item="item" collection="filter.nodeIds" open="(" separator="," close=")">
+					       #{item,javaType=long,jdbcType=BIGINT}
+					</foreach>
 				</if>
 				<if test="filter.states != null">
 					AND ni.deliver_state IN
