@@ -27,7 +27,7 @@ package net.solarnetwork.central.domain;
 import java.io.Serializable;
 
 /**
- * Base implementation of a Long-based {@link Identity}.
+ * Base implementation of a String-based {@link Identity}.
  * 
  * @author matt
  * @version $Revision$
@@ -42,7 +42,7 @@ public abstract class BaseStringIdentity implements Cloneable, Serializable, Ide
 	public Object clone() {
 		try {
 			return super.clone();
-		} catch (CloneNotSupportedException e) {
+		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
 		}
@@ -57,7 +57,8 @@ public abstract class BaseStringIdentity implements Cloneable, Serializable, Ide
 	}
 
 	/**
-	 * Test if two BaseStringEntity objects have the same {@link #getId()} value.
+	 * Test if two BaseStringEntity objects have the same {@link #getId()}
+	 * value.
 	 */
 	@Override
 	public boolean equals(Object obj) {
@@ -70,7 +71,7 @@ public abstract class BaseStringIdentity implements Cloneable, Serializable, Ide
 		if ( getClass() != obj.getClass() ) {
 			return false;
 		}
-		BaseStringIdentity other = (BaseStringIdentity)obj;
+		BaseStringIdentity other = (BaseStringIdentity) obj;
 		if ( id == null ) {
 			if ( other.id != null ) {
 				return false;
@@ -82,7 +83,8 @@ public abstract class BaseStringIdentity implements Cloneable, Serializable, Ide
 	}
 
 	/**
-	 * Compare based on the primary key, with <em>null<em> values ordered before non-null values.
+	 * Compare based on the primary key, with <em>null<em> values ordered before
+	 * non-null values.
 	 */
 	@Override
 	public int compareTo(String o) {
@@ -101,12 +103,14 @@ public abstract class BaseStringIdentity implements Cloneable, Serializable, Ide
 	/**
 	 * @return the id
 	 */
+	@Override
 	public String getId() {
 		return id;
 	}
 
 	/**
-	 * @param id the id to set
+	 * @param id
+	 *        the id to set
 	 */
 	public void setId(String id) {
 		this.id = id;
