@@ -143,6 +143,9 @@
 							<optgroup label="User Metadata (read only)">
 								<option value="/solarquery/api/v1/sec/users/meta/{userId}">View specific user metadata</option>
 							</optgroup>
+							<optgroup label="Authentication">
+								<option value="/solaruser/api/v1/sec/whoami">Verify authentication</option>
+							</optgroup>
 							<optgroup label="Instructions">
 								<option value="/solaruser/api/v1/sec/instr/add?nodeIds={nodeIds}&topic=SetControlParameter&parameters%5B0%5D.name={controlId}&parameters%5B0%5D.value={controlValue}" data-method="POST">Set control parameter</option>
 								<option value="/solaruser/api/v1/sec/instr/viewActive?nodeIds={nodeIds}">View active instructions</option>
