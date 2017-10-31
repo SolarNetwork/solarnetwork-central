@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
@@ -76,7 +77,8 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 	public AuthorizationV2Builder createAuthorizationV2Builder(String tokenId, DateTime signingDate) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("id", tokenId);
-		long date = signingDate.toLocalDate().toDateTimeAtStartOfDay().getMillis();
+		long date = signingDate.withZone(DateTimeZone.UTC).toLocalDate()
+				.toDateTimeAtStartOfDay(DateTimeZone.UTC).getMillis();
 		params.put("date", new java.sql.Date(date));
 		Byte[] data = selectFirst(QUERY_FOR_SIGNING_KEY, params);
 		if ( data == null || data.length < 1 ) {
