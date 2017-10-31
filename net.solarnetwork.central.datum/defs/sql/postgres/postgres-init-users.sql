@@ -160,6 +160,16 @@ CREATE VIEW solaruser.user_auth_token_role AS
 	FROM solaruser.user_auth_token t
 	JOIN solaruser.user_role r ON r.user_id = t.user_id AND t.token_type = 'User'::solaruser.user_auth_token_type;
 
+CREATE OR REPLACE FUNCTION solaruser.snws2_signing_key(sign_date date, secret text)
+RETURNS bytea AS $$
+	SELECT hmac('snws2_request', hmac(to_char(sign_date, 'YYYYMMDD'), 'SNWS2' || secret, 'sha256'), 'sha256');
+$$ LANGUAGE SQL STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION solaruser.snws2_signing_key_hex(sign_date date, secret text)
+RETURNS text AS $$
+	SELECT encode(solaruser.snws2_signing_key(sign_date, secret), 'hex');
+$$ LANGUAGE SQL STRICT IMMUTABLE;
+
 /* === USER NODE =========================================================== */
 
 CREATE TABLE solaruser.user_node (
