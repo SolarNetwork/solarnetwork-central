@@ -15,8 +15,6 @@
 
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.web">
 		<prop key="JSONView.indentAmount">0</prop>
-		<prop key="SolarNodeImageMakerController.nimBaseUrl">https://apps.solarnetwork.net/solarnode-image-maker</prop>
-		<prop key="SolarNodeImageMakerController.virtualMachineName">NIM</prop>
 	</osgix:cm-properties>
 	
 	<!-- Service References -->
@@ -40,7 +38,7 @@
 	<osgi:reference id="registrationBiz" sticky="false" depends-on="userValidator"
 		interface="net.solarnetwork.central.user.biz.RegistrationBiz"/>
 	
-	<osgi:reference id="userBiz" sticky="false" depends-on="userValidator"
+	<osgi:reference id="userBiz" filter="(secured=true)" depends-on="userValidator"
 		interface="net.solarnetwork.central.user.biz.UserBiz"/>
 		
 	<osgi:reference id="userMetadataBiz" sticky="false"
@@ -70,14 +68,9 @@
 		<property name="serviceFilter" value="(secured=true)"/>
 	</bean>
 
-	<bean id="appsVirtualMachineBiz" class="net.solarnetwork.util.DynamicServiceTracker">
+	<bean id="nimBiz" class="net.solarnetwork.util.DynamicServiceTracker">
 		<property name="bundleContext" ref="bundleContext"/>
-		<property name="serviceClassName" value="net.solarnetwork.central.cloud.biz.VirtualMachineBiz"/>
-		<property name="propertyFilters">
-			<map>
-				<entry key="uid" value="SolarNetwork-Apps"/>
-			</map>
-		</property>
+		<property name="serviceClassName" value="net.solarnetwork.central.user.nim.biz.SolarNodeImageMakerBiz"/>
 	</bean>
 
 	<!-- Published Services -->

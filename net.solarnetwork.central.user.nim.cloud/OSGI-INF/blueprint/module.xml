@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:osgix="http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+		http://www.osgi.org/xmlns/blueprint/v1.0.0
+		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.nim.cloud.jobs">
+		<beans:prop key="NodeImageMakerVmManager.jobCron">0 12 * * * ?</beans:prop>
+		<beans:prop key="NodeImageMakerVmManager.maximumWaitMs">600000</beans:prop>
+	</osgix:cm-properties>
+
+	<ctx:property-placeholder properties-ref="cfg"/>
+	
+	<!-- Service References -->
+
+	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
+	
+	<reference id="userBiz" interface="net.solarnetwork.central.user.biz.UserBiz" filter="(secured=true)"/>
+
+	<bean id="appsVirtualMachineBiz" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.cloud.biz.VirtualMachineBiz"/>
+		<property name="propertyFilters">
+			<map>
+				<entry key="uid" value="SolarNetwork-Apps"/>
+			</map>
+		</property>
+	</bean>
+		
+	<!-- Published Services -->
+	
+	<service ref="nimBiz" interface="net.solarnetwork.central.user.nim.biz.SolarNodeImageMakerBiz"/>
+	
+	<service ref="nimVmManagerJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{nimVmManagerJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<!-- Supporting Services -->
+
+	<bean id="nimBiz" class="net.solarnetwork.central.user.nim.cloud.CloudSolarNodeImageMakerBiz">
+		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.nim.cloud.CloudSolarNodeImageMakerBiz" autowire-on-update="true"/>
+		<argument ref="userBiz"/>
+		<argument ref="appsVirtualMachineBiz"/>
+	</bean>
+
+	<bean id="nimVmManagerJob" class="net.solarnetwork.central.user.nim.cloud.CloudSolarNodeImageMakerVmJob">
+		<argument ref="eventAdmin"/>
+		<argument ref="nimBiz"/>
+		<property name="jobCron" value="${NodeImageMakerVmManager.jobCron}"/>
+		<property name="maximumWaitMs" value="${NodeImageMakerVmManager.maximumWaitMs}"/>
+		<property name="jobId" value="NodeImageMakerVmManager"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/nim/cloud/NodeImageMakerVmManager"/>
+	</bean>
+
+</blueprint>
