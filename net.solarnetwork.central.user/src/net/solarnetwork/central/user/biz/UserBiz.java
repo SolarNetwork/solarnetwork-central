@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.biz;
 
 import java.util.List;
 import java.util.Set;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
@@ -34,12 +35,13 @@ import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.web.security.AuthorizationV2Builder;
 
 /**
  * API for registered user tasks.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface UserBiz {
 
@@ -233,4 +235,25 @@ public interface UserBiz {
 	 */
 	UserAuthToken updateUserAuthTokenPolicy(Long userId, String tokenId, SecurityPolicy newPolicy,
 			boolean replace);
+
+	/**
+	 * Create an authorization builder object with a populated signing key for a
+	 * specific token.
+	 * 
+	 * <p>
+	 * Use this method to create a new builder with a signing key populated for
+	 * generating signed SNWS2 {@code Authorization} HTTP header values.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param tokenId
+	 *        the UserAuthToken ID to use
+	 * @param signingDate
+	 *        the date to generate the signing key with
+	 * @return the builder
+	 * @since 1.5
+	 */
+	AuthorizationV2Builder createAuthorizationV2Builder(Long userId, String tokenId,
+			DateTime signingDate);
 }

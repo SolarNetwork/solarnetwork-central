@@ -15,13 +15,13 @@
 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.31.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.dao.mybatis" rev="[1.5.0,2.0.0)"/>
 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.11.0,2.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.25.0,2.0.0)"/>
-    	<dependency org="org.aopalliance" name="com.springsource.org.aopalliance" rev="1.0.0" />
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.27.0,2.0.0)"/>
+		<dependency org="org.aopalliance" name="com.springsource.org.aopalliance" rev="1.0.0" />
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>
-    	<dependency org="org.mybatis" name="mybatis" rev="3.2.8" />
-    	<dependency org="org.mybatis" name="mybatis-spring" rev="1.2.2" />
+		<dependency org="org.mybatis" name="mybatis" rev="3.2.8" />
+		<dependency org="org.mybatis" name="mybatis-spring" rev="1.2.2" />
 		<dependency org="org.osgi" name="org.osgi.enterprise" rev="4.2.0"/>
-    	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
+		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
 		<dependency org="org.springframework" name="spring-context" rev="4.2.6.RELEASE"/>
 		<dependency org="org.springframework" name="spring-tx" rev="4.2.6.RELEASE"/>
     </dependencies>

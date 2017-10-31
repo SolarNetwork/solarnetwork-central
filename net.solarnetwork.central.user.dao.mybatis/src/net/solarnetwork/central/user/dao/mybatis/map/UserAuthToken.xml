@@ -78,5 +78,14 @@
 		ORDER BY
 			uat.created, uat.auth_token
 	</select>
+	
+	<select id="get-snws2-signingkey-for-tokenid" parameterType="map" resultType="byte[]">
+		SELECT
+			solaruser.snws2_signing_key(#{date}, uat.auth_secret)
+		FROM
+			solaruser.user_auth_token uat
+		WHERE
+			uat.auth_token = #{id}
+	</select>
 
 </mapper>
