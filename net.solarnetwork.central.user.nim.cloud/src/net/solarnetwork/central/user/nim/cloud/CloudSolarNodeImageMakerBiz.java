@@ -275,10 +275,10 @@ public class CloudSolarNodeImageMakerBiz implements SolarNodeImageMakerBiz {
 			if ( m.find() ) {
 				return Integer.parseInt(m.group(1));
 			}
-			log.warn("NIM ping at {} did not return active session count in response: {}", pingUrl,
+			log.debug("NIM ping at {} did not return active session count in response: {}", pingUrl,
 					data);
 		} catch ( RestClientException e ) {
-			log.warn("NIM ping request to {} did not succeed: {}", pingUrl, e.getMessage());
+			log.debug("NIM ping request to {} did not succeed: {}", pingUrl, e.getMessage());
 		}
 		return -1;
 	}
