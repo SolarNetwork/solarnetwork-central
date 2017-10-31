@@ -18,53 +18,53 @@
 
 	<reference id="registrationBiz"
 		interface="net.solarnetwork.central.user.biz.RegistrationBiz"
-		filter="(!(aop=true))"/>
+		filter="(!(secured=true))"/>
 	
 	<reference id="userBiz"
 		interface="net.solarnetwork.central.user.biz.UserBiz"
-		filter="(!(aop=true))"/>
+		filter="(!(secured=true))"/>
 	
 	<reference id="userMetadataBiz"
 		interface="net.solarnetwork.central.user.biz.UserMetadataBiz"
-		filter="(!(aop=true))"/>
+		filter="(!(secured=true))"/>
 	
 	<reference id="userAlertBiz"
 		interface="net.solarnetwork.central.user.biz.UserAlertBiz"
-		filter="(!(aop=true))"/>
+		filter="(!(secured=true))"/>
 	
 	<reference id="nodeOwnershipBiz"
 		interface="net.solarnetwork.central.user.biz.NodeOwnershipBiz"
-		filter="(!(aop=true))"/>
+		filter="(!(secured=true))"/>
 	
 	<!-- Published Services -->
 
 	<service ref="aopRegistrationBiz" interface="net.solarnetwork.central.user.biz.RegistrationBiz" ranking="10">
 		<service-properties>
-			<entry key="aop" value="true"/>
+			<entry key="secured" value="true"/>
 		</service-properties>
 	</service>
 
 	<service ref="aopUserBiz" interface="net.solarnetwork.central.user.biz.UserBiz" ranking="10">
 		<service-properties>
-			<entry key="aop" value="true"/>
+			<entry key="secured" value="true"/>
 		</service-properties>
 	</service>
 
 	<service ref="aopUserMetadataBiz" interface="net.solarnetwork.central.user.biz.UserMetadataBiz" ranking="10">
 		<service-properties>
-			<entry key="aop" value="true"/>
+			<entry key="secured" value="true"/>
 		</service-properties>
 	</service>
 
 	<service ref="aopNodeOwnershipBiz" interface="net.solarnetwork.central.user.biz.NodeOwnershipBiz" ranking="10">
 		<service-properties>
-			<entry key="aop" value="true"/>
+			<entry key="secured" value="true"/>
 		</service-properties>
 	</service>
 
 	<service ref="aopUserAlertBiz" interface="net.solarnetwork.central.user.biz.UserAlertBiz" ranking="10">
 		<service-properties>
-			<entry key="aop" value="true"/>
+			<entry key="secured" value="true"/>
 		</service-properties>
 	</service>
 	
