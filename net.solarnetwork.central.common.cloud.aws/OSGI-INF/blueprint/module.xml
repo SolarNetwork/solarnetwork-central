@@ -18,11 +18,7 @@
 		<osgix:interfaces>
 			<beans:value>net.solarnetwork.central.cloud.biz.VirtualMachineBiz</beans:value>
 		</osgix:interfaces>
-		<osgix:service-properties>
-			<beans:entry key="settingPid" value="net.solarnetwork.central.cloud.aws.biz.AwsVirtualMachineBiz"/>
-		</osgix:service-properties>
-		<bean class="net.solarnetwork.central.cloud.aws.biz.AwsVirtualMachineBiz" init-method="init">
-		</bean>
+		<bean class="net.solarnetwork.central.cloud.aws.biz.AwsVirtualMachineBiz" init-method="init"/>
 	</osgix:managed-service-factory>
 	
 </blueprint>

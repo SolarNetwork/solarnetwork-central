@@ -22,13 +22,30 @@
 
 package net.solarnetwork.central.cloud.aws.biz;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
+import com.amazonaws.services.ec2.model.DescribeInstanceStatusRequest;
+import com.amazonaws.services.ec2.model.DescribeInstanceStatusResult;
+import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.DescribeTagsRequest;
+import com.amazonaws.services.ec2.model.DescribeTagsResult;
+import com.amazonaws.services.ec2.model.Filter;
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceStatus;
+import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.TagDescription;
+import net.solarnetwork.central.cloud.aws.domain.Ec2VirtualMachine;
 import net.solarnetwork.central.cloud.biz.VirtualMachineBiz;
+import net.solarnetwork.central.cloud.domain.VirtualMachine;
 import net.solarnetwork.central.cloud.domain.VirtualMachineState;
 
 /**
@@ -39,6 +56,9 @@ import net.solarnetwork.central.cloud.domain.VirtualMachineState;
  */
 public class AwsVirtualMachineBiz implements VirtualMachineBiz {
 
+	private String uid = UUID.randomUUID().toString();
+	private String groupUid;
+	private String displayName;
 	private String region = "us-west-2";
 	private String accessKey;
 	private String secretKey;
@@ -57,16 +77,120 @@ public class AwsVirtualMachineBiz implements VirtualMachineBiz {
 		ec2Client = builder.build();
 	}
 
+	private AmazonEC2 getEc2Client() {
+		AmazonEC2 client = ec2Client;
+		if ( client == null ) {
+			throw new RuntimeException("No EC2 client configured");
+		}
+		return client;
+	}
+
+	@Override
+	public VirtualMachine virtualMachineForName(String name) {
+		AmazonEC2 client = getEc2Client();
+		DescribeTagsRequest tagReq = new DescribeTagsRequest().withFilters(
+				new Filter("key").withValues("Name"),
+				new Filter("resource-type").withValues("instance"));
+		DescribeTagsResult tagRes;
+		do {
+			tagRes = client.describeTags(tagReq);
+			for ( TagDescription tag : tagRes.getTags() ) {
+				if ( name.equalsIgnoreCase(tag.getValue()) ) {
+					String instanceId = tag.getResourceId();
+					return new Ec2VirtualMachine(instanceId, tag.getValue());
+				}
+			}
+			tagReq.setNextToken(tagRes.getNextToken());
+		} while ( tagRes.getNextToken() != null );
+
+		return null;
+	}
+
+	@Override
+	public Iterable<VirtualMachine> virtualMachinesForIds(Set<String> ids) {
+		AmazonEC2 client = getEc2Client();
+		DescribeInstancesRequest req = new DescribeInstancesRequest().withInstanceIds(ids);
+		DescribeInstancesResult res;
+		List<VirtualMachine> results = new ArrayList<>(ids.size());
+		do {
+			res = client.describeInstances(req);
+			for ( Reservation reservation : res.getReservations() ) {
+				for ( Instance inst : reservation.getInstances() ) {
+					results.add(new Ec2VirtualMachine(inst));
+				}
+			}
+			req.setNextToken(res.getNextToken());
+		} while ( res.getNextToken() != null );
+		return results;
+	}
+
 	@Override
 	public Map<String, VirtualMachineState> stateForVirtualMachines(Set<String> machineIds) {
-		// TODO Auto-generated method stub
-		return null;
+		AmazonEC2 client = getEc2Client();
+		DescribeInstanceStatusRequest req = new DescribeInstanceStatusRequest()
+				.withInstanceIds(machineIds);
+		DescribeInstanceStatusResult res;
+		Map<String, VirtualMachineState> result = new LinkedHashMap<>(machineIds.size());
+		do {
+			res = client.describeInstanceStatus(req);
+			for ( InstanceStatus status : res.getInstanceStatuses() ) {
+				result.put(status.getInstanceId(), Ec2VirtualMachine
+						.virtualMachineStateForInstanceState(status.getInstanceState()));
+			}
+			req.setNextToken(res.getNextToken());
+		} while ( res.getNextToken() != null );
+		return result;
 	}
 
 	@Override
 	public void changeVirtualMachinesState(Set<String> machineIds, VirtualMachineState state) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public String getUid() {
+		return uid;
+	}
+
+	/**
+	 * Set the service unique ID.
+	 * 
+	 * @param uid
+	 *        the unique ID
+	 */
+	public void setUid(String uid) {
+		this.uid = uid;
+	}
+
+	@Override
+	public String getGroupUid() {
+		return groupUid;
+	}
+
+	/**
+	 * Set the service group unique ID.
+	 * 
+	 * @param groupUid
+	 *        the group ID
+	 */
+	public void setGroupUid(String groupUid) {
+		this.groupUid = groupUid;
+	}
+
+	@Override
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	/**
+	 * Set the service display name.
+	 * 
+	 * @param displayName
+	 *        the display name
+	 */
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
 	}
 
 	/**

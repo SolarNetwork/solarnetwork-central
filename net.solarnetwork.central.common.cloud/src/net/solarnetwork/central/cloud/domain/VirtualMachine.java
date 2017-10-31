@@ -37,6 +37,18 @@ public interface VirtualMachine extends Entity<String> {
 	 * 
 	 * @return a name
 	 */
-	String getName();
+	String getDisplayName();
+
+	/**
+	 * Get the state of this machine.
+	 * 
+	 * <p>
+	 * This value might be a cached, last known value. Use
+	 * {@code VirtualMachineBiz} to read the current state.
+	 * </p>
+	 * 
+	 * @return the state
+	 */
+	VirtualMachineState getState();
 
 }

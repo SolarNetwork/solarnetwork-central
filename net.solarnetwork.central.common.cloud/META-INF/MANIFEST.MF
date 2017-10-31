@@ -10,5 +10,5 @@ Export-Package:
  net.solarnetwork.central.cloud.domain;version="1.0.0"
 Import-Package: 
  net.solarnetwork.central.domain;version="1.23",
- net.solarnetwork.domain;version="1.10",
+ net.solarnetwork.domain;version="1.11",
  org.joda.time;version="2.9.0"
