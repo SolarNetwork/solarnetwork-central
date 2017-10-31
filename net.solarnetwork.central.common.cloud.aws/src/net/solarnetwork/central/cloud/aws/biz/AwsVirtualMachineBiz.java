@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
@@ -40,8 +42,13 @@ import com.amazonaws.services.ec2.model.DescribeTagsRequest;
 import com.amazonaws.services.ec2.model.DescribeTagsResult;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceStateChange;
 import com.amazonaws.services.ec2.model.InstanceStatus;
 import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.StartInstancesRequest;
+import com.amazonaws.services.ec2.model.StartInstancesResult;
+import com.amazonaws.services.ec2.model.StopInstancesRequest;
+import com.amazonaws.services.ec2.model.StopInstancesResult;
 import com.amazonaws.services.ec2.model.TagDescription;
 import net.solarnetwork.central.cloud.aws.domain.Ec2VirtualMachine;
 import net.solarnetwork.central.cloud.biz.VirtualMachineBiz;
@@ -62,6 +69,8 @@ public class AwsVirtualMachineBiz implements VirtualMachineBiz {
 	private String region = "us-west-2";
 	private String accessKey;
 	private String secretKey;
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private AmazonEC2 ec2Client;
 
@@ -128,7 +137,7 @@ public class AwsVirtualMachineBiz implements VirtualMachineBiz {
 	public Map<String, VirtualMachineState> stateForVirtualMachines(Set<String> machineIds) {
 		AmazonEC2 client = getEc2Client();
 		DescribeInstanceStatusRequest req = new DescribeInstanceStatusRequest()
-				.withInstanceIds(machineIds);
+				.withInstanceIds(machineIds).withIncludeAllInstances(true);
 		DescribeInstanceStatusResult res;
 		Map<String, VirtualMachineState> result = new LinkedHashMap<>(machineIds.size());
 		do {
@@ -143,9 +152,21 @@ public class AwsVirtualMachineBiz implements VirtualMachineBiz {
 	}
 
 	@Override
-	public void changeVirtualMachinesState(Set<String> machineIds, VirtualMachineState state) {
-		// TODO Auto-generated method stub
-
+	public void changeVirtualMachinesState(Set<String> machineIds, VirtualMachineState desiredState) {
+		AmazonEC2 client = getEc2Client();
+		List<InstanceStateChange> results = null;
+		if ( desiredState == VirtualMachineState.Running ) {
+			StartInstancesRequest req = new StartInstancesRequest().withInstanceIds(machineIds);
+			StartInstancesResult res = client.startInstances(req);
+			results = res.getStartingInstances();
+		} else if ( desiredState == VirtualMachineState.Stopped ) {
+			StopInstancesRequest req = new StopInstancesRequest().withInstanceIds(machineIds);
+			StopInstancesResult res = client.stopInstances(req);
+			results = res.getStoppingInstances();
+		} else {
+			throw new IllegalArgumentException("Desired state not supported: " + desiredState);
+		}
+		log.info("Changed EC2 instances {} desired state to {}: {}", machineIds, desiredState, results);
 	}
 
 	@Override
