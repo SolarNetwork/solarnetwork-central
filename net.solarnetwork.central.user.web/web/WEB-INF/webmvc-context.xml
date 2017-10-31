@@ -82,6 +82,11 @@
 		<property name="pingTests" ref="pingTests"/>
 	</bean>
 	
+	<bean id="v1SolarNodeImageMakerController" class="net.solarnetwork.central.reg.web.api.v1.SolarNodeImageMakerController">
+		<property name="nimBaseUrl" value="${SolarNodeImageMakerController.nimBaseUrl}"/>
+		<property name="virtualMachineName" value="${SolarNodeImageMakerController.virtualMachineName}"/>
+	</bean>
+	
 	<!-- Dispatches requests mapped to POJO @Controllers implementations -->
 	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"/>
 

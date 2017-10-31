@@ -15,6 +15,8 @@
 
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.web">
 		<prop key="JSONView.indentAmount">0</prop>
+		<prop key="SolarNodeImageMakerController.nimBaseUrl">https://apps.solarnetwork.net/solarnode-image-maker</prop>
+		<prop key="SolarNodeImageMakerController.virtualMachineName">NIM</prop>
 	</osgix:cm-properties>
 	
 	<!-- Service References -->
@@ -66,6 +68,16 @@
 		<property name="bundleContext" ref="bundleContext"/>
 		<property name="serviceClassName" value="net.solarnetwork.central.user.billing.biz.BillingBiz"/>
 		<property name="serviceFilter" value="(secured=true)"/>
+	</bean>
+
+	<bean id="appsVirtualMachineBiz" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.cloud.biz.VirtualMachineBiz"/>
+		<property name="propertyFilters">
+			<map>
+				<entry key="uid" value="SolarNetwork-Apps"/>
+			</map>
+		</property>
 	</bean>
 
 	<!-- Published Services -->
