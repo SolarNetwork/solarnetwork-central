@@ -19,8 +19,8 @@
 -->
 <web-app xmlns="http://java.sun.com/xml/ns/javaee"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
-	version="2.5">
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	version="3.0" metadata-complete="true">
 
 	<display-name>SolarNetwork Web User Registration</display-name>
     <description>SolarNetwork Web User Registration Server</description>
@@ -44,6 +44,7 @@
 	<filter>
 		<filter-name>springSecurityFilterChain</filter-name>
 		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+		<async-supported>true</async-supported>
 	</filter>
 	
 	<filter-mapping>
@@ -55,6 +56,7 @@
 	<filter>
 		<filter-name>Compression Filter</filter-name>
 		<filter-class>org.mortbay.servlet.GzipFilter</filter-class>
+		<async-supported>true</async-supported>
 		<init-param>
 			<param-name>minGzipSize</param-name>
 			<param-value>1024</param-value>
@@ -78,6 +80,7 @@
 	<filter>
 		<filter-name>Set Character Encoding</filter-name>
 		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<async-supported>true</async-supported>
 		<init-param>
 			<param-name>encoding</param-name>
 			<param-value>UTF-8</param-value>
@@ -101,6 +104,7 @@
 			<param-value></param-value>
 		</init-param>
 		<load-on-startup>1</load-on-startup>
+		<async-supported>true</async-supported>
 	</servlet>
 	
 	<servlet-mapping>
