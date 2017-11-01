@@ -12,6 +12,7 @@
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.cloud" rev="[1.0.0,2.0.0)"/>
+ 		<dependency org="com.amazonaws" name="aws-java-sdk-osgi" rev="1.11.207"/>
 		<dependency org="joda-time" name="joda-time" rev="2.9"/>
 		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
     </dependencies>
