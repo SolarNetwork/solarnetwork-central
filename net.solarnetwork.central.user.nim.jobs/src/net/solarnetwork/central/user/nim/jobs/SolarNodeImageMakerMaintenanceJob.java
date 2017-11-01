@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudSolarNodeImageMakerVmJob.java - 1/11/2017 11:32:30 AM
+ * SolarNodeImageMakerMaintenanceJob.java - 1/11/2017 11:32:30 AM
  * 
  * Copyright 2017 SolarNetwork.net Dev Team
  * 
@@ -20,41 +20,50 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.nim.cloud;
+package net.solarnetwork.central.user.nim.jobs;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import net.solarnetwork.central.biz.MaintenanceSubscriber;
 import net.solarnetwork.central.scheduler.JobSupport;
+import net.solarnetwork.central.user.nim.biz.SolarNodeImageMakerBiz;
+import net.solarnetwork.util.OptionalServiceCollection;
 
 /**
- * Periodic job to perform virtual machine maintenance on the NIM service.
+ * Periodic job to perform maintenance on registered NIM services.
  * 
  * @author matt
  * @version 1.0
  */
-public class CloudSolarNodeImageMakerVmJob extends JobSupport {
+public class SolarNodeImageMakerMaintenanceJob extends JobSupport {
 
-	private final CloudSolarNodeImageMakerBiz service;
+	private final OptionalServiceCollection<SolarNodeImageMakerBiz> services;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param eventAdmin
 	 *        the {@link EventAdmin} to use
-	 * @param service
-	 *        the service to use
+	 * @param services
+	 *        the services to manage
 	 */
-	public CloudSolarNodeImageMakerVmJob(EventAdmin eventAdmin, CloudSolarNodeImageMakerBiz service) {
+	public SolarNodeImageMakerMaintenanceJob(EventAdmin eventAdmin,
+			OptionalServiceCollection<SolarNodeImageMakerBiz> services) {
 		super(eventAdmin);
 		setJobGroup("NIM");
 		setMaximumWaitMs(TimeUnit.MINUTES.toMillis(10));
-		this.service = service;
+		this.services = services;
 	}
 
 	@Override
 	protected boolean handleJob(Event job) throws Exception {
-		service.performVmMaintence();
+		for ( SolarNodeImageMakerBiz service : services.services() ) {
+			if ( service instanceof MaintenanceSubscriber ) {
+				((MaintenanceSubscriber) service).performServiceMaintenance(Collections.emptyMap());
+			}
+		}
 		return true;
 	}
 

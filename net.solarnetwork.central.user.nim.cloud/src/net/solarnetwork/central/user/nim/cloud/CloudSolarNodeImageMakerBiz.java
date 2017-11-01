@@ -26,6 +26,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,6 +42,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.central.RemoteServiceException;
+import net.solarnetwork.central.biz.MaintenanceSubscriber;
 import net.solarnetwork.central.cloud.biz.VirtualMachineBiz;
 import net.solarnetwork.central.cloud.domain.VirtualMachine;
 import net.solarnetwork.central.cloud.domain.VirtualMachineState;
@@ -58,10 +60,12 @@ import net.solarnetwork.web.security.AuthorizationV2Builder;
  * @author matt
  * @version 1.0
  */
-public class CloudSolarNodeImageMakerBiz implements SolarNodeImageMakerBiz {
+public class CloudSolarNodeImageMakerBiz implements SolarNodeImageMakerBiz, MaintenanceSubscriber {
 
 	private final UserBiz userBiz;
 	private final OptionalService<VirtualMachineBiz> virtualMachineBiz;
+	private String uid;
+	private String groupUid;
 	private String virtualMachineName = "NIM";
 	private String nimBaseUrl = "https://apps.solarnetwork.net/solarnode-image-maker";
 	private int virtualMachineTimeoutSeconds = (int) TimeUnit.MINUTES.toSeconds(4);
@@ -86,6 +90,7 @@ public class CloudSolarNodeImageMakerBiz implements SolarNodeImageMakerBiz {
 		super();
 		this.userBiz = userBiz;
 		this.virtualMachineBiz = virtualMachineBiz;
+		this.uid = UUID.randomUUID().toString();
 	}
 
 	@Override
@@ -115,12 +120,28 @@ public class CloudSolarNodeImageMakerBiz implements SolarNodeImageMakerBiz {
 	 * </p>
 	 * 
 	 */
-	public void performVmMaintence() {
+	@Override
+	public void performServiceMaintenance(Map<String, ?> parameters) {
 		int activeSessionCount = nimActiveSessionCount();
 		log.info("NIM at {} has {} active sessions", nimBaseUrl, activeSessionCount);
 		if ( activeSessionCount == 0 ) {
 			shutdownNim();
 		}
+	}
+
+	@Override
+	public String getUid() {
+		return uid;
+	}
+
+	@Override
+	public String getGroupUid() {
+		return groupUid;
+	}
+
+	@Override
+	public String getDisplayName() {
+		return "Cloud SolarNodeImageMaker Integration";
 	}
 
 	private String getNimAuthorizationKey(URI reqUri, SecurityToken token) {
@@ -314,6 +335,26 @@ public class CloudSolarNodeImageMakerBiz implements SolarNodeImageMakerBiz {
 	 */
 	public void setVirtualMachineTimeoutSeconds(int virtualMachineTimeoutSeconds) {
 		this.virtualMachineTimeoutSeconds = virtualMachineTimeoutSeconds;
+	}
+
+	/**
+	 * Set the unique ID for this service.
+	 * 
+	 * @param uid
+	 *        the UID
+	 */
+	public void setUid(String uid) {
+		this.uid = uid;
+	}
+
+	/**
+	 * Set the group ID for this service.
+	 * 
+	 * @param groupUid
+	 *        the group ID
+	 */
+	public void setGroupUid(String groupUid) {
+		this.groupUid = groupUid;
 	}
 
 }
