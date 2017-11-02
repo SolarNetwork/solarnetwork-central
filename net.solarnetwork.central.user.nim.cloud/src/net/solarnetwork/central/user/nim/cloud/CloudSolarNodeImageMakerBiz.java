@@ -182,7 +182,7 @@ public class CloudSolarNodeImageMakerBiz implements SolarNodeImageMakerBiz, Main
 
 	private static String uriHost(URI uri) {
 		String host = uri.getHost();
-		if ( uri.getPort() != 80 && uri.getPort() != 443 ) {
+		if ( uri.getPort() > 0 && uri.getPort() != 80 && uri.getPort() != 443 ) {
 			host += ":" + uri.getPort();
 		}
 		return host;
