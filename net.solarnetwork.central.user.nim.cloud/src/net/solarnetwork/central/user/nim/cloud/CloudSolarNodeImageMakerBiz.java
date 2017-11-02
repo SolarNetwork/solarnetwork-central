@@ -193,6 +193,12 @@ public class CloudSolarNodeImageMakerBiz implements SolarNodeImageMakerBiz, Main
 		AuthorizationV2Builder authBuilder = userBiz.createAuthorizationV2Builder(token.getUserId(),
 				token.getToken(), now);
 		authBuilder.path("/solaruser/api/v1/sec/whoami").host(snHost);
+		if ( log.isDebugEnabled() ) {
+			log.debug("Pre-signing /whoami request canonical request data:\n{}\n\nSigning key: {}",
+					authBuilder.buildCanonicalRequestData(), authBuilder.signingKeyHex());
+		}
+		log.info("Pre-signing /whoami request to {} @ {} on behalf of user {} token {}", snHost, now,
+				token.getUserId(), token.getToken());
 		return authBuilder.build();
 	}
 

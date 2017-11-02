@@ -79,7 +79,9 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 		params.put("id", tokenId);
 		long date = signingDate.withZone(DateTimeZone.UTC).toLocalDate()
 				.toDateTimeAtStartOfDay(DateTimeZone.UTC).getMillis();
-		params.put("date", new java.sql.Date(date));
+		java.sql.Date sqlDate = new java.sql.Date(date);
+		params.put("date", sqlDate);
+		log.debug("Requesting signing key for token {} with date {}", tokenId, sqlDate);
 		Byte[] data = selectFirst(QUERY_FOR_SIGNING_KEY, params);
 		if ( data == null || data.length < 1 ) {
 			return null;
