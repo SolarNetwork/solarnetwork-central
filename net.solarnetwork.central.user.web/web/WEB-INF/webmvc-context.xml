@@ -83,7 +83,7 @@
 	</bean>
 	
 	<!-- Dispatches requests mapped to POJO @Controllers implementations -->
-	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"/>
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter"/>
 
 	<!-- Enables plain Controllers -->
 	<bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter" />

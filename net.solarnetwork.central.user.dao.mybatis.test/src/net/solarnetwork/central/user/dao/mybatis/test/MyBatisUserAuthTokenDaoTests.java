@@ -22,14 +22,18 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
@@ -40,12 +44,13 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.web.security.AuthorizationV2Builder;
 
 /**
  * Test cases for the {@link MyBatisUserAuthTokenDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -199,6 +204,28 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		assertNotNull(results);
 		assertEquals(1, results.size());
 		assertEquals(authToken3, results.get(0));
+	}
+
+	private DateTime getTestDate() {
+		return new DateTime(2017, 3, 25, 14, 30, 0, DateTimeZone.UTC);
+	}
+
+	@Test
+	public void createAuthBuilder() {
+		storeNew();
+		DateTime date = getTestDate();
+		AuthorizationV2Builder builder = userAuthTokenDao.createAuthorizationV2Builder(TEST_TOKEN, date);
+
+		assertThat("Builder", builder, notNullValue());
+		assertThat("Signing key", builder.signingKeyHex(),
+				equalTo("4ffe547294445f9f4e89f80c4c0801b95d4329a9936389582ae5a6a5758c70fe"));
+
+		builder.host("localhost").path("/api/test");
+
+		final String result = builder.build();
+		assertThat("Authorization header", result, equalTo(
+				"SNWS2 Credential=public.token12345678,SignedHeaders=date;host,Signature=535124f5f333c0aebe42996a429a2a6e4b347dcc2ac2d8cbb8ac6b641fafbab7"));
+
 	}
 
 }

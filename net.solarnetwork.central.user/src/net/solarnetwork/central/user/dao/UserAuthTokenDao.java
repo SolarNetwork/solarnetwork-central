@@ -23,14 +23,16 @@
 package net.solarnetwork.central.user.dao;
 
 import java.util.List;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.UserAuthToken;
+import net.solarnetwork.web.security.AuthorizationV2Builder;
 
 /**
  * DAO API for {@link UserAuthToken} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserAuthTokenDao extends GenericDao<UserAuthToken, String> {
 
@@ -43,5 +45,21 @@ public interface UserAuthTokenDao extends GenericDao<UserAuthToken, String> {
 	 *         found
 	 */
 	List<UserAuthToken> findUserAuthTokensForUser(Long userId);
+
+	/**
+	 * Create a new {@link AuthorizationV2Builder} for a given token.
+	 * 
+	 * <p>
+	 * The returned builder will have a signing key populated.
+	 * </p>
+	 * 
+	 * @param tokenId
+	 *        the token ID to get a builder for
+	 * @param signingDate
+	 *        the date to use in the signing key
+	 * @return the builder, or {@literal null} if the given {@code tokenId} is
+	 *         not found
+	 */
+	public AuthorizationV2Builder createAuthorizationV2Builder(String tokenId, DateTime signingDate);
 
 }

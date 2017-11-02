@@ -27,6 +27,7 @@ import java.security.SecureRandom;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
@@ -56,12 +57,13 @@ import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
+import net.solarnetwork.web.security.AuthorizationV2Builder;
 
 /**
  * DAO-based implementation of {@link UserBiz}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
@@ -402,6 +404,21 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			cancelNodeOwnershipTransfer(userId, nodeId);
 		}
 		return xfer;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public AuthorizationV2Builder createAuthorizationV2Builder(Long userId, String tokenId,
+			DateTime signingDate) {
+		assert userId != null;
+		UserAuthToken token = userAuthTokenDao.get(tokenId);
+		if ( token == null ) {
+			return null;
+		}
+		if ( !userId.equals(token.getUserId()) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
+		}
+		return userAuthTokenDao.createAuthorizationV2Builder(tokenId, signingDate);
 	}
 
 	public void setUserDao(UserDao userDao) {

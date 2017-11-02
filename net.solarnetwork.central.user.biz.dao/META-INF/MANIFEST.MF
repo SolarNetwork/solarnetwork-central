@@ -2,11 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central DAO User Biz
 Bundle-SymbolicName: net.solarnetwork.central.user.biz.dao
-Bundle-Version: 1.16.1
+Bundle-Version: 1.17.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: net.solarnetwork.central.user.biz.dao;version="1.7.1"
 Import-Package: 
+ javax.crypto,
+ javax.crypto.spec,
  net.sf.ehcache;version="[2.7,3.0)",
  net.solarnetwork.central;version="1.0",
  net.solarnetwork.central.dao;version="1.13",
@@ -15,13 +17,14 @@ Import-Package:
  net.solarnetwork.central.instructor.biz;version="1.2.0",
  net.solarnetwork.central.instructor.domain;version="1.1.1",
  net.solarnetwork.central.security;version="1.8",
- net.solarnetwork.central.user.biz;version="1.14",
- net.solarnetwork.central.user.dao;version="1.6",
+ net.solarnetwork.central.user.biz;version="1.16",
+ net.solarnetwork.central.user.dao;version="1.9",
  net.solarnetwork.central.user.domain;version="1.12",
  net.solarnetwork.domain;version="1.5",
  net.solarnetwork.io;version="1.1.0",
  net.solarnetwork.support;version="1.2.0",
  net.solarnetwork.util;version="[1.6,2.0)",
+ net.solarnetwork.web.security;version="[1.0,2.0)",
  org.aopalliance.aop;version="[1.0,2.0)",
  org.apache.commons.codec.binary;version="[1.7,2.0)",
  org.apache.commons.codec.digest;version="[1.7,2.0)",
@@ -36,6 +39,7 @@ Import-Package:
  org.springframework.core;version="[4.2,5.0)",
  org.springframework.dao;version="[4.2,5.0)",
  org.springframework.jdbc.support;version="[4.2,5.0)",
+ org.springframework.http;version="[4.2,5.0)",
  org.springframework.security.core;version="[4.1,5.0)",
  org.springframework.security.core.context;version="[4.1,5.0)",
  org.springframework.stereotype;version="[4.2,5.0)",

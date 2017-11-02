@@ -38,7 +38,7 @@
 	<osgi:reference id="registrationBiz" sticky="false" depends-on="userValidator"
 		interface="net.solarnetwork.central.user.biz.RegistrationBiz"/>
 	
-	<osgi:reference id="userBiz" sticky="false" depends-on="userValidator"
+	<osgi:reference id="userBiz" filter="(secured=true)" depends-on="userValidator"
 		interface="net.solarnetwork.central.user.biz.UserBiz"/>
 		
 	<osgi:reference id="userMetadataBiz" sticky="false"
@@ -66,6 +66,11 @@
 		<property name="bundleContext" ref="bundleContext"/>
 		<property name="serviceClassName" value="net.solarnetwork.central.user.billing.biz.BillingBiz"/>
 		<property name="serviceFilter" value="(secured=true)"/>
+	</bean>
+
+	<bean id="nimBiz" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.user.nim.biz.SolarNodeImageMakerBiz"/>
 	</bean>
 
 	<!-- Published Services -->

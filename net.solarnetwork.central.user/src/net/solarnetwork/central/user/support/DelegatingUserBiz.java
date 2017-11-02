@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.support;
 
 import java.util.List;
 import java.util.Set;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.user.biz.UserBiz;
@@ -34,12 +35,13 @@ import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.web.security.AuthorizationV2Builder;
 
 /**
  * Delegating implementation of {@link UserBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @SuppressWarnings("deprecation")
 public class DelegatingUserBiz implements UserBiz {
@@ -134,6 +136,12 @@ public class DelegatingUserBiz implements UserBiz {
 	@Override
 	public List<UserNode> getArchivedUserNodes(Long userId) throws AuthorizationException {
 		return delegate.getArchivedUserNodes(userId);
+	}
+
+	@Override
+	public AuthorizationV2Builder createAuthorizationV2Builder(Long userId, String tokenId,
+			DateTime signingDate) {
+		return delegate.createAuthorizationV2Builder(userId, tokenId, signingDate);
 	}
 
 }

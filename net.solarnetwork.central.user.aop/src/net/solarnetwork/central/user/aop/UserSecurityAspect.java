@@ -39,7 +39,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * Security enforcing AOP aspect for {@link UserBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 public class UserSecurityAspect extends AuthorizationSupport {
@@ -95,6 +95,10 @@ public class UserSecurityAspect extends AuthorizationSupport {
 	public void updateAuthToken(Long userId, String token) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserBiz.createAuthorizationV2Builder(..)) && args(userId,token,..)")
+	public void createAuthorizationV2Builder(Long userId, String token) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.biz.*UserBiz.saveUserNode(..)) && args(entry)")
 	public void updateUserNode(UserNode entry) {
 	}
@@ -120,7 +124,7 @@ public class UserSecurityAspect extends AuthorizationSupport {
 		}
 	}
 
-	@Before("deleteAuthToken(userId, tokenId) || updateAuthToken(userId, tokenId)")
+	@Before("deleteAuthToken(userId, tokenId) || updateAuthToken(userId, tokenId) || createAuthorizationV2Builder(userId, tokenId)")
 	public void updateAuthTokenAccessCheck(Long userId, String tokenId) {
 		requireUserWriteAccess(userId);
 		UserAuthToken token = userAuthTokenDao.get(tokenId);

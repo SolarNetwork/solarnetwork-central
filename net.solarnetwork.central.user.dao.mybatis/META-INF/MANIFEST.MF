@@ -2,12 +2,12 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarUser MyBatis DAO
 Bundle-SymbolicName: net.solarnetwork.central.user.dao.mybatis
-Bundle-Version: 1.9.0
+Bundle-Version: 1.10.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
- net.solarnetwork.central.user.dao.mybatis;version="1.7.0",
- net.solarnetwork.central.user.dao.mybatis.map;version="1.8.0"
+ net.solarnetwork.central.user.dao.mybatis;version="1.8.0",
+ net.solarnetwork.central.user.dao.mybatis.map;version="1.9.0"
 Import-Package: 
  javax.sql,
  net.solarnetwork.central.dao;version="1.0",
@@ -17,9 +17,10 @@ Import-Package:
  net.solarnetwork.central.domain;version="1.0",
  net.solarnetwork.central.security;version="1.9.0",
  net.solarnetwork.central.support;version="1.12.0",
- net.solarnetwork.central.user.dao;version="1.8",
+ net.solarnetwork.central.user.dao;version="1.9",
  net.solarnetwork.central.user.domain;version="1.14",
  net.solarnetwork.util;version="1.0",
+ net.solarnetwork.web.security;version="1.1",
  org.aopalliance.aop;version="1.0.0",
  org.apache.ibatis.annotations;version="[3.2,4.0)",
  org.apache.ibatis.mapping;version="[3.2,4.0)",
@@ -36,6 +37,7 @@ Import-Package:
  org.springframework.beans;version="[4.2,5.0)",
  org.springframework.context;version="[4.2,5.0)",
  org.springframework.core;version="[4.2,5.0)",
+ org.springframework.http;version="[4.2,5.0)",
  org.springframework.jdbc.support;version="[4.2,5.0)",
  org.springframework.transaction;version="[4.2,5.0)",
  org.springframework.transaction.annotation;version="[4.2,5.0)"

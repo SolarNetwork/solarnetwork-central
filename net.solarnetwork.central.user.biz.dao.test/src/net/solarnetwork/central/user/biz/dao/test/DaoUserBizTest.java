@@ -42,6 +42,7 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IArgumentMatcher;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,12 +67,13 @@ import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
+import net.solarnetwork.web.security.AuthorizationV2Builder;
 
 /**
  * Test cases for the {@link DaoUserBiz} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoUserBizTest {
 
@@ -505,6 +507,29 @@ public class DaoUserBizTest {
 		assertThat("UserNode now owned by recipient", userNode.getUser(), sameInstance(recipient));
 		assertThat("Auth token no longer contains transferred node", userAuthToken.getNodeIds(),
 				hasItems(TEST_NODE_ID_2));
+	}
+
+	@Test
+	public void createAuthBuilder() {
+		// given
+		UserAuthToken token = new UserAuthToken(TEST_AUTH_TOKEN, TEST_USER_ID, TEST_AUTH_SECRET,
+				UserAuthTokenType.User);
+		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(token);
+
+		DateTime signingDate = new DateTime(2017, 1, 1, 0, 0, DateTimeZone.UTC);
+		AuthorizationV2Builder builder = new AuthorizationV2Builder(TEST_AUTH_TOKEN);
+		expect(userAuthTokenDao.createAuthorizationV2Builder(TEST_AUTH_TOKEN, signingDate))
+				.andReturn(builder);
+
+		// when
+		replayProperties();
+		AuthorizationV2Builder result = userBiz.createAuthorizationV2Builder(TEST_USER_ID,
+				TEST_AUTH_TOKEN, signingDate);
+
+		// then
+		assertThat("Builder", result, sameInstance(builder));
+
+		verifyProperties();
 	}
 
 }
