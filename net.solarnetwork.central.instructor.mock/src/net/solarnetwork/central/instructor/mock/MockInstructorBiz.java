@@ -23,8 +23,10 @@
 package net.solarnetwork.central.instructor.mock;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
@@ -37,7 +39,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  * Mock implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MockInstructorBiz implements InstructorBiz {
 
@@ -86,6 +88,41 @@ public class MockInstructorBiz implements InstructorBiz {
 	@Override
 	public NodeInstruction getInstruction(Long instructionId) {
 		return null;
+	}
+
+	@Override
+	public List<NodeInstruction> getActiveInstructionsForNodes(Set<Long> nodeIds) {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public List<NodeInstruction> getPendingInstructionsForNodes(Set<Long> nodeIds) {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public List<NodeInstruction> queueInstructions(Set<Long> nodeIds, Instruction instruction) {
+		List<NodeInstruction> result = new ArrayList<NodeInstruction>(nodeIds.size());
+		for ( Long nodeId : nodeIds ) {
+			result.add(queueInstruction(nodeId, instruction));
+		}
+		return result;
+	}
+
+	@Override
+	public List<NodeInstruction> getInstructions(Set<Long> instructionIds) {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public void updateInstructionsState(Set<Long> instructionIds, InstructionState state) {
+		// nothing to do here
+	}
+
+	@Override
+	public void updateInstructionsState(Set<Long> instructionIds, InstructionState state,
+			Map<Long, Map<String, ?>> resultParameters) {
+		// nothing to do here
 	}
 
 }
