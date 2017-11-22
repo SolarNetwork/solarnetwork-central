@@ -46,7 +46,7 @@ import net.solarnetwork.central.scheduler.SchedulerUtils;
  * Manage the lifecycle of the Quartz Scheduler.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SchedulerManager extends EventHandlerSupport
 		implements ApplicationListener<ContextRefreshedEvent>, EventHandler, PingTest {
@@ -182,6 +182,7 @@ public class SchedulerManager extends EventHandlerSupport
 							return new PingTestResult(false, String.format(stateErrorTemplate,
 									triggerGroup, triggerKey.getName(), "BLOCKED", lastFireTime));
 						}
+						break;
 
 					case ERROR:
 						trigger = s.getTrigger(triggerKey);
