@@ -89,7 +89,7 @@
 			</when>
 			<when test="filter.nodeIds.length > 1 and filter.sourceId == null">
 				{call solardatum.find_most_recent(
-					CAST(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler} AS solarcommon.node_ids)
+					#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
 				)}
 			</when>
 			<otherwise>
