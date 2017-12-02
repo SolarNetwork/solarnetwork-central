@@ -71,7 +71,7 @@
 
 	<sql id="fragment-findall-GeneralLocationDatumMetadata-GeneralLocationDatumMetadataMatch-where">
 		<if test="filter.tags != null and filter.tags.length &gt; 0">
-			JOIN LATERAL jsonb_array_elements(meta.jdata-&gt;'t') jtag ON true
+			JOIN LATERAL json_array_elements(meta.jdata-&gt;'t') jtag ON true
 		</if>
 		<where>
 			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">

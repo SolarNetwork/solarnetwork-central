@@ -10,7 +10,7 @@ $BODY$
 DECLARE
 	ts_crea timestamp with time zone := COALESCE(cdate, now());
 	ts_post timestamp with time zone := COALESCE(pdate, now());
-	jdata_json jsonb := jdata::jsonb;
+	jdata_json json := jdata::json;
 	jdata_prop_count integer := solardatum.datum_prop_count(jdata_json);
 	ts_post_hour timestamp with time zone := date_trunc('hour', ts_post);
 BEGIN
