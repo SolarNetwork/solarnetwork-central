@@ -8,13 +8,15 @@ ALTER TABLE solardatum.da_loc_datum
   ALTER COLUMN ts SET DATA TYPE timestamp with time zone,
   ALTER COLUMN loc_id SET DATA TYPE bigint,
   ALTER COLUMN source_id SET DATA TYPE character varying(64),
-  ALTER COLUMN posted SET DATA TYPE timestamp with time zone;
+  ALTER COLUMN posted SET DATA TYPE timestamp with time zone,
+  ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 ALTER TABLE solardatum.da_loc_meta
   ALTER COLUMN loc_id SET DATA TYPE bigint,
   ALTER COLUMN source_id SET DATA TYPE character varying(64),
   ALTER COLUMN created SET DATA TYPE timestamp with time zone,
-  ALTER COLUMN updated SET DATA TYPE timestamp with time zone;
+  ALTER COLUMN updated SET DATA TYPE timestamp with time zone,
+  ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 ALTER TABLE solaragg.agg_stale_loc_datum
   ALTER COLUMN loc_id SET DATA TYPE bigint,
@@ -27,7 +29,8 @@ ALTER TABLE solaragg.agg_loc_messages
 
 ALTER TABLE solaragg.agg_loc_datum_hourly
   ALTER COLUMN loc_id SET DATA TYPE bigint,
-  ALTER COLUMN source_id SET DATA TYPE character varying(64);
+  ALTER COLUMN source_id SET DATA TYPE character varying(64),
+  ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 ALTER TABLE solaragg.aud_loc_datum_hourly
   ALTER COLUMN loc_id SET DATA TYPE bigint,
@@ -35,11 +38,13 @@ ALTER TABLE solaragg.aud_loc_datum_hourly
 
 ALTER TABLE solaragg.agg_loc_datum_daily
   ALTER COLUMN loc_id SET DATA TYPE bigint,
-  ALTER COLUMN source_id SET DATA TYPE character varying(64);
+  ALTER COLUMN source_id SET DATA TYPE character varying(64),
+  ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 ALTER TABLE solaragg.agg_loc_datum_monthly
   ALTER COLUMN loc_id SET DATA TYPE bigint,
-  ALTER COLUMN source_id SET DATA TYPE character varying(64);
+  ALTER COLUMN source_id SET DATA TYPE character varying(64),
+  ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 CREATE VIEW solaragg.da_loc_datum_avail_hourly AS
 WITH loctz AS (
@@ -81,7 +86,7 @@ CREATE OR REPLACE FUNCTION solardatum.store_loc_meta(
 $BODY$
 DECLARE
 	udate timestamp with time zone := now();
-	jdata_json json := jdata::json;
+	jdata_json jsonb := jdata::jsonb;
 BEGIN
 	INSERT INTO solardatum.da_loc_meta(loc_id, source_id, created, updated, jdata)
 	VALUES (loc, src, cdate, udate, jdata_json)

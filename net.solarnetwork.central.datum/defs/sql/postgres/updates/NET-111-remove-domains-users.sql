@@ -1,6 +1,7 @@
 ALTER TABLE solaruser.user_meta
   ALTER COLUMN created SET DATA TYPE timestamp with time zone,
-  ALTER COLUMN updated SET DATA TYPE timestamp with time zone;
+  ALTER COLUMN updated SET DATA TYPE timestamp with time zone,
+  ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 DROP FUNCTION solaruser.store_user_meta(solarcommon.ts, bigint, text);
 CREATE OR REPLACE FUNCTION solaruser.store_user_meta(
@@ -11,7 +12,7 @@ CREATE OR REPLACE FUNCTION solaruser.store_user_meta(
 $BODY$
 DECLARE
 	udate timestamp with time zone := now();
-	jdata_json json := jdata::json;
+	jdata_json jsonb := jdata::jsonb;
 BEGIN
 	INSERT INTO solaruser.user_meta(user_id, created, updated, jdata)
 	VALUES (userid, cdate, udate, jdata_json)

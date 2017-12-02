@@ -8,13 +8,15 @@ ALTER TABLE solardatum.da_datum
   ALTER COLUMN ts SET DATA TYPE timestamp with time zone,
   ALTER COLUMN node_id SET DATA TYPE bigint,
   ALTER COLUMN source_id SET DATA TYPE character varying(64),
-  ALTER COLUMN posted SET DATA TYPE timestamp with time zone;
+  ALTER COLUMN posted SET DATA TYPE timestamp with time zone,
+  ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 ALTER TABLE solardatum.da_meta
   ALTER COLUMN node_id SET DATA TYPE bigint,
   ALTER COLUMN source_id SET DATA TYPE character varying(64),
   ALTER COLUMN created SET DATA TYPE timestamp with time zone,
-  ALTER COLUMN updated SET DATA TYPE timestamp with time zone;
+  ALTER COLUMN updated SET DATA TYPE timestamp with time zone,
+  ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 ALTER TABLE solaragg.agg_stale_datum
   ALTER COLUMN node_id SET DATA TYPE bigint,
@@ -27,7 +29,8 @@ ALTER TABLE solaragg.agg_messages
 
 ALTER TABLE solaragg.agg_datum_hourly
   ALTER COLUMN node_id SET DATA TYPE bigint,
-  ALTER COLUMN source_id SET DATA TYPE character varying(64);
+  ALTER COLUMN source_id SET DATA TYPE character varying(64),
+  ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 ALTER TABLE solaragg.aud_datum_hourly
   ALTER COLUMN node_id SET DATA TYPE bigint,
@@ -35,11 +38,13 @@ ALTER TABLE solaragg.aud_datum_hourly
 
 ALTER TABLE solaragg.agg_datum_daily
   ALTER COLUMN node_id SET DATA TYPE bigint,
-  ALTER COLUMN source_id SET DATA TYPE character varying(64);
+  ALTER COLUMN source_id SET DATA TYPE character varying(64),
+  ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 ALTER TABLE solaragg.agg_datum_monthly
   ALTER COLUMN node_id SET DATA TYPE bigint,
-  ALTER COLUMN source_id SET DATA TYPE character varying(64);
+  ALTER COLUMN source_id SET DATA TYPE character varying(64),
+  ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 CREATE VIEW solaragg.da_datum_avail_hourly AS
 WITH nodetz AS (
@@ -84,7 +89,7 @@ CREATE OR REPLACE FUNCTION solardatum.store_meta(
 $BODY$
 DECLARE
 	udate timestamp with time zone := now();
-	jdata_json json := jdata::json;
+	jdata_json jsonb := jdata::jsonb;
 BEGIN
 	INSERT INTO solardatum.da_meta(node_id, source_id, created, updated, jdata)
 	VALUES (node, src, cdate, udate, jdata_json)
@@ -232,4 +237,25 @@ while ( rec = curs.fetch() ) {
 curs.close();
 stmt.free();
 
+$BODY$;
+
+DROP FUNCTION solardatum.datum_prop_count(json);
+CREATE OR REPLACE FUNCTION solardatum.datum_prop_count(IN jdata jsonb)
+  RETURNS INTEGER
+  LANGUAGE plv8
+  IMMUTABLE AS
+$BODY$
+'use strict';
+var count = 0, prop, val;
+if ( jdata ) {
+	for ( prop in jdata ) {
+		val = jdata[prop];
+		if ( Array.isArray(val) ) {
+			count += val.length;
+		} else {
+			count += Object.keys(val).length;
+		}
+	}
+}
+return count;
 $BODY$;
