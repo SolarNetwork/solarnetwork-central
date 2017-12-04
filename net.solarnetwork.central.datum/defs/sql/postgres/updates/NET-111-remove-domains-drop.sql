@@ -1,3 +1,5 @@
+\echo Droping domains...
+
 DROP DOMAIN IF EXISTS solarcommon.ts;
 DROP DOMAIN IF EXISTS solarcommon.node_id;
 DROP DOMAIN IF EXISTS solarcommon.node_ids;

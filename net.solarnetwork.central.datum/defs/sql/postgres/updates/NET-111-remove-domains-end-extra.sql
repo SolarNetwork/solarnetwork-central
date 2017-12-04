@@ -1,3 +1,5 @@
+\echo Recreating extra views...
+
 CREATE OR REPLACE VIEW solaruser.million_metric_avg_hour_costs AS
  SELECT a.node_id,
     max(u.email) AS owner,

@@ -1,8 +1,10 @@
+\echo Dropping aggregate datum views...
+
 DROP VIEW solaragg.da_datum_avail_hourly;
-
 DROP VIEW solaragg.da_datum_avail_daily;
-
 DROP VIEW solaragg.da_datum_avail_monthly;
+
+\echo Removing domains from datum tables...
 
 ALTER TABLE solardatum.da_datum
   ALTER COLUMN ts SET DATA TYPE timestamp with time zone,
@@ -25,11 +27,13 @@ ALTER TABLE solaragg.agg_messages
   ALTER COLUMN source_id SET DATA TYPE character varying(64),
   ALTER COLUMN ts SET DATA TYPE timestamp with time zone;
 
-ALTER TABLE solaragg.agg_datum_hourly
+\echo Removing domains from datum aggregate tables...
+
+ALTER TABLE solaragg.aud_datum_hourly
   ALTER COLUMN node_id SET DATA TYPE bigint,
   ALTER COLUMN source_id SET DATA TYPE character varying(64);
 
-ALTER TABLE solaragg.aud_datum_hourly
+ALTER TABLE solaragg.agg_datum_hourly
   ALTER COLUMN node_id SET DATA TYPE bigint,
   ALTER COLUMN source_id SET DATA TYPE character varying(64);
 
@@ -40,6 +44,8 @@ ALTER TABLE solaragg.agg_datum_daily
 ALTER TABLE solaragg.agg_datum_monthly
   ALTER COLUMN node_id SET DATA TYPE bigint,
   ALTER COLUMN source_id SET DATA TYPE character varying(64);
+
+\echo Recreating aggregate datum views...
 
 CREATE VIEW solaragg.da_datum_avail_hourly AS
 WITH nodetz AS (
@@ -73,6 +79,8 @@ SELECT date_trunc('month', d.ts at time zone nodetz.tz) at time zone nodetz.tz A
 FROM solardatum.da_datum d
 INNER JOIN nodetz ON nodetz.node_id = d.node_id
 GROUP BY date_trunc('month', d.ts at time zone nodetz.tz) at time zone nodetz.tz, d.node_id, d.source_id;
+
+\echo Recreating datum functions...
 
 DROP FUNCTION solardatum.store_meta(solarcommon.ts, solarcommon.node_id, solarcommon.source_id, text);
 CREATE OR REPLACE FUNCTION solardatum.store_meta(

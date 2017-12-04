@@ -1,8 +1,11 @@
+\echo Dropping aggregate loc datum views...
+
+
 DROP VIEW solaragg.da_loc_datum_avail_hourly;
-
 DROP VIEW solaragg.da_loc_datum_avail_daily;
-
 DROP VIEW solaragg.da_loc_datum_avail_monthly;
+
+\echo Removing domains from loc datum tables...
 
 ALTER TABLE solardatum.da_loc_datum
   ALTER COLUMN ts SET DATA TYPE timestamp with time zone,
@@ -25,11 +28,13 @@ ALTER TABLE solaragg.agg_loc_messages
   ALTER COLUMN source_id SET DATA TYPE character varying(64),
   ALTER COLUMN ts SET DATA TYPE timestamp with time zone;
 
-ALTER TABLE solaragg.agg_loc_datum_hourly
+\echo Removing domains from loc datum aggregate tables...
+
+ALTER TABLE solaragg.aud_loc_datum_hourly
   ALTER COLUMN loc_id SET DATA TYPE bigint,
   ALTER COLUMN source_id SET DATA TYPE character varying(64);
 
-ALTER TABLE solaragg.aud_loc_datum_hourly
+ALTER TABLE solaragg.agg_loc_datum_hourly
   ALTER COLUMN loc_id SET DATA TYPE bigint,
   ALTER COLUMN source_id SET DATA TYPE character varying(64);
 
@@ -40,6 +45,8 @@ ALTER TABLE solaragg.agg_loc_datum_daily
 ALTER TABLE solaragg.agg_loc_datum_monthly
   ALTER COLUMN loc_id SET DATA TYPE bigint,
   ALTER COLUMN source_id SET DATA TYPE character varying(64);
+
+\echo Recreating aggregate loc datum views...
 
 CREATE VIEW solaragg.da_loc_datum_avail_hourly AS
 WITH loctz AS (
@@ -70,6 +77,8 @@ SELECT date_trunc('month', d.ts at time zone loctz.tz) at time zone loctz.tz AS 
 FROM solardatum.da_loc_datum d
 INNER JOIN loctz ON loctz.loc_id = d.loc_id
 GROUP BY date_trunc('month', d.ts at time zone loctz.tz) at time zone loctz.tz, d.loc_id, d.source_id;
+
+\echo Recreating loc datum functions...
 
 DROP FUNCTION solardatum.store_loc_meta(solarcommon.ts, solarcommon.loc_id, solarcommon.source_id, text);
 CREATE OR REPLACE FUNCTION solardatum.store_loc_meta(

@@ -1,3 +1,5 @@
+\echo Removing domains from node meta...
+
 ALTER TABLE solarnet.sn_node_meta
   ALTER COLUMN node_id SET DATA TYPE bigint,
   ALTER COLUMN created SET DATA TYPE timestamp with time zone,
