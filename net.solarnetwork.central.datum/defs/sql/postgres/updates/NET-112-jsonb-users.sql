@@ -17,3 +17,14 @@ BEGIN
 	SET jdata = EXCLUDED.jdata, updated = EXCLUDED.updated;
 END;
 $BODY$;
+
+DROP FUNCTION solaruser.find_most_recent_datum_for_user(bigint[]);
+CREATE OR REPLACE FUNCTION solaruser.find_most_recent_datum_for_user(users bigint[])
+  RETURNS SETOF solardatum.da_datum AS
+$BODY$
+	SELECT r.*
+	FROM (SELECT node_id FROM solaruser.user_node WHERE user_id = ANY(users)) AS n,
+	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
+	ORDER BY r.node_id, r.source_id;
+$BODY$
+  LANGUAGE sql STABLE;
