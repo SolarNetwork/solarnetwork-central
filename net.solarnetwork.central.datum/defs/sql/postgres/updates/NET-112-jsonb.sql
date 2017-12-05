@@ -1,8 +1,10 @@
 \i NET-112-jsonb-core.sql
 \i NET-112-jsonb-generic-datum.sql
 \i NET-112-jsonb-generic-datum-agg-functions.sql
+\i NET-112-jsonb-generic-datum-new.sql
 \i NET-112-jsonb-generic-loc-datum.sql
 \i NET-112-jsonb-generic-loc-datum-agg-functions.sql
+\i NET-112-jsonb-generic-loc-datum-new.sql
 \i NET-112-jsonb-generic-datum-x-functions.sql
 \i NET-112-jsonb-generic-loc-datum-x-functions.sql
 \i NET-112-jsonb-users.sql
