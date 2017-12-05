@@ -49,7 +49,7 @@ DECLARE
 	ts_post_hour timestamp with time zone := date_trunc('hour', ts_post);
 BEGIN
 	INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata_i, jdata_a, jdata_s, jdata_t)
-	VALUES (ts_crea, node, src, ts_post, jdata_json->'i', jdata_json->'a', jdata_json->'s', jdata_json->'t')
+	VALUES (ts_crea, node, src, ts_post, jdata_json->'i', jdata_json->'a', jdata_json->'s', solarnet.json_array_to_text_arrary(jdata_json->'t'))
 	ON CONFLICT (node_id, ts, source_id) DO UPDATE
 	SET jdata_i = EXCLUDED.jdata_i,
 		jdata_a = EXCLUDED.jdata_a,

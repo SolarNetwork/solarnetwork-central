@@ -2,7 +2,7 @@ ALTER TABLE solardatum.da_loc_datum
 	ADD COLUMN jdata_i jsonb,
 	ADD COLUMN jdata_a jsonb,
 	ADD COLUMN jdata_s jsonb,
-	ADD COLUMN jdata_t jsonb;
+	ADD COLUMN jdata_t text[];
 
 ALTER TABLE solardatum.da_loc_meta
   ALTER COLUMN jdata SET DATA TYPE jsonb;
@@ -15,19 +15,19 @@ ALTER TABLE solaragg.agg_loc_datum_hourly
 	ADD COLUMN jdata_i jsonb,
 	ADD COLUMN jdata_a jsonb,
 	ADD COLUMN jdata_s jsonb,
-	ADD COLUMN jdata_t jsonb;
+	ADD COLUMN jdata_t text[];
 
 ALTER TABLE solaragg.agg_loc_datum_daily
 	ADD COLUMN jdata_i jsonb,
 	ADD COLUMN jdata_a jsonb,
 	ADD COLUMN jdata_s jsonb,
-	ADD COLUMN jdata_t jsonb;
+	ADD COLUMN jdata_t text[];
 
 ALTER TABLE solaragg.agg_loc_datum_monthly
 	ADD COLUMN jdata_i jsonb,
 	ADD COLUMN jdata_a jsonb,
 	ADD COLUMN jdata_s jsonb,
-	ADD COLUMN jdata_t jsonb;
+	ADD COLUMN jdata_t text[];
 
 CREATE OR REPLACE FUNCTION solardatum.jdata_from_datum(datum solardatum.da_loc_datum)
 	RETURNS jsonb
