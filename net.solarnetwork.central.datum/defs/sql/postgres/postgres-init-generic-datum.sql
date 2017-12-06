@@ -3,27 +3,27 @@ CREATE SCHEMA IF NOT EXISTS solardatum;
 CREATE SCHEMA IF NOT EXISTS solaragg;
 
 CREATE TABLE solardatum.da_datum (
-  ts solarcommon.ts NOT NULL,
-  node_id solarcommon.node_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  posted solarcommon.ts NOT NULL,
+  ts timestamp with time zone NOT NULL,
+  node_id bigint NOT NULL,
+  source_id text NOT NULL,
+  posted timestamp with time zone NOT NULL,
   jdata json NOT NULL,
   CONSTRAINT da_datum_pkey PRIMARY KEY (node_id, ts, source_id)
 );
 
 CREATE TABLE solardatum.da_meta (
-  node_id solarcommon.node_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  created solarcommon.ts NOT NULL,
-  updated solarcommon.ts NOT NULL,
+  node_id bigint NOT NULL,
+  source_id text NOT NULL,
+  created timestamp with time zone NOT NULL,
+  updated timestamp with time zone NOT NULL,
   jdata json NOT NULL,
   CONSTRAINT da_meta_pkey PRIMARY KEY (node_id, source_id)
 );
 
 CREATE TABLE solaragg.agg_stale_datum (
   ts_start timestamp with time zone NOT NULL,
-  node_id solarcommon.node_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
+  node_id bigint NOT NULL,
+  source_id text NOT NULL,
   agg_kind char(1) NOT NULL,
   created timestamp NOT NULL DEFAULT now(),
   CONSTRAINT agg_stale_datum_pkey PRIMARY KEY (agg_kind, ts_start, node_id, source_id)
@@ -31,9 +31,9 @@ CREATE TABLE solaragg.agg_stale_datum (
 
 CREATE TABLE solaragg.agg_messages (
   created timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  node_id solarcommon.node_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  ts solarcommon.ts NOT NULL,
+  node_id bigint NOT NULL,
+  source_id text NOT NULL,
+  ts timestamp with time zone NOT NULL,
   msg text NOT NULL
 );
 
@@ -42,16 +42,16 @@ CREATE INDEX agg_messages_ts_node_idx ON solaragg.agg_messages (ts, node_id);
 CREATE TABLE solaragg.agg_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
   local_date timestamp without time zone NOT NULL,
-  node_id solarcommon.node_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
+  node_id bigint NOT NULL,
+  source_id text NOT NULL,
   jdata json NOT NULL,
  CONSTRAINT agg_datum_hourly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
 CREATE TABLE solaragg.aud_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
-  node_id solarcommon.node_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
+  node_id bigint NOT NULL,
+  source_id text NOT NULL,
   prop_count integer NOT NULL,
   CONSTRAINT aud_datum_hourly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
@@ -59,8 +59,8 @@ CREATE TABLE solaragg.aud_datum_hourly (
 CREATE TABLE solaragg.agg_datum_daily (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
-  node_id solarcommon.node_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
+  node_id bigint NOT NULL,
+  source_id text NOT NULL,
   jdata json NOT NULL,
  CONSTRAINT agg_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
@@ -68,8 +68,8 @@ CREATE TABLE solaragg.agg_datum_daily (
 CREATE TABLE solaragg.agg_datum_monthly (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
-  node_id solarcommon.node_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
+  node_id bigint NOT NULL,
+  source_id text NOT NULL,
   jdata json NOT NULL,
  CONSTRAINT agg_datum_monthly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
@@ -108,14 +108,14 @@ INNER JOIN nodetz ON nodetz.node_id = d.node_id
 GROUP BY date_trunc('month', d.ts at time zone nodetz.tz) at time zone nodetz.tz, d.node_id, d.source_id;
 
 CREATE OR REPLACE FUNCTION solardatum.store_meta(
-	cdate solarcommon.ts,
-	node solarcommon.node_id,
-	src solarcommon.source_id,
+	cdate timestamp with time zone,
+	node bigint,
+	src text,
 	jdata text)
   RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
-	udate solarcommon.ts := now();
+	udate timestamp with time zone := now();
 	jdata_json json := jdata::json;
 BEGIN
 	INSERT INTO solardatum.da_meta(node_id, source_id, created, updated, jdata)
@@ -126,10 +126,10 @@ END;
 $BODY$;
 
 CREATE OR REPLACE FUNCTION solardatum.find_available_sources(
-	IN node solarcommon.node_id,
-	IN st solarcommon.ts DEFAULT NULL,
-	IN en solarcommon.ts DEFAULT NULL)
-  RETURNS TABLE(source_id solarcommon.source_id) AS
+	IN node bigint,
+	IN st timestamp with time zone DEFAULT NULL,
+	IN en timestamp with time zone DEFAULT NULL)
+  RETURNS TABLE(source_id text) AS
 $BODY$
 DECLARE
 	node_tz text;
@@ -149,41 +149,37 @@ BEGIN
 
 	CASE
 		WHEN st IS NULL AND en IS NULL THEN
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_datum_daily d
-			WHERE d.node_id = node
-			ORDER BY d.source_id;
+			WHERE d.node_id = node;
 
 		WHEN en IS NULL THEN
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_datum_daily d
 			WHERE d.node_id = node
-				AND d.ts_start >= CAST(st at time zone node_tz AS DATE)
-			ORDER BY d.source_id;
+				AND d.ts_start >= CAST(st at time zone node_tz AS DATE);
 
 		WHEN st IS NULL THEN
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_datum_daily d
 			WHERE d.node_id = node
-				AND d.ts_start <= CAST(en at time zone node_tz AS DATE)
-			ORDER BY d.source_id;
+				AND d.ts_start <= CAST(en at time zone node_tz AS DATE);
 
 		ELSE
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_datum_daily d
 			WHERE d.node_id = node
 				AND d.ts_start >= CAST(st at time zone node_tz AS DATE)
-				AND d.ts_start <= CAST(en at time zone node_tz AS DATE)
-			ORDER BY d.source_id;
+				AND d.ts_start <= CAST(en at time zone node_tz AS DATE);
 	END CASE;
 END;$BODY$
   LANGUAGE plpgsql STABLE ROWS 50;
 
 CREATE OR REPLACE FUNCTION solardatum.find_reportable_interval(
-	IN node solarcommon.node_id,
-	IN src solarcommon.source_id DEFAULT NULL,
-	OUT ts_start solarcommon.ts,
-	OUT ts_end solarcommon.ts,
+	IN node bigint,
+	IN src text DEFAULT NULL,
+	OUT ts_start timestamp with time zone,
+	OUT ts_end timestamp with time zone,
 	OUT node_tz TEXT,
 	OUT node_tz_offset INTEGER)
   RETURNS RECORD AS
@@ -256,7 +252,7 @@ CREATE OR REPLACE FUNCTION solardatum.find_sources_for_meta(
     IN nodes bigint[],
     IN criteria text
   )
-  RETURNS TABLE(node_id solarcommon.node_id, source_id solarcommon.source_id)
+  RETURNS TABLE(node_id bigint, source_id text)
   LANGUAGE plv8 ROWS 100 STABLE AS
 $BODY$
 'use strict';

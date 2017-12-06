@@ -241,19 +241,19 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_minute(
 	IN slotsecs integer DEFAULT 600,
 	IN tolerance interval DEFAULT interval '1 hour')
   RETURNS TABLE(
-	node_id solarcommon.node_id,
+	node_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
+	source_id text,
 	jdata json)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	n.node_id::solarcommon.node_id,
+	node AS node_id,
 	d.ts_start,
 	d.ts_start AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_date,
-	d.source_id::solarcommon.source_id,
+	d.source_id,
 	d.jdata
  FROM solaragg.calc_datum_time_slots(
 	node,
@@ -340,16 +340,16 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_hod(
 	IN start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	node_id solarcommon.node_id,
+	node_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
+	source_id text,
 	jdata json)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	node::solarcommon.node_id,
+	node AS node_id,
 	(CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AT TIME ZONE 'UTC' AS ts_start,
 	(CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AS local_date,
 	d.source_id,
@@ -386,16 +386,16 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_seasonal_hod(
 	IN start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	node_id solarcommon.node_id,
+	node_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
+	source_id text,
 	jdata json)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	node::solarcommon.node_id,
+	node AS node_id,
 	(solarnet.get_season_monday_start(CAST(d.local_date AS DATE))
 		+ CAST(EXTRACT(hour FROM d.local_date) || ' hour' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
 	solarnet.get_season_monday_start(CAST(d.local_date AS DATE))
@@ -435,16 +435,16 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_dow(
 	IN start_ts timestamp with time zone DEFAULT '2001-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	node_id solarcommon.node_id,
+	node_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
+	source_id text,
 	jdata json)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	node::solarcommon.node_id,
+	node AS node_id,
 	(DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
 	(DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AS local_date,
 	d.source_id,
@@ -481,16 +481,16 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_seasonal_dow(
 	IN start_ts timestamp with time zone DEFAULT '2001-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	node_id solarcommon.node_id,
+	node_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
+	source_id text,
 	jdata json)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	node::solarcommon.node_id,
+	node AS node_id,
 	(solarnet.get_season_monday_start(d.local_date)
 		+ CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
 	(solarnet.get_season_monday_start(d.local_date)
@@ -653,8 +653,8 @@ END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
 CREATE OR REPLACE FUNCTION solaragg.find_most_recent_hourly(
-	node solarcommon.node_id,
-	sources solarcommon.source_ids DEFAULT NULL)
+	node bigint,
+	sources text[] DEFAULT NULL)
   RETURNS SETOF solaragg.agg_datum_hourly AS
 $BODY$
 BEGIN
@@ -686,8 +686,8 @@ END;$BODY$
   ROWS 20;
 
 CREATE OR REPLACE FUNCTION solaragg.find_most_recent_daily(
-	node solarcommon.node_id,
-	sources solarcommon.source_ids DEFAULT NULL)
+	node bigint,
+	sources text[] DEFAULT NULL)
   RETURNS SETOF solaragg.agg_datum_daily AS
 $BODY$
 BEGIN
@@ -719,8 +719,8 @@ END;$BODY$
   ROWS 20;
 
 CREATE OR REPLACE FUNCTION solaragg.find_most_recent_monthly(
-	node solarcommon.node_id,
-	sources solarcommon.source_ids DEFAULT NULL)
+	node bigint,
+	sources text[] DEFAULT NULL)
   RETURNS SETOF solaragg.agg_datum_monthly AS
 $BODY$
 BEGIN
@@ -918,10 +918,10 @@ $BODY$;
  * @param src  An optional source ID to query for. Pass <code>NULL</code> for all sources.
  */
 CREATE OR REPLACE FUNCTION solaragg.find_audit_datum_interval(
-	IN node solarcommon.node_id,
-	IN src solarcommon.source_id DEFAULT NULL,
-	OUT ts_start solarcommon.ts,
-	OUT ts_end solarcommon.ts,
+	IN node bigint,
+	IN src text DEFAULT NULL,
+	OUT ts_start timestamp with time zone,
+	OUT ts_end timestamp with time zone,
 	OUT node_tz TEXT,
 	OUT node_tz_offset INTEGER)
   RETURNS RECORD AS

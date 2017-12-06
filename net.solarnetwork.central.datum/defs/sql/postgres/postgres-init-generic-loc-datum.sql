@@ -1,25 +1,25 @@
 CREATE TABLE solardatum.da_loc_datum (
-  ts solarcommon.ts NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  posted solarcommon.ts NOT NULL,
+  ts timestamp with time zone NOT NULL,
+  loc_id bigint NOT NULL,
+  source_id text NOT NULL,
+  posted timestamp with time zone NOT NULL,
   jdata json NOT NULL,
   CONSTRAINT da_loc_datum_pkey PRIMARY KEY (loc_id, ts, source_id)
 );
 
 CREATE TABLE solardatum.da_loc_meta (
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  created solarcommon.ts NOT NULL,
-  updated solarcommon.ts NOT NULL,
+  loc_id bigint NOT NULL,
+  source_id text NOT NULL,
+  created timestamp with time zone NOT NULL,
+  updated timestamp with time zone NOT NULL,
   jdata json NOT NULL,
   CONSTRAINT da_loc_meta_pkey PRIMARY KEY (loc_id, source_id)
 );
 
 CREATE TABLE solaragg.agg_stale_loc_datum (
   ts_start timestamp with time zone NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
+  loc_id bigint NOT NULL,
+  source_id text NOT NULL,
   agg_kind char(1) NOT NULL,
   created timestamp NOT NULL DEFAULT now(),
   CONSTRAINT agg_stale_loc_datum_pkey PRIMARY KEY (agg_kind, ts_start, loc_id, source_id)
@@ -27,9 +27,9 @@ CREATE TABLE solaragg.agg_stale_loc_datum (
 
 CREATE TABLE solaragg.agg_loc_messages (
   created timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  ts solarcommon.ts NOT NULL,
+  loc_id bigint NOT NULL,
+  source_id text NOT NULL,
+  ts timestamp with time zone NOT NULL,
   msg text NOT NULL
 );
 
@@ -38,16 +38,16 @@ CREATE INDEX agg_loc_messages_ts_loc_idx ON solaragg.agg_loc_messages (ts, loc_i
 CREATE TABLE solaragg.agg_loc_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
   local_date timestamp without time zone NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
+  loc_id bigint NOT NULL,
+  source_id text NOT NULL,
   jdata json NOT NULL,
   CONSTRAINT agg_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
 CREATE TABLE solaragg.aud_loc_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
+  loc_id bigint NOT NULL,
+  source_id text NOT NULL,
   prop_count integer NOT NULL,
   CONSTRAINT aud_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
@@ -55,8 +55,8 @@ CREATE TABLE solaragg.aud_loc_datum_hourly (
 CREATE TABLE solaragg.agg_loc_datum_daily (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
+  loc_id bigint NOT NULL,
+  source_id text NOT NULL,
   jdata json NOT NULL,
   CONSTRAINT agg_loc_datum_daily_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
@@ -64,8 +64,8 @@ CREATE TABLE solaragg.agg_loc_datum_daily (
 CREATE TABLE solaragg.agg_loc_datum_monthly (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
+  loc_id bigint NOT NULL,
+  source_id text NOT NULL,
   jdata json NOT NULL,
   CONSTRAINT agg_loc_datum_monthly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
@@ -101,14 +101,14 @@ INNER JOIN loctz ON loctz.loc_id = d.loc_id
 GROUP BY date_trunc('month', d.ts at time zone loctz.tz) at time zone loctz.tz, d.loc_id, d.source_id;
 
 CREATE OR REPLACE FUNCTION solardatum.store_loc_meta(
-	cdate solarcommon.ts,
-	loc solarcommon.loc_id,
-	src solarcommon.source_id,
+	cdate timestamp with time zone,
+	loc bigint,
+	src text,
 	jdata text)
   RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
-	udate solarcommon.ts := now();
+	udate timestamp with time zone := now();
 	jdata_json json := jdata::json;
 BEGIN
 	INSERT INTO solardatum.da_loc_meta(loc_id, source_id, created, updated, jdata)
@@ -119,10 +119,10 @@ END;
 $BODY$;
 
 CREATE OR REPLACE FUNCTION solardatum.find_loc_available_sources(
-	IN loc solarcommon.loc_id,
-	IN st solarcommon.ts DEFAULT NULL,
-	IN en solarcommon.ts DEFAULT NULL)
-  RETURNS TABLE(source_id solarcommon.source_id) AS
+	IN loc bigint,
+	IN st timestamp with time zone DEFAULT NULL,
+	IN en timestamp with time zone DEFAULT NULL)
+  RETURNS TABLE(source_id text) AS
 $BODY$
 DECLARE
 	loc_tz text;
@@ -162,11 +162,11 @@ END;$BODY$
   LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION solardatum.find_loc_reportable_interval(
-	IN loc solarcommon.loc_id,
-	IN src solarcommon.source_id DEFAULT NULL,
-	OUT ts_start solarcommon.ts,
-	OUT ts_end solarcommon.ts,
-	OUT loc_tz TEXT,
+	IN loc bigint,
+	IN src text DEFAULT NULL,
+	OUT ts_start timestamp with time zone,
+	OUT ts_end timestamp with time zone,
+	OUT loc_tz text,
 	OUT loc_tz_offset INTEGER)
   RETURNS RECORD AS
 $BODY$
@@ -206,8 +206,8 @@ END;$BODY$
   LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION solardatum.find_loc_most_recent(
-	loc solarcommon.loc_id,
-	sources solarcommon.source_ids DEFAULT NULL)
+	loc bigint,
+	sources text[] DEFAULT NULL)
   RETURNS SETOF solardatum.da_loc_datum AS
 $BODY$
 BEGIN
@@ -275,7 +275,7 @@ CREATE OR REPLACE FUNCTION solardatum.find_sources_for_loc_meta(
     IN locs bigint[],
     IN criteria text
   )
-  RETURNS TABLE(loc_id solarcommon.loc_id ,source_id solarcommon.source_id)
+  RETURNS TABLE(loc_id bigint, source_id text)
   LANGUAGE plv8 ROWS 100 STABLE AS
 $BODY$
 'use strict';

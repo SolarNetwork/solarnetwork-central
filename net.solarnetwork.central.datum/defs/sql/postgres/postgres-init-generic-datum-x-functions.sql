@@ -8,8 +8,8 @@
  * @returns Set of solardatum.da_datum records.
  */
 CREATE OR REPLACE FUNCTION solardatum.find_most_recent(
-	node solarcommon.node_id,
-	sources solarcommon.source_ids DEFAULT NULL)
+	node bigint,
+	sources text[] DEFAULT NULL)
   RETURNS SETOF solardatum.da_datum AS
 $BODY$
 	SELECT dd.* FROM solardatum.da_datum dd
@@ -35,7 +35,7 @@ $BODY$
  * @param nodes An array of node IDs to return results for.
  * @returns Set of solardatum.da_datum records.
  */
-CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes solarcommon.node_ids)
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes bigint[])
   RETURNS SETOF solardatum.da_datum AS
 $BODY$
 	SELECT r.*
@@ -55,16 +55,16 @@ $BODY$
  * @param jdata The datum JSON document.
  */
 CREATE OR REPLACE FUNCTION solardatum.store_datum(
-	cdate solarcommon.ts,
-	node solarcommon.node_id,
-	src solarcommon.source_id,
-	pdate solarcommon.ts,
+	cdate timestamp with time zone,
+	node bigint,
+	src text,
+	pdate timestamp with time zone,
 	jdata text)
   RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
-	ts_crea solarcommon.ts := COALESCE(cdate, now());
-	ts_post solarcommon.ts := COALESCE(pdate, now());
+	ts_crea timestamp with time zone := COALESCE(cdate, now());
+	ts_post timestamp with time zone := COALESCE(pdate, now());
 	jdata_json json := jdata::json;
 	jdata_prop_count integer := solardatum.datum_prop_count(jdata_json);
 	ts_post_hour timestamp with time zone := date_trunc('hour', ts_post);

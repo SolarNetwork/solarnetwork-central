@@ -243,19 +243,19 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_loc_datum_minute(
 	IN slotsecs integer DEFAULT 600,
 	IN tolerance interval DEFAULT interval '1 hour')
   RETURNS TABLE(
-	loc_id solarcommon.loc_id,
+	loc_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
+	source_id text,
 	jdata json)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	loc::solarcommon.loc_id,
+	loc AS loc_id,
 	d.ts_start,
 	d.ts_start AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_date,
-	d.source_id::solarcommon.source_id,
+	d.source_id,
 	d.jdata
  FROM solaragg.calc_loc_datum_time_slots(
 	loc,
@@ -287,16 +287,16 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_loc_datum_hod(
 	IN start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	loc_id solarcommon.loc_id,
+	loc_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
+	source_id text,
 	jdata json)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	loc::solarcommon.loc_id,
+	loc AS loc_id,
 	(CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AT TIME ZONE 'UTC' AS ts_start,
 	(CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AS local_date,
 	d.source_id,
@@ -333,16 +333,16 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_loc_datum_seasonal_hod(
 	IN start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	loc_id solarcommon.loc_id,
+	loc_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
+	source_id text,
 	jdata json)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	loc::solarcommon.loc_id,
+	loc AS loc_id,
 	(solarnet.get_season_monday_start(CAST(d.local_date AS DATE))
 		+ CAST(EXTRACT(hour FROM d.local_date) || ' hour' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
 	solarnet.get_season_monday_start(CAST(d.local_date AS DATE))
@@ -382,16 +382,16 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_loc_datum_dow(
 	IN start_ts timestamp with time zone DEFAULT '2001-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	loc_id solarcommon.loc_id,
+	loc_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
+	source_id text,
 	jdata json)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	loc::solarcommon.loc_id,
+	loc AS loc_id,
 	(DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
 	(DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AS local_date,
 	d.source_id,
@@ -428,16 +428,16 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_loc_datum_seasonal_dow(
 	IN start_ts timestamp with time zone DEFAULT '2001-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	loc_id solarcommon.loc_id,
+	loc_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
+	source_id text,
 	jdata json)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	loc::solarcommon.loc_id,
+	loc AS loc_id,
 	(solarnet.get_season_monday_start(d.local_date)
 		+ CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
 	(solarnet.get_season_monday_start(d.local_date)

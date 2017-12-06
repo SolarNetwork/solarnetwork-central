@@ -5,7 +5,7 @@ CREATE OR REPLACE VIEW solaruser.million_metric_avg_hour_costs AS
     (avg(a.prop_count) * 24::numeric * 30::numeric / 1000000::numeric * 7::numeric)::numeric(6,2) AS month_cost7,
     (avg(a.prop_count) * 24::numeric * 30::numeric / 1000000::numeric * 10::numeric)::numeric(6,2) AS month_cost10
    FROM solaragg.aud_datum_hourly a
-     JOIN solaruser.user_node un ON un.node_id = a.node_id::bigint
+     JOIN solaruser.user_node un ON un.node_id = a.node_id
      JOIN solaruser.user_user u ON u.id = un.user_id
   GROUP BY a.node_id
   ORDER BY (round(avg(a.prop_count))::integer) DESC;
