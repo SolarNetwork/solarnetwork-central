@@ -138,8 +138,8 @@ public class StaleGeneralNodeDatumProcessorTests extends AbstractCentralTest {
 		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_hourly");
 	}
 
-	private static final String SQL_INSERT_DATUM = "INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata) "
-			+ "VALUES (?, ?, ?, ?, CAST(? AS json))";
+	private static final String SQL_INSERT_DATUM = "INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata_i, jdata_a) "
+			+ "VALUES (?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb))";
 
 	private static final long MS_PER_HOUR = 60 * 60 * 1000L;
 
@@ -158,7 +158,8 @@ public class StaleGeneralNodeDatumProcessorTests extends AbstractCentralTest {
 					stmt.setLong(2, nodeId);
 					stmt.setString(3, sourceId);
 					stmt.setTimestamp(4, new Timestamp(now));
-					stmt.setString(5, "{\"i\":{\"watts\":125},\"a\":{\"wattHours\":10}}");
+					stmt.setString(5, "{\"watts\":125}");
+					stmt.setString(6, "{\"wattHours\":10}");
 					stmt.executeUpdate();
 					ts += step;
 				}
