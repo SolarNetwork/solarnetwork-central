@@ -33,28 +33,28 @@ CREATE OR REPLACE FUNCTION solardatum.jdata_from_datum(datum solardatum.da_datum
 	RETURNS jsonb
 	LANGUAGE SQL IMMUTABLE AS
 $$
-	SELECT solarnet.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
+	SELECT solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
 $$;
 
 CREATE OR REPLACE FUNCTION solaragg.jdata_from_datum(datum solaragg.agg_datum_hourly)
 	RETURNS jsonb
 	LANGUAGE SQL IMMUTABLE AS
 $$
-	SELECT solarnet.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
+	SELECT solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
 $$;
 
 CREATE OR REPLACE FUNCTION solaragg.jdata_from_datum(datum solaragg.agg_datum_daily)
 	RETURNS jsonb
 	LANGUAGE SQL IMMUTABLE AS
 $$
-	SELECT solarnet.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
+	SELECT solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
 $$;
 
 CREATE OR REPLACE FUNCTION solaragg.jdata_from_datum(datum solaragg.agg_datum_monthly)
 	RETURNS jsonb
 	LANGUAGE SQL IMMUTABLE AS
 $$
-	SELECT solarnet.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
+	SELECT solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
 $$;
 
 CREATE OR REPLACE FUNCTION solardatum.store_meta(

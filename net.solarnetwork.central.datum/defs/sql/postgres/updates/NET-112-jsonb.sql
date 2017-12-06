@@ -1,3 +1,4 @@
+\i NET-112-jsonb-common.sql
 \i NET-112-jsonb-core.sql
 \i NET-112-jsonb-generic-datum.sql
 \i NET-112-jsonb-generic-datum-agg-functions.sql

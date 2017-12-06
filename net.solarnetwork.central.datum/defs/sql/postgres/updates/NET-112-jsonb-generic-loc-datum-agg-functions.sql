@@ -353,7 +353,7 @@ BEGIN
 						agg_json->'i',
 						agg_json->'a',
 						agg_json->'s',
-						solarnet.json_array_to_text_arrary(agg_json->'t')
+						solarcommon.json_array_to_text_array(agg_json->'t')
 					)
 					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
@@ -372,7 +372,7 @@ BEGIN
 						agg_json->'i',
 						agg_json->'a',
 						agg_json->'s',
-						solarnet.json_array_to_text_arrary(agg_json->'t')
+						solarcommon.json_array_to_text_array(agg_json->'t')
 					)
 					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
@@ -391,7 +391,7 @@ BEGIN
 						agg_json->'i',
 						agg_json->'a',
 						agg_json->'s',
-						solarnet.json_array_to_text_arrary(agg_json->'t')
+						solarcommon.json_array_to_text_array(agg_json->'t')
 					)
 					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
