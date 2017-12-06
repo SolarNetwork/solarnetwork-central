@@ -3,16 +3,30 @@ CREATE TABLE solardatum.da_loc_datum (
   loc_id bigint NOT NULL,
   source_id text NOT NULL,
   posted timestamp with time zone NOT NULL,
-  jdata json NOT NULL,
+  jdata_i jsonb,
+  jdata_a jsonb,
+  jdata_s jsonb,
+  jdata_t text[],
   CONSTRAINT da_loc_datum_pkey PRIMARY KEY (loc_id, ts, source_id)
 );
+
+CREATE OR REPLACE FUNCTION solardatum.jdata_from_datum(datum solardatum.da_loc_datum)
+	RETURNS jsonb
+	LANGUAGE SQL IMMUTABLE AS
+$$
+	SELECT solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
+$$;
+
+CREATE VIEW solardatum.da_loc_datum_data AS
+    SELECT d.ts, d.loc_id, d.source_id, d.posted, solardatum.jdata_from_datum(d) AS jdata
+    FROM solardatum.da_loc_datum d;
 
 CREATE TABLE solardatum.da_loc_meta (
   loc_id bigint NOT NULL,
   source_id text NOT NULL,
   created timestamp with time zone NOT NULL,
   updated timestamp with time zone NOT NULL,
-  jdata json NOT NULL,
+  jdata jsonb NOT NULL,
   CONSTRAINT da_loc_meta_pkey PRIMARY KEY (loc_id, source_id)
 );
 
@@ -40,7 +54,10 @@ CREATE TABLE solaragg.agg_loc_datum_hourly (
   local_date timestamp without time zone NOT NULL,
   loc_id bigint NOT NULL,
   source_id text NOT NULL,
-  jdata json NOT NULL,
+  jdata_i jsonb,
+  jdata_a jsonb,
+  jdata_s jsonb,
+  jdata_t text[],
   CONSTRAINT agg_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
@@ -57,7 +74,10 @@ CREATE TABLE solaragg.agg_loc_datum_daily (
   local_date date NOT NULL,
   loc_id bigint NOT NULL,
   source_id text NOT NULL,
-  jdata json NOT NULL,
+  jdata_i jsonb,
+  jdata_a jsonb,
+  jdata_s jsonb,
+  jdata_t text[],
   CONSTRAINT agg_loc_datum_daily_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
@@ -66,9 +86,45 @@ CREATE TABLE solaragg.agg_loc_datum_monthly (
   local_date date NOT NULL,
   loc_id bigint NOT NULL,
   source_id text NOT NULL,
-  jdata json NOT NULL,
+  jdata_i jsonb,
+  jdata_a jsonb,
+  jdata_s jsonb,
+  jdata_t text[],
   CONSTRAINT agg_loc_datum_monthly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
+
+CREATE OR REPLACE FUNCTION solaragg.jdata_from_datum(datum solaragg.agg_loc_datum_hourly)
+	RETURNS jsonb
+	LANGUAGE SQL IMMUTABLE AS
+$$
+	SELECT solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
+$$;
+
+CREATE OR REPLACE FUNCTION solaragg.jdata_from_datum(datum solaragg.agg_loc_datum_daily)
+	RETURNS jsonb
+	LANGUAGE SQL IMMUTABLE AS
+$$
+	SELECT solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
+$$;
+
+CREATE OR REPLACE FUNCTION solaragg.jdata_from_datum(datum solaragg.agg_loc_datum_monthly)
+	RETURNS jsonb
+	LANGUAGE SQL IMMUTABLE AS
+$$
+	SELECT solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
+$$;
+
+CREATE VIEW solaragg.agg_loc_datum_hourly_data AS
+    SELECT d.ts_start, d.local_date, d.loc_id, d.source_id, solaragg.jdata_from_datum(d) AS jdata
+    FROM solaragg.agg_loc_datum_hourly d;
+
+CREATE VIEW solaragg.agg_loc_datum_daily_data AS
+    SELECT d.ts_start, d.local_date, d.loc_id, d.source_id, solaragg.jdata_from_datum(d) AS jdata
+    FROM solaragg.agg_loc_datum_daily d;
+
+CREATE VIEW solaragg.agg_loc_datum_monthly_data AS
+    SELECT d.ts_start, d.local_date, d.loc_id, d.source_id, solaragg.jdata_from_datum(d) AS jdata
+    FROM solaragg.agg_loc_datum_monthly d;
 
 CREATE VIEW solaragg.da_loc_datum_avail_hourly AS
 WITH loctz AS (
@@ -109,7 +165,7 @@ CREATE OR REPLACE FUNCTION solardatum.store_loc_meta(
 $BODY$
 DECLARE
 	udate timestamp with time zone := now();
-	jdata_json json := jdata::json;
+	jdata_json jsonb := jdata::jsonb;
 BEGIN
 	INSERT INTO solardatum.da_loc_meta(loc_id, source_id, created, updated, jdata)
 	VALUES (loc, src, cdate, udate, jdata_json)

@@ -65,14 +65,18 @@ $BODY$
 DECLARE
 	ts_crea timestamp with time zone := COALESCE(cdate, now());
 	ts_post timestamp with time zone := COALESCE(pdate, now());
-	jdata_json json := jdata::json;
+	jdata_json jsonb := jdata::jsonb;
 	jdata_prop_count integer := solardatum.datum_prop_count(jdata_json);
 	ts_post_hour timestamp with time zone := date_trunc('hour', ts_post);
 BEGIN
-	INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata)
-	VALUES (ts_crea, node, src, ts_post, jdata_json)
+	INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata_i, jdata_a, jdata_s, jdata_t)
+	VALUES (ts_crea, node, src, ts_post, jdata_json->'i', jdata_json->'a', jdata_json->'s', solarcommon.json_array_to_text_array(jdata_json->'t'))
 	ON CONFLICT (node_id, ts, source_id) DO UPDATE
-	SET jdata = EXCLUDED.jdata, posted = EXCLUDED.posted;
+	SET jdata_i = EXCLUDED.jdata_i,
+		jdata_a = EXCLUDED.jdata_a,
+		jdata_s = EXCLUDED.jdata_s,
+		jdata_t = EXCLUDED.jdata_t,
+		posted = EXCLUDED.posted;
 
 	INSERT INTO solaragg.aud_datum_hourly (
 		ts_start, node_id, source_id, prop_count)
