@@ -123,18 +123,18 @@ BEGIN
 
 	CASE
 		WHEN st IS NULL AND en IS NULL THEN
-			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
+			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc;
 
 		WHEN st IS NULL THEN
-			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
+			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc
 				AND d.ts_start >= CAST(st at time zone loc_tz AS DATE);
 
 		ELSE
-			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
+			RETURN QUERY SELECT DISTINCT d.source_id
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc
 				AND d.ts_start >= CAST(st at time zone loc_tz AS DATE)
