@@ -16,7 +16,7 @@ The `postgres-create.sql` script can be used to
 
  1. Create a **solarnet** database user.
  2. Create a **solarnetwork** database, owned by the **solarnet** user.
- 3. Install the **citext** extension.
+ 3. Install the **citext** and **pgcrypto** extensions.
 
 This script should be run as a database superuser, for example **postgres**.
 Assuming Postgres is available on the same machine you are are, the script can
