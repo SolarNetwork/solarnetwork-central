@@ -59,11 +59,7 @@ CREATE OR REPLACE FUNCTION solarcommon.jdata_from_components(
 	RETURNS jsonb
 	LANGUAGE SQL IMMUTABLE AS
 $$
-SELECT jsonb_strip_nulls(jsonb_set(jsonb_set(jsonb_set(jsonb_set(
-				'{"t":null}'::jsonb, '{t}', COALESCE(to_jsonb(jdata_t), 'null'::jsonb)),
-			'{s}', COALESCE(jdata_s, 'null'::jsonb)),
-		'{a}', COALESCE(jdata_a, 'null'::jsonb)),
-	'{i}', COALESCE(jdata_i, 'null'::jsonb)));
+SELECT jsonb_strip_nulls(jsonb_build_object('i', jdata_i, 'a', jdata_a, 's', jdata_s, 't', to_jsonb(jdata_t)));
 $$;
 
 /**
