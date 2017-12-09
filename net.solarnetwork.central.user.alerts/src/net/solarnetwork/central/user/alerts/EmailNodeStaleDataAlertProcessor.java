@@ -33,6 +33,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
+import org.joda.time.LocalTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
@@ -55,15 +64,6 @@ import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
 import net.solarnetwork.central.user.domain.UserAlertStatus;
 import net.solarnetwork.central.user.domain.UserAlertType;
 import net.solarnetwork.central.user.domain.UserNode;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Interval;
-import org.joda.time.LocalTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.MessageSource;
 
 /**
  * Process stale data alerts for nodes.
@@ -233,8 +233,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				}
 
 				// get UserAlertSitutation for this alert
-				UserAlertSituation sit = userAlertSituationDao.getActiveAlertSituationForAlert(alert
-						.getId());
+				UserAlertSituation sit = userAlertSituationDao
+						.getActiveAlertSituationForAlert(alert.getId());
 				if ( stale != null ) {
 					long notifyOffset = 0;
 					if ( sit == null ) {
@@ -248,7 +248,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					} else if ( sit.getNotified().equals(sit.getCreated()) ) {
 						notifyOffset = (initialAlertReminderDelayMinutes * 60L * 1000L);
 					} else {
-						notifyOffset = ((sit.getNotified().getMillis() - sit.getCreated().getMillis()) * alertReminderFrequencyMultiplier);
+						notifyOffset = ((sit.getNotified().getMillis() - sit.getCreated().getMillis())
+								* alertReminderFrequencyMultiplier);
 					}
 
 					// taper off the alerts so the become less frequent over time
@@ -398,8 +399,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					.findFiltered(filter, null, null, null);
 			for ( GeneralNodeDatumFilterMatch match : latestNodeData.getResults() ) {
 				// first add to node list
-				List<GeneralNodeDatumFilterMatch> datumMatches = nodeDataCache.get(match.getId()
-						.getNodeId());
+				List<GeneralNodeDatumFilterMatch> datumMatches = nodeDataCache
+						.get(match.getId().getNodeId());
 				if ( datumMatches == null ) {
 					datumMatches = new ArrayList<GeneralNodeDatumFilterMatch>();
 					nodeDataCache.put(match.getId().getNodeId(), datumMatches);
@@ -433,15 +434,15 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			FilterResults<GeneralNodeDatumFilterMatch> latestNodeData = generalNodeDatumDao
 					.findFiltered(filter, null, null, null);
 			for ( GeneralNodeDatumFilterMatch match : latestNodeData.getResults() ) {
-				List<GeneralNodeDatumFilterMatch> datumMatches = nodeDataCache.get(match.getId()
-						.getNodeId());
+				List<GeneralNodeDatumFilterMatch> datumMatches = nodeDataCache
+						.get(match.getId().getNodeId());
 				if ( datumMatches == null ) {
 					datumMatches = new ArrayList<GeneralNodeDatumFilterMatch>();
 					nodeDataCache.put(match.getId().getNodeId(), datumMatches);
 				}
 				if ( !nodeCache.containsKey(match.getId().getNodeId()) ) {
-					nodeCache
-							.put(match.getId().getNodeId(), solarNodeDao.get(match.getId().getNodeId()));
+					nodeCache.put(match.getId().getNodeId(),
+							solarNodeDao.get(match.getId().getNodeId()));
 				}
 				datumMatches.add(match);
 			}
@@ -521,8 +522,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			List<Interval> nodeIntervals = intervals;
 			if ( alert.getNodeId() == null ) {
 				try {
-					nodeIntervals = parseAlertTimeWindows(now, timeFormatter, alert, datum.getId()
-							.getNodeId());
+					nodeIntervals = parseAlertTimeWindows(now, timeFormatter, alert,
+							datum.getId().getNodeId());
 					if ( nodeIntervals != null ) {
 						for ( Interval interval : nodeIntervals ) {
 							if ( !intervals.contains(interval) ) {
@@ -537,7 +538,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			}
 			if ( datum.getId().getCreated().getMillis() + (long) (age.doubleValue() * 1000) < now
 					.getMillis()
-					&& (sourceIds == null || Arrays.binarySearch(sourceIds, datum.getId().getSourceId()) >= 0)
+					&& (sourceIds == null
+							|| Arrays.binarySearch(sourceIds, datum.getId().getSourceId()) >= 0)
 					&& withinIntervals(now.getMillis(), nodeIntervals) ) {
 				stale = datum;
 				break;
@@ -555,7 +557,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		List<GeneralNodeDatumFilterMatch> latestNodeData = getLatestNodeData(alert);
 		for ( GeneralNodeDatumFilterMatch datum : latestNodeData ) {
 			if ( datum.getId().getCreated().getMillis() + (long) (age.doubleValue() * 1000) >= now
-					&& (sourceIds == null || Arrays.binarySearch(sourceIds, datum.getId().getSourceId()) >= 0) ) {
+					&& (sourceIds == null
+							|| Arrays.binarySearch(sourceIds, datum.getId().getSourceId()) >= 0) ) {
 				nonStale = datum;
 				break;
 			}
@@ -587,8 +590,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			}
 			model.put("datumDate", dateFormat.print(datum.getId().getCreated()));
 
-			String subject = messageSource.getMessage(subjectKey, new Object[] { datum.getId()
-					.getNodeId() }, locale);
+			String subject = messageSource.getMessage(subjectKey,
+					new Object[] { datum.getId().getNodeId() }, locale);
 
 			log.debug("Sending NodeStaleData alert {} to {} with model {}", subject, user.getEmail(),
 					model);
