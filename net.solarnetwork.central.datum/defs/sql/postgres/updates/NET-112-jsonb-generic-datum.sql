@@ -1,33 +1,9 @@
-ALTER TABLE solardatum.da_datum
-	ADD COLUMN jdata_i jsonb,
-	ADD COLUMN jdata_a jsonb,
-	ADD COLUMN jdata_s jsonb,
-	ADD COLUMN jdata_t text[];
-
 ALTER TABLE solardatum.da_meta
   ALTER COLUMN jdata SET DATA TYPE jsonb;
 
 DROP VIEW solaragg.da_datum_avail_hourly;
 DROP VIEW solaragg.da_datum_avail_daily;
 DROP VIEW solaragg.da_datum_avail_monthly;
-
-ALTER TABLE solaragg.agg_datum_hourly
-	ADD COLUMN jdata_i jsonb,
-	ADD COLUMN jdata_a jsonb,
-	ADD COLUMN jdata_s jsonb,
-	ADD COLUMN jdata_t text[];
-
-ALTER TABLE solaragg.agg_datum_daily
-	ADD COLUMN jdata_i jsonb,
-	ADD COLUMN jdata_a jsonb,
-	ADD COLUMN jdata_s jsonb,
-	ADD COLUMN jdata_t text[];
-
-ALTER TABLE solaragg.agg_datum_monthly
-	ADD COLUMN jdata_i jsonb,
-	ADD COLUMN jdata_a jsonb,
-	ADD COLUMN jdata_s jsonb,
-	ADD COLUMN jdata_t text[];
 
 CREATE OR REPLACE FUNCTION solardatum.jdata_from_datum(datum solardatum.da_datum)
 	RETURNS jsonb
