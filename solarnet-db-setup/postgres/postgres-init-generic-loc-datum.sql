@@ -175,9 +175,9 @@ END;
 $BODY$;
 
 CREATE OR REPLACE FUNCTION solardatum.find_loc_available_sources(
-	IN loc bigint,
-	IN st timestamp with time zone DEFAULT NULL,
-	IN en timestamp with time zone DEFAULT NULL)
+    IN loc bigint,
+    IN st timestamp with time zone DEFAULT NULL::timestamp with time zone,
+    IN en timestamp with time zone DEFAULT NULL::timestamp with time zone)
   RETURNS TABLE(source_id text) AS
 $BODY$
 DECLARE
@@ -197,18 +197,18 @@ BEGIN
 
 	CASE
 		WHEN st IS NULL AND en IS NULL THEN
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc;
 
 		WHEN st IS NULL THEN
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc
 				AND d.ts_start >= CAST(st at time zone loc_tz AS DATE);
 
 		ELSE
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc
 				AND d.ts_start >= CAST(st at time zone loc_tz AS DATE)
@@ -264,12 +264,12 @@ END;$BODY$
 CREATE OR REPLACE FUNCTION solardatum.find_loc_most_recent(
 	loc bigint,
 	sources text[] DEFAULT NULL)
-  RETURNS SETOF solardatum.da_loc_datum AS
+  RETURNS SETOF solardatum.da_loc_datum_data AS
 $BODY$
 BEGIN
 	IF sources IS NULL OR array_length(sources, 1) < 1 THEN
 		RETURN QUERY
-		SELECT dd.* FROM solardatum.da_loc_datum dd
+		SELECT dd.* FROM solardatum.da_loc_datum_data dd
 		INNER JOIN (
 			-- to speed up query for sources (which can be very slow when queried directly on da_loc_datum),
 			-- we find the most recent hour time slot in agg_loc_datum_hourly, and then join to da_loc_datum with that narrow time range
@@ -289,7 +289,7 @@ BEGIN
 		ORDER BY dd.source_id ASC;
 	ELSE
 		RETURN QUERY
-		SELECT dd.* FROM solardatum.da_loc_datum dd
+		SELECT dd.* FROM solardatum.da_loc_datum_data dd
 		INNER JOIN (
 			WITH days AS (
 				SELECT max(d.ts_start) as ts_start, d.source_id FROM solaragg.agg_loc_datum_hourly d

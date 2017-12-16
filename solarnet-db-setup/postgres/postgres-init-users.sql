@@ -326,7 +326,7 @@ END;$BODY$
  * @returns Set of solardatum.da_datum records.
  */
 CREATE OR REPLACE FUNCTION solaruser.find_most_recent_datum_for_user(users bigint[])
-  RETURNS SETOF solardatum.da_datum AS
+  RETURNS SETOF solardatum.da_datum_data AS
 $BODY$
 	SELECT r.*
 	FROM (SELECT node_id FROM solaruser.user_node WHERE user_id = ANY(users)) AS n,

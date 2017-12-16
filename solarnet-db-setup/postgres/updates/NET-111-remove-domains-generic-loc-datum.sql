@@ -101,9 +101,9 @@ $BODY$;
 
 DROP FUNCTION solardatum.find_loc_available_sources(solarcommon.loc_id, solarcommon.ts, solarcommon.ts);
 CREATE OR REPLACE FUNCTION solardatum.find_loc_available_sources(
-	IN loc bigint,
-	IN st timestamp with time zone DEFAULT NULL,
-	IN en timestamp with time zone DEFAULT NULL)
+    IN loc bigint,
+    IN st timestamp with time zone DEFAULT NULL::timestamp with time zone,
+    IN en timestamp with time zone DEFAULT NULL::timestamp with time zone)
   RETURNS TABLE(source_id text) AS
 $BODY$
 DECLARE
@@ -123,18 +123,18 @@ BEGIN
 
 	CASE
 		WHEN st IS NULL AND en IS NULL THEN
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc;
 
 		WHEN st IS NULL THEN
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc
 				AND d.ts_start >= CAST(st at time zone loc_tz AS DATE);
 
 		ELSE
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc
 				AND d.ts_start >= CAST(st at time zone loc_tz AS DATE)

@@ -10,9 +10,9 @@
 CREATE OR REPLACE FUNCTION solardatum.find_most_recent(
 	node bigint,
 	sources text[] DEFAULT NULL)
-  RETURNS SETOF solardatum.da_datum AS
+  RETURNS SETOF solardatum.da_datum_data AS
 $BODY$
-	SELECT dd.* FROM solardatum.da_datum dd
+	SELECT dd.* FROM solardatum.da_datum_data dd
 	INNER JOIN (
 		-- to speed up query for sources (which can be very slow when queried directly on da_datum),
 		-- we find the most recent hour time slot in agg_datum_hourly, and then join to da_datum with that narrow time range
@@ -36,7 +36,7 @@ $BODY$
  * @returns Set of solardatum.da_datum records.
  */
 CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes bigint[])
-  RETURNS SETOF solardatum.da_datum AS
+  RETURNS SETOF solardatum.da_datum_data AS
 $BODY$
 	SELECT r.*
 	FROM (SELECT unnest(nodes) AS node_id) AS n,

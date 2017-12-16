@@ -55,12 +55,12 @@ DROP FUNCTION solardatum.find_loc_most_recent(bigint, text[]);
 CREATE OR REPLACE FUNCTION solardatum.find_loc_most_recent(
 	loc bigint,
 	sources text[] DEFAULT NULL)
-  RETURNS SETOF solardatum.da_loc_datum AS
+  RETURNS SETOF solardatum.da_loc_datum_data AS
 $BODY$
 BEGIN
 	IF sources IS NULL OR array_length(sources, 1) < 1 THEN
 		RETURN QUERY
-		SELECT dd.* FROM solardatum.da_loc_datum dd
+		SELECT dd.* FROM solardatum.da_loc_datum_data dd
 		INNER JOIN (
 			-- to speed up query for sources (which can be very slow when queried directly on da_loc_datum),
 			-- we find the most recent hour time slot in agg_loc_datum_hourly, and then join to da_loc_datum with that narrow time range
@@ -80,7 +80,7 @@ BEGIN
 		ORDER BY dd.source_id ASC;
 	ELSE
 		RETURN QUERY
-		SELECT dd.* FROM solardatum.da_loc_datum dd
+		SELECT dd.* FROM solardatum.da_loc_datum_data dd
 		INNER JOIN (
 			WITH days AS (
 				SELECT max(d.ts_start) as ts_start, d.source_id FROM solaragg.agg_loc_datum_hourly d
