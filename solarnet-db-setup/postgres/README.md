@@ -33,6 +33,8 @@ $ createuser -U postgres -EP solarnet
 $ createdb -U postgres -E UTF8 -O solarnet -T template0 solarnetwork
 $ psql -U postgres -d solarnetwork \
 	-c 'CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;'
+$ psql -U postgres -d solarnetwork \
+	-c 'CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;'
 ```
 
 ## Setup plv8
