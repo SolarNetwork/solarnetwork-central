@@ -45,6 +45,7 @@ import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
@@ -388,7 +389,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		dao.store(d2);
 
 		// most recent sorted ascending by source ID
-		List<GeneralNodeDatumPK> pks = Arrays.asList(d2.getId(), lastDatum.getId());
+		List<GeneralNodeDatum> datum = Arrays.asList(d2, lastDatum);
 
 		// immediately process reporting data as getting all sources scans daily table
 		processAggregateStaleData();
@@ -399,9 +400,14 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(filter, null, null, null);
 		assertNotNull(results);
 		assertEquals(Long.valueOf(2), results.getTotalResults());
-		Iterator<GeneralNodeDatumPK> pkIterator = pks.iterator();
+		Iterator<GeneralNodeDatum> datumIterator = datum.iterator();
 		for ( GeneralNodeDatumFilterMatch match : results.getResults() ) {
-			assertEquals(pkIterator.next(), match.getId());
+			GeneralNodeDatum expected = datumIterator.next();
+			assertEquals(expected.getId(), match.getId());
+
+			Assert.assertTrue("Match class", match instanceof GeneralNodeDatumMatch);
+			GeneralNodeDatumMatch m = (GeneralNodeDatumMatch) match;
+			assertEquals(expected.getSamples(), m.getSamples());
 		}
 	}
 
@@ -421,6 +427,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertEquals(Long.valueOf(1), results.getTotalResults());
 		GeneralNodeDatumFilterMatch match = results.getResults().iterator().next();
 		assertEquals(lastDatum.getId(), match.getId());
+		Assert.assertTrue("Match class", match instanceof GeneralNodeDatumMatch);
+		GeneralNodeDatumMatch m = (GeneralNodeDatumMatch) match;
+		assertEquals(lastDatum.getSamples(), m.getSamples());
 	}
 
 	@Test
@@ -621,7 +630,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		dao.store(d5);
 
 		// most recent sorted ascending by node ID, source ID
-		List<GeneralNodeDatumPK> pks = Arrays.asList(d5.getId(), d3.getId(), d2.getId());
+		List<GeneralNodeDatum> pks = Arrays.asList(d5, d3, d2);
 
 		// immediately process reporting data as getting all sources scans daily table
 		processAggregateStaleData();
@@ -632,9 +641,14 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(filter, null, null, null);
 		assertNotNull(results);
 		assertEquals(Long.valueOf(3), results.getTotalResults());
-		Iterator<GeneralNodeDatumPK> pkIterator = pks.iterator();
+		Iterator<GeneralNodeDatum> datumIterator = pks.iterator();
 		for ( GeneralNodeDatumFilterMatch match : results.getResults() ) {
-			assertEquals(pkIterator.next(), match.getId());
+			GeneralNodeDatum expected = datumIterator.next();
+			assertEquals(expected.getId(), match.getId());
+
+			Assert.assertTrue("Match class", match instanceof GeneralNodeDatumMatch);
+			GeneralNodeDatumMatch m = (GeneralNodeDatumMatch) match;
+			assertEquals(expected.getSamples(), m.getSamples());
 		}
 	}
 

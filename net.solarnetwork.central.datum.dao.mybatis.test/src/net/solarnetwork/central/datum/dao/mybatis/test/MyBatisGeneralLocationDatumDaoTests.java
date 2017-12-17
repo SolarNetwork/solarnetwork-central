@@ -47,6 +47,7 @@ import net.solarnetwork.central.datum.domain.DatumMappingInfo;
 import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.datum.domain.PriceDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
@@ -391,7 +392,7 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		dao.store(d2);
 
 		// most recent sorted ascending by source ID
-		List<GeneralLocationDatumPK> pks = Arrays.asList(d2.getId(), lastDatum.getId());
+		List<GeneralLocationDatum> datum = Arrays.asList(d2, lastDatum);
 
 		// immediately process reporting data as getting all sources scans daily table
 		processAggregateStaleData();
@@ -403,9 +404,13 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 				null);
 		assertNotNull(results);
 		assertEquals(Long.valueOf(2), results.getTotalResults());
-		Iterator<GeneralLocationDatumPK> pkIterator = pks.iterator();
+		Iterator<GeneralLocationDatum> datumIterator = datum.iterator();
 		for ( GeneralLocationDatumFilterMatch match : results.getResults() ) {
-			assertEquals(pkIterator.next(), match.getId());
+			GeneralLocationDatum expected = datumIterator.next();
+			assertEquals(expected.getId(), match.getId());
+			Assert.assertTrue("Match class", match instanceof GeneralLocationDatumMatch);
+			GeneralLocationDatumMatch m = (GeneralLocationDatumMatch) match;
+			assertEquals(expected.getSamples(), m.getSamples());
 		}
 	}
 
@@ -426,6 +431,9 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		assertEquals(Long.valueOf(1), results.getTotalResults());
 		GeneralLocationDatumFilterMatch match = results.getResults().iterator().next();
 		assertEquals(lastDatum.getId(), match.getId());
+		Assert.assertTrue("Match class", match instanceof GeneralLocationDatumMatch);
+		GeneralLocationDatumMatch m = (GeneralLocationDatumMatch) match;
+		assertEquals(lastDatum.getSamples(), m.getSamples());
 	}
 
 	@Test
