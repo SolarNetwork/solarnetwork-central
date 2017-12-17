@@ -115,7 +115,7 @@ CREATE OR REPLACE FUNCTION solaragg.find_loc_datum_for_time_span(
     IN start_ts timestamp with time zone,
     IN span interval,
     IN tolerance interval DEFAULT '01:00:00'::interval)
-  RETURNS TABLE(ts timestamp with time zone, source_id text, jdata json) AS
+  RETURNS TABLE(ts timestamp with time zone, source_id text, jdata jsonb) AS
 $BODY$
 SELECT sub.ts, sub.source_id, sub.jdata FROM (
 	-- subselect filters out "extra" leading/lagging rows from results
@@ -127,7 +127,7 @@ SELECT sub.ts, sub.source_id, sub.jdata FROM (
 				THEN TRUE
 			ELSE FALSE
 		END AS outside,
-		d.jdata as jdata
+		solardatum.jdata_from_datum(d) as jdata
 	FROM solardatum.da_loc_datum d
 	WHERE d.loc_id = loc
 		AND d.source_id = ANY(sources)
@@ -164,7 +164,7 @@ CREATE OR REPLACE FUNCTION solaragg.calc_loc_datum_time_slots(
 	IN span interval,
 	IN slotsecs integer DEFAULT 600,
 	IN tolerance interval DEFAULT interval '1 hour')
-  RETURNS TABLE(ts_start timestamp with time zone, source_id text, jdata json) LANGUAGE plv8 AS
+  RETURNS TABLE(ts_start timestamp with time zone, source_id text, jdata jsonb) LANGUAGE plv8 AS
 $BODY$
 'use strict';
 
@@ -243,19 +243,19 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_loc_datum_minute(
 	IN slotsecs integer DEFAULT 600,
 	IN tolerance interval DEFAULT interval '1 hour')
   RETURNS TABLE(
-	loc_id solarcommon.loc_id,
+	loc_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
-	jdata json)
+	source_id text,
+	jdata jsonb)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	loc::solarcommon.loc_id,
+	loc AS loc_id,
 	d.ts_start,
 	d.ts_start AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_date,
-	d.source_id::solarcommon.source_id,
+	d.source_id,
 	d.jdata
  FROM solaragg.calc_loc_datum_time_slots(
 	loc,
@@ -287,22 +287,22 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_loc_datum_hod(
 	IN start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	loc_id solarcommon.loc_id,
+	loc_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
-	jdata json)
+	source_id text,
+	jdata jsonb)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	loc::solarcommon.loc_id,
+	loc AS loc_id,
 	(CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AT TIME ZONE 'UTC' AS ts_start,
 	(CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AS local_date,
 	d.source_id,
 	('{"' || path[1] || '":{"' || path[2] || '":'
-		|| ROUND(AVG(CAST(json_extract_path_text(jdata, VARIADIC path) AS double precision)) * 1000) / 1000
-		|| '}}')::json as jdata
+		|| ROUND(AVG(CAST(jsonb_extract_path_text(solaragg.jdata_from_datum(d), VARIADIC path) AS double precision)) * 1000) / 1000
+		|| '}}')::jsonb as jdata
 FROM solaragg.agg_loc_datum_hourly d
 WHERE
 	d.loc_id = loc
@@ -333,24 +333,24 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_loc_datum_seasonal_hod(
 	IN start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	loc_id solarcommon.loc_id,
+	loc_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
-	jdata json)
+	source_id text,
+	jdata jsonb)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	loc::solarcommon.loc_id,
+	loc AS loc_id,
 	(solarnet.get_season_monday_start(CAST(d.local_date AS DATE))
 		+ CAST(EXTRACT(hour FROM d.local_date) || ' hour' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
 	solarnet.get_season_monday_start(CAST(d.local_date AS DATE))
 		+ CAST(EXTRACT(hour FROM d.local_date) || ' hour' AS INTERVAL) AS local_date,
 	d.source_id,
 	('{"' || path[1] || '":{"' || path[2] || '":'
-		|| ROUND(AVG(CAST(json_extract_path_text(jdata, VARIADIC path) AS double precision)) * 1000) / 1000
-		|| '}}')::json as jdata
+		|| ROUND(AVG(CAST(jsonb_extract_path_text(solaragg.jdata_from_datum(d), VARIADIC path) AS double precision)) * 1000) / 1000
+		|| '}}')::jsonb as jdata
 FROM solaragg.agg_loc_datum_hourly d
 WHERE
 	d.loc_id = loc
@@ -382,22 +382,22 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_loc_datum_dow(
 	IN start_ts timestamp with time zone DEFAULT '2001-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	loc_id solarcommon.loc_id,
+	loc_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
-	jdata json)
+	source_id text,
+	jdata jsonb)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	loc::solarcommon.loc_id,
+	loc AS loc_id,
 	(DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
 	(DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AS local_date,
 	d.source_id,
 	('{"' || path[1] || '":{"' || path[2] || '":'
-		|| ROUND(AVG(CAST(json_extract_path_text(jdata, VARIADIC path) AS double precision)) * 1000) / 1000
-		|| '}}')::json as jdata
+		|| ROUND(AVG(CAST(jsonb_extract_path_text(solaragg.jdata_from_datum(d), VARIADIC path) AS double precision)) * 1000) / 1000
+		|| '}}')::jsonb as jdata
 FROM solaragg.agg_loc_datum_daily d
 WHERE
 	d.loc_id = loc
@@ -428,24 +428,24 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_loc_datum_seasonal_dow(
 	IN start_ts timestamp with time zone DEFAULT '2001-01-01 00:00+0'::timestamptz,
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
   RETURNS TABLE(
-	loc_id solarcommon.loc_id,
+	loc_id bigint,
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
-	source_id solarcommon.source_id,
-	jdata json)
+	source_id text,
+	jdata jsonb)
   LANGUAGE sql
   STABLE AS
 $BODY$
 SELECT
-	loc::solarcommon.loc_id,
+	loc AS loc_id,
 	(solarnet.get_season_monday_start(d.local_date)
 		+ CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start,
 	(solarnet.get_season_monday_start(d.local_date)
 		+ CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AS local_date,
 	d.source_id,
 	('{"' || path[1] || '":{"' || path[2] || '":'
-		|| ROUND(AVG(CAST(json_extract_path_text(jdata, VARIADIC path) AS double precision)) * 1000) / 1000
-		|| '}}')::json as jdata
+		|| ROUND(AVG(CAST(jsonb_extract_path_text(solaragg.jdata_from_datum(d), VARIADIC path) AS double precision)) * 1000) / 1000
+		|| '}}')::jsonb as jdata
 FROM solaragg.agg_loc_datum_daily d
 WHERE
 	d.loc_id = loc
@@ -470,7 +470,7 @@ DECLARE
 			LIMIT 1
 			FOR UPDATE SKIP LOCKED;
 	agg_span interval;
-	agg_json json := NULL;
+	agg_json jsonb := NULL;
 	loc_tz text := 'UTC';
 	result integer := 0;
 BEGIN
@@ -522,40 +522,61 @@ BEGIN
 			CASE kind
 				WHEN 'h' THEN
 					INSERT INTO solaragg.agg_loc_datum_hourly (
-						ts_start, local_date, loc_id, source_id, jdata)
+						ts_start, local_date, loc_id, source_id,
+						jdata_i, jdata_a, jdata_s, jdata_t)
 					VALUES (
 						stale.ts_start,
 						stale.ts_start at time zone loc_tz,
 						stale.loc_id,
 						stale.source_id,
-						agg_json
+						agg_json->'i',
+						agg_json->'a',
+						agg_json->'s',
+						solarcommon.json_array_to_text_array(agg_json->'t')
 					)
 					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
-					SET jdata = EXCLUDED.jdata;
+					SET jdata_i = EXCLUDED.jdata_i,
+						jdata_a = EXCLUDED.jdata_a,
+						jdata_s = EXCLUDED.jdata_s,
+						jdata_t = EXCLUDED.jdata_t;
 				WHEN 'd' THEN
 					INSERT INTO solaragg.agg_loc_datum_daily (
-						ts_start, local_date, loc_id, source_id, jdata)
+						ts_start, local_date, loc_id, source_id,
+						jdata_i, jdata_a, jdata_s, jdata_t)
 					VALUES (
 						stale.ts_start,
 						CAST(stale.ts_start at time zone loc_tz AS DATE),
 						stale.loc_id,
 						stale.source_id,
-						agg_json
+						agg_json->'i',
+						agg_json->'a',
+						agg_json->'s',
+						solarcommon.json_array_to_text_array(agg_json->'t')
 					)
 					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
-					SET jdata = EXCLUDED.jdata;
+					SET jdata_i = EXCLUDED.jdata_i,
+						jdata_a = EXCLUDED.jdata_a,
+						jdata_s = EXCLUDED.jdata_s,
+						jdata_t = EXCLUDED.jdata_t;
 				ELSE
 					INSERT INTO solaragg.agg_loc_datum_monthly (
-						ts_start, local_date, loc_id, source_id, jdata)
+						ts_start, local_date, loc_id, source_id,
+						jdata_i, jdata_a, jdata_s, jdata_t)
 					VALUES (
 						stale.ts_start,
 						CAST(stale.ts_start at time zone loc_tz AS DATE),
 						stale.loc_id,
 						stale.source_id,
-						agg_json
+						agg_json->'i',
+						agg_json->'a',
+						agg_json->'s',
+						solarcommon.json_array_to_text_array(agg_json->'t')
 					)
 					ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
-					SET jdata = EXCLUDED.jdata;
+					SET jdata_i = EXCLUDED.jdata_i,
+						jdata_a = EXCLUDED.jdata_a,
+						jdata_s = EXCLUDED.jdata_s,
+						jdata_t = EXCLUDED.jdata_t;
 			END CASE;
 		END IF;
 		DELETE FROM solaragg.agg_stale_loc_datum WHERE CURRENT OF curs;
@@ -614,7 +635,13 @@ CREATE OR REPLACE FUNCTION solaragg.find_running_loc_datum(
 	IN loc bigint,
 	IN sources text[],
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
-RETURNS TABLE(ts_start timestamp with time zone, local_date timestamp without time zone, loc_id bigint, source_id text, jdata json, weight integer)
+RETURNS TABLE(
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
+	loc_id bigint,
+	source_id text,
+	jdata jsonb,
+	weight integer)
 LANGUAGE sql
 STABLE AS
 $BODY$
@@ -626,20 +653,20 @@ $BODY$
 		SELECT loc::bigint AS loc_id, 'UTC'::character varying AS tz
 		WHERE NOT EXISTS (SELECT id AS loc_id FROM solarnet.sn_loc WHERE id = loc)
 	)
-	SELECT d.ts_start, d.local_date, d.loc_id, d.source_id, d.jdata, CAST(extract(epoch from (local_date + interval '1 month') - local_date) / 3600 AS integer) AS weight
+	SELECT d.ts_start, d.local_date, d.loc_id, d.source_id, solaragg.jdata_from_datum(d), CAST(extract(epoch from (local_date + interval '1 month') - local_date) / 3600 AS integer) AS weight
 	FROM solaragg.agg_loc_datum_monthly d
 	INNER JOIN loctz ON loctz.loc_id = d.loc_id
 	WHERE d.ts_start < date_trunc('month', end_ts AT TIME ZONE loctz.tz) AT TIME ZONE loctz.tz
 		AND d.source_id = ANY(sources)
 	UNION ALL
-	SELECT d.ts_start, d.local_date, d.loc_id, d.source_id, d.jdata, 24::integer as weight
+	SELECT d.ts_start, d.local_date, d.loc_id, d.source_id, solaragg.jdata_from_datum(d), 24::integer as weight
 	FROM solaragg.agg_loc_datum_daily d
 	INNER JOIN loctz ON loctz.loc_id = d.loc_id
 	WHERE ts_start < date_trunc('day', end_ts AT TIME ZONE loctz.tz) AT TIME ZONE loctz.tz
 		AND d.ts_start >= date_trunc('month', end_ts AT TIME ZONE loctz.tz) AT TIME ZONE loctz.tz
 		AND d.source_id = ANY(sources)
 	UNION ALL
-	SELECT d.ts_start, d.local_date, d.loc_id, d.source_id, d.jdata, 1::INTEGER as weight
+	SELECT d.ts_start, d.local_date, d.loc_id, d.source_id, solaragg.jdata_from_datum(d), 1::INTEGER as weight
 	FROM solaragg.agg_loc_datum_hourly d
 	INNER JOIN loctz ON loctz.loc_id = d.loc_id
 	WHERE d.ts_start < date_trunc('hour', end_ts AT TIME ZONE loctz.tz) AT TIME ZONE loctz.tz
@@ -671,7 +698,12 @@ CREATE OR REPLACE FUNCTION solaragg.calc_running_loc_datum_total(
 	IN loc bigint,
 	IN sources text[],
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
-RETURNS TABLE(ts_start timestamp with time zone, local_date timestamp without time zone, loc_id bigint, source_id text, jdata json)
+RETURNS TABLE(
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
+	loc_id bigint,
+	source_id text,
+	jdata jsonb)
 LANGUAGE sql
 STABLE
 ROWS 10 AS

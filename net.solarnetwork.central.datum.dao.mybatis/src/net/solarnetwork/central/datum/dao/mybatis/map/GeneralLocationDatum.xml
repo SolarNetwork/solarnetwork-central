@@ -47,7 +47,7 @@
 		SELECT
 			<include refid="fragment-GeneralLocationDatum-full-result"/>
 		FROM
-			solardatum.da_loc_datum datum
+			solardatum.da_loc_datum_data datum
 		WHERE
 			datum.loc_id = #{locationId}
 			AND datum.ts = #{created}
@@ -159,7 +159,7 @@
 			<include refid="fragment-GeneralLocationDatum-full-result"/>
 			, datum.ts AT TIME ZONE COALESCE(loc.time_zone, 'UTC') AS datum_local_date
 		FROM
-			solardatum.da_loc_datum datum
+			solardatum.da_loc_datum_data datum
 		LEFT OUTER JOIN solarnet.sn_loc loc ON loc.id = datum.loc_id
 		<include refid="fragment-findall-GeneralLocationDatum-GeneralLocationDatumMatch-where"/>
 		ORDER BY
@@ -183,7 +183,7 @@
 	<select id="findall-GeneralLocationDatum-GeneralLocationDatumMatch-count" resultType="long">
 		SELECT count(datum.ts)
 		FROM
-			solardatum.da_loc_datum datum
+			solardatum.da_loc_datum_data datum
 		<include refid="fragment-findall-GeneralLocationDatum-GeneralLocationDatumMatch-where"/>
 	</select>
 
@@ -282,7 +282,7 @@
 	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Hour-count" resultType="long">
 		SELECT count(datum.ts_start)
 		FROM
-			solaragg.agg_loc_datum_hourly datum
+			solaragg.agg_loc_datum_hourly_data datum
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
 	</select>
 	
@@ -290,7 +290,7 @@
 		SELECT
 			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
 		FROM
-			solaragg.agg_loc_datum_hourly datum
+			solaragg.agg_loc_datum_hourly_data datum
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
 	</select>
@@ -324,7 +324,7 @@
 	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Day-count" resultType="long">
 		SELECT count(datum.ts_start)
 		FROM
-			solaragg.agg_loc_datum_daily datum
+			solaragg.agg_loc_datum_daily_data datum
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
 	</select>
 	
@@ -332,7 +332,7 @@
 		SELECT
 			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
 		FROM
-			solaragg.agg_loc_datum_daily datum
+			solaragg.agg_loc_datum_daily_data datum
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
 	</select>
@@ -366,7 +366,7 @@
 	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Month-count" resultType="long">
 		SELECT count(datum.ts_start)
 		FROM
-			solaragg.agg_loc_datum_monthly datum
+			solaragg.agg_loc_datum_monthly_data datum
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
 	</select>
 	
@@ -374,7 +374,7 @@
 		SELECT
 			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
 		FROM
-			solaragg.agg_loc_datum_monthly datum
+			solaragg.agg_loc_datum_monthly_data datum
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-where"/>
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
 	</select>

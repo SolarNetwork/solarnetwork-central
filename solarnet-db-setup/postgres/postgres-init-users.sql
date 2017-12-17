@@ -47,9 +47,9 @@ $BODY$;
  */
 CREATE TABLE solaruser.user_meta (
   user_id 			BIGINT NOT NULL,
-  created 			solarcommon.ts NOT NULL,
-  updated 			solarcommon.ts NOT NULL,
-  jdata 			json NOT NULL,
+  created 			timestamp with time zone NOT NULL,
+  updated 			timestamp with time zone NOT NULL,
+  jdata				jsonb NOT NULL,
   CONSTRAINT user_meta_pkey PRIMARY KEY (user_id),
   CONSTRAINT user_meta_user_fk FOREIGN KEY (user_id)
         REFERENCES solaruser.user_user (id) MATCH SIMPLE
@@ -66,14 +66,14 @@ CREATE TABLE solaruser.user_meta (
  * @param jdata the metadata to store
  */
 CREATE OR REPLACE FUNCTION solaruser.store_user_meta(
-	cdate solarcommon.ts,
+	cdate timestamp with time zone,
 	userid BIGINT,
 	jdata text)
   RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
-	udate solarcommon.ts := now();
-	jdata_json json := jdata::json;
+	udate timestamp with time zone := now();
+	jdata_json jsonb := jdata::jsonb;
 BEGIN
 	INSERT INTO solaruser.user_meta(user_id, created, updated, jdata)
 	VALUES (userid, cdate, udate, jdata_json)
@@ -247,8 +247,8 @@ CREATE TABLE solaruser.user_node_cert (
 );
 
 CREATE OR REPLACE FUNCTION solaruser.store_user_node_cert(
-	created solarcommon.ts,
-	node solarcommon.node_id,
+	created timestamp with time zone,
+	node bigint,
 	userid bigint,
 	stat char,
 	request text,
@@ -280,7 +280,7 @@ END;$BODY$
 CREATE TABLE solaruser.user_node_xfer (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id			BIGINT NOT NULL,
-	node_id			solarcommon.node_id,
+	node_id			BIGINT NOT NULL,
 	recipient		citext NOT NULL,
 	CONSTRAINT user_node_xfer_pkey PRIMARY KEY (user_id, node_id),
 	CONSTRAINT user_node_xfer_user_fk FOREIGN KEY (user_id)
@@ -291,7 +291,7 @@ CREATE TABLE solaruser.user_node_xfer (
 CREATE INDEX user_node_xfer_recipient_idx ON solaruser.user_node_xfer (recipient);
 
 /**************************************************************************************************
- * FUNCTION solaruser.store_user_node_xfer(solarcommon.node_id, bigint, varchar, varchar)
+ * FUNCTION solaruser.store_user_node_xfer(bigint, bigint, varchar, varchar)
  *
  * Insert or update a user node transfer record.
  *
@@ -300,8 +300,8 @@ CREATE INDEX user_node_xfer_recipient_idx ON solaruser.user_node_xfer (recipient
  * @param recip The recipient email of the requested owner.
  */
 CREATE OR REPLACE FUNCTION solaruser.store_user_node_xfer(
-	node solarcommon.node_id,
-	userid BIGINT,
+	node bigint,
+	userid bigint,
 	recip CHARACTER VARYING(255))
   RETURNS void AS
 $BODY$
@@ -326,7 +326,7 @@ END;$BODY$
  * @returns Set of solardatum.da_datum records.
  */
 CREATE OR REPLACE FUNCTION solaruser.find_most_recent_datum_for_user(users bigint[])
-  RETURNS SETOF solardatum.da_datum AS
+  RETURNS SETOF solardatum.da_datum_data AS
 $BODY$
 	SELECT r.*
 	FROM (SELECT node_id FROM solaruser.user_node WHERE user_id = ANY(users)) AS n,

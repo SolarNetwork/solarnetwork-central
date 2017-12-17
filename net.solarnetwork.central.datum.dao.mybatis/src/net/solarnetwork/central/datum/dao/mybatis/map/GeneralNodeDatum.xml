@@ -47,7 +47,7 @@
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-full-result"/>
 		FROM
-			solardatum.da_datum datum
+			solardatum.da_datum_data datum
 		WHERE
 			datum.node_id = #{nodeId}
 			AND datum.ts = #{created}
@@ -89,7 +89,7 @@
 			</when>
 			<when test="filter.nodeIds.length > 1 and filter.sourceId == null">
 				{call solardatum.find_most_recent(
-					CAST(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler} AS solarcommon.node_ids)
+					#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
 				)}
 			</when>
 			<otherwise>
@@ -130,7 +130,7 @@
 			<include refid="fragment-GeneralNodeDatum-full-result"/>
 			, datum.ts AT TIME ZONE COALESCE(loc.time_zone, 'UTC') AS datum_local_date
 		FROM
-			solardatum.da_datum datum
+			solardatum.da_datum_data datum
 		LEFT OUTER JOIN solarnet.sn_node node ON node.node_id = datum.node_id
 		LEFT OUTER JOIN solarnet.sn_loc loc ON loc.id = node.loc_id
 		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where"/>
@@ -155,7 +155,7 @@
 	<select id="findall-GeneralNodeDatum-GeneralNodeDatumMatch-count" resultType="long">
 		SELECT count(datum.ts)
 		FROM
-			solardatum.da_datum datum
+			solardatum.da_datum_data datum
 		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where"/>
 	</select>
 	
@@ -315,7 +315,7 @@
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour-count" resultType="long">
 		SELECT count(datum.ts_start)
 		FROM
-			solaragg.agg_datum_hourly datum
+			solaragg.agg_datum_hourly_data datum
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 	</select>
 	
@@ -323,7 +323,7 @@
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM
-			solaragg.agg_datum_hourly datum
+			solaragg.agg_datum_hourly_data datum
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
@@ -357,7 +357,7 @@
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day-count" resultType="long">
 		SELECT count(datum.ts_start)
 		FROM
-			solaragg.agg_datum_daily datum
+			solaragg.agg_datum_daily_data datum
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 	</select>
 	
@@ -365,7 +365,7 @@
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM
-			solaragg.agg_datum_daily datum
+			solaragg.agg_datum_daily_data datum
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
@@ -399,7 +399,7 @@
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-count" resultType="long">
 		SELECT count(datum.ts_start)
 		FROM
-			solaragg.agg_datum_monthly datum
+			solaragg.agg_datum_monthly_data datum
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 	</select>
 	
@@ -407,7 +407,7 @@
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM
-			solaragg.agg_datum_monthly datum
+			solaragg.agg_datum_monthly_data datum
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>

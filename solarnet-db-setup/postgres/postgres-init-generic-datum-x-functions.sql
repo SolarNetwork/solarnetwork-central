@@ -8,11 +8,11 @@
  * @returns Set of solardatum.da_datum records.
  */
 CREATE OR REPLACE FUNCTION solardatum.find_most_recent(
-	node solarcommon.node_id,
-	sources solarcommon.source_ids DEFAULT NULL)
-  RETURNS SETOF solardatum.da_datum AS
+	node bigint,
+	sources text[] DEFAULT NULL)
+  RETURNS SETOF solardatum.da_datum_data AS
 $BODY$
-	SELECT dd.* FROM solardatum.da_datum dd
+	SELECT dd.* FROM solardatum.da_datum_data dd
 	INNER JOIN (
 		-- to speed up query for sources (which can be very slow when queried directly on da_datum),
 		-- we find the most recent hour time slot in agg_datum_hourly, and then join to da_datum with that narrow time range
@@ -35,8 +35,8 @@ $BODY$
  * @param nodes An array of node IDs to return results for.
  * @returns Set of solardatum.da_datum records.
  */
-CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes solarcommon.node_ids)
-  RETURNS SETOF solardatum.da_datum AS
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes bigint[])
+  RETURNS SETOF solardatum.da_datum_data AS
 $BODY$
 	SELECT r.*
 	FROM (SELECT unnest(nodes) AS node_id) AS n,
@@ -55,24 +55,28 @@ $BODY$
  * @param jdata The datum JSON document.
  */
 CREATE OR REPLACE FUNCTION solardatum.store_datum(
-	cdate solarcommon.ts,
-	node solarcommon.node_id,
-	src solarcommon.source_id,
-	pdate solarcommon.ts,
+	cdate timestamp with time zone,
+	node bigint,
+	src text,
+	pdate timestamp with time zone,
 	jdata text)
   RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
-	ts_crea solarcommon.ts := COALESCE(cdate, now());
-	ts_post solarcommon.ts := COALESCE(pdate, now());
-	jdata_json json := jdata::json;
+	ts_crea timestamp with time zone := COALESCE(cdate, now());
+	ts_post timestamp with time zone := COALESCE(pdate, now());
+	jdata_json jsonb := jdata::jsonb;
 	jdata_prop_count integer := solardatum.datum_prop_count(jdata_json);
 	ts_post_hour timestamp with time zone := date_trunc('hour', ts_post);
 BEGIN
-	INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata)
-	VALUES (ts_crea, node, src, ts_post, jdata_json)
+	INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata_i, jdata_a, jdata_s, jdata_t)
+	VALUES (ts_crea, node, src, ts_post, jdata_json->'i', jdata_json->'a', jdata_json->'s', solarcommon.json_array_to_text_array(jdata_json->'t'))
 	ON CONFLICT (node_id, ts, source_id) DO UPDATE
-	SET jdata = EXCLUDED.jdata, posted = EXCLUDED.posted;
+	SET jdata_i = EXCLUDED.jdata_i,
+		jdata_a = EXCLUDED.jdata_a,
+		jdata_s = EXCLUDED.jdata_s,
+		jdata_t = EXCLUDED.jdata_t,
+		posted = EXCLUDED.posted;
 
 	INSERT INTO solaragg.aud_datum_hourly (
 		ts_start, node_id, source_id, prop_count)

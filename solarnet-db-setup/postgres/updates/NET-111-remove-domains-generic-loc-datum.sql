@@ -1,74 +1,52 @@
-CREATE TABLE solardatum.da_loc_datum (
-  ts solarcommon.ts NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  posted solarcommon.ts NOT NULL,
-  jdata json NOT NULL,
-  CONSTRAINT da_loc_datum_pkey PRIMARY KEY (loc_id, ts, source_id)
-);
+\echo Dropping aggregate loc datum views...
 
-CREATE TABLE solardatum.da_loc_meta (
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  created solarcommon.ts NOT NULL,
-  updated solarcommon.ts NOT NULL,
-  jdata json NOT NULL,
-  CONSTRAINT da_loc_meta_pkey PRIMARY KEY (loc_id, source_id)
-);
 
-CREATE TABLE solaragg.agg_stale_loc_datum (
-  ts_start timestamp with time zone NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  agg_kind char(1) NOT NULL,
-  created timestamp NOT NULL DEFAULT now(),
-  CONSTRAINT agg_stale_loc_datum_pkey PRIMARY KEY (agg_kind, ts_start, loc_id, source_id)
-);
+DROP VIEW solaragg.da_loc_datum_avail_hourly;
+DROP VIEW solaragg.da_loc_datum_avail_daily;
+DROP VIEW solaragg.da_loc_datum_avail_monthly;
 
-CREATE TABLE solaragg.agg_loc_messages (
-  created timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  ts solarcommon.ts NOT NULL,
-  msg text NOT NULL
-);
+\echo Removing domains from loc datum tables...
 
-CREATE INDEX agg_loc_messages_ts_loc_idx ON solaragg.agg_loc_messages (ts, loc_id);
+ALTER TABLE solardatum.da_loc_datum
+  ALTER COLUMN ts SET DATA TYPE timestamp with time zone,
+  ALTER COLUMN loc_id SET DATA TYPE bigint,
+  ALTER COLUMN source_id SET DATA TYPE character varying(64),
+  ALTER COLUMN posted SET DATA TYPE timestamp with time zone;
 
-CREATE TABLE solaragg.agg_loc_datum_hourly (
-  ts_start timestamp with time zone NOT NULL,
-  local_date timestamp without time zone NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  jdata json NOT NULL,
-  CONSTRAINT agg_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
-);
+ALTER TABLE solardatum.da_loc_meta
+  ALTER COLUMN loc_id SET DATA TYPE bigint,
+  ALTER COLUMN source_id SET DATA TYPE character varying(64),
+  ALTER COLUMN created SET DATA TYPE timestamp with time zone,
+  ALTER COLUMN updated SET DATA TYPE timestamp with time zone;
 
-CREATE TABLE solaragg.aud_loc_datum_hourly (
-  ts_start timestamp with time zone NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  prop_count integer NOT NULL,
-  CONSTRAINT aud_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
-);
+ALTER TABLE solaragg.agg_stale_loc_datum
+  ALTER COLUMN loc_id SET DATA TYPE bigint,
+  ALTER COLUMN source_id SET DATA TYPE character varying(64);
 
-CREATE TABLE solaragg.agg_loc_datum_daily (
-  ts_start timestamp with time zone NOT NULL,
-  local_date date NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  jdata json NOT NULL,
-  CONSTRAINT agg_loc_datum_daily_pkey PRIMARY KEY (loc_id, ts_start, source_id)
-);
+ALTER TABLE solaragg.agg_loc_messages
+  ALTER COLUMN loc_id SET DATA TYPE bigint,
+  ALTER COLUMN source_id SET DATA TYPE character varying(64),
+  ALTER COLUMN ts SET DATA TYPE timestamp with time zone;
 
-CREATE TABLE solaragg.agg_loc_datum_monthly (
-  ts_start timestamp with time zone NOT NULL,
-  local_date date NOT NULL,
-  loc_id solarcommon.loc_id NOT NULL,
-  source_id solarcommon.source_id NOT NULL,
-  jdata json NOT NULL,
-  CONSTRAINT agg_loc_datum_monthly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
-);
+\echo Removing domains from loc datum aggregate tables...
+
+ALTER TABLE solaragg.aud_loc_datum_hourly
+  ALTER COLUMN loc_id SET DATA TYPE bigint,
+  ALTER COLUMN source_id SET DATA TYPE character varying(64);
+
+ALTER TABLE solaragg.agg_loc_datum_hourly
+  ALTER COLUMN loc_id SET DATA TYPE bigint,
+  ALTER COLUMN source_id SET DATA TYPE character varying(64);
+
+ALTER TABLE solaragg.agg_loc_datum_daily
+  ALTER COLUMN loc_id SET DATA TYPE bigint,
+  ALTER COLUMN source_id SET DATA TYPE character varying(64);
+
+ALTER TABLE solaragg.agg_loc_datum_monthly
+  ALTER COLUMN loc_id SET DATA TYPE bigint,
+  ALTER COLUMN source_id SET DATA TYPE character varying(64);
+
+\echo Recreating aggregate loc datum views...
 
 CREATE VIEW solaragg.da_loc_datum_avail_hourly AS
 WITH loctz AS (
@@ -100,15 +78,18 @@ FROM solardatum.da_loc_datum d
 INNER JOIN loctz ON loctz.loc_id = d.loc_id
 GROUP BY date_trunc('month', d.ts at time zone loctz.tz) at time zone loctz.tz, d.loc_id, d.source_id;
 
+\echo Recreating loc datum functions...
+
+DROP FUNCTION solardatum.store_loc_meta(solarcommon.ts, solarcommon.loc_id, solarcommon.source_id, text);
 CREATE OR REPLACE FUNCTION solardatum.store_loc_meta(
-	cdate solarcommon.ts,
-	loc solarcommon.loc_id,
-	src solarcommon.source_id,
+	cdate timestamp with time zone,
+	loc bigint,
+	src text,
 	jdata text)
   RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
-	udate solarcommon.ts := now();
+	udate timestamp with time zone := now();
 	jdata_json json := jdata::json;
 BEGIN
 	INSERT INTO solardatum.da_loc_meta(loc_id, source_id, created, updated, jdata)
@@ -118,11 +99,12 @@ BEGIN
 END;
 $BODY$;
 
+DROP FUNCTION solardatum.find_loc_available_sources(solarcommon.loc_id, solarcommon.ts, solarcommon.ts);
 CREATE OR REPLACE FUNCTION solardatum.find_loc_available_sources(
-	IN loc solarcommon.loc_id,
-	IN st solarcommon.ts DEFAULT NULL,
-	IN en solarcommon.ts DEFAULT NULL)
-  RETURNS TABLE(source_id solarcommon.source_id) AS
+    IN loc bigint,
+    IN st timestamp with time zone DEFAULT NULL::timestamp with time zone,
+    IN en timestamp with time zone DEFAULT NULL::timestamp with time zone)
+  RETURNS TABLE(source_id text) AS
 $BODY$
 DECLARE
 	loc_tz text;
@@ -141,18 +123,18 @@ BEGIN
 
 	CASE
 		WHEN st IS NULL AND en IS NULL THEN
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc;
 
 		WHEN st IS NULL THEN
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc
 				AND d.ts_start >= CAST(st at time zone loc_tz AS DATE);
 
 		ELSE
-			RETURN QUERY SELECT DISTINCT d.source_id
+			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
 			FROM solaragg.agg_loc_datum_daily d
 			WHERE d.loc_id = loc
 				AND d.ts_start >= CAST(st at time zone loc_tz AS DATE)
@@ -161,12 +143,13 @@ BEGIN
 END;$BODY$
   LANGUAGE plpgsql STABLE;
 
+DROP FUNCTION solardatum.find_loc_reportable_interval(solarcommon.loc_id, solarcommon.source_id);
 CREATE OR REPLACE FUNCTION solardatum.find_loc_reportable_interval(
-	IN loc solarcommon.loc_id,
-	IN src solarcommon.source_id DEFAULT NULL,
-	OUT ts_start solarcommon.ts,
-	OUT ts_end solarcommon.ts,
-	OUT loc_tz TEXT,
+	IN loc bigint,
+	IN src text DEFAULT NULL,
+	OUT ts_start timestamp with time zone,
+	OUT ts_end timestamp with time zone,
+	OUT loc_tz text,
 	OUT loc_tz_offset INTEGER)
   RETURNS RECORD AS
 $BODY$
@@ -205,9 +188,10 @@ BEGIN
 END;$BODY$
   LANGUAGE plpgsql STABLE;
 
+DROP FUNCTION solardatum.find_loc_most_recent(solarcommon.loc_id, solarcommon.source_ids);
 CREATE OR REPLACE FUNCTION solardatum.find_loc_most_recent(
-	loc solarcommon.loc_id,
-	sources solarcommon.source_ids DEFAULT NULL)
+	loc bigint,
+	sources text[] DEFAULT NULL)
   RETURNS SETOF solardatum.da_loc_datum AS
 $BODY$
 BEGIN
@@ -254,28 +238,12 @@ END;$BODY$
   LANGUAGE plpgsql STABLE
   ROWS 20;
 
-CREATE TRIGGER populate_updated
-  BEFORE INSERT OR UPDATE
-  ON solardatum.da_loc_meta
-  FOR EACH ROW
-  EXECUTE PROCEDURE solardatum.populate_updated();
-
-
-/**
- * Find source IDs matching a location metadata search filter.
- *
- * Search filters are specified using LDAP filter syntax, e.g. <code>(/m/foo=bar)</code>.
- *
- * @param locs				array of location IDs
- * @param criteria			the search filter
- *
- * @returns All matching source IDs.
- */
+DROP FUNCTION solardatum.find_sources_for_loc_meta(bigint[],text);
 CREATE OR REPLACE FUNCTION solardatum.find_sources_for_loc_meta(
     IN locs bigint[],
     IN criteria text
   )
-  RETURNS TABLE(loc_id solarcommon.loc_id ,source_id solarcommon.source_id)
+  RETURNS TABLE(loc_id bigint, source_id text)
   LANGUAGE plv8 ROWS 100 STABLE AS
 $BODY$
 'use strict';

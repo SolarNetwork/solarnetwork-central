@@ -16,7 +16,7 @@ The `postgres-create.sql` script can be used to
 
  1. Create a **solarnet** database user.
  2. Create a **solarnetwork** database, owned by the **solarnet** user.
- 3. Install the **citext** extension.
+ 3. Install the **citext** and **pgcrypto** extensions.
 
 This script should be run as a database superuser, for example **postgres**.
 Assuming Postgres is available on the same machine you are are, the script can
@@ -33,6 +33,8 @@ $ createuser -U postgres -EP solarnet
 $ createdb -U postgres -E UTF8 -O solarnet -T template0 solarnetwork
 $ psql -U postgres -d solarnetwork \
 	-c 'CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;'
+$ psql -U postgres -d solarnetwork \
+	-c 'CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;'
 ```
 
 ## Setup plv8
