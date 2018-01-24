@@ -22,9 +22,13 @@
 
 package net.solarnetwork.central.scheduler.internal;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventHandler;
@@ -39,17 +43,20 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import net.solarnetwork.central.domain.PingTest;
 import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.scheduler.EventHandlerSupport;
+import net.solarnetwork.central.scheduler.JobInfo;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
+import net.solarnetwork.central.scheduler.SchedulerStatus;
 import net.solarnetwork.central.scheduler.SchedulerUtils;
 
 /**
  * Manage the lifecycle of the Quartz Scheduler.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.5
  */
 public class SchedulerManager extends EventHandlerSupport
-		implements ApplicationListener<ContextRefreshedEvent>, EventHandler, PingTest {
+		implements ApplicationListener<ContextRefreshedEvent>, EventHandler, PingTest,
+		net.solarnetwork.central.scheduler.SchedulerManager {
 
 	private static final String TEST_TOPIC = "net/solarnetwork/central/scheduler/TEST";
 
@@ -133,6 +140,60 @@ public class SchedulerManager extends EventHandlerSupport
 			}
 		}
 		log.warn("Running job {} in group {} not found", jobId, jobGroup);
+		return null;
+	}
+
+	@Override
+	public SchedulerStatus currentStatus() {
+		try {
+			if ( scheduler.isShutdown() ) {
+				return SchedulerStatus.Destroyed;
+			} else if ( scheduler.isInStandbyMode() && scheduler.isStarted() ) {
+				return SchedulerStatus.Paused;
+			} else if ( scheduler.isInStandbyMode() ) {
+				return SchedulerStatus.Starting;
+			}
+			return SchedulerStatus.Running;
+		} catch ( SchedulerException e ) {
+			log.error("Error getting Quartz scheduler status", e);
+		}
+		return SchedulerStatus.Unknown;
+	}
+
+	@Override
+	public void updateStatus(SchedulerStatus desiredStatus) {
+		try {
+			if ( desiredStatus == SchedulerStatus.Destroyed ) {
+				if ( !scheduler.isShutdown() ) {
+					scheduler.shutdown(true);
+				}
+			} else if ( desiredStatus == SchedulerStatus.Paused ) {
+				if ( !scheduler.isShutdown() && !scheduler.isInStandbyMode() ) {
+					scheduler.standby();
+				}
+			} else if ( desiredStatus == SchedulerStatus.Running ) {
+				if ( !scheduler.isShutdown() && scheduler.isInStandbyMode() ) {
+					scheduler.start();
+				}
+			}
+		} catch ( SchedulerException e ) {
+			log.error("Error updating Quartz scheduler status to {}", desiredStatus, e);
+		}
+	}
+
+	@Override
+	public Collection<JobInfo> allJobInfos() {
+		try {
+			Set<TriggerKey> triggerKeys = scheduler.getTriggerKeys(GroupMatcher.<TriggerKey> anyGroup());
+			List<JobInfo> result = new ArrayList<JobInfo>(triggerKeys.size());
+			for ( TriggerKey triggerKey : triggerKeys ) {
+				Trigger t = scheduler.getTrigger(triggerKey);
+				result.add(new QuartzJobInfo(t, scheduler));
+			}
+			return result;
+		} catch ( SchedulerException e ) {
+			log.error("Error getting Quartz scheduler trigger details", e);
+		}
 		return null;
 	}
 
