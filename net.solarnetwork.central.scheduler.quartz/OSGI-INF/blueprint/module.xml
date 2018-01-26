@@ -59,6 +59,7 @@
 		<interfaces>
 			<value>org.osgi.service.event.EventHandler</value>
 			<value>net.solarnetwork.central.domain.PingTest</value>
+			<value>net.solarnetwork.central.scheduler.SchedulerManager</value>
 		</interfaces>
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">

@@ -80,6 +80,12 @@ public class NotificationJob implements Job {
 		final JobDataMap jobDataMap = jobContext.getMergedJobDataMap();
 		final String jobTopic = jobDataMap.getString(SchedulerConstants.JOB_TOPIC);
 
+		if ( jobTopic == null ) {
+			log.error("Cannot execute job {} because job data key [{}] missing",
+					jobContext.getJobDetail().getKey(), SchedulerConstants.JOB_TOPIC);
+			return;
+		}
+
 		final Event event = new Event(jobTopic, jobContext.getMergedJobDataMap());
 
 		// save a ref to jobContext for finished callback
@@ -87,7 +93,8 @@ public class NotificationJob implements Job {
 
 		final long start = System.currentTimeMillis();
 		final long maxWait = (jobDataMap.containsKey(SchedulerConstants.JOB_MAX_WAIT)
-				? (Long) jobDataMap.get(SchedulerConstants.JOB_MAX_WAIT) : DEFAULT_MAX_JOB_WAIT);
+				? (Long) jobDataMap.get(SchedulerConstants.JOB_MAX_WAIT)
+				: DEFAULT_MAX_JOB_WAIT);
 		try {
 			synchronized ( this ) {
 				// post the job event now, waiting for our acknowledgment event

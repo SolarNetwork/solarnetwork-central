@@ -24,9 +24,14 @@
 		<beans:prop key="jdbc.url">jdbc:postgresql://localhost:5432/solarnetwork</beans:prop>
 		<beans:prop key="jdbc.user">solarnet</beans:prop>
 		<beans:prop key="jdbc.pass">solarnet</beans:prop>
-		<beans:prop key="jdbc.pool.maxIdle">1</beans:prop>
+		<beans:prop key="jdbc.pool.initialSize">1</beans:prop>
+		<beans:prop key="jdbc.pool.minIdle">1</beans:prop>
+		<beans:prop key="jdbc.pool.maxIdle">4</beans:prop>
 		<beans:prop key="jdbc.pool.maxActive">10</beans:prop>
+		<beans:prop key="jdbc.pool.maxAge">86400000</beans:prop>
 		<beans:prop key="jdbc.pool.maxWait">20000</beans:prop>
+		<beans:prop key="jdbc.pool.removeAbandonedTimeout">600</beans:prop>
+		<beans:prop key="jdbc.pool.abandonWhenPercentageFull">70</beans:prop>
 		<beans:prop key="jdbc.pool.timeBetweenEvictionRunsMillis">120000</beans:prop>
 		<beans:prop key="jdbc.pool.minEvictableIdleTimeMillis">300000</beans:prop>
 		<beans:prop key="jdbc.pool.validationQuery">SELECT CURRENT_TIMESTAMP</beans:prop>
@@ -73,14 +78,16 @@
 		<property name="validationInterval" value="30000"/>
 		<property name="timeBetweenEvictionRunsMillis" value="${jdbc.pool.timeBetweenEvictionRunsMillis}"/>
 		<property name="maxActive" value="${jdbc.pool.maxActive}"/>
-		<property name="initialSize" value="0"/>
+		<property name="initialSize" value="${jdbc.pool.initialSize}"/>
 		<property name="maxWait" value="${jdbc.pool.maxWait}"/>
-		<property name="removeAbandonedTimeout" value="60"/>
+		<property name="removeAbandonedTimeout" value="${jdbc.pool.removeAbandonedTimeout}"/>
+		<property name="abandonWhenPercentageFull" value="${jdbc.pool.abandonWhenPercentageFull}"/>
 		<property name="minEvictableIdleTimeMillis" value="${jdbc.pool.minEvictableIdleTimeMillis}"/>
-		<property name="minIdle" value="0"/>
-		<property name="maxIdle" value="${jdbc.pool.maxActive}"/>
-		<property name="logAbandoned" value="true"/>
-		<property name="jdbcInterceptors" value="org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer"/>
+		<property name="minIdle" value="${jdbc.pool.minIdle}"/>
+		<property name="maxIdle" value="${jdbc.pool.maxIdle}"/>
+		<property name="maxAge" value="${jdbc.pool.maxAge}"/>
+		<property name="logAbandoned" value="false"/>
+		<property name="jdbcInterceptors" value="ConnectionState;StatementFinalizer;ResetAbandonedTimer"/>
 	</bean>
 
 	<bean id="dataSource" class="net.solarnetwork.dao.jdbc.TomcatJdbcPoolDataSourceFactoryBean">

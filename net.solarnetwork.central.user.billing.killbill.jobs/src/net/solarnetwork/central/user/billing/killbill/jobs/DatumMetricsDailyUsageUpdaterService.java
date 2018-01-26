@@ -268,7 +268,13 @@ public class DatumMetricsDailyUsageUpdaterService {
 					userDao.storeInternalData(match.getId(), Collections.singletonMap(
 							UserDataProperties.KILLBILL_ACCOUNT_KEY_DATA_PROP, accountKey));
 				}
-				processOneAccount(match, accountKey);
+				try {
+					processOneAccount(match, accountKey);
+				} catch ( RuntimeException e ) {
+					// log error, but continue to next user
+					log.error("Error processing daily usage for account {} user {}", accountKey,
+							match.getEmail(), e);
+				}
 			}
 		} while ( userResults.getStartingOffset() != null && userResults.getReturnedResultCount() != null
 				&& userResults.getTotalResults() != null && (userResults.getStartingOffset()
