@@ -156,7 +156,7 @@ public class NotificationScheduler extends EventHandlerSupport {
 					(jobCron != null ? jobCron : new Date(jobDate).toString()) });
 			JobDetail job = JobBuilder
 					.newJob((jobCron != null ? StatefulNotificationJob.class : NotificationJob.class))
-					.withIdentity(jobKey).requestRecovery().storeDurably(false).build();
+					.withIdentity(jobKey).requestRecovery(false).storeDurably(false).build();
 			scheduler.scheduleJob(job, trigger);
 		}
 	}
