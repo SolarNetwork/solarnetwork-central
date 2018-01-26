@@ -197,6 +197,26 @@ public class SchedulerManager extends EventHandlerSupport
 		return null;
 	}
 
+	@Override
+	public void pauseJob(String groupId, String id) {
+		final TriggerKey tk = new TriggerKey(id, groupId);
+		try {
+			scheduler.pauseTrigger(tk);
+		} catch ( SchedulerException e ) {
+			log.error("Error pausing trigger [" + tk + "]", e);
+		}
+	}
+
+	@Override
+	public void resumeJob(String groupId, String id) {
+		final TriggerKey tk = new TriggerKey(id, groupId);
+		try {
+			scheduler.resumeTrigger(tk);
+		} catch ( SchedulerException e ) {
+			log.error("Error pausing trigger [" + tk + "]", e);
+		}
+	}
+
 	// PingTest support
 
 	@Override

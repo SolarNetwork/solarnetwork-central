@@ -32,7 +32,9 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
+import org.quartz.Trigger.TriggerState;
 import net.solarnetwork.central.scheduler.BasicJobInfo;
+import net.solarnetwork.central.scheduler.JobStatus;
 
 /**
  * Quartz implementation of {@code JobInfo}.
@@ -72,19 +74,56 @@ public class QuartzJobInfo extends BasicJobInfo {
 			return ("cron: " + cronTrigger.getCronExpression());
 		} else if ( trigger instanceof CalendarIntervalTrigger ) {
 			CalendarIntervalTrigger calTrigger = (CalendarIntervalTrigger) trigger;
-			return String.format("every %d %s%s from %tD %<tH:%<tM", calTrigger.getRepeatInterval(),
+			return String.format("every %d %s%s from %tY-%<tm-%<td %<tH:%<tM %<tz ",
+					calTrigger.getRepeatInterval(),
 					calTrigger.getRepeatIntervalUnit().toString().toLowerCase(),
 					calTrigger.getRepeatInterval() != 1 ? "s" : "", calTrigger.getStartTime());
 		} else if ( trigger instanceof SimpleTrigger ) {
 			SimpleTrigger simpTrigger = (SimpleTrigger) trigger;
-			return String.format("every %d seconds from %tD %<tH:%<tM",
-					Math.round(simpTrigger.getRepeatInterval() / 1000.0), simpTrigger.getStartTime());
+			final int repeatCount = simpTrigger.getRepeatCount();
+			if ( repeatCount == 0 ) {
+				return String.format("at %tY-%<tm-%<td %<tH:%<tM %<tz", simpTrigger.getStartTime());
+			}
+			return String.format("every %d seconds from %tY-%<tm-%<td %<tH:%<tM %<tz (%s)",
+					Math.round(simpTrigger.getRepeatInterval() / 1000.0), simpTrigger.getStartTime(),
+					simpTrigger.getRepeatCount() == SimpleTrigger.REPEAT_INDEFINITELY ? "indefinitely"
+							: repeatCount + " time" + (repeatCount != 1 ? "s" : ""));
 		}
 		Date fireTime = trigger.getNextFireTime();
 		if ( fireTime != null ) {
-			return String.format("next execution at %tD %<tH:%<tM", trigger.getNextFireTime());
+			return String.format("next execution at %tY-%<tm-%<td %<tH:%<tM %<tz",
+					trigger.getNextFireTime());
 		}
 		return "Unknown schedule: " + trigger.toString();
+	}
+
+	@Override
+	public JobStatus getJobStatus() {
+		try {
+			TriggerState state = scheduler.getTriggerState(trigger.getKey());
+			switch (state) {
+				case BLOCKED:
+				case NORMAL:
+					return JobStatus.Scheduled;
+
+				case COMPLETE:
+					return JobStatus.Complete;
+
+				case ERROR:
+					return JobStatus.Error;
+
+				case NONE:
+					break;
+
+				case PAUSED:
+					return JobStatus.Paused;
+
+			}
+			return super.getJobStatus();
+		} catch ( SchedulerException e ) {
+			// ignore this
+		}
+		return JobStatus.Unknown;
 	}
 
 	@Override
@@ -100,6 +139,12 @@ public class QuartzJobInfo extends BasicJobInfo {
 			// ignore this
 		}
 		return false;
+	}
+
+	@Override
+	public DateTime getPreviousExecutionTime() {
+		Date d = trigger.getPreviousFireTime();
+		return (d != null ? new DateTime(d) : null);
 	}
 
 	@Override

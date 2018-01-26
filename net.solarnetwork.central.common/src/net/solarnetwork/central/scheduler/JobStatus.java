@@ -1,5 +1,5 @@
 /* ==================================================================
- * BasicJobInfo.java - 24/01/2018 3:23:38 PM
+ * JobStatus.java - 26/01/2018 2:15:47 PM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -22,61 +22,36 @@
 
 package net.solarnetwork.central.scheduler;
 
-import org.joda.time.DateTime;
-
 /**
- * Basic implementation of {@link JobInfo}.
+ * Status for a job.
  * 
  * @author matt
  * @version 1.0
  * @since 1.37
  */
-public class BasicJobInfo implements JobInfo {
+public enum JobStatus {
 
-	private final String groupId;
-	private final String id;
-	private final String executionScheduleDescription;
+	/** The job is scheduled to run normally. */
+	Scheduled,
 
-	public BasicJobInfo(String groupId, String id, String executionScheduleDescription) {
-		super();
-		this.groupId = groupId;
-		this.id = id;
-		this.executionScheduleDescription = executionScheduleDescription;
-	}
+	/**
+	 * The job will not be executed in the future, but can be resumed.
+	 */
+	Paused,
 
-	@Override
-	public final String getGroupId() {
-		return groupId;
-	}
+	/**
+	 * The job has finished executing and is not scheduled to run again.
+	 */
+	Complete,
 
-	@Override
-	public final String getId() {
-		return id;
-	}
+	/**
+	 * The job encountered an error.
+	 */
+	Error,
 
-	@Override
-	public final String getExecutionScheduleDescription() {
-		return executionScheduleDescription;
-	}
-
-	@Override
-	public JobStatus getJobStatus() {
-		return null;
-	}
-
-	@Override
-	public boolean isExecuting() {
-		return false;
-	}
-
-	@Override
-	public DateTime getPreviousExecutionTime() {
-		return null;
-	}
-
-	@Override
-	public DateTime getNextExecutionTime() {
-		return null;
-	}
+	/**
+	 * The job is not in any known state.
+	 */
+	Unknown;
 
 }

@@ -52,11 +52,31 @@ public interface JobInfo {
 	String getId();
 
 	/**
+	 * Get the status of this job.
+	 * 
+	 * @return the job status
+	 */
+	JobStatus getJobStatus();
+
+	/**
 	 * Flag indicating the job is currently executing.
 	 * 
 	 * @return {@literal true} if the job is executing
 	 */
 	boolean isExecuting();
+
+	/**
+	 * Get the previous execution time of the job.
+	 * 
+	 * <p>
+	 * If the job is currently executing, this value represents the time the job
+	 * started.
+	 * </p>
+	 * 
+	 * @return the previous execution time, or {@literal null} if the job has
+	 *         never run before
+	 */
+	DateTime getPreviousExecutionTime();
 
 	/**
 	 * Get the next execution time of the job.

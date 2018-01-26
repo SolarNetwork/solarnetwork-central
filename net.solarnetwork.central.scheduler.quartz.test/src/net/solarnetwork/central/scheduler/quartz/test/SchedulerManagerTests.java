@@ -254,4 +254,28 @@ public class SchedulerManagerTests extends AbstractCentralTest {
 		EasyMock.verify(runningJob);
 	}
 
+	@Test
+	public void pauseJob() throws Exception {
+		final TriggerKey triggerKey = new TriggerKey("t1", "g1");
+
+		scheduler.pauseTrigger(triggerKey);
+
+		replayAll();
+
+		service.pauseJob("g1", "t1");
+
+	}
+
+	@Test
+	public void resumeJob() throws Exception {
+		final TriggerKey triggerKey = new TriggerKey("t1", "g1");
+
+		scheduler.resumeTrigger(triggerKey);
+
+		replayAll();
+
+		service.resumeJob("g1", "t1");
+
+	}
+
 }

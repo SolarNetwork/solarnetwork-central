@@ -55,4 +55,24 @@ public interface SchedulerManager {
 	 */
 	Collection<JobInfo> allJobInfos();
 
+	/**
+	 * Pause a specific job.
+	 * 
+	 * @param groupId
+	 *        the job group ID
+	 * @param id
+	 *        the job ID
+	 */
+	void pauseJob(String groupId, String id);
+
+	/**
+	 * Resume a paused job.
+	 * 
+	 * @param groupId
+	 *        the job group ID
+	 * @param id
+	 *        the job ID
+	 */
+	void resumeJob(String groupId, String id);
+
 }

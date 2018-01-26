@@ -74,6 +74,42 @@ public class SchedulerAdminController extends WebServiceControllerSupport {
 	}
 
 	/**
+	 * Pause a specific job.
+	 * 
+	 * @param groupId
+	 *        the group ID of the job to pause
+	 * @param id
+	 *        the ID of the job to pause
+	 * @return the response
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/jobs/pause", method = RequestMethod.POST)
+	public Response<Void> pauseJob(
+			@RequestParam(value = "groupId", required = false) final String groupId,
+			@RequestParam("id") final String id) {
+		schedulerManager.pauseJob(groupId, id);
+		return response(null);
+	}
+
+	/**
+	 * Resume a specific paused job.
+	 * 
+	 * @param groupId
+	 *        the group ID of the job to resume
+	 * @param id
+	 *        the ID of the job to resume
+	 * @return the response
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/jobs/resume", method = RequestMethod.POST)
+	public Response<Void> resumeJob(
+			@RequestParam(value = "groupId", required = false) final String groupId,
+			@RequestParam("id") final String id) {
+		schedulerManager.resumeJob(groupId, id);
+		return response(null);
+	}
+
+	/**
 	 * Update the scheduler's status.
 	 * 
 	 * @param desiredStatus
