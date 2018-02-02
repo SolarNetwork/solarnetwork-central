@@ -71,7 +71,7 @@
 	
 	<bean id="poolProperties" class="org.apache.tomcat.jdbc.pool.PoolProperties">
 		<property name="jmxEnabled" value="true"/>
-		<property name="testWhileIdle" value="false"/>
+		<property name="testWhileIdle" value="true"/>
 		<property name="testOnBorrow" value="true"/>
 		<property name="validationQuery" value="${jdbc.pool.validationQuery}"/>
 		<property name="testOnReturn" value="false"/>
