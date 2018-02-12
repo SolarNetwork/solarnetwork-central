@@ -6,6 +6,10 @@ Bundle-Version: 1.6.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
+ com.cronutils.descriptor;version="[7.0,8.0)",
+ com.cronutils.model;version="[7.0,8.0)",
+ com.cronutils.model.definition;version="[7.0,8.0)",
+ com.cronutils.parser;version="[7.0,8.0)",
  javax.sql,
  net.solarnetwork.central.domain;version="1.18.0",
  net.solarnetwork.central.scheduler;version="1.5.0",

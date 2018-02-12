@@ -33,6 +33,11 @@ import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 import org.quartz.Trigger.TriggerState;
+import com.cronutils.descriptor.CronDescriptor;
+import com.cronutils.model.Cron;
+import com.cronutils.model.CronType;
+import com.cronutils.model.definition.CronDefinitionBuilder;
+import com.cronutils.parser.CronParser;
 import net.solarnetwork.central.scheduler.BasicJobInfo;
 import net.solarnetwork.central.scheduler.JobStatus;
 
@@ -71,7 +76,14 @@ public class QuartzJobInfo extends BasicJobInfo {
 	private static final String extractExecutionScheduleDescription(Trigger trigger) {
 		if ( trigger instanceof CronTrigger ) {
 			CronTrigger cronTrigger = (CronTrigger) trigger;
-			return ("cron: " + cronTrigger.getCronExpression());
+			try {
+				Cron cron = new CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.QUARTZ))
+						.parse(cronTrigger.getCronExpression());
+				CronDescriptor desc = CronDescriptor.instance();
+				return desc.describe(cron);
+			} catch ( IllegalArgumentException e ) {
+				return ("cron: " + cronTrigger.getCronExpression());
+			}
 		} else if ( trigger instanceof CalendarIntervalTrigger ) {
 			CalendarIntervalTrigger calTrigger = (CalendarIntervalTrigger) trigger;
 			return String.format("every %d %s%s from %tY-%<tm-%<td %<tH:%<tM %<tz ",
@@ -101,25 +113,26 @@ public class QuartzJobInfo extends BasicJobInfo {
 	public JobStatus getJobStatus() {
 		try {
 			TriggerState state = scheduler.getTriggerState(trigger.getKey());
-			switch (state) {
-				case BLOCKED:
-				case NORMAL:
-					return JobStatus.Scheduled;
+			if ( state != null ) {
+				switch (state) {
+					case BLOCKED:
+					case NORMAL:
+						return JobStatus.Scheduled;
 
-				case COMPLETE:
-					return JobStatus.Complete;
+					case COMPLETE:
+						return JobStatus.Complete;
 
-				case ERROR:
-					return JobStatus.Error;
+					case ERROR:
+						return JobStatus.Error;
 
-				case NONE:
-					break;
+					case NONE:
+						break;
 
-				case PAUSED:
-					return JobStatus.Paused;
+					case PAUSED:
+						return JobStatus.Paused;
 
+				}
 			}
-			return super.getJobStatus();
 		} catch ( SchedulerException e ) {
 			// ignore this
 		}

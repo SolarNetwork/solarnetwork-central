@@ -56,7 +56,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public abstract class WebServiceControllerSupport {
 
@@ -187,7 +187,8 @@ public abstract class WebServiceControllerSupport {
 	}
 
 	/**
-	 * Handle a {@link RuntimeException}.
+	 * Handle a {@link RuntimeException} not handled by other exception
+	 * handlers.
 	 * 
 	 * @param e
 	 *        the exception
@@ -198,6 +199,14 @@ public abstract class WebServiceControllerSupport {
 	@ExceptionHandler(RuntimeException.class)
 	@ResponseBody
 	public Response<?> handleRuntimeException(RuntimeException e, HttpServletResponse response) {
+		// NOTE: in Spring 4.3 the root exception will be unwrapped; support Spring 4.2 here
+		Throwable cause = e;
+		while ( cause.getCause() != null ) {
+			cause = cause.getCause();
+		}
+		if ( cause instanceof IllegalArgumentException ) {
+			return handleIllegalArgumentException((IllegalArgumentException) cause, response);
+		}
 		log.error("RuntimeException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
 	}

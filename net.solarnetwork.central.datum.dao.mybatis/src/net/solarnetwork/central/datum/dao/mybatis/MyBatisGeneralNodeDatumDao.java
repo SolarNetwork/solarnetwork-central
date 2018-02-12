@@ -53,7 +53,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -264,7 +264,20 @@ public class MyBatisGeneralNodeDatumDao
 			sqlProps.put(PARAM_END_DATE, filter.getEndDate() != null ? filter.getEndDate() : forced);
 		}
 
-		List<ReportingGeneralNodeDatumMatch> rows = selectList(query, sqlProps, offset, max);
+		List<ReportingGeneralNodeDatumMatch> rows;
+		try {
+			rows = selectList(query, sqlProps, offset, max);
+		} catch ( RuntimeException e ) {
+			Throwable cause = e;
+			while ( cause.getCause() != null ) {
+				cause = cause.getCause();
+			}
+			if ( cause instanceof IllegalArgumentException ) {
+				// assume this is "query not found" so aggregate not supported
+				throw new IllegalArgumentException("Aggregate " + agg + " not supported");
+			}
+			throw e;
+		}
 
 		// rows = postProcessAggregationFilterQuery(filter, rows);
 
@@ -276,9 +289,21 @@ public class MyBatisGeneralNodeDatumDao
 	}
 
 	private Long executeCountQuery(final String countQueryName, final Map<String, ?> sqlProps) {
-		Number n = getSqlSession().selectOne(countQueryName, sqlProps);
-		if ( n != null ) {
-			return n.longValue();
+		try {
+			Number n = getSqlSession().selectOne(countQueryName, sqlProps);
+			if ( n != null ) {
+				return n.longValue();
+			}
+		} catch ( RuntimeException e ) {
+			Throwable cause = e;
+			while ( cause.getCause() != null ) {
+				cause = cause.getCause();
+			}
+			if ( cause instanceof IllegalArgumentException ) {
+				log.warn("Count query not supported: {}", countQueryName, e);
+			} else {
+				throw e;
+			}
 		}
 		return null;
 	}

@@ -70,7 +70,7 @@ import net.solarnetwork.central.query.domain.ReportableInterval;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -150,7 +150,8 @@ public class DaoQueryBiz implements QueryBiz {
 			e = new DateTime();
 		}
 		long diffDays = (s != null && e != null
-				? (e.getMillis() - s.getMillis()) / (1000L * 60L * 60L * 24L) : 0);
+				? (e.getMillis() - s.getMillis()) / (1000L * 60L * 60L * 24L)
+				: 0);
 		if ( s == null && e == null && (agg == null || agg.compareTo(Aggregation.Day) < 0)
 				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
 				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek ) {
@@ -169,12 +170,12 @@ public class DaoQueryBiz implements QueryBiz {
 						diffDays, maxDaysForDayOfWeekAggregation, filter);
 				forced = Aggregation.Month;
 			}
-		} else if ( diffDays > maxDaysForDayAggregation
+		} else if ( maxDaysForDayAggregation > 0 && diffDays > maxDaysForDayAggregation
 				&& (agg == null || agg.compareLevel(Aggregation.Month) < 0) ) {
 			log.info("Restricting aggregate to Month level for filter duration {} days (> {}): {}",
 					diffDays, maxDaysForDayAggregation, filter);
 			forced = Aggregation.Month;
-		} else if ( diffDays > maxDaysForHourAggregation
+		} else if ( maxDaysForHourAggregation > 0 && diffDays > maxDaysForHourAggregation
 				&& (agg == null || agg.compareLevel(Aggregation.Day) < 0) ) {
 			log.info("Restricting aggregate to Day level for filter duration {} days (> {}): {}",
 					diffDays, maxDaysForHourAggregation, filter);
@@ -316,14 +317,38 @@ public class DaoQueryBiz implements QueryBiz {
 		this.generalNodeDatumDao = generalNodeDatumDao;
 	}
 
+	/**
+	 * Set the maximum hour time range allowed for minute aggregate queries
+	 * before a higher aggregation level (e.g. hour) is enforced.
+	 * 
+	 * @param maxDaysForMinuteAggregation
+	 *        the maximum hour range, or {@literal 0} to not restrict; defaults
+	 *        to {@literal 7}
+	 */
 	public void setMaxDaysForMinuteAggregation(long maxDaysForMinuteAggregation) {
 		this.maxDaysForMinuteAggregation = maxDaysForMinuteAggregation;
 	}
 
+	/**
+	 * Set the maximum hour time range allowed for hour aggregate queries before
+	 * a higher aggregation level (e.g. day) is enforced.
+	 * 
+	 * @param maxDaysForHourAggregation
+	 *        the maximum hour range, or {@literal 0} to not restrict; defaults
+	 *        to {@literal 31}
+	 */
 	public void setMaxDaysForHourAggregation(long maxDaysForHourAggregation) {
 		this.maxDaysForHourAggregation = maxDaysForHourAggregation;
 	}
 
+	/**
+	 * Set the maximum hour time range allowed for day aggregate queries before
+	 * a higher aggregation level (e.g. month) is enforced.
+	 * 
+	 * @param maxDaysForDayAggregation
+	 *        the maximum hour range, or {@literal 0} to not restrict; defaults
+	 *        to {@literal 730}
+	 */
 	public void setMaxDaysForDayAggregation(long maxDaysForDayAggregation) {
 		this.maxDaysForDayAggregation = maxDaysForDayAggregation;
 	}
