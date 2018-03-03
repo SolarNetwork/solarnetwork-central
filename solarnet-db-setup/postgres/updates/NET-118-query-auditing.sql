@@ -9,7 +9,7 @@ CREATE OR REPLACE FUNCTION solaragg.aud_inc_datum_query_count(
 	dcount integer)
 	RETURNS void LANGUAGE sql VOLATILE AS
 $BODY$
-	INSERT INTO solaragg.aud_datum_hourly(ts_start, node_id, source_id, prop_count)
+	INSERT INTO solaragg.aud_datum_hourly(ts_start, node_id, source_id, datum_q_count)
 	VALUES (date_trunc('hour', qdate), node, source, dcount)
 	ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 	SET datum_q_count = aud_datum_hourly.datum_q_count + EXCLUDED.datum_q_count;
