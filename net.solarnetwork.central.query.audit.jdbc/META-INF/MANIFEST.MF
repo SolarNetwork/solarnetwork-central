@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SolarNetwork JDBC Query Auditor
+Bundle-Description: Audit query results and store the results in a database using JDBC.
+Bundle-SymbolicName: net.solarnetwork.central.query.audit.jdbc
+Bundle-Version: 0.1.0
+Bundle-Vendor: SolarNetwork
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Import-Package: 
+ net.solarnetwork.central.datum.domain;version="1.19.0",
+ net.solarnetwork.central.domain;version="1.23.0",
+ net.solarnetwork.central.query.biz;version="2.1.0",
+ net.solarnetwork.central.query.domain;version="1.2.0",
+ net.solarnetwork.central.query.support;version="1.5.0",
+ org.joda.time;version="[2.4,3.0)",
+ org.joda.time.base;version="[2.4,3.0)",
+ org.joda.time.field;version="[2.4,3.0)",
+ org.slf4j;version="[1.7.0,2.0.0)",
+ org.springframework.core;version="[4.2,5.0)",
+ org.springframework.dao;version="[4.2,5.0)",
+ org.springframework.jdbc.core;version="[4.2,5.0)"
