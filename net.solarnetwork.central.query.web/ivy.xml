@@ -18,7 +18,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.12.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.web" rev="[1.14.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.21.0,2.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[2.2.0,3.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[2.3.0,3.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.26.0,3.0.0)"/>
 		<dependency org="javax.servlet" name="com.springsource.javax.servlet" rev="2.5.0" />
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>
