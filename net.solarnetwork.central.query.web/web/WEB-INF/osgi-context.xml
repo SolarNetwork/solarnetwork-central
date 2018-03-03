@@ -32,9 +32,6 @@
 	<osgi:reference id="solarNodeDao"
 		interface="net.solarnetwork.central.dao.SolarNodeDao"/>
 
-	<osgi:reference id="queryBiz" sticky="false"
-		interface="net.solarnetwork.central.query.biz.QueryBiz" />
-
 	<osgi:reference id="datumMetadtaBiz" sticky="false"
 		interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz"/>
 	
@@ -48,5 +45,17 @@
 		interface="net.solarnetwork.central.user.biz.UserMetadataBiz" />
 
 	<osgi:list id="pingTests" availability="optional" interface="net.solarnetwork.central.domain.PingTest"/>
+	
+	<bean id="queryBiz" class="net.solarnetwork.central.query.support.AuditingQueryBiz">
+		<constructor-arg>
+			<osgi:reference sticky="false" interface="net.solarnetwork.central.query.biz.QueryBiz"/>
+		</constructor-arg>
+		<constructor-arg>
+			<bean class="net.solarnetwork.util.DynamicServiceTracker">
+				<property name="bundleContext" ref="bundleContext"/>
+				<property name="serviceClassName" value="net.solarnetwork.central.query.biz.QueryAuditor"/>
+			</bean>
+		</constructor-arg>
+	</bean>
 
 </beans>
