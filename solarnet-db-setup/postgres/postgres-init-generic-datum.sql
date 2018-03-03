@@ -70,6 +70,7 @@ CREATE TABLE solaragg.aud_datum_hourly (
   node_id bigint NOT NULL,
   source_id text NOT NULL,
   prop_count integer NOT NULL,
+  datum_q_count integer NOT NULL DEFAULT 0,
   CONSTRAINT aud_datum_hourly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
