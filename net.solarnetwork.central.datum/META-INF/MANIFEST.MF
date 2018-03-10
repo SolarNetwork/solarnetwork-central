@@ -20,6 +20,7 @@ Import-Package:
  net.solarnetwork.central.domain;version="1.21.0",
  net.solarnetwork.central.support;version="1.14.0",
  net.solarnetwork.domain;version="1.7.0",
+ net.solarnetwork.settings;version="1.0.0",
  net.solarnetwork.util;version="1.18.0",
  org.apache.commons.codec.digest;version="[1.7,2.0)",
  org.joda.time;version="[2.4,3.0)",
