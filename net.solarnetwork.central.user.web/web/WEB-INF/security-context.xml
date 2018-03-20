@@ -62,6 +62,7 @@
 			</beans:bean>
 		</beans:property>
 		<beans:property name="authenticationEntryPoint" ref="authTokenEntryPoint"/>
+		<beans:property name="maxRequestBodySize" value="${security.maxRequestBodySize}"/>
 	</beans:bean>
 
 </beans:beans>
