@@ -53,54 +53,34 @@ import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
  * <p>
  * This authentication method has been modeled after the Amazon Web Service
  * authentication scheme used by the S3 service
- * (http://docs.amazonwebservices.com
- * /AmazonS3/latest/dev/S3_Authentication2.html). The auth token is fixed at
- * {@link #AUTH_TOKEN_LENGTH} characters. All query parameters (GET or POST) are
- * added to the request path in the message; parameters are sorted
- * lexicographically and then their keys and <em>first</em> value is appended to
- * the path following a {@code ?} character and separated by a {@code &}
- * character.
+ * (http://docs.amazonwebservices.com/AmazonS3/latest/dev/S3_Authentication2.html).
+ * The auth token is fixed at {@link #AUTH_TOKEN_LENGTH} characters. All query
+ * parameters (GET or POST) are added to the request path in the message;
+ * parameters are sorted lexicographically and then their keys and
+ * <em>first</em> value is appended to the path following a {@code ?} character
+ * and separated by a {@code &} character.
  * </p>
- * 
- * <p>
- * The configurable properties of this class are:
- * </p>
- * 
- * <dl class="class-properties">
- * <dt>authenticationDetailsSource</dt>
- * <dd>Defaults to {@link WebAuthenticationDetailsSource}.</dd>
- * 
- * <dt>userDetailsService</dt>
- * <dd>The details service, which must return users with valid SolarNetwork
- * usernames (email addresses) and plain-text authorization token secret
- * passwords via {@link UserDetails#getUsername()} and
- * {@link UserDetails#getPassword()}. After validating the request
- * authorization, this filter will authenticate the user with Spring
- * Security.</dd>
- * 
- * <dt>maxDateSkew</dt>
- * <dd>The maximum amount of difference in the supplied HTTP {@code Date} (or
- * {@code X-SN-Date}) header value with the current time as reported by the
- * system. If this difference is exceeded, authorization fails.</dd>
- * 
- * <dt>entryPoint</dt>
- * <dd>The {@link UserAuthTokenAuthenticationEntryPoint} to use as the entry
- * point.</dd>
- * 
- * </dl>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class UserAuthTokenAuthenticationFilter extends GenericFilterBean implements Filter {
 
 	/** The fixed length of the auth token. */
 	public static final int AUTH_TOKEN_LENGTH = 20;
 
+	/**
+	 * The default value for the {@code maxRequestBodySize} property.
+	 * 
+	 * @since 1.3
+	 */
+	public static final int DEFAULT_MAX_REQUEST_BODY_SIZE = 65535;
+
 	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
 	private UserAuthTokenAuthenticationEntryPoint authenticationEntryPoint;
 	private UserDetailsService userDetailsService;
 	private long maxDateSkew = 15 * 60 * 1000; // 15 minutes default
+	private int maxRequestBodySize = 65535;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -114,7 +94,7 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
 			throws IOException, ServletException {
 		SecurityHttpServletRequestWrapper request = new SecurityHttpServletRequestWrapper(
-				(HttpServletRequest) req, 65536);
+				(HttpServletRequest) req, maxRequestBodySize);
 		HttpServletResponse response = (HttpServletResponse) res;
 
 		AuthenticationData data;
@@ -175,21 +155,75 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		authenticationEntryPoint.commence(request, response, failed);
 	}
 
+	/**
+	 * Set the details service, which must return users with valid SolarNetwork
+	 * usernames (email addresses) and plain-text authorization token secret
+	 * passwords via {@link UserDetails#getUsername()} and
+	 * {@link UserDetails#getPassword()}.
+	 * 
+	 * <p>
+	 * After validating the request authorization, this filter will authenticate
+	 * the user with Spring Security.
+	 * </p>
+	 * 
+	 * @param userDetailsService
+	 *        the service
+	 */
 	public void setUserDetailsService(UserDetailsService userDetailsService) {
 		this.userDetailsService = userDetailsService;
 	}
 
+	/**
+	 * Set the details source to use.
+	 * 
+	 * <p>
+	 * Defaults to a {@link WebAuthenticationDetailsSource}.
+	 * </p>
+	 * 
+	 * @param authenticationDetailsSource
+	 *        the source to use
+	 */
 	public void setAuthenticationDetailsSource(
 			AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource) {
 		this.authenticationDetailsSource = authenticationDetailsSource;
 	}
 
+	/**
+	 * Set the maximum amount of difference in the supplied HTTP {@code Date}
+	 * (or {@code X-SN-Date}) header value with the current time as reported by
+	 * the system.
+	 * 
+	 * <p>
+	 * If this difference is exceeded, authorization fails.
+	 * </p>
+	 * 
+	 * @param maxDateSkew
+	 *        the maximum allowed date skew
+	 */
 	public void setMaxDateSkew(long maxDateSkew) {
 		this.maxDateSkew = maxDateSkew;
 	}
 
+	/**
+	 * The {@link UserAuthTokenAuthenticationEntryPoint} to use as the entry
+	 * point.
+	 * 
+	 * @param entryPoint
+	 *        the entry point to use
+	 */
 	public void setAuthenticationEntryPoint(UserAuthTokenAuthenticationEntryPoint entryPoint) {
 		this.authenticationEntryPoint = entryPoint;
+	}
+
+	/**
+	 * Set the maximum allowed request body size.
+	 * 
+	 * @param maxRequestBodySize
+	 *        the maximum request body size allowed
+	 * @since 1.3
+	 */
+	public void setMaxRequestBodySize(int maxRequestBodySize) {
+		this.maxRequestBodySize = maxRequestBodySize;
 	}
 
 }

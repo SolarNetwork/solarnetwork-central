@@ -34,16 +34,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import net.solarnetwork.central.RepeatableTaskException;
-import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.datum.domain.Datum;
-import net.solarnetwork.central.datum.domain.HardwareControlDatum;
-import net.solarnetwork.central.in.biz.DataCollectorBiz;
-import net.solarnetwork.central.instructor.domain.Instruction;
-import net.solarnetwork.central.instructor.domain.InstructionState;
-import net.solarnetwork.central.security.AuthenticatedNode;
-import net.solarnetwork.central.security.SecurityException;
-import net.solarnetwork.domain.NodeControlPropertyType;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
@@ -59,6 +49,16 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import net.solarnetwork.central.RepeatableTaskException;
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.datum.domain.Datum;
+import net.solarnetwork.central.datum.domain.HardwareControlDatum;
+import net.solarnetwork.central.in.biz.DataCollectorBiz;
+import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.instructor.domain.InstructionState;
+import net.solarnetwork.central.security.AuthenticatedNode;
+import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.domain.NodeControlPropertyType;
 
 /**
  * Controller for accepting bulk upload XML documents.
@@ -69,7 +69,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @deprecated see {@link BulkJsonDataCollector}
  */
 @Deprecated
@@ -223,7 +223,8 @@ public class BulkDataCollector extends AbstractDataCollector {
 	 *        global attributes
 	 * @return
 	 */
-	private Object handleInstructionStatusElement(XMLStreamReader reader, Map<String, Object> attributes) {
+	private Object handleInstructionStatusElement(XMLStreamReader reader,
+			Map<String, Object> attributes) {
 		String instructionId = reader.getAttributeValue(null, "instructionId");
 		String status = reader.getAttributeValue(null, "status");
 		Instruction result = null;
@@ -327,9 +328,8 @@ public class BulkDataCollector extends AbstractDataCollector {
 			NodeControlPropertyType t = NodeControlPropertyType.valueOf(type);
 			switch (t) {
 				case Boolean:
-					if ( value.length() > 0
-							&& (value.equals("1") || value.equalsIgnoreCase("yes") || value
-									.equalsIgnoreCase("true")) ) {
+					if ( value.length() > 0 && (value.equals("1") || value.equalsIgnoreCase("yes")
+							|| value.equalsIgnoreCase("true")) ) {
 						datum.setIntegerValue(Integer.valueOf(1));
 					} else {
 						datum.setIntegerValue(Integer.valueOf(0));
@@ -343,6 +343,10 @@ public class BulkDataCollector extends AbstractDataCollector {
 				case Float:
 				case Percent:
 					datum.setFloatValue(Float.valueOf(value));
+					break;
+
+				default:
+					// other types not supported in legacy datum
 					break;
 
 			}
