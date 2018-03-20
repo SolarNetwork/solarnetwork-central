@@ -22,8 +22,7 @@
 
 package net.solarnetwork.central.datum.domain.export;
 
-import java.util.Map;
-import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
+import net.solarnetwork.domain.IdentifiableConfiguration;
 
 /**
  * A output format configuration object for a datum export.
@@ -35,18 +34,7 @@ import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
  * @author matt
  * @version 1.0
  */
-public interface OutputConfiguration {
-
-	/**
-	 * Get a name for this configuration.
-	 * 
-	 * <p>
-	 * This is expected to be a user-supplied name.
-	 * </p>
-	 * 
-	 * @return a configuration name
-	 */
-	String getName();
+public interface OutputConfiguration extends IdentifiableConfiguration {
 
 	/**
 	 * Get the desired compression to apply to the output.
@@ -54,31 +42,5 @@ public interface OutputConfiguration {
 	 * @return the desired compression type
 	 */
 	OutputCompressionType getCompressionType();
-
-	/**
-	 * Get a unique identifier for the export destination service to use.
-	 * 
-	 * <p>
-	 * This value will correspond to some
-	 * {@link DatumExportDestinationService#getId()} value.
-	 * </p>
-	 * 
-	 * @return the service type identifier
-	 */
-	String getServiceIdentifier();
-
-	/**
-	 * Get a map of properties to pass to the
-	 * {@link DatumExportDestinationService} in order to perform actions.
-	 * 
-	 * <p>
-	 * It is expected this map would contain runtime configuration such as the
-	 * credentials to use, host name, etc.
-	 * </p>
-	 * 
-	 * @return the runtime properties to pass to the
-	 *         {@link DatumExportDestinationService}
-	 */
-	Map<String, ?> getServiceProperties();
 
 }

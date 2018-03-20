@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.domain.export;
 
 import net.solarnetwork.central.datum.domain.AggregateNodeDatumFilter;
+import net.solarnetwork.domain.IdentifiableConfiguration;
 
 /**
  * A data configuration object for a datum export.
@@ -34,18 +35,7 @@ import net.solarnetwork.central.datum.domain.AggregateNodeDatumFilter;
  * @author matt
  * @version 1.0
  */
-public interface DataConfiguration {
-
-	/**
-	 * Get a name for this configuration.
-	 * 
-	 * <p>
-	 * This is expected to be a user-supplied name.
-	 * </p>
-	 * 
-	 * @return a configuration name
-	 */
-	String getName();
+public interface DataConfiguration extends IdentifiableConfiguration {
 
 	/**
 	 * Get a criteria for which datum to include in the export.

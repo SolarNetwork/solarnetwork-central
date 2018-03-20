@@ -1,5 +1,5 @@
 /* ==================================================================
- * DestinationConfiguration.java - 5/03/2018 5:23:53 PM
+ * BasicOutputConfiguration.java - 21/03/2018 11:19:10 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -22,18 +22,31 @@
 
 package net.solarnetwork.central.datum.domain.export;
 
-import net.solarnetwork.domain.IdentifiableConfiguration;
+import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 
 /**
- * A destination configuration object for a datum export.
- * 
- * <p>
- * This API defines where the data should be exported to.
- * </p>
+ * Basic implementation of {@link OutputConfiguration}.
  * 
  * @author matt
  * @version 1.0
  */
-public interface DestinationConfiguration extends IdentifiableConfiguration {
+@JsonPropertyOrder({ "name", "serviceIdentifier", "compressionType", "serviceProperties" })
+public class BasicOutputConfiguration extends BasicIdentifiableConfiguration
+		implements OutputConfiguration, Serializable {
+
+	private static final long serialVersionUID = -588365600656134370L;
+
+	private OutputCompressionType compressionType;
+
+	@Override
+	public OutputCompressionType getCompressionType() {
+		return compressionType;
+	}
+
+	public void setCompressionType(OutputCompressionType compressionType) {
+		this.compressionType = compressionType;
+	}
 
 }

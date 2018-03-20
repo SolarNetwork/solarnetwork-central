@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.test;
+package net.solarnetwork.central.datum.domain.test;
 
 import java.math.BigDecimal;
 import java.util.HashMap;

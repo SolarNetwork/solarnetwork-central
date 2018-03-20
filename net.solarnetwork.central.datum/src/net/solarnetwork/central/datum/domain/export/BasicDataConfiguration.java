@@ -1,5 +1,5 @@
 /* ==================================================================
- * DestinationConfiguration.java - 5/03/2018 5:23:53 PM
+ * BasicDataConfiguration.java - 21/03/2018 11:39:38 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -22,18 +22,30 @@
 
 package net.solarnetwork.central.datum.domain.export;
 
-import net.solarnetwork.domain.IdentifiableConfiguration;
+import java.io.Serializable;
+import net.solarnetwork.central.datum.domain.AggregateNodeDatumFilter;
+import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 
 /**
- * A destination configuration object for a datum export.
- * 
- * <p>
- * This API defines where the data should be exported to.
- * </p>
+ * Basic implementation of {@link DataConfiguration}.
  * 
  * @author matt
  * @version 1.0
  */
-public interface DestinationConfiguration extends IdentifiableConfiguration {
+public class BasicDataConfiguration extends BasicIdentifiableConfiguration
+		implements DataConfiguration, Serializable {
+
+	private static final long serialVersionUID = -4639476112147998835L;
+
+	private AggregateNodeDatumFilter datumFilter;
+
+	@Override
+	public AggregateNodeDatumFilter getDatumFilter() {
+		return datumFilter;
+	}
+
+	public void setDatumFilter(AggregateNodeDatumFilter datumFilter) {
+		this.datumFilter = datumFilter;
+	}
 
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * GeneralLocationDatumMetadataTests.java - Oct 17, 2014 3:16:11 PM
+ * GeneralLocationDatumTests.java - Oct 17, 2014 2:40:32 PM
  * 
  * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
@@ -20,12 +20,13 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.test;
+package net.solarnetwork.central.datum.domain.test;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
-import net.solarnetwork.domain.GeneralDatumMetadata;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
@@ -36,12 +37,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 /**
- * Test cases for the {@link GeneralLocationDatumMetadata} class.
+ * Test cases for the {@link GeneralLocationDatum} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class GeneralLocationDatumMetadataTests {
+public class GeneralLocationDatumTests {
 
 	private static final Long TEST_NODE_ID = -1L;
 	private static final String TEST_SOURCE_ID = "test.source";
@@ -55,20 +56,24 @@ public class GeneralLocationDatumMetadataTests {
 				.configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
 	}
 
-	private GeneralLocationDatumMetadata getTestInstance() {
-		GeneralLocationDatumMetadata datum = new GeneralLocationDatumMetadata();
+	private GeneralLocationDatum getTestInstance() {
+		GeneralLocationDatum datum = new GeneralLocationDatum();
 		datum.setCreated(new DateTime(2014, 8, 22, 12, 0, 0, 0));
 		datum.setLocationId(TEST_NODE_ID);
-		datum.setUpdated(datum.getCreated());
+		datum.setPosted(datum.getCreated());
 		datum.setSourceId(TEST_SOURCE_ID);
 
-		GeneralDatumMetadata samples = new GeneralDatumMetadata();
-		datum.setMeta(samples);
+		GeneralLocationDatumSamples samples = new GeneralLocationDatumSamples();
+		datum.setSamples(samples);
 
 		// some sample data
-		Map<String, Object> info = new HashMap<String, Object>(2);
-		info.put("unit", "C");
-		samples.setInfo(info);
+		Map<String, Number> instants = new HashMap<String, Number>(2);
+		instants.put("temp", 231);
+		samples.setInstantaneous(instants);
+
+		Map<String, Number> accum = new HashMap<String, Number>(2);
+		accum.put("rotations", 4123);
+		samples.setAccumulating(accum);
 
 		return datum;
 	}
@@ -76,33 +81,33 @@ public class GeneralLocationDatumMetadataTests {
 	@Test
 	public void serializeJson() throws Exception {
 		String json = objectMapper.writeValueAsString(getTestInstance());
-		Assert.assertEquals(
-				"{\"created\":1408665600000,\"updated\":1408665600000,\"locationId\":-1,\"sourceId\":\"test.source\","
-						+ "\"m\":{\"unit\":\"C\"}}", json);
+		Assert.assertEquals("{\"created\":1408665600000,\"locationId\":-1,\"sourceId\":\"test.source\","
+				+ "\"temp\":231,\"rotations\":4123}", json);
 	}
 
 	@Test
 	public void serializeJsonWithTags() throws Exception {
-		GeneralLocationDatumMetadata datum = getTestInstance();
-		datum.getMeta().addTag("test");
+		GeneralLocationDatum datum = getTestInstance();
+		datum.getSamples().addTag("test");
 		String json = objectMapper.writeValueAsString(datum);
-		Assert.assertEquals(
-				"{\"created\":1408665600000,\"updated\":1408665600000,\"locationId\":-1,\"sourceId\":\"test.source\","
-						+ "\"m\":{\"unit\":\"C\"},\"t\":[\"test\"]}", json);
+		Assert.assertEquals("{\"created\":1408665600000,\"locationId\":-1,\"sourceId\":\"test.source\","
+				+ "\"temp\":231,\"rotations\":4123,\"tags\":[\"test\"]}", json);
 	}
 
 	@Test
 	public void deserializeJson() throws Exception {
-		String json = "{\"created\":1408665600000,\"sourceId\":\"Main\",\"meta\":{\"m\":{\"ploc\":2502287},\"t\":[\"foo\"]}}}";
-		GeneralLocationDatumMetadata datum = objectMapper.readValue(json,
-				GeneralLocationDatumMetadata.class);
+		String json = "{\"created\":1408665600000,\"sourceId\":\"Main\",\"samples\":{\"i\":{\"temp_f\":89, \"temp\":21.2},\"s\":{\"ploc\":2502287}}}";
+		GeneralLocationDatum datum = objectMapper.readValue(json, GeneralLocationDatum.class);
 		Assert.assertNotNull(datum);
 		Assert.assertNotNull(datum.getCreated());
 		Assert.assertEquals(1408665600000L, datum.getCreated().getMillis());
 		Assert.assertEquals("Main", datum.getSourceId());
-		Assert.assertNotNull(datum.getMeta());
-		Assert.assertEquals(Long.valueOf(2502287), datum.getMeta().getInfoLong("ploc"));
-		Assert.assertTrue("Has tag", datum.getMeta().hasTag("foo"));
+		Assert.assertNotNull(datum.getSamples());
+		Assert.assertEquals(Integer.valueOf(89),
+				datum.getSamples().getInstantaneousSampleInteger("temp_f"));
+		Assert.assertEquals(Long.valueOf(2502287), datum.getSamples().getStatusSampleLong("ploc"));
+		Assert.assertEquals(new BigDecimal("21.2"),
+				datum.getSamples().getInstantaneousSampleBigDecimal("temp"));
 	}
 
 }

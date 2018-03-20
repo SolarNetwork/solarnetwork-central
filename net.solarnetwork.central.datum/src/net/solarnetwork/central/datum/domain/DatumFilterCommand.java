@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +30,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -41,12 +45,16 @@ import net.solarnetwork.central.support.MutableSortDescriptor;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
+@JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "tags", "dataPath",
+		"mostRecent", "startDate", "endDate", "max", "offset", "sorts", "type", "location" })
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
-		GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter {
+		GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter, Serializable {
+
+	private static final long serialVersionUID = -8161634027558143061L;
 
 	private final SolarLocation location;
 	private DateTime startDate;
@@ -88,6 +96,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		}
 	}
 
+	@JsonIgnore
 	@Override
 	public Map<String, ?> getFilter() {
 		Map<String, Object> filter = new LinkedHashMap<String, Object>();
@@ -121,6 +130,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		return filter;
 	}
 
+	@JsonIgnore
 	public boolean isHasLocationCriteria() {
 		return (location != null && location.getFilter().size() > 0);
 	}
@@ -180,6 +190,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		this.sorts = sorts;
 	}
 
+	@JsonIgnore
 	public List<SortDescriptor> getSortDescriptors() {
 		if ( sorts == null ) {
 			return Collections.emptyList();
@@ -217,6 +228,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * @param nodeId
 	 *        the ID of the node
 	 */
+	@JsonSetter
 	public void setNodeId(Long nodeId) {
 		this.nodeIds = new Long[] { nodeId };
 	}
@@ -231,6 +243,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * 
 	 * @return the first node ID
 	 */
+	@JsonIgnore
 	@Override
 	public Long getNodeId() {
 		return this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0];
@@ -250,6 +263,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * @param nodeId
 	 *        the ID of the node
 	 */
+	@JsonSetter
 	public void setSourceId(String sourceId) {
 		if ( sourceId == null ) {
 			this.sourceIds = null;
@@ -268,6 +282,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * 
 	 * @return the first node ID
 	 */
+	@JsonIgnore
 	@Override
 	public String getSourceId() {
 		return this.sourceIds == null || this.sourceIds.length < 1 ? null : this.sourceIds[0];
@@ -343,6 +358,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		this.dataPath = dataPath;
 	}
 
+	@JsonIgnore
 	@Override
 	public String[] getDataPathElements() {
 		String path = this.dataPath;
@@ -381,6 +397,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * @param userId
 	 *        the ID of the user
 	 */
+	@JsonSetter
 	public void setUserId(Long userId) {
 		this.userIds = new Long[] { userId };
 	}
@@ -395,6 +412,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * 
 	 * @return the first user ID
 	 */
+	@JsonIgnore
 	@Override
 	public Long getUserId() {
 		return this.userIds == null || this.userIds.length < 1 ? null : this.userIds[0];

@@ -1,5 +1,5 @@
 /* ==================================================================
- * DestinationConfiguration.java - 5/03/2018 5:23:53 PM
+ * BasicDestinationConfiguration.java - 21/03/2018 11:23:25 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -22,18 +22,18 @@
 
 package net.solarnetwork.central.datum.domain.export;
 
-import net.solarnetwork.domain.IdentifiableConfiguration;
+import java.io.Serializable;
+import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 
 /**
- * A destination configuration object for a datum export.
- * 
- * <p>
- * This API defines where the data should be exported to.
- * </p>
+ * Basic implementation of {@link DestinationConfiguration}.
  * 
  * @author matt
  * @version 1.0
  */
-public interface DestinationConfiguration extends IdentifiableConfiguration {
+public class BasicDestinationConfiguration extends BasicIdentifiableConfiguration
+		implements DestinationConfiguration, Serializable {
+
+	private static final long serialVersionUID = 7134357946005308817L;
 
 }
