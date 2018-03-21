@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans-4.2.xsd">
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="typeAliases">
+			<list>
+				<value>net.solarnetwork.central.domain.SolarLocation</value>
+				<value>net.solarnetwork.central.domain.SolarNode</value>
+				<value>net.solarnetwork.central.user.domain.User</value>
+				<value>net.solarnetwork.central.user.domain.UserMatch</value>
+				<value>net.solarnetwork.central.user.export.domain.UserDataConfiguration</value>
+				<value>net.solarnetwork.central.user.export.domain.UserDestinationConfiguration</value>
+				<value>net.solarnetwork.central.user.export.domain.UserOutputConfiguration</value>
+				<value>net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration</value>
+			</list>
+		</property>
+		<property name="typeHandlers">
+			<list>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaDateTimeTypeHandler"/>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler"/>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTypeHandler"/>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalTimeTypeHandler"/>
+			</list>
+		</property>
+		<property name="mapperLocations">
+			<!-- Note: the order of these elements is significant because of inter-resource includes -->
+			<list>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
+
+				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDataConfiguration.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDestinationConfiguration.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserOutputConfiguration.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDatumExportConfiguration.xml</value>
+			</list>
+		</property>
+	</bean>
+	
+</beans>
