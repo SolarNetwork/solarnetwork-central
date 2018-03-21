@@ -13,6 +13,7 @@ Import-Package:
  net.solarnetwork.central.dao.mybatis.support;version="1.1.0",
  net.solarnetwork.central.dao.mybatis.type;version="1.0.0",
  net.solarnetwork.central.datum.domain;version="1.19.0",
+ net.solarnetwork.central.datum.domain.export;version="1.0.0",
  net.solarnetwork.central.domain;version="[1.16,2.0)",
  net.solarnetwork.central.security;version="1.9.0",
  net.solarnetwork.central.support;version="[1.4,2.0)",

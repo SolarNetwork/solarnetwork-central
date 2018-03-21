@@ -2,4 +2,87 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.user.export.domain.UserOutputConfiguration">
 
+<!-- 
+	id				BIGINT NOT NULL DEFAULT nextval('solaruser.user_export_seq'),
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	user_id			BIGINT NOT NULL,
+	cname			CHARACTER VARYING(64) NOT NULL,
+	sident			CHARACTER VARYING(128) NOT NULL,
+	sprops			jsonb,
+	compression		CHARACTER(1) NOT NULL,
+-->
+
+	<insert id="insert-UserOutputConfiguration" parameterType="UserOutputConfiguration">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solaruser.user_export_seq') AS id 
+		</selectKey>
+		INSERT INTO solaruser.user_export_outp_conf (
+			id, user_id, cname, sident, compression
+			<if test="created != null">,created</if>
+			<if test="servicePropsJson != null">,sprops</if>
+			)
+		VALUES (
+			#{id}, #{userId}, #{name}, #{serviceIdentifier}, #{compressionTypeKey}
+			<if test="created != null">,#{created}</if>
+			<if test="servicePropsJson != null">,CAST(#{servicePropsJson} AS jsonb)</if>
+			)
+	</insert>
+
+	<update id="update-UserOutputConfiguration" parameterType="UserOutputConfiguration">
+		UPDATE
+			solaruser.user_export_outp_conf
+		SET
+			cname = #{name}
+			, sident = #{serviceIdentifier}
+			, sprops = CAST(#{servicePropsJson} AS jsonb)
+			, compression = #{compressionTypeKey}
+		WHERE
+			id = #{id}
+	</update>
+
+	<delete id="delete-UserOutputConfiguration" parameterType="long">
+		DELETE FROM solaruser.user_export_outp_conf
+		WHERE id = #{id}
+	</delete>
+	
+	<sql id="fragment-UserOutputConfiguration-full-result">
+		uopc.id AS user_export_outp_conf_id, 
+		uopc.created AS user_export_outp_conf_created,
+		uopc.user_id AS user_export_outp_conf_user_id,
+		uopc.cname AS user_export_outp_conf_cname,
+		uopc.sident AS user_export_outp_conf_sident,
+		uopc.sprops AS user_export_outp_conf_sprops,
+		uopc.compression AS user_export_outp_conf_compression
+	</sql>
+
+	<resultMap id="UserOutputConfigurationFullResult" type="UserOutputConfiguration">
+		<id property="id" column="user_export_outp_conf_id"/>
+		<result property="created" column="user_export_outp_conf_created"/>
+		<result property="userId" column="user_export_outp_conf_user_id"/>
+		<result property="name" column="user_export_outp_conf_cname"/>
+		<result property="serviceIdentifier" column="user_export_outp_conf_sident"/>
+		<result property="servicePropsJson" column="user_export_outp_conf_sprops"/>
+		<result property="compressionTypeKey" column="user_export_outp_conf_compression"/>
+	</resultMap>
+	
+	<select id="get-UserOutputConfiguration-for-id" parameterType="long" resultMap="UserOutputConfigurationFullResult">
+		SELECT
+			<include refid="fragment-UserOutputConfiguration-full-result"/>
+		FROM
+			solaruser.user_export_outp_conf uopc
+		WHERE
+			uopc.id = #{id}
+	</select>
+	
+	<select id="find-UserOutputConfiguration-for-user" parameterType="long" resultMap="UserOutputConfigurationFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-UserOutputConfiguration-full-result"/>
+		FROM
+			solaruser.user_export_outp_conf uopc
+		WHERE
+			uopc.user_id = #{id}
+		ORDER BY
+			lower(uopc.cname), uopc.id
+	</select>
+
 </mapper>

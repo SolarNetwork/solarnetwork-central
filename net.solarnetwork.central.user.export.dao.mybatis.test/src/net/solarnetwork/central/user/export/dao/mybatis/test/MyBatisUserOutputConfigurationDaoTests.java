@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisUserDataConfigurationDaoTests.java - 22/03/2018 7:10:36 AM
+ * MyBatisUserOutputConfigurationDaoTests.java - 22/03/2018 9:33:57 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -38,32 +38,30 @@ import java.util.Map;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.datum.domain.export.OutputCompressionType;
 import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDataConfigurationDao;
-import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserOutputConfigurationDao;
+import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 
 /**
- * Test cases for the {@link MyBatisUserDataConfigurationDao} class.
+ * Test cases for the {@link MyBatisUserOutputConfigurationDao} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDaoTestSupport {
+public class MyBatisUserOutputConfigurationDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private static final String TEST_NAME = "test.name";
 	private static final String TEST_SERVICE_IDENT = "test.ident";
 
-	private MyBatisUserDataConfigurationDao confDao;
+	private MyBatisUserOutputConfigurationDao confDao;
 
 	private User user;
-	private UserDataConfiguration conf;
+	private UserOutputConfiguration conf;
 
 	@Before
 	public void setUp() throws Exception {
-		confDao = new MyBatisUserDataConfigurationDao();
+		confDao = new MyBatisUserOutputConfigurationDao();
 		confDao.setSqlSessionFactory(getSqlSessionFactory());
 
 		this.user = createNewUser(TEST_EMAIL);
@@ -73,11 +71,12 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 	@Test
 	public void storeNew() {
-		UserDataConfiguration conf = new UserDataConfiguration();
+		UserOutputConfiguration conf = new UserOutputConfiguration();
 		conf.setCreated(new DateTime());
 		conf.setUserId(this.user.getId());
 		conf.setName(TEST_NAME);
 		conf.setServiceIdentifier(TEST_SERVICE_IDENT);
+		conf.setCompressionType(OutputCompressionType.None);
 
 		Map<String, Object> sprops = new HashMap<String, Object>(4);
 		sprops.put("string", "foo");
@@ -90,11 +89,6 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 		conf.setServiceProps(sprops);
 
-		DatumFilterCommand filter = new DatumFilterCommand();
-		filter.setAggregate(Aggregation.Day);
-		filter.setNodeId(TEST_NODE_ID);
-		conf.setFilter(filter);
-
 		Long id = confDao.store(conf);
 		assertThat("Primary key assigned", id, notNullValue());
 
@@ -106,7 +100,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 	@Test
 	public void getByPrimaryKey() {
 		storeNew();
-		UserDataConfiguration conf = confDao.get(this.conf.getId());
+		UserOutputConfiguration conf = confDao.get(this.conf.getId());
 		assertThat("Found by PK", conf, notNullValue());
 		assertThat("PK", conf.getId(), equalTo(this.conf.getId()));
 		assertThat("Created", conf.getCreated().secondOfMinute().roundFloorCopy(),
@@ -114,6 +108,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("User ID", conf.getUserId(), equalTo(this.user.getId()));
 		assertThat("Name", conf.getName(), equalTo(TEST_NAME));
 		assertThat("Service identifier", conf.getServiceIdentifier(), equalTo(TEST_SERVICE_IDENT));
+		assertThat("Compression type", conf.getCompressionType(), equalTo(OutputCompressionType.None));
 
 		Map<String, ?> sprops = conf.getServiceProperties();
 		assertThat("Service props", sprops, notNullValue());
@@ -121,34 +116,25 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat(sprops, hasEntry("string", "foo"));
 		assertThat(sprops, hasEntry("number", 42));
 		assertThat(sprops, hasEntry("list", Arrays.asList("first", "second")));
-
-		AggregateGeneralNodeDatumFilter filter = conf.getDatumFilter();
-		assertThat("Filter", filter, notNullValue());
-		assertThat("Filter aggregate", filter.getAggregation(), equalTo(Aggregation.Day));
-		assertThat("Filter node ID", filter.getNodeId(), equalTo(TEST_NODE_ID));
 	}
 
 	@Test
 	public void update() {
 		storeNew();
-		UserDataConfiguration conf = confDao.get(this.conf.getId());
+		UserOutputConfiguration conf = confDao.get(this.conf.getId());
 
 		conf.setName("new.name");
 		conf.setServiceIdentifier("new.ident");
+		conf.setCompressionType(OutputCompressionType.GZIP);
 
 		Map<String, Object> options = conf.getServiceProps();
 		options.put("string", "updated");
 		options.put("added-string", "added");
 
-		DatumFilterCommand filter = conf.getFilter();
-		filter.setNodeId((long) Integer.MIN_VALUE);
-		filter.setSourceId("test.source");
-		conf.setFilter(filter); // necessary to clear cached JSON
-
 		Long id = confDao.store(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
 
-		UserDataConfiguration updatedConf = confDao.get(id);
+		UserOutputConfiguration updatedConf = confDao.get(id);
 		assertThat("Found by PK", updatedConf, notNullValue());
 		assertThat("New entity returned", updatedConf, not(sameInstance(conf)));
 		assertThat("PK", updatedConf.getId(), equalTo(conf.getId()));
@@ -157,6 +143,8 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("Updated name", updatedConf.getName(), equalTo(conf.getName()));
 		assertThat("Updated service identifier", updatedConf.getServiceIdentifier(),
 				equalTo(conf.getServiceIdentifier()));
+		assertThat("Updated compression type", updatedConf.getCompressionType(),
+				equalTo(conf.getCompressionType()));
 
 		Map<String, ?> sprops = conf.getServiceProperties();
 		assertThat("Service props", sprops, notNullValue());
@@ -165,13 +153,6 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat(sprops, hasEntry("number", 42));
 		assertThat(sprops, hasEntry("list", Arrays.asList("first", "second")));
 		assertThat(sprops, hasEntry("added-string", "added"));
-
-		AggregateGeneralNodeDatumFilter f = updatedConf.getDatumFilter();
-		assertThat("Filter", f, notNullValue());
-		assertThat("New filter instance", f, not(sameInstance(filter)));
-		assertThat("Filter aggregate", f.getAggregation(), equalTo(filter.getAggregation()));
-		assertThat("Filter node ID", f.getNodeId(), equalTo(filter.getNodeId()));
-		assertThat("Filter source ID", f.getSourceId(), equalTo(filter.getSourceId()));
 	}
 
 }
