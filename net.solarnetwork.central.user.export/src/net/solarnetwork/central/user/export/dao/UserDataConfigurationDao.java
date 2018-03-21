@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.export.dao;
 
-import java.util.List;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 
@@ -32,19 +31,7 @@ import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
  * @author matt
  * @version 1.0
  */
-public interface UserDataConfigurationDao extends GenericDao<UserDataConfiguration, Long> {
-
-	/**
-	 * Get a set of all configuration entities for a user.
-	 * 
-	 * <p>
-	 * The results will be ordered by name.
-	 * </p>
-	 * 
-	 * @param userId
-	 *        The ID of the user to get all configurations for.
-	 * @return The found entities, or an empty list if none found.
-	 */
-	List<UserDataConfiguration> findConfigurationForUser(Long userId);
+public interface UserDataConfigurationDao extends GenericDao<UserDataConfiguration, Long>,
+		UserConfigurationDao<UserDataConfiguration, Long> {
 
 }

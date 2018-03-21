@@ -31,6 +31,7 @@ import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
  * @author matt
  * @version 1.0
  */
-public interface UserDestinationConfigurationDao extends GenericDao<UserDestinationConfiguration, Long> {
+public interface UserDestinationConfigurationDao extends GenericDao<UserDestinationConfiguration, Long>,
+		UserConfigurationDao<UserDestinationConfiguration, Long> {
 
 }

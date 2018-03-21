@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserDatumExportConfigurationDao.java - 21/03/2018 11:12:06 AM
+ * UserConfigurationDao.java - 22/03/2018 9:27:57 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -22,16 +22,29 @@
 
 package net.solarnetwork.central.user.export.dao;
 
-import net.solarnetwork.central.dao.GenericDao;
-import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
+import java.io.Serializable;
+import java.util.List;
+import net.solarnetwork.central.domain.Entity;
 
 /**
- * DAO API for {@link UserOutputConfiguration} entities.
+ * Common DAO API for user configuration entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserOutputConfigurationDao extends GenericDao<UserOutputConfiguration, Long>,
-		UserConfigurationDao<UserOutputConfiguration, Long> {
+public interface UserConfigurationDao<T extends Entity<PK>, PK extends Serializable> {
+
+	/**
+	 * Get a set of all configuration entities for a user.
+	 * 
+	 * <p>
+	 * The results will be ordered by name.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        The ID of the user to get all configurations for.
+	 * @return The found entities, or an empty list if none found.
+	 */
+	List<T> findConfigurationForUser(Long userId);
 
 }
