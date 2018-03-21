@@ -48,4 +48,34 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity
 		this.compressionType = compressionType;
 	}
 
+	/**
+	 * Get the compression type key value.
+	 * 
+	 * @return the compression type; if {@link #getCompressionType()} is
+	 *         {@literal null} this will return the key value for
+	 *         {@link OutputCompressionType#None}
+	 */
+	public char getCompressionTypeKey() {
+		OutputCompressionType type = getCompressionType();
+		return (type != null ? type.getKey() : OutputCompressionType.None.getKey());
+	}
+
+	/**
+	 * Set the output compression type via its key value.
+	 * 
+	 * @param key
+	 *        the key of the compression type to set; if {@code key} is
+	 *        unsupported, the compression will be set to
+	 *        {@link OutputCompressionType#None}
+	 */
+	public void setCompressionTypeKey(char key) {
+		OutputCompressionType type = OutputCompressionType.None;
+		try {
+			type = OutputCompressionType.forKey(key);
+		} catch ( IllegalArgumentException e ) {
+			// ignore, and force to None
+		}
+		setCompressionType(type);
+	}
+
 }
