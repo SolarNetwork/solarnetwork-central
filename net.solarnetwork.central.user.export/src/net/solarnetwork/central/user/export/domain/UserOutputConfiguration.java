@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.export.domain;
 
 import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.datum.domain.export.OutputCompressionType;
 import net.solarnetwork.central.datum.domain.export.OutputConfiguration;
 
@@ -55,6 +56,7 @@ public class UserOutputConfiguration extends BaseExportConfigurationEntity
 	 *         {@literal null} this will return the key value for
 	 *         {@link OutputCompressionType#None}
 	 */
+	@JsonIgnore
 	public char getCompressionTypeKey() {
 		OutputCompressionType type = getCompressionType();
 		return (type != null ? type.getKey() : OutputCompressionType.None.getKey());
