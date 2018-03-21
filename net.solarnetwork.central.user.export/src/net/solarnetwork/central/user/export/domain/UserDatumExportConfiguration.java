@@ -75,6 +75,37 @@ public class UserDatumExportConfiguration extends net.solarnetwork.central.domai
 		this.schedule = schedule;
 	}
 
+	/**
+	 * Get the schedule type key value.
+	 * 
+	 * @return the schedule type; if {@link #getScheduleType()} is
+	 *         {@literal null} this will return the key value for
+	 *         {@link ScheduleType#Daily}
+	 */
+	@JsonIgnore
+	public char getScheduleKey() {
+		ScheduleType type = getSchedule();
+		return (type != null ? type.getKey() : ScheduleType.Daily.getKey());
+	}
+
+	/**
+	 * Set the schedule type via its key value.
+	 * 
+	 * @param key
+	 *        the key of the schedule type to set; if {@code key} is
+	 *        unsupported, the compression will be set to
+	 *        {@link ScheduleType#Daily}
+	 */
+	public void setScheduleKey(char key) {
+		ScheduleType type = ScheduleType.Daily;
+		try {
+			type = ScheduleType.forKey(key);
+		} catch ( IllegalArgumentException e ) {
+			// ignore
+		}
+		setSchedule(type);
+	}
+
 	@Override
 	public int getHourDelayOffset() {
 		return hourDelayOffset;
@@ -93,6 +124,17 @@ public class UserDatumExportConfiguration extends net.solarnetwork.central.domai
 		this.userDataConfiguration = userDataConfiguration;
 	}
 
+	/**
+	 * Get the {@link UserDataConfiguration} ID.
+	 * 
+	 * @return the ID, or {@literal null}
+	 */
+	@JsonIgnore
+	public Long getUserDataConfigurationId() {
+		UserDataConfiguration conf = getUserDataConfiguration();
+		return (conf != null ? conf.getId() : null);
+	}
+
 	@Override
 	public DataConfiguration getDataConfiguration() {
 		return getUserDataConfiguration();
@@ -105,6 +147,17 @@ public class UserDatumExportConfiguration extends net.solarnetwork.central.domai
 
 	public void setUserOutputConfiguration(UserOutputConfiguration userOutputConfiguration) {
 		this.userOutputConfiguration = userOutputConfiguration;
+	}
+
+	/**
+	 * Get the {@link UserOutputConfiguration} ID.
+	 * 
+	 * @return the ID, or {@literal null}
+	 */
+	@JsonIgnore
+	public Long getUserOutputConfigurationId() {
+		UserOutputConfiguration conf = getUserOutputConfiguration();
+		return (conf != null ? conf.getId() : null);
 	}
 
 	@Override
@@ -120,6 +173,17 @@ public class UserDatumExportConfiguration extends net.solarnetwork.central.domai
 	public void setUserDestinationConfiguration(
 			UserDestinationConfiguration userDestinationConfiguration) {
 		this.userDestinationConfiguration = userDestinationConfiguration;
+	}
+
+	/**
+	 * Get the {@link UserDestinationConfiguration} ID.
+	 * 
+	 * @return the ID, or {@literal null}
+	 */
+	@JsonIgnore
+	public Long getUserDestinationConfigurationId() {
+		UserDestinationConfiguration conf = getUserDestinationConfiguration();
+		return (conf != null ? conf.getId() : null);
 	}
 
 	@Override

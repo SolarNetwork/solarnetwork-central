@@ -2,4 +2,101 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration">
 
+<!-- 
+	id				BIGINT NOT NULL DEFAULT nextval('solaruser.user_export_seq'),
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	user_id			BIGINT NOT NULL,
+	cname			CHARACTER VARYING(64) NOT NULL,
+	delay_mins		INTEGER NOT NULL,
+	schedule		CHARACTER(1) NOT NULL,
+	data_conf_id	BIGINT,
+	dest_conf_id	BIGINT,
+	outp_conf_id	BIGINT,
+ -->
+ 
+ 	<insert id="insert-UserDatumExportConfiguration" parameterType="UserDatumExportConfiguration">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solaruser.user_export_seq') AS id 
+		</selectKey>
+		INSERT INTO solaruser.user_export_datum_conf (
+			id, user_id, cname, delay_mins, schedule, data_conf_id, dest_conf_id, outp_conf_id
+			<if test="created != null">,created</if>
+			)
+		VALUES (
+			#{id}, #{userId}, #{name}, (#{hourDelayOffset} * 60), #{scheduleKey},
+			#{userDataConfigurationId}, #{userDestinationConfigurationId}, #{userOutputConfigurationId}
+			<if test="created != null">,#{created}</if>
+			)
+	</insert>
+
+	<update id="update-UserDatumExportConfiguration" parameterType="UserDatumExportConfiguration">
+		UPDATE
+			solaruser.user_export_datum_conf
+		SET
+			cname = #{name}
+			, delay_mins = (#{hourDelayOffset} * 60)
+			, schedule = #{scheduleKey}
+			, data_conf_id = #{userDataConfigurationId}
+			, dest_conf_id = #{userDestinationConfigurationId}
+			, outp_conf_id = #{userOutputConfigurationId}
+		WHERE
+			id = #{id}
+	</update>
+
+	<delete id="delete-UserDatumExportConfiguration" parameterType="long">
+		DELETE FROM solaruser.user_export_datum_conf
+		WHERE id = #{id}
+	</delete>
+	
+	<sql id="fragment-UserDatumExportConfiguration-full-result">
+		udexc.id AS user_export_datum_conf_id, 
+		udexc.created AS user_export_datum_conf_created,
+		udexc.user_id AS user_export_datum_conf_user_id,
+		udexc.cname AS user_export_datum_conf_cname,
+		udexc.delay_mins AS user_export_datum_conf_delay_mins,
+		udexc.schedule AS user_export_datum_conf_schedule
+	</sql>
+
+	<resultMap id="UserDatumExportConfigurationFullResult" type="UserDatumExportConfiguration">
+		<id property="id" column="user_export_datum_conf_id"/>
+		<result property="created" column="user_export_datum_conf_created"/>
+		<result property="userId" column="user_export_datum_conf_user_id"/>
+		<result property="name" column="user_export_datum_conf_cname"/>
+		<result property="serviceIdentifier" column="user_export_datum_conf_sident"/>
+		<result property="servicePropsJson" column="user_export_datum_conf_sprops"/>
+		<association property="userDataConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserDataConfiguration.UserDataConfigurationFullResult"/>
+		<association property="userDestinationConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration.UserDestinationConfigurationFullResult"/>
+		<association property="userOutputConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserOutputConfiguration.UserOutputConfigurationFullResult"/>
+	</resultMap>
+	
+	<sql id="fragment-UserDatumExportConfiguration-select-full">
+		SELECT
+			<include refid="fragment-UserDatumExportConfiguration-full-result"/>,
+			<include refid="net.solarnetwork.central.user.export.domain.UserDataConfiguration.fragment-UserDataConfiguration-full-result"/>,
+			<include refid="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration.fragment-UserDestinationConfiguration-full-result"/>,
+			<include refid="net.solarnetwork.central.user.export.domain.UserOutputConfiguration.fragment-UserOutputConfiguration-full-result"/>
+		FROM
+			solaruser.user_export_datum_conf udexc
+		LEFT OUTER JOIN
+			solaruser.user_export_data_conf udac ON udac.id = udexc.data_conf_id
+		LEFT OUTER JOIN
+			solaruser.user_export_dest_conf udec ON udec.id = udexc.dest_conf_id
+		LEFT OUTER JOIN
+			solaruser.user_export_outp_conf uopc ON uopc.id = udexc.outp_conf_id
+	</sql>
+
+	<select id="get-UserDatumExportConfiguration-for-id" parameterType="long" resultMap="UserDatumExportConfigurationFullResult">
+		<include refid="fragment-UserDatumExportConfiguration-select-full"/>
+		WHERE
+			udexc.id = #{id}
+	</select>
+	
+	<select id="find-UserDatumExportConfiguration-for-user" parameterType="long" resultMap="UserDatumExportConfigurationFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-UserDatumExportConfiguration-select-full"/>
+		WHERE
+			udexc.user_id = #{id}
+		ORDER BY
+			lower(udexc.cname), udexc.id
+	</select>
+ 
 </mapper>
