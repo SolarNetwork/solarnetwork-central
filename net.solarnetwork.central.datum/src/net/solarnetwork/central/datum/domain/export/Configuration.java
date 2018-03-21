@@ -31,6 +31,13 @@ package net.solarnetwork.central.datum.domain.export;
 public interface Configuration {
 
 	/**
+	 * Get a name for this configuration.
+	 * 
+	 * @return a configuration name
+	 */
+	String getName();
+
+	/**
 	 * Get the configuration of what data to export.
 	 * 
 	 * @return the data configuration
