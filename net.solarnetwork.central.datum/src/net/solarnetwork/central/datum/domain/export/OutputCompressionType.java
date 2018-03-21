@@ -31,9 +31,42 @@ package net.solarnetwork.central.datum.domain.export;
 public enum OutputCompressionType {
 
 	/** No compression. */
-	None,
+	None('n'),
 
 	/** Gzip compression. */
-	GZIP,
+	GZIP('z');
+
+	private final char key;
+
+	private OutputCompressionType(char key) {
+		this.key = key;
+	}
+
+	/**
+	 * Get the key value.
+	 * 
+	 * @return the key value
+	 */
+	public char getKey() {
+		return key;
+	}
+
+	/**
+	 * Get an enum for a key value.
+	 * 
+	 * @param key
+	 *        the key of the enum to get
+	 * @return the enum with the given key
+	 * @throws IllegalArgumentException
+	 *         if {@code key} is not supported
+	 */
+	public static OutputCompressionType forKey(char key) {
+		for ( OutputCompressionType type : OutputCompressionType.values() ) {
+			if ( type.key == key ) {
+				return type;
+			}
+		}
+		throw new IllegalArgumentException("Unsupported key: " + key);
+	}
 
 }

@@ -30,12 +30,44 @@ package net.solarnetwork.central.datum.domain.export;
  */
 public enum ScheduleType {
 
-	Hourly,
+	Hourly('h'),
 
-	Daily,
+	Daily('d'),
 
-	Weekly,
+	Weekly('w'),
 
-	Monthly,
+	Monthly('m');
 
+	private final char key;
+
+	private ScheduleType(char key) {
+		this.key = key;
+	}
+
+	/**
+	 * Get the key value.
+	 * 
+	 * @return the key value
+	 */
+	public char getKey() {
+		return key;
+	}
+
+	/**
+	 * Get an enum for a key value.
+	 * 
+	 * @param key
+	 *        the key of the enum to get
+	 * @return the enum with the given key
+	 * @throws IllegalArgumentException
+	 *         if {@code key} is not supported
+	 */
+	public static ScheduleType forKey(char key) {
+		for ( ScheduleType type : ScheduleType.values() ) {
+			if ( type.key == key ) {
+				return type;
+			}
+		}
+		throw new IllegalArgumentException("Unsupported key: " + key);
+	}
 }
