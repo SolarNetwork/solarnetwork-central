@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.datum.domain.export;
 
-import net.solarnetwork.central.datum.domain.AggregateNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.domain.IdentifiableConfiguration;
 
 /**
@@ -55,6 +55,6 @@ public interface DataConfiguration extends IdentifiableConfiguration {
 	 * 
 	 * @return the datum filter
 	 */
-	AggregateNodeDatumFilter getDatumFilter();
+	AggregateGeneralNodeDatumFilter getDatumFilter();
 
 }

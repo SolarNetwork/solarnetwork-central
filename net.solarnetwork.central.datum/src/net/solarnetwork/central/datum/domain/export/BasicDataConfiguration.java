@@ -23,7 +23,7 @@
 package net.solarnetwork.central.datum.domain.export;
 
 import java.io.Serializable;
-import net.solarnetwork.central.datum.domain.AggregateNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 
 /**
@@ -37,14 +37,14 @@ public class BasicDataConfiguration extends BasicIdentifiableConfiguration
 
 	private static final long serialVersionUID = -4639476112147998835L;
 
-	private AggregateNodeDatumFilter datumFilter;
+	private AggregateGeneralNodeDatumFilter datumFilter;
 
 	@Override
-	public AggregateNodeDatumFilter getDatumFilter() {
+	public AggregateGeneralNodeDatumFilter getDatumFilter() {
 		return datumFilter;
 	}
 
-	public void setDatumFilter(AggregateNodeDatumFilter datumFilter) {
+	public void setDatumFilter(AggregateGeneralNodeDatumFilter datumFilter) {
 		this.datumFilter = datumFilter;
 	}
 
