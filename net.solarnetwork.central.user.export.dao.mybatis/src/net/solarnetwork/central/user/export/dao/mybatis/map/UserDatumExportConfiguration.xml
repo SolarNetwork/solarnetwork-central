@@ -53,7 +53,7 @@
 		udexc.created AS user_export_datum_conf_created,
 		udexc.user_id AS user_export_datum_conf_user_id,
 		udexc.cname AS user_export_datum_conf_cname,
-		udexc.delay_mins AS user_export_datum_conf_delay_mins,
+		udexc.delay_mins / 60 AS user_export_datum_conf_delay_hours,
 		udexc.schedule AS user_export_datum_conf_schedule
 	</sql>
 
@@ -62,8 +62,8 @@
 		<result property="created" column="user_export_datum_conf_created"/>
 		<result property="userId" column="user_export_datum_conf_user_id"/>
 		<result property="name" column="user_export_datum_conf_cname"/>
-		<result property="serviceIdentifier" column="user_export_datum_conf_sident"/>
-		<result property="servicePropsJson" column="user_export_datum_conf_sprops"/>
+		<result property="hourDelayOffset" column="user_export_datum_conf_delay_hours"/>
+		<result property="scheduleKey" column="user_export_datum_conf_schedule"/>
 		<association property="userDataConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserDataConfiguration.UserDataConfigurationFullResult"/>
 		<association property="userDestinationConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration.UserDestinationConfigurationFullResult"/>
 		<association property="userOutputConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserOutputConfiguration.UserOutputConfigurationFullResult"/>

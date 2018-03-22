@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import java.util.ArrayList;
@@ -56,7 +59,6 @@ import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private static final String TEST_NAME = "test.name";
-	private static final String TEST_SERVICE_IDENT = "test.ident";
 
 	private MyBatisUserDataConfigurationDao dataConfDao;
 	private MyBatisUserDestinationConfigurationDao destConfDao;
@@ -201,4 +203,81 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		this.conf = conf;
 	}
 
+	@Test
+	public void getByPrimaryKey() {
+		storeNewWithConfigurations();
+		UserDatumExportConfiguration conf = dao.get(this.conf.getId());
+		assertThat("Found by PK", conf, notNullValue());
+		assertThat("Different instance", conf, not(sameInstance(this.conf)));
+		assertThat("PK", conf.getId(), equalTo(this.conf.getId()));
+		assertThat("Created", conf.getCreated().secondOfMinute().roundFloorCopy(),
+				equalTo(this.conf.getCreated().secondOfMinute().roundFloorCopy()));
+		assertThat("User ID", conf.getUserId(), equalTo(this.user.getId()));
+		assertThat("Name", conf.getName(), equalTo(TEST_NAME));
+		assertThat("Hour delay", conf.getHourDelayOffset(), equalTo(2));
+		assertThat("Schedule", conf.getSchedule(), equalTo(ScheduleType.Weekly));
+
+		UserDataConfiguration dataConf = conf.getUserDataConfiguration();
+		assertThat("Data conf retrieved", dataConf, notNullValue());
+		assertThat("Data conf different instance", dataConf,
+				not(sameInstance(this.conf.getUserDataConfiguration())));
+		assertThat("Data conf created", dataConf.getCreated().secondOfMinute().roundFloorCopy(), equalTo(
+				this.conf.getUserDataConfiguration().getCreated().secondOfMinute().roundFloorCopy()));
+		assertThat("Data conf name", dataConf.getName(),
+				equalTo(this.conf.getUserDataConfiguration().getName()));
+		assertThat("Data conf service ident", dataConf.getServiceIdentifier(),
+				equalTo(this.conf.getUserDataConfiguration().getServiceIdentifier()));
+		assertThat("Data conf filter", dataConf.getFilter(),
+				equalTo(this.conf.getUserDataConfiguration().getFilter()));
+		// TODO rest of properties
+
+		UserDestinationConfiguration destConf = conf.getUserDestinationConfiguration();
+		assertThat("Dest conf retrieved", destConf, notNullValue());
+		assertThat("Dest conf different instance", destConf,
+				not(sameInstance(this.conf.getUserDestinationConfiguration())));
+		assertThat("Dest conf created", destConf.getCreated().secondOfMinute().roundFloorCopy(),
+				equalTo(this.conf.getUserDestinationConfiguration().getCreated().secondOfMinute()
+						.roundFloorCopy()));
+		assertThat("Dest conf name", destConf.getName(),
+				equalTo(this.conf.getUserDestinationConfiguration().getName()));
+		assertThat("Dest conf service ident", destConf.getServiceIdentifier(),
+				equalTo(this.conf.getUserDestinationConfiguration().getServiceIdentifier()));
+
+		UserOutputConfiguration outpConf = conf.getUserOutputConfiguration();
+		assertThat("Outp conf retrieved", outpConf, notNullValue());
+		assertThat("Outp conf different instance", outpConf,
+				not(sameInstance(this.conf.getUserOutputConfiguration())));
+		assertThat("Outp conf created", outpConf.getCreated().secondOfMinute().roundFloorCopy(), equalTo(
+				this.conf.getUserOutputConfiguration().getCreated().secondOfMinute().roundFloorCopy()));
+		assertThat("Outp conf name", outpConf.getName(),
+				equalTo(this.conf.getUserOutputConfiguration().getName()));
+		assertThat("Outp conf service ident", outpConf.getServiceIdentifier(),
+				equalTo(this.conf.getUserOutputConfiguration().getServiceIdentifier()));
+		assertThat("Outp conf compression", outpConf.getCompressionType(),
+				equalTo(this.conf.getUserOutputConfiguration().getCompressionType()));
+	}
+
+	@Test
+	public void update() {
+		storeNewWithConfigurations();
+		UserDatumExportConfiguration conf = dao.get(this.conf.getId());
+
+		conf.setName("new.name");
+		conf.setHourDelayOffset(5);
+		conf.setSchedule(ScheduleType.Monthly);
+
+		Long id = dao.store(conf);
+		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
+
+		UserDatumExportConfiguration updatedConf = dao.get(id);
+		assertThat("Found by PK", updatedConf, notNullValue());
+		assertThat("New entity returned", updatedConf, not(sameInstance(conf)));
+		assertThat("PK", updatedConf.getId(), equalTo(conf.getId()));
+		assertThat("Created unchanged", updatedConf.getCreated(), equalTo(conf.getCreated()));
+		assertThat("Uesr ID", updatedConf.getUserId(), equalTo(conf.getUserId()));
+		assertThat("Updated name", updatedConf.getName(), equalTo(conf.getName()));
+		assertThat("Updated hour offset", updatedConf.getHourDelayOffset(),
+				equalTo(conf.getHourDelayOffset()));
+		assertThat("Updated schedule", updatedConf.getSchedule(), equalTo(conf.getSchedule()));
+	}
 }
