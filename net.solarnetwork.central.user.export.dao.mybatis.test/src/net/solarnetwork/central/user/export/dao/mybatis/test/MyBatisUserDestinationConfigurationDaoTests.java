@@ -149,4 +149,17 @@ public class MyBatisUserDestinationConfigurationDaoTests extends AbstractMyBatis
 		assertThat(sprops, hasEntry("added-string", "added"));
 	}
 
+	@Test
+	public void findAllForUser() {
+		List<UserDestinationConfiguration> confs = new ArrayList<>(3);
+		for ( int i = 0; i < 3; i++ ) {
+			storeNew();
+			confs.add(this.conf);
+		}
+
+		List<UserDestinationConfiguration> found = confDao.findConfigurationForUser(this.user.getId());
+		assertThat(found, not(sameInstance(confs)));
+		assertThat(found, equalTo(confs));
+	}
+
 }

@@ -31,6 +31,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
  * @author matt
  * @version 1.0
  */
-public interface UserDatumExportConfigurationDao extends GenericDao<UserDatumExportConfiguration, Long> {
+public interface UserDatumExportConfigurationDao extends GenericDao<UserDatumExportConfiguration, Long>,
+		UserConfigurationDao<UserDatumExportConfiguration, Long> {
 
 }

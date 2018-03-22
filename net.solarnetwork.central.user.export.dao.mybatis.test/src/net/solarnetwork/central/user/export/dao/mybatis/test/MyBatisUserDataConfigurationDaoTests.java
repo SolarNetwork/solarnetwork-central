@@ -174,4 +174,17 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("Filter source ID", f.getSourceId(), equalTo(filter.getSourceId()));
 	}
 
+	@Test
+	public void findAllForUser() {
+		List<UserDataConfiguration> confs = new ArrayList<>(3);
+		for ( int i = 0; i < 3; i++ ) {
+			storeNew();
+			confs.add(this.conf);
+		}
+
+		List<UserDataConfiguration> found = confDao.findConfigurationForUser(this.user.getId());
+		assertThat(found, not(sameInstance(confs)));
+		assertThat(found, equalTo(confs));
+	}
+
 }

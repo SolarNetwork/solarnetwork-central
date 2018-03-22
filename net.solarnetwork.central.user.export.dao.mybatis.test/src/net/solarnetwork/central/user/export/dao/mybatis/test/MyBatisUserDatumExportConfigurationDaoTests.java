@@ -280,4 +280,18 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 				equalTo(conf.getHourDelayOffset()));
 		assertThat("Updated schedule", updatedConf.getSchedule(), equalTo(conf.getSchedule()));
 	}
+
+	@Test
+	public void findAllForUser() {
+		List<UserDatumExportConfiguration> confs = new ArrayList<>(3);
+		for ( int i = 0; i < 3; i++ ) {
+			storeNewWithConfigurations();
+			confs.add(this.conf);
+		}
+
+		List<UserDatumExportConfiguration> found = dao.findConfigurationForUser(this.user.getId());
+		assertThat(found, not(sameInstance(confs)));
+		assertThat(found, equalTo(confs));
+	}
+
 }
