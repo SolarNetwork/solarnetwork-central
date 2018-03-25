@@ -157,7 +157,7 @@ public class MyBatisUserDestinationConfigurationDaoTests extends AbstractMyBatis
 			confs.add(this.conf);
 		}
 
-		List<UserDestinationConfiguration> found = confDao.findConfigurationForUser(this.user.getId());
+		List<UserDestinationConfiguration> found = confDao.findConfigurationsForUser(this.user.getId());
 		assertThat(found, not(sameInstance(confs)));
 		assertThat(found, equalTo(confs));
 	}

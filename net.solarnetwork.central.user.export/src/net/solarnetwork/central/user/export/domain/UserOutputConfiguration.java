@@ -34,7 +34,7 @@ import net.solarnetwork.central.datum.domain.export.OutputConfiguration;
  * @version 1.0
  */
 public class UserOutputConfiguration extends BaseExportConfigurationEntity
-		implements OutputConfiguration, Serializable {
+		implements OutputConfiguration, UserIdentifiableConfiguration, Serializable {
 
 	private static final long serialVersionUID = -1581617729654201770L;
 

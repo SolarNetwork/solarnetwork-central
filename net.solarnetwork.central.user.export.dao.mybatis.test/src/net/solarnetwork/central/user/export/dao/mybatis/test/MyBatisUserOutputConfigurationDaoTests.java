@@ -163,7 +163,7 @@ public class MyBatisUserOutputConfigurationDaoTests extends AbstractMyBatisUserD
 			confs.add(this.conf);
 		}
 
-		List<UserOutputConfiguration> found = confDao.findConfigurationForUser(this.user.getId());
+		List<UserOutputConfiguration> found = confDao.findConfigurationsForUser(this.user.getId());
 		assertThat(found, not(sameInstance(confs)));
 		assertThat(found, equalTo(confs));
 	}

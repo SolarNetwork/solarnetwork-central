@@ -38,7 +38,7 @@ import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 public class MyBatisUserDataConfigurationDao extends BaseMyBatisGenericDao<UserDataConfiguration, Long>
 		implements UserDataConfigurationDao {
 
-	/** The query name used for {@link #findConfigurationForUser(Long)}. */
+	/** The query name used for {@link #findConfigurationsForUser(Long)}. */
 	public static final String QUERY_CONFIGURATIONS_FOR_USER = "find-UserDataConfiguration-for-user";
 
 	/**
@@ -50,7 +50,7 @@ public class MyBatisUserDataConfigurationDao extends BaseMyBatisGenericDao<UserD
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<UserDataConfiguration> findConfigurationForUser(Long userId) {
+	public List<UserDataConfiguration> findConfigurationsForUser(Long userId) {
 		return selectList(QUERY_CONFIGURATIONS_FOR_USER, userId, null, null);
 	}
 

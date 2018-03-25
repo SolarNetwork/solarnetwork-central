@@ -12,7 +12,7 @@
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.23,2.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.27,2.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.28,2.0)"/>
     		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
 		<dependency org="org.springframework" name="spring-core" rev="4.2.6.RELEASE"/>
 	</dependencies>

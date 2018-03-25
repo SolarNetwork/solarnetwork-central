@@ -289,7 +289,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 			confs.add(this.conf);
 		}
 
-		List<UserDatumExportConfiguration> found = dao.findConfigurationForUser(this.user.getId());
+		List<UserDatumExportConfiguration> found = dao.findConfigurationsForUser(this.user.getId());
 		assertThat(found, not(sameInstance(confs)));
 		assertThat(found, equalTo(confs));
 	}

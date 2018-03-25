@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserDestinationConfiguration.java - 21/03/2018 2:14:08 PM
+ * UserIdentifiableConfiguration.java - 25/03/2018 1:18:59 PM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -22,18 +22,13 @@
 
 package net.solarnetwork.central.user.export.domain;
 
-import java.io.Serializable;
-import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
-
 /**
- * User related {@link DestinationConfiguration} entity.
+ * User export specific entity for identifiable configuration.
  * 
  * @author matt
  * @version 1.0
  */
-public class UserDestinationConfiguration extends BaseExportConfigurationEntity
-		implements DestinationConfiguration, UserIdentifiableConfiguration, Serializable {
-
-	private static final long serialVersionUID = 4860680512331245447L;
+public interface UserIdentifiableConfiguration
+		extends net.solarnetwork.central.user.domain.UserIdentifiableConfiguration {
 
 }

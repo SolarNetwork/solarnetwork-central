@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.export.domain;
 
+import java.io.Serializable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
@@ -35,7 +36,8 @@ import net.solarnetwork.util.JsonUtils;
  * @author matt
  * @version 1.0
  */
-public class UserDataConfiguration extends BaseExportConfigurationEntity implements DataConfiguration {
+public class UserDataConfiguration extends BaseExportConfigurationEntity
+		implements DataConfiguration, UserIdentifiableConfiguration, Serializable {
 
 	private static final long serialVersionUID = 866381003784859350L;
 

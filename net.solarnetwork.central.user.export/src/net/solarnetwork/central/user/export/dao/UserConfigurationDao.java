@@ -45,6 +45,6 @@ public interface UserConfigurationDao<T extends Entity<PK>, PK extends Serializa
 	 *        The ID of the user to get all configurations for.
 	 * @return The found entities, or an empty list if none found.
 	 */
-	List<T> findConfigurationForUser(Long userId);
+	List<T> findConfigurationsForUser(Long userId);
 
 }

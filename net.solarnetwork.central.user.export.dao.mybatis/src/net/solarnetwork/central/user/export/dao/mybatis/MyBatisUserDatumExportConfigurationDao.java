@@ -39,7 +39,7 @@ public class MyBatisUserDatumExportConfigurationDao
 		extends BaseMyBatisGenericDao<UserDatumExportConfiguration, Long>
 		implements UserDatumExportConfigurationDao {
 
-	/** The query name used for {@link #findConfigurationForUser(Long)}. */
+	/** The query name used for {@link #findConfigurationsForUser(Long)}. */
 	public static final String QUERY_CONFIGURATIONS_FOR_USER = "find-UserDatumExportConfiguration-for-user";
 
 	/**
@@ -51,7 +51,7 @@ public class MyBatisUserDatumExportConfigurationDao
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<UserDatumExportConfiguration> findConfigurationForUser(Long userId) {
+	public List<UserDatumExportConfiguration> findConfigurationsForUser(Long userId) {
 		return selectList(QUERY_CONFIGURATIONS_FOR_USER, userId, null, null);
 	}
 

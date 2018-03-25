@@ -39,7 +39,7 @@ public class MyBatisUserDestinationConfigurationDao
 		extends BaseMyBatisGenericDao<UserDestinationConfiguration, Long>
 		implements UserDestinationConfigurationDao {
 
-	/** The query name used for {@link #findConfigurationForUser(Long)}. */
+	/** The query name used for {@link #findConfigurationsForUser(Long)}. */
 	public static final String QUERY_CONFIGURATIONS_FOR_USER = "find-UserDestinationConfiguration-for-user";
 
 	/**
@@ -51,7 +51,7 @@ public class MyBatisUserDestinationConfigurationDao
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<UserDestinationConfiguration> findConfigurationForUser(Long userId) {
+	public List<UserDestinationConfiguration> findConfigurationsForUser(Long userId) {
 		return selectList(QUERY_CONFIGURATIONS_FOR_USER, userId, null, null);
 	}
 

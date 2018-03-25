@@ -29,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.BaseEntity;
-import net.solarnetwork.domain.IdentifiableConfiguration;
 import net.solarnetwork.util.JsonUtils;
 import net.solarnetwork.util.SerializeIgnore;
 
@@ -40,7 +39,7 @@ import net.solarnetwork.util.SerializeIgnore;
  * @version 1.0
  */
 public class BaseExportConfigurationEntity extends BaseEntity
-		implements IdentifiableConfiguration, Serializable {
+		implements UserIdentifiableConfiguration, Serializable {
 
 	private static final long serialVersionUID = -1417068116997904853L;
 
@@ -51,6 +50,7 @@ public class BaseExportConfigurationEntity extends BaseEntity
 
 	private Map<String, Object> serviceProps;
 
+	@Override
 	public Long getUserId() {
 		return userId;
 	}

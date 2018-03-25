@@ -29,6 +29,8 @@ import net.solarnetwork.central.datum.domain.export.DataConfiguration;
 import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
 import net.solarnetwork.central.datum.domain.export.OutputConfiguration;
 import net.solarnetwork.central.datum.domain.export.ScheduleType;
+import net.solarnetwork.central.domain.BaseEntity;
+import net.solarnetwork.central.user.domain.UserRelatedEntity;
 
 /**
  * User related {@link Configuration} entity.
@@ -36,8 +38,8 @@ import net.solarnetwork.central.datum.domain.export.ScheduleType;
  * @author matt
  * @version 1.0
  */
-public class UserDatumExportConfiguration extends net.solarnetwork.central.domain.BaseEntity
-		implements Configuration, Serializable {
+public class UserDatumExportConfiguration extends BaseEntity
+		implements Configuration, UserRelatedEntity<Long>, Serializable {
 
 	private static final long serialVersionUID = -1797774828456852275L;
 
@@ -49,6 +51,7 @@ public class UserDatumExportConfiguration extends net.solarnetwork.central.domai
 	private UserOutputConfiguration userOutputConfiguration;
 	private UserDestinationConfiguration userDestinationConfiguration;
 
+	@Override
 	public Long getUserId() {
 		return userId;
 	}
