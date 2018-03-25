@@ -32,20 +32,21 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.support.CertificateException;
 import net.solarnetwork.util.SerializeIgnore;
-import org.joda.time.DateTime;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * A user node certificate. The certificate is expected to be in X.509 format.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-public class UserNodeCertificate implements Entity<UserNodePK>, Cloneable, Serializable {
+public class UserNodeCertificate
+		implements Entity<UserNodePK>, Cloneable, Serializable, UserRelatedEntity<UserNodePK> {
 
 	private static final long serialVersionUID = 3070315335910395052L;
 
@@ -177,6 +178,7 @@ public class UserNodeCertificate implements Entity<UserNodePK>, Cloneable, Seria
 	 * 
 	 * @return the userId
 	 */
+	@Override
 	public Long getUserId() {
 		return (id == null ? null : id.getUserId());
 	}

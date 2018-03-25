@@ -24,14 +24,14 @@ package net.solarnetwork.central.user.domain;
 
 import java.math.BigDecimal;
 import java.util.Map;
-import net.solarnetwork.central.domain.BaseEntity;
-import net.solarnetwork.central.support.JsonUtils;
-import net.solarnetwork.domain.GeneralNodeDatumSamples;
-import net.solarnetwork.util.SerializeIgnore;
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import net.solarnetwork.central.domain.BaseEntity;
+import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.util.SerializeIgnore;
 
 /**
  * An alert condition definition. User alerts are designed to cover conditions
@@ -46,10 +46,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * </ul>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "id", "created", "userId", "nodeId", "type", "status", "validTo", "options" })
-public class UserAlert extends BaseEntity {
+public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 
 	private static final long serialVersionUID = 1374111067444093568L;
 
@@ -100,6 +100,7 @@ public class UserAlert extends BaseEntity {
 		options = null;
 	}
 
+	@Override
 	public Long getUserId() {
 		return userId;
 	}

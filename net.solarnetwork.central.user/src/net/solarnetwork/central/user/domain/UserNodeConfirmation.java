@@ -24,8 +24,8 @@
 
 package net.solarnetwork.central.user.domain;
 
-import net.solarnetwork.central.domain.BaseEntity;
 import org.joda.time.DateTime;
+import net.solarnetwork.central.domain.BaseEntity;
 
 /**
  * The "pending confirmation" entity for after a user generates a node
@@ -33,9 +33,9 @@ import org.joda.time.DateTime;
  * UserNode entity is created.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-public class UserNodeConfirmation extends BaseEntity {
+public class UserNodeConfirmation extends BaseEntity implements UserRelatedEntity<Long> {
 
 	private static final long serialVersionUID = -598611218946751443L;
 
@@ -53,6 +53,12 @@ public class UserNodeConfirmation extends BaseEntity {
 
 	public void setUser(User user) {
 		this.user = user;
+	}
+
+	@Override
+	public Long getUserId() {
+		User user = getUser();
+		return (user != null ? user.getId() : null);
 	}
 
 	public Long getNodeId() {
