@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.reg.web;
 
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -30,9 +29,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
  * Controller for the secure home page.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-@Controller
+@GlobalServiceController
 public class HomeController {
 
 	@RequestMapping(value = "/sec/home", method = RequestMethod.GET)

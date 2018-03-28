@@ -1,7 +1,7 @@
 /* ==================================================================
- * BillingController.java - 25/08/2017 7:34:17 AM
+ * DatumExportController.java - 29/03/2018 7:14:04 AM
  * 
- * Copyright 2017 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -26,17 +26,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
- * Controller for the billing page.
+ * Controller for the export page.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.26
  */
 @GlobalServiceController
-public class BillingController {
+public class DatumExportController {
 
-	@RequestMapping(value = "/sec/billing", method = RequestMethod.GET)
+	@RequestMapping(value = "/sec/export", method = RequestMethod.GET)
 	public String home() {
-		return "billing/billing";
+		return "export/export";
 	}
 
 }
