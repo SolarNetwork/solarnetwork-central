@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:osgix="http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xsi:schemaLocation="
+		http://www.osgi.org/xmlns/blueprint/v1.0.0
+		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.2.xsd">
+
+	<!-- Service References -->
+
+	<reference id="datumExportConfDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao"/>
+	<reference id="dataConfDao" interface="net.solarnetwork.central.user.export.dao.UserDataConfigurationDao"/>
+	<reference id="destinationConfDao" interface="net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao"/>
+	<reference id="outputConfDao" interface="net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao"/>
+
+	<!-- Published Services -->
+	
+	<service interface="net.solarnetwork.central.user.export.biz.UserExportBiz">
+		<bean class="net.solarnetwork.central.user.export.biz.dao.DaoUserExportBiz">
+			<argument ref="datumExportConfDao"/>
+			<argument ref="dataConfDao"/>
+			<argument ref="destinationConfDao"/>
+			<argument ref="outputConfDao"/>
+		</bean>
+	</service>
+	
+</blueprint>
