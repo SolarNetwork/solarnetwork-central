@@ -30,10 +30,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.reg.web.domain.DatumExportFullConfigurations;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
+import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
+import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
+import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.web.domain.Response;
 
@@ -64,14 +68,22 @@ public class DatumExportController {
 
 	@ResponseBody
 	@RequestMapping(value = "/configs", method = RequestMethod.GET)
-	public Response<Object> foo() {
-		SecurityUser actor = SecurityUtils.getCurrentUser();
-		UserExportBiz biz = exportBiz.service();
+	public Response<DatumExportFullConfigurations> fullConfiguration() {
+		final SecurityUser actor = SecurityUtils.getCurrentUser();
+		final Long userId = actor.getUserId();
+		final UserExportBiz biz = exportBiz.service();
 		List<UserDatumExportConfiguration> configs = null;
+		List<UserDataConfiguration> dataConfigs = null;
+		List<UserDestinationConfiguration> destConfigs = null;
+		List<UserOutputConfiguration> outputConfigs = null;
 		if ( biz != null ) {
-			configs = biz.datumExportsForUser(actor.getUserId());
+			configs = biz.datumExportsForUser(userId);
+			dataConfigs = biz.configurationsForUser(userId, UserDataConfiguration.class);
+			destConfigs = biz.configurationsForUser(userId, UserDestinationConfiguration.class);
+			outputConfigs = biz.configurationsForUser(userId, UserOutputConfiguration.class);
 		}
-		return response(configs);
+		return response(
+				new DatumExportFullConfigurations(configs, dataConfigs, destConfigs, outputConfigs));
 	}
 
 }
