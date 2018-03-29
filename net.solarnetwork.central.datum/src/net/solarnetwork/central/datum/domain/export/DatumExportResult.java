@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumExportBiz.java - 5/03/2018 5:11:15 PM
+ * DatumExportResult.java - 29/03/2018 5:55:32 PM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,40 +20,33 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.biz;
-
-import net.solarnetwork.central.datum.domain.export.Configuration;
-import net.solarnetwork.central.datum.domain.export.DatumExportStatus;
+package net.solarnetwork.central.datum.domain.export;
 
 /**
- * API for a datum export service.
+ * API for the result of a datum export job.
  * 
  * @author matt
  * @version 1.0
  */
-public interface DatumExportBiz {
+public interface DatumExportResult {
 
 	/**
-	 * Perform a datum export.
+	 * Get a success flag.
 	 * 
-	 * @param configuration
-	 *        the full configuration for the export job
-	 * @return a status
+	 * @return the success flag
 	 */
-	DatumExportStatus performExport(Configuration configuration);
+	boolean isSuccess();
 
 	/**
-	 * Get the status for a running (or recently completed) export job.
+	 * Get a message about the result.
 	 * 
 	 * <p>
-	 * After requesting an export via {@link #performExport(Configuration)} the
-	 * {@link DatumExportStatus#getJobId()} can be passed to this method to
-	 * obtain the status of that job.
+	 * If {@link #isSuccess()} returns {@literal false}, this method will return
+	 * a message about the error.
 	 * </p>
 	 * 
-	 * @param jobId
-	 * @return
+	 * @return a message
 	 */
-	DatumExportStatus statusForJob(String jobId);
+	String getMessage();
 
 }

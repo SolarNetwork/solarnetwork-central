@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumExportBiz.java - 5/03/2018 5:11:15 PM
+ * DatumExportState.java - 29/03/2018 6:03:38 PM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,40 +20,39 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.biz;
-
-import net.solarnetwork.central.datum.domain.export.Configuration;
-import net.solarnetwork.central.datum.domain.export.DatumExportStatus;
+package net.solarnetwork.central.datum.domain.export;
 
 /**
- * API for a datum export service.
+ * A status for a datum export job.
+ * 
+ * <p>
+ * An export job starts in the {@code Queued} state, then will transition to
+ * {@code Executing} and then finally {@code Completed}.
+ * </p>
  * 
  * @author matt
  * @version 1.0
  */
-public interface DatumExportBiz {
+public enum DatumExportState {
 
 	/**
-	 * Perform a datum export.
-	 * 
-	 * @param configuration
-	 *        the full configuration for the export job
-	 * @return a status
+	 * The state is not known.
 	 */
-	DatumExportStatus performExport(Configuration configuration);
+	Unknown,
 
 	/**
-	 * Get the status for a running (or recently completed) export job.
-	 * 
-	 * <p>
-	 * After requesting an export via {@link #performExport(Configuration)} the
-	 * {@link DatumExportStatus#getJobId()} can be passed to this method to
-	 * obtain the status of that job.
-	 * </p>
-	 * 
-	 * @param jobId
-	 * @return
+	 * The export job has been queued, but not started yet.
 	 */
-	DatumExportStatus statusForJob(String jobId);
+	Queued,
+
+	/**
+	 * The export job is being executed currently.
+	 */
+	Executing,
+
+	/**
+	 * The export job has completed.
+	 */
+	Completed;
 
 }

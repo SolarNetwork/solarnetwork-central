@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumExportBiz.java - 5/03/2018 5:11:15 PM
+ * DatumExportStatus.java - 29/03/2018 5:56:23 PM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,40 +20,42 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.biz;
+package net.solarnetwork.central.datum.domain.export;
 
-import net.solarnetwork.central.datum.domain.export.Configuration;
-import net.solarnetwork.central.datum.domain.export.DatumExportStatus;
+import java.util.concurrent.Future;
 
 /**
- * API for a datum export service.
+ * The status of a datum export job.
+ * 
+ * <p>
+ * This API is also a {@link Future} so you can get the results of the export
+ * when it finishes.
+ * </p>
  * 
  * @author matt
  * @version 1.0
  */
-public interface DatumExportBiz {
+public interface DatumExportStatus extends Future<DatumExportResult> {
 
 	/**
-	 * Perform a datum export.
+	 * Get a unique ID for this export job.
 	 * 
-	 * @param configuration
-	 *        the full configuration for the export job
-	 * @return a status
+	 * @return the unique ID of this export job
 	 */
-	DatumExportStatus performExport(Configuration configuration);
+	String getJobId();
 
 	/**
-	 * Get the status for a running (or recently completed) export job.
+	 * Get the state of the export job.
 	 * 
-	 * <p>
-	 * After requesting an export via {@link #performExport(Configuration)} the
-	 * {@link DatumExportStatus#getJobId()} can be passed to this method to
-	 * obtain the status of that job.
-	 * </p>
-	 * 
-	 * @param jobId
-	 * @return
+	 * @return the state, never {@literal null}
 	 */
-	DatumExportStatus statusForJob(String jobId);
+	DatumExportState getJobState();
+
+	/**
+	 * Get a percentage complete for the job overall.
+	 * 
+	 * @return a percentage complete, or {@literal -1} if not known
+	 */
+	double getPercentComplete();
 
 }
