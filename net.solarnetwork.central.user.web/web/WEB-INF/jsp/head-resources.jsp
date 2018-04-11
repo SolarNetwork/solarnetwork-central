@@ -19,4 +19,5 @@
 	/js/auth-tokens.js
 	/js/alerts.js
 	/js/billing.js
+	/js/export.js
 </pack:script>
