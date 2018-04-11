@@ -63,7 +63,7 @@ import net.solarnetwork.central.datum.domain.export.BasicDatumExportResource;
 import net.solarnetwork.central.datum.domain.export.BasicDestinationConfiguration;
 import net.solarnetwork.central.datum.domain.export.DatumExportResource;
 import net.solarnetwork.central.datum.export.dest.s3.S3DatumExportDestinationService;
-import net.solarnetwork.central.datum.support.CsvDatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.standard.CsvDatumExportOutputFormatService;
 import net.solarnetwork.central.test.AbstractCentralTest;
 import net.solarnetwork.settings.KeyedSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;

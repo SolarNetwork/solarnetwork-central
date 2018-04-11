@@ -1,0 +1,25 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SolarNet Standard Datum Export
+Bundle-SymbolicName: net.solarnetwork.central.datum.export.standard
+Bundle-Version: 0.1.0
+Bundle-Vendor: SolarNetwork
+Automatic-Module-Name: net.solarnetwork.central.datum.export.standard
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: 
+ net.solarnetwork.central.datum.export.standard;version="0.1.0"
+Import-Package: 
+ net.solarnetwork.central;version="1.4.0",
+ net.solarnetwork.central.datum.biz;version="1.2.0",
+ net.solarnetwork.central.datum.domain.export;version="1.0.0",
+ net.solarnetwork.central.datum.support;version="1.7.0",
+ net.solarnetwork.central.domain;version="1.24.0",
+ net.solarnetwork.domain;version="1.12.0",
+ net.solarnetwork.settings;version="1.0.0",
+ net.solarnetwork.settings.support;version="1.0.0",
+ net.solarnetwork.support;version="1.7.0",
+ net.solarnetwork.util;version="1.30.0",
+ org.slf4j;version="[1.7,2.0)",
+ org.springframework.context;version="[4.2,5.0)",
+ org.springframework.context.support;version="[4.2,5.0)",
+ org.springframework.core;version="[4.2,5.0)"

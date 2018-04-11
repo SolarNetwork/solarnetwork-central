@@ -1,5 +1,5 @@
 /* ==================================================================
- * CsvDatumExportOutputFormatService.java - 11/04/2018 12:08:19 PM
+ * JsonDatumExportOutputFormatService.java - 12/04/2018 6:53:40 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,37 +20,37 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.support;
+package net.solarnetwork.central.datum.export.standard;
 
 import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.support.BaseDatumExportOutputFormatService;
 
 /**
- * Comma-separated-values implementation of
- * {@link DatumExportOutputFormatService}
+ * JSON implementation of {@link DatumExportOutputFormatService}
  * 
  * @author matt
  * @version 1.0
  * @since 1.23
  */
-public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputFormatService {
+public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFormatService {
 
-	public CsvDatumExportOutputFormatService() {
-		super("net.solarnetwork.central.datum.biz.impl.CsvDatumExportOutputFormatService");
+	public JsonDatumExportOutputFormatService() {
+		super("net.solarnetwork.central.datum.support.JsonDatumExportOutputFormatService");
 	}
 
 	@Override
 	public String getDisplayName() {
-		return "CSV Output Format";
+		return "JSON Output Format";
 	}
 
 	@Override
 	public String getExportFilenameExtension() {
-		return "csv";
+		return "json";
 	}
 
 	@Override
 	public String getExportContentType() {
-		return "text/csv;charset=UTF-8";
+		return "application/json;charset=UTF-8";
 	}
 
 }
