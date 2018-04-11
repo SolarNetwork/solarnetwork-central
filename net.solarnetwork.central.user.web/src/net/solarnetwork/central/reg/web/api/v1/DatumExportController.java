@@ -23,13 +23,17 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
+import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.reg.web.domain.DatumExportFullConfigurations;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -38,6 +42,7 @@ import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
+import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.web.domain.Response;
 
@@ -64,6 +69,36 @@ public class DatumExportController {
 	public DatumExportController(@Qualifier("exportBiz") OptionalService<UserExportBiz> exportBiz) {
 		super();
 		this.exportBiz = exportBiz;
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/services/output", method = RequestMethod.GET)
+	public Response<List<LocalizedServiceInfo>> availableOutputFormatServices(Locale locale) {
+		final UserExportBiz biz = exportBiz.service();
+		List<LocalizedServiceInfo> result = null;
+		if ( biz != null ) {
+			Iterable<DatumExportOutputFormatService> services = biz.availableOutputFormatServices();
+			result = new ArrayList<>();
+			for ( DatumExportOutputFormatService s : services ) {
+				result.add(s.getLocalizedServiceInfo(locale));
+			}
+		}
+		return response(result);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/services/destination", method = RequestMethod.GET)
+	public Response<List<LocalizedServiceInfo>> availableDestinationServices(Locale locale) {
+		final UserExportBiz biz = exportBiz.service();
+		List<LocalizedServiceInfo> result = null;
+		if ( biz != null ) {
+			Iterable<DatumExportDestinationService> services = biz.availableDestinationServices();
+			result = new ArrayList<>();
+			for ( DatumExportDestinationService s : services ) {
+				result.add(s.getLocalizedServiceInfo(locale));
+			}
+		}
+		return response(result);
 	}
 
 	@ResponseBody
