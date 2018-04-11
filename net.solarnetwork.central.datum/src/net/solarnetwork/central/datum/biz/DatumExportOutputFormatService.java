@@ -45,11 +45,22 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.23
  */
 public interface DatumExportOutputFormatService extends Identity<String>, SettingSpecifierProvider {
 
+	/**
+	 * Get an appropriate filename extension to use for this export format.
+	 * 
+	 * @return the extension
+	 */
 	String getExportFilenameExtension();
 
+	/**
+	 * Get an appropriate content type to use for this export format.
+	 * 
+	 * @return the export content type
+	 */
 	String getExportContentType();
 
 }

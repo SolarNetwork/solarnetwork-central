@@ -29,6 +29,7 @@ import java.io.Serializable;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.23
  */
 public class BasicConfiguration implements Configuration, Serializable {
 

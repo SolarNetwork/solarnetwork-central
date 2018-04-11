@@ -35,6 +35,7 @@ import net.solarnetwork.central.domain.Identity;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.23
  */
 public abstract class BaseDatumExportDestinationService extends BasicObjectIdentity<String>
 		implements DatumExportDestinationService {

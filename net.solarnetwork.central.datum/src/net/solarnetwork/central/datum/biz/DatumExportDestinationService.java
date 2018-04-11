@@ -52,6 +52,7 @@ import net.solarnetwork.util.ProgressListener;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.23
  */
 public interface DatumExportDestinationService extends Identity<String>, SettingSpecifierProvider {
 

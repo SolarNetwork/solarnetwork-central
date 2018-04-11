@@ -32,6 +32,7 @@ import org.springframework.core.io.Resource;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.23
  */
 public class BasicDatumExportResource implements DatumExportResource {
 

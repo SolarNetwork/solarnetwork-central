@@ -27,21 +27,24 @@ package net.solarnetwork.central.datum.domain.export;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.23
  */
 public enum OutputCompressionType {
 
 	/** No compression. */
-	None('n', ""),
+	None('n', "", ""),
 
 	/** Gzip compression. */
-	GZIP('z', "gz");
+	GZIP('z', "gz", "application/gzip");
 
 	private final char key;
 	private final String ext;
+	private final String contentType;
 
-	private OutputCompressionType(char key, String ext) {
+	private OutputCompressionType(char key, String ext, String contentType) {
 		this.key = key;
 		this.ext = ext;
+		this.contentType = contentType;
 	}
 
 	/**
@@ -61,6 +64,15 @@ public enum OutputCompressionType {
 	 */
 	public String getFilenameExtension() {
 		return ext;
+	}
+
+	/**
+	 * Get the content type for this compression type.
+	 * 
+	 * @return the content type
+	 */
+	public String getContentType() {
+		return contentType;
 	}
 
 	/**

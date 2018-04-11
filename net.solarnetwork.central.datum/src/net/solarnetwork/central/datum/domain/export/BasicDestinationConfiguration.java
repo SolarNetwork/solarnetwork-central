@@ -30,6 +30,7 @@ import net.solarnetwork.domain.BasicIdentifiableConfiguration;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.23
  */
 public class BasicDestinationConfiguration extends BasicIdentifiableConfiguration
 		implements DestinationConfiguration, Serializable {
