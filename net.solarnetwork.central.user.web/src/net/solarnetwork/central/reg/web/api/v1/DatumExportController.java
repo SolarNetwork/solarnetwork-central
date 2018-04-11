@@ -35,7 +35,6 @@ import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.reg.web.domain.DatumExportFullConfigurations;
-import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
@@ -104,8 +103,7 @@ public class DatumExportController {
 	@ResponseBody
 	@RequestMapping(value = "/configs", method = RequestMethod.GET)
 	public Response<DatumExportFullConfigurations> fullConfiguration() {
-		final SecurityUser actor = SecurityUtils.getCurrentUser();
-		final Long userId = actor.getUserId();
+		final Long userId = SecurityUtils.getCurrentActorUserId();
 		final UserExportBiz biz = exportBiz.service();
 		List<UserDatumExportConfiguration> configs = null;
 		List<UserDataConfiguration> dataConfigs = null;
