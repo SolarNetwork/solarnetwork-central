@@ -4,19 +4,20 @@ Bundle-Name: SolarNetwork Central Datum
 Bundle-SymbolicName: net.solarnetwork.central.datum
 Bundle-Version: 1.23.0
 Bundle-Vendor: SolarNetwork
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: 
  net.solarnetwork.central.datum.biz;version="1.2.0",
  net.solarnetwork.central.datum.dao;version="2.2.0",
  net.solarnetwork.central.datum.domain;version="1.19.0",
  net.solarnetwork.central.datum.domain.export;version="1.0.0",
- net.solarnetwork.central.datum.support;version="1.6.0"
+ net.solarnetwork.central.datum.support;version="1.7.0"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.4,3.0)",
  com.fasterxml.jackson.core;version="[2.4,3.0)",
  com.fasterxml.jackson.databind;version="[2.4,3.0)",
  com.fasterxml.jackson.databind.annotation;version="[2.4,3.0)",
  com.fasterxml.jackson.databind.type;version="[2.4,3.0)",
+ net.solarnetwork.central;version="1.4.0",
  net.solarnetwork.central.dao;version="1.14.0",
  net.solarnetwork.central.domain;version="1.21.0",
  net.solarnetwork.central.support;version="1.15.1",
@@ -26,4 +27,7 @@ Import-Package:
  org.apache.commons.codec.digest;version="[1.7,2.0)",
  org.joda.time;version="[2.4,3.0)",
  org.joda.time.base;version="[2.4,3.0)",
- org.slf4j;version="[1.7,2.0)"
+ org.joda.time.format;version="[2.4,3.0)",
+ org.slf4j;version="[1.7,2.0)",
+ org.springframework.context;version="[4.2,5.0)",
+ org.springframework.core.io;version="[4.2,5.0)"

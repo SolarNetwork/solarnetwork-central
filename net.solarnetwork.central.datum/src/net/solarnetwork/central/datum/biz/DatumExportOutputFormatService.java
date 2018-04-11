@@ -48,4 +48,8 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  */
 public interface DatumExportOutputFormatService extends Identity<String>, SettingSpecifierProvider {
 
+	String getExportFilenameExtension();
+
+	String getExportContentType();
+
 }

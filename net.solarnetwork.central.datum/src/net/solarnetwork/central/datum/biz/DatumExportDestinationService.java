@@ -22,8 +22,14 @@
 
 package net.solarnetwork.central.datum.biz;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Map;
+import net.solarnetwork.central.datum.domain.export.Configuration;
+import net.solarnetwork.central.datum.domain.export.DatumExportResource;
 import net.solarnetwork.central.domain.Identity;
 import net.solarnetwork.settings.SettingSpecifierProvider;
+import net.solarnetwork.util.ProgressListener;
 
 /**
  * API for datum export destination services.
@@ -48,5 +54,24 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * @version 1.0
  */
 public interface DatumExportDestinationService extends Identity<String>, SettingSpecifierProvider {
+
+	/**
+	 * Create a new {@link OutputStream} suitable for writing export data to
+	 * based on a specific configuration.
+	 * 
+	 * @param config
+	 *        the configuration in use
+	 * @param resource
+	 *        the resource to export
+	 * @param runtimeProperties
+	 *        the runtime properties to use
+	 * @param progressListener
+	 *        an optional listener for progress updates on the export process
+	 * @throws IOException
+	 *         if the export fails for any reason from an IO error
+	 * @throw RemoteServiceException if a remote access error occurs
+	 */
+	void export(Configuration config, DatumExportResource resource, Map<String, ?> runtimeProperties,
+			ProgressListener<DatumExportResource> progressListener) throws IOException;
 
 }

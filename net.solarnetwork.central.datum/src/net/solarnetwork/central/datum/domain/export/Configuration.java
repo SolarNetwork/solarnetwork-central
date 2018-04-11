@@ -22,6 +22,13 @@
 
 package net.solarnetwork.central.datum.domain.export;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
+
 /**
  * A complete configuration for a scheduled export job.
  * 
@@ -78,5 +85,58 @@ public interface Configuration {
 	 * @return an hour delay offset, or {@literal 0} for no delay
 	 */
 	int getHourDelayOffset();
+
+	/** A runtime property for a formatted date string. */
+	String PROP_DATE = "date";
+
+	/** A runtime property for a {@code DateTime} object. */
+	String PROP_DATE_TIME = "ts";
+
+	/** A runtime property for a filename extension. */
+	String PROP_FILENAME_EXTENSION = "ext";
+
+	/**
+	 * Get runtime properties to use for an export at a specific time.
+	 * 
+	 * @param exportTime
+	 *        the time of the export
+	 * @param dateFormatter
+	 *        a formatter to use; if not provided an ISO timestamp formatter
+	 *        will be used
+	 * @param outputFormatService
+	 *        the output format service to determine the filename extension to
+	 *        use
+	 * @return the properties, never {@literal null}
+	 */
+	default Map<String, Object> getRuntimeProperties(DateTime exportTime,
+			DateTimeFormatter dateFormatter, DatumExportOutputFormatService outputFormatService) {
+		Map<String, Object> result = new LinkedHashMap<String, Object>(8);
+		DateTime ts = exportTime != null ? exportTime : new DateTime();
+		result.put(PROP_DATE_TIME, ts);
+
+		String date = (dateFormatter != null ? dateFormatter.print(ts)
+				: ISODateTimeFormat.basicDateTimeNoMillis().print(ts));
+		result.put(PROP_DATE, date);
+
+		String ext = null;
+		if ( outputFormatService != null ) {
+			ext = outputFormatService.getExportFilenameExtension();
+		}
+		if ( ext != null ) {
+			OutputConfiguration outpConfig = getOutputConfiguration();
+			if ( outpConfig != null ) {
+				OutputCompressionType compressType = outpConfig.getCompressionType();
+				if ( compressType != null ) {
+					String compressExt = compressType.getFilenameExtension();
+					if ( !compressExt.isEmpty() ) {
+						ext += "." + compressExt;
+					}
+				}
+			}
+			result.put(PROP_FILENAME_EXTENSION, ext);
+		}
+
+		return result;
+	}
 
 }
