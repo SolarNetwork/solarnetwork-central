@@ -33,11 +33,8 @@ import net.solarnetwork.central.domain.Identity;
 import net.solarnetwork.settings.SettingSpecifier;
 
 /**
- * FIXME
- * 
- * <p>
- * TODO
- * </p>
+ * Base class to support implementations of
+ * {@link DatumExportOutputFormatService}.
  * 
  * @author matt
  * @version 1.0
