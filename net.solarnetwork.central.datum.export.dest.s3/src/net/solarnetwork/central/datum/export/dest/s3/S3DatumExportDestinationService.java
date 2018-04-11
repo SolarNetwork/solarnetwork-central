@@ -103,7 +103,12 @@ public class S3DatumExportDestinationService extends BaseDatumExportDestinationS
 		AmazonS3URI uri = props.getUri();
 		String key = getDestinationPath(props, runtimeProperties);
 		ObjectMetadata objectMetadata = new ObjectMetadata();
-		if ( resource.getContentType() != null ) {
+		if ( config.getOutputConfiguration() != null
+				&& config.getOutputConfiguration().getCompressionType() != null
+				&& !config.getOutputConfiguration().getCompressionType().getContentType().isEmpty() ) {
+			objectMetadata.setContentType(
+					config.getOutputConfiguration().getCompressionType().getContentType());
+		} else if ( resource.getContentType() != null ) {
 			objectMetadata.setContentType(resource.getContentType());
 		}
 		objectMetadata.setContentLength(resource.contentLength());
