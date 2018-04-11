@@ -9,7 +9,7 @@ Export-Package:
  net.solarnetwork.central;version="1.4.0",
  net.solarnetwork.central.biz;version="1.2.0",
  net.solarnetwork.central.dao;version="1.14.0",
- net.solarnetwork.central.domain;version="1.24.0",
+ net.solarnetwork.central.domain;version="1.24.1",
  net.solarnetwork.central.scheduler;version="1.5.0",
  net.solarnetwork.central.support;version="1.15.1"
 Import-Package: 
