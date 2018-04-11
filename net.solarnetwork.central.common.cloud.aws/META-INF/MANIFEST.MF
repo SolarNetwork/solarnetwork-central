@@ -2,12 +2,12 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: AWS SolarNetwork Cloud Support
 Bundle-SymbolicName: net.solarnetwork.central.common.cloud.aws
-Bundle-Version: 1.0.0
+Bundle-Version: 1.0.1
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
- com.amazonaws.auth;version="1.11.207",
- com.amazonaws.client.builder;version="1.11.207",
+ com.amazonaws.auth;version="[1.11,1.12)",
+ com.amazonaws.client.builder;version="[1.11,1.12)",
  com.amazonaws.services.ec2;version="[1.11.207,2.0)",
  com.amazonaws.services.ec2.model;version="[1.11.207,2.0)",
  net.solarnetwork.central.cloud.biz;version="1.0.0",
