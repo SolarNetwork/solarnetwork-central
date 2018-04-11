@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.user.export.biz.dao;
 
+import java.util.Collections;
 import java.util.List;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
+import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.dao.UserDataConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
@@ -35,6 +38,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
+import net.solarnetwork.util.OptionalServiceCollection;
 
 /**
  * DAO implementation of {@link UserExportBiz}.
@@ -48,6 +52,9 @@ public class DaoUserExportBiz implements UserExportBiz {
 	private final UserDataConfigurationDao dataConfigDao;
 	private final UserDestinationConfigurationDao destinationConfigDao;
 	private final UserOutputConfigurationDao outputConfigDao;
+
+	private OptionalServiceCollection<DatumExportOutputFormatService> outputFormatServices;
+	private OptionalServiceCollection<DatumExportDestinationService> destinationServices;
 
 	/**
 	 * Constructor.
@@ -69,6 +76,18 @@ public class DaoUserExportBiz implements UserExportBiz {
 		this.dataConfigDao = dataConfigDao;
 		this.destinationConfigDao = destinationConfigDao;
 		this.outputConfigDao = outputConfigDao;
+	}
+
+	@Override
+	public Iterable<DatumExportOutputFormatService> availableOutputFormatServices() {
+		OptionalServiceCollection<DatumExportOutputFormatService> svcs = this.outputFormatServices;
+		return (svcs != null ? svcs.services() : Collections.emptyList());
+	}
+
+	@Override
+	public Iterable<DatumExportDestinationService> availableDestinationServices() {
+		OptionalServiceCollection<DatumExportDestinationService> svcs = this.destinationServices;
+		return (svcs != null ? svcs.services() : Collections.emptyList());
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -130,6 +149,28 @@ public class DaoUserExportBiz implements UserExportBiz {
 			return (List<T>) outputConfigDao.findConfigurationsForUser(userId);
 		}
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
+	}
+
+	/**
+	 * Set the optional output format services.
+	 * 
+	 * @param outputFormatServices
+	 *        the optional services
+	 */
+	public void setOutputFormatServices(
+			OptionalServiceCollection<DatumExportOutputFormatService> outputFormatServices) {
+		this.outputFormatServices = outputFormatServices;
+	}
+
+	/**
+	 * Set the optional destination services.
+	 * 
+	 * @param destinationServices
+	 *        the optional services
+	 */
+	public void setDestinationServices(
+			OptionalServiceCollection<DatumExportDestinationService> destinationServices) {
+		this.destinationServices = destinationServices;
 	}
 
 }

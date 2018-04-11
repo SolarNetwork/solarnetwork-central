@@ -23,6 +23,8 @@
 package net.solarnetwork.central.user.export.biz;
 
 import java.util.List;
+import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
+import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
 
@@ -33,6 +35,20 @@ import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration
  * @version 1.0
  */
 public interface UserExportBiz {
+
+	/**
+	 * Get a list of all available output format services.
+	 * 
+	 * @return the available services, never {@literal null}
+	 */
+	Iterable<DatumExportOutputFormatService> availableOutputFormatServices();
+
+	/**
+	 * Get a list of all available destination services.
+	 * 
+	 * @return the available services, never {@literal null}
+	 */
+	Iterable<DatumExportDestinationService> availableDestinationServices();
 
 	/**
 	 * Get a saved datum export configuration.

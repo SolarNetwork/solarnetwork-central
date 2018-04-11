@@ -22,8 +22,9 @@
 
 package net.solarnetwork.central.datum.biz;
 
-import net.solarnetwork.central.domain.Identity;
+import net.solarnetwork.domain.Identity;
 import net.solarnetwork.settings.SettingSpecifierProvider;
+import net.solarnetwork.support.LocalizedServiceInfoProvider;
 
 /**
  * API for datum export destination services.
@@ -47,7 +48,8 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * @version 1.0
  * @since 1.23
  */
-public interface DatumExportOutputFormatService extends Identity<String>, SettingSpecifierProvider {
+public interface DatumExportOutputFormatService
+		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
 
 	/**
 	 * Get an appropriate filename extension to use for this export format.

@@ -27,8 +27,9 @@ import java.io.OutputStream;
 import java.util.Map;
 import net.solarnetwork.central.datum.domain.export.Configuration;
 import net.solarnetwork.central.datum.domain.export.DatumExportResource;
-import net.solarnetwork.central.domain.Identity;
+import net.solarnetwork.domain.Identity;
 import net.solarnetwork.settings.SettingSpecifierProvider;
+import net.solarnetwork.support.LocalizedServiceInfoProvider;
 import net.solarnetwork.util.ProgressListener;
 
 /**
@@ -54,7 +55,8 @@ import net.solarnetwork.util.ProgressListener;
  * @version 1.0
  * @since 1.23
  */
-public interface DatumExportDestinationService extends Identity<String>, SettingSpecifierProvider {
+public interface DatumExportDestinationService
+		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
 
 	/**
 	 * Create a new {@link OutputStream} suitable for writing export data to

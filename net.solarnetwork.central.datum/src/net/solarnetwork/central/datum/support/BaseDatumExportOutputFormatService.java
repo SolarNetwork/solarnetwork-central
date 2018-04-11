@@ -24,13 +24,9 @@ package net.solarnetwork.central.datum.support;
 
 import java.util.Collections;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.MessageSource;
 import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
-import net.solarnetwork.central.domain.BasicObjectIdentity;
-import net.solarnetwork.central.domain.Identity;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 
 /**
  * Base class to support implementations of
@@ -40,13 +36,9 @@ import net.solarnetwork.settings.SettingSpecifier;
  * @version 1.0
  * @since 1.23
  */
-public abstract class BaseDatumExportOutputFormatService extends BasicObjectIdentity<String>
+public abstract class BaseDatumExportOutputFormatService
+		extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
 		implements DatumExportOutputFormatService {
-
-	/** A class-level logger. */
-	protected final Logger log = LoggerFactory.getLogger(getClass());
-
-	private MessageSource messageSource;
 
 	/**
 	 * Constructor.
@@ -59,22 +51,8 @@ public abstract class BaseDatumExportOutputFormatService extends BasicObjectIden
 	}
 
 	@Override
-	public String getSettingUID() {
-		return getId();
-	}
-
-	@Override
 	public List<SettingSpecifier> getSettingSpecifiers() {
 		return Collections.emptyList();
-	}
-
-	@Override
-	public MessageSource getMessageSource() {
-		return messageSource;
-	}
-
-	public void setMessageSource(MessageSource messageSource) {
-		this.messageSource = messageSource;
 	}
 
 }

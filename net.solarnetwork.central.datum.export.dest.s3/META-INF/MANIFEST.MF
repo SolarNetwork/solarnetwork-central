@@ -23,6 +23,7 @@ Import-Package:
  net.solarnetwork.domain;version="1.12.0",
  net.solarnetwork.settings;version="1.0.0",
  net.solarnetwork.settings.support;version="1.0.0",
+ net.solarnetwork.support;version="1.7.0",
  net.solarnetwork.util;version="1.30.0",
  org.slf4j;version="[1.7,2.0)",
  org.springframework.context;version="[4.2,5.0)",

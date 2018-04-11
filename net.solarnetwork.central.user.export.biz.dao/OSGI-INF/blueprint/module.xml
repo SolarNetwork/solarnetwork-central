@@ -26,6 +26,18 @@
 			<argument ref="dataConfDao"/>
 			<argument ref="destinationConfDao"/>
 			<argument ref="outputConfDao"/>
+			<property name="outputFormatServices">
+				<bean class="net.solarnetwork.util.DynamicServiceTracker">
+					<property name="bundleContext" ref="bundleContext"/>
+					<property name="serviceClassName" value="net.solarnetwork.central.datum.biz.DatumExportOutputFormatService"/>
+				</bean>
+			</property>
+			<property name="destinationServices">
+				<bean class="net.solarnetwork.util.DynamicServiceTracker">
+					<property name="bundleContext" ref="bundleContext"/>
+					<property name="serviceClassName" value="net.solarnetwork.central.datum.biz.DatumExportDestinationService"/>
+				</bean>
+			</property>
 		</bean>
 	</service>
 	
