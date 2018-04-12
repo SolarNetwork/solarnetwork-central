@@ -26,8 +26,10 @@ import static net.solarnetwork.web.domain.Response.response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -41,6 +43,7 @@ import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
+import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.web.domain.Response;
@@ -54,7 +57,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @RestController("v1DatumExportController")
 @RequestMapping(value = { "/sec/export", "/v1/sec/user/export" })
-public class DatumExportController {
+public class DatumExportController extends WebServiceControllerSupport {
 
 	private final OptionalService<UserExportBiz> exportBiz;
 
@@ -128,6 +131,48 @@ public class DatumExportController {
 		}
 		return response(
 				new DatumExportFullConfigurations(configs, dataConfigs, destConfigs, outputConfigs));
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/configs/output", method = RequestMethod.POST)
+	public Response<UserOutputConfiguration> saveOutputConfiguration(
+			@RequestBody UserOutputConfiguration config) {
+		final UserExportBiz biz = exportBiz.service();
+		if ( biz != null ) {
+			if ( config.getUserId() == null ) {
+				config.setUserId(SecurityUtils.getCurrentActorUserId());
+			}
+			if ( config.getCreated() == null ) {
+				config.setCreated(new DateTime());
+			}
+			Long id = biz.saveConfiguration(config);
+			if ( id != null ) {
+				config.setId(id);
+				return response(config);
+			}
+		}
+		return new Response<UserOutputConfiguration>(false, null, null, null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/configs/destination", method = RequestMethod.POST)
+	public Response<UserDestinationConfiguration> saveDestinationConfiguration(
+			@RequestBody UserDestinationConfiguration config) {
+		final UserExportBiz biz = exportBiz.service();
+		if ( biz != null ) {
+			if ( config.getUserId() == null ) {
+				config.setUserId(SecurityUtils.getCurrentActorUserId());
+			}
+			if ( config.getCreated() == null ) {
+				config.setCreated(new DateTime());
+			}
+			Long id = biz.saveConfiguration(config);
+			if ( id != null ) {
+				config.setId(id);
+				return response(config);
+			}
+		}
+		return new Response<UserDestinationConfiguration>(false, null, null, null);
 	}
 
 }

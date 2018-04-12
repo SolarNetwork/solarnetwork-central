@@ -35,7 +35,7 @@ public enum OutputCompressionType {
 	None('n', "", ""),
 
 	/** Gzip compression. */
-	GZIP('z', "gz", "application/gzip");
+	GZIP('g', "gz", "application/gzip");
 
 	private final char key;
 	private final String ext;

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.export.domain;
 
 import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
 
 /**
@@ -31,6 +32,7 @@ import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
  * @author matt
  * @version 1.0
  */
+@JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProps" })
 public class UserDestinationConfiguration extends BaseExportConfigurationEntity
 		implements DestinationConfiguration, UserIdentifiableConfiguration, Serializable {
 

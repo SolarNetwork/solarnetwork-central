@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.export.domain;
 
 import java.io.Serializable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -36,6 +37,7 @@ import net.solarnetwork.util.JsonUtils;
  * @author matt
  * @version 1.0
  */
+@JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProps" })
 public class UserDataConfiguration extends BaseExportConfigurationEntity
 		implements DataConfiguration, UserIdentifiableConfiguration, Serializable {
 

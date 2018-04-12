@@ -45,7 +45,7 @@
 			<fmt:param value='0'/>
 		</fmt:message>
 	</p>
-	<table class="table configs" id="export-data-config-list-container hidden">
+	<table id="export-data-config-list-container" class="table configs hidden">
 		<thead>
 			<tr>
 				<th><fmt:message key="export.dataConfig.name.label"/></th>
@@ -78,19 +78,17 @@
 			<fmt:param value='0'/>
 		</fmt:message>
 	</p>
-	<table class="table configs" id="export-output-config-list-container hidden">
+	<table id="export-output-config-list-container" class="table configs hidden">
 		<thead>
 			<tr>
 				<th><fmt:message key="export.outputConfig.name.label"/></th>
 				<th><fmt:message key="export.outputConfig.type.label"/></th>
-				<th><fmt:message key="export.outputConfig.filename.label"/></th>
-				<th><fmt:message key="export.outputConfig.compressed.label"/></th>
+				<th><fmt:message key="export.outputConfig.compression.label"/></th>
 			</tr>
 			<tr class="template">
 				<td><a href="#" data-tprop="name"></a></td>
 				<td data-tprop="type"></td>
-				<td data-tprop="filename"></td>
-				<td data-tprop="compressed"></td>
+				<td data-tprop="compression"></td>
 			</tr>
 		</thead>
 		<tbody>
@@ -111,7 +109,7 @@
 			<fmt:param value='0'/>
 		</fmt:message>
 	</p>
-	<table class="table configs" id="export-dest-config-list-container hidden">
+	<table id="export-dest-config-list-container" class="table configs hidden">
 		<thead>
 			<tr>
 				<th><fmt:message key="export.destConfig.name.label"/></th>

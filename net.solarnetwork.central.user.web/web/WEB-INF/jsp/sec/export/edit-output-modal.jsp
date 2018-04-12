@@ -1,4 +1,4 @@
-<form id="edit-export-output-config-modal" class="modal fade" action="<c:url value='/u/sec/export/output'/>" method="post" tabindex="-1" role="dialog">
+<form id="edit-export-output-config-modal" class="modal fade" action="<c:url value='/u/sec/export/configs/output'/>" method="post" tabindex="-1" role="dialog">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -24,7 +24,7 @@
 		 				${' '}
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<select class="form-control export-output-services" name="serviceId" required="required">
+		 				<select class="form-control export-output-services" name="serviceIdentifier" required="required">
 		 				</select>
 		 			</div>
 		 		</div>
