@@ -101,6 +101,17 @@ public class DatumExportController {
 	}
 
 	@ResponseBody
+	@RequestMapping(value = "/services/compression", method = RequestMethod.GET)
+	public Response<Iterable<LocalizedServiceInfo>> availableCompressionServices(Locale locale) {
+		final UserExportBiz biz = exportBiz.service();
+		Iterable<LocalizedServiceInfo> result = null;
+		if ( biz != null ) {
+			result = biz.availableOutputCompressionTypes(locale);
+		}
+		return response(result);
+	}
+
+	@ResponseBody
 	@RequestMapping(value = "/configs", method = RequestMethod.GET)
 	public Response<DatumExportFullConfigurations> fullConfiguration() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();

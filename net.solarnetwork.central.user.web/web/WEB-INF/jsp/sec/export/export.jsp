@@ -4,6 +4,12 @@
 	<fmt:message key='export.intro'/>
 </p>
 
+<div class="datum-export-getstarted hidden alert alert-info alert-dismissible" role="alert">
+	<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	<strong><fmt:message key='export.getstarted.title'/></strong>
+	<fmt:message key='export.getstarted.intro'/>
+</div>
+
 <section id="datum-export-configs">
 	<h2>
 		<fmt:message key='export.datumExportList.header'/>
@@ -59,40 +65,10 @@
 	</table>
 </section>
 
-<section id="export-dest-configs">
-	<h2>
-		<fmt:message key='export.destConfigList.header'/>
-		<a href="#create-export-dest-config" class="btn btn-primary pull-right" data-toggle="modal" 
-			title="<fmt:message key='export.destConfigList.action.create'/>">
-			<i class="glyphicon glyphicon-plus"></i>
-		</a>
-	</h2>
-	<p class="intro">
-		<fmt:message key='export.destConfigList.intro'>
-			<fmt:param value='0'/>
-		</fmt:message>
-	</p>
-	<table class="table configs" id="export-dest-config-list-container hidden">
-		<thead>
-			<tr>
-				<th><fmt:message key="export.destConfig.name.label"/></th>
-				<th><fmt:message key="export.destConfig.type.label"/></th>
-			</tr>
-			<tr class="template">
-				<td><a href="#" data-tprop="name"></a></td>
-				<td data-tprop="type"></td>
-			</tr>
-		</thead>
-		<tbody>
-		</tbody>
-	</table>
-</section>
-
-
 <section id="export-output-configs">
 	<h2>
 		<fmt:message key='export.outputConfigList.header'/>
-		<a href="#create-export-output-config" class="btn btn-primary pull-right" data-toggle="modal" 
+		<a href="#edit-export-output-config-modal" class="btn btn-primary pull-right" data-toggle="modal" 
 			title="<fmt:message key='export.outputConfigList.action.create'/>">
 			<i class="glyphicon glyphicon-plus"></i>
 		</a>
@@ -122,3 +98,36 @@
 	</table>
 </section>
 
+<section id="export-dest-configs">
+	<h2>
+		<fmt:message key='export.destConfigList.header'/>
+		<a href="#create-export-dest-config" class="btn btn-primary pull-right" data-toggle="modal" 
+			title="<fmt:message key='export.destConfigList.action.create'/>">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro">
+		<fmt:message key='export.destConfigList.intro'>
+			<fmt:param value='0'/>
+		</fmt:message>
+	</p>
+	<table class="table configs" id="export-dest-config-list-container hidden">
+		<thead>
+			<tr>
+				<th><fmt:message key="export.destConfig.name.label"/></th>
+				<th><fmt:message key="export.destConfig.type.label"/></th>
+			</tr>
+			<tr class="template">
+				<td><a href="#" data-tprop="name"></a></td>
+				<td data-tprop="type"></td>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+</section>
+
+<%-- Modal forms --%>
+
+<jsp:include page="edit-output-modal.jsp"/>
+<%--@include file="/WEB-INF/jsp/sec/export/create-output-modal.jsp" --%>
