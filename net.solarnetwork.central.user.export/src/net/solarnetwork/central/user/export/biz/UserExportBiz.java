@@ -23,10 +23,12 @@
 package net.solarnetwork.central.user.export.biz;
 
 import java.util.List;
+import java.util.Locale;
 import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
+import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
  * Service API for user export feature.
@@ -49,6 +51,13 @@ public interface UserExportBiz {
 	 * @return the available services, never {@literal null}
 	 */
 	Iterable<DatumExportDestinationService> availableDestinationServices();
+
+	/**
+	 * Get a localized list of all available compression type information.
+	 * 
+	 * @return the compression type info
+	 */
+	Iterable<LocalizedServiceInfo> availableOutputCompressionTypes(Locale locale);
 
 	/**
 	 * Get a saved datum export configuration.

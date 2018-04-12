@@ -26,6 +26,8 @@ Import-Package:
  org.springframework.aop.framework;version="[4.2,5.0)",
  org.springframework.beans;version="[4.2,5.0)",
  org.springframework.beans.factory.annotation;version="[4.2,5.0)",
+ org.springframework.context;version="[4.2,5.0)",
+ org.springframework.context.support;version="[4.2,5.0)",
  org.springframework.core;version="[4.2,5.0)",
  org.springframework.dao;version="[4.2,5.0)",
  org.springframework.jdbc.support;version="[4.2,5.0)",

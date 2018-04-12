@@ -38,6 +38,19 @@
 					<property name="serviceClassName" value="net.solarnetwork.central.datum.biz.DatumExportDestinationService"/>
 				</bean>
 			</property>
+			<property name="messageSource">
+				<bean class="net.solarnetwork.util.PrefixedMessageSource">
+					<property name="delegates">
+						<map>
+							<entry key="compressionType.">
+								<bean class="org.springframework.context.support.ResourceBundleMessageSource">
+									<property name="basename" value="net.solarnetwork.central.datum.domain.export.OutputCompressionType"/>
+								</bean>
+							</entry>
+						</map>
+					</property>
+				</bean>	
+			</property>
 		</bean>
 	</service>
 	

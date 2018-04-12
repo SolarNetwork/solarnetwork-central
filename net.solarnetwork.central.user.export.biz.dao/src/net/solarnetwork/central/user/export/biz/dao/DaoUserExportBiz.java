@@ -22,12 +22,16 @@
 
 package net.solarnetwork.central.user.export.biz.dao;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import org.springframework.context.MessageSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.domain.export.OutputCompressionType;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.dao.UserDataConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
@@ -38,6 +42,8 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
+import net.solarnetwork.domain.BasicLocalizedServiceInfo;
+import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.util.OptionalServiceCollection;
 
 /**
@@ -55,6 +61,8 @@ public class DaoUserExportBiz implements UserExportBiz {
 
 	private OptionalServiceCollection<DatumExportOutputFormatService> outputFormatServices;
 	private OptionalServiceCollection<DatumExportDestinationService> destinationServices;
+
+	private MessageSource messageSource;
 
 	/**
 	 * Constructor.
@@ -88,6 +96,24 @@ public class DaoUserExportBiz implements UserExportBiz {
 	public Iterable<DatumExportDestinationService> availableDestinationServices() {
 		OptionalServiceCollection<DatumExportDestinationService> svcs = this.destinationServices;
 		return (svcs != null ? svcs.services() : Collections.emptyList());
+	}
+
+	@Override
+	public Iterable<LocalizedServiceInfo> availableOutputCompressionTypes(Locale locale) {
+		List<LocalizedServiceInfo> results = new ArrayList<>(OutputCompressionType.values().length);
+		for ( OutputCompressionType type : OutputCompressionType.values() ) {
+			String name = type.toString();
+			String desc = null;
+			if ( messageSource != null ) {
+				name = messageSource.getMessage("compressionType." + type.name() + ".key", null, name,
+						locale);
+				desc = messageSource.getMessage("compressionType." + type.name() + ".desc", null, desc,
+						locale);
+			}
+			results.add(new BasicLocalizedServiceInfo(String.valueOf(type.getKey()), locale, name, desc,
+					null));
+		}
+		return results;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -171,6 +197,16 @@ public class DaoUserExportBiz implements UserExportBiz {
 	public void setDestinationServices(
 			OptionalServiceCollection<DatumExportDestinationService> destinationServices) {
 		this.destinationServices = destinationServices;
+	}
+
+	/**
+	 * A message source for resolving messages with.
+	 * 
+	 * @param messageSource
+	 *        the message source
+	 */
+	public void setMessageSource(MessageSource messageSource) {
+		this.messageSource = messageSource;
 	}
 
 }
