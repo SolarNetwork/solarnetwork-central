@@ -178,6 +178,7 @@ $(document).ready(function() {
 			console.log('Got export configurations: %o', json);
 			if ( json && json.success === true ) {
 				exportConfigs = populateExportConfigs(json.data);
+				$('.datum-export-getstarted').toggleClass('hidden', exportConfigs.length > 0);
 			}
 		});
 	});
