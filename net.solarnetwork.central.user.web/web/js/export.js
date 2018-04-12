@@ -7,6 +7,43 @@ $(document).ready(function() {
 	var compressionTypes = [];
 	
 	/**
+	 * Replace the textual content of DOM elements who have data attributes matching template parameter names.
+	 * 
+	 * This method replaces parameters in a DOM structure, based on parameter names encoded as HTML
+	 * `data-tprop` attributes. For any element with a matching `data-tprop` value, its content will 
+	 * be replaced by the parameter value.
+	 * 
+	 * Imagine a DOM structure like:
+	 * 
+	 * ```html
+	 * <tr><td data-tprop="name"></td></tr>
+	 * ```
+	 * 
+	 * Then calling this method like `replaceTemplateProperties($(trEl), {name:"Hello, world."})` will change the DOM
+	 * to this:
+	 * 
+	 * ```html
+	 * <tr><td data-tprop="name">Hello, world.</td></tr>
+	 * ```
+	 * 
+	 * **Note** that parameter names starting with `_` are skipped.
+	 * 
+	 * @param {jQuery} el the element to perform replacements on
+	 * @param {object} obj the object whose properties act as template parameters
+	 * @param {string} [prefix] an optional prefix to prepend to each template parameter
+	 */
+	function replaceTemplateProperties(el, obj, prefix) {
+		var prop, sel;
+		for ( prop in obj ) {
+			if ( !prop.startsWith('_') && obj.hasOwnProperty(prop) ) {
+				sel = "[data-tprop='" +(prefix || '') +prop +"']";
+				el.find(sel).addBack(sel).text(obj[prop]);
+			}
+		}
+		return el;
+	}
+	
+	/**
 	 * Get a display name for a service based on its identifier.
 	 * 
 	 * @param {Array} services the array of localized service infos to search
@@ -23,6 +60,12 @@ $(document).ready(function() {
 		return (service ? service.localizedName : '');
 	}
 	
+	/**
+	 * Populate an HTML `<select>` element with options based on localized service infos.
+	 * 
+	 * @param {Array} services array of localized service infos
+	 * @param {String} selector jQuery selector for the `<select>` element to update
+	 */
 	function populateServiceSelectOptions(services, selector) {
 		services = Array.isArray(services) ? services : [];
 		$(selector).each(function() {
@@ -32,6 +75,48 @@ $(document).ready(function() {
 			});
 		});
 		return services;
+	}
+	
+	/**
+	 * Create new DOM elements from a template DOM element for each of a parameter object.
+	 * 
+	 * @param {jQuery} container the container that holds the template item
+	 * @param {Array} items  the array of parameter objects to populate into cloned templates
+	 * @param {boolean} preserve `true` to only append items, do not clear out any existing items
+	 * @see #appendTemplateItem
+	 */
+	function populateTemplateItems(container, items, preserve) {
+		var itemTemplate = container.find('.template').first();
+		var itemContainer = itemTemplate.parent();
+		if ( !preserve ) {
+			itemTemplate.nextAll().remove();
+		}
+		items.forEach(function(item) {
+			appendTemplateItem(itemContainer, itemTemplate, item);
+		});
+		container.toggleClass('hidden', items.length < 1);
+	}
+	
+	/**
+	 * Clone a template element, replace template parameters in the clone, and append
+	 * the clone to a container element.
+	 * 
+	 * The special `_contextItem` parameter value, if provided, will be stored on 
+	 * the cloned element as a data attribute named `context-item`.
+	 * 
+	 * @param {jQuery} container the container element to append the new item into
+	 * @param {jQuery} template the template to clone
+	 * @param {object} item the parameter object 
+	 */
+	function appendTemplateItem(container, template, item) {
+		if ( !(container && template && item) ) {
+			return;
+		}
+		var newItem = template.clone(true).removeClass('template');
+		if ( item._contextItem ) {
+			newItem.data('context-item', item._contextItem);
+		}
+		replaceTemplateProperties(newItem, item).appendTo(container);
 	}
 	
 	function populateExportConfigs(configs) {
@@ -66,45 +151,18 @@ $(document).ready(function() {
 	function populateOutputConfigs(configs, preserve) {
 		configs = Array.isArray(configs) ? configs : [];
 		var container = $('#export-output-config-list-container');
-		var itemTemplate = container.find('.template').first();
-		var itemContainer = itemTemplate.parent();
 		var items = configs.map(function(config) {
 			return {
-					_config : config,
+					_contextItem : config,
 					name : config.name,
 					type : serviceDisplayName(outputServices, config.serviceIdentifier),
 					compression : serviceDisplayName(compressionTypes, config.compressionTypeKey)
 			};
 		});
-		if ( !preserve ) {
-			itemTemplate.nextAll().remove();
-		}
-		items.forEach(function(item) {
-			appendTemplateItem(itemContainer, itemTemplate, item);
-		});
-		container.toggleClass('hidden', configs.length < 1);
+		populateTemplateItems(container, items, preserve);
 		return configs;
 	}
-	
-	function appendTemplateItem(container, template, item) {
-		if ( !(container && template && item) ) {
-			return;
-		}
-		var newItem = template.clone(true).removeClass('template');
-		replaceTemplateProperties(newItem, item).appendTo(container);
-	}
-	
-	function replaceTemplateProperties(el, obj, prefix) {
-		var prop, sel;
-		for ( prop in obj ) {
-			if ( !prop.startsWith('_') && obj.hasOwnProperty(prop) ) {
-				sel = "[data-tprop='" +(prefix || '') +prop +"']";
-				el.find(sel).addBack(sel).text(obj[prop]);
-			}
-		}
-		return el;
-	}
-	
+
 	function renderJobsList(configs) {
 		
 	}

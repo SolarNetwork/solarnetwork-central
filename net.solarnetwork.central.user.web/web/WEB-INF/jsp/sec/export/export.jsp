@@ -98,26 +98,33 @@
 
 <section id="export-dest-configs">
 	<h2>
-		<fmt:message key='export.destConfigList.header'/>
-		<a href="#create-export-dest-config" class="btn btn-primary pull-right" data-toggle="modal" 
-			title="<fmt:message key='export.destConfigList.action.create'/>">
+		<fmt:message key='export.destinationConfigList.header'/>
+		<a href="#edit-export-destination-config-modal" class="btn btn-primary pull-right" data-toggle="modal" 
+			title="<fmt:message key='export.destinationConfigList.action.create'/>">
 			<i class="glyphicon glyphicon-plus"></i>
 		</a>
 	</h2>
 	<p class="intro">
-		<fmt:message key='export.destConfigList.intro'>
+		<fmt:message key='export.destinationConfigList.intro'>
 			<fmt:param value='0'/>
 		</fmt:message>
 	</p>
 	<table id="export-dest-config-list-container" class="table configs hidden">
 		<thead>
 			<tr>
-				<th><fmt:message key="export.destConfig.name.label"/></th>
-				<th><fmt:message key="export.destConfig.type.label"/></th>
+				<th><fmt:message key="export.destinationConfig.name.label"/></th>
+				<th><fmt:message key="export.destinationConfig.type.label"/></th>
+				<th><fmt:message key="export.destinationConfig.serviceProps.label"/></th>
 			</tr>
 			<tr class="template">
 				<td><a href="#" data-tprop="name"></a></td>
 				<td data-tprop="type"></td>
+				<td>
+					<dl>
+						<dt class="template" data-tprop="serviceProp.name"></dt>
+						<dd class="template" data-tprop="serviceProp.value"></dd>
+					</dl>
+				</td>
 			</tr>
 		</thead>
 		<tbody>
@@ -127,5 +134,5 @@
 
 <%-- Modal forms --%>
 
+<jsp:include page="edit-destination-modal.jsp"/>
 <jsp:include page="edit-output-modal.jsp"/>
-<%--@include file="/WEB-INF/jsp/sec/export/create-output-modal.jsp" --%>
