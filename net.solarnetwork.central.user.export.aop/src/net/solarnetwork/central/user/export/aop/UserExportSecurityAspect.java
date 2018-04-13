@@ -64,6 +64,10 @@ public class UserExportSecurityAspect extends AuthorizationSupport {
 	public void saveConfiguration(UserRelatedEntity<?> config) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.export.biz.UserExportBiz.delete*(..)) && args(config,..)")
+	public void deleteConfiguration(UserRelatedEntity<?> config) {
+	}
+
 	@Before("actionForUser(userId)")
 	public void actionForUserCheck(Long userId) {
 		requireUserReadAccess(userId);
@@ -79,7 +83,7 @@ public class UserExportSecurityAspect extends AuthorizationSupport {
 		requireUserReadAccess(result.getUserId());
 	}
 
-	@Before("saveConfiguration(config)")
+	@Before("saveConfiguration(config) || deleteConfiguration(config)")
 	public void saveConfigurationCheck(UserRelatedEntity<?> config) {
 		final Long userId = (config != null ? config.getUserId() : null);
 		requireUserWriteAccess(userId);

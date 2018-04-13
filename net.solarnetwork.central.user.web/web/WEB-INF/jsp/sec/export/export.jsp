@@ -23,7 +23,7 @@
 			<fmt:param value='0'/>
 		</fmt:message>
 	</p>
-	<ol class="table configs" id="datum-export-list-container">
+	<ol class="table configs list-container" id="datum-export-list-container">
 		<li class="template">
 			<p>
 				<fmt:message key='export.datumExportList.exportListItem'/>
@@ -60,7 +60,7 @@
 				<td data-tprop="aggregation"></td>
 			</tr>
 		</thead>
-		<tbody>
+		<tbody class="list-container">
 		</tbody>
 	</table>
 </section>
@@ -91,7 +91,7 @@
 				<td data-tprop="compression"></td>
 			</tr>
 		</thead>
-		<tbody>
+		<tbody class="list-container">
 		</tbody>
 	</table>
 </section>
@@ -127,7 +127,7 @@
 				</td>
 			</tr>
 		</thead>
-		<tbody>
+		<tbody class="list-container">
 		</tbody>
 	</table>
 </section>

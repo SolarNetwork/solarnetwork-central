@@ -103,13 +103,19 @@ public interface UserExportBiz {
 	/**
 	 * Save a configuration for a user.
 	 * 
-	 * @param userId
-	 *        the user ID to save the configuration for
 	 * @param configuration
 	 *        the configuration to save
 	 * @return the primary key of the saved configuration
 	 */
 	Long saveConfiguration(UserIdentifiableConfiguration configuration);
+
+	/**
+	 * Delete a specific configuration.
+	 * 
+	 * @param configuration
+	 *        the configuration to delete
+	 */
+	void deleteConfiguration(UserIdentifiableConfiguration configuration);
 
 	/**
 	 * Get a list of all available data export configurations for a given user.

@@ -29,6 +29,7 @@ import java.util.Locale;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -155,6 +156,21 @@ public class DatumExportController extends WebServiceControllerSupport {
 	}
 
 	@ResponseBody
+	@RequestMapping(value = "/configs/output/{id}", method = RequestMethod.DELETE)
+	public Response<Void> deleteOutputConfiguration(@PathVariable("id") Long id) {
+		final UserExportBiz biz = exportBiz.service();
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			UserOutputConfiguration config = biz.configurationForUser(userId,
+					UserOutputConfiguration.class, id);
+			if ( config != null ) {
+				biz.deleteConfiguration(config);
+			}
+		}
+		return response(null);
+	}
+
+	@ResponseBody
 	@RequestMapping(value = "/configs/destination", method = RequestMethod.POST)
 	public Response<UserDestinationConfiguration> saveDestinationConfiguration(
 			@RequestBody UserDestinationConfiguration config) {
@@ -173,6 +189,21 @@ public class DatumExportController extends WebServiceControllerSupport {
 			}
 		}
 		return new Response<UserDestinationConfiguration>(false, null, null, null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/configs/destination/{id}", method = RequestMethod.DELETE)
+	public Response<Void> deleteDestinationConfiguration(@PathVariable("id") Long id) {
+		final UserExportBiz biz = exportBiz.service();
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			UserDestinationConfiguration config = biz.configurationForUser(userId,
+					UserDestinationConfiguration.class, id);
+			if ( config != null ) {
+				biz.deleteConfiguration(config);
+			}
+		}
+		return response(null);
 	}
 
 }

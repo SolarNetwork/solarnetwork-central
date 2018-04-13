@@ -151,6 +151,20 @@ public class DaoUserExportBiz implements UserExportBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
+	public void deleteConfiguration(UserIdentifiableConfiguration configuration) {
+		if ( configuration instanceof UserDataConfiguration ) {
+			dataConfigDao.delete((UserDataConfiguration) configuration);
+		} else if ( configuration instanceof UserDestinationConfiguration ) {
+			destinationConfigDao.delete((UserDestinationConfiguration) configuration);
+		} else if ( configuration instanceof UserOutputConfiguration ) {
+			outputConfigDao.delete((UserOutputConfiguration) configuration);
+		} else {
+			throw new IllegalArgumentException("Unsupported configuration type: " + configuration);
+		}
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
 	public Long saveConfiguration(UserIdentifiableConfiguration configuration) {
 		if ( configuration instanceof UserDataConfiguration ) {
 			return dataConfigDao.store((UserDataConfiguration) configuration);

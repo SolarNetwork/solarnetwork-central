@@ -94,6 +94,11 @@ public class DelegatingUserExportBiz implements UserExportBiz {
 	}
 
 	@Override
+	public void deleteConfiguration(UserIdentifiableConfiguration configuration) {
+		delegate.deleteConfiguration(configuration);
+	}
+
+	@Override
 	public <T extends UserIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
 			Class<T> configurationClass) {
 		return delegate.configurationsForUser(userId, configurationClass);

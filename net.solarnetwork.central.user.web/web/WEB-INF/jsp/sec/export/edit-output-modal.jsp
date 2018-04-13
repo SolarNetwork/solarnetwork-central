@@ -39,14 +39,23 @@
 		 			</div>
 		 		</div>
 		 	</div>
-		 	<div class="modal-body form-horizontal service-props-container">
+		 	<div class="modal-body form-horizontal service-props-container hidden">
+		 	</div>
+		 	<div class="modal-body delete-confirm hidden">
+		 		<p class="alert alert-danger">
+		 			<fmt:message key='export.deleteConfiguration.confirm.intro'/>
+		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
+		 		<button type="button" class="btn btn-danger pull-left delete-config hidden">
+		 			<span class="glyphicon glyphicon-trash"></span>
+		 			<fmt:message key='export.deleteConfiguration.label'/>
+		 		</button>
 				<button type="button" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></button>
-		 		<input type="hidden" name="id"/>
 		 		<button type="submit" class="btn btn-primary"><fmt:message key='save.label'/></button>
 		 	</div>
 		 </div>
  	</div>
+	<input type="hidden" name="id"/>
  	<sec:csrfInput/>
 </form>

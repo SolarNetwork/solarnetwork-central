@@ -50,7 +50,26 @@ SolarReg.Templates.populateServiceSelectOptions = function populateServiceSelect
 };
 
 /**
+ * Find an existing template item element in a list of items.
+ * 
+ * @param {jQuery} container the container of the list of items to search
+ * @param {*} itemId the item ID to look for
+ * @returns {jQuery} the jQuery selector for the first matching item
+ */
+SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(container, itemId) {
+	return container.children().filter(function(i, e) {
+		var ctx = $(e).data('context-item');
+		// note the loose == here, to handle numbers that might be handed in as strings from form elements
+		return (ctx && ctx.id && ctx.id == itemId);
+	}).first();
+};
+
+/**
  * Create new DOM elements from a template DOM element for each of a parameter object.
+ * 
+ * The `container` will be searched for an element with class `list-container`, and 
+ * if found that element will be where the new DOM elements will be appended. If not 
+ * found, the parent of `container` will be used.
  * 
  * @param {jQuery} container the container that holds the template item
  * @param {Array} items  the array of parameter objects to populate into cloned templates
@@ -59,7 +78,10 @@ SolarReg.Templates.populateServiceSelectOptions = function populateServiceSelect
  */
 SolarReg.Templates.populateTemplateItems = function populateTemplateItems(container, items, preserve) {
 	var itemTemplate = container.find('.template').first();
-	var itemContainer = itemTemplate.parent();
+	var itemContainer = container.find('.list-container').first();
+	if ( itemContainer.length < 1 ) {
+		itemContainer = itemTemplate.parent();
+	} 
 	if ( !preserve ) {
 		itemTemplate.nextAll().remove();
 	}
@@ -67,12 +89,9 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 		var existing;
 		if ( preserve && item._contextItem && item._contextItem.id ) {
 			// look for existing row to update, rather than append
-			existing = itemContainer.children().filter(function(i, e) {
-				var ctx = $(e).data('context-item');
-				return (ctx && ctx.id && ctx.id === item._contextItem.id);
-			}).first();
+			existing = SolarReg.Templates.findExistingTemplateItem(itemContainer, item._contextItem.id);
 		}
-		if ( existing ) {
+		if ( existing && existing.length > 0 ) {
 			SolarReg.Templates.replaceTemplateProperties(existing, item);
 		} else {
 			SolarReg.Templates.appendTemplateItem(itemContainer, itemTemplate, item);
@@ -170,6 +189,139 @@ SolarReg.Templates.findContextItem = function findContextItem(el) {
 	}).first().data('context-item');
 };
 
+/**
+ * Prepare an edit service form for display.
+ * 
+ * @param {HTMLFormElement} form the form to reset
+ * @param {array} services array of possible service infos for this form
+ * @param {jQuery} settingTemplates the container for setting templates
+ */
+SolarReg.Templates.prepareEditServiceForm = function prepareEditServiceForm(form, services, settingTemplates) {
+	var clicked = event.relatedTarget;
+	if ( form && clicked ) {
+		var config = SolarReg.Templates.findContextItem(clicked);
+		var service = (config ? SolarReg.findById(services, config.serviceIdentifier) : null);
+		var container = $(form).find('.service-props-container');
+		SolarReg.Settings.setupServiceCoreSettings(service, form, config);
+		SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
+	}
+};
+
+/**
+ * Search for the nearest configuration container for an element.
+ * 
+ * The configuration container is the closest element (anscestor or self) that 
+ * contains the class `configs`. If not found, `el` itself will be returned.
+ * 
+ * @param {jQuery} el the element to find the configuration container for
+ */
+SolarReg.Templates.findConfigurationContainer = function findConfigurationContainer(el) {
+	if ( el.hasClass('configs') ) {
+		return el;
+	}
+	var result = el.closest('.configs');
+	return (result.length > 0 ? result : el);
+}
+
+/**
+ * Reset an edit service form for reuse.
+ * 
+ * @param {HTMLFormElement} form the form to reset
+ * @param {jQuery} container a container element of existing list items to delete from, if the form closed after a delete action
+ */
+SolarReg.Templates.resetEditServiceForm = function resetEditServiceForm(form, container) {
+	var id = form.elements['id'].value;
+	var f = $(form);
+	// look if we deleted an item, which will only be true if form in "danger" mode
+	if ( id && f.hasClass('deleted') ) {
+		var existing = SolarReg.Templates.findExistingTemplateItem(container, id);
+		if ( existing.length > 0 ) {
+			existing.remove();
+			if ( container.children().length < 1 ) {
+				// empty container; hide it
+				SolarReg.Templates.findConfigurationContainer(container).addClass('hidden');
+			}
+		}
+	}
+
+	// reset form and modal for next item
+	form.reset();
+	f.find('input[type=hidden]').val('');
+
+	// clear delete status
+	f.removeClass('danger').removeClass('deleted');
+	f.find('button[type=submit]').prop('disabled', false);
+	f.find('.delete-confirm').addClass('hidden');
+	f.find('button.delete-config').addClass('hidden');
+};
+
+/**
+ * Handle the delete action for an edit service form.
+ * 
+ * @param {HTMLButtonElement} deleteBtn the delete button that was activated
+ */
+SolarReg.Templates.handleEditServiceFormDelete = function handleEditServiceFormDelete(deleteBtn) {
+	var modal = $(deleteBtn).closest('.modal');
+	var confirmEl = modal.find('.delete-confirm');
+	var submitBtn = modal.find('button[type=submit]');
+	if ( confirmEl && confirmEl.hasClass('hidden') ) {
+		// show confirm
+		confirmEl.removeClass('hidden');
+
+		// disable submit button
+		submitBtn.prop('disabled', true);
+
+		// enable "danger" mode in modal
+		modal.addClass('danger');
+	} else {
+		// perform delete
+		var id = modal.get(0).elements['id'].value;
+		if ( id ) {
+			var action = modal.attr('action') + '/' + encodeURIComponent(id);
+			$.ajax({
+				type: 'DELETE',
+				url: action,
+				dataType: 'json',
+				beforeSend: function(xhr) {
+					SolarReg.csrf(xhr);
+				}
+			}).done(function() {
+				modal.addClass('deleted');
+				modal.modal('hide');
+			}).fail(function(xhr, statusText, error) {
+				modal.removeClass('danger');
+				modal.find('.delete-confirm').addClass('hidden');
+				submitBtn.prop('disabled', false);
+				SolarReg.showAlertBefore(modal.find('.modal-body > *:first-child'), 'alert-warning', statusText);
+			});
+		} else {
+			modal.modal('hide');
+		}
+	}
+};
+
+/**
+ * Show a form to edit a service configuration.
+ * 
+ * @param {jQuery} modal the modal form
+ * @param {array} services array of possible service infos for this form
+ * @param {jQuery} settingTemplates the container for setting templates
+ * @param {object} [config] the configuration
+ */
+SolarReg.Templates.showEditServiceForm = function showEditServiceForm(modal, services, settingTemplates, config) {
+	if ( !(modal && Array.isArray(services) && config) ) {
+		return;
+	}
+	var service = SolarReg.findById(services, config.serviceIdentifier);
+	var container = modal.find('.service-props-container').first();
+	SolarReg.Settings.setupServiceCoreSettings(service, modal.get(0), config);
+	SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
+	if ( config && config.id ) {
+		modal.find('button.delete-config').removeClass('hidden');
+	}
+	modal.modal('show');
+};
+
 SolarReg.Settings = {};
 
 /**
@@ -202,6 +354,9 @@ SolarReg.Settings.serviceFormItem = function formItem(service, setting, item) {
  * @param {object} config the current configuration settings
  */
 SolarReg.Settings.setupServiceCoreSettings = function setupServiceCoreSettings(service, form, config) {
+	if ( !(service && form && config) ) {
+		return;
+	}
 	var i, len,
 		fields = form.elements,
 		field,
@@ -304,47 +459,17 @@ $(document).ready(function() {
 		return configs;
 	}
 
-	function editService(modalSelector, services, config) {
-		if ( !(modalSelector && Array.isArray(services) && config) ) {
-			return;
-		}
-		var modal = $(modalSelector);
-		var service = SolarReg.findById(services, config.serviceIdentifier);
-		var container = modal.find('.service-props-container').first();
-		SolarReg.Settings.setupServiceCoreSettings(service, modal.get(0), config);
-		SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
-		modal.modal('show');
-	}
-
 	function renderJobsList(configs) {
 		
 	}
 
 	$('#edit-export-destination-config-modal').on('show.bs.modal', function(event) {
-		var form = event.target;
-		var clicked = event.relatedTarget;
-		if ( form && clicked ) {
-			var config = SolarReg.Templates.findContextItem(clicked);
-			var service = SolarReg.findById(destinationServices, config.serviceIdentifier);
-			var container = $(form).find('.service-props-container');
-			SolarReg.Settings.setupServiceCoreSettings(service, form, config);
-			SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
-		}
+		SolarReg.Templates.prepareEditServiceForm(event.target, destinationServices, settingTemplates);
 	});
 
 	$('#edit-export-output-config-modal').on('show.bs.modal', function(event) {
-		var form = event.target;
-		var clicked = event.relatedTarget;
-		if ( form && clicked ) {
-			var config = SolarReg.Templates.findContextItem(clicked);
-			var service = SolarReg.findById(outputServices, config.serviceIdentifier);
-			var container = $(form).find('.service-props-container');
-			SolarReg.Settings.setupServiceCoreSettings(service, form, config);
-			SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
-		}
-	});
-
-	$('#edit-export-output-config-modal').on('submit', function(event) {
+		SolarReg.Templates.prepareEditServiceForm(event.target, outputServices, settingTemplates);
+	}).on('submit', function(event) {
 		var form = event.target;
 		var body = {
 			name : form.elements['name'].value,
@@ -374,24 +499,25 @@ $(document).ready(function() {
 				$(form).modal('hide');
 			},
 			error: function(xhr, status, statusText) {
-				SolarReg.showAlertBefore('#edit-export-output-config-modal .modal-body > *:first-child', 'alert-error', statusText);
+				SolarReg.showAlertBefore('#edit-export-output-config-modal .modal-body > *:first-child', 'alert-warning', statusText);
 			}
 		});
 		event.preventDefault();
 		return false;
 	}).on('hidden.bs.modal', function() {
-		// reset form and modal for next item
-		this.reset();
-		var form = $(this);
-		form.find('input[type=hidden]').value = '';
+		SolarReg.Templates.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'));
 	});
 
 	$('#export-output-config-list-container').on('click', function(event) {
 		console.log('click: %o', event);
 		if ( event.target && event.target.classList && event.target.classList.contains('edit-link') ) {
 			var config = SolarReg.Templates.findContextItem(event.target);
-			editService('#edit-export-output-config-modal', outputServices, config);
+			SolarReg.Templates.showEditServiceForm($('#edit-export-output-config-modal'), outputServices, settingTemplates, config);
 		}
+	});
+
+	$('.modal button.delete-config').on('click', function(event) {
+		SolarReg.Templates.handleEditServiceFormDelete(event.target);
 	});
 
 	$('#datum-export-configs').first().each(function() {
