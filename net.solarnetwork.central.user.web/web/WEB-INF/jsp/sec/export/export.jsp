@@ -162,4 +162,12 @@
 			<input type="text" class="form-control setting-form-element" name="__unnamed" maxlength="255">
 		</div>
 	</div>
+	<div class="form-group template" data-setting-type="net.solarnetwork.settings.TextFieldSettingSpecifier|secureTextEntry">
+		<label class="col-sm-3 control-label" data-tprop="name">
+			${' '}
+		</label>
+		<div class="col-sm-8">
+			<input type="password" placeholder="<fmt:message key='settings.secureTextEntry.placeholder'/>" class="form-control setting-form-element" name="__unnamed" maxlength="255">
+		</div>
+	</div>
 </div>

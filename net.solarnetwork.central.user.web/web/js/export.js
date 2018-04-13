@@ -408,6 +408,16 @@ SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings
 		if ( !type ) {
 			return;
 		}
+
+		var options = [];
+		if ( setting.secureTextEntry ) {
+			options.push('secureTextEntry');
+		}
+		if ( options.length > 0 ) {
+			options.sort();
+			type += '|' + options.join(',');
+		}
+
 		var templateSel = ".template[data-setting-type='" +type +"']";
 		var template = templates.find(templateSel);
 		if ( !template.length ) {
@@ -415,7 +425,7 @@ SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings
 		}
 		var formItem = SolarReg.Settings.serviceFormItem(service, setting, item);
 		var formElement = SolarReg.Templates.appendTemplateItem(container, template, formItem);
-		formElement.find('.setting-form-element').val(formElement.value);
+		formElement.find('.setting-form-element').val(formElement.value).attr('name', 'serviceProps.' + setting.key);
 	});
 	container.toggleClass('hidden', service.settingSpecifiers.length < 1);
 };
