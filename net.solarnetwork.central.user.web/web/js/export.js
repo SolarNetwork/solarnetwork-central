@@ -190,20 +190,18 @@ SolarReg.Templates.findContextItem = function findContextItem(el) {
 };
 
 /**
- * Prepare an edit service form for display.
+ * Prepare an edit service form for dislpay of creating a new service item configuration.
  * 
- * @param {HTMLFormElement} form the form to reset
- * @param {array} services array of possible service infos for this form
+ * @param {HTMLFormElement} form the form to prepare
+ * @param {array} services array of possible service infos for this form; the first service will be shown inititally
  * @param {jQuery} settingTemplates the container for setting templates
  */
-SolarReg.Templates.prepareEditServiceForm = function prepareEditServiceForm(form, services, settingTemplates) {
-	var clicked = event.relatedTarget;
-	if ( form && clicked ) {
-		var config = SolarReg.Templates.findContextItem(clicked);
-		var service = (config ? SolarReg.findById(services, config.serviceIdentifier) : null);
+SolarReg.Templates.prepareCreateServiceItemForm = function prepareCreateServiceItemForm(form, services, settingTemplates) {
+	if ( form && Array.isArray(services) && services.length > 0 ) {
+		var service = services[0];
 		var container = $(form).find('.service-props-container');
-		SolarReg.Settings.setupServiceCoreSettings(service, form, config);
-		SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
+		SolarReg.Settings.setupServiceCoreSettings(service, form);
+		SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates);
 	}
 };
 
@@ -243,6 +241,9 @@ SolarReg.Templates.resetEditServiceForm = function resetEditServiceForm(form, co
 			}
 		}
 	}
+
+	// clear out dynamic settings
+	f.find('.service-props-container').empty().addClass('hidden');
 
 	// reset form and modal for next item
 	form.reset();
@@ -387,16 +388,21 @@ SolarReg.Settings.setupServiceCoreSettings = function setupServiceCoreSettings(s
 }
 
 /**
+ * Render a form item for each setting defined on a service.
  * 
- * @param {object} service the service info
- * @param {*} container 
- * @param {*} templates 
- * @param {*} item 
+ * Each form item template must have a `.template` class and a `data-setting-type` attribute
+ * that matches the setting type that template supports.
+ * 
+ * @param {object} service the service info whose settings should be rendered as form items
+ * @param {jQuery} container the container to render all form item HTML into
+ * @param {jQuery} templates a container of setting form item templates, one for each type of supported setting
+ * @param {object} [item] the current model object, if available, to populate the initial form values with
  */
 SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings(service, container, templates, item) {
 	if ( !(container && templates && service && Array.isArray(service.settingSpecifiers)) ) {
 		return;
 	}
+	container.empty();
 	service.settingSpecifiers.forEach(function(setting) {
 		var type = setting.type;
 		if ( !type ) {
@@ -411,6 +417,7 @@ SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings
 		var formElement = SolarReg.Templates.appendTemplateItem(container, template, formItem);
 		formElement.find('.setting-form-element').val(formElement.value);
 	});
+	container.toggleClass('hidden', service.settingSpecifiers.length < 1);
 };
 
 $(document).ready(function() {
@@ -481,7 +488,7 @@ $(document).ready(function() {
 
 	// ***** Edit destination form
 	$('#edit-export-destination-config-modal').on('show.bs.modal', function(event) {
-		SolarReg.Templates.prepareEditServiceForm(event.target, destinationServices, settingTemplates);
+		SolarReg.Templates.prepareCreateServiceItemForm(event.target, destinationServices, settingTemplates);
 	})
 	.on('shown.bs.modal', SolarReg.Templates.focusEditServiceForm)
 	.on('submit', function(event) {
@@ -520,12 +527,17 @@ $(document).ready(function() {
 		event.preventDefault();
 		return false;
 	}).on('hidden.bs.modal', function() {
-		SolarReg.Templates.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'));
+		SolarReg.Templates.resetEditServiceForm(this, $('#export-destination-config-list-container .list-container'));
 	});
+
+	$('#export-destination-config-list-container .list-container').on('click', function(event) {
+		SolarReg.Templates.handleEditServiceItemAction(event, destinationServices, settingTemplates);
+	});
+
 
 	// ***** Edit output format form
 	$('#edit-export-output-config-modal').on('show.bs.modal', function(event) {
-		SolarReg.Templates.prepareEditServiceForm(event.target, outputServices, settingTemplates);
+		SolarReg.Templates.prepareCreateServiceItemForm(event.target, outputServices, settingTemplates);
 	})
 	.on('shown.bs.modal', SolarReg.Templates.focusEditServiceForm)
 	.on('submit', function(event) {
