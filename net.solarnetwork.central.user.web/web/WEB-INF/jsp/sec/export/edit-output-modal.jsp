@@ -39,6 +39,8 @@
 		 			</div>
 		 		</div>
 		 	</div>
+		 	<div class="modal-body form-horizontal service-props-container">
+		 	</div>
 		 	<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></button>
 		 		<input type="hidden" name="id"/>

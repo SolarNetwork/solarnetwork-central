@@ -54,7 +54,7 @@
 				<th><fmt:message key="export.dataConfig.aggregation.label"/></th>
 			</tr>
 			<tr class="template">
-				<td><a href="#" data-tprop="name"></a></td>
+				<td><a href="#" class="edit-link" data-tprop="name"></a></td>
 				<td data-tprop="nodes"></td>
 				<td data-tprop="sources"></td>
 				<td data-tprop="aggregation"></td>
@@ -86,7 +86,7 @@
 				<th><fmt:message key="export.outputConfig.compression.label"/></th>
 			</tr>
 			<tr class="template">
-				<td><a href="#" data-tprop="name"></a></td>
+				<td><a href="#" class="edit-link" data-tprop="name"></a></td>
 				<td data-tprop="type"></td>
 				<td data-tprop="compression"></td>
 			</tr>
@@ -117,7 +117,7 @@
 				<th><fmt:message key="export.destinationConfig.serviceProps.label"/></th>
 			</tr>
 			<tr class="template">
-				<td><a href="#" data-tprop="name"></a></td>
+				<td><a href="#" class="edit-link" data-tprop="name"></a></td>
 				<td data-tprop="type"></td>
 				<td>
 					<dl>
@@ -136,3 +136,16 @@
 
 <jsp:include page="edit-destination-modal.jsp"/>
 <jsp:include page="edit-output-modal.jsp"/>
+
+<%-- Setting templates --%>
+
+<div id="export-setting-templates" class="hidden">
+	<div class="form-group template" data-setting-type="net.solarnetwork.settings.TextFieldSettingSpecifier">
+		<label class="col-sm-3 control-label" data-tprop="name">
+			${' '}
+		</label>
+		<div class="col-sm-8">
+			<input type="text" class="form-control setting-form-element" name="__unnamed" maxlength="255">
+		</div>
+	</div>
+</div>
