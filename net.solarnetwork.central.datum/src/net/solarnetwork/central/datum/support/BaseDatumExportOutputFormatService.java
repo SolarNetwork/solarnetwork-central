@@ -22,13 +22,11 @@
 
 package net.solarnetwork.central.datum.support;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
-import net.solarnetwork.central.datum.domain.export.OutputCompressionType;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
-import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
 /**
  * Base class to support implementations of
@@ -54,10 +52,7 @@ public abstract class BaseDatumExportOutputFormatService
 
 	@Override
 	public List<SettingSpecifier> getSettingSpecifiers() {
-		List<SettingSpecifier> result = new ArrayList<>(2);
-		result.add(new BasicTextFieldSettingSpecifier("compressionTypeKey",
-				String.valueOf(OutputCompressionType.None.getKey())));
-		return result;
+		return Collections.emptyList();
 	}
 
 }
