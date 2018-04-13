@@ -256,11 +256,12 @@ SolarReg.Templates.resetEditServiceForm = function resetEditServiceForm(form, co
 };
 
 /**
- * Handle the delete action for an edit service form.
+ * Handle the delete action for an edit service item form.
  * 
- * @param {HTMLButtonElement} deleteBtn the delete button that was activated
+ * @param {event} event the event that triggered the delete action
  */
-SolarReg.Templates.handleEditServiceFormDelete = function handleEditServiceFormDelete(deleteBtn) {
+SolarReg.Templates.handleEditServiceItemDeleteAction = function handleEditServiceItemDelete(event) {
+	var deleteBtn = event.target;
 	var modal = $(deleteBtn).closest('.modal');
 	var confirmEl = modal.find('.delete-confirm');
 	var submitBtn = modal.find('button[type=submit]');
@@ -320,6 +321,21 @@ SolarReg.Templates.showEditServiceForm = function showEditServiceForm(modal, ser
 		modal.find('button.delete-config').removeClass('hidden');
 	}
 	modal.modal('show');
+};
+
+SolarReg.Templates.handleEditServiceItemAction = function handleEditAction(event, services, settingTemplates) {
+	console.log('click: %o', event);
+	if ( event.target && event.target.classList && event.target.classList.contains('edit-link') ) {
+		var config = SolarReg.Templates.findContextItem(event.target);
+		var button = $(event.target);
+		var modal = $(button.data('edit-modal'));
+		SolarReg.Templates.showEditServiceForm(modal, services, settingTemplates, config);
+	}
+};
+
+SolarReg.Templates.focusEditServiceForm = function focusEditServiceForm(event) {
+	var form = event.target;
+	$(form).find('input[type=text]').first().focus();
 };
 
 SolarReg.Settings = {};
@@ -463,14 +479,58 @@ $(document).ready(function() {
 		
 	}
 
+	// ***** Edit destination form
 	$('#edit-export-destination-config-modal').on('show.bs.modal', function(event) {
 		SolarReg.Templates.prepareEditServiceForm(event.target, destinationServices, settingTemplates);
+	})
+	.on('shown.bs.modal', SolarReg.Templates.focusEditServiceForm)
+	.on('submit', function(event) {
+		var form = event.target;
+		var modal = $(form);
+		var body = {
+			name : form.elements['name'].value,
+			serviceIdentifier : form.elements['serviceIdentifier'].value
+		};
+		if ( form.elements['id'].value ) {
+			body.id = form.elements['id'].value;
+		}
+		$.ajax({
+			type: 'POST',
+			url: form.action,
+			contentType: "application/json; charset=utf-8",
+			data : JSON.stringify(body),
+			dataType: 'json',
+			beforeSend: function(xhr) {
+				SolarReg.csrf(xhr);
+            },
+			success: function(json) {
+				console.log('Saved output config: %o', json);
+				if ( json && json.success === true ) {
+					populateDestinationConfigs([json.data], true);
+					if ( !body.id && Array.isArray(exportConfigs.destintationConfigs) ) {
+						exportConfigs.destintationConfigs.push(json.data);
+					}
+				}
+				modal.modal('hide');
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore(modal.find('.modal-body > *:first-child'), 'alert-warning', statusText);
+			}
+		});
+		event.preventDefault();
+		return false;
+	}).on('hidden.bs.modal', function() {
+		SolarReg.Templates.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'));
 	});
 
+	// ***** Edit output format form
 	$('#edit-export-output-config-modal').on('show.bs.modal', function(event) {
 		SolarReg.Templates.prepareEditServiceForm(event.target, outputServices, settingTemplates);
-	}).on('submit', function(event) {
+	})
+	.on('shown.bs.modal', SolarReg.Templates.focusEditServiceForm)
+	.on('submit', function(event) {
 		var form = event.target;
+		var modal = $(form);
 		var body = {
 			name : form.elements['name'].value,
 			compressionTypeKey : form.elements['compressionTypeKey'].selectedOptions[0].value,
@@ -496,10 +556,10 @@ $(document).ready(function() {
 						exportConfigs.outputConfigs.push(json.data);
 					}
 				}
-				$(form).modal('hide');
+				modal.modal('hide');
 			},
 			error: function(xhr, status, statusText) {
-				SolarReg.showAlertBefore('#edit-export-output-config-modal .modal-body > *:first-child', 'alert-warning', statusText);
+				SolarReg.showAlertBefore(modal.find('.modal-body > *:first-child'), 'alert-warning', statusText);
 			}
 		});
 		event.preventDefault();
@@ -508,17 +568,11 @@ $(document).ready(function() {
 		SolarReg.Templates.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'));
 	});
 
-	$('#export-output-config-list-container').on('click', function(event) {
-		console.log('click: %o', event);
-		if ( event.target && event.target.classList && event.target.classList.contains('edit-link') ) {
-			var config = SolarReg.Templates.findContextItem(event.target);
-			SolarReg.Templates.showEditServiceForm($('#edit-export-output-config-modal'), outputServices, settingTemplates, config);
-		}
+	$('#export-output-config-list-container .list-container').on('click', function(event) {
+		SolarReg.Templates.handleEditServiceItemAction(event, outputServices, settingTemplates);
 	});
 
-	$('.modal button.delete-config').on('click', function(event) {
-		SolarReg.Templates.handleEditServiceFormDelete(event.target);
-	});
+	$('.edit-config button.delete-config').on('click', SolarReg.Templates.handleEditServiceItemDeleteAction);
 
 	$('#datum-export-configs').first().each(function() {
 		// get available output services

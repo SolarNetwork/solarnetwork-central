@@ -35,7 +35,7 @@
 <section id="export-data-configs">
 	<h2>
 		<fmt:message key='export.dataConfigList.header'/>
-		<a href="#create-export-data-config" class="btn btn-primary pull-right" data-toggle="modal" 
+		<a href="#edit-export-data-config-modal" class="btn btn-primary pull-right" data-toggle="modal" 
 			title="<fmt:message key='export.dataConfigList.action.create'/>">
 			<i class="glyphicon glyphicon-plus"></i>
 		</a>
@@ -48,18 +48,24 @@
 	<table id="export-data-config-list-container" class="table configs hidden">
 		<thead>
 			<tr>
-				<th><fmt:message key="export.dataConfig.name.label"/></th>
-				<th><fmt:message key="export.dataConfig.nodes.label"/></th>
-				<th><fmt:message key="export.dataConfig.sources.label"/></th>
-				<th><fmt:message key="export.dataConfig.aggregation.label"/></th>
+				<th><fmt:message key='export.dataConfig.name.label'/></th>
+				<th><fmt:message key='export.dataConfig.nodes.label'/></th>
+				<th><fmt:message key='export.dataConfig.sources.label'/></th>
+				<th><fmt:message key='export.dataConfig.aggregation.label'/></th>
 			</tr>
+			<%--
+				The .template class defines the HTML structure for one object.
+			 --%>
 			<tr class="template">
-				<td><a href="#" class="edit-link" data-tprop="name"></a></td>
+				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-export-data-config-modal"></a></td>
 				<td data-tprop="nodes"></td>
 				<td data-tprop="sources"></td>
 				<td data-tprop="aggregation"></td>
 			</tr>
 		</thead>
+		<%--
+			The .list-container class defines where objects will be rendered into HTML.
+		 --%>
 		<tbody class="list-container">
 		</tbody>
 	</table>
@@ -81,12 +87,20 @@
 	<table id="export-output-config-list-container" class="table configs hidden">
 		<thead>
 			<tr>
-				<th><fmt:message key="export.outputConfig.name.label"/></th>
-				<th><fmt:message key="export.outputConfig.type.label"/></th>
-				<th><fmt:message key="export.outputConfig.compression.label"/></th>
+				<th><fmt:message key='export.outputConfig.name.label'/></th>
+				<th><fmt:message key='export.outputConfig.type.label'/></th>
+				<th><fmt:message key='export.outputConfig.compression.label'/></th>
 			</tr>
 			<tr class="template">
-				<td><a href="#" class="edit-link" data-tprop="name"></a></td>
+				<%--
+					Within a .template, data-tprop attributes correspond to model object property names,
+					whose text content will be replaced by the model object property value.
+					
+					The a.edit-link element will have its click event ignored; instead a click
+					handler on the .list-container should be registered, and use the event.target
+					property to verify the click happened
+				 --%>
+				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-export-output-config-modal"></a></td>
 				<td data-tprop="type"></td>
 				<td data-tprop="compression"></td>
 			</tr>
@@ -96,7 +110,7 @@
 	</table>
 </section>
 
-<section id="export-dest-configs">
+<section id="export-destination-configs">
 	<h2>
 		<fmt:message key='export.destinationConfigList.header'/>
 		<a href="#edit-export-destination-config-modal" class="btn btn-primary pull-right" data-toggle="modal" 
@@ -109,15 +123,15 @@
 			<fmt:param value='0'/>
 		</fmt:message>
 	</p>
-	<table id="export-dest-config-list-container" class="table configs hidden">
+	<table id="export-destination-config-list-container" class="table configs hidden">
 		<thead>
 			<tr>
-				<th><fmt:message key="export.destinationConfig.name.label"/></th>
-				<th><fmt:message key="export.destinationConfig.type.label"/></th>
-				<th><fmt:message key="export.destinationConfig.serviceProps.label"/></th>
+				<th><fmt:message key='export.destinationConfig.name.label'/></th>
+				<th><fmt:message key='export.destinationConfig.type.label'/></th>
+				<th><fmt:message key='export.serviceProps.label'/></th>
 			</tr>
 			<tr class="template">
-				<td><a href="#" class="edit-link" data-tprop="name"></a></td>
+				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-export-destination-config-modal"></a></td>
 				<td data-tprop="type"></td>
 				<td>
 					<dl>
