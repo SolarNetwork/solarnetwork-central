@@ -425,9 +425,62 @@ SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings
 		}
 		var formItem = SolarReg.Settings.serviceFormItem(service, setting, item);
 		var formElement = SolarReg.Templates.appendTemplateItem(container, template, formItem);
-		formElement.find('.setting-form-element').val(formElement.value).attr('name', 'serviceProps.' + setting.key);
+		formElement.find('.setting-form-element').val(formItem.value).attr('name', 'serviceProperties.' + setting.key);
 	});
 	container.toggleClass('hidden', service.settingSpecifiers.length < 1);
+};
+
+/**
+ * Encode a service item configuration form into an object, suitable for encoding into JSON
+ * for posting to SolarNetwork.
+ * 
+ * @param {HTMLFormElement} form the form
+ * @returns {object} the encoded object
+ */
+SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
+	var body = {},
+		fields = form.elements;
+	var i, iLen,
+		j, jLen,
+		field,
+		name,
+		value,
+		components,
+		component,
+		bodyPart;
+	
+	for ( i = 0, iLen = fields.length; i < iLen; i += 1 ) {
+		field = fields.item(i);
+		name = field.name;
+		if ( !name ) {
+			continue;
+		}
+		components = name.split('.');
+		if ( field.selectedOptions ) {
+			// <select>
+			value = field.selectedOptions[0].value;
+		} else {
+			// <input>
+			value = field.value || '';
+			if ( name === 'id' && !value ) {
+				// don't populate empty ID value
+				continue;
+			}
+		}
+
+		bodyPart = body;
+		for ( j = 0, jLen = components.length - 1; j < jLen; j += 1 ) {
+			component = components[j];
+			if ( !bodyPart[component] ) {
+				bodyPart[component] = {};
+			}
+			bodyPart = bodyPart[component];
+		}
+		component = components[components.length - 1];
+		bodyPart[component] = value;
+	}
+
+	return body;
 };
 
 $(document).ready(function() {
@@ -504,13 +557,7 @@ $(document).ready(function() {
 	.on('submit', function(event) {
 		var form = event.target;
 		var modal = $(form);
-		var body = {
-			name : form.elements['name'].value,
-			serviceIdentifier : form.elements['serviceIdentifier'].value
-		};
-		if ( form.elements['id'].value ) {
-			body.id = form.elements['id'].value;
-		}
+		var body = SolarReg.Settings.encodeServiceItemForm(form);
 		$.ajax({
 			type: 'POST',
 			url: form.action,
@@ -553,14 +600,7 @@ $(document).ready(function() {
 	.on('submit', function(event) {
 		var form = event.target;
 		var modal = $(form);
-		var body = {
-			name : form.elements['name'].value,
-			compressionTypeKey : form.elements['compressionTypeKey'].selectedOptions[0].value,
-			serviceIdentifier : form.elements['serviceIdentifier'].value
-		};
-		if ( form.elements['id'].value ) {
-			body.id = form.elements['id'].value;
-		}
+		var body = SolarReg.Settings.encodeServiceItemForm(form);
 		$.ajax({
 			type: 'POST',
 			url: form.action,
