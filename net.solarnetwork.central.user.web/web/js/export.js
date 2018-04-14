@@ -127,14 +127,34 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 * @param {string} [prefix] an optional prefix to prepend to each template parameter
 */
 SolarReg.Templates.replaceTemplateProperties = function replaceTemplateProperties(el, obj, prefix) {
-   var prop, sel;
-   for ( prop in obj ) {
-	   if ( !prop.startsWith('_') && obj.hasOwnProperty(prop) ) {
-		   sel = "[data-tprop='" +(prefix || '') +prop +"']";
-		   el.find(sel).addBack(sel).text(obj[prop]);
-	   }
-   }
-   return el;
+	var prop, sel, val,
+		sPropKey, sPropVal, sPropItem,
+		sPropContainer = el.find('.service-props-container'),
+		sPropTemplate = sPropContainer.find('.template');
+	for ( prop in obj ) {
+		if ( prop.startsWith('_') || !obj.hasOwnProperty(prop) ) {
+			continue;
+		}
+		val = obj[prop];
+		if ( prop === 'serviceProperties' && sPropContainer.length > 0 ) {
+			for ( sPropKey in val ) {
+				if ( !val.hasOwnProperty(sPropKey) ) {
+					continue;
+				}
+				sPropVal = val[sPropKey];
+				sPropItem = sPropTemplate.clone(true).removeClass('template');
+				sel = "[data-tprop='" +(prefix || '') +"serviceProperties.name']";
+				sPropItem.find(sel).addBack(sel).text(sPropKey);
+				sel = "[data-tprop='" +(prefix || '') +"serviceProperties.value']";
+				sPropItem.find(sel).addBack(sel).text(sPropVal);
+				sPropContainer.append(sPropItem);
+			}
+		} else {
+			sel = "[data-tprop='" +(prefix || '') +prop +"']";
+			el.find(sel).addBack(sel).text(val);
+		}
+	}
+	return el;
 };
 
 /**
@@ -339,6 +359,21 @@ SolarReg.Templates.focusEditServiceForm = function focusEditServiceForm(event) {
 	$(form).find('input[type=text]').first().focus();
 };
 
+SolarReg.Templates.serviceConfigurationItem = function serviceConfigurationItem(config, services) {
+	if ( !(config && Array.isArray(services)) ) {
+		return {};
+	}
+	var result = {
+			_contextItem : config,
+			name : config.name,
+			type : SolarReg.Templates.serviceDisplayName(services, config.serviceIdentifier)
+	};
+	if ( config.serviceProperties ) {
+		result.serviceProperties = config.serviceProperties;
+	}
+	return result;
+};
+
 SolarReg.Settings = {};
 
 /**
@@ -520,11 +555,7 @@ $(document).ready(function() {
 		configs = Array.isArray(configs) ? configs : [];
 		var container = $('#export-destination-config-list-container');
 		var items = configs.map(function(config) {
-			return {
-					_contextItem : config,
-					name : config.name,
-					type : SolarReg.Templates.serviceDisplayName(destinationServices, config.serviceIdentifier)
-			};
+			return SolarReg.Templates.serviceConfigurationItem(config, destinationServices);
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
 		return configs;
@@ -534,12 +565,9 @@ $(document).ready(function() {
 		configs = Array.isArray(configs) ? configs : [];
 		var container = $('#export-output-config-list-container');
 		var items = configs.map(function(config) {
-			return {
-					_contextItem : config,
-					name : config.name,
-					type : SolarReg.Templates.serviceDisplayName(outputServices, config.serviceIdentifier),
-					compression : SolarReg.Templates.serviceDisplayName(compressionTypes, config.compressionTypeKey)
-			};
+			var item = SolarReg.Templates.serviceConfigurationItem(config, destinationServices);
+			item.compression = SolarReg.Templates.serviceDisplayName(compressionTypes, config.compressionTypeKey);
+			return item;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
 		return configs;

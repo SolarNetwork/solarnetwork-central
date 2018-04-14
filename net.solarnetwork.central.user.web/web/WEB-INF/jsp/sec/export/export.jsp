@@ -134,9 +134,12 @@
 				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-export-destination-config-modal"></a></td>
 				<td data-tprop="type"></td>
 				<td>
-					<dl>
-						<dt class="template" data-tprop="serviceProp.name"></dt>
-						<dd class="template" data-tprop="serviceProp.value"></dd>
+					<%--
+						The .service-props-container here serves as a nested template for dynamic service properties.
+					 --%>
+					<dl class="service-props-container">
+						<dt class="template" data-tprop="serviceProperties.name"></dt>
+						<dd class="template" data-tprop="serviceProperties.value"></dd>
 					</dl>
 				</td>
 			</tr>
