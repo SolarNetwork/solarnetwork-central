@@ -54,6 +54,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.domain.IdentifiableConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.settings.MappableSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -143,39 +144,48 @@ public class DatumExportController extends WebServiceControllerSupport {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
-	private <T> List<T> maskConfigurations(List<? extends UserIdentifiableConfiguration> configurations,
+	private <T extends IdentifiableConfiguration> List<T> maskConfigurations(
+			List<? extends UserIdentifiableConfiguration> configurations,
 			Function<Void, Iterable<? extends SettingSpecifierProvider>> settingProviderFunction) {
 		if ( configurations == null || configurations.isEmpty() ) {
 			return Collections.emptyList();
 		}
 		List<T> result = new ArrayList<>(configurations.size());
 		for ( UserIdentifiableConfiguration config : configurations ) {
-			String id = config.getServiceIdentifier();
-			if ( id == null ) {
-				continue;
-			}
-			List<SettingSpecifier> settings = serviceSettings.get(id);
-			if ( settings == null ) {
-				settings = settingsForService(id, settingProviderFunction.apply(null));
-				if ( settings != null ) {
-					settings = settings.stream().map(s -> {
-						if ( s instanceof MappableSpecifier ) {
-							return ((MappableSpecifier) s).mappedTo("serviceProperties.");
-						}
-						return s;
-					}).collect(Collectors.toList());
-					serviceSettings.put(id, settings);
-				}
-			}
-			if ( settings != null ) {
-				T masked = (T) SecureEntryMaskingIdentifiableConfiguration.createProxy(config, settings);
-				result.add(masked);
-			} else {
-				result.add((T) config);
+			T maskedConfig = maskConfiguration(config, settingProviderFunction);
+			if ( maskedConfig != null ) {
+				result.add(maskedConfig);
 			}
 		}
 		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T extends IdentifiableConfiguration> T maskConfiguration(
+			UserIdentifiableConfiguration config,
+			Function<Void, Iterable<? extends SettingSpecifierProvider>> settingProviderFunction) {
+		String id = config.getServiceIdentifier();
+		if ( id == null ) {
+			return null;
+		}
+		List<SettingSpecifier> settings = serviceSettings.get(id);
+		if ( settings == null ) {
+			settings = settingsForService(id, settingProviderFunction.apply(null));
+			if ( settings != null ) {
+				settings = settings.stream().map(s -> {
+					if ( s instanceof MappableSpecifier ) {
+						return ((MappableSpecifier) s).mappedTo("serviceProperties.");
+					}
+					return s;
+				}).collect(Collectors.toList());
+				serviceSettings.put(id, settings);
+			}
+		}
+		if ( settings != null ) {
+			T masked = (T) SecureEntryMaskingIdentifiableConfiguration.createProxy(config, settings);
+			return masked;
+		}
+		return (T) config;
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -207,7 +217,7 @@ public class DatumExportController extends WebServiceControllerSupport {
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/output", method = RequestMethod.POST)
-	public Response<UserOutputConfiguration> saveOutputConfiguration(
+	public Response<OutputConfiguration> saveOutputConfiguration(
 			@RequestBody UserOutputConfiguration config) {
 		final UserExportBiz biz = exportBiz.service();
 		if ( biz != null ) {
@@ -220,10 +230,12 @@ public class DatumExportController extends WebServiceControllerSupport {
 			Long id = biz.saveConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
-				return response(config);
+				return response(maskConfiguration(config, (Void) -> {
+					return biz.availableOutputFormatServices();
+				}));
 			}
 		}
-		return new Response<UserOutputConfiguration>(false, null, null, null);
+		return new Response<OutputConfiguration>(false, null, null, null);
 	}
 
 	@ResponseBody
@@ -243,7 +255,7 @@ public class DatumExportController extends WebServiceControllerSupport {
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/destination", method = RequestMethod.POST)
-	public Response<UserDestinationConfiguration> saveDestinationConfiguration(
+	public Response<DestinationConfiguration> saveDestinationConfiguration(
 			@RequestBody UserDestinationConfiguration config) {
 		final UserExportBiz biz = exportBiz.service();
 		if ( biz != null ) {
@@ -256,10 +268,12 @@ public class DatumExportController extends WebServiceControllerSupport {
 			Long id = biz.saveConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
-				return response(config);
+				return response(maskConfiguration(config, (Void) -> {
+					return biz.availableDestinationServices();
+				}));
 			}
 		}
-		return new Response<UserDestinationConfiguration>(false, null, null, null);
+		return new Response<DestinationConfiguration>(false, null, null, null);
 	}
 
 	@ResponseBody
