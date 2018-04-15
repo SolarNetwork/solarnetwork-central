@@ -138,6 +138,8 @@
 						The .service-props-container here serves as a nested template for dynamic service properties.
 					 --%>
 					<dl class="service-props-container">
+					</dl>
+					<dl class="hidden">
 						<dt class="template" data-tprop="serviceProperties.name"></dt>
 						<dd class="template" data-tprop="serviceProperties.value"></dd>
 					</dl>

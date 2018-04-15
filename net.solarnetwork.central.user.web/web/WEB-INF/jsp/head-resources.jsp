@@ -13,6 +13,8 @@
 	/js-lib/moment.js
 	/js-lib/bootstrap.js
 	/js/global.js
+	/js/templates.js
+	/js/settings.js
 	/js/login.js
 	/js/register.js
 	/js/my-nodes.js

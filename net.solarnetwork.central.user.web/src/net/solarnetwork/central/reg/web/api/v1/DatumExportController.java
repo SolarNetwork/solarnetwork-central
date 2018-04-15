@@ -178,7 +178,7 @@ public class DatumExportController extends WebServiceControllerSupport {
 					(Map<String, Object>) serviceProps, SettingUtils.secureKeys(settings));
 			if ( maskedServiceProps != null ) {
 				ClassUtils.setBeanProperties(config,
-						Collections.singletonMap("serviceProperties", maskedServiceProps), true);
+						Collections.singletonMap("serviceProps", maskedServiceProps), true);
 			}
 		}
 		return config;
