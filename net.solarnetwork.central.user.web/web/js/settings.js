@@ -99,11 +99,57 @@ SolarReg.Settings.serviceConfigurationItem = function serviceConfigurationItem(c
 			_contextItem : config,
 			name : config.name,
 			type : SolarReg.Templates.serviceDisplayName(services, config.serviceIdentifier)
-	};
-	if ( config.serviceProperties ) {
-		result.serviceProperties = config.serviceProperties;
-	}
+    };
+    var serviceProps = (config.serviceProperties
+                        ? SolarReg.Settings.serviceConfigurationItemServiceProperties(config, services)
+                        : null);
+	if ( serviceProps ) {
+        result.serviceProperties = serviceProps;
+    }
 	return result;
+};
+
+/**
+ * Get a service configuration display model item for the service properties of a service configuration.
+ * 
+ * This method will iterate over the `settingSpecifiers` array of the service with an `id` that matches
+ * `config.serviceIdentifier`, and then populate localized keys and associated values for each non-empty
+ * service property. If a setting has the `secureTextEntry` flag set to `true` then the value will be
+ * rendered as a set of asterisk characters only.
+ * 
+ * @param {Object} config the service configuration to get a display model for
+ * @param {Array} services the available services
+ */
+SolarReg.Settings.serviceConfigurationItemServiceProperties = function serviceConfigurationItemServiceProperties(config, services) {
+    if ( !config.serviceProperties ) {
+        return null;
+    }
+    var service = SolarReg.findByIdentifier(services, config.serviceIdentifier),
+        infoMessages = (service ? service.localizedInfoMessages : null),
+        serviceProps = config.serviceProperties,
+        result = {};
+
+    if ( !Array.isArray(service.settingSpecifiers) ) {
+        return null;
+    }
+    service.settingSpecifiers.forEach(function(setting) {
+        var type = setting.type,
+            key = setting.key,
+            msgKey,
+            name,
+            val;
+        if ( !(type && key) ) {
+            return;
+        }
+
+        msgKey = key+'.key';
+        name = infoMessages[msgKey] || key;
+        val = serviceProps[key];
+        if ( val ) {
+            result[name] = (setting.secureTextEntry ? '*****' : val);
+        }
+    });
+    return result;
 };
 
 /**
@@ -208,7 +254,7 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
 		return;
 	}
 	var config = SolarReg.Templates.findContextItem(modal);
-	var service = (config ? SolarReg.findById(services, config.serviceIdentifier) : services[0]);
+	var service = (config ? SolarReg.findByIdentifier(services, config.serviceIdentifier) : services[0]);
 	var container = modal.find('.service-props-container').first();
 	SolarReg.Settings.setupServiceCoreSettings(service, modal.get(0), config);
 	SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);

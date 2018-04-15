@@ -31,6 +31,23 @@ SolarReg.csrf = function(xhr) {
 	 return SolarReg.csrfData.token;
 };
 
+/**
+ * Search for an object with a matching `id` property value.
+ * 
+ * @param {array} array the array of objects to search through
+ * @param {string} identifier the `id` value to search for
+ * @returns {object} the first object that has a matching `id` property
+ */
+SolarReg.findByIdentifier = function findByIdentifier(array, identifier) {
+	var result;
+	if ( identifier && Array.isArray(array) ) {
+		result = array.find(function(obj) {
+			return obj.id === identifier;
+		});
+	}
+	return result;
+ };
+
 $(document).ready(function() {
 	$('body').on('hidden', '.modal.dynamic', function () {
 		$(this).removeData('modal');

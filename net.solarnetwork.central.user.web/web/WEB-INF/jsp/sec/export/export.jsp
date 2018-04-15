@@ -139,7 +139,7 @@
 					 --%>
 					<dl class="service-props-container">
 					</dl>
-					<dl class="hidden">
+					<dl class="service-props-template hidden">
 						<dt class="template" data-tprop="serviceProperties.name"></dt>
 						<dd class="template" data-tprop="serviceProperties.value"></dd>
 					</dl>

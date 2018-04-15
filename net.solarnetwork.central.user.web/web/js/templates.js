@@ -8,7 +8,7 @@ SolarReg.Templates = {};
 * @returns {String} the localized name, or an empty string if not found
 */
 SolarReg.Templates.serviceDisplayName =	function serviceDisplayName(services, identifier) {
-   var service = SolarReg.findById(services, identifier);
+   var service = SolarReg.findByIdentifier(services, identifier);
    return (service ? service.localizedName : '');
 };
 
@@ -101,6 +101,25 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 * ```
 * 
 * **Note** that parameter names starting with `_` are skipped.
+*
+* In addition, if `obj` has an object property named `serviceProperties`, special handling is performed
+* to generate a dynamic list of key/value property pairs using another HTML template. The desintation
+* for the dynamic HTML is determined by the element with a `.service-props-container` class. The HTML
+* template for each dynamic property are the elements matching a `.service-props-template .template` 
+* selector. Within the tempalte, the `serviceProperties.name` template property will be replaced
+* by the service property name and `serviceProperty.value` its associated value.
+*
+* For example, the following HTML contains a `<dl>` container for service properties and associated
+* template HTML that generates `<dt>` and `<dd>` elements:
+*
+* ```html
+* <dl class="service-props-container">
+* </dl>
+* <dl class="service-props-template hidden">
+*   <dt class="template" data-tprop="serviceProperties.name"></dt>
+* 	<dd class="template" data-tprop="serviceProperties.value"></dd>
+* </dl>
+* ```
 * 
 * @param {jQuery} el the element to perform replacements on
 * @param {object} obj the object whose properties act as template parameters
@@ -109,8 +128,8 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 SolarReg.Templates.replaceTemplateProperties = function replaceTemplateProperties(el, obj, prefix) {
 	var prop, sel, val,
 		sPropKey, sPropVal, sPropItem,
-		sPropContainer = el.find('.service-props-container'),
-		sPropTemplate = sPropContainer.find('.template');
+		sPropContainer = el.find('.service-props-container').first(),
+		sPropTemplate = el.find('.service-props-template .template');
 	for ( prop in obj ) {
 		if ( prop.startsWith('_') || !obj.hasOwnProperty(prop) ) {
 			continue;
