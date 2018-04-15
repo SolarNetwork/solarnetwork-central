@@ -527,7 +527,7 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		beforeSend: function(xhr) {
 			SolarReg.csrf(xhr);
 		}
-	}).done(function() {
+	}).done(function(json, statusText) {
 		console.log('Saved output config: %o', json);
 		if ( json && json.success === true && typeof onSuccess === 'function' ) {
 			onSuccess(body, json.data);
@@ -585,12 +585,49 @@ $(document).ready(function() {
 		configs = Array.isArray(configs) ? configs : [];
 		var container = $('#export-output-config-list-container');
 		var items = configs.map(function(config) {
-			var item = SolarReg.Templates.serviceConfigurationItem(config, destinationServices);
+			var item = SolarReg.Templates.serviceConfigurationItem(config, outputServices);
 			item.compression = SolarReg.Templates.serviceDisplayName(compressionTypes, config.compressionTypeKey);
 			return item;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
 		return configs;
+	}
+
+	/**
+	 * Either update an existing or add a new service configuration to an array of configurations.
+	 * 
+	 * If an existing object in `configurations` has an `id` that matches `config.id` then
+	 * that element's properties will be replaced by those on `config`. Otherwise `config` 
+	 * will be appended to `configurations`.
+	 * 
+	 * @param {Object} config the configuration to save
+	 * @param {Array} configurations the array of existing configurations
+	 */
+	function storeServiceConfiguration(config, configurations) {
+		if ( !(config && config.id && Array.isArray(configurations)) ) {
+			return;
+		}
+		var i, len, prop, existing;
+		for ( i = 0, len = configurations.length; i < len; i += 1 ) {
+			existing = configurations[i];
+			if ( config.id === existing.id ) {
+				// found an existing configuration; so update the properties on that
+				// to match the new configuration
+				for ( prop in config ) {
+					if ( !config.hasOwnProperty(prop)  ) {
+						continue;
+					}
+					existing[prop] = config[prop];
+				}
+				for ( prop in existing ) {
+					if ( !config.hasOwnProperty(prop) ) {
+						delete existing[prop];
+					}
+				}
+				return;
+			}
+		}
+		configurations.push(config);
 	}
 
 	function renderJobsList(configs) {
@@ -605,9 +642,7 @@ $(document).ready(function() {
 	.on('submit', function(event) {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateDestinationConfigs([res], true);
-			if ( !req.id && Array.isArray(exportConfigs.destintationConfigs) ) {
-				exportConfigs.destintationConfigs.push(res);
-			}
+			storeServiceConfiguration(res, exportConfigs.destintationConfigs);
 		});
 		return false;
 	}).on('hidden.bs.modal', function() {
@@ -627,9 +662,7 @@ $(document).ready(function() {
 	.on('submit', function(event) {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateOutputConfigs([res], true);
-			if ( !req.id && Array.isArray(exportConfigs.outputConfigs) ) {
-				exportConfigs.outputConfigs.push(res);
-			}
+			storeServiceConfiguration(res, exportConfigs.outputConfigs);
 		});
 		return false;
 	}).on('hidden.bs.modal', function() {

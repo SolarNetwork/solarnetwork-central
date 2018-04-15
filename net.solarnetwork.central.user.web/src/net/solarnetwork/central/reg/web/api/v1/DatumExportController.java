@@ -27,10 +27,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -42,7 +42,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
-import net.solarnetwork.central.datum.domain.export.DataConfiguration;
 import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
 import net.solarnetwork.central.datum.domain.export.OutputConfiguration;
 import net.solarnetwork.central.reg.web.domain.DatumExportFullConfigurations;
@@ -54,13 +53,13 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
-import net.solarnetwork.domain.IdentifiableConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.settings.MappableSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifierProvider;
-import net.solarnetwork.settings.support.SecureEntryMaskingIdentifiableConfiguration;
+import net.solarnetwork.settings.support.SettingUtils;
+import net.solarnetwork.util.ClassUtils;
 import net.solarnetwork.util.OptionalService;
+import net.solarnetwork.util.StringUtils;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -144,14 +143,13 @@ public class DatumExportController extends WebServiceControllerSupport {
 		return null;
 	}
 
-	private <T extends IdentifiableConfiguration> List<T> maskConfigurations(
-			List<? extends UserIdentifiableConfiguration> configurations,
+	private <T extends UserIdentifiableConfiguration> List<T> maskConfigurations(List<T> configurations,
 			Function<Void, Iterable<? extends SettingSpecifierProvider>> settingProviderFunction) {
 		if ( configurations == null || configurations.isEmpty() ) {
 			return Collections.emptyList();
 		}
 		List<T> result = new ArrayList<>(configurations.size());
-		for ( UserIdentifiableConfiguration config : configurations ) {
+		for ( T config : configurations ) {
 			T maskedConfig = maskConfiguration(config, settingProviderFunction);
 			if ( maskedConfig != null ) {
 				result.add(maskedConfig);
@@ -161,8 +159,7 @@ public class DatumExportController extends WebServiceControllerSupport {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends IdentifiableConfiguration> T maskConfiguration(
-			UserIdentifiableConfiguration config,
+	private <T extends UserIdentifiableConfiguration> T maskConfiguration(T config,
 			Function<Void, Iterable<? extends SettingSpecifierProvider>> settingProviderFunction) {
 		String id = config.getServiceIdentifier();
 		if ( id == null ) {
@@ -172,36 +169,34 @@ public class DatumExportController extends WebServiceControllerSupport {
 		if ( settings == null ) {
 			settings = settingsForService(id, settingProviderFunction.apply(null));
 			if ( settings != null ) {
-				settings = settings.stream().map(s -> {
-					if ( s instanceof MappableSpecifier ) {
-						return ((MappableSpecifier) s).mappedTo("serviceProperties.");
-					}
-					return s;
-				}).collect(Collectors.toList());
 				serviceSettings.put(id, settings);
 			}
 		}
 		if ( settings != null ) {
-			T masked = (T) SecureEntryMaskingIdentifiableConfiguration.createProxy(config, settings);
-			return masked;
+			Map<String, ?> serviceProps = config.getServiceProperties();
+			Map<String, Object> maskedServiceProps = StringUtils.sha256MaskedMap(
+					(Map<String, Object>) serviceProps, SettingUtils.secureKeys(settings));
+			if ( maskedServiceProps != null ) {
+				ClassUtils.setBeanProperties(config,
+						Collections.singletonMap("serviceProperties", maskedServiceProps), true);
+			}
 		}
-		return (T) config;
+		return config;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@ResponseBody
 	@RequestMapping(value = "/configs", method = RequestMethod.GET)
 	public Response<DatumExportFullConfigurations> fullConfiguration() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		final UserExportBiz biz = exportBiz.service();
 		List<UserDatumExportConfiguration> configs = null;
-		List<DataConfiguration> dataConfigs = Collections.emptyList();
-		List<DestinationConfiguration> destConfigs = Collections.emptyList();
-		List<OutputConfiguration> outputConfigs = Collections.emptyList();
+		List<UserDataConfiguration> dataConfigs = Collections.emptyList();
+		List<UserDestinationConfiguration> destConfigs = Collections.emptyList();
+		List<UserOutputConfiguration> outputConfigs = Collections.emptyList();
 		if ( biz != null ) {
 			configs = biz.datumExportsForUser(userId);
 			// TODO: remove cast here after define data service API
-			dataConfigs = (List) biz.configurationsForUser(userId, UserDataConfiguration.class);
+			dataConfigs = biz.configurationsForUser(userId, UserDataConfiguration.class);
 			destConfigs = maskConfigurations(
 					biz.configurationsForUser(userId, UserDestinationConfiguration.class), (Void) -> {
 						return biz.availableDestinationServices();

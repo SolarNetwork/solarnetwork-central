@@ -37,13 +37,14 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 public class DatumExportFullConfigurations {
 
 	private final List<UserDatumExportConfiguration> datumExportConfigs;
-	private final List<DataConfiguration> dataConfigs;
-	private final List<DestinationConfiguration> destintationConfigs;
-	private final List<OutputConfiguration> outputConfigs;
+	private final List<? extends DataConfiguration> dataConfigs;
+	private final List<? extends DestinationConfiguration> destintationConfigs;
+	private final List<? extends OutputConfiguration> outputConfigs;
 
 	public DatumExportFullConfigurations(List<UserDatumExportConfiguration> datumExportConfigs,
-			List<DataConfiguration> dataConfigs, List<DestinationConfiguration> destintationConfigs,
-			List<OutputConfiguration> outputConfigs) {
+			List<? extends DataConfiguration> dataConfigs,
+			List<? extends DestinationConfiguration> destintationConfigs,
+			List<? extends OutputConfiguration> outputConfigs) {
 		super();
 		this.datumExportConfigs = datumExportConfigs;
 		this.dataConfigs = dataConfigs;
@@ -55,15 +56,15 @@ public class DatumExportFullConfigurations {
 		return datumExportConfigs;
 	}
 
-	public List<DataConfiguration> getDataConfigs() {
+	public List<? extends DataConfiguration> getDataConfigs() {
 		return dataConfigs;
 	}
 
-	public List<DestinationConfiguration> getDestintationConfigs() {
+	public List<? extends DestinationConfiguration> getDestintationConfigs() {
 		return destintationConfigs;
 	}
 
-	public List<OutputConfiguration> getOutputConfigs() {
+	public List<? extends OutputConfiguration> getOutputConfigs() {
 		return outputConfigs;
 	}
 
