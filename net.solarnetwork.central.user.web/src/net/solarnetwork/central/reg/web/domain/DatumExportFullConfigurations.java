@@ -23,10 +23,10 @@
 package net.solarnetwork.central.reg.web.domain;
 
 import java.util.List;
-import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
+import net.solarnetwork.central.datum.domain.export.DataConfiguration;
+import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
+import net.solarnetwork.central.datum.domain.export.OutputConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
-import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
-import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 
 /**
  * DTO to consolidate datum export configuration details into a single response.
@@ -37,14 +37,13 @@ import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 public class DatumExportFullConfigurations {
 
 	private final List<UserDatumExportConfiguration> datumExportConfigs;
-	private final List<UserDataConfiguration> dataConfigs;
-	private final List<UserDestinationConfiguration> destintationConfigs;
-	private final List<UserOutputConfiguration> outputConfigs;
+	private final List<DataConfiguration> dataConfigs;
+	private final List<DestinationConfiguration> destintationConfigs;
+	private final List<OutputConfiguration> outputConfigs;
 
 	public DatumExportFullConfigurations(List<UserDatumExportConfiguration> datumExportConfigs,
-			List<UserDataConfiguration> dataConfigs,
-			List<UserDestinationConfiguration> destintationConfigs,
-			List<UserOutputConfiguration> outputConfigs) {
+			List<DataConfiguration> dataConfigs, List<DestinationConfiguration> destintationConfigs,
+			List<OutputConfiguration> outputConfigs) {
 		super();
 		this.datumExportConfigs = datumExportConfigs;
 		this.dataConfigs = dataConfigs;
@@ -56,15 +55,15 @@ public class DatumExportFullConfigurations {
 		return datumExportConfigs;
 	}
 
-	public List<UserDataConfiguration> getDataConfigs() {
+	public List<DataConfiguration> getDataConfigs() {
 		return dataConfigs;
 	}
 
-	public List<UserDestinationConfiguration> getDestintationConfigs() {
+	public List<DestinationConfiguration> getDestintationConfigs() {
 		return destintationConfigs;
 	}
 
-	public List<UserOutputConfiguration> getOutputConfigs() {
+	public List<OutputConfiguration> getOutputConfigs() {
 		return outputConfigs;
 	}
 

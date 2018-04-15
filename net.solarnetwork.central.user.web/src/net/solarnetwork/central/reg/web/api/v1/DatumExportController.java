@@ -24,8 +24,13 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -37,8 +42,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.domain.export.DataConfiguration;
+import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
+import net.solarnetwork.central.datum.domain.export.OutputConfiguration;
 import net.solarnetwork.central.reg.web.domain.DatumExportFullConfigurations;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
@@ -46,6 +55,10 @@ import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.settings.MappableSpecifier;
+import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.SettingSpecifierProvider;
+import net.solarnetwork.settings.support.SecureEntryMaskingIdentifiableConfiguration;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.web.domain.Response;
 
@@ -61,6 +74,7 @@ import net.solarnetwork.web.domain.Response;
 public class DatumExportController extends WebServiceControllerSupport {
 
 	private final OptionalService<UserExportBiz> exportBiz;
+	private final ConcurrentMap<String, List<SettingSpecifier>> serviceSettings;
 
 	/**
 	 * Constructor.
@@ -72,6 +86,7 @@ public class DatumExportController extends WebServiceControllerSupport {
 	public DatumExportController(@Qualifier("exportBiz") OptionalService<UserExportBiz> exportBiz) {
 		super();
 		this.exportBiz = exportBiz;
+		serviceSettings = new ConcurrentHashMap<>(8);
 	}
 
 	@ResponseBody
@@ -115,20 +130,76 @@ public class DatumExportController extends WebServiceControllerSupport {
 		return response(result);
 	}
 
+	private List<SettingSpecifier> settingsForService(String id,
+			Iterable<? extends SettingSpecifierProvider> providers) {
+		if ( providers == null ) {
+			return null;
+		}
+		for ( SettingSpecifierProvider provider : providers ) {
+			if ( id.equals(provider.getSettingUID()) ) {
+				return provider.getSettingSpecifiers();
+			}
+		}
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> List<T> maskConfigurations(List<? extends UserIdentifiableConfiguration> configurations,
+			Function<Void, Iterable<? extends SettingSpecifierProvider>> settingProviderFunction) {
+		if ( configurations == null || configurations.isEmpty() ) {
+			return Collections.emptyList();
+		}
+		List<T> result = new ArrayList<>(configurations.size());
+		for ( UserIdentifiableConfiguration config : configurations ) {
+			String id = config.getServiceIdentifier();
+			if ( id == null ) {
+				continue;
+			}
+			List<SettingSpecifier> settings = serviceSettings.get(id);
+			if ( settings == null ) {
+				settings = settingsForService(id, settingProviderFunction.apply(null));
+				if ( settings != null ) {
+					settings = settings.stream().map(s -> {
+						if ( s instanceof MappableSpecifier ) {
+							return ((MappableSpecifier) s).mappedTo("serviceProperties.");
+						}
+						return s;
+					}).collect(Collectors.toList());
+					serviceSettings.put(id, settings);
+				}
+			}
+			if ( settings != null ) {
+				T masked = (T) SecureEntryMaskingIdentifiableConfiguration.createProxy(config, settings);
+				result.add(masked);
+			} else {
+				result.add((T) config);
+			}
+		}
+		return result;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@ResponseBody
 	@RequestMapping(value = "/configs", method = RequestMethod.GET)
 	public Response<DatumExportFullConfigurations> fullConfiguration() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		final UserExportBiz biz = exportBiz.service();
 		List<UserDatumExportConfiguration> configs = null;
-		List<UserDataConfiguration> dataConfigs = null;
-		List<UserDestinationConfiguration> destConfigs = null;
-		List<UserOutputConfiguration> outputConfigs = null;
+		List<DataConfiguration> dataConfigs = Collections.emptyList();
+		List<DestinationConfiguration> destConfigs = Collections.emptyList();
+		List<OutputConfiguration> outputConfigs = Collections.emptyList();
 		if ( biz != null ) {
 			configs = biz.datumExportsForUser(userId);
-			dataConfigs = biz.configurationsForUser(userId, UserDataConfiguration.class);
-			destConfigs = biz.configurationsForUser(userId, UserDestinationConfiguration.class);
-			outputConfigs = biz.configurationsForUser(userId, UserOutputConfiguration.class);
+			// TODO: remove cast here after define data service API
+			dataConfigs = (List) biz.configurationsForUser(userId, UserDataConfiguration.class);
+			destConfigs = maskConfigurations(
+					biz.configurationsForUser(userId, UserDestinationConfiguration.class), (Void) -> {
+						return biz.availableDestinationServices();
+					});
+			outputConfigs = maskConfigurations(
+					biz.configurationsForUser(userId, UserOutputConfiguration.class), (Void) -> {
+						return biz.availableOutputFormatServices();
+					});
 		}
 		return response(
 				new DatumExportFullConfigurations(configs, dataConfigs, destConfigs, outputConfigs));
