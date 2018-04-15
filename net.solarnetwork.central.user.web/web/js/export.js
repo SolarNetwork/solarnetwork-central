@@ -621,7 +621,7 @@ $(document).ready(function() {
 
 	// ***** Edit output format form
 	$('#edit-export-output-config-modal').on('show.bs.modal', function(event) {
-		SolarReg.Settings.prepareEditServiceItem($(event.target), outputServices, settingTemplates);
+		SolarReg.Settings.prepareEditServiceForm($(event.target), outputServices, settingTemplates);
 	})
 	.on('shown.bs.modal', SolarReg.Templates.focusEditServiceForm)
 	.on('submit', function(event) {
