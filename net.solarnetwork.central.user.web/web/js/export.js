@@ -7,7 +7,7 @@
  * @param {string} identifier the `id` value to search for
  * @returns {object} the first object that has a matching `id` property
  */
-SolarReg.findById = function findByIdentifier(array, identifier) {
+SolarReg.findById = function findById(array, identifier) {
 	var result;
 	if ( identifier && Array.isArray(array) ) {
 		result = array.find(function(obj) {
@@ -210,22 +210,6 @@ SolarReg.Templates.findContextItem = function findContextItem(el) {
 };
 
 /**
- * Prepare an edit service form for dislpay of creating a new service item configuration.
- * 
- * @param {HTMLFormElement} form the form to prepare
- * @param {array} services array of possible service infos for this form; the first service will be shown inititally
- * @param {jQuery} settingTemplates the container for setting templates
- */
-SolarReg.Templates.prepareCreateServiceItemForm = function prepareCreateServiceItemForm(form, services, settingTemplates) {
-	if ( form && Array.isArray(services) && services.length > 0 ) {
-		var service = services[0];
-		var container = $(form).find('.service-props-container');
-		SolarReg.Settings.setupServiceCoreSettings(service, form);
-		SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates);
-	}
-};
-
-/**
  * Search for the nearest configuration container for an element.
  * 
  * The configuration container is the closest element (anscestor or self) that 
@@ -274,6 +258,9 @@ SolarReg.Templates.resetEditServiceForm = function resetEditServiceForm(form, co
 	f.find('button[type=submit]').prop('disabled', false);
 	f.find('.delete-confirm').addClass('hidden');
 	f.find('button.delete-config').addClass('hidden');
+
+	// clear any context item
+	f.removeData('context-item');
 };
 
 /**
@@ -322,38 +309,6 @@ SolarReg.Templates.handleEditServiceItemDeleteAction = function handleEditServic
 	}
 };
 
-/**
- * Show a form to edit a service configuration.
- * 
- * @param {jQuery} modal the modal form
- * @param {array} services array of possible service infos for this form
- * @param {jQuery} settingTemplates the container for setting templates
- * @param {object} [config] the configuration
- */
-SolarReg.Templates.showEditServiceForm = function showEditServiceForm(modal, services, settingTemplates, config) {
-	if ( !(modal && Array.isArray(services) && config) ) {
-		return;
-	}
-	var service = SolarReg.findById(services, config.serviceIdentifier);
-	var container = modal.find('.service-props-container').first();
-	SolarReg.Settings.setupServiceCoreSettings(service, modal.get(0), config);
-	SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
-	if ( config && config.id ) {
-		modal.find('button.delete-config').removeClass('hidden');
-	}
-	modal.modal('show');
-};
-
-SolarReg.Templates.handleEditServiceItemAction = function handleEditAction(event, services, settingTemplates) {
-	console.log('click: %o', event);
-	if ( event.target && event.target.classList && event.target.classList.contains('edit-link') ) {
-		var config = SolarReg.Templates.findContextItem(event.target);
-		var button = $(event.target);
-		var modal = $(button.data('edit-modal'));
-		SolarReg.Templates.showEditServiceForm(modal, services, settingTemplates, config);
-	}
-};
-
 SolarReg.Templates.focusEditServiceForm = function focusEditServiceForm(event) {
 	var form = event.target;
 	$(form).find('input[type=text]').first().focus();
@@ -381,17 +336,17 @@ SolarReg.Settings = {};
  * 
  * @param {object} service the service info
  * @param {object} setting the setting specifier
- * @param {item} [item] the current item value
+ * @param {config} [config] the current configuration settings, if available
  * @returns {object} a form item object
  */
-SolarReg.Settings.serviceFormItem = function formItem(service, setting, item) {
+SolarReg.Settings.serviceFormItem = function formItem(service, setting, config) {
 	var result = {};
 	if ( service && setting ) {
 		result.id = setting.key;
 		result.name = SolarReg.Templates.serviceInfoMessage(service, setting.key +'.key');
 		result.description = SolarReg.Templates.serviceInfoMessage(service, setting.key +'.desc');
-		if ( item && item.value ) {
-			result.value = item.value;
+		if ( config && config[setting.key] ) {
+			result.value = config[setting.key];
 		} else {
 			result.value = setting.defaultValue || '';
 		}
@@ -458,11 +413,44 @@ SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings
 		if ( !template.length ) {
 			return;
 		}
-		var formItem = SolarReg.Settings.serviceFormItem(service, setting, item);
+		var formItem = SolarReg.Settings.serviceFormItem(service, setting, (item ? item.serviceProperties : null));
 		var formElement = SolarReg.Templates.appendTemplateItem(container, template, formItem);
 		formElement.find('.setting-form-element').val(formItem.value).attr('name', 'serviceProperties.' + setting.key);
 	});
 	container.toggleClass('hidden', service.settingSpecifiers.length < 1);
+};
+
+/**
+ * Prepare a form to edit a service configuration.
+ * 
+ * @param {jQuery} modal the modal form
+ * @param {array} services array of possible service infos for this form
+ * @param {jQuery} settingTemplates the container for setting templates
+ * @param {object} [config] the configuration
+ */
+SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal, services, settingTemplates) {
+	if ( !(modal && Array.isArray(services)) ) {
+		return;
+	}
+	var config = SolarReg.Templates.findContextItem(modal);
+	var service = (config ? SolarReg.findById(services, config.serviceIdentifier) : services[0]);
+	var container = modal.find('.service-props-container').first();
+	SolarReg.Settings.setupServiceCoreSettings(service, modal.get(0), config);
+	SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
+	if ( config && config.id ) {
+		modal.find('button.delete-config').removeClass('hidden');
+	}
+};
+
+SolarReg.Settings.handleEditServiceItemAction = function handleEditAction(event, services, settingTemplates) {
+	console.log('click: %o', event);
+	if ( event.target && event.target.classList && event.target.classList.contains('edit-link') ) {
+		var config = SolarReg.Templates.findContextItem(event.target);
+		var button = $(event.target);
+		var modal = $(button.data('edit-modal'));
+		modal.data('context-item', config);
+		modal.modal('show');
+	}
 };
 
 /**
@@ -516,6 +504,38 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
 	}
 
 	return body;
+};
+
+/**
+ * Handle the submit event for a edit service form.
+ * 
+ * @param {event} event the submit event that triggered form submission
+ * @param {function} onSuccess a callback to invoke on success; will be passed the upload body object and the response body object
+ * @returns {jqXHR} the jQuery XHR object
+ */
+SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess) {
+	var form = event.target;
+	var modal = $(form);
+	var body = SolarReg.Settings.encodeServiceItemForm(form);
+	event.preventDefault();
+	return $.ajax({
+		type: 'POST',
+		url: form.action,
+		contentType: "application/json; charset=utf-8",
+		data : JSON.stringify(body),
+		dataType: 'json',
+		beforeSend: function(xhr) {
+			SolarReg.csrf(xhr);
+		}
+	}).done(function() {
+		console.log('Saved output config: %o', json);
+		if ( json && json.success === true && typeof onSuccess === 'function' ) {
+			onSuccess(body, json.data);
+		}
+		modal.modal('hide');
+	}).fail(function(xhr, statusText, error) {
+		SolarReg.showAlertBefore(modal.find('.modal-body > *:first-child'), 'alert-warning', statusText);
+	});
 };
 
 $(document).ready(function() {
@@ -579,87 +599,45 @@ $(document).ready(function() {
 
 	// ***** Edit destination form
 	$('#edit-export-destination-config-modal').on('show.bs.modal', function(event) {
-		SolarReg.Templates.prepareCreateServiceItemForm(event.target, destinationServices, settingTemplates);
+		SolarReg.Settings.prepareEditServiceForm($(event.target), destinationServices, settingTemplates);
 	})
 	.on('shown.bs.modal', SolarReg.Templates.focusEditServiceForm)
 	.on('submit', function(event) {
-		var form = event.target;
-		var modal = $(form);
-		var body = SolarReg.Settings.encodeServiceItemForm(form);
-		$.ajax({
-			type: 'POST',
-			url: form.action,
-			contentType: "application/json; charset=utf-8",
-			data : JSON.stringify(body),
-			dataType: 'json',
-			beforeSend: function(xhr) {
-				SolarReg.csrf(xhr);
-            },
-			success: function(json) {
-				console.log('Saved output config: %o', json);
-				if ( json && json.success === true ) {
-					populateDestinationConfigs([json.data], true);
-					if ( !body.id && Array.isArray(exportConfigs.destintationConfigs) ) {
-						exportConfigs.destintationConfigs.push(json.data);
-					}
-				}
-				modal.modal('hide');
-			},
-			error: function(xhr, status, statusText) {
-				SolarReg.showAlertBefore(modal.find('.modal-body > *:first-child'), 'alert-warning', statusText);
+		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			populateDestinationConfigs([res], true);
+			if ( !req.id && Array.isArray(exportConfigs.destintationConfigs) ) {
+				exportConfigs.destintationConfigs.push(res);
 			}
 		});
-		event.preventDefault();
 		return false;
 	}).on('hidden.bs.modal', function() {
 		SolarReg.Templates.resetEditServiceForm(this, $('#export-destination-config-list-container .list-container'));
 	});
 
 	$('#export-destination-config-list-container .list-container').on('click', function(event) {
-		SolarReg.Templates.handleEditServiceItemAction(event, destinationServices, settingTemplates);
+		SolarReg.Settings.handleEditServiceItemAction(event, destinationServices, settingTemplates);
 	});
 
 
 	// ***** Edit output format form
 	$('#edit-export-output-config-modal').on('show.bs.modal', function(event) {
-		SolarReg.Templates.prepareCreateServiceItemForm(event.target, outputServices, settingTemplates);
+		SolarReg.Settings.prepareEditServiceItem($(event.target), outputServices, settingTemplates);
 	})
 	.on('shown.bs.modal', SolarReg.Templates.focusEditServiceForm)
 	.on('submit', function(event) {
-		var form = event.target;
-		var modal = $(form);
-		var body = SolarReg.Settings.encodeServiceItemForm(form);
-		$.ajax({
-			type: 'POST',
-			url: form.action,
-			contentType: "application/json; charset=utf-8",
-			data : JSON.stringify(body),
-			dataType: 'json',
-			beforeSend: function(xhr) {
-				SolarReg.csrf(xhr);
-            },
-			success: function(json) {
-				console.log('Saved output config: %o', json);
-				if ( json && json.success === true ) {
-					populateOutputConfigs([json.data], true);
-					if ( !body.id && Array.isArray(exportConfigs.outputConfigs) ) {
-						exportConfigs.outputConfigs.push(json.data);
-					}
-				}
-				modal.modal('hide');
-			},
-			error: function(xhr, status, statusText) {
-				SolarReg.showAlertBefore(modal.find('.modal-body > *:first-child'), 'alert-warning', statusText);
+		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			populateOutputConfigs([res], true);
+			if ( !req.id && Array.isArray(exportConfigs.outputConfigs) ) {
+				exportConfigs.outputConfigs.push(res);
 			}
 		});
-		event.preventDefault();
 		return false;
 	}).on('hidden.bs.modal', function() {
 		SolarReg.Templates.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'));
 	});
 
 	$('#export-output-config-list-container .list-container').on('click', function(event) {
-		SolarReg.Templates.handleEditServiceItemAction(event, outputServices, settingTemplates);
+		SolarReg.Settings.handleEditServiceItemAction(event, outputServices, settingTemplates);
 	});
 
 	$('.edit-config button.delete-config').on('click', SolarReg.Templates.handleEditServiceItemDeleteAction);
