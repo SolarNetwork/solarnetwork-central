@@ -125,8 +125,8 @@ public class DaoUserExportBiz implements UserExportBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public UserDatumExportConfiguration datumExportConfiguration(Long id) {
-		return datumExportConfigDao.get(id);
+	public UserDatumExportConfiguration datumExportConfigurationForUser(Long userId, Long id) {
+		return datumExportConfigDao.get(id, userId);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -153,11 +153,11 @@ public class DaoUserExportBiz implements UserExportBiz {
 	public <T extends UserIdentifiableConfiguration> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id) {
 		if ( UserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return (T) dataConfigDao.get(id);
+			return (T) dataConfigDao.get(id, userId);
 		} else if ( UserDestinationConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return (T) destinationConfigDao.get(id);
+			return (T) destinationConfigDao.get(id, userId);
 		} else if ( UserOutputConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return (T) outputConfigDao.get(id);
+			return (T) outputConfigDao.get(id, userId);
 		}
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
 	}

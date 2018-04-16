@@ -62,11 +62,13 @@ public interface UserExportBiz {
 	/**
 	 * Get a saved datum export configuration.
 	 * 
+	 * @param userId
+	 *        the user ID to get configurations for
 	 * @param id
 	 *        the ID of the configuration to get
 	 * @return the configuration, or {@literal null} if not available
 	 */
-	UserDatumExportConfiguration datumExportConfiguration(Long id);
+	UserDatumExportConfiguration datumExportConfigurationForUser(Long userId, Long id);
 
 	/**
 	 * Save a datum export configuration for a user.

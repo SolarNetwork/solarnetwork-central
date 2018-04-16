@@ -251,7 +251,8 @@ public class DatumExportController extends WebServiceControllerSupport {
 	public Response<Void> deleteExportConfiguration(@PathVariable("id") Long id) {
 		final UserExportBiz biz = exportBiz.service();
 		if ( biz != null ) {
-			UserDatumExportConfiguration config = biz.datumExportConfiguration(id);
+			UserDatumExportConfiguration config = biz
+					.datumExportConfigurationForUser(SecurityUtils.getCurrentActorUserId(), id);
 			if ( config != null ) {
 				biz.deleteDatumExportConfiguration(config);
 			}

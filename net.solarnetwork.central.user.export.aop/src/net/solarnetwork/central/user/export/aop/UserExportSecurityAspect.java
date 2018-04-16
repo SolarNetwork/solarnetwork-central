@@ -22,15 +22,12 @@
 
 package net.solarnetwork.central.user.export.aop;
 
-import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
-import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserRelatedEntity;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
-import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
 
 /**
@@ -56,10 +53,6 @@ public class UserExportSecurityAspect extends AuthorizationSupport {
 	public void actionForUser(Long userId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.export.biz.UserExportBiz.datumExportConfiguration(..))")
-	public void readDatumExportConfiguration() {
-	}
-
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.export.biz.UserExportBiz.save*(..)) && args(config,..)")
 	public void saveConfiguration(UserRelatedEntity<?> config) {
 	}
@@ -71,16 +64,6 @@ public class UserExportSecurityAspect extends AuthorizationSupport {
 	@Before("actionForUser(userId)")
 	public void actionForUserCheck(Long userId) {
 		requireUserReadAccess(userId);
-	}
-
-	@AfterReturning(pointcut = "readDatumExportConfiguration()", returning = "result")
-	public void readDatumExportConfigurationCheck(UserDatumExportConfiguration result) {
-		final Long userId = (result != null ? result.getUserId() : null);
-		if ( userId == null ) {
-			log.warn("Access DENIED to UserDatumExportConfiguration {}; userId not provided", result);
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, userId);
-		}
-		requireUserReadAccess(result.getUserId());
 	}
 
 	@Before("saveConfiguration(config) || deleteConfiguration(config)")
