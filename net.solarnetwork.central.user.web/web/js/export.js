@@ -130,6 +130,24 @@ $(document).ready(function() {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateDataConfigs([res], true);
 			storeServiceConfiguration(res, exportConfigs.dataConfigs);
+		}, function serializeDataConfigForm(form) {
+			var data = SolarReg.Settings.encodeServiceItemForm(form);
+			if ( data.datumFilter ) {
+				var filter = data.datumFilter;
+				var nodeIds =  SolarReg.splitAsNumberArray(filter.nodeIds);
+				if ( nodeIds.length ) {
+					filter.nodeIds = nodeIds;
+				} else {
+					delete filter.nodeIds;
+				}
+				var sourceIds = (filter.sourceIds ? filter.sourceIds.split(/\s*,\s*/) : []);
+				if ( sourceIds.length ) {
+					filter.sourceIds = sourceIds;
+				} else {
+					delete filter.sourceIds;
+				}
+			}
+			return data;
 		});
 		return false;
 	})

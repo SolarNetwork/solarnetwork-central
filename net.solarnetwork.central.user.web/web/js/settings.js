@@ -345,12 +345,16 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
  * 
  * @param {event} event the submit event that triggered form submission
  * @param {function} onSuccess a callback to invoke on success; will be passed the upload body object and the response body object
+ * @param {function} [serializer] a callback to invoke to serialize the form data; will be passed the form object and must return
+ *                                an object that will be serialized into JSON via `JSON.stringify`
  * @returns {jqXHR} the jQuery XHR object
  */
-SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess) {
+SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess, serializer) {
 	var form = event.target;
 	var modal = $(form);
-	var body = SolarReg.Settings.encodeServiceItemForm(form);
+	var body = (typeof serializer === 'function' 
+		? serializer(form) 
+		: SolarReg.Settings.encodeServiceItemForm(form));
 	event.preventDefault();
 	return $.ajax({
 		type: 'POST',
@@ -365,8 +369,11 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		console.log('Saved output config: %o', json);
 		if ( json && json.success === true && typeof onSuccess === 'function' ) {
 			onSuccess(body, json.data);
+			modal.modal('hide');
+		} else {
+			var msg = (json && json.message ? json.message : 'Unknown error: ' +statusText);
+			SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', msg);
 		}
-		modal.modal('hide');
 	}).fail(function(xhr, statusText, error) {
 		SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', statusText);
 	});

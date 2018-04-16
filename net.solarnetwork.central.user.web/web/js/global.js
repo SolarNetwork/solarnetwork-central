@@ -48,6 +48,24 @@ SolarReg.findByIdentifier = function findByIdentifier(array, identifier) {
 	return result;
  };
 
+ /**
+  * Split a string into an array of numbers.
+  * 
+  * This method will filter out any values that are not numbers.
+  * 
+  * @param {string} string the string to split into numbers
+  * @param {RegExp} [delimiter] the regular expression to split with; defaults to comma with optional surrounding whitespace
+  */
+ SolarReg.splitAsNumberArray = function splitAsNumberArray(string, delimiter) {
+	 delimiter = (delimiter || /\s*,\s*/);
+	 if ( !string ) {
+		 return [];
+	 }
+	 return string.split(delimiter)
+		 .map(function(id) { return Number(id); })
+		 .filter(function(id) { return !isNaN(id); });
+ };
+
 $(document).ready(function() {
 	$('body').on('hidden', '.modal.dynamic', function () {
 		$(this).removeData('modal');
