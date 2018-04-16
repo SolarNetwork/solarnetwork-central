@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -46,6 +47,7 @@ import net.solarnetwork.central.datum.domain.export.DataConfiguration;
 import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
 import net.solarnetwork.central.datum.domain.export.OutputConfiguration;
 import net.solarnetwork.central.reg.web.domain.DatumExportFullConfigurations;
+import net.solarnetwork.central.reg.web.domain.DatumExportProperties;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
@@ -195,8 +197,8 @@ public class DatumExportController extends WebServiceControllerSupport {
 		List<UserDestinationConfiguration> destConfigs = Collections.emptyList();
 		List<UserOutputConfiguration> outputConfigs = Collections.emptyList();
 		if ( biz != null ) {
-			configs = biz.datumExportsForUser(userId);
-			// TODO: remove cast here after define data service API
+			configs = biz.datumExportsForUser(userId).stream().map(c -> new DatumExportProperties(c))
+					.collect(Collectors.toList());
 			dataConfigs = biz.configurationsForUser(userId, UserDataConfiguration.class);
 			destConfigs = maskConfigurations(
 					biz.configurationsForUser(userId, UserDestinationConfiguration.class), (Void) -> {
@@ -209,6 +211,52 @@ public class DatumExportController extends WebServiceControllerSupport {
 		}
 		return response(
 				new DatumExportFullConfigurations(configs, dataConfigs, destConfigs, outputConfigs));
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/configs", method = RequestMethod.POST)
+	public Response<UserDatumExportConfiguration> saveExportConfiguration(
+			@RequestBody DatumExportProperties config) {
+		final UserExportBiz biz = exportBiz.service();
+		if ( biz != null ) {
+			if ( config.getUserId() == null ) {
+				config.setUserId(SecurityUtils.getCurrentActorUserId());
+			}
+			if ( config.getCreated() == null ) {
+				config.setCreated(new DateTime());
+			}
+			if ( config.getDataConfigurationId() != null ) {
+				config.setUserDataConfiguration(biz.configurationForUser(config.getUserId(),
+						UserDataConfiguration.class, config.getDataConfigurationId()));
+			}
+			if ( config.getDestinationConfigurationId() != null ) {
+				config.setUserDestinationConfiguration(biz.configurationForUser(config.getUserId(),
+						UserDestinationConfiguration.class, config.getDestinationConfigurationId()));
+			}
+			if ( config.getOutputConfigurationId() != null ) {
+				config.setUserOutputConfiguration(biz.configurationForUser(config.getUserId(),
+						UserOutputConfiguration.class, config.getOutputConfigurationId()));
+			}
+			Long id = biz.saveDatumExportConfiguration(config);
+			if ( id != null ) {
+				config.setId(id);
+				return response(config);
+			}
+		}
+		return new Response<UserDatumExportConfiguration>(false, null, null, null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/configs/{id}", method = RequestMethod.DELETE)
+	public Response<Void> deleteExportConfiguration(@PathVariable("id") Long id) {
+		final UserExportBiz biz = exportBiz.service();
+		if ( biz != null ) {
+			UserDatumExportConfiguration config = biz.datumExportConfiguration(id);
+			if ( config != null ) {
+				biz.deleteDatumExportConfiguration(config);
+			}
+		}
+		return response(null);
 	}
 
 	@ResponseBody

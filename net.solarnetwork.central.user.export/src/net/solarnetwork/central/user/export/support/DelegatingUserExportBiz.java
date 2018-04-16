@@ -78,6 +78,11 @@ public class DelegatingUserExportBiz implements UserExportBiz {
 	}
 
 	@Override
+	public void deleteDatumExportConfiguration(UserDatumExportConfiguration configuration) {
+		delegate.deleteDatumExportConfiguration(configuration);
+	}
+
+	@Override
 	public List<UserDatumExportConfiguration> datumExportsForUser(Long userId) {
 		return delegate.datumExportsForUser(userId);
 	}

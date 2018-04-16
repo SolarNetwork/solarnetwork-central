@@ -69,13 +69,21 @@ public interface UserExportBiz {
 	UserDatumExportConfiguration datumExportConfiguration(Long id);
 
 	/**
-	 * Save a configuration for a user.
+	 * Save a datum export configuration for a user.
 	 * 
 	 * @param configuration
 	 *        the configuration to save
 	 * @return the primary key of the saved configuration
 	 */
 	Long saveDatumExportConfiguration(UserDatumExportConfiguration configuration);
+
+	/**
+	 * Delete a specific datum export configuration.
+	 * 
+	 * @param configuration
+	 *        the configuration to delete
+	 */
+	void deleteDatumExportConfiguration(UserDatumExportConfiguration configuration);
 
 	/**
 	 * Get a list of all available datum export configurations for a given user.

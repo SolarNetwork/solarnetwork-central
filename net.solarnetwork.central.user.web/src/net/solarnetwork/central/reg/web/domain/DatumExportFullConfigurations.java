@@ -33,6 +33,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.26
  */
 public class DatumExportFullConfigurations {
 

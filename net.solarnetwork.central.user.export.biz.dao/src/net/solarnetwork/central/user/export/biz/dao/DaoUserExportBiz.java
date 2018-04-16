@@ -135,6 +135,12 @@ public class DaoUserExportBiz implements UserExportBiz {
 		return datumExportConfigDao.store(configuration);
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteDatumExportConfiguration(UserDatumExportConfiguration configuration) {
+		datumExportConfigDao.delete(configuration);
+	}
+
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public List<UserDatumExportConfiguration> datumExportsForUser(Long userId) {
