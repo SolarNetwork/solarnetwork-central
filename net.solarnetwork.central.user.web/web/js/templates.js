@@ -136,6 +136,7 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 		}
 		val = obj[prop];
 		if ( prop === 'serviceProperties' && sPropContainer.length > 0 ) {
+            sPropContainer.empty();
 			for ( sPropKey in val ) {
 				if ( !val.hasOwnProperty(sPropKey) ) {
 					continue;

@@ -90,6 +90,17 @@ $(document).ready(function() {
 		configurations.push(config);
 	}
 
+	function handleServiceIdentifierChange(event, services) {
+		var target = event.target;
+		console.log('change event on %o: %o', target, event);
+		if ( target.name === 'serviceIdentifier' ) {
+			var service = SolarReg.findByIdentifier(services, $(event.target).val());
+			var modal = $(target.form);
+			var container = modal.find('.service-props-container').first();
+			SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, modal.data('context-item'));
+		}
+	}
+
 	function renderJobsList(configs) {
 		
 	}
@@ -97,15 +108,18 @@ $(document).ready(function() {
 	// ***** Edit destination form
 	$('#edit-export-destination-config-modal').on('show.bs.modal', function(event) {
 		SolarReg.Settings.prepareEditServiceForm($(event.target), destinationServices, settingTemplates);
+	}).on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('change', function(event) {
+		handleServiceIdentifierChange(event, destinationServices);
 	})
-	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 	.on('submit', function(event) {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateDestinationConfigs([res], true);
 			storeServiceConfiguration(res, exportConfigs.destintationConfigs);
 		});
 		return false;
-	}).on('hidden.bs.modal', function() {
+	})
+	.on('hidden.bs.modal', function() {
 		SolarReg.Settings.resetEditServiceForm(this, $('#export-destination-config-list-container .list-container'));
 	});
 
@@ -119,13 +133,17 @@ $(document).ready(function() {
 		SolarReg.Settings.prepareEditServiceForm($(event.target), outputServices, settingTemplates);
 	})
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('change', function(event) {
+		handleServiceIdentifierChange(event, destinationServices);
+	})
 	.on('submit', function(event) {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateOutputConfigs([res], true);
 			storeServiceConfiguration(res, exportConfigs.outputConfigs);
 		});
 		return false;
-	}).on('hidden.bs.modal', function() {
+	})
+	.on('hidden.bs.modal', function() {
 		SolarReg.Settings.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'));
 	});
 
