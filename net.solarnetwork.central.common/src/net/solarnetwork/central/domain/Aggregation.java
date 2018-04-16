@@ -27,7 +27,7 @@ package net.solarnetwork.central.domain;
 /**
  * An aggregation level enumeration.
  * 
- * @version 1.5
+ * @version 1.6
  */
 public enum Aggregation {
 
@@ -53,7 +53,9 @@ public enum Aggregation {
 	/** Hour level aggregation. */
 	Hour(3600),
 
-	/** Aggregate by hour of the day, e.g. compare 12-1pm across multiple days. */
+	/**
+	 * Aggregate by hour of the day, e.g. compare 12-1pm across multiple days.
+	 */
 	HourOfDay(3600),
 
 	/** Aggregate by hour of the day per season. */
@@ -125,6 +127,31 @@ public enum Aggregation {
 	 */
 	public Integer getLevel() {
 		return level;
+	}
+
+	/**
+	 * Get a key value.
+	 * 
+	 * @return the key
+	 * @since 1.6
+	 */
+	public String getKey() {
+		// for now this just maps to name!
+		return name();
+	}
+
+	/**
+	 * Get an enum instance for a key value.
+	 * 
+	 * @param key
+	 *        the key value
+	 * @return the enum
+	 * @throws IllegalArgumentException
+	 *         if {@code key} is not supported
+	 * @since 1.6
+	 */
+	public static Aggregation forKey(String key) {
+		return Aggregation.valueOf(key);
 	}
 
 }
