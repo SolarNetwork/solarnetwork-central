@@ -159,20 +159,39 @@
 <%-- Setting templates --%>
 
 <div id="export-setting-templates" class="hidden">
+	<%--
+		The setting-type data property must match a setting UID + any options as |opt1,opt2.
+		
+		Supported options:
+			secureTextEntry : for password fields
+	 --%>
 	<div class="form-group template" data-setting-type="net.solarnetwork.settings.TextFieldSettingSpecifier">
 		<label class="col-sm-3 control-label" data-tprop="name">
 			${' '}
 		</label>
-		<div class="col-sm-8">
+		<div class="col-sm-7">
+			<%--
+				The .setting-form-element class must be attached to the setting form field that will hold the value to upload.
+			 --%>
 			<input type="text" class="form-control setting-form-element" name="__unnamed" maxlength="255">
+		</div>
+		<div class="col-sm-1 form-control-static">
+			<a tabindex="-1" title="<fmt:message key='settings.info.label'/>" class="setting-help" role="button" data-toggle="popover" data-trigger="focus" data-html="true" data-container="body">
+				<span class="glyphicon glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+			</a>
 		</div>
 	</div>
 	<div class="form-group template" data-setting-type="net.solarnetwork.settings.TextFieldSettingSpecifier|secureTextEntry">
 		<label class="col-sm-3 control-label" data-tprop="name">
 			${' '}
 		</label>
-		<div class="col-sm-8">
+		<div class="col-sm-7">
 			<input type="password" placeholder="<fmt:message key='settings.secureTextEntry.placeholder'/>" class="form-control setting-form-element" name="__unnamed" maxlength="255">
+		</div>
+		<div class="col-sm-1 form-control-static">
+			<a tabindex="-1" title="<fmt:message key='settings.info.label'/>" class="setting-help" role="button" data-toggle="popover" data-trigger="focus" data-html="true" data-container="body">
+				<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+			</a>
 		</div>
 	</div>
 </div>

@@ -239,6 +239,17 @@ SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings
         formElement.find('.setting-form-element')
             .val(setting.secureTextEntry ? '' : formItem.value)
             .attr('name', 'serviceProperties.' + setting.key);
+        var helpElement = formElement.find('.setting-help');
+        if ( helpElement.data('toggle') === 'popover' ) {
+            helpElement.attr('data-content', formItem.description);
+            helpElement.on('click', function(event) {
+                event.preventDefault();
+                $(event.currentTarget).popover('show');
+            });
+        } else {
+            helpElement.html(formItem.description);
+        }
+        helpElement.toggleClass('hidden', !formItem.description);
 	});
 	container.toggleClass('hidden', service.settingSpecifiers.length < 1);
 };
