@@ -163,7 +163,7 @@ $(document).ready(function() {
 		return false;
 	})
 	.on('hidden.bs.modal', function() {
-		SolarReg.Settings.resetEditServiceForm(this, $('#export-dadta-config-list-container .list-container'));
+		SolarReg.Settings.resetEditServiceForm(this, $('#export-data-config-list-container .list-container'));
 	});
 
 	$('#export-data-config-list-container .list-container').on('click', function(event) {
