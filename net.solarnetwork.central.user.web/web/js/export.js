@@ -38,7 +38,18 @@ $(document).ready(function() {
 		configs = Array.isArray(configs) ? configs : [];
 		var container = $('#export-data-config-list-container');
 		var items = configs.map(function(config) {
-			return SolarReg.Settings.serviceConfigurationItem(config, dataServices);
+			var model = SolarReg.Settings.serviceConfigurationItem(config, dataServices);
+			if ( config.datumFilter ) {
+				var filter = config.datumFilter;
+				if ( filter.aggregation ) {
+					model.aggregation = filter.aggregation;
+				}
+				var nodeIds = SolarReg.arrayAsDelimitedString(filter.nodeIds);
+				model.nodes = nodeIds || '*';
+				var sourceIds = SolarReg.arrayAsDelimitedString(filter.soruceIds);
+				model.sources = sourceIds || '*';
+			}
+			return model;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
 		return configs;

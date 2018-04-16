@@ -91,6 +91,19 @@ SolarReg.Settings.focusEditServiceForm = function focusEditServiceForm(event) {
 	$(form).find('input[type=text]').first().focus();
 };
 
+/**
+ * Generate a display model object out of a configuration object.
+ * 
+ * The returned object will contain:
+ * 
+ *  * `name` - the `config.name`
+ *  * `type` - the localized name of the service matching `config.serviceIdentifier`
+ *  * `serviceProperties` - result of calling {@link SolarReg.Settings.serviceConfigurationItemServiceProperties}
+ * 
+ * @param {object} config the configuration object to generate a display model object for
+ * @param {array} services the array of possible services the configuration might adopt
+ * @returns {object} a display model object
+ */
 SolarReg.Settings.serviceConfigurationItem = function serviceConfigurationItem(config, services) {
 	if ( !(config && Array.isArray(services)) ) {
 		return {};

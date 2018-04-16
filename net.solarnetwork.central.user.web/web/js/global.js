@@ -55,8 +55,9 @@ SolarReg.findByIdentifier = function findByIdentifier(array, identifier) {
   * 
   * @param {string} string the string to split into numbers
   * @param {RegExp} [delimiter] the regular expression to split with; defaults to comma with optional surrounding whitespace
+  * @returns {array<Number>}
   */
- SolarReg.splitAsNumberArray = function splitAsNumberArray(string, delimiter) {
+SolarReg.splitAsNumberArray = function splitAsNumberArray(string, delimiter) {
 	 delimiter = (delimiter || /\s*,\s*/);
 	 if ( !string ) {
 		 return [];
@@ -65,6 +66,24 @@ SolarReg.findByIdentifier = function findByIdentifier(array, identifier) {
 		 .map(function(id) { return Number(id); })
 		 .filter(function(id) { return !isNaN(id); });
  };
+
+/**
+  * Split a string into an array of numbers.
+  * 
+  * This method will filter out any values that are not numbers.
+  * 
+  * @param {array} array the array to join into a string
+  * @param {string} [delimiter] the string to join elements with; defaults to comma and space
+  * @returns {string}
+  */
+SolarReg.arrayAsDelimitedString = function arrayAsDelimitedString(array, delimiter) {
+	// allow the empty string delimiter
+	delimiter = (delimiter !== undefined ? delimiter : ', ');
+	if ( !(Array.isArray(array) && array.length > 0) ) {
+		return '';
+	}
+	return array.join(delimiter);
+};
 
 $(document).ready(function() {
 	$('body').on('hidden', '.modal.dynamic', function () {
