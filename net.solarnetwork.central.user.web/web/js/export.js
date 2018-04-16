@@ -46,7 +46,7 @@ $(document).ready(function() {
 				}
 				var nodeIds = SolarReg.arrayAsDelimitedString(filter.nodeIds);
 				model.nodes = nodeIds || '*';
-				var sourceIds = SolarReg.arrayAsDelimitedString(filter.soruceIds);
+				var sourceIds = SolarReg.arrayAsDelimitedString(filter.sourceIds);
 				model.sources = sourceIds || '*';
 			}
 			return model;

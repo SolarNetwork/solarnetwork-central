@@ -189,6 +189,17 @@ SolarReg.Settings.serviceFormItem = function formItem(service, setting, config) 
 };
 
 /**
+ * Populate form fields with corresponding values from a configuration object.
+ * 
+ * This method will iterate over all form fields, and look for a corresponding property in `config`
+ * with the same name. Names will be split on `.` characters, such that nested objects within
+ * `config` will be inspected for the associated value.
+ * 
+ * For example given a configuration object like `{filter: {ids: [1, 2, 3]}}` then a form field
+ * named `filter.ids` would resolve to the array `[1, 2, 3]`.
+ * 
+ * Array values will be passed to {@link SolarReg.arrayAsDelimitedString} before being set
+ * as a form field value.
  * 
  * @param {object} service the service info 
  * @param {HTMLFormElement} form the form
@@ -201,12 +212,25 @@ SolarReg.Settings.setupServiceCoreSettings = function setupServiceCoreSettings(s
 	var i, len,
 		fields = form.elements,
 		field,
-		name;
+		name,
+		components,
+		component,
+		obj,
+		j, jLen;
 	for ( i = 0, len = fields.length; i < len; i += 1 ) {
 		field = fields.item(i);
 		name = field.name;
-		if ( name && config[name] ) {
-			$(field).val(config[name]);
+		obj = config;
+		components = name.split('.');
+		component = name;
+		for ( j = 1, jLen = components.length; j < jLen && obj; j += 1 ) {
+			obj = obj[components[j-1]];
+			component = components[j];
+		}
+		if ( name && obj && obj[component] ) {
+			$(field).val(Array.isArray(obj[component]) 
+				? SolarReg.arrayAsDelimitedString(obj[component]) 
+				: obj[component]);
 		}
 	}
 }
