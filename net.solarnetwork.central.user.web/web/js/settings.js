@@ -236,7 +236,9 @@ SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings
 		}
 		var formItem = SolarReg.Settings.serviceFormItem(service, setting, (item ? item.serviceProperties : null));
 		var formElement = SolarReg.Templates.appendTemplateItem(container, template, formItem);
-		formElement.find('.setting-form-element').val(formItem.value).attr('name', 'serviceProperties.' + setting.key);
+        formElement.find('.setting-form-element')
+            .val(setting.secureTextEntry ? '' : formItem.value)
+            .attr('name', 'serviceProperties.' + setting.key);
 	});
 	container.toggleClass('hidden', service.settingSpecifiers.length < 1);
 };
