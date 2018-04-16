@@ -11,6 +11,7 @@ Export-Package:
 Import-Package: 
  net.solarnetwork.central;version="1.4.0",
  net.solarnetwork.central.datum.biz;version="1.2.0",
+ net.solarnetwork.central.datum.domain;version="1.19.0",
  net.solarnetwork.central.datum.domain.export;version="1.0.0",
  net.solarnetwork.central.datum.support;version="1.7.0",
  net.solarnetwork.central.domain;version="1.24.0",
@@ -19,6 +20,7 @@ Import-Package:
  net.solarnetwork.settings.support;version="1.0.0",
  net.solarnetwork.support;version="1.7.0",
  net.solarnetwork.util;version="1.30.0",
+ org.joda.time;version="[2.4,3.0)",
  org.slf4j;version="[1.7,2.0)",
  org.springframework.context;version="[4.2,5.0)",
  org.springframework.context.support;version="[4.2,5.0)",

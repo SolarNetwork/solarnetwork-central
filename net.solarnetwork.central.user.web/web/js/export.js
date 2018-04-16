@@ -2,6 +2,9 @@ $(document).ready(function() {
 	'use strict';
 	
 	var exportConfigs = {};
+	var dataServices = [{
+		id : 'net.solarnetwork.central.datum.export.standard.DefaultDatumExportDataFilterService'
+	}];
 	var outputServices = [];
 	var destinationServices = [];
 	var compressionTypes = [];
@@ -28,6 +31,16 @@ $(document).ready(function() {
 	function populateDataConfigs(configs) {
 		configs = Array.isArray(configs) ? configs : [];
 		// TODO
+		return configs;
+	}
+	
+	function populateDataConfigs(configs, preserve) {
+		configs = Array.isArray(configs) ? configs : [];
+		var container = $('#export-data-config-list-container');
+		var items = configs.map(function(config) {
+			return SolarReg.Settings.serviceConfigurationItem(config, dataServices);
+		});
+		SolarReg.Templates.populateTemplateItems(container, items, preserve);
 		return configs;
 	}
 	
@@ -105,6 +118,29 @@ $(document).ready(function() {
 		
 	}
 
+	// ***** Edit data format form
+	$('#edit-export-data-config-modal').on('show.bs.modal', function(event) {
+		SolarReg.Settings.prepareEditServiceForm($(event.target), dataServices, settingTemplates);
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('change', function(event) {
+		handleServiceIdentifierChange(event, dataServices);
+	})
+	.on('submit', function(event) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			populateDataConfigs([res], true);
+			storeServiceConfiguration(res, exportConfigs.dataConfigs);
+		});
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		SolarReg.Settings.resetEditServiceForm(this, $('#export-dadta-config-list-container .list-container'));
+	});
+
+	$('#export-data-config-list-container .list-container').on('click', function(event) {
+		SolarReg.Settings.handleEditServiceItemAction(event, dataServices, settingTemplates);
+	});
+	
 	// ***** Edit destination form
 	$('#edit-export-destination-config-modal').on('show.bs.modal', function(event) {
 		SolarReg.Settings.prepareEditServiceForm($(event.target), destinationServices, settingTemplates);
@@ -134,7 +170,7 @@ $(document).ready(function() {
 	})
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 	.on('change', function(event) {
-		handleServiceIdentifierChange(event, destinationServices);
+		handleServiceIdentifierChange(event, outputServices);
 	})
 	.on('submit', function(event) {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {

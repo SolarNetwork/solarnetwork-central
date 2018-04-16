@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.domain.export.DataConfiguration;
 import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
 import net.solarnetwork.central.datum.domain.export.OutputConfiguration;
 import net.solarnetwork.central.reg.web.domain.DatumExportFullConfigurations;
@@ -208,6 +209,41 @@ public class DatumExportController extends WebServiceControllerSupport {
 		}
 		return response(
 				new DatumExportFullConfigurations(configs, dataConfigs, destConfigs, outputConfigs));
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/configs/data", method = RequestMethod.POST)
+	public Response<DataConfiguration> saveDataConfiguration(@RequestBody UserDataConfiguration config) {
+		final UserExportBiz biz = exportBiz.service();
+		if ( biz != null ) {
+			if ( config.getUserId() == null ) {
+				config.setUserId(SecurityUtils.getCurrentActorUserId());
+			}
+			if ( config.getCreated() == null ) {
+				config.setCreated(new DateTime());
+			}
+			Long id = biz.saveConfiguration(config);
+			if ( id != null ) {
+				config.setId(id);
+				return response(config);
+			}
+		}
+		return new Response<DataConfiguration>(false, null, null, null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/configs/data/{id}", method = RequestMethod.DELETE)
+	public Response<Void> deleteDataConfiguration(@PathVariable("id") Long id) {
+		final UserExportBiz biz = exportBiz.service();
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			UserDataConfiguration config = biz.configurationForUser(userId, UserDataConfiguration.class,
+					id);
+			if ( config != null ) {
+				biz.deleteConfiguration(config);
+			}
+		}
+		return response(null);
 	}
 
 	@ResponseBody

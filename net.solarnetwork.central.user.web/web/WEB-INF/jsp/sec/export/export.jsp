@@ -153,6 +153,7 @@
 
 <%-- Modal forms --%>
 
+<jsp:include page="edit-data-modal.jsp"/>
 <jsp:include page="edit-destination-modal.jsp"/>
 <jsp:include page="edit-output-modal.jsp"/>
 
