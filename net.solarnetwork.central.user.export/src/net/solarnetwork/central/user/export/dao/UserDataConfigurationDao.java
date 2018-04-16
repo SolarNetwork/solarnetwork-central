@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.user.export.dao;
 
-import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 
 /**
@@ -31,7 +31,7 @@ import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
  * @author matt
  * @version 1.0
  */
-public interface UserDataConfigurationDao extends GenericDao<UserDataConfiguration, Long>,
+public interface UserDataConfigurationDao extends UserRelatedGenericDao<UserDataConfiguration, Long>,
 		UserConfigurationDao<UserDataConfiguration, Long> {
 
 }

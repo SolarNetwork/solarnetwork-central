@@ -40,12 +40,12 @@
 			, dest_conf_id = #{userDestinationConfigurationId}
 			, outp_conf_id = #{userOutputConfigurationId}
 		WHERE
-			id = #{id}
+			id = #{id} AND user_id = #{userId}
 	</update>
 
-	<delete id="delete-UserDatumExportConfiguration" parameterType="long">
+	<delete id="delete-UserDatumExportConfiguration" parameterType="UserDatumExportConfiguration">
 		DELETE FROM solaruser.user_export_datum_conf
-		WHERE id = #{id}
+		WHERE id = #{id} AND user_id = #{userId}
 	</delete>
 	
 	<sql id="fragment-UserDatumExportConfiguration-full-result">
@@ -85,10 +85,10 @@
 			solaruser.user_export_outp_conf uopc ON uopc.id = udexc.outp_conf_id
 	</sql>
 
-	<select id="get-UserDatumExportConfiguration-for-id" parameterType="long" resultMap="UserDatumExportConfigurationFullResult">
+	<select id="get-UserDatumExportConfiguration-for-id" parameterType="map" resultMap="UserDatumExportConfigurationFullResult">
 		<include refid="fragment-UserDatumExportConfiguration-select-full"/>
 		WHERE
-			udexc.id = #{id}
+			udexc.id = #{id} AND udexc.user_id = #{userId}
 	</select>
 	
 	<select id="find-UserDatumExportConfiguration-for-user" parameterType="long" resultMap="UserDatumExportConfigurationFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">

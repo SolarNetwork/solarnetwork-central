@@ -206,7 +206,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 	@Test
 	public void getByPrimaryKey() {
 		storeNewWithConfigurations();
-		UserDatumExportConfiguration conf = dao.get(this.conf.getId());
+		UserDatumExportConfiguration conf = dao.get(this.conf.getId(), this.user.getId());
 		assertThat("Found by PK", conf, notNullValue());
 		assertThat("Different instance", conf, not(sameInstance(this.conf)));
 		assertThat("PK", conf.getId(), equalTo(this.conf.getId()));
@@ -260,7 +260,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 	@Test
 	public void update() {
 		storeNewWithConfigurations();
-		UserDatumExportConfiguration conf = dao.get(this.conf.getId());
+		UserDatumExportConfiguration conf = dao.get(this.conf.getId(), this.user.getId());
 
 		conf.setName("new.name");
 		conf.setHourDelayOffset(5);
@@ -269,7 +269,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		Long id = dao.store(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
 
-		UserDatumExportConfiguration updatedConf = dao.get(id);
+		UserDatumExportConfiguration updatedConf = dao.get(id, this.user.getId());
 		assertThat("Found by PK", updatedConf, notNullValue());
 		assertThat("New entity returned", updatedConf, not(sameInstance(conf)));
 		assertThat("PK", updatedConf.getId(), equalTo(conf.getId()));

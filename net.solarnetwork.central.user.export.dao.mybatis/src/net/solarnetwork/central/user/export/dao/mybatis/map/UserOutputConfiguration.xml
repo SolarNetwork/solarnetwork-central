@@ -37,12 +37,12 @@
 			, sprops = CAST(#{servicePropsJson} AS jsonb)
 			, compression = #{compressionTypeKey}
 		WHERE
-			id = #{id}
+			id = #{id} AND user_id = #{userId}
 	</update>
 
-	<delete id="delete-UserOutputConfiguration" parameterType="long">
+	<delete id="delete-UserOutputConfiguration" parameterType="UserOutputConfiguration">
 		DELETE FROM solaruser.user_export_outp_conf
-		WHERE id = #{id}
+		WHERE id = #{id} AND user_id = #{userId}
 	</delete>
 	
 	<sql id="fragment-UserOutputConfiguration-full-result">
@@ -65,13 +65,13 @@
 		<result property="compressionTypeKey" column="user_export_outp_conf_compression"/>
 	</resultMap>
 	
-	<select id="get-UserOutputConfiguration-for-id" parameterType="long" resultMap="UserOutputConfigurationFullResult">
+	<select id="get-UserOutputConfiguration-for-id" parameterType="map" resultMap="UserOutputConfigurationFullResult">
 		SELECT
 			<include refid="fragment-UserOutputConfiguration-full-result"/>
 		FROM
 			solaruser.user_export_outp_conf uopc
 		WHERE
-			uopc.id = #{id}
+			uopc.id = #{id} AND uopc.user_id = #{userId}
 	</select>
 	
 	<select id="find-UserOutputConfiguration-for-user" parameterType="long" resultMap="UserOutputConfigurationFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">

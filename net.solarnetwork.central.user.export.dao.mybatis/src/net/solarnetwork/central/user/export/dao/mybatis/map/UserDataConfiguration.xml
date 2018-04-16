@@ -39,12 +39,13 @@
 			, sprops = CAST(#{servicePropsJson} AS jsonb)
 			, filter = CAST(#{filterJson} AS jsonb)
 		WHERE
-			id = #{id}
+			id = #{id} AND user_id = #{userId}
+			
 	</update>
 
-	<delete id="delete-UserDataConfiguration" parameterType="long">
+	<delete id="delete-UserDataConfiguration" parameterType="UserDataConfiguration">
 		DELETE FROM solaruser.user_export_data_conf
-		WHERE id = #{id}
+		WHERE id = #{id} AND user_id = #{userId}
 	</delete>
 	
 	<sql id="fragment-UserDataConfiguration-full-result">
@@ -67,13 +68,13 @@
 		<result property="filterJson" column="user_export_data_conf_filter"/>
 	</resultMap>
 	
-	<select id="get-UserDataConfiguration-for-id" parameterType="long" resultMap="UserDataConfigurationFullResult">
+	<select id="get-UserDataConfiguration-for-id" parameterType="map" resultMap="UserDataConfigurationFullResult">
 		SELECT
 			<include refid="fragment-UserDataConfiguration-full-result"/>
 		FROM
 			solaruser.user_export_data_conf udac
 		WHERE
-			udac.id = #{id}
+			udac.id = #{id} AND udac.user_id = #{userId}
 	</select>
 	
 	<select id="find-UserDataConfiguration-for-user" parameterType="long" resultMap="UserDataConfigurationFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">

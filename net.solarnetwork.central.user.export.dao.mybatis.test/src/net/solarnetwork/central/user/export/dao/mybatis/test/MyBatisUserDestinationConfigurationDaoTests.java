@@ -98,7 +98,7 @@ public class MyBatisUserDestinationConfigurationDaoTests extends AbstractMyBatis
 	@Test
 	public void getByPrimaryKey() {
 		storeNew();
-		UserDestinationConfiguration conf = confDao.get(this.conf.getId());
+		UserDestinationConfiguration conf = confDao.get(this.conf.getId(), this.user.getId());
 		assertThat("Found by PK", conf, notNullValue());
 		assertThat("PK", conf.getId(), equalTo(this.conf.getId()));
 		assertThat("Created", conf.getCreated().secondOfMinute().roundFloorCopy(),
@@ -118,7 +118,7 @@ public class MyBatisUserDestinationConfigurationDaoTests extends AbstractMyBatis
 	@Test
 	public void update() {
 		storeNew();
-		UserDestinationConfiguration conf = confDao.get(this.conf.getId());
+		UserDestinationConfiguration conf = confDao.get(this.conf.getId(), this.user.getId());
 
 		conf.setName("new.name");
 		conf.setServiceIdentifier("new.ident");
@@ -130,7 +130,7 @@ public class MyBatisUserDestinationConfigurationDaoTests extends AbstractMyBatis
 		Long id = confDao.store(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
 
-		UserDestinationConfiguration updatedConf = confDao.get(id);
+		UserDestinationConfiguration updatedConf = confDao.get(id, this.user.getId());
 		assertThat("Found by PK", updatedConf, notNullValue());
 		assertThat("New entity returned", updatedConf, not(sameInstance(conf)));
 		assertThat("PK", updatedConf.getId(), equalTo(conf.getId()));

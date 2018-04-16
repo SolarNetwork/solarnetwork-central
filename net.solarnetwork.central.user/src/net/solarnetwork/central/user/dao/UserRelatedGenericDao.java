@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserConfigurationDao.java - 22/03/2018 9:27:57 AM
+ * UserRelatedGenericDao.java - 17/04/2018 10:44:57 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,31 +20,38 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.export.dao;
+package net.solarnetwork.central.user.dao;
 
 import java.io.Serializable;
-import java.util.List;
+import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.UserRelatedEntity;
 
 /**
- * Common DAO API for user configuration entities.
+ * Extension of {@link GenericDao} to restrict actions based on the owner of the
+ * entities.
+ * 
+ * <p>
+ * The idea with this DAO is to add the user ID of each entity into all SQL
+ * queries, so that querying and updates are always restricted to a specific
+ * user. Often the user will be the currently authenticated actor, which will
+ * have already been verified before reaching the DAO layer.
+ * </p>
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserConfigurationDao<T extends UserRelatedEntity<PK>, PK extends Serializable> {
+public interface UserRelatedGenericDao<T extends UserRelatedEntity<PK>, PK extends Serializable>
+		extends GenericDao<T, PK> {
 
 	/**
-	 * Get a set of all configuration entities for a user.
+	 * Get a persisted domain object by its primary key and the owner's user ID.
 	 * 
-	 * <p>
-	 * The results will be ordered by name.
-	 * </p>
-	 * 
+	 * @param id
+	 *        the primary key to retrieve
 	 * @param userId
-	 *        The ID of the user to get all configurations for.
-	 * @return The found entities, or an empty list if none found.
+	 *        the ID of the owner
+	 * @return the domain object
 	 */
-	List<T> findConfigurationsForUser(Long userId);
+	T get(PK id, Long userId);
 
 }
