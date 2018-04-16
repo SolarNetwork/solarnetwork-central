@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import org.springframework.context.MessageSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,7 @@ import net.solarnetwork.central.user.export.dao.UserDataConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao;
+import net.solarnetwork.central.user.export.domain.BaseExportConfigurationEntity;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
@@ -44,7 +47,11 @@ import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.SettingSpecifierProvider;
+import net.solarnetwork.settings.support.SettingUtils;
 import net.solarnetwork.util.OptionalServiceCollection;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * DAO implementation of {@link UserExportBiz}.
@@ -163,15 +170,75 @@ public class DaoUserExportBiz implements UserExportBiz {
 		}
 	}
 
+	private Iterable<? extends SettingSpecifierProvider> providersForServiceProperties(
+			Class<? extends UserIdentifiableConfiguration> configurationClass) {
+		if ( UserDestinationConfiguration.class.isAssignableFrom(configurationClass) ) {
+			return availableDestinationServices();
+		} else if ( UserOutputConfiguration.class.isAssignableFrom(configurationClass) ) {
+			return availableOutputFormatServices();
+		}
+		return Collections.emptyList();
+	}
+
+	private List<SettingSpecifier> settingsForService(String identifier,
+			Iterable<? extends SettingSpecifierProvider> providers) {
+		if ( identifier != null && providers != null ) {
+			for ( SettingSpecifierProvider provider : providers ) {
+				if ( identifier.equals(provider.getSettingUID()) ) {
+					return provider.getSettingSpecifiers();
+				}
+			}
+		}
+		return Collections.emptyList();
+	}
+
+	private <T extends BaseExportConfigurationEntity> T mergeServiceProperties(T entity) {
+		if ( entity == null || entity.getId() == null ) {
+			return entity;
+		}
+		Map<String, Object> serviceProps = entity.getServiceProps();
+		if ( serviceProps == null || serviceProps.isEmpty() ) {
+			return entity;
+		}
+		BaseExportConfigurationEntity existing = configurationForUser(entity.getUserId(),
+				entity.getClass(), entity.getId());
+		if ( existing == null ) {
+			return entity;
+		}
+		Map<String, Object> existingServiceProps = existing.getServiceProps();
+		if ( existingServiceProps == null || existingServiceProps.isEmpty() ) {
+			return entity;
+		}
+		Iterable<? extends SettingSpecifierProvider> providers = providersForServiceProperties(
+				entity.getClass());
+		List<SettingSpecifier> settings = settingsForService(entity.getServiceIdentifier(), providers);
+		Set<String> secureEntrySettings = SettingUtils.secureKeys(settings);
+		for ( String secureKey : secureEntrySettings ) {
+			Object val = serviceProps.get(secureKey);
+			String secureVal = (val != null ? val.toString() : "");
+			if ( secureVal.isEmpty()
+					|| StringUtils.DIGEST_PREFIX_PATTERN.matcher(secureVal).matches() ) {
+				// secure value is provided that is empty or is already a digest value; do not change existing value
+				Object existingVal = existingServiceProps.get(secureKey);
+				if ( existingVal != null ) {
+					serviceProps.put(secureKey, existingVal);
+				}
+			}
+		}
+		return entity;
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public Long saveConfiguration(UserIdentifiableConfiguration configuration) {
 		if ( configuration instanceof UserDataConfiguration ) {
-			return dataConfigDao.store((UserDataConfiguration) configuration);
+			return dataConfigDao.store(mergeServiceProperties((UserDataConfiguration) configuration));
 		} else if ( configuration instanceof UserDestinationConfiguration ) {
-			return destinationConfigDao.store((UserDestinationConfiguration) configuration);
+			return destinationConfigDao
+					.store(mergeServiceProperties((UserDestinationConfiguration) configuration));
 		} else if ( configuration instanceof UserOutputConfiguration ) {
-			return outputConfigDao.store((UserOutputConfiguration) configuration);
+			return outputConfigDao
+					.store(mergeServiceProperties((UserOutputConfiguration) configuration));
 		}
 		throw new IllegalArgumentException("Unsupported configuration: " + configuration);
 	}
