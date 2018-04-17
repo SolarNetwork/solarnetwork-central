@@ -24,7 +24,7 @@ package net.solarnetwork.central.user.export.dao;
 
 import java.util.List;
 import org.joda.time.DateTime;
-import net.solarnetwork.central.datum.domain.export.ScheduleType;
+import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 

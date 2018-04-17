@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.datum.export.standard;
 
-import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
-import net.solarnetwork.central.datum.support.BaseDatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatService;
 
 /**
  * JSON implementation of {@link DatumExportOutputFormatService}

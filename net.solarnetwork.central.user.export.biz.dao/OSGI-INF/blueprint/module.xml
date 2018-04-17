@@ -34,13 +34,13 @@
 		<property name="outputFormatServices">
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>
-				<property name="serviceClassName" value="net.solarnetwork.central.datum.biz.DatumExportOutputFormatService"/>
+				<property name="serviceClassName" value="net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService"/>
 			</bean>
 		</property>
 		<property name="destinationServices">
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>
-				<property name="serviceClassName" value="net.solarnetwork.central.datum.biz.DatumExportDestinationService"/>
+				<property name="serviceClassName" value="net.solarnetwork.central.datum.export.biz.DatumExportDestinationService"/>
 			</bean>
 		</property>
 		<property name="messageSource">
@@ -49,12 +49,12 @@
 					<map>
 						<entry key="compressionType.">
 							<bean class="org.springframework.context.support.ResourceBundleMessageSource">
-								<property name="basename" value="net.solarnetwork.central.datum.domain.export.OutputCompressionType"/>
+								<property name="basename" value="net.solarnetwork.central.datum.export.domain.OutputCompressionType"/>
 							</bean>
 						</entry>
 						<entry key="scheduleType.">
 							<bean class="org.springframework.context.support.ResourceBundleMessageSource">
-								<property name="basename" value="net.solarnetwork.central.datum.domain.export.ScheduleType"/>
+								<property name="basename" value="net.solarnetwork.central.datum.export.domain.ScheduleType"/>
 							</bean>
 						</entry>
 					</map>

@@ -57,6 +57,7 @@
 		<property name="dataSource" ref="dataSource"/>
 		<property name="typeAliases">
 			<list>
+				<value>java.util.UUID</value>
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
 				<value>net.solarnetwork.central.user.domain.User</value>
@@ -65,6 +66,8 @@
 				<value>net.solarnetwork.central.user.export.domain.UserDestinationConfiguration</value>
 				<value>net.solarnetwork.central.user.export.domain.UserOutputConfiguration</value>
 				<value>net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration</value>
+				<value>net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK</value>
+				<value>net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo</value>
 			</list>
 		</property>
 		<property name="typeHandlers">
@@ -73,6 +76,7 @@
 				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler"/>
 				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTypeHandler"/>
 				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalTimeTypeHandler"/>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
 			</list>
 		</property>
 		<property name="mapperLocations">
@@ -86,6 +90,7 @@
 				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDestinationConfiguration.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserOutputConfiguration.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDatumExportConfiguration.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDatumExportTaskInfo.xml</value>
 			</list>
 		</property>
 	</bean>

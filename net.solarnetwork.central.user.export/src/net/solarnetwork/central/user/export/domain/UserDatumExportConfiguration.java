@@ -25,11 +25,11 @@ package net.solarnetwork.central.user.export.domain;
 import java.io.Serializable;
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.datum.domain.export.Configuration;
-import net.solarnetwork.central.datum.domain.export.DataConfiguration;
-import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
-import net.solarnetwork.central.datum.domain.export.OutputConfiguration;
-import net.solarnetwork.central.datum.domain.export.ScheduleType;
+import net.solarnetwork.central.datum.export.domain.Configuration;
+import net.solarnetwork.central.datum.export.domain.DataConfiguration;
+import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
+import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
+import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.domain.BaseEntity;
 import net.solarnetwork.central.user.domain.UserRelatedEntity;
 

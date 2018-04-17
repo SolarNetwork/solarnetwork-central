@@ -14,26 +14,26 @@ CREATE TABLE solarnet.sn_datum_export_task (
 );
 
 /**************************************************************************************************
- * FUNCTION solarnet.add_datum_export_task(uuid, timestamp with time zone, jsonb)
+ * FUNCTION solarnet.add_datum_export_task(uuid, timestamp with time zone, text)
  *
  * Insert a new datum export task record.
  *
  * @param uid the UUID of the task
  * @param ex_date the export date of the task
- * @param cfg the complete export configuration document
+ * @param cfg the complete export configuration document, as JSON
  * @return the status value of the inserted record
  */
 CREATE OR REPLACE FUNCTION solarnet.add_datum_export_task(
 	uid uuid,
 	ex_date TIMESTAMP WITH TIME ZONE,
-	cfg jsonb
+	cfg text
   ) RETURNS CHARACTER(1) LANGUAGE plpgsql VOLATILE AS
 $BODY$
 BEGIN
 	INSERT INTO solarnet.sn_datum_export_task
 		(id, created, export_date, config, status)
 	VALUES
-		(uid, CURRENT_TIMESTAMP, ex_date, cfg, 'q');
+		(uid, CURRENT_TIMESTAMP, ex_date, cfg::jsonb, 'q');
 	RETURN 'q';
 END;
 $BODY$;

@@ -13,7 +13,7 @@
 	<!-- Published Services -->
 	
 	<service ref="exportDestService" 
-		interface="net.solarnetwork.central.datum.biz.DatumExportDestinationService"/>
+		interface="net.solarnetwork.central.datum.export.biz.DatumExportDestinationService"/>
 	
 	<!-- Supporting Services -->
 	

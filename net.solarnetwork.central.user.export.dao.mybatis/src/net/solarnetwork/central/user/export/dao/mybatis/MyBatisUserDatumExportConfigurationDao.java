@@ -29,7 +29,7 @@ import java.util.Map;
 import org.joda.time.DateTime;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import net.solarnetwork.central.datum.domain.export.ScheduleType;
+import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;

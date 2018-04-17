@@ -8,14 +8,14 @@
 		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
 		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd">
 
-	<service interface="net.solarnetwork.central.datum.biz.DatumExportOutputFormatService">
+	<service interface="net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService">
 		<bean class="net.solarnetwork.central.datum.export.standard.CsvDatumExportOutputFormatService">
 			<property name="messageSource">
 				<bean class="org.springframework.context.support.ResourceBundleMessageSource">
 					<property name="basenames">
 						<array>
 							<value>net.solarnetwork.central.datum.export.standard.CsvDatumExportOutputFormatService</value>
-							<value>net.solarnetwork.central.datum.domain.export.OutputConfiguration</value>
+							<value>net.solarnetwork.central.datum.export.domain.OutputConfiguration</value>
 						</array>
 					</property>
 				</bean>
@@ -23,14 +23,14 @@
 		</bean>
 	</service>
 	
-	<service interface="net.solarnetwork.central.datum.biz.DatumExportOutputFormatService">
+	<service interface="net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService">
 		<bean class="net.solarnetwork.central.datum.export.standard.JsonDatumExportOutputFormatService">
 			<property name="messageSource">
 				<bean class="org.springframework.context.support.ResourceBundleMessageSource">
 					<property name="basenames">
 						<array>
 							<value>net.solarnetwork.central.datum.export.standard.JsonDatumExportOutputFormatService</value>
-							<value>net.solarnetwork.central.datum.domain.export.OutputConfiguration</value>
+							<value>net.solarnetwork.central.datum.export.domain.OutputConfiguration</value>
 						</array>
 					</property>
 				</bean>

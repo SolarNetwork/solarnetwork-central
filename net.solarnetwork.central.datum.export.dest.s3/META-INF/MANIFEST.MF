@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet S3 Datum Export Destination
 Bundle-SymbolicName: net.solarnetwork.central.datum.export.dest.s3
-Bundle-Version: 0.1.0
+Bundle-Version: 1.0.0
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.datum.export.dest.s3
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -16,9 +16,9 @@ Import-Package:
  com.amazonaws.services.s3.model;version="[1.11,1.12)",
  com.amazonaws.services.s3.transfer;version="[1.11,1.12)",
  net.solarnetwork.central;version="1.4.0",
- net.solarnetwork.central.datum.biz;version="1.2.0",
- net.solarnetwork.central.datum.domain.export;version="1.0.0",
- net.solarnetwork.central.datum.support;version="1.7.0",
+ net.solarnetwork.central.datum.export.biz;version="1.0.0",
+ net.solarnetwork.central.datum.export.domain;version="1.0.0",
+ net.solarnetwork.central.datum.export.support;version="1.0.0",
  net.solarnetwork.central.domain;version="1.24.0",
  net.solarnetwork.domain;version="1.12.0",
  net.solarnetwork.settings;version="1.0.0",

@@ -91,6 +91,7 @@ CREATE INDEX user_export_datum_conf_user_idx ON solaruser.user_export_datum_conf
  *
  */
 CREATE TABLE solaruser.user_export_task (
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id			BIGINT NOT NULL,
 	schedule		CHARACTER(1) NOT NULL,
 	export_date		TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -117,7 +118,7 @@ CREATE OR REPLACE FUNCTION solaruser.store_export_task(
 	usr BIGINT,
 	sched CHARACTER(1),
 	ex_date TIMESTAMP WITH TIME ZONE,
-	cfg jsonb
+	cfg text
   ) RETURNS uuid LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE

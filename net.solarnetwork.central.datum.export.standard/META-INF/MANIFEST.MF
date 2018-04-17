@@ -10,10 +10,10 @@ Export-Package:
  net.solarnetwork.central.datum.export.standard;version="0.1.0"
 Import-Package: 
  net.solarnetwork.central;version="1.4.0",
- net.solarnetwork.central.datum.biz;version="1.2.0",
  net.solarnetwork.central.datum.domain;version="1.19.0",
- net.solarnetwork.central.datum.domain.export;version="1.0.0",
- net.solarnetwork.central.datum.support;version="1.7.0",
+ net.solarnetwork.central.datum.export.biz;version="1.0.0",
+ net.solarnetwork.central.datum.export.domain;version="1.0.0",
+ net.solarnetwork.central.datum.export.support;version="1.0.0",
  net.solarnetwork.central.domain;version="1.24.0",
  net.solarnetwork.domain;version="1.12.0",
  net.solarnetwork.settings;version="1.0.0",

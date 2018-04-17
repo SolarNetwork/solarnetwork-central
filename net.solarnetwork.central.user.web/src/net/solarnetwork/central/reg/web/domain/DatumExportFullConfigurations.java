@@ -23,9 +23,9 @@
 package net.solarnetwork.central.reg.web.domain;
 
 import java.util.List;
-import net.solarnetwork.central.datum.domain.export.DataConfiguration;
-import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
-import net.solarnetwork.central.datum.domain.export.OutputConfiguration;
+import net.solarnetwork.central.datum.export.domain.DataConfiguration;
+import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
+import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 
 /**

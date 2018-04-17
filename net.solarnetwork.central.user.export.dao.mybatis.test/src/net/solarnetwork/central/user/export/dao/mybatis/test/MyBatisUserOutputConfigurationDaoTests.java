@@ -38,7 +38,7 @@ import java.util.Map;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import net.solarnetwork.central.datum.domain.export.OutputCompressionType;
+import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserOutputConfigurationDao;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;

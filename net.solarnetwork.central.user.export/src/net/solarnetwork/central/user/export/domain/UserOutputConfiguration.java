@@ -25,8 +25,8 @@ package net.solarnetwork.central.user.export.domain;
 import java.io.Serializable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.datum.domain.export.OutputCompressionType;
-import net.solarnetwork.central.datum.domain.export.OutputConfiguration;
+import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
+import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 
 /**
  * User related {@link OutputConfiguration} entity.
