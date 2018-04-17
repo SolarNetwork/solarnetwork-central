@@ -313,7 +313,8 @@ $(document).ready(function() {
 			loadCountdown -= 1;
 			if ( loadCountdown === 0 ) {
 				populateExportConfigs(exportConfigs);
-				$('.datum-export-getstarted').toggleClass('hidden', exportConfigs.length > 0);
+				$('.datum-export-getstarted').toggleClass('hidden', 
+					exportConfigs.datumExportConfigs && exportConfigs.datumExportConfigs.length > 0);
 			}
 		}
 
