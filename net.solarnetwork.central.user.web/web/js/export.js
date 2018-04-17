@@ -60,23 +60,31 @@ $(document).ready(function() {
 			return model;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
-		/*
-		container.find('a').forEach(function(idx, el) {
-			var btn = $(el),
-				configType = btn.data('config-type'),
+
+		// attach actual service configuration to each link
+		container.find('a.edit-link:not(*[data-config-type])').each(function(idx, el) {
+			var btn = $(el),			
 				config = SolarReg.Templates.findContextItem(btn);
-			if ( !(configType && config) ) {
+			if ( !config ) {
 				return;
 			}
-			if ( configType === 'data' ) {
 
-			} else if ( configType === 'destintation' ) {
-
-			} else if ( configType === 'output'  ) {
-
-			}
+			btn.parent().find('.edit-link[data-config-type]').each(function(idx, el) {
+				var link = $(el),
+					configType = link.data('config-type'),
+					relatedConfig;
+				if ( configType === 'data' ) {
+					relatedConfig = SolarReg.findByIdentifier(exportConfigs.dataConfigs, config.dataConfigurationId);
+				} else if ( configType === 'destination' ) {
+					relatedConfig = SolarReg.findByIdentifier(exportConfigs.destinationConfigs, config.destinationConfigurationId);
+				} else if ( configType === 'output'  ) {
+					relatedConfig = SolarReg.findByIdentifier(exportConfigs.outputConfigs, config.outputConfigurationId);
+				}
+				if ( relatedConfig ) {
+					SolarReg.Templates.setContextItem(link, relatedConfig);
+				}
+			});
 		});
-		*/
 		return configs;
 	}
 	
@@ -309,6 +317,21 @@ $(document).ready(function() {
 
 		$('#datum-export-list-container').on('click', function(event) {
 			console.log('Got click on %o export config: %o', event.target, event);
+			var target = event.target,
+				el = $(event.target),
+				configType = el.data('config-type');
+			if ( configType ) {
+				var config = SolarReg.Templates.findContextItem(el);
+				if ( configType === 'data' ) {
+					SolarReg.Settings.handleEditServiceItemAction(event, dataServices, settingTemplates);
+				} else if ( configType === 'destination' ) {
+					SolarReg.Settings.handleEditServiceItemAction(event, destinationServices, settingTemplates);
+				} else if ( configType === 'output'  ) {
+					SolarReg.Settings.handleEditServiceItemAction(event, outputServices, settingTemplates);
+				}
+			} else {
+				SolarReg.Settings.handleEditServiceItemAction(event, [], settingTemplates);
+			}
 			event.preventDefault();
 		});
 	});

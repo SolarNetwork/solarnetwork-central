@@ -37,7 +37,7 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 	f.find('button.delete-config').addClass('hidden');
 
 	// clear any context item
-	f.removeData('context-item');
+	SolarReg.Templates.setContextItem(f, null);
 };
 
 /**
@@ -319,7 +319,7 @@ SolarReg.Settings.handleEditServiceItemAction = function handleEditAction(event,
 		var config = SolarReg.Templates.findContextItem(event.target);
 		var button = $(event.target);
 		var modal = $(button.data('edit-modal'));
-		modal.data('context-item', config);
+		SolarReg.Templates.setContextItem(modal, config);
 		modal.modal('show');
 	}
 };

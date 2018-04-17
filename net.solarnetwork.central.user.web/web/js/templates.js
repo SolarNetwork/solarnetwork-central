@@ -175,7 +175,7 @@ SolarReg.Templates.appendTemplateItem = function appendTemplateItem(container, t
    }
    var newItem = template.clone(true).removeClass('template');
    if ( item._contextItem ) {
-	   newItem.data('context-item', item._contextItem);
+	   SolarReg.Templates.setContextItem(newItem, item._contextItem);
    }
    SolarReg.Templates.replaceTemplateProperties(newItem, item).appendTo(container);
    newItem.find('a.edit-link').on('click', function(event) {
@@ -223,4 +223,18 @@ SolarReg.Templates.findContextItem = function findContextItem(el) {
 	return el.parents().filter(function(i, e) {
 		return !!$(e).data('context-item');
 	}).first().data('context-item');
+};
+
+/**
+ * Set or remove a context item on a DOM element.
+ * 
+ * @param {element} el the element to set or remove the context item on; a jQuery object is also allowed
+ * @param {Object} [item] if provided, the context item to set; if falsy then remove any context item 
+ */
+SolarReg.Templates.setContextItem = function setContextItem(el, item) {
+	if ( item ) {
+		$(el).data('context-item', item);
+	} else {
+		$(el).removeData('context-item');
+	}
 };
