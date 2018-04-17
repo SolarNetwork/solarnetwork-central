@@ -31,11 +31,14 @@ $(document).ready(function() {
 				_contextItem: config,
 				id: config.id,
 				name: config.name,
-				schedule: config.schedule,
+				schedule: SolarReg.Templates.serviceDisplayName(scheduleTypes, config.scheduleKey),
 				dataConfigId: config.dataConfigurationId,
 				destinationConfigId: config.destinationConfigurationId,
 				outputConfigId: config.outputConfigurationId,
 			};
+			if ( model.schedule ) {
+				model.schedule = model.schedule.toLowerCase();
+			}
 			if ( config.dataConfigurationId ) {
 				relatedConfig = SolarReg.findByIdentifier(exportConfigs.dataConfigs, config.dataConfigurationId);
 				if ( relatedConfig ) {
@@ -94,6 +97,8 @@ $(document).ready(function() {
 				}
 			});
 		});
+
+		container.closest('section').find('.listCount').text(configs.length);
 		return configs;
 	}
 	
@@ -115,6 +120,7 @@ $(document).ready(function() {
 			return model;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
+		container.closest('section').find('.listCount').text(configs.length);
 		return configs;
 	}
 	
@@ -125,6 +131,7 @@ $(document).ready(function() {
 			return SolarReg.Settings.serviceConfigurationItem(config, destinationServices);
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
+		container.closest('section').find('.listCount').text(configs.length);
 		return configs;
 	}
 	
@@ -137,6 +144,7 @@ $(document).ready(function() {
 			return item;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
+		container.closest('section').find('.listCount').text(configs.length);
 		return configs;
 	}
 
