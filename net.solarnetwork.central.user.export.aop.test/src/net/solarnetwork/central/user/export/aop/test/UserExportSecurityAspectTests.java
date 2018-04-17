@@ -100,44 +100,6 @@ public class UserExportSecurityAspectTests extends AbstractCentralTest {
 	}
 
 	@Test(expected = AuthorizationException.class)
-	public void readDatumExportConfigNoAuth() {
-		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
-		conf.setUserId(TEST_USER_ID);
-		replayAll();
-		aspect.readDatumExportConfigurationCheck(conf);
-		verifyAll();
-	}
-
-	@Test(expected = AuthorizationException.class)
-	public void readDatumExportConfigWrongUser() {
-		becomeUser("ROLE_USER");
-		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
-		conf.setUserId(-2L);
-		replayAll();
-		aspect.readDatumExportConfigurationCheck(conf);
-		verifyAll();
-	}
-
-	@Test(expected = AuthorizationException.class)
-	public void readDatumExportConfigMissingUser() {
-		becomeUser("ROLE_USER");
-		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
-		replayAll();
-		aspect.readDatumExportConfigurationCheck(conf);
-		verifyAll();
-	}
-
-	@Test
-	public void readDatumExportConfigAllowed() {
-		becomeUser("ROLE_USER");
-		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
-		conf.setUserId(TEST_USER_ID);
-		replayAll();
-		aspect.readDatumExportConfigurationCheck(conf);
-		verifyAll();
-	}
-
-	@Test(expected = AuthorizationException.class)
 	public void saveConfigNoAuth() {
 		replayAll();
 		UserDatumExportConfiguration config = new UserDatumExportConfiguration();
