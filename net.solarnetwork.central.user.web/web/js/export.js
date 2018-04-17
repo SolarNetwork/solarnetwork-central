@@ -17,20 +17,66 @@ $(document).ready(function() {
 		}
 		configs.datumExportConfigs = populateDatumExportConfigs(configs.datumExportConfigs);
 		configs.dataConfigs = populateDataConfigs(configs.dataConfigs);
-		configs.destintationConfigs = populateDestinationConfigs(configs.destintationConfigs);
+		configs.destinationConfigs = populateDestinationConfigs(configs.destinationConfigs);
 		configs.outputConfigs = populateOutputConfigs(configs.outputConfigs)
 		return configs;
 	}
-	
-	function populateDatumExportConfigs(configs) {
-		configs = Array.isArray(configs) ? configs : [];
-		// TODO
-		return configs;
+
+	function handleDatumExportConfigAction(event) {
+
 	}
 	
-	function populateDataConfigs(configs) {
-		configs = Array.isArray(configs) ? configs : [];
-		// TODO
+	function populateDatumExportConfigs(configs, preserve) {
+		var container = $('#datum-export-list-container');
+		var items = configs.map(function(config) {
+			var relatedConfig;
+			var model = {
+				_contextItem: config,
+				id: config.id,
+				name: config.name,
+				schedule: config.schedule,
+				dataConfigId: config.dataConfigurationId,
+				destinationConfigId: config.destinationConfigurationId,
+				outputConfigId: config.outputConfigurationId,
+			};
+			if ( config.dataConfigurationId ) {
+				relatedConfig = SolarReg.findByIdentifier(exportConfigs.dataConfigs, config.dataConfigurationId);
+				if ( relatedConfig ) {
+					model.dataConfigName = relatedConfig.name;
+				}
+			}
+			if ( config.destinationConfigurationId ) {
+				relatedConfig = SolarReg.findByIdentifier(exportConfigs.destinationConfigs, config.destinationConfigurationId);
+				if ( relatedConfig ) {
+					model.destinationConfigName = relatedConfig.name;
+				}
+			}
+			if ( config.outputConfigurationId ) {
+				relatedConfig = SolarReg.findByIdentifier(exportConfigs.outputConfigs, config.outputConfigurationId);
+				if ( relatedConfig ) {
+					model.outputConfigName = relatedConfig.name;
+				}
+			}
+			return model;
+		});
+		SolarReg.Templates.populateTemplateItems(container, items, preserve);
+		/*
+		container.find('a').forEach(function(idx, el) {
+			var btn = $(el),
+				configType = btn.data('config-type'),
+				config = SolarReg.Templates.findContextItem(btn);
+			if ( !(configType && config) ) {
+				return;
+			}
+			if ( configType === 'data' ) {
+
+			} else if ( configType === 'destintation' ) {
+
+			} else if ( configType === 'output'  ) {
+
+			}
+		});
+		*/
 		return configs;
 	}
 	
@@ -125,10 +171,6 @@ $(document).ready(function() {
 		}
 	}
 
-	function renderJobsList(configs) {
-		
-	}
-
 	// ***** Edit data format form
 	$('#edit-export-data-config-modal').on('show.bs.modal', function(event) {
 		SolarReg.Settings.prepareEditServiceForm($(event.target), dataServices, settingTemplates);
@@ -180,7 +222,7 @@ $(document).ready(function() {
 	.on('submit', function(event) {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateDestinationConfigs([res], true);
-			storeServiceConfiguration(res, exportConfigs.destintationConfigs);
+			storeServiceConfiguration(res, exportConfigs.destinationConfigs);
 		});
 		return false;
 	})
@@ -219,12 +261,23 @@ $(document).ready(function() {
 	$('.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
 
 	$('#datum-export-configs').first().each(function() {
+		var loadCountdown = 4;
+
+		function liftoff() {
+			loadCountdown -= 1;
+			if ( loadCountdown === 0 ) {
+				populateExportConfigs(exportConfigs);
+				$('.datum-export-getstarted').toggleClass('hidden', exportConfigs.length > 0);
+			}
+		}
+
 		// get available output services
 		$.getJSON(SolarReg.solarUserURL('/sec/export/services/output'), function(json) {
 			console.log('Got export output services: %o', json);
 			if ( json && json.success === true ) {
 				outputServices = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.export-output-services');
 			}
+			liftoff();
 		});
 
 		// get available destination services
@@ -233,6 +286,7 @@ $(document).ready(function() {
 			if ( json && json.success === true ) {
 				destinationServices = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.export-destination-services');
 			}
+			liftoff();
 		});
 
 		// get available compression services
@@ -241,15 +295,21 @@ $(document).ready(function() {
 			if ( json && json.success === true ) {
 				compressionTypes = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.export-output-compression-types');
 			}
+			liftoff();
 		});
 
 		// list all configs
 		$.getJSON(SolarReg.solarUserURL('/sec/export/configs'), function(json) {
 			console.log('Got export configurations: %o', json);
 			if ( json && json.success === true ) {
-				exportConfigs = populateExportConfigs(json.data);
-				$('.datum-export-getstarted').toggleClass('hidden', exportConfigs.length > 0);
+				exportConfigs = json.data;
 			}
+			liftoff();
+		});
+
+		$('#datum-export-list-container').on('click', function(event) {
+			console.log('Got click on %o export config: %o', event.target, event);
+			event.preventDefault();
 		});
 	});
 	

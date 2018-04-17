@@ -39,7 +39,7 @@ public class DatumExportFullConfigurations {
 
 	private final List<UserDatumExportConfiguration> datumExportConfigs;
 	private final List<? extends DataConfiguration> dataConfigs;
-	private final List<? extends DestinationConfiguration> destintationConfigs;
+	private final List<? extends DestinationConfiguration> destinationConfigs;
 	private final List<? extends OutputConfiguration> outputConfigs;
 
 	public DatumExportFullConfigurations(List<UserDatumExportConfiguration> datumExportConfigs,
@@ -49,7 +49,7 @@ public class DatumExportFullConfigurations {
 		super();
 		this.datumExportConfigs = datumExportConfigs;
 		this.dataConfigs = dataConfigs;
-		this.destintationConfigs = destintationConfigs;
+		this.destinationConfigs = destintationConfigs;
 		this.outputConfigs = outputConfigs;
 	}
 
@@ -61,8 +61,8 @@ public class DatumExportFullConfigurations {
 		return dataConfigs;
 	}
 
-	public List<? extends DestinationConfiguration> getDestintationConfigs() {
-		return destintationConfigs;
+	public List<? extends DestinationConfiguration> getDestinationConfigs() {
+		return destinationConfigs;
 	}
 
 	public List<? extends OutputConfiguration> getOutputConfigs() {

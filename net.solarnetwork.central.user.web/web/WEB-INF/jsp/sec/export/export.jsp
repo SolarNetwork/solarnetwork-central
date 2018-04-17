@@ -13,7 +13,7 @@
 <section id="datum-export-configs">
 	<h2>
 		<fmt:message key='export.datumExportList.header'/>
-		<a href="#create-datum-export-config" class="btn btn-primary pull-right" data-toggle="modal" 
+		<a href="#edit-datum-export-config-modal" class="btn btn-primary pull-right" data-toggle="modal" 
 			title="<fmt:message key='export.datumExportList.action.create'/>">
 			<i class="glyphicon glyphicon-plus"></i>
 		</a>
@@ -23,13 +23,17 @@
 			<fmt:param value='0'/>
 		</fmt:message>
 	</p>
-	<ol class="table configs list-container" id="datum-export-list-container">
-		<li class="template">
-			<p>
-				<fmt:message key='export.datumExportList.exportListItem'/>
-			</p>
-		</li>
-	</ol>
+	<div id="datum-export-list-container" class="table configs hidden">
+		<ol class="list-container">
+		</ol>
+		<ol class="hidden">
+			<li class="template">
+				<p>
+					<fmt:message key='export.datumExportList.exportListItem'/>
+				</p>
+			</li>
+		</ol>
+	</div>
 </section>
 
 <section id="export-data-configs">
