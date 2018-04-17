@@ -15,15 +15,18 @@ SolarReg.Templates.serviceDisplayName =	function serviceDisplayName(services, id
 /**
  * Populate an HTML `<select>` element with options based on localized service infos.
  * 
+ * Each
+ * 
  * @param {Array} services array of localized service infos
  * @param {String} selector jQuery selector for the `<select>` element to update
+ * @returns {Array} the `services` array
  */
 SolarReg.Templates.populateServiceSelectOptions = function populateServiceSelectOptions(services, selector) {
 	services = Array.isArray(services) ? services : [];
-	$(selector).each(function() {
+	$(selector).empty().each(function() {
 		var select = this;
 		services.forEach(function(service) {
-			select.add(new Option(service.localizedName, service.id));
+			select.add(new Option(service.localizedName || service.name, service.id));
 		});
 	});
 	return services;

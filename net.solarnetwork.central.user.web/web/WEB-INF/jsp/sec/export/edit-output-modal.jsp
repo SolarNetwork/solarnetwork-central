@@ -30,7 +30,7 @@
 		 				${' '}
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<select class="form-control export-output-services" name="serviceIdentifier" required="required">
+		 				<select class="form-control" name="serviceIdentifier" required="required">
 		 				</select>
 		 			</div>
 		 		</div>

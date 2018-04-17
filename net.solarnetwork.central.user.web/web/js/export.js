@@ -199,6 +199,9 @@ $(document).ready(function() {
 	// ***** Edit datum export job form
 	$('#edit-datum-export-config-modal').on('show.bs.modal', function(event) {
 		SolarReg.Settings.prepareEditServiceForm($(event.target), [], settingTemplates);
+		SolarReg.Templates.populateServiceSelectOptions(exportConfigs.dataConfigs, 'select[name=dataConfigurationId]');
+		SolarReg.Templates.populateServiceSelectOptions(exportConfigs.destinationConfigs, 'select[name=destinationConfigurationId]');
+		SolarReg.Templates.populateServiceSelectOptions(exportConfigs.outputConfigs, 'select[name=outputConfigurationId]');
 	})
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 	.on('change', function(event) {
@@ -337,7 +340,7 @@ $(document).ready(function() {
 		$.getJSON(SolarReg.solarUserURL('/sec/export/services/output'), function(json) {
 			console.log('Got export output services: %o', json);
 			if ( json && json.success === true ) {
-				outputServices = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.export-output-services');
+				outputServices = json.data;
 			}
 			liftoff();
 		});
@@ -346,7 +349,7 @@ $(document).ready(function() {
 		$.getJSON(SolarReg.solarUserURL('/sec/export/services/destination'), function(json) {
 			console.log('Got export destination services: %o', json);
 			if ( json && json.success === true ) {
-				destinationServices = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.export-destination-services');
+				destinationServices = json.data;
 			}
 			liftoff();
 		});
