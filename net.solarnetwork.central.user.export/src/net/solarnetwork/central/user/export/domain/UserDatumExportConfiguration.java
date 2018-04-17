@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.export.domain;
 
 import java.io.Serializable;
+import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.datum.domain.export.Configuration;
 import net.solarnetwork.central.datum.domain.export.DataConfiguration;
@@ -41,7 +42,7 @@ import net.solarnetwork.central.user.domain.UserRelatedEntity;
 public class UserDatumExportConfiguration extends BaseEntity
 		implements Configuration, UserRelatedEntity<Long>, Serializable {
 
-	private static final long serialVersionUID = -1797774828456852275L;
+	private static final long serialVersionUID = -3558732991434330021L;
 
 	private Long userId;
 	private String name;
@@ -50,6 +51,7 @@ public class UserDatumExportConfiguration extends BaseEntity
 	private UserDataConfiguration userDataConfiguration;
 	private UserOutputConfiguration userOutputConfiguration;
 	private UserDestinationConfiguration userDestinationConfiguration;
+	private DateTime minimumExportDate;
 
 	@Override
 	public Long getUserId() {
@@ -192,6 +194,32 @@ public class UserDatumExportConfiguration extends BaseEntity
 	@Override
 	public DestinationConfiguration getDestinationConfiguration() {
 		return getUserDestinationConfiguration();
+	}
+
+	/**
+	 * Get the minimum export date that can be scheduled for execution.
+	 * 
+	 * @return the minimum export date
+	 */
+	public DateTime getMinimumExportDate() {
+		return minimumExportDate;
+	}
+
+	/**
+	 * Set the minimum export date that can be scheduled for execution.
+	 * 
+	 * <p>
+	 * This date will be updated over time as export tasks complete. It
+	 * represents the minimum export date that can be scheduled for future
+	 * export tasks, so that we can know at what date the next scheduled export
+	 * task should use for its export date.
+	 * </p>
+	 * 
+	 * @param minimumExportDate
+	 *        the minimum export date to use
+	 */
+	public void setMinimumExportDate(DateTime minimumExportDate) {
+		this.minimumExportDate = minimumExportDate;
 	}
 
 }

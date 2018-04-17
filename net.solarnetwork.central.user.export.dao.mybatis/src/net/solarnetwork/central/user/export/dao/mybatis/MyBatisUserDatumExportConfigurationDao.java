@@ -22,9 +22,14 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis;
 
+import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import org.joda.time.DateTime;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.datum.domain.export.ScheduleType;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
@@ -43,6 +48,12 @@ public class MyBatisUserDatumExportConfigurationDao
 	public static final String QUERY_CONFIGURATIONS_FOR_USER = "find-UserDatumExportConfiguration-for-user";
 
 	/**
+	 * The query name used for
+	 * {@link #findForExecution(DateTime, ScheduleType)}.
+	 */
+	public static final String QUERY_CONFIGURATIONS_FOR_EXECUTION = "find-UserDatumExportConfiguration-for-execution";
+
+	/**
 	 * Default constructor.
 	 */
 	public MyBatisUserDatumExportConfigurationDao() {
@@ -53,6 +64,40 @@ public class MyBatisUserDatumExportConfigurationDao
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserDatumExportConfiguration> findConfigurationsForUser(Long userId) {
 		return selectList(QUERY_CONFIGURATIONS_FOR_USER, userId, null, null);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public List<UserDatumExportConfiguration> findForExecution(Long userId, DateTime exportDate,
+			ScheduleType scheduleType) {
+		DateTime date = (exportDate != null ? exportDate : new DateTime());
+		if ( scheduleType == null ) {
+			scheduleType = ScheduleType.Daily;
+		}
+		DateTime.Property dateProperty;
+		switch (scheduleType) {
+			case Hourly:
+				dateProperty = date.minuteOfHour();
+				break;
+
+			case Weekly:
+				dateProperty = date.dayOfWeek();
+				break;
+
+			case Monthly:
+				dateProperty = date.dayOfMonth();
+				break;
+
+			default:
+				dateProperty = date.hourOfDay();
+		}
+		date = dateProperty.roundFloorCopy();
+		Timestamp ts = new Timestamp(date.getMillis());
+		Map<String, Object> params = new HashMap<>(2);
+		params.put("userId", userId);
+		params.put("date", ts);
+		params.put("schedule", scheduleType.getKey());
+		return selectList(QUERY_CONFIGURATIONS_FOR_EXECUTION, params, null, null);
 	}
 
 }

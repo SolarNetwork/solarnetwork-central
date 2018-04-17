@@ -57,6 +57,7 @@ CREATE TABLE solaruser.user_export_datum_conf (
 	cname			CHARACTER VARYING(64) NOT NULL,
 	delay_mins		INTEGER NOT NULL,
 	schedule		CHARACTER(1) NOT NULL,
+	min_export_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	data_conf_id	BIGINT,
 	dest_conf_id	BIGINT,
 	outp_conf_id	BIGINT,

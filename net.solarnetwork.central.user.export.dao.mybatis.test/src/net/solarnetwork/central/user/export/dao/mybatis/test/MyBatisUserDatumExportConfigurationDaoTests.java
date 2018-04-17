@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.export.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -290,6 +292,45 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		}
 
 		List<UserDatumExportConfiguration> found = dao.findConfigurationsForUser(this.user.getId());
+		assertThat(found, not(sameInstance(confs)));
+		assertThat(found, equalTo(confs));
+	}
+
+	@Test
+	public void findForExecution() {
+		List<UserDatumExportConfiguration> confs = new ArrayList<>(3);
+		DateTime exportDate = new DateTime(2017, 4, 18, 8, 0, 0, DateTimeZone.UTC);
+		for ( int i = 0; i < 3; i++ ) {
+			UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
+			conf.setCreated(new DateTime());
+			conf.setUserId(this.user.getId());
+			conf.setName(TEST_NAME);
+			conf.setHourDelayOffset(2);
+			conf.setSchedule(ScheduleType.Hourly);
+			conf.setMinimumExportDate(exportDate.plusHours(i));
+
+			Long id = dao.store(conf);
+			conf.setId(id);
+			confs.add(conf);
+		}
+
+		List<UserDatumExportConfiguration> found = dao.findForExecution(this.user.getId(), exportDate,
+				ScheduleType.Hourly);
+		assertThat("0800 query export date finds nothing", found, hasSize(0));
+
+		found = dao.findForExecution(this.user.getId(), exportDate.plusHours(1), ScheduleType.Hourly);
+		assertThat("0900 query export date finds 0800 conf", found, hasSize(1));
+		assertThat(found.get(0), equalTo(confs.get(0)));
+
+		found = dao.findForExecution(this.user.getId(), exportDate.plusHours(1).plusMinutes(1),
+				ScheduleType.Hourly);
+		assertThat("0901 query export date finds 0800, 0900 confs", found, hasSize(2));
+		assertThat(found.get(0), equalTo(confs.get(0)));
+		assertThat(found.get(1), equalTo(confs.get(1)));
+
+		found = dao.findForExecution(this.user.getId(), exportDate.plusHours(2).plusMinutes(1),
+				ScheduleType.Hourly);
+		assertThat("1001 query export date finds 0800, 0900, 1000 confs", found, hasSize(3));
 		assertThat(found, not(sameInstance(confs)));
 		assertThat(found, equalTo(confs));
 	}

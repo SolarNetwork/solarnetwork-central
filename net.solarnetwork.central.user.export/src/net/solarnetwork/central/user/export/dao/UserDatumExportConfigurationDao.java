@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.user.export.dao;
 
+import java.util.List;
+import org.joda.time.DateTime;
+import net.solarnetwork.central.datum.domain.export.ScheduleType;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 
@@ -34,5 +37,8 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 public interface UserDatumExportConfigurationDao
 		extends UserRelatedGenericDao<UserDatumExportConfiguration, Long>,
 		UserConfigurationDao<UserDatumExportConfiguration, Long> {
+
+	List<UserDatumExportConfiguration> findForExecution(Long userId, DateTime exportDate,
+			ScheduleType scheduleType);
 
 }
