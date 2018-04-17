@@ -71,9 +71,14 @@ SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditService
 				beforeSend: function(xhr) {
 					SolarReg.csrf(xhr);
 				}
-			}).done(function() {
-				modal.addClass('deleted');
-				modal.modal('hide');
+			}).done(function(json) {
+				if ( json && json.success === true ) {
+					modal.addClass('deleted');
+					modal.modal('hide');
+				} else {
+					var msg = (json && json.message ? json.message : 'Unknown error: ' +statusText);
+					SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', msg);
+				}
 			}).fail(function(xhr, statusText, error) {
 				modal.removeClass('danger');
 				modal.find('.delete-confirm').addClass('hidden');
@@ -306,6 +311,7 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
 	var service = (config ? SolarReg.findByIdentifier(services, config.serviceIdentifier) : services[0]);
 	var container = modal.find('.service-props-container').first();
 	SolarReg.Settings.setupCoreSettings(modal.get(0), config);
+	SolarReg.Templates.populateServiceSelectOptions(services, 'select[name=serviceIdentifier]');
 	SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
 	if ( config && config.id ) {
 		modal.find('button.delete-config').removeClass('hidden');
@@ -405,9 +411,11 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 			SolarReg.csrf(xhr);
 		}
 	}).done(function(json, statusText) {
-		console.log('Saved output config: %o', json);
-		if ( json && json.success === true && typeof onSuccess === 'function' ) {
-			onSuccess(body, json.data);
+		console.log('Save config result: %o', json);
+		if ( json && json.success === true ) {
+			if ( typeof onSuccess === 'function' ) {
+				onSuccess(body, json.data);
+			}
 			modal.modal('hide');
 		} else {
 			var msg = (json && json.message ? json.message : 'Unknown error: ' +statusText);

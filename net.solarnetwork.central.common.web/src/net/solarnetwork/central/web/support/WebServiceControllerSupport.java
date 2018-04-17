@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -56,7 +58,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public abstract class WebServiceControllerSupport {
 
@@ -184,6 +186,40 @@ public abstract class WebServiceControllerSupport {
 		}
 		log.error("HttpMessageNotReadableException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getMessage(), null);
+	}
+
+	/**
+	 * Handle a {@link DataIntegrityViolationException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 * @since 1.8
+	 */
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	@ResponseBody
+	public Response<?> handleDataIntegrityViolationException(DataIntegrityViolationException e,
+			HttpServletResponse response, Locale locale) {
+		log.warn("DataIntegrityViolationException in {} controller", getClass().getSimpleName(), e);
+		String msg;
+		String msgKey;
+		String code;
+		if ( e instanceof DuplicateKeyException ) {
+			msg = "Duplicate key";
+			msgKey = "error.dao.duplicateKey";
+			code = "DAO.00101";
+		} else {
+			msg = "Data integrity violation";
+			msgKey = "error.dao.dataIntegrityViolation";
+			code = "DAO.00100";
+		}
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return new Response<Object>(Boolean.FALSE, code, msg, null);
 	}
 
 	/**

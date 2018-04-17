@@ -18,7 +18,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.mail" rev="[1.4.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.13.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security.web" rev="[1.9.1,2.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.web" rev="[1.13.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.web" rev="[1.15.2,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.23.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.instructor" rev="[1.6.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[2.0.0,3.0.0)"/>

@@ -91,10 +91,9 @@ $(document).ready(function() {
 				}
 				if ( relatedConfig ) {
 					SolarReg.Templates.setContextItem(link, relatedConfig);
-				} else {
-					// this cannot be edited without a config
-					link.removeClass('edit-link');
 				}
+				// this cannot be edited without a config
+				link.toggleClass('edit-link', !!relatedConfig);
 			});
 		});
 
