@@ -201,12 +201,11 @@ SolarReg.Settings.serviceFormItem = function formItem(service, setting, config) 
  * Array values will be passed to {@link SolarReg.arrayAsDelimitedString} before being set
  * as a form field value.
  * 
- * @param {object} service the service info 
  * @param {HTMLFormElement} form the form
  * @param {object} config the current configuration settings
  */
-SolarReg.Settings.setupServiceCoreSettings = function setupServiceCoreSettings(service, form, config) {
-	if ( !(service && form && config) ) {
+SolarReg.Settings.setupCoreSettings = function setupCoreSettings(form, config) {
+	if ( !(form && config) ) {
 		return;
 	}
 	var i, len,
@@ -306,7 +305,7 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
 	var config = SolarReg.Templates.findContextItem(modal);
 	var service = (config ? SolarReg.findByIdentifier(services, config.serviceIdentifier) : services[0]);
 	var container = modal.find('.service-props-container').first();
-	SolarReg.Settings.setupServiceCoreSettings(service, modal.get(0), config);
+	SolarReg.Settings.setupCoreSettings(modal.get(0), config);
 	SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
 	if ( config && config.id ) {
 		modal.find('button.delete-config').removeClass('hidden');
@@ -352,7 +351,10 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
 		components = name.split('.');
 		if ( field.selectedOptions ) {
 			// <select>
-			value = field.selectedOptions[0].value;
+			if ( field.selectedOptions.length < 1 ) {
+				continue;
+			}
+			value = field.selectedOptions[0].value
 		} else {
 			// <input>
 			value = field.value || '';

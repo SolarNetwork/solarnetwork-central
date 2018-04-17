@@ -68,6 +68,11 @@ public class DelegatingUserExportBiz implements UserExportBiz {
 	}
 
 	@Override
+	public Iterable<LocalizedServiceInfo> availableScheduleTypes(Locale locale) {
+		return delegate.availableScheduleTypes(locale);
+	}
+
+	@Override
 	public UserDatumExportConfiguration datumExportConfigurationForUser(Long userId, Long id) {
 		return delegate.datumExportConfigurationForUser(userId, id);
 	}

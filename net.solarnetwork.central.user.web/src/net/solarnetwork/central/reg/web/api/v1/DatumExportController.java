@@ -133,6 +133,17 @@ public class DatumExportController extends WebServiceControllerSupport {
 		return response(result);
 	}
 
+	@ResponseBody
+	@RequestMapping(value = "/services/schedule", method = RequestMethod.GET)
+	public Response<Iterable<LocalizedServiceInfo>> availableScheduleServices(Locale locale) {
+		final UserExportBiz biz = exportBiz.service();
+		Iterable<LocalizedServiceInfo> result = null;
+		if ( biz != null ) {
+			result = biz.availableScheduleTypes(locale);
+		}
+		return response(result);
+	}
+
 	private List<SettingSpecifier> settingsForService(String id,
 			Iterable<? extends SettingSpecifierProvider> providers) {
 		if ( providers == null ) {

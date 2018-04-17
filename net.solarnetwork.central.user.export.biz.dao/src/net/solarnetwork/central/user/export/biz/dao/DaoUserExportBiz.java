@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.domain.export.OutputCompressionType;
+import net.solarnetwork.central.datum.domain.export.ScheduleType;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.dao.UserDataConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
@@ -115,6 +116,24 @@ public class DaoUserExportBiz implements UserExportBiz {
 				name = messageSource.getMessage("compressionType." + type.name() + ".key", null, name,
 						locale);
 				desc = messageSource.getMessage("compressionType." + type.name() + ".desc", null, desc,
+						locale);
+			}
+			results.add(new BasicLocalizedServiceInfo(String.valueOf(type.getKey()), locale, name, desc,
+					null));
+		}
+		return results;
+	}
+
+	@Override
+	public Iterable<LocalizedServiceInfo> availableScheduleTypes(Locale locale) {
+		List<LocalizedServiceInfo> results = new ArrayList<>(ScheduleType.values().length);
+		for ( ScheduleType type : ScheduleType.values() ) {
+			String name = type.toString();
+			String desc = null;
+			if ( messageSource != null ) {
+				name = messageSource.getMessage("scheduleType." + type.name() + ".key", null, name,
+						locale);
+				desc = messageSource.getMessage("scheduleType." + type.name() + ".desc", null, desc,
 						locale);
 			}
 			results.add(new BasicLocalizedServiceInfo(String.valueOf(type.getKey()), locale, name, desc,

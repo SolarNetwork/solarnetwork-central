@@ -24,7 +24,6 @@ package net.solarnetwork.central.user.export.domain;
 
 import java.io.Serializable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.datum.domain.export.Configuration;
 import net.solarnetwork.central.datum.domain.export.DataConfiguration;
 import net.solarnetwork.central.datum.domain.export.DestinationConfiguration;
@@ -70,6 +69,7 @@ public class UserDatumExportConfiguration extends BaseEntity
 		this.name = name;
 	}
 
+	@JsonIgnore
 	@Override
 	public ScheduleType getSchedule() {
 		return schedule;
@@ -86,7 +86,6 @@ public class UserDatumExportConfiguration extends BaseEntity
 	 *         {@literal null} this will return the key value for
 	 *         {@link ScheduleType#Daily}
 	 */
-	@JsonIgnore
 	public char getScheduleKey() {
 		ScheduleType type = getSchedule();
 		return (type != null ? type.getKey() : ScheduleType.Daily.getKey());
@@ -100,7 +99,6 @@ public class UserDatumExportConfiguration extends BaseEntity
 	 *        unsupported, the compression will be set to
 	 *        {@link ScheduleType#Daily}
 	 */
-	@JsonSetter
 	public void setScheduleKey(char key) {
 		ScheduleType type = ScheduleType.Daily;
 		try {

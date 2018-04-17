@@ -8,6 +8,7 @@ $(document).ready(function() {
 	var outputServices = [];
 	var destinationServices = [];
 	var compressionTypes = [];
+	var scheduleTypes = [];
 
 	var settingTemplates = $('#export-setting-templates');
 	
@@ -22,10 +23,6 @@ $(document).ready(function() {
 		return configs;
 	}
 
-	function handleDatumExportConfigAction(event) {
-
-	}
-	
 	function populateDatumExportConfigs(configs, preserve) {
 		var container = $('#datum-export-list-container');
 		var items = configs.map(function(config) {
@@ -45,17 +42,26 @@ $(document).ready(function() {
 					model.dataConfigName = relatedConfig.name;
 				}
 			}
+			if ( !model.dataConfigName ) {
+				model.dataConfigName = '?';
+			}
 			if ( config.destinationConfigurationId ) {
 				relatedConfig = SolarReg.findByIdentifier(exportConfigs.destinationConfigs, config.destinationConfigurationId);
 				if ( relatedConfig ) {
 					model.destinationConfigName = relatedConfig.name;
 				}
 			}
+			if ( !model.destinationConfigName ) {
+				model.destinationConfigName = '?';
+			}
 			if ( config.outputConfigurationId ) {
 				relatedConfig = SolarReg.findByIdentifier(exportConfigs.outputConfigs, config.outputConfigurationId);
 				if ( relatedConfig ) {
 					model.outputConfigName = relatedConfig.name;
 				}
+			}
+			if ( !model.outputConfigName ) {
+				model.outputConfigName = '?';
 			}
 			return model;
 		});
@@ -82,6 +88,9 @@ $(document).ready(function() {
 				}
 				if ( relatedConfig ) {
 					SolarReg.Templates.setContextItem(link, relatedConfig);
+				} else {
+					// this cannot be edited without a config
+					link.removeClass('edit-link');
 				}
 			});
 		});
@@ -179,6 +188,25 @@ $(document).ready(function() {
 		}
 	}
 
+	// ***** Edit datum export job form
+	$('#edit-datum-export-config-modal').on('show.bs.modal', function(event) {
+		SolarReg.Settings.prepareEditServiceForm($(event.target), [], settingTemplates);
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('change', function(event) {
+		handleServiceIdentifierChange(event, []);
+	})
+	.on('submit', function(event) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			populateDatumExportConfigs([res], true);
+			storeServiceConfiguration(res, exportConfigs.datumExportConfigs);
+		});
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		SolarReg.Settings.resetEditServiceForm(this, $('#datum-export-list-container .list-container'));
+	});
+
 	// ***** Edit data format form
 	$('#edit-export-data-config-modal').on('show.bs.modal', function(event) {
 		SolarReg.Settings.prepareEditServiceForm($(event.target), dataServices, settingTemplates);
@@ -269,7 +297,7 @@ $(document).ready(function() {
 	$('.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
 
 	$('#datum-export-configs').first().each(function() {
-		var loadCountdown = 4;
+		var loadCountdown = 5;
 
 		function liftoff() {
 			loadCountdown -= 1;
@@ -279,6 +307,24 @@ $(document).ready(function() {
 			}
 		}
 
+		// get available compression services
+		$.getJSON(SolarReg.solarUserURL('/sec/export/services/compression'), function(json) {
+			console.log('Got export compression types: %o', json);
+			if ( json && json.success === true ) {
+				compressionTypes = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.export-output-compression-types');
+			}
+			liftoff();
+		});
+
+		// get available schedule services
+		$.getJSON(SolarReg.solarUserURL('/sec/export/services/schedule'), function(json) {
+			console.log('Got export schedule types: %o', json);
+			if ( json && json.success === true ) {
+				scheduleTypes = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.export-output-schedule-types');
+			}
+			liftoff();
+		});
+		
 		// get available output services
 		$.getJSON(SolarReg.solarUserURL('/sec/export/services/output'), function(json) {
 			console.log('Got export output services: %o', json);
@@ -293,15 +339,6 @@ $(document).ready(function() {
 			console.log('Got export destination services: %o', json);
 			if ( json && json.success === true ) {
 				destinationServices = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.export-destination-services');
-			}
-			liftoff();
-		});
-
-		// get available compression services
-		$.getJSON(SolarReg.solarUserURL('/sec/export/services/compression'), function(json) {
-			console.log('Got export compression types: %o', json);
-			if ( json && json.success === true ) {
-				compressionTypes = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.export-output-compression-types');
 			}
 			liftoff();
 		});

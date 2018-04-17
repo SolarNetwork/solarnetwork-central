@@ -52,6 +52,11 @@
 								<property name="basename" value="net.solarnetwork.central.datum.domain.export.OutputCompressionType"/>
 							</bean>
 						</entry>
+						<entry key="scheduleType.">
+							<bean class="org.springframework.context.support.ResourceBundleMessageSource">
+								<property name="basename" value="net.solarnetwork.central.datum.domain.export.ScheduleType"/>
+							</bean>
+						</entry>
 					</map>
 				</property>
 			</bean>	

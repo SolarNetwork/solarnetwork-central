@@ -60,6 +60,13 @@ public interface UserExportBiz {
 	Iterable<LocalizedServiceInfo> availableOutputCompressionTypes(Locale locale);
 
 	/**
+	 * Get a localized list of all available schedule type information.
+	 * 
+	 * @return the schedule type info
+	 */
+	Iterable<LocalizedServiceInfo> availableScheduleTypes(Locale locale);
+
+	/**
 	 * Get a saved datum export configuration.
 	 * 
 	 * @param userId
