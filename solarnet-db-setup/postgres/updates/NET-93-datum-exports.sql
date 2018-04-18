@@ -38,3 +38,33 @@ BEGIN
 	RETURN 'q';
 END;
 $BODY$;
+
+/**************************************************************************************************
+ * FUNCTION solarnet.claim_datum_export_task()
+ *
+ * "Claim" an export task from the solarnet.sn_datum_export_task table that has a status of 'q'
+ * and change the status to 'e' and return it. The tasks will be claimed from oldest to newest
+ * based on the created column.
+ *
+ * @return the claimed row, if one was able to be claimed
+ */
+CREATE OR REPLACE FUNCTION solarnet.claim_datum_export_task()
+  RETURNS solarnet.sn_datum_export_task LANGUAGE plpgsql VOLATILE AS
+$BODY$
+DECLARE
+	rec solarnet.sn_datum_export_task;
+	curs CURSOR FOR SELECT * FROM solarnet.sn_datum_export_task
+			WHERE status = 'q'
+			ORDER BY created ASC, ID ASC
+			LIMIT 1
+			FOR UPDATE SKIP LOCKED;
+BEGIN
+	OPEN curs;
+	FETCH NEXT FROM curs INTO rec;
+	IF FOUND THEN
+		UPDATE solarnet.sn_datum_export_task SET status = 'e' WHERE CURRENT OF curs;
+	END IF;
+	CLOSE curs;
+	RETURN rec;
+END;
+$BODY$;
