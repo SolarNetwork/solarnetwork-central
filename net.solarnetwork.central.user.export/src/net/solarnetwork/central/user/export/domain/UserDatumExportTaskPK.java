@@ -93,13 +93,18 @@ public class UserDatumExportTaskPK
 			return false;
 		}
 		UserDatumExportTaskPK other = (UserDatumExportTaskPK) obj;
+
+		// compare dates ignoring time zone differences here
 		if ( date == null ) {
 			if ( other.date != null ) {
 				return false;
 			}
-		} else if ( !date.equals(other.date) ) {
+		} else if ( other.date == null ) {
+			return false;
+		} else if ( date.getMillis() != other.date.getMillis() ) {
 			return false;
 		}
+
 		if ( scheduleType != other.scheduleType ) {
 			return false;
 		}

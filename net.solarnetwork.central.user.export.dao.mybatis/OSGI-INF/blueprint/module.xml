@@ -60,6 +60,7 @@
 				<value>java.util.UUID</value>
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
+				<value>net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo</value>
 				<value>net.solarnetwork.central.user.domain.User</value>
 				<value>net.solarnetwork.central.user.domain.UserMatch</value>
 				<value>net.solarnetwork.central.user.export.domain.UserDataConfiguration</value>
@@ -84,6 +85,8 @@
 			<list>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
+
+				<value>classpath:/net/solarnetwork/central/datum/export/dao/mybatis/map/DatumExportTaskInfo.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDataConfiguration.xml</value>

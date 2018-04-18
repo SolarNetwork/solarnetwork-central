@@ -40,31 +40,28 @@
 
 	<resultMap id="UserDatumExportTaskInfoFullResult" type="UserDatumExportTaskInfo">
 		<id property="userId" column="user_export_task_user_id"/>
-		<id property="scheduleKey" column="user_export_task_schedule"/>
+		<id property="scheduleTypeKey" column="user_export_task_schedule"/>
 		<id property="exportDate" column="user_export_task_export_date"/>
 		<result property="created" column="user_export_task_created"/>
 		<result property="taskId" column="user_export_task_id"/>
 		
-		<!-- TODO: join with solarnet.sn_datum_export_task for configuration
-		<association property="configJson" resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult"/>
-		-->
+		<association property="task" resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult" />
 	</resultMap>
 	
 	<sql id="fragment-UserDatumExportTaskInfo-select-full">
 		SELECT
-			<include refid="fragment-UserDatumExportTaskInfo-full-result"/><!-- TODO,
-			<include refid="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.fragment-DatumExportTaskInfo-full-result"/>-->
+			<include refid="fragment-UserDatumExportTaskInfo-full-result"/>,
+			<include refid="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.fragment-DatumExportTaskInfo-full-result"/>
 		FROM
 			solaruser.user_export_task uet
-		<!--  TODO
 		LEFT OUTER JOIN
-			solarnet.sn_datum_export_task det ON det.id = uet.task_id -->
+			solarnet.sn_datum_export_task det ON det.id = uet.task_id
 	</sql>
 
-	<select id="get-UserDatumExportTaskInfo-for-id" parameterType="UserDatumExportTaskPK" resultMap="UserDatumExportTaskInfoFullResult">
+	<select id="get-UserDatumExportTaskInfo-for-id" parameterType="map" resultMap="UserDatumExportTaskInfoFullResult">
 		<include refid="fragment-UserDatumExportTaskInfo-select-full"/>
 		WHERE
-			uet.user_id = #{userId} AND uet.schedule = #{scheduleTypeKey} AND uet.export_date = #{date}
+			uet.user_id = #{userId} AND uet.schedule = #{id.scheduleTypeKey} AND uet.export_date = #{id.date}
 	</select>
 	
 	<select id="find-UserDatumExportTaskInfo-for-user" parameterType="long" resultMap="UserDatumExportTaskInfoFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">

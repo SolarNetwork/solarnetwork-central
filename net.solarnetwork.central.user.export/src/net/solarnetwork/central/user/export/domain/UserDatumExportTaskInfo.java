@@ -24,6 +24,9 @@ package net.solarnetwork.central.user.export.domain;
 
 import java.util.UUID;
 import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.domain.BaseObjectEntity;
 import net.solarnetwork.central.user.domain.UserRelatedEntity;
@@ -41,8 +44,9 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 	private static final long serialVersionUID = 2326178444641325856L;
 
 	private UUID taskId;
-	private UserDatumExportConfiguration config;
+	private BasicConfiguration config;
 	private String configJson;
+	private DatumExportTaskInfo task;
 
 	public UUID getTaskId() {
 		return taskId;
@@ -52,21 +56,33 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 		this.taskId = taskId;
 	}
 
-	public UserDatumExportConfiguration getConfig() {
+	public DatumExportTaskInfo getTask() {
+		return task;
+	}
+
+	public void setTask(DatumExportTaskInfo task) {
+		this.task = task;
+		if ( task != null ) {
+			setConfig(task.getConfig());
+		}
+	}
+
+	public BasicConfiguration getConfig() {
 		if ( config == null && configJson != null ) {
-			config = JsonUtils.getObjectFromJSON(configJson, UserDatumExportConfiguration.class);
+			config = JsonUtils.getObjectFromJSON(configJson, BasicConfiguration.class);
 		}
 		return config;
 	}
 
-	public void setConfig(UserDatumExportConfiguration config) {
+	public void setConfig(BasicConfiguration config) {
 		this.config = config;
 		configJson = null;
 	}
 
+	@JsonIgnore
 	public String getConfigJson() {
 		if ( configJson == null ) {
-			configJson = JsonUtils.getJSONString(configJson, null);
+			configJson = JsonUtils.getJSONString(config, null);
 		}
 		return configJson;
 	}
@@ -89,6 +105,21 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 			setId(id);
 		}
 		id.setUserId(userId);
+	}
+
+	@JsonIgnore
+	public ScheduleType getScheduleType() {
+		UserDatumExportTaskPK id = getId();
+		return (id != null ? id.getScheduleType() : ScheduleType.Daily);
+	}
+
+	public void setScheduleType(ScheduleType type) {
+		UserDatumExportTaskPK id = getId();
+		if ( id == null ) {
+			id = new UserDatumExportTaskPK();
+			setId(id);
+		}
+		id.setScheduleType(type);
 	}
 
 	public char getScheduleTypeKey() {

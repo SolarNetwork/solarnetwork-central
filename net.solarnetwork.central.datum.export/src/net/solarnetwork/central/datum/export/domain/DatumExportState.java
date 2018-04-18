@@ -39,21 +39,52 @@ public enum DatumExportState {
 	/**
 	 * The state is not known.
 	 */
-	Unknown,
+	Unknown('u'),
 
 	/**
 	 * The export job has been queued, but not started yet.
 	 */
-	Queued,
+	Queued('q'),
 
 	/**
 	 * The export job is being executed currently.
 	 */
-	Executing,
+	Executing('e'),
 
 	/**
 	 * The export job has completed.
 	 */
-	Completed;
+	Completed('c');
 
+	private final char key;
+
+	private DatumExportState(char key) {
+		this.key = key;
+	}
+
+	/**
+	 * Get the key value.
+	 * 
+	 * @return the key value
+	 */
+	public char getKey() {
+		return key;
+	}
+
+	/**
+	 * Get an enum for a key value.
+	 * 
+	 * @param key
+	 *        the key of the enum to get
+	 * @return the enum with the given key, or {@link DatumExportState#Unknown}
+	 *         if not recognized
+	 */
+	public static DatumExportState forKey(char key) {
+		for ( DatumExportState type : DatumExportState.values() ) {
+			if ( type.key == key ) {
+				return type;
+			}
+		}
+		return DatumExportState.Unknown;
+	}
 }
