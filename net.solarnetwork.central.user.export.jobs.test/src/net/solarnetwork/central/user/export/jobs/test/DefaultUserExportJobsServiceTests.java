@@ -127,7 +127,7 @@ public class DefaultUserExportJobsServiceTests {
 		assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Hourly));
 		assertThat("Task date", task.getExportDate(), equalTo(exportDate));
 		assertThat("Task config available", task.getConfig(), notNullValue());
-		assertThat("Config ID", task.getConfig().getName(), equalTo(configs.get(0).getName()));
+		assertThat("Config name", task.getConfig().getName(), equalTo(configs.get(0).getName()));
 
 	}
 
