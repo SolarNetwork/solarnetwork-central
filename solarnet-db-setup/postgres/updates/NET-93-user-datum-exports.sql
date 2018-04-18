@@ -88,7 +88,6 @@ CREATE INDEX user_export_datum_conf_user_idx ON solaruser.user_export_datum_conf
  *
  * Holds records for user initiated datum export tasks to allow tracking the status
  * of those tasks at the user level.
- *
  */
 CREATE TABLE solaruser.user_export_task (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
