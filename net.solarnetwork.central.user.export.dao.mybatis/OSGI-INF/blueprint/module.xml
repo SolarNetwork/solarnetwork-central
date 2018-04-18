@@ -21,6 +21,8 @@
 
 	<service ref="userDatumExportConfigurationDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao"/>
 
+	<service ref="userDatumExportTaskInfoDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao"/>
+
 	<service ref="userDestinationConfigurationDao" interface="net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao"/>
 
 	<service ref="userOutputConfigurationDao" interface="net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao"/>
@@ -42,6 +44,10 @@
 	</bean>
 	
 	<bean id="userDatumExportConfigurationDao" class="net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDatumExportConfigurationDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="userDatumExportTaskInfoDao" class="net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDatumExportTaskInfoDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean>
 	

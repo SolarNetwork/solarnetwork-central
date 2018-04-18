@@ -18,4 +18,125 @@
 		http://www.springframework.org/schema/context/spring-context-4.2.xsd">
 
 
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.export.jobs">
+		<beans:prop key="UserExportTaskPopulatorHourly.jobCron">0 10/30 * * * ?</beans:prop>
+		<beans:prop key="UserExportTaskPopulatorHourly.maximumWaitMs">600000</beans:prop>
+		<beans:prop key="UserExportTaskPopulatorDaily.jobCron">0 10/30 1/8 * * ?</beans:prop>
+		<beans:prop key="UserExportTaskPopulatorDaily.maximumWaitMs">600000</beans:prop>
+		<beans:prop key="UserExportTaskPopulatorWeekly.jobCron">0 15 1/12 ? * MON-TUE</beans:prop>
+		<beans:prop key="UserExportTaskPopulatorWeekly.maximumWaitMs">600000</beans:prop>
+		<beans:prop key="UserExportTaskPopulatorMonthly.jobCron">0 45 2 1/2 * ?</beans:prop>
+		<beans:prop key="UserExportTaskPopulatorMonthly.maximumWaitMs">600000</beans:prop>
+	</osgix:cm-properties>
+
+	<ctx:property-placeholder properties-ref="cfg"/>
+	
+	<!-- Service References -->
+
+	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
+	
+	<reference id="configurationDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao"/>
+	
+	<reference id="taskDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao"/>
+
+	<!-- Published Services -->
+	
+	<service ref="hourlyTaskPopulatorJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{hourlyTaskPopulatorJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<service ref="dailyTaskPopulatorJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{dailyTaskPopulatorJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<service ref="weeklyTaskPopulatorJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{weeklyTaskPopulatorJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<service ref="monthlyTaskPopulatorJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{monthlyTaskPopulatorJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<!-- Supporting Services -->
+	
+	<bean id="jobsService" class="net.solarnetwork.central.user.export.jobs.DefaultUserExportJobsService">
+		<argument ref="configurationDao"/>
+		<argument ref="taskDao"/>
+	</bean>
+
+	<bean id="hourlyTaskPopulatorJob" class="net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob">
+		<argument ref="eventAdmin"/>
+		<argument value="#{T(net.solarnetwork.central.datum.export.domain.ScheduleType).Hourly}"/>
+		<argument ref="jobsService"/>
+		<property name="jobCron" value="${UserExportTaskPopulatorHourly.jobCron}"/>
+		<property name="maximumWaitMs" value="${UserExportTaskPopulatorHourly.maximumWaitMs}"/>
+		<property name="jobGroup" value="UserExport"/>
+		<property name="jobId" value="UserExportTaskPopulatorHourly"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/export/UserExportTaskPopulatorHourly"/>
+	</bean>
+
+
+	<bean id="dailyTaskPopulatorJob" class="net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob">
+		<argument ref="eventAdmin"/>
+		<argument value="#{T(net.solarnetwork.central.datum.export.domain.ScheduleType).Hourly}"/>
+		<argument ref="jobsService"/>
+		<property name="jobCron" value="${UserExportTaskPopulatorDaily.jobCron}"/>
+		<property name="maximumWaitMs" value="${UserExportTaskPopulatorDaily.maximumWaitMs}"/>
+		<property name="jobGroup" value="UserExport"/>
+		<property name="jobId" value="UserExportTaskPopulatorDaily"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/export/UserExportTaskPopulatorDaily"/>
+	</bean>
+
+	<bean id="weeklyTaskPopulatorJob" class="net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob">
+		<argument ref="eventAdmin"/>
+		<argument value="#{T(net.solarnetwork.central.datum.export.domain.ScheduleType).Hourly}"/>
+		<argument ref="jobsService"/>
+		<property name="jobCron" value="${UserExportTaskPopulatorWeekly.jobCron}"/>
+		<property name="maximumWaitMs" value="${UserExportTaskPopulatorWeekly.maximumWaitMs}"/>
+		<property name="jobGroup" value="UserExport"/>
+		<property name="jobId" value="UserExportTaskPopulatorWeekly"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/export/UserExportTaskPopulatorWeekly"/>
+	</bean>
+
+	<bean id="monthlyTaskPopulatorJob" class="net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob">
+		<argument ref="eventAdmin"/>
+		<argument value="#{T(net.solarnetwork.central.datum.export.domain.ScheduleType).Hourly}"/>
+		<argument ref="jobsService"/>
+		<property name="jobCron" value="${UserExportTaskPopulatorMonthly.jobCron}"/>
+		<property name="maximumWaitMs" value="${UserExportTaskPopulatorMonthly.maximumWaitMs}"/>
+		<property name="jobGroup" value="UserExport"/>
+		<property name="jobId" value="UserExportTaskPopulatorMonthly"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/export/UserExportTaskPopulatorMonthly"/>
+	</bean>
+
 </blueprint>
