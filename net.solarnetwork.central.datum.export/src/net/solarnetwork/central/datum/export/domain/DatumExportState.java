@@ -47,6 +47,12 @@ public enum DatumExportState {
 	Queued('q'),
 
 	/**
+	 * The export job as been "claimed" for execution but has not started
+	 * execution yet.
+	 */
+	Claimed('p'),
+
+	/**
 	 * The export job is being executed currently.
 	 */
 	Executing('e'),

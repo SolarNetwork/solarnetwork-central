@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumExportTaskInfoDao.java - 18/04/2018 11:52:19 AM
+ * AbstractMyBatisDaoTestSupport.java - Nov 11, 2014 6:41:43 AM
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,30 +20,31 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.export.dao;
+package net.solarnetwork.central.datum.export.dao.mybatis.test;
 
-import java.util.UUID;
-import net.solarnetwork.central.dao.GenericDao;
-import net.solarnetwork.central.datum.export.domain.DatumExportState;
-import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 
 /**
- * DAO API for {@link DatumExportTaskInfo} entities.
+ * Base class for user DAO tests.
  * 
  * @author matt
  * @version 1.0
  */
-public interface DatumExportTaskInfoDao extends GenericDao<DatumExportTaskInfo, UUID> {
+@ContextConfiguration
+public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
 
-	/**
-	 * Claim a queued task.
-	 * 
-	 * This method will "claim" a task that is currently in the
-	 * {@link DatumExportState#Queued} state, changing the state to
-	 * {@link DatumExportState#Claimed}.
-	 * 
-	 * @return a claimed task, or {@literal null} if none could be claimed
-	 */
-	DatumExportTaskInfo claimQueuedTask();
+	private SqlSessionFactory sqlSessionFactory;
+
+	public SqlSessionFactory getSqlSessionFactory() {
+		return sqlSessionFactory;
+	}
+
+	@Autowired
+	public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+		this.sqlSessionFactory = sqlSessionFactory;
+	}
 
 }

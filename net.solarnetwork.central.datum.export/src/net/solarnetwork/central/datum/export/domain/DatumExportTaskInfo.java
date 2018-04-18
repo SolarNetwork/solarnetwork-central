@@ -36,9 +36,8 @@ import net.solarnetwork.util.JsonUtils;
  */
 public class DatumExportTaskInfo extends BaseObjectEntity<UUID> {
 
-	private static final long serialVersionUID = 8684455161151011352L;
+	private static final long serialVersionUID = -7460673556637773372L;
 
-	private ScheduleType scheduleType;
 	private DateTime exportDate;
 	private DatumExportState status;
 	private BasicConfiguration config;
@@ -50,30 +49,6 @@ public class DatumExportTaskInfo extends BaseObjectEntity<UUID> {
 
 	public void setExportDate(DateTime exportDate) {
 		this.exportDate = exportDate;
-	}
-
-	@JsonIgnore
-	public ScheduleType getScheduleType() {
-		return scheduleType;
-	}
-
-	public void setScheduleType(ScheduleType scheduleType) {
-		this.scheduleType = scheduleType;
-	}
-
-	public char getScheduleTypeKey() {
-		ScheduleType type = getScheduleType();
-		return (type != null ? type.getKey() : ScheduleType.Daily.getKey());
-	}
-
-	public void setScheduleTypeKey(char key) {
-		ScheduleType type;
-		try {
-			type = ScheduleType.forKey(key);
-		} catch ( IllegalArgumentException e ) {
-			type = ScheduleType.Daily;
-		}
-		setScheduleType(type);
 	}
 
 	@JsonIgnore
@@ -115,7 +90,7 @@ public class DatumExportTaskInfo extends BaseObjectEntity<UUID> {
 	@JsonIgnore
 	public String getConfigJson() {
 		if ( configJson == null ) {
-			configJson = JsonUtils.getJSONString(configJson, null);
+			configJson = JsonUtils.getJSONString(config, null);
 		}
 		return configJson;
 	}

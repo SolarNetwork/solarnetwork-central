@@ -4,12 +4,24 @@
 <mapper namespace="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo">
 
 	<update id="update-DatumExportTaskInfo" parameterType="DatumExportTaskInfo">
-		UPDATE solarnet.sn_datum_export_task
-		SET
-			status = #{statusKey},
-			modified = #{modified}
-		WHERE
-			id = #{id,typeHandler=net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler}
+		INSERT INTO solarnet.sn_datum_export_task (
+			id
+			<if test="created != null">, created</if>
+			<if test="modified != null">, modified</if>
+			, export_date
+			, status
+			, config
+		) VALUES (
+			#{id,typeHandler=net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler}
+			<if test="created != null">, #{created}</if>
+			<if test="modified != null">, #{modified}</if>
+			, #{exportDate}
+			, #{statusKey}
+			, #{configJson}::jsonb
+		)
+		ON CONFLICT (id) DO UPDATE
+		SET status = EXCLUDED.status,
+			modified = EXCLUDED.modified;
 	</update>
 	
 	<sql id="fragment-DatumExportTaskInfo-full-result">
@@ -34,7 +46,7 @@
 		SELECT
 			<include refid="fragment-DatumExportTaskInfo-full-result"/>
 		FROM
-			solarnet.sn_datum_export_task_data det
+			solarnet.sn_datum_export_task det
 		WHERE
 			det.id = #{id}
 	</select>

@@ -51,6 +51,23 @@ public class BasicConfiguration implements Configuration, Serializable {
 	}
 
 	/**
+	 * Construct with values.
+	 * 
+	 * @param name
+	 *        the name
+	 * @param schedule
+	 *        the schedule
+	 * @param hourDelayOffset
+	 *        the offset
+	 */
+	public BasicConfiguration(String name, ScheduleType schedule, int hourDelayOffset) {
+		super();
+		setName(name);
+		setSchedule(schedule);
+		setHourDelayOffset(hourDelayOffset);
+	}
+
+	/**
 	 * Copy constructor.
 	 * 
 	 * @param other

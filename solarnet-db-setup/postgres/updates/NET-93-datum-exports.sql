@@ -43,7 +43,7 @@ $BODY$;
  * FUNCTION solarnet.claim_datum_export_task()
  *
  * "Claim" an export task from the solarnet.sn_datum_export_task table that has a status of 'q'
- * and change the status to 'e' and return it. The tasks will be claimed from oldest to newest
+ * and change the status to 'p' and return it. The tasks will be claimed from oldest to newest
  * based on the created column.
  *
  * @return the claimed row, if one was able to be claimed
@@ -62,7 +62,7 @@ BEGIN
 	OPEN curs;
 	FETCH NEXT FROM curs INTO rec;
 	IF FOUND THEN
-		UPDATE solarnet.sn_datum_export_task SET status = 'e' WHERE CURRENT OF curs;
+		UPDATE solarnet.sn_datum_export_task SET status = 'p' WHERE CURRENT OF curs;
 	END IF;
 	CLOSE curs;
 	RETURN rec;
