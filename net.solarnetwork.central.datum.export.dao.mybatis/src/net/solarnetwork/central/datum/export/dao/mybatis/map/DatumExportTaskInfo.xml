@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Thu Nov 13 07:30:21 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo">
+
+	<update id="update-DatumExportTaskInfo" parameterType="DatumExportTaskInfo">
+		UPDATE solarnet.sn_datum_export_task
+		SET
+			status = #{statusKey},
+			modified = #{modified}
+		WHERE
+			id = #{id,typeHandler=net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler}
+	</update>
+	
+	<sql id="fragment-DatumExportTaskInfo-full-result">
+		det.id AS datum_export_task_id,
+		det.created AS datum_export_task_created,
+		det.modified AS datum_export_task_modified,
+		det.export_date AS datum_export_task_export_date,
+		det.status AS datum_export_task_status,
+		det.config AS datum_export_task_config
+	</sql>
+	
+	<resultMap id="DatumExportTaskInfoFullResult" type="DatumExportTaskInfo">
+		<id property="id" column="datum_export_task_id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+		<result property="created" column="datum_export_task_created"/>
+		<result property="modified" column="datum_export_task_modified"/>
+		<result property="exportDate" column="datum_export_task_export_date"/>
+		<result property="statusKey" column="datum_export_task_status"/>
+		<result property="configJson" column="datum_export_task_config"/>
+	</resultMap>
+	
+	<select id="get-DatumExportTaskInfo-for-id" parameterType="UUID" resultMap="DatumExportTaskInfoFullResult">
+		SELECT
+			<include refid="fragment-DatumExportTaskInfo-full-result"/>
+		FROM
+			solarnet.sn_datum_export_task_data det
+		WHERE
+			det.id = #{id}
+	</select>
+
+</mapper>

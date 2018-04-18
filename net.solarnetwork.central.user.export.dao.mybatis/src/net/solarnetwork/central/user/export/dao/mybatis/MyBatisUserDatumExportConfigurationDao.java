@@ -70,28 +70,10 @@ public class MyBatisUserDatumExportConfigurationDao
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserDatumExportConfiguration> findForExecution(DateTime exportDate,
 			ScheduleType scheduleType) {
-		DateTime date = (exportDate != null ? exportDate : new DateTime());
 		if ( scheduleType == null ) {
 			scheduleType = ScheduleType.Daily;
 		}
-		DateTime.Property dateProperty;
-		switch (scheduleType) {
-			case Hourly:
-				dateProperty = date.minuteOfHour();
-				break;
-
-			case Weekly:
-				dateProperty = date.dayOfWeek();
-				break;
-
-			case Monthly:
-				dateProperty = date.dayOfMonth();
-				break;
-
-			default:
-				dateProperty = date.hourOfDay();
-		}
-		date = dateProperty.roundFloorCopy();
+		DateTime date = scheduleType.exportDate(exportDate);
 		Timestamp ts = new Timestamp(date.getMillis());
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("date", ts);

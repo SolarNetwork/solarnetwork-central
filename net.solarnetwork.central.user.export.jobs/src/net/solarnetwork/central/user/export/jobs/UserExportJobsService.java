@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserExportTaskPopulatorJob.java - 18/04/2018 7:45:34 AM
+ * UserExportJobsService.java - 19/04/2018 6:45:21 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -23,44 +23,26 @@
 package net.solarnetwork.central.user.export.jobs;
 
 import org.joda.time.DateTime;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
-import net.solarnetwork.central.scheduler.JobSupport;
 
 /**
- * Job to find export tasks that need to be submitted for execution.
+ * Jobs service API to separate core functionality out of job classes.
  * 
  * @author matt
  * @version 1.0
  */
-public class UserExportTaskPopulatorJob extends JobSupport {
-
-	private final ScheduleType scheduleType;
-	private final UserExportJobsService jobsService;
+public interface UserExportJobsService {
 
 	/**
-	 * Constructor.
+	 * Query for user export configurations that need to be submitted for
+	 * execution, and submit them.
 	 * 
-	 * @param eventAdmin
-	 *        the event admin
+	 * @param date
+	 *        the date to query for (typically the current time)
 	 * @param scheduleType
-	 *        the schedule type
-	 * @param jobsService
-	 *        the helper
+	 *        the type of schedule to look for
+	 * @return the count of configurations found
 	 */
-	public UserExportTaskPopulatorJob(EventAdmin eventAdmin, ScheduleType scheduleType,
-			UserExportJobsService jobsService) {
-		super(eventAdmin);
-		this.scheduleType = scheduleType;
-		this.jobsService = jobsService;
-	}
-
-	@Override
-	protected boolean handleJob(Event job) throws Exception {
-		int count = jobsService.createExportExecutionTasks(new DateTime(), scheduleType);
-		log.info("Found {} {} user export configurations for execution", count, scheduleType);
-		return true;
-	}
+	public int createExportExecutionTasks(DateTime date, ScheduleType scheduleType);
 
 }

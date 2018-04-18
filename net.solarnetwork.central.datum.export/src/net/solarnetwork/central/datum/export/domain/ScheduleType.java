@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.datum.export.domain;
 
+import org.joda.time.DateTime;
+import org.joda.time.DurationFieldType;
+
 /**
  * Enumeration of export job schedule options.
  * 
@@ -71,4 +74,100 @@ public enum ScheduleType {
 		}
 		throw new IllegalArgumentException("Unsupported key: " + key);
 	}
+
+	/**
+	 * Get a {@link DateTime.Property} for a given date.
+	 * 
+	 * <p>
+	 * The returned property will be the appropriate property for rounding on
+	 * given this schedule type.
+	 * </p>
+	 * 
+	 * @param date
+	 *        the date, or {@literal null} for the current date
+	 * @return the property, never {@literal null}
+	 */
+	public DateTime.Property dateTimeProperty(DateTime date) {
+		DateTime exportDate = (date != null ? date : new DateTime());
+		DateTime.Property dateProperty;
+		switch (this) {
+			case Hourly:
+				dateProperty = exportDate.hourOfDay();
+				break;
+
+			case Weekly:
+				dateProperty = exportDate.weekOfWeekyear();
+				break;
+
+			case Monthly:
+				dateProperty = exportDate.monthOfYear();
+				break;
+
+			default:
+				dateProperty = exportDate.dayOfMonth();
+		}
+		return dateProperty;
+	}
+
+	/**
+	 * Get a {@link DurationFieldType} for this schedule.
+	 * 
+	 * @return the field type, never {@literal null}
+	 */
+	public DurationFieldType durationFieldType() {
+		DurationFieldType type;
+		switch (this) {
+			case Hourly:
+				type = DurationFieldType.hours();
+				break;
+
+			case Weekly:
+				type = DurationFieldType.weeks();
+				break;
+
+			case Monthly:
+				type = DurationFieldType.months();
+				break;
+
+			default:
+				type = DurationFieldType.days();
+		}
+		return type;
+	}
+
+	/**
+	 * Get an appropriate "export date" for a given date.
+	 * 
+	 * <p>
+	 * The returned date can be used as the <em>starting</em> date of an export
+	 * task executing at {@code date}. It will be a copy of {@code date} that
+	 * has been rounded by flooring based on this schedule type.
+	 * </p>
+	 * 
+	 * @param date
+	 *        the date to get an export date for, or {@literal null} for the
+	 *        current date
+	 * @return the export date
+	 */
+	public DateTime exportDate(DateTime date) {
+		DateTime exportDate = (date != null ? date : new DateTime());
+		DateTime.Property dateProperty = dateTimeProperty(exportDate);
+		exportDate = dateProperty.roundFloorCopy();
+		return exportDate;
+	}
+
+	/**
+	 * Get the "next" export date for a given date.
+	 * 
+	 * @param date
+	 *        the date to get the "next" export date for, or {@literal null} for
+	 *        the current date
+	 * @return the "next" export date
+	 */
+	public DateTime nextExportDate(DateTime date) {
+		DateTime exportDate = exportDate(date);
+		DurationFieldType fieldType = durationFieldType();
+		return exportDate.withFieldAdded(fieldType, 1);
+	}
+
 }
