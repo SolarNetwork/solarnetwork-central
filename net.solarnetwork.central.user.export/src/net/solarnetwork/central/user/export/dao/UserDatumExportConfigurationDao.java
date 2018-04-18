@@ -38,7 +38,15 @@ public interface UserDatumExportConfigurationDao
 		extends UserRelatedGenericDao<UserDatumExportConfiguration, Long>,
 		UserConfigurationDao<UserDatumExportConfiguration, Long> {
 
-	List<UserDatumExportConfiguration> findForExecution(Long userId, DateTime exportDate,
-			ScheduleType scheduleType);
+	/**
+	 * Find all configurations requiring export task execution.
+	 * 
+	 * @param exportDate
+	 *        the export date
+	 * @param scheduleType
+	 *        the schedule type to find
+	 * @return the configurations, never {@literal null}
+	 */
+	List<UserDatumExportConfiguration> findForExecution(DateTime exportDate, ScheduleType scheduleType);
 
 }

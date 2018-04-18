@@ -68,7 +68,7 @@ public class MyBatisUserDatumExportConfigurationDao
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<UserDatumExportConfiguration> findForExecution(Long userId, DateTime exportDate,
+	public List<UserDatumExportConfiguration> findForExecution(DateTime exportDate,
 			ScheduleType scheduleType) {
 		DateTime date = (exportDate != null ? exportDate : new DateTime());
 		if ( scheduleType == null ) {
@@ -94,7 +94,6 @@ public class MyBatisUserDatumExportConfigurationDao
 		date = dateProperty.roundFloorCopy();
 		Timestamp ts = new Timestamp(date.getMillis());
 		Map<String, Object> params = new HashMap<>(2);
-		params.put("userId", userId);
 		params.put("date", ts);
 		params.put("schedule", scheduleType.getKey());
 		return selectList(QUERY_CONFIGURATIONS_FOR_EXECUTION, params, null, null);

@@ -107,8 +107,7 @@
 	<select id="find-UserDatumExportConfiguration-for-execution" parameterType="map" resultMap="UserDatumExportConfigurationFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		<include refid="fragment-UserDatumExportConfiguration-select-full"/>
 		WHERE
-			udexc.user_id = #{userId}
-			AND udexc.schedule = #{schedule}
+			udexc.schedule = #{schedule}
 			AND udexc.min_export_date &lt; #{date}
 		ORDER BY
 			udexc.min_export_date, udexc.id

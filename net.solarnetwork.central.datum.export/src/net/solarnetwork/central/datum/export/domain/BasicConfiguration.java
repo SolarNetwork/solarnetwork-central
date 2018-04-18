@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.export.domain;
 
 import java.io.Serializable;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * Basic implementation of {@link Configuration}.
@@ -42,6 +43,32 @@ public class BasicConfiguration implements Configuration, Serializable {
 	private ScheduleType schedule;
 	private int hourDelayOffset;
 
+	/**
+	 * Default constructor.
+	 */
+	public BasicConfiguration() {
+		super();
+	}
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the configuration to copy
+	 */
+	public BasicConfiguration(Configuration other) {
+		super();
+		if ( other == null ) {
+			return;
+		}
+		this.name = other.getName();
+		this.dataConfiguration = other.getDataConfiguration();
+		this.outputConfiguration = other.getOutputConfiguration();
+		this.destinationConfiguration = other.getDestinationConfiguration();
+		this.schedule = other.getSchedule();
+		this.hourDelayOffset = other.getHourDelayOffset();
+	}
+
 	@Override
 	public String getName() {
 		return name;
@@ -56,6 +83,7 @@ public class BasicConfiguration implements Configuration, Serializable {
 		return dataConfiguration;
 	}
 
+	@JsonDeserialize(as = BasicDataConfiguration.class)
 	public void setDataConfiguration(DataConfiguration dataConfiguration) {
 		this.dataConfiguration = dataConfiguration;
 	}
@@ -65,6 +93,7 @@ public class BasicConfiguration implements Configuration, Serializable {
 		return outputConfiguration;
 	}
 
+	@JsonDeserialize(as = BasicOutputConfiguration.class)
 	public void setOutputConfiguration(OutputConfiguration outputConfiguration) {
 		this.outputConfiguration = outputConfiguration;
 	}
@@ -74,6 +103,7 @@ public class BasicConfiguration implements Configuration, Serializable {
 		return destinationConfiguration;
 	}
 
+	@JsonDeserialize(as = BasicDestinationConfiguration.class)
 	public void setDestinationConfiguration(DestinationConfiguration destinationConfiguration) {
 		this.destinationConfiguration = destinationConfiguration;
 	}

@@ -25,7 +25,9 @@ package net.solarnetwork.central.user.export.domain;
 import java.util.UUID;
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.domain.BaseObjectEntity;
@@ -44,7 +46,7 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 	private static final long serialVersionUID = 2326178444641325856L;
 
 	private UUID taskId;
-	private BasicConfiguration config;
+	private Configuration config;
 	private String configJson;
 	private DatumExportTaskInfo task;
 
@@ -67,14 +69,15 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 		}
 	}
 
-	public BasicConfiguration getConfig() {
+	public Configuration getConfig() {
 		if ( config == null && configJson != null ) {
 			config = JsonUtils.getObjectFromJSON(configJson, BasicConfiguration.class);
 		}
 		return config;
 	}
 
-	public void setConfig(BasicConfiguration config) {
+	@JsonDeserialize(as = BasicConfiguration.class)
+	public void setConfig(Configuration config) {
 		this.config = config;
 		configJson = null;
 	}

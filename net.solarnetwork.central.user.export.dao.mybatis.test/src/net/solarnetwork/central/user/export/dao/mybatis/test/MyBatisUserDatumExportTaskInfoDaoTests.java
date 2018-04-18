@@ -34,6 +34,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDatumExportTaskInfoDao;
@@ -105,7 +106,7 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		UserDatumExportTaskInfo info = dao.get(this.info.getId(), this.user.getId());
 		DateTime originalCreated = info.getCreated();
 		info.setCreated(new DateTime());
-		info.getConfig().setHourDelayOffset(1);
+		((BasicConfiguration) info.getConfig()).setHourDelayOffset(1);
 
 		UserDatumExportTaskPK id = dao.store(info);
 		assertThat("PK unchanged", id, equalTo(this.info.getId()));
