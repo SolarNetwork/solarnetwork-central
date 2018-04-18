@@ -73,7 +73,7 @@ public class DefaultUserExportJobsService implements UserExportJobsService {
 		DateTime maxExportDate = scheduleType.exportDate(date);
 		DateTime now = new DateTime();
 		for ( UserDatumExportConfiguration config : configs ) {
-			DateTime currExportDate = config.getMinimumExportDate();
+			DateTime currExportDate = scheduleType.exportDate(config.getMinimumExportDate());
 			if ( currExportDate == null ) {
 				currExportDate = maxExportDate;
 			}
