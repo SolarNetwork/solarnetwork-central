@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.After;
@@ -128,7 +129,47 @@ public class DefaultUserExportJobsServiceTests {
 		assertThat("Task date", task.getExportDate(), equalTo(exportDate));
 		assertThat("Task config available", task.getConfig(), notNullValue());
 		assertThat("Config name", task.getConfig().getName(), equalTo(configs.get(0).getName()));
+	}
 
+	@Test
+	public void oneConfigurationFoundMultipleExports() {
+		// given
+		DateTime now = new DateTime();
+		UserDatumExportConfiguration config = createConfiguration();
+		DateTime minExportDate = ScheduleType.Hourly.exportDate(null);
+		minExportDate = minExportDate.withFieldAdded(ScheduleType.Hourly.durationFieldType(), -2);
+		config.setMinimumExportDate(minExportDate);
+		List<UserDatumExportConfiguration> configs = Arrays.asList(config);
+		expect(configurationDao.findForExecution(now, ScheduleType.Hourly)).andReturn(configs);
+
+		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>(CaptureType.ALL);
+
+		for ( int i = 0; i < 3; i++ ) {
+			DateTime exportDate = minExportDate.withFieldAdded(ScheduleType.Hourly.durationFieldType(),
+					i);
+			expect(taskDao.store(capture(taskCaptor)))
+					.andReturn(new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Hourly, exportDate));
+		}
+
+		// when
+		replayAll();
+		int count = service.createExportExecutionTasks(now, ScheduleType.Hourly);
+
+		// then
+		assertThat("Result", count, equalTo(1));
+		assertThat("Task created", taskCaptor.hasCaptured(), equalTo(true));
+		assertThat("Multiple tasks created for exports", taskCaptor.getValues().size(), equalTo(3));
+
+		for ( int i = 0; i < 3; i++ ) {
+			UserDatumExportTaskInfo task = taskCaptor.getValues().get(i);
+			assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
+			assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Hourly));
+			DateTime exportDate = minExportDate.withFieldAdded(ScheduleType.Hourly.durationFieldType(),
+					i);
+			assertThat("Task date", task.getExportDate(), equalTo(exportDate));
+			assertThat("Task config available", task.getConfig(), notNullValue());
+			assertThat("Config name", task.getConfig().getName(), equalTo(configs.get(0).getName()));
+		}
 	}
 
 }
