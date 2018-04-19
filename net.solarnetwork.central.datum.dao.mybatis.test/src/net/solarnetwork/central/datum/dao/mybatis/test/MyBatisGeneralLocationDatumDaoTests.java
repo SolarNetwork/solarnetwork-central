@@ -587,6 +587,19 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
 	}
 
+	@Test(expected = IllegalArgumentException.class)
+	public void findFilteredAggregateRunningTotalNoSourceId() {
+		// populate 1 hour of data
+		findFilteredAggregateDaily();
+
+		// first, verify that the the day is also at 10 Wh
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setLocationId(TEST_LOC_ID);
+		criteria.setAggregate(Aggregation.RunningTotal);
+
+		dao.findAggregationFiltered(criteria, null, null, null);
+	}
+
 	@Test
 	public void findFilteredAggregateFiveMinute() {
 		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
