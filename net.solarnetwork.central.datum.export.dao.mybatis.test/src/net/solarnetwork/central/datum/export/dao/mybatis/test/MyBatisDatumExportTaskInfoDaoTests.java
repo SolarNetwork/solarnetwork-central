@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.export.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.util.UUID;
 import org.joda.time.DateTime;
@@ -90,6 +91,31 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		assertThat("Config name", info.getConfig().getName(), equalTo(TEST_NAME));
 		assertThat("Config schedule", info.getConfig().getSchedule(), equalTo(ScheduleType.Daily));
 		assertThat("Config offset", info.getConfig().getHourDelayOffset(), equalTo(TEST_HOUR_OFFSET));
+	}
+
+	@Test
+	public void getByClaimNoRows() {
+		DatumExportTaskInfo info = dao.claimQueuedTask();
+		assertThat("Nothing claimed", info, nullValue());
+	}
+
+	@Test
+	public void getByClaim() {
+		storeNew();
+		DatumExportTaskInfo info = dao.claimQueuedTask();
+		assertThat("Found by claim", info, notNullValue());
+		assertThat("PK", info.getId(), equalTo(this.info.getId()));
+	}
+
+	@Test
+	public void getByClaimNothingLeftToClaim() {
+		getByClaim();
+
+		// flush session cache
+		dao.getSqlSession().clearCache();
+
+		DatumExportTaskInfo info = dao.claimQueuedTask();
+		assertThat("Nothing claimed", info, nullValue());
 	}
 
 }

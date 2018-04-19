@@ -41,6 +41,15 @@
 		<result property="statusKey" column="datum_export_task_status"/>
 		<result property="configJson" column="datum_export_task_config"/>
 	</resultMap>
+
+	<resultMap id="DatumExportTaskInfoDirectResult" type="DatumExportTaskInfo">
+		<id property="id" column="id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+		<result property="created" column="created"/>
+		<result property="modified" column="modified"/>
+		<result property="exportDate" column="export_date"/>
+		<result property="statusKey" column="status"/>
+		<result property="configJson" column="config"/>
+	</resultMap>
 	
 	<select id="get-DatumExportTaskInfo-for-id" parameterType="UUID" resultMap="DatumExportTaskInfoFullResult">
 		SELECT
@@ -49,6 +58,10 @@
 			solarnet.sn_datum_export_task det
 		WHERE
 			det.id = #{id}
+	</select>
+
+	<select id="get-DatumExportTaskInfo-for-claim" resultMap="DatumExportTaskInfoDirectResult" statementType="CALLABLE">
+		{call solarnet.claim_datum_export_task()}
 	</select>
 
 </mapper>
