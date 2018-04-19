@@ -262,6 +262,9 @@ public class MyBatisGeneralNodeDatumDao
 			sqlProps.put(PARAM_START_DATE,
 					filter.getStartDate() != null ? filter.getStartDate() : forced);
 			sqlProps.put(PARAM_END_DATE, filter.getEndDate() != null ? filter.getEndDate() : forced);
+		} else if ( agg != null && agg == Aggregation.RunningTotal && filter.getSourceId() == null ) {
+			// source ID is required for RunningTotal currently
+			throw new IllegalArgumentException("sourceId is required for RunningTotal aggregation");
 		}
 
 		List<ReportingGeneralNodeDatumMatch> rows;
