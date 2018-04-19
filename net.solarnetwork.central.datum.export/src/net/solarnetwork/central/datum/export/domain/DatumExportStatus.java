@@ -59,4 +59,11 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 */
 	double getPercentComplete();
 
+	/**
+	 * Get the completion date, as milliseconds since the epoch.
+	 * 
+	 * @return the completion date, or {@literal 0} if not complete.
+	 */
+	long getCompletionDate();
+
 }
