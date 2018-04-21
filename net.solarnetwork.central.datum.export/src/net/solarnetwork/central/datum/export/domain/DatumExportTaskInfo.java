@@ -34,7 +34,7 @@ import net.solarnetwork.util.JsonUtils;
  * @author matt
  * @version 1.0
  */
-public class DatumExportTaskInfo extends BaseObjectEntity<UUID> {
+public class DatumExportTaskInfo extends BaseObjectEntity<UUID> implements DatumExportRequest {
 
 	private static final long serialVersionUID = -7460673556637773372L;
 
@@ -43,6 +43,7 @@ public class DatumExportTaskInfo extends BaseObjectEntity<UUID> {
 	private BasicConfiguration config;
 	private String configJson;
 
+	@Override
 	public DateTime getExportDate() {
 		return exportDate;
 	}
@@ -85,6 +86,12 @@ public class DatumExportTaskInfo extends BaseObjectEntity<UUID> {
 	public void setConfig(BasicConfiguration config) {
 		this.config = config;
 		configJson = null;
+	}
+
+	@JsonIgnore
+	@Override
+	public Configuration getConfiguration() {
+		return getConfig();
 	}
 
 	@JsonIgnore

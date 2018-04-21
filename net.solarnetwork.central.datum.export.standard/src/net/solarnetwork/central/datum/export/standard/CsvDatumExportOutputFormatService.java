@@ -22,8 +22,23 @@
 
 package net.solarnetwork.central.datum.export.standard;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.Collections;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.supercsv.io.CsvBeanWriter;
+import org.supercsv.io.ICsvBeanWriter;
+import org.supercsv.prefs.CsvPreference;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatServiceExportContext;
 
 /**
  * Comma-separated-values implementation of
@@ -52,6 +67,63 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 	@Override
 	public String getExportContentType() {
 		return "text/csv;charset=UTF-8";
+	}
+
+	@Override
+	public ExportContext createExportContext(OutputConfiguration config) {
+		return new CsvExportContext(config, false); // TODO: make setting for including header
+	}
+
+	private class CsvExportContext extends BaseDatumExportOutputFormatServiceExportContext {
+
+		private final boolean includeHeader;
+		private File temporaryFile;
+		private ICsvBeanWriter writer;
+
+		private CsvExportContext(OutputConfiguration config, boolean includeHeader) {
+			super(config);
+			this.includeHeader = includeHeader;
+		}
+
+		@Override
+		public void start() throws IOException {
+			temporaryFile = createTemporaryResource();
+			OutputStream out = createCompressedOutputStream(
+					new BufferedOutputStream(new FileOutputStream(temporaryFile)));
+			writer = new CsvBeanWriter(new OutputStreamWriter(out, "UTF-8"),
+					CsvPreference.STANDARD_PREFERENCE);
+		}
+
+		@Override
+		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable)
+				throws IOException {
+			if ( writer.getLineNumber() == 1 && includeHeader ) {
+				// TODO write header
+			}
+			// TODO Auto-generated method stub
+		}
+
+		@Override
+		public Iterable<Resource> finish() throws IOException {
+			flush();
+			close();
+			return Collections.singleton(new FileSystemResource(temporaryFile));
+		}
+
+		@Override
+		public void flush() throws IOException {
+			if ( writer != null ) {
+				writer.flush();
+			}
+		}
+
+		@Override
+		public void close() throws IOException {
+			if ( writer != null ) {
+				writer.close();
+			}
+		}
+
 	}
 
 }

@@ -24,4 +24,10 @@ Import-Package:
  org.slf4j;version="[1.7,2.0)",
  org.springframework.context;version="[4.2,5.0)",
  org.springframework.context.support;version="[4.2,5.0)",
- org.springframework.core;version="[4.2,5.0)"
+ org.springframework.core;version="[4.2,5.0)",
+ org.springframework.core.io;version="[4.2,5.0)",
+ org.supercsv.io;version="[2.0,3.0)",
+ org.supercsv.prefs;version="[2.0,3.0)",
+ org.supercsv.cellprocessor;version="[2.0,3.0)",
+ org.supercsv.cellprocessor.ift;version="[2.0,3.0)",
+ org.supercsv.util;version="[2.0,3.0)"

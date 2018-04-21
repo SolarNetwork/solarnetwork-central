@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumExportBiz.java - 5/03/2018 5:11:15 PM
+ * DatumExportException.java - 21/04/2018 5:16:26 PM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,43 +20,49 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.export.biz;
+package net.solarnetwork.central.datum.export.support;
 
-import net.solarnetwork.central.datum.export.domain.Configuration;
-import net.solarnetwork.central.datum.export.domain.DatumExportRequest;
-import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
+import java.util.UUID;
 
 /**
- * API for a datum export service.
+ * An exception related to the datum export process.
  * 
  * @author matt
  * @version 1.0
- * @since 1.23
  */
-public interface DatumExportBiz {
+public class DatumExportException extends RuntimeException {
+
+	private static final long serialVersionUID = -9084429939147833562L;
+
+	private final String jobId;
+	private final UUID requestId;
 
 	/**
-	 * Perform a datum export.
-	 * 
-	 * @param info
-	 *        the export info with full configuration for the export task; the
-	 *        UUID uniquely identifies the export request
-	 * @return a status
+	 * @param message
+	 * @param cause
 	 */
-	DatumExportStatus performExport(DatumExportRequest info);
+	public DatumExportException(String jobId, UUID requestId, String message, Throwable cause) {
+		super(message, cause);
+		this.jobId = jobId;
+		this.requestId = requestId;
+	}
 
 	/**
-	 * Get the status for a running (or recently completed) export job.
+	 * Get the job execution ID related to this exception.
 	 * 
-	 * <p>
-	 * After requesting an export via {@link #performExport(Configuration)} the
-	 * {@link DatumExportStatus#getJobId()} can be passed to this method to
-	 * obtain the status of that job.
-	 * </p>
-	 * 
-	 * @param jobId
-	 * @return
+	 * @return the job ID
 	 */
-	DatumExportStatus statusForJob(String jobId);
+	public String getJobId() {
+		return jobId;
+	}
+
+	/**
+	 * Get the job request ID related to this exception.
+	 * 
+	 * @return the request ID
+	 */
+	public UUID getRequestId() {
+		return requestId;
+	}
 
 }

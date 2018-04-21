@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumExportBiz.java - 5/03/2018 5:11:15 PM
+ * DatumExportRequest.java - 21/04/2018 2:36:13 PM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,43 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.export.biz;
+package net.solarnetwork.central.datum.export.domain;
 
-import net.solarnetwork.central.datum.export.domain.Configuration;
-import net.solarnetwork.central.datum.export.domain.DatumExportRequest;
-import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
+import java.util.UUID;
+import org.joda.time.DateTime;
+import net.solarnetwork.domain.Identity;
 
 /**
- * API for a datum export service.
+ * API for a {@link Configuration} associated with an identity.
  * 
  * @author matt
  * @version 1.0
- * @since 1.23
  */
-public interface DatumExportBiz {
+public interface DatumExportRequest extends Identity<UUID> {
 
 	/**
-	 * Perform a datum export.
+	 * Get the configuration associated with this entity.
 	 * 
-	 * @param info
-	 *        the export info with full configuration for the export task; the
-	 *        UUID uniquely identifies the export request
-	 * @return a status
+	 * @return the configuration
 	 */
-	DatumExportStatus performExport(DatumExportRequest info);
+	Configuration getConfiguration();
 
 	/**
-	 * Get the status for a running (or recently completed) export job.
+	 * Get the data export starting date.
 	 * 
-	 * <p>
-	 * After requesting an export via {@link #performExport(Configuration)} the
-	 * {@link DatumExportStatus#getJobId()} can be passed to this method to
-	 * obtain the status of that job.
-	 * </p>
-	 * 
-	 * @param jobId
-	 * @return
+	 * @return the export date
 	 */
-	DatumExportStatus statusForJob(String jobId);
+	DateTime getExportDate();
 
 }

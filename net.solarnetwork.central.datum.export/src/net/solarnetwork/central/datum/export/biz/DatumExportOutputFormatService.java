@@ -22,6 +22,12 @@
 
 package net.solarnetwork.central.datum.export.biz;
 
+import java.io.Closeable;
+import java.io.Flushable;
+import java.io.IOException;
+import org.springframework.core.io.Resource;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.settings.SettingSpecifierProvider;
 import net.solarnetwork.support.LocalizedServiceInfoProvider;
@@ -64,5 +70,54 @@ public interface DatumExportOutputFormatService
 	 * @return the export content type
 	 */
 	String getExportContentType();
+
+	/**
+	 * A runtime context object for encoding datum into the output format
+	 * supported by this service.
+	 */
+	interface ExportContext extends Closeable, Flushable {
+
+		/**
+		 * Called at the start of the export process, to initialize any
+		 * necessary resources or write any header information.
+		 * 
+		 * @return the output stream to write to
+		 * @throws IOException
+		 *         if an IO error occurs
+		 */
+		void start() throws IOException;
+
+		/**
+		 * Append datum match data to the output stream started via
+		 * {@link #start()}.
+		 * 
+		 * @param iterable
+		 *        the data to encode
+		 * @throws IOException
+		 *         if an IO error occurs
+		 */
+		void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable)
+				throws IOException;
+
+		/**
+		 * Called at the end of the export process, to clean up any necessary
+		 * resources or write any footer information.
+		 * 
+		 * @return the resource(s) to upload to the export destination
+		 * @throws IOException
+		 *         if an IO error occurs
+		 */
+		Iterable<Resource> finish() throws IOException;
+
+	}
+
+	/**
+	 * Create an export context for encoding the data with.
+	 * 
+	 * @param config
+	 *        the configuration to create the context for
+	 * @return the context
+	 */
+	ExportContext createExportContext(OutputConfiguration config);
 
 }

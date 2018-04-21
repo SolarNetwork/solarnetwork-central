@@ -22,8 +22,19 @@
 
 package net.solarnetwork.central.datum.export.standard;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collections;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatServiceExportContext;
 
 /**
  * JSON implementation of {@link DatumExportOutputFormatService}
@@ -53,4 +64,53 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 		return "application/json;charset=UTF-8";
 	}
 
+	@Override
+	public ExportContext createExportContext(OutputConfiguration config) {
+		return new JsonExportContext(config);
+	}
+
+	private class JsonExportContext extends BaseDatumExportOutputFormatServiceExportContext {
+
+		private File temporaryFile;
+		private OutputStream out;
+
+		private JsonExportContext(OutputConfiguration config) {
+			super(config);
+		}
+
+		@Override
+		public void start() throws IOException {
+			temporaryFile = createTemporaryResource();
+			out = createCompressedOutputStream(
+					new BufferedOutputStream(new FileOutputStream(temporaryFile)));
+		}
+
+		@Override
+		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable)
+				throws IOException {
+			// TODO Auto-generated method stub
+		}
+
+		@Override
+		public Iterable<Resource> finish() throws IOException {
+			flush();
+			close();
+			return Collections.singleton(new FileSystemResource(temporaryFile));
+		}
+
+		@Override
+		public void flush() throws IOException {
+			if ( out != null ) {
+				out.flush();
+			}
+		}
+
+		@Override
+		public void close() throws IOException {
+			if ( out != null ) {
+				out.close();
+			}
+		}
+
+	}
 }
