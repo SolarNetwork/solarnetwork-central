@@ -96,6 +96,27 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		}
 	}
 
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the filter to copy
+	 */
+	public DatumFilterCommand(AggregateGeneralNodeDatumFilter other) {
+		super();
+		location = new SolarLocation();
+		if ( other == null ) {
+			return;
+		}
+		setAggregate(other.getAggregation());
+		setDataPath(other.getDataPath());
+		setEndDate(other.getEndDate());
+		setNodeIds(other.getNodeIds());
+		setSourceIds(other.getSourceIds());
+		setStartDate(other.getStartDate());
+		setUserIds(other.getUserIds());
+	}
+
 	@JsonIgnore
 	@Override
 	public Map<String, ?> getFilter() {
