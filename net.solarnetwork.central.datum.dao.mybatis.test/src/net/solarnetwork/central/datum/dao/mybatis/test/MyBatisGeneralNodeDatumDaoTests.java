@@ -22,8 +22,12 @@
 
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -56,8 +60,9 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  * Test cases for the {@link MyBatisGeneralNodeDatumDao} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
+@SuppressWarnings("deprecation")
 public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private static final String TEST_SOURCE_ID = "test.source";
@@ -257,6 +262,63 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertEquals("Returned results", 2L, (long) results.getTotalResults());
 		assertEquals("Returned result count", 1, (int) results.getReturnedResultCount());
 		assertEquals("Datum ID", lastDatum.getId(), results.iterator().next().getId());
+	}
+
+	@Test
+	public void findFilteredWithMaxNoCount() {
+		storeNew();
+
+		GeneralNodeDatum datum2 = new GeneralNodeDatum();
+		datum2.setCreated(new DateTime().plusHours(1));
+		datum2.setNodeId(TEST_NODE_ID);
+		datum2.setSourceId(TEST_SOURCE_ID);
+		datum2.setSampleJson("{\"i\":{\"watts\":123}}");
+		dao.store(datum2);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setWithoutTotalResultsCount(true);
+
+		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(criteria, null, 0, 1);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Total result count disabled", results.getTotalResults(), nullValue());
+		assertThat("Result ID", results.getResults().iterator().next().getId(),
+				equalTo(lastDatum.getId()));
+
+		results = dao.findFiltered(criteria, null, 1, 1);
+		assertNotNull(results);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Total result count disabled", results.getTotalResults(), nullValue());
+		assertThat("Result ID", results.getResults().iterator().next().getId(), equalTo(datum2.getId()));
+	}
+
+	@Test
+	public void findFilteredWithMaxBeyondTotal() {
+		storeNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+
+		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(criteria, null, 1, 1000);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), equalTo(1L));
+	}
+
+	@Test
+	public void findFilteredWithMaxBeyondTotalNoCount() {
+		storeNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setWithoutTotalResultsCount(true);
+
+		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(criteria, null, 1, 1000);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), nullValue());
 	}
 
 	@Test

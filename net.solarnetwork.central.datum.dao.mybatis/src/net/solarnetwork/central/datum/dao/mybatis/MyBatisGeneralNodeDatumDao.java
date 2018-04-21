@@ -53,7 +53,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -210,7 +210,8 @@ public class MyBatisGeneralNodeDatumDao
 
 		// attempt count first, if max NOT specified as -1 and NOT a mostRecent query
 		Long totalCount = null;
-		if ( max != null && max.intValue() != -1 && filter.isMostRecent() == false ) {
+		if ( max != null && max.intValue() != -1 && !filter.isMostRecent()
+				&& !filter.isWithoutTotalResultsCount() ) {
 			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
 
@@ -219,8 +220,10 @@ public class MyBatisGeneralNodeDatumDao
 		//rows = postProcessFilterQuery(filter, rows);
 
 		BasicFilterResults<GeneralNodeDatumFilterMatch> results = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
-				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset,
-				rows.size());
+				rows,
+				(totalCount != null ? totalCount
+						: filter.isWithoutTotalResultsCount() ? null : Long.valueOf(rows.size())),
+				offset, rows.size());
 
 		return results;
 	}
@@ -244,10 +247,11 @@ public class MyBatisGeneralNodeDatumDao
 		// and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
 		Long totalCount = null;
 		final Aggregation agg = filter.getAggregation();
-		if ( !filter.isMostRecent() && max != null && max.intValue() != -1
-				&& agg.compareTo(Aggregation.Hour) >= 0 && agg != Aggregation.DayOfWeek
-				&& agg != Aggregation.SeasonalDayOfWeek && agg != Aggregation.HourOfDay
-				&& agg != Aggregation.SeasonalHourOfDay && agg != Aggregation.RunningTotal ) {
+		if ( filter.isMostRecent() && !filter.isWithoutTotalResultsCount() && max != null
+				&& max.intValue() != -1 && agg.compareTo(Aggregation.Hour) >= 0
+				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
+				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
+				&& agg != Aggregation.RunningTotal ) {
 			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
 		if ( agg != null && agg.compareLevel(Aggregation.Hour) < 1 ) {
@@ -285,8 +289,10 @@ public class MyBatisGeneralNodeDatumDao
 		// rows = postProcessAggregationFilterQuery(filter, rows);
 
 		BasicFilterResults<ReportingGeneralNodeDatumMatch> results = new BasicFilterResults<ReportingGeneralNodeDatumMatch>(
-				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset,
-				rows.size());
+				rows,
+				(totalCount != null ? totalCount
+						: filter.isWithoutTotalResultsCount() ? null : Long.valueOf(rows.size())),
+				offset, rows.size());
 
 		return results;
 	}

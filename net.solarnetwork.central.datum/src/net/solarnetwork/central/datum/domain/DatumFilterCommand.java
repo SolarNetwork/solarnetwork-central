@@ -54,7 +54,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
 		GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter, Serializable {
 
-	private static final long serialVersionUID = -8161634027558143061L;
+	private static final long serialVersionUID = -2563498875989149622L;
 
 	private final SolarLocation location;
 	private DateTime startDate;
@@ -72,6 +72,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	private Long[] userIds;
 	private String[] tags;
 	private Aggregation aggregation;
+	private boolean withoutTotalResultsCount;
 
 	/**
 	 * Default constructor.
@@ -101,20 +102,40 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * 
 	 * @param other
 	 *        the filter to copy
+	 * @since 1.9
 	 */
 	public DatumFilterCommand(AggregateGeneralNodeDatumFilter other) {
+		this(other, new SolarLocation());
+		setAggregate(other.getAggregation());
+		setNodeIds(other.getNodeIds());
+		setUserIds(other.getUserIds());
+	}
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the filter to copy
+	 * @param loc
+	 *        the location to use
+	 * @since 1.9
+	 */
+	public DatumFilterCommand(CommonFilter other, Location loc) {
 		super();
-		location = new SolarLocation();
+		if ( loc instanceof SolarLocation ) {
+			location = (SolarLocation) loc;
+		} else {
+			location = new SolarLocation(loc);
+		}
 		if ( other == null ) {
 			return;
 		}
-		setAggregate(other.getAggregation());
 		setDataPath(other.getDataPath());
 		setEndDate(other.getEndDate());
-		setNodeIds(other.getNodeIds());
 		setSourceIds(other.getSourceIds());
 		setStartDate(other.getStartDate());
-		setUserIds(other.getUserIds());
+		setMostRecent(other.isMostRecent());
+		setWithoutTotalResultsCount(other.isWithoutTotalResultsCount());
 	}
 
 	@JsonIgnore
@@ -446,6 +467,22 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	public void setUserIds(Long[] userIds) {
 		this.userIds = userIds;
+	}
+
+	@Override
+	public boolean isWithoutTotalResultsCount() {
+		return withoutTotalResultsCount;
+	}
+
+	/**
+	 * Toggle the total results count flag.
+	 * 
+	 * @param withoutTotalResultsCount
+	 *        the value to set
+	 * @since 1.9
+	 */
+	public void setWithoutTotalResultsCount(boolean withoutTotalResultsCount) {
+		this.withoutTotalResultsCount = withoutTotalResultsCount;
 	}
 
 	/**
