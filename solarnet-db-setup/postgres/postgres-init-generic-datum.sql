@@ -21,9 +21,17 @@ $$
 	SELECT solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, datum.jdata_s, datum.jdata_t);
 $$;
 
-CREATE VIEW solardatum.da_datum_data AS
-    SELECT d.ts, d.node_id, d.source_id, d.posted, solardatum.jdata_from_datum(d) AS jdata
-    FROM solardatum.da_datum d;
+CREATE OR REPLACE VIEW solardatum.da_datum_data AS
+	SELECT
+		d.ts,
+		d.node_id,
+		d.source_id,
+		d.posted,
+		solardatum.jdata_from_datum(d.*) AS jdata,
+		d.ts AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_date
+	FROM solardatum.da_datum d
+	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = d.node_id
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id;
 
 CREATE TABLE solardatum.da_meta (
   node_id bigint NOT NULL,

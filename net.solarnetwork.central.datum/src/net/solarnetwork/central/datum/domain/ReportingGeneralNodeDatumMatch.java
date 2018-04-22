@@ -22,22 +22,12 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import java.util.Map;
-
 /**
  * API for an aggregate (reporting) {@link GeneralNodeDatumFilterMatch}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface ReportingGeneralNodeDatumMatch extends ReportingDatum, GeneralNodeDatumFilterMatch {
-
-	/**
-	 * Get all available sample data as a Map.
-	 * 
-	 * @return the sample data as a Map, or <em>null</em> if no sample data
-	 *         available
-	 */
-	public Map<String, ?> getSampleData();
+public interface ReportingGeneralNodeDatumMatch extends GeneralNodeDatumFilterMatch {
 
 }

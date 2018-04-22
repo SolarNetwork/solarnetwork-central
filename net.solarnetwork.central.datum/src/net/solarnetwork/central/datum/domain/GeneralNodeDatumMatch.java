@@ -22,6 +22,11 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import net.solarnetwork.util.SerializeIgnore;
 
 /**
  * A "match" to a {@link GeneralNodeDatum}.
@@ -33,10 +38,38 @@ package net.solarnetwork.central.datum.domain;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class GeneralNodeDatumMatch extends GeneralNodeDatum implements GeneralNodeDatumFilterMatch {
 
-	private static final long serialVersionUID = 6894637498151159318L;
+	private static final long serialVersionUID = -3781355133819327343L;
+
+	private LocalDateTime localDateTime;
+
+	@Override
+	public LocalDate getLocalDate() {
+		if ( localDateTime == null ) {
+			return null;
+		}
+		return localDateTime.toLocalDate();
+	}
+
+	@Override
+	public LocalTime getLocalTime() {
+		if ( localDateTime == null ) {
+			return null;
+		}
+		return localDateTime.toLocalTime();
+	}
+
+	@JsonIgnore
+	@SerializeIgnore
+	public LocalDateTime getLocalDateTime() {
+		return localDateTime;
+	}
+
+	public void setLocalDateTime(LocalDateTime localDateTime) {
+		this.localDateTime = localDateTime;
+	}
 
 }
