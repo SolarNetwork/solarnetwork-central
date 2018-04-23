@@ -91,7 +91,7 @@ public class DefaultUserExportJobsService implements UserExportJobsService {
 				}
 			} catch ( Exception e ) {
 				log.error("Error submiting user {} export task for config {}", config.getUserId(),
-						config.getId());
+						config.getId(), e);
 			}
 		}
 
