@@ -27,9 +27,7 @@ import java.io.OutputStream;
 import java.util.Map;
 import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DatumExportResource;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.settings.SettingSpecifierProvider;
-import net.solarnetwork.support.LocalizedServiceInfoProvider;
 import net.solarnetwork.util.ProgressListener;
 
 /**
@@ -55,8 +53,7 @@ import net.solarnetwork.util.ProgressListener;
  * @version 1.0
  * @since 1.23
  */
-public interface DatumExportDestinationService
-		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
+public interface DatumExportDestinationService extends DatumExportService {
 
 	/**
 	 * Create a new {@link OutputStream} suitable for writing export data to
@@ -64,8 +61,8 @@ public interface DatumExportDestinationService
 	 * 
 	 * @param config
 	 *        the configuration in use
-	 * @param resource
-	 *        the resource to export
+	 * @param resources
+	 *        the resources to export
 	 * @param runtimeProperties
 	 *        the runtime properties to use
 	 * @param progressListener
@@ -74,7 +71,8 @@ public interface DatumExportDestinationService
 	 *         if the export fails for any reason from an IO error
 	 * @throw RemoteServiceException if a remote access error occurs
 	 */
-	void export(Configuration config, DatumExportResource resource, Map<String, ?> runtimeProperties,
-			ProgressListener<DatumExportResource> progressListener) throws IOException;
+	void export(Configuration config, Iterable<DatumExportResource> resources,
+			Map<String, ?> runtimeProperties, ProgressListener<DatumExportService> progressListener)
+			throws IOException;
 
 }

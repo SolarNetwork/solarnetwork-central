@@ -73,4 +73,13 @@ public class BasicDatumExportResource implements DatumExportResource {
 		return contentType;
 	}
 
+	/**
+	 * Get the delegate resource.
+	 * 
+	 * @return the delegate
+	 */
+	public Resource getDelegate() {
+		return delegate;
+	}
+
 }

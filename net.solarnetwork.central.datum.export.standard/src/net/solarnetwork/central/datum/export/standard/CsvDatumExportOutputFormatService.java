@@ -42,7 +42,6 @@ import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.joda.time.ReadableInstant;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import org.supercsv.cellprocessor.FmtDate;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -51,6 +50,9 @@ import org.supercsv.io.ICsvMapWriter;
 import org.supercsv.prefs.CsvPreference;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.biz.DatumExportService;
+import net.solarnetwork.central.datum.export.domain.BasicDatumExportResource;
+import net.solarnetwork.central.datum.export.domain.DatumExportResource;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatServiceExportContext;
@@ -234,7 +236,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 
 		@Override
 		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable,
-				ProgressListener<ExportContext> progressListener) throws IOException {
+				ProgressListener<DatumExportService> progressListener) throws IOException {
 			if ( writer == null ) {
 				throw new UnsupportedOperationException("The start method must be called first.");
 			}
@@ -259,7 +261,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 					}
 					writer.write(map, headers, cellProcessors);
 				}
-				incrementProgress(1, progressListener);
+				incrementProgress(CsvDatumExportOutputFormatService.this, 1, progressListener);
 			}
 		}
 
@@ -276,12 +278,13 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 		}
 
 		@Override
-		public Iterable<Resource> finish() throws IOException {
+		public Iterable<DatumExportResource> finish() throws IOException {
 			flush();
 			close();
 			if ( temporaryFile != null ) {
-				return Collections
-						.singleton(new DeleteOnCloseFileResource(new FileSystemResource(temporaryFile)));
+				return Collections.singleton(new BasicDatumExportResource(
+						new DeleteOnCloseFileResource(new FileSystemResource(temporaryFile)),
+						getContentType(config)));
 			}
 			return Collections.emptyList();
 		}

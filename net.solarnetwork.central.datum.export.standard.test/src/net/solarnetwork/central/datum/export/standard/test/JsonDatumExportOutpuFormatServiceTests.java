@@ -37,18 +37,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import java.util.zip.GZIPInputStream;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 import org.junit.Test;
-import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
-import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService.ExportContext;
+import net.solarnetwork.central.datum.export.biz.DatumExportService;
+import net.solarnetwork.central.datum.export.domain.BasicDatumExportResource;
 import net.solarnetwork.central.datum.export.domain.BasicOutputConfiguration;
+import net.solarnetwork.central.datum.export.domain.DatumExportResource;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.standard.JsonDatumExportOutputFormatService;
 import net.solarnetwork.util.ProgressListener;
@@ -83,21 +85,20 @@ public class JsonDatumExportOutpuFormatServiceTests {
 		List<Double> progress = new ArrayList<>(4);
 
 		// when
-		Iterable<Resource> results = null;
+		Iterable<DatumExportResource> results = null;
 		try (DatumExportOutputFormatService.ExportContext context = service
 				.createExportContext(config)) {
 			assertThat("Context created", context, notNullValue());
 
 			context.start(1);
-			context.appendDatumMatch(data,
-					new ProgressListener<DatumExportOutputFormatService.ExportContext>() {
+			context.appendDatumMatch(data, new ProgressListener<DatumExportService>() {
 
-						@Override
-						public void progressChanged(ExportContext ctx, double amountComplete) {
-							assertThat("Same context", ctx, sameInstance(context));
-							progress.add(amountComplete);
-						}
-					});
+				@Override
+				public void progressChanged(DatumExportService ctx, double amountComplete) {
+					assertThat("Same context", ctx, sameInstance(service));
+					progress.add(amountComplete);
+				}
+			});
 			results = context.finish();
 		}
 
@@ -105,14 +106,16 @@ public class JsonDatumExportOutpuFormatServiceTests {
 		assertThat("Result created", results, notNullValue());
 		assertThat("Progress provided", progress, hasSize(1));
 
-		List<Resource> resultList = StreamSupport.stream(results.spliterator(), false)
+		List<DatumExportResource> resultList = StreamSupport.stream(results.spliterator(), false)
 				.collect(Collectors.toList());
 		assertThat(resultList, hasSize(1));
 
-		Resource r = resultList.get(0);
-		File tempFile = r.getFile();
+		DatumExportResource r = resultList.get(0);
+		assertThat(r, Matchers.instanceOf(BasicDatumExportResource.class));
+		File tempFile = ((BasicDatumExportResource) r).getDelegate().getFile();
 		assertThat("Temp file exists", tempFile.exists(), equalTo(true));
 		assertThat("Temp file extension", tempFile.getName(), endsWith(".json"));
+		assertThat("Content type", r.getContentType(), equalTo(service.getExportContentType()));
 		String csv = FileCopyUtils.copyToString(new InputStreamReader(r.getInputStream(), "UTF-8"));
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
 		assertThat("Generated JSON", csv, equalTo(
@@ -144,36 +147,38 @@ public class JsonDatumExportOutpuFormatServiceTests {
 		List<Double> progress = new ArrayList<>(4);
 
 		// when
-		Iterable<Resource> results = null;
+		Iterable<DatumExportResource> results = null;
 		try (DatumExportOutputFormatService.ExportContext context = service
 				.createExportContext(config)) {
 			assertThat("Context created", context, notNullValue());
 
 			context.start(1);
-			context.appendDatumMatch(data,
-					new ProgressListener<DatumExportOutputFormatService.ExportContext>() {
+			context.appendDatumMatch(data, new ProgressListener<DatumExportService>() {
 
-						@Override
-						public void progressChanged(ExportContext ctx, double amountComplete) {
-							assertThat("Same context", ctx, sameInstance(context));
-							progress.add(amountComplete);
-						}
-					});
+				@Override
+				public void progressChanged(DatumExportService ctx, double amountComplete) {
+					assertThat("Same context", ctx, sameInstance(service));
+					progress.add(amountComplete);
+				}
+			});
 			results = context.finish();
 		}
 
 		// then
 		assertThat("Result created", results, notNullValue());
 
-		List<Resource> resultList = StreamSupport.stream(results.spliterator(), false)
+		List<DatumExportResource> resultList = StreamSupport.stream(results.spliterator(), false)
 				.collect(Collectors.toList());
 		assertThat(resultList, hasSize(1));
 		assertThat("Progress provided", progress, hasSize(count));
 
-		Resource r = resultList.get(0);
-		File tempFile = r.getFile();
+		DatumExportResource r = resultList.get(0);
+		assertThat(r, Matchers.instanceOf(BasicDatumExportResource.class));
+		File tempFile = ((BasicDatumExportResource) r).getDelegate().getFile();
 		assertThat("Temp file exists", tempFile.exists(), equalTo(true));
 		assertThat("Temp file extension", tempFile.getName(), endsWith(".json.gz"));
+		assertThat("Content type", r.getContentType(),
+				equalTo(OutputCompressionType.GZIP.getContentType()));
 		String json = FileCopyUtils
 				.copyToString(new InputStreamReader(new GZIPInputStream(r.getInputStream()), "UTF-8"));
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));

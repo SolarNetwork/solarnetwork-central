@@ -31,6 +31,7 @@ import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,7 @@ import com.amazonaws.services.s3.model.DeleteObjectsResult;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import net.solarnetwork.central.datum.export.biz.DatumExportService;
 import net.solarnetwork.central.datum.export.dest.s3.S3DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.BasicDatumExportResource;
@@ -183,14 +185,15 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 
 		// when
 		List<Double> progress = new ArrayList<>(8);
-		service.export(config, rsrc, runtimeProps, new ProgressListener<DatumExportResource>() {
+		service.export(config, Collections.singleton(rsrc), runtimeProps,
+				new ProgressListener<DatumExportService>() {
 
-			@Override
-			public void progressChanged(DatumExportResource context, double amountComplete) {
-				assertThat("Context is resource", context, sameInstance(rsrc));
-				progress.add(amountComplete);
-			}
-		});
+					@Override
+					public void progressChanged(DatumExportService context, double amountComplete) {
+						assertThat("Context is service", context, sameInstance(service));
+						progress.add(amountComplete);
+					}
+				});
 
 		// then
 		assertThat("Progress was made", progress, not(hasSize(0)));

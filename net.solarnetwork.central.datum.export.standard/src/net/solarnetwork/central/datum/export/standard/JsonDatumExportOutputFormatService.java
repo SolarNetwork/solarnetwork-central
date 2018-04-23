@@ -29,11 +29,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.biz.DatumExportService;
+import net.solarnetwork.central.datum.export.domain.BasicDatumExportResource;
+import net.solarnetwork.central.datum.export.domain.DatumExportResource;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatServiceExportContext;
@@ -113,21 +115,22 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 
 		@Override
 		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable,
-				ProgressListener<ExportContext> progressListener) throws IOException {
+				ProgressListener<DatumExportService> progressListener) throws IOException {
 			generator.writeStartArray();
 			for ( GeneralNodeDatumFilterMatch match : iterable ) {
 				generator.writeObject(match);
-				incrementProgress(1, progressListener);
+				incrementProgress(JsonDatumExportOutputFormatService.this, 1, progressListener);
 			}
 			generator.writeEndArray();
 		}
 
 		@Override
-		public Iterable<Resource> finish() throws IOException {
+		public Iterable<DatumExportResource> finish() throws IOException {
 			flush();
 			close();
-			return Collections
-					.singleton(new DeleteOnCloseFileResource(new FileSystemResource(temporaryFile)));
+			return Collections.singleton(new BasicDatumExportResource(
+					new DeleteOnCloseFileResource(new FileSystemResource(temporaryFile)),
+					getContentType(config)));
 		}
 
 		@Override

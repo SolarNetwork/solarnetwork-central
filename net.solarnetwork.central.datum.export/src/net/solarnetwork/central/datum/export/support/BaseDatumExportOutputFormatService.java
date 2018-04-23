@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
@@ -83,6 +84,22 @@ public abstract class BaseDatumExportOutputFormatService
 			ext += "." + compExt;
 		}
 		return File.createTempFile(getClass().getSimpleName() + "-", "." + ext, getTemporaryDir());
+	}
+
+	/**
+	 * Get the appropriate content type to use based on the output
+	 * configuration.
+	 * 
+	 * @param config
+	 *        the output configuration
+	 * @return the content type
+	 */
+	protected String getContentType(OutputConfiguration config) {
+		if ( config != null && config.getCompressionType() != null
+				&& config.getCompressionType() != OutputCompressionType.None ) {
+			return config.getCompressionType().getContentType();
+		}
+		return getExportContentType();
 	}
 
 	/**

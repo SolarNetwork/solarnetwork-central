@@ -25,12 +25,10 @@ package net.solarnetwork.central.datum.export.biz;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
-import org.springframework.core.io.Resource;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.export.domain.DatumExportResource;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
-import net.solarnetwork.domain.Identity;
 import net.solarnetwork.settings.SettingSpecifierProvider;
-import net.solarnetwork.support.LocalizedServiceInfoProvider;
 import net.solarnetwork.util.ProgressListener;
 
 /**
@@ -55,8 +53,7 @@ import net.solarnetwork.util.ProgressListener;
  * @version 1.0
  * @since 1.23
  */
-public interface DatumExportOutputFormatService
-		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
+public interface DatumExportOutputFormatService extends DatumExportService {
 
 	/**
 	 * Get an appropriate filename extension to use for this export format.
@@ -103,7 +100,7 @@ public interface DatumExportOutputFormatService
 		 *         if an IO error occurs
 		 */
 		void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable,
-				ProgressListener<ExportContext> progressListener) throws IOException;
+				ProgressListener<DatumExportService> progressListener) throws IOException;
 
 		/**
 		 * Called at the end of the export process, to clean up any necessary
@@ -121,7 +118,7 @@ public interface DatumExportOutputFormatService
 		 * @throws IOException
 		 *         if an IO error occurs
 		 */
-		Iterable<Resource> finish() throws IOException;
+		Iterable<DatumExportResource> finish() throws IOException;
 
 	}
 

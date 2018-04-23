@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService.ExportContext;
+import net.solarnetwork.central.datum.export.biz.DatumExportService;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.util.ProgressListener;
 
@@ -56,12 +57,13 @@ public abstract class BaseDatumExportOutputFormatServiceExportContext implements
 		this.estimatedResultCount = estimatedResultCount;
 	}
 
-	protected void incrementProgress(int count, ProgressListener<ExportContext> progressListener) {
+	protected void incrementProgress(DatumExportService context, int count,
+			ProgressListener<DatumExportService> progressListener) {
 		if ( estimatedResultCount < 1 ) {
 			return;
 		}
 		complete += count;
-		progressListener.progressChanged(this,
+		progressListener.progressChanged(context,
 				Math.min(1.0, (double) complete / (double) estimatedResultCount));
 	}
 
