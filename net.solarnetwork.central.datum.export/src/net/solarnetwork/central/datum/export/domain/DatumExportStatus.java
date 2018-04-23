@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.datum.export.domain;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Future;
+import org.osgi.service.event.Event;
 
 /**
  * The status of a datum export job.
@@ -37,6 +40,17 @@ import java.util.concurrent.Future;
  * @since 1.23
  */
 public interface DatumExportStatus extends Future<DatumExportResult> {
+
+	/** Topic for a job request notification. */
+	String EVENT_TOPIC_JOB_STATUS_CHANGED = "net/solarnetwork/central/datum/export/JOB_STATUS_CHAGNED";
+
+	String EVENT_PROP_JOB_ID = "jobId";
+
+	String EVENT_PROP_JOB_STATE = "jobState";
+
+	String EVENT_PROP_PERCENT_COMPLETE = "percentComplete";
+
+	String EVENT_PROP_COMPLETION_DATE = "completionDate";
 
 	/**
 	 * Get a unique ID for this export job.
@@ -65,5 +79,39 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 * @return the completion date, or {@literal 0} if not complete.
 	 */
 	long getCompletionDate();
+
+	/**
+	 * Create a job status changed event out of this instance.
+	 * 
+	 * @return the event, never {@literal null}
+	 * @see #createJobStatusChagnedEvent(DatumExportStatus)
+	 */
+	default Event asJobStatusChagnedEvent() {
+		return createJobStatusChagnedEvent(this);
+	}
+
+	/**
+	 * Create an event out of a status instance.
+	 * 
+	 * <p>
+	 * The event will be populated with the property constants defined on this
+	 * interface, using values from {@code status}.
+	 * </p>
+	 * 
+	 * @param status
+	 *        the status instance to create the event for
+	 * @return the event, never {@literal null}
+	 */
+	static Event createJobStatusChagnedEvent(DatumExportStatus status) {
+		Map<String, Object> props = new HashMap<String, Object>(4);
+		if ( status != null ) {
+			props.put(EVENT_PROP_JOB_ID, status.getJobId());
+			props.put(EVENT_PROP_JOB_STATE, status.getJobState() != null ? status.getJobState().getKey()
+					: DatumExportState.Unknown.getKey());
+			props.put(EVENT_PROP_PERCENT_COMPLETE, status.getPercentComplete());
+			props.put(EVENT_PROP_COMPLETION_DATE, status.getCompletionDate());
+		}
+		return new Event(EVENT_TOPIC_JOB_STATUS_CHANGED, props);
+	}
 
 }

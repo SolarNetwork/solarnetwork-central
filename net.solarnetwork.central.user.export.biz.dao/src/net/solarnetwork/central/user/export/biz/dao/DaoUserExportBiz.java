@@ -28,21 +28,29 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import org.joda.time.DateTime;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventHandler;
 import org.springframework.context.MessageSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.domain.DatumExportState;
+import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.dao.UserDataConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
+import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao;
 import net.solarnetwork.central.user.export.domain.BaseExportConfigurationEntity;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
+import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
@@ -60,12 +68,13 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 1.0
  */
-public class DaoUserExportBiz implements UserExportBiz {
+public class DaoUserExportBiz implements UserExportBiz, EventHandler {
 
 	private final UserDatumExportConfigurationDao datumExportConfigDao;
 	private final UserDataConfigurationDao dataConfigDao;
 	private final UserDestinationConfigurationDao destinationConfigDao;
 	private final UserOutputConfigurationDao outputConfigDao;
+	private final UserDatumExportTaskInfoDao taskDao;
 
 	private OptionalServiceCollection<DatumExportOutputFormatService> outputFormatServices;
 	private OptionalServiceCollection<DatumExportDestinationService> destinationServices;
@@ -83,15 +92,18 @@ public class DaoUserExportBiz implements UserExportBiz {
 	 *        the destination configuration DAO to use
 	 * @param outputConfigDao
 	 *        the output configuration DAO to use
+	 * @param taskDao
+	 *        the task DAO to use
 	 */
 	public DaoUserExportBiz(UserDatumExportConfigurationDao datumExportConfigDao,
 			UserDataConfigurationDao dataConfigDao, UserDestinationConfigurationDao destinationConfigDao,
-			UserOutputConfigurationDao outputConfigDao) {
+			UserOutputConfigurationDao outputConfigDao, UserDatumExportTaskInfoDao taskDao) {
 		super();
 		this.datumExportConfigDao = datumExportConfigDao;
 		this.dataConfigDao = dataConfigDao;
 		this.destinationConfigDao = destinationConfigDao;
 		this.outputConfigDao = outputConfigDao;
+		this.taskDao = taskDao;
 	}
 
 	@Override
@@ -281,6 +293,41 @@ public class DaoUserExportBiz implements UserExportBiz {
 			return (List<T>) outputConfigDao.findConfigurationsForUser(userId);
 		}
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
+	}
+
+	@Override
+	public void handleEvent(Event event) {
+		if ( event == null
+				|| !DatumExportStatus.EVENT_TOPIC_JOB_STATUS_CHANGED.equals(event.getTopic()) ) {
+			return;
+		}
+		if ( !(event.getProperty(DatumExportStatus.EVENT_PROP_JOB_STATE) instanceof Character
+				&& event.getProperty(DatumExportStatus.EVENT_PROP_JOB_ID) instanceof String) ) {
+			return;
+		}
+		DatumExportState jobState = DatumExportState
+				.forKey((char) event.getProperty(DatumExportStatus.EVENT_PROP_JOB_STATE));
+		if ( jobState != DatumExportState.Completed ) {
+			return;
+		}
+
+		String jobId = (String) event.getProperty(DatumExportStatus.EVENT_PROP_JOB_ID); // TODO: maybe rename this TASK_ID?
+		UUID taskId = UUID.fromString(jobId);
+
+		UserDatumExportTaskInfo info = taskDao.getForTaskId(taskId);
+		if ( info == null || info.getConfig() == null
+				|| info.getUserDatumExportConfigurationId() == null ) {
+			return;
+		}
+
+		ScheduleType schedule = info.getConfig().getSchedule();
+		if ( schedule == null ) {
+			return;
+		}
+
+		DateTime nextExportDate = schedule.nextExportDate(info.getExportDate());
+		datumExportConfigDao.updateMinimumExportDate(info.getUserDatumExportConfigurationId(),
+				info.getUserId(), nextExportDate);
 	}
 
 	/**

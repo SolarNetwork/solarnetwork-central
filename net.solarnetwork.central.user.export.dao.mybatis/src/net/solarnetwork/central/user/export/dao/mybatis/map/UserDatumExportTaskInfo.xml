@@ -14,15 +14,16 @@
 		<parameter property="userId" jdbcType="BIGINT" mode="IN"/>
 		<parameter property="scheduleTypeKey" jdbcType="CHAR" mode="IN"/>
 		<parameter property="exportDate" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="userDatumExportConfigurationId" jdbcType="BIGINT" mode="IN"/>
 		<parameter property="configJson" jdbcType="VARCHAR" mode="IN"/>
 	</parameterMap>
 
  	<insert id="insert-UserDatumExportTaskInfo" parameterMap="pmap-UserDatumExportTaskInfo" statementType="CALLABLE">
- 		{call solaruser.store_export_task(?, ?, ?, ?)}
+ 		{call solaruser.store_export_task(?, ?, ?, ?, ?)}
 	</insert>
 
 	<update id="update-UserDatumExportTaskInfo" parameterMap="pmap-UserDatumExportTaskInfo" statementType="CALLABLE">
- 		{call solaruser.store_export_task(?, ?, ?, ?)}
+ 		{call solaruser.store_export_task(?, ?, ?, ?, ?)}
 	</update>
 
 	<delete id="delete-UserDatumExportTaskInfo" parameterType="UserDatumExportTaskInfo">
@@ -35,7 +36,8 @@
 		uet.user_id AS user_export_task_user_id,
 		uet.schedule AS user_export_task_schedule,
 		uet.export_date AS user_export_task_export_date,
-		uet.task_id AS user_export_task_min_task_id
+		uet.task_id AS user_export_task_min_task_id,
+		uet.conf_id AS user_export_task_conf_id
 	</sql>
 
 	<resultMap id="UserDatumExportTaskInfoFullResult" type="UserDatumExportTaskInfo">
@@ -44,6 +46,7 @@
 		<id property="exportDate" column="user_export_task_export_date"/>
 		<result property="created" column="user_export_task_created"/>
 		<result property="taskId" column="user_export_task_id"/>
+		<result property="userDatumExportConfigurationId" column="user_export_task_conf_id"/>
 		
 		<association property="task" resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult" />
 	</resultMap>
@@ -62,6 +65,12 @@
 		<include refid="fragment-UserDatumExportTaskInfo-select-full"/>
 		WHERE
 			uet.user_id = #{userId} AND uet.schedule = #{id.scheduleTypeKey} AND uet.export_date = #{id.date}
+	</select>
+	
+	<select id="get-UserDatumExportTaskInfo-for-task-id" parameterType="java.util.UUID" resultMap="UserDatumExportTaskInfoFullResult">
+		<include refid="fragment-UserDatumExportTaskInfo-select-full"/>
+		WHERE
+			uet.task_id = #{id}
 	</select>
 	
 	<select id="find-UserDatumExportTaskInfo-for-user" parameterType="long" resultMap="UserDatumExportTaskInfoFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">

@@ -49,4 +49,18 @@ public interface UserDatumExportConfigurationDao
 	 */
 	List<UserDatumExportConfiguration> findForExecution(DateTime exportDate, ScheduleType scheduleType);
 
+	/**
+	 * Update the minimum export date on an existing configuration, as long as
+	 * it is <b>older</b> than {@link minimumDate}.
+	 * 
+	 * @param id
+	 *        the configuration ID to update
+	 * @param userId
+	 *        the user ID
+	 * @param minimumDate
+	 *        the minimum date to set
+	 * @return the number of rows updated
+	 */
+	int updateMinimumExportDate(Long id, Long userId, DateTime minimumDate);
+
 }

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.export.dao;
 
+import java.util.UUID;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
@@ -34,5 +35,14 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
  */
 public interface UserDatumExportTaskInfoDao
 		extends UserRelatedGenericDao<UserDatumExportTaskInfo, UserDatumExportTaskPK> {
+
+	/**
+	 * Get an export task by its task ID.
+	 * 
+	 * @param taskId
+	 *        the task ID to get
+	 * @return the export task, or {@literal null} if not available
+	 */
+	UserDatumExportTaskInfo getForTaskId(UUID taskId);
 
 }

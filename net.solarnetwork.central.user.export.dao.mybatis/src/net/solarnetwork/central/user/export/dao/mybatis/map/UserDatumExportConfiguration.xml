@@ -45,6 +45,17 @@
 		WHERE
 			id = #{id} AND user_id = #{userId}
 	</update>
+	
+	<update id="update-UserDatumExportConfiguration-minimum-export-date" parameterType="map">
+		UPDATE
+			solaruser.user_export_datum_conf
+		SET
+			min_export_date = #{date}
+		WHERE
+			id = #{id} 
+			AND user_id = #{userId} 
+			AND (min_export_date IS NULL OR min_export_date &lt; #{date})
+	</update>
 
 	<delete id="delete-UserDatumExportConfiguration" parameterType="UserDatumExportConfiguration">
 		DELETE FROM solaruser.user_export_datum_conf

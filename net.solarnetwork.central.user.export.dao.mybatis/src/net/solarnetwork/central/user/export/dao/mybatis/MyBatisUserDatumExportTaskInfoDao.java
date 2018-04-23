@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis;
 
+import java.util.UUID;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
@@ -37,11 +38,19 @@ public class MyBatisUserDatumExportTaskInfoDao
 		extends BaseMyBatisUserRelatedGenericDao<UserDatumExportTaskInfo, UserDatumExportTaskPK>
 		implements UserDatumExportTaskInfoDao {
 
+	/** The query name used for {@link #getForTaskId(UUID)}. */
+	public static final String QUERY_TASK_INFO_FOR_TASK_ID = "get-UserDatumExportTaskInfo-for-task-id";
+
 	/**
 	 * Default constructor.
 	 */
 	public MyBatisUserDatumExportTaskInfoDao() {
 		super(UserDatumExportTaskInfo.class, UserDatumExportTaskPK.class);
+	}
+
+	@Override
+	public UserDatumExportTaskInfo getForTaskId(UUID taskId) {
+		return selectFirst(QUERY_TASK_INFO_FOR_TASK_ID, taskId);
 	}
 
 }

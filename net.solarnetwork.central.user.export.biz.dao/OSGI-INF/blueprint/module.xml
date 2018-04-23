@@ -19,18 +19,33 @@
 	<reference id="dataConfDao" interface="net.solarnetwork.central.user.export.dao.UserDataConfigurationDao"/>
 	<reference id="destinationConfDao" interface="net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao"/>
 	<reference id="outputConfDao" interface="net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao"/>
+	<reference id="taskDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao"/>
 
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 	
 	<!-- Published Services -->
 	
-	<service interface="net.solarnetwork.central.user.export.biz.UserExportBiz" ref="userExportBiz"/>
+	<service ref="userExportBiz">
+		<interfaces>
+			<value>net.solarnetwork.central.user.export.biz.UserExportBiz</value>
+			<value>org.osgi.service.event.EventHandler</value>
+		</interfaces>
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.datum.export.domain.DatumExportStatus).EVENT_TOPIC_JOB_STATUS_CHANGED}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+	
 	<bean id="userExportBiz" class="net.solarnetwork.central.user.export.biz.dao.DaoUserExportBiz">
 		<argument ref="datumExportConfDao"/>
 		<argument ref="dataConfDao"/>
 		<argument ref="destinationConfDao"/>
 		<argument ref="outputConfDao"/>
+		<argument ref="taskDao"/>
 		<property name="outputFormatServices">
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>

@@ -54,6 +54,12 @@ public class MyBatisUserDatumExportConfigurationDao
 	public static final String QUERY_CONFIGURATIONS_FOR_EXECUTION = "find-UserDatumExportConfiguration-for-execution";
 
 	/**
+	 * The query name used for
+	 * {@link #updateMinimumExportDate(Long, Long, DateTime)}.
+	 */
+	public static final String UPDATE_MINIMUM_EXPORT_DATE = "update-UserDatumExportConfiguration-minimum-export-date";
+
+	/**
 	 * Default constructor.
 	 */
 	public MyBatisUserDatumExportConfigurationDao() {
@@ -79,6 +85,16 @@ public class MyBatisUserDatumExportConfigurationDao
 		params.put("date", ts);
 		params.put("schedule", scheduleType.getKey());
 		return selectList(QUERY_CONFIGURATIONS_FOR_EXECUTION, params, null, null);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	public int updateMinimumExportDate(Long id, Long userId, DateTime minimumDate) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("id", id);
+		params.put("userId", userId);
+		params.put("date", new Timestamp(minimumDate.getMillis()));
+		return getSqlSession().update(UPDATE_MINIMUM_EXPORT_DATE, params);
 	}
 
 }

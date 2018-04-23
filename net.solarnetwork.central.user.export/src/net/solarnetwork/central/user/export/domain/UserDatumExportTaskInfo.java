@@ -43,12 +43,32 @@ import net.solarnetwork.util.JsonUtils;
 public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTaskPK>
 		implements UserRelatedEntity<UserDatumExportTaskPK> {
 
-	private static final long serialVersionUID = 2326178444641325856L;
+	private static final long serialVersionUID = -7053341262497665231L;
 
 	private UUID taskId;
+	private Long userDatumExportConfigurationId;
 	private Configuration config;
 	private String configJson;
 	private DatumExportTaskInfo task;
+
+	/**
+	 * Get the related {@link UserDatumExportConfiguration#getId()} value.
+	 * 
+	 * @return the user configuration ID
+	 */
+	public Long getUserDatumExportConfigurationId() {
+		return userDatumExportConfigurationId;
+	}
+
+	/**
+	 * Set the related {@link UserDatumExportConfiguration#getId()} value.
+	 * 
+	 * @param userDatumExportConfigurationId
+	 *        the user configuration ID to set
+	 */
+	public void setUserDatumExportConfigurationId(Long userDatumExportConfigurationId) {
+		this.userDatumExportConfigurationId = userDatumExportConfigurationId;
+	}
 
 	public UUID getTaskId() {
 		return taskId;
@@ -76,8 +96,25 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 		return config;
 	}
 
+	/**
+	 * Set the configuration.
+	 * 
+	 * <p>
+	 * If {@code config} is a {@link UserDatumExportConfiguration} then
+	 * {@link #setUserDatumExportConfigurationId(Long)} will be invoked with the
+	 * value's {@link UserDatumExportConfiguration#getId()}.
+	 * </p>
+	 * 
+	 * @param config
+	 */
 	@JsonDeserialize(as = BasicConfiguration.class)
 	public void setConfig(Configuration config) {
+		if ( config instanceof UserDatumExportConfiguration ) {
+			setUserDatumExportConfigurationId(((UserDatumExportConfiguration) config).getId());
+		}
+		if ( !config.getClass().equals(BasicConfiguration.class) ) {
+			config = new BasicConfiguration(config);
+		}
 		this.config = config;
 		configJson = null;
 	}

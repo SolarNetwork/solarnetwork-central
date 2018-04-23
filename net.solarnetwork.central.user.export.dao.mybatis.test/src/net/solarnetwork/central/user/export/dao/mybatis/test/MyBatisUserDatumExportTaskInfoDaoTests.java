@@ -27,7 +27,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import java.util.UUID;
 import org.joda.time.DateTime;
@@ -37,7 +36,9 @@ import org.junit.Test;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDatumExportTaskInfoDao;
+import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
 
@@ -49,9 +50,11 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
  */
 public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
+	private MyBatisUserDatumExportConfigurationDao confDao;
 	private MyBatisUserDatumExportTaskInfoDao dao;
 
 	private User user;
+	private UserDatumExportConfiguration userDatumExportConfig;
 	private UserDatumExportTaskInfo info;
 
 	@Before
@@ -59,9 +62,31 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		dao = new MyBatisUserDatumExportTaskInfoDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
 
+		confDao = new MyBatisUserDatumExportConfigurationDao();
+		confDao.setSqlSessionFactory(getSqlSessionFactory());
+
 		this.user = createNewUser(TEST_EMAIL);
-		assertNotNull(this.user);
+		assertThat("Test user", this.user, notNullValue());
+
+		this.userDatumExportConfig = createNewUserDatumExportConfig();
+		assertThat("Test user datum export config", this.userDatumExportConfig, notNullValue());
+
 		info = null;
+	}
+
+	private UserDatumExportConfiguration createNewUserDatumExportConfig() {
+		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
+		conf.setCreated(new DateTime());
+		conf.setUserId(this.user.getId());
+		conf.setName(TEST_NAME);
+		conf.setHourDelayOffset(2);
+		conf.setSchedule(ScheduleType.Weekly);
+
+		Long id = confDao.store(conf);
+		assertThat("Primary key assigned", id, notNullValue());
+
+		conf.setId(id);
+		return conf;
 	}
 
 	@Test
@@ -70,7 +95,7 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		UserDatumExportTaskInfo info = new UserDatumExportTaskInfo();
 		info.setId(new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Hourly, date));
 		info.setTaskId(UUID.randomUUID());
-		info.setConfigJson("{}");
+		info.setConfig(this.userDatumExportConfig);
 
 		UserDatumExportTaskPK id = dao.store(info);
 		assertThat("Primary key assigned", id, notNullValue());
@@ -94,6 +119,8 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		assertThat("Export date", info.getExportDate(), sameInstance(info.getId().getDate()));
 		assertThat("Modified date not used", info.getModified(), nullValue());
 		assertThat("Task ID", info.getTaskId(), nullValue());
+		assertThat("Config ID", info.getUserDatumExportConfigurationId(),
+				equalTo(this.userDatumExportConfig.getId()));
 	}
 
 	@Test

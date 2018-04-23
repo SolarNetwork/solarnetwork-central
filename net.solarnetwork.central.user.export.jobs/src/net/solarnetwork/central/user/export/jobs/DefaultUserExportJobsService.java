@@ -84,6 +84,7 @@ public class DefaultUserExportJobsService implements UserExportJobsService {
 					task.setUserId(config.getUserId());
 					task.setExportDate(currExportDate);
 					task.setScheduleType(scheduleType);
+					task.setUserDatumExportConfigurationId(config.getId());
 					task.setConfig(new BasicConfiguration(config));
 					taskDao.store(task);
 					currExportDate = scheduleType.nextExportDate(currExportDate);

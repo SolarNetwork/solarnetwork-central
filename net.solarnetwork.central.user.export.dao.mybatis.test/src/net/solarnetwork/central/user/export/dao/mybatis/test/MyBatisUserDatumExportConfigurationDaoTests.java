@@ -284,6 +284,19 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 	}
 
 	@Test
+	public void updateMinimumDate() {
+		storeNew();
+
+		DateTime minDate = ScheduleType.Hourly.nextExportDate(new DateTime());
+
+		int updated = dao.updateMinimumExportDate(this.conf.getId(), this.user.getId(), minDate);
+		assertThat("Update count", updated, equalTo(1));
+
+		UserDatumExportConfiguration conf = dao.get(this.conf.getId(), this.user.getId());
+		assertThat("Min date", conf.getMinimumExportDate(), equalTo(minDate));
+	}
+
+	@Test
 	public void findAllForUser() {
 		List<UserDatumExportConfiguration> confs = new ArrayList<>(3);
 		for ( int i = 0; i < 3; i++ ) {
@@ -321,12 +334,12 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		assertThat("0900 query export date finds 0800 conf", found, hasSize(1));
 		assertThat(found.get(0), equalTo(confs.get(0)));
 
-		found = dao.findForExecution(exportDate.plusHours(1).plusMinutes(1), ScheduleType.Hourly);
+		found = dao.findForExecution(exportDate.plusHours(2), ScheduleType.Hourly);
 		assertThat("0901 query export date finds 0800, 0900 confs", found, hasSize(2));
 		assertThat(found.get(0), equalTo(confs.get(0)));
 		assertThat(found.get(1), equalTo(confs.get(1)));
 
-		found = dao.findForExecution(exportDate.plusHours(2).plusMinutes(1), ScheduleType.Hourly);
+		found = dao.findForExecution(exportDate.plusHours(3), ScheduleType.Hourly);
 		assertThat("1001 query export date finds 0800, 0900, 1000 confs", found, hasSize(3));
 		assertThat(found, not(sameInstance(confs)));
 		assertThat(found, equalTo(confs));

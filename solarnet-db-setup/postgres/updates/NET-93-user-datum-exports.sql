@@ -95,9 +95,13 @@ CREATE TABLE solaruser.user_export_task (
 	schedule		CHARACTER(1) NOT NULL,
 	export_date		TIMESTAMP WITH TIME ZONE NOT NULL,
 	task_id			uuid NOT NULL,
+	conf_id			BIGINT NOT NULL,
 	CONSTRAINT user_export_task_pkey PRIMARY KEY (user_id, schedule, export_date),
 	CONSTRAINT user_export_task_datum_export_task_fk
 		FOREIGN KEY (task_id) REFERENCES solarnet.sn_datum_export_task (id)
+		ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT user_export_task_user_export_datum_conf_fk FOREIGN KEY (conf_id)
+		REFERENCES solaruser.user_export_datum_conf (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
@@ -117,6 +121,7 @@ CREATE OR REPLACE FUNCTION solaruser.store_export_task(
 	usr BIGINT,
 	sched CHARACTER(1),
 	ex_date TIMESTAMP WITH TIME ZONE,
+	cfg_id BIGINT,
 	cfg text
   ) RETURNS uuid LANGUAGE plpgsql VOLATILE AS
 $BODY$
@@ -135,9 +140,9 @@ BEGIN
 		t_id := gen_random_uuid();
 		PERFORM solarnet.add_datum_export_task(t_id, ex_date, cfg);
 		INSERT INTO solaruser.user_export_task
-			(user_id, schedule, export_date, task_id)
+			(user_id, schedule, export_date, task_id, conf_id)
 		VALUES
-			(usr, sched, ex_date, t_id);
+			(usr, sched, ex_date, t_id, cfg_id);
 	END IF;
 
 	RETURN t_id;
