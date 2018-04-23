@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 
@@ -69,13 +70,19 @@ public abstract class BaseDatumExportOutputFormatService
 	 * name and file extension.
 	 * </p>
 	 * 
+	 * @param config
+	 *        the output configuration
 	 * @return the file
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */
-	protected File createTemporaryResource() throws IOException {
-		return File.createTempFile(getClass().getSimpleName() + "-", "." + getExportFilenameExtension(),
-				getTemporaryDir());
+	protected File createTemporaryResource(OutputConfiguration config) throws IOException {
+		String ext = getExportFilenameExtension();
+		String compExt = config.getCompressionType().getFilenameExtension();
+		if ( !compExt.isEmpty() ) {
+			ext += "." + compExt;
+		}
+		return File.createTempFile(getClass().getSimpleName() + "-", "." + ext, getTemporaryDir());
 	}
 
 	/**

@@ -81,7 +81,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 
 		@Override
 		public void start(long estimatedResultCount) throws IOException {
-			temporaryFile = createTemporaryResource();
+			temporaryFile = createTemporaryResource(config);
 			out = createCompressedOutputStream(
 					new BufferedOutputStream(new FileOutputStream(temporaryFile)));
 		}

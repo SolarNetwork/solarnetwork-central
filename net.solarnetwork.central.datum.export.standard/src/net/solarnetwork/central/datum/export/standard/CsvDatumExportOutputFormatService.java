@@ -224,7 +224,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 
 		@Override
 		public void start(long estimatedResultCount) throws IOException {
-			temporaryFile = createTemporaryResource();
+			temporaryFile = createTemporaryResource(config);
 			OutputStream out = createCompressedOutputStream(
 					new BufferedOutputStream(new FileOutputStream(temporaryFile)));
 			writer = new CsvMapWriter(new OutputStreamWriter(out, "UTF-8"),
