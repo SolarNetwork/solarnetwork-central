@@ -199,5 +199,23 @@
 				<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
 			</a>
 		</div>
+	</div>	
+	<div class="form-group template" data-setting-type="net.solarnetwork.settings.ToggleSettingSpecifier">
+		<label class="col-sm-3 control-label" data-tprop="name">
+			${' '}
+		</label>
+		<div class="col-sm-7">
+			<button type="button" name="__unnamed" class="form-control setting-form-element toggle btn btn-default" 
+				data-toggle="setting-toggle" aria-pressed="false" autocomplete="off"
+				data-on-text="<fmt:message key='settings.toggle.enabled'/>"
+				data-off-text="<fmt:message key='settings.toggle.disabled'/>">
+				<fmt:message key='settings.toggle.disabled'/>
+			</button>
+		</div>
+		<div class="col-sm-1 form-control-static">
+			<a tabindex="-1" title="<fmt:message key='settings.info.label'/>" class="setting-help" role="button" data-toggle="popover" data-trigger="focus" data-html="true" data-container="body">
+				<span class="glyphicon glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+			</a>
+		</div>
 	</div>
 </div>

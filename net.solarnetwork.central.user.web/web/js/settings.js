@@ -187,7 +187,7 @@ SolarReg.Settings.serviceFormItem = function formItem(service, setting, config) 
 		if ( config && config[setting.key] ) {
 			result.value = config[setting.key];
 		} else {
-			result.value = setting.defaultValue || '';
+			result.value = ''+setting.defaultValue || '';
 		}
 	}
 	return result;
@@ -276,11 +276,26 @@ SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings
 			return;
 		}
 		var formItem = SolarReg.Settings.serviceFormItem(service, setting, (item ? item.serviceProperties : null));
-		var formElement = SolarReg.Templates.appendTemplateItem(container, template, formItem);
-        formElement.find('.setting-form-element')
+		var templateElement = SolarReg.Templates.appendTemplateItem(container, template, formItem);
+		var fieldElement = templateElement.find('.setting-form-element');
+        fieldElement
             .val(setting.secureTextEntry ? '' : formItem.value)
-            .attr('name', 'serviceProperties.' + setting.key);
-        var helpElement = formElement.find('.setting-help');
+			.attr('name', 'serviceProperties.' + setting.key);
+		if ( fieldElement.data('toggle') === 'setting-toggle' && fieldElement.data('on-text') && fieldElement.data('off-text') ) {
+			var handleButton = function handleButton(btn, enabled) {
+				btn.toggleClass('btn-success', enabled)
+					.toggleClass('active', enabled)
+					.attr('aria-pressed', enabled )
+					.button(enabled ? 'on' : 'off')
+					.val(enabled ? 'true' : 'false');
+			}
+			handleButton(fieldElement, formItem.value === 'true'); // initialize initial state
+			fieldElement.on('click', function() {
+				var btn = $(this);
+				handleButton(btn, btn.val() !== 'true');
+			});
+		}
+        var helpElement = templateElement.find('.setting-help');
         if ( helpElement.data('toggle') === 'popover' ) {
             helpElement.attr('data-content', formItem.description);
             helpElement.on('click', function(event) {
