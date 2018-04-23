@@ -30,11 +30,15 @@ import java.io.OutputStream;
 import java.util.Collections;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatServiceExportContext;
+import net.solarnetwork.io.DeleteOnCloseFileResource;
+import net.solarnetwork.util.JsonUtils;
 import net.solarnetwork.util.ProgressListener;
 
 /**
@@ -46,8 +50,27 @@ import net.solarnetwork.util.ProgressListener;
  */
 public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFormatService {
 
+	private final ObjectMapper objectMapper;
+
+	/**
+	 * Default constructor.
+	 */
 	public JsonDatumExportOutputFormatService() {
+		this((ObjectMapper) null);
+	}
+
+	/**
+	 * Construct with an {@link ObjectMapper}.
+	 * 
+	 * @param objectMapper
+	 *        the object mapper to use
+	 */
+	public JsonDatumExportOutputFormatService(ObjectMapper objectMapper) {
 		super("net.solarnetwork.central.datum.support.JsonDatumExportOutputFormatService");
+		if ( objectMapper == null ) {
+			objectMapper = JsonUtils.newObjectMapper();
+		}
+		this.objectMapper = objectMapper;
 	}
 
 	@Override
@@ -73,7 +96,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 	private class JsonExportContext extends BaseDatumExportOutputFormatServiceExportContext {
 
 		private File temporaryFile;
-		private OutputStream out;
+		private JsonGenerator generator;
 
 		private JsonExportContext(OutputConfiguration config) {
 			super(config);
@@ -81,35 +104,43 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 
 		@Override
 		public void start(long estimatedResultCount) throws IOException {
+			setEstimatedResultCount(estimatedResultCount);
 			temporaryFile = createTemporaryResource(config);
-			out = createCompressedOutputStream(
+			OutputStream out = createCompressedOutputStream(
 					new BufferedOutputStream(new FileOutputStream(temporaryFile)));
+			generator = objectMapper.getFactory().createGenerator(out);
 		}
 
 		@Override
 		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable,
 				ProgressListener<ExportContext> progressListener) throws IOException {
-			// TODO Auto-generated method stub
+			generator.writeStartArray();
+			for ( GeneralNodeDatumFilterMatch match : iterable ) {
+				generator.writeObject(match);
+				incrementProgress(1, progressListener);
+			}
+			generator.writeEndArray();
 		}
 
 		@Override
 		public Iterable<Resource> finish() throws IOException {
 			flush();
 			close();
-			return Collections.singleton(new FileSystemResource(temporaryFile));
+			return Collections
+					.singleton(new DeleteOnCloseFileResource(new FileSystemResource(temporaryFile)));
 		}
 
 		@Override
 		public void flush() throws IOException {
-			if ( out != null ) {
-				out.flush();
+			if ( generator != null ) {
+				generator.flush();
 			}
 		}
 
 		@Override
 		public void close() throws IOException {
-			if ( out != null ) {
-				out.close();
+			if ( generator != null ) {
+				generator.close();
 			}
 		}
 

@@ -26,6 +26,7 @@ import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.util.SerializeIgnore;
 
 /**
@@ -40,6 +41,7 @@ import net.solarnetwork.util.SerializeIgnore;
  * @author matt
  * @version 1.1
  */
+@JsonPropertyOrder({ "created", "nodeId", "sourceId", "localDate", "localTime" })
 public class GeneralNodeDatumMatch extends GeneralNodeDatum implements GeneralNodeDatumFilterMatch {
 
 	private static final long serialVersionUID = -3781355133819327343L;
