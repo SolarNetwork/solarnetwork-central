@@ -28,17 +28,39 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
+import org.joda.time.ReadableInstant;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.supercsv.io.CsvBeanWriter;
-import org.supercsv.io.ICsvBeanWriter;
+import org.supercsv.cellprocessor.FmtDate;
+import org.supercsv.cellprocessor.Optional;
+import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.io.CsvMapWriter;
+import org.supercsv.io.ICsvMapWriter;
 import org.supercsv.prefs.CsvPreference;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatServiceExportContext;
+import net.solarnetwork.io.DeleteOnCloseFileResource;
+import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
+import net.solarnetwork.util.ClassUtils;
+import net.solarnetwork.util.JodaDatePropertySerializer;
+import net.solarnetwork.util.ProgressListener;
+import net.solarnetwork.util.PropertySerializer;
 
 /**
  * Comma-separated-values implementation of
@@ -49,6 +71,30 @@ import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormat
  * @since 1.23
  */
 public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputFormatService {
+
+	private static final Set<String> CSV_CORE_HEADERS = Collections.unmodifiableSet(new LinkedHashSet<>(
+			Arrays.asList("created", "nodeId", "sourceId", "localDate", "localTime")));
+
+	private static final PropertySerializer JODA_DATE_TIME_PROP_SERIALIZER = new JodaDatePropertySerializer(
+			"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone("UTC"));
+
+	private static final CellProcessor JODA_DATE_TIME_CELL_PROCESSOR = new PropertySerializerCellProcessor(
+			JODA_DATE_TIME_PROP_SERIALIZER);
+
+	private static final PropertySerializer JODA_DATE_PROP_SERIALIZER = new JodaDatePropertySerializer(
+			"yyyy-MM-dd", TimeZone.getTimeZone("UTC"));
+
+	private static final CellProcessor JODA_DATE_CELL_PROCESSOR = new PropertySerializerCellProcessor(
+			JODA_DATE_PROP_SERIALIZER);
+
+	private static final PropertySerializer JODA_TIME_PROP_SERIALIZER = new JodaDatePropertySerializer(
+			"HH:mm:ss.SSS", TimeZone.getTimeZone("UTC"));
+
+	private static final CellProcessor JODA_TIME_CELL_PROCESSOR = new PropertySerializerCellProcessor(
+			JODA_TIME_PROP_SERIALIZER);
+
+	private static final CellProcessor DATE_TIME_CELL_PROCESSOR = new FmtDate(
+			"yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
 	public CsvDatumExportOutputFormatService() {
 		super("net.solarnetwork.central.datum.biz.impl.CsvDatumExportOutputFormatService");
@@ -70,44 +116,174 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 	}
 
 	@Override
+	public List<SettingSpecifier> getSettingSpecifiers() {
+		List<SettingSpecifier> result = new ArrayList<>(4);
+		result.add(new BasicToggleSettingSpecifier("includeHeader", Boolean.TRUE));
+		return result;
+	}
+
+	@Override
 	public ExportContext createExportContext(OutputConfiguration config) {
 		return new CsvExportContext(config, false); // TODO: make setting for including header
 	}
 
 	private class CsvExportContext extends BaseDatumExportOutputFormatServiceExportContext {
 
-		private final boolean includeHeader;
+		private final CsvOutputFormatProperties props;
 		private File temporaryFile;
-		private ICsvBeanWriter writer;
+		private ICsvMapWriter writer;
+		private Set<String> headerSet;
+		private String[] headers;
+		private CellProcessor[] cellProcessors;
 
 		private CsvExportContext(OutputConfiguration config, boolean includeHeader) {
 			super(config);
-			this.includeHeader = includeHeader;
+
+			CsvOutputFormatProperties props = new CsvOutputFormatProperties();
+			ClassUtils.setBeanProperties(props, config.getServiceProperties(), true);
+			if ( !props.isValid() ) {
+				throw new RuntimeException("CSV output service configuration is not valid.");
+			}
+
+			this.props = props;
+		}
+
+		private String[] headersForDatumMap(Map<String, Object> map) {
+			String[] headers = new String[Math.max(CSV_CORE_HEADERS.size(), map.size())];
+			int idx = 0;
+			for ( String key : CSV_CORE_HEADERS ) {
+				headers[idx++] = key;
+			}
+			for ( String key : map.keySet() ) {
+				if ( CSV_CORE_HEADERS.contains(key) ) {
+					continue;
+				}
+				headers[idx++] = key;
+			}
+			return headers;
+		}
+
+		private CellProcessor processorForDatumProperty(String key, Object value) {
+			if ( value instanceof ReadableInstant ) {
+				return JODA_DATE_TIME_CELL_PROCESSOR;
+			} else if ( value instanceof LocalDate ) {
+				return JODA_DATE_CELL_PROCESSOR;
+			} else if ( value instanceof LocalTime ) {
+				return JODA_TIME_CELL_PROCESSOR;
+			} else if ( value instanceof Date ) {
+				return DATE_TIME_CELL_PROCESSOR;
+			}
+			return null;
+		}
+
+		private CellProcessor[] processorsForDatumMap(Map<String, Object> map) {
+			CellProcessor[] processors = new CellProcessor[Math.max(CSV_CORE_HEADERS.size(),
+					map.size())];
+			processors[0] = JODA_DATE_TIME_CELL_PROCESSOR;
+			processors[1] = null;
+			processors[2] = null;
+			processors[3] = JODA_DATE_CELL_PROCESSOR;
+			processors[4] = JODA_TIME_CELL_PROCESSOR;
+			int idx = 5;
+			for ( Map.Entry<String, ?> me : map.entrySet() ) {
+				if ( CSV_CORE_HEADERS.contains(me.getKey()) ) {
+					continue;
+				}
+				CellProcessor proc = processorForDatumProperty(me.getKey(), me.getValue());
+				processors[idx++] = (proc != null ? new Optional(proc) : null);
+			}
+			return processors;
+		}
+
+		@SuppressWarnings("deprecation")
+		private Map<String, Object> datumMap(GeneralNodeDatumFilterMatch match) {
+			if ( match == null || match.getId() == null ) {
+				return Collections.emptyMap();
+			}
+			Map<String, Object> map = new LinkedHashMap<String, Object>(8);
+
+			map.put("created", match.getId().getCreated());
+			map.put("nodeId", match.getId().getNodeId());
+			map.put("sourceId", match.getId().getSourceId());
+			map.put("localDate", match.getLocalDate());
+			map.put("localTime", match.getLocalTime());
+
+			Map<String, ?> sampleData = match.getSampleData();
+			if ( sampleData != null ) {
+				// don't allow overwrite of core properties (nodeId, etc)
+				for ( Map.Entry<String, ?> me : sampleData.entrySet() ) {
+					String key = me.getKey();
+					if ( !map.containsKey(key) ) {
+						map.put(key, me.getValue());
+					}
+				}
+			}
+
+			return map;
 		}
 
 		@Override
-		public void start() throws IOException {
+		public void start(long estimatedResultCount) throws IOException {
 			temporaryFile = createTemporaryResource();
 			OutputStream out = createCompressedOutputStream(
 					new BufferedOutputStream(new FileOutputStream(temporaryFile)));
-			writer = new CsvBeanWriter(new OutputStreamWriter(out, "UTF-8"),
+			writer = new CsvMapWriter(new OutputStreamWriter(out, "UTF-8"),
 					CsvPreference.STANDARD_PREFERENCE);
+			setEstimatedResultCount(estimatedResultCount);
 		}
 
 		@Override
-		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable)
-				throws IOException {
-			if ( writer.getLineNumber() == 1 && includeHeader ) {
-				// TODO write header
+		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable,
+				ProgressListener<ExportContext> progressListener) throws IOException {
+			if ( writer == null ) {
+				throw new UnsupportedOperationException("The start method must be called first.");
 			}
-			// TODO Auto-generated method stub
+			for ( GeneralNodeDatumFilterMatch m : iterable ) {
+				Map<String, Object> map = datumMap(m);
+				if ( map != null && !map.isEmpty() ) {
+					if ( writer.getLineNumber() == 0 ) {
+						headers = headersForDatumMap(map);
+						headerSet = new LinkedHashSet<>(Arrays.asList(headers));
+						if ( props.isIncludeHeader() ) {
+							writer.writeHeader(headers);
+						}
+						cellProcessors = processorsForDatumMap(map);
+					} else {
+						// check for column additions, and adjust header/processor structures accordingly
+						for ( Map.Entry<String, Object> me : map.entrySet() ) {
+							if ( !headerSet.contains(me.getKey()) ) {
+								// new column!
+								addColumnForMapProperty(me.getKey(), me.getValue());
+							}
+						}
+					}
+					writer.write(map, headers, cellProcessors);
+				}
+				incrementProgress(1, progressListener);
+			}
+		}
+
+		private void addColumnForMapProperty(String key, Object value) {
+			String[] newHeaders = new String[headers.length + 1];
+			System.arraycopy(headers, 0, newHeaders, 0, headers.length);
+			newHeaders[headers.length] = key;
+			headers = newHeaders;
+			headerSet.add(key);
+			CellProcessor[] newProcessors = new CellProcessor[cellProcessors.length + 1];
+			System.arraycopy(cellProcessors, 0, newProcessors, 0, cellProcessors.length);
+			newProcessors[cellProcessors.length] = processorForDatumProperty(key, value);
+			cellProcessors = newProcessors;
 		}
 
 		@Override
 		public Iterable<Resource> finish() throws IOException {
 			flush();
 			close();
-			return Collections.singleton(new FileSystemResource(temporaryFile));
+			if ( temporaryFile != null ) {
+				return Collections
+						.singleton(new DeleteOnCloseFileResource(new FileSystemResource(temporaryFile)));
+			}
+			return Collections.emptyList();
 		}
 
 		@Override

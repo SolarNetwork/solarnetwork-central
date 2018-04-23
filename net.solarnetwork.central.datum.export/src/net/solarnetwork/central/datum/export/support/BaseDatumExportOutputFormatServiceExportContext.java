@@ -22,19 +22,15 @@
 
 package net.solarnetwork.central.datum.export.support;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService.ExportContext;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
+import net.solarnetwork.util.ProgressListener;
 
 /**
- * FIXME
- * 
- * <p>
- * TODO
- * </p>
+ * Base class for {@link ExportContext} implementations.
  * 
  * @author matt
  * @version 1.0
@@ -42,6 +38,8 @@ import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 public abstract class BaseDatumExportOutputFormatServiceExportContext implements ExportContext {
 
 	protected final OutputConfiguration config;
+	private long estimatedResultCount = -1;
+	private long complete = 0;
 
 	/**
 	 * Constructor.
@@ -52,6 +50,19 @@ public abstract class BaseDatumExportOutputFormatServiceExportContext implements
 	public BaseDatumExportOutputFormatServiceExportContext(OutputConfiguration config) {
 		super();
 		this.config = config;
+	}
+
+	protected void setEstimatedResultCount(long estimatedResultCount) {
+		this.estimatedResultCount = estimatedResultCount;
+	}
+
+	protected void incrementProgress(int count, ProgressListener<ExportContext> progressListener) {
+		if ( estimatedResultCount < 1 ) {
+			return;
+		}
+		complete += count;
+		progressListener.progressChanged(this,
+				Math.min(1.0, (double) complete / (double) estimatedResultCount));
 	}
 
 	/**
@@ -77,16 +88,6 @@ public abstract class BaseDatumExportOutputFormatServiceExportContext implements
 			}
 		}
 		return out;
-	}
-
-	/**
-	 * Create a temporary file.
-	 * 
-	 * @return the file
-	 */
-	protected File createTemporaryResource() {
-		// TODO
-		return null;
 	}
 
 	@Override

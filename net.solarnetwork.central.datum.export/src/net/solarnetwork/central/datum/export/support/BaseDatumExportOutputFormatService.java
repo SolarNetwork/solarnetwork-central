@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.export.support;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
@@ -40,6 +42,8 @@ public abstract class BaseDatumExportOutputFormatService
 		extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
 		implements DatumExportOutputFormatService {
 
+	private File temporaryDir;
+
 	/**
 	 * Constructor.
 	 * 
@@ -48,11 +52,69 @@ public abstract class BaseDatumExportOutputFormatService
 	 */
 	public BaseDatumExportOutputFormatService(String id) {
 		super(id);
+		setTemporaryPath(null);
 	}
 
 	@Override
 	public List<SettingSpecifier> getSettingSpecifiers() {
 		return Collections.emptyList();
+	}
+
+	/**
+	 * Create a temporary file.
+	 * 
+	 * <p>
+	 * This will create a temporary file within the configured
+	 * {@link #getTemporaryDir()} directory, named after this instance's class
+	 * name and file extension.
+	 * </p>
+	 * 
+	 * @return the file
+	 * @throws IOException
+	 *         if an IO error occurs
+	 */
+	protected File createTemporaryResource() throws IOException {
+		return File.createTempFile(getClass().getSimpleName() + "-", "." + getExportFilenameExtension(),
+				getTemporaryDir());
+	}
+
+	/**
+	 * Get the configured temporary directory.
+	 * 
+	 * @return the temporary directory; defaults to the system property
+	 *         {@literal java.io.tmpdir}
+	 */
+	public File getTemporaryDir() {
+		return temporaryDir;
+	}
+
+	/**
+	 * Set the temporary directory.
+	 * 
+	 * @param temporaryDir
+	 *        the temporary directory to set
+	 * @throws IllegalArgumentException
+	 *         if {@code temporaryDir} is {@literal null}
+	 */
+	public void setTemporaryDir(File temporaryDir) {
+		if ( temporaryDir == null ) {
+			throw new IllegalArgumentException("The temporary directory must not be null");
+		}
+		this.temporaryDir = temporaryDir;
+	}
+
+	/**
+	 * Set the temporary directory as a path string.
+	 * 
+	 * @param path
+	 *        the path to use, or {@literal null} or an empty string to use the
+	 *        system property {@literal java.io.tmpdir}
+	 */
+	public void setTemporaryPath(String path) {
+		if ( path == null ) {
+			path = System.getProperty("java.io.tmpdir");
+		}
+		setTemporaryDir(new File(path));
 	}
 
 }

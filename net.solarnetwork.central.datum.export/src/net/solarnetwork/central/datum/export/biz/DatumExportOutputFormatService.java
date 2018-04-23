@@ -31,6 +31,7 @@ import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.settings.SettingSpecifierProvider;
 import net.solarnetwork.support.LocalizedServiceInfoProvider;
+import net.solarnetwork.util.ProgressListener;
 
 /**
  * API for datum export destination services.
@@ -81,11 +82,14 @@ public interface DatumExportOutputFormatService
 		 * Called at the start of the export process, to initialize any
 		 * necessary resources or write any header information.
 		 * 
+		 * @param estimatedResultCount
+		 *        an estimate on the total number of results to be exported, or
+		 *        if less than {@literal 0} the count is not known
 		 * @return the output stream to write to
 		 * @throws IOException
 		 *         if an IO error occurs
 		 */
-		void start() throws IOException;
+		void start(long estimatedResultCount) throws IOException;
 
 		/**
 		 * Append datum match data to the output stream started via
@@ -93,15 +97,25 @@ public interface DatumExportOutputFormatService
 		 * 
 		 * @param iterable
 		 *        the data to encode
+		 * @param progressListener
+		 *        a progress listener
 		 * @throws IOException
 		 *         if an IO error occurs
 		 */
-		void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable)
-				throws IOException;
+		void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable,
+				ProgressListener<ExportContext> progressListener) throws IOException;
 
 		/**
 		 * Called at the end of the export process, to clean up any necessary
 		 * resources or write any footer information.
+		 * 
+		 * <p>
+		 * <b>Note<b> that the resources returned by this method should be
+		 * considered temporary, and only support reading their contents
+		 * <b>once</b>. If the calling code needs to repeatedly read the
+		 * contents of a returned resource, it must copy the resource to another
+		 * location first.
+		 * </p>
 		 * 
 		 * @return the resource(s) to upload to the export destination
 		 * @throws IOException

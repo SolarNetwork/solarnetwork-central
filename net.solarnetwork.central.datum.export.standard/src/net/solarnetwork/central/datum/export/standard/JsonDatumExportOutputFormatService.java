@@ -35,6 +35,7 @@ import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatServiceExportContext;
+import net.solarnetwork.util.ProgressListener;
 
 /**
  * JSON implementation of {@link DatumExportOutputFormatService}
@@ -79,15 +80,15 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 		}
 
 		@Override
-		public void start() throws IOException {
+		public void start(long estimatedResultCount) throws IOException {
 			temporaryFile = createTemporaryResource();
 			out = createCompressedOutputStream(
 					new BufferedOutputStream(new FileOutputStream(temporaryFile)));
 		}
 
 		@Override
-		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable)
-				throws IOException {
+		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable,
+				ProgressListener<ExportContext> progressListener) throws IOException {
 			// TODO Auto-generated method stub
 		}
 
