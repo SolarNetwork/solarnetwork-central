@@ -23,7 +23,9 @@
 package net.solarnetwork.central.datum.export.domain;
 
 import java.io.Serializable;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 
 /**
@@ -45,6 +47,7 @@ public class BasicDataConfiguration extends BasicIdentifiableConfiguration
 		return datumFilter;
 	}
 
+	@JsonDeserialize(as = DatumFilterCommand.class)
 	public void setDatumFilter(AggregateGeneralNodeDatumFilter datumFilter) {
 		this.datumFilter = datumFilter;
 	}
