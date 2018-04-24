@@ -99,6 +99,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 
 		private File temporaryFile;
 		private JsonGenerator generator;
+		private boolean started;
 
 		private JsonExportContext(OutputConfiguration config) {
 			super(config);
@@ -116,16 +117,21 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 		@Override
 		public void appendDatumMatch(Iterable<? extends GeneralNodeDatumFilterMatch> iterable,
 				ProgressListener<DatumExportService> progressListener) throws IOException {
-			generator.writeStartArray();
+			if ( !started ) {
+				generator.writeStartArray();
+				started = true;
+			}
 			for ( GeneralNodeDatumFilterMatch match : iterable ) {
 				generator.writeObject(match);
 				incrementProgress(JsonDatumExportOutputFormatService.this, 1, progressListener);
 			}
-			generator.writeEndArray();
 		}
 
 		@Override
 		public Iterable<DatumExportResource> finish() throws IOException {
+			if ( !generator.isClosed() ) {
+				generator.writeEndArray();
+			}
 			flush();
 			close();
 			return Collections.singleton(new BasicDatumExportResource(

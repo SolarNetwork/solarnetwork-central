@@ -20,6 +20,7 @@
 	<reference id="destinationConfDao" interface="net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao"/>
 	<reference id="outputConfDao" interface="net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao"/>
 	<reference id="taskDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao"/>
+	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="transactionManager"/>
@@ -29,6 +30,7 @@
 	<service ref="userExportBiz">
 		<interfaces>
 			<value>net.solarnetwork.central.user.export.biz.UserExportBiz</value>
+			<value>net.solarnetwork.central.user.export.biz.UserExportTaskBiz</value>
 			<value>org.osgi.service.event.EventHandler</value>
 		</interfaces>
 		<service-properties>
@@ -46,6 +48,7 @@
 		<argument ref="destinationConfDao"/>
 		<argument ref="outputConfDao"/>
 		<argument ref="taskDao"/>
+		<argument ref="userNodeDao"/>
 		<property name="outputFormatServices">
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>

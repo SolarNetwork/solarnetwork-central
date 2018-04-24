@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.export.domain;
 
+import org.joda.time.DateTime;
+
 /**
  * Basic implementation of {@link DatumExportResult}.
  * 
@@ -32,6 +34,7 @@ public class BasicDatumExportResult implements DatumExportResult {
 
 	private final boolean success;
 	private final String message;
+	private final DateTime completionDate;
 
 	/**
 	 * Constructor.
@@ -40,11 +43,25 @@ public class BasicDatumExportResult implements DatumExportResult {
 	 *        the success flag
 	 * @param message
 	 *        a message
+	 * @param completionDate
+	 *        the completion date
 	 */
-	public BasicDatumExportResult(boolean success, String message) {
+	public BasicDatumExportResult(boolean success, String message, DateTime completionDate) {
 		super();
 		this.success = success;
 		this.message = message;
+		this.completionDate = completionDate;
+	}
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the result to copy
+	 */
+	public BasicDatumExportResult(DatumExportResult other) {
+		this((other != null ? other.isSuccess() : false), (other != null ? other.getMessage() : null),
+				(other != null ? other.getCompletionDate() : null));
 	}
 
 	@Override
@@ -55,6 +72,11 @@ public class BasicDatumExportResult implements DatumExportResult {
 	@Override
 	public String getMessage() {
 		return message;
+	}
+
+	@Override
+	public DateTime getCompletionDate() {
+		return completionDate;
 	}
 
 }

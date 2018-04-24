@@ -32,16 +32,23 @@ import java.util.UUID;
 import org.joda.time.DateTime;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.export.domain.BasicDataConfiguration;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
+import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
 import net.solarnetwork.central.user.export.dao.UserDataConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
@@ -51,6 +58,7 @@ import net.solarnetwork.central.user.export.domain.BaseExportConfigurationEntity
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
+import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
@@ -68,13 +76,16 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 1.0
  */
-public class DaoUserExportBiz implements UserExportBiz, EventHandler {
+public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, EventHandler {
 
 	private final UserDatumExportConfigurationDao datumExportConfigDao;
 	private final UserDataConfigurationDao dataConfigDao;
 	private final UserDestinationConfigurationDao destinationConfigDao;
 	private final UserOutputConfigurationDao outputConfigDao;
 	private final UserDatumExportTaskInfoDao taskDao;
+	private final UserNodeDao userNodeDao;
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private OptionalServiceCollection<DatumExportOutputFormatService> outputFormatServices;
 	private OptionalServiceCollection<DatumExportDestinationService> destinationServices;
@@ -94,16 +105,20 @@ public class DaoUserExportBiz implements UserExportBiz, EventHandler {
 	 *        the output configuration DAO to use
 	 * @param taskDao
 	 *        the task DAO to use
+	 * @param userNodeDao
+	 *        the user node DAO to use
 	 */
 	public DaoUserExportBiz(UserDatumExportConfigurationDao datumExportConfigDao,
 			UserDataConfigurationDao dataConfigDao, UserDestinationConfigurationDao destinationConfigDao,
-			UserOutputConfigurationDao outputConfigDao, UserDatumExportTaskInfoDao taskDao) {
+			UserOutputConfigurationDao outputConfigDao, UserDatumExportTaskInfoDao taskDao,
+			UserNodeDao userNodeDao) {
 		super();
 		this.datumExportConfigDao = datumExportConfigDao;
 		this.dataConfigDao = dataConfigDao;
 		this.destinationConfigDao = destinationConfigDao;
 		this.outputConfigDao = outputConfigDao;
 		this.taskDao = taskDao;
+		this.userNodeDao = userNodeDao;
 	}
 
 	@Override
@@ -293,6 +308,56 @@ public class DaoUserExportBiz implements UserExportBiz, EventHandler {
 			return (List<T>) outputConfigDao.findConfigurationsForUser(userId);
 		}
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	@Override
+	public UserDatumExportTaskInfo submitDatumExportConfiguration(UserDatumExportConfiguration config,
+			DateTime exportDate) {
+		ScheduleType scheduleType = config.getSchedule();
+		if ( scheduleType == null ) {
+			throw new IllegalArgumentException("The schedule type is required.");
+		}
+		// set up the configuration for the task(s), in which we must resolve
+		// the node IDs associated with the export
+		BasicConfiguration taskConfig = new BasicConfiguration(config);
+		BasicDataConfiguration taskDataConfig = new BasicDataConfiguration(
+				taskConfig.getDataConfiguration());
+		DatumFilterCommand taskDatumFilter = new DatumFilterCommand(taskDataConfig.getDatumFilter());
+
+		if ( taskDatumFilter.getNodeId() == null ) {
+			// set to all available node IDs
+			Set<Long> nodeIds = userNodeDao.findNodeIdsForUser(config.getUserId());
+			if ( nodeIds != null && !nodeIds.isEmpty() ) {
+				taskDatumFilter.setNodeIds(nodeIds.toArray(new Long[nodeIds.size()]));
+			} else {
+				log.info("User {} has no nodes available for datum export", config.getUserId());
+				return null;
+			}
+		}
+
+		taskDataConfig.setDatumFilter(taskDatumFilter);
+		taskConfig.setDataConfiguration(taskDataConfig);
+
+		DateTime currExportDate = scheduleType
+				.exportDate(exportDate != null ? exportDate : new DateTime());
+		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
+		task.setCreated(new DateTime());
+		task.setUserId(config.getUserId());
+		task.setExportDate(currExportDate);
+		task.setScheduleType(scheduleType);
+		task.setUserDatumExportConfigurationId(config.getId());
+		task.setConfig(taskConfig);
+		UserDatumExportTaskPK pk = taskDao.store(task);
+		task.setId(pk);
+		return task;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	@Override
+	public UserDatumExportTaskInfo saveDatumExportTaskForConfiguration(
+			UserDatumExportConfiguration configuration, DateTime exportDate) {
+		return submitDatumExportConfiguration(configuration, exportDate);
 	}
 
 	@Override

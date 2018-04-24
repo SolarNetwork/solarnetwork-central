@@ -38,8 +38,8 @@
 	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
 	
 	<reference id="configurationDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao"/>
-	
-	<reference id="taskDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao"/>
+
+	<reference id="taskBiz" interface="net.solarnetwork.central.user.export.biz.UserExportTaskBiz"/>
 
 	<!-- Published Services -->
 	
@@ -91,7 +91,7 @@
 	
 	<bean id="jobsService" class="net.solarnetwork.central.user.export.jobs.DefaultUserExportJobsService">
 		<argument ref="configurationDao"/>
-		<argument ref="taskDao"/>
+		<argument ref="taskBiz"/>
 	</bean>
 
 	<bean id="hourlyTaskPopulatorJob" class="net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob">

@@ -165,9 +165,35 @@ public enum ScheduleType {
 	 * @return the "next" export date
 	 */
 	public DateTime nextExportDate(DateTime date) {
+		return offsetExportDate(date, 1);
+	}
+
+	/**
+	 * Get the "previous" export date for a given date.
+	 * 
+	 * @param date
+	 *        the date to get the "previous" export date for, or {@literal null}
+	 *        for the current date
+	 * @return the "previous" export date
+	 */
+	public DateTime previousExportDate(DateTime date) {
+		return offsetExportDate(date, -1);
+	}
+
+	/**
+	 * Get an offset export date from a given date.
+	 * 
+	 * @param date
+	 *        the date to get the offset export date for, or {@literal null} for
+	 *        the current date
+	 * @param offset
+	 *        the schedule period offset
+	 * @return the offset export date
+	 */
+	public DateTime offsetExportDate(DateTime date, int offset) {
 		DateTime exportDate = exportDate(date);
 		DurationFieldType fieldType = durationFieldType();
-		return exportDate.withFieldAdded(fieldType, 1);
+		return exportDate.withFieldAdded(fieldType, offset);
 	}
 
 }

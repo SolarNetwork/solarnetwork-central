@@ -106,6 +106,9 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 */
 	public DatumFilterCommand(AggregateGeneralNodeDatumFilter other) {
 		this(other, new SolarLocation());
+		if ( other == null ) {
+			return;
+		}
 		setAggregate(other.getAggregation());
 		setNodeIds(other.getNodeIds());
 		setUserIds(other.getUserIds());

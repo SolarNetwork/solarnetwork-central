@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.export.domain;
 
+import org.joda.time.DateTime;
+
 /**
  * API for the result of a datum export job.
  * 
@@ -49,5 +51,12 @@ public interface DatumExportResult {
 	 * @return a message
 	 */
 	String getMessage();
+
+	/**
+	 * Get the date the export task was completed.
+	 * 
+	 * @return the completion date
+	 */
+	DateTime getCompletionDate();
 
 }

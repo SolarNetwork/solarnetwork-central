@@ -11,6 +11,9 @@ CREATE TABLE solarnet.sn_datum_export_task (
 	export_date		TIMESTAMP WITH TIME ZONE NOT NULL,
 	status			CHARACTER(1) NOT NULL,
 	config			jsonb NOT NULL,
+	success 		BOOLEAN,
+	message			TEXT,
+	completed 		TIMESTAMP WITH TIME ZONE,
 	CONSTRAINT datum_export_task_pkey PRIMARY KEY (id)
 );
 

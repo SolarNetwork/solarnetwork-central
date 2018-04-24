@@ -24,10 +24,12 @@ package net.solarnetwork.central.user.export.support;
 
 import java.util.List;
 import java.util.Locale;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
+import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 
@@ -112,6 +114,12 @@ public class DelegatingUserExportBiz implements UserExportBiz {
 	public <T extends UserIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
 			Class<T> configurationClass) {
 		return delegate.configurationsForUser(userId, configurationClass);
+	}
+
+	@Override
+	public UserDatumExportTaskInfo saveDatumExportTaskForConfiguration(
+			UserDatumExportConfiguration configuration, DateTime exportDate) {
+		return delegate.saveDatumExportTaskForConfiguration(configuration, exportDate);
 	}
 
 }

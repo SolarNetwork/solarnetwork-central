@@ -79,7 +79,9 @@ public abstract class BaseDatumExportOutputFormatService
 	 */
 	protected File createTemporaryResource(OutputConfiguration config) throws IOException {
 		String ext = getExportFilenameExtension();
-		String compExt = config.getCompressionType().getFilenameExtension();
+		String compExt = (config.getCompressionType() != null
+				? config.getCompressionType().getFilenameExtension()
+				: "");
 		if ( !compExt.isEmpty() ) {
 			ext += "." + compExt;
 		}
@@ -135,7 +137,7 @@ public abstract class BaseDatumExportOutputFormatService
 	 *        system property {@literal java.io.tmpdir}
 	 */
 	public void setTemporaryPath(String path) {
-		if ( path == null ) {
+		if ( path == null || path.isEmpty() ) {
 			path = System.getProperty("java.io.tmpdir");
 		}
 		setTemporaryDir(new File(path));

@@ -42,6 +42,27 @@ public class BasicDataConfiguration extends BasicIdentifiableConfiguration
 
 	private AggregateGeneralNodeDatumFilter datumFilter;
 
+	/**
+	 * Default constructor.
+	 */
+	public BasicDataConfiguration() {
+		super();
+	}
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the configuration to copy
+	 */
+	public BasicDataConfiguration(DataConfiguration other) {
+		super(other);
+		if ( other == null ) {
+			return;
+		}
+		setDatumFilter(other.getDatumFilter());
+	}
+
 	@Override
 	public AggregateGeneralNodeDatumFilter getDatumFilter() {
 		return datumFilter;

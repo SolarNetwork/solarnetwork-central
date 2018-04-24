@@ -26,10 +26,9 @@ import java.util.List;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
-import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 
@@ -42,7 +41,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 public class DefaultUserExportJobsService implements UserExportJobsService {
 
 	private final UserDatumExportConfigurationDao configurationDao;
-	private final UserDatumExportTaskInfoDao taskDao;
+	private final UserExportTaskBiz taskBiz;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -51,14 +50,16 @@ public class DefaultUserExportJobsService implements UserExportJobsService {
 	 * 
 	 * @param configurationDao
 	 *        the configuration DAO
-	 * @param tasskDao
+	 * @param taskDao
 	 *        the task DAO
+	 * @param taskBiz
+	 *        the task service
 	 */
 	public DefaultUserExportJobsService(UserDatumExportConfigurationDao configurationDao,
-			UserDatumExportTaskInfoDao taskDao) {
+			UserExportTaskBiz taskBiz) {
 		super();
 		this.configurationDao = configurationDao;
-		this.taskDao = taskDao;
+		this.taskBiz = taskBiz;
 	}
 
 	@Override
@@ -71,7 +72,9 @@ public class DefaultUserExportJobsService implements UserExportJobsService {
 		List<UserDatumExportConfiguration> configs = configurationDao.findForExecution(date,
 				scheduleType);
 		DateTime maxExportDate = scheduleType.exportDate(date);
-		DateTime now = new DateTime();
+		while ( scheduleType.nextExportDate(maxExportDate).isAfterNow() ) {
+			maxExportDate = scheduleType.previousExportDate(maxExportDate);
+		}
 		for ( UserDatumExportConfiguration config : configs ) {
 			DateTime currExportDate = scheduleType.exportDate(config.getMinimumExportDate());
 			if ( currExportDate == null ) {
@@ -79,14 +82,11 @@ public class DefaultUserExportJobsService implements UserExportJobsService {
 			}
 			try {
 				while ( !currExportDate.isAfter(maxExportDate) ) {
-					UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
-					task.setCreated(now);
-					task.setUserId(config.getUserId());
-					task.setExportDate(currExportDate);
-					task.setScheduleType(scheduleType);
-					task.setUserDatumExportConfigurationId(config.getId());
-					task.setConfig(new BasicConfiguration(config));
-					taskDao.store(task);
+					UserDatumExportTaskInfo task = taskBiz.submitDatumExportConfiguration(config,
+							currExportDate);
+					if ( task != null ) {
+						log.info("Submitted user datum export task {}", task);
+					}
 					currExportDate = scheduleType.nextExportDate(currExportDate);
 				}
 			} catch ( Exception e ) {

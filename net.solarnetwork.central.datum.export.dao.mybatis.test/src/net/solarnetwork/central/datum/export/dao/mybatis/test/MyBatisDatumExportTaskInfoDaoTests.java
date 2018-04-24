@@ -23,8 +23,10 @@
 package net.solarnetwork.central.datum.export.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.util.UUID;
 import org.joda.time.DateTime;
@@ -91,6 +93,23 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		assertThat("Config name", info.getConfig().getName(), equalTo(TEST_NAME));
 		assertThat("Config schedule", info.getConfig().getSchedule(), equalTo(ScheduleType.Daily));
 		assertThat("Config offset", info.getConfig().getHourDelayOffset(), equalTo(TEST_HOUR_OFFSET));
+	}
+
+	@Test
+	public void updateResults() {
+		storeNew();
+		DatumExportTaskInfo info = dao.get(this.info.getId());
+		info.setTaskSuccess(Boolean.TRUE);
+		info.setMessage("Yee haw!");
+		info.setCompleted(new DateTime());
+		UUID uuid = dao.store(info);
+		assertThat("UUID unchanged", uuid, equalTo(info.getId()));
+
+		DatumExportTaskInfo updated = dao.get(info.getId());
+		assertThat("Updated instance", updated, not(sameInstance(info)));
+		assertThat("Success", updated.getTaskSuccess(), equalTo(true));
+		assertThat("Message", updated.getMessage(), equalTo(info.getMessage()));
+		assertThat("Completed", updated.getCompleted(), equalTo(info.getCompleted()));
 	}
 
 	@Test

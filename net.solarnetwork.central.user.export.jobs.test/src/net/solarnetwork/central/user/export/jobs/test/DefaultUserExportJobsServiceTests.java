@@ -23,9 +23,9 @@
 package net.solarnetwork.central.user.export.jobs.test;
 
 import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,11 +39,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
-import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
-import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
 import net.solarnetwork.central.user.export.jobs.DefaultUserExportJobsService;
 
 /**
@@ -58,25 +57,25 @@ public class DefaultUserExportJobsServiceTests {
 	private static final AtomicLong ID_GENERATOR = new AtomicLong(-999L);
 
 	private UserDatumExportConfigurationDao configurationDao;
-	private UserDatumExportTaskInfoDao taskDao;
+	private UserExportTaskBiz taskBiz;
 
 	private DefaultUserExportJobsService service;
 
 	@Before
 	public void setup() {
 		configurationDao = EasyMock.createMock(UserDatumExportConfigurationDao.class);
-		taskDao = EasyMock.createMock(UserDatumExportTaskInfoDao.class);
+		taskBiz = EasyMock.createMock(UserExportTaskBiz.class);
 
-		service = new DefaultUserExportJobsService(configurationDao, taskDao);
+		service = new DefaultUserExportJobsService(configurationDao, taskBiz);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(configurationDao, taskDao);
+		EasyMock.replay(configurationDao, taskBiz);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(configurationDao, taskDao);
+		EasyMock.verify(configurationDao, taskBiz);
 	}
 
 	@Test
@@ -106,14 +105,16 @@ public class DefaultUserExportJobsServiceTests {
 	public void oneConfigurationFound() {
 		// given
 		DateTime now = new DateTime();
-		List<UserDatumExportConfiguration> configs = Arrays.asList(createConfiguration());
-		expect(configurationDao.findForExecution(now, ScheduleType.Hourly)).andReturn(configs);
+		UserDatumExportConfiguration config = createConfiguration();
+		DateTime minExportDate = ScheduleType.Hourly.previousExportDate(now);
+		config.setMinimumExportDate(minExportDate);
+		expect(configurationDao.findForExecution(now, ScheduleType.Hourly))
+				.andReturn(Collections.singletonList(config));
 
-		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
-
-		DateTime exportDate = ScheduleType.Hourly.exportDate(now);
-		expect(taskDao.store(capture(taskCaptor)))
-				.andReturn(new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Hourly, exportDate));
+		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
+		Capture<UserDatumExportConfiguration> configCaptor = new Capture<>(CaptureType.ALL);
+		expect(taskBiz.submitDatumExportConfiguration(capture(configCaptor), eq(minExportDate)))
+				.andReturn(task);
 
 		// when
 		replayAll();
@@ -121,14 +122,6 @@ public class DefaultUserExportJobsServiceTests {
 
 		// then
 		assertThat("Result", count, equalTo(1));
-		assertThat("Task created", taskCaptor.hasCaptured(), equalTo(true));
-
-		UserDatumExportTaskInfo task = taskCaptor.getValue();
-		assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
-		assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Hourly));
-		assertThat("Task date", task.getExportDate(), equalTo(exportDate));
-		assertThat("Task config available", task.getConfig(), notNullValue());
-		assertThat("Config name", task.getConfig().getName(), equalTo(configs.get(0).getName()));
 	}
 
 	@Test
@@ -136,19 +129,20 @@ public class DefaultUserExportJobsServiceTests {
 		// given
 		DateTime now = new DateTime();
 		UserDatumExportConfiguration config = createConfiguration();
-		DateTime minExportDate = ScheduleType.Hourly.exportDate(null);
-		minExportDate = minExportDate.withFieldAdded(ScheduleType.Hourly.durationFieldType(), -2);
+		DateTime minExportDate = ScheduleType.Hourly.exportDate(now);
+		minExportDate = minExportDate.withFieldAdded(ScheduleType.Hourly.durationFieldType(), -3);
 		config.setMinimumExportDate(minExportDate);
 		List<UserDatumExportConfiguration> configs = Arrays.asList(config);
 		expect(configurationDao.findForExecution(now, ScheduleType.Hourly)).andReturn(configs);
 
-		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>(CaptureType.ALL);
-
+		Capture<UserDatumExportConfiguration> configCaptor = new Capture<>(CaptureType.ALL);
 		for ( int i = 0; i < 3; i++ ) {
 			DateTime exportDate = minExportDate.withFieldAdded(ScheduleType.Hourly.durationFieldType(),
 					i);
-			expect(taskDao.store(capture(taskCaptor)))
-					.andReturn(new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Hourly, exportDate));
+			UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
+			expect(taskBiz.submitDatumExportConfiguration(capture(configCaptor), eq(exportDate)))
+					.andReturn(task);
+
 		}
 
 		// when
@@ -157,19 +151,8 @@ public class DefaultUserExportJobsServiceTests {
 
 		// then
 		assertThat("Result", count, equalTo(1));
-		assertThat("Task created", taskCaptor.hasCaptured(), equalTo(true));
-		assertThat("Multiple tasks created for exports", taskCaptor.getValues().size(), equalTo(3));
-
-		for ( int i = 0; i < 3; i++ ) {
-			UserDatumExportTaskInfo task = taskCaptor.getValues().get(i);
-			assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
-			assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Hourly));
-			DateTime exportDate = minExportDate.withFieldAdded(ScheduleType.Hourly.durationFieldType(),
-					i);
-			assertThat("Task date", task.getExportDate(), equalTo(exportDate));
-			assertThat("Task config available", task.getConfig(), notNullValue());
-			assertThat("Config name", task.getConfig().getName(), equalTo(configs.get(0).getName()));
-		}
+		assertThat("Task created", configCaptor.hasCaptured(), equalTo(true));
+		assertThat("Multiple tasks created for exports", configCaptor.getValues().size(), equalTo(3));
 	}
 
 }

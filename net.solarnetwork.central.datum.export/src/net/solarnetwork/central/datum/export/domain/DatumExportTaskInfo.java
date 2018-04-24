@@ -34,14 +34,18 @@ import net.solarnetwork.util.JsonUtils;
  * @author matt
  * @version 1.0
  */
-public class DatumExportTaskInfo extends BaseObjectEntity<UUID> implements DatumExportRequest {
+public class DatumExportTaskInfo extends BaseObjectEntity<UUID>
+		implements DatumExportRequest, DatumExportResult {
 
-	private static final long serialVersionUID = -7460673556637773372L;
+	private static final long serialVersionUID = -6825907221034388360L;
 
 	private DateTime exportDate;
 	private DatumExportState status;
 	private BasicConfiguration config;
 	private String configJson;
+	private Boolean taskSuccess;
+	private String message;
+	private DateTime completed;
 
 	@Override
 	public DateTime getExportDate() {
@@ -105,6 +109,43 @@ public class DatumExportTaskInfo extends BaseObjectEntity<UUID> implements Datum
 	public void setConfigJson(String configJson) {
 		this.configJson = configJson;
 		config = null;
+	}
+
+	@Override
+	public boolean isSuccess() {
+		return (taskSuccess != null && taskSuccess.booleanValue());
+	}
+
+	@JsonIgnore
+	public Boolean getTaskSuccess() {
+		return taskSuccess;
+	}
+
+	public void setTaskSuccess(Boolean taskSuccess) {
+		this.taskSuccess = taskSuccess;
+	}
+
+	@Override
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	@Override
+	public DateTime getCompletionDate() {
+		return getCompleted();
+	}
+
+	@JsonIgnore
+	public DateTime getCompleted() {
+		return completed;
+	}
+
+	public void setCompleted(DateTime completed) {
+		this.completed = completed;
 	}
 
 }

@@ -11,6 +11,9 @@
 			, export_date
 			, status
 			, config
+			, success
+			, message
+			, completed
 		) VALUES (
 			#{id,typeHandler=net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler}
 			<if test="created != null">, #{created}</if>
@@ -18,10 +21,16 @@
 			, #{exportDate}
 			, #{statusKey}
 			, #{configJson}::jsonb
+			, #{taskSuccess}
+			, #{message}
+			, #{completed}
 		)
 		ON CONFLICT (id) DO UPDATE
 		SET status = EXCLUDED.status,
-			modified = EXCLUDED.modified;
+			modified = EXCLUDED.modified,
+			success = EXCLUDED.success,
+			message = EXCLUDED.message,
+			completed = EXCLUDED.completed;
 	</update>
 	
 	<sql id="fragment-DatumExportTaskInfo-full-result">
@@ -30,7 +39,10 @@
 		det.modified AS datum_export_task_modified,
 		det.export_date AS datum_export_task_export_date,
 		det.status AS datum_export_task_status,
-		det.config AS datum_export_task_config
+		det.config AS datum_export_task_config,
+		det.success AS datum_export_task_success,
+		det.message AS datum_export_task_message,
+		det.completed AS datum_export_task_completed
 	</sql>
 	
 	<resultMap id="DatumExportTaskInfoFullResult" type="DatumExportTaskInfo">
@@ -40,6 +52,9 @@
 		<result property="exportDate" column="datum_export_task_export_date"/>
 		<result property="statusKey" column="datum_export_task_status"/>
 		<result property="configJson" column="datum_export_task_config"/>
+		<result property="taskSuccess" column="datum_export_task_success"/>
+		<result property="message" column="datum_export_task_message"/>
+		<result property="completed" column="datum_export_task_completed"/>
 	</resultMap>
 
 	<resultMap id="DatumExportTaskInfoDirectResult" type="DatumExportTaskInfo">
@@ -49,6 +64,9 @@
 		<result property="exportDate" column="export_date"/>
 		<result property="statusKey" column="status"/>
 		<result property="configJson" column="config"/>
+		<result property="taskSuccess" column="success"/>
+		<result property="message" column="message"/>
+		<result property="completed" column="completed"/>
 	</resultMap>
 	
 	<select id="get-DatumExportTaskInfo-for-id" parameterType="UUID" resultMap="DatumExportTaskInfoFullResult">

@@ -24,9 +24,11 @@ package net.solarnetwork.central.user.export.biz;
 
 import java.util.List;
 import java.util.Locale;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
+import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 
@@ -143,5 +145,21 @@ public interface UserExportBiz {
 	 */
 	<T extends UserIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
 			Class<T> configurationClass);
+
+	/**
+	 * Submit a datum export configuration for execution, returning the tasks
+	 * created.
+	 * 
+	 * @param configuration
+	 *        the configuration to save the tasks for
+	 * @param exportDate
+	 *        the export date to use
+	 * @return the created task, never {@literal null}
+	 * @throws IllegalArgumentException
+	 *         if {@code configuration} is not complete enough to create an
+	 *         export task
+	 */
+	UserDatumExportTaskInfo saveDatumExportTaskForConfiguration(
+			UserDatumExportConfiguration configuration, DateTime exportDate);
 
 }
