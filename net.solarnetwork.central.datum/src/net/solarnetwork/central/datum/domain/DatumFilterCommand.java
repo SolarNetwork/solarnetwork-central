@@ -142,6 +142,18 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		setWithoutTotalResultsCount(other.isWithoutTotalResultsCount());
 	}
 
+	@Override
+	public String toString() {
+		return "DatumFilterCommand{aggregation=" + aggregation + ",mostRecent=" + mostRecent
+				+ ",startDate=" + startDate + ",endDate=" + endDate + ",withoutTotalResultsCount="
+				+ withoutTotalResultsCount
+				+ (nodeIds != null && nodeIds.length > 0 ? ",nodeIds=" + Arrays.toString(nodeIds)
+						: locationIds != null && locationIds.length > 0
+								? ",locationIds=" + Arrays.toString(locationIds)
+								: "")
+				+ ",sourceIds=" + Arrays.toString(sourceIds) + "}";
+	}
+
 	@JsonIgnore
 	@Override
 	public Map<String, ?> getFilter() {

@@ -51,6 +51,13 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 	private String configJson;
 	private DatumExportTaskInfo task;
 
+	@Override
+	public String toString() {
+		return "UserDatumExportTaskInfo{userId=" + getUserId() + ",date=" + getExportDate()
+				+ ",scheduleType=" + getScheduleType() + ",taskId=" + taskId + ",configId="
+				+ userDatumExportConfigurationId + "}";
+	}
+
 	/**
 	 * Get the related {@link UserDatumExportConfiguration#getId()} value.
 	 * 
