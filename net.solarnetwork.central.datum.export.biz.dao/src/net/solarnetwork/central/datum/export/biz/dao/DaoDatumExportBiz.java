@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.export.biz.dao;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +37,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
 import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -244,9 +247,12 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 						"No output service available for identifier [" + serviceId + "]", null);
 			}
 
+			DateTimeZone zone = (config.getTimeZoneId() != null
+					? DateTimeZone.forID(config.getTimeZoneId())
+					: DateTimeZone.UTC);
 			DatumFilterCommand filter = new DatumFilterCommand(datumFilter);
-			filter.setStartDate(info.getExportDate());
-			filter.setEndDate(schedule.nextExportDate(info.getExportDate()));
+			filter.setStartDate(info.getExportDate().withZone(zone));
+			filter.setEndDate(schedule.nextExportDate(filter.getStartDate()));
 			int offset = 0;
 			final int pageSize = queryPageSize;
 			long totalResultCount = COUNT_UNDEFINED; // used only for progress tracking
@@ -287,8 +293,10 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 			}
 			DatumExportOutputFormatService outputService = optionalService(outputFormatServices,
 					config.getOutputConfiguration());
-			destService.export(config, resources,
-					config.getRuntimeProperties(info.getExportDate(), null, outputService), this);
+			DateTimeFormatter dateFormatter = config.createDateTimeFormatterForSchedule();
+			Map<String, Object> runtimeProps = config.createRuntimeProperties(info.getExportDate(),
+					dateFormatter, outputService);
+			destService.export(config, resources, runtimeProps, this);
 		}
 
 		@Override

@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  */
 public class BasicConfiguration implements Configuration, Serializable {
 
-	private static final long serialVersionUID = 8180339992339193694L;
+	private static final long serialVersionUID = 5872632878013036272L;
 
 	private String name;
 	private DataConfiguration dataConfiguration;
@@ -42,6 +42,7 @@ public class BasicConfiguration implements Configuration, Serializable {
 	private DestinationConfiguration destinationConfiguration;
 	private ScheduleType schedule;
 	private int hourDelayOffset;
+	private String timeZoneId;
 
 	/**
 	 * Default constructor.
@@ -84,6 +85,7 @@ public class BasicConfiguration implements Configuration, Serializable {
 		this.destinationConfiguration = other.getDestinationConfiguration();
 		this.schedule = other.getSchedule();
 		this.hourDelayOffset = other.getHourDelayOffset();
+		this.timeZoneId = other.getTimeZoneId();
 	}
 
 	@Override
@@ -141,6 +143,15 @@ public class BasicConfiguration implements Configuration, Serializable {
 
 	public void setHourDelayOffset(int hourDelayOffset) {
 		this.hourDelayOffset = hourDelayOffset;
+	}
+
+	@Override
+	public String getTimeZoneId() {
+		return timeZoneId;
+	}
+
+	public void setTimeZoneId(String timeZoneId) {
+		this.timeZoneId = timeZoneId;
 	}
 
 }

@@ -52,11 +52,7 @@
 		 				${' '}
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<select class="form-control" name="datumFilter.aggregation">
-		 					<option><fmt:message key='aggregation.None.label'/></option>
-		 					<c:forEach items="<%= net.solarnetwork.central.domain.Aggregation.values() %>" var="agg">
-		 						<option value="${agg.key}"<c:if test='${agg.key == "Hour"}'> selected</c:if>><fmt:message key='aggregation.${agg}.label'/></option>
-		 					</c:forEach>
+		 				<select class="form-control export-data-aggregation-types" name="datumFilter.aggregationKey">
 		 				</select>
 		 			</div>
 		 		</div>

@@ -75,6 +75,11 @@
 								<property name="basename" value="net.solarnetwork.central.datum.export.domain.ScheduleType"/>
 							</bean>
 						</entry>
+						<entry key="aggregation.">
+							<bean class="org.springframework.context.support.ResourceBundleMessageSource">
+								<property name="basename" value="net.solarnetwork.central.domain.Aggregation"/>
+							</bean>
+						</entry>
 					</map>
 				</property>
 			</bean>	

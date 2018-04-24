@@ -27,7 +27,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,8 +82,12 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		dao = new MyBatisUserDatumExportConfigurationDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
 
+		setupTestLocation();
 		this.user = createNewUser(TEST_EMAIL);
-		assertNotNull(this.user);
+		assertThat("Test user created", this.user, notNullValue());
+		this.user.setLocationId(TEST_LOC_ID);
+		userDao.store(this.user);
+
 		conf = null;
 	}
 
@@ -218,6 +221,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		assertThat("Name", conf.getName(), equalTo(TEST_NAME));
 		assertThat("Hour delay", conf.getHourDelayOffset(), equalTo(2));
 		assertThat("Schedule", conf.getSchedule(), equalTo(ScheduleType.Weekly));
+		assertThat("Time zone", conf.getTimeZoneId(), equalTo(TEST_TZ));
 
 		UserDataConfiguration dataConf = conf.getUserDataConfiguration();
 		assertThat("Data conf retrieved", dataConf, notNullValue());
@@ -281,6 +285,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		assertThat("Updated hour offset", updatedConf.getHourDelayOffset(),
 				equalTo(conf.getHourDelayOffset()));
 		assertThat("Updated schedule", updatedConf.getSchedule(), equalTo(conf.getSchedule()));
+		assertThat("Time zone", updatedConf.getTimeZoneId(), equalTo(TEST_TZ));
 	}
 
 	@Test

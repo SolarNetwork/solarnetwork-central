@@ -36,7 +36,7 @@ public enum Aggregation {
 	 * 
 	 * @since 1.6
 	 */
-	None(0, ""),
+	None(0, "0"),
 
 	/** Minute level aggregation. */
 	Minute(60, "m"),
@@ -152,13 +152,17 @@ public enum Aggregation {
 	 * Get an enum instance for a key value.
 	 * 
 	 * @param key
-	 *        the key value
+	 *        the key value; if {@literal null} or empty then {@link #None} will
+	 *        be returned
 	 * @return the enum
 	 * @throws IllegalArgumentException
 	 *         if {@code key} is not supported
 	 * @since 1.6
 	 */
 	public static Aggregation forKey(String key) {
+		if ( key == null || key.isEmpty() ) {
+			return None;
+		}
 		try {
 			// try name() value first for convenience
 			return Aggregation.valueOf(key);

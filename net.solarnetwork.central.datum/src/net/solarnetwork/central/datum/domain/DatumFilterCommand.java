@@ -47,8 +47,9 @@ import net.solarnetwork.central.support.MutableSortDescriptor;
  * @author matt
  * @version 1.9
  */
-@JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "tags", "dataPath",
-		"mostRecent", "startDate", "endDate", "max", "offset", "sorts", "type", "location" })
+@JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
+		"tags", "dataPath", "mostRecent", "startDate", "endDate", "max", "offset", "sorts", "type",
+		"location" })
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
@@ -383,6 +384,39 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 */
 	public void setAggregate(Aggregation aggregate) {
 		setAggregation(aggregate);
+	}
+
+	/**
+	 * Get the aggregation key.
+	 * 
+	 * @return the aggregation key, never {@literal null}
+	 * @since 1.9
+	 */
+	public String getAggregationKey() {
+		Aggregation agg = getAggregation();
+		return (agg != null ? agg : Aggregation.None).getKey();
+	}
+
+	/**
+	 * Set the aggregation as a key value.
+	 * 
+	 * <p>
+	 * If {@literal key} is not a supported {@link Aggregation} key value, then
+	 * {@link Aggregation#None} will be used.
+	 * </p>
+	 * 
+	 * @param key
+	 *        the key to set
+	 * @since 1.9
+	 */
+	public void setAggregationKey(String key) {
+		Aggregation agg = null;
+		try {
+			agg = Aggregation.forKey(key);
+		} catch ( IllegalArgumentException e ) {
+			agg = Aggregation.None;
+		}
+		setAggregation(agg);
 	}
 
 	@Override

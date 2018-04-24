@@ -46,6 +46,7 @@ import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
@@ -161,6 +162,24 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 				name = messageSource.getMessage("scheduleType." + type.name() + ".key", null, name,
 						locale);
 				desc = messageSource.getMessage("scheduleType." + type.name() + ".desc", null, desc,
+						locale);
+			}
+			results.add(new BasicLocalizedServiceInfo(String.valueOf(type.getKey()), locale, name, desc,
+					null));
+		}
+		return results;
+	}
+
+	@Override
+	public Iterable<LocalizedServiceInfo> availableAggregationTypes(Locale locale) {
+		List<LocalizedServiceInfo> results = new ArrayList<>(ScheduleType.values().length);
+		for ( Aggregation type : Aggregation.values() ) {
+			String name = type.toString();
+			String desc = null;
+			if ( messageSource != null ) {
+				name = messageSource.getMessage("aggregation." + type.name() + ".key", null, name,
+						locale);
+				desc = messageSource.getMessage("aggregation." + type.name() + ".desc", null, desc,
 						locale);
 			}
 			results.add(new BasicLocalizedServiceInfo(String.valueOf(type.getKey()), locale, name, desc,

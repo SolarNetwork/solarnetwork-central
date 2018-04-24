@@ -325,8 +325,8 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
 	var config = SolarReg.Templates.findContextItem(modal);
 	var service = (config ? SolarReg.findByIdentifier(services, config.serviceIdentifier) : services[0]);
 	var container = modal.find('.service-props-container').first();
-	SolarReg.Settings.setupCoreSettings(modal.get(0), config);
 	SolarReg.Templates.populateServiceSelectOptions(services, 'select[name=serviceIdentifier]');
+	SolarReg.Settings.setupCoreSettings(modal.get(0), config);
 	SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
 	if ( config && config.id ) {
 		modal.find('button.delete-config').removeClass('hidden');
@@ -375,7 +375,10 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
 			if ( field.selectedOptions.length < 1 ) {
 				continue;
 			}
-			value = field.selectedOptions[0].value
+			// handle <option> without any value attribute as null value
+			value = (field.selectedOptions[0].hasAttribute('value')
+				? field.selectedOptions[0].value
+				: null);
 		} else {
 			// <input>
 			value = field.value || '';

@@ -42,7 +42,7 @@ import net.solarnetwork.central.user.domain.UserRelatedEntity;
 public class UserDatumExportConfiguration extends BaseEntity
 		implements Configuration, UserRelatedEntity<Long>, Serializable {
 
-	private static final long serialVersionUID = -3558732991434330021L;
+	private static final long serialVersionUID = -961786443214010801L;
 
 	private Long userId;
 	private String name;
@@ -52,6 +52,7 @@ public class UserDatumExportConfiguration extends BaseEntity
 	private UserOutputConfiguration userOutputConfiguration;
 	private UserDestinationConfiguration userDestinationConfiguration;
 	private DateTime minimumExportDate;
+	private String timeZoneId;
 
 	@Override
 	public Long getUserId() {
@@ -220,6 +221,15 @@ public class UserDatumExportConfiguration extends BaseEntity
 	 */
 	public void setMinimumExportDate(DateTime minimumExportDate) {
 		this.minimumExportDate = minimumExportDate;
+	}
+
+	public void setTimeZoneId(String timeZoneId) {
+		this.timeZoneId = timeZoneId;
+	}
+
+	@Override
+	public String getTimeZoneId() {
+		return timeZoneId;
 	}
 
 }

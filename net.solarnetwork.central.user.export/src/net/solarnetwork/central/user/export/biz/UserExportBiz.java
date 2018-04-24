@@ -69,6 +69,13 @@ public interface UserExportBiz {
 	Iterable<LocalizedServiceInfo> availableScheduleTypes(Locale locale);
 
 	/**
+	 * Get a localized list of all available aggregation type information.
+	 * 
+	 * @return the aggregation type info
+	 */
+	Iterable<LocalizedServiceInfo> availableAggregationTypes(Locale locale);
+
+	/**
 	 * Get a saved datum export configuration.
 	 * 
 	 * @param userId

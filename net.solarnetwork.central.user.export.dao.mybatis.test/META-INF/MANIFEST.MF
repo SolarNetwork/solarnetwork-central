@@ -17,7 +17,7 @@ Import-Package:
  net.solarnetwork.central.domain;version="[1.16,2.0)",
  net.solarnetwork.central.security;version="1.9.0",
  net.solarnetwork.central.support;version="[1.4,2.0)",
- net.solarnetwork.central.test;version="[1.0,2.0)",
+ net.solarnetwork.central.test;version="[1.6,2.0)",
  net.solarnetwork.central.user.dao;version="1.9.0",
  net.solarnetwork.central.user.dao.mybatis;version="1.8.0",
  net.solarnetwork.central.user.dao.mybatis.map;version="1.9.0",

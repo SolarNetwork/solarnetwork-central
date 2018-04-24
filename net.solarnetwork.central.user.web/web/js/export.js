@@ -9,6 +9,7 @@ $(document).ready(function() {
 	var destinationServices = [];
 	var compressionTypes = [];
 	var scheduleTypes = [];
+	var aggregationTypes = [];
 
 	var settingTemplates = $('#export-setting-templates');
 	
@@ -106,16 +107,12 @@ $(document).ready(function() {
 		var container = $('#export-data-config-list-container');
 		var items = configs.map(function(config) {
 			var model = SolarReg.Settings.serviceConfigurationItem(config, dataServices);
-			if ( config.datumFilter ) {
-				var filter = config.datumFilter;
-				if ( filter.aggregation ) {
-					model.aggregation = filter.aggregation;
-				}
-				var nodeIds = SolarReg.arrayAsDelimitedString(filter.nodeIds);
-				model.nodes = nodeIds || '*';
-				var sourceIds = SolarReg.arrayAsDelimitedString(filter.sourceIds);
-				model.sources = sourceIds || '*';
-			}
+			var filter = config.datumFilter || {};
+			model.aggregation = SolarReg.Templates.serviceDisplayName(aggregationTypes, filter.aggregationKey) || '';
+			var nodeIds = SolarReg.arrayAsDelimitedString(filter.nodeIds);
+			model.nodes = nodeIds || '*';
+			var sourceIds = SolarReg.arrayAsDelimitedString(filter.sourceIds);
+			model.sources = sourceIds || '*';
 			return model;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
@@ -307,7 +304,7 @@ $(document).ready(function() {
 	$('.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
 
 	$('#datum-export-configs').first().each(function() {
-		var loadCountdown = 5;
+		var loadCountdown = 6;
 
 		function liftoff() {
 			loadCountdown -= 1;
@@ -332,6 +329,15 @@ $(document).ready(function() {
 			console.log('Got export schedule types: %o', json);
 			if ( json && json.success === true ) {
 				scheduleTypes = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.export-output-schedule-types');
+			}
+			liftoff();
+		});
+		
+		// get available aggregation services
+		$.getJSON(SolarReg.solarUserURL('/sec/export/services/aggregation'), function(json) {
+			console.log('Got export aggregation types: %o', json);
+			if ( json && json.success === true ) {
+				aggregationTypes = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.export-data-aggregation-types');
 			}
 			liftoff();
 		});

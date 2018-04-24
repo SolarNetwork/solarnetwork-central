@@ -25,7 +25,9 @@ package net.solarnetwork.central.datum.export.domain;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.ISODateTimeFormat;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 
@@ -74,6 +76,13 @@ public interface Configuration {
 	ScheduleType getSchedule();
 
 	/**
+	 * Get the desired time zone for the export.
+	 * 
+	 * @return the time zone
+	 */
+	String getTimeZoneId();
+
+	/**
 	 * Get the minimum number of hours offset before the scheduled export should
 	 * run.
 	 * 
@@ -109,14 +118,14 @@ public interface Configuration {
 	 *        use
 	 * @return the properties, never {@literal null}
 	 */
-	default Map<String, Object> getRuntimeProperties(DateTime exportTime,
+	default Map<String, Object> createRuntimeProperties(DateTime exportTime,
 			DateTimeFormatter dateFormatter, DatumExportOutputFormatService outputFormatService) {
 		Map<String, Object> result = new LinkedHashMap<String, Object>(8);
 		DateTime ts = exportTime != null ? exportTime : new DateTime();
 		result.put(PROP_DATE_TIME, ts);
 
 		String date = (dateFormatter != null ? dateFormatter.print(ts)
-				: ISODateTimeFormat.basicDateTimeNoMillis().withZoneUTC().print(ts));
+				: createDateTimeFormatterForSchedule().print(ts));
 		result.put(PROP_DATE, date);
 
 		String ext = null;
@@ -138,6 +147,42 @@ public interface Configuration {
 		}
 
 		return result;
+	}
+
+	/**
+	 * Get a default {@link DateTimeFormatter} based on the configured schedule
+	 * type in the time zone specified by {@link #getTimeZoneId()}.
+	 * 
+	 * <p>
+	 * If no time zone is available, {@literal UTC} will be used.
+	 * </p>
+	 * 
+	 * @return the formatter, never {@literal null}
+	 */
+	default DateTimeFormatter createDateTimeFormatterForSchedule() {
+		ScheduleType schedule = getSchedule();
+		if ( schedule == null ) {
+			schedule = ScheduleType.Daily;
+		}
+		DateTimeZone zone = (getTimeZoneId() != null ? DateTimeZone.forID(getTimeZoneId())
+				: DateTimeZone.UTC);
+		switch (schedule) {
+			case Hourly:
+				return new DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd'T'hh:mmZZZ")
+						.toFormatter().withZone(zone);
+
+			case Weekly:
+				return ISODateTimeFormat.basicWeekDate().withZone(zone);
+
+			case Monthly:
+				return new DateTimeFormatterBuilder().appendPattern("yyyy-MMZZZ").toFormatter()
+						.withZone(zone);
+
+			default:
+				return new DateTimeFormatterBuilder().appendPattern("yyyy-MM-ddZZZ").toFormatter()
+						.withZone(zone);
+
+		}
 	}
 
 }

@@ -178,7 +178,7 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 		destConfig.setServiceProps(destProps);
 		config.setDestinationConfiguration(destConfig);
 
-		Map<String, Object> runtimeProps = config.getRuntimeProperties(ts, null,
+		Map<String, Object> runtimeProps = config.createRuntimeProperties(ts, null,
 				new CsvDatumExportOutputFormatService());
 
 		DatumExportResource rsrc = getTestResource();

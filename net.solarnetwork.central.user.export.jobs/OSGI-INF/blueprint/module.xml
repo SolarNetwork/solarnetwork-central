@@ -39,8 +39,6 @@
 	
 	<reference id="configurationDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao"/>
 
-	<reference id="userDao" interface="net.solarnetwork.central.user.dao.UserDao"/>
-
 	<reference id="taskBiz" interface="net.solarnetwork.central.user.export.biz.UserExportTaskBiz"/>
 
 	<!-- Published Services -->
@@ -93,7 +91,6 @@
 	
 	<bean id="jobsService" class="net.solarnetwork.central.user.export.jobs.DefaultUserExportJobsService">
 		<argument ref="configurationDao"/>
-		<argument ref="userDao"/>
 		<argument ref="taskBiz"/>
 	</bean>
 
