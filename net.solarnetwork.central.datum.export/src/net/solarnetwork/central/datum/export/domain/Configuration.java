@@ -26,8 +26,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.ISODateTimeFormat;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 
@@ -121,11 +121,15 @@ public interface Configuration {
 	default Map<String, Object> createRuntimeProperties(DateTime exportTime,
 			DateTimeFormatter dateFormatter, DatumExportOutputFormatService outputFormatService) {
 		Map<String, Object> result = new LinkedHashMap<String, Object>(8);
-		DateTime ts = exportTime != null ? exportTime : new DateTime();
+
+		DateTimeZone zone = (getTimeZoneId() != null ? DateTimeZone.forID(getTimeZoneId())
+				: DateTimeZone.UTC);
+		DateTime ts = (exportTime != null ? exportTime : new DateTime()).withZone(zone);
 		result.put(PROP_DATE_TIME, ts);
 
-		String date = (dateFormatter != null ? dateFormatter.print(ts)
-				: createDateTimeFormatterForSchedule().print(ts));
+		DateTimeFormatter fmt = (dateFormatter != null ? dateFormatter
+				: createDateTimeFormatterForSchedule()).withZone(zone);
+		String date = fmt.print(ts);
 		result.put(PROP_DATE, date);
 
 		String ext = null;
@@ -168,19 +172,16 @@ public interface Configuration {
 				: DateTimeZone.UTC);
 		switch (schedule) {
 			case Hourly:
-				return new DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd'T'hh:mmZZZ")
-						.toFormatter().withZone(zone);
+				return DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm").withZone(zone);
 
 			case Weekly:
 				return ISODateTimeFormat.basicWeekDate().withZone(zone);
 
 			case Monthly:
-				return new DateTimeFormatterBuilder().appendPattern("yyyy-MMZZZ").toFormatter()
-						.withZone(zone);
+				return DateTimeFormat.forPattern("yyyy-MM").withZone(zone);
 
 			default:
-				return new DateTimeFormatterBuilder().appendPattern("yyyy-MM-ddZZZ").toFormatter()
-						.withZone(zone);
+				return DateTimeFormat.forPattern("yyyy-MM-dd").withZone(zone);
 
 		}
 	}
