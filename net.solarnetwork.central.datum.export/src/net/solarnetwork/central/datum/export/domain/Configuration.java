@@ -116,7 +116,7 @@ public interface Configuration {
 		result.put(PROP_DATE_TIME, ts);
 
 		String date = (dateFormatter != null ? dateFormatter.print(ts)
-				: ISODateTimeFormat.basicDateTimeNoMillis().print(ts));
+				: ISODateTimeFormat.basicDateTimeNoMillis().withZoneUTC().print(ts));
 		result.put(PROP_DATE, date);
 
 		String ext = null;

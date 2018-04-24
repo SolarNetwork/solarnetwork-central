@@ -30,15 +30,20 @@ import static org.junit.Assert.assertThat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicLong;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
@@ -57,6 +62,7 @@ public class DefaultUserExportJobsServiceTests {
 	private static final AtomicLong ID_GENERATOR = new AtomicLong(-999L);
 
 	private UserDatumExportConfigurationDao configurationDao;
+	private UserDao userDao;
 	private UserExportTaskBiz taskBiz;
 
 	private DefaultUserExportJobsService service;
@@ -64,18 +70,19 @@ public class DefaultUserExportJobsServiceTests {
 	@Before
 	public void setup() {
 		configurationDao = EasyMock.createMock(UserDatumExportConfigurationDao.class);
+		userDao = EasyMock.createMock(UserDao.class);
 		taskBiz = EasyMock.createMock(UserExportTaskBiz.class);
 
-		service = new DefaultUserExportJobsService(configurationDao, taskBiz);
+		service = new DefaultUserExportJobsService(configurationDao, userDao, taskBiz);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(configurationDao, taskBiz);
+		EasyMock.replay(configurationDao, userDao, taskBiz);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(configurationDao, taskBiz);
+		EasyMock.verify(configurationDao, userDao, taskBiz);
 	}
 
 	@Test
@@ -101,6 +108,14 @@ public class DefaultUserExportJobsServiceTests {
 		return config;
 	}
 
+	private User createUser(String tzId) {
+		User user = new User(TEST_USER_ID, "test@localhost");
+		SolarLocation loc = new SolarLocation();
+		loc.setTimeZoneId(tzId);
+		user.setLocation(loc);
+		return user;
+	}
+
 	@Test
 	public void oneConfigurationFound() {
 		// given
@@ -110,6 +125,9 @@ public class DefaultUserExportJobsServiceTests {
 		config.setMinimumExportDate(minExportDate);
 		expect(configurationDao.findForExecution(now, ScheduleType.Hourly))
 				.andReturn(Collections.singletonList(config));
+
+		User user = createUser("Pacific/Auckland");
+		expect(userDao.get(TEST_USER_ID)).andReturn(user);
 
 		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
 		Capture<UserDatumExportConfiguration> configCaptor = new Capture<>(CaptureType.ALL);
@@ -122,6 +140,38 @@ public class DefaultUserExportJobsServiceTests {
 
 		// then
 		assertThat("Result", count, equalTo(1));
+		assertThat("Task created", configCaptor.hasCaptured(), equalTo(true));
+	}
+
+	@Test
+	public void oneConfigurationFoundDifferentTimeZone() {
+		// given
+		User user = createUser(
+				TimeZone.getDefault().getID().equals("Pacific/Auckland") ? "America/Los_Angeles"
+						: "Pacific/Auckland");
+
+		DateTime now = new DateTime();
+		UserDatumExportConfiguration config = createConfiguration();
+		DateTime minExportDate = ScheduleType.Daily
+				.previousExportDate(now.withZone(DateTimeZone.forTimeZone(user.getTimeZone())));
+		config.setMinimumExportDate(minExportDate);
+		expect(configurationDao.findForExecution(now, ScheduleType.Daily))
+				.andReturn(Collections.singletonList(config));
+
+		expect(userDao.get(TEST_USER_ID)).andReturn(user);
+
+		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
+		Capture<UserDatumExportConfiguration> configCaptor = new Capture<>(CaptureType.ALL);
+		expect(taskBiz.submitDatumExportConfiguration(capture(configCaptor), eq(minExportDate)))
+				.andReturn(task);
+
+		// when
+		replayAll();
+		int count = service.createExportExecutionTasks(now, ScheduleType.Daily);
+
+		// then
+		assertThat("Result", count, equalTo(1));
+		assertThat("Task created", configCaptor.hasCaptured(), equalTo(true));
 	}
 
 	@Test
@@ -134,6 +184,9 @@ public class DefaultUserExportJobsServiceTests {
 		config.setMinimumExportDate(minExportDate);
 		List<UserDatumExportConfiguration> configs = Arrays.asList(config);
 		expect(configurationDao.findForExecution(now, ScheduleType.Hourly)).andReturn(configs);
+
+		User user = createUser("Pacific/Auckland");
+		expect(userDao.get(TEST_USER_ID)).andReturn(user);
 
 		Capture<UserDatumExportConfiguration> configCaptor = new Capture<>(CaptureType.ALL);
 		for ( int i = 0; i < 3; i++ ) {

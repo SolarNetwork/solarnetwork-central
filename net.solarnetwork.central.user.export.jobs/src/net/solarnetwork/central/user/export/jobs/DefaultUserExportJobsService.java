@@ -23,10 +23,14 @@
 package net.solarnetwork.central.user.export.jobs;
 
 import java.util.List;
+import java.util.TimeZone;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
@@ -41,6 +45,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 public class DefaultUserExportJobsService implements UserExportJobsService {
 
 	private final UserDatumExportConfigurationDao configurationDao;
+	private final UserDao userDao;
 	private final UserExportTaskBiz taskBiz;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -56,9 +61,10 @@ public class DefaultUserExportJobsService implements UserExportJobsService {
 	 *        the task service
 	 */
 	public DefaultUserExportJobsService(UserDatumExportConfigurationDao configurationDao,
-			UserExportTaskBiz taskBiz) {
+			UserDao userDao, UserExportTaskBiz taskBiz) {
 		super();
 		this.configurationDao = configurationDao;
+		this.userDao = userDao;
 		this.taskBiz = taskBiz;
 	}
 
@@ -71,12 +77,25 @@ public class DefaultUserExportJobsService implements UserExportJobsService {
 		}
 		List<UserDatumExportConfiguration> configs = configurationDao.findForExecution(date,
 				scheduleType);
-		DateTime maxExportDate = scheduleType.exportDate(date);
-		while ( scheduleType.nextExportDate(maxExportDate).isAfterNow() ) {
-			maxExportDate = scheduleType.previousExportDate(maxExportDate);
-		}
 		for ( UserDatumExportConfiguration config : configs ) {
-			DateTime currExportDate = scheduleType.exportDate(config.getMinimumExportDate());
+
+			User user = userDao.get(config.getUserId());
+			if ( user == null ) {
+				// shouldn't happen
+				continue;
+			}
+
+			TimeZone userTimeZone = user.getTimeZone();
+			DateTimeZone userTz = (userTimeZone != null ? DateTimeZone.forTimeZone(userTimeZone)
+					: DateTimeZone.UTC);
+
+			DateTime maxExportDate = scheduleType.exportDate(date.withZone(userTz));
+			while ( scheduleType.nextExportDate(maxExportDate).isAfterNow() ) {
+				maxExportDate = scheduleType.previousExportDate(maxExportDate);
+			}
+
+			DateTime currExportDate = scheduleType
+					.exportDate(config.getMinimumExportDate().withZone(userTz));
 			if ( currExportDate == null ) {
 				currExportDate = maxExportDate;
 			}
