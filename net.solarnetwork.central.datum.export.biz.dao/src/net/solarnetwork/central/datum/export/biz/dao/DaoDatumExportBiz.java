@@ -268,10 +268,11 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 								: COUNT_UNKNOWN;
 						exportContext.start(totalResultCount);
 					}
+					exportContext.appendDatumMatch(pageResults, this);
 					// once we've done the first query and got the total results count, we can turn
 					// that off for better performance
 					filter.setWithoutTotalResultsCount(true);
-					exportContext.appendDatumMatch(pageResults, this);
+					offset += pageSize;
 				} while ( pageResults != null && pageResults.getReturnedResultCount() != null
 						&& pageResults.getReturnedResultCount() == pageSize );
 				return exportContext.finish();
