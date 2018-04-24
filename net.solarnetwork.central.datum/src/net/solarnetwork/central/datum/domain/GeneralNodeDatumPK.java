@@ -30,7 +30,7 @@ import org.joda.time.DateTime;
  * Primary key for a general node datum.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class GeneralNodeDatumPK implements Serializable, Cloneable, Comparable<GeneralNodeDatumPK> {
 
@@ -162,7 +162,7 @@ public class GeneralNodeDatumPK implements Serializable, Cloneable, Comparable<G
 			if ( other.created != null ) {
 				return false;
 			}
-		} else if ( !created.equals(other.created) ) {
+		} else if ( !created.isEqual(other.created) ) {
 			return false;
 		}
 		if ( sourceId == null ) {
