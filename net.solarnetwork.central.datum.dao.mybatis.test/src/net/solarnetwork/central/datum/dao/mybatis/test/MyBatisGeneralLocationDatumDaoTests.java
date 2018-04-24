@@ -904,6 +904,53 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 	}
 
 	@Test
+	public void findFilteredAggregateNone() {
+		GeneralLocationDatum datum1 = new GeneralLocationDatum();
+		datum1.setCreated(new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC));
+		datum1.setLocationId(TEST_LOC_ID);
+		datum1.setSourceId(TEST_SOURCE_ID);
+		datum1.setSampleJson("{\"a\":{\"watt_hours\":0}}");
+		dao.store(datum1);
+		lastDatum = datum1;
+
+		GeneralLocationDatum datum2 = new GeneralLocationDatum();
+		datum2.setCreated(datum1.getCreated().plusMinutes(20));
+		datum2.setLocationId(TEST_LOC_ID);
+		datum2.setSourceId(TEST_SOURCE_ID);
+		datum2.setSampleJson("{\"a\":{\"watt_hours\":5}}");
+		dao.store(datum2);
+
+		GeneralLocationDatum datum3 = new GeneralLocationDatum();
+		datum3.setCreated(datum2.getCreated().plusMinutes(20));
+		datum3.setLocationId(TEST_LOC_ID);
+		datum3.setSourceId(TEST_SOURCE_ID);
+		datum3.setSampleJson("{\"a\":{\"watt_hours\":10}}");
+		dao.store(datum3);
+
+		processAggregateStaleData();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setLocationId(TEST_LOC_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(datum1.getCreated());
+		criteria.setEndDate(datum3.getCreated());
+		criteria.setAggregate(Aggregation.None);
+
+		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertNotNull(results);
+		assertEquals(2L, (long) results.getTotalResults());
+		assertEquals(2, (int) results.getReturnedResultCount());
+
+		Iterator<ReportingGeneralLocationDatumMatch> itr = results.iterator();
+
+		assertThat("Match 1", itr.next().getId(), equalTo(datum1.getId()));
+		assertThat("Match 2", itr.next().getId(), equalTo(datum2.getId()));
+		assertThat("No more matches", itr.hasNext(), equalTo(false));
+	}
+
+	@Test
 	public void mapDayDatum() {
 		DayDatum day = new DayDatum();
 		day.setLocationId(TEST_WEATHER_LOC_ID);

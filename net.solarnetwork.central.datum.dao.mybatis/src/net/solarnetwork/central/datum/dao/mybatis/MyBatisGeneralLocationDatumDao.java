@@ -151,7 +151,7 @@ public class MyBatisGeneralLocationDatumDao
 		if ( filter instanceof AggregationFilter ) {
 			aggregation = ((AggregationFilter) filter).getAggregation();
 		}
-		if ( aggregation == null ) {
+		if ( aggregation == null || aggregation.getLevel() < 1 ) {
 			return getQueryForAll() + "-GeneralLocationDatumMatch";
 		} else if ( aggregation.compareTo(Aggregation.Hour) < 0 ) {
 			// all *Minute aggregates are mapped to the Minute query name

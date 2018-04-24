@@ -167,7 +167,7 @@ public class MyBatisGeneralNodeDatumDao
 			}
 			return queryForMostRecent;
 		}
-		if ( aggregation == null ) {
+		if ( aggregation == null || aggregation.getLevel() < 1 ) {
 			return getQueryForAll() + "-GeneralNodeDatumMatch";
 		} else if ( aggregation.compareTo(Aggregation.Hour) < 0 ) {
 			// all *Minute aggregates are mapped to the Minute query name
@@ -180,6 +180,10 @@ public class MyBatisGeneralNodeDatumDao
 		if ( filter.isMostRecent() && filter instanceof net.solarnetwork.central.domain.AggregationFilter
 				&& ((AggregationFilter) filter).getAggregation() != null ) {
 			Aggregation aggregation = ((AggregationFilter) filter).getAggregation();
+			if ( aggregation.getLevel() < 1 ) {
+				// support None
+				return;
+			}
 			if ( aggregation.compareLevel(Aggregation.Hour) < 1 ) {
 				sqlProps.put(PARAM_AGGREGATION, Aggregation.Hour.name());
 			} else if ( aggregation.compareLevel(Aggregation.Day) < 1 ) {
@@ -254,7 +258,7 @@ public class MyBatisGeneralNodeDatumDao
 				&& agg != Aggregation.RunningTotal ) {
 			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
-		if ( agg != null && agg.compareLevel(Aggregation.Hour) < 1 ) {
+		if ( agg != null && agg.getLevel() > 0 && agg.compareLevel(Aggregation.Hour) < 1 ) {
 			// make sure start/end date provided for minute level aggregation queries as query expects it
 			DateTime forced = null;
 			if ( filter.getStartDate() == null || filter.getEndDate() == null ) {
