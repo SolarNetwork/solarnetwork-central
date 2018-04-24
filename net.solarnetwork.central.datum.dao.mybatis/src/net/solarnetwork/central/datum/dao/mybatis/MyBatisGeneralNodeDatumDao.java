@@ -251,8 +251,8 @@ public class MyBatisGeneralNodeDatumDao
 		// and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
 		Long totalCount = null;
 		final Aggregation agg = filter.getAggregation();
-		if ( filter.isMostRecent() && !filter.isWithoutTotalResultsCount() && max != null
-				&& max.intValue() != -1 && agg.compareTo(Aggregation.Hour) >= 0
+		if ( !filter.isMostRecent() && !filter.isWithoutTotalResultsCount() && max != null
+				&& max.intValue() != -1 && (agg.getLevel() < 1 || agg.compareTo(Aggregation.Hour) >= 0)
 				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
 				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
 				&& agg != Aggregation.RunningTotal ) {
