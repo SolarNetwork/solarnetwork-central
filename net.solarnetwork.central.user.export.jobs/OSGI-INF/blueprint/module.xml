@@ -108,7 +108,7 @@
 
 	<bean id="dailyTaskPopulatorJob" class="net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob">
 		<argument ref="eventAdmin"/>
-		<argument value="#{T(net.solarnetwork.central.datum.export.domain.ScheduleType).Hourly}"/>
+		<argument value="#{T(net.solarnetwork.central.datum.export.domain.ScheduleType).Daily}"/>
 		<argument ref="jobsService"/>
 		<property name="jobCron" value="${UserExportTaskPopulatorDaily.jobCron}"/>
 		<property name="maximumWaitMs" value="${UserExportTaskPopulatorDaily.maximumWaitMs}"/>
@@ -119,7 +119,7 @@
 
 	<bean id="weeklyTaskPopulatorJob" class="net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob">
 		<argument ref="eventAdmin"/>
-		<argument value="#{T(net.solarnetwork.central.datum.export.domain.ScheduleType).Hourly}"/>
+		<argument value="#{T(net.solarnetwork.central.datum.export.domain.ScheduleType).Weekly}"/>
 		<argument ref="jobsService"/>
 		<property name="jobCron" value="${UserExportTaskPopulatorWeekly.jobCron}"/>
 		<property name="maximumWaitMs" value="${UserExportTaskPopulatorWeekly.maximumWaitMs}"/>
@@ -130,7 +130,7 @@
 
 	<bean id="monthlyTaskPopulatorJob" class="net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob">
 		<argument ref="eventAdmin"/>
-		<argument value="#{T(net.solarnetwork.central.datum.export.domain.ScheduleType).Hourly}"/>
+		<argument value="#{T(net.solarnetwork.central.datum.export.domain.ScheduleType).Monthly}"/>
 		<argument ref="jobsService"/>
 		<property name="jobCron" value="${UserExportTaskPopulatorMonthly.jobCron}"/>
 		<property name="maximumWaitMs" value="${UserExportTaskPopulatorMonthly.maximumWaitMs}"/>
