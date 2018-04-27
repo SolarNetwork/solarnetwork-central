@@ -29,6 +29,8 @@
 		<beans:prop key="UserExportTaskPopulatorWeekly.maximumWaitMs">600000</beans:prop>
 		<beans:prop key="UserExportTaskPopulatorMonthly.jobCron">0 45 2 1/2 * ?</beans:prop>
 		<beans:prop key="UserExportTaskPopulatorMonthly.maximumWaitMs">600000</beans:prop>
+		<beans:prop key="UserExportTaskCleaner.jobCron">0 37 * * * ?</beans:prop>
+		<beans:prop key="UserExportTaskCleaner.minimumAgeMinutes">360</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -38,6 +40,8 @@
 	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
 	
 	<reference id="configurationDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao"/>
+
+	<reference id="taskDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao"/>
 
 	<reference id="taskBiz" interface="net.solarnetwork.central.user.export.biz.UserExportTaskBiz"/>
 
@@ -86,6 +90,18 @@
 			</entry>
 		</service-properties>
 	</service>
+
+	<service ref="userExportTaskCleanerJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{userExportTaskCleanerJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
 
 	<!-- Supporting Services -->
 	
@@ -139,4 +155,14 @@
 		<property name="jobTopic" value="net/solarnetwork/central/user/export/UserExportTaskPopulatorMonthly"/>
 	</bean>
 
+	<bean id="userExportTaskCleanerJob" class="net.solarnetwork.central.user.export.jobs.UserExportTaskCleanerJob">
+		<argument ref="eventAdmin"/>
+		<argument ref="taskDao"/>
+		<property name="jobCron" value="${UserExportTaskCleaner.jobCron}"/>
+		<property name="minimumAgeMinutes" value="${UserExportTaskCleaner.minimumAgeMinutes}"/>
+		<property name="jobId" value="UserExportTaskCleaner"/>
+		<property name="jobGroup" value="UserExport"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/export/UserExportTaskCleaner"/>
+	</bean>
+	
 </blueprint>
