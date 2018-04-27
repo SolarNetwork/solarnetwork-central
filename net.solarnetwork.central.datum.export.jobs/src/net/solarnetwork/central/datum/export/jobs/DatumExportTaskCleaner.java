@@ -36,7 +36,8 @@ import net.solarnetwork.central.scheduler.JobSupport;
  */
 public class DatumExportTaskCleaner extends JobSupport {
 
-	public static final int DEFAULT_MINIMUM_AGE_MINUTES = 360;
+	/** The default value for the {@code minimumAgeMinutes} property. */
+	public static final int DEFAULT_MINIMUM_AGE_MINUTES = 720;
 
 	private final DatumExportTaskInfoDao taskDao;
 
