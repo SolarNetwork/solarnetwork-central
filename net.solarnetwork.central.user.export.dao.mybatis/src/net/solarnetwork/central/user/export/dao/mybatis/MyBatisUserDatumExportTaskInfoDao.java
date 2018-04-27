@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
@@ -42,6 +45,12 @@ public class MyBatisUserDatumExportTaskInfoDao
 	public static final String QUERY_TASK_INFO_FOR_TASK_ID = "get-UserDatumExportTaskInfo-for-task-id";
 
 	/**
+	 * The {@code DELETE} query name used for
+	 * {@link #purgeCompletedTasks(DateTime)}.
+	 */
+	public static final String UPDATE_PURGE_COMPLETED = "delete-UserDatumExportTaskInfo-completed";
+
+	/**
 	 * Default constructor.
 	 */
 	public MyBatisUserDatumExportTaskInfoDao() {
@@ -51,6 +60,15 @@ public class MyBatisUserDatumExportTaskInfoDao
 	@Override
 	public UserDatumExportTaskInfo getForTaskId(UUID taskId) {
 		return selectFirst(QUERY_TASK_INFO_FOR_TASK_ID, taskId);
+	}
+
+	@Override
+	public long purgeCompletedTasks(DateTime olderThanDate) {
+		Map<String, Object> params = new HashMap<>(2);
+		params.put("date", olderThanDate);
+		getSqlSession().update(UPDATE_PURGE_COMPLETED, params);
+		Long result = (Long) params.get("result");
+		return (result == null ? 0 : result.longValue());
 	}
 
 }

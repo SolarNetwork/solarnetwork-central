@@ -36,7 +36,7 @@
 		uet.user_id AS user_export_task_user_id,
 		uet.schedule AS user_export_task_schedule,
 		uet.export_date AS user_export_task_export_date,
-		uet.task_id AS user_export_task_min_task_id,
+		uet.task_id AS user_export_task_task_id,
 		uet.conf_id AS user_export_task_conf_id
 	</sql>
 
@@ -45,7 +45,7 @@
 		<id property="scheduleTypeKey" column="user_export_task_schedule"/>
 		<id property="exportDate" column="user_export_task_export_date"/>
 		<result property="created" column="user_export_task_created"/>
-		<result property="taskId" column="user_export_task_id"/>
+		<result property="taskId" column="user_export_task_task_id"/>
 		<result property="userDatumExportConfigurationId" column="user_export_task_conf_id"/>
 		
 		<association property="task" resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult" />
@@ -80,5 +80,11 @@
 		ORDER BY
 			uet.schedule, uet.export_date
 	</select>
+
+	<delete id="delete-UserDatumExportTaskInfo-completed" parameterType="map" statementType="CALLABLE">
+		{#{result, mode=OUT, jdbcType=BIGINT} = call solaruser.purge_completed_user_export_tasks(
+			#{date, mode=IN, jdbcType=TIMESTAMP}
+		)}
+	</delete>
  
 </mapper>

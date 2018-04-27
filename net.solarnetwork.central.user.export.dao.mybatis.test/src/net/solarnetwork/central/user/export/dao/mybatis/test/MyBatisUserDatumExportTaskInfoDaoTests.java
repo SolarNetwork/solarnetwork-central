@@ -28,12 +28,14 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
-import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.datum.export.dao.mybatis.MyBatisDatumExportTaskInfoDao;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.export.domain.DatumExportState;
+import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDatumExportConfigurationDao;
@@ -51,6 +53,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
 public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private MyBatisUserDatumExportConfigurationDao confDao;
+	private MyBatisDatumExportTaskInfoDao datumTaskDao;
 	private MyBatisUserDatumExportTaskInfoDao dao;
 
 	private User user;
@@ -64,6 +67,9 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 
 		confDao = new MyBatisUserDatumExportConfigurationDao();
 		confDao.setSqlSessionFactory(getSqlSessionFactory());
+
+		datumTaskDao = new MyBatisDatumExportTaskInfoDao();
+		datumTaskDao.setSqlSessionFactory(getSqlSessionFactory());
 
 		this.user = createNewUser(TEST_EMAIL);
 		assertThat("Test user", this.user, notNullValue());
@@ -94,7 +100,6 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		DateTime date = new DateTime(2017, 4, 18, 9, 0, 0, DateTimeZone.UTC);
 		UserDatumExportTaskInfo info = new UserDatumExportTaskInfo();
 		info.setId(new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Hourly, date));
-		info.setTaskId(UUID.randomUUID());
 		info.setConfig(this.userDatumExportConfig);
 
 		UserDatumExportTaskPK id = dao.store(info);
@@ -118,9 +123,12 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		assertThat("Config", info.getConfig(), notNullValue());
 		assertThat("Export date", info.getExportDate(), sameInstance(info.getId().getDate()));
 		assertThat("Modified date not used", info.getModified(), nullValue());
-		assertThat("Task ID", info.getTaskId(), nullValue());
+		assertThat("Task ID", info.getTaskId(), notNullValue());
 		assertThat("Config ID", info.getUserDatumExportConfigurationId(),
 				equalTo(this.userDatumExportConfig.getId()));
+
+		// stash results for other tests to use
+		this.info = info;
 	}
 
 	@Test
@@ -145,5 +153,42 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		assertThat("Created unchanged", updatedConf.getCreated(), equalTo(originalCreated));
 		assertThat("Config unchanged", updatedConf.getConfig().getHourDelayOffset(),
 				equalTo(this.info.getConfig().getHourDelayOffset()));
+	}
+
+	@Test
+	public void purgeCompletedNoneCompleted() {
+		getByPrimaryKey();
+		long result = dao.purgeCompletedTasks(new DateTime());
+		assertThat("Delete count", result, equalTo(0L));
+	}
+
+	@Test
+	public void purgeCompletedNoneExpired() {
+		getByPrimaryKey();
+
+		long result = dao.purgeCompletedTasks(new DateTime().hourOfDay().roundCeilingCopy());
+		assertThat("Delete count", result, equalTo(0L));
+	}
+
+	@Test
+	public void purgeCompleted() {
+		getByPrimaryKey();
+		DatumExportTaskInfo datumTask = datumTaskDao.get(this.info.getTaskId());
+		datumTask.setStatus(DatumExportState.Completed);
+		datumTask.setCompleted(new DateTime().secondOfMinute().roundFloorCopy());
+		datumTaskDao.store(datumTask);
+
+		UserDatumExportTaskInfo info = new UserDatumExportTaskInfo();
+		info.setId(new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Hourly,
+				new DateTime(2017, 4, 18, 10, 0, 0, DateTimeZone.UTC)));
+		info.setConfig(this.userDatumExportConfig);
+		info = dao.get(dao.store(info), this.user.getId());
+		datumTask = datumTaskDao.get(info.getTaskId());
+		datumTask.setStatus(DatumExportState.Completed);
+		datumTask.setCompleted(new DateTime().hourOfDay().roundFloorCopy());
+		datumTaskDao.store(datumTask);
+
+		long result = dao.purgeCompletedTasks(new DateTime().hourOfDay().roundCeilingCopy());
+		assertThat("Delete count", result, equalTo(2L));
 	}
 }
