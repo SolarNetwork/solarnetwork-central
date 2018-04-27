@@ -23,8 +23,8 @@
 package net.solarnetwork.central.datum.export.dao;
 
 import java.util.UUID;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.dao.GenericDao;
-import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 
 /**
@@ -39,11 +39,23 @@ public interface DatumExportTaskInfoDao extends GenericDao<DatumExportTaskInfo, 
 	 * Claim a queued task.
 	 * 
 	 * This method will "claim" a task that is currently in the
-	 * {@link DatumExportState#Queued} state, changing the state to
-	 * {@link DatumExportState#Claimed}.
+	 * {@link net.solarnetwork.central.datum.export.domain.DatumExportState#Queued}
+	 * state, changing the state to
+	 * {@link net.solarnetwork.central.datum.export.domain.DatumExportState#Claimed}.
 	 * 
 	 * @return a claimed task, or {@literal null} if none could be claimed
 	 */
 	DatumExportTaskInfo claimQueuedTask();
+
+	/**
+	 * Purge tasks that have reached a
+	 * {@link net.solarnetwork.central.datum.export.domain.DatumExportState#Completed}
+	 * and are older than a given date.
+	 * 
+	 * @param olderThanDate
+	 *        the maximum date for which to purge completed tasks
+	 * @return the number of tasks deleted
+	 */
+	long purgeCompletedTasks(DateTime olderThanDate);
 
 }

@@ -137,4 +137,37 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		assertThat("Nothing claimed", info, nullValue());
 	}
 
+	@Test
+	public void purgeCompletedNoneCompleted() {
+		storeNew();
+		long result = dao.purgeCompletedTasks(new DateTime());
+		assertThat("Delete count", result, equalTo(0L));
+	}
+
+	@Test
+	public void purgeCompletedNoneExpired() {
+		storeNew();
+		this.info.setCompleted(new DateTime().secondOfMinute().roundFloorCopy());
+		this.info.setStatus(DatumExportState.Completed);
+		dao.store(this.info);
+		long result = dao.purgeCompletedTasks(this.info.getCompleted());
+		assertThat("Delete count", result, equalTo(0L));
+	}
+
+	@Test
+	public void purgeCompleted() {
+		storeNew();
+		this.info.setCompleted(new DateTime().secondOfMinute().roundFloorCopy());
+		this.info.setStatus(DatumExportState.Completed);
+		dao.store(this.info);
+
+		storeNew();
+		this.info.setCompleted(new DateTime().hourOfDay().roundFloorCopy());
+		this.info.setStatus(DatumExportState.Completed);
+		dao.store(this.info);
+
+		long result = dao.purgeCompletedTasks(new DateTime().hourOfDay().roundCeilingCopy());
+		assertThat("Delete count", result, equalTo(2L));
+	}
+
 }

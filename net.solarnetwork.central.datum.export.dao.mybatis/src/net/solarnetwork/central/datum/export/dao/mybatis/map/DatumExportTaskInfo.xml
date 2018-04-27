@@ -81,5 +81,11 @@
 	<select id="get-DatumExportTaskInfo-for-claim" resultMap="DatumExportTaskInfoDirectResult" statementType="CALLABLE">
 		{call solarnet.claim_datum_export_task()}
 	</select>
+	
+	<delete id="delete-DatumExportTaskInfo-completed" parameterType="map" statementType="CALLABLE">
+		{#{result, mode=OUT, jdbcType=BIGINT} = call solarnet.purge_completed_datum_export_tasks(
+			#{date, mode=IN, jdbcType=TIMESTAMP}
+		)}
+	</delete>
 
 </mapper>

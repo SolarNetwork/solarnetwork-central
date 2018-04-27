@@ -71,3 +71,25 @@ BEGIN
 	RETURN rec;
 END;
 $BODY$;
+
+/**************************************************************************************************
+ * FUNCTION solarnet.purge_completed_datum_export_tasks(timestamp with time zone)
+ *
+ * Delete sn_datum_export_task rows that have reached the 'c' status, and whose
+ * completed date is older than the given date.
+ *
+ * @param older_date The maximum date to delete tasks for.
+ * @return The number of rows deleted.
+ */
+CREATE OR REPLACE FUNCTION solarnet.purge_completed_datum_export_tasks(older_date timestamp with time zone)
+  RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS
+$BODY$
+DECLARE
+	num_rows BIGINT := 0;
+BEGIN
+	DELETE FROM solarnet.sn_datum_export_task
+	WHERE completed < older_date AND status = 'c';
+	GET DIAGNOSTICS num_rows = ROW_COUNT;
+	RETURN num_rows;
+END;
+$BODY$;

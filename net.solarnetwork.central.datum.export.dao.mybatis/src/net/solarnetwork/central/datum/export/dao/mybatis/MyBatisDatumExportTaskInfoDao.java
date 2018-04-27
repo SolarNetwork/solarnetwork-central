@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.datum.export.dao.mybatis;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.export.dao.DatumExportTaskInfoDao;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
@@ -39,7 +42,14 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 	/** The default query name used for {@link #claimQueuedTask(Long)}. */
 	public static final String QUERY_FOR_CLAIMING_TASK = "get-DatumExportTaskInfo-for-claim";
 
+	/**
+	 * The {@code DELETE} query name used for
+	 * {@link #purgeCompletedTasks(DateTime)}.
+	 */
+	public static final String UPDATE_PURGE_COMPLETED = "delete-DatumExportTaskInfo-completed";
+
 	private String queryForClaimQueuedTask;
+	private String updateDeleteCompletedTasks;
 
 	/**
 	 * Constructor.
@@ -47,11 +57,21 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 	public MyBatisDatumExportTaskInfoDao() {
 		super(DatumExportTaskInfo.class, UUID.class);
 		setQueryForClaimQueuedTask(QUERY_FOR_CLAIMING_TASK);
+		setUpdateDeleteCompletedTasks(UPDATE_PURGE_COMPLETED);
 	}
 
 	@Override
 	public DatumExportTaskInfo claimQueuedTask() {
 		return selectFirst(queryForClaimQueuedTask, null);
+	}
+
+	@Override
+	public long purgeCompletedTasks(DateTime olderThanDate) {
+		Map<String, Object> params = new HashMap<>(2);
+		params.put("date", olderThanDate);
+		getSqlSession().update(updateDeleteCompletedTasks, params);
+		Long result = (Long) params.get("result");
+		return (result == null ? 0 : result.longValue());
 	}
 
 	/**
@@ -62,6 +82,17 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 	 */
 	public void setQueryForClaimQueuedTask(String queryForClaimQueuedTask) {
 		this.queryForClaimQueuedTask = queryForClaimQueuedTask;
+	}
+
+	/**
+	 * Set the statement name for the {@link #purgeCompletedTasks(DateTime)}
+	 * method to use.
+	 * 
+	 * @param updateDeleteCompletedTasks
+	 *        the statement name; defaults to {@link #UPDATE_PURGE_COMPLETED}
+	 */
+	public void setUpdateDeleteCompletedTasks(String updateDeleteCompletedTasks) {
+		this.updateDeleteCompletedTasks = updateDeleteCompletedTasks;
 	}
 
 }
