@@ -66,7 +66,7 @@ public class DatumFilterCommandTests {
 		String json = objectMapper.writeValueAsString(cmd);
 		assertThat(json, notNullValue());
 		assertThat(json, equalTo(
-				"{\"nodeIds\":[1],\"sourceIds\":[\"test\"],\"aggregation\":\"Day\",\"mostRecent\":false,\"startDate\":1490097600000,\"endDate\":1490702400000,\"offset\":0,\"location\":{}}"));
+				"{\"nodeIds\":[1],\"sourceIds\":[\"test\"],\"aggregation\":\"Day\",\"aggregationKey\":\"d\",\"mostRecent\":false,\"startDate\":1490097600000,\"endDate\":1490702400000,\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
 	}
 
 	@Test
