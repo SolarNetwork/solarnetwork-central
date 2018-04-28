@@ -21,6 +21,5 @@
 		<!-- Testing support -->
 		
 		<!-- SolarNetwork -->
-		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.export.standard" rev="1.0.0"/>
     </dependencies>
 </ivy-module>

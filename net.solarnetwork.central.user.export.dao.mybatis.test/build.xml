@@ -9,6 +9,8 @@
 		<include name="net.solarnetwork.central.user.export.dao.mybatis"/>
 	</dirset>
 
+	<property name="dir.env.input" value="../net.solarnetwork.central.test"/>
+
 	<property name="dir.osgi.base" value="${basedir}/../../solarnetwork-build/solarnetwork-osgi-lib"/>	
 	<import file="${dir.osgi.base}/lib-build.xml"/>
 	
