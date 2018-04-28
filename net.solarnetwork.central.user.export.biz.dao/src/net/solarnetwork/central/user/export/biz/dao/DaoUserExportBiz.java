@@ -24,6 +24,8 @@ package net.solarnetwork.central.user.export.biz.dao;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,6 +39,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.PathMatcher;
+import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
@@ -85,6 +89,7 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	private final UserOutputConfigurationDao outputConfigDao;
 	private final UserDatumExportTaskInfoDao taskDao;
 	private final UserNodeDao userNodeDao;
+	private final GeneralNodeDatumDao generalNodeDatumDao;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -92,6 +97,7 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	private OptionalServiceCollection<DatumExportDestinationService> destinationServices;
 
 	private MessageSource messageSource;
+	private PathMatcher pathMatcher;
 
 	/**
 	 * Constructor.
@@ -108,11 +114,13 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	 *        the task DAO to use
 	 * @param userNodeDao
 	 *        the user node DAO to use
+	 * @param generalNodeDatumDao
+	 *        the node datum DAO to use
 	 */
 	public DaoUserExportBiz(UserDatumExportConfigurationDao datumExportConfigDao,
 			UserDataConfigurationDao dataConfigDao, UserDestinationConfigurationDao destinationConfigDao,
 			UserOutputConfigurationDao outputConfigDao, UserDatumExportTaskInfoDao taskDao,
-			UserNodeDao userNodeDao) {
+			UserNodeDao userNodeDao, GeneralNodeDatumDao generalNodeDatumDao) {
 		super();
 		this.datumExportConfigDao = datumExportConfigDao;
 		this.dataConfigDao = dataConfigDao;
@@ -120,6 +128,7 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 		this.outputConfigDao = outputConfigDao;
 		this.taskDao = taskDao;
 		this.userNodeDao = userNodeDao;
+		this.generalNodeDatumDao = generalNodeDatumDao;
 	}
 
 	@Override
@@ -329,6 +338,37 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
 	}
 
+	/**
+	 * Filter a set of sources using a source ID path pattern.
+	 * 
+	 * <p>
+	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
+	 * path pattern, then {@code sources} will be returned without filtering.
+	 * </p>
+	 * 
+	 * @param sources
+	 *        the sources to filter
+	 * @param pathMatcher
+	 *        the path matcher to use
+	 * @param pattern
+	 *        the pattern to test
+	 * @return the filtered sources
+	 */
+	public static Set<String> filterSources(Set<String> sources, PathMatcher pathMatcher,
+			String pattern) {
+		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
+				|| !pathMatcher.isPattern(pattern) ) {
+			return sources;
+		}
+		for ( Iterator<String> itr = sources.iterator(); itr.hasNext(); ) {
+			String source = itr.next();
+			if ( !pathMatcher.match(pattern, source) ) {
+				itr.remove();
+			}
+		}
+		return sources;
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
 	@Override
 	public UserDatumExportTaskInfo submitDatumExportConfiguration(UserDatumExportConfiguration config,
@@ -355,11 +395,33 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 			}
 		}
 
+		DateTime currExportDate = scheduleType
+				.exportDate(exportDate != null ? exportDate : new DateTime());
+		DateTime nextExportDate = scheduleType.nextExportDate(currExportDate);
+
+		if ( taskDatumFilter.getSourceId() != null ) {
+			Set<String> allSourceIds = new LinkedHashSet<>();
+			for ( Long nodeId : taskDatumFilter.getNodeIds() ) {
+				Set<String> nodeSources = generalNodeDatumDao.getAvailableSources(nodeId, currExportDate,
+						nextExportDate);
+				if ( nodeSources != null ) {
+					allSourceIds.addAll(nodeSources);
+				}
+			}
+			Set<String> resolvedSourceIds = new LinkedHashSet<>(allSourceIds.size());
+			for ( String sourceId : taskDatumFilter.getSourceIds() ) {
+				Set<String> sources = filterSources(allSourceIds, this.pathMatcher, sourceId);
+				if ( sources != null ) {
+					resolvedSourceIds.addAll(sources);
+				}
+			}
+			taskDatumFilter
+					.setSourceIds(resolvedSourceIds.toArray(new String[resolvedSourceIds.size()]));
+		}
+
 		taskDataConfig.setDatumFilter(taskDatumFilter);
 		taskConfig.setDataConfiguration(taskDataConfig);
 
-		DateTime currExportDate = scheduleType
-				.exportDate(exportDate != null ? exportDate : new DateTime());
 		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
 		task.setCreated(new DateTime());
 		task.setUserId(config.getUserId());
@@ -444,6 +506,20 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	 */
 	public void setMessageSource(MessageSource messageSource) {
 		this.messageSource = messageSource;
+	}
+
+	/**
+	 * Set a path matcher to resolve patterns against.
+	 * 
+	 * <p>
+	 * If configured, this will be used to resolve source ID patterns.
+	 * </p>
+	 * 
+	 * @param pathMatcher
+	 *        the path matcher to use
+	 */
+	public void setPathMatcher(PathMatcher pathMatcher) {
+		this.pathMatcher = pathMatcher;
 	}
 
 }

@@ -18,6 +18,7 @@
 	<reference id="datumExportConfDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao"/>
 	<reference id="dataConfDao" interface="net.solarnetwork.central.user.export.dao.UserDataConfigurationDao"/>
 	<reference id="destinationConfDao" interface="net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao"/>
+	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 	<reference id="outputConfDao" interface="net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao"/>
 	<reference id="taskDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao"/>
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
@@ -49,6 +50,7 @@
 		<argument ref="outputConfDao"/>
 		<argument ref="taskDao"/>
 		<argument ref="userNodeDao"/>
+		<argument ref="generalNodeDatumDao"/>
 		<property name="outputFormatServices">
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>
@@ -83,6 +85,12 @@
 					</map>
 				</property>
 			</bean>	
+		</property>
+		<property name="pathMatcher">
+			<bean class="org.springframework.util.AntPathMatcher" >
+				<property name="cachePatterns" value="false"/>
+				<property name="caseSensitive" value="false"/>
+			</bean>
 		</property>
 	</bean>
 	
