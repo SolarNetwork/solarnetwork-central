@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumExportTaskCleaner.java - 28/04/2018 7:32:38 AM
+ * DatumExportTaskCleanerJob.java - 28/04/2018 7:32:38 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -34,7 +34,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * @author matt
  * @version 1.0
  */
-public class DatumExportTaskCleaner extends JobSupport {
+public class DatumExportTaskCleanerJob extends JobSupport {
 
 	/** The default value for the {@code minimumAgeMinutes} property. */
 	public static final int DEFAULT_MINIMUM_AGE_MINUTES = 720;
@@ -51,7 +51,7 @@ public class DatumExportTaskCleaner extends JobSupport {
 	 * @param taskDao
 	 *        the DAO to use
 	 */
-	public DatumExportTaskCleaner(EventAdmin eventAdmin, DatumExportTaskInfoDao taskDao) {
+	public DatumExportTaskCleanerJob(EventAdmin eventAdmin, DatumExportTaskInfoDao taskDao) {
 		super(eventAdmin);
 		this.taskDao = taskDao;
 		setJobGroup("DatumExport");

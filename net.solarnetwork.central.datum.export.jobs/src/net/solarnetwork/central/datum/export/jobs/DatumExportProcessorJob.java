@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumExportProcessor.java - 18/04/2018 6:23:15 AM
+ * DatumExportProcessorJob.java - 18/04/2018 6:23:15 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -37,7 +37,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * @author matt
  * @version 1.0
  */
-public class DatumExportProcessor extends JobSupport {
+public class DatumExportProcessorJob extends JobSupport {
 
 	private final DatumExportTaskInfoDao taskDao;
 	private final DatumExportBiz datumExportBiz;
@@ -53,7 +53,7 @@ public class DatumExportProcessor extends JobSupport {
 	 * @param datumExportBiz
 	 *        the export service to use
 	 */
-	public DatumExportProcessor(EventAdmin eventAdmin, DatumExportTaskInfoDao taskDao,
+	public DatumExportProcessorJob(EventAdmin eventAdmin, DatumExportTaskInfoDao taskDao,
 			DatumExportBiz datumExportBiz) {
 		super(eventAdmin);
 		this.taskDao = taskDao;

@@ -52,7 +52,7 @@
 		</service-properties>
 	</service>
 
-	<bean id="datumExportProcessorJob" class="net.solarnetwork.central.datum.export.jobs.DatumExportProcessor">
+	<bean id="datumExportProcessorJob" class="net.solarnetwork.central.datum.export.jobs.DatumExportProcessorJob">
 		<argument ref="eventAdmin"/>
 		<argument ref="taskDao"/>
 		<argument ref="datumExportService"/>
@@ -75,7 +75,7 @@
 		</service-properties>
 	</service>
 
-	<bean id="datumExportTaskCleanerJob" class="net.solarnetwork.central.datum.export.jobs.DatumExportTaskCleaner">
+	<bean id="datumExportTaskCleanerJob" class="net.solarnetwork.central.datum.export.jobs.DatumExportTaskCleanerJob">
 		<argument ref="eventAdmin"/>
 		<argument ref="taskDao"/>
 		<property name="jobCron" value="${DatumExportTaskCleaner.jobCron}"/>
