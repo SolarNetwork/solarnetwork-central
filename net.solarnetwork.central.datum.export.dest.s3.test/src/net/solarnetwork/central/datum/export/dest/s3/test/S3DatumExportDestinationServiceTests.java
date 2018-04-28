@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,8 +88,12 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 	public static void setupClass() {
 		Properties p = new Properties();
 		try {
-			p.load(S3DatumExportDestinationServiceTests.class.getClassLoader()
-					.getResourceAsStream("dest.properties"));
+			InputStream in = S3DatumExportDestinationServiceTests.class.getClassLoader()
+					.getResourceAsStream("s3-dest.properties");
+			if ( in != null ) {
+				p.load(in);
+				in.close();
+			}
 		} catch ( IOException e ) {
 			throw new RuntimeException(e);
 		}
@@ -107,13 +112,15 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 		ListObjectsV2Result result = listFolder(client);
 
 		DeleteObjectsRequest req = new DeleteObjectsRequest(uri.getBucket());
-		for ( S3ObjectSummary obj : result.getObjectSummaries() ) {
-			req.getKeys().add(new KeyVersion(obj.getKey()));
-		}
-		DeleteObjectsResult deleteResult = client.deleteObjects(req);
-		if ( deleteResult.getDeletedObjects() != null ) {
-			log.info("Deleted objects from S3: " + deleteResult.getDeletedObjects().stream()
-					.map(o -> o.getKey()).collect(Collectors.toList()));
+		if ( result.getKeyCount() > 0 ) {
+			for ( S3ObjectSummary obj : result.getObjectSummaries() ) {
+				req.getKeys().add(new KeyVersion(obj.getKey()));
+			}
+			DeleteObjectsResult deleteResult = client.deleteObjects(req);
+			if ( deleteResult.getDeletedObjects() != null ) {
+				log.info("Deleted objects from S3: " + deleteResult.getDeletedObjects().stream()
+						.map(o -> o.getKey()).collect(Collectors.toList()));
+			}
 		}
 	}
 
@@ -157,6 +164,19 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 		builder = builder.withCredentials(
 				new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)));
 		return builder.build();
+	}
+
+	private String getObjectKeyPrefix() {
+		AmazonS3URI uri = new AmazonS3URI(TEST_PROPS.getProperty("path"));
+		String keyPrefix = uri.getURI().getPath();
+		if ( keyPrefix.startsWith("/") ) {
+			keyPrefix = keyPrefix.substring(1);
+		}
+		int bucketIdx = keyPrefix.indexOf('/');
+		if ( bucketIdx > 0 ) {
+			keyPrefix = keyPrefix.substring(bucketIdx + 1);
+		}
+		return keyPrefix;
 	}
 
 	@Test
@@ -203,7 +223,8 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 		ListObjectsV2Result listing = listFolder(client);
 		Set<String> keys = listing.getObjectSummaries().stream().map(S3ObjectSummary::getKey)
 				.collect(Collectors.toSet());
-		assertThat(keys, containsInAnyOrder("data-exports/data-export-20180411T115000+1200.csv"));
+		String keyPrefix = getObjectKeyPrefix();
+		assertThat(keys, containsInAnyOrder(keyPrefix + "/data-export-2018-04-10.csv"));
 
 		String exportContent = getObjectAsString(client, listing.getObjectSummaries().get(0).getKey());
 		assertThat("Exported content", exportContent,
