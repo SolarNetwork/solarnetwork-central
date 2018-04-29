@@ -33,6 +33,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,6 +49,7 @@ import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.DataConfiguration;
 import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
+import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.reg.web.domain.DatumExportFullConfigurations;
 import net.solarnetwork.central.reg.web.domain.DatumExportProperties;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -280,6 +284,51 @@ public class DatumExportController extends WebServiceControllerSupport {
 			}
 		}
 		return response(null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/configs/{id}/date", method = RequestMethod.POST)
+	public Response<LocalDateTime> updateExportConfigurationDate(@PathVariable("id") Long id,
+			@RequestBody Map<String, Object> body) {
+		final UserExportBiz biz = exportBiz.service();
+		LocalDateTime result = null;
+		if ( biz != null ) {
+			UserDatumExportConfiguration config = biz
+					.datumExportConfigurationForUser(SecurityUtils.getCurrentActorUserId(), id);
+			if ( config != null ) {
+				ScheduleType schedule = config.getSchedule();
+				if ( schedule == null ) {
+					schedule = ScheduleType.Daily;
+				}
+				DateTimeFormatter fmt;
+				int parseLength;
+				switch (schedule) {
+					case Hourly:
+						// include hours
+						fmt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm");
+						parseLength = 16;
+						break;
+
+					default:
+						// just date
+						fmt = DateTimeFormat.forPattern("yyyy-MM-dd");
+						parseLength = 10;
+				}
+				Object date = body.get("startingExportDate");
+				if ( date != null ) {
+					String s = date.toString();
+					// ignore all after parse length
+					if ( s.length() > parseLength ) {
+						s = s.substring(0, parseLength);
+					}
+					LocalDateTime parsedDate = fmt.parseLocalDateTime(s);
+					config.setStartingExportDate(parsedDate);
+					biz.saveDatumExportConfiguration(config);
+					result = parsedDate;
+				}
+			}
+		}
+		return response(result);
 	}
 
 	@ResponseBody

@@ -413,15 +413,16 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
  * @returns {jqXHR} the jQuery XHR object
  */
 SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess, serializer) {
+	event.preventDefault();
 	var form = event.target;
 	var modal = $(form);
 	var body = (typeof serializer === 'function' 
 		? serializer(form) 
 		: SolarReg.Settings.encodeServiceItemForm(form));
-	event.preventDefault();
+	var submitUrl = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(form.action), body));
 	return $.ajax({
 		type: 'POST',
-		url: form.action,
+		url: submitUrl,
 		contentType: "application/json; charset=utf-8",
 		data : JSON.stringify(body),
 		dataType: 'json',

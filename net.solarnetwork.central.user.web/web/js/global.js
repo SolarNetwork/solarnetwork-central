@@ -85,6 +85,22 @@ SolarReg.arrayAsDelimitedString = function arrayAsDelimitedString(array, delimit
 	return array.join(delimiter);
 };
 
+/**
+ * Replace template variables on a string with coresponding values from a parameter object.
+ * 
+ * The template variables take the form of `{x}` where `x` is the parameter name.
+ * 
+ * @param {string} str the string to replace template values on
+ * @param {object} params the substitution parameter values
+ * @returns {string} the string with parameters replaced
+ */
+SolarReg.replaceTemplateParameters = function replaceTemplateParameters(str, params) {
+	var re = /\{(\w+)\}/g;
+	return str.replace(re, function(match, p1) {
+		return params[p1] || '';
+	});
+};
+
 $(document).ready(function() {
 	$('body').on('hidden', '.modal.dynamic', function () {
 		$(this).removeData('modal');

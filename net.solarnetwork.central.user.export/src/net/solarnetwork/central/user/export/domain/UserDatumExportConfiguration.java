@@ -24,6 +24,8 @@ package net.solarnetwork.central.user.export.domain;
 
 import java.io.Serializable;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DataConfiguration;
@@ -221,6 +223,45 @@ public class UserDatumExportConfiguration extends BaseEntity
 	 */
 	public void setMinimumExportDate(DateTime minimumExportDate) {
 		this.minimumExportDate = minimumExportDate;
+	}
+
+	/**
+	 * Get the minimum export date as a local date.
+	 * 
+	 * <p>
+	 * The date will be in the {@link #getTimeZoneId()} time zone, or
+	 * {@code UTC} if that is unavailable.
+	 * </p>
+	 * 
+	 * @return the minimum export date as a local date
+	 * @see #getMinimumExportDate()
+	 */
+	public LocalDateTime getStartingExportDate() {
+		DateTime dt = getMinimumExportDate();
+		if ( dt == null ) {
+			return null;
+		}
+		String tzId = getTimeZoneId();
+		DateTimeZone zone = (tzId != null ? DateTimeZone.forID(tzId) : DateTimeZone.UTC);
+		return dt.withZone(zone).toLocalDateTime();
+	}
+
+	/**
+	 * Set the minimum export date as a local date.
+	 * 
+	 * <p>
+	 * The date will be in the {@link #getTimeZoneId()} time zone, or
+	 * {@code UTC} if that is unavailable.
+	 * </p>
+	 * 
+	 * @param date
+	 *        the date to set
+	 * @see #setMinimumExportDate(DateTime)
+	 */
+	public void setStartingExportDate(LocalDateTime date) {
+		String tzId = getTimeZoneId();
+		DateTimeZone zone = (tzId != null ? DateTimeZone.forID(tzId) : DateTimeZone.UTC);
+		setMinimumExportDate(date.toDateTime(zone));
 	}
 
 	public void setTimeZoneId(String timeZoneId) {

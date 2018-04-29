@@ -158,6 +158,7 @@
 <%-- Modal forms --%>
 
 <jsp:include page="edit-export-job-modal.jsp"/>
+<jsp:include page="edit-export-job-date-modal.jsp"/>
 <jsp:include page="edit-data-modal.jsp"/>
 <jsp:include page="edit-destination-modal.jsp"/>
 <jsp:include page="edit-output-modal.jsp"/>

@@ -33,6 +33,7 @@ $(document).ready(function() {
 				id: config.id,
 				name: config.name,
 				schedule: SolarReg.Templates.serviceDisplayName(scheduleTypes, config.scheduleKey),
+				date: config.startingExportDate,
 				dataConfigId: config.dataConfigurationId,
 				destinationConfigId: config.destinationConfigurationId,
 				outputConfigId: config.outputConfigurationId,
@@ -89,6 +90,8 @@ $(document).ready(function() {
 					relatedConfig = SolarReg.findByIdentifier(exportConfigs.destinationConfigs, config.destinationConfigurationId);
 				} else if ( configType === 'output'  ) {
 					relatedConfig = SolarReg.findByIdentifier(exportConfigs.outputConfigs, config.outputConfigurationId);
+				} else if ( configType === 'date' ) {
+					relatedConfig = config;
 				}
 				if ( relatedConfig ) {
 					SolarReg.Templates.setContextItem(link, relatedConfig);
@@ -297,6 +300,26 @@ $(document).ready(function() {
 		SolarReg.Settings.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'));
 	});
 
+	// ***** Edit job date form
+	$('#edit-datum-export-date-modal').on('show.bs.modal', function(event) {
+		SolarReg.Settings.prepareEditServiceForm($(event.target), [], settingTemplates);
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('submit', function(event) {
+		var form = event.target;
+		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			var config = SolarReg.Templates.findContextItem(form);
+			if ( config ) {
+				config.startingExportDate = res;
+				populateDatumExportConfigs([config], true);
+			}
+		});
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		// TODO SolarReg.Settings.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'));
+	});
+
 	$('#export-output-config-list-container .list-container').on('click', function(event) {
 		SolarReg.Settings.handleEditServiceItemAction(event, outputServices, settingTemplates);
 	});
@@ -382,6 +405,8 @@ $(document).ready(function() {
 					SolarReg.Settings.handleEditServiceItemAction(event, destinationServices, settingTemplates);
 				} else if ( configType === 'output'  ) {
 					SolarReg.Settings.handleEditServiceItemAction(event, outputServices, settingTemplates);
+				} else if ( configType === 'date' ) {
+					SolarReg.Settings.handleEditServiceItemAction(event, [], settingTemplates);
 				}
 			} else {
 				SolarReg.Settings.handleEditServiceItemAction(event, [], settingTemplates);

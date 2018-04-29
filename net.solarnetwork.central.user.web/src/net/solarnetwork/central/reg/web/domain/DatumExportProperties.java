@@ -60,6 +60,9 @@ public class DatumExportProperties extends UserDatumExportConfiguration {
 		setHourDelayOffset(other.getHourDelayOffset());
 		setName(other.getName());
 		setSchedule(other.getSchedule());
+		setMinimumExportDate(other.getMinimumExportDate());
+		setTimeZoneId(other.getTimeZoneId());
+
 		setUserDataConfiguration(other.getUserDataConfiguration());
 		setUserDestinationConfiguration(other.getUserDestinationConfiguration());
 		setUserOutputConfiguration(other.getUserOutputConfiguration());

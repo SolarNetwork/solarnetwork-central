@@ -268,9 +268,11 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		storeNewWithConfigurations();
 		UserDatumExportConfiguration conf = dao.get(this.conf.getId(), this.user.getId());
 
+		DateTime exportDate = new DateTime(2018, 4, 29, 7, 0, DateTimeZone.UTC);
 		conf.setName("new.name");
 		conf.setHourDelayOffset(5);
 		conf.setSchedule(ScheduleType.Monthly);
+		conf.setMinimumExportDate(exportDate);
 
 		Long id = dao.store(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
@@ -286,6 +288,8 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 				equalTo(conf.getHourDelayOffset()));
 		assertThat("Updated schedule", updatedConf.getSchedule(), equalTo(conf.getSchedule()));
 		assertThat("Time zone", updatedConf.getTimeZoneId(), equalTo(TEST_TZ));
+		assertThat("Minimum export date", updatedConf.getMinimumExportDate().isEqual(exportDate),
+				equalTo(true));
 	}
 
 	@Test
