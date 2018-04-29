@@ -29,7 +29,7 @@
 
 	<reference id="queryBiz"
 		interface="net.solarnetwork.central.query.biz.QueryBiz"
-		filter="(!(aop=true))"/>
+		filter="(!(secured=true))"/>
 	
 	<!-- Published Services -->
 
@@ -37,6 +37,7 @@
 			interface="net.solarnetwork.central.query.biz.QueryBiz" ranking="10">
 		<service-properties>
 			<entry key="aop" value="true"/>
+			<entry key="secured" value="true"/>
 		</service-properties>
 	</service>
 

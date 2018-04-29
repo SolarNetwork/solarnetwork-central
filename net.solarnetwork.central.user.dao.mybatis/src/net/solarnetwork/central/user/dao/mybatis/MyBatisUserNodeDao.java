@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.user.dao.mybatis;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
@@ -38,7 +41,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * MyBatis implementation of {@link UserNodeDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> implements UserNodeDao {
 
@@ -85,6 +88,14 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 * {@link #findUserNodeTransferRequestsForEmail(String)}.
 	 */
 	public static final String QUERY_USER_NODE_TRANSFERS_FOR_EMAIL = "find-UserNodeTransfer-for-email";
+
+	/**
+	 * The query name used for
+	 * {@link #findUserNodeTransferRequestsForEmail(String)}.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String QUERY_NODE_IDS_FOR_USER = "find-node-ids-for-user-id";
 
 	/**
 	 * Default constructor.
@@ -166,6 +177,19 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 		sqlProperties.put("nodeIds", nodeIds);
 		sqlProperties.put("archived", archived);
 		getSqlSession().update(UPDATE_ARCHIVED_STATUS, sqlProperties);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.2
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<Long> findNodeIdsForUser(Long userId) {
+		List<Long> ids = selectList(QUERY_NODE_IDS_FOR_USER, userId, null, null);
+		return (ids == null || ids.isEmpty() ? Collections.<Long> emptySet()
+				: new LinkedHashSet<Long>(ids));
 	}
 
 }

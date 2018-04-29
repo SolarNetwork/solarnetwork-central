@@ -23,11 +23,11 @@
 package net.solarnetwork.central.user.domain;
 
 import java.io.Serializable;
+import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.util.SerializeIgnore;
-import org.joda.time.DateTime;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * A node ownership transfer request. This entity is associated with the node
@@ -35,9 +35,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * this entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class UserNodeTransfer implements Entity<UserNodePK>, Cloneable, Serializable {
+public class UserNodeTransfer
+		implements Entity<UserNodePK>, Cloneable, Serializable, UserRelatedEntity<UserNodePK> {
 
 	private static final long serialVersionUID = -1316805739552206861L;
 
@@ -127,6 +128,7 @@ public class UserNodeTransfer implements Entity<UserNodePK>, Cloneable, Serializ
 	 * 
 	 * @return the userId
 	 */
+	@Override
 	public Long getUserId() {
 		return (id == null ? null : id.getUserId());
 	}

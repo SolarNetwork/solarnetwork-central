@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.support;
 
+import java.io.Serializable;
 import net.solarnetwork.central.domain.SortDescriptor;
 
 /**
@@ -32,9 +33,11 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class MutableSortDescriptor implements SortDescriptor {
+public class MutableSortDescriptor implements SortDescriptor, Serializable {
+
+	private static final long serialVersionUID = 4099205361786294490L;
 
 	private String sortKey;
 	private boolean descending = false;

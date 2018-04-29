@@ -27,73 +27,84 @@ package net.solarnetwork.central.domain;
 /**
  * An aggregation level enumeration.
  * 
- * @version 1.5
+ * @version 1.6
  */
 public enum Aggregation {
 
+	/**
+	 * No aggregation.
+	 * 
+	 * @since 1.6
+	 */
+	None(0, "0"),
+
 	/** Minute level aggregation. */
-	Minute(60),
+	Minute(60, "m"),
 
 	/** Five minute level aggregation. */
-	FiveMinute(60 * 5),
+	FiveMinute(60 * 5, "5m"),
 
 	/** Ten minute level aggregation. */
-	TenMinute(60 * 10),
+	TenMinute(60 * 10, "10m"),
 
 	/** Fifteen minute level aggregation. */
-	FifteenMinute(60 * 15),
+	FifteenMinute(60 * 15, "15m"),
 
 	/**
 	 * Thirty minute level aggregation.
 	 * 
 	 * @since 1.5
 	 */
-	ThirtyMinute(60 * 30),
+	ThirtyMinute(60 * 30, "30m"),
 
 	/** Hour level aggregation. */
-	Hour(3600),
+	Hour(3600, "h"),
 
-	/** Aggregate by hour of the day, e.g. compare 12-1pm across multiple days. */
-	HourOfDay(3600),
+	/**
+	 * Aggregate by hour of the day, e.g. compare 12-1pm across multiple days.
+	 */
+	HourOfDay(3600, "hd"),
 
 	/** Aggregate by hour of the day per season. */
-	SeasonalHourOfDay(3600),
+	SeasonalHourOfDay(3600, "shd"),
 
 	/** Day level aggregation. */
-	Day(86400),
+	Day(86400, "d"),
 
 	/**
 	 * Aggregate by day of the week, e.g. compare Mondays against Tuesdays
 	 * across multiple weeks.
 	 */
-	DayOfWeek(86400),
+	DayOfWeek(86400, "wd"),
 
 	/** Aggregate by day of the week per season. */
-	SeasonalDayOfWeek(86400),
+	SeasonalDayOfWeek(86400, "swd"),
 
 	/** Week level aggregation. */
-	Week(604800),
+	Week(604800, "w"),
 
 	/**
 	 * Aggregate by week of the year, e.g. compare Week 1's against Week 2's
 	 * across multiple years.
 	 */
-	WeekOfYear(604800),
+	WeekOfYear(604800, "yw"),
 
 	/** Month level aggregation. */
-	Month(2419200),
+	Month(2419200, "M"),
 
 	/**
 	 * Aggregate all values into a single total result.
 	 * 
 	 * @since 1.4
 	 */
-	RunningTotal(Integer.MAX_VALUE);
+	RunningTotal(Integer.MAX_VALUE, "rt");
 
 	private final Integer level;
+	private final String key;
 
-	private Aggregation(int level) {
+	private Aggregation(int level, String key) {
 		this.level = level;
+		this.key = key;
 	}
 
 	/**
@@ -125,6 +136,44 @@ public enum Aggregation {
 	 */
 	public Integer getLevel() {
 		return level;
+	}
+
+	/**
+	 * Get a key value.
+	 * 
+	 * @return the key
+	 * @since 1.6
+	 */
+	public String getKey() {
+		return key;
+	}
+
+	/**
+	 * Get an enum instance for a key value.
+	 * 
+	 * @param key
+	 *        the key value; if {@literal null} or empty then {@link #None} will
+	 *        be returned
+	 * @return the enum
+	 * @throws IllegalArgumentException
+	 *         if {@code key} is not supported
+	 * @since 1.6
+	 */
+	public static Aggregation forKey(String key) {
+		if ( key == null || key.isEmpty() ) {
+			return None;
+		}
+		try {
+			// try name() value first for convenience
+			return Aggregation.valueOf(key);
+		} catch ( IllegalArgumentException e ) {
+			for ( Aggregation a : Aggregation.values() ) {
+				if ( a.key.equals(key) ) {
+					return a;
+				}
+			}
+		}
+		throw new IllegalArgumentException("Invalid Aggregation value");
 	}
 
 }

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration">
+
+<!-- 
+	id				BIGINT NOT NULL DEFAULT nextval('solaruser.user_export_seq'),
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	user_id			BIGINT NOT NULL,
+	cname			CHARACTER VARYING(64) NOT NULL,
+	delay_mins		INTEGER NOT NULL,
+	schedule		CHARACTER(1) NOT NULL,
+	min_export_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	data_conf_id	BIGINT,
+	dest_conf_id	BIGINT,
+	outp_conf_id	BIGINT,
+ -->
+ 
+ 	<insert id="insert-UserDatumExportConfiguration" parameterType="UserDatumExportConfiguration">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solaruser.user_export_seq') AS id 
+		</selectKey>
+		INSERT INTO solaruser.user_export_datum_conf (
+			id, user_id, cname, delay_mins, schedule, data_conf_id, dest_conf_id, outp_conf_id
+			<if test="created != null">,created</if>
+			<if test="minimumExportDate != null">,min_export_date</if>
+			)
+		VALUES (
+			#{id}, #{userId}, #{name}, (#{hourDelayOffset} * 60), #{scheduleKey},
+			#{userDataConfigurationId}, #{userDestinationConfigurationId}, #{userOutputConfigurationId}
+			<if test="created != null">,#{created}</if>
+			<if test="minimumExportDate != null">,#{minimumExportDate}</if>
+			)
+	</insert>
+
+	<update id="update-UserDatumExportConfiguration" parameterType="UserDatumExportConfiguration">
+		UPDATE
+			solaruser.user_export_datum_conf
+		SET
+			cname = #{name}
+			, delay_mins = (#{hourDelayOffset} * 60)
+			, schedule = #{scheduleKey}
+			, data_conf_id = #{userDataConfigurationId}
+			, dest_conf_id = #{userDestinationConfigurationId}
+			, outp_conf_id = #{userOutputConfigurationId}
+			<if test="minimumExportDate != null">, min_export_date = #{minimumExportDate}</if>
+		WHERE
+			id = #{id} AND user_id = #{userId}
+	</update>
+	
+	<update id="update-UserDatumExportConfiguration-minimum-export-date" parameterType="map">
+		UPDATE
+			solaruser.user_export_datum_conf
+		SET
+			min_export_date = #{date}
+		WHERE
+			id = #{id} 
+			AND user_id = #{userId} 
+			AND (min_export_date IS NULL OR min_export_date &lt; #{date})
+	</update>
+
+	<delete id="delete-UserDatumExportConfiguration" parameterType="UserDatumExportConfiguration">
+		DELETE FROM solaruser.user_export_datum_conf
+		WHERE id = #{id} AND user_id = #{userId}
+	</delete>
+	
+	<sql id="fragment-UserDatumExportConfiguration-full-result">
+		udexc.id AS user_export_datum_conf_id, 
+		udexc.created AS user_export_datum_conf_created,
+		udexc.user_id AS user_export_datum_conf_user_id,
+		udexc.cname AS user_export_datum_conf_cname,
+		udexc.delay_mins / 60 AS user_export_datum_conf_delay_hours,
+		udexc.schedule AS user_export_datum_conf_schedule,
+		udexc.min_export_date AS user_export_datum_conf_min_export_date
+	</sql>
+
+	<resultMap id="UserDatumExportConfigurationFullResult" type="UserDatumExportConfiguration">
+		<id property="id" column="user_export_datum_conf_id"/>
+		<result property="created" column="user_export_datum_conf_created"/>
+		<result property="userId" column="user_export_datum_conf_user_id"/>
+		<result property="name" column="user_export_datum_conf_cname"/>
+		<result property="hourDelayOffset" column="user_export_datum_conf_delay_hours"/>
+		<result property="scheduleKey" column="user_export_datum_conf_schedule"/>
+		<result property="minimumExportDate" column="user_export_datum_conf_min_export_date"/>
+		<result property="timeZoneId" column="user_export_datum_conf_time_zone"/>
+		<association property="userDataConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserDataConfiguration.UserDataConfigurationFullResult"/>
+		<association property="userDestinationConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration.UserDestinationConfigurationFullResult"/>
+		<association property="userOutputConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserOutputConfiguration.UserOutputConfigurationFullResult"/>
+	</resultMap>
+	
+	<sql id="fragment-UserDatumExportConfiguration-select-full">
+		SELECT
+			<include refid="fragment-UserDatumExportConfiguration-full-result"/>,
+			l.time_zone AS user_export_datum_conf_time_zone,
+			<include refid="net.solarnetwork.central.user.export.domain.UserDataConfiguration.fragment-UserDataConfiguration-full-result"/>,
+			<include refid="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration.fragment-UserDestinationConfiguration-full-result"/>,
+			<include refid="net.solarnetwork.central.user.export.domain.UserOutputConfiguration.fragment-UserOutputConfiguration-full-result"/>
+		FROM
+			solaruser.user_export_datum_conf udexc
+		LEFT OUTER JOIN
+			solaruser.user_export_data_conf udac ON udac.id = udexc.data_conf_id
+		LEFT OUTER JOIN
+			solaruser.user_export_dest_conf udec ON udec.id = udexc.dest_conf_id
+		LEFT OUTER JOIN
+			solaruser.user_export_outp_conf uopc ON uopc.id = udexc.outp_conf_id
+		LEFT OUTER JOIN
+			solaruser.user_user u ON u.id = udexc.user_id
+		LEFT OUTER JOIN
+			solarnet.sn_loc l ON l.id = u.loc_id
+	</sql>
+
+	<select id="get-UserDatumExportConfiguration-for-id" parameterType="map" resultMap="UserDatumExportConfigurationFullResult">
+		<include refid="fragment-UserDatumExportConfiguration-select-full"/>
+		WHERE
+			udexc.id = #{id} AND udexc.user_id = #{userId}
+	</select>
+	
+	<select id="find-UserDatumExportConfiguration-for-user" parameterType="long" resultMap="UserDatumExportConfigurationFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-UserDatumExportConfiguration-select-full"/>
+		WHERE
+			udexc.user_id = #{id}
+		ORDER BY
+			lower(udexc.cname), udexc.id
+	</select>
+	
+	<select id="find-UserDatumExportConfiguration-for-execution" parameterType="map" resultMap="UserDatumExportConfigurationFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-UserDatumExportConfiguration-select-full"/>
+		WHERE
+			udexc.schedule = #{schedule}
+			AND udexc.min_export_date &lt; #{date}
+		ORDER BY
+			udexc.min_export_date, udexc.id
+	</select>
+ 
+</mapper>

@@ -129,4 +129,16 @@
 			un.node_id ASC
 	</select>
 	
+	<select id="find-node-ids-for-user-id" resultType="long" parameterType="long">
+		SELECT DISTINCT
+			un.node_id
+		FROM
+			solaruser.user_node un
+		WHERE 
+			un.user_id = #{id}
+			AND un.archived = FALSE		
+		ORDER BY
+			un.node_id
+	</select>
+	
 </mapper>

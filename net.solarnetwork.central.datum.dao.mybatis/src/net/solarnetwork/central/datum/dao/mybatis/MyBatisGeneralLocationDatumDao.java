@@ -58,7 +58,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralLocationDatumDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisGeneralLocationDatumDao
 		extends BaseMyBatisGenericDao<GeneralLocationDatum, GeneralLocationDatumPK> implements
@@ -151,7 +151,7 @@ public class MyBatisGeneralLocationDatumDao
 		if ( filter instanceof AggregationFilter ) {
 			aggregation = ((AggregationFilter) filter).getAggregation();
 		}
-		if ( aggregation == null ) {
+		if ( aggregation == null || aggregation.getLevel() < 1 ) {
 			return getQueryForAll() + "-GeneralLocationDatumMatch";
 		} else if ( aggregation.compareTo(Aggregation.Hour) < 0 ) {
 			// all *Minute aggregates are mapped to the Minute query name
@@ -175,7 +175,8 @@ public class MyBatisGeneralLocationDatumDao
 
 		// attempt count first, if max NOT specified as -1 and NOT a mostRecent query
 		Long totalCount = null;
-		if ( max != null && max.intValue() != -1 && filter.isMostRecent() == false ) {
+		if ( max != null && max.intValue() != -1 && !filter.isMostRecent()
+				&& !filter.isWithoutTotalResultsCount() ) {
 			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
 
@@ -184,8 +185,10 @@ public class MyBatisGeneralLocationDatumDao
 		//rows = postProcessFilterQuery(filter, rows);
 
 		BasicFilterResults<GeneralLocationDatumFilterMatch> results = new BasicFilterResults<GeneralLocationDatumFilterMatch>(
-				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset,
-				rows.size());
+				rows,
+				(totalCount != null ? totalCount
+						: filter.isWithoutTotalResultsCount() ? null : Long.valueOf(rows.size())),
+				offset, rows.size());
 
 		return results;
 	}
@@ -208,7 +211,8 @@ public class MyBatisGeneralLocationDatumDao
 		// and NOT a *Minute, *DayOfWeek, or *HourOfDay*, or *RunningTotal* aggregate level
 		Long totalCount = null;
 		final Aggregation agg = filter.getAggregation();
-		if ( max != null && max.intValue() != -1 && agg.compareTo(Aggregation.Hour) >= 0
+		if ( !filter.isMostRecent() && !filter.isWithoutTotalResultsCount() && max != null
+				&& max.intValue() != -1 && (agg.getLevel() < 1 || agg.compareTo(Aggregation.Hour) >= 0)
 				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
 				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
 				&& agg != Aggregation.RunningTotal ) {
@@ -225,8 +229,10 @@ public class MyBatisGeneralLocationDatumDao
 		// rows = postProcessAggregationFilterQuery(filter, rows);
 
 		BasicFilterResults<ReportingGeneralLocationDatumMatch> results = new BasicFilterResults<ReportingGeneralLocationDatumMatch>(
-				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset,
-				rows.size());
+				rows,
+				(totalCount != null ? totalCount
+						: filter.isWithoutTotalResultsCount() ? null : Long.valueOf(rows.size())),
+				offset, rows.size());
 
 		return results;
 	}

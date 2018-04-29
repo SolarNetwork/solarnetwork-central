@@ -676,7 +676,7 @@ END;$BODY$
 CREATE OR REPLACE FUNCTION solaragg.find_most_recent_hourly(
 	node bigint,
 	sources text[] DEFAULT NULL)
-  RETURNS SETOF solaragg.agg_datum_hourly AS
+  RETURNS SETOF solaragg.agg_datum_hourly_data AS
 $BODY$
 BEGIN
 	IF sources IS NULL OR array_length(sources, 1) < 1 THEN
@@ -687,7 +687,7 @@ BEGIN
 			WHERE d. node_id = node
 			GROUP BY d.source_id
 		)
-		SELECT d.* FROM solaragg.agg_datum_hourly d
+		SELECT d.* FROM solaragg.agg_datum_hourly_data d
 		INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts_start = d.ts_start
 		ORDER BY d.source_id ASC;
 	ELSE
@@ -698,7 +698,7 @@ BEGIN
 			WHERE d. node_id = node
 			GROUP BY d.source_id
 		)
-		SELECT d.* FROM solaragg.agg_datum_hourly d
+		SELECT d.* FROM solaragg.agg_datum_hourly_data d
 		INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts_start = d.ts_start
 		ORDER BY d.source_id ASC;
 	END IF;
@@ -709,7 +709,7 @@ END;$BODY$
 CREATE OR REPLACE FUNCTION solaragg.find_most_recent_daily(
 	node bigint,
 	sources text[] DEFAULT NULL)
-  RETURNS SETOF solaragg.agg_datum_daily AS
+  RETURNS SETOF solaragg.agg_datum_daily_data AS
 $BODY$
 BEGIN
 	IF sources IS NULL OR array_length(sources, 1) < 1 THEN
@@ -720,7 +720,7 @@ BEGIN
 			WHERE d. node_id = node
 			GROUP BY d.source_id
 		)
-		SELECT d.* FROM solaragg.agg_datum_daily d
+		SELECT d.* FROM solaragg.agg_datum_daily_data d
 		INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts_start = d.ts_start
 		ORDER BY d.source_id ASC;
 	ELSE
@@ -731,7 +731,7 @@ BEGIN
 			WHERE d. node_id = node
 			GROUP BY d.source_id
 		)
-		SELECT d.* FROM solaragg.agg_datum_daily d
+		SELECT d.* FROM solaragg.agg_datum_daily_data d
 		INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts_start = d.ts_start
 		ORDER BY d.source_id ASC;
 	END IF;
@@ -742,7 +742,7 @@ END;$BODY$
 CREATE OR REPLACE FUNCTION solaragg.find_most_recent_monthly(
 	node bigint,
 	sources text[] DEFAULT NULL)
-  RETURNS SETOF solaragg.agg_datum_monthly AS
+  RETURNS SETOF solaragg.agg_datum_monthly_data AS
 $BODY$
 BEGIN
 	IF sources IS NULL OR array_length(sources, 1) < 1 THEN
@@ -753,7 +753,7 @@ BEGIN
 			WHERE d. node_id = node
 			GROUP BY d.source_id
 		)
-		SELECT d.* FROM solaragg.agg_datum_monthly d
+		SELECT d.* FROM solaragg.agg_datum_monthly_data d
 		INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts_start = d.ts_start
 		ORDER BY d.source_id ASC;
 	ELSE
@@ -764,7 +764,7 @@ BEGIN
 			WHERE d. node_id = node
 			GROUP BY d.source_id
 		)
-		SELECT d.* FROM solaragg.agg_datum_monthly d
+		SELECT d.* FROM solaragg.agg_datum_monthly_data d
 		INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts_start = d.ts_start
 		ORDER BY d.source_id ASC;
 	END IF;

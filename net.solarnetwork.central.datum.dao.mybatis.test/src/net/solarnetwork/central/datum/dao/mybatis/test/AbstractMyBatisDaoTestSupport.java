@@ -26,20 +26,21 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import java.util.Set;
-import net.solarnetwork.central.domain.Identity;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import net.solarnetwork.central.domain.Identity;
+import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 
 /**
  * Base class for MyBatis tests.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
+@SuppressWarnings("deprecation")
 @ContextConfiguration
 public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
 
@@ -96,9 +97,9 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	 *        the user username
 	 */
 	protected void setupTestUser(Long id, String username) {
-		jdbcTemplate
-				.update("insert into solaruser.user_user (id,email,password,disp_name,enabled) values (?,?,?,?,?)",
-						id, username, DigestUtils.sha256Hex("password"), "Unit Test", Boolean.TRUE);
+		jdbcTemplate.update(
+				"insert into solaruser.user_user (id,email,password,disp_name,enabled) values (?,?,?,?,?)",
+				id, username, DigestUtils.sha256Hex("password"), "Unit Test", Boolean.TRUE);
 	}
 
 	/**
@@ -114,9 +115,8 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	 * @since 1.1
 	 */
 	protected void setupTestUserNode(Long userId, Long nodeId, String name) {
-		jdbcTemplate.update(
-				"insert into solaruser.user_node (user_id,node_id,disp_name) values (?,?,?)", userId,
-				nodeId, name);
+		jdbcTemplate.update("insert into solaruser.user_node (user_id,node_id,disp_name) values (?,?,?)",
+				userId, nodeId, name);
 	}
 
 	/**
@@ -142,9 +142,9 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	 *        the price source ID
 	 */
 	protected void setupTestPriceLocation(Long id, Long locationId, String name, Long sourceId) {
-		jdbcTemplate
-				.update("insert into solarnet.sn_price_loc (id,loc_id,loc_name,source_id,currency,unit) values (?,?,?,?,?,?)",
-						id, locationId, name, sourceId, "NZD", "kWh");
+		jdbcTemplate.update(
+				"insert into solarnet.sn_price_loc (id,loc_id,loc_name,source_id,currency,unit) values (?,?,?,?,?,?)",
+				id, locationId, name, sourceId, "NZD", "kWh");
 	}
 
 	/**
@@ -162,7 +162,8 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	@Override
 	protected void setupTestPriceLocation() {
 		setupTestPriceSource(TEST_PRICE_SOURCE_ID, TEST_PRICE_SOURCE_NAME);
-		setupTestPriceLocation(TEST_PRICE_LOC_ID, TEST_LOC_ID, TEST_PRICE_LOC_NAME, TEST_PRICE_SOURCE_ID);
+		setupTestPriceLocation(TEST_PRICE_LOC_ID, TEST_LOC_ID, TEST_PRICE_LOC_NAME,
+				TEST_PRICE_SOURCE_ID);
 	}
 
 }
