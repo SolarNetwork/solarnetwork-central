@@ -60,6 +60,7 @@ import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private static final String TEST_NAME = "test.name";
+	private static final DateTime TEST_DATE = new DateTime(2018, 4, 29, 7, 0, DateTimeZone.UTC);
 
 	private MyBatisUserDataConfigurationDao dataConfDao;
 	private MyBatisUserDestinationConfigurationDao destConfDao;
@@ -268,11 +269,10 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		storeNewWithConfigurations();
 		UserDatumExportConfiguration conf = dao.get(this.conf.getId(), this.user.getId());
 
-		DateTime exportDate = new DateTime(2018, 4, 29, 7, 0, DateTimeZone.UTC);
 		conf.setName("new.name");
 		conf.setHourDelayOffset(5);
 		conf.setSchedule(ScheduleType.Monthly);
-		conf.setMinimumExportDate(exportDate);
+		conf.setMinimumExportDate(TEST_DATE);
 
 		Long id = dao.store(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
@@ -288,8 +288,38 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 				equalTo(conf.getHourDelayOffset()));
 		assertThat("Updated schedule", updatedConf.getSchedule(), equalTo(conf.getSchedule()));
 		assertThat("Time zone", updatedConf.getTimeZoneId(), equalTo(TEST_TZ));
-		assertThat("Minimum export date", updatedConf.getMinimumExportDate().isEqual(exportDate),
+		assertThat("Minimum export date", updatedConf.getMinimumExportDate().isEqual(TEST_DATE),
 				equalTo(true));
+	}
+
+	@Test
+	public void updateNoChangeToMinimumExportDate() {
+		update();
+
+		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
+		conf.setId(this.conf.getId());
+		conf.setUserId(this.user.getId());
+		conf.setName("new.new.name");
+		conf.setHourDelayOffset(6);
+		conf.setSchedule(ScheduleType.Weekly);
+		conf.setMinimumExportDate(null);
+
+		Long id = dao.store(conf);
+		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
+
+		UserDatumExportConfiguration updatedConf = dao.get(id, this.user.getId());
+		assertThat("Found by PK", updatedConf, notNullValue());
+		assertThat("New entity returned", updatedConf, not(sameInstance(conf)));
+		assertThat("PK", updatedConf.getId(), equalTo(conf.getId()));
+		assertThat("Created unchanged", updatedConf.getCreated(), equalTo(this.conf.getCreated()));
+		assertThat("Uesr ID", updatedConf.getUserId(), equalTo(conf.getUserId()));
+		assertThat("Updated name", updatedConf.getName(), equalTo(conf.getName()));
+		assertThat("Updated hour offset", updatedConf.getHourDelayOffset(),
+				equalTo(conf.getHourDelayOffset()));
+		assertThat("Updated schedule", updatedConf.getSchedule(), equalTo(conf.getSchedule()));
+		assertThat("Time zone", updatedConf.getTimeZoneId(), equalTo(TEST_TZ));
+		assertThat("Minimum export date unchanged",
+				updatedConf.getMinimumExportDate().isEqual(TEST_DATE), equalTo(true));
 	}
 
 	@Test
