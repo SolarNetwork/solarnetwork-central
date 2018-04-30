@@ -88,7 +88,7 @@ public class MyBatisUserDatumExportConfigurationDao
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public int updateMinimumExportDate(Long id, Long userId, DateTime minimumDate) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("id", id);
