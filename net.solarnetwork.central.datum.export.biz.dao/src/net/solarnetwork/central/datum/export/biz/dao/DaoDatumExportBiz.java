@@ -27,7 +27,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -136,7 +135,6 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 
 		private static final int COUNT_UNKNOWN = -1;
 		private static final int COUNT_UNDEFINED = -2;
-		private final String jobId;
 		private final DatumExportTaskInfo info;
 		private DatumExportState jobState;
 		private double percentComplete;
@@ -156,7 +154,6 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 		 */
 		private DatumExportTask(DatumExportTaskInfo info) {
 			super();
-			this.jobId = UUID.randomUUID().toString();
 			this.info = info;
 			this.jobState = DatumExportState.Claimed;
 		}
@@ -222,7 +219,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 
 		private void updateTaskStatus(DatumExportState state, Boolean success, String message,
 				DateTime completionDate) {
-			log.info("Datum export job {} transitioned to state {} with success {}", jobId, state,
+			log.info("Datum export job {} transitioned to state {} with success {}", info.getId(), state,
 					success);
 			this.jobState = state;
 			doWithinOptionalTransaction(() -> {
@@ -247,14 +244,14 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 					? config.getDataConfiguration().getDatumFilter()
 					: null);
 			if ( datumFilter == null ) {
-				throw new DatumExportException(jobId, info.getId(), "No datum filter available", null);
+				throw new DatumExportException(info.getId(), "No datum filter available", null);
 			}
 			ScheduleType schedule = config.getSchedule();
 			if ( schedule == null ) {
 				schedule = ScheduleType.Daily;
 			}
 			if ( info.getExportDate() == null ) {
-				throw new DatumExportException(jobId, info.getId(), "No export date available", null);
+				throw new DatumExportException(info.getId(), "No export date available", null);
 			}
 
 			DatumExportOutputFormatService outputService = optionalService(outputFormatServices,
@@ -263,7 +260,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 				String serviceId = (config.getOutputConfiguration() != null
 						? config.getOutputConfiguration().getServiceIdentifier()
 						: null);
-				throw new DatumExportException(jobId, info.getId(),
+				throw new DatumExportException(info.getId(),
 						"No output service available for identifier [" + serviceId + "]", null);
 			}
 
@@ -297,7 +294,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 						&& pageResults.getReturnedResultCount() == pageSize );
 				return exportContext.finish();
 			} catch ( IOException e ) {
-				throw new DatumExportException(jobId, info.getId(), e.getMessage(), e);
+				throw new DatumExportException(info.getId(), e.getMessage(), e);
 			}
 		}
 
@@ -309,7 +306,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 				String serviceId = (config.getDestinationConfiguration() != null
 						? config.getDestinationConfiguration().getServiceIdentifier()
 						: null);
-				throw new DatumExportException(jobId, info.getId(),
+				throw new DatumExportException(info.getId(),
 						"No destination service available for identifier [" + serviceId + "]", null);
 			}
 			DatumExportOutputFormatService outputService = optionalService(outputFormatServices,
@@ -329,7 +326,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 
 		@Override
 		public String getJobId() {
-			return jobId;
+			return info.getId().toString();
 		}
 
 		@Override
@@ -375,7 +372,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 
 		@Override
 		public String toString() {
-			return "DatumExportTask{jobId=" + jobId + ",config="
+			return "DatumExportTask{jobId=" + getJobId() + ",config="
 					+ (info != null ? info.getConfig() : null) + ",jobState=" + jobState
 					+ ",percentComplete=" + percentComplete + ",completionDate=" + completionDate + "}";
 		}
@@ -408,15 +405,15 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 		return taskMap.get(jobId);
 	}
 
-	private void postJobStatusChangedEvent(DatumExportStatus status) {
-		if ( status == null ) {
+	private void postJobStatusChangedEvent(DatumExportTask task) {
+		if ( task == null ) {
 			return;
 		}
 		EventAdmin ea = (this.eventAdmin != null ? this.eventAdmin.service() : null);
 		if ( ea == null ) {
 			return;
 		}
-		ea.postEvent(status.asJobStatusChagnedEvent());
+		ea.postEvent(task.asJobStatusChagnedEvent(task.info));
 	}
 
 	private <T> T doWithinOptionalTransaction(Supplier<T> supplier) {

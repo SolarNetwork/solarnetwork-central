@@ -467,6 +467,16 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 			return;
 		}
 
+		boolean success = false;
+		if ( event.getProperty(DatumExportStatus.EVENT_PROP_SUCCESS) instanceof Boolean ) {
+			success = ((Boolean) event.getProperty(DatumExportStatus.EVENT_PROP_SUCCESS)).booleanValue();
+		}
+		if ( !success ) {
+			log.info("Datum export job {} was not successful; not updating minimum export date: {}",
+					jobId, event.getProperty(DatumExportStatus.EVENT_PROP_MESSAGE));
+			return;
+		}
+
 		ScheduleType schedule = info.getConfig().getSchedule();
 		if ( schedule == null ) {
 			return;

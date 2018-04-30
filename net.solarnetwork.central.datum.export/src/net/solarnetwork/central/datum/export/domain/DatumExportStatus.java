@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.export.domain;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.osgi.service.event.Event;
 
 /**
@@ -42,7 +43,7 @@ import org.osgi.service.event.Event;
 public interface DatumExportStatus extends Future<DatumExportResult> {
 
 	/** Topic for a job request notification. */
-	String EVENT_TOPIC_JOB_STATUS_CHANGED = "net/solarnetwork/central/datum/export/JOB_STATUS_CHAGNED";
+	String EVENT_TOPIC_JOB_STATUS_CHANGED = "net/solarnetwork/central/datum/export/JOB_STATUS_CHANGED";
 
 	String EVENT_PROP_JOB_ID = "jobId";
 
@@ -51,6 +52,10 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	String EVENT_PROP_PERCENT_COMPLETE = "percentComplete";
 
 	String EVENT_PROP_COMPLETION_DATE = "completionDate";
+
+	String EVENT_PROP_SUCCESS = "success";
+
+	String EVENT_PROP_MESSAGE = "message";
 
 	/**
 	 * Get a unique ID for this export job.
@@ -91,6 +96,18 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	}
 
 	/**
+	 * Create a job status changed event out of this instance.
+	 * 
+	 * @param result
+	 *        a specific result to use
+	 * @return the event, never {@literal null}
+	 * @see #createJobStatusChagnedEvent(DatumExportStatus, DatumExportResult)
+	 */
+	default Event asJobStatusChagnedEvent(DatumExportResult result) {
+		return createJobStatusChagnedEvent(this, result);
+	}
+
+	/**
 	 * Create an event out of a status instance.
 	 * 
 	 * <p>
@@ -103,6 +120,30 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 * @return the event, never {@literal null}
 	 */
 	static Event createJobStatusChagnedEvent(DatumExportStatus status) {
+		DatumExportResult result = null;
+		if ( status.isDone() ) {
+			try {
+				result = status.get(1, TimeUnit.SECONDS);
+			} catch ( Exception e ) {
+				// ignore
+			}
+		}
+		return createJobStatusChagnedEvent(status, result);
+	}
+
+	/**
+	 * Create an event out of a status instance.
+	 * 
+	 * <p>
+	 * The event will be populated with the property constants defined on this
+	 * interface, using values from {@code status}.
+	 * </p>
+	 * 
+	 * @param status
+	 *        the status instance to create the event for
+	 * @return the event, never {@literal null}
+	 */
+	static Event createJobStatusChagnedEvent(DatumExportStatus status, DatumExportResult result) {
 		Map<String, Object> props = new HashMap<String, Object>(4);
 		if ( status != null ) {
 			props.put(EVENT_PROP_JOB_ID, status.getJobId());
@@ -110,6 +151,10 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 					: DatumExportState.Unknown.getKey());
 			props.put(EVENT_PROP_PERCENT_COMPLETE, status.getPercentComplete());
 			props.put(EVENT_PROP_COMPLETION_DATE, status.getCompletionDate());
+			if ( result != null ) {
+				props.put(EVENT_PROP_SUCCESS, result.isSuccess());
+				props.put(EVENT_PROP_MESSAGE, result.getMessage());
+			}
 		}
 		return new Event(EVENT_TOPIC_JOB_STATUS_CHANGED, props);
 	}

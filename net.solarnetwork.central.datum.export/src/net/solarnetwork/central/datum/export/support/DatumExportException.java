@@ -34,26 +34,15 @@ public class DatumExportException extends RuntimeException {
 
 	private static final long serialVersionUID = -9084429939147833562L;
 
-	private final String jobId;
 	private final UUID requestId;
 
 	/**
 	 * @param message
 	 * @param cause
 	 */
-	public DatumExportException(String jobId, UUID requestId, String message, Throwable cause) {
+	public DatumExportException(UUID requestId, String message, Throwable cause) {
 		super(message, cause);
-		this.jobId = jobId;
 		this.requestId = requestId;
-	}
-
-	/**
-	 * Get the job execution ID related to this exception.
-	 * 
-	 * @return the job ID
-	 */
-	public String getJobId() {
-		return jobId;
 	}
 
 	/**
