@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.export.biz.dao;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -188,7 +190,23 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 				updateTaskStatus(DatumExportState.Completed, Boolean.TRUE, null, new DateTime());
 			} catch ( Exception e ) {
 				log.error("Error exporting datum for task {}", this, e);
-				updateTaskStatus(DatumExportState.Completed, Boolean.FALSE, e.getMessage(),
+				Throwable root = e;
+				while ( root.getCause() != null ) {
+					root = root.getCause();
+				}
+				StringBuilder msg = new StringBuilder();
+				msg.append(root.getClass().getSimpleName());
+				if ( root.getMessage() != null ) {
+					msg.append(": ").append(root.getMessage());
+				}
+				msg.append("\n");
+				try (StringWriter sout = new StringWriter(); PrintWriter out = new PrintWriter(sout)) {
+					root.printStackTrace(out);
+					msg.append(sout.toString());
+				} catch ( IOException e2 ) {
+					// ignore
+				}
+				updateTaskStatus(DatumExportState.Completed, Boolean.FALSE, msg.toString(),
 						new DateTime());
 			} finally {
 				if ( info.getStatus() != DatumExportState.Completed ) {
@@ -204,6 +222,8 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 
 		private void updateTaskStatus(DatumExportState state, Boolean success, String message,
 				DateTime completionDate) {
+			log.info("Datum export job {} transitioned to state {} with success {}", jobId, state,
+					success);
 			this.jobState = state;
 			doWithinOptionalTransaction(() -> {
 				info.setStatus(state);
