@@ -463,6 +463,7 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 		UserDatumExportTaskInfo info = taskDao.getForTaskId(taskId);
 		if ( info == null || info.getConfig() == null
 				|| info.getUserDatumExportConfigurationId() == null ) {
+			log.info("Datum export job {} has no associated user export task", jobId);
 			return;
 		}
 
@@ -472,6 +473,8 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 		}
 
 		DateTime nextExportDate = schedule.nextExportDate(info.getExportDate());
+		log.info("Updating user {} export task {} minimum epxort date to {} for job {}",
+				info.getUserId(), info.getUserDatumExportConfigurationId(), nextExportDate, jobId);
 		datumExportConfigDao.updateMinimumExportDate(info.getUserDatumExportConfigurationId(),
 				info.getUserId(), nextExportDate);
 	}
