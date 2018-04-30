@@ -32,7 +32,7 @@ import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
  * @author matt
  * @version 1.0
  */
-@JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProps" })
+@JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProperties" })
 public class UserDestinationConfiguration extends BaseExportConfigurationEntity
 		implements DestinationConfiguration, UserIdentifiableConfiguration, Serializable {
 

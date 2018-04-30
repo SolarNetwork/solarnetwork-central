@@ -35,7 +35,7 @@ import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
  * @version 1.0
  */
 @JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "compressionTypeKey",
-		"serviceProps" })
+		"serviceProperties" })
 public class UserOutputConfiguration extends BaseExportConfigurationEntity
 		implements OutputConfiguration, UserIdentifiableConfiguration, Serializable {
 
