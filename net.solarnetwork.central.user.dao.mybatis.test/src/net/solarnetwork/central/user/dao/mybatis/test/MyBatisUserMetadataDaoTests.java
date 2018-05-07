@@ -43,7 +43,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * Test cases for the {@link MyBatisUserMetadataDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserMetadataDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -113,6 +113,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisUserDaoTestSuppo
 		validate(datum, entity);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Test
 	public void findFiltered() {
 		storeNew();

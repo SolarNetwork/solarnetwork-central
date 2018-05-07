@@ -25,6 +25,7 @@
 package net.solarnetwork.central.user.dao;
 
 import java.util.List;
+import java.util.Set;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
@@ -36,7 +37,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * DAO API for UserNode objects.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
@@ -51,6 +52,19 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 	 * @return list of {@link UserNode} objects, or an empty list if none found
 	 */
 	List<UserNode> findUserNodesForUser(User user);
+
+	/**
+	 * Find a set of node IDs for a user ID.
+	 * 
+	 * This will not return archived nodes (see
+	 * {@link #findArchivedUserNodesForUser(Long)}).
+	 * 
+	 * @param userId
+	 *        the user ID to get all node IDs for
+	 * @return set of node IDs, or an empty set if none found
+	 * @since 1.4
+	 */
+	Set<Long> findNodeIdsForUser(Long userId);
 
 	/**
 	 * Find all UserNodes for a given user.

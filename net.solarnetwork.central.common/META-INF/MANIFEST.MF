@@ -2,16 +2,16 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Common Central
 Bundle-SymbolicName: net.solarnetwork.central.common
-Bundle-Version: 1.37.0
+Bundle-Version: 1.38.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
  net.solarnetwork.central;version="1.4.0",
  net.solarnetwork.central.biz;version="1.2.0",
  net.solarnetwork.central.dao;version="1.14.0",
- net.solarnetwork.central.domain;version="1.23.0",
+ net.solarnetwork.central.domain;version="1.24.1",
  net.solarnetwork.central.scheduler;version="1.5.0",
- net.solarnetwork.central.support;version="1.15.0"
+ net.solarnetwork.central.support;version="1.15.1"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.4,3.0)",
  com.fasterxml.jackson.core;version="[2.4,3.0)",

@@ -50,17 +50,17 @@ import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.support.CachedResult;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.support.CertificateException;
 import net.solarnetwork.support.CertificateService;
 import net.solarnetwork.support.XmlSupport;
+import net.solarnetwork.util.CachedResult;
 
 /**
  * Dogtag implementation of {@link NodePKIBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 

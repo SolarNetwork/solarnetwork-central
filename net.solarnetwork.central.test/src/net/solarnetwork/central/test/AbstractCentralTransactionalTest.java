@@ -46,7 +46,7 @@ import net.solarnetwork.central.security.AuthenticatedNode;
  * Base test class for transactional unit tests.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml",
 		"classpath:/net/solarnetwork/central/test/test-tx-context.xml" })
@@ -144,9 +144,25 @@ public abstract class AbstractCentralTransactionalTest
 	 * sn_weather_loc table.
 	 */
 	protected void setupTestLocation(Long id, Long weatherLocId) {
+		setupTestLocation(id, weatherLocId, TEST_TZ);
+	}
+
+	/**
+	 * Insert a test location into the sn_loc table and weather location in the
+	 * sn_weather_loc table.
+	 * 
+	 * @param id
+	 *        the location ID to use
+	 * @param weatherLocId
+	 *        the weather location ID to use
+	 * @param timeZoneId
+	 *        the time zone ID to use
+	 * @since 1.7
+	 */
+	protected void setupTestLocation(Long id, Long weatherLocId, String timeZoneId) {
 		jdbcTemplate.update(
 				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
-				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, TEST_TZ);
+				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, timeZoneId);
 		jdbcTemplate.update("insert into solarnet.sn_weather_source (id,sname) values (?,?)",
 				TEST_WEATHER_SOURCE_ID, TEST_WEATHER_SOURCE_NAME);
 		jdbcTemplate.update("insert into solarnet.sn_weather_loc (id,loc_id,source_id) values (?,?,?)",

@@ -22,10 +22,14 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import java.util.List;
+import java.util.Set;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +48,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * Test cases for the {@link MyBatisUserNodeDao} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -389,5 +393,24 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertEquals(user.getId(), xfer1.getUserId());
 		assertEquals(node.getId(), xfer1.getNodeId());
 		assertEquals(TEST_EMAIL_2, xfer1.getEmail());
+	}
+
+	@Test
+	public void findNodeIdsForUser() {
+		storeNewUserNode();
+
+		// create 2nd node for user
+		setupTestNode(TEST_ID_2);
+		UserNode newUserNode = new UserNode();
+		newUserNode.setCreated(new DateTime());
+		newUserNode.setDescription(TEST_DESC);
+		newUserNode.setName(TEST_NAME);
+		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
+		newUserNode.setUser(this.user);
+		Long userNode2 = userNodeDao.store(newUserNode);
+		assertThat("UserNode created", userNode2, notNullValue());
+
+		Set<Long> results = userNodeDao.findNodeIdsForUser(this.user.getId());
+		assertThat("Node IDs", results, contains(TEST_ID_2, TEST_NODE_ID));
 	}
 }

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +30,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -41,12 +45,17 @@ import net.solarnetwork.central.support.MutableSortDescriptor;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
+@JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
+		"tags", "dataPath", "mostRecent", "startDate", "endDate", "max", "offset", "sorts", "type",
+		"location" })
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
-		GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter {
+		GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter, Serializable {
+
+	private static final long serialVersionUID = -2563498875989149622L;
 
 	private final SolarLocation location;
 	private DateTime startDate;
@@ -64,6 +73,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	private Long[] userIds;
 	private String[] tags;
 	private Aggregation aggregation;
+	private boolean withoutTotalResultsCount;
 
 	/**
 	 * Default constructor.
@@ -88,6 +98,63 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		}
 	}
 
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the filter to copy
+	 * @since 1.9
+	 */
+	public DatumFilterCommand(AggregateGeneralNodeDatumFilter other) {
+		this(other, new SolarLocation());
+		if ( other == null ) {
+			return;
+		}
+		setAggregate(other.getAggregation());
+		setNodeIds(other.getNodeIds());
+		setUserIds(other.getUserIds());
+	}
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the filter to copy
+	 * @param loc
+	 *        the location to use
+	 * @since 1.9
+	 */
+	public DatumFilterCommand(CommonFilter other, Location loc) {
+		super();
+		if ( loc instanceof SolarLocation ) {
+			location = (SolarLocation) loc;
+		} else {
+			location = new SolarLocation(loc);
+		}
+		if ( other == null ) {
+			return;
+		}
+		setDataPath(other.getDataPath());
+		setEndDate(other.getEndDate());
+		setSourceIds(other.getSourceIds());
+		setStartDate(other.getStartDate());
+		setMostRecent(other.isMostRecent());
+		setWithoutTotalResultsCount(other.isWithoutTotalResultsCount());
+	}
+
+	@Override
+	public String toString() {
+		return "DatumFilterCommand{aggregation=" + aggregation + ",mostRecent=" + mostRecent
+				+ ",startDate=" + startDate + ",endDate=" + endDate + ",withoutTotalResultsCount="
+				+ withoutTotalResultsCount
+				+ (nodeIds != null && nodeIds.length > 0 ? ",nodeIds=" + Arrays.toString(nodeIds)
+						: locationIds != null && locationIds.length > 0
+								? ",locationIds=" + Arrays.toString(locationIds)
+								: "")
+				+ ",sourceIds=" + Arrays.toString(sourceIds) + "}";
+	}
+
+	@JsonIgnore
 	@Override
 	public Map<String, ?> getFilter() {
 		Map<String, Object> filter = new LinkedHashMap<String, Object>();
@@ -121,6 +188,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		return filter;
 	}
 
+	@JsonIgnore
 	public boolean isHasLocationCriteria() {
 		return (location != null && location.getFilter().size() > 0);
 	}
@@ -180,6 +248,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		this.sorts = sorts;
 	}
 
+	@JsonIgnore
 	public List<SortDescriptor> getSortDescriptors() {
 		if ( sorts == null ) {
 			return Collections.emptyList();
@@ -217,6 +286,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * @param nodeId
 	 *        the ID of the node
 	 */
+	@JsonSetter
 	public void setNodeId(Long nodeId) {
 		this.nodeIds = new Long[] { nodeId };
 	}
@@ -231,6 +301,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * 
 	 * @return the first node ID
 	 */
+	@JsonIgnore
 	@Override
 	public Long getNodeId() {
 		return this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0];
@@ -250,6 +321,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * @param nodeId
 	 *        the ID of the node
 	 */
+	@JsonSetter
 	public void setSourceId(String sourceId) {
 		if ( sourceId == null ) {
 			this.sourceIds = null;
@@ -268,6 +340,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * 
 	 * @return the first node ID
 	 */
+	@JsonIgnore
 	@Override
 	public String getSourceId() {
 		return this.sourceIds == null || this.sourceIds.length < 1 ? null : this.sourceIds[0];
@@ -325,6 +398,39 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		setAggregation(aggregate);
 	}
 
+	/**
+	 * Get the aggregation key.
+	 * 
+	 * @return the aggregation key, never {@literal null}
+	 * @since 1.9
+	 */
+	public String getAggregationKey() {
+		Aggregation agg = getAggregation();
+		return (agg != null ? agg : Aggregation.None).getKey();
+	}
+
+	/**
+	 * Set the aggregation as a key value.
+	 * 
+	 * <p>
+	 * If {@literal key} is not a supported {@link Aggregation} key value, then
+	 * {@link Aggregation#None} will be used.
+	 * </p>
+	 * 
+	 * @param key
+	 *        the key to set
+	 * @since 1.9
+	 */
+	public void setAggregationKey(String key) {
+		Aggregation agg = null;
+		try {
+			agg = Aggregation.forKey(key);
+		} catch ( IllegalArgumentException e ) {
+			agg = Aggregation.None;
+		}
+		setAggregation(agg);
+	}
+
 	@Override
 	public boolean isMostRecent() {
 		return mostRecent;
@@ -343,6 +449,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		this.dataPath = dataPath;
 	}
 
+	@JsonIgnore
 	@Override
 	public String[] getDataPathElements() {
 		String path = this.dataPath;
@@ -381,6 +488,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * @param userId
 	 *        the ID of the user
 	 */
+	@JsonSetter
 	public void setUserId(Long userId) {
 		this.userIds = new Long[] { userId };
 	}
@@ -395,6 +503,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * 
 	 * @return the first user ID
 	 */
+	@JsonIgnore
 	@Override
 	public Long getUserId() {
 		return this.userIds == null || this.userIds.length < 1 ? null : this.userIds[0];
@@ -407,6 +516,22 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	public void setUserIds(Long[] userIds) {
 		this.userIds = userIds;
+	}
+
+	@Override
+	public boolean isWithoutTotalResultsCount() {
+		return withoutTotalResultsCount;
+	}
+
+	/**
+	 * Toggle the total results count flag.
+	 * 
+	 * @param withoutTotalResultsCount
+	 *        the value to set
+	 * @since 1.9
+	 */
+	public void setWithoutTotalResultsCount(boolean withoutTotalResultsCount) {
+		this.withoutTotalResultsCount = withoutTotalResultsCount;
 	}
 
 	/**

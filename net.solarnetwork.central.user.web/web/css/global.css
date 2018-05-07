@@ -87,6 +87,10 @@ section + section {
 	margin-left: 10px;
 }
 
+.modal.danger .modal-content {
+	background-color: #c0a2a2;
+}
+
 .carousel-indicators.dark li {
 	background-color: #777;
 	border: none;

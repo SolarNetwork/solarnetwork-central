@@ -22,8 +22,12 @@
 
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -56,8 +60,9 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  * Test cases for the {@link MyBatisGeneralNodeDatumDao} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
+@SuppressWarnings("deprecation")
 public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private static final String TEST_SOURCE_ID = "test.source";
@@ -227,6 +232,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		List<GeneralNodeDatumPK> ids = new ArrayList<GeneralNodeDatumPK>();
 		for ( GeneralNodeDatumFilterMatch d : results ) {
 			ids.add(d.getId());
+			assertThat("Local date", d.getLocalDate(), notNullValue());
+			assertThat("Local time", d.getLocalTime(), notNullValue());
+			assertThat("Sample data", d.getSampleData(), notNullValue());
 		}
 		// expect d3, d1, d2 because sorted by nodeId,created,sourceId
 		assertEquals("Result order", Arrays.asList(datum3.getId(), lastDatum.getId(), datum2.getId()),
@@ -257,6 +265,63 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertEquals("Returned results", 2L, (long) results.getTotalResults());
 		assertEquals("Returned result count", 1, (int) results.getReturnedResultCount());
 		assertEquals("Datum ID", lastDatum.getId(), results.iterator().next().getId());
+	}
+
+	@Test
+	public void findFilteredWithMaxNoCount() {
+		storeNew();
+
+		GeneralNodeDatum datum2 = new GeneralNodeDatum();
+		datum2.setCreated(new DateTime().plusHours(1));
+		datum2.setNodeId(TEST_NODE_ID);
+		datum2.setSourceId(TEST_SOURCE_ID);
+		datum2.setSampleJson("{\"i\":{\"watts\":123}}");
+		dao.store(datum2);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setWithoutTotalResultsCount(true);
+
+		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(criteria, null, 0, 1);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Total result count disabled", results.getTotalResults(), nullValue());
+		assertThat("Result ID", results.getResults().iterator().next().getId(),
+				equalTo(lastDatum.getId()));
+
+		results = dao.findFiltered(criteria, null, 1, 1);
+		assertNotNull(results);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Total result count disabled", results.getTotalResults(), nullValue());
+		assertThat("Result ID", results.getResults().iterator().next().getId(), equalTo(datum2.getId()));
+	}
+
+	@Test
+	public void findFilteredWithMaxBeyondTotal() {
+		storeNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+
+		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(criteria, null, 1, 1000);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), equalTo(1L));
+	}
+
+	@Test
+	public void findFilteredWithMaxBeyondTotalNoCount() {
+		storeNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setWithoutTotalResultsCount(true);
+
+		FilterResults<GeneralNodeDatumFilterMatch> results = dao.findFiltered(criteria, null, 1, 1000);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), nullValue());
 	}
 
 	@Test
@@ -404,6 +469,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		for ( GeneralNodeDatumFilterMatch match : results.getResults() ) {
 			GeneralNodeDatum expected = datumIterator.next();
 			assertEquals(expected.getId(), match.getId());
+			assertThat("Local date", match.getLocalDate(), notNullValue());
+			assertThat("Local time", match.getLocalTime(), notNullValue());
+			assertThat("Sample data", match.getSampleData(), notNullValue());
 
 			Assert.assertTrue("Match class", match instanceof GeneralNodeDatumMatch);
 			GeneralNodeDatumMatch m = (GeneralNodeDatumMatch) match;
@@ -427,6 +495,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertEquals(Long.valueOf(1), results.getTotalResults());
 		GeneralNodeDatumFilterMatch match = results.getResults().iterator().next();
 		assertEquals(lastDatum.getId(), match.getId());
+		assertThat("Local date", match.getLocalDate(), notNullValue());
+		assertThat("Local time", match.getLocalTime(), notNullValue());
+		assertThat("Sample data", match.getSampleData(), notNullValue());
 		Assert.assertTrue("Match class", match instanceof GeneralNodeDatumMatch);
 		GeneralNodeDatumMatch m = (GeneralNodeDatumMatch) match;
 		assertEquals(lastDatum.getSamples(), m.getSamples());
@@ -449,6 +520,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertNotNull(results);
 		assertEquals(Long.valueOf(1), results.getTotalResults());
 		GeneralNodeDatumFilterMatch match = results.getResults().iterator().next();
+		assertThat("Local date", match.getLocalDate(), notNullValue());
+		assertThat("Local time", match.getLocalTime(), notNullValue());
+		assertThat("Sample data", match.getSampleData(), notNullValue());
 
 		GeneralNodeDatumPK expectedPK = new GeneralNodeDatumPK();
 		expectedPK.setCreated(lastDatum.getCreated().hourOfDay().roundFloorCopy());
@@ -474,6 +548,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertNotNull(results);
 		assertEquals(Long.valueOf(1), results.getTotalResults());
 		GeneralNodeDatumFilterMatch match = results.getResults().iterator().next();
+		assertThat("Local date", match.getLocalDate(), notNullValue());
+		assertThat("Local time", match.getLocalTime(), notNullValue());
+		assertThat("Sample data", match.getSampleData(), notNullValue());
 
 		GeneralNodeDatumPK expectedPK = new GeneralNodeDatumPK();
 		expectedPK.setCreated(lastDatum.getCreated().dayOfYear().roundFloorCopy());
@@ -499,6 +576,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertNotNull(results);
 		assertEquals(Long.valueOf(1), results.getTotalResults());
 		GeneralNodeDatumFilterMatch match = results.getResults().iterator().next();
+		assertThat("Local date", match.getLocalDate(), notNullValue());
+		assertThat("Local time", match.getLocalTime(), notNullValue());
+		assertThat("Sample data", match.getSampleData(), notNullValue());
 
 		GeneralNodeDatumPK expectedPK = new GeneralNodeDatumPK();
 		expectedPK.setCreated(lastDatum.getCreated().monthOfYear().roundFloorCopy());
@@ -552,6 +632,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		Iterator<GeneralNodeDatumPK> pkIterator = pks.iterator();
 		for ( GeneralNodeDatumFilterMatch match : results.getResults() ) {
 			assertEquals(pkIterator.next(), match.getId());
+			assertThat("Local date", match.getLocalDate(), notNullValue());
+			assertThat("Local time", match.getLocalTime(), notNullValue());
+			assertThat("Sample data", match.getSampleData(), notNullValue());
 		}
 	}
 
@@ -597,6 +680,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		Iterator<GeneralNodeDatumPK> pkIterator = pks.iterator();
 		for ( GeneralNodeDatumFilterMatch match : results.getResults() ) {
 			assertEquals(pkIterator.next(), match.getId());
+			assertThat("Local date", match.getLocalDate(), notNullValue());
+			assertThat("Local time", match.getLocalTime(), notNullValue());
+			assertThat("Sample data", match.getSampleData(), notNullValue());
 		}
 	}
 
@@ -645,6 +731,8 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		for ( GeneralNodeDatumFilterMatch match : results.getResults() ) {
 			GeneralNodeDatum expected = datumIterator.next();
 			assertEquals(expected.getId(), match.getId());
+			assertThat("Local date", match.getLocalDate(), notNullValue());
+			assertThat("Local time", match.getLocalTime(), notNullValue());
 
 			Assert.assertTrue("Match class", match instanceof GeneralNodeDatumMatch);
 			GeneralNodeDatumMatch m = (GeneralNodeDatumMatch) match;
@@ -767,6 +855,19 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertNotNull("Aggregate sample data", data);
 		assertNotNull("Aggregate Wh", data.get("watt_hours"));
 		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void findFilteredAggregateRunningTotalNoSourceId() {
+		// populate 1 hour of data
+		findFilteredAggregateDaily();
+
+		// first, verify that the the day is also at 10 Wh
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setAggregate(Aggregation.RunningTotal);
+
+		dao.findAggregationFiltered(criteria, null, null, null);
 	}
 
 	@Test
@@ -1097,6 +1198,53 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 					match.getSampleData().get("watt_hours"));
 			i++;
 		}
+	}
+
+	@Test
+	public void findFilteredAggregateNone() {
+		GeneralNodeDatum datum1 = new GeneralNodeDatum();
+		datum1.setCreated(new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC));
+		datum1.setNodeId(TEST_NODE_ID);
+		datum1.setSourceId(TEST_SOURCE_ID);
+		datum1.setSampleJson("{\"a\":{\"watt_hours\":0}}");
+		dao.store(datum1);
+		lastDatum = datum1;
+
+		GeneralNodeDatum datum2 = new GeneralNodeDatum();
+		datum2.setCreated(datum1.getCreated().plusMinutes(20));
+		datum2.setNodeId(TEST_NODE_ID);
+		datum2.setSourceId(TEST_SOURCE_ID);
+		datum2.setSampleJson("{\"a\":{\"watt_hours\":5}}");
+		dao.store(datum2);
+
+		GeneralNodeDatum datum3 = new GeneralNodeDatum();
+		datum3.setCreated(datum2.getCreated().plusMinutes(20));
+		datum3.setNodeId(TEST_NODE_ID);
+		datum3.setSourceId(TEST_SOURCE_ID);
+		datum3.setSampleJson("{\"a\":{\"watt_hours\":10}}");
+		dao.store(datum3);
+
+		processAggregateStaleData();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(datum1.getCreated());
+		criteria.setEndDate(datum3.getCreated());
+		criteria.setAggregate(Aggregation.None);
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertNotNull(results);
+		assertEquals(2L, (long) results.getTotalResults());
+		assertEquals(2, (int) results.getReturnedResultCount());
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+
+		assertThat("Match 1", itr.next().getId(), equalTo(datum1.getId()));
+		assertThat("Match 2", itr.next().getId(), equalTo(datum2.getId()));
+		assertThat("No more matches", itr.hasNext(), equalTo(false));
 	}
 
 	@Test

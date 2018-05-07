@@ -30,7 +30,7 @@ import org.joda.time.DateTime;
  * Primary key for a general location datum.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class GeneralLocationDatumPK
 		implements Serializable, Cloneable, Comparable<GeneralLocationDatumPK> {
@@ -163,7 +163,7 @@ public class GeneralLocationDatumPK
 			if ( other.created != null ) {
 				return false;
 			}
-		} else if ( !created.equals(other.created) ) {
+		} else if ( !created.isEqual(other.created) ) {
 			return false;
 		}
 		if ( sourceId == null ) {

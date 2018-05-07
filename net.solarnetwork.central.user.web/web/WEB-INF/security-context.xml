@@ -24,6 +24,8 @@
 	<!-- Stateless BASIC authentication realm for web services. -->
 	<http pattern="/api/v1/sec/**" create-session="stateless" entry-point-ref="authTokenEntryPoint" use-expressions="true">
 		<intercept-url pattern='/**' method="OPTIONS" access="permitAll" />
+	    <intercept-url pattern="/user/billing/**" access="ROLE_BILLING" />
+	    <intercept-url pattern="/user/export/**" access="ROLE_BILLING" />
 		<intercept-url pattern='/**' access="hasRole('ROLE_USER')" />
 		<custom-filter position="PRE_AUTH_FILTER" ref="authTokenFilter" />
 		<csrf disabled="true"/>
@@ -32,6 +34,8 @@
 	<!-- Configure Spring Security -->
 	<http auto-config="true" use-expressions="false">
 		<intercept-url pattern="/*.do*" access="ROLE_ANONYMOUS,ROLE_USER"/>
+	    <intercept-url pattern="/u/sec/billing/**" access="ROLE_BILLING" />
+	    <intercept-url pattern="/u/sec/export/**" access="ROLE_BILLING" />
 	    <intercept-url pattern="/u/sec/**" access="ROLE_USER" />
 	    <intercept-url pattern="/u/**" access="ROLE_ANONYMOUS,ROLE_USER" />
 		<form-login login-page="/login.do" default-target-url="/u/sec/home"
@@ -62,6 +66,7 @@
 			</beans:bean>
 		</beans:property>
 		<beans:property name="authenticationEntryPoint" ref="authTokenEntryPoint"/>
+		<beans:property name="maxRequestBodySize" value="${security.maxRequestBodySize}"/>
 	</beans:bean>
 
 </beans:beans>

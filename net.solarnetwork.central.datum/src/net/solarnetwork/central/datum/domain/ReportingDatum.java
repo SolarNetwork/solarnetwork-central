@@ -20,8 +20,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ===================================================================
- * $Id$
- * ===================================================================
  */
 
 package net.solarnetwork.central.datum.domain;
@@ -33,24 +31,24 @@ import org.joda.time.LocalTime;
  * Basic reporting-level Datum API.
  * 
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.0
  */
 public interface ReportingDatum {
 
 	/**
-	 * Get a "local" date for this datum, local to the node or location
-	 * the datum is associated with.
+	 * Get a "local" date for this datum, local to the node or location the
+	 * datum is associated with.
 	 * 
 	 * @return local date
 	 */
 	public LocalDate getLocalDate();
-	
+
 	/**
-	 * Get a "local" time for this datum, local to the node or location
-	 * the datum is associated with.
+	 * Get a "local" time for this datum, local to the node or location the
+	 * datum is associated with.
 	 * 
 	 * @return local time
 	 */
 	public LocalTime getLocalTime();
-	
+
 }

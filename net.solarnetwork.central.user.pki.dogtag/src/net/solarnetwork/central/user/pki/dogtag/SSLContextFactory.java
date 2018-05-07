@@ -34,10 +34,6 @@ import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
-import net.solarnetwork.central.domain.PingTest;
-import net.solarnetwork.central.domain.PingTestResult;
-import net.solarnetwork.central.support.CachedResult;
-import net.solarnetwork.support.CertificateException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.HttpClientConnectionManager;
@@ -50,16 +46,22 @@ import org.apache.http.ssl.SSLContexts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
+import net.solarnetwork.central.domain.PingTest;
+import net.solarnetwork.central.domain.PingTestResult;
+import net.solarnetwork.support.CertificateException;
+import net.solarnetwork.util.CachedResult;
+import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
 
 /**
  * Factory for {@link SSLContext} objects configured with an associated
  * key/trust store.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.4
  */
 public class SSLContextFactory implements PingTest {
 
@@ -104,9 +106,16 @@ public class SSLContextFactory implements PingTest {
 		HttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(r);
 		HttpClient httpClient = HttpClients.custom().setConnectionManager(connManager).build();
 
-		HttpComponentsClientHttpRequestFactory reqFactory = new HttpComponentsClientHttpRequestFactory(
-				httpClient);
-		return new RestTemplate(reqFactory);
+		ClientHttpRequestFactory reqFactory = LoggingHttpRequestInterceptor
+				.requestFactory(new HttpComponentsClientHttpRequestFactory(httpClient));
+
+		RestTemplate restTemplate = new RestTemplate(reqFactory);
+
+		if ( LoggingHttpRequestInterceptor.supportsLogging(reqFactory) ) {
+			restTemplate.getInterceptors().add(new LoggingHttpRequestInterceptor());
+		}
+
+		return restTemplate;
 	}
 
 	private KeyStore loadKeyStore() throws GeneralSecurityException {
@@ -124,8 +133,8 @@ public class SSLContextFactory implements PingTest {
 			} else {
 				msg = "Error loading certificate key store ";
 			}
-			throw new CertificateException(msg
-					+ (keystoreResource == null ? null : keystoreResource.getFilename()), e);
+			throw new CertificateException(
+					msg + (keystoreResource == null ? null : keystoreResource.getFilename()), e);
 		} finally {
 			if ( in != null ) {
 				try {
@@ -188,21 +197,21 @@ public class SSLContextFactory implements PingTest {
 						X509Certificate x509 = (X509Certificate) cert;
 						validated = true;
 						if ( x509.getNotBefore().getTime() > now ) {
-							result = new PingTestResult(false, "Certificate "
-									+ x509.getSubjectDN().getName() + " not yet valid. Valid from "
-									+ x509.getNotBefore() + ".");
+							result = new PingTestResult(false,
+									"Certificate " + x509.getSubjectDN().getName()
+											+ " not yet valid. Valid from " + x509.getNotBefore() + ".");
 							break;
 						}
 						if ( x509.getNotAfter().getTime() < now ) {
-							result = new PingTestResult(false, "Certificate "
-									+ x509.getSubjectDN().getName() + " expired on "
-									+ x509.getNotAfter() + ".");
+							result = new PingTestResult(false,
+									"Certificate " + x509.getSubjectDN().getName() + " expired on "
+											+ x509.getNotAfter() + ".");
 							break;
 						}
 						if ( x509.getNotAfter().getTime() < monthAgo ) {
-							result = new PingTestResult(false, "Certificate "
-									+ x509.getSubjectDN().getName() + " will exipre on "
-									+ x509.getNotAfter() + ".");
+							result = new PingTestResult(false,
+									"Certificate " + x509.getSubjectDN().getName() + " will exipre on "
+											+ x509.getNotAfter() + ".");
 							break;
 						}
 						if ( message.length() > 0 ) {
@@ -222,7 +231,8 @@ public class SSLContextFactory implements PingTest {
 		}
 		// cache the results: for success cache for longer so we don't spend a lot of time parsing the certificates
 		CachedResult<PingTestResult> cached = new CachedResult<PingTestResult>(result,
-				(result.isSuccess() ? 1L : 30L), (result.isSuccess() ? TimeUnit.DAYS : TimeUnit.MINUTES));
+				(result.isSuccess() ? 1L : 30L),
+				(result.isSuccess() ? TimeUnit.DAYS : TimeUnit.MINUTES));
 		cachedResult = cached;
 		return result;
 	}

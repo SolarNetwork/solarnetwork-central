@@ -22,8 +22,12 @@
 
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -60,8 +64,9 @@ import net.solarnetwork.domain.GeneralLocationDatumSamples;
  * Test cases for the {@link MyBatisGeneralLocationDatumDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
+@SuppressWarnings("deprecation")
 public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private static final String TEST_SOURCE_ID = "test.source";
@@ -260,6 +265,65 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		assertEquals("Returned results", 2L, (long) results.getTotalResults());
 		assertEquals("Returned result count", 1, (int) results.getReturnedResultCount());
 		assertEquals("Datum ID", lastDatum.getId(), results.iterator().next().getId());
+	}
+
+	@Test
+	public void findFilteredWithMaxNoCount() {
+		storeNew();
+
+		GeneralLocationDatum datum2 = new GeneralLocationDatum();
+		datum2.setCreated(new DateTime().plusHours(1));
+		datum2.setLocationId(TEST_LOC_ID);
+		datum2.setSourceId(TEST_SOURCE_ID);
+		datum2.setSampleJson("{\"i\":{\"watts\":123}}");
+		dao.store(datum2);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setLocationId(TEST_LOC_ID);
+		criteria.setWithoutTotalResultsCount(true);
+
+		FilterResults<GeneralLocationDatumFilterMatch> results = dao.findFiltered(criteria, null, 0, 1);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Total result count disabled", results.getTotalResults(), nullValue());
+		assertThat("Result ID", results.getResults().iterator().next().getId(),
+				equalTo(lastDatum.getId()));
+
+		results = dao.findFiltered(criteria, null, 1, 1);
+		assertNotNull(results);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Total result count disabled", results.getTotalResults(), nullValue());
+		assertThat("Result ID", results.getResults().iterator().next().getId(), equalTo(datum2.getId()));
+	}
+
+	@Test
+	public void findFilteredWithMaxBeyondTotal() {
+		storeNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setLocationId(TEST_LOC_ID);
+
+		FilterResults<GeneralLocationDatumFilterMatch> results = dao.findFiltered(criteria, null, 1,
+				1000);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), equalTo(1L));
+	}
+
+	@Test
+	public void findFilteredWithMaxBeyondTotalNoCount() {
+		storeNew();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setLocationId(TEST_LOC_ID);
+		criteria.setWithoutTotalResultsCount(true);
+
+		FilterResults<GeneralLocationDatumFilterMatch> results = dao.findFiltered(criteria, null, 1,
+				1000);
+		assertThat("Results", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), nullValue());
 	}
 
 	@Test
@@ -587,6 +651,19 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
 	}
 
+	@Test(expected = IllegalArgumentException.class)
+	public void findFilteredAggregateRunningTotalNoSourceId() {
+		// populate 1 hour of data
+		findFilteredAggregateDaily();
+
+		// first, verify that the the day is also at 10 Wh
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setLocationId(TEST_LOC_ID);
+		criteria.setAggregate(Aggregation.RunningTotal);
+
+		dao.findAggregationFiltered(criteria, null, null, null);
+	}
+
 	@Test
 	public void findFilteredAggregateFiveMinute() {
 		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
@@ -824,6 +901,53 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 					match.getSampleData().get("watt_hours"));
 			i++;
 		}
+	}
+
+	@Test
+	public void findFilteredAggregateNone() {
+		GeneralLocationDatum datum1 = new GeneralLocationDatum();
+		datum1.setCreated(new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC));
+		datum1.setLocationId(TEST_LOC_ID);
+		datum1.setSourceId(TEST_SOURCE_ID);
+		datum1.setSampleJson("{\"a\":{\"watt_hours\":0}}");
+		dao.store(datum1);
+		lastDatum = datum1;
+
+		GeneralLocationDatum datum2 = new GeneralLocationDatum();
+		datum2.setCreated(datum1.getCreated().plusMinutes(20));
+		datum2.setLocationId(TEST_LOC_ID);
+		datum2.setSourceId(TEST_SOURCE_ID);
+		datum2.setSampleJson("{\"a\":{\"watt_hours\":5}}");
+		dao.store(datum2);
+
+		GeneralLocationDatum datum3 = new GeneralLocationDatum();
+		datum3.setCreated(datum2.getCreated().plusMinutes(20));
+		datum3.setLocationId(TEST_LOC_ID);
+		datum3.setSourceId(TEST_SOURCE_ID);
+		datum3.setSampleJson("{\"a\":{\"watt_hours\":10}}");
+		dao.store(datum3);
+
+		processAggregateStaleData();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setLocationId(TEST_LOC_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(datum1.getCreated());
+		criteria.setEndDate(datum3.getCreated());
+		criteria.setAggregate(Aggregation.None);
+
+		FilterResults<ReportingGeneralLocationDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertNotNull(results);
+		assertEquals(2L, (long) results.getTotalResults());
+		assertEquals(2, (int) results.getReturnedResultCount());
+
+		Iterator<ReportingGeneralLocationDatumMatch> itr = results.iterator();
+
+		assertThat("Match 1", itr.next().getId(), equalTo(datum1.getId()));
+		assertThat("Match 2", itr.next().getId(), equalTo(datum2.getId()));
+		assertThat("No more matches", itr.hasNext(), equalTo(false));
 	}
 
 	@Test

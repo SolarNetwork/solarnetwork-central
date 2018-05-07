@@ -15,6 +15,7 @@
 
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.web">
 		<prop key="JSONView.indentAmount">0</prop>
+		<prop key="security.maxRequestBodySize">512000</prop>
 	</osgix:cm-properties>
 	
 	<!-- Service References -->
@@ -71,6 +72,12 @@
 	<bean id="nimBiz" class="net.solarnetwork.util.DynamicServiceTracker">
 		<property name="bundleContext" ref="bundleContext"/>
 		<property name="serviceClassName" value="net.solarnetwork.central.user.nim.biz.SolarNodeImageMakerBiz"/>
+	</bean>
+
+	<bean id="exportBiz" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.user.export.biz.UserExportBiz"/>
+		<property name="serviceFilter" value="(secured=true)"/>
 	</bean>
 
 	<!-- Published Services -->

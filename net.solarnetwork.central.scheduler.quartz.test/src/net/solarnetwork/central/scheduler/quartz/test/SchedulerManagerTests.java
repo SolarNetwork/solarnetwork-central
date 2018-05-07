@@ -209,8 +209,7 @@ public class SchedulerManagerTests extends AbstractCentralTest {
 		assertThat(info, is(instanceOf(QuartzJobInfo.class)));
 		assertThat("Job ID", info.getId(), equalTo(triggerKey.getName()));
 		assertThat("Job group ID", info.getGroupId(), equalTo(triggerKey.getGroup()));
-		assertThat("Schedule desc", info.getExecutionScheduleDescription(),
-				equalTo("cron: 0 * * * * ?"));
+		assertThat("Schedule desc", info.getExecutionScheduleDescription(), equalTo("every minute"));
 		assertThat("Next exec time", info.getNextExecutionTime(), equalTo(new DateTime(firstFireTime)));
 		assertThat("Executing", info.isExecuting(), equalTo(false));
 	}

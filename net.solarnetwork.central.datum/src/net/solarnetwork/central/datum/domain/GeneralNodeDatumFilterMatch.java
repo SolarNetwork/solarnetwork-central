@@ -22,14 +22,23 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.util.Map;
 import net.solarnetwork.central.domain.FilterMatch;
 
 /**
  * API for a GeneralNodeDatum search or filter match result.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface GeneralNodeDatumFilterMatch extends FilterMatch<GeneralNodeDatumPK> {
+public interface GeneralNodeDatumFilterMatch extends FilterMatch<GeneralNodeDatumPK>, ReportingDatum {
+
+	/**
+	 * Get all available sample data as a Map.
+	 * 
+	 * @return the sample data as a Map, or <em>null</em> if no sample data
+	 *         available
+	 */
+	public Map<String, ?> getSampleData();
 
 }

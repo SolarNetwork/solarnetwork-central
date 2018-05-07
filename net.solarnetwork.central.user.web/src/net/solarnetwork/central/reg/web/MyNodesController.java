@@ -42,7 +42,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -86,7 +85,7 @@ import net.solarnetwork.web.domain.Response;
  * @author matt
  * @version 1.4
  */
-@Controller
+@GlobalServiceController
 @RequestMapping("/sec/my-nodes")
 public class MyNodesController extends ControllerSupport {
 

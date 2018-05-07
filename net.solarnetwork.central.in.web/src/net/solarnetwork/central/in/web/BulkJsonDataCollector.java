@@ -58,7 +58,7 @@ import net.solarnetwork.web.domain.Response;
  * JSON implementation of bulk upload service.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @Controller
 @RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" }, consumes = "application/json")
@@ -270,6 +270,10 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 				case Float:
 				case Percent:
 					datum.setFloatValue(Float.valueOf(value));
+					break;
+
+				default:
+					// other types not supported in legacy datum
 					break;
 
 			}

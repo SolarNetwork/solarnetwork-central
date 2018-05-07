@@ -24,7 +24,8 @@
 		datum.ts AS datum_ts,
 		datum.source_id AS datum_source_id,
 		datum.posted AS datum_posted,
-		datum.jdata AS datum_jdata
+		datum.jdata AS datum_jdata,
+		datum.local_date AS datum_local_date
 	</sql>
 	
 	<resultMap id="GeneralNodeDatumFullResult" type="GeneralNodeDatum">
@@ -76,9 +77,11 @@
 	-->
 
 	<resultMap id="GeneralNodeDatumMatchResult" type="ReportingGeneralNodeDatum" extends="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatum.GeneralNodeDatumFullResult">
-		<result property="localDateTime" column="datum_local_date"/>
+		<result property="localDateTime" column="datum_local_date" typeHandler="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler"/>
 	</resultMap>
-	<resultMap id="GeneralNodeDatumDirectMatchResult" type="GeneralNodeDatumMatch" extends="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatum.GeneralNodeDatumDirectResult"/>
+	<resultMap id="GeneralNodeDatumDirectMatchResult" type="GeneralNodeDatumMatch" extends="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatum.GeneralNodeDatumDirectResult">
+		<result property="localDateTime" column="local_date" typeHandler="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler"/>
+	</resultMap>
 
 	<select id="find-general-most-recent" resultMap="GeneralNodeDatumDirectMatchResult" statementType="CALLABLE">
 		<choose>
@@ -204,6 +207,7 @@
 		<id property="nodeId" column="node_id"/>
 		<id property="created" column="ts_start"/>
 		<id property="sourceId" column="source_id"/>
+		<result property="localDateTime" column="local_date"/>
 		<result property="sampleJson" column="jdata"/>
 	</resultMap>
 

@@ -70,7 +70,7 @@ import net.solarnetwork.central.query.domain.ReportableInterval;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -197,13 +197,8 @@ public class DaoQueryBiz implements QueryBiz {
 		Aggregation forced = enforceAggregation(filter.getAggregation(), filter.getStartDate(),
 				filter.getEndDate(), filter);
 		if ( forced != null ) {
-			DatumFilterCommand cmd = new DatumFilterCommand();
+			DatumFilterCommand cmd = new DatumFilterCommand(filter);
 			cmd.setAggregate(forced);
-			cmd.setEndDate(filter.getEndDate());
-			cmd.setNodeIds(filter.getNodeIds());
-			cmd.setSourceIds(filter.getSourceIds());
-			cmd.setStartDate(filter.getStartDate());
-			cmd.setDataPath(filter.getDataPath());
 			return cmd;
 		}
 		return filter;
