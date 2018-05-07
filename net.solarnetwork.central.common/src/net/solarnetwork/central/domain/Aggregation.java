@@ -93,6 +93,13 @@ public enum Aggregation {
 	Month(2419200, "M"),
 
 	/**
+	 * Year level aggregation.
+	 * 
+	 * @since 1.6
+	 */
+	Year(31536000, "y"),
+
+	/**
 	 * Aggregate all values into a single total result.
 	 * 
 	 * @since 1.4
@@ -130,6 +137,7 @@ public enum Aggregation {
 	 * <ul>
 	 * <li><b>Week</b> - 7 days</li>
 	 * <li><b>Month</b> - 4 weeks (28 days)</li>
+	 * <li><b>Year</b> - 365 days</li>
 	 * </ul>
 	 * 
 	 * @return the aggregation level
