@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.export.standard;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -42,6 +43,8 @@ import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.joda.time.ReadableInstant;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.util.FileCopyUtils;
+import org.springframework.util.StreamUtils;
 import org.supercsv.cellprocessor.FmtDate;
 import org.supercsv.cellprocessor.Optional;
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -224,11 +227,18 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			return map;
 		}
 
+		private boolean isSinglePassOutput() {
+			return (!props.isIncludeHeader() || config == null || config.getCompressionType() == null);
+		}
+
 		@Override
 		public void start(long estimatedResultCount) throws IOException {
 			temporaryFile = createTemporaryResource(config);
-			OutputStream out = createCompressedOutputStream(
-					new BufferedOutputStream(new FileOutputStream(temporaryFile)));
+			OutputStream out = new BufferedOutputStream(new FileOutputStream(temporaryFile));
+			if ( isSinglePassOutput() ) {
+				// compress stream in single pass
+				out = createCompressedOutputStream(out);
+			}
 			writer = new CsvMapWriter(new OutputStreamWriter(out, "UTF-8"),
 					CsvPreference.STANDARD_PREFERENCE);
 			setEstimatedResultCount(estimatedResultCount);
@@ -246,7 +256,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 					if ( writer.getLineNumber() == 0 ) {
 						headers = headersForDatumMap(map);
 						headerSet = new LinkedHashSet<>(Arrays.asList(headers));
-						if ( props.isIncludeHeader() ) {
+						if ( props.isIncludeHeader() && isSinglePassOutput() ) {
 							writer.writeHeader(headers);
 						}
 						cellProcessors = processorsForDatumMap(map);
@@ -281,6 +291,21 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 		public Iterable<DatumExportResource> finish() throws IOException {
 			flush();
 			close();
+			if ( !isSinglePassOutput() ) {
+				// we have to concatenate headers + content
+				File temporaryConcatenatedFile = createTemporaryResource(config);
+				try (OutputStream out = createCompressedOutputStream(
+						new BufferedOutputStream(new FileOutputStream(temporaryConcatenatedFile)));
+						ICsvMapWriter concatenatedWriter = new CsvMapWriter(
+								new OutputStreamWriter(StreamUtils.nonClosing(out), "UTF-8"),
+								CsvPreference.STANDARD_PREFERENCE)) {
+					concatenatedWriter.writeHeader(headers);
+					concatenatedWriter.flush();
+					FileCopyUtils.copy(new FileInputStream(temporaryFile), out);
+				}
+				temporaryFile.delete();
+				temporaryFile = temporaryConcatenatedFile;
+			}
 			if ( temporaryFile != null ) {
 				return Collections.singleton(new BasicDatumExportResource(
 						new DeleteOnCloseFileResource(new FileSystemResource(temporaryFile)),
