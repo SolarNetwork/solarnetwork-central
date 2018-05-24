@@ -39,7 +39,7 @@ import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -53,9 +53,9 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @param nodeId
 	 *        the node ID to search for
 	 * @param sourceId
-	 *        an optional source ID to limit the results to, or <em>null</em>
+	 *        an optional source ID to limit the results to, or {@literal null}
 	 *        for all sources
-	 * @return interval, or <em>null</em> if no data available
+	 * @return interval, or {@literal null} if no data available
 	 */
 	ReadableInterval getReportableInterval(Long nodeId, String sourceId);
 
@@ -69,9 +69,34 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 *        an optional start date (inclusive) to filter on
 	 * @param end
 	 *        an optional end date (inclusive) to filter on
-	 * @return the distinct source IDs available (never <em>null</em>)
+	 * @return the distinct source IDs available (never {@literal null})
+	 * @deprecated since 1.2; use
+	 *             {@link #getAvailableSources(GeneralNodeDatumFilter)}
 	 */
+	@Deprecated
 	Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end);
+
+	/**
+	 * Get the available source IDs for a given filter.
+	 * 
+	 * <p>
+	 * The filter is expected to provide a node ID. Multiple node IDs may be
+	 * provided. A {@code startDate} (inclusive), {@code endDate} (exclusive),
+	 * or both dates may be provided to limit the query to a specific date
+	 * range.
+	 * </p>
+	 * 
+	 * <p>
+	 * <b>Note</b> that the precision of dates may be rounded by implementations
+	 * when executing the query, for performance reasons.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @return the distinct source IDs available (never {@literal null})
+	 * @since 1.2
+	 */
+	Set<String> getAvailableSources(GeneralNodeDatumFilter filter);
 
 	/**
 	 * Find the earliest date audit data is available for a given node.

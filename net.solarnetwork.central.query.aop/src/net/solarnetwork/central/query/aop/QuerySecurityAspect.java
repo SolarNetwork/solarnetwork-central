@@ -86,6 +86,10 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public void nodeReportableSources(Long nodeId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(filter,..)")
+	public void nodesReportableSources(GeneralNodeDatumFilter filter) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getMostRecentWeatherConditions(..)) && args(nodeId,..)")
 	public void nodeMostRecentWeatherConditions(Long nodeId) {
 	}
@@ -108,8 +112,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			if ( isQueryBiz && filter instanceof DatumFilterCommand ) {
 				QueryBiz target = (QueryBiz) pjp.getTarget();
 				DatumFilterCommand f = (DatumFilterCommand) filter;
-				Set<String> availableSources = target.getAvailableSources(f.getNodeId(),
-						f.getStartDate(), f.getEndDate());
+				Set<String> availableSources = target.getAvailableSources(f);
 				if ( availableSources != null && !availableSources.isEmpty() ) {
 					f.setSourceIds(availableSources.toArray(new String[availableSources.size()]));
 				}
@@ -144,6 +147,34 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Enforce node ID and source ID policy restrictions when requesting the
+	 * available sources of nodes.
+	 * 
+	 * First the node IDs are verified. Then, for all returned source ID values,
+	 * if the active policy has no source ID restrictions return all values,
+	 * otherwise remove any value not included in the policy.
+	 * 
+	 * @param pjp
+	 *        The join point.
+	 * @param filter
+	 *        The filter.
+	 * @return The set of String source IDs.
+	 * @throws Throwable
+	 */
+	@Around("nodesReportableSources(filter)")
+	public Object reportableSourcesFilterAccessCheck(ProceedingJoinPoint pjp,
+			GeneralNodeDatumFilter filter) throws Throwable {
+		for ( Long nodeId : filter.getNodeIds() ) {
+			requireNodeReadAccess(nodeId);
+		}
+
+		// verify source IDs in result
+		@SuppressWarnings("unchecked")
+		Set<String> result = (Set<String>) pjp.proceed();
+		return verifySourceIdSet(result);
+	}
+
+	/**
+	 * Enforce node ID and source ID policy restrictions when requesting the
 	 * available sources of a node.
 	 * 
 	 * First the node ID is verified. Then, for all returned source ID values,
@@ -165,6 +196,10 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		// verify source IDs in result
 		@SuppressWarnings("unchecked")
 		Set<String> result = (Set<String>) pjp.proceed();
+		return verifySourceIdSet(result);
+	}
+
+	private Set<String> verifySourceIdSet(Set<String> result) {
 		if ( result == null || result.isEmpty() ) {
 			return result;
 		}
@@ -189,6 +224,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			result = Collections.emptySet();
 		}
 		return result;
+
 	}
 
 	/**

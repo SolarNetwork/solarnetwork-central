@@ -38,6 +38,7 @@ import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -53,7 +54,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -330,17 +331,30 @@ public class MyBatisGeneralNodeDatumDao
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		if ( nodeId != null ) {
-			params.put(PARAM_NODE_ID, nodeId);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(nodeId);
+		filter.setStartDate(start);
+		filter.setEndDate(end);
+		return getAvailableSources(filter);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
+		GeneralNodeDatumFilter f = filter;
+		if ( f.getStartDate() != null || f.getEndDate() != null ) {
+			// round dates to days, because we are searching day data
+			DatumFilterCommand c = new DatumFilterCommand();
+			c.setNodeIds(f.getNodeIds());
+			if ( f.getStartDate() != null ) {
+				c.setStartDate(f.getStartDate().dayOfMonth().roundFloorCopy());
+			}
+			if ( f.getEndDate() != null ) {
+				c.setEndDate(f.getEndDate().dayOfMonth().roundCeilingCopy());
+			}
+			f = c;
 		}
-		if ( start != null ) {
-			params.put(PARAM_START_DATE, start);
-		}
-		if ( end != null ) {
-			params.put(PARAM_END_DATE, end);
-		}
-		List<String> results = getSqlSession().selectList(this.queryForDistinctSources, params);
+		List<String> results = getSqlSession().selectList(this.queryForDistinctSources, f);
 		return new LinkedHashSet<String>(results);
 	}
 

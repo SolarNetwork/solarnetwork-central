@@ -28,6 +28,7 @@ package net.solarnetwork.central.query.biz;
 
 import java.util.List;
 import java.util.Set;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
@@ -43,13 +44,12 @@ import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.domain.ReportableInterval;
-import org.joda.time.DateTime;
 
 /**
  * API for querying business logic.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface QueryBiz {
 
@@ -64,7 +64,7 @@ public interface QueryBiz {
 	 * range of data available.
 	 * </p>
 	 * <p>
-	 * If the {@code sourceId} parameter is <em>null</em> then the returned
+	 * If the {@code sourceId} parameter is {@literal null} then the returned
 	 * interval will be for the node as a whole, for any sources.
 	 * </p>
 	 * 
@@ -72,7 +72,8 @@ public interface QueryBiz {
 	 *        the ID of the node to look for
 	 * @param sourceId
 	 *        an optional source ID to find the available interval for
-	 * @return ReadableInterval instance, or <em>null</em> if no data available
+	 * @return ReadableInterval instance, or {@literal null} if no data
+	 *         available
 	 */
 	ReportableInterval getReportableInterval(Long nodeId, String sourceId);
 
@@ -86,9 +87,25 @@ public interface QueryBiz {
 	 *        an optional start date (inclusive) to filter on
 	 * @param end
 	 *        an optional end date (inclusive) to filter on
-	 * @return the distinct source IDs available (never <em>null</em>)
+	 * @return the distinct source IDs available (never {@literal null})
 	 */
 	Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end);
+
+	/**
+	 * Get the available source IDs for a given filter.
+	 * 
+	 * <p>
+	 * The filter is expected to provide a node ID. Multiple node IDs may be
+	 * provided. Start and end dates may be provided to limit the query to a
+	 * specific date range.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @return the distinct source IDs available (never {@literal null})
+	 * @since 2.1
+	 */
+	Set<String> getAvailableSources(GeneralNodeDatumFilter filter);
 
 	/**
 	 * API for querying for a filtered set of GeneralNodeDatum results from all
@@ -102,7 +119,7 @@ public interface QueryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@literal null}
 	 * @since 1.4
 	 */
 	FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
@@ -121,12 +138,12 @@ public interface QueryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@literal null}
 	 * @since 1.4
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max);
 
 	/**
 	 * API for querying for a filtered set of
@@ -141,7 +158,7 @@ public interface QueryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@literal null}
 	 * @since 1.5
 	 */
 	FilterResults<GeneralLocationDatumFilterMatch> findGeneralLocationDatum(
@@ -161,7 +178,7 @@ public interface QueryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@literal null}
 	 * @since 1.5
 	 */
 	FilterResults<ReportingGeneralLocationDatumMatch> findAggregateGeneralLocationDatum(
@@ -178,7 +195,7 @@ public interface QueryBiz {
 	 *        an optional start date (inclusive) to filter on
 	 * @param end
 	 *        an optional end date (inclusive) to filter on
-	 * @return the distinct source IDs available (never <em>null</em>)
+	 * @return the distinct source IDs available (never {@literal null})
 	 * @since 1.5
 	 */
 	Set<String> getLocationAvailableSources(Long locationId, DateTime start, DateTime end);
@@ -194,7 +211,7 @@ public interface QueryBiz {
 	 * range of data available.
 	 * </p>
 	 * <p>
-	 * If the {@code sourceId} parameter is <em>null</em> then the returned
+	 * If the {@code sourceId} parameter is {@literal null} then the returned
 	 * interval will be for the node as a whole, for any sources.
 	 * </p>
 	 * 
@@ -202,7 +219,8 @@ public interface QueryBiz {
 	 *        the ID of the location to look for
 	 * @param sourceId
 	 *        an optional source ID to find the available interval for
-	 * @return ReadableInterval instance, or <em>null</em> if no data available
+	 * @return ReadableInterval instance, or {@literal null} if no data
+	 *         available
 	 * @since 1.5
 	 */
 	ReportableInterval getLocationReportableInterval(Long locationId, String sourceId);
@@ -220,7 +238,7 @@ public interface QueryBiz {
 	 * @param max
 	 *        an optional maximum number of returned results
 	 * 
-	 * @return the results, never <em>null</em>
+	 * @return the results, never {@literal null}
 	 * @since 1.4
 	 */
 	FilterResults<LocationMatch> findFilteredLocations(Location filter,

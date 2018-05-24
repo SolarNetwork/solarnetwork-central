@@ -996,3 +996,83 @@ BEGIN
 
 END;$BODY$
   LANGUAGE plpgsql STABLE;
+
+
+/**
+ * Find distinct sources for a set of node IDs.
+ *
+ * @param nodes The IDs of the nodes to query for.
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_available_sources(nodes bigint[])
+	RETURNS TABLE(source_id text) LANGUAGE sql STABLE ROWS 50 AS
+$$
+	SELECT DISTINCT CAST(d.source_id AS text)
+	FROM solaragg.agg_datum_daily d
+	WHERE d.node_id = ANY(nodes)
+	ORDER BY source_id
+$$;
+
+
+/**
+ * Find distinct sources for a set of node IDs and minimum date.
+ *
+ * This function searches the <code>solaragg.agg_datum_daily</code> table only,
+ * so the date filter is approximate.
+ *
+ * @param nodes The IDs of the nodes to query for.
+ * @param sdate The minimum datum date to consider, inclusive.
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_available_sources_since(nodes bigint[], sdate timestamp with time zone)
+	RETURNS TABLE(source_id text) LANGUAGE sql STABLE ROWS 50 AS
+$$
+	SELECT DISTINCT CAST(d.source_id AS text)
+	FROM solaragg.agg_datum_daily d
+	WHERE d.node_id = ANY(nodes)
+		AND d.ts_start >= sdate
+	ORDER BY source_id
+$$;
+
+
+/**
+ * Find distinct sources for a set of node IDs and maximum date.
+ *
+ * This function searches the <code>solaragg.agg_datum_daily</code> table only,
+ * so the date filter is approximate.
+ *
+ * @param nodes The IDs of the nodes to query for.
+ * @param edate The maximum datum date to consider, exclusive.
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_available_sources_before(nodes bigint[], edate timestamp with time zone)
+	RETURNS TABLE(source_id text) LANGUAGE sql STABLE ROWS 50 AS
+$$
+	SELECT DISTINCT CAST(d.source_id AS text)
+	FROM solaragg.agg_datum_daily d
+	WHERE d.node_id = ANY(nodes)
+		AND d.ts_start < edate
+	ORDER BY source_id
+$$;
+
+
+/**
+ * Find distinct sources for a set of node IDs and a date range.
+ *
+ * This function searches the <code>solaragg.agg_datum_daily</code> table only,
+ * so the date filter is approximate.
+ *
+ * @param nodes The IDs of the nodes to query for.
+ * @param sdate The minimum datum date to consider, inclusive.
+ * @param edate The maximum datum date to consider, exclusive.
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_available_sources(
+		nodes bigint[],
+		sdate timestamp with time zone,
+		edate timestamp with time zone)
+	RETURNS TABLE(source_id text) LANGUAGE sql STABLE ROWS 50 AS
+$$
+	SELECT DISTINCT CAST(d.source_id AS text)
+	FROM solaragg.agg_datum_daily d
+	WHERE d.node_id = ANY(nodes)
+		AND d.ts_start >= sdate
+		AND d.ts_start < edate
+	ORDER BY source_id
+$$;

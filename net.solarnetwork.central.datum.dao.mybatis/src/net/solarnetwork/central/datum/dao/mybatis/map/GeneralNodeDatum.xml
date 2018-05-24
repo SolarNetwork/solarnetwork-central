@@ -55,8 +55,33 @@
 			AND datum.source_id = #{sourceId}
 	</select>
 
-	<select id="find-general-distinct-sources" resultType="string" statementType="CALLABLE">
-		{call solardatum.find_available_sources(#{node,jdbcType=BIGINT}, #{start,jdbcType=TIMESTAMP}, #{end,jdbcType=TIMESTAMP})}
+	<select id="find-general-distinct-sources" parameterType="net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter" resultType="string" statementType="CALLABLE">
+		<choose>
+			<when test="startDate != null and endDate != null">
+				{call solaragg.find_available_sources(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+					, #{startDate,jdbcType=TIMESTAMP}
+					, #{endDate,jdbcType=TIMESTAMP}
+				)}
+			</when>
+			<when test="startDate != null">
+				{call solaragg.find_available_sources_since(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+					, #{startDate,jdbcType=TIMESTAMP}
+				)}
+			</when>
+			<when test="endDate != null">
+				{call solaragg.find_available_sources_before(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+					, #{endDate,jdbcType=TIMESTAMP}
+				)}
+			</when>
+			<otherwise>
+				{call solaragg.find_available_sources(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+				)}
+			</otherwise>
+		</choose>
 	</select>
 	
 	<parameterMap id="pmap-reportable-interval" type="map">

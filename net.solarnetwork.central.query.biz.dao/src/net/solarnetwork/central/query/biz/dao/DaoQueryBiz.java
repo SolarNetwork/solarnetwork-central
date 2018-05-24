@@ -70,7 +70,7 @@ import net.solarnetwork.central.query.domain.ReportableInterval;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -115,6 +115,13 @@ public class DaoQueryBiz implements QueryBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end) {
 		return generalNodeDatumDao.getAvailableSources(nodeId, start, end);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
