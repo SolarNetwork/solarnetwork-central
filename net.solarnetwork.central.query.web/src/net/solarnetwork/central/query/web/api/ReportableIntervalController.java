@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
@@ -56,7 +57,7 @@ import net.solarnetwork.web.domain.Response;
  * </p>
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
@@ -193,8 +194,11 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
 			"!metadataFilter" })
 	public Response<Set<String>> getAvailableSources(GeneralReportableIntervalCommand cmd) {
-		Set<String> data = queryBiz.getAvailableSources(cmd.getNodeId(), cmd.getStartDate(),
-				cmd.getEndDate());
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setNodeIds(cmd.getNodeIds());
+		f.setStartDate(cmd.getStartDate());
+		f.setEndDate(cmd.getEndDate());
+		Set<String> data = queryBiz.getAvailableSources(f);
 
 		// support filtering based on sourceId path pattern
 		data = filterSources(data, this.pathMatcher, cmd.getSourceId());
