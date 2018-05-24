@@ -88,7 +88,10 @@ public interface QueryBiz {
 	 * @param end
 	 *        an optional end date (inclusive) to filter on
 	 * @return the distinct source IDs available (never {@literal null})
+	 * @deprecated since 2.1; use
+	 *             {@link #getAvailableSources(GeneralNodeDatumFilter)}
 	 */
+	@Deprecated
 	Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end);
 
 	/**
@@ -98,6 +101,11 @@ public interface QueryBiz {
 	 * The filter is expected to provide a node ID. Multiple node IDs may be
 	 * provided. Start and end dates may be provided to limit the query to a
 	 * specific date range.
+	 * </p>
+	 * 
+	 * <p>
+	 * <b>Note</b> that the precision of dates may be rounded by implementations
+	 * when executing the query, for performance reasons.
 	 * </p>
 	 * 
 	 * @param filter

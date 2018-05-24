@@ -111,6 +111,7 @@ public class DaoQueryBiz implements QueryBiz {
 		return new ReportableInterval(interval, (tz == null ? null : tz.toTimeZone()));
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end) {
@@ -120,8 +121,7 @@ public class DaoQueryBiz implements QueryBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
-		// TODO Auto-generated method stub
-		return null;
+		return generalNodeDatumDao.getAvailableSources(filter);
 	}
 
 	@Override

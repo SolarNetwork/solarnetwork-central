@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.query.biz.dao.test;
 
+import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,6 +36,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Resource;
+import org.joda.time.DateTime;
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -52,21 +58,18 @@ import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.support.SimpleSortDescriptor;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
-import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Unit test for the {@link DaoQueryBiz} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 
 	private final String TEST_SOURCE_ID = "test.source";
 	private final String TEST_SOURCE_ID2 = "test.source.2";
+	private final Long TEST_NODE_ID2 = -2L;
 
 	@Resource
 	private DaoQueryBiz daoQueryBiz;
@@ -190,6 +193,35 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	}
 
 	@Test
+	public void getAvailableSourcesGeneralNodeDatumMultipleNodes() {
+		GeneralNodeDatum d = getTestGeneralNodeDatumInstance();
+		generalNodeDatumDao.store(d);
+
+		GeneralNodeDatum d2 = getTestGeneralNodeDatumInstance();
+		d2.setCreated(d2.getCreated().plusHours(1));
+		generalNodeDatumDao.store(d2);
+
+		GeneralNodeDatum d3 = getTestGeneralNodeDatumInstance();
+		d3.setNodeId(TEST_NODE_ID2);
+		d3.setSourceId(TEST_SOURCE_ID2);
+		generalNodeDatumDao.store(d3);
+
+		GeneralNodeDatum d4 = getTestGeneralNodeDatumInstance();
+		d4.setCreated(d3.getCreated().plusHours(1));
+		d4.setNodeId(TEST_NODE_ID2);
+		d4.setSourceId(TEST_SOURCE_ID2);
+		generalNodeDatumDao.store(d4);
+
+		// immediately process reporting data, which the DAO relies on
+		processAggregateStaleData();
+
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID2 });
+		Set<String> result = daoQueryBiz.getAvailableSources(f);
+		assertThat("Source IDs set", result, contains(TEST_SOURCE_ID, TEST_SOURCE_ID2));
+	}
+
+	@Test
 	public void getAvailableSourcesGeneralNodeDatumWithDateRange() {
 		GeneralNodeDatum d = getTestGeneralNodeDatumInstance();
 		generalNodeDatumDao.store(d);
@@ -204,14 +236,14 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 
 		Set<String> result;
 
-		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, d.getCreated(), d.getCreated()
-				.plusDays(1));
+		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, d.getCreated(),
+				d.getCreated().plusDays(1));
 		assertNotNull(result);
 		assertEquals(1, result.size());
 		assertTrue("1st result inclusive start date", result.contains(TEST_SOURCE_ID));
 
-		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, d.getCreated().plusDays(1), d
-				.getCreated().plusDays(2));
+		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, d.getCreated().plusDays(1),
+				d.getCreated().plusDays(2));
 		assertNotNull(result);
 		assertEquals("No results within date range", 0, result.size());
 
@@ -329,14 +361,14 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 
 		Set<String> result;
 
-		result = daoQueryBiz.getLocationAvailableSources(TEST_NODE_ID, d.getCreated(), d.getCreated()
-				.plusDays(1));
+		result = daoQueryBiz.getLocationAvailableSources(TEST_NODE_ID, d.getCreated(),
+				d.getCreated().plusDays(1));
 		assertNotNull(result);
 		assertEquals(1, result.size());
 		assertTrue("1st result inclusive start date", result.contains(TEST_SOURCE_ID));
 
-		result = daoQueryBiz.getLocationAvailableSources(TEST_NODE_ID, d.getCreated().plusDays(1), d
-				.getCreated().plusDays(2));
+		result = daoQueryBiz.getLocationAvailableSources(TEST_NODE_ID, d.getCreated().plusDays(1),
+				d.getCreated().plusDays(2));
 		assertNotNull(result);
 		assertEquals("No results within date range", 0, result.size());
 
