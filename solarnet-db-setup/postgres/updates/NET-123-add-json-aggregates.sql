@@ -1,23 +1,22 @@
 /* sum json number */
 
+/** JSONB number sum aggregate state transition function. */
 CREATE OR REPLACE FUNCTION solarcommon.jsonb_sum_sfunc(agg_state jsonb, el jsonb)
 RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	return (!agg_state ? el : agg_state + el);
 $$;
 
-CREATE OR REPLACE FUNCTION solarcommon.jsonb_sum_finalfunc(agg_state jsonb)
-RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
-    return agg_state;
-$$;
-
+/**
+ * Sum aggregate for JSON number values, resulting in a JSON number.
+ */
 CREATE AGGREGATE solarcommon.jsonb_sum(jsonb) (
     sfunc = solarcommon.jsonb_sum_sfunc,
-    stype = jsonb,
-    finalfunc = solarcommon.jsonb_sum_finalfunc
+    stype = jsonb
 );
 
 /* sum json object */
 
+/** JSONB object sum aggregate state transition function. */
 CREATE OR REPLACE FUNCTION solarcommon.jsonb_sum_object_sfunc(agg_state jsonb, el jsonb)
 RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	'use strict';
@@ -34,19 +33,27 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	return agg_state;
 $$;
 
-CREATE OR REPLACE FUNCTION solarcommon.jsonb_sum_object_finalfunc(agg_state jsonb)
-RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
-    return agg_state;
-$$;
-
+/**
+ * Sum aggregate for JSON object values, resulting in JSON object.
+ *
+ * This aggregate will sum the _properties_ of JSON objects, resulting in a JSON object.
+ * For example, if aggregating objects like:
+ *
+ *     {"watts":123, "wattHours":234}
+ *     {"watts":234, "wattHours":345}
+ *
+ * the resulting object would be:
+ *
+ *    {"watts":357, "wattHours":579}
+ */
 CREATE AGGREGATE solarcommon.jsonb_sum_object(jsonb) (
     sfunc = solarcommon.jsonb_sum_object_sfunc,
-    stype = jsonb,
-    finalfunc = solarcommon.jsonb_sum_object_finalfunc
+    stype = jsonb
 );
 
 /* average json number */
 
+/** JSONB number average aggregate state transition function. */
 CREATE OR REPLACE FUNCTION solarcommon.jsonb_avg_sfunc(agg_state jsonb, el jsonb)
 RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	'use strict';
@@ -60,12 +67,16 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	return agg_state;
 $$;
 
+/** JSONB number average aggregate final calculation function. */
 CREATE OR REPLACE FUNCTION solarcommon.jsonb_avg_finalfunc(agg_state jsonb)
 RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	'use strict';
     return (agg_state.c > 0 ? agg_state.s / agg_state.c : null);
 $$;
 
+/**
+ * Average aggregate for JSON number values, resulting in a JSON number.
+ */
 CREATE AGGREGATE solarcommon.jsonb_avg(jsonb) (
     sfunc = solarcommon.jsonb_avg_sfunc,
     stype = jsonb,
@@ -74,6 +85,7 @@ CREATE AGGREGATE solarcommon.jsonb_avg(jsonb) (
 
 /* average json object */
 
+/** JSONB object average aggregate state transition function. */
 CREATE OR REPLACE FUNCTION solarcommon.jsonb_avg_object_sfunc(agg_state jsonb, el jsonb)
 RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	'use strict';
@@ -98,6 +110,7 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	return agg_state;
 $$;
 
+/** JSONB object average aggregate final calculation function. */
 CREATE OR REPLACE FUNCTION solarcommon.jsonb_avg_object_finalfunc(agg_state jsonb)
 RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	'use strict';
@@ -105,6 +118,19 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	return calculateAverages(agg_state.d, agg_state.c);
 $$;
 
+/**
+ * Average aggregate for JSON object values, resulting in JSON object.
+ *
+ * This aggregate will sum the _properties_ of JSON objects, resulting in a JSON object.
+ * For example, if aggregating objects like:
+ *
+ *     {"watts":123, "wattHours":234}
+ *     {"watts":234, "wattHours":345}
+ *
+ * the resulting object would be:
+ *
+ *    {"watts":178.5, "wattHours":289.5}
+ */
 CREATE AGGREGATE solarcommon.jsonb_avg_object(jsonb) (
     sfunc = solarcommon.jsonb_avg_object_sfunc,
     stype = jsonb,
