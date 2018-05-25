@@ -35,7 +35,7 @@ import org.joda.time.LocalTime;
  * Array handler for {@link LocalTime} objects stored as {@link Time} objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JodaLocalTimeArrayTypeHandler extends BaseArrayTypeHandler {
 
@@ -44,15 +44,14 @@ public class JodaLocalTimeArrayTypeHandler extends BaseArrayTypeHandler {
 	}
 
 	@Override
-	public void setNonNullParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType)
+	public void setNonNullParameter(PreparedStatement ps, int i, Object[] parameter, JdbcType jdbcType)
 			throws SQLException {
 		if ( parameter == null ) {
 			ps.setNull(i, Types.ARRAY);
 		} else {
-			Object[] input = (Object[]) parameter;
-			Time[] output = new Time[input.length];
-			for ( int j = 0, len = input.length; j < len; j++ ) {
-				output[j] = JodaLocalTimeTypeHandler.getTime(input[j]);
+			Time[] output = new Time[parameter.length];
+			for ( int j = 0, len = parameter.length; j < len; j++ ) {
+				output[j] = JodaLocalTimeTypeHandler.getTime(parameter[j]);
 			}
 
 			Connection conn = ps.getConnection();

@@ -36,7 +36,7 @@ import org.joda.time.DateTime;
  * columns.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JodaDurationArrayTypeHandler extends BaseArrayTypeHandler {
 
@@ -48,15 +48,14 @@ public class JodaDurationArrayTypeHandler extends BaseArrayTypeHandler {
 	}
 
 	@Override
-	public void setNonNullParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType)
+	public void setNonNullParameter(PreparedStatement ps, int i, Object[] parameter, JdbcType jdbcType)
 			throws SQLException {
 		if ( parameter == null ) {
 			ps.setNull(i, Types.ARRAY);
 		} else {
-			Object[] input = (Object[]) parameter;
-			String[] output = new String[input.length];
-			for ( int j = 0, len = input.length; j < len; j++ ) {
-				output[j] = JodaDurationTypeHandler.getDuration(input[j]);
+			String[] output = new String[parameter.length];
+			for ( int j = 0, len = parameter.length; j < len; j++ ) {
+				output[j] = JodaDurationTypeHandler.getDuration(parameter[j]);
 			}
 
 			Connection conn = ps.getConnection();

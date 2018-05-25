@@ -36,9 +36,9 @@ import org.apache.ibatis.type.JdbcType;
  * Base {@link org.apache.ibatis.type.TypeHandler} for SQL arrays.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public abstract class BaseArrayTypeHandler extends BaseTypeHandler<Object> {
+public abstract class BaseArrayTypeHandler extends BaseTypeHandler<Object[]> {
 
 	final protected String elementJdbcType;
 
@@ -53,33 +53,33 @@ public abstract class BaseArrayTypeHandler extends BaseTypeHandler<Object> {
 	}
 
 	@Override
-	public void setNonNullParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType)
+	public void setNonNullParameter(PreparedStatement ps, int i, Object[] parameter, JdbcType jdbcType)
 			throws SQLException {
 		if ( parameter == null ) {
 			ps.setNull(i, Types.ARRAY);
 		} else {
 			Connection conn = ps.getConnection();
-			Array loc = conn.createArrayOf(elementJdbcType, (Object[]) parameter);
+			Array loc = conn.createArrayOf(elementJdbcType, parameter);
 			ps.setArray(i, loc);
 		}
 	}
 
 	@Override
-	public Object getNullableResult(ResultSet rs, String columnName) throws SQLException {
+	public Object[] getNullableResult(ResultSet rs, String columnName) throws SQLException {
 		Array result = rs.getArray(columnName);
-		return (result == null ? null : result.getArray());
+		return (result == null ? null : (Object[]) result.getArray());
 	}
 
 	@Override
-	public Object getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+	public Object[] getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
 		Array result = rs.getArray(columnIndex);
-		return (result == null ? null : result.getArray());
+		return (result == null ? null : (Object[]) result.getArray());
 	}
 
 	@Override
-	public Object getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
+	public Object[] getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
 		Array result = cs.getArray(columnIndex);
-		return (result == null ? null : result.getArray());
+		return (result == null ? null : (Object[]) result.getArray());
 	}
 
 }
