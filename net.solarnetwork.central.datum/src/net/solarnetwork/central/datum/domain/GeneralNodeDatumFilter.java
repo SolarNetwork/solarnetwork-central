@@ -22,13 +22,17 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import net.solarnetwork.central.domain.NodeMappingFilter;
+import net.solarnetwork.central.domain.SourceMappingFilter;
+
 /**
  * Filter API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
-public interface GeneralNodeDatumFilter extends CommonFilter {
+public interface GeneralNodeDatumFilter
+		extends CommonFilter, CombiningFilter, NodeMappingFilter, SourceMappingFilter {
 
 	/**
 	 * Get the first node ID. This returns the first available node ID from the
