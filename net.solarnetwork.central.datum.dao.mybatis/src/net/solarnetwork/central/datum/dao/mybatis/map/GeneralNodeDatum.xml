@@ -328,6 +328,36 @@
 			,#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz
 		</if>
 	</sql>
+	
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-combine-cte">
+		<if test="combine != null">
+			<foreach collection="combine.configs" open="WITH" separator="," item="config">
+				${config.name}_mappings AS (
+					SELECT m.ids, v.vid
+					FROM solarcommon.reduce_dim(
+						<choose>
+							<when test="config.name == 'node'">
+								#{config.idSets,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
+							</when>
+							<otherwise>
+								#{config.idSets,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+							</otherwise>
+						</choose>
+						) WITH ORDINALITY AS m(ids,n)
+					JOIN unnest(
+						<choose>
+							<when test="config.name == 'node'">
+								#{config.virtualIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
+							</when>
+							<otherwise>
+								#{config.virtualIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+							</otherwise>
+						</choose>
+					) WITH ORDINALITY AS v(vid,n) ON v.n = m.n
+				)
+			</foreach>
+		</if>
+	</sql>
 
 	<!-- Aggregated query: Minute -->
 
@@ -342,6 +372,7 @@
 	<!-- Aggregated query: hour -->
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour-count" resultType="long">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT count(datum.ts_start)
 		FROM
 			solaragg.agg_datum_hourly_data datum
@@ -349,6 +380,7 @@
 	</select>
 	
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM

@@ -23,7 +23,9 @@
 package net.solarnetwork.central.datum.dao.mybatis;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,7 @@ import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
@@ -87,6 +90,13 @@ public class MyBatisGeneralNodeDatumDao
 
 	/** The query parameter for a general {@link Filter} object value. */
 	public static final String PARAM_FILTER = "filter";
+
+	/**
+	 * The query parameter for a combining data structure.
+	 * 
+	 * @since 1.5
+	 */
+	public static final String PARAM_COMBINING = "combine";
 
 	/** The default query name used for {@link #getReportableInterval(Long)}. */
 	public static final String QUERY_FOR_REPORTABLE_INTERVAL = "find-general-reportable-interval";
@@ -195,6 +205,36 @@ public class MyBatisGeneralNodeDatumDao
 		}
 	}
 
+	private Map<String, Object> getCombiningFilterProperties(GeneralNodeDatumFilter filter) {
+		Map<Long, Set<Long>> nodeMappings = filter.getNodeIdMappings();
+		Map<String, Set<String>> sourceMappings = filter.getSourceIdMappings();
+		if ( (nodeMappings == null || nodeMappings.isEmpty())
+				&& (sourceMappings == null || sourceMappings.isEmpty()) ) {
+			return null;
+		}
+		CombiningType type = filter.getCombiningType();
+		if ( type == null ) {
+			type = CombiningType.Sum;
+		}
+		Map<String, Object> props = new LinkedHashMap<String, Object>(3);
+		props.put("type", type.getKey());
+		List<CombineConfig<Object>> configs = new ArrayList<CombineConfig<Object>>(2);
+		if ( nodeMappings != null && !nodeMappings.isEmpty() ) {
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			CombineConfig<Object> config = (CombineConfig) new CombineConfig<Long>("node", nodeMappings,
+					Long.class);
+			configs.add(config);
+		}
+		if ( sourceMappings != null && !sourceMappings.isEmpty() ) {
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			CombineConfig<Object> config = (CombineConfig) new CombineConfig<String>("source",
+					sourceMappings, String.class);
+			configs.add(config);
+		}
+		props.put("configs", configs);
+		return props;
+	}
+
 	@Override
 	// Propagation.REQUIRED for server-side cursors
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
@@ -210,6 +250,10 @@ public class MyBatisGeneralNodeDatumDao
 				&& ((AggregationFilter) filter).getAggregation() != null ) {
 			throw new IllegalArgumentException(
 					"Aggregation not allowed on a filter for most recent datum");
+		}
+		Map<String, Object> combining = getCombiningFilterProperties(filter);
+		if ( combining != null ) {
+			sqlProps.put(PARAM_COMBINING, combining);
 		}
 		//postProcessFilterProperties(filter, sqlProps);
 
@@ -248,17 +292,7 @@ public class MyBatisGeneralNodeDatumDao
 		setupAggregationParam(filter, sqlProps);
 		//postProcessAggregationFilterProperties(filter, sqlProps);
 
-		// attempt count first, if NOT mostRecent query and max NOT specified as -1
-		// and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
-		Long totalCount = null;
 		final Aggregation agg = filter.getAggregation();
-		if ( !filter.isMostRecent() && !filter.isWithoutTotalResultsCount() && max != null
-				&& max.intValue() != -1 && (agg.getLevel() < 1 || agg.compareTo(Aggregation.Hour) >= 0)
-				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
-				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
-				&& agg != Aggregation.RunningTotal ) {
-			totalCount = executeCountQuery(query + "-count", sqlProps);
-		}
 		if ( agg != null && agg.getLevel() > 0 && agg.compareLevel(Aggregation.Hour) < 1 ) {
 			// make sure start/end date provided for minute level aggregation queries as query expects it
 			DateTime forced = null;
@@ -274,6 +308,22 @@ public class MyBatisGeneralNodeDatumDao
 		} else if ( agg != null && agg == Aggregation.RunningTotal && filter.getSourceId() == null ) {
 			// source ID is required for RunningTotal currently
 			throw new IllegalArgumentException("sourceId is required for RunningTotal aggregation");
+		}
+
+		Map<String, Object> combining = getCombiningFilterProperties(filter);
+		if ( combining != null ) {
+			sqlProps.put(PARAM_COMBINING, combining);
+		}
+
+		// attempt count first, if NOT mostRecent query and max NOT specified as -1
+		// and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
+		Long totalCount = null;
+		if ( !filter.isMostRecent() && !filter.isWithoutTotalResultsCount() && max != null
+				&& max.intValue() != -1 && (agg.getLevel() < 1 || agg.compareTo(Aggregation.Hour) >= 0)
+				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
+				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
+				&& agg != Aggregation.RunningTotal ) {
+			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
 
 		List<ReportingGeneralNodeDatumMatch> rows;
