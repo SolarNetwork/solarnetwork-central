@@ -25,7 +25,6 @@ package net.solarnetwork.central.datum.dao.mybatis;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +91,7 @@ public class MyBatisGeneralNodeDatumDao
 	public static final String PARAM_FILTER = "filter";
 
 	/**
-	 * The query parameter for a combining data structure.
+	 * The query parameter for a {@link CombiningConfig} data structure.
 	 * 
 	 * @since 1.5
 	 */
@@ -205,34 +204,33 @@ public class MyBatisGeneralNodeDatumDao
 		}
 	}
 
-	private Map<String, Object> getCombiningFilterProperties(GeneralNodeDatumFilter filter) {
+	private CombiningConfig getCombiningFilterProperties(GeneralNodeDatumFilter filter) {
 		Map<Long, Set<Long>> nodeMappings = filter.getNodeIdMappings();
 		Map<String, Set<String>> sourceMappings = filter.getSourceIdMappings();
 		if ( (nodeMappings == null || nodeMappings.isEmpty())
 				&& (sourceMappings == null || sourceMappings.isEmpty()) ) {
 			return null;
 		}
-		CombiningType type = filter.getCombiningType();
-		if ( type == null ) {
-			type = CombiningType.Sum;
-		}
-		Map<String, Object> props = new LinkedHashMap<String, Object>(3);
-		props.put("type", type.getKey());
-		List<CombineConfig<Object>> configs = new ArrayList<CombineConfig<Object>>(2);
+		List<CombineIdsConfig<Object>> configs = new ArrayList<CombineIdsConfig<Object>>(2);
 		if ( nodeMappings != null && !nodeMappings.isEmpty() ) {
 			@SuppressWarnings({ "unchecked", "rawtypes" })
-			CombineConfig<Object> config = (CombineConfig) new CombineConfig<Long>("node", nodeMappings,
-					Long.class);
+			CombineIdsConfig<Object> config = (CombineIdsConfig) new CombineIdsConfig<Long>(
+					CombiningConfig.NODE_IDS_CONFIG, nodeMappings, Long.class);
 			configs.add(config);
 		}
 		if ( sourceMappings != null && !sourceMappings.isEmpty() ) {
 			@SuppressWarnings({ "unchecked", "rawtypes" })
-			CombineConfig<Object> config = (CombineConfig) new CombineConfig<String>("source",
-					sourceMappings, String.class);
+			CombineIdsConfig<Object> config = (CombineIdsConfig) new CombineIdsConfig<String>(
+					CombiningConfig.SOURCE_IDS_CONFIG, sourceMappings, String.class);
 			configs.add(config);
 		}
-		props.put("configs", configs);
-		return props;
+
+		CombiningType type = filter.getCombiningType();
+		if ( type == null ) {
+			type = CombiningType.Sum;
+		}
+
+		return new CombiningConfig(type, configs);
 	}
 
 	@Override
@@ -251,7 +249,7 @@ public class MyBatisGeneralNodeDatumDao
 			throw new IllegalArgumentException(
 					"Aggregation not allowed on a filter for most recent datum");
 		}
-		Map<String, Object> combining = getCombiningFilterProperties(filter);
+		CombiningConfig combining = getCombiningFilterProperties(filter);
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
@@ -310,7 +308,7 @@ public class MyBatisGeneralNodeDatumDao
 			throw new IllegalArgumentException("sourceId is required for RunningTotal aggregation");
 		}
 
-		Map<String, Object> combining = getCombiningFilterProperties(filter);
+		CombiningConfig combining = getCombiningFilterProperties(filter);
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}

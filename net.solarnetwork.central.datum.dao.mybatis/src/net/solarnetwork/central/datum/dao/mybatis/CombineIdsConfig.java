@@ -1,5 +1,5 @@
 /* ==================================================================
- * CombineConfig.java - 25/05/2018 5:04:00 PM
+ * CombineIdsConfig.java - 25/05/2018 5:04:00 PM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -27,18 +27,20 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Data structure to help with combining query execution.
+ * A mapping of a set of real IDs to virtual IDs, to help with combining query
+ * execution.
  * 
  * @author matt
  * @version 1.0
+ * @since 2.7
  */
-public class CombineConfig<T> {
+public class CombineIdsConfig<T> {
 
 	private final String name;
 	private final T[][] idSets;
 	private final T[] virtualIds;
 
-	public CombineConfig(String name, Map<T, Set<T>> mapping, Class<T> clazz) {
+	public CombineIdsConfig(String name, Map<T, Set<T>> mapping, Class<T> clazz) {
 		super();
 		this.name = name;
 		this.idSets = combiningNormalizedArray(mapping, clazz);

@@ -1,3 +1,23 @@
+/**
+ * Reduce a 2d array into a set of 1d arrays.
+ */
+CREATE OR REPLACE FUNCTION solarcommon.reduce_dim(anyarray)
+  RETURNS SETOF anyarray LANGUAGE plpgsql IMMUTABLE AS
+$$
+DECLARE
+	s $1%TYPE;
+BEGIN
+	FOREACH s SLICE 1  IN ARRAY $1 LOOP
+		RETURN NEXT s;
+	END LOOP;
+	RETURN;
+END;
+$$;
+
+
+/* ========================================
+   ======================================== */
+
 -- UPDATE result table to include node_id column, so can be joined to other tables
 DROP FUNCTION solaragg.calc_datum_time_slots(bigint, text[], timestamp with time zone, interval, integer, interval);
 CREATE OR REPLACE FUNCTION solaragg.calc_datum_time_slots(
