@@ -132,16 +132,10 @@
 	<sql id="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where">
 		<where>
 			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
-				AND datum.source_id IN
-				<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
-					#{source,javaType=string,jdbcType=VARCHAR}
-				</foreach>
+				AND datum.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
-				AND datum.node_id IN
-				<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
-					#{node,javaType=long,jdbcType=BIGINT}
-				</foreach>
+				AND datum.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[])
 			</if>
 			<if test="filter.startDate != null">
 				AND datum.ts &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
@@ -198,16 +192,10 @@
 		FROM solaragg.aud_datum_hourly aud
 		<where>
 			<if test="nodeIds != null and nodeIds.length > 0">
-				AND aud.node_id IN
-				<foreach collection="nodeIds" open="(" close=")" separator="," item="node">
-					#{node,javaType=long,jdbcType=BIGINT}
-				</foreach>
+				AND aud.node_id = ANY(#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[])
 			</if>
 			<if test="sourceIds != null and sourceIds.length > 0">
-				AND aud.source_id IN
-				<foreach collection="sourceIds" open="(" close=")" separator="," item="source">
-					#{source,javaType=string,jdbcType=VARCHAR}
-				</foreach>
+				AND aud.source_id = ANY(#{sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 			<if test="startDate != null">
 				AND aud.ts_start &gt;= #{startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
@@ -270,16 +258,10 @@
 	<sql id="fragment-findall-ReportingGeneralNodeDatum-where">
 		<where>
 			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
-				AND datum.source_id IN
-				<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
-					#{source,javaType=string,jdbcType=VARCHAR}
-				</foreach>
+				AND datum.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
-				AND datum.node_id IN
-				<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
-					#{node,javaType=long,jdbcType=BIGINT}
-				</foreach>
+				AND datum.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[])
 			</if>
 			<if test="filter.startDate != null">
 				AND datum.ts_start &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
