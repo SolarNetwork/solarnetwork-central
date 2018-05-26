@@ -1116,8 +1116,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertThat("Result date is grouped", m.getId().getCreated().isEqual(startDate), equalTo(true));
 		assertThat("Result node ID is virutal", m.getId().getNodeId(), equalTo(-5000L));
 		assertThat("Result source ID is virutal", m.getId().getSourceId(), equalTo("Foobar"));
-		Map<String, ?> data = m.getSampleData();
-		assertThat("Aggregate Wh", data, hasEntry("watt_hours", (Object) 120));
+		assertThat("Aggregate Wh", m.getSampleData(), hasEntry("watt_hours", (Object) 120));
 	}
 
 	@Test
@@ -1529,6 +1528,56 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		for ( ReportingGeneralNodeDatumMatch match : results ) {
 			assertEquals("Wh for minute slot", Integer.valueOf(i < 3 ? 30 : 20),
 					match.getSampleData().get("watt_hours"));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFilteredAggregateFifteenMinuteCombined() {
+		setupTestNode(TEST_2ND_NODE);
+
+		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
+		DateTime startDate = new DateTime(2014, 2, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		for ( int i = 0; i < 12; i++ ) {
+			GeneralNodeDatum d = new GeneralNodeDatum();
+			d.setCreated(startDate.plusMinutes(i * 5));
+			d.setNodeId(TEST_NODE_ID);
+			d.setSourceId(TEST_SOURCE_ID);
+			d.setSampleJson("{\"a\":{\"watt_hours\":" + (i * 10) + "}}");
+			dao.store(d);
+			d.setNodeId(TEST_2ND_NODE);
+			d.setSourceId(TEST_2ND_SOURCE);
+			dao.store(d);
+		}
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(1));
+		criteria.setAggregate(Aggregation.FifteenMinute);
+		criteria.setNodeIdMappings(Collections.singletonMap(-5000L,
+				(Set<Long>) new LinkedHashSet<Long>(Arrays.asList(TEST_NODE_ID, TEST_2ND_NODE))));
+		criteria.setSourceIdMappings(
+				Collections.singletonMap("Foobar", (Set<String>) new LinkedHashSet<String>(
+						Arrays.asList(TEST_SOURCE_ID, TEST_2ND_SOURCE))));
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertThat("Results available", results, notNullValue());
+		assertThat("Total result count", results.getTotalResults(), equalTo(4L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(4));
+
+		int i = 0;
+		for ( ReportingGeneralNodeDatumMatch m : results ) {
+			DateTime slotDate = startDate.plusMinutes(i * 15);
+			assertThat("Result date is grouped", m.getId().getCreated().isEqual(slotDate),
+					equalTo(true));
+			assertThat("Result node ID is virutal", m.getId().getNodeId(), equalTo(-5000L));
+			assertThat("Result source ID is virutal", m.getId().getSourceId(), equalTo("Foobar"));
+			assertThat("Aggregate Wh for minute slot " + i + "(" + slotDate + ")", m.getSampleData(),
+					hasEntry("watt_hours", (Object) Integer.valueOf(i < 3 ? 30 : 20)));
 			i++;
 		}
 	}

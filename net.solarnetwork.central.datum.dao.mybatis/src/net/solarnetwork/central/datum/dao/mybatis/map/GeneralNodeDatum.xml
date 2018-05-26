@@ -373,16 +373,6 @@
 		</choose>
 	</sql>
 
-	<sql id="fragment-findall-ReportingGeneralNodeDatum-minuteagg-where">
-		solaragg.find_agg_datum_minute(
-			#{filter.nodeId,jdbcType=BIGINT},
-			#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
-			#{start,jdbcType=TIMESTAMP}::timestamptz,
-			#{end,jdbcType=TIMESTAMP}::timestamptz,
-			#{filter.aggregation.level}
-		) AS datum
-	</sql>
-
 	<sql id="fragment-findall-ReportingGeneralNodeDatum-agg-where">
 		#{filter.nodeId,jdbcType=BIGINT},
 		#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
@@ -398,10 +388,27 @@
 	<!-- Aggregated query: Minute -->
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Minute" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM
-		<include refid="fragment-findall-ReportingGeneralNodeDatum-minuteagg-where"/>
+			<choose>
+				<when test="combine != null">
+					solaragg.find_agg_datum_minute
+				</when>
+				<otherwise>
+					solaragg.find_agg_datum_minute_data
+				</otherwise>
+			</choose>
+			(
+				#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler},
+				#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
+				#{start,jdbcType=TIMESTAMP}::timestamptz,
+				#{end,jdbcType=TIMESTAMP}::timestamptz,
+				#{filter.aggregation.level}
+			) AS datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
 

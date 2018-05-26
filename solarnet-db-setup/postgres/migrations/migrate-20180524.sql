@@ -2,3 +2,4 @@
 
 \i updates/NET-123-add-json-aggregates.sql
 \i updates/NET-126-available-sources-multi-node.sql
+\i updates/NET-125-add-datum-grouping.sql

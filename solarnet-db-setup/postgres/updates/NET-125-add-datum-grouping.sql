@@ -15,9 +15,6 @@ END;
 $$;
 
 
-/* ========================================
-   ======================================== */
-
 -- UPDATE result table to include node_id column, so can be joined to other tables
 DROP FUNCTION solaragg.calc_datum_time_slots(bigint, text[], timestamp with time zone, interval, integer, interval);
 CREATE OR REPLACE FUNCTION solaragg.calc_datum_time_slots(
@@ -91,6 +88,66 @@ stmt.free();
 
 $BODY$;
 
+-- Fix to work with new node_id column in solaragg.calc_datum_time_slots
+CREATE OR REPLACE FUNCTION solaragg.find_running_datum(
+    IN node bigint,
+    IN sources text[],
+    IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
+  RETURNS TABLE(
+  	ts_start timestamp with time zone,
+  	local_date timestamp without time zone,
+  	node_id bigint,
+  	source_id text,
+  	jdata jsonb,
+  	weight integer)
+LANGUAGE sql
+STABLE AS
+$BODY$
+	-- get the node TZ, falling back to UTC if not available so we always have a time zone even if node not found
+	WITH nodetz AS (
+		SELECT n.node_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM solarnet.sn_node n
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE n.node_id = node
+		UNION ALL
+		SELECT node::bigint AS node_id, 'UTC'::character varying AS tz
+		WHERE NOT EXISTS (SELECT node_id FROM solarnet.sn_node WHERE node_id = node)
+	)
+	SELECT d.ts_start, d.local_date, d.node_id, d.source_id, solaragg.jdata_from_datum(d),
+		CAST(extract(epoch from (local_date + interval '1 month') - local_date) / 3600 AS integer) AS weight
+	FROM solaragg.agg_datum_monthly d
+	INNER JOIN nodetz ON nodetz.node_id = d.node_id
+	WHERE d.ts_start < date_trunc('month', end_ts AT TIME ZONE nodetz.tz) AT TIME ZONE nodetz.tz
+		AND d.source_id = ANY(sources)
+	UNION ALL
+	SELECT d.ts_start, d.local_date, d.node_id, d.source_id, solaragg.jdata_from_datum(d),
+		24::integer as weight
+	FROM solaragg.agg_datum_daily d
+	INNER JOIN nodetz ON nodetz.node_id = d.node_id
+	WHERE ts_start < date_trunc('day', end_ts AT TIME ZONE nodetz.tz) AT TIME ZONE nodetz.tz
+		AND d.ts_start >= date_trunc('month', end_ts AT TIME ZONE nodetz.tz) AT TIME ZONE nodetz.tz
+		AND d.source_id = ANY(sources)
+	UNION ALL
+	SELECT d.ts_start, d.local_date, d.node_id, d.source_id, solaragg.jdata_from_datum(d),
+		1::INTEGER as weight
+	FROM solaragg.agg_datum_hourly d
+	INNER JOIN nodetz ON nodetz.node_id = d.node_id
+	WHERE d.ts_start < date_trunc('hour', end_ts AT TIME ZONE nodetz.tz) AT TIME ZONE nodetz.tz
+		AND d.ts_start >= date_trunc('day', end_ts AT TIME ZONE nodetz.tz) AT TIME ZONE nodetz.tz
+		AND d.source_id = ANY(sources)
+	UNION ALL
+	SELECT ts_start, ts_start at time zone nodetz.tz AS local_date, nodetz.node_id, source_id, jdata, 1::integer as weight
+	FROM solaragg.calc_datum_time_slots(
+		node,
+		sources,
+		date_trunc('hour', end_ts),
+		interval '1 hour',
+		0,
+		interval '1 hour')
+	INNER JOIN nodetz ON nodetz.node_id = node
+	ORDER BY ts_start, source_id
+$BODY$;
+
 /**
  * Dynamically calculate minute-level time slot aggregate values for nodes and set of source IDs.
  *
@@ -99,6 +156,51 @@ $BODY$;
  * @param start_ts			the start timestamp
  * @param end_ts			the end timestamp
  * @param slotsecs			the number of seconds per time slot, e.g. 600 == 10 minutes.
+ * @param tolerance         maximum interval between datum to consider when aggregating
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_minute_data(
+	IN node bigint[],
+	IN source text[],
+	IN start_ts timestamp with time zone,
+	IN end_ts timestamp with time zone,
+	IN slotsecs integer DEFAULT 600,
+	IN tolerance interval DEFAULT interval '1 hour')
+  RETURNS TABLE(
+	node_id bigint,
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
+	source_id text,
+	jdata jsonb
+  ) LANGUAGE sql STABLE AS
+$$
+SELECT
+	n.node_id,
+	d.ts_start,
+	d.ts_start AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_date,
+	d.source_id,
+	d.jdata
+FROM solarnet.sn_node n
+INNER JOIN LATERAL solaragg.calc_datum_time_slots(
+	n.node_id,
+	source,
+	solaragg.minute_time_slot(start_ts, solaragg.slot_seconds(slotsecs)),
+	(end_ts - solaragg.minute_time_slot(start_ts, solaragg.slot_seconds(slotsecs))),
+	solaragg.slot_seconds(slotsecs),
+	tolerance
+) d ON d.node_id = n.node_id
+LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+WHERE n.node_id = ANY(node)
+$$;
+
+/**
+ * Dynamically calculate minute-level time slot aggregate values for nodes and set of source IDs.
+ *
+ * @param node				array of node IDs
+ * @param source			array of source IDs
+ * @param start_ts			the start timestamp
+ * @param end_ts			the end timestamp
+ * @param slotsecs			the number of seconds per time slot, e.g. 600 == 10 minutes.
+ * @param tolerance         maximum interval between datum to consider when aggregating
  */
 CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_minute(
 	IN node bigint[],
@@ -119,156 +221,23 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_minute(
   ) LANGUAGE sql STABLE AS
 $$
 SELECT
-	n.node_id,
+	d.node_id,
 	d.ts_start,
-	d.ts_start AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_date,
+	d.local_date,
 	d.source_id,
 	d.jdata->'i' AS jdata_i,
 	d.jdata->'a' AS jdata_a,
 	d.jdata->'s' AS jdata_s,
 	solarcommon.json_array_to_text_array(d.jdata->'t') AS jdata_t
-FROM solarnet.sn_node n
-INNER JOIN LATERAL solaragg.calc_datum_time_slots(
-	n.node_id,
+FROM solaragg.find_agg_datum_minute_data(
+	node,
 	source,
-	solaragg.minute_time_slot(start_ts, solaragg.slot_seconds(slotsecs)),
-	(end_ts - solaragg.minute_time_slot(start_ts, solaragg.slot_seconds(slotsecs))),
-	solaragg.slot_seconds(slotsecs),
+	start_ts,
+	end_ts,
+	slotsecs,
 	tolerance
-) d ON d.node_id = n.node_id
-LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-WHERE n.node_id = ANY(node)
+) d
 $$;
 
-/* =====
-   NEW
-   ===== */
-
-CREATE OR REPLACE FUNCTION solaragg.sum_datum_props_grouped_source_minute(
-	nodes bigint[],
-	sources text[],
-	sdate timestamptz,
-	edate timestamptz,
-	grouped_source text,
-	slotsecs integer DEFAULT 600,
-	tolerance interval DEFAULT interval '1 hour'
-	)
-  RETURNS TABLE(ts_start timestamp with time zone, local_date timestamp without time zone, node_id bigint, source_id text, jdata jsonb)
-  LANGUAGE sql STABLE AS
-$$
-	SELECT
-		d.ts_start,
-		min(d.local_date) AS local_date,
-		d.node_id AS node_id,
-		grouped_source AS source_id,
-		solarcommon.jdata_from_components(
-			solarcommon.jsonb_sum_object(d.jdata_i),
-			solarcommon.jsonb_sum_object(d.jdata_a),
-			NULL,
-			NULL)
-	FROM solaragg.find_agg_datum_minute(
-			nodes,
-			sources,
-			sdate,
-			edate,
-			slotsecs,
-			tolerance
-		) d
-	WHERE
-		d.node_id = ANY(nodes)
-		AND d.source_id = ANY(sources)
-		AND d.ts_start >= sdate
-		AND d.ts_start < edate
-	GROUP BY
-		d.ts_start, d.node_id;
-$$;
-
-CREATE OR REPLACE FUNCTION solaragg.sum_datum_props_grouped_source_hourly(
-	nodes bigint[],
-	sources text[],
-	sdate timestamptz,
-	edate timestamptz,
-	grouped_source text
-	)
-  RETURNS TABLE(ts_start timestamp with time zone, local_date timestamp without time zone, node_id bigint, source_id text, jdata jsonb)
-  LANGUAGE sql STABLE AS
-$$
-	SELECT
-		d.ts_start,
-		min(d.local_date) AS local_date,
-		d.node_id AS node_id,
-		grouped_source AS source_id,
-		solarcommon.jdata_from_components(
-			solarcommon.jsonb_sum_object(d.jdata_i),
-			solarcommon.jsonb_sum_object(d.jdata_a),
-			NULL,
-			NULL)
-	FROM solaragg.agg_datum_hourly d
-	WHERE
-		d.node_id = ANY(nodes)
-		AND d.source_id = ANY(sources)
-		AND d.ts_start >= sdate
-		AND d.ts_start < edate
-	GROUP BY
-		d.ts_start, d.node_id;
-$$;
-
-CREATE OR REPLACE FUNCTION solaragg.sum_datum_props_grouped_source_daily(
-	nodes bigint[],
-	sources text[],
-	sdate timestamptz,
-	edate timestamptz,
-	grouped_source text
-	)
-  RETURNS TABLE(ts_start timestamp with time zone, local_date timestamp without time zone, node_id bigint, source_id text, jdata jsonb)
-  LANGUAGE sql STABLE AS
-$$
-	SELECT
-		d.ts_start,
-		min(d.local_date) AS local_date,
-		d.node_id AS node_id,
-		grouped_source AS source_id,
-		solarcommon.jdata_from_components(
-			solarcommon.jsonb_sum_object(d.jdata_i),
-			solarcommon.jsonb_sum_object(d.jdata_a),
-			NULL,
-			NULL)
-	FROM solaragg.agg_datum_daily d
-	WHERE
-		d.node_id = ANY(nodes)
-		AND d.source_id = ANY(sources)
-		AND d.ts_start >= sdate
-		AND d.ts_start < edate
-	GROUP BY
-		d.ts_start, d.node_id;
-$$;
-
-CREATE OR REPLACE FUNCTION solaragg.sum_datum_props_grouped_source_monthly(
-	nodes bigint[],
-	sources text[],
-	sdate timestamptz,
-	edate timestamptz,
-	grouped_source text
-	)
-  RETURNS TABLE(ts_start timestamp with time zone, local_date timestamp without time zone, node_id bigint, source_id text, jdata jsonb)
-  LANGUAGE sql STABLE AS
-$$
-	SELECT
-		d.ts_start,
-		min(d.local_date) AS local_date,
-		d.node_id AS node_id,
-		grouped_source AS source_id,
-		solarcommon.jdata_from_components(
-			solarcommon.jsonb_sum_object(d.jdata_i),
-			solarcommon.jsonb_sum_object(d.jdata_a),
-			NULL,
-			NULL)
-	FROM solaragg.agg_datum_monthly d
-	WHERE
-		d.node_id = ANY(nodes)
-		AND d.source_id = ANY(sources)
-		AND d.ts_start >= sdate
-		AND d.ts_start < edate
-	GROUP BY
-		d.ts_start, d.node_id;
-$$;
+-- At some point in the future, drop this backwards compatible (but no longer used) function
+-- DROP FUNCTION solaragg.find_agg_datum_minute(bigint, text[], timestamp with time zone, timestamp with time zone, integer, interval);

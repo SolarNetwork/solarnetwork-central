@@ -1,5 +1,21 @@
 CREATE SCHEMA IF NOT EXISTS solarcommon;
 
+/**
+ * Reduce a 2d array into a set of 1d arrays.
+ */
+CREATE OR REPLACE FUNCTION solarcommon.reduce_dim(anyarray)
+  RETURNS SETOF anyarray LANGUAGE plpgsql IMMUTABLE AS
+$$
+DECLARE
+	s $1%TYPE;
+BEGIN
+	FOREACH s SLICE 1  IN ARRAY $1 LOOP
+		RETURN NEXT s;
+	END LOOP;
+	RETURN;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION solarcommon.plainto_prefix_tsquery(config regconfig, qtext TEXT)
 RETURNS tsquery AS $$
 SELECT to_tsquery(config,
