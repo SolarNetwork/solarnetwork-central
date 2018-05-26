@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
@@ -41,7 +42,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
 import org.joda.time.DateTimeZone;
@@ -884,6 +884,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 
 	@Test
 	public void findFilteredAggregateHourlyCombined() {
+		setupTestNode(TEST_2ND_NODE);
 		final DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
 		final int count = 3;
 		for ( int i = 0; i < count; i++ ) {
@@ -924,7 +925,106 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertThat("Result node ID is virutal", m.getId().getNodeId(), equalTo(-5000L));
 		assertThat("Result source ID is virutal", m.getId().getSourceId(), equalTo("Foobar"));
 		Map<String, ?> data = m.getSampleData();
-		assertThat("Aggregate Wh", data, Matchers.hasEntry("watt_hours", (Object) 20));
+		assertThat("Aggregate Wh", data, hasEntry("watt_hours", (Object) 20));
+	}
+
+	@Test
+	public void findFilteredAggregateHourlyCombinedNodeOnly() {
+		setupTestNode(TEST_2ND_NODE);
+		final DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
+		final int count = 3;
+		for ( int i = 0; i < count; i++ ) {
+			GeneralNodeDatum d = new GeneralNodeDatum();
+			d.setCreated(startDate.plusMinutes(i * 20));
+			d.setNodeId(TEST_NODE_ID);
+			d.setSourceId(TEST_SOURCE_ID);
+			d.setSampleJson("{\"a\":{\"watt_hours\":" + (i * 5) + "}}");
+			dao.store(d);
+			d.setNodeId(TEST_2ND_NODE);
+			d.setSourceId(TEST_2ND_SOURCE);
+			dao.store(d);
+		}
+
+		processAggregateStaleData();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeIds(new Long[] { TEST_NODE_ID, TEST_2ND_NODE });
+		criteria.setSourceIds(new String[] { TEST_SOURCE_ID, TEST_2ND_SOURCE });
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(1));
+		criteria.setAggregate(Aggregation.Hour);
+		criteria.setNodeIdMappings(Collections.singletonMap(-5000L,
+				(Set<Long>) new LinkedHashSet<Long>(Arrays.asList(TEST_NODE_ID, TEST_2ND_NODE))));
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertThat("Results available", results, notNullValue());
+		assertThat("Total result count", results.getTotalResults(), equalTo(2L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.getResults().iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Result date is grouped", m.getId().getCreated().isEqual(startDate), equalTo(true));
+		assertThat("Result node ID is virutal", m.getId().getNodeId(), equalTo(-5000L));
+		assertThat("Result source ID is virutal", m.getId().getSourceId(), equalTo(TEST_2ND_SOURCE));
+		assertThat("Aggregate Wh", m.getSampleData(), hasEntry("watt_hours", (Object) 10));
+
+		m = itr.next();
+		assertThat("Result date is grouped", m.getId().getCreated().isEqual(startDate), equalTo(true));
+		assertThat("Result node ID is virutal", m.getId().getNodeId(), equalTo(-5000L));
+		assertThat("Result source ID is virutal", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Aggregate Wh", m.getSampleData(), hasEntry("watt_hours", (Object) 10));
+	}
+
+	@Test
+	public void findFilteredAggregateHourlyCombinedSourceOnly() {
+		setupTestNode(TEST_2ND_NODE);
+		final DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
+		final int count = 3;
+		for ( int i = 0; i < count; i++ ) {
+			GeneralNodeDatum d = new GeneralNodeDatum();
+			d.setCreated(startDate.plusMinutes(i * 20));
+			d.setNodeId(TEST_NODE_ID);
+			d.setSourceId(TEST_SOURCE_ID);
+			d.setSampleJson("{\"a\":{\"watt_hours\":" + (i * 5) + "}}");
+			dao.store(d);
+			d.setNodeId(TEST_2ND_NODE);
+			d.setSourceId(TEST_2ND_SOURCE);
+			dao.store(d);
+		}
+
+		processAggregateStaleData();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeIds(new Long[] { TEST_NODE_ID, TEST_2ND_NODE });
+		criteria.setSourceIds(new String[] { TEST_SOURCE_ID, TEST_2ND_SOURCE });
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(1));
+		criteria.setAggregate(Aggregation.Hour);
+		criteria.setSourceIdMappings(
+				Collections.singletonMap("Foobar", (Set<String>) new LinkedHashSet<String>(
+						Arrays.asList(TEST_SOURCE_ID, TEST_2ND_SOURCE))));
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertThat("Results available", results, notNullValue());
+		assertThat("Total result count", results.getTotalResults(), equalTo(2L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.getResults().iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Result date is grouped", m.getId().getCreated().isEqual(startDate), equalTo(true));
+		assertThat("Result node ID is virutal", m.getId().getNodeId(), equalTo(TEST_2ND_NODE));
+		assertThat("Result source ID is virutal", m.getId().getSourceId(), equalTo("Foobar"));
+		assertThat("Aggregate Wh", m.getSampleData(), hasEntry("watt_hours", (Object) 10));
+
+		m = itr.next();
+		assertThat("Result date is grouped", m.getId().getCreated().isEqual(startDate), equalTo(true));
+		assertThat("Result node ID is virutal", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Result source ID is virutal", m.getId().getSourceId(), equalTo("Foobar"));
+		assertThat("Aggregate Wh", m.getSampleData(), hasEntry("watt_hours", (Object) 10));
 	}
 
 	@Test
@@ -972,6 +1072,98 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertNotNull("Aggregate sample data", data);
 		assertNotNull("Aggregate Wh", data.get("watt_hours"));
 		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
+	}
+
+	@Test
+	public void findFilteredAggregateDailyCombined() {
+		setupTestNode(TEST_2ND_NODE);
+		final DateTime startDate = new DateTime(2014, 2, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		final int count = 13;
+		for ( int i = 0; i < count; i++ ) {
+			GeneralNodeDatum d = new GeneralNodeDatum();
+			d.setCreated(startDate.plusMinutes(i * 20));
+			d.setNodeId(TEST_NODE_ID);
+			d.setSourceId(TEST_SOURCE_ID);
+			d.setSampleJson("{\"a\":{\"watt_hours\":" + (i * 5) + "}}");
+			dao.store(d);
+			d.setNodeId(TEST_2ND_NODE);
+			d.setSourceId(TEST_2ND_SOURCE);
+			dao.store(d);
+		}
+
+		processAggregateStaleData();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeIds(new Long[] { TEST_NODE_ID, TEST_2ND_NODE });
+		criteria.setSourceIds(new String[] { TEST_SOURCE_ID, TEST_2ND_SOURCE });
+		criteria.setStartDate(startDate.dayOfMonth().roundFloorCopy());
+		criteria.setEndDate(criteria.getStartDate().plusDays(1));
+		criteria.setAggregate(Aggregation.Day);
+		criteria.setNodeIdMappings(Collections.singletonMap(-5000L,
+				(Set<Long>) new LinkedHashSet<Long>(Arrays.asList(TEST_NODE_ID, TEST_2ND_NODE))));
+		criteria.setSourceIdMappings(
+				Collections.singletonMap("Foobar", (Set<String>) new LinkedHashSet<String>(
+						Arrays.asList(TEST_SOURCE_ID, TEST_2ND_SOURCE))));
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertThat("Results available", results, notNullValue());
+		assertThat("Total result count", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+
+		ReportingGeneralNodeDatumMatch m = results.getResults().iterator().next();
+		assertThat("Result date is grouped", m.getId().getCreated().isEqual(startDate), equalTo(true));
+		assertThat("Result node ID is virutal", m.getId().getNodeId(), equalTo(-5000L));
+		assertThat("Result source ID is virutal", m.getId().getSourceId(), equalTo("Foobar"));
+		Map<String, ?> data = m.getSampleData();
+		assertThat("Aggregate Wh", data, hasEntry("watt_hours", (Object) 120));
+	}
+
+	@Test
+	public void findFilteredAggregateMonthlyCombined() {
+		setupTestNode(TEST_2ND_NODE);
+		final DateTime startDate = new DateTime(2014, 2, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		final int count = 145;
+		for ( int i = 0; i < count; i++ ) {
+			GeneralNodeDatum d = new GeneralNodeDatum();
+			d.setCreated(startDate.plusMinutes(i * 20));
+			d.setNodeId(TEST_NODE_ID);
+			d.setSourceId(TEST_SOURCE_ID);
+			d.setSampleJson("{\"a\":{\"watt_hours\":" + (i * 5) + "}}");
+			dao.store(d);
+			d.setNodeId(TEST_2ND_NODE);
+			d.setSourceId(TEST_2ND_SOURCE);
+			dao.store(d);
+		}
+
+		processAggregateStaleData();
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeIds(new Long[] { TEST_NODE_ID, TEST_2ND_NODE });
+		criteria.setSourceIds(new String[] { TEST_SOURCE_ID, TEST_2ND_SOURCE });
+		criteria.setStartDate(startDate.dayOfMonth().roundFloorCopy());
+		criteria.setEndDate(criteria.getStartDate().plusDays(1));
+		criteria.setAggregate(Aggregation.Month);
+		criteria.setNodeIdMappings(Collections.singletonMap(-5000L,
+				(Set<Long>) new LinkedHashSet<Long>(Arrays.asList(TEST_NODE_ID, TEST_2ND_NODE))));
+		criteria.setSourceIdMappings(
+				Collections.singletonMap("Foobar", (Set<String>) new LinkedHashSet<String>(
+						Arrays.asList(TEST_SOURCE_ID, TEST_2ND_SOURCE))));
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertThat("Results available", results, notNullValue());
+		assertThat("Total result count", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+
+		ReportingGeneralNodeDatumMatch m = results.getResults().iterator().next();
+		assertThat("Result date is grouped", m.getId().getCreated().isEqual(startDate), equalTo(true));
+		assertThat("Result node ID is virutal", m.getId().getNodeId(), equalTo(-5000L));
+		assertThat("Result source ID is virutal", m.getId().getSourceId(), equalTo("Foobar"));
+		Map<String, ?> data = m.getSampleData();
+		assertThat("Aggregate Wh", data, hasEntry("watt_hours", (Object) 1440));
 	}
 
 	@Test

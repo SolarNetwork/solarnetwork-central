@@ -352,10 +352,7 @@
 
 	<sql id="fragment-findall-ReportingGeneralNodeDatum-combine-group">
 		<if test="combine != null">
-			GROUP BY datum.ts_start
-			<foreach collection="combine.configs" open="," separator="," item="config">
-				${config.name}_mappings.vid
-			</foreach>
+			GROUP BY r_datum_ts_start, r_datum_node_id, r_datum_source_id
 		</if>
 	</sql>
 	
@@ -424,6 +421,7 @@
 			</choose>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 	</select>
 	
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
@@ -472,18 +470,38 @@
 	<!-- Aggregated query: day -->
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day-count" resultType="long">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT count(datum.ts_start)
 		FROM
-			solaragg.agg_datum_daily_data datum
+			<choose>
+				<when test="combine != null">
+					solaragg.agg_datum_daily datum
+				</when>
+				<otherwise>
+					solaragg.agg_datum_daily_data datum
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 	</select>
 	
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM
-			solaragg.agg_datum_daily_data datum
+			<choose>
+				<when test="combine != null">
+					solaragg.agg_datum_daily datum
+				</when>
+				<otherwise>
+					solaragg.agg_datum_daily_data datum
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
 
@@ -514,18 +532,38 @@
 	<!-- Aggregated query: month -->
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-count" resultType="long">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT count(datum.ts_start)
 		FROM
-			solaragg.agg_datum_monthly_data datum
+			<choose>
+				<when test="combine != null">
+					solaragg.agg_datum_monthly datum
+				</when>
+				<otherwise>
+					solaragg.agg_datum_monthly_data datum
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 	</select>
 	
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM
-			solaragg.agg_datum_monthly_data datum
+			<choose>
+				<when test="combine != null">
+					solaragg.agg_datum_monthly datum
+				</when>
+				<otherwise>
+					solaragg.agg_datum_monthly_data datum
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
 
