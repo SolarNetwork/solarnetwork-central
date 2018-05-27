@@ -55,8 +55,33 @@
 			AND datum.source_id = #{sourceId}
 	</select>
 
-	<select id="find-general-distinct-sources" resultType="string" statementType="CALLABLE">
-		{call solardatum.find_available_sources(#{node,jdbcType=BIGINT}, #{start,jdbcType=TIMESTAMP}, #{end,jdbcType=TIMESTAMP})}
+	<select id="find-general-distinct-sources" parameterType="net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter" resultType="string" statementType="CALLABLE">
+		<choose>
+			<when test="startDate != null and endDate != null">
+				{call solaragg.find_available_sources(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+					, #{startDate,jdbcType=TIMESTAMP}
+					, #{endDate,jdbcType=TIMESTAMP}
+				)}
+			</when>
+			<when test="startDate != null">
+				{call solaragg.find_available_sources_since(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+					, #{startDate,jdbcType=TIMESTAMP}
+				)}
+			</when>
+			<when test="endDate != null">
+				{call solaragg.find_available_sources_before(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+					, #{endDate,jdbcType=TIMESTAMP}
+				)}
+			</when>
+			<otherwise>
+				{call solaragg.find_available_sources(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+				)}
+			</otherwise>
+		</choose>
 	</select>
 	
 	<parameterMap id="pmap-reportable-interval" type="map">
@@ -107,16 +132,10 @@
 	<sql id="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where">
 		<where>
 			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
-				AND datum.source_id IN
-				<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
-					#{source,javaType=string,jdbcType=VARCHAR}
-				</foreach>
+				AND datum.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
-				AND datum.node_id IN
-				<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
-					#{node,javaType=long,jdbcType=BIGINT}
-				</foreach>
+				AND datum.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[])
 			</if>
 			<if test="filter.startDate != null">
 				AND datum.ts &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
@@ -173,16 +192,10 @@
 		FROM solaragg.aud_datum_hourly aud
 		<where>
 			<if test="nodeIds != null and nodeIds.length > 0">
-				AND aud.node_id IN
-				<foreach collection="nodeIds" open="(" close=")" separator="," item="node">
-					#{node,javaType=long,jdbcType=BIGINT}
-				</foreach>
+				AND aud.node_id = ANY(#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[])
 			</if>
 			<if test="sourceIds != null and sourceIds.length > 0">
-				AND aud.source_id IN
-				<foreach collection="sourceIds" open="(" close=")" separator="," item="source">
-					#{source,javaType=string,jdbcType=VARCHAR}
-				</foreach>
+				AND aud.source_id = ANY(#{sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 			<if test="startDate != null">
 				AND aud.ts_start &gt;= #{startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
@@ -212,11 +225,51 @@
 	</resultMap>
 
 	<sql id="fragment-GeneralNodeDatum-aggregation-result">
-		datum.node_id AS r_datum_node_id,
 		datum.ts_start AS r_datum_ts_start,
-		datum.local_date AS r_datum_local_date,
-		datum.source_id AS r_datum_source_id,
-		datum.jdata AS r_datum_jdata
+		<choose>
+			<when test="combine != null">
+				min(datum.local_date) AS r_datum_local_date,
+				<choose>
+					<when test="combine.withNodeIds">
+						node_mappings.vid AS r_datum_node_id,
+					</when>
+					<otherwise>
+						datum.node_id AS r_datum_node_id,
+					</otherwise>
+				</choose>
+				<choose>
+					<when test="combine.withSourceIds">
+						source_mappings.vid AS r_datum_source_id,
+					</when>
+					<otherwise>
+						datum.source_id AS r_datum_source_id,
+					</otherwise>
+				</choose>
+				<choose>
+					<when test="combine.type == 'Average'">
+						solarcommon.jdata_from_components(
+							solarcommon.jsonb_avg_object(datum.jdata_i),
+							solarcommon.jsonb_avg_object(datum.jdata_a),
+							NULL,
+							NULL) AS r_datum_jdata
+					</when>
+					<otherwise>
+						<!--  sum -->
+						solarcommon.jdata_from_components(
+							solarcommon.jsonb_sum_object(datum.jdata_i),
+							solarcommon.jsonb_sum_object(datum.jdata_a),
+							NULL,
+							NULL) AS r_datum_jdata
+					</otherwise>
+				</choose>
+			</when>
+			<otherwise>
+				datum.local_date AS r_datum_local_date,
+				datum.node_id AS r_datum_node_id,
+				datum.source_id AS r_datum_source_id,
+				datum.jdata AS r_datum_jdata
+			</otherwise>
+		</choose>
 	</sql>
 
 	<select id="find-general-reporting-most-recent" resultMap="ReportingGeneralNodeDatumDirectResult" statementType="CALLABLE">
@@ -242,19 +295,51 @@
 		</choose>
 	</select>
 
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-combine-cte">
+		<if test="combine != null">
+			<foreach collection="combine.configs" open="WITH" separator="," item="config">
+				${config.name}_mappings AS (
+					SELECT m.ids, v.vid
+					FROM solarcommon.reduce_dim(
+						<choose>
+							<when test="config.name == 'node'">
+								#{config.idSets,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
+							</when>
+							<otherwise>
+								#{config.idSets,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+							</otherwise>
+						</choose>
+						) WITH ORDINALITY AS m(ids,n)
+					JOIN unnest(
+						<choose>
+							<when test="config.name == 'node'">
+								#{config.virtualIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
+							</when>
+							<otherwise>
+								#{config.virtualIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+							</otherwise>
+						</choose>
+					) WITH ORDINALITY AS v(vid,n) ON v.n = m.n
+				)
+			</foreach>
+		</if>
+	</sql>
+
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-combine-join">
+		<if test="combine != null">
+			<foreach collection="combine.configs" item="config">
+				INNER JOIN ${config.name}_mappings ON datum.${config.name}_id = ANY (${config.name}_mappings.ids)
+			</foreach>
+		</if>
+	</sql>
+
 	<sql id="fragment-findall-ReportingGeneralNodeDatum-where">
 		<where>
 			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
-				AND datum.source_id IN
-				<foreach collection="filter.sourceIds" open="(" close=")" separator="," item="source">
-					#{source,javaType=string,jdbcType=VARCHAR}
-				</foreach>
+				AND datum.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
-				AND datum.node_id IN
-				<foreach collection="filter.nodeIds" open="(" close=")" separator="," item="node">
-					#{node,javaType=long,jdbcType=BIGINT}
-				</foreach>
+				AND datum.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[])
 			</if>
 			<if test="filter.startDate != null">
 				AND datum.ts_start &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
@@ -263,6 +348,12 @@
 				AND datum.ts_start &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
 			</if>
 		</where>
+	</sql>
+
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-combine-group">
+		<if test="combine != null">
+			GROUP BY r_datum_ts_start, r_datum_node_id, r_datum_source_id
+		</if>
 	</sql>
 	
 	<sql id="fragment-findall-ReportingGeneralNodeDatum-order">
@@ -282,16 +373,6 @@
 		</choose>
 	</sql>
 
-	<sql id="fragment-findall-ReportingGeneralNodeDatum-minuteagg-where">
-		solaragg.find_agg_datum_minute(
-			#{filter.nodeId,jdbcType=BIGINT},
-			#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
-			#{start,jdbcType=TIMESTAMP}::timestamptz,
-			#{end,jdbcType=TIMESTAMP}::timestamptz,
-			#{filter.aggregation.level}
-		) AS datum
-	</sql>
-
 	<sql id="fragment-findall-ReportingGeneralNodeDatum-agg-where">
 		#{filter.nodeId,jdbcType=BIGINT},
 		#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
@@ -303,32 +384,69 @@
 			,#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz
 		</if>
 	</sql>
-
+	
 	<!-- Aggregated query: Minute -->
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Minute" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM
-		<include refid="fragment-findall-ReportingGeneralNodeDatum-minuteagg-where"/>
+			<choose>
+				<when test="combine != null">
+					solaragg.find_agg_datum_minute
+				</when>
+				<otherwise>
+					solaragg.find_agg_datum_minute_data
+				</otherwise>
+			</choose>
+			(
+				#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler},
+				#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
+				#{start,jdbcType=TIMESTAMP}::timestamptz,
+				#{end,jdbcType=TIMESTAMP}::timestamptz,
+				#{filter.aggregation.level}
+			) AS datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
 
 	<!-- Aggregated query: hour -->
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour-count" resultType="long">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT count(datum.ts_start)
 		FROM
-			solaragg.agg_datum_hourly_data datum
+			<choose>
+				<when test="combine != null">
+					solaragg.agg_datum_hourly datum
+				</when>
+				<otherwise>
+					solaragg.agg_datum_hourly_data datum
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 	</select>
 	
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Hour" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM
-			solaragg.agg_datum_hourly_data datum
+			<choose>
+				<when test="combine != null">
+					solaragg.agg_datum_hourly datum
+				</when>
+				<otherwise>
+					solaragg.agg_datum_hourly_data datum
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
 
@@ -359,18 +477,38 @@
 	<!-- Aggregated query: day -->
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day-count" resultType="long">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT count(datum.ts_start)
 		FROM
-			solaragg.agg_datum_daily_data datum
+			<choose>
+				<when test="combine != null">
+					solaragg.agg_datum_daily datum
+				</when>
+				<otherwise>
+					solaragg.agg_datum_daily_data datum
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 	</select>
 	
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM
-			solaragg.agg_datum_daily_data datum
+			<choose>
+				<when test="combine != null">
+					solaragg.agg_datum_daily datum
+				</when>
+				<otherwise>
+					solaragg.agg_datum_daily_data datum
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
 
@@ -401,18 +539,38 @@
 	<!-- Aggregated query: month -->
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-count" resultType="long">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT count(datum.ts_start)
 		FROM
-			solaragg.agg_datum_monthly_data datum
+			<choose>
+				<when test="combine != null">
+					solaragg.agg_datum_monthly datum
+				</when>
+				<otherwise>
+					solaragg.agg_datum_monthly_data datum
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 	</select>
 	
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM
-			solaragg.agg_datum_monthly_data datum
+			<choose>
+				<when test="combine != null">
+					solaragg.agg_datum_monthly datum
+				</when>
+				<otherwise>
+					solaragg.agg_datum_monthly_data datum
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
 

@@ -1,7 +1,7 @@
 /* ==================================================================
- * TextArrayTypeHandler.java - Nov 8, 2014 11:24:54 AM
+ * SourceMappingFilter.java - 25/05/2018 11:42:10 AM
  * 
- * Copyright 2007-2014 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,21 +20,34 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dao.mybatis.type;
+package net.solarnetwork.central.domain;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Text array type hanlder.
+ * Extension of {@link Filter} for mapping source IDs into virtual IDs.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @sicne 1.39
  */
-public class TextArrayTypeHandler extends BaseArrayTypeHandler {
+public interface SourceMappingFilter extends Filter {
 
 	/**
-	 * Default constructor.
+	 * Get a map whose keys represent virtual source ID values for the
+	 * associated value's set of real source IDs.
+	 * 
+	 * <p>
+	 * This mapping provides a way to request a set of source IDs be treated as
+	 * a single logical virtual source ID. For example a set of source IDs for
+	 * data collected from PV inverters could be treated as a single virtual
+	 * source ID.
+	 * <p>
+	 * 
+	 * @return the mapping of virtual source IDs to the set of real source IDs
+	 *         that should be mapped to them
 	 */
-	public TextArrayTypeHandler() {
-		super("text");
-	}
+	Map<String, Set<String>> getSourceIdMappings();
 
 }

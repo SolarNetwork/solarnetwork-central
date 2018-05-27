@@ -162,7 +162,8 @@ CREATE OR REPLACE FUNCTION solaragg.calc_datum_time_slots(
 	IN span interval,
 	IN slotsecs integer DEFAULT 600,
 	IN tolerance interval DEFAULT interval '1 hour')
-  RETURNS TABLE(ts_start timestamp with time zone, source_id text, jdata jsonb) LANGUAGE plv8 AS
+  RETURNS TABLE(node_id bigint, ts_start timestamp with time zone, source_id text, jdata jsonb)
+  LANGUAGE plv8 STABLE AS
 $BODY$
 'use strict';
 
@@ -208,12 +209,14 @@ while ( rec = cur.fetch() ) {
 	}
 	aggResult = helper.addDatumRecord(rec);
 	if ( aggResult ) {
+		aggResult.node_id = node;
 		plv8.return_next(aggResult);
 	}
 }
 aggResult = helper.finish();
 if ( Array.isArray(aggResult) ) {
 	for ( i = 0; i < aggResult.length; i += 1 ) {
+		aggResult[i].node_id = node;
 		plv8.return_next(aggResult[i]);
 	}
 }
@@ -221,20 +224,21 @@ if ( Array.isArray(aggResult) ) {
 cur.close();
 stmt.free();
 
-$BODY$ STABLE;
+$BODY$;
 
 
 /**
- * Dynamically calculate minute-level time slot aggregate values for a node and set of source IDs.
+ * Dynamically calculate minute-level time slot aggregate values for nodes and set of source IDs.
  *
- * @param node				node ID
+ * @param node				array of node IDs
  * @param source			array of source IDs
  * @param start_ts			the start timestamp
  * @param end_ts			the end timestamp
  * @param slotsecs			the number of seconds per time slot, e.g. 600 == 10 minutes.
+ * @param tolerance         maximum interval between datum to consider when aggregating
  */
-CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_minute(
-	IN node bigint,
+CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_minute_data(
+	IN node bigint[],
 	IN source text[],
 	IN start_ts timestamp with time zone,
 	IN end_ts timestamp with time zone,
@@ -245,27 +249,75 @@ CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_minute(
 	ts_start timestamp with time zone,
 	local_date timestamp without time zone,
 	source_id text,
-	jdata jsonb)
-  LANGUAGE sql
-  STABLE AS
-$BODY$
+	jdata jsonb
+  ) LANGUAGE sql STABLE AS
+$$
 SELECT
-	node AS node_id,
+	n.node_id,
 	d.ts_start,
 	d.ts_start AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_date,
 	d.source_id,
 	d.jdata
- FROM solaragg.calc_datum_time_slots(
-	node,
+FROM solarnet.sn_node n
+INNER JOIN LATERAL solaragg.calc_datum_time_slots(
+	n.node_id,
 	source,
 	solaragg.minute_time_slot(start_ts, solaragg.slot_seconds(slotsecs)),
 	(end_ts - solaragg.minute_time_slot(start_ts, solaragg.slot_seconds(slotsecs))),
 	solaragg.slot_seconds(slotsecs),
 	tolerance
-) AS d
-JOIN solarnet.sn_node n ON n.node_id = node
+) d ON d.node_id = n.node_id
 LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-$BODY$;
+WHERE n.node_id = ANY(node)
+$$;
+
+
+/**
+ * Dynamically calculate minute-level time slot aggregate values for nodes and set of source IDs.
+ *
+ * @param node				array of node IDs
+ * @param source			array of source IDs
+ * @param start_ts			the start timestamp
+ * @param end_ts			the end timestamp
+ * @param slotsecs			the number of seconds per time slot, e.g. 600 == 10 minutes.
+ * @param tolerance         maximum interval between datum to consider when aggregating
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_minute(
+	IN node bigint[],
+	IN source text[],
+	IN start_ts timestamp with time zone,
+	IN end_ts timestamp with time zone,
+	IN slotsecs integer DEFAULT 600,
+	IN tolerance interval DEFAULT interval '1 hour')
+  RETURNS TABLE(
+	node_id bigint,
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
+	source_id text,
+	jdata_i jsonb,
+	jdata_a jsonb,
+	jdata_s jsonb,
+	jdata_t text[]
+  ) LANGUAGE sql STABLE AS
+$$
+SELECT
+	d.node_id,
+	d.ts_start,
+	d.local_date,
+	d.source_id,
+	d.jdata->'i' AS jdata_i,
+	d.jdata->'a' AS jdata_a,
+	d.jdata->'s' AS jdata_s,
+	solarcommon.json_array_to_text_array(d.jdata->'t') AS jdata_t
+FROM solaragg.find_agg_datum_minute_data(
+	node,
+	source,
+	start_ts,
+	end_ts,
+	slotsecs,
+	tolerance
+) d
+$$;
 
 
 /**
@@ -839,7 +891,7 @@ $BODY$
 		interval '1 hour',
 		0,
 		interval '1 hour')
-	INNER JOIN nodetz ON nodetz.node_id = node_id
+	INNER JOIN nodetz ON nodetz.node_id = node
 	ORDER BY ts_start, source_id
 $BODY$;
 
@@ -996,3 +1048,83 @@ BEGIN
 
 END;$BODY$
   LANGUAGE plpgsql STABLE;
+
+
+/**
+ * Find distinct sources for a set of node IDs.
+ *
+ * @param nodes The IDs of the nodes to query for.
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_available_sources(nodes bigint[])
+	RETURNS TABLE(source_id text) LANGUAGE sql STABLE ROWS 50 AS
+$$
+	SELECT DISTINCT CAST(d.source_id AS text)
+	FROM solaragg.agg_datum_daily d
+	WHERE d.node_id = ANY(nodes)
+	ORDER BY source_id
+$$;
+
+
+/**
+ * Find distinct sources for a set of node IDs and minimum date.
+ *
+ * This function searches the <code>solaragg.agg_datum_daily</code> table only,
+ * so the date filter is approximate.
+ *
+ * @param nodes The IDs of the nodes to query for.
+ * @param sdate The minimum datum date to consider, inclusive.
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_available_sources_since(nodes bigint[], sdate timestamp with time zone)
+	RETURNS TABLE(source_id text) LANGUAGE sql STABLE ROWS 50 AS
+$$
+	SELECT DISTINCT CAST(d.source_id AS text)
+	FROM solaragg.agg_datum_daily d
+	WHERE d.node_id = ANY(nodes)
+		AND d.ts_start >= sdate
+	ORDER BY source_id
+$$;
+
+
+/**
+ * Find distinct sources for a set of node IDs and maximum date.
+ *
+ * This function searches the <code>solaragg.agg_datum_daily</code> table only,
+ * so the date filter is approximate.
+ *
+ * @param nodes The IDs of the nodes to query for.
+ * @param edate The maximum datum date to consider, exclusive.
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_available_sources_before(nodes bigint[], edate timestamp with time zone)
+	RETURNS TABLE(source_id text) LANGUAGE sql STABLE ROWS 50 AS
+$$
+	SELECT DISTINCT CAST(d.source_id AS text)
+	FROM solaragg.agg_datum_daily d
+	WHERE d.node_id = ANY(nodes)
+		AND d.ts_start < edate
+	ORDER BY source_id
+$$;
+
+
+/**
+ * Find distinct sources for a set of node IDs and a date range.
+ *
+ * This function searches the <code>solaragg.agg_datum_daily</code> table only,
+ * so the date filter is approximate.
+ *
+ * @param nodes The IDs of the nodes to query for.
+ * @param sdate The minimum datum date to consider, inclusive.
+ * @param edate The maximum datum date to consider, exclusive.
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_available_sources(
+		nodes bigint[],
+		sdate timestamp with time zone,
+		edate timestamp with time zone)
+	RETURNS TABLE(source_id text) LANGUAGE sql STABLE ROWS 50 AS
+$$
+	SELECT DISTINCT CAST(d.source_id AS text)
+	FROM solaragg.agg_datum_daily d
+	WHERE d.node_id = ANY(nodes)
+		AND d.ts_start >= sdate
+		AND d.ts_start < edate
+	ORDER BY source_id
+$$;

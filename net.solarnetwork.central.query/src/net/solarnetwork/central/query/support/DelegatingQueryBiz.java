@@ -24,6 +24,7 @@ package net.solarnetwork.central.query.support;
 
 import java.util.List;
 import java.util.Set;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
@@ -38,13 +39,12 @@ import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
-import org.joda.time.DateTime;
 
 /**
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DelegatingQueryBiz implements QueryBiz {
 
@@ -72,6 +72,11 @@ public class DelegatingQueryBiz implements QueryBiz {
 	}
 
 	@Override
+	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
+		return delegate.getAvailableSources(filter);
+	}
+
+	@Override
 	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
 			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
@@ -80,8 +85,8 @@ public class DelegatingQueryBiz implements QueryBiz {
 
 	@Override
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
 		return delegate.findFilteredAggregateGeneralNodeDatum(filter, sortDescriptors, offset, max);
 	}
 

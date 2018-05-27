@@ -23,7 +23,6 @@
 package net.solarnetwork.central.query.web.api;
 
 import static net.solarnetwork.central.query.web.api.ReportableIntervalController.filterSources;
-import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TimeZone;
 import org.joda.time.DateTime;
@@ -47,7 +46,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
@@ -103,14 +102,7 @@ public class DatumController extends WebServiceControllerSupport {
 		}
 		String sourceId = cmd.getSourceId();
 		if ( sourceId != null && pathMatcher.isPattern(sourceId) && cmd.getNodeIds() != null ) {
-			Set<String> allSources = new LinkedHashSet<String>();
-			for ( Long nodeId : cmd.getNodeIds() ) {
-				Set<String> data = queryBiz.getAvailableSources(nodeId, cmd.getStartDate(),
-						cmd.getEndDate());
-				if ( data != null ) {
-					allSources.addAll(data);
-				}
-			}
+			Set<String> allSources = queryBiz.getAvailableSources(cmd);
 			allSources = filterSources(allSources, pathMatcher, sourceId);
 			if ( !allSources.isEmpty() ) {
 				cmd.setSourceIds(allSources.toArray(new String[allSources.size()]));
