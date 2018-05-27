@@ -299,8 +299,10 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 						ICsvMapWriter concatenatedWriter = new CsvMapWriter(
 								new OutputStreamWriter(StreamUtils.nonClosing(out), "UTF-8"),
 								CsvPreference.STANDARD_PREFERENCE)) {
-					concatenatedWriter.writeHeader(headers);
-					concatenatedWriter.flush();
+					if ( headers != null ) {
+						concatenatedWriter.writeHeader(headers);
+						concatenatedWriter.flush();
+					}
 					FileCopyUtils.copy(new FileInputStream(temporaryFile), out);
 				}
 				temporaryFile.delete();
