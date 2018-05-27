@@ -172,6 +172,17 @@ public class DatumFilterCommandTests {
 	}
 
 	@Test
+	public void setSourceMapsSpringSpecialCase() {
+		String[] sourceMaps = new String[] { "GEN:A", "B", "C" };
+		DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setSourceIdMaps(sourceMaps);
+
+		Map<String, Set<String>> expected = new LinkedHashMap<String, Set<String>>(2);
+		expected.put("GEN", new LinkedHashSet<String>(Arrays.asList("A", "B", "C")));
+		assertThat("Source ID mapping", cmd.getSourceIdMappings(), equalTo(expected));
+	}
+
+	@Test
 	public void setNodeMaps() {
 		String[] nodeMaps = new String[] { "100:1,2,3", "200:4" };
 		DatumFilterCommand cmd = new DatumFilterCommand();
@@ -211,6 +222,17 @@ public class DatumFilterCommandTests {
 
 		Map<Long, Set<Long>> expected = new LinkedHashMap<Long, Set<Long>>(2);
 		expected.put(200L, new LinkedHashSet<Long>(Arrays.asList(4L)));
+		assertThat("Node ID mapping", cmd.getNodeIdMappings(), equalTo(expected));
+	}
+
+	@Test
+	public void setNodeMapsSpringSpecialCase() {
+		String[] nodeMaps = new String[] { "100:1", "2", "3" };
+		DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setNodeIdMaps(nodeMaps);
+
+		Map<Long, Set<Long>> expected = new LinkedHashMap<Long, Set<Long>>(2);
+		expected.put(100L, new LinkedHashSet<Long>(Arrays.asList(1L, 2L, 3L)));
 		assertThat("Node ID mapping", cmd.getNodeIdMappings(), equalTo(expected));
 	}
 

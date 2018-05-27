@@ -650,6 +650,11 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * {@literal VIRT_NODE_ID:NODE_ID1,NODE_ID2,...}. That is, a virtual node ID
 	 * followed by a colon followed by a comma-delimited list of real node IDs.
 	 * </p>
+	 * <p>
+	 * A special case is handled when the mappings are such that the first
+	 * includes the colon delimiter, and the remaining values are simple
+	 * strings. In that case a single virtual node ID mapping is created.
+	 * </p>
 	 * 
 	 * @param mappings
 	 *        the mappings to set
@@ -663,7 +668,15 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 			result = new LinkedHashMap<Long, Set<Long>>(mappings.length);
 			for ( String map : mappings ) {
 				int vIdDelimIdx = map.indexOf(':');
-				if ( vIdDelimIdx < 1 || vIdDelimIdx + 1 >= map.length() ) {
+				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
+					// special case, when Spring maps single query param into 3 fields split on comma like 1:2, 3, 4
+					try {
+						result.get(result.keySet().iterator().next()).add(Long.valueOf(map));
+					} catch ( NumberFormatException e ) {
+						// ignore
+					}
+					continue;
+				} else if ( vIdDelimIdx < 1 || vIdDelimIdx + 1 >= map.length() ) {
 					continue;
 				}
 				try {
@@ -714,6 +727,12 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * source IDs.
 	 * </p>
 	 * 
+	 * <p>
+	 * A special case is handled when the mappings are such that the first
+	 * includes the colon delimiter, and the remaining values are simple
+	 * strings. In that case a single virtual source ID mapping is created.
+	 * </p>
+	 * 
 	 * @param mappings
 	 *        the mappings to set
 	 * @since 1.10
@@ -726,7 +745,15 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 			result = new LinkedHashMap<String, Set<String>>(mappings.length);
 			for ( String map : mappings ) {
 				int vIdDelimIdx = map.indexOf(':');
-				if ( vIdDelimIdx < 1 || vIdDelimIdx + 1 >= map.length() ) {
+				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
+					// special case, when Spring maps single query param into 3 fields split on comma like A:B, C, D
+					try {
+						result.get(result.keySet().iterator().next()).add(map);
+					} catch ( NumberFormatException e ) {
+						// ignore
+					}
+					continue;
+				} else if ( vIdDelimIdx < 1 || vIdDelimIdx + 1 >= map.length() ) {
 					continue;
 				}
 				String vId = map.substring(0, vIdDelimIdx);
