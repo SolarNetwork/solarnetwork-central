@@ -1,7 +1,7 @@
 /* ==================================================================
- * TextArrayTypeHandler.java - Nov 8, 2014 11:24:54 AM
+ * NodeMappingFilter.java - 25/05/2018 11:51:24 AM
  * 
- * Copyright 2007-2014 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,21 +20,34 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dao.mybatis.type;
+package net.solarnetwork.central.domain;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Text array type hanlder.
+ * Extension of {@link Filter} for mapping node IDs into virtual IDs.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.39
  */
-public class TextArrayTypeHandler extends BaseArrayTypeHandler {
+public interface NodeMappingFilter {
 
 	/**
-	 * Default constructor.
+	 * Get a map whose keys represent virtual node ID values for the associated
+	 * value's set of real node IDs.
+	 * 
+	 * <p>
+	 * This mapping provides a way to request a set of node IDs be treated as a
+	 * single logical virtual node ID. For example a set of node IDs for data
+	 * collected from different buildings could be treated as a single virtual
+	 * site node ID.
+	 * <p>
+	 * 
+	 * @return the mapping of virtual node IDs to the set of real node IDs that
+	 *         should be mapped to them
 	 */
-	public TextArrayTypeHandler() {
-		super("text");
-	}
+	Map<Long, Set<Long>> getNodeIdMappings();
 
 }

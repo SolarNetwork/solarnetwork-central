@@ -27,8 +27,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -39,23 +41,24 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.MutableSortDescriptor;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Implementation of {@link LocationDatumFilter}, {@link NodeDatumFilter}, and
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.9
+ * @version 1.10
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
-		"tags", "dataPath", "mostRecent", "startDate", "endDate", "max", "offset", "sorts", "type",
-		"location" })
+		"combiningType", "combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "tags", "dataPath",
+		"mostRecent", "startDate", "endDate", "max", "offset", "sorts", "type", "location" })
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
 		GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter, Serializable {
 
-	private static final long serialVersionUID = -2563498875989149622L;
+	private static final long serialVersionUID = -949767931549934411L;
 
 	private final SolarLocation location;
 	private DateTime startDate;
@@ -74,6 +77,10 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	private String[] tags;
 	private Aggregation aggregation;
 	private boolean withoutTotalResultsCount;
+
+	private CombiningType combiningType;
+	private Map<Long, Set<Long>> nodeIdMappings;
+	private Map<String, Set<String>> sourceIdMappings;
 
 	/**
 	 * Default constructor.
@@ -106,13 +113,30 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	 * @since 1.9
 	 */
 	public DatumFilterCommand(AggregateGeneralNodeDatumFilter other) {
-		this(other, new SolarLocation());
+		this((GeneralNodeDatumFilter) other);
 		if ( other == null ) {
 			return;
 		}
 		setAggregate(other.getAggregation());
+	}
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the filter to copy
+	 * @since 1.10
+	 */
+	public DatumFilterCommand(GeneralNodeDatumFilter other) {
+		this(other, new SolarLocation());
+		if ( other == null ) {
+			return;
+		}
 		setNodeIds(other.getNodeIds());
 		setUserIds(other.getUserIds());
+		setCombiningType(other.getCombiningType());
+		setNodeIdMappings(other.getNodeIdMappings());
+		setSourceIdMappings(other.getSourceIdMappings());
 	}
 
 	/**
@@ -184,6 +208,15 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		}
 		if ( aggregation != null ) {
 			filter.put("aggregation", aggregation.toString());
+		}
+		if ( combiningType != null ) {
+			filter.put("combiningType", combiningType.toString());
+		}
+		if ( nodeIdMappings != null ) {
+			filter.put("nodeIdMappings", nodeIdMappings);
+		}
+		if ( sourceIdMappings != null ) {
+			filter.put("sourceIdMappings", sourceIdMappings);
 		}
 		return filter;
 	}
@@ -537,6 +570,204 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * @since 1.10
+	 */
+	@Override
+	public CombiningType getCombiningType() {
+		return combiningType;
+	}
+
+	/**
+	 * Set the combining type.
+	 * 
+	 * @param combiningType
+	 *        the type
+	 * @since 1.10
+	 */
+	public void setCombiningType(CombiningType combiningType) {
+		this.combiningType = combiningType;
+	}
+
+	/**
+	 * Get the combining type key.
+	 * 
+	 * @return the combining type key, or {@literal null} if not defined
+	 * @since 1.10
+	 */
+	public String getCombiningTypeKey() {
+		CombiningType type = getCombiningType();
+		return (type != null ? type.getKey() : null);
+	}
+
+	/**
+	 * Set the aggregation as a key value.
+	 * 
+	 * <p>
+	 * If {@literal key} is not a supported {@link CombiningType} key value,
+	 * then {@literal null} will be used.
+	 * </p>
+	 * 
+	 * @param key
+	 *        the key to set
+	 * @since 1.10
+	 */
+	public void setCombiningTypeKey(String key) {
+		CombiningType type = null;
+		try {
+			type = CombiningType.forKey(key);
+		} catch ( IllegalArgumentException e ) {
+			type = null;
+		}
+		setCombiningType(type);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.10
+	 */
+	@Override
+	public Map<Long, Set<Long>> getNodeIdMappings() {
+		return nodeIdMappings;
+	}
+
+	/**
+	 * Set the node ID mappings.
+	 * 
+	 * @param nodeIdMappings
+	 *        the mappings to set
+	 * @since 1.10
+	 */
+	public void setNodeIdMappings(Map<Long, Set<Long>> nodeIdMappings) {
+		this.nodeIdMappings = nodeIdMappings;
+	}
+
+	/**
+	 * Set the node ID mappings value via a list of string encoded mappings.
+	 * 
+	 * <p>
+	 * Each mapping in {@code mappings} must be encoded as
+	 * {@literal VIRT_NODE_ID:NODE_ID1,NODE_ID2,...}. That is, a virtual node ID
+	 * followed by a colon followed by a comma-delimited list of real node IDs.
+	 * </p>
+	 * <p>
+	 * A special case is handled when the mappings are such that the first
+	 * includes the colon delimiter, and the remaining values are simple
+	 * strings. In that case a single virtual node ID mapping is created.
+	 * </p>
+	 * 
+	 * @param mappings
+	 *        the mappings to set
+	 * @since 1.10
+	 */
+	public void setNodeIdMaps(String[] mappings) {
+		Map<Long, Set<Long>> result;
+		if ( mappings == null || mappings.length < 1 ) {
+			result = null;
+		} else {
+			result = new LinkedHashMap<Long, Set<Long>>(mappings.length);
+			for ( String map : mappings ) {
+				int vIdDelimIdx = map.indexOf(':');
+				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
+					// special case, when Spring maps single query param into 3 fields split on comma like 1:2, 3, 4
+					try {
+						result.get(result.keySet().iterator().next()).add(Long.valueOf(map));
+					} catch ( NumberFormatException e ) {
+						// ignore
+					}
+					continue;
+				} else if ( vIdDelimIdx < 1 || vIdDelimIdx + 1 >= map.length() ) {
+					continue;
+				}
+				try {
+					Long vId = Long.valueOf(map.substring(0, vIdDelimIdx));
+					Set<String> rIds = StringUtils
+							.commaDelimitedStringToSet(map.substring(vIdDelimIdx + 1));
+					Set<Long> rNodeIds = new LinkedHashSet<Long>(rIds.size());
+					for ( String rId : rIds ) {
+						rNodeIds.add(Long.valueOf(rId));
+					}
+					result.put(vId, rNodeIds);
+				} catch ( NumberFormatException e ) {
+					// ignore and continue
+				}
+			}
+		}
+		setNodeIdMappings(result.isEmpty() ? null : result);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.10
+	 */
+	@Override
+	public Map<String, Set<String>> getSourceIdMappings() {
+		return sourceIdMappings;
+	}
+
+	/**
+	 * Set the source ID mappings.
+	 * 
+	 * @param sourceIdMappings
+	 *        the mappings to set
+	 * @since 1.10
+	 */
+	public void setSourceIdMappings(Map<String, Set<String>> sourceIdMappings) {
+		this.sourceIdMappings = sourceIdMappings;
+	}
+
+	/**
+	 * Set the source ID mappings value via a list of string encoded mappings.
+	 * 
+	 * <p>
+	 * Each mapping in {@code mappings} must be encoded as
+	 * {@literal VIRT_SOURCE_ID:SOURCE_ID1,SOURCE_ID2,...}. That is, a virtual
+	 * source ID followed by a colon followed by a comma-delimited list of real
+	 * source IDs.
+	 * </p>
+	 * 
+	 * <p>
+	 * A special case is handled when the mappings are such that the first
+	 * includes the colon delimiter, and the remaining values are simple
+	 * strings. In that case a single virtual source ID mapping is created.
+	 * </p>
+	 * 
+	 * @param mappings
+	 *        the mappings to set
+	 * @since 1.10
+	 */
+	public void setSourceIdMaps(String[] mappings) {
+		Map<String, Set<String>> result;
+		if ( mappings == null || mappings.length < 1 ) {
+			result = null;
+		} else {
+			result = new LinkedHashMap<String, Set<String>>(mappings.length);
+			for ( String map : mappings ) {
+				int vIdDelimIdx = map.indexOf(':');
+				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
+					// special case, when Spring maps single query param into 3 fields split on comma like A:B, C, D
+					try {
+						result.get(result.keySet().iterator().next()).add(map);
+					} catch ( NumberFormatException e ) {
+						// ignore
+					}
+					continue;
+				} else if ( vIdDelimIdx < 1 || vIdDelimIdx + 1 >= map.length() ) {
+					continue;
+				}
+				String vId = map.substring(0, vIdDelimIdx);
+				Set<String> rSourceIds = StringUtils
+						.commaDelimitedStringToSet(map.substring(vIdDelimIdx + 1));
+				result.put(vId, rSourceIds);
+			}
+		}
+		setSourceIdMappings(result.isEmpty() ? null : result);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
 	 * @since 1.8
 	 */
 	@Override
@@ -558,6 +789,9 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		result = prime * result + Arrays.hashCode(tags);
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + Arrays.hashCode(userIds);
+		result = prime * result + ((combiningType == null) ? 0 : combiningType.hashCode());
+		result = prime * result + ((nodeIdMappings == null) ? 0 : nodeIdMappings.hashCode());
+		result = prime * result + ((sourceIdMappings == null) ? 0 : sourceIdMappings.hashCode());
 		return result;
 	}
 
@@ -653,6 +887,23 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 			return false;
 		}
 		if ( !Arrays.equals(userIds, other.userIds) ) {
+			return false;
+		}
+		if ( combiningType != other.combiningType ) {
+			return false;
+		}
+		if ( nodeIdMappings == null ) {
+			if ( other.nodeIdMappings != null ) {
+				return false;
+			}
+		} else if ( !nodeIdMappings.equals(other.nodeIdMappings) ) {
+			return false;
+		}
+		if ( sourceIdMappings == null ) {
+			if ( other.sourceIdMappings != null ) {
+				return false;
+			}
+		} else if ( !sourceIdMappings.equals(other.sourceIdMappings) ) {
 			return false;
 		}
 		return true;

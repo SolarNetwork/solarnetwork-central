@@ -1,7 +1,7 @@
 /* ==================================================================
- * TextArrayTypeHandler.java - Nov 8, 2014 11:24:54 AM
+ * CombiningFilter.java - 25/05/2018 12:05:09 PM
  * 
- * Copyright 2007-2014 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,21 +20,24 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dao.mybatis.type;
+package net.solarnetwork.central.datum.domain;
+
+import net.solarnetwork.central.domain.Filter;
 
 /**
- * Text array type hanlder.
+ * Extension of {@link Filter} specific to combined results.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.25
  */
-public class TextArrayTypeHandler extends BaseArrayTypeHandler {
+public interface CombiningFilter extends Filter {
 
 	/**
-	 * Default constructor.
+	 * Get the type of combining action to perform when combining data.
+	 * 
+	 * @return the combining type
 	 */
-	public TextArrayTypeHandler() {
-		super("text");
-	}
+	CombiningType getCombiningType();
 
 }

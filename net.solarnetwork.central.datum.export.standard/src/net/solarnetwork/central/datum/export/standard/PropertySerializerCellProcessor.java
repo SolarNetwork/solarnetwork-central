@@ -32,7 +32,7 @@ import net.solarnetwork.util.PropertySerializer;
  * {@link CellProcessor} that delegates to a {@link PropertySerializer}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class PropertySerializerCellProcessor extends CellProcessorAdaptor implements DateCellProcessor {
 
@@ -62,6 +62,7 @@ public class PropertySerializerCellProcessor extends CellProcessorAdaptor implem
 		this.propertySerializer = propertySerializer;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Object execute(Object value, CsvContext context) {
 		return propertySerializer.serialize(context.getRowSource(),
