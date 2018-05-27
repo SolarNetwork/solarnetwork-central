@@ -211,6 +211,10 @@ public class MyBatisGeneralNodeDatumDao
 				&& (sourceMappings == null || sourceMappings.isEmpty()) ) {
 			return null;
 		}
+		if ( !filter.isWithoutTotalResultsCount() ) {
+			throw new IllegalArgumentException(
+					"Total results not allowed on combining query; set withoutTotalResultsCount to true");
+		}
 		List<CombineIdsConfig<Object>> configs = new ArrayList<CombineIdsConfig<Object>>(2);
 		if ( nodeMappings != null && !nodeMappings.isEmpty() ) {
 			@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -238,6 +242,8 @@ public class MyBatisGeneralNodeDatumDao
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public FilterResults<GeneralNodeDatumFilterMatch> findFiltered(GeneralNodeDatumFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		// force withoutTotalResultsCount if combining
+
 		final String query = getQueryForFilter(filter);
 		Map<String, Object> sqlProps = new HashMap<String, Object>(1);
 		sqlProps.put(PARAM_FILTER, filter);

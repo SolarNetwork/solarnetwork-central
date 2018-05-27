@@ -907,6 +907,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		criteria.setStartDate(startDate);
 		criteria.setEndDate(startDate.plusHours(1));
 		criteria.setAggregate(Aggregation.Hour);
+		criteria.setWithoutTotalResultsCount(true);
 		criteria.setNodeIdMappings(Collections.singletonMap(-5000L,
 				(Set<Long>) new LinkedHashSet<Long>(Arrays.asList(TEST_NODE_ID, TEST_2ND_NODE))));
 		criteria.setSourceIdMappings(
@@ -917,7 +918,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				null, null, null);
 
 		assertThat("Results available", results, notNullValue());
-		assertThat("Total result count", results.getTotalResults(), equalTo(1L));
+		assertThat("Total result count", results.getTotalResults(), nullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
 
 		ReportingGeneralNodeDatumMatch m = results.getResults().iterator().next();
@@ -953,6 +954,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		criteria.setStartDate(startDate);
 		criteria.setEndDate(startDate.plusHours(1));
 		criteria.setAggregate(Aggregation.Hour);
+		criteria.setWithoutTotalResultsCount(true);
 		criteria.setNodeIdMappings(Collections.singletonMap(-5000L,
 				(Set<Long>) new LinkedHashSet<Long>(Arrays.asList(TEST_NODE_ID, TEST_2ND_NODE))));
 
@@ -960,7 +962,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				null, null, null);
 
 		assertThat("Results available", results, notNullValue());
-		assertThat("Total result count", results.getTotalResults(), equalTo(2L));
+		assertThat("Total result count", results.getTotalResults(), nullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
 
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.getResults().iterator();
@@ -1002,6 +1004,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		criteria.setStartDate(startDate);
 		criteria.setEndDate(startDate.plusHours(1));
 		criteria.setAggregate(Aggregation.Hour);
+		criteria.setWithoutTotalResultsCount(true);
 		criteria.setSourceIdMappings(
 				Collections.singletonMap("Foobar", (Set<String>) new LinkedHashSet<String>(
 						Arrays.asList(TEST_SOURCE_ID, TEST_2ND_SOURCE))));
@@ -1010,7 +1013,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				null, null, null);
 
 		assertThat("Results available", results, notNullValue());
-		assertThat("Total result count", results.getTotalResults(), equalTo(2L));
+		assertThat("Total result count", results.getTotalResults(), nullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
 
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.getResults().iterator();
@@ -1099,6 +1102,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		criteria.setStartDate(startDate.dayOfMonth().roundFloorCopy());
 		criteria.setEndDate(criteria.getStartDate().plusDays(1));
 		criteria.setAggregate(Aggregation.Day);
+		criteria.setWithoutTotalResultsCount(true);
 		criteria.setNodeIdMappings(Collections.singletonMap(-5000L,
 				(Set<Long>) new LinkedHashSet<Long>(Arrays.asList(TEST_NODE_ID, TEST_2ND_NODE))));
 		criteria.setSourceIdMappings(
@@ -1109,7 +1113,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				null, null, null);
 
 		assertThat("Results available", results, notNullValue());
-		assertThat("Total result count", results.getTotalResults(), equalTo(1L));
+		assertThat("Total result count", results.getTotalResults(), nullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
 
 		ReportingGeneralNodeDatumMatch m = results.getResults().iterator().next();
@@ -1144,6 +1148,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		criteria.setStartDate(startDate.dayOfMonth().roundFloorCopy());
 		criteria.setEndDate(criteria.getStartDate().plusDays(1));
 		criteria.setAggregate(Aggregation.Month);
+		criteria.setWithoutTotalResultsCount(true);
 		criteria.setNodeIdMappings(Collections.singletonMap(-5000L,
 				(Set<Long>) new LinkedHashSet<Long>(Arrays.asList(TEST_NODE_ID, TEST_2ND_NODE))));
 		criteria.setSourceIdMappings(
@@ -1154,7 +1159,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				null, null, null);
 
 		assertThat("Results available", results, notNullValue());
-		assertThat("Total result count", results.getTotalResults(), equalTo(1L));
+		assertThat("Total result count", results.getTotalResults(), nullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
 
 		ReportingGeneralNodeDatumMatch m = results.getResults().iterator().next();
@@ -1556,6 +1561,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		criteria.setStartDate(startDate);
 		criteria.setEndDate(startDate.plusHours(1));
 		criteria.setAggregate(Aggregation.FifteenMinute);
+		criteria.setWithoutTotalResultsCount(true);
 		criteria.setNodeIdMappings(Collections.singletonMap(-5000L,
 				(Set<Long>) new LinkedHashSet<Long>(Arrays.asList(TEST_NODE_ID, TEST_2ND_NODE))));
 		criteria.setSourceIdMappings(
@@ -1566,7 +1572,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				null, null, null);
 
 		assertThat("Results available", results, notNullValue());
-		assertThat("Total result count", results.getTotalResults(), equalTo(4L));
+		assertThat("Total result count", results.getTotalResults(), nullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(4));
 
 		int i = 0;
