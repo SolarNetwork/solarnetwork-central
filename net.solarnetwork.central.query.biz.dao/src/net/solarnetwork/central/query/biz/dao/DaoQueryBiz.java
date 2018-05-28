@@ -26,6 +26,7 @@ package net.solarnetwork.central.query.biz.dao;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,6 @@ import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.SolarLocationDao;
-import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
@@ -62,7 +62,6 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.PriceLocation;
-import net.solarnetwork.central.domain.SolarNodeFilterMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceLocation;
 import net.solarnetwork.central.domain.SourceLocationMatch;
@@ -73,7 +72,6 @@ import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.central.support.FilterSupport;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 
 /**
@@ -86,7 +84,6 @@ public class DaoQueryBiz implements QueryBiz {
 
 	private GeneralNodeDatumDao generalNodeDatumDao;
 	private GeneralLocationDatumDao generalLocationDatumDao;
-	private SolarNodeDao solarNodeDao;
 	private SolarLocationDao solarLocationDao;
 	private UserNodeDao userNodeDao;
 	private int filteredResultsLimit = 1000;
@@ -136,7 +133,6 @@ public class DaoQueryBiz implements QueryBiz {
 		return generalNodeDatumDao.getAvailableSources(filter);
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public Set<Long> findAvailableNodes(SecurityActor actor) {
 		Set<Long> nodeIds = null;
@@ -144,29 +140,24 @@ public class DaoQueryBiz implements QueryBiz {
 			nodeIds = Collections.singleton(((SecurityNode) actor).getNodeId());
 		} else if ( actor instanceof SecurityToken ) {
 			SecurityPolicy policy = ((SecurityToken) actor).getPolicy();
-			Set<Long> nodes = (policy != null ? policy.getNodeIds() : null);
-			if ( nodes != null && !nodes.isEmpty() ) {
-				nodeIds = nodes;
-			} else {
-				Long ownerId = ((SecurityToken) actor).getUserId();
-				nodes = userNodeDao.findNodeIdsForUser(ownerId);
-				if ( nodes != null && !nodes.isEmpty() ) {
-					nodeIds = nodes;
+			Long ownerId = ((SecurityToken) actor).getUserId();
+			Set<Long> allUserNodes = userNodeDao.findNodeIdsForUser(ownerId);
+			Set<Long> policyNodes = (policy != null ? policy.getNodeIds() : null);
+			if ( policyNodes != null && !policyNodes.isEmpty() ) {
+				// user might not have access to node from policy anymore, so filter those out now
+				policyNodes = new LinkedHashSet<Long>(policyNodes); // make mutable set
+				for ( Iterator<Long> nodeItr = policyNodes.iterator(); nodeItr.hasNext(); ) {
+					if ( !allUserNodes.contains(nodeItr.next()) ) {
+						nodeItr.remove();
+					}
 				}
+				nodeIds = policyNodes;
+			} else {
+				nodeIds = allUserNodes;
 			}
 		}
 		if ( nodeIds == null || nodeIds.isEmpty() ) {
 			return Collections.emptySet();
-		}
-		FilterSupport filter = new FilterSupport();
-		filter.setNodeIds(nodeIds.toArray(new Long[nodeIds.size()]));
-		FilterResults<SolarNodeFilterMatch> results = solarNodeDao.findFiltered(filter, null, null, -1);
-		if ( results == null ) {
-			return Collections.emptySet();
-		}
-		nodeIds = new LinkedHashSet<Long>(results.getReturnedResultCount().intValue());
-		for ( SolarNodeFilterMatch m : results ) {
-			nodeIds.add(m.getId());
 		}
 		return nodeIds;
 	}
@@ -438,18 +429,6 @@ public class DaoQueryBiz implements QueryBiz {
 	@Autowired
 	public void setUserNodeDao(UserNodeDao userNodeDao) {
 		this.userNodeDao = userNodeDao;
-	}
-
-	/**
-	 * Set the solar node DAO to use.
-	 * 
-	 * @param solarNodeDao
-	 *        the node dao to use
-	 * @since 2.4
-	 */
-	@Autowired
-	public void setSolarNodeDao(SolarNodeDao solarNodeDao) {
-		this.solarNodeDao = solarNodeDao;
 	}
 
 }
