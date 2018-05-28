@@ -22,19 +22,24 @@
 
 package net.solarnetwork.central.dao.mybatis;
 
-import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
-import net.solarnetwork.central.domain.SolarNode;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
+import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.domain.SolarNodeFilter;
+import net.solarnetwork.central.domain.SolarNodeFilterMatch;
+import net.solarnetwork.central.domain.SolarNodeMatch;
 
 /**
  * MyBatis implementation of {@link SolarNodeDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class MyBatisSolarNodeDao extends BaseMyBatisGenericDao<SolarNode, Long> implements SolarNodeDao {
+public class MyBatisSolarNodeDao
+		extends BaseMyBatisFilterableDao<SolarNode, SolarNodeFilterMatch, SolarNodeFilter, Long>
+		implements SolarNodeDao {
 
 	/** The query name used for {@link #getUnusedNodeId(String)}. */
 	public static final String QUERY_FOR_NEXT_NODE_ID = "get-next-node-id";
@@ -43,7 +48,7 @@ public class MyBatisSolarNodeDao extends BaseMyBatisGenericDao<SolarNode, Long> 
 	 * Default constructor.
 	 */
 	public MyBatisSolarNodeDao() {
-		super(SolarNode.class, Long.class);
+		super(SolarNode.class, Long.class, SolarNodeMatch.class);
 	}
 
 	@Override

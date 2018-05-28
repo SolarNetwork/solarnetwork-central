@@ -24,7 +24,10 @@
 
 package net.solarnetwork.central.query.biz.dao;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +68,11 @@ import net.solarnetwork.central.domain.SourceLocationMatch;
 import net.solarnetwork.central.domain.WeatherLocation;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
+import net.solarnetwork.central.security.SecurityActor;
+import net.solarnetwork.central.security.SecurityNode;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.user.dao.UserNodeDao;
 
 /**
  * Implementation of {@link QueryBiz}.
@@ -77,6 +85,7 @@ public class DaoQueryBiz implements QueryBiz {
 	private GeneralNodeDatumDao generalNodeDatumDao;
 	private GeneralLocationDatumDao generalLocationDatumDao;
 	private SolarLocationDao solarLocationDao;
+	private UserNodeDao userNodeDao;
 	private int filteredResultsLimit = 1000;
 	private long maxDaysForMinuteAggregation = 7;
 	private long maxDaysForHourAggregation = 31;
@@ -122,6 +131,35 @@ public class DaoQueryBiz implements QueryBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
 		return generalNodeDatumDao.getAvailableSources(filter);
+	}
+
+	@Override
+	public Set<Long> findAvailableNodes(SecurityActor actor) {
+		Set<Long> nodeIds = null;
+		if ( actor instanceof SecurityNode ) {
+			nodeIds = Collections.singleton(((SecurityNode) actor).getNodeId());
+		} else if ( actor instanceof SecurityToken ) {
+			SecurityPolicy policy = ((SecurityToken) actor).getPolicy();
+			Long ownerId = ((SecurityToken) actor).getUserId();
+			Set<Long> allUserNodes = userNodeDao.findNodeIdsForUser(ownerId);
+			Set<Long> policyNodes = (policy != null ? policy.getNodeIds() : null);
+			if ( policyNodes != null && !policyNodes.isEmpty() ) {
+				// user might not have access to node from policy anymore, so filter those out now
+				policyNodes = new LinkedHashSet<Long>(policyNodes); // make mutable set
+				for ( Iterator<Long> nodeItr = policyNodes.iterator(); nodeItr.hasNext(); ) {
+					if ( !allUserNodes.contains(nodeItr.next()) ) {
+						nodeItr.remove();
+					}
+				}
+				nodeIds = policyNodes;
+			} else {
+				nodeIds = allUserNodes;
+			}
+		}
+		if ( nodeIds == null || nodeIds.isEmpty() ) {
+			return Collections.emptySet();
+		}
+		return nodeIds;
 	}
 
 	@Override
@@ -379,6 +417,18 @@ public class DaoQueryBiz implements QueryBiz {
 	@Autowired
 	public void setGeneralLocationDatumDao(GeneralLocationDatumDao generalLocationDatumDao) {
 		this.generalLocationDatumDao = generalLocationDatumDao;
+	}
+
+	/**
+	 * Set the user node DAO to use.
+	 * 
+	 * @param userNodeDao
+	 *        the DAO
+	 * @since 2.4
+	 */
+	@Autowired
+	public void setUserNodeDao(UserNodeDao userNodeDao) {
+		this.userNodeDao = userNodeDao;
 	}
 
 }

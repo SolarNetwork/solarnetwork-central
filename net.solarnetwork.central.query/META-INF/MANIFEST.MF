@@ -2,22 +2,23 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Query
 Bundle-SymbolicName: net.solarnetwork.central.query
-Bundle-Version: 2.4.0
+Bundle-Version: 2.5.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
- net.solarnetwork.central.query.biz;version="2.2.0",
+ net.solarnetwork.central.query.biz;version="2.3.0",
  net.solarnetwork.central.query.domain;version="1.2.0",
- net.solarnetwork.central.query.support;version="1.6.0"
+ net.solarnetwork.central.query.support;version="1.7.0"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.4,3.0)",
  net.solarnetwork.central.biz;version="1.1.0",
  net.solarnetwork.central.datum.domain;version="1.15.0",
  net.solarnetwork.central.domain;version="1.16.0",
+ net.solarnetwork.central.security;version="1.11.0",
  net.solarnetwork.central.support;version="1.15.0",
  net.solarnetwork.util;version="1.26.1",
+ org.eclipse.gemini.blueprint.compendium.cm;version="[2.0,3.0)",
  org.joda.time;version="[2.4,3.0)",
  org.joda.time.base;version="[2.4,3.0)",
  org.joda.time.field;version="[2.4,3.0)",
- org.eclipse.gemini.blueprint.compendium.cm;version="[2.0,3.0)",
  org.osgi.service.cm;version="1.2.0"

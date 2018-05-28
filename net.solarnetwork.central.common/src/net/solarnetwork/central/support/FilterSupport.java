@@ -27,16 +27,17 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.domain.SolarNodeFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 
 /**
  * Supporting base class for {@link Filter} implementations.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.32
  */
-public class FilterSupport implements Filter, Serializable, SolarNodeMetadataFilter {
+public class FilterSupport implements Filter, Serializable, SolarNodeFilter, SolarNodeMetadataFilter {
 
 	private static final long serialVersionUID = 912502801129411927L;
 

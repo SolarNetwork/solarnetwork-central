@@ -39,13 +39,15 @@ import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
+import net.solarnetwork.central.security.SecurityActor;
 
 /**
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
+@SuppressWarnings("deprecation")
 public class DelegatingQueryBiz implements QueryBiz {
 
 	private final QueryBiz delegate;
@@ -74,6 +76,11 @@ public class DelegatingQueryBiz implements QueryBiz {
 	@Override
 	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
 		return delegate.getAvailableSources(filter);
+	}
+
+	@Override
+	public Set<Long> findAvailableNodes(SecurityActor actor) {
+		return delegate.findAvailableNodes(actor);
 	}
 
 	@Override

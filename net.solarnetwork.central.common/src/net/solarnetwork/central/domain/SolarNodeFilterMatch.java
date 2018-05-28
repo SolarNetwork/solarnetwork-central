@@ -1,7 +1,7 @@
 /* ==================================================================
- * NodeIdentity.java - Aug 8, 2010 7:41:42 PM
+ * SolarNodeFilterMatch.java - 28/05/2018 2:46:59 PM
  * 
- * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,11 +23,12 @@
 package net.solarnetwork.central.domain;
 
 /**
- * Node identity information.
+ * API for a {@link SolarNode} search or filter match result.
  * 
  * @author matt
  * @version 1.0
+ * @since 1.40
  */
-public interface NodeIdentity extends Identity<Long> {
+public interface SolarNodeFilterMatch extends NodeIdentity, FilterMatch<Long> {
 
 }
