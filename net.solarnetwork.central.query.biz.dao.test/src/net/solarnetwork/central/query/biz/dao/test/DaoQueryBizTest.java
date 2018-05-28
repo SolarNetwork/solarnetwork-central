@@ -23,14 +23,17 @@
 package net.solarnetwork.central.query.biz.dao.test;
 
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +58,11 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.support.SimpleSortDescriptor;
+import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
@@ -410,7 +417,36 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 						((ReportingGeneralLocationDatum) match).getCreated().getMillis());
 			}
 		}
+	}
 
+	@Test
+	public void findNodesForDataToken() {
+		User user = createNewUser(TEST_USER_EMAIL);
+		for ( int i = 100; i < 105; i++ ) {
+			setupTestNode(TEST_NODE_ID - i);
+			storeNewUserNode(user, getNode(TEST_NODE_ID - i));
+		}
+		SecurityToken actor = becomeAuthenticatedReadNodeDataToken(user.getId(), null);
+		Set<Long> results = daoQueryBiz.findAvailableNodes(actor);
+
+		assertThat("Results", results, hasItems(TEST_NODE_ID - 104, TEST_NODE_ID - 103,
+				TEST_NODE_ID - 102, TEST_NODE_ID - 101, TEST_NODE_ID - 100));
+	}
+
+	@Test
+	public void findNodesForDataTokenWithPolicy() {
+		User user = createNewUser(TEST_USER_EMAIL);
+		for ( int i = 100; i < 105; i++ ) {
+			setupTestNode(TEST_NODE_ID - i);
+			storeNewUserNode(user, getNode(TEST_NODE_ID - i));
+		}
+
+		SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<Long>(Arrays.asList(TEST_NODE_ID - 100, TEST_NODE_ID - 104)))
+				.build();
+		SecurityToken actor = becomeAuthenticatedReadNodeDataToken(user.getId(), policy);
+		Set<Long> results = daoQueryBiz.findAvailableNodes(actor);
+		assertThat("Results", results, hasItems(TEST_NODE_ID - 104, TEST_NODE_ID - 100));
 	}
 
 }

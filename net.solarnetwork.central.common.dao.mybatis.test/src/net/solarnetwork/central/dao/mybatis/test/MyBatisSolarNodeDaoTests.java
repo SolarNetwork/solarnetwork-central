@@ -22,19 +22,25 @@
 
 package net.solarnetwork.central.dao.mybatis.test;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
-import net.solarnetwork.central.domain.SolarNode;
+import static org.junit.Assert.assertThat;
+import java.util.Iterator;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.domain.SolarNodeFilterMatch;
+import net.solarnetwork.central.support.FilterSupport;
 
 /**
  * Test cases for the {@link MyBatisSolarNodeDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -90,6 +96,25 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertEquals(id, id2);
 		node = dao.get(id);
 		assertEquals("myname", node.getName());
+	}
+
+	@Test
+	public void findFilteredNodeIds() throws Exception {
+		final int nodeCount = 5;
+		for ( int i = 0; i < nodeCount; i++ ) {
+			setupTestNode(TEST_NODE_ID - i);
+		}
+
+		FilterSupport filter = new FilterSupport();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID - 1, TEST_NODE_ID - 2 });
+
+		FilterResults<SolarNodeFilterMatch> results = dao.findFiltered(filter, null, null, -1);
+		assertThat("Result count", results.getReturnedResultCount(), equalTo(3));
+		Iterator<SolarNodeFilterMatch> itr = results.iterator();
+		for ( int i = 0; i < 3; i++ ) {
+			SolarNodeFilterMatch m = itr.next();
+			assertThat("Match " + i + " ID", m.getId(), equalTo(TEST_NODE_ID - 2 + i));
+		}
 	}
 
 }

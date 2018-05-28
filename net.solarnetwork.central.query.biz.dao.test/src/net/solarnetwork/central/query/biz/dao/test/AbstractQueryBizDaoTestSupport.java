@@ -22,29 +22,126 @@
 
 package net.solarnetwork.central.query.biz.dao.test;
 
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import static org.junit.Assert.assertNotNull;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.joda.time.DateTime;
+import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ContextConfiguration;
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.security.AuthenticatedToken;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
+import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.central.user.domain.UserNode;
 
 /**
  * Base class for other unit tests.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ContextConfiguration
 public abstract class AbstractQueryBizDaoTestSupport extends AbstractCentralTransactionalTest {
 
+	public static final Long TEST_USER_ID = -2L;
+	public static final String TEST_USER_EMAIL = "test@localhost";
+	public static final String TEST_USER_NAME = "Foobar";
+	public static final String TEST_USER_PASSWORD = "foobar";
+
 	private SqlSessionFactory sqlSessionFactory;
+	protected UserDao userDao;
+
+	@Autowired
+	protected SolarNodeDao solarNodeDao;
+
+	@Autowired
+	protected UserNodeDao userNodeDao;
 
 	public SqlSessionFactory getSqlSessionFactory() {
 		return sqlSessionFactory;
 	}
 
+	@Before
+	public void setupBaseSupport() {
+		userDao = new MyBatisUserDao();
+		((MyBatisUserDao) userDao).setSqlSessionFactory(sqlSessionFactory);
+	}
+
 	@Autowired
 	public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
 		this.sqlSessionFactory = sqlSessionFactory;
+	}
+
+	protected SolarNode getNode(Long nodeId) {
+		return solarNodeDao.get(nodeId);
+	}
+
+	/**
+	 * Persist a new User and return it.
+	 * 
+	 * @param email
+	 *        the email of the new user
+	 * @return the User
+	 */
+	protected User createNewUser(String email) {
+		return userDao.get(storeNewUser(email));
+	}
+
+	/**
+	 * Persist a new User and return its primary key.
+	 * 
+	 * @param email
+	 *        the email of the new user
+	 * @return the primary key
+	 */
+	protected Long storeNewUser(String email) {
+		User newUser = new User();
+		newUser.setCreated(new DateTime());
+		newUser.setEmail(email);
+		newUser.setName(TEST_USER_NAME);
+		newUser.setPassword(TEST_USER_PASSWORD);
+		newUser.setEnabled(Boolean.TRUE);
+		Long id = userDao.store(newUser);
+		logger.debug("Got new user PK: " + id);
+		assertNotNull(id);
+		return id;
+	}
+
+	protected void storeNewUserNode(User user, SolarNode node) {
+		UserNode newUserNode = new UserNode();
+		newUserNode.setCreated(new DateTime());
+		newUserNode.setDescription("Test description");
+		newUserNode.setName("Test name");
+		newUserNode.setNode(node);
+		newUserNode.setUser(user);
+		userNodeDao.store(newUserNode);
+	}
+
+	protected void becomeActor(Authentication auth) {
+		SecurityContextHolder.getContext().setAuthentication(auth);
+	}
+
+	protected SecurityToken becomeAuthenticatedReadNodeDataToken(final Long userId,
+			final SecurityPolicy policy) {
+		AuthenticatedToken token = new AuthenticatedToken(
+				new org.springframework.security.core.userdetails.User("user", "pass", true, true, true,
+						true, AuthorityUtils.NO_AUTHORITIES),
+				UserAuthTokenType.ReadNodeData.toString(), userId, policy);
+		TestingAuthenticationToken auth = new TestingAuthenticationToken(token, userId.toString(),
+				"ROLE_READNODEDATA");
+		becomeActor(auth);
+		return token;
 	}
 
 }

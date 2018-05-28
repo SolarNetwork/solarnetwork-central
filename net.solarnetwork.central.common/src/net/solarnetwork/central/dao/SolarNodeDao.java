@@ -20,30 +20,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ===================================================================
- * $Id$
- * ===================================================================
  */
 
 package net.solarnetwork.central.dao;
 
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.domain.SolarNodeFilter;
+import net.solarnetwork.central.domain.SolarNodeFilterMatch;
 
 /**
  * DAO API for SolarNode data.
  * 
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.1
  */
-public interface SolarNodeDao extends GenericDao<SolarNode, Long> {
+public interface SolarNodeDao
+		extends GenericDao<SolarNode, Long>, FilterableDao<SolarNodeFilterMatch, Long, SolarNodeFilter> {
 
 	/**
 	 * Get an unused node ID value.
 	 * 
-	 * <p>Once an ID has been returned by this method, that ID will
-	 * never be returned again.</p>
+	 * <p>
+	 * Once an ID has been returned by this method, that ID will never be
+	 * returned again.
+	 * </p>
 	 * 
 	 * @return an unused node ID
 	 */
 	Long getUnusedNodeId();
-	
+
 }

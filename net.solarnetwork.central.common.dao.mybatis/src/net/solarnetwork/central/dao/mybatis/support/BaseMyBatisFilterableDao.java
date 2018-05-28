@@ -40,7 +40,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * Base MyBatis {@link FilterableDao} implementation.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends FilterMatch<PK>, F extends Filter, PK extends Serializable>
 		extends BaseMyBatisGenericDao<T, PK> implements FilterableDao<M, PK, F> {
@@ -104,7 +104,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 		// attempt count first, if max NOT specified as -1
 		Long totalCount = null;
 		if ( max != null && max.intValue() != -1 ) {
-			Number n = selectLong(query + "-count", sqlProps);
+			Long n = executeFilterCountQuery(query + "-count", filter, sqlProps);
 			if ( n != null ) {
 				totalCount = n.longValue();
 			}
@@ -116,6 +116,41 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 				(totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
 
 		return results;
+	}
+
+	/**
+	 * Execute a count query for a filter.
+	 * 
+	 * <p>
+	 * If the query throws an {@link IllegalArgumentException} this method
+	 * assumes that means the query name was not found, and will simply return
+	 * {@literal null}.
+	 * </p>
+	 * 
+	 * @param countQueryName
+	 *        the query name
+	 * @param filter
+	 *        the filter
+	 * @param sqlProps
+	 *        the SQL properties
+	 * @return the count
+	 */
+	protected Long executeFilterCountQuery(final String countQueryName, F filter,
+			final Map<String, ?> sqlProps) {
+		try {
+			return selectLong(countQueryName, sqlProps);
+		} catch ( RuntimeException e ) {
+			Throwable cause = e;
+			while ( cause.getCause() != null ) {
+				cause = cause.getCause();
+			}
+			if ( cause instanceof IllegalArgumentException ) {
+				log.warn("Count query not supported: {}", countQueryName, e);
+			} else {
+				throw e;
+			}
+		}
+		return null;
 	}
 
 }

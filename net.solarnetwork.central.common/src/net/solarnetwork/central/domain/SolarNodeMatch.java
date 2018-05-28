@@ -1,7 +1,7 @@
 /* ==================================================================
- * NodeIdentity.java - Aug 8, 2010 7:41:42 PM
+ * SolarNodeMatch.java - 28/05/2018 2:52:30 PM
  * 
- * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,11 +23,19 @@
 package net.solarnetwork.central.domain;
 
 /**
- * Node identity information.
+ * A "match" to a {@link SolarNode}.
+ * 
+ * <p>
+ * Although this class extends {@link SolarNode} that is merely an
+ * implementation detail.
+ * </p>
  * 
  * @author matt
  * @version 1.0
+ * @since 1.40
  */
-public interface NodeIdentity extends Identity<Long> {
+public class SolarNodeMatch extends SolarNode implements SolarNodeFilterMatch {
+
+	private static final long serialVersionUID = 7972204667914199552L;
 
 }

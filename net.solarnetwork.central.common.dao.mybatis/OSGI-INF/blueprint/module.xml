@@ -105,6 +105,7 @@
 				<value>net.solarnetwork.central.domain.PriceSource</value>
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
+				<value>net.solarnetwork.central.domain.SolarNodeMatch</value>
 				<value>net.solarnetwork.central.domain.SolarNodeMetadata</value>
 				<value>net.solarnetwork.central.domain.SolarNodeMetadataMatch</value>
 				<value>net.solarnetwork.central.domain.WeatherLocation</value>
