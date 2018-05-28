@@ -1,7 +1,7 @@
 /* ==================================================================
- * NodeIdentity.java - Aug 8, 2010 7:41:42 PM
+ * SolarNodeFilter.java - 28/05/2018 2:45:37 PM
  * 
- * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,11 +23,31 @@
 package net.solarnetwork.central.domain;
 
 /**
- * Node identity information.
+ * Filter API for {@link SolarNode}.
  * 
  * @author matt
  * @version 1.0
+ * @since 1.40
  */
-public interface NodeIdentity extends Identity<Long> {
+public interface SolarNodeFilter extends Filter {
+
+	/**
+	 * Get the first node ID.
+	 * 
+	 * <p>
+	 * This returns the first available node ID from the {@link #getNodeIds()}
+	 * array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the node ID, or {@literal null} if not available
+	 */
+	public Long getNodeId();
+
+	/**
+	 * Get an array of node IDs.
+	 * 
+	 * @return array of node IDs (may be {@literal null})
+	 */
+	public Long[] getNodeIds();
 
 }

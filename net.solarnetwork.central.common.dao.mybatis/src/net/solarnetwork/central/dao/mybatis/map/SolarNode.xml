@@ -67,4 +67,48 @@
 			n.node_id = #{id}
 	</select>
 	
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="SolarNodeMatchResult" type="net.solarnetwork.central.domain.SolarNodeMatch"
+		extends="net.solarnetwork.central.dao.mybatis.SolarNode.SolarNodeFullResult"/>
+
+	<sql id="fragment-findall-SolarNode-SolarNodeMatch-where">
+		<where>
+			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+				AND n.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+		</where>
+	</sql>
+
+
+	<select id="findall-SolarNode-SolarNodeMatch" resultMap="SolarNodeMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-SolarNode-full-result"/>
+		FROM
+			solarnet.sn_node n
+		<include refid="fragment-findall-SolarNode-SolarNodeMatch-where"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item.sortKey == &quot;created&quot;">n.created</if>
+					<if test="item.sortKey == &quot;node&quot;">n.node_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				n.node_id
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findall-SolarNode-SolarNodeMatch-count" resultType="long">
+		SELECT count(nmeta.created)
+		FROM
+			solarnet.sn_node n
+		<include refid="fragment-findall-SolarNode-SolarNodeMatch-where"/>
+	</select>
+	
 </mapper>

@@ -44,12 +44,13 @@ import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.domain.ReportableInterval;
+import net.solarnetwork.central.security.SecurityActor;
 
 /**
  * API for querying business logic.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface QueryBiz {
 
@@ -114,6 +115,16 @@ public interface QueryBiz {
 	 * @since 2.1
 	 */
 	Set<String> getAvailableSources(GeneralNodeDatumFilter filter);
+
+	/**
+	 * Find all available nodes for a given actor.
+	 * 
+	 * @param actor
+	 *        the actor to get nodes for
+	 * @return the results, never {@literal null}
+	 * @since 2.2
+	 */
+	Set<Long> findAvailableNodes(SecurityActor actor);
 
 	/**
 	 * API for querying for a filtered set of GeneralNodeDatum results from all
