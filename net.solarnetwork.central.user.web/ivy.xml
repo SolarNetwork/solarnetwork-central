@@ -23,7 +23,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.instructor" rev="[1.6.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[2.0.0,3.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.28.0,2.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.billing" rev="[0.2.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.billing" rev="[1.0.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.export" rev="[1.0.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.nim" rev="[1.0.0,2.0.0)"/>
 		<dependency org="javax.servlet" name="com.springsource.javax.servlet" rev="2.5.0" />

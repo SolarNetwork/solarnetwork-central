@@ -141,3 +141,7 @@ dd + dt {
 .nav-pills.form-group {
 	margin-bottom: 15px;
 }
+
+tfoot .ledger-amount-label {
+	text-align: right;
+}
