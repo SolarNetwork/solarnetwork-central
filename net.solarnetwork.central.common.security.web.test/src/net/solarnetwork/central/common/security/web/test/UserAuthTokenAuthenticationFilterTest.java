@@ -43,6 +43,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.easymock.EasyMock;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -53,6 +54,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import net.solarnetwork.central.security.AuthenticatedToken;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint;
 import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter;
 import net.solarnetwork.web.security.AuthenticationScheme;
@@ -559,5 +562,24 @@ public class UserAuthTokenAuthenticationFilterTest {
 		filter.doFilter(request, response, filterChain);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Content sha-256 digest value mismatch");
 		verify(filterChain, userDetailsService);
+	}
+
+	@Test
+	public void expiredToken() throws ServletException, IOException {
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNotAfter(new DateTime(System.currentTimeMillis() - 1000)).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "ReadNodeData", -1L,
+				policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		final Date now = new Date(System.currentTimeMillis() - 16L * 60L * 1000L);
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Expired token");
 	}
 }
