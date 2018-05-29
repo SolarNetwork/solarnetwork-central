@@ -1,7 +1,7 @@
 /* ==================================================================
- * InvoiceMatch.java - 25/08/2017 2:34:43 PM
+ * InvoiceMatchFilterResults.java - 29/05/2018 1:20:19 PM
  * 
- * Copyright 2017 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,47 +23,25 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
-import org.joda.time.DateTime;
-import net.solarnetwork.central.domain.FilterMatch;
+import net.solarnetwork.central.domain.FilterResults;
 
 /**
- * Search resulut match for an Invoice.
+ * API for a set of invoices returned from a filter query.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface InvoiceMatch extends FilterMatch<String> {
+public interface InvoiceMatchFilterResults extends FilterResults<InvoiceMatch> {
 
 	/**
-	 * Get the date this invoice was created.
-	 * 
-	 * @return the created date
-	 */
-	DateTime getCreated();
-
-	/**
-	 * Get the time zone this invoice was created in.
-	 * 
-	 * @return the time zone ID
-	 */
-	String getTimeZoneId();
-
-	/**
-	 * Get a reference invoice "number".
-	 * 
-	 * @return the invoice number
-	 */
-	String getInvoiceNumber();
-
-	/**
-	 * Get the amount charged on this invoice.
+	 * Get the total amount charged across all invoices.
 	 * 
 	 * @return the amount
 	 */
-	BigDecimal getAmount();
+	BigDecimal getTotalAmount();
 
 	/**
-	 * Get the current invoice balance (unpaid amount).
+	 * Get the current total balance (unpaid amount) across all invoices.
 	 * 
 	 * <p>
 	 * If this is positive then the invoice has outstanding payment due.
@@ -71,19 +49,18 @@ public interface InvoiceMatch extends FilterMatch<String> {
 	 * 
 	 * @return the invoice balance
 	 */
-	BigDecimal getBalance();
+	BigDecimal getTotalBalance();
 
 	/**
-	 * Get the total amount of all tax invoice items.
+	 * Get the total amount of all tax invoice items in all invoices.
 	 * 
 	 * @return the total tax amount
-	 * @since 1.1
 	 */
-	BigDecimal getTaxAmount();
+	BigDecimal getTotalTaxAmount();
 
 	/**
-	 * Get the currency this invoice is in, as a string currency code like
-	 * {@literal NZD} or {@literal USD}.
+	 * Get the currency the amounts returned by other methods in this API is in,
+	 * as a string currency code like {@literal NZD} or {@literal USD}.
 	 * 
 	 * @return the currency code
 	 */

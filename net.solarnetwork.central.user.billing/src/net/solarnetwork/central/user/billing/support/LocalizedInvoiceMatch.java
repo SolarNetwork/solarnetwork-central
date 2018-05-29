@@ -36,7 +36,7 @@ import net.solarnetwork.javax.money.MoneyUtils;
  * Localized version of {@link InvoiceMatch}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatchInfo {
 
@@ -120,6 +120,11 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatc
 	@Override
 	public BigDecimal getBalance() {
 		return match.getBalance();
+	}
+
+	@Override
+	public BigDecimal getTaxAmount() {
+		return match.getTaxAmount();
 	}
 
 	@Override

@@ -146,11 +146,20 @@ $(document).ready(function() {
 	function renderInvoiceTable(table, pagination, displayCount, json) {
 		var haveRows = json && json.data && json.data.results.length > 0;
 		var total = (json.data ? json.data.totalResults : returned);
+		var container, prop, cell;
 		if ( haveRows ) {
 			var table = $(table);
 			var templateRow = table.find('tr.template');
 			var tbody = table.find('tbody');
 			renderInvoiceTableRows(tbody, templateRow, json.data.results);
+		}
+		if ( json.data ) {
+			container = table.find('tfoot');
+			if ( container.length ) {
+				for ( prop in json.data ) {
+					container.find("[data-tprop='" +prop +"']").text(json.data[prop]);
+				}
+			}
 		}
 		if ( pagination ) {
 			var offset = (json.data ? json.data.startingOffset : 0);

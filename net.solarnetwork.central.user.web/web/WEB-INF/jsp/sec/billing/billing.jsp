@@ -28,6 +28,12 @@
 		</thead>
 		<tbody>
 		</tbody>
+		<tfoot>
+			<tr>
+				<th colspan="2" class="ledger-amount-label"><fmt:message key="billing.invoice.balance.total.label"/></th>
+				<th data-tprop="localizedTotalBalance"></th>
+			</tr>
+		</tfoot>
 	</table>
 </section>
 
