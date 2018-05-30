@@ -19,7 +19,7 @@
 
 	<context:component-scan base-package="net.solarnetwork.central.query.web"/>
 
-	<mvc:annotation-driven>
+	<mvc:annotation-driven conversion-service="isoDateConversionService">
 		<mvc:message-converters register-defaults="true">
 			<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
 				<property name="prefixJson" value="false" />
@@ -39,6 +39,8 @@
 			</bean>
 		</mvc:message-converters>
 	</mvc:annotation-driven>
+
+	<bean id="isoDateConversionService" class="net.solarnetwork.central.support.JodaIsoFormattingConversionServiceFactoryBean"/>
 
 	<mvc:cors>
 		<mvc:mapping path="/api/**"
