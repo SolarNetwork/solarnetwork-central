@@ -39,9 +39,9 @@
 				<tr>
 					<td class="monospace"><c:out value='${token.authToken}'/></td>
 					<td>
-						<joda:dateTimeZone value="GMT">
+						<joda:dateTimeZone value="UTC">
 							<joda:format value="${token.created}"
-								 pattern="dd MMM yyyy"/> GMT
+								 pattern="dd MMM yyyy"/> UTC
 						</joda:dateTimeZone>
 					</td>
 					<td>
@@ -106,6 +106,20 @@
 						<td>
 							<c:if test="${not empty token.policy}">
 								<dl>
+									<c:if test="${not empty token.policy.notAfter}">
+										<dt><fmt:message key='auth-tokens.label.notAfter'/></dt>
+										<dd>
+											<joda:dateTimeZone value="UTC">
+												<joda:format value="${token.policy.notAfter}" pattern="dd MMM yyyy"/> UTC
+											</joda:dateTimeZone>
+										</dd>
+									</c:if>
+									<c:if test="${not empty token.policy.refreshAllowed and token.policy.refreshAllowed}">
+										<dt><fmt:message key='auth-tokens.label.refreshAllowed'/></dt>
+										<dd>
+											<fmt:message key='auth-tokens-policy-refreshAllowed.true.label'/>
+										</dd>
+									</c:if>
 									<c:if test="${fn:length(token.policy.nodeIds) gt 0}">
 										<dt><fmt:message key='auth-tokens.label.nodes'/></dt>
 										<dd>
@@ -148,15 +162,24 @@
 							</c:if>
 						</td>
 						<td>
-							<joda:dateTimeZone value="GMT">
+							<joda:dateTimeZone value="UTC">
 								<joda:format value="${token.created}"
-									 pattern="dd MMM yyyy"/> GMT
+									 pattern="dd MMM yyyy"/> UTC
 							</joda:dateTimeZone>
 						</td>
 						<td>
-							<span class="label label-${token.status eq 'Active' ? 'success' : 'warning'}">
-								<fmt:message key='auth-tokens.label.status.${token.status}'/>
-							</span>
+							<c:choose>
+								<c:when test="${token.expired}">
+									<span class="label label-danger">
+										<fmt:message key='auth-tokens.label.expired'/>
+									</span>
+								</c:when>
+								<c:otherwise>
+									<span class="label label-${token.status eq 'Active' ? 'success' : 'warning'}">
+										<fmt:message key='auth-tokens.label.status.${token.status}'/>
+									</span>
+								</c:otherwise>
+							</c:choose>
 						</td>
 						<td>
 							<form class="action-data-token">
@@ -265,6 +288,7 @@
 			 		<p class="before"><fmt:message key='auth-tokens.data.create.intro'/></p>
 			 		<ul class="nav nav-pills form-group before">
 						<li class="active"><a data-toggle="pill" href="#create-data-auth-token-tab-ids"><fmt:message key='auth-tokens.data.create.group.ids'/></a></li>
+						<li><a data-toggle="pill" href="#create-data-auth-token-tab-expiry"><fmt:message key='auth-tokens.data.create.group.expiry'/></a></li>
 						<li><a data-toggle="pill" href="#create-data-auth-token-tab-agg"><fmt:message key='auth-tokens.data.create.group.agg'/></a></li>
 						<li><a data-toggle="pill" href="#create-data-auth-token-tab-node-meta"><fmt:message key='auth-tokens.data.create.group.node-meta'/></a></li>
 						<li><a data-toggle="pill" href="#create-data-auth-token-tab-user-meta"><fmt:message key='auth-tokens.data.create.group.user-meta'/></a></li>
@@ -282,6 +306,28 @@
 					 				placeholder="<fmt:message key='auth-tokens.policy.sourceIds.placeholder'/>"></textarea>
 					 			<div id="create-data-auth-token-policy-sourceids-hint" class="toggle-buttons"></div>
 					 		</div>
+						</div>
+						<div id="create-data-auth-token-tab-expiry" class="tab-pane fade form-horizontal">
+							<div class="form-group">
+					 			<label for="create-data-auth-token-policy-not-after" class="col-sm-3 control-label"><fmt:message key='auth-tokens.policy.notAfter.label'/></label>
+					 			<div class="col-sm-9">
+					 				<input type="date" id="create-data-auth-token-policy-not-after" class="form-control" name="notAfter" maxlength="10" placeholder="<fmt:message key='auth-tokens.policy.notAfter.placeholder'/>">
+				 				</div>
+				 			</div>
+				 			<div class="form-group">
+					 			<label for="create-data-auth-token-policy-not-after" class="col-sm-3 control-label"><fmt:message key='auth-tokens.policy.refreshAllowed.label'/></label>
+								<div class="col-sm-9">
+									<label class="radio-inline">
+										<input type="radio" name="refreshAllowed" value="true">
+										<fmt:message key='auth-tokens-policy-refreshAllowed.true.label'/>
+									</label>
+									<label class="radio-inline">
+										<input type="radio" name="refreshAllowed" value="false" checked="checked">
+										<fmt:message key='auth-tokens-policy-refreshAllowed.false.label'/>
+									</label>
+						 			<div class="help-block"><fmt:message key='auth-tokens.policy.refreshAllowed.caption'/></div>
+								</div>
+							</div>
 						</div>
 						<div id="create-data-auth-token-tab-agg" class="tab-pane fade">
 				 			<label for="create-data-auth-token-policy-minagg"><fmt:message key='auth-tokens.policy.minAggregation.label'/></label>

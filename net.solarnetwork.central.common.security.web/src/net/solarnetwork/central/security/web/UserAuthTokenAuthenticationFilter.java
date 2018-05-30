@@ -43,6 +43,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.GenericFilterBean;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.web.security.AuthenticationData;
 import net.solarnetwork.web.security.AuthenticationDataFactory;
 import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
@@ -62,7 +64,7 @@ import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
  * </p>
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class UserAuthTokenAuthenticationFilter extends GenericFilterBean implements Filter {
 
@@ -119,6 +121,15 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 			fail(request, response, new BadCredentialsException("Bad credentials"));
 			return;
 		}
+
+		if ( user instanceof SecurityToken ) {
+			SecurityPolicy policy = ((SecurityToken) user).getPolicy();
+			if ( policy != null && !policy.isValidAt(System.currentTimeMillis()) ) {
+				fail(request, response, new BadCredentialsException("Expired token"));
+				return;
+			}
+		}
+
 		final String computedDigest = data.computeSignatureDigest(user.getPassword());
 		if ( !computedDigest.equals(data.getSignatureDigest()) ) {
 			log.debug("Expected response: '{}' but received: '{}'", computedDigest,

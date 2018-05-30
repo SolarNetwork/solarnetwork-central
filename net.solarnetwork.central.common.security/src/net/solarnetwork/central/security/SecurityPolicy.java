@@ -23,6 +23,7 @@
 package net.solarnetwork.central.security;
 
 import java.util.Set;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.LocationPrecision;
 
@@ -30,7 +31,7 @@ import net.solarnetwork.central.domain.LocationPrecision;
  * API for a security policy, that is rules defining access permissions.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface SecurityPolicy {
 
@@ -91,5 +92,33 @@ public interface SecurityPolicy {
 	 * @since 1.1
 	 */
 	Set<String> getUserMetadataPaths();
+
+	/**
+	 * Get a date after which a token is no longer valid.
+	 * 
+	 * @return the expire date, or {@literal null} for no expiration
+	 * @since 1.2
+	 */
+	DateTime getNotAfter();
+
+	/**
+	 * Test if the policy is valid at a specific date.
+	 * 
+	 * @param timestamp
+	 *        the epoch time to test
+	 * @return {@literal false} if {@code notAfter} is set on the policy and
+	 *         {@code timestamp} is after that
+	 * @since 1.2
+	 */
+	boolean isValidAt(long timestamp);
+
+	/**
+	 * Flag indicating if the token can be refreshed.
+	 * 
+	 * @return {@literal true} if a token can be refreshed, {@literal false}
+	 *         otherwise
+	 * @since 1.2
+	 */
+	Boolean getRefreshAllowed();
 
 }

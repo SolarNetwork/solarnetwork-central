@@ -52,5 +52,9 @@
 		<beans:property name="userDetailsService" ref="jdbcUserService"/>
 		<beans:property name="authenticationEntryPoint" ref="authTokenEntryPoint"/>
 	</beans:bean>
+	
+	<beans:bean id="authenticationTokenService" class="net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTokenService">
+		<beans:constructor-arg ref="jdbcUserService"/>
+	</beans:bean>
 
 </beans:beans>

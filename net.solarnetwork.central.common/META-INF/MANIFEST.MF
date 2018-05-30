@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Common Central
 Bundle-SymbolicName: net.solarnetwork.central.common
-Bundle-Version: 1.40.0
+Bundle-Version: 1.41.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
@@ -11,7 +11,7 @@ Export-Package:
  net.solarnetwork.central.dao;version="1.15.0",
  net.solarnetwork.central.domain;version="1.26.0",
  net.solarnetwork.central.scheduler;version="1.5.0",
- net.solarnetwork.central.support;version="1.15.2"
+ net.solarnetwork.central.support;version="1.16.0"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.4,3.0)",
  com.fasterxml.jackson.core;version="[2.4,3.0)",
@@ -39,6 +39,9 @@ Import-Package:
  org.springframework.beans;version="[4.2,5.0)",
  org.springframework.beans.factory;version="[4.2,5.0)",
  org.springframework.context;version="[4.2,5.0)",
+ org.springframework.format;version="[4.2,5.0)",
+ org.springframework.format.datetime.joda;version="[4.2,5.0)",
+ org.springframework.format.support;version="[4.2,5.0)",
  org.springframework.util;version="[4.2,5.0)",
  org.springframework.validation;version="[4.2,5.0)",
  org.springframework.validation.beanvalidation;version="[4.2,5.0)"

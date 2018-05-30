@@ -143,10 +143,16 @@ $(document).ready(function() {
 				containerNodeMetadataText = form.find('textarea[name=nodeMetadataPaths]').val(),
 				containerNodeMetadataPaths = (containerNodeMetadataText ? containerNodeMetadataText.split(/\s*,\s*/) : []),
 				containerUserMetadataText = form.find('textarea[name=userMetadataPaths]').val(),
-				containerUserMetadataPaths = (containerUserMetadataText ? containerUserMetadataText.split(/\s*,\s*/) : []);
+				containerUserMetadataPaths = (containerUserMetadataText ? containerUserMetadataText.split(/\s*,\s*/) : []),
+				containerNotAfter = form.find('input[name=notAfter]').val(),
+				containerRefreshAllowed = form.find('input[name=refreshAllowed]:checked').val();
 			activePolicy.sourceIds = containerSourceIds;
 			activePolicy.nodeMetadataPaths = containerNodeMetadataPaths;
 			activePolicy.userMetadataPaths = containerUserMetadataPaths;
+			activePolicy.refreshAllowed = (containerRefreshAllowed === 'true');
+			if ( containerNotAfter ) {
+				activePolicy.notAfter = containerNotAfter;
+			}
 		},
 		beforeSubmit: function(array, form, options) {
 			var sourceIdsIdx = array.findIndex(function(obj) {

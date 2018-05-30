@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -127,13 +130,19 @@ public class UserAuthTokenController extends ControllerSupport {
 			@RequestParam(value = "sourceId", required = false) Set<String> sourceIds,
 			@RequestParam(value = "minAggregation", required = false) Aggregation minAggregation,
 			@RequestParam(value = "nodeMetadataPath", required = false) Set<String> nodeMetadataPaths,
-			@RequestParam(value = "userMetadataPath", required = false) Set<String> userMetadataPaths) {
+			@RequestParam(value = "userMetadataPath", required = false) Set<String> userMetadataPaths,
+			@RequestParam(value = "notAfter", required = false) LocalDate notAfter,
+			@RequestParam(value = "refreshAllowed", required = false) Boolean refreshAllowed) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
+		final DateTime notAfterDate = (notAfter != null
+				? notAfter.toDateTimeAtStartOfDay(DateTimeZone.UTC)
+				: null);
 		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId(),
 				UserAuthTokenType.ReadNodeData,
 				new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).withSourceIds(sourceIds)
 						.withMinAggregation(minAggregation).withNodeMetadataPaths(nodeMetadataPaths)
-						.withUserMetadataPaths(userMetadataPaths).build());
+						.withUserMetadataPaths(userMetadataPaths).withNotAfter(notAfterDate)
+						.withRefreshAllowed(refreshAllowed).build());
 		return new Response<UserAuthToken>(token);
 	}
 

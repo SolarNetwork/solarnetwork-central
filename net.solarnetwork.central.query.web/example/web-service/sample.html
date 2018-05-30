@@ -153,7 +153,10 @@
 								<option value="/solaruser/api/v1/sec/instr/view?ids={instructionIds}">View instructions</option>
 								<option value="/solaruser/api/v1/sec/instr/updateState?ids={instructionIds}&state={instructionState:(Received|Executing|Declined|Completed)}" data-method="POST">Update instructions state</option>
 							</optgroup>
-							<optgroup label="Auth Tokens">
+							<optgroup label="Auth tokens (read only)">
+								<option value="/solarquery/api/v1/sec/auth-tokens/refresh/v2?date={YYYY-MM-DD}">Refresh a V2 token</option>
+							</optgroup>
+							<optgroup label="Auth Tokens (read/write)">
 								<option value="/solaruser/api/v1/sec/user/auth-tokens">List all tokens</option>
 								<option value="/solaruser/api/v1/sec/user/auth-tokens/generate/{type:User|ReadNodeData}" data-method="POST">Generate token</option>
 								<option value="/solaruser/api/v1/sec/user/auth-tokens/{token}/status?status={status:Active|Disabled}" data-method="POST">Update status</option>
