@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import org.joda.time.DateTime;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.solarnetwork.central.domain.Aggregation;
@@ -39,13 +40,13 @@ import net.solarnetwork.central.domain.LocationPrecision;
  * Basic implementation of {@link SecurityPolicy}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonDeserialize(builder = net.solarnetwork.central.security.BasicSecurityPolicy.Builder.class)
 @JsonSerialize(using = SecurityPolicySerializer.class)
 public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 
-	private static final long serialVersionUID = -7842690205136252446L;
+	private static final long serialVersionUID = 2178988304971356373L;
 
 	/**
 	 * A builder for {@link BasicSecurityPolicy} instances.
@@ -68,6 +69,8 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		private LocationPrecision minLocationPrecision;
 		private Set<String> nodeMetadataPaths;
 		private Set<String> userMetadataPaths;
+		private DateTime notAfter;
+		private Boolean refreshAllowed;
 
 		public Builder withPolicy(SecurityPolicy policy) {
 			if ( policy != null ) {
@@ -77,7 +80,9 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 						.withMinLocationPrecision(policy.getMinLocationPrecision())
 						.withNodeIds(policy.getNodeIds()).withSourceIds(policy.getSourceIds())
 						.withNodeMetadataPaths(policy.getNodeMetadataPaths())
-						.withUserMetadataPaths(policy.getUserMetadataPaths());
+						.withUserMetadataPaths(policy.getUserMetadataPaths())
+						.withNotAfter(policy.getNotAfter())
+						.withRefreshAllowed(policy.getRefreshAllowed());
 			}
 			return this;
 		}
@@ -95,6 +100,12 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 				}
 				if ( policy.getMinLocationPrecision() != null ) {
 					b = b.withMinLocationPrecision(policy.getMinLocationPrecision());
+				}
+				if ( policy.getNotAfter() != null ) {
+					b = b.withNotAfter(policy.getNotAfter());
+				}
+				if ( policy.getRefreshAllowed() != null ) {
+					b = b.withRefreshAllowed(policy.getRefreshAllowed());
 				}
 				return b;
 			}
@@ -277,10 +288,20 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 			return result;
 		}
 
+		public Builder withNotAfter(DateTime date) {
+			this.notAfter = date;
+			return this;
+		}
+
+		public Builder withRefreshAllowed(Boolean refreshAllowed) {
+			this.refreshAllowed = refreshAllowed;
+			return this;
+		}
+
 		public BasicSecurityPolicy build() {
 			return new BasicSecurityPolicy(nodeIds, sourceIds, buildAggregations(), minAggregation,
 					buildLocationPrecisions(), minLocationPrecision, nodeMetadataPaths,
-					userMetadataPaths);
+					userMetadataPaths, notAfter, refreshAllowed);
 		}
 
 	}
@@ -293,35 +314,83 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 	private final LocationPrecision minLocationPrecision;
 	private final Set<String> nodeMetadataPaths;
 	private final Set<String> userMetadataPaths;
+	private final DateTime notAfter;
+	private final Boolean refreshAllowed;
 
 	/**
 	 * Constructor.
 	 * 
+	 * <p>
+	 * The {@code notAfter} property will be set to {@literal null} (for no
+	 * expiration date) and {@code refreshable} to {@literal false}.
+	 * </p>
+	 * 
 	 * @param nodeIds
-	 *        The node IDs to restrict to, or {@code null} for no restriction.
+	 *        The node IDs to restrict to, or {@literal null} for no
+	 *        restriction.
 	 * @param sourceIds
-	 *        The source ID to restrict to, or {@code null} for no restriction.
+	 *        The source ID to restrict to, or {@literal null} for no
+	 *        restriction.
 	 * @param aggregations
-	 *        The aggregations to restrict to, or {@code null} for no
+	 *        The aggregations to restrict to, or {@literal null} for no
 	 *        restriction.
 	 * @param minAggregation
 	 *        If specified, a minimum aggregation level that is allowed.
 	 * @param locationPrecisions
-	 *        The location precisions to restrict to, or {@code null} for no
+	 *        The location precisions to restrict to, or {@literal null} for no
 	 *        restriction.
 	 * @param minALocationPrecision
 	 *        If specified, a minimum location precision that is allowed.
 	 * @param nodeMetadataPaths
 	 *        The {@code SolarNodeMetadata} paths to restrict to, or
-	 *        {@code null} for no restriction.
+	 *        {@literal null} for no restriction.
 	 * @param userMetadataPaths
-	 *        The {@code UserNodeMetadata} paths to restrict to, or {@code null}
-	 *        for no restriction.
+	 *        The {@code UserNodeMetadata} paths to restrict to, or
+	 *        {@literal null} for no restriction.
 	 */
 	public BasicSecurityPolicy(Set<Long> nodeIds, Set<String> sourceIds, Set<Aggregation> aggregations,
 			Aggregation minAggregation, Set<LocationPrecision> locationPrecisions,
 			LocationPrecision minLocationPrecision, Set<String> nodeMetadataPaths,
 			Set<String> userMetadataPaths) {
+		this(nodeIds, sourceIds, aggregations, minAggregation, locationPrecisions, minLocationPrecision,
+				nodeMetadataPaths, userMetadataPaths, null, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param nodeIds
+	 *        The node IDs to restrict to, or {@literal null} for no
+	 *        restriction.
+	 * @param sourceIds
+	 *        The source ID to restrict to, or {@literal null} for no
+	 *        restriction.
+	 * @param aggregations
+	 *        The aggregations to restrict to, or {@literal null} for no
+	 *        restriction.
+	 * @param minAggregation
+	 *        If specified, a minimum aggregation level that is allowed.
+	 * @param locationPrecisions
+	 *        The location precisions to restrict to, or {@lieral null} for no
+	 *        restriction.
+	 * @param minALocationPrecision
+	 *        If specified, a minimum location precision that is allowed.
+	 * @param nodeMetadataPaths
+	 *        The {@code SolarNodeMetadata} paths to restrict to, or
+	 *        {@literal null} for no restriction.
+	 * @param userMetadataPaths
+	 *        The {@code UserNodeMetadata} paths to restrict to, or
+	 *        {@lieral null} for no restriction.
+	 * @param notAfter
+	 *        A date after which the token is no longer valid, or {@lieral null}
+	 *        for no expiration.
+	 * @param refreshAllowed
+	 *        {@literal true} if the token can be refreshed
+	 */
+	public BasicSecurityPolicy(Set<Long> nodeIds, Set<String> sourceIds, Set<Aggregation> aggregations,
+			Aggregation minAggregation, Set<LocationPrecision> locationPrecisions,
+			LocationPrecision minLocationPrecision, Set<String> nodeMetadataPaths,
+			Set<String> userMetadataPaths, DateTime notAfter, Boolean refreshAllowed) {
 		super();
 		this.nodeIds = nodeIds;
 		this.sourceIds = sourceIds;
@@ -331,6 +400,8 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		this.minLocationPrecision = minLocationPrecision;
 		this.nodeMetadataPaths = nodeMetadataPaths;
 		this.userMetadataPaths = userMetadataPaths;
+		this.notAfter = notAfter;
+		this.refreshAllowed = refreshAllowed;
 	}
 
 	@Override
@@ -374,6 +445,21 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 	}
 
 	@Override
+	public DateTime getNotAfter() {
+		return notAfter;
+	}
+
+	@Override
+	public boolean isValidAt(long timestamp) {
+		return (notAfter == null || !notAfter.isBefore(timestamp));
+	}
+
+	@Override
+	public Boolean getRefreshAllowed() {
+		return refreshAllowed;
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -385,6 +471,8 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		result = prime * result + ((sourceIds == null) ? 0 : sourceIds.hashCode());
 		result = prime * result + ((nodeMetadataPaths == null) ? 0 : nodeMetadataPaths.hashCode());
 		result = prime * result + ((userMetadataPaths == null) ? 0 : userMetadataPaths.hashCode());
+		result = prime * result + ((notAfter == null) ? 0 : notAfter.hashCode());
+		result = prime * result + (refreshAllowed == null ? 0 : refreshAllowed.hashCode());
 		return result;
 	}
 
@@ -446,6 +534,20 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 				return false;
 			}
 		} else if ( !userMetadataPaths.equals(other.userMetadataPaths) ) {
+			return false;
+		}
+		if ( notAfter == null ) {
+			if ( other.notAfter != null ) {
+				return false;
+			}
+		} else if ( !notAfter.equals(other.notAfter) ) {
+			return false;
+		}
+		if ( refreshAllowed == null ) {
+			if ( other.refreshAllowed != null ) {
+				return false;
+			}
+		} else if ( !refreshAllowed.equals(other.refreshAllowed) ) {
 			return false;
 		}
 		return true;

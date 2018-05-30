@@ -12,7 +12,7 @@
 	<ctx:property-placeholder properties-ref="query.web.cfg"/>
 
 	<ctx:annotation-config/>
-
+	
 	<!-- Note: we use ReloadableResourceBundleMessageSource with no reloading because
 	           ResourceBundleMessageSource doesn't resolve the messages properly. -->
 	<bean id="messageSource" 

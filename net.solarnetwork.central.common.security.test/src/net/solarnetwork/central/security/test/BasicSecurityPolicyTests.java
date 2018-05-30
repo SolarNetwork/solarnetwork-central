@@ -22,10 +22,14 @@
 
 package net.solarnetwork.central.security.test;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,9 +41,11 @@ import net.solarnetwork.central.security.BasicSecurityPolicy;
  * Test cases for the {@link BasicSecurityPolicy} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class BasicSecurityPolicyTests {
+
+	private static final DateTime TEST_DATE = new DateTime(2018, 5, 30, 10, 30, DateTimeZone.UTC);
 
 	@Test
 	public void buildNodeIdsPolicy() {
@@ -164,7 +170,8 @@ public class BasicSecurityPolicyTests {
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withMinAggregation(Aggregation.Month).build();
 		Assert.assertEquals("Minimum aggregation set",
-				EnumSet.of(Aggregation.Month, Aggregation.RunningTotal), policy.getAggregations());
+				EnumSet.of(Aggregation.Month, Aggregation.Year, Aggregation.RunningTotal),
+				policy.getAggregations());
 		try {
 			policy.getAggregations().add(Aggregation.Minute);
 			Assert.fail("Aggregation set should be immutable");
@@ -184,7 +191,7 @@ public class BasicSecurityPolicyTests {
 		Assert.assertEquals("Minimum aggregation", Aggregation.Day, policy.getMinAggregation());
 		Assert.assertEquals("Minimum aggregation set",
 				EnumSet.of(Aggregation.Day, Aggregation.DayOfWeek, Aggregation.SeasonalDayOfWeek,
-						Aggregation.Week, Aggregation.WeekOfYear, Aggregation.Month,
+						Aggregation.Week, Aggregation.WeekOfYear, Aggregation.Month, Aggregation.Year,
 						Aggregation.RunningTotal),
 				policy.getAggregations());
 		try {
@@ -233,6 +240,19 @@ public class BasicSecurityPolicyTests {
 	}
 
 	@Test
+	public void buildExpiringPolicy() {
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNotAfter(TEST_DATE)
+				.withRefreshAllowed(true).build();
+		assertThat("Not after set", TEST_DATE.isEqual(policy.getNotAfter()), equalTo(true));
+		assertThat("Refresh allowed set", policy.getRefreshAllowed(), equalTo(true));
+		assertThat("Valid before", policy.isValidAt(TEST_DATE.plusMillis(-1).getMillis()),
+				equalTo(true));
+		assertThat("Valid at", policy.isValidAt(TEST_DATE.getMillis()), equalTo(true));
+		assertThat("Not valid after", policy.isValidAt(TEST_DATE.plusMillis(1).getMillis()),
+				equalTo(false));
+	}
+
+	@Test
 	public void parseJsonNodeIdPolicy() throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
 		BasicSecurityPolicy policy = mapper.readValue("{\"nodeIds\":[1,2,3]}",
@@ -263,7 +283,8 @@ public class BasicSecurityPolicyTests {
 		BasicSecurityPolicy policy = mapper.readValue("{\"minAggregation\":\"Month\"}",
 				BasicSecurityPolicy.class);
 		Assert.assertEquals("Minimum aggregation set",
-				EnumSet.of(Aggregation.Month, Aggregation.RunningTotal), policy.getAggregations());
+				EnumSet.of(Aggregation.Month, Aggregation.Year, Aggregation.RunningTotal),
+				policy.getAggregations());
 	}
 
 	@Test
@@ -283,6 +304,22 @@ public class BasicSecurityPolicyTests {
 		Assert.assertEquals("Minimum location precision set",
 				EnumSet.of(LocationPrecision.TimeZone, LocationPrecision.Country),
 				policy.getLocationPrecisions());
+	}
+
+	@Test
+	public void parseJsonNotAfterPolicy() throws Exception {
+		ObjectMapper mapper = new ObjectMapper();
+		BasicSecurityPolicy policy = mapper.readValue("{\"notAfter\":" + TEST_DATE.getMillis() + "}",
+				BasicSecurityPolicy.class);
+		assertThat("Not after set", TEST_DATE.isEqual(policy.getNotAfter()), equalTo(true));
+	}
+
+	@Test
+	public void parseJsonRefreshAllowedPolicy() throws Exception {
+		ObjectMapper mapper = new ObjectMapper();
+		BasicSecurityPolicy policy = mapper.readValue("{\"refreshAllowed\":true}",
+				BasicSecurityPolicy.class);
+		assertThat("Refresh allowed set", policy.getRefreshAllowed(), equalTo(true));
 	}
 
 	@Test

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.security.test;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -29,6 +31,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,9 +49,11 @@ import net.solarnetwork.util.ObjectMapperFactoryBean;
  * Test cases for the {@link SecurityPolicySerializer} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SecurityPolicySerializerTests {
+
+	private static final DateTime TEST_DATE = new DateTime(2018, 5, 30, 10, 30, DateTimeZone.UTC);
 
 	private ObjectMapper objectMapper;
 
@@ -146,6 +152,15 @@ public class SecurityPolicySerializerTests {
 				"{\"nodeIds\":[1,2,3],\"sourceIds\":[\"three\",\"two\",\"one\"],\"minAggregation\":\"Day\",\"minLocationPrecision\":\"PostalCode\""
 						+ ",\"nodeMetadataPaths\":[\"1\"],\"userMetadataPaths\":[\"2\",\"3\"]}",
 				json);
+	}
+
+	@Test
+	public void serializeExpiringPolicy() throws JsonProcessingException {
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNotAfter(TEST_DATE)
+				.withRefreshAllowed(true).build();
+		String json = objectMapper.writeValueAsString(policy);
+		assertThat("JSON", json,
+				equalTo("{\"notAfter\":" + TEST_DATE.getMillis() + ",\"refreshAllowed\":true}"));
 	}
 
 }

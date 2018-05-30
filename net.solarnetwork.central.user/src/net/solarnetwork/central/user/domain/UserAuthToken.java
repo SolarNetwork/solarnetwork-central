@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.domain.BaseStringEntity;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.util.SerializeIgnore;
 
@@ -34,7 +35,7 @@ import net.solarnetwork.util.SerializeIgnore;
  * A user authorization token.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity<String> {
 
@@ -204,5 +205,16 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	public void setPolicyJson(String json) {
 		policyJson = json;
 		policy = null;
+	}
+
+	/**
+	 * Test if the token has expired.
+	 * 
+	 * @return {@literal true} if the token has expired
+	 * @since 1.3
+	 */
+	public boolean isExpired() {
+		SecurityPolicy policy = getPolicy();
+		return (policy != null && !policy.isValidAt(System.currentTimeMillis()));
 	}
 }

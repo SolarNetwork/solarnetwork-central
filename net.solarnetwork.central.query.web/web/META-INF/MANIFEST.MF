@@ -2,9 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Query Web
 Bundle-SymbolicName: net.solarnetwork.central.query.web
-Bundle-Version: 2.10.0
+Bundle-Version: 2.12.0
 Bundle-Vendor: SolarNetwork
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: WEB-INF/classes/
 Web-ContextPath: /solarquery
 Import-Package: 
@@ -26,8 +26,9 @@ Import-Package:
  net.solarnetwork.central.query.support;version="1.6.0",
  net.solarnetwork.central.security;version="1.10.0",
  net.solarnetwork.central.security.jdbc;version="1.4.0",
- net.solarnetwork.central.security.web;version="1.0.0",
- net.solarnetwork.central.support;version="1.9.0",
+ net.solarnetwork.central.security.web;version="1.7.0",
+ net.solarnetwork.central.security.web.support;version="1.0.0",
+ net.solarnetwork.central.support;version="1.16.0",
  net.solarnetwork.central.user.biz;version="1.0.0",
  net.solarnetwork.central.user.domain;version="1.13.0",
  net.solarnetwork.central.user.support;version="1.11.0",
@@ -38,8 +39,10 @@ Import-Package:
  net.solarnetwork.util;version="1.26.1",
  net.solarnetwork.web.domain;version="1.0.0",
  net.solarnetwork.web.gemini;version="1.0.0",
+ net.solarnetwork.web.security;version="1.2.2",
  net.solarnetwork.web.support;version="1.7.0",
  org.aopalliance.aop;version="[1.0,2.0)",
+ org.apache.commons.codec.binary;version="[1.7,2.0)",
  org.apache.taglibs.response;version="1.0.1",
  org.eclipse.gemini.blueprint.compendium.cm;version="[2.0,3.0)",
  org.joda.time;version="[2.4,3.0)",
