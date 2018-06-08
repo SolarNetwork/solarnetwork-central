@@ -30,7 +30,7 @@
 		<beans:prop key="SimpleNetworkIdentityBiz.forceTLS">false</beans:prop>
 		<beans:prop key="SimpleNetworkIdentityBiz.solarUserBaseURL">http://localhost/solaruser</beans:prop>
 		<beans:prop key="SimpleNetworkIdentityBiz.solarQueryBaseURL">http://localhost/solarquery</beans:prop>
-		<beans:prop key="SimpleNetworkIdentityBiz.solarInMqttBaseURL">mqtt://localhost:8883</beans:prop>
+		<beans:prop key="SimpleNetworkIdentityBiz.solarInMqttBaseURL">mqtts://localhost:8883</beans:prop>
 	</osgix:cm-properties>
 
 	<!-- Service References -->
