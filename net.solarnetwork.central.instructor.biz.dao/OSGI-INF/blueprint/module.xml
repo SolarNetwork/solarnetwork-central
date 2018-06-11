@@ -27,6 +27,9 @@
 	
  	<reference id="nodeInstructionDao" 
  		interface="net.solarnetwork.central.instructor.dao.NodeInstructionDao"/>
+ 		
+ 	<reference-list id="queueHooks" availability="optional" 
+ 		interface="net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook"/>
 	
 	<!-- Published Services -->
 	
@@ -39,10 +42,9 @@
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="txManager"/>
 	
-	<!-- See http://forum.springsource.org/archive/index.php/t-54188.html for discussion
-		on getting component-scan to work in PDE. We are required to add are Eclipse build
-		path to the Bundle-Classpath value. -->
-	<ctx:annotation-config/>
-	<ctx:component-scan base-package="net.solarnetwork.central.instructor.biz.dao"/>
+	<bean id="daoInstructorBiz" class="net.solarnetwork.central.instructor.biz.dao.DaoInstructorBiz">
+		<argument ref="nodeInstructionDao"/>
+		<argument ref="queueHooks"/>
+	</bean>
 	
 </blueprint>
