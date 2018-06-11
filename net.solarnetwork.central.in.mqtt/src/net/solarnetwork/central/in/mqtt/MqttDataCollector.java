@@ -348,20 +348,20 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 
 	@Override
 	public void messageArrived(String topic, MqttMessage message) {
-		stats.incrementAndGet(Counts.MessagesReceived);
-		Matcher m = NODE_TOPIC_REGEX.matcher(topic);
-		if ( !m.matches() ) {
-			log.info("Unknown topic: {}" + topic);
-			return;
-		}
-		final Long nodeId = Long.valueOf(m.group(1));
-		final String subTopic = m.group(2);
-		assert "datum".equals(subTopic);
-
-		// assume node security role
-		SecurityUtils.becomeNode(nodeId);
-
 		try {
+			stats.incrementAndGet(Counts.MessagesReceived);
+			Matcher m = NODE_TOPIC_REGEX.matcher(topic);
+			if ( !m.matches() ) {
+				log.info("Unknown topic: {}" + topic);
+				return;
+			}
+			final Long nodeId = Long.valueOf(m.group(1));
+			final String subTopic = m.group(2);
+			assert "datum".equals(subTopic);
+
+			// assume node security role
+			SecurityUtils.becomeNode(nodeId);
+
 			JsonNode root = objectMapper.readTree(message.getPayload());
 			if ( root.isObject() ) {
 				handleNode(nodeId, root);
@@ -376,6 +376,8 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 				}
 				log.debug("RepeatableTaskException caused by: " + root.getMessage());
 			}
+		} catch ( RuntimeException e ) {
+			log.error("Error handling MQTT message on topic {}", topic, e);
 		}
 	}
 
