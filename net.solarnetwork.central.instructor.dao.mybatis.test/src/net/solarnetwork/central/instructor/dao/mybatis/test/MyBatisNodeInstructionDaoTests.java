@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -49,8 +50,9 @@ import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
  * Test cases for the {@link MyBatisNodeInstructionDao} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
+@SuppressWarnings("deprecation")
 public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private MyBatisNodeInstructionDao dao;
@@ -374,4 +376,53 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		assertNull("Purged instruction is not found", instr);
 	}
 
+	@Test
+	public void updateStateWithResultParameters() {
+		// given
+		storeNew();
+
+		// when
+		Map<String, Object> resultParams = Collections.singletonMap("foo", (Object) "bar");
+		boolean updated = dao.updateNodeInstructionState(lastDatum.getId(), lastDatum.getNodeId(),
+				InstructionState.Completed, resultParams);
+
+		assertThat("Updated", updated, equalTo(true));
+
+		NodeInstruction datum = dao.get(lastDatum.getId());
+		assertThat("State changed", datum.getState(), equalTo(InstructionState.Completed));
+		assertThat("Result parameters saved", datum.getResultParameters(), equalTo(resultParams));
+	}
+
+	@Test
+	public void updateCompareState() {
+		// given
+		storeNew();
+
+		// when
+		Map<String, Object> resultParams = Collections.singletonMap("foo", (Object) "bar");
+		boolean updated = dao.compareAndUpdateInstructionState(lastDatum.getId(), lastDatum.getNodeId(),
+				InstructionState.Queued, InstructionState.Completed, resultParams);
+
+		assertThat("Updated", updated, equalTo(true));
+
+		NodeInstruction datum = dao.get(lastDatum.getId());
+		assertThat("State changed", datum.getState(), equalTo(InstructionState.Completed));
+		assertThat("Result parameters saved", datum.getResultParameters(), equalTo(resultParams));
+	}
+
+	@Test
+	public void updateCompareStateDifferentExpectedState() {
+		// given
+		storeNew();
+
+		// when
+		Map<String, Object> resultParams = Collections.singletonMap("foo", (Object) "bar");
+		boolean updated = dao.compareAndUpdateInstructionState(lastDatum.getId(), lastDatum.getNodeId(),
+				InstructionState.Executing, InstructionState.Completed, resultParams);
+
+		assertThat("Updated", updated, equalTo(false));
+
+		NodeInstruction datum = dao.get(lastDatum.getId());
+		assertThat("State unchanged", datum.getState(), equalTo(InstructionState.Queued));
+	}
 }

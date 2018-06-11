@@ -189,6 +189,9 @@ public class DaoInstructorBiz implements InstructorBiz {
 			}
 		}
 		Long id = nodeInstructionDao.store(instr);
+		for ( NodeInstructionQueueHook hook : queueHooks ) {
+			hook.didQueueNodeInstruction(instr, id);
+		}
 		return nodeInstructionDao.get(id);
 	}
 

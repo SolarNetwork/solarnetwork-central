@@ -18,21 +18,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.instructor.domain;
 
-import net.solarnetwork.central.domain.EntityMatch;
-
 import org.joda.time.DateTime;
+import net.solarnetwork.central.domain.EntityMatch;
 
 /**
  * Instruction for a specific node.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public class NodeInstruction extends Instruction implements EntityMatch {
 
@@ -46,24 +43,41 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	public NodeInstruction() {
 		super();
 	}
-	
+
 	/**
 	 * Construct with values.
 	 * 
-	 * @param topic the topic
-	 * @param instructionDate the instruction date
-	 * @param nodeId the node ID
+	 * @param topic
+	 *        the topic
+	 * @param instructionDate
+	 *        the instruction date
+	 * @param nodeId
+	 *        the node ID
 	 */
 	public NodeInstruction(String topic, DateTime instructionDate, Long nodeId) {
 		super(topic, instructionDate);
-		this.nodeId = nodeId;
+		setNodeId(nodeId);
 	}
-	
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the instance to copy
+	 * @since 1.1
+	 */
+	public NodeInstruction(NodeInstruction other) {
+		super(other);
+		setNodeId(other.getNodeId());
+
+	}
+
 	public Long getNodeId() {
 		return nodeId;
 	}
+
 	public void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
 	}
-	
+
 }

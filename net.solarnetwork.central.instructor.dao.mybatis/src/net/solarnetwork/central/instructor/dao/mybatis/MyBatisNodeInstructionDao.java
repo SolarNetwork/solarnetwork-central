@@ -24,25 +24,47 @@ package net.solarnetwork.central.instructor.dao.mybatis;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.joda.time.DateTime;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
+import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
+import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import org.joda.time.DateTime;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * MyBatis implementation of {@link NodeInstructionDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class MyBatisNodeInstructionDao extends
-		BaseMyBatisFilterableDao<NodeInstruction, EntityMatch, InstructionFilter, Long> implements
-		NodeInstructionDao {
+public class MyBatisNodeInstructionDao
+		extends BaseMyBatisFilterableDao<NodeInstruction, EntityMatch, InstructionFilter, Long>
+		implements NodeInstructionDao {
 
+	/** Query name used by {@link #purgeCompletedInstructions(DateTime)}. */
 	public static final String UPDATE_PURGE_COMPLETED_INSTRUCTIONS = "delete-NodeInstruction-completed";
+
+	/**
+	 * Query name used by
+	 * {@link #updateNodeInstructionState(Long, Long, InstructionState, Map)}.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String UPDATE_SET_STATE = "update-NodeInstruction-state";
+
+	/**
+	 * Query name used by
+	 * {@link #compareAndStoreInstruction(Long, InstructionState, Instruction)}.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String UPDATE_COMPARE_STATE = "update-NodeInstruction-compare-state";
 
 	/**
 	 * Default constructor.
@@ -59,6 +81,7 @@ public class MyBatisNodeInstructionDao extends
 	}
 
 	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public long purgeCompletedInstructions(DateTime olderThanDate) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("date", olderThanDate);
@@ -66,4 +89,34 @@ public class MyBatisNodeInstructionDao extends
 		Long result = (Long) params.get("result");
 		return (result == null ? 0 : result.longValue());
 	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public boolean compareAndUpdateInstructionState(Long instructionId, Long nodeId,
+			InstructionState expectedState, InstructionState state, Map<String, ?> resultParameters) {
+		Map<String, Object> params = new HashMap<String, Object>(3);
+		params.put("id", instructionId);
+		params.put("nodeId", nodeId);
+		params.put("expectedState", expectedState);
+		params.put("state", state);
+		params.put("resultParametersJson",
+				resultParameters != null ? JsonUtils.getJSONString(resultParameters, null) : null);
+		int count = getSqlSession().update(UPDATE_COMPARE_STATE, params);
+		return (count > 0);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public boolean updateNodeInstructionState(Long instructionId, Long nodeId, InstructionState state,
+			Map<String, ?> resultParameters) {
+		Map<String, Object> params = new HashMap<String, Object>(3);
+		params.put("id", instructionId);
+		params.put("nodeId", nodeId);
+		params.put("state", state);
+		params.put("resultParametersJson",
+				resultParameters != null ? JsonUtils.getJSONString(resultParameters, null) : null);
+		int count = getSqlSession().update(UPDATE_SET_STATE, params);
+		return (count > 0);
+	}
+
 }

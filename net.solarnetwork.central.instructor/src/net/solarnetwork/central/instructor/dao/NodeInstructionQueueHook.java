@@ -56,4 +56,14 @@ public interface NodeInstructionQueueHook {
 	 */
 	NodeInstruction willQueueNodeInstruction(NodeInstruction instruction);
 
+	/**
+	 * Invoked after a node instruction has been queued.
+	 * 
+	 * @param instruction
+	 *        the instruction to enqueue
+	 * @param instructionId
+	 *        the ID of the enqueued instruction
+	 */
+	void didQueueNodeInstruction(NodeInstruction instruction, Long instructionId);
+
 }
