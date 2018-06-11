@@ -24,8 +24,8 @@ package net.solarnetwork.central.in.mqtt.test;
 
 import static org.easymock.EasyMock.capture;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,6 +44,7 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.moquette.interception.messages.InterceptConnectMessage;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
@@ -104,8 +105,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		String serverUri = "mqtt://localhost:" + getMqttServerPort();
 		service = new MqttDataCollector(objectMapper, dataCollectorBiz,
-				new StaticOptionalService<InstructorBiz>(instructorBiz), null, serverUri,
-				TEST_CLIENT_ID);
+				new StaticOptionalService<InstructorBiz>(instructorBiz), null, serverUri, TEST_CLIENT_ID,
+				false);
 	}
 
 	@Override
@@ -246,5 +247,101 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
 		samples.putStatusSampleValue("val", 1);
 		assertThat("Posted datum samples", postedDatum.getSamples(), equalTo(samples));
+	}
+
+	@Test
+	public void connectToServer() throws Exception {
+		// given
+		final String username = UUID.randomUUID().toString();
+		final String password = UUID.randomUUID().toString();
+		service.setUsername(username);
+		service.setPassword(password);
+
+		replayAll();
+
+		// when
+		service.init();
+
+		stopMqttServer(); // to flush messages
+
+		// then
+		TestingInterceptHandler session = getTestingInterceptHandler();
+		assertThat("Connected to broker", session.connectMessages, hasSize(1));
+
+		InterceptConnectMessage connMsg = session.connectMessages.get(0);
+		assertThat("Connect client ID", connMsg.getClientID(), equalTo(TEST_CLIENT_ID));
+		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
+		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
+		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));
+	}
+
+	@Test
+	public void connectToServerWithRetryEnabled() throws Exception {
+		// given
+		final String username = UUID.randomUUID().toString();
+		final String password = UUID.randomUUID().toString();
+		service.setUsername(username);
+		service.setPassword(password);
+		service.setRetryConnect(true);
+
+		replayAll();
+
+		// when
+		service.init();
+
+		// sleep for a bit to allow background thread to connect
+		Thread.sleep(1000);
+
+		stopMqttServer(); // to flush messages
+
+		// then
+		TestingInterceptHandler session = getTestingInterceptHandler();
+		assertThat("Connected to broker", session.connectMessages, hasSize(1));
+
+		InterceptConnectMessage connMsg = session.connectMessages.get(0);
+		assertThat("Connect client ID", connMsg.getClientID(), equalTo(TEST_CLIENT_ID));
+		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
+		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
+		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));
+	}
+
+	@Test
+	public void connectToServerWithRetryEnabledFirstConnectFails() throws Exception {
+		stopMqttServer(); // start shut down
+		final int mqttPort = getFreePort();
+
+		// given
+		final String username = UUID.randomUUID().toString();
+		final String password = UUID.randomUUID().toString();
+		service.setUsername(username);
+		service.setPassword(password);
+		service.setRetryConnect(true);
+		service.setServerUri("mqtt://localhost:" + mqttPort);
+
+		replayAll();
+
+		// when
+		service.init();
+
+		// sleep for a bit to allow background thread to attempt first connect
+		Thread.sleep(700);
+
+		// bring up MQTT server now
+		setupMqttServer(null, null, null, mqttPort);
+
+		// sleep for a bit to allow background thread to attempt second connect
+		Thread.sleep(1000);
+
+		stopMqttServer(); // to flush messages
+
+		// then
+		TestingInterceptHandler session = getTestingInterceptHandler();
+		assertThat("Connected to broker", session.connectMessages, hasSize(1));
+
+		InterceptConnectMessage connMsg = session.connectMessages.get(0);
+		assertThat("Connect client ID", connMsg.getClientID(), equalTo(TEST_CLIENT_ID));
+		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
+		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
+		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));
 	}
 }

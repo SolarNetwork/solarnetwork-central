@@ -71,8 +71,10 @@ public class MqttServerSupport {
 		}
 	}
 
-	protected Properties createMqttServerProperties() {
-		int port = getFreePort();
+	protected Properties createMqttServerProperties(int port) {
+		if ( port < 1 ) {
+			port = getFreePort();
+		}
 		Properties p = new Properties();
 		p.setProperty(BrokerConstants.PORT_PROPERTY_NAME, String.valueOf(port));
 		p.setProperty(BrokerConstants.HOST_PROPERTY_NAME, "127.0.0.1");
@@ -80,7 +82,7 @@ public class MqttServerSupport {
 	}
 
 	public void setupMqttServer(List<InterceptHandler> handlers, IAuthenticator authenticator,
-			IAuthorizator authorizator) {
+			IAuthorizator authorizator, int port) {
 		testingHandler = null;
 		if ( handlers == null ) {
 			testingHandler = new TestingInterceptHandler();
@@ -88,7 +90,7 @@ public class MqttServerSupport {
 		}
 		Server s = new Server();
 		try {
-			Properties p = createMqttServerProperties();
+			Properties p = createMqttServerProperties(port);
 			log.debug("Starting MQTT server with props {}", p);
 			s.startServer(new MemoryConfig(p), handlers, null, authenticator, authorizator);
 			mqttServer = s;
@@ -99,7 +101,7 @@ public class MqttServerSupport {
 	}
 
 	public void setupMqttServer() {
-		setupMqttServer(null, null, null);
+		setupMqttServer(null, null, null, 0);
 	}
 
 	/**
