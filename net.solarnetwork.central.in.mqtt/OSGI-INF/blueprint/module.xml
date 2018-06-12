@@ -19,6 +19,7 @@
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.in.mqtt">
 		<beans:prop key="mqtt.truststore.path">conf/tls/mqtt-trust.jks</beans:prop>
 		<beans:prop key="mqtt.truststore.pass">password</beans:prop>
+		<beans:prop key="executor.parallelism">2</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -44,10 +45,9 @@
 
 	<reference id="dataCollectorBiz" interface="net.solarnetwork.central.in.biz.DataCollectorBiz"/>
 	
-	<bean id="instructorBiz" class="net.solarnetwork.util.DynamicServiceTracker">
+	<bean id="nodeInstructionDao" class="net.solarnetwork.util.DynamicServiceTracker">
 		<property name="bundleContext" ref="bundleContext"/>
-		<property name="serviceClassName" value="net.solarnetwork.node.reactor.InstructionExecutionService"/>
-		<property name="serviceFilter" value="(secured=true)"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.instructor.dao.NodeInstructionDao"/>
 	</bean>
 	
 	<bean id="sslService" class="net.solarnetwork.util.StaticOptionalService">
@@ -58,6 +58,10 @@
 			</bean>
 		</argument>
 	</bean>
+
+	<bean id="executorService" class="java.util.concurrent.Executors" factory-method="newWorkStealingPool">
+		<argument value="${executor.parallelism}"/>
+	</bean>
 	
 	<!-- Published Services -->
 	
@@ -65,11 +69,13 @@
 			autowire-on-update="true" update-method="init">
 		<osgix:interfaces>
 			<beans:value>net.solarnetwork.domain.Identifiable</beans:value>
+			<beans:value>net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook</beans:value>
 		</osgix:interfaces>
 		<bean class="net.solarnetwork.central.in.mqtt.MqttDataCollector" init-method="init">
+			<argument ref="executorService"/>
 			<argument ref="objectMapper"/>
 			<argument ref="dataCollectorBiz"/>
-			<argument ref="instructorBiz"/>
+			<argument ref="nodeInstructionDao"/>
 			<argument ref="sslService"/>
 			<argument value="true"/>
 		</bean>

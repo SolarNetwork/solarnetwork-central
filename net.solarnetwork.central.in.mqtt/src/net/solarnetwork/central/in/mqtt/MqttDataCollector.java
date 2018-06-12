@@ -29,17 +29,20 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.eclipse.paho.client.mqttv3.IMqttClient;
+import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
+import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
-import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -47,6 +50,7 @@ import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.DigestUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.RepeatableTaskException;
@@ -54,8 +58,10 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttStats.Counts;
-import net.solarnetwork.central.instructor.biz.InstructorBiz;
+import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
+import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.InstructionState;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.domain.Identifiable;
@@ -68,7 +74,7 @@ import net.solarnetwork.util.OptionalService;
  * @author matt
  * @version 1.0
  */
-public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
+public class MqttDataCollector implements MqttCallbackExtended, Identifiable, NodeInstructionQueueHook {
 
 	/** The MQTT topic template for node instruction publication. */
 	public static final String NODE_INSTRUCTION_TOPIC_TEMPLATE = "node/%s/instr";
@@ -91,6 +97,9 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 	/** The {@link GeneralNodeDatum} or {@link GeneralLocationDatum} type. */
 	public static final String GENERAL_NODE_DATUM_TYPE = "datum";
 
+	/** The default value for the {@code mqttTimeout} property. */
+	public static final long DEFAULT_MQTT_TIMEOUT = 10000;
+
 	/**
 	 * The JSON field name for a location ID on a {@link GeneralLocationDatum}
 	 * value.
@@ -100,11 +109,12 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 	private static final long RETRY_CONNECT_DELAY = 2000L;
 	private static final long MAX_CONNECT_DELAY_MS = 120000L;
 
+	private final ExecutorService executorService;
 	private final ObjectMapper objectMapper;
 	private final DataCollectorBiz dataCollectorBiz;
-	private final OptionalService<InstructorBiz> instructorBizRef;
+	private final OptionalService<NodeInstructionDao> nodeInstructionDaoRef;
 	private final OptionalService<SSLService> sslServiceRef;
-	private final AtomicReference<IMqttClient> clientRef;
+	private final AtomicReference<IMqttAsyncClient> clientRef;
 	private final MqttStats stats;
 
 	private String uid = UUID.randomUUID().toString();
@@ -117,29 +127,36 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 	private String username;
 	private String password;
 	private String persistencePath = "var/mqtt-solarin";
+	private int subscribeQos = 2;
+	private int publishQos = 2;
+	private long mqttTimeout = DEFAULT_MQTT_TIMEOUT;
 
-	private Thread connectThread = null;
+	private Runnable connectThread = null;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	public MqttDataCollector(ObjectMapper objectMapper, DataCollectorBiz dataCollectorBiz,
-			OptionalService<InstructorBiz> instructorBiz, OptionalService<SSLService> sslService,
-			boolean retryConnect) {
-		this(objectMapper, dataCollectorBiz, instructorBiz, sslService, null, null, retryConnect);
+	public MqttDataCollector(ExecutorService executorService, ObjectMapper objectMapper,
+			DataCollectorBiz dataCollectorBiz, OptionalService<NodeInstructionDao> nodeInstructionDao,
+			OptionalService<SSLService> sslService, boolean retryConnect) {
+		this(executorService, objectMapper, dataCollectorBiz, nodeInstructionDao, sslService, null, null,
+				retryConnect);
 	}
 
-	public MqttDataCollector(ObjectMapper objectMapper, DataCollectorBiz dataCollectorBiz,
-			OptionalService<InstructorBiz> instructorBiz, OptionalService<SSLService> sslService,
-			String serverUri, String clientId, boolean retryConnect) {
+	public MqttDataCollector(ExecutorService executorService, ObjectMapper objectMapper,
+			DataCollectorBiz dataCollectorBiz, OptionalService<NodeInstructionDao> nodeInstructionDao,
+			OptionalService<SSLService> sslService, String serverUri, String clientId,
+			boolean retryConnect) {
 		super();
+		assert executorService != null && objectMapper != null && dataCollectorBiz != null;
+		this.executorService = executorService;
 		this.objectMapper = objectMapper;
 		this.dataCollectorBiz = dataCollectorBiz;
-		this.instructorBizRef = instructorBiz;
+		this.nodeInstructionDaoRef = nodeInstructionDao;
 		this.sslServiceRef = sslService;
 		this.serverUri = serverUri;
 		this.clientId = clientId;
 		this.retryConnect = retryConnect;
-		this.clientRef = new AtomicReference<IMqttClient>();
+		this.clientRef = new AtomicReference<IMqttAsyncClient>();
 		this.stats = new MqttStats(serverUri, 500);
 	}
 
@@ -167,7 +184,7 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 							}
 						}
 						try {
-							IMqttClient client = setupClient();
+							IMqttAsyncClient client = setupClient();
 							if ( client != null ) {
 								synchronized ( connectThread ) {
 									connectThread = null;
@@ -190,25 +207,20 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 								});
 						log.info("Failed to connect to MQTT server {}, will try again in {}s", serverUri,
 								TimeUnit.MILLISECONDS.toSeconds(delay));
-						synchronized ( connectThread ) {
-							connectThread = new Thread(this, "MQTT-connect " + serverUri);
-							connectThread.setDaemon(true);
-							connectThread.start();
-						}
+						executorService.execute(this);
 					}
 				};
-				connectThread = new Thread(connector, "MQTT-connect " + serverUri);
-				connectThread.setDaemon(true);
-				connectThread.start();
+				connectThread = connector;
+				executorService.execute(connector);
 			}
 		} else {
 			setupClient();
 		}
 	}
 
-	private IMqttClient setupClient() {
-		IMqttClient client = null;
-		IMqttClient oldClient = null;
+	private IMqttAsyncClient setupClient() {
+		IMqttAsyncClient client = null;
+		IMqttAsyncClient oldClient = null;
 		try {
 			client = createClient();
 			if ( client != null ) {
@@ -227,14 +239,14 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 					connOptions.setSocketFactory(sslService.getSSLSocketFactory());
 				}
 
-				client.connect(connOptions);
+				client.connect(connOptions).waitForCompletion(mqttTimeout);
 
 				subscribeToTopics(client);
 
 				oldClient = clientRef.getAndSet(client);
 			}
 		} catch ( MqttException e ) {
-			log.error("Error creating MQTT client", e);
+			log.error("Error creating MQTT client: {}", e.toString());
 			try {
 				if ( client != null ) {
 					client.close();
@@ -254,7 +266,7 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 		return client;
 	}
 
-	private IMqttClient createClient() throws MqttException {
+	private IMqttAsyncClient createClient() throws MqttException {
 		URI uri;
 		try {
 			uri = new URI(serverUri);
@@ -280,28 +292,29 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 			}
 		}
 		MqttDefaultFilePersistence persistence = new MqttDefaultFilePersistence(p.toString());
-		MqttClient c = null;
-		c = new MqttClient(serverUri, clientId, persistence);
+		MqttAsyncClient c = null;
+		c = new MqttAsyncClient(serverUri, clientId, persistence);
 		c.setCallback(this);
 		return c;
 	}
 
-	private IMqttClient client() {
-		IMqttClient client = clientRef.get();
+	private IMqttAsyncClient client() {
+		IMqttAsyncClient client = clientRef.get();
 		if ( client == null ) {
 			client = setupClient();
 		}
 		return client;
 	}
 
-	private void subscribeToTopics(IMqttClient client) throws MqttException {
+	private void subscribeToTopics(IMqttAsyncClient client) throws MqttException {
 		final String datumTopics = String.format(NODE_DATUM_TOPIC_TEMPLATE, "+");
-		client.subscribe(datumTopics);
+		IMqttToken token = client.subscribe(datumTopics, subscribeQos);
+		token.waitForCompletion(mqttTimeout);
 	}
 
 	@Override
 	public void connectionLost(Throwable cause) {
-		IMqttClient client = clientRef.get();
+		IMqttAsyncClient client = clientRef.get();
 		log.info("Connection to MQTT server @ {} lost: {}",
 				(client != null ? client.getServerURI() : "N/A"), cause.getMessage());
 	}
@@ -316,33 +329,42 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 		log.info("{} to MQTT server @ {}", (reconnect ? "Reconnected" : "Connected"), serverURI);
 		if ( reconnect ) {
 			// re-subscribe
-			final IMqttClient client = clientRef.get();
-			if ( client != null ) {
-				try {
-					subscribeToTopics(client);
-				} catch ( MqttException e ) {
-					log.error("Error subscribing to node topics: {}", e.getMessage(), e);
-					Thread t = new Thread(new Runnable() {
+			executorService.execute(new Runnable() {
 
-						@Override
-						public void run() {
-							try {
-								Thread.sleep(20);
-							} catch ( InterruptedException e ) {
-								// just continue
-							}
-							try {
-								client.disconnect();
-							} catch ( MqttException e ) {
-								log.warn("Error disconnecting from MQTT server @ {}: {}", serverURI,
-										e.getMessage());
-							}
+				@Override
+				public void run() {
+					final IMqttAsyncClient client = clientRef.get();
+					if ( client != null ) {
+						try {
+							Thread.sleep(200);
+						} catch ( InterruptedException e ) {
+							// just continue
 						}
-					}, "MQTT-disconnect " + serverUri);
-					t.setDaemon(true);
-					t.start();
+						try {
+							subscribeToTopics(client);
+						} catch ( MqttException e ) {
+							log.error("Error subscribing to node topics: {}", e.getMessage(), e);
+							executorService.execute(new Runnable() {
+
+								@Override
+								public void run() {
+									try {
+										Thread.sleep(600);
+									} catch ( InterruptedException e ) {
+										// just continue
+									}
+									try {
+										client.disconnect();
+									} catch ( MqttException e ) {
+										log.warn("Error disconnecting from MQTT server @ {}: {}",
+												serverURI, e.getMessage());
+									}
+								}
+							});
+						}
+					}
 				}
-			}
+			});
 		}
 	}
 
@@ -381,6 +403,76 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 		}
 	}
 
+	@Override
+	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
+		if ( instruction != null && instruction.getNodeId() != null
+				&& InstructionState.Queued == instruction.getState() ) {
+			// we will change this state to Queing so batch processing does not pick up
+			instruction.setState(InstructionState.Queuing);
+		}
+		return instruction;
+	}
+
+	@Override
+	public void didQueueNodeInstruction(NodeInstruction instruction, Long instructionId) {
+		if ( instruction != null && instruction.getNodeId() != null && instructionId != null
+				&& InstructionState.Queuing == instruction.getState() ) {
+			try {
+				executorService.execute(new PublishNodeInstructionTask(instruction, instructionId));
+			} catch ( JsonProcessingException e ) {
+				log.error("Error encoding node instruction {} for MQTT payload: {}", instruction.getId(),
+						e.getMessage());
+			}
+		}
+	}
+
+	private class PublishNodeInstructionTask implements Runnable {
+
+		private final Long instructionId;
+		private final Long nodeId;
+		private final String topic;
+		private final byte[] payload;
+
+		private PublishNodeInstructionTask(NodeInstruction instruction, Long instructionId)
+				throws JsonProcessingException {
+			super();
+			// create copy with ID set
+			this.instructionId = instructionId;
+			this.nodeId = instruction.getNodeId();
+			this.topic = String.format(NODE_INSTRUCTION_TOPIC_TEMPLATE, instruction.getNodeId());
+			Map<String, Object> data = Collections.singletonMap("instructions",
+					Collections.singleton(instruction));
+			this.payload = objectMapper.writeValueAsBytes(data);
+		}
+
+		@Override
+		public void run() {
+			try {
+				IMqttAsyncClient client = client();
+				IMqttDeliveryToken token = client.publish(topic, payload, publishQos, false);
+				token.waitForCompletion(mqttTimeout);
+			} catch ( MqttException e ) {
+				// error delivering instruction so change state to Queued to fall back to batch processing
+				NodeInstructionDao dao = (nodeInstructionDaoRef != null ? nodeInstructionDaoRef.service()
+						: null);
+				if ( dao != null ) {
+					log.info(
+							"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
+							instructionId, nodeId, e.toString());
+					dao.compareAndUpdateInstructionState(instructionId, nodeId, InstructionState.Queuing,
+							InstructionState.Queued, null);
+				} else {
+					log.error("Failed to publish MQTT instruction {} to node {}", instructionId, nodeId,
+							e);
+				}
+			} catch ( Exception e ) {
+				log.warn("Error publishing instruction {} to node {} via MQTT", instructionId, nodeId,
+						e);
+			}
+		}
+
+	}
+
 	private void handleNode(final Long nodeId, final JsonNode node) {
 		String nodeType = getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
 		if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) ) {
@@ -392,20 +484,21 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 				handleGeneralNodeDatum(nodeId, node);
 			}
 		} else if ( INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
-			handleInstructionStatus(node);
+			handleInstructionStatus(nodeId, node);
 		}
 	}
 
-	private void handleInstructionStatus(final JsonNode node) {
+	private void handleInstructionStatus(final Long nodeId, final JsonNode node) {
 		stats.incrementAndGet(Counts.InstructionStatusReceived);
 		String instructionId = getStringFieldValue(node, "instructionId", null);
 		String status = getStringFieldValue(node, "status", null);
 		Map<String, Object> resultParams = JsonUtils.getStringMapFromTree(node.get("resultParameters"));
-		InstructorBiz biz = (instructorBizRef != null ? instructorBizRef.service() : null);
-		if ( instructionId != null && status != null && biz != null ) {
+		NodeInstructionDao dao = (nodeInstructionDaoRef != null ? nodeInstructionDaoRef.service()
+				: null);
+		if ( instructionId != null && nodeId != null && status != null && dao != null ) {
 			Long id = Long.valueOf(instructionId);
 			InstructionState state = InstructionState.valueOf(status);
-			biz.updateInstructionState(id, state, resultParams);
+			dao.updateNodeInstructionState(id, nodeId, state, resultParams);
 		}
 	}
 
@@ -581,6 +674,37 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable {
 			frequency = 1;
 		}
 		stats.setLogFrequency(frequency);
+	}
+
+	/**
+	 * The MQTT QoS to use on subscription topics.
+	 * 
+	 * @param subscribeQos
+	 *        the subscription QoS; defaults to {@literal 2}
+	 */
+	public void setSubscribeQos(int subscribeQos) {
+		this.subscribeQos = subscribeQos;
+	}
+
+	/**
+	 * The MQTT QoS to use to publish to topics.
+	 * 
+	 * @param publishQos
+	 *        the publish QoS; defaults to {@literal 2}
+	 */
+	public void setPublishQos(int publishQos) {
+		this.publishQos = publishQos;
+	}
+
+	/**
+	 * A timeout, in milliseconds, to wait for MQTT operations to complete in.
+	 * 
+	 * @param mqttTimeout
+	 *        the timeout, or less than 1 to wait forever; defaults to
+	 *        {@link #DEFAULT_MQTT_TIMEOUT}
+	 */
+	public void setMqttTimeout(long mqttTimeout) {
+		this.mqttTimeout = mqttTimeout;
 	}
 
 }

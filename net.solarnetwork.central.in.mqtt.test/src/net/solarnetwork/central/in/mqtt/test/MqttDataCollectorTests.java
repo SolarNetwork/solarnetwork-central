@@ -23,9 +23,11 @@
 package net.solarnetwork.central.in.mqtt.test;
 
 import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.expect;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,11 +51,12 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
-import net.solarnetwork.central.instructor.biz.InstructorBiz;
+import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionState;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
-import net.solarnetwork.domain.NodeControlPropertyType;
 import net.solarnetwork.util.JodaDateTimeSerializer;
 import net.solarnetwork.util.JodaLocalDateSerializer;
 import net.solarnetwork.util.JodaLocalDateTimeSerializer;
@@ -77,7 +80,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 	private ObjectMapper objectMapper;
 	private DataCollectorBiz dataCollectorBiz;
-	private InstructorBiz instructorBiz;
+	private NodeInstructionDao nodeInstructionDao;
 	private MqttDataCollector service;
 
 	private ObjectMapper createObjectMapper(JsonFactory jsonFactory) {
@@ -101,23 +104,23 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		objectMapper = createObjectMapper(null);
 		dataCollectorBiz = EasyMock.createMock(DataCollectorBiz.class);
-		instructorBiz = EasyMock.createMock(InstructorBiz.class);
+		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
 
 		String serverUri = "mqtt://localhost:" + getMqttServerPort();
-		service = new MqttDataCollector(objectMapper, dataCollectorBiz,
-				new StaticOptionalService<InstructorBiz>(instructorBiz), null, serverUri, TEST_CLIENT_ID,
-				false);
+		service = new MqttDataCollector(new CallingThreadExecutorService(), objectMapper,
+				dataCollectorBiz, new StaticOptionalService<NodeInstructionDao>(nodeInstructionDao),
+				null, serverUri, TEST_CLIENT_ID, false);
 	}
 
 	@Override
 	@After
 	public void teardown() {
 		super.teardown();
-		EasyMock.verify(dataCollectorBiz, instructorBiz);
+		EasyMock.verify(dataCollectorBiz, nodeInstructionDao);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(dataCollectorBiz, instructorBiz);
+		EasyMock.replay(dataCollectorBiz, nodeInstructionDao);
 	}
 
 	private String datumTopic(Long nodeId) {
@@ -195,7 +198,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		final Long nodeInstructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
 		final Long instructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
 		final Map<String, Object> resultParams = Collections.singletonMap("foo", "bar");
-		instructorBiz.updateInstructionState(instructionId, InstructionState.Completed, resultParams);
+		expect(nodeInstructionDao.updateNodeInstructionState(instructionId, TEST_NODE_ID,
+				InstructionState.Completed, resultParams)).andReturn(true);
 
 		replayAll();
 
@@ -215,38 +219,6 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		service.messageArrived(topic, msg);
 
 		// then
-	}
-
-	@Test
-	public void processControlInfo() throws Exception {
-		// given
-		final String controlId = UUID.randomUUID().toString();
-		Capture<Iterable<GeneralNodeDatum>> postDatumCaptor = new Capture<>();
-		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
-
-		replayAll();
-
-		// when
-		String topic = datumTopic(TEST_NODE_ID);
-		DateTime date = new DateTime();
-		String json = "{\"__type__\":\"NodeControlInfo\",\"created\":" + date.getMillis()
-				+ ",\"controlId\":\"" + controlId + "\",\"type\":\"" + NodeControlPropertyType.Boolean
-				+ "\",\"value\":\"true\"}";
-		MqttMessage msg = new MqttMessage(json.getBytes("UTF-8"));
-		service.messageArrived(topic, msg);
-
-		// then
-		assertThat("Datum posted", postDatumCaptor.getValue(), notNullValue());
-		List<GeneralNodeDatum> postedDatumList = StreamSupport
-				.stream(postDatumCaptor.getValue().spliterator(), false).collect(Collectors.toList());
-		assertThat("Posted datum count", postedDatumList, hasSize(1));
-		GeneralNodeDatum postedDatum = postedDatumList.get(0);
-		assertThat("Posted datum node ID", postedDatum.getNodeId(), equalTo(TEST_NODE_ID));
-		assertThat("Posted datum source ID", postedDatum.getSourceId(), equalTo(controlId));
-		assertThat("Posted datum created", postedDatum.getCreated(), equalTo(date));
-		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
-		samples.putStatusSampleValue("val", 1);
-		assertThat("Posted datum samples", postedDatum.getSamples(), equalTo(samples));
 	}
 
 	@Test
@@ -321,16 +293,25 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		replayAll();
 
 		// when
-		service.init();
+
+		// start in bg thread, because of CallingThreadExecutorService use
+		Thread initThread = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				service.init();
+			}
+		});
+		initThread.start();
 
 		// sleep for a bit to allow background thread to attempt first connect
-		Thread.sleep(700);
+		Thread.sleep(200);
 
 		// bring up MQTT server now
 		setupMqttServer(null, null, null, mqttPort);
 
 		// sleep for a bit to allow background thread to attempt second connect
-		Thread.sleep(1000);
+		initThread.join(3000);
 
 		stopMqttServer(); // to flush messages
 
@@ -343,5 +324,64 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
 		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
 		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));
+	}
+
+	@Test
+	public void willQueueNodeInstruction() {
+		// given
+		DateTime now = new DateTime();
+		NodeInstruction input = new NodeInstruction(TEST_INSTRUCTION_TOPIC, now, TEST_NODE_ID);
+		input.setState(InstructionState.Queued);
+
+		// when
+		NodeInstruction instr = service.willQueueNodeInstruction(input);
+
+		replayAll();
+
+		// then
+		assertThat("Same instance", instr, sameInstance(input));
+		assertThat("State changed", instr.getState(), equalTo(InstructionState.Queuing));
+		assertThat("Topic unchanged", instr.getTopic(), equalTo(TEST_INSTRUCTION_TOPIC));
+		assertThat("Node ID unchanged", instr.getNodeId(), equalTo(TEST_NODE_ID));
+	}
+
+	@Test
+	public void didQueueNodeInstruction() throws Exception {
+		// given
+		DateTime now = new DateTime();
+		NodeInstruction input = new NodeInstruction(TEST_INSTRUCTION_TOPIC, now, TEST_NODE_ID);
+		input.setState(InstructionState.Queuing);
+
+		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+
+		replayAll();
+
+		// when
+		service.init();
+		service.didQueueNodeInstruction(input, instructionId);
+
+		// then
+	}
+
+	@Test
+	public void didQueueNodeInstructionMqttNotConnected() throws Exception {
+		// given
+		DateTime now = new DateTime();
+		NodeInstruction input = new NodeInstruction(TEST_INSTRUCTION_TOPIC, now, TEST_NODE_ID);
+		input.setState(InstructionState.Queuing);
+
+		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+
+		expect(nodeInstructionDao.compareAndUpdateInstructionState(instructionId, TEST_NODE_ID,
+				InstructionState.Queuing, InstructionState.Queued, null)).andReturn(true);
+
+		replayAll();
+
+		// when
+		service.init();
+		stopMqttServer();
+		service.didQueueNodeInstruction(input, instructionId);
+
+		// then
 	}
 }
