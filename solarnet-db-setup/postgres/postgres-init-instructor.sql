@@ -17,7 +17,7 @@ CREATE TABLE solarnet.sn_node_instruction (
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
-CREATE INDEX sn_node_instruction_node_idx ON solarnet.sn_node_instruction 
+CREATE INDEX sn_node_instruction_node_idx ON solarnet.sn_node_instruction
 	(node_id, deliver_state, instr_date);
 
 CREATE TABLE solarnet.sn_node_instruction_param (
@@ -27,16 +27,16 @@ CREATE TABLE solarnet.sn_node_instruction_param (
 	pvalue			CHARACTER VARYING(256) NOT NULL,
 	CONSTRAINT sn_node_instruction_param_pkey PRIMARY KEY (instr_id, idx),
 	CONSTRAINT sn_node_instruction_param_sn_node_instruction_fk
-		FOREIGN KEY (instr_id) REFERENCES solarnet.sn_node_instruction (id) 
+		FOREIGN KEY (instr_id) REFERENCES solarnet.sn_node_instruction (id)
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 /**************************************************************************************************
  * FUNCTION solarnet.purge_completed_instructions(timestamp with time zone)
- * 
- * Delete instructions that have reached the Declined or Completed state, and whose 
+ *
+ * Delete instructions that have reached the Declined or Completed state, and whose
  * instruction date is older than the given date.
- * 
+ *
  * @param older_date The maximum date to delete instructions for.
  * @return The number of instructions deleted.
  */
@@ -49,7 +49,7 @@ BEGIN
 	DELETE FROM solarnet.sn_node_instruction
 	WHERE instr_date < older_date
 		AND deliver_state IN (
-			'Declined'::solarnet.instruction_delivery_state, 
+			'Declined'::solarnet.instruction_delivery_state,
 			'Completed'::solarnet.instruction_delivery_state);
 	GET DIAGNOSTICS num_rows = ROW_COUNT;
 	RETURN num_rows;
