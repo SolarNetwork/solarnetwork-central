@@ -1,7 +1,7 @@
 CREATE SEQUENCE solarnet.instruction_seq;
 
-CREATE TYPE solarnet.instruction_delivery_state AS ENUM 
-	('Unknown', 'Queued', 'Received', 'Executing', 'Declined', 'Completed');
+CREATE TYPE solarnet.instruction_delivery_state AS ENUM
+	('Unknown', 'Queued', 'Queuing', 'Received', 'Executing', 'Declined', 'Completed');
 
 CREATE TABLE solarnet.sn_node_instruction (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.instruction_seq'),
