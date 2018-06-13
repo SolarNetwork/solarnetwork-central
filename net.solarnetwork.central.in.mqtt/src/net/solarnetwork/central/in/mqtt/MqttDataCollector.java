@@ -53,7 +53,6 @@ import org.springframework.util.DigestUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
@@ -128,7 +127,7 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 	private String password;
 	private String persistencePath = "var/mqtt-solarin";
 	private int subscribeQos = 2;
-	private int publishQos = 2;
+	private int publishQos = 0;
 	private long mqttTimeout = DEFAULT_MQTT_TIMEOUT;
 
 	private Runnable connectThread = null;
@@ -218,6 +217,21 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 		}
 	}
 
+	/**
+	 * Close down the service.
+	 */
+	public void close() {
+		IMqttAsyncClient client = clientRef.get();
+		if ( client != null ) {
+			try {
+				client.disconnectForcibly();
+				client.close();
+			} catch ( MqttException e ) {
+				log.warn("Error closing MQTT connection to {}: {}", client.getServerURI(), e.toString());
+			}
+		}
+	}
+
 	private IMqttAsyncClient setupClient() {
 		IMqttAsyncClient client = null;
 		IMqttAsyncClient oldClient = null;
@@ -227,6 +241,7 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 				MqttConnectOptions connOptions = new MqttConnectOptions();
 				connOptions.setCleanSession(false);
 				connOptions.setAutomaticReconnect(true);
+				connOptions.setConnectionTimeout((int) TimeUnit.MILLISECONDS.toSeconds(mqttTimeout));
 				if ( username != null && !username.isEmpty() ) {
 					connOptions.setUserName(username);
 				}
@@ -249,18 +264,21 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 			log.error("Error creating MQTT client: {}", e.toString());
 			try {
 				if ( client != null ) {
+					client.disconnectForcibly(0, 100);
 					client.close();
 				}
 			} catch ( MqttException e2 ) {
 				// ignore
+				log.warn("Error closing MQTT client: {}", e2.toString());
 			}
 			client = null;
 		}
 		if ( oldClient != null ) {
 			try {
+				client.disconnectForcibly(0, 100);
 				oldClient.close();
 			} catch ( MqttException e ) {
-				log.warn("Error closing MQTT client: {}", e.getMessage());
+				log.warn("Error closing MQTT client: {}", e.toString());
 			}
 		}
 		return client;
@@ -296,14 +314,6 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 		c = new MqttAsyncClient(serverUri, clientId, persistence);
 		c.setCallback(this);
 		return c;
-	}
-
-	private IMqttAsyncClient client() {
-		IMqttAsyncClient client = clientRef.get();
-		if ( client == null ) {
-			client = setupClient();
-		}
-		return client;
 	}
 
 	private void subscribeToTopics(IMqttAsyncClient client) throws MqttException {
@@ -369,7 +379,7 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 	}
 
 	@Override
-	public void messageArrived(String topic, MqttMessage message) {
+	public void messageArrived(String topic, MqttMessage message) throws Exception {
 		try {
 			stats.incrementAndGet(Counts.MessagesReceived);
 			Matcher m = NODE_TOPIC_REGEX.matcher(topic);
@@ -390,16 +400,10 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 			}
 		} catch ( IOException e ) {
 			log.debug("Communication error handling message on MQTT topic {}", topic, e);
-		} catch ( RepeatableTaskException e ) {
-			if ( log.isDebugEnabled() ) {
-				Throwable root = e;
-				while ( root.getCause() != null ) {
-					root = root.getCause();
-				}
-				log.debug("RepeatableTaskException caused by: " + root.getMessage());
-			}
+			throw e;
 		} catch ( RuntimeException e ) {
 			log.error("Error handling MQTT message on topic {}", topic, e);
+			throw e;
 		}
 	}
 
@@ -448,10 +452,15 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 		@Override
 		public void run() {
 			try {
-				IMqttAsyncClient client = client();
-				IMqttDeliveryToken token = client.publish(topic, payload, publishQos, false);
-				token.waitForCompletion(mqttTimeout);
-			} catch ( MqttException e ) {
+				IMqttAsyncClient client = clientRef.get();
+				if ( client != null ) {
+					IMqttDeliveryToken token = client.publish(topic, payload, publishQos, false);
+					token.waitForCompletion(mqttTimeout);
+					stats.incrementAndGet(Counts.InstructionsPublished);
+				} else {
+					throw new RuntimeException("MQTT client not available");
+				}
+			} catch ( Exception e ) {
 				// error delivering instruction so change state to Queued to fall back to batch processing
 				NodeInstructionDao dao = (nodeInstructionDaoRef != null ? nodeInstructionDaoRef.service()
 						: null);
@@ -465,9 +474,6 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 					log.error("Failed to publish MQTT instruction {} to node {}", instructionId, nodeId,
 							e);
 				}
-			} catch ( Exception e ) {
-				log.warn("Error publishing instruction {} to node {} via MQTT", instructionId, nodeId,
-						e);
 			}
 		}
 
@@ -687,10 +693,18 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 	}
 
 	/**
-	 * The MQTT QoS to use to publish to topics.
+	 * The MQTT QoS to use to publish to instruction topics.
+	 * 
+	 * <p>
+	 * Note this defaults to {@literal 0} because a node might not actually be
+	 * using MQTT, and instructions that aren't transitioned from their initial
+	 * {@literal Queuing } state to something else after a set period of time
+	 * will automatically be transitioned to {@literal Queued} so the bulk
+	 * instruction process will pick up the instruction.
+	 * </p>
 	 * 
 	 * @param publishQos
-	 *        the publish QoS; defaults to {@literal 2}
+	 *        the publish QoS; defaults to {@literal 0}
 	 */
 	public void setPublishQos(int publishQos) {
 		this.publishQos = publishQos;
