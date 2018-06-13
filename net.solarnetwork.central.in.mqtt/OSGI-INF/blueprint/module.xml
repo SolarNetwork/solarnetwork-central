@@ -71,7 +71,8 @@
 			<beans:value>net.solarnetwork.domain.Identifiable</beans:value>
 			<beans:value>net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook</beans:value>
 		</osgix:interfaces>
-		<bean class="net.solarnetwork.central.in.mqtt.MqttDataCollector" init-method="init">
+		<bean class="net.solarnetwork.central.in.mqtt.MqttDataCollector" 
+				init-method="init" destroy-method="close">
 			<argument ref="executorService"/>
 			<argument ref="objectMapper"/>
 			<argument ref="dataCollectorBiz"/>
