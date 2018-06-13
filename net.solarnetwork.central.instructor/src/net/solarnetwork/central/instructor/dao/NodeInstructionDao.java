@@ -92,4 +92,20 @@ public interface NodeInstructionDao
 	boolean compareAndUpdateInstructionState(Long instructionId, Long nodeId,
 			InstructionState expectedState, InstructionState state, Map<String, ?> resultParameters);
 
+	/**
+	 * Find instructions in a given state that are older than a specific date
+	 * and update their state to some other state.
+	 * 
+	 * @param currentState
+	 *        the state of instructions to look for
+	 * @param olderThanDate
+	 *        only update instructions older than this date
+	 * @param desiredState
+	 *        the state to change the found instructions to
+	 * @return The number of instructions deleted.
+	 * @since 1.2
+	 */
+	long updateStaleInstructionsState(InstructionState currentState, DateTime olderThanDate,
+			InstructionState desiredState);
+
 }

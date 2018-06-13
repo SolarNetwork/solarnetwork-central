@@ -67,6 +67,14 @@ public class MyBatisNodeInstructionDao
 	public static final String UPDATE_COMPARE_STATE = "update-NodeInstruction-compare-state";
 
 	/**
+	 * Query name used by
+	 * {@link #updateStaleInstructionStates(InstructionState, DateTime, InstructionState)
+	 * 
+	 * @since 1.2
+	 */
+	public static final String UPDATE_STALE_STATE = "update-NodeInstruction-stale-state";
+
+	/**
 	 * Default constructor.
 	 */
 	public MyBatisNodeInstructionDao() {
@@ -117,6 +125,17 @@ public class MyBatisNodeInstructionDao
 				resultParameters != null ? JsonUtils.getJSONString(resultParameters, null) : null);
 		int count = getSqlSession().update(UPDATE_SET_STATE, params);
 		return (count > 0);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public long updateStaleInstructionsState(InstructionState currentState, DateTime olderThanDate,
+			InstructionState desiredState) {
+		Map<String, Object> params = new HashMap<String, Object>(2);
+		params.put("date", olderThanDate);
+		params.put("expectedState", currentState);
+		params.put("state", desiredState);
+		return getSqlSession().update(UPDATE_STALE_STATE, params);
 	}
 
 }
