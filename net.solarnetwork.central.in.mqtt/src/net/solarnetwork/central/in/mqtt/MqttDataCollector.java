@@ -134,6 +134,22 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param executorService
+	 *        task service
+	 * @param objectMapper
+	 *        object mapper for messages
+	 * @param dataCollectorBiz
+	 *        data collector
+	 * @param nodeInstructionDao
+	 *        node instruction
+	 * @param sslService
+	 *        SSL service
+	 * @param retryConnect
+	 *        {@literal true} to keep retrying to connect to MQTT server
+	 */
 	public MqttDataCollector(ExecutorService executorService, ObjectMapper objectMapper,
 			DataCollectorBiz dataCollectorBiz, OptionalService<NodeInstructionDao> nodeInstructionDao,
 			OptionalService<SSLService> sslService, boolean retryConnect) {
@@ -141,6 +157,26 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 				retryConnect);
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param executorService
+	 *        task service
+	 * @param objectMapper
+	 *        object mapper for messages
+	 * @param dataCollectorBiz
+	 *        data collector
+	 * @param nodeInstructionDao
+	 *        node instruction
+	 * @param sslService
+	 *        SSL service
+	 * @param serverUri
+	 *        MQTT URI to connect to
+	 * @param clientId
+	 *        the MQTT client ID
+	 * @param retryConnect
+	 *        {@literal true} to keep retrying to connect to MQTT server
+	 */
 	public MqttDataCollector(ExecutorService executorService, ObjectMapper objectMapper,
 			DataCollectorBiz dataCollectorBiz, OptionalService<NodeInstructionDao> nodeInstructionDao,
 			OptionalService<SSLService> sslService, String serverUri, String clientId,
