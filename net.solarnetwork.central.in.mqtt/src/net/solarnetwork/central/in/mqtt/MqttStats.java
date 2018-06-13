@@ -43,7 +43,9 @@ public class MqttStats {
 
 		LocationDatumReceived(2, "location datum received"),
 
-		InstructionStatusReceived(3, "instruction status received");
+		InstructionStatusReceived(3, "instruction status received"),
+
+		InstructionsPublished(4, "instructions published");
 
 		private final int index;
 		private final String description;
