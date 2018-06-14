@@ -24,7 +24,7 @@
 		<beans:prop key="DatumExportProcessor.maximumWaitMs">300000</beans:prop>
 		<beans:prop key="DatumExportProcessor.maximumClaimCount">1000</beans:prop>
 		<beans:prop key="DatumExportTaskCleaner.jobCron">0 47 * * * ?</beans:prop>
-		<beans:prop key="DatumExportTaskCleaner.minimumAgeMinutes">360</beans:prop>
+		<beans:prop key="DatumExportTaskCleaner.minimumAgeMinutes">720</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
