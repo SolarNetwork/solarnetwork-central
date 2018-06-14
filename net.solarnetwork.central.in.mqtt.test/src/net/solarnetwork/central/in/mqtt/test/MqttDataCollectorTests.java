@@ -124,7 +124,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 	}
 
 	private String datumTopic(Long nodeId) {
-		return String.format(MqttDataCollector.NODE_DATUM_TOPIC_TEMPLATE, nodeId);
+		return String.format(MqttDataCollector.DEFAULT_NODE_DATUM_TOPIC_TEMPLATE, nodeId);
 	}
 
 	@Test
@@ -321,6 +321,58 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		InterceptConnectMessage connMsg = session.connectMessages.get(0);
 		assertThat("Connect client ID", connMsg.getClientID(), equalTo(TEST_CLIENT_ID));
+		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
+		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
+		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));
+	}
+
+	@Test
+	public void reconnectToServerAfterConfigChangeWithRetryEnabled() throws Exception {
+		// given
+		final String username = UUID.randomUUID().toString();
+		final String password = UUID.randomUUID().toString();
+		service.setUsername(username);
+		service.setPassword(password);
+		service.setRetryConnect(true);
+
+		final TestingInterceptHandler session = getTestingInterceptHandler();
+
+		replayAll();
+
+		// when
+		service.init();
+
+		// sleep for a bit to allow background thread to connect
+		Thread.sleep(1000);
+
+		// stop server
+		stopMqttServer();
+
+		Thread.sleep(200);
+
+		// start server on new port, update configuration
+		setupMqttServer(Collections.singletonList(session), null, null, getFreePort());
+		service.setClientId("test.client.2");
+		service.setServerUri("mqtt://localhost:" + getMqttServerPort());
+		service.init();
+
+		// sleep for a bit to allow background thread to connect
+		Thread.sleep(1000);
+
+		// stop server to flush messages
+		stopMqttServer();
+
+		// then
+		assertThat("Connected to broker", session.connectMessages, hasSize(2));
+
+		InterceptConnectMessage connMsg = session.connectMessages.get(0);
+		assertThat("Connect client ID", connMsg.getClientID(), equalTo(TEST_CLIENT_ID));
+		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
+		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
+		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));
+
+		connMsg = session.connectMessages.get(1);
+		assertThat("Connect client ID", connMsg.getClientID(), equalTo("test.client.2"));
 		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
 		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
 		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));

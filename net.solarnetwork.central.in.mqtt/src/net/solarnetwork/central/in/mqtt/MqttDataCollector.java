@@ -75,11 +75,24 @@ import net.solarnetwork.util.OptionalService;
  */
 public class MqttDataCollector implements MqttCallbackExtended, Identifiable, NodeInstructionQueueHook {
 
-	/** The MQTT topic template for node instruction publication. */
-	public static final String NODE_INSTRUCTION_TOPIC_TEMPLATE = "node/%s/instr";
+	/**
+	 * The default MQTT topic template for node instruction publication.
+	 * 
+	 * <p>
+	 * This template will be passed a single node ID parameter.
+	 * </p>
+	 */
+	public static final String DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE = "node/%s/instr";
 
-	/** The MQTT topic template for node data subscription. */
-	public static final String NODE_DATUM_TOPIC_TEMPLATE = "node/%s/datum";
+	/**
+	 * The default MQTT topic template for node data subscription.
+	 * 
+	 * <p>
+	 * This template will be passed a single node ID (or {@literal +} wildcard)
+	 * parameter.
+	 * </p>
+	 */
+	public static final String DEFAULT_NODE_DATUM_TOPIC_TEMPLATE = "node/%s/datum";
 
 	/**
 	 * A regular expression that matches node topics and returns node ID and
@@ -129,6 +142,8 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 	private int subscribeQos = 2;
 	private int publishQos = 0;
 	private long mqttTimeout = DEFAULT_MQTT_TIMEOUT;
+	private String nodeInstructionTopicTemplate = DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE;
+	private String nodeDatumTopicTemplate = DEFAULT_NODE_DATUM_TOPIC_TEMPLATE;
 
 	private Runnable connectThread = null;
 
@@ -257,20 +272,32 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 	 * Close down the service.
 	 */
 	public void close() {
-		IMqttAsyncClient client = clientRef.get();
-		if ( client != null ) {
+		shutdownClient(clientRef.get());
+	}
+
+	private void shutdownClient(IMqttAsyncClient client) {
+		if ( client == null ) {
+			return;
+		}
+		try {
+			client.disconnectForcibly();
+		} catch ( MqttException e ) {
+			log.warn("Error disconnecting MQTT connection to {}: {}", client.getServerURI(),
+					e.toString());
+		} finally {
 			try {
-				client.disconnectForcibly();
 				client.close();
 			} catch ( MqttException e ) {
 				log.warn("Error closing MQTT connection to {}: {}", client.getServerURI(), e.toString());
+			} finally {
+				clientRef.compareAndSet(client, null);
 			}
 		}
 	}
 
 	private IMqttAsyncClient setupClient() {
 		IMqttAsyncClient client = null;
-		IMqttAsyncClient oldClient = null;
+		shutdownClient(clientRef.get());
 		try {
 			client = createClient();
 			if ( client != null ) {
@@ -294,28 +321,12 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 
 				subscribeToTopics(client);
 
-				oldClient = clientRef.getAndSet(client);
+				clientRef.set(client);
 			}
 		} catch ( MqttException e ) {
 			log.error("Error creating MQTT client: {}", e.toString());
-			try {
-				if ( client != null ) {
-					client.disconnectForcibly(0, 100);
-					client.close();
-				}
-			} catch ( MqttException e2 ) {
-				// ignore
-				log.warn("Error closing MQTT client: {}", e2.toString());
-			}
+			shutdownClient(client);
 			client = null;
-		}
-		if ( oldClient != null ) {
-			try {
-				client.disconnectForcibly(0, 100);
-				oldClient.close();
-			} catch ( MqttException e ) {
-				log.warn("Error closing MQTT client: {}", e.toString());
-			}
 		}
 		return client;
 	}
@@ -353,9 +364,10 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 	}
 
 	private void subscribeToTopics(IMqttAsyncClient client) throws MqttException {
-		final String datumTopics = String.format(NODE_DATUM_TOPIC_TEMPLATE, "+");
+		final String datumTopics = String.format(nodeDatumTopicTemplate, "+");
 		IMqttToken token = client.subscribe(datumTopics, subscribeQos);
 		token.waitForCompletion(mqttTimeout);
+		log.info("Subscribed to MQTT topic {} @ {}", datumTopics, client.getServerURI());
 	}
 
 	@Override
@@ -479,7 +491,7 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 			// create copy with ID set
 			this.instructionId = instructionId;
 			this.nodeId = instruction.getNodeId();
-			this.topic = String.format(NODE_INSTRUCTION_TOPIC_TEMPLATE, instruction.getNodeId());
+			this.topic = String.format(nodeInstructionTopicTemplate, instruction.getNodeId());
 			Map<String, Object> data = Collections.singletonMap("instructions",
 					Collections.singleton(instruction));
 			this.payload = objectMapper.writeValueAsBytes(data);
@@ -755,6 +767,38 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 	 */
 	public void setMqttTimeout(long mqttTimeout) {
 		this.mqttTimeout = mqttTimeout;
+	}
+
+	/**
+	 * Set the node instruction topic template.
+	 * 
+	 * <p>
+	 * This topic template is used when publishing instructions to nodes. The
+	 * template will be passed a single node ID parameter.
+	 * </p>
+	 * 
+	 * @param nodeInstructionTopicTemplate
+	 *        the template to use; defaults to
+	 *        {@link #DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE}
+	 */
+	public void setNodeInstructionTopicTemplate(String nodeInstructionTopicTemplate) {
+		this.nodeInstructionTopicTemplate = nodeInstructionTopicTemplate;
+	}
+
+	/**
+	 * Set the node datum topic template.
+	 * 
+	 * <p>
+	 * This topic template will be used to subscribe to node datum topics, using
+	 * either a {@literal +} wildcard parameter.
+	 * </p>
+	 * 
+	 * @param nodeDatumTopicTemplate
+	 *        the template to use; defaults to
+	 *        {@link #DEFAULT_NODE_DATUM_TOPIC_TEMPLATE}
+	 */
+	public void setNodeDatumTopicTemplate(String nodeDatumTopicTemplate) {
+		this.nodeDatumTopicTemplate = nodeDatumTopicTemplate;
 	}
 
 }
