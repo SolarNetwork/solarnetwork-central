@@ -22,21 +22,23 @@
 
 package net.solarnetwork.central.instructor.dao;
 
+import java.util.Map;
+import org.joda.time.DateTime;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
+import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import org.joda.time.DateTime;
 
 /**
  * DAO API for {@link NodeInstruction}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public interface NodeInstructionDao extends GenericDao<NodeInstruction, Long>,
-		FilterableDao<EntityMatch, Long, InstructionFilter> {
+public interface NodeInstructionDao
+		extends GenericDao<NodeInstruction, Long>, FilterableDao<EntityMatch, Long, InstructionFilter> {
 
 	/**
 	 * Purge instructions that have reached a final state and are older than a
@@ -47,5 +49,63 @@ public interface NodeInstructionDao extends GenericDao<NodeInstruction, Long>,
 	 * @return The number of instructions deleted.
 	 */
 	long purgeCompletedInstructions(DateTime olderThanDate);
+
+	/**
+	 * Update the state of a node instruction.
+	 * 
+	 * @param instructionId
+	 *        the instruction ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param state
+	 *        the new state
+	 * @param resultParameters
+	 *        optional result parameters to include
+	 * @return {@literal true} if the instruction was found and updated
+	 * @since 1.2
+	 */
+	boolean updateNodeInstructionState(Long instructionId, Long nodeId, InstructionState state,
+			Map<String, ?> resultParameters);
+
+	/**
+	 * Update an instruction status only if it currently has an expected state.
+	 * 
+	 * <p>
+	 * This is equivalent to an atomic compare-and-set operation. The given
+	 * instruction will be updated only if the instruction with
+	 * {@code instructionId} exists and has the {@code expectedState} state.
+	 * </p>
+	 * 
+	 * @param instructionId
+	 *        the ID of the instruction to update the status for
+	 * @param nodeId
+	 *        the node ID
+	 * @param expectedState
+	 *        the expected state of the instruction
+	 * @param state
+	 *        the new state
+	 * @param resultParameters
+	 *        optional result parameters to include
+	 * @return {@literal true} if the instruction was updated
+	 * @since 1.2
+	 */
+	boolean compareAndUpdateInstructionState(Long instructionId, Long nodeId,
+			InstructionState expectedState, InstructionState state, Map<String, ?> resultParameters);
+
+	/**
+	 * Find instructions in a given state that are older than a specific date
+	 * and update their state to some other state.
+	 * 
+	 * @param currentState
+	 *        the state of instructions to look for
+	 * @param olderThanDate
+	 *        only update instructions older than this date
+	 * @param desiredState
+	 *        the state to change the found instructions to
+	 * @return The number of instructions deleted.
+	 * @since 1.2
+	 */
+	long updateStaleInstructionsState(InstructionState currentState, DateTime olderThanDate,
+			InstructionState desiredState);
 
 }

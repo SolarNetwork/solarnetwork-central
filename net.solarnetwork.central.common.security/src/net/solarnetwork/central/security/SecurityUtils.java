@@ -44,7 +44,7 @@ import org.springframework.security.core.userdetails.User;
  * Security helper methods.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SecurityUtils {
 
@@ -93,6 +93,23 @@ public class SecurityUtils {
 	}
 
 	/**
+	 * Become a node with a {@code RUN_AS_ROLE_NODE} authority.
+	 * 
+	 * @param nodeId
+	 *        the node ID to become
+	 * @since 1.4
+	 */
+	public static void becomeNode(Long nodeId) {
+		AuthenticatedNode node = new AuthenticatedNode(nodeId, NodeUserDetailsService.AUTHORITIES,
+				false);
+		Collection<GrantedAuthority> authorities = Collections
+				.singleton((GrantedAuthority) new SimpleGrantedAuthority("RUN_AS_ROLE_NODE"));
+		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(node, "",
+				authorities);
+		SecurityContextHolder.getContext().setAuthentication(auth);
+	}
+
+	/**
 	 * Require any one of a set of roles for the current actor. The actor's
 	 * roles are converted to upper case before testing for inclusion in the
 	 * {@code roles} argument.
@@ -103,7 +120,8 @@ public class SecurityUtils {
 	public static void requireAnyRole(final Set<String> roles) {
 		Authentication auth = getCurrentAuthentication();
 		if ( auth == null || auth.isAuthenticated() == false ) {
-			throw new AuthorizationException(AuthorizationException.Reason.ANONYMOUS_ACCESS_DENIED, null);
+			throw new AuthorizationException(AuthorizationException.Reason.ANONYMOUS_ACCESS_DENIED,
+					null);
 		}
 		for ( GrantedAuthority role : auth.getAuthorities() ) {
 			if ( roles.contains(role.getAuthority().toUpperCase()) ) {
@@ -124,7 +142,8 @@ public class SecurityUtils {
 	public static void requireAllRoles(final Set<String> roles) {
 		Authentication auth = getCurrentAuthentication();
 		if ( auth == null || auth.isAuthenticated() == false ) {
-			throw new AuthorizationException(AuthorizationException.Reason.ANONYMOUS_ACCESS_DENIED, null);
+			throw new AuthorizationException(AuthorizationException.Reason.ANONYMOUS_ACCESS_DENIED,
+					null);
 		}
 		Set<String> rolesCopy = new HashSet<String>(roles);
 		for ( GrantedAuthority role : auth.getAuthorities() ) {

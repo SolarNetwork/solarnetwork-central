@@ -55,5 +55,24 @@
 			</entry>
 		</service-properties>
 	</service>
+	
+	<osgix:managed-service-factory factory-pid="net.solarnetwork.central.instructor.jobs.StaleNodeStateUpdater">
+		<osgix:interfaces>
+			<beans:value>org.osgi.service.event.EventHandler</beans:value>
+		</osgix:interfaces>
+		<osgix:service-properties>
+			<beans:entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<beans:array value-type="java.lang.String">
+					<beans:value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</beans:value>
+					<beans:value>net/solarnetwork/central/instructor/jobs/StaleNodeStateUpdater</beans:value>
+				</beans:array>
+			</beans:entry>
+		</osgix:service-properties>
+		<bean class="net.solarnetwork.central.instructor.jobs.StaleNodeStateUpdater">
+			<argument ref="eventAdmin"/>
+			<argument ref="nodeInstructionDao"/>
+			<property name="jobTopic" value="net/solarnetwork/central/instructor/jobs/StaleNodeStateUpdater"/>
+		</bean>
+	</osgix:managed-service-factory>
 
 </blueprint>

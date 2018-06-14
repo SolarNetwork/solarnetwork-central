@@ -30,7 +30,7 @@
 		interface="net.solarnetwork.central.biz.AppConfigurationBiz"
 		filter="(app=user)"/>
 	
-	<osgi:reference id="instructorBiz" sticky="false"
+	<osgi:reference id="instructorBiz" sticky="false"  filter="(secured=true)"
 		interface="net.solarnetwork.central.instructor.biz.InstructorBiz"/>
 	
 	<osgi:reference id="queryBiz" sticky="false"
