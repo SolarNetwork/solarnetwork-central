@@ -69,6 +69,7 @@
 			autowire-on-update="true" update-method="init">
 		<osgix:interfaces>
 			<beans:value>net.solarnetwork.domain.Identifiable</beans:value>
+			<beans:value>net.solarnetwork.central.domain.PingTest</beans:value>
 			<beans:value>net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook</beans:value>
 		</osgix:interfaces>
 		<bean class="net.solarnetwork.central.in.mqtt.MqttDataCollector" 

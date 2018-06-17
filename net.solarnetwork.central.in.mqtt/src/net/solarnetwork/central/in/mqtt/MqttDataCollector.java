@@ -55,6 +55,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.domain.PingTest;
+import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttStats.Counts;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -73,7 +75,8 @@ import net.solarnetwork.util.OptionalService;
  * @author matt
  * @version 1.0
  */
-public class MqttDataCollector implements MqttCallbackExtended, Identifiable, NodeInstructionQueueHook {
+public class MqttDataCollector
+		implements MqttCallbackExtended, Identifiable, NodeInstructionQueueHook, PingTest {
 
 	/**
 	 * The default MQTT topic template for node instruction publication.
@@ -582,10 +585,44 @@ public class MqttDataCollector implements MqttCallbackExtended, Identifiable, No
 		return (child == null ? placeholder : child.asText());
 	}
 
+	/*---------------------
+	 * Ping test support
+	 *------------------ */
+
+	@Override
+	public String getPingTestId() {
+		return getClass().getName() + "-" + getUid();
+	}
+
+	@Override
+	public String getPingTestName() {
+		return "SolarIn MQTT";
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 10000;
+	}
+
+	@Override
+	public PingTestResult performPingTest() throws Exception {
+		IMqttAsyncClient client = clientRef.get();
+		boolean healthy = (client != null && client.isConnected());
+		String msg = (healthy ? "Connected to " + serverUri
+				: client != null ? "Not connected" : "No client available");
+		Map<String, Object> props = Collections.singletonMap("serverUri", serverUri);
+		PingTestResult result = new PingTestResult(healthy, msg, props);
+		return result;
+	}
+
 	@Override
 	public String getUid() {
 		return uid;
 	}
+
+	/*---------------------
+	 * Accessors
+	 *------------------ */
 
 	/**
 	 * Set the service unique ID.
