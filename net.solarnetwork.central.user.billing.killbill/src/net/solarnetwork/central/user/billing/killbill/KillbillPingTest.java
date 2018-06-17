@@ -26,14 +26,14 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import net.solarnetwork.central.domain.PingTest;
 import net.solarnetwork.central.domain.PingTestResult;
-import net.solarnetwork.central.support.CachedResult;
 import net.solarnetwork.central.user.billing.killbill.domain.HealthCheckResult;
+import net.solarnetwork.util.CachedResult;
 
 /**
  * Health check for Kill Bill.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class KillbillPingTest implements PingTest {
 

@@ -12,7 +12,7 @@
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
 		<dependency org="com.fasterxml.jackson.datatype" name="jackson-datatype-joda" rev="2.8.7" />
- 		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="[1.37.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="[1.39.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common.web" rev="[1.12.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.13.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.25.0,2.0.0)"/>
