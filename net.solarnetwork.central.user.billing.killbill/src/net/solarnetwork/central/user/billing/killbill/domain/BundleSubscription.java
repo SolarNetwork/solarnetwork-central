@@ -22,26 +22,92 @@
 
 package net.solarnetwork.central.user.billing.killbill.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 /**
  * A bundle and subscription combo, for setting up a new bundle.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
+@JsonPropertyOrder({ "accountId", "bundleId", "externalKey" })
 public class BundleSubscription {
 
 	private final Bundle bundle;
+	private final Subscription subscription;
+
+	/**
+	 * Create a list of bundle subscriptions from a bundle instance with at
+	 * least one base subscription and any number of add-on subscriptions.
+	 * 
+	 * @param bundle
+	 *        the bundle
+	 * @param accountId
+	 *        the account ID
+	 * @return the list, or an empty list if there are no subscriptions in
+	 *         {@code bundle}
+	 * @since 1.1
+	 */
+	public static List<BundleSubscription> entitlementsForBundle(Bundle bundle, String accountId) {
+		List<BundleSubscription> result = new ArrayList<>(
+				bundle.getSubscriptions() != null ? bundle.getSubscriptions().size() : 0);
+		if ( bundle.getSubscriptions() != null ) {
+			for ( Subscription sub : bundle.getSubscriptions() ) {
+				Bundle b = (Bundle) bundle.clone();
+				b.setAccountId(accountId);
+				if ( !result.isEmpty() ) {
+					// only the first can have an external key because applied at bundle level
+					b.setExternalKey(null);
+				}
+				result.add(new BundleSubscription(b, sub));
+			}
+		}
+		return result;
+	}
 
 	/**
 	 * Constructor.
+	 * 
+	 * <p>
+	 * This constructor will clone {@code bundle} and set the {@code bundleId}
+	 * to {@literal null}, and extract the first subscription from
+	 * {@link Bundle#getSubscriptions()}. This is designed for when a bundle is
+	 * getting created the first time.
+	 * </p>
+	 * 
+	 * @param bundle
+	 *        the bundle to create from
 	 */
 	public BundleSubscription(Bundle bundle) {
 		super();
+		this.bundle = (Bundle) bundle.clone();
+		this.bundle.setBundleId(null);
+		this.subscription = bundle.getSubscriptions() != null && !bundle.getSubscriptions().isEmpty()
+				? bundle.getSubscriptions().get(0)
+				: null;
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * This constructor will not modify {@code bundle} nor {@code subscription}.
+	 * </p>
+	 * 
+	 * @param the
+	 *        bundle
+	 * @param subscription
+	 *        the subscription
+	 * @since 1.1
+	 */
+	public BundleSubscription(Bundle bundle, Subscription subscription) {
+		super();
 		this.bundle = bundle;
+		this.subscription = subscription;
 	}
 
 	/**
@@ -52,6 +118,15 @@ public class BundleSubscription {
 	@JsonIgnore
 	public Bundle getBundle() {
 		return bundle;
+	}
+
+	/**
+	 * Get the bundle ID.
+	 * 
+	 * @return the bundle ID, or {@literal null} when creating a new bundle
+	 */
+	public String getBundleId() {
+		return bundle.getBundleId();
 	}
 
 	/**
@@ -79,8 +154,7 @@ public class BundleSubscription {
 	 */
 	@JsonUnwrapped
 	public Subscription getSubscription() {
-		List<Subscription> subs = bundle.getSubscriptions();
-		return (subs != null && !subs.isEmpty() ? subs.get(0) : null);
+		return subscription;
 	}
 
 }

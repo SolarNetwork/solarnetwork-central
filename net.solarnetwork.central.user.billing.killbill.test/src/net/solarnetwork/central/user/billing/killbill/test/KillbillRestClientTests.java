@@ -52,6 +52,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.junit.Before;
@@ -100,6 +101,7 @@ public class KillbillRestClientTests {
 	private static final String TEST_BUNDLE_ID = "db4fde26-9094-4a2c-8520-96455ab35201";
 	private static final String TEST_SUBSCRIPTION_ID = "e791cb82-2363-4c77-86a7-770dd7aaf3c9";
 	private static final String TEST_SUBSCRIPTION_PLAN_NAME = "api-posted-datum-metric-monthly-usage";
+	private static final String TEST_ADDON_PLAN_NAME = "api-query-datum-monthly-usage";
 	private static final String TEST_BASE_URL = "http://localhost";
 	private static final String TEST_API_SECRET = "test.secret";
 	private static final String TEST_API_KEY = TEST_ACCOUNT_KEY;
@@ -302,6 +304,85 @@ public class KillbillRestClientTests {
 
 		// then
 		assertThat("Subscription ID", subscriptionId, equalTo(TEST_SUBSCRIPTION_ID));
+	}
+
+	@Test
+	public void createBundleWithAddOn() throws Exception {
+		// given
+		String accountId = UUID.randomUUID().toString();
+
+		Bundle bundle = new Bundle();
+		bundle.setAccountId(accountId);
+		bundle.setExternalKey(TEST_BUNDLE_KEY);
+
+		Subscription baseSub = new Subscription();
+		baseSub.setBillCycleDayLocal(1);
+		baseSub.setPlanName(TEST_SUBSCRIPTION_PLAN_NAME);
+		baseSub.setProductCategory(Subscription.BASE_PRODUCT_CATEGORY);
+
+		Subscription addOnSub = new Subscription();
+		addOnSub.setBillCycleDayLocal(1);
+		addOnSub.setPlanName(TEST_ADDON_PLAN_NAME);
+		addOnSub.setProductCategory(Subscription.ADDON_PRODUCT_CATEGORY);
+
+		bundle.setSubscriptions(Arrays.asList(baseSub, addOnSub));
+
+		// using the BundleSubscription to verify the request JSON structure
+		List<BundleSubscription> bsList = BundleSubscription.entitlementsForBundle(bundle, accountId);
+
+		// @formatter:off
+		serverExpect("/1.0/kb/subscriptions/createEntitlementWithAddOns?requestedDate=2017-01-01", HttpMethod.POST)
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+			.andExpect(json(objectMapper).bodyObject(bsList))
+			.andRespond(withCreatedEntity(new URI("http://localhost:8080/1.0/kb/subscriptions/" 
+					+TEST_SUBSCRIPTION_ID)));
+	    // @formatter:on
+
+		// when
+		Account account = new Account(accountId);
+		LocalDate date = new LocalDate(2017, 1, 1);
+		String subscriptionId = client.createBundle(account, date, bundle);
+
+		// then
+		assertThat("Subscription ID", subscriptionId, equalTo(TEST_SUBSCRIPTION_ID));
+	}
+
+	@Test
+	public void addSubscriptionToBundle() throws Exception {
+		// given
+		String accountId = UUID.randomUUID().toString();
+		String bundleId = UUID.randomUUID().toString();
+		Bundle bundle = new Bundle();
+		bundle.setAccountId(accountId);
+		bundle.setBundleId(bundleId);
+
+		Subscription subscription = new Subscription();
+		subscription.setBillCycleDayLocal(1);
+		subscription.setPlanName(TEST_ADDON_PLAN_NAME);
+		subscription.setProductCategory(Subscription.ADDON_PRODUCT_CATEGORY);
+
+		bundle.setSubscriptions(Collections.singletonList(subscription));
+
+		// using the BundleSubscription to verify the request JSON structure
+		BundleSubscription bs = new BundleSubscription(bundle, subscription);
+
+		String addOnSubId = UUID.randomUUID().toString();
+
+		// @formatter:off
+		serverExpect("/1.0/kb/subscriptions?requestedDate=2017-01-01", HttpMethod.POST)
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+			.andExpect(json(objectMapper).bodyObject(bs))
+			.andRespond(withCreatedEntity(new URI("http://localhost:8080/1.0/kb/subscriptions/" 
+					+addOnSubId)));
+	    // @formatter:on
+
+		// when
+		Account account = new Account(accountId);
+		LocalDate date = new LocalDate(2017, 1, 1);
+		String subscriptionId = client.addSubscriptionToBundle(account, bundleId, date, subscription);
+
+		// then
+		assertThat("Subscription ID", subscriptionId, equalTo(addOnSubId));
 	}
 
 	@Test

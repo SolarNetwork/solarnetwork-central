@@ -78,7 +78,7 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
  * REST implementation of {@link KillbillClient}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class KillbillRestClient implements KillbillClient {
 
@@ -264,14 +264,38 @@ public class KillbillRestClient implements KillbillClient {
 
 	@Override
 	public String createBundle(Account account, LocalDate requestedDate, Bundle info) {
+		UriComponentsBuilder builder;
+		Object data;
+		if ( info.getSubscriptions().size() > 1 ) {
+			builder = UriComponentsBuilder
+					.fromHttpUrl(kbUrl("/1.0/kb/subscriptions/createEntitlementWithAddOns"));
+			data = BundleSubscription.entitlementsForBundle(info, account.getAccountId());
+		} else {
+			builder = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/subscriptions"));
+			Bundle b = (Bundle) info.clone();
+			b.setAccountId(account.getAccountId());
+			data = new BundleSubscription(b, b.getSubscriptions().get(0));
+		}
+		if ( requestedDate != null ) {
+			builder.queryParam("requestedDate", ISO_DATE_FORMATTER.print(requestedDate));
+		}
+		URI uri = builder.build().toUri();
+		URI loc = client.postForLocation(uri, data);
+		return idFromLocation(loc);
+	}
+
+	@Override
+	public String addSubscriptionToBundle(Account account, String bundleId, LocalDate requestedDate,
+			Subscription subscription) {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/subscriptions"));
 		if ( requestedDate != null ) {
 			builder.queryParam("requestedDate", ISO_DATE_FORMATTER.print(requestedDate));
 		}
-		Bundle bundle = (Bundle) info.clone();
+		Bundle bundle = new Bundle();
+		bundle.setBundleId(bundleId);
 		bundle.setAccountId(account.getAccountId());
 		URI uri = builder.build().toUri();
-		URI loc = client.postForLocation(uri, new BundleSubscription(bundle));
+		URI loc = client.postForLocation(uri, new BundleSubscription(bundle, subscription));
 		return idFromLocation(loc);
 	}
 

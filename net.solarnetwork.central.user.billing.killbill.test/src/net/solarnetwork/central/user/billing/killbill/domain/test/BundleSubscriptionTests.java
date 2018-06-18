@@ -22,10 +22,16 @@
 
 package net.solarnetwork.central.user.billing.killbill.domain.test;
 
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,6 +82,76 @@ public class BundleSubscriptionTests {
 		expected.put("productCategory", Subscription.BASE_PRODUCT_CATEGORY);
 
 		assertThat(data, equalTo(expected));
+	}
+
+	@Test
+	public void createList() throws Exception {
+
+		Bundle bundle = new Bundle();
+		bundle.setExternalKey("c");
+
+		Subscription sub = new Subscription();
+		sub.setBillCycleDayLocal(1);
+		sub.setPlanName("d");
+		sub.setProductCategory(Subscription.BASE_PRODUCT_CATEGORY);
+
+		Subscription sub2 = new Subscription();
+		sub2.setBillCycleDayLocal(1);
+		sub2.setPlanName("e");
+		sub2.setProductCategory(Subscription.ADDON_PRODUCT_CATEGORY);
+
+		bundle.setSubscriptions(Arrays.asList(sub, sub2));
+
+		List<BundleSubscription> result = BundleSubscription.entitlementsForBundle(bundle, "a");
+
+		assertThat(result, hasSize(2));
+
+		int i = 0;
+		for ( BundleSubscription bsub : result ) {
+			assertThat("Bundle " + (i + 1), bsub.getBundle(), not(sameInstance(bundle)));
+			assertThat("Bundle account ID " + (i + 1), bsub.getBundle().getAccountId(), equalTo("a"));
+			if ( i == 0 ) {
+				assertThat("Bundle external key " + (i + 1), bsub.getBundle().getExternalKey(),
+						equalTo("c"));
+			} else {
+				assertThat("Bundle external key " + (i + 1), bsub.getBundle().getExternalKey(),
+						nullValue());
+			}
+			assertThat("Sub " + (i + 1), bsub.getSubscription(),
+					sameInstance(bundle.getSubscriptions().get(i)));
+			i++;
+		}
+
+	}
+
+	@Test
+	public void createListSerializeToJson() throws Exception {
+
+		Bundle bundle = new Bundle();
+		bundle.setBundleId("b");
+		bundle.setExternalKey("c");
+
+		Subscription sub = new Subscription();
+		sub.setBillCycleDayLocal(1);
+		sub.setPlanName("d");
+		sub.setProductCategory(Subscription.BASE_PRODUCT_CATEGORY);
+
+		Subscription sub2 = new Subscription();
+		sub2.setBillCycleDayLocal(1);
+		sub2.setPlanName("e");
+		sub2.setProductCategory(Subscription.ADDON_PRODUCT_CATEGORY);
+
+		bundle.setSubscriptions(Arrays.asList(sub, sub2));
+
+		List<BundleSubscription> result = BundleSubscription.entitlementsForBundle(bundle, "a");
+		String json = objectMapper.writeValueAsString(result.get(0));
+		assertThat("Sub 1 JSON", json,
+				equalTo("{\"accountId\":\"a\",\"bundleId\":\"b\",\"externalKey\":\"c\","
+						+ "\"productCategory\":\"BASE\",\"planName\":\"d\",\"billCycleDayLocal\":1}"));
+
+		json = objectMapper.writeValueAsString(result.get(1));
+		assertThat("Sub 2 JSON", json, equalTo("{\"accountId\":\"a\",\"bundleId\":\"b\","
+				+ "\"productCategory\":\"ADD_ON\",\"planName\":\"e\",\"billCycleDayLocal\":1}"));
 	}
 
 }

@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumMetricsDailyUsageUpdaterService.java - 22/08/2017 1:47:50 PM
+ * BaseDailyUsageUpdaterService.java - 18/06/2018 7:16:18 AM
  * 
- * Copyright 2017 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -68,87 +68,18 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.util.StringUtils;
 
 /**
- * Post daily usage data to Killbill for SolarNetwork users subscribed to this
- * service.
- * 
- * <p>
- * To be subscribed to this service, a {@link User} must have billing data with
- * the following:
- * </p>
- * 
- * <dl>
- * <dt><code>accounting</code></dt>
- * <dd><code>kb</code></dd>
- * <dt><code>kb_datumMetricsDailyUsage</code></dt>
- * <dd><code>true</code></dd>
- * </dl>
- * 
- * <p>
- * For users meeting that criteria, a billing data key
- * <code>kb_accountKey</code> will be used as the Killbill account external key
- * value to associate with the user. If <code>kb_accountKey</code> does not
- * exist, a new Killbill account will be created for the user, and an external
- * key will be assigned and saved to the billing data key
- * <code>kb_accountKey</code> for future use (e.g. {@literal SN_123}, see
- * {@link #setAccountKeyTemplate(String)}).
- * </p>
- * 
- * <p>
- * All nodes associated with their SolarNetwork account will be subscribed to a
- * Killbill bundle using a bundle external key based on the node's ID (e.g.
- * {@literal IN_234}, see {@link #setBundleKeyTemplate(String)}). The bundle is
- * expected to contain a subscription to the {@code basePlanName} configured on
- * this service. If the bundle does not exist, it will be created with a single
- * subscription to {@code basePlanName}. The subscription
- * <code>requestedDate</code> will be set to the earliest available datum date
- * for the node, essentially starting the plan when the node first posts data.
- * The subscription billing day will be set to the {@code accountBillCycleDay}
- * configured on this service.
- * </p>
- * 
- * <p>
- * For each node, daily aggregate usage data will be posted to Killbill using
- * the <code>property_count</code> datum audit data available for that node (see
- * {@link GeneralNodeDatumDao#getAuditPropertyCountTotal()}). This service will
- * calculate the usage for all days before the current one and post the usage
- * records to Killbill. The usage unit will be the {@code usageUnitName}
- * configured on this service.
- * </p>
- * 
- * <p>
- * When all nodes for a given user have been processed, the current date is
- * saved in the user's billing data key
- * {@link #KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP}. The next time this
- * service runs it will use that date as the earliest day to upload usage data
- * for.
- * </p>
+ * Service to support services that update daily usage in Killbill.
  * 
  * @author matt
  * @version 1.0
  */
-public class DatumMetricsDailyUsageUpdaterService {
+public class DailyUsageUpdaterService implements ExecutableService {
 
 	/** The default currency map of country codes to currency codes. */
 	public static final Map<String, String> DEFAULT_CURRENCY_MAP = defaultCurrencyMap();
 
 	/** A {@code paymentMethodData} object for the external payment method. */
 	public static final Map<String, Object> EXTERNAL_PAYMENT_METHOD_DATA = externalPaymentMethodData();
-
-	/**
-	 * The billing data key that signals this updater service should be used via
-	 * a boolean flag.
-	 */
-	public static final String KILLBILL_DAILY_USAGE_PLAN_DATA_PROP = "kb_datumMetricsDailyUsage";
-
-	/**
-	 * The billing data key that holds a {@code Map} of "most recent usage date"
-	 * to start from, using node IDs as keys and {@literal YYYY-MM-DD} formatted
-	 * date values.
-	 */
-	public static final String KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP = "kb_mrUsageDates";
-
-	/** The default base plan name. */
-	public static final String DEFAULT_BASE_PLAN_NAME = "api-posted-datum-metric-monthly-usage";
 
 	/** The default time zone. */
 	public static final String DEFAULT_TIMEZONE = "Pacific/Auckland";
@@ -171,36 +102,14 @@ public class DatumMetricsDailyUsageUpdaterService {
 	/** The default batch size. */
 	public static final int DEFAULT_BATCH_SIZE = 50;
 
-	/** The default usage unit name. */
-	public static final String DEFAULT_USAGE_UNIT_NAME = "DatumMetrics";
-
 	/** The custom field name for a SolarNode ID. */
 	public static final String CUSTOM_FIELD_NODE_ID = "nodeId";
 
+	/** The default audit property to publish. */
+	public static final String DEFAULT_AUDIT_PROPERTY_KEY = "Property";
+
 	/** The default value for the account tags property. */
 	public static final Set<String> DEFAULT_ACCOUNT_TAGS = Collections.singleton("MANUAL_PAY");
-
-	private final SolarLocationDao locationDao;
-	private final GeneralNodeDatumDao nodeDatumDao;
-	private final UserDao userDao;
-	private final UserNodeDao userNodeDao;
-	private final KillbillClient client;
-	private int batchSize = DEFAULT_BATCH_SIZE;
-	private Map<String, String> countryCurrencyMap = DEFAULT_CURRENCY_MAP;
-	private String timeZone = DEFAULT_TIMEZONE;
-	private Map<String, Object> paymentMethodData = EXTERNAL_PAYMENT_METHOD_DATA;
-	private String basePlanName = DEFAULT_BASE_PLAN_NAME;
-	private String accountKeyTemplate = DEFAULT_ACCOUNT_KEY_TEMPLATE;
-	private String bundleKeyTemplate = DEFAULT_BUNDLE_KEY_TEMPLATE;
-	private Integer accountBillCycleDay = DEFAULT_ACCOUNT_BILL_CYCLE_DAY;
-	private String accountDefaultLocale = DEFAULT_ACCOUNT_LOCALE;
-	private Integer subscriptionBillCycleDay = DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
-	private String usageUnitName = DEFAULT_USAGE_UNIT_NAME;
-	private Set<String> accountTags = DEFAULT_ACCOUNT_TAGS;
-
-	private Cache<String, TagDefinition> tagDefinitionCache;
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private static final Map<String, String> defaultCurrencyMap() {
 		Map<String, String> map = new HashMap<>();
@@ -216,6 +125,35 @@ public class DatumMetricsDailyUsageUpdaterService {
 		return Collections.unmodifiableMap(map);
 	}
 
+	private final SolarLocationDao locationDao;
+	private final GeneralNodeDatumDao nodeDatumDao;
+	private final UserDao userDao;
+	private final UserNodeDao userNodeDao;
+	private final KillbillClient client;
+
+	private String timeZone = DEFAULT_TIMEZONE;
+	protected int batchSize = DEFAULT_BATCH_SIZE;
+	private Map<String, String> countryCurrencyMap = DEFAULT_CURRENCY_MAP;
+	private Map<String, Object> paymentMethodData = EXTERNAL_PAYMENT_METHOD_DATA;
+	private String accountKeyTemplate = DEFAULT_ACCOUNT_KEY_TEMPLATE;
+	private String bundleKeyTemplate = DEFAULT_BUNDLE_KEY_TEMPLATE;
+	private Integer accountBillCycleDay = DEFAULT_ACCOUNT_BILL_CYCLE_DAY;
+	private String accountDefaultLocale = DEFAULT_ACCOUNT_LOCALE;
+	private Integer subscriptionBillCycleDay = DEFAULT_SUBSCRIPTION_BILL_CYCLE_DAY;
+	private Set<String> accountTags = DEFAULT_ACCOUNT_TAGS;
+	private String auditPropertyKey = DEFAULT_AUDIT_PROPERTY_KEY;
+
+	private String billingDataFilterPlanKey;
+	private String billingDataMostRecentUsageKey;
+	private String basePlanName;
+	private String usageUnitName;
+	private String addOnPlanName;
+	private LocalDate minUsageDate;
+
+	private Cache<String, TagDefinition> tagDefinitionCache;
+
+	protected final Logger log = LoggerFactory.getLogger(getClass());
+
 	/**
 	 * Constructor.
 	 * 
@@ -230,7 +168,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 * @param client
 	 *        the {@link KillbillClient} to use
 	 */
-	public DatumMetricsDailyUsageUpdaterService(SolarLocationDao locationDao, UserDao userDao,
+	public DailyUsageUpdaterService(SolarLocationDao locationDao, UserDao userDao,
 			UserNodeDao userNodeDao, GeneralNodeDatumDao nodeDatumDao, KillbillClient client) {
 		this.locationDao = locationDao;
 		this.userDao = userDao;
@@ -239,15 +177,13 @@ public class DatumMetricsDailyUsageUpdaterService {
 		this.client = client;
 	}
 
-	/**
-	 * Execute the task.
-	 */
+	@Override
 	public void execute() {
-		// iterate over users configured to use Killbill
+		// iterate over users configured to use Killbill & subscribe to this plan
 		Map<String, Object> billingDataFilter = new HashMap<>();
 		billingDataFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP,
 				KillbillBillingSystem.ACCOUNTING_SYSTEM_KEY);
-		billingDataFilter.put(KILLBILL_DAILY_USAGE_PLAN_DATA_PROP, true);
+		billingDataFilter.put(billingDataFilterPlanKey, true);
 		UserFilterCommand criteria = new UserFilterCommand();
 		criteria.setInternalData(billingDataFilter);
 		final int max = this.batchSize;
@@ -279,42 +215,6 @@ public class DatumMetricsDailyUsageUpdaterService {
 		} while ( userResults.getStartingOffset() != null && userResults.getReturnedResultCount() != null
 				&& userResults.getTotalResults() != null && (userResults.getStartingOffset()
 						+ userResults.getReturnedResultCount() < userResults.getTotalResults()) );
-	}
-
-	private Locale localeForUser(UserInfo user, SolarLocation loc) {
-		String country = loc.getCountry();
-		String[] defaultLangCountry = accountDefaultLocale.split("_");
-		assert defaultLangCountry.length > 1;
-		Locale defaultLocale = new Locale(defaultLangCountry[0], defaultLangCountry[1]);
-		List<Locale> localesForCountry = Arrays.stream(Locale.getAvailableLocales())
-				.filter(locale -> country.equals(locale.getCountry())).collect(Collectors.toList());
-		if ( localesForCountry.isEmpty() ) {
-			return defaultLocale;
-		}
-		localesForCountry.sort(new Comparator<Locale>() {
-
-			@Override
-			public int compare(Locale l, Locale r) {
-				// sort those for just language first
-				int a = l.getVariant().length();
-				int b = r.getVariant().length();
-				if ( a == 0 && b > 0 ) {
-					return -1;
-				} else if ( b == 0 && a > 0 ) {
-					return 1;
-				}
-				a = l.getLanguage().length();
-				b = r.getLanguage().length();
-				if ( a == 0 && b > 0 ) {
-					return -1;
-				} else if ( b == 0 && a > 0 ) {
-					return 1;
-				}
-				return l.getCountry().compareTo(r.getCountry());
-			}
-
-		});
-		return localesForCountry.get(0);
 	}
 
 	private void processOneAccount(UserInfo user, String accountKey) {
@@ -380,20 +280,11 @@ public class DatumMetricsDailyUsageUpdaterService {
 		List<UserNode> userNodes = userNodeDao
 				.findUserNodesForUser((user instanceof User ? (User) user : userDao.get(user.getId())));
 
-		Map<String, String> nodeMostRecentUsagekeys = mostRecentUsageKeys(user);
+		Map<String, String> nodeMostRecentUsagekeys = mostRecentUsageKeys(user,
+				billingDataMostRecentUsageKey);
 		for ( UserNode userNode : userNodes ) {
 			processOneUserNode(account, userNode, timeZone, nodeMostRecentUsagekeys);
 		}
-	}
-
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private Map<String, String> mostRecentUsageKeys(UserInfo user) {
-		Map<String, String> map = (Map) user.getInternalData()
-				.get(KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP);
-		if ( map == null ) {
-			map = new HashMap<>();
-		}
-		return map;
 	}
 
 	private void processOneUserNode(Account account, UserNode userNode, DateTimeZone timeZone,
@@ -428,6 +319,13 @@ public class DatumMetricsDailyUsageUpdaterService {
 			usageEndDay = usageEndDay.minusDays(1);
 		}
 
+		if ( minUsageDate != null ) {
+			DateTime minDate = minUsageDate.toDateTimeAtStartOfDay(timeZone);
+			if ( minDate.isAfter(usageStartDay) ) {
+				usageStartDay = minDate;
+			}
+		}
+
 		// got usage start date; get the bundle for this node
 		List<UsageRecord> recordsToAdd = new ArrayList<>();
 		DateTime usageCurrDay = new DateTime(usageStartDay);
@@ -437,7 +335,8 @@ public class DatumMetricsDailyUsageUpdaterService {
 			DateTime nextDay = usageCurrDay.plusDays(1);
 			criteria.setStartDate(usageCurrDay);
 			criteria.setEndDate(nextDay);
-			long dayUsage = nodeDatumDao.getAuditPropertyCountTotal(criteria);
+			criteria.setDataPath(auditPropertyKey);
+			long dayUsage = nodeDatumDao.getAuditCountTotal(criteria);
 			if ( dayUsage > 0 ) {
 				UsageRecord record = new UsageRecord();
 				record.setRecordDate(usageCurrDay.toLocalDate());
@@ -450,8 +349,15 @@ public class DatumMetricsDailyUsageUpdaterService {
 		String nextStartDate = ISO_DATE_FORMATTER.print(usageEndDay.toLocalDate());
 		if ( !recordsToAdd.isEmpty() ) {
 			Bundle bundle = bundleForUserNode(userNode, account);
-			Subscription subscription = (bundle != null ? bundle.subscriptionWithPlanName(basePlanName)
+			Subscription subscription = (bundle != null
+					? bundle.subscriptionWithPlanName(
+							addOnPlanName != null ? addOnPlanName : basePlanName)
 					: null);
+			if ( bundle != null && subscription == null && addOnPlanName != null ) {
+				// add subscription to existing bundle
+				subscription = createAddOnSubscriptionInBundle(account, bundle);
+				addNodeIdMetadataToSubscription(subscription.getSubscriptionId(), userNode);
+			}
 			if ( subscription == null ) {
 				return;
 			}
@@ -470,12 +376,100 @@ public class DatumMetricsDailyUsageUpdaterService {
 		// store the last processed date so we can pick up there next time
 		if ( mostRecentUsageDate == null || !mostRecentUsageDate.equals(nextStartDate) ) {
 			nodeMostRecentUsageDateKeys.put(userNode.getNode().getId().toString(), nextStartDate);
-			userDao.storeInternalData(userNode.getUser().getId(), Collections.singletonMap(
-					KILLBILL_MOST_RECENT_USAGE_KEYS_DATA_PROP, nodeMostRecentUsageDateKeys));
+			userDao.storeInternalData(userNode.getUser().getId(), Collections
+					.singletonMap(billingDataMostRecentUsageKey, nodeMostRecentUsageDateKeys));
 		}
 	}
 
-	private Bundle bundleForUserNode(UserNode userNode, Account account) {
+	private Subscription createAddOnSubscriptionInBundle(Account account, Bundle bundle) {
+		Subscription sub = new Subscription();
+		sub.setBillCycleDayLocal(this.subscriptionBillCycleDay);
+		sub.setPlanName(addOnPlanName);
+		sub.setProductCategory(Subscription.ADDON_PRODUCT_CATEGORY);
+		String subId = client.addSubscriptionToBundle(account, bundle.getBundleId(),
+				new LocalDate(DateTimeZone.forID(account.getTimeZone())), sub);
+		sub.setSubscriptionId(subId);
+		return sub;
+	}
+
+	protected String accountTimeZoneString(String timeZoneId) {
+		TimeZone tz = accountTimeZone(timeZoneId);
+		return tz.getID();
+	}
+
+	private TimeZone accountTimeZone(String timeZoneId) {
+		TimeZone tz = null;
+		if ( timeZoneId != null ) {
+			tz = TimeZone.getTimeZone(timeZoneId);
+		} else {
+			tz = TimeZone.getTimeZone(this.timeZone);
+		}
+		return tz;
+	}
+
+	protected TimeZone timeZoneForAccount(Account account) {
+		if ( account != null && account.getTimeZone() != null ) {
+			return TimeZone.getTimeZone(account.getTimeZone());
+		}
+		return TimeZone.getTimeZone(this.timeZone);
+	}
+
+	/**
+	 * Set a time zone to use for users without a time zone in their location.
+	 * 
+	 * @param timeZone
+	 *        the time zone to use; defaults to {@link #DEFAULT_TIMEZONE}
+	 */
+	public void setTimeZone(String timeZone) {
+		this.timeZone = timeZone != null ? timeZone : DEFAULT_TIMEZONE;
+	}
+
+	protected Locale localeForUser(UserInfo user, SolarLocation loc) {
+		String country = loc.getCountry();
+		String[] defaultLangCountry = accountDefaultLocale.split("_");
+		assert defaultLangCountry.length > 1;
+		Locale defaultLocale = new Locale(defaultLangCountry[0], defaultLangCountry[1]);
+		List<Locale> localesForCountry = Arrays.stream(Locale.getAvailableLocales())
+				.filter(locale -> country.equals(locale.getCountry())).collect(Collectors.toList());
+		if ( localesForCountry.isEmpty() ) {
+			return defaultLocale;
+		}
+		localesForCountry.sort(new Comparator<Locale>() {
+
+			@Override
+			public int compare(Locale l, Locale r) {
+				// sort those for just language first
+				int a = l.getVariant().length();
+				int b = r.getVariant().length();
+				if ( a == 0 && b > 0 ) {
+					return -1;
+				} else if ( b == 0 && a > 0 ) {
+					return 1;
+				}
+				a = l.getLanguage().length();
+				b = r.getLanguage().length();
+				if ( a == 0 && b > 0 ) {
+					return -1;
+				} else if ( b == 0 && a > 0 ) {
+					return 1;
+				}
+				return l.getCountry().compareTo(r.getCountry());
+			}
+
+		});
+		return localesForCountry.get(0);
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	protected Map<String, String> mostRecentUsageKeys(UserInfo user, String key) {
+		Map<String, String> map = (Map) user.getInternalData().get(key);
+		if ( map == null ) {
+			map = new HashMap<>();
+		}
+		return map;
+	}
+
+	protected Bundle bundleForUserNode(UserNode userNode, Account account) {
 		final String bundleKey = String.format(this.bundleKeyTemplate, userNode.getNode().getId());
 		Bundle bundle = client.bundleForExternalKey(account, bundleKey);
 		if ( bundle == null ) {
@@ -489,7 +483,15 @@ public class DatumMetricsDailyUsageUpdaterService {
 			base.setPlanName(basePlanName);
 			base.setProductCategory(Subscription.BASE_PRODUCT_CATEGORY);
 
-			bundle.setSubscriptions(Arrays.asList(base));
+			if ( addOnPlanName == null ) {
+				bundle.setSubscriptions(Arrays.asList(base));
+			} else {
+				Subscription addOn = new Subscription();
+				addOn.setBillCycleDayLocal(this.subscriptionBillCycleDay);
+				addOn.setPlanName(addOnPlanName);
+				addOn.setProductCategory(Subscription.ADDON_PRODUCT_CATEGORY);
+				bundle.setSubscriptions(Arrays.asList(base, addOn));
+			}
 
 			// find requestedDate based on earliest data date
 			DateTime oldestPostedDatumDate = null;
@@ -506,20 +508,15 @@ public class DatumMetricsDailyUsageUpdaterService {
 			log.info("Created bundle {} with ID {} with plan {} for user {} node {}", bundleKey,
 					bundleId, basePlanName, userNode.getUser().getEmail(), userNode.getNode().getId());
 
-			// to pick up subscription ID; re-get bundle now
+			// to pick up subscription ID(s); re-get bundle now
 			bundle = client.bundleForExternalKey(account, bundleKey);
 
-			// add node ID as metadata to the subscription
-			Subscription sub = (bundle != null && bundle.getSubscriptions() != null
-					&& !bundle.getSubscriptions().isEmpty() ? bundle.getSubscriptions().get(0) : null);
-			if ( sub != null ) {
-				CustomField field = new CustomField(CUSTOM_FIELD_NODE_ID,
-						userNode.getNode().getId().toString());
-				String fieldListId = client.createSubscriptionCustomFields(
-						bundle.getSubscriptions().get(0).getSubscriptionId(),
-						Collections.singletonList(field));
-				log.debug("Added user {} node ID {} custom field {} to subscription {}",
-						userNode.getUser().getEmail(), userNode.getNode().getId(), fieldListId);
+			// add node ID as metadata to the subscriptions
+			if ( bundle != null && bundle.getSubscriptions() != null
+					&& !bundle.getSubscriptions().isEmpty() ) {
+				for ( Subscription sub : bundle.getSubscriptions() ) {
+					addNodeIdMetadataToSubscription(sub.getSubscriptionId(), userNode);
+				}
 			} else {
 				log.warn(
 						"Subscription ID not available for bundle {}; cannot add nodeId {} custom field",
@@ -530,26 +527,12 @@ public class DatumMetricsDailyUsageUpdaterService {
 		return bundle;
 	}
 
-	private String accountTimeZoneString(String timeZoneId) {
-		TimeZone tz = accountTimeZone(timeZoneId);
-		return tz.getID();
-	}
-
-	private TimeZone accountTimeZone(String timeZoneId) {
-		TimeZone tz = null;
-		if ( timeZoneId != null ) {
-			tz = TimeZone.getTimeZone(timeZoneId);
-		} else {
-			tz = TimeZone.getTimeZone(this.timeZone);
-		}
-		return tz;
-	}
-
-	private TimeZone timeZoneForAccount(Account account) {
-		if ( account != null && account.getTimeZone() != null ) {
-			return TimeZone.getTimeZone(account.getTimeZone());
-		}
-		return TimeZone.getTimeZone(this.timeZone);
+	private void addNodeIdMetadataToSubscription(String subscriptionId, UserNode userNode) {
+		CustomField field = new CustomField(CUSTOM_FIELD_NODE_ID, userNode.getNode().getId().toString());
+		String fieldListId = client.createSubscriptionCustomFields(subscriptionId,
+				Collections.singletonList(field));
+		log.debug("Added user {} node ID {} custom field {} to subscription {}",
+				userNode.getUser().getEmail(), userNode.getNode().getId(), fieldListId);
 	}
 
 	/**
@@ -559,7 +542,7 @@ public class DatumMetricsDailyUsageUpdaterService {
 	 *        the name of the tag definition to get
 	 * @return the tag definition, or {@literal null} if not available
 	 */
-	private TagDefinition tagDefinitionForName(String name) {
+	protected TagDefinition tagDefinitionForName(String name) {
 		TagDefinition result = null;
 		Cache<String, TagDefinition> cache = this.tagDefinitionCache;
 		if ( cache != null ) {
@@ -612,16 +595,6 @@ public class DatumMetricsDailyUsageUpdaterService {
 	public void setCountryCurrencyMap(Map<String, String> countryCurrencyMap) {
 		assert countryCurrencyMap != null;
 		this.countryCurrencyMap = countryCurrencyMap;
-	}
-
-	/**
-	 * Set a time zone to use for users without a time zone in their location.
-	 * 
-	 * @param timeZone
-	 *        the time zone to use; defaults to {@link #DEFAULT_TIMEZONE}
-	 */
-	public void setTimeZone(String timeZone) {
-		this.timeZone = timeZone != null ? timeZone : DEFAULT_TIMEZONE;
 	}
 
 	/**
@@ -753,4 +726,73 @@ public class DatumMetricsDailyUsageUpdaterService {
 		this.accountTags = accountTags;
 	}
 
+	/**
+	 * The user metadata key that accounts must have to be considered for the
+	 * configured subscription.
+	 * 
+	 * <p>
+	 * The value of this metadata property must be {@literal true}.
+	 * </p>
+	 * 
+	 * @param billingDataFilterPlanKey
+	 *        the user metadata key indicating participation in the configured
+	 *        subscription
+	 */
+	public void setBillingDataFilterPlanKey(String billingDataFilterPlanKey) {
+		this.billingDataFilterPlanKey = billingDataFilterPlanKey;
+	}
+
+	/**
+	 * The user metadata key that holds a mapping of node IDs to associated
+	 * "most recent" date strings representing the most recently posted daily
+	 * usage date for that node.
+	 * 
+	 * <p>
+	 * This metadata object will be updated when this service runs.
+	 * </p>
+	 * 
+	 * @param billingDataMostRecentUsageKey
+	 *        the user metadata key to use to maintain posted daily usage dates
+	 */
+	public void setBillingDataMostRecentUsageKey(String billingDataMostRecentUsageKey) {
+		this.billingDataMostRecentUsageKey = billingDataMostRecentUsageKey;
+	}
+
+	/**
+	 * The audit property key to query for.
+	 * 
+	 * @param auditPropertyKey
+	 *        the
+	 *        {@link GeneralNodeDatumDao#getAuditCountTotal(net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter)}
+	 *        {@code dataPath} value to use; defaults to
+	 *        {@link #DEFAULT_AUDIT_PROPERTY_KEY}
+	 */
+	public void setAuditPropertyKey(String auditPropertyKey) {
+		this.auditPropertyKey = auditPropertyKey;
+	}
+
+	/**
+	 * Configure an "add on" plan name to add to the base plan name.
+	 * 
+	 * <p>
+	 * If not {@literal null} then this plan will be subscribed to as an add-on
+	 * plan.
+	 * </p>
+	 * 
+	 * @param addOnPlanName
+	 *        the add on plan name; defaults to {@literal null}
+	 */
+	public void setAddOnPlanName(String addOnPlanName) {
+		this.addOnPlanName = addOnPlanName;
+	}
+
+	/**
+	 * Set a minimum usage date, in ISO 8601 YYYY-MM-DD format.
+	 * 
+	 * @param dateStr
+	 *        the date, or {@literal null} for no limit
+	 */
+	public void setMinUsageDate(String dateStr) {
+		this.minUsageDate = ISO_DATE_FORMATTER.parseLocalDate(dateStr);
+	}
 }
