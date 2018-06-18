@@ -532,7 +532,7 @@ public class DailyUsageUpdaterService implements ExecutableService {
 		String fieldListId = client.createSubscriptionCustomFields(subscriptionId,
 				Collections.singletonList(field));
 		log.debug("Added user {} node ID {} custom field {} to subscription {}",
-				userNode.getUser().getEmail(), userNode.getNode().getId(), fieldListId);
+				userNode.getUser().getEmail(), userNode.getNode().getId(), fieldListId, subscriptionId);
 	}
 
 	/**
