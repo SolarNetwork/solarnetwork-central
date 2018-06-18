@@ -39,7 +39,7 @@ import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -124,7 +124,28 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 *        the filter criteria
 	 * @return the total count
 	 * @since 1.1
+	 * @deprecated use {@link #getAuditCountTotal(GeneralNodeDatumFilter)} with
+	 *             a {@code dataPath} of {@literal Property}
 	 */
+	@Deprecated
 	long getAuditPropertyCountTotal(GeneralNodeDatumFilter filter);
+
+	/**
+	 * Get the total audit count of datum property updates for a search
+	 * criteria.
+	 * 
+	 * <p>
+	 * The {@code nodeId}, {@code startDate}, {@code endDate}, and
+	 * {@code dataPath} values are required at a minimum. The {@code sourceId}
+	 * can also be provided. The {@code dataPath} will be the name of a
+	 * supported audit property, which are implementation specific.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the filter criteria
+	 * @return the total count
+	 * @since 1.3
+	 */
+	long getAuditCountTotal(GeneralNodeDatumFilter filter);
 
 }

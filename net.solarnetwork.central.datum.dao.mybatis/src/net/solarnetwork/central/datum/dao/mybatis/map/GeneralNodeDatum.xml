@@ -187,8 +187,13 @@
 		{call solaragg.find_audit_datum_interval(?, ?, ?, ?, ?, ?)}
 	</update>
 
-	<select id="find-general-audit-hourly-prop-count" resultType="long">
-		SELECT SUM(CAST(aud.prop_count AS BIGINT))
+	<select id="find-general-audit-hourly-prop-count" resultType="long" parameterType="map">
+		SELECT SUM(CAST(
+			<choose>
+				<when test="dataPath == 'DatumQuery'">aud.datum_q_count</when>
+				<otherwise>aud.prop_count</otherwise>
+			</choose>
+			AS BIGINT))
 		FROM solaragg.aud_datum_hourly aud
 		<where>
 			<if test="nodeIds != null and nodeIds.length > 0">

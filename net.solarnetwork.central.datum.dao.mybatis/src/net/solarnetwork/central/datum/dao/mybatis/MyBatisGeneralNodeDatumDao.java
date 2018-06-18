@@ -56,7 +56,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -455,6 +455,34 @@ public class MyBatisGeneralNodeDatumDao
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public long getAuditPropertyCountTotal(GeneralNodeDatumFilter filter) {
+		return getAuditCountTotal(filter);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * The following {@code dataPath} values are supported:
+	 * </p>
+	 * 
+	 * <dl>
+	 * <dt>DatumQuery</dt>
+	 * <dd>The count of datum queried.</dd>
+	 * 
+	 * <dt>Property</dt>
+	 * <dd>The count of datum properties added.</dd>
+	 * </dl>
+	 * 
+	 * <p>
+	 * If {@code dataPath} is missing, or not one of the above values, then
+	 * {@literal Property} will be assumed.
+	 * </p>
+	 * 
+	 * @since 1.6
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public long getAuditCountTotal(GeneralNodeDatumFilter filter) {
 		Long result = selectLong(queryForAuditHourlyPropertyCount, filter);
 		return (result != null ? result : 0L);
 	}
