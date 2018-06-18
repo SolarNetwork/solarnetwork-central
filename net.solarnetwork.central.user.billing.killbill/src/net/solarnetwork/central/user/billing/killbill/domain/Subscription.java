@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * A subscription.
@@ -35,6 +36,8 @@ import java.util.stream.Collectors;
  * @author matt
  * @version 1.0
  */
+@JsonPropertyOrder({ "subscriptionId", "productCategory", "productName", "planName", "billCycleDayLocal",
+		"phaseType", "customFields" })
 public class Subscription {
 
 	public static final String BASE_PRODUCT_CATEGORY = "BASE";
