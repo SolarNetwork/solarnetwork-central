@@ -60,6 +60,11 @@ public class UsageRecord {
 		this.amount = amount;
 	}
 
+	@Override
+	public String toString() {
+		return "UsageRecord{recordDate=" + recordDate + ",amount=" + amount + "}";
+	}
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	public LocalDate getRecordDate() {
 		return recordDate;
