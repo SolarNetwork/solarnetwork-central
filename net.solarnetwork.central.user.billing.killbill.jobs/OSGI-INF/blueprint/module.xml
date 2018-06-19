@@ -43,7 +43,8 @@
 	
 	<!-- Published Services -->
 
-	<osgix:managed-service-factory factory-pid="net.solarnetwork.central.user.billing.killbill.jobs.DailyUsageUpdaterJob">
+	<osgix:managed-service-factory factory-pid="net.solarnetwork.central.user.billing.killbill.jobs.DailyUsageUpdaterJob"
+			autowire-on-update="true">
 		<osgix:interfaces>
 			<beans:value>org.osgi.service.event.EventHandler</beans:value>
 		</osgix:interfaces>
