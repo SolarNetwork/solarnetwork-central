@@ -51,7 +51,7 @@ import net.solarnetwork.central.user.billing.killbill.domain.UsageRecord;
  * API for interaction with Killbill.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface KillbillClient {
 
@@ -141,6 +141,23 @@ public interface KillbillClient {
 	 * @return the subscription ID
 	 */
 	String createBundle(Account account, LocalDate requestedDate, Bundle info);
+
+	/**
+	 * Add a new subscription to a bundle.
+	 * 
+	 * @param account
+	 *        the account to update
+	 * @param bundleId
+	 *        the bundle ID to add the subscription to
+	 * @param requestedDate
+	 *        the request date, or {@code null} for the current date
+	 * @param subscription
+	 *        the subscription to add
+	 * @return the subscription ID
+	 * @since 1.3
+	 */
+	String addSubscriptionToBundle(Account account, String bundleId, LocalDate requestedDate,
+			Subscription subscription);
 
 	/**
 	 * Create custom field values associated with a subscription.

@@ -31,14 +31,14 @@
 	
 	<reference id="instructorBiz"
 		interface="net.solarnetwork.central.instructor.biz.InstructorBiz"
-		filter="(!(aop=true))"/>
+		filter="(!(secured=true))"/>
 	
 	<!-- Published Services -->
 
 	<service ref="aopInstructorBiz" 
 			interface="net.solarnetwork.central.instructor.biz.InstructorBiz" ranking="10">
 		<service-properties>
-			<entry key="aop" value="true"/>
+			<entry key="secured" value="true"/>
 		</service-properties>
 	</service>
 	

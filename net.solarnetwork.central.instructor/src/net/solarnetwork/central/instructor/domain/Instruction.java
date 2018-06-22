@@ -38,7 +38,7 @@ import net.solarnetwork.central.support.JsonUtils;
  * Domain object for an individual instruction.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class Instruction extends BaseEntity {
 
@@ -71,6 +71,21 @@ public class Instruction extends BaseEntity {
 		super();
 		this.topic = topic;
 		this.instructionDate = instructionDate;
+	}
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the instance to copy
+	 * @since 1.2
+	 */
+	public Instruction(Instruction other) {
+		this(other.getTopic(), other.getInstructionDate());
+		setId(other.getId());
+		setParameters(other.getParameters());
+		setResultParameters(other.getResultParameters());
+		setState(other.getState());
 	}
 
 	/**

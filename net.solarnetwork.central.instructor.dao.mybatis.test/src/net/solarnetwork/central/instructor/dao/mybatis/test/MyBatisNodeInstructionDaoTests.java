@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -49,8 +50,9 @@ import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
  * Test cases for the {@link MyBatisNodeInstructionDao} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
+@SuppressWarnings("deprecation")
 public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private MyBatisNodeInstructionDao dao;
@@ -68,9 +70,13 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	}
 
 	private NodeInstruction storeNewInstruction(Long nodeId) {
+		return storeNewInstruction(nodeId, new DateTime());
+	}
+
+	private NodeInstruction storeNewInstruction(Long nodeId, DateTime date) {
 		NodeInstruction datum = new NodeInstruction();
 		datum.setCreated(new DateTime());
-		datum.setInstructionDate(new DateTime());
+		datum.setInstructionDate(date);
 		datum.setNodeId(nodeId);
 		datum.setState(InstructionState.Queued);
 		datum.setTopic("Test Topic");
@@ -374,4 +380,124 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		assertNull("Purged instruction is not found", instr);
 	}
 
+	@Test
+	public void updateStateWithResultParameters() {
+		// given
+		storeNew();
+
+		// when
+		Map<String, Object> resultParams = Collections.singletonMap("foo", (Object) "bar");
+		boolean updated = dao.updateNodeInstructionState(lastDatum.getId(), lastDatum.getNodeId(),
+				InstructionState.Completed, resultParams);
+
+		assertThat("Updated", updated, equalTo(true));
+
+		NodeInstruction datum = dao.get(lastDatum.getId());
+		assertThat("State changed", datum.getState(), equalTo(InstructionState.Completed));
+		assertThat("Result parameters saved", datum.getResultParameters(), equalTo(resultParams));
+	}
+
+	@Test
+	public void updateCompareState() {
+		// given
+		storeNew();
+
+		// when
+		Map<String, Object> resultParams = Collections.singletonMap("foo", (Object) "bar");
+		boolean updated = dao.compareAndUpdateInstructionState(lastDatum.getId(), lastDatum.getNodeId(),
+				InstructionState.Queued, InstructionState.Completed, resultParams);
+
+		assertThat("Updated", updated, equalTo(true));
+
+		NodeInstruction datum = dao.get(lastDatum.getId());
+		assertThat("State changed", datum.getState(), equalTo(InstructionState.Completed));
+		assertThat("Result parameters saved", datum.getResultParameters(), equalTo(resultParams));
+	}
+
+	@Test
+	public void updateCompareStateDifferentExpectedState() {
+		// given
+		storeNew();
+
+		// when
+		Map<String, Object> resultParams = Collections.singletonMap("foo", (Object) "bar");
+		boolean updated = dao.compareAndUpdateInstructionState(lastDatum.getId(), lastDatum.getNodeId(),
+				InstructionState.Executing, InstructionState.Completed, resultParams);
+
+		assertThat("Updated", updated, equalTo(false));
+
+		NodeInstruction datum = dao.get(lastDatum.getId());
+		assertThat("State unchanged", datum.getState(), equalTo(InstructionState.Queued));
+	}
+
+	@Test
+	public void updateStaleStateNothing() {
+		// given
+		storeNew();
+
+		// when
+		long count = dao.updateStaleInstructionsState(InstructionState.Queuing, new DateTime(),
+				InstructionState.Completed);
+
+		// then
+		assertThat("Update count", count, equalTo(0L));
+	}
+
+	@Test
+	public void updateStaleStateNotOlder() {
+		// given
+		storeNew();
+
+		DateTime instrDate = lastDatum.getInstructionDate();
+
+		// when
+		long count = dao.updateStaleInstructionsState(InstructionState.Queued, instrDate.minusHours(1),
+				InstructionState.Completed);
+
+		// then
+		assertThat("Update count", count, equalTo(0L));
+	}
+
+	@Test
+	public void updateStaleState() {
+		// given
+		storeNew();
+
+		DateTime instrDate = lastDatum.getInstructionDate();
+
+		// when
+		long count = dao.updateStaleInstructionsState(InstructionState.Queued, instrDate.plusMinutes(1),
+				InstructionState.Completed);
+
+		// then
+		assertThat("Update count", count, equalTo(1L));
+
+		NodeInstruction updated = dao.get(lastDatum.getId());
+		assertThat("Updated state", updated.getState(), equalTo(InstructionState.Completed));
+	}
+
+	@Test
+	public void updateStaleMulti() {
+		// given
+		DateTime startTime = new DateTime().minuteOfHour().roundFloorCopy();
+		final int instrCount = 5;
+		List<NodeInstruction> instructions = new ArrayList<NodeInstruction>(instrCount);
+		for ( int i = 0; i < instrCount; i++ ) {
+			instructions.add(storeNewInstruction(TEST_NODE_ID, startTime.plusMinutes(i)));
+		}
+
+		// when
+		final int numMinutes = 3;
+		long count = dao.updateStaleInstructionsState(InstructionState.Queued,
+				startTime.plusMinutes(numMinutes), InstructionState.Completed);
+
+		// then
+		assertThat("Update count", count, equalTo((long) numMinutes));
+
+		for ( int i = 0; i < instrCount; i++ ) {
+			NodeInstruction updated = dao.get(instructions.get(i).getId());
+			assertThat("Updated state " + i, updated.getState(),
+					equalTo(i < numMinutes ? InstructionState.Completed : InstructionState.Queued));
+		}
+	}
 }

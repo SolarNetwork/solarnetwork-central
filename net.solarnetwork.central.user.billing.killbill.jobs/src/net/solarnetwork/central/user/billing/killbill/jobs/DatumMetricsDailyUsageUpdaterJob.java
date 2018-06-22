@@ -30,11 +30,11 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * Job to execute the {@link DatumMetricsDailyUsageUpdaterService}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DatumMetricsDailyUsageUpdaterJob extends JobSupport {
 
-	private final DatumMetricsDailyUsageUpdaterService service;
+	private final ExecutableService service;
 
 	/**
 	 * Constructor.
@@ -44,8 +44,7 @@ public class DatumMetricsDailyUsageUpdaterJob extends JobSupport {
 	 * @param service
 	 *        the service to use
 	 */
-	public DatumMetricsDailyUsageUpdaterJob(EventAdmin eventAdmin,
-			DatumMetricsDailyUsageUpdaterService service) {
+	public DatumMetricsDailyUsageUpdaterJob(EventAdmin eventAdmin, ExecutableService service) {
 		super(eventAdmin);
 		setJobGroup("Billing");
 		setMaximumWaitMs(3600000L);
@@ -56,6 +55,15 @@ public class DatumMetricsDailyUsageUpdaterJob extends JobSupport {
 	protected boolean handleJob(Event job) throws Exception {
 		service.execute();
 		return true;
+	}
+
+	/**
+	 * Get the execution service.
+	 * 
+	 * @return the service
+	 */
+	public ExecutableService getService() {
+		return service;
 	}
 
 }

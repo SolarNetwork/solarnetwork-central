@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarUser Killbill Billing Jobs
 Bundle-SymbolicName: net.solarnetwork.central.user.billing.killbill.jobs
-Bundle-Version: 0.2.1
+Bundle-Version: 1.0.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
@@ -14,7 +14,7 @@ Import-Package:
  javax.cache;version="[1.0,2.0)",
  javax.cache.expiry;version="[1.0,2.0)",
  net.solarnetwork.central.dao;version="1.14.0",
- net.solarnetwork.central.datum.dao;version="2.2.0",
+ net.solarnetwork.central.datum.dao;version="2.4.0",
  net.solarnetwork.central.datum.domain;version="1.19.0",
  net.solarnetwork.central.domain;version="1.22.0",
  net.solarnetwork.central.scheduler;version="1.4.0",

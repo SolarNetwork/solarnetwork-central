@@ -421,6 +421,61 @@ $(document).ready(function() {
 	   				: ''));
 	};
 
+	var maxHistoryItemDisplayLength = 100;
+
+	var addHistoryItem = function(params) {
+		var histSelect = $('#history'),
+			histEl = histSelect.get(0),
+			histItem,
+			displayPath,
+			i;
+
+		// don't add duplicate items
+		for ( i = 0; i < histEl.childElementCount; i += 1 ) {
+			histItem = histEl.children.item(i);
+			if ( histItem.value === params.path ) {
+				return;
+			}
+		}
+
+		displayPath = params.path;
+		if ( displayPath.length > maxHistoryItemDisplayLength ) {
+			displayPath = displayPath.substr(0, maxHistoryItemDisplayLength) + '\u2026';
+		}
+		histItem = new Option(displayPath, params.path);
+		histItem.dataset['authType'] = params.authType;
+		histItem.dataset['method'] = params.method;
+		histItem.dataset['output'] = params.output;
+		histItem.dataset['upload'] = params.upload;
+		histEl.add(histItem, 1);
+		while ( histEl.children.length > 51 ) {
+			histEl.remove(51);
+		}
+	};
+
+	$('#history').change(function(event) {
+		event.preventDefault();
+		var formEl = this.form,
+			form = $(formEl),
+			path = this.value,
+			histItem = this.options[this.selectedIndex],
+			authType = histItem.dataset['authType'],
+			method = histItem.dataset['method'],
+			output = histItem.dataset['output'],
+			upload = histItem.dataset['upload'];
+		if ( histItem.value.length < 1 ) {
+			return;
+		}
+		form.find('input[name=useAuth]').removeAttr('checked');
+		form.find('input[name=useAuth][value='+authType+']').trigger('click');
+		formEl.elements['path'].value = path;
+		form.find('input[name=method]').removeAttr('checked');
+		form.find('input[name=method][value='+method+']').trigger('click');
+		form.find('input[name=output]').removeAttr('checked');
+		form.find('input[name=output][value='+output+']').trigger('click');
+		formEl.elements['upload'].value = upload;
+	});
+
 	$('#shortcuts').change(function(event) {
 		event.preventDefault();
 		var form = this.form,
@@ -573,6 +628,7 @@ $(document).ready(function() {
 		// make HTTP request and show the results
 		SNAPI.request(params.host +params.path, params.output, params.method, params.data, params.contentType).done(function (data, status, xhr) {
 			showResult(textForDisplay(xhr, params.output));
+			addHistoryItem(params);
 		}).fail(function(xhr, status, reason) {
 			showResult(textForDisplay(xhr, params.output));
 			alert(reason + ': ' +status +' (' +xhr.status +')');

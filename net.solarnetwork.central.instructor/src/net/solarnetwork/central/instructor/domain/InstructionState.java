@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.instructor.domain;
@@ -28,35 +26,44 @@ package net.solarnetwork.central.instructor.domain;
  * An instruction state.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
 public enum InstructionState {
-	
+
 	/**
 	 * The instruction state is not known.
 	 */
 	Unknown,
-	
+
 	/**
 	 * The instruction has been queued, but not acknowledged yet.
 	 */
 	Queued,
 
 	/**
-	 * The instruction has been acknowledged, but has not been looked at yet. 
+	 * The instruction is in the process of being queued, potentially jumping to
+	 * the received state.
+	 * 
+	 * @since 1.1
+	 */
+	Queuing,
+
+	/**
+	 * The instruction has been acknowledged, but has not been looked at yet.
 	 */
 	Received,
-	
-	/** 
+
+	/**
 	 * The instruction has been acknowledged and is being executed currently.
 	 */
 	Executing,
-	
+
 	/**
-	 * The instruction was acknowledged but has been declined and will not be executed.
+	 * The instruction was acknowledged but has been declined and will not be
+	 * executed.
 	 */
 	Declined,
-	
+
 	/**
 	 * The instruction was acknowledged and has been executed.
 	 */

@@ -28,6 +28,39 @@
 			id = #{id}
 	</update>
 
+	<update id="update-NodeInstruction-compare-state" parameterType="map">
+		UPDATE 
+			solarnet.sn_node_instruction
+		SET
+			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state),
+			jresult_params = CAST(#{resultParametersJson} AS json)
+		WHERE
+			id = #{id}
+			AND node_id = #{nodeId}
+			AND deliver_state = CAST(#{expectedState} AS solarnet.instruction_delivery_state)
+	</update>
+
+	<update id="update-NodeInstruction-state" parameterType="map">
+		UPDATE 
+			solarnet.sn_node_instruction
+		SET
+			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state),
+			jresult_params = CAST(#{resultParametersJson} AS json)
+		WHERE
+			id = #{id}
+			AND node_id = #{nodeId}
+	</update>
+	
+	<update id="update-NodeInstruction-stale-state" parameterType="map">
+		UPDATE 
+			solarnet.sn_node_instruction
+		SET
+			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state)
+		WHERE
+			instr_date &lt; #{date, jdbcType=TIMESTAMP}
+			AND deliver_state = CAST(#{expectedState} AS solarnet.instruction_delivery_state)
+	</update>
+
 	<sql id="fragment-NodeInstruction-full-result">
 		ni.id AS sn_node_instruction_id,
 		ni.created AS sn_node_instruction_created,

@@ -23,13 +23,13 @@
 package net.solarnetwork.central.instructor.biz.dao;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +37,7 @@ import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
+import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
@@ -47,14 +48,41 @@ import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
  * DAO based implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @Service
 public class DaoInstructorBiz implements InstructorBiz {
 
-	@Autowired
-	private NodeInstructionDao nodeInstructionDao;
+	private final NodeInstructionDao nodeInstructionDao;
+	private final List<NodeInstructionQueueHook> queueHooks;
 
+	/**
+	 * Construct without queue hooks.
+	 * 
+	 * @param nodeInstructionDao
+	 *        the DAO to use
+	 */
+	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao) {
+		this(nodeInstructionDao, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param nodeInstructionDao
+	 *        the DAO to use
+	 * @param queueHooks
+	 *        the queue hooks to use (may be {@literal null}
+	 */
+	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao,
+			List<NodeInstructionQueueHook> queueHooks) {
+		super();
+		this.nodeInstructionDao = nodeInstructionDao;
+		this.queueHooks = (queueHooks != null ? queueHooks
+				: Collections.<NodeInstructionQueueHook> emptyList());
+	}
+
+	@SuppressWarnings("deprecation")
 	private List<Instruction> asResultList(FilterResults<EntityMatch> matches) {
 		List<Instruction> results = new ArrayList<Instruction>(matches.getReturnedResultCount());
 		for ( EntityMatch match : matches.getResults() ) {
@@ -67,6 +95,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 		return results;
 	}
 
+	@SuppressWarnings("deprecation")
 	private List<NodeInstruction> asNodeInstructionList(FilterResults<EntityMatch> matches) {
 		List<NodeInstruction> results = new ArrayList<NodeInstruction>(matches.getReturnedResultCount());
 		for ( EntityMatch match : matches.getResults() ) {
@@ -153,7 +182,16 @@ public class DaoInstructorBiz implements InstructorBiz {
 				instr.addParameter(param.getName(), param.getValue());
 			}
 		}
+		for ( NodeInstructionQueueHook hook : queueHooks ) {
+			instr = hook.willQueueNodeInstruction(instr);
+			if ( instr == null ) {
+				return null;
+			}
+		}
 		Long id = nodeInstructionDao.store(instr);
+		for ( NodeInstructionQueueHook hook : queueHooks ) {
+			hook.didQueueNodeInstruction(instr, id);
+		}
 		return nodeInstructionDao.get(id);
 	}
 

@@ -71,8 +71,12 @@
 					<label class="control-label">Service</label>
 					<div class="controls">
 						<textarea name="path" class="span6" rows="3" placeholder="Enter URL path here"></textarea>
-
-						<label style="margin-top: 1em;">Templates: <select id="shortcuts">
+					</div>
+				</div>
+				<div class="control-group">
+					<label class="control-label">Templates</label>
+					<div class="controls">
+						<select id="shortcuts" class="span6">
 							<option></option>
 							<optgroup label="Location List">
 								<option value="/solarquery/api/v1/sec/location?location.name={name}&location.country={country}&location.postalCode={postalCode}&location.timeZoneId={timeZoneId}">Location search</option>
@@ -85,20 +89,20 @@
 							</optgroup>
 							<optgroup label="Location Datum List">
 								<option value="/solarquery/api/v1/sec/location/datum/mostRecent?locationId={locationId}&sourceIds={sourceId}">Most recent location datum</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Location datum, default sort</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&sorts%5B0%5D.sortKey=created&sorts%5B1%5D.sortKey=source&offset=0&max=50">Location datum, sorted by date, source</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=FiveMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Location datum, by 5 minute</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=TenMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Location datum, by 10 minute</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=FifteenMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Location datum, by 15 minutes</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=ThirtyMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Location datum, by 30 minutes</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=Hour&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Location datum, by hour</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=HourOfDay&sourceIds={sourceId}&dataPath={dataPath}">Location datum value, averaged by hour of day</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=SeasonalHourOfDay&sourceIds={sourceId}&dataPath={dataPath}">Location datum value, averaged seasonally by hour of day</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=Day&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Location datum, by day</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=DayOfWeek&sourceIds={sourceId}&dataPath={dataPath}">Location datum value, averaged by day of week</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=SeasonalDayOfWeek&sourceIds={sourceId}&dataPath={dataPath}">Location datum value, averaged seasonally by day of week</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=Month&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Location datum, by month</option>
-								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&aggregation=RunningTotal&sourceIds={sourceId}">Location datum, running total</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Location datum, default sort</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sorts%5B0%5D.sortKey=created&sorts%5B1%5D.sortKey=source&offset=0&max=50">Location datum, sorted by date, source</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=FiveMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Location datum, by 5 minute</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=TenMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Location datum, by 10 minute</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=FifteenMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Location datum, by 15 minutes</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=ThirtyMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Location datum, by 30 minutes</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=Hour&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Location datum, by hour</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=HourOfDay&dataPath={dataPath}">Location datum value, averaged by hour of day</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=SeasonalHourOfDay&dataPath={dataPath}">Location datum value, averaged seasonally by hour of day</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=Day&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Location datum, by day</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=DayOfWeek&dataPath={dataPath}">Location datum value, averaged by day of week</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=SeasonalDayOfWeek&dataPath={dataPath}">Location datum value, averaged seasonally by day of week</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=Month&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Location datum, by month</option>
+								<option value="/solarquery/api/v1/sec/location/datum/list?locationId={locationId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=RunningTotal">Location datum, running total</option>
 							</optgroup>
 							<optgroup label="Location Datum Metadata">
 								<option value="/solarquery/api/v1/sec/location/meta?query={query}&tags={tag}">Find location datum metadata</option>
@@ -114,20 +118,21 @@
 							</optgroup>
 							<optgroup label="Datum List">
 								<option value="/solarquery/api/v1/sec/datum/mostRecent?nodeId={nodeId}&sourceIds={sourceId}">Most recent datum</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, default sort</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&sorts%5B0%5D.sortKey=created&sorts%5B1%5D.sortKey=source&offset=0&max=50">Datum, sorted by date, source</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=FiveMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by 5 minute</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=TenMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by 10 minute</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=FifteenMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by 15 minutes</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=ThirtyMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by 30 minutes</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Hour&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by hour</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=HourOfDay&sourceIds={sourceId}&dataPath={dataPath}">Datum value, averaged by hour of day</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=SeasonalHourOfDay&sourceIds={sourceId}&dataPath={dataPath}">Datum value, averaged seasonally by hour of day</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Day&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by day</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=DayOfWeek&sourceIds={sourceId}&dataPath={dataPath}">Datum value, averaged by day of week</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=SeasonalDayOfWeek&sourceIds={sourceId}&dataPath={dataPath}">Datum value, averaged seasonally by day of week</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=Month&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sourceIds={sourceId}&offset=0&max=50">Datum, by month</option>
-								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&aggregation=RunningTotal&sourceIds={sourceId}">Datum, running total</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Datum, default sort</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&sorts%5B0%5D.sortKey=created&sorts%5B0%5D.descending=true&offset=0&max=50">Datum, sorted by date descending</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&sorts%5B0%5D.sortKey=created&sorts%5B1%5D.sortKey=source&offset=0&max=50">Datum, sorted by date, source</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&sourceIds={sourceId}&aggregation=FiveMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Datum, by 5 minute</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=TenMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Datum, by 10 minute</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=FifteenMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Datum, by 15 minutes</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=ThirtyMinute&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Datum, by 30 minutes</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=Hour&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Datum, by hour</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=HourOfDay&dataPath={dataPath}">Datum value, averaged by hour of day</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=SeasonalHourOfDay&dataPath={dataPath}">Datum value, averaged seasonally by hour of day</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=Day&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Datum, by day</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=DayOfWeek&dataPath={dataPath}">Datum value, averaged by day of week</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=SeasonalDayOfWeek&dataPath={dataPath}">Datum value, averaged seasonally by day of week</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=Month&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Datum, by month</option>
+								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=RunningTotal">Datum, running total</option>
 							</optgroup>
 							<optgroup label="Datum Metadata">
 								<option value="/solarquery/api/v1/sec/datum/meta/{nodeId}">View all datum metadata</option>
@@ -182,8 +187,15 @@
 								<option value="/solaruser/api/v1/sec/users/meta/{userId}" data-method="PUT">Store metadata for a specific user</option>
 								<option value="/solaruser/api/v1/sec/users/meta/{userId}" data-method="DELETE">Delete metadata for a specific user</option>
 							</optgroup>
-						</select></label>
-
+						</select>
+					</div>
+				</div>
+				<div class="control-group">
+					<label class="control-label">History</label>
+					<div class="controls">
+						<select id="history" class="span6">
+							<option></option>
+						</select>
 					</div>
 				</div>
 				<div class="control-group">
@@ -193,7 +205,7 @@
    							<input type="radio" name="useAuth" value="2" checked="checked"> Token <a href="https://github.com/SolarNetwork/solarnetwork/wiki/SolarNet-API-authentication-scheme-V2">V2</a>
    						</label>
 					    <label class="radio inline">
-   							<input type="radio" name="useAuth" value="1" checked="checked"> Token <a href="https://github.com/SolarNetwork/solarnetwork/wiki/SolarNet-API-authentication-scheme">V1</a>
+   							<input type="radio" name="useAuth" value="1"> Token <a href="https://github.com/SolarNetwork/solarnetwork/wiki/SolarNet-API-authentication-scheme">V1</a>
    						</label>
 					    <label class="radio inline">
    							<input type="radio" name="useAuth" value="0"> None

@@ -108,7 +108,7 @@ public interface InstructorBiz {
 	 *        the node ID
 	 * @param instruction
 	 *        the instruction
-	 * @return the persisted instruction
+	 * @return the persisted instruction, or {@literal null} if not accepted
 	 */
 	NodeInstruction queueInstruction(Long nodeId, Instruction instruction);
 

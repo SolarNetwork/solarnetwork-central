@@ -30,6 +30,7 @@
 		<beans:prop key="SimpleNetworkIdentityBiz.forceTLS">false</beans:prop>
 		<beans:prop key="SimpleNetworkIdentityBiz.solarUserBaseURL">http://localhost/solaruser</beans:prop>
 		<beans:prop key="SimpleNetworkIdentityBiz.solarQueryBaseURL">http://localhost/solarquery</beans:prop>
+		<beans:prop key="SimpleNetworkIdentityBiz.solarInMqttBaseURL">mqtts://localhost:8883</beans:prop>
 	</osgix:cm-properties>
 
 	<!-- Service References -->
@@ -88,6 +89,7 @@
 			<map>
 				<entry key="solaruser" value="${SimpleNetworkIdentityBiz.solarUserBaseURL}"/>
 				<entry key="solarquery" value="${SimpleNetworkIdentityBiz.solarQueryBaseURL}"/>
+				<entry key="solarin-mqtt" value="${SimpleNetworkIdentityBiz.solarInMqttBaseURL}"/>
 			</map>
 		</property>
 		<property name="networkAssociationDao" ref="networkAssociationDao"/>

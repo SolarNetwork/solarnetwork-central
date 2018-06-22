@@ -2,9 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarUser Billing Killbill Tests
 Bundle-SymbolicName: net.solarnetwork.central.user.billing.killbill.test
-Bundle-Version: 0.3.0
+Bundle-Version: 1.0.0
 Bundle-Vendor: SolarNetwork
-Fragment-Host: net.solarnetwork.central.user.billing.killbill;bundle-version="0.3.0"
+Fragment-Host: net.solarnetwork.central.user.billing.killbill;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
  net.solarnetwork.central.support;version="1.14.0",

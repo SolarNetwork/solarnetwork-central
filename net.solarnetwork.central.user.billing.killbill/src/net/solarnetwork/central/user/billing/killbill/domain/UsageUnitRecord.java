@@ -46,6 +46,15 @@ public class UsageUnitRecord {
 		this.usageRecords = usageRecords;
 	}
 
+	@Override
+	public String toString() {
+		return "UsageUnitRecord{type=" + unitType + ",amount="
+				+ (usageRecords != null ? usageRecords.stream()
+						.mapToLong(r -> r.getAmount() != null ? r.getAmount().longValue() : 0L).sum()
+						: 0L)
+				+ "}";
+	}
+
 	/**
 	 * Get the unit type.
 	 * 
