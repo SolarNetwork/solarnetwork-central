@@ -129,7 +129,7 @@ CREATE TABLE solaruser.user_auth_token (
 	auth_secret		CHARACTER VARYING(32) NOT NULL,
 	status			solaruser.user_auth_token_status NOT NULL,
 	token_type		solaruser.user_auth_token_type NOT NULL,
-	jpolicy			json,
+	jpolicy			jsonb,
 	CONSTRAINT user_auth_token_pkey PRIMARY KEY (auth_token),
 	CONSTRAINT user_auth_token_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE

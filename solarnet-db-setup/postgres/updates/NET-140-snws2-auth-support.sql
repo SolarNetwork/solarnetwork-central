@@ -81,7 +81,7 @@ CREATE OR REPLACE FUNCTION solaruser.snws2_find_verified_token_details(
 	host text,
 	path text,
 	signature text)
-RETURNS TABLE (user_id bigint, token_type solaruser.user_auth_token_type, jpolicy json)
+RETURNS TABLE (user_id bigint, token_type solaruser.user_auth_token_type, jpolicy jsonb)
 LANGUAGE SQL STRICT STABLE ROWS 1 AS
 $$
 	WITH sign_dates AS (
