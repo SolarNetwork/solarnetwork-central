@@ -19,6 +19,7 @@
 		<dependency org="net.solarnetwork.central.test" name="net.solarnetwork.central.test" rev="1.7.0"/>
 		
 		<!-- Testing support -->
+		<dependency org="commons-codec" name="commons-codec" rev="1.10"/>
 		
 		<!-- SolarNetwork -->
     </dependencies>
