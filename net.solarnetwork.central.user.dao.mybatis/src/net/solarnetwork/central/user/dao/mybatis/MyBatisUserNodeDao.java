@@ -41,7 +41,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * MyBatis implementation of {@link UserNodeDao}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> implements UserNodeDao {
 
@@ -90,12 +90,18 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	public static final String QUERY_USER_NODE_TRANSFERS_FOR_EMAIL = "find-UserNodeTransfer-for-email";
 
 	/**
-	 * The query name used for
-	 * {@link #findUserNodeTransferRequestsForEmail(String)}.
+	 * The query name used for {@link #findNodeIdsForUser(Long)}.
 	 * 
 	 * @since 1.2
 	 */
 	public static final String QUERY_NODE_IDS_FOR_USER = "find-node-ids-for-user-id";
+
+	/**
+	 * The query name used for {@link #findNodeIdsForToken(String)}.
+	 * 
+	 * @since 1.3
+	 */
+	public static final String QUERY_NODE_IDS_FOR_TOKEN = "find-node-ids-for-token-id";
 
 	/**
 	 * Default constructor.
@@ -188,6 +194,19 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<Long> findNodeIdsForUser(Long userId) {
 		List<Long> ids = selectList(QUERY_NODE_IDS_FOR_USER, userId, null, null);
+		return (ids == null || ids.isEmpty() ? Collections.<Long> emptySet()
+				: new LinkedHashSet<Long>(ids));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.3
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<Long> findNodeIdsForToken(String tokenId) {
+		List<Long> ids = selectList(QUERY_NODE_IDS_FOR_TOKEN, tokenId, null, null);
 		return (ids == null || ids.isEmpty() ? Collections.<Long> emptySet()
 				: new LinkedHashSet<Long>(ids));
 	}

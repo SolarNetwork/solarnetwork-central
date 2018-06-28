@@ -26,8 +26,6 @@ package net.solarnetwork.central.query.biz.dao;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,7 +68,6 @@ import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityNode;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 
@@ -78,7 +75,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -139,22 +136,8 @@ public class DaoQueryBiz implements QueryBiz {
 		if ( actor instanceof SecurityNode ) {
 			nodeIds = Collections.singleton(((SecurityNode) actor).getNodeId());
 		} else if ( actor instanceof SecurityToken ) {
-			SecurityPolicy policy = ((SecurityToken) actor).getPolicy();
-			Long ownerId = ((SecurityToken) actor).getUserId();
-			Set<Long> allUserNodes = userNodeDao.findNodeIdsForUser(ownerId);
-			Set<Long> policyNodes = (policy != null ? policy.getNodeIds() : null);
-			if ( policyNodes != null && !policyNodes.isEmpty() ) {
-				// user might not have access to node from policy anymore, so filter those out now
-				policyNodes = new LinkedHashSet<Long>(policyNodes); // make mutable set
-				for ( Iterator<Long> nodeItr = policyNodes.iterator(); nodeItr.hasNext(); ) {
-					if ( !allUserNodes.contains(nodeItr.next()) ) {
-						nodeItr.remove();
-					}
-				}
-				nodeIds = policyNodes;
-			} else {
-				nodeIds = allUserNodes;
-			}
+			String tokenId = ((SecurityToken) actor).getToken();
+			nodeIds = userNodeDao.findNodeIdsForToken(tokenId);
 		}
 		if ( nodeIds == null || nodeIds.isEmpty() ) {
 			return Collections.emptySet();

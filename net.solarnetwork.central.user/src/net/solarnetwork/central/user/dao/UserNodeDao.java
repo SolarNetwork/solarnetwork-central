@@ -37,7 +37,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * DAO API for UserNode objects.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
@@ -65,6 +65,22 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 	 * @since 1.4
 	 */
 	Set<Long> findNodeIdsForUser(Long userId);
+
+	/**
+	 * Find a set of node IDs for a security token.
+	 * 
+	 * <p>
+	 * This will not return archived nodes (see
+	 * {@link #findArchivedUserNodesForUser(Long)}). It will also restrict the
+	 * returned node IDs based on the policy associated with the token.
+	 * </p>
+	 * 
+	 * @param tokenId
+	 *        the token ID to get all node IDs for
+	 * @return set of node IDs, or an empty set if none found
+	 * @since 1.5
+	 */
+	Set<Long> findNodeIdsForToken(String tokenId);
 
 	/**
 	 * Find all UserNodes for a given user.

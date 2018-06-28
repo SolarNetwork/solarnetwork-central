@@ -125,3 +125,25 @@ RETURNS boolean LANGUAGE SQL STRICT STABLE AS
 $$
 	SELECT req_date BETWEEN CURRENT_TIMESTAMP - tolerance AND CURRENT_TIMESTAMP + tolerance
 $$;
+
+/**
+ * View of all valid node IDs for a given token.
+ *
+ * This will filter out any node IDs not present on the token policy `nodeIds` array.
+ * Additionally, archived nodes are filtered out.
+ *
+ * Typical query is:
+ *
+ *     SELECT node_id` FROM solaruser.nodes_for_auth_token
+ *     WHERE auth_token = 'token-id'
+ */
+CREATE OR REPLACE VIEW solaruser.user_auth_token_nodes AS
+	SELECT t.auth_token, un.node_id
+	FROM solaruser.user_auth_token t
+	INNER JOIN solaruser.user_node un ON un.user_id = t.user_id
+	WHERE
+		un.archived = FALSE
+		AND (
+			t.jpolicy->'nodeIds' IS NULL
+			OR t.jpolicy->'nodeIds' @> un.node_id::text::jsonb
+		);

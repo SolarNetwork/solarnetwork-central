@@ -37,11 +37,13 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 
@@ -132,8 +134,18 @@ public abstract class AbstractQueryBizDaoTestSupport extends AbstractCentralTran
 		SecurityContextHolder.getContext().setAuthentication(auth);
 	}
 
+	protected void storeNewToken(String tokenId, String tokenSecret, Long userId,
+			UserAuthTokenStatus status, UserAuthTokenType type, String policy) {
+		jdbcTemplate.update(
+				"INSERT INTO solaruser.user_auth_token(auth_token,auth_secret,user_id,status,token_type,jpolicy)"
+						+ " VALUES (?,?,?,?::solaruser.user_auth_token_status,?::solaruser.user_auth_token_type,?::json)",
+				tokenId, tokenSecret, userId, status.name(), type.name(), policy);
+	}
+
 	protected SecurityToken becomeAuthenticatedReadNodeDataToken(final Long userId,
 			final SecurityPolicy policy) {
+		storeNewToken("user", "pass", userId, UserAuthTokenStatus.Active, UserAuthTokenType.ReadNodeData,
+				JsonUtils.getJSONString(policy, null));
 		AuthenticatedToken token = new AuthenticatedToken(
 				new org.springframework.security.core.userdetails.User("user", "pass", true, true, true,
 						true, AuthorityUtils.NO_AUTHORITIES),

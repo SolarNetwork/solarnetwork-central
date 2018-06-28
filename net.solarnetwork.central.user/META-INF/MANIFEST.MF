@@ -2,12 +2,12 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet User
 Bundle-SymbolicName: net.solarnetwork.central.user
-Bundle-Version: 1.28.1
+Bundle-Version: 1.29.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
  net.solarnetwork.central.user.biz;version="1.16.0",
- net.solarnetwork.central.user.dao;version="1.10.0",
+ net.solarnetwork.central.user.dao;version="1.11.0",
  net.solarnetwork.central.user.domain;version="1.15.1",
  net.solarnetwork.central.user.support;version="1.12.0"
 Import-Package: 

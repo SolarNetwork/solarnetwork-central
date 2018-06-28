@@ -141,4 +141,15 @@
 			un.node_id
 	</select>
 	
+	<select id="find-node-ids-for-token-id" resultType="long" parameterType="string">
+		SELECT 
+			node_id
+		FROM
+			solaruser.user_auth_token_nodes
+		WHERE 
+			auth_token = #{id}
+		ORDER BY
+			node_id
+	</select>
+	
 </mapper>

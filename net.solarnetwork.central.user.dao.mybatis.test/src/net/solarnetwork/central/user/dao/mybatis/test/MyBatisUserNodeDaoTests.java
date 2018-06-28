@@ -22,12 +22,17 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.joda.time.DateTime;
@@ -35,9 +40,14 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserAuthToken;
+import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
+import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
@@ -68,6 +78,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	private MyBatisUserNodeDao userNodeDao;
 	private MyBatisSolarNodeDao solarNodeDao;
 	private MyBatisUserNodeCertificateDao userNodeCertificateDao;
+	private MyBatisUserAuthTokenDao userAuthTokenDao;
 
 	private User user = null;
 	private SolarNode node = null;
@@ -79,6 +90,8 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		userNodeCertificateDao.setSqlSessionFactory(getSqlSessionFactory());
 		solarNodeDao = new MyBatisSolarNodeDao();
 		solarNodeDao.setSqlSessionFactory(getSqlSessionFactory());
+		userAuthTokenDao = new MyBatisUserAuthTokenDao();
+		userAuthTokenDao.setSqlSessionFactory(getSqlSessionFactory());
 		userNodeDao = new MyBatisUserNodeDao();
 		userNodeDao.setSqlSessionFactory(getSqlSessionFactory());
 		setupTestNode();
@@ -412,5 +425,132 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 		Set<Long> results = userNodeDao.findNodeIdsForUser(this.user.getId());
 		assertThat("Node IDs", results, contains(TEST_ID_2, TEST_NODE_ID));
+	}
+
+	/*-
+	private void storeAuthTokenWithNodeIds() {
+		final Long nodeId2 = -2L;
+		setupTestNode(nodeId2);
+		UserAuthToken authToken = new UserAuthToken();
+		authToken.setCreated(new DateTime());
+		authToken.setUserId(this.user.getId());
+		authToken.setAuthSecret(TEST_SECRET);
+		authToken.setAuthToken(TEST_TOKEN);
+		authToken.setStatus(UserAuthTokenStatus.Active);
+		authToken.setType(UserAuthTokenType.ReadNodeData);
+		authToken.setPolicy(new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<Long>(Arrays.asList(node.getId(), nodeId2))).build());
+		String id = userAuthTokenDao.store(authToken);
+		assertNotNull(id);
+		this.userAuthToken = authToken;
+	}*/
+
+	private String randomTokenId() {
+		return java.util.UUID.randomUUID().toString().replaceAll("-", "").substring(0, 20);
+	}
+
+	private UserAuthToken tokenForUser(UserAuthTokenType type) {
+		final String tokenId = randomTokenId();
+		UserAuthToken authToken = new UserAuthToken();
+		authToken.setCreated(new DateTime());
+		authToken.setUserId(this.user.getId());
+		authToken.setAuthSecret("password");
+		authToken.setAuthToken(tokenId);
+		authToken.setStatus(UserAuthTokenStatus.Active);
+		authToken.setType(type);
+		return authToken;
+	}
+
+	@Test
+	public void findNodeIdsForUserTokenNoNodes() {
+		// create some OTHER user with a node, to be sure
+		storeNewUserNode();
+
+		// create a new user without any nodes
+		this.user = createNewUser(TEST_EMAIL_2);
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		userAuthTokenDao.store(authToken);
+
+		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
+		assertThat("No nodes returned", nodeIds, hasSize(0));
+	}
+
+	@Test
+	public void findNodeIdsForUserTokenSingleNode() {
+		storeNewUserNode();
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		userAuthTokenDao.store(authToken);
+
+		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
+		assertThat(nodeIds, contains(this.node.getId()));
+	}
+
+	@Test
+	public void findNodeIdsForUserTokenMultipleNodes() {
+		Set<Long> expectedNodeIds = new LinkedHashSet<Long>();
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_ID_2 - i;
+			setupTestNode(nodeId);
+			UserNode newUserNode = new UserNode();
+			newUserNode.setCreated(new DateTime());
+			newUserNode.setDescription(TEST_DESC);
+			newUserNode.setName(TEST_NAME);
+			newUserNode.setNode(solarNodeDao.get(nodeId));
+			newUserNode.setUser(this.user);
+			userNodeDao.store(newUserNode);
+			expectedNodeIds.add(nodeId);
+		}
+
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		userAuthTokenDao.store(authToken);
+
+		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
+		assertThat("User nodes", nodeIds, equalTo(expectedNodeIds));
+	}
+
+	@Test
+	public void findNodeIdsForUserTokenMultipleNodesFilteredByPolicy() {
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_ID_2 - i;
+			setupTestNode(nodeId);
+			UserNode newUserNode = new UserNode();
+			newUserNode.setCreated(new DateTime());
+			newUserNode.setDescription(TEST_DESC);
+			newUserNode.setName(TEST_NAME);
+			newUserNode.setNode(solarNodeDao.get(nodeId));
+			newUserNode.setUser(this.user);
+			userNodeDao.store(newUserNode);
+		}
+
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		authToken.setPolicy(new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<Long>(Arrays.asList(TEST_ID_2, TEST_ID_2 - 1))).build());
+		userAuthTokenDao.store(authToken);
+
+		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
+		assertThat("Policy filtered user nodes", nodeIds, contains(TEST_ID_2 - 1, TEST_ID_2));
+	}
+
+	@Test
+	public void findNodeIdsForReadNodeDataTokenMultipleNodesFilteredByPolicy() {
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_ID_2 - i;
+			setupTestNode(nodeId);
+			UserNode newUserNode = new UserNode();
+			newUserNode.setCreated(new DateTime());
+			newUserNode.setDescription(TEST_DESC);
+			newUserNode.setName(TEST_NAME);
+			newUserNode.setNode(solarNodeDao.get(nodeId));
+			newUserNode.setUser(this.user);
+			userNodeDao.store(newUserNode);
+		}
+
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.ReadNodeData);
+		authToken.setPolicy(new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<Long>(Arrays.asList(TEST_ID_2, TEST_ID_2 - 1))).build());
+		userAuthTokenDao.store(authToken);
+
+		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
+		assertThat("Policy filtered user nodes", nodeIds, contains(TEST_ID_2 - 1, TEST_ID_2));
 	}
 }
