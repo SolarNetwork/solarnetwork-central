@@ -143,6 +143,7 @@ CREATE OR REPLACE VIEW solaruser.user_auth_token_nodes AS
 	INNER JOIN solaruser.user_node un ON un.user_id = t.user_id
 	WHERE
 		un.archived = FALSE
+		AND t.status = 'Active'::solaruser.user_auth_token_status
 		AND (
 			t.jpolicy->'nodeIds' IS NULL
 			OR t.jpolicy->'nodeIds' @> un.node_id::text::jsonb

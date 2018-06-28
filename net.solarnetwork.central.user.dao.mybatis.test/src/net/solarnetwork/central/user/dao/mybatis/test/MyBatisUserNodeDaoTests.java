@@ -486,6 +486,17 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	}
 
 	@Test
+	public void findNodeIdsForUserTokenSingleNodeTokenDisabled() {
+		storeNewUserNode();
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		authToken.setStatus(UserAuthTokenStatus.Disabled);
+		userAuthTokenDao.store(authToken);
+
+		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
+		assertThat("No nodes returned", nodeIds, hasSize(0));
+	}
+
+	@Test
 	public void findNodeIdsForUserTokenMultipleNodes() {
 		Set<Long> expectedNodeIds = new LinkedHashSet<Long>();
 		for ( int i = 0; i < 3; i++ ) {
@@ -553,4 +564,5 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
 		assertThat("Policy filtered user nodes", nodeIds, contains(TEST_ID_2 - 1, TEST_ID_2));
 	}
+
 }
