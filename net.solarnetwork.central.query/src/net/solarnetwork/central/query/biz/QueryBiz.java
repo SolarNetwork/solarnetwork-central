@@ -31,12 +31,14 @@ import java.util.Set;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.FilterResults;
@@ -50,7 +52,7 @@ import net.solarnetwork.central.security.SecurityActor;
  * API for querying business logic.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public interface QueryBiz {
 
@@ -125,6 +127,19 @@ public interface QueryBiz {
 	 * @since 2.2
 	 */
 	Set<Long> findAvailableNodes(SecurityActor actor);
+
+	/**
+	 * Find all available node sources for a given actor.
+	 * 
+	 * @param actor
+	 *        the actor to get node sources for
+	 * @param filter
+	 *        an optional filter, from which a start and/or end dates can be
+	 *        provided
+	 * @return the results, never {@literal null}
+	 * @since 2.3
+	 */
+	Set<NodeSourcePK> findAvailableSources(SecurityActor actor, DatumFilter filter);
 
 	/**
 	 * API for querying for a filtered set of GeneralNodeDatum results from all

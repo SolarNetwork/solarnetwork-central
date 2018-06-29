@@ -27,6 +27,8 @@ package net.solarnetwork.central.user.dao;
 import java.util.List;
 import java.util.Set;
 import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.datum.domain.DatumFilter;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
@@ -81,6 +83,25 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 	 * @since 1.5
 	 */
 	Set<Long> findNodeIdsForToken(String tokenId);
+
+	/**
+	 * Find a set of source IDs for a security token.
+	 * 
+	 * <p>
+	 * This will not return archived nodes (see
+	 * {@link #findArchivedUserNodesForUser(Long)}). It will also restrict the
+	 * returned node IDs based on the policy associated with the token.
+	 * </p>
+	 * 
+	 * @param tokenId
+	 *        the token ID to get all source IDs for
+	 * @param filter
+	 *        an optional filter, where the start and end days may be provided
+	 *        to limit the source date range
+	 * @return set of source IDs, or an empty set if none found
+	 * @since 1.5
+	 */
+	Set<NodeSourcePK> findSourceIdsForToken(String tokenId, DatumFilter filter);
 
 	/**
 	 * Find all UserNodes for a given user.

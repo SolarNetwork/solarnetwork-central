@@ -2,13 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Query
 Bundle-SymbolicName: net.solarnetwork.central.query
-Bundle-Version: 2.5.0
+Bundle-Version: 2.6.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: 
- net.solarnetwork.central.query.biz;version="2.3.0",
+ net.solarnetwork.central.query.biz;version="2.4.0",
  net.solarnetwork.central.query.domain;version="1.2.0",
- net.solarnetwork.central.query.support;version="1.7.0"
+ net.solarnetwork.central.query.support;version="1.8.0"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.4,3.0)",
  net.solarnetwork.central.biz;version="1.1.0",

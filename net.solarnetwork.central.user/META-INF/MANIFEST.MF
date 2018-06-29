@@ -18,6 +18,7 @@ Import-Package:
  javax.cache;version="[1.0,2.0)",
  net.solarnetwork.central.biz;version="1.1.0",
  net.solarnetwork.central.dao;version="1.14",
+ net.solarnetwork.central.datum.domain;version="1.21.0",
  net.solarnetwork.central.domain;version="1.23",
  net.solarnetwork.central.security;version="1.10",
  net.solarnetwork.central.support;version="1.15",

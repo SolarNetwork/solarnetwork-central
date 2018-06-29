@@ -134,7 +134,7 @@ $$;
  *
  * Typical query is:
  *
- *     SELECT node_id` FROM solaruser.nodes_for_auth_token
+ *     SELECT node_id FROM solaruser.user_auth_token_nodes
  *     WHERE auth_token = 'token-id'
  */
 CREATE OR REPLACE VIEW solaruser.user_auth_token_nodes AS
@@ -147,4 +147,67 @@ CREATE OR REPLACE VIEW solaruser.user_auth_token_nodes AS
 		AND (
 			t.jpolicy->'nodeIds' IS NULL
 			OR t.jpolicy->'nodeIds' @> un.node_id::text::jsonb
+		);
+
+/**
+ * Convert an Ant path pattern into a regular expression.
+ *
+ * This can be used to convert source ID wildcard patterns into
+ * regular expressions that Postgres understands.
+ *
+ * @param pat the Ant path pattern to convert
+ * @returns the equivalent regular expression
+ */
+CREATE OR REPLACE FUNCTION solarcommon.ant_pattern_to_regexp(pat text)
+RETURNS text LANGUAGE SQL STRICT IMMUTABLE AS
+$$
+	SELECT '^' ||
+		regexp_replace(
+			regexp_replace(
+				regexp_replace(
+					regexp_replace(pat, '([!$()+.:<=>[\\\]^{|}-])', '\\\1', 'g'),
+				E'[?]', E'[^/]', 'g'),
+			E'(?<![*])[*](?![*])', E'[^/]*', 'g'),
+		E'[*]{2}', '(?<=/|^).*(?=/|$)', 'g')
+		|| '$';
+$$
+
+/**
+ * View of all valid node source IDs for a given token.
+ *
+ * This will filter out any node IDs not present on the token policy `nodeIds` array,
+ * and then any source IDs not present in the token policy `sourceIds` array. Note
+ * that the `sourceIds` array holds wildcard patterns, which are converted into
+ * regular expressions for filtering purposes.Additionally, archived nodes are filtered
+ * out.
+ *
+ * Note that the output of this view is NOT distinct. That is left to the
+ * caller. Additionally this view provides the `ts` column so that the sources
+ * can be narrowed down to a specific date range. Because source IDs are extracted
+ * from the datum data itself, providing date range criteria when selecting from
+ * this view can greatly speed up the query.
+ *
+ * Typical query is:
+ *
+ *     SELECT DISTINCT node_id, source_id FROM solaruser.user_auth_token_sources
+ *     WHERE auth_token = 'token-id' AND ts > CURRENT_DATE - interval '1 month'
+ */
+CREATE OR REPLACE VIEW solaruser.user_auth_token_sources AS
+	SELECT t.auth_token, un.node_id, d.source_id::text, d.ts_start AS ts
+	FROM solaruser.user_auth_token t
+	INNER JOIN solaruser.user_node un ON un.user_id = t.user_id
+	INNER JOIN solaragg.agg_datum_daily d ON d.node_id = un.node_id
+	LEFT OUTER JOIN LATERAL (
+		SELECT solarcommon.ant_pattern_to_regexp(jsonb_array_elements_text(t.jpolicy->'sourceIds')) AS regex
+		) s_regex ON TRUE
+	WHERE
+		un.archived = FALSE
+		AND t.status = 'Active'::solaruser.user_auth_token_status
+		AND (
+			t.jpolicy->'nodeIds' IS NULL
+			OR t.jpolicy->'nodeIds' @> un.node_id::text::jsonb
+		)
+		AND (
+			t.jpolicy->'sourceIds' IS NULL
+			OR d.source_id ~ s_regex.regex
 		);

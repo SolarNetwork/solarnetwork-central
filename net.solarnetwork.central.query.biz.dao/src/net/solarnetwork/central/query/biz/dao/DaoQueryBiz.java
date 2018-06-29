@@ -26,6 +26,7 @@ package net.solarnetwork.central.query.biz.dao;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,11 +47,13 @@ import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
@@ -131,6 +134,35 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 
 	@Override
+	public Set<NodeSourcePK> findAvailableSources(SecurityActor actor, DatumFilter filter) {
+		Set<NodeSourcePK> sources = null;
+		if ( actor instanceof SecurityNode ) {
+			Long nodeId = ((SecurityNode) actor).getNodeId();
+			DatumFilterCommand f = new DatumFilterCommand();
+			f.setNodeId(nodeId);
+			if ( filter != null ) {
+				f.setStartDate(filter.getStartDate());
+				f.setEndDate(filter.getEndDate());
+			}
+			Set<String> sourceIds = generalNodeDatumDao.getAvailableSources(f);
+			if ( sourceIds != null && !sourceIds.isEmpty() ) {
+				sources = new LinkedHashSet<NodeSourcePK>(sourceIds.size());
+				for ( String sourceId : sourceIds ) {
+					sources.add(new NodeSourcePK(nodeId, sourceId));
+				}
+			}
+		} else if ( actor instanceof SecurityToken ) {
+			String tokenId = ((SecurityToken) actor).getToken();
+			sources = userNodeDao.findSourceIdsForToken(tokenId, filter);
+		}
+		if ( sources == null ) {
+			return Collections.emptySet();
+		}
+		return sources;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<Long> findAvailableNodes(SecurityActor actor) {
 		Set<Long> nodeIds = null;
 		if ( actor instanceof SecurityNode ) {

@@ -39,6 +39,7 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
@@ -58,7 +59,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * Test cases for the {@link MyBatisUserNodeDao} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -565,4 +566,256 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertThat("Policy filtered user nodes", nodeIds, contains(TEST_ID_2 - 1, TEST_ID_2));
 	}
 
+	private void storeNewDayDatum(Long nodeId, String sourceId, DateTime ts) {
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.agg_datum_daily (ts_start, local_date, node_id, source_id) VALUES (?,?,?,?)",
+				new java.sql.Timestamp(ts.getMillis()), new java.sql.Date(ts.getMillis()), nodeId,
+				sourceId);
+	}
+
+	@Test
+	public void findSourceIdsForUserTokenNoNodes() {
+		// create some OTHER user with a node, to be sure
+		storeNewUserNode();
+
+		// create a new user without any nodes
+		this.user = createNewUser(TEST_EMAIL_2);
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		userAuthTokenDao.store(authToken);
+
+		Set<NodeSourcePK> sourceIds = userNodeDao.findSourceIdsForToken(authToken.getId(), null);
+		assertThat("No sources returned", sourceIds, hasSize(0));
+	}
+
+	@Test
+	public void findSourceIdsForUserTokenSingleSource() {
+		storeNewUserNode();
+		final String sourceId = "/test/source/1";
+		storeNewDayDatum(this.node.getId(), sourceId, new DateTime());
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		userAuthTokenDao.store(authToken);
+
+		Set<NodeSourcePK> sourceIds = userNodeDao.findSourceIdsForToken(authToken.getId(), null);
+		assertThat(sourceIds, contains(new NodeSourcePK(node.getId(), sourceId)));
+	}
+
+	@Test
+	public void findSourceIdsForUserTokenSingleSourceTokenDisabled() {
+		storeNewUserNode();
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		authToken.setStatus(UserAuthTokenStatus.Disabled);
+		userAuthTokenDao.store(authToken);
+
+		Set<NodeSourcePK> sourceIds = userNodeDao.findSourceIdsForToken(authToken.getId(), null);
+		assertThat("No sources returned", sourceIds, hasSize(0));
+	}
+
+	@Test
+	public void findSourceIdsForUserTokenMultipleNodes() {
+		Set<NodeSourcePK> expectedSourceIds = new LinkedHashSet<NodeSourcePK>();
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_ID_2 - i;
+			setupTestNode(nodeId);
+			UserNode newUserNode = new UserNode();
+			newUserNode.setCreated(new DateTime());
+			newUserNode.setDescription(TEST_DESC);
+			newUserNode.setName(TEST_NAME);
+			newUserNode.setNode(solarNodeDao.get(nodeId));
+			newUserNode.setUser(this.user);
+			userNodeDao.store(newUserNode);
+
+			String sourceId = "/test/source/" + i;
+			storeNewDayDatum(nodeId, sourceId, new DateTime());
+
+			expectedSourceIds.add(new NodeSourcePK(nodeId, sourceId));
+		}
+
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		userAuthTokenDao.store(authToken);
+
+		Set<NodeSourcePK> sourceIds = userNodeDao.findSourceIdsForToken(authToken.getId(), null);
+		assertThat("User nodes", sourceIds, equalTo(expectedSourceIds));
+	}
+
+	@Test
+	public void findSourceIdsForUserTokenMultipleNodesFilteredByNodePolicy() {
+		Set<NodeSourcePK> expectedSourceIds = new LinkedHashSet<NodeSourcePK>();
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_ID_2 - i;
+			setupTestNode(nodeId);
+			UserNode newUserNode = new UserNode();
+			newUserNode.setCreated(new DateTime());
+			newUserNode.setDescription(TEST_DESC);
+			newUserNode.setName(TEST_NAME);
+			newUserNode.setNode(solarNodeDao.get(nodeId));
+			newUserNode.setUser(this.user);
+			userNodeDao.store(newUserNode);
+
+			String sourceId = "/test/source/" + i;
+			storeNewDayDatum(nodeId, sourceId, new DateTime());
+
+			if ( i > 0 ) {
+				expectedSourceIds.add(new NodeSourcePK(nodeId, sourceId));
+			}
+		}
+
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		authToken.setPolicy(new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<Long>(Arrays.asList(TEST_ID_2 - 1, TEST_ID_2 - 2))).build());
+		userAuthTokenDao.store(authToken);
+
+		Set<NodeSourcePK> sourceIds = userNodeDao.findSourceIdsForToken(authToken.getId(), null);
+		assertThat("User nodes", sourceIds, equalTo(expectedSourceIds));
+	}
+
+	@Test
+	public void findSourceIdsForUserTokenMultipleNodesFilteredBySourcePolicy() {
+		Set<NodeSourcePK> expectedSourceIds = new LinkedHashSet<NodeSourcePK>();
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_ID_2 - i;
+			setupTestNode(nodeId);
+			UserNode newUserNode = new UserNode();
+			newUserNode.setCreated(new DateTime());
+			newUserNode.setDescription(TEST_DESC);
+			newUserNode.setName(TEST_NAME);
+			newUserNode.setNode(solarNodeDao.get(nodeId));
+			newUserNode.setUser(this.user);
+			userNodeDao.store(newUserNode);
+
+			String sourceId = "/test/source/" + i;
+			storeNewDayDatum(nodeId, sourceId, new DateTime());
+
+			if ( i > 0 ) {
+				expectedSourceIds.add(new NodeSourcePK(nodeId, sourceId));
+			}
+		}
+
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		authToken.setPolicy(new BasicSecurityPolicy.Builder()
+				.withSourceIds(new HashSet<String>(Arrays.asList("/test/source/1", "/test/source/2")))
+				.build());
+		userAuthTokenDao.store(authToken);
+
+		Set<NodeSourcePK> sourceIds = userNodeDao.findSourceIdsForToken(authToken.getId(), null);
+		assertThat("Node sources", sourceIds, equalTo(expectedSourceIds));
+	}
+
+	@Test
+	public void findSourceIdsForUserTokenMultipleNodesFilteredByNodeAndSourcePolicy() {
+		Set<NodeSourcePK> expectedSourceIds = new LinkedHashSet<NodeSourcePK>();
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_ID_2 - i;
+			setupTestNode(nodeId);
+			UserNode newUserNode = new UserNode();
+			newUserNode.setCreated(new DateTime());
+			newUserNode.setDescription(TEST_DESC);
+			newUserNode.setName(TEST_NAME);
+			newUserNode.setNode(solarNodeDao.get(nodeId));
+			newUserNode.setUser(this.user);
+			userNodeDao.store(newUserNode);
+
+			String sourceId = "/test/source/" + i;
+			storeNewDayDatum(nodeId, sourceId, new DateTime());
+
+			if ( i == 1 ) {
+				expectedSourceIds.add(new NodeSourcePK(nodeId, sourceId));
+			}
+		}
+
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		authToken.setPolicy(new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<Long>(Arrays.asList(TEST_ID_2 - 1)))
+				.withSourceIds(new HashSet<String>(Arrays.asList("/test/source/1", "/test/source/2")))
+				.build());
+		userAuthTokenDao.store(authToken);
+
+		Set<NodeSourcePK> sourceIds = userNodeDao.findSourceIdsForToken(authToken.getId(), null);
+		assertThat("Node sources", sourceIds, equalTo(expectedSourceIds));
+	}
+
+	@Test
+	public void findSourceIdsForUserTokenMultipleNodesFilteredBySourceWildcardCharacterPolicy() {
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_ID_2 - i;
+			setupTestNode(nodeId);
+			UserNode newUserNode = new UserNode();
+			newUserNode.setCreated(new DateTime());
+			newUserNode.setDescription(TEST_DESC);
+			newUserNode.setName(TEST_NAME);
+			newUserNode.setNode(solarNodeDao.get(nodeId));
+			newUserNode.setUser(this.user);
+			userNodeDao.store(newUserNode);
+
+			String sourceId = "/test/source/" + (i + 9);
+			storeNewDayDatum(nodeId, sourceId, new DateTime());
+		}
+
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		authToken.setPolicy(new BasicSecurityPolicy.Builder()
+				.withSourceIds(new HashSet<String>(Arrays.asList("/test/source/?"))).build());
+		userAuthTokenDao.store(authToken);
+
+		Set<NodeSourcePK> sourceIds = userNodeDao.findSourceIdsForToken(authToken.getId(), null);
+		assertThat("Node sources", sourceIds, contains(new NodeSourcePK(TEST_ID_2, "/test/source/9")));
+	}
+
+	@Test
+	public void findSourceIdsForUserTokenMultipleNodesFilteredBySourceWildcardCharactersPolicy() {
+		Set<NodeSourcePK> expectedSourceIds = new LinkedHashSet<NodeSourcePK>();
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_ID_2 - i;
+			setupTestNode(nodeId);
+			UserNode newUserNode = new UserNode();
+			newUserNode.setCreated(new DateTime());
+			newUserNode.setDescription(TEST_DESC);
+			newUserNode.setName(TEST_NAME);
+			newUserNode.setNode(solarNodeDao.get(nodeId));
+			newUserNode.setUser(this.user);
+			userNodeDao.store(newUserNode);
+
+			String sourceId = "/test/source/" + (i + 9);
+			storeNewDayDatum(nodeId, sourceId, new DateTime());
+
+			expectedSourceIds.add(new NodeSourcePK(nodeId, sourceId));
+		}
+
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		authToken.setPolicy(new BasicSecurityPolicy.Builder()
+				.withSourceIds(new HashSet<String>(Arrays.asList("/test/source/*"))).build());
+		userAuthTokenDao.store(authToken);
+
+		Set<NodeSourcePK> sourceIds = userNodeDao.findSourceIdsForToken(authToken.getId(), null);
+		assertThat("Node sources", sourceIds, equalTo(expectedSourceIds));
+	}
+
+	@Test
+	public void findSourceIdsForUserTokenMultipleNodesFilteredBySourceWildcardPathPolicy() {
+		Set<NodeSourcePK> expectedSourceIds = new LinkedHashSet<NodeSourcePK>();
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_ID_2 - i;
+			setupTestNode(nodeId);
+			UserNode newUserNode = new UserNode();
+			newUserNode.setCreated(new DateTime());
+			newUserNode.setDescription(TEST_DESC);
+			newUserNode.setName(TEST_NAME);
+			newUserNode.setNode(solarNodeDao.get(nodeId));
+			newUserNode.setUser(this.user);
+			userNodeDao.store(newUserNode);
+
+			String sourceId = "/test/" + i + (i == 0 ? "/no" : "/yes");
+			storeNewDayDatum(nodeId, sourceId, new DateTime());
+
+			if ( i > 0 ) {
+				expectedSourceIds.add(new NodeSourcePK(nodeId, sourceId));
+			}
+		}
+
+		final UserAuthToken authToken = tokenForUser(UserAuthTokenType.User);
+		authToken.setPolicy(new BasicSecurityPolicy.Builder()
+				.withSourceIds(new HashSet<String>(Arrays.asList("/**/yes"))).build());
+		userAuthTokenDao.store(authToken);
+
+		Set<NodeSourcePK> sourceIds = userNodeDao.findSourceIdsForToken(authToken.getId(), null);
+		assertThat("Node sources", sourceIds, equalTo(expectedSourceIds));
+	}
 }

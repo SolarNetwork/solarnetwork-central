@@ -31,6 +31,8 @@ import java.util.Set;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
+import net.solarnetwork.central.datum.domain.DatumFilter;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
@@ -102,6 +104,13 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 * @since 1.3
 	 */
 	public static final String QUERY_NODE_IDS_FOR_TOKEN = "find-node-ids-for-token-id";
+
+	/**
+	 * The query name used for {@link #findSourceIdsForToken(String)}.
+	 * 
+	 * @since 1.3
+	 */
+	public static final String QUERY_SOURCE_IDS_FOR_TOKEN = "find-source-ids-for-token-id";
 
 	/**
 	 * Default constructor.
@@ -209,6 +218,29 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 		List<Long> ids = selectList(QUERY_NODE_IDS_FOR_TOKEN, tokenId, null, null);
 		return (ids == null || ids.isEmpty() ? Collections.<Long> emptySet()
 				: new LinkedHashSet<Long>(ids));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.3
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<NodeSourcePK> findSourceIdsForToken(String tokenId, DatumFilter filter) {
+		Map<String, Object> params = new HashMap<String, Object>(3);
+		params.put("id", tokenId);
+		if ( filter != null ) {
+			if ( filter.getStartDate() != null ) {
+				params.put("startDate", filter.getStartDate());
+			}
+			if ( filter.getEndDate() != null ) {
+				params.put("endDate", filter.getEndDate());
+			}
+		}
+		List<NodeSourcePK> ids = selectList(QUERY_SOURCE_IDS_FOR_TOKEN, params, null, null);
+		return (ids == null || ids.isEmpty() ? Collections.<NodeSourcePK> emptySet()
+				: new LinkedHashSet<NodeSourcePK>(ids));
 	}
 
 }
