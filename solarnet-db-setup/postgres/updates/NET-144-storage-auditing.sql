@@ -1,3 +1,40 @@
+-- keep track of requests to calculate counts, so parallel jobs can compute
+CREATE TABLE solaragg.aud_datum_daily_stale (
+	ts_start timestamp with time zone NOT NULL,
+	node_id bigint NOT NULL,
+	source_id text NOT NULL,
+	aud_kind char(1) NOT NULL,
+	created timestamp NOT NULL DEFAULT now(),
+	CONSTRAINT aud_datum_daily_stale_pkey PRIMARY KEY (aud_kind, ts_start, node_id, source_id)
+);
+
+-- hold the daily level datum audit data
+CREATE TABLE solaragg.aud_datum_daily (
+	ts_start timestamp with time zone NOT NULL,
+	node_id bigint NOT NULL,
+	source_id character varying(64) NOT NULL,
+    prop_count bigint NOT NULL DEFAULT 0,
+    datum_q_count bigint NOT NULL DEFAULT 0,
+	datum_count bigint NOT NULL DEFAULT 0,
+	datum_hourly_count bigint NOT NULL DEFAULT 0,
+	datum_daily_count bigint NOT NULL DEFAULT 0,
+	CONSTRAINT aud_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
+);
+
+-- hold the monthly level datum audit data
+CREATE TABLE solaragg.aud_datum_monthly (
+	ts_start timestamp with time zone NOT NULL,
+	node_id bigint NOT NULL,
+	source_id character varying(64) NOT NULL,
+    prop_count bigint NOT NULL DEFAULT 0,
+    datum_q_count bigint NOT NULL DEFAULT 0,
+	datum_count bigint NOT NULL DEFAULT 0,
+	datum_hourly_count bigint NOT NULL DEFAULT 0,
+	datum_daily_count bigint NOT NULL DEFAULT 0,
+	datum_monthly_count bigint NOT NULL DEFAULT 0,
+	CONSTRAINT aud_datum_monthly_pkey PRIMARY KEY (node_id, ts_start, source_id)
+);
+
 ALTER TABLE solaragg.aud_datum_hourly
 	ADD COLUMN datum_count integer NOT NULL DEFAULT 0;
 
@@ -227,43 +264,6 @@ BEGIN
 END;
 $BODY$;
 
-
--- keep track of requests to calculate counts, so parallel jobs can compute
-CREATE TABLE solaragg.aud_datum_daily_stale (
-	ts_start timestamp with time zone NOT NULL,
-	node_id bigint NOT NULL,
-	source_id text NOT NULL,
-	aud_kind char(1) NOT NULL,
-	created timestamp NOT NULL DEFAULT now(),
-	CONSTRAINT aud_datum_daily_stale_pkey PRIMARY KEY (aud_kind, ts_start, node_id, source_id)
-);
-
--- hold the daily level datum audit data
-CREATE TABLE solaragg.aud_datum_daily (
-	ts_start timestamp with time zone NOT NULL,
-	node_id bigint NOT NULL,
-	source_id character varying(64) NOT NULL,
-    prop_count bigint NOT NULL DEFAULT 0,
-    datum_q_count bigint NOT NULL DEFAULT 0,
-	datum_count bigint NOT NULL DEFAULT 0,
-	datum_hourly_count bigint NOT NULL DEFAULT 0,
-	datum_daily_count bigint NOT NULL DEFAULT 0,
-	CONSTRAINT aud_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
-);
-
--- hold the monthly level datum audit data
-CREATE TABLE solaragg.aud_datum_monthly (
-	ts_start timestamp with time zone NOT NULL,
-	node_id bigint NOT NULL,
-	source_id character varying(64) NOT NULL,
-    prop_count bigint NOT NULL DEFAULT 0,
-    datum_q_count bigint NOT NULL DEFAULT 0,
-	datum_count bigint NOT NULL DEFAULT 0,
-	datum_hourly_count bigint NOT NULL DEFAULT 0,
-	datum_daily_count bigint NOT NULL DEFAULT 0,
-	datum_monthly_count bigint NOT NULL DEFAULT 0,
-	CONSTRAINT aud_datum_monthly_pkey PRIMARY KEY (node_id, ts_start, source_id)
-);
 
 /**
  * Process a single row from the `solaragg.aud_datum_daily_stale` table by performing
