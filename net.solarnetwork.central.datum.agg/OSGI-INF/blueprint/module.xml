@@ -49,7 +49,7 @@
 	<!-- Supporting Services -->
 	
 	<!-- A common thread pool for these jobs -->
-	<bean id="executorService" class="java.util.concurrent.Executors" factory-method="newCachedThreadPool"/>
+	<bean id="executorService" class="java.util.concurrent.Executors" factory-method="newCachedThreadPool" destroy-method="shutdown"/>
 	
 	<bean id="staleGeneralNodeDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor">
 		<argument ref="eventAdmin"/>
