@@ -123,7 +123,7 @@ CREATE OR REPLACE FUNCTION solaruser.snws2_validated_request_date(
 	tolerance interval default interval '5 minutes')
 RETURNS boolean LANGUAGE SQL STRICT STABLE AS
 $$
-	SELECT req_date BETWEEN CURRENT_TIMESTAMP - tolerance AND CURRENT_TIMESTAMP + tolerance
+	SELECT req_date BETWEEN CURRENT_TIMESTAMP - tolerance AND CURRENT_TIMESTAMP + tolerance;
 $$;
 
 /**
@@ -170,7 +170,7 @@ $$
 			E'(?<![*])[*](?![*])', E'[^/]*', 'g'),
 		E'[*]{2}', '(?<=/|^).*(?=/|$)', 'g')
 		|| '$';
-$$
+$$;
 
 /**
  * View of all valid node source IDs for a given token.
