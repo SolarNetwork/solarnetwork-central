@@ -35,6 +35,17 @@ CREATE TABLE solaragg.aud_datum_monthly (
 	CONSTRAINT aud_datum_monthly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
+/**
+ * View of node time zones and local time information.
+ */
+CREATE OR REPLACE VIEW solarnet.node_local_time AS
+	SELECT n.node_id,
+		COALESCE(l.time_zone, 'UTC'::character varying(64)) AS time_zone,
+		CURRENT_TIMESTAMP AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_ts,
+		EXTRACT(HOUR FROM CURRENT_TIMESTAMP AT TIME ZONE COALESCE(l.time_zone, 'UTC'))::integer AS local_hour_of_day
+	FROM solarnet.sn_node n
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id;
+
 ALTER TABLE solaragg.aud_datum_hourly
 	ADD COLUMN datum_count integer NOT NULL DEFAULT 0;
 
