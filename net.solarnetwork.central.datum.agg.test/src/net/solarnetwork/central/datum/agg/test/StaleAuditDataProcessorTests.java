@@ -40,30 +40,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Resource;
-import javax.sql.DataSource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.agg.StaleAuditDataProcessor;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
-import net.solarnetwork.central.test.AbstractCentralTest;
 import net.solarnetwork.util.JsonUtils;
 
 /**
@@ -72,25 +62,13 @@ import net.solarnetwork.util.JsonUtils;
  * @author matt
  * @version 1.0
  */
-@ContextConfiguration("classpath:/net/solarnetwork/central/test/test-tx-context.xml")
-public class StaleAuditDataProcessorTests extends AbstractCentralTest {
+public class StaleAuditDataProcessorTests extends AggTestSupport {
 
 	private static final String TEST_JOB_ID = "Test Stale Audit Datum Processor";
 
 	private static final String TEST_SOURCE_ID = "test.source";
 
-	@Resource
-	private DataSource dataSource;
-
-	@Resource
-	private PlatformTransactionManager txManager;
-
-	private JdbcTemplate jdbcTemplate;
-	private TransactionTemplate txTemplate;
-
 	private TestStaleAuditDataProcessor job;
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private static final class TestStaleAuditDataProcessor extends StaleAuditDataProcessor {
 
@@ -123,12 +101,10 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 
 	}
 
+	@Override
 	@Before
 	public void setup() {
-		Assert.assertNotNull("DataSource", dataSource);
-
-		jdbcTemplate = new JdbcTemplate(dataSource);
-		txTemplate = new TransactionTemplate(txManager);
+		super.setup();
 
 		job = new TestStaleAuditDataProcessor(null, jdbcTemplate);
 		job.setJobGroup("Test");
@@ -141,33 +117,6 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 
 		setupTestLocation(TEST_LOC_ID, "UTC");
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-	}
-
-	protected void setupTestNode(Long nodeId, Long locationId) {
-		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id) values (?,?)", nodeId,
-				locationId);
-	}
-
-	protected void setupTestLocation(Long id, String timeZoneId) {
-		jdbcTemplate.update(
-				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
-				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, timeZoneId);
-	}
-
-	@After
-	public void cleanupDatabase() {
-		jdbcTemplate.update("DELETE FROM solardatum.da_datum");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_hourly");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_daily");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_monthly");
-		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_hourly");
-		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_daily");
-		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_monthly");
-		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_daily_stale");
-		jdbcTemplate.update("DELETE FROM solarnet.sn_node WHERE node_id = ?", TEST_NODE_ID);
-		jdbcTemplate.update("DELETE FROM solarnet.sn_loc WHERE id = ?", TEST_LOC_ID);
-
 	}
 
 	private static final String SQL_INSERT_DATUM = "INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata_i, jdata_a) "
