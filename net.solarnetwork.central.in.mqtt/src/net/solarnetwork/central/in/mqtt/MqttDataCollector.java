@@ -142,7 +142,7 @@ public class MqttDataCollector
 	private String username;
 	private String password;
 	private String persistencePath = "var/mqtt-solarin";
-	private int subscribeQos = 2;
+	private int subscribeQos = 1;
 	private int publishQos = 0;
 	private long mqttTimeout = DEFAULT_MQTT_TIMEOUT;
 	private String nodeInstructionTopicTemplate = DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE;
@@ -771,7 +771,7 @@ public class MqttDataCollector
 	 * The MQTT QoS to use on subscription topics.
 	 * 
 	 * @param subscribeQos
-	 *        the subscription QoS; defaults to {@literal 2}
+	 *        the subscription QoS; defaults to {@literal 1}
 	 */
 	public void setSubscribeQos(int subscribeQos) {
 		this.subscribeQos = subscribeQos;

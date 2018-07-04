@@ -624,22 +624,26 @@ BEGIN
 			stale.ts_start, agg_span, 0, interval '1 hour')
 		INTO agg_json;
 		IF agg_json IS NULL THEN
+			-- delete agg, using date range in case time zone of node has changed
 			CASE kind
 				WHEN 'h' THEN
 					DELETE FROM solaragg.agg_datum_hourly
 					WHERE node_id = stale.node_id
 						AND source_id = stale.source_id
-						AND ts_start = stale.ts_start;
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span;
 				WHEN 'd' THEN
 					DELETE FROM solaragg.agg_datum_daily
 					WHERE node_id = stale.node_id
 						AND source_id = stale.source_id
-						AND ts_start = stale.ts_start;
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span;
 				ELSE
 					DELETE FROM solaragg.agg_datum_monthly
 					WHERE node_id = stale.node_id
 						AND source_id = stale.source_id
-						AND ts_start = stale.ts_start;
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span;
 			END CASE;
 		ELSE
 			CASE kind
@@ -662,6 +666,14 @@ BEGIN
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
 						jdata_t = EXCLUDED.jdata_t;
+
+					-- in case node tz changed, remove stale record(s)
+					DELETE FROM solaragg.agg_datum_hourly
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span
+						AND ts_start <> stale.ts_start;
 				WHEN 'd' THEN
 					INSERT INTO solaragg.agg_datum_daily (
 						ts_start, local_date, node_id, source_id,
@@ -681,6 +693,14 @@ BEGIN
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
 						jdata_t = EXCLUDED.jdata_t;
+
+					-- in case node tz changed, remove stale record(s)
+					DELETE FROM solaragg.agg_datum_daily
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span
+						AND ts_start <> stale.ts_start;
 				ELSE
 					INSERT INTO solaragg.agg_datum_monthly (
 						ts_start, local_date, node_id, source_id,
@@ -700,23 +720,50 @@ BEGIN
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
 						jdata_t = EXCLUDED.jdata_t;
+
+					-- in case node tz changed, remove stale record(s)
+					DELETE FROM solaragg.agg_datum_monthly
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span
+						AND ts_start <> stale.ts_start;
 			END CASE;
 		END IF;
 		DELETE FROM solaragg.agg_stale_datum WHERE CURRENT OF curs;
 		result := 1;
 
 		-- now make sure we recalculate the next aggregate level by submitting a stale record for the next level
+		-- and also update daily audit stats
 		CASE kind
 			WHEN 'h' THEN
 				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
 				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'd')
-				ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
+				ON CONFLICT DO NOTHING;
 			WHEN 'd' THEN
 				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
 				VALUES (date_trunc('month', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'm')
-				ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
+				ON CONFLICT DO NOTHING;
+
+				-- handle update to raw audit data
+				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
+				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'r')
+				ON CONFLICT DO NOTHING;
+
+				-- handle update to hourly audit data
+				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
+				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'h')
+				ON CONFLICT DO NOTHING;
+
+				-- handle update to daily audit data
+				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
+				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'd')
+				ON CONFLICT DO NOTHING;
 			ELSE
-				-- nothing
+				-- handle update to monthly audit data
+				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
+				VALUES (date_trunc('month', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'm')
+				ON CONFLICT DO NOTHING;
 		END CASE;
 	END IF;
 	CLOSE curs;
@@ -741,6 +788,178 @@ BEGIN
 	RETURN total_result;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
+
+/**
+ * Process a single row from the `solaragg.aud_datum_daily_stale` table by performing
+ * the appropriate calculations and updating the appropriate audit table with the results.
+ *
+ * Supported `kind` values are:
+ *
+ *  * `r` for solardatum.da_datum data rolled up to day values into the `solaragg.aud_datum_daily` table
+ *  * `h` for solaragg.agg_datum_hourly data rolled up to day values into the `solaragg.aud_datum_daily` table
+ *  * `d` for solaragg.agg_datum_daily data rolled up to day values into the `solaragg.aud_datum_daily` table
+ *  * `m` for solaragg.agg_datum_monthly data rolled up to month values into the `solaragg.aud_datum_monthly` table
+ *
+ * @param kind the rollup kind to process
+ * @returns the number of rows processed (always 1 or 0)
+ */
+CREATE OR REPLACE FUNCTION solaragg.process_one_aud_datum_daily_stale(kind char)
+  RETURNS integer LANGUAGE plpgsql VOLATILE AS
+$BODY$
+DECLARE
+	stale record;
+	curs CURSOR FOR SELECT * FROM solaragg.aud_datum_daily_stale
+			WHERE aud_kind = kind
+			ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
+			LIMIT 1
+			FOR UPDATE SKIP LOCKED;
+	result integer := 0;
+BEGIN
+	OPEN curs;
+	FETCH NEXT FROM curs INTO stale;
+
+	IF FOUND THEN
+		CASE kind
+			WHEN 'r' THEN
+				-- raw data counts
+				INSERT INTO solaragg.aud_datum_daily (node_id, source_id, ts_start, datum_count)
+				SELECT
+					node_id,
+					source_id,
+					stale.ts_start,
+					count(*) AS datum_count
+				FROM solardatum.da_datum
+				WHERE node_id = stale.node_id
+					AND source_id = stale.source_id
+					AND ts >= stale.ts_start
+					AND ts < stale.ts_start + interval '1 day'
+				GROUP BY node_id, source_id
+				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+				SET datum_count = EXCLUDED.datum_count;
+
+			WHEN 'h' THEN
+				-- hour data counts
+				INSERT INTO solaragg.aud_datum_daily (node_id, source_id, ts_start, datum_hourly_count)
+				SELECT
+					node_id,
+					source_id,
+					stale.ts_start,
+					count(*) AS datum_hourly_count
+				FROM solaragg.agg_datum_hourly
+				WHERE node_id = stale.node_id
+					AND source_id = stale.source_id
+					AND ts_start >= stale.ts_start
+					AND ts_start < stale.ts_start + interval '1 day'
+				GROUP BY node_id, source_id
+				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+				SET datum_hourly_count = EXCLUDED.datum_hourly_count;
+
+			WHEN 'd' THEN
+				-- day data counts, including sum of hourly audit prop_count, datum_q_count
+				INSERT INTO solaragg.aud_datum_daily (node_id, source_id, ts_start, datum_daily_pres, prop_count, datum_q_count)
+				WITH datum AS (
+					SELECT count(*)::integer::boolean AS datum_daily_pres
+					FROM solaragg.agg_datum_daily d
+					WHERE d.node_id = stale.node_id
+					AND d.source_id = stale.source_id
+					AND d.ts_start = stale.ts_start
+				)
+				SELECT
+					aud.node_id,
+					aud.source_id,
+					stale.ts_start,
+					bool_or(d.datum_daily_pres) AS datum_daily_pres,
+					sum(aud.prop_count) AS prop_count,
+					sum(aud.datum_q_count) AS datum_q_count
+				FROM solaragg.aud_datum_hourly aud
+				CROSS JOIN datum d
+				WHERE aud.node_id = stale.node_id
+					AND aud.source_id = stale.source_id
+					AND aud.ts_start >= stale.ts_start
+					AND aud.ts_start < stale.ts_start + interval '1 day'
+				GROUP BY aud.node_id, aud.source_id
+				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+				SET datum_daily_pres = EXCLUDED.datum_daily_pres,
+					prop_count = EXCLUDED.prop_count,
+					datum_q_count = EXCLUDED.datum_q_count;
+
+			ELSE
+				-- month data counts
+				INSERT INTO solaragg.aud_datum_monthly (node_id, source_id, ts_start,
+					datum_count, datum_hourly_count, datum_daily_count, datum_monthly_pres,
+					prop_count, datum_q_count)
+				WITH datum AS (
+					SELECT count(*)::integer::boolean AS datum_monthly_pres
+					FROM solaragg.agg_datum_monthly d
+					WHERE d.node_id = stale.node_id
+					AND d.source_id = stale.source_id
+					AND d.ts_start = stale.ts_start
+				)
+				SELECT
+					aud.node_id,
+					aud.source_id,
+					stale.ts_start,
+					sum(aud.datum_count) AS datum_count,
+					sum(aud.datum_hourly_count) AS datum_hourly_count,
+					sum(CASE aud.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END) AS datum_daily_count,
+					bool_or(d.datum_monthly_pres) AS datum_monthly_pres,
+					sum(aud.prop_count) AS prop_count,
+					sum(aud.datum_q_count) AS datum_q_count
+				FROM solaragg.aud_datum_daily aud
+				CROSS JOIN datum d
+				WHERE aud.node_id = stale.node_id
+					AND aud.source_id = stale.source_id
+					AND aud.ts_start >= stale.ts_start
+					AND aud.ts_start < stale.ts_start + interval '1 month'
+				GROUP BY aud.node_id, aud.source_id
+				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+				SET datum_count = EXCLUDED.datum_count,
+					datum_hourly_count = EXCLUDED.datum_hourly_count,
+					datum_daily_count = EXCLUDED.datum_daily_count,
+					datum_monthly_pres = EXCLUDED.datum_monthly_pres,
+					prop_count = EXCLUDED.prop_count,
+					datum_q_count = EXCLUDED.datum_q_count;
+		END CASE;
+
+		-- in case node tz changed, remove record(s) from other zone
+		CASE kind
+			WHEN 'm' THEN
+				-- monthly records clean 1 month on either side
+				DELETE FROM solaragg.aud_datum_monthly
+				WHERE node_id = stale.node_id
+					AND source_id = stale.source_id
+					AND ts_start > stale.ts_start - interval '1 month'
+					AND ts_start < stale.ts_start + interval '1 month'
+					AND ts_start <> stale.ts_start;
+			ELSE
+				-- daily records clean 1 day on either side
+				DELETE FROM solaragg.aud_datum_daily
+				WHERE node_id = stale.node_id
+					AND source_id = stale.source_id
+					AND ts_start > stale.ts_start - interval '1 day'
+					AND ts_start < stale.ts_start + interval '1 day'
+					AND ts_start <> stale.ts_start;
+
+				-- recalculate monthly audit based on updated daily values
+				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
+				SELECT
+					date_trunc('month', stale.ts_start AT TIME ZONE node.time_zone) AT TIME ZONE node.time_zone,
+					stale.node_id,
+					stale.source_id,
+					'm'
+				FROM solarnet.node_local_time node
+				WHERE node.node_id = stale.node_id
+				ON CONFLICT DO NOTHING;
+		END CASE;
+
+		-- remove processed stale record
+		DELETE FROM solaragg.aud_datum_daily_stale WHERE CURRENT OF curs;
+		result := 1;
+	END IF;
+	CLOSE curs;
+	RETURN result;
+END;
+$BODY$;
 
 CREATE OR REPLACE FUNCTION solaragg.find_most_recent_hourly(
 	node bigint,

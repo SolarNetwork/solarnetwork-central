@@ -17,7 +17,7 @@
 			, #{userId}, #{authSecret}
 			, CAST(#{status} AS solaruser.user_auth_token_status)
 			, CAST(#{type} AS solaruser.user_auth_token_type)
-			, CAST(#{policyJson} AS json)
+			, CAST(#{policyJson} AS jsonb)
 			)
 	</insert>
 
@@ -28,7 +28,7 @@
 	<update id="update-UserAuthToken" parameterType="UserAuthToken">
 		UPDATE solaruser.user_auth_token SET
 			status = CAST(#{status} AS solaruser.user_auth_token_status),
-			jpolicy = CAST(#{policyJson} AS json)
+			jpolicy = CAST(#{policyJson} AS jsonb)
 		WHERE
 			auth_token = #{id}
 			AND user_id = #{userId}

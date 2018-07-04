@@ -26,7 +26,6 @@ package net.solarnetwork.central.query.biz.dao;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,11 +47,13 @@ import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
@@ -70,7 +71,6 @@ import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityNode;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 
@@ -78,7 +78,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -134,27 +134,42 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 
 	@Override
+	public Set<NodeSourcePK> findAvailableSources(SecurityActor actor, DatumFilter filter) {
+		Set<NodeSourcePK> sources = null;
+		if ( actor instanceof SecurityNode ) {
+			Long nodeId = ((SecurityNode) actor).getNodeId();
+			DatumFilterCommand f = new DatumFilterCommand();
+			f.setNodeId(nodeId);
+			if ( filter != null ) {
+				f.setStartDate(filter.getStartDate());
+				f.setEndDate(filter.getEndDate());
+			}
+			Set<String> sourceIds = generalNodeDatumDao.getAvailableSources(f);
+			if ( sourceIds != null && !sourceIds.isEmpty() ) {
+				sources = new LinkedHashSet<NodeSourcePK>(sourceIds.size());
+				for ( String sourceId : sourceIds ) {
+					sources.add(new NodeSourcePK(nodeId, sourceId));
+				}
+			}
+		} else if ( actor instanceof SecurityToken ) {
+			String tokenId = ((SecurityToken) actor).getToken();
+			sources = userNodeDao.findSourceIdsForToken(tokenId, filter);
+		}
+		if ( sources == null ) {
+			return Collections.emptySet();
+		}
+		return sources;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<Long> findAvailableNodes(SecurityActor actor) {
 		Set<Long> nodeIds = null;
 		if ( actor instanceof SecurityNode ) {
 			nodeIds = Collections.singleton(((SecurityNode) actor).getNodeId());
 		} else if ( actor instanceof SecurityToken ) {
-			SecurityPolicy policy = ((SecurityToken) actor).getPolicy();
-			Long ownerId = ((SecurityToken) actor).getUserId();
-			Set<Long> allUserNodes = userNodeDao.findNodeIdsForUser(ownerId);
-			Set<Long> policyNodes = (policy != null ? policy.getNodeIds() : null);
-			if ( policyNodes != null && !policyNodes.isEmpty() ) {
-				// user might not have access to node from policy anymore, so filter those out now
-				policyNodes = new LinkedHashSet<Long>(policyNodes); // make mutable set
-				for ( Iterator<Long> nodeItr = policyNodes.iterator(); nodeItr.hasNext(); ) {
-					if ( !allUserNodes.contains(nodeItr.next()) ) {
-						nodeItr.remove();
-					}
-				}
-				nodeIds = policyNodes;
-			} else {
-				nodeIds = allUserNodes;
-			}
+			String tokenId = ((SecurityToken) actor).getToken();
+			nodeIds = userNodeDao.findNodeIdsForToken(tokenId);
 		}
 		if ( nodeIds == null || nodeIds.isEmpty() ) {
 			return Collections.emptySet();

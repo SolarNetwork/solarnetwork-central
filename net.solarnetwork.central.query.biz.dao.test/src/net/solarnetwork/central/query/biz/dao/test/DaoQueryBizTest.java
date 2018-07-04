@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.biz.dao.test;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
@@ -35,6 +36,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +54,7 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.domain.FilterResults;
@@ -449,4 +452,48 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 		assertThat("Results", results, hasItems(TEST_NODE_ID - 104, TEST_NODE_ID - 100));
 	}
 
+	private void storeNewDayDatum(Long nodeId, String sourceId, DateTime ts) {
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.agg_datum_daily (ts_start, local_date, node_id, source_id) VALUES (?,?,?,?)",
+				new java.sql.Timestamp(ts.getMillis()), new java.sql.Date(ts.getMillis()), nodeId,
+				sourceId);
+	}
+
+	@Test
+	public void findSourcesForDataToken() {
+		User user = createNewUser(TEST_USER_EMAIL);
+		Set<NodeSourcePK> expectedSources = new LinkedHashSet<NodeSourcePK>(5);
+		for ( int i = 100; i < 105; i++ ) {
+			setupTestNode(TEST_NODE_ID - i);
+			storeNewUserNode(user, getNode(TEST_NODE_ID - i));
+
+			storeNewDayDatum(TEST_NODE_ID - i, "/test/source", new DateTime());
+			expectedSources.add(new NodeSourcePK(TEST_NODE_ID - i, "/test/source"));
+		}
+
+		SecurityToken actor = becomeAuthenticatedReadNodeDataToken(user.getId(), null);
+		Set<NodeSourcePK> results = daoQueryBiz.findAvailableSources(actor, null);
+
+		assertThat("Results", results, equalTo(expectedSources));
+	}
+
+	@Test
+	public void findSourcesForDataTokenWithPolicy() {
+		User user = createNewUser(TEST_USER_EMAIL);
+		for ( int i = 100; i < 105; i++ ) {
+			setupTestNode(TEST_NODE_ID - i);
+			storeNewUserNode(user, getNode(TEST_NODE_ID - i));
+			storeNewDayDatum(TEST_NODE_ID - i, "/test/source/" + i, new DateTime());
+		}
+
+		SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(
+						new HashSet<String>(Arrays.asList("/test/source/102", "/test/source/104")))
+				.build();
+		SecurityToken actor = becomeAuthenticatedReadNodeDataToken(user.getId(), policy);
+
+		Set<NodeSourcePK> results = daoQueryBiz.findAvailableSources(actor, null);
+		assertThat("Results", results, hasItems(new NodeSourcePK(TEST_NODE_ID - 104, "/test/source/104"),
+				new NodeSourcePK(TEST_NODE_ID - 102, "/test/source/102")));
+	}
 }

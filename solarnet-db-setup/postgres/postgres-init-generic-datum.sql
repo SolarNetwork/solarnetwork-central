@@ -77,7 +77,8 @@ CREATE TABLE solaragg.aud_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
   node_id bigint NOT NULL,
   source_id text NOT NULL,
-  prop_count integer NOT NULL,
+  datum_count integer NOT NULL DEFAULT 0,
+  prop_count integer NOT NULL DEFAULT 0,
   datum_q_count integer NOT NULL DEFAULT 0,
   CONSTRAINT aud_datum_hourly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
@@ -92,6 +93,43 @@ CREATE TABLE solaragg.agg_datum_daily (
   jdata_s jsonb,
   jdata_t text[],
  CONSTRAINT agg_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
+);
+
+-- keep track of requests to calculate day/month audit counts, so parallel jobs can compute
+CREATE TABLE solaragg.aud_datum_daily_stale (
+	ts_start timestamp with time zone NOT NULL,
+	node_id bigint NOT NULL,
+	source_id text NOT NULL,
+	aud_kind char(1) NOT NULL,
+	created timestamp NOT NULL DEFAULT now(),
+	CONSTRAINT aud_datum_daily_stale_pkey PRIMARY KEY (aud_kind, ts_start, node_id, source_id)
+);
+
+-- hold the daily level datum audit data
+CREATE TABLE solaragg.aud_datum_daily (
+	ts_start timestamp with time zone NOT NULL,
+	node_id bigint NOT NULL,
+	source_id character varying(64) NOT NULL,
+    prop_count bigint NOT NULL DEFAULT 0,
+    datum_q_count bigint NOT NULL DEFAULT 0,
+	datum_count integer NOT NULL DEFAULT 0,
+	datum_hourly_count smallint NOT NULL DEFAULT 0,
+	datum_daily_pres BOOLEAN NOT NULL DEFAULT FALSE,
+	CONSTRAINT aud_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
+);
+
+-- hold the monthly level datum audit data
+CREATE TABLE solaragg.aud_datum_monthly (
+	ts_start timestamp with time zone NOT NULL,
+	node_id bigint NOT NULL,
+	source_id character varying(64) NOT NULL,
+    prop_count bigint NOT NULL DEFAULT 0,
+    datum_q_count bigint NOT NULL DEFAULT 0,
+	datum_count integer NOT NULL DEFAULT 0,
+	datum_hourly_count smallint NOT NULL DEFAULT 0,
+	datum_daily_count smallint NOT NULL DEFAULT 0,
+	datum_monthly_pres boolean NOT NULL DEFAULT FALSE,
+	CONSTRAINT aud_datum_monthly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
 CREATE TABLE solaragg.agg_datum_monthly (

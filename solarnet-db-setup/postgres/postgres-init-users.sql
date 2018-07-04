@@ -114,62 +114,6 @@ CREATE VIEW solaruser.user_login_role AS
 	FROM solaruser.user_user u
 	INNER JOIN solaruser.user_role r ON r.user_id = u.id;
 
-/* === USER AUTH TOKEN ===================================================== */
-
-CREATE TYPE solaruser.user_auth_token_status AS ENUM
-	('Active', 'Disabled');
-
-CREATE TYPE solaruser.user_auth_token_type AS ENUM
-	('User', 'ReadNodeData');
-
-CREATE TABLE solaruser.user_auth_token (
-	auth_token		CHARACTER(20) NOT NULL,
-	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	user_id			BIGINT NOT NULL,
-	auth_secret		CHARACTER VARYING(32) NOT NULL,
-	status			solaruser.user_auth_token_status NOT NULL,
-	token_type		solaruser.user_auth_token_type NOT NULL,
-	jpolicy			json,
-	CONSTRAINT user_auth_token_pkey PRIMARY KEY (auth_token),
-	CONSTRAINT user_auth_token_user_fk FOREIGN KEY (user_id)
-		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
-);
-
-CREATE OR REPLACE VIEW solaruser.user_auth_token_login AS
-	SELECT t.auth_token AS username,
-		t.auth_secret AS password,
-		u.enabled,
-		u.id AS user_id,
-		u.disp_name AS display_name,
-		t.token_type::character varying AS token_type,
-		t.jpolicy
-	 FROM solaruser.user_auth_token t
-		 JOIN solaruser.user_user u ON u.id = t.user_id
-	WHERE t.status = 'Active'::solaruser.user_auth_token_status;
-
-CREATE VIEW solaruser.user_auth_token_role AS
-	SELECT
-		t.auth_token AS username,
-		'ROLE_'::text || upper(t.token_type::character varying::text) AS authority
-	FROM solaruser.user_auth_token t
-	UNION
-	SELECT
-		t.auth_token AS username,
-		r.role_name AS authority
-	FROM solaruser.user_auth_token t
-	JOIN solaruser.user_role r ON r.user_id = t.user_id AND t.token_type = 'User'::solaruser.user_auth_token_type;
-
-CREATE OR REPLACE FUNCTION solaruser.snws2_signing_key(sign_date date, secret text)
-RETURNS bytea AS $$
-	SELECT hmac('snws2_request', hmac(to_char(sign_date, 'YYYYMMDD'), 'SNWS2' || secret, 'sha256'), 'sha256');
-$$ LANGUAGE SQL STRICT IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION solaruser.snws2_signing_key_hex(sign_date date, secret text)
-RETURNS text AS $$
-	SELECT encode(solaruser.snws2_signing_key(sign_date, secret), 'hex');
-$$ LANGUAGE SQL STRICT IMMUTABLE;
-
 /* === USER NODE =========================================================== */
 
 CREATE TABLE solaruser.user_node (
@@ -191,6 +135,260 @@ CREATE TABLE solaruser.user_node (
 
 /* Add index on user_node to assist finding all nodes for a given user. */
 CREATE INDEX user_node_user_idx ON solaruser.user_node (user_id);
+
+/* === USER AUTH TOKEN ===================================================== */
+
+CREATE TYPE solaruser.user_auth_token_status AS ENUM
+	('Active', 'Disabled');
+
+CREATE TYPE solaruser.user_auth_token_type AS ENUM
+	('User', 'ReadNodeData');
+
+CREATE TABLE solaruser.user_auth_token (
+	auth_token		CHARACTER(20) NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	user_id			BIGINT NOT NULL,
+	auth_secret		CHARACTER VARYING(32) NOT NULL,
+	status			solaruser.user_auth_token_status NOT NULL,
+	token_type		solaruser.user_auth_token_type NOT NULL,
+	jpolicy			jsonb,
+	CONSTRAINT user_auth_token_pkey PRIMARY KEY (auth_token),
+	CONSTRAINT user_auth_token_user_fk FOREIGN KEY (user_id)
+		REFERENCES solaruser.user_user (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+/**
+ * View of active tokens with associated user, token, and policy details.
+ */
+CREATE OR REPLACE VIEW solaruser.user_auth_token_login AS
+	SELECT t.auth_token AS username,
+		t.auth_secret AS password,
+		u.enabled,
+		u.id AS user_id,
+		u.disp_name AS display_name,
+		t.token_type::character varying AS token_type,
+		t.jpolicy
+	 FROM solaruser.user_auth_token t
+		 JOIN solaruser.user_user u ON u.id = t.user_id
+	WHERE t.status = 'Active'::solaruser.user_auth_token_status;
+
+/**
+ * View of granted roles for tokens.
+ */
+CREATE VIEW solaruser.user_auth_token_role AS
+	SELECT
+		t.auth_token AS username,
+		'ROLE_'::text || upper(t.token_type::character varying::text) AS authority
+	FROM solaruser.user_auth_token t
+	UNION
+	SELECT
+		t.auth_token AS username,
+		r.role_name AS authority
+	FROM solaruser.user_auth_token t
+	JOIN solaruser.user_role r ON r.user_id = t.user_id AND t.token_type = 'User'::solaruser.user_auth_token_type;
+
+/**
+ * View of all valid node IDs for a given token.
+ *
+ * This will filter out any node IDs not present on the token policy `nodeIds` array.
+ * Additionally, archived nodes are filtered out.
+ *
+ * Typical query is:
+ *
+ *     SELECT node_id FROM solaruser.user_auth_token_nodes
+ *     WHERE auth_token = 'token-id'
+ */
+CREATE OR REPLACE VIEW solaruser.user_auth_token_nodes AS
+	SELECT t.auth_token, un.node_id
+	FROM solaruser.user_auth_token t
+	INNER JOIN solaruser.user_node un ON un.user_id = t.user_id
+	WHERE
+		un.archived = FALSE
+		AND t.status = 'Active'::solaruser.user_auth_token_status
+		AND (
+			t.jpolicy->'nodeIds' IS NULL
+			OR t.jpolicy->'nodeIds' @> un.node_id::text::jsonb
+		);
+
+/**
+ * View of all valid node source IDs for a given token.
+ *
+ * This will filter out any node IDs not present on the token policy `nodeIds` array,
+ * and then any source IDs not present in the token policy `sourceIds` array. Note
+ * that the `sourceIds` array holds wildcard patterns, which are converted into
+ * regular expressions for filtering purposes.Additionally, archived nodes are filtered
+ * out.
+ *
+ * Note that the output of this view is NOT distinct. That is left to the
+ * caller. Additionally this view provides the `ts` column so that the sources
+ * can be narrowed down to a specific date range. Because source IDs are extracted
+ * from the datum data itself, providing date range criteria when selecting from
+ * this view can greatly speed up the query.
+ *
+ * Typical query is:
+ *
+ *     SELECT DISTINCT node_id, source_id FROM solaruser.user_auth_token_sources
+ *     WHERE auth_token = 'token-id' AND ts > CURRENT_DATE - interval '1 month'
+ */
+CREATE OR REPLACE VIEW solaruser.user_auth_token_sources AS
+	SELECT t.auth_token, un.node_id, d.source_id::text, d.ts_start AS ts
+	FROM solaruser.user_auth_token t
+	INNER JOIN solaruser.user_node un ON un.user_id = t.user_id
+	INNER JOIN solaragg.agg_datum_daily d ON d.node_id = un.node_id
+	LEFT OUTER JOIN LATERAL (
+		SELECT solarcommon.ant_pattern_to_regexp(jsonb_array_elements_text(t.jpolicy->'sourceIds')) AS regex
+		) s_regex ON TRUE
+	WHERE
+		un.archived = FALSE
+		AND t.status = 'Active'::solaruser.user_auth_token_status
+		AND (
+			t.jpolicy->'nodeIds' IS NULL
+			OR t.jpolicy->'nodeIds' @> un.node_id::text::jsonb
+		)
+		AND (
+			t.jpolicy->'sourceIds' IS NULL
+			OR d.source_id ~ s_regex.regex
+		);
+
+/**
+ * Generate a SNWS2 signing key out of a token secret.
+ *
+ * @param sign_date the signing date
+ * @param secret the token secret
+ * @returns the key to use for signing SNWS2 messages
+ */
+CREATE OR REPLACE FUNCTION solaruser.snws2_signing_key(sign_date date, secret text)
+RETURNS bytea LANGUAGE SQL STRICT IMMUTABLE AS $$
+	SELECT hmac('snws2_request', hmac(to_char(sign_date, 'YYYYMMDD'), 'SNWS2' || secret, 'sha256'), 'sha256');
+$$;
+
+/**
+ * Generate a hex-encoded SNWS2 signing key out of a token secret.
+ *
+ * @param sign_date the signing date
+ * @param secret the token secret
+ * @returns the key to use for signing SNWS2 messages, encoded as hex
+ */
+CREATE OR REPLACE FUNCTION solaruser.snws2_signing_key_hex(sign_date date, secret text)
+RETURNS text LANGUAGE SQL STRICT IMMUTABLE AS $$
+	SELECT encode(solaruser.snws2_signing_key(sign_date, secret), 'hex');
+$$;
+
+/**
+ * Generate SNWS2 canonical request data for a GET request and `host` and `x-sn-date` signed headers.
+ *
+ * @param req_date the request date (e.g. the X-SN-Date HTTP header)
+ * @param host the request host (e.g. the Host HTTP header)
+ * @param path the request path
+ * @returns the canonical request data
+ */
+CREATE OR REPLACE FUNCTION solaruser.snws2_canon_request_data(req_date timestamptz, host text, path text)
+RETURNS text LANGUAGE SQL STRICT IMMUTABLE AS
+$$
+	SELECT E'GET\n'
+		|| path || E'\n'
+		|| E'\n' -- query params
+		|| 'host:' || host || E'\n'
+		|| 'x-sn-date:' || solarcommon.to_rfc1123_utc(req_date) || E'\n'
+		|| E'host;x-sn-date\n'
+		|| 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+$$;
+
+/**
+ * Generate the message data to be signed for a SNWS2 authorization header.
+ *
+ * @param req_date the request date
+ * @param canon_request_data the canonical request data
+ * @returns the message data to sign
+ */
+CREATE OR REPLACE FUNCTION solaruser.snws2_signature_data(req_date timestamptz, canon_request_data text)
+RETURNS text LANGUAGE SQL STRICT IMMUTABLE AS
+$$
+	SELECT E'SNWS2-HMAC-SHA256\n'
+		|| to_char(req_date at time zone 'UTC', 'YYYYMMDD"T"HH24MISS"Z"') || E'\n'
+		|| encode(digest(canon_request_data, 'sha256'), 'hex');
+$$;
+
+/**
+ * Compute the SNWS2 signature from the data to sign and the sign key.
+ *
+ * @param signature_data the data to sign, e.g. result of `solaruser.snws2_signature_data(text, timestamptz)`
+ * @param sign_key the key to sign the data with, e.g. result of `solaruser.snws2_signing_key`
+ * @returns the hex-encoded signature result
+ */
+CREATE OR REPLACE FUNCTION solaruser.snws2_signature(signature_data text, sign_key bytea)
+RETURNS text LANGUAGE SQL STRICT IMMUTABLE AS
+$$
+	SELECT encode(hmac(convert_to(signature_data, 'UTF8'), sign_key, 'sha256'), 'hex');
+$$;
+
+/**
+ * Find token details matching a given signature and associated parameters.
+ *
+ * This function will validate the provided signature and parameters matches
+ * the token secret associated with `token_id`, by re-computing the signature
+ * value using a signing date matching any date between `req_date` and 6 days
+ * earlier.
+ *
+ * @param token_id the security token to verify
+ * @param req_date the request date
+ * @param host the request host (e.g. the Host HTTP header)
+ * @param path the request path
+ * @param signature the signature to verify
+ * @returns the user ID, token type, and policy of the verified token, or an empty result if not verified
+ */
+CREATE OR REPLACE FUNCTION solaruser.snws2_find_verified_token_details(
+	token_id text,
+	req_date timestamptz,
+	host text,
+	path text,
+	signature text)
+RETURNS TABLE (user_id bigint, token_type solaruser.user_auth_token_type, jpolicy jsonb)
+LANGUAGE SQL STRICT STABLE ROWS 1 AS
+$$
+	WITH sign_dates AS (
+		SELECT CAST(generate_series(
+			(req_date at time zone 'UTC')::date,
+			(req_date at time zone 'UTC')::date - interval '6 days',
+			-interval '1 day') at time zone 'UTC' AS DATE) as sign_date
+	), canon_data AS (
+		SELECT solaruser.snws2_signature_data(
+			req_date,
+			solaruser.snws2_canon_request_data(req_date, host, path)
+		) AS sign_data
+	)
+	SELECT
+		user_id,
+		token_type,
+		jpolicy
+	FROM solaruser.user_auth_token auth
+	INNER JOIN sign_dates sd ON TRUE
+	INNER JOIN canon_data cd ON TRUE
+	WHERE auth.auth_token = token_id
+		AND auth.status = 'Active'::solaruser.user_auth_token_status
+		AND COALESCE(to_timestamp((jpolicy->>'notAfter')::double precision / 1000), req_date) >= req_date
+		AND solaruser.snws2_signature(
+				sign_data,
+				solaruser.snws2_signing_key(sd.sign_date, auth.auth_secret)
+			) = signature;
+$$;
+
+/**
+ * Validate a request date.
+ *
+ * @param req_date the request date
+ * @param tolerance the tolerance plus/minus to allow from the current time
+ * @returns `true` if the request date is within the given tolerance
+ */
+CREATE OR REPLACE FUNCTION solaruser.snws2_validated_request_date(
+	req_date timestamptz,
+	tolerance interval default interval '5 minutes')
+RETURNS boolean LANGUAGE SQL STRICT STABLE AS
+$$
+	SELECT req_date BETWEEN CURRENT_TIMESTAMP - tolerance AND CURRENT_TIMESTAMP + tolerance;
+$$;
+
 
 /* === USER NODE CONF ======================================================
  * Note the node_id is NOT a foreign key to the node table, because the ID

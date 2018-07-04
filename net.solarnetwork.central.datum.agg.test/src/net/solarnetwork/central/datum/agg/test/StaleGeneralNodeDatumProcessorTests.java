@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.agg.test;
 
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
@@ -38,29 +39,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Resource;
-import javax.sql.DataSource;
 import org.joda.time.DateTime;
-import org.junit.After;
+import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
-import net.solarnetwork.central.test.AbstractCentralTest;
 
 /**
  * Test cases for the {@link StaleGeneralNodeDatumProcessor} class.
@@ -68,25 +60,13 @@ import net.solarnetwork.central.test.AbstractCentralTest;
  * @author matt
  * @version 1.1
  */
-@ContextConfiguration("classpath:/net/solarnetwork/central/test/test-tx-context.xml")
-public class StaleGeneralNodeDatumProcessorTests extends AbstractCentralTest {
+public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 
 	private static final String TEST_JOB_ID = "Test Stale General Node Datum Processor";
 
 	private static final String TEST_SOURCE_ID = "test.source";
 
-	@Resource
-	private DataSource dataSource;
-
-	@Resource
-	private PlatformTransactionManager txManager;
-
-	private JdbcTemplate jdbcTemplate;
-	private TransactionTemplate txTemplate;
-
 	private TestStaleGeneralNodeDatumProcessor job;
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private static final class TestStaleGeneralNodeDatumProcessor
 			extends StaleGeneralNodeDatumProcessor {
@@ -120,12 +100,10 @@ public class StaleGeneralNodeDatumProcessorTests extends AbstractCentralTest {
 
 	}
 
+	@Override
 	@Before
 	public void setup() {
-		Assert.assertNotNull("DataSource", dataSource);
-
-		jdbcTemplate = new JdbcTemplate(dataSource);
-		txTemplate = new TransactionTemplate(txManager);
+		super.setup();
 
 		job = new TestStaleGeneralNodeDatumProcessor(null, jdbcTemplate);
 		job.setJobGroup("Test");
@@ -137,16 +115,10 @@ public class StaleGeneralNodeDatumProcessorTests extends AbstractCentralTest {
 		cleanupDatabase();
 	}
 
-	@After
-	public void cleanupDatabase() {
-		jdbcTemplate.update("DELETE FROM solardatum.da_datum");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_hourly");
-		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_hourly");
-	}
-
 	private static final String SQL_INSERT_DATUM = "INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata_i, jdata_a) "
 			+ "VALUES (?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb))";
+
+	private static final String SQL_SELECT_AUD_DATUM_DAILY_STALE = "SELECT * FROM solaragg.aud_datum_daily_stale ORDER BY aud_kind, ts_start, node_id, source_id";
 
 	private static final long MS_PER_HOUR = 60 * 60 * 1000L;
 
@@ -322,6 +294,68 @@ public class StaleGeneralNodeDatumProcessorTests extends AbstractCentralTest {
 		assertThat("Stale row " + desc + " node_id", row, hasEntry("node_id", (Object) nodeId));
 		assertThat("Stale row " + desc + " source_id", row, hasEntry("source_id", (Object) sourceId));
 		assertThat("Stale row " + desc + " agg_kind", row, hasEntry("agg_kind", (Object) aggKind));
+	}
+
+	@Test
+	public void processStaleDailyAggProducesStaleDailyAuditRows() throws Exception {
+		DateTime ts1 = new DateTime(2018, 6, 22, 14, 55, DateTimeZone.UTC);
+		populateTestData(ts1.getMillis(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
+
+		Timestamp dayStart = new Timestamp(ts1.dayOfMonth().roundFloorCopy().getMillis());
+
+		// reset stale datum to 'h' as if we already processed 'h' rows
+		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
+
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.agg_stale_datum (ts_start,node_id,source_id,agg_kind) VALUES (?,?,?,?)",
+				dayStart, TEST_NODE_ID, TEST_SOURCE_ID, "d");
+
+		// change job to daily agg processing
+		job.setAggregateProcessType("d");
+		assertThat("Job completed", job.executeJob(), equalTo(true));
+
+		List<Map<String, Object>> staleDailyAuditRows = jdbcTemplate
+				.queryForList(SQL_SELECT_AUD_DATUM_DAILY_STALE);
+		assertThat("Stale daily audit row count", staleDailyAuditRows, hasSize(3));
+
+		assertThat("Audit row daily", staleDailyAuditRows.get(0), allOf(
+				hasEntry("ts_start", (Object) dayStart), hasEntry("node_id", (Object) TEST_NODE_ID),
+				hasEntry("source_id", (Object) TEST_SOURCE_ID), hasEntry("aud_kind", (Object) "d")));
+
+		assertThat("Audit row hourly", staleDailyAuditRows.get(1), allOf(
+				hasEntry("ts_start", (Object) dayStart), hasEntry("node_id", (Object) TEST_NODE_ID),
+				hasEntry("source_id", (Object) TEST_SOURCE_ID), hasEntry("aud_kind", (Object) "h")));
+
+		assertThat("Audit row raw", staleDailyAuditRows.get(2), allOf(
+				hasEntry("ts_start", (Object) dayStart), hasEntry("node_id", (Object) TEST_NODE_ID),
+				hasEntry("source_id", (Object) TEST_SOURCE_ID), hasEntry("aud_kind", (Object) "r")));
+	}
+
+	@Test
+	public void processStaleMonthlyAggProducesStaleDailyAuditRow() throws Exception {
+		DateTime ts1 = new DateTime(2018, 6, 22, 14, 55, DateTimeZone.UTC);
+		populateTestData(ts1.getMillis(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
+
+		Timestamp dayStart = new Timestamp(ts1.monthOfYear().roundFloorCopy().getMillis());
+
+		// reset stale datum to 'h' as if we already processed 'h' rows
+		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
+
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.agg_stale_datum (ts_start,node_id,source_id,agg_kind) VALUES (?,?,?,?)",
+				dayStart, TEST_NODE_ID, TEST_SOURCE_ID, "m");
+
+		// change job to monthly agg processing
+		job.setAggregateProcessType("m");
+		assertThat("Job completed", job.executeJob(), equalTo(true));
+
+		List<Map<String, Object>> staleDailyAuditRows = jdbcTemplate
+				.queryForList(SQL_SELECT_AUD_DATUM_DAILY_STALE);
+		assertThat("Stale daily audit row count", staleDailyAuditRows, hasSize(1));
+
+		assertThat("Audit row monthly", staleDailyAuditRows.get(0), allOf(
+				hasEntry("ts_start", (Object) dayStart), hasEntry("node_id", (Object) TEST_NODE_ID),
+				hasEntry("source_id", (Object) TEST_SOURCE_ID), hasEntry("aud_kind", (Object) "m")));
 	}
 
 	@Test
@@ -544,5 +578,4 @@ public class StaleGeneralNodeDatumProcessorTests extends AbstractCentralTest {
 		validateStaleRow("2", staleRows.get(1), ts1.hourOfDay().roundFloorCopy().plusHours(1),
 				TEST_NODE_ID, TEST_SOURCE_ID, "h");
 	}
-
 }

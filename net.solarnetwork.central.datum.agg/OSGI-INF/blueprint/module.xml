@@ -22,11 +22,17 @@
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.agg">
 		<beans:prop key="staleNodeDatumProcessor.maximumRowCount">200</beans:prop>
 		<beans:prop key="staleNodeDatumProcessor.taskCount">4</beans:prop>
-		<beans:prop key="staleLocationDatumProcessor.maximumRowCount">200</beans:prop>
-		<beans:prop key="staleLocationDatumProcessor.taskCount">2</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.hourly.jobCron">15 0/1 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.daily.jobCron">30 0/5 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.monthly.jobCron">45 0/20 * * * ?</beans:prop>
+
+		<beans:prop key="staleAuditNodeDatumProcessor.raw.jobCron">45 0/5 * * * ?</beans:prop>
+		<beans:prop key="staleAuditNodeDatumProcessor.hourly.jobCron">45 3/5 * * * ?</beans:prop>
+		<beans:prop key="staleAuditNodeDatumProcessor.daily.jobCron">30 4/5 * * * ?</beans:prop>
+		<beans:prop key="staleAuditNodeDatumProcessor.monthly.jobCron">45 10/20 * * * ?</beans:prop>
+		
+		<beans:prop key="staleLocationDatumProcessor.maximumRowCount">200</beans:prop>
+		<beans:prop key="staleLocationDatumProcessor.taskCount">2</beans:prop>
 		<beans:prop key="staleGeneralLocationDatumProcessor.hourly.jobCron">5 0/1 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralLocationDatumProcessor.daily.jobCron">20 0/5 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralLocationDatumProcessor.monthly.jobCron">35 0/20 * * * ?</beans:prop>
@@ -42,9 +48,13 @@
 	
 	<!-- Supporting Services -->
 	
+	<!-- A common thread pool for these jobs -->
+	<bean id="executorService" class="java.util.concurrent.Executors" factory-method="newCachedThreadPool" destroy-method="shutdown"/>
+	
 	<bean id="staleGeneralNodeDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
+		<property name="executorService" ref="executorService"/>
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.hourly.jobCron}"/>
@@ -56,6 +66,7 @@
 	<bean id="staleGeneralNodeDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
+		<property name="executorService" ref="executorService"/>
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.daily.jobCron}"/>
@@ -67,6 +78,7 @@
 	<bean id="staleGeneralNodeDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
+		<property name="executorService" ref="executorService"/>
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.monthly.jobCron}"/>
@@ -78,6 +90,7 @@
 	<bean id="staleGeneralLocationDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleGeneralLocationDatumProcessor">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
+		<property name="executorService" ref="executorService"/>
 		<property name="maximumRowCount" value="${staleLocationDatumProcessor.maximumRowCount}"/>
 		<property name="taskCount" value="${staleLocationDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.hourly.jobCron}"/>
@@ -89,6 +102,7 @@
 	<bean id="staleGeneralLocationDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleGeneralLocationDatumProcessor">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
+		<property name="executorService" ref="executorService"/>
 		<property name="maximumRowCount" value="${staleLocationDatumProcessor.maximumRowCount}"/>
 		<property name="taskCount" value="${staleLocationDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.daily.jobCron}"/>
@@ -100,12 +114,61 @@
 	<bean id="staleGeneralLocationDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleGeneralLocationDatumProcessor">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
+		<property name="executorService" ref="executorService"/>
 		<property name="maximumRowCount" value="${staleLocationDatumProcessor.maximumRowCount}"/>
 		<property name="taskCount" value="${staleLocationDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.monthly.jobCron}"/>
 		<property name="jobId" value="StaleGeneralLocationDatumProcessorMonthly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
 		<property name="aggregateProcessType" value="m"/>
+	</bean>
+	
+	<bean id="staleAuditNodeDatumProcessorRaw" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor">
+		<argument ref="eventAdmin"/>
+		<argument ref="jdbcOps"/>
+		<property name="executorService" ref="executorService"/>
+		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="jobCron" value="${staleAuditNodeDatumProcessor.raw.jobCron}"/>
+		<property name="jobId" value="StaleAuditNodeDatumProcessorRaw"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
+		<property name="tierProcessType" value="r"/>
+	</bean>
+	
+	<bean id="staleAuditNodeDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor">
+		<argument ref="eventAdmin"/>
+		<argument ref="jdbcOps"/>
+		<property name="executorService" ref="executorService"/>
+		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="jobCron" value="${staleAuditNodeDatumProcessor.hourly.jobCron}"/>
+		<property name="jobId" value="StaleAuditNodeDatumProcessorHourly"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
+		<property name="tierProcessType" value="h"/>
+	</bean>
+	
+	<bean id="staleAuditNodeDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor">
+		<argument ref="eventAdmin"/>
+		<argument ref="jdbcOps"/>
+		<property name="executorService" ref="executorService"/>
+		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="jobCron" value="${staleAuditNodeDatumProcessor.daily.jobCron}"/>
+		<property name="jobId" value="StaleAuditNodeDatumProcessorDaily"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
+		<property name="tierProcessType" value="d"/>
+	</bean>
+	
+	<bean id="staleAuditNodeDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor">
+		<argument ref="eventAdmin"/>
+		<argument ref="jdbcOps"/>
+		<property name="executorService" ref="executorService"/>
+		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="jobCron" value="${staleAuditNodeDatumProcessor.monthly.jobCron}"/>
+		<property name="jobId" value="StaleAuditNodeDatumProcessorMonthly"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
+		<property name="tierProcessType" value="m"/>
 	</bean>
 	
 	<!-- Published Services -->
@@ -176,4 +239,48 @@
 		</service-properties>
 	</service>
 
+	<service ref="staleAuditNodeDatumProcessorRaw" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{staleAuditNodeDatumProcessorRaw.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<service ref="staleAuditNodeDatumProcessorHourly" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{staleAuditNodeDatumProcessorHourly.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<service ref="staleAuditNodeDatumProcessorDaily" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{staleAuditNodeDatumProcessorDaily.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<service ref="staleAuditNodeDatumProcessorMonthly" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{staleAuditNodeDatumProcessorMonthly.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+	
 </blueprint>

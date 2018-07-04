@@ -21,5 +21,6 @@
 		<!-- Testing support -->
 		
 		<!-- SolarNetwork -->
+		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="1.45.0"/>
     </dependencies>
 </ivy-module>

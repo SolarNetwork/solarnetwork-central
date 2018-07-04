@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -84,10 +85,14 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 	}
 
 	private GeneralNodeDatum getTestInstance() {
+		return getTestInstance(new DateTime(), TEST_NODE_ID, TEST_SOURCE_ID);
+	}
+
+	private GeneralNodeDatum getTestInstance(DateTime created, Long nodeId, String sourceId) {
 		GeneralNodeDatum datum = new GeneralNodeDatum();
-		datum.setCreated(new DateTime());
+		datum.setCreated(created);
 		datum.setNodeId(TEST_NODE_ID);
-		datum.setPosted(new DateTime());
+		datum.setPosted(created);
 		datum.setSourceId(TEST_SOURCE_ID);
 
 		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
@@ -147,21 +152,45 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		validate(datum, entity);
 	}
 
-	private int getAuditDatumHourlyPropCount(GeneralNodeDatum datum) {
+	private Map<String, Object> getAuditDatumHourlyPropCounts(GeneralNodeDatum datum) {
 		DateTime tsStart = datum.getPosted().property(DateTimeFieldType.hourOfDay()).roundFloorCopy();
-		Integer propCount = this.jdbcTemplate.queryForObject(
-				"SELECT prop_count FROM solaragg.aud_datum_hourly WHERE ts_start = ? AND node_id = ? AND source_id = ?",
+		Map<String, Object> propCounts = this.jdbcTemplate.queryForMap(
+				"SELECT datum_count, prop_count FROM solaragg.aud_datum_hourly WHERE ts_start = ? AND node_id = ? AND source_id = ?",
 				new Object[] { new java.sql.Timestamp(tsStart.getMillis()), datum.getNodeId(),
-						datum.getSourceId() },
-				Integer.class);
-		return (propCount == null ? 0 : propCount.intValue());
+						datum.getSourceId() });
+		if ( propCounts == null ) {
+			return Collections.emptyMap();
+		}
+		return propCounts;
 	}
 
 	@Test
 	public void storeNewCreatesHourAuditRecord() {
 		storeNew();
-		int propCount = getAuditDatumHourlyPropCount(lastDatum);
-		assertEquals(3, propCount);
+		Map<String, Object> propCounts = getAuditDatumHourlyPropCounts(lastDatum);
+		assertThat("Audit counts", propCounts,
+				allOf(hasEntry("datum_count", (Object) 1), hasEntry("prop_count", (Object) 3)));
+	}
+
+	@Test
+	public void storeUpdateModifiesHourAuditRecord() {
+		DateTime now = new DateTime();
+		GeneralNodeDatum datum = dao.get(dao.store(getTestInstance(now, TEST_NODE_ID, TEST_SOURCE_ID)));
+
+		Map<String, Object> propCounts = getAuditDatumHourlyPropCounts(datum);
+		assertThat("Audit counts", propCounts,
+				allOf(hasEntry("datum_count", (Object) 1), hasEntry("prop_count", (Object) 3)));
+
+		// re-store the same datum, but with one new property added
+		GeneralNodeDatum updated = getTestInstance(now, TEST_NODE_ID, TEST_SOURCE_ID);
+		updated.getSamples().putAccumulatingSampleValue("just.one.more.after.dinner.mint", 1);
+		dao.store(updated);
+
+		// now datum_count should STILL be 1 because this tracks number CREATED only
+		// while prop_count INCREMENTS for every insert AND update
+		propCounts = getAuditDatumHourlyPropCounts(datum);
+		assertThat("Audit counts", propCounts,
+				allOf(hasEntry("datum_count", (Object) 1), hasEntry("prop_count", (Object) 7)));
 	}
 
 	@Test
@@ -193,8 +222,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		datum3.setSampleJson("{\"a\":{\"watt_hours\":10}}");
 		dao.store(datum3);
 
-		int propCount = getAuditDatumHourlyPropCount(datum1);
-		assertEquals(4, propCount);
+		Map<String, Object> propCounts = getAuditDatumHourlyPropCounts(lastDatum);
+		assertThat("Audit counts", propCounts,
+				allOf(hasEntry("datum_count", (Object) 3), hasEntry("prop_count", (Object) 4)));
 	}
 
 	@Test

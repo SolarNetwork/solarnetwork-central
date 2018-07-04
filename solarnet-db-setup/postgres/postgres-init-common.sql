@@ -225,3 +225,40 @@ CREATE AGGREGATE solarcommon.jsonb_avg_object(jsonb) (
     stype = jsonb,
     finalfunc = solarcommon.jsonb_avg_object_finalfunc
 );
+
+/**
+ * Format a timestamp to RFC 1123 syntax using the GMT time zone.
+ *
+ * This is the form used by SNWS2 signatures and HTTP date headers.
+ *
+ * @param d the timestamp to format
+ * @returns the formatted date, e.g. `Tue, 25 Apr 2017 14:30:00 GMT`
+ */
+CREATE OR REPLACE FUNCTION solarcommon.to_rfc1123_utc(d timestamptz)
+RETURNS text LANGUAGE SQL STRICT IMMUTABLE AS
+$$
+	SELECT to_char(d at time zone 'UTC', 'Dy, FMDD Mon YYYY HH24:MI:SS "GMT"');
+$$;
+
+/**
+ * Convert an Ant path pattern into a regular expression.
+ *
+ * This can be used to convert source ID wildcard patterns into
+ * regular expressions that Postgres understands.
+ *
+ * @param pat the Ant path pattern to convert
+ * @returns the equivalent regular expression
+ */
+CREATE OR REPLACE FUNCTION solarcommon.ant_pattern_to_regexp(pat text)
+RETURNS text LANGUAGE SQL STRICT IMMUTABLE AS
+$$
+	SELECT '^' ||
+		regexp_replace(
+			regexp_replace(
+				regexp_replace(
+					regexp_replace(pat, '([!$()+.:<=>[\\\]^{|}-])', '\\\1', 'g'),
+				E'[?]', E'[^/]', 'g'),
+			E'(?<![*])[*](?![*])', E'[^/]*', 'g'),
+		E'[*]{2}', '(?<=/|^).*(?=/|$)', 'g')
+		|| '$';
+$$;

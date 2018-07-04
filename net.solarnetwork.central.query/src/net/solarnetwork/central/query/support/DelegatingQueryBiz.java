@@ -27,10 +27,12 @@ import java.util.Set;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.FilterResults;
@@ -45,7 +47,7 @@ import net.solarnetwork.central.security.SecurityActor;
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @SuppressWarnings("deprecation")
 public class DelegatingQueryBiz implements QueryBiz {
@@ -125,6 +127,11 @@ public class DelegatingQueryBiz implements QueryBiz {
 	@Override
 	public ReportableInterval getLocationReportableInterval(Long locationId, String sourceId) {
 		return delegate.getLocationReportableInterval(locationId, sourceId);
+	}
+
+	@Override
+	public Set<NodeSourcePK> findAvailableSources(SecurityActor actor, DatumFilter filter) {
+		return delegate.findAvailableSources(actor, filter);
 	}
 
 }

@@ -68,6 +68,7 @@ DECLARE
 	jdata_json jsonb := jdata::jsonb;
 	jdata_prop_count integer := solardatum.datum_prop_count(jdata_json);
 	ts_post_hour timestamp with time zone := date_trunc('hour', ts_post);
+	is_insert boolean := false;
 BEGIN
 	INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata_i, jdata_a, jdata_s, jdata_t)
 	VALUES (ts_crea, node, src, ts_post, jdata_json->'i', jdata_json->'a', jdata_json->'s', solarcommon.json_array_to_text_array(jdata_json->'t'))
@@ -76,13 +77,16 @@ BEGIN
 		jdata_a = EXCLUDED.jdata_a,
 		jdata_s = EXCLUDED.jdata_s,
 		jdata_t = EXCLUDED.jdata_t,
-		posted = EXCLUDED.posted;
+		posted = EXCLUDED.posted
+	RETURNING (xmax = 0)
+	INTO is_insert;
 
 	INSERT INTO solaragg.aud_datum_hourly (
-		ts_start, node_id, source_id, prop_count)
-	VALUES (ts_post_hour, node, src, jdata_prop_count)
+		ts_start, node_id, source_id, datum_count, prop_count)
+	VALUES (ts_post_hour, node, src, 1, jdata_prop_count)
 	ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
-	SET prop_count = aud_datum_hourly.prop_count + EXCLUDED.prop_count;
+	SET datum_count = aud_datum_hourly.datum_count + (CASE is_insert WHEN TRUE THEN 1 ELSE 0 END),
+		prop_count = aud_datum_hourly.prop_count + EXCLUDED.prop_count;
 END;
 $BODY$;
 

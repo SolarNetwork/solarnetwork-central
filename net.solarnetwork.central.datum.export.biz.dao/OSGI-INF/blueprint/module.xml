@@ -47,12 +47,12 @@
 		<argument value="DatumExport-"/>
 	</bean>
 	
-	<bean id="scheduler" class="java.util.concurrent.ScheduledThreadPoolExecutor">
+	<bean id="scheduler" class="java.util.concurrent.ScheduledThreadPoolExecutor" destroy-method="shutdown">
 		<argument value="${scheduler.corePoolSize}"/>
 		<argument ref="threadFactory"/>
 	</bean>
 	
-	<bean id="executor" class="java.util.concurrent.Executors" factory-method="newWorkStealingPool">
+	<bean id="executor" class="java.util.concurrent.Executors" factory-method="newWorkStealingPool" destroy-method="shutdown">
 		<argument value="${executor.parallelism}"/>
 	</bean>
 
