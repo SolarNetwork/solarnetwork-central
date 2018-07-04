@@ -104,6 +104,20 @@ CREATE TABLE solarnet.sn_node (
 );
 
 /******************************************************************************
+ * VIEW solarnet.node_local_time
+ *
+ * View of node time zones and local time information. The local_ts and
+ * local_hour_of_day columns are based on the current (transaction) time.
+ */
+CREATE OR REPLACE VIEW solarnet.node_local_time AS
+	SELECT n.node_id,
+		COALESCE(l.time_zone, 'UTC'::character varying(64)) AS time_zone,
+		CURRENT_TIMESTAMP AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS local_ts,
+		EXTRACT(HOUR FROM CURRENT_TIMESTAMP AT TIME ZONE COALESCE(l.time_zone, 'UTC'))::integer AS local_hour_of_day
+	FROM solarnet.sn_node n
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id;
+
+/******************************************************************************
  * TABLE solarnet.sn_node_meta
  *
  * Stores JSON metadata specific to a node.
