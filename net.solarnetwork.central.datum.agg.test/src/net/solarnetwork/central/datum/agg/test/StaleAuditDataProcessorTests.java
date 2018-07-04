@@ -44,6 +44,7 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -134,12 +135,26 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		job.setJobId(TEST_JOB_ID);
 		job.setMaximumRowCount(10);
 		job.setTierProcessType("r");
-		//job.setMaximumWaitMs(15 * 1000L);
+		job.setMaximumWaitMs(15 * 1000L);
 
 		cleanupDatabase();
+
+		setupTestLocation(TEST_LOC_ID, "UTC");
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
 	}
 
-	//@After
+	protected void setupTestNode(Long nodeId, Long locationId) {
+		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id) values (?,?)", nodeId,
+				locationId);
+	}
+
+	protected void setupTestLocation(Long id, String timeZoneId) {
+		jdbcTemplate.update(
+				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
+				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, timeZoneId);
+	}
+
+	@After
 	public void cleanupDatabase() {
 		jdbcTemplate.update("DELETE FROM solardatum.da_datum");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
@@ -150,6 +165,9 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_daily");
 		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_monthly");
 		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_daily_stale");
+		jdbcTemplate.update("DELETE FROM solarnet.sn_node WHERE node_id = ?", TEST_NODE_ID);
+		jdbcTemplate.update("DELETE FROM solarnet.sn_loc WHERE id = ?", TEST_LOC_ID);
+
 	}
 
 	private static final String SQL_INSERT_DATUM = "INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata_i, jdata_a) "
@@ -163,16 +181,17 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 			@Override
 			public Object doInPreparedStatement(PreparedStatement stmt)
 					throws SQLException, DataAccessException {
-				// round to hour ts
 				long ts = start;
 				for ( int i = 0; i < count; i++ ) {
-					stmt.setTimestamp(1, new Timestamp(ts));
+					Timestamp created = new Timestamp(ts);
+					stmt.setTimestamp(1, created);
 					stmt.setLong(2, nodeId);
 					stmt.setString(3, sourceId);
 					stmt.setTimestamp(4, new Timestamp(now));
 					stmt.setString(5, "{\"watts\":125}");
 					stmt.setString(6, "{\"wattHours\":10}");
 					stmt.executeUpdate();
+					log.debug("Insert datum ts = {}, node = {}, source = {}", created, nodeId, sourceId);
 					ts += step;
 				}
 				return null;
@@ -216,6 +235,15 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 	private List<Map<String, Object>> listAuditDatumMonthlyRows() {
 		return jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.aud_datum_monthly ORDER BY ts_start,node_id,source_id");
+	}
+
+	private void assertAuditDatumDailyStaleRow(String desc, Map<String, Object> row, long ts,
+			Long nodeId, String sourceId, String kind) {
+		assertThat(desc + " not null", row, notNullValue());
+		assertThat(desc + " data", row,
+				allOf(hasEntry("ts_start", (Object) new Timestamp(ts)),
+						hasEntry("node_id", (Object) nodeId), hasEntry("source_id", (Object) sourceId),
+						hasEntry("aud_kind", (Object) kind)));
 	}
 
 	private void assertAuditDatumDailyRow(String desc, Map<String, Object> row, long ts, Long nodeId,
@@ -309,7 +337,9 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 
 		// then
 		List<Map<String, Object>> rows = listAuditDatumDailyStaleRows();
-		assertThat("Audit stale table empty", rows, hasSize(0));
+		assertThat("Audit stale table", rows, hasSize(1));
+		assertAuditDatumDailyStaleRow("Month stale", rows.get(0),
+				start.monthOfYear().roundFloorCopy().getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, "m");
 
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
@@ -335,7 +365,9 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 
 		// then
 		List<Map<String, Object>> rows = listAuditDatumDailyStaleRows();
-		assertThat("Audit stale table empty", rows, hasSize(0));
+		assertThat("Audit stale table", rows, hasSize(1));
+		assertAuditDatumDailyStaleRow("Month stale", rows.get(0),
+				start.monthOfYear().roundFloorCopy().getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, "m");
 
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
@@ -367,7 +399,9 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 
 		// then
 		List<Map<String, Object>> rows = listAuditDatumDailyStaleRows();
-		assertThat("Audit stale table empty", rows, hasSize(0));
+		assertThat("Audit stale table", rows, hasSize(1));
+		assertAuditDatumDailyStaleRow("Month stale", rows.get(0),
+				start.monthOfYear().roundFloorCopy().getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, "m");
 
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
@@ -403,7 +437,9 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 
 		// then
 		List<Map<String, Object>> rows = listAuditDatumDailyStaleRows();
-		assertThat("Audit stale table empty", rows, hasSize(0));
+		assertThat("Audit stale table", rows, hasSize(1));
+		assertAuditDatumDailyStaleRow("Month stale", rows.get(0),
+				start.monthOfYear().roundFloorCopy().getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, "m");
 
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
@@ -442,7 +478,9 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 
 		// then
 		List<Map<String, Object>> rows = listAuditDatumDailyStaleRows();
-		assertThat("Audit stale table empty", rows, hasSize(0));
+		assertThat("Audit stale table", rows, hasSize(1));
+		assertAuditDatumDailyStaleRow("Month stale", rows.get(0),
+				start.monthOfYear().roundFloorCopy().getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, "m");
 
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
@@ -485,7 +523,9 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 
 		// then
 		List<Map<String, Object>> rows = listAuditDatumDailyStaleRows();
-		assertThat("Audit stale table empty", rows, hasSize(0));
+		assertThat("Audit stale table", rows, hasSize(1));
+		assertAuditDatumDailyStaleRow("Month stale", rows.get(0),
+				start.monthOfYear().roundFloorCopy().getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, "m");
 
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
@@ -590,7 +630,8 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 
 	@Test
 	public void runParallelTasks() throws Exception {
-		final DateTime start = new DateTime(DateTimeZone.UTC).hourOfDay().roundFloorCopy();
+		// start at midnight UTC
+		final DateTime start = new DateTime(DateTimeZone.UTC).dayOfMonth().roundFloorCopy();
 
 		// 5 nodes posting 8 samples 12 hours apart (2 per day, 4 days)
 		for ( long nodeId = TEST_NODE_ID; nodeId > TEST_NODE_ID - 5; nodeId-- ) {
@@ -598,9 +639,8 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		}
 
 		// populate 4 stale daily audit rows for raw data
-		final DateTime startDay = start.dayOfMonth().roundFloorCopy();
-		for ( long ts = startDay.getMillis(); ts < startDay.getMillis()
-				+ TimeUnit.DAYS.toMillis(4); ts += TimeUnit.DAYS.toMillis(1) ) {
+		for ( long ts = start.getMillis(); ts < start.dayOfMonth().addToCopy(4)
+				.getMillis(); ts += TimeUnit.DAYS.toMillis(1) ) {
 			for ( long nodeId = TEST_NODE_ID; nodeId > TEST_NODE_ID - 5; nodeId-- ) {
 				insertAuditDatumDailyStaleRow("r", ts, nodeId, TEST_SOURCE_ID);
 			}
@@ -615,13 +655,15 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		assertThat("Job completed", job.executeJob(), equalTo(true));
 
 		List<Map<String, Object>> rows = listAuditDatumDailyStaleRows();
-		assertThat("Audit stale table empty", rows, hasSize(0));
+		assertThat("Audit stale table", rows, hasSize(1));
+		assertAuditDatumDailyStaleRow("Month stale", rows.get(0),
+				start.monthOfYear().roundFloorCopy().getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, "m");
 
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(20));
 		int i = 0;
-		for ( long ts = startDay.getMillis(); ts < startDay.getMillis()
-				+ TimeUnit.DAYS.toMillis(4); ts += TimeUnit.DAYS.toMillis(1) ) {
+		for ( long ts = start.getMillis(); ts < start.dayOfMonth().addToCopy(4)
+				.getMillis(); ts += TimeUnit.DAYS.toMillis(1) ) {
 			for ( long nodeId = TEST_NODE_ID - 4; nodeId <= TEST_NODE_ID; nodeId++ ) {
 				assertAuditDatumDailyRow("Audit row " + (i + 1), rows.get(i), ts, nodeId, TEST_SOURCE_ID,
 						2, 0, false);
@@ -729,8 +771,10 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 
 		// only the previously locked stale row should be left
 		staleRows = listAuditDatumDailyStaleRows();
-		assertThat("Only locked row remains", staleRows, hasSize(1));
-		Assert.assertEquals("Locked stale row remains", oneStaleRow, staleRows.get(0));
+		assertThat("Locked row and stale month remain", staleRows, hasSize(2));
+		assertAuditDatumDailyStaleRow("Month stale", staleRows.get(0),
+				start.monthOfYear().roundFloorCopy().getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, "m");
+		assertThat("Locked stale row remains", oneStaleRow, equalTo(staleRows.get(1)));
 	}
 
 }

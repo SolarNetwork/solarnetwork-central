@@ -426,6 +426,17 @@ BEGIN
 					AND ts_start > stale.ts_start - interval '1 day'
 					AND ts_start < stale.ts_start + interval '1 day'
 					AND ts_start <> stale.ts_start;
+
+				-- recalculate monthly audit based on updated daily values
+				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
+				SELECT
+					date_trunc('month', stale.ts_start AT TIME ZONE node.time_zone) AT TIME ZONE node.time_zone,
+					stale.node_id,
+					stale.source_id,
+					'm'
+				FROM solarnet.node_local_time node
+				WHERE node.node_id = stale.node_id
+				ON CONFLICT DO NOTHING;
 		END CASE;
 
 		-- remove processed stale record
