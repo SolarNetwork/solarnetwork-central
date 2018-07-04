@@ -44,7 +44,6 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -140,7 +139,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		cleanupDatabase();
 	}
 
-	@After
+	//@After
 	public void cleanupDatabase() {
 		jdbcTemplate.update("DELETE FROM solardatum.da_datum");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
@@ -187,19 +186,20 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 				kind, new Timestamp(ts), nodeId, sourceId);
 	}
 
-	private void insertAuditDatumDailyRow(long ts, Long nodeId, String sourceId, Long rawCount,
-			Long hourCount, Long dailyCount, Long propInCount, Long datumOutCount) {
+	private void insertAuditDatumDailyRow(long ts, Long nodeId, String sourceId, Integer rawCount,
+			Integer hourCount, Boolean dailyPresent, Long propInCount, Long datumOutCount) {
 		jdbcTemplate.update(
-				"INSERT INTO solaragg.aud_datum_daily (ts_start,node_id,source_id,datum_count,datum_hourly_count,datum_daily_count,prop_count,datum_q_count) VALUES (?,?,?,?,?,?,?,?)",
-				new Timestamp(ts), nodeId, sourceId, rawCount, hourCount, dailyCount, propInCount,
+				"INSERT INTO solaragg.aud_datum_daily (ts_start,node_id,source_id,datum_count,datum_hourly_count,datum_daily_pres,prop_count,datum_q_count) VALUES (?,?,?,?,?,?,?,?)",
+				new Timestamp(ts), nodeId, sourceId, rawCount, hourCount, dailyPresent, propInCount,
 				datumOutCount);
 	}
 
 	private void insertAuditDatumMonthlyRow(long ts, Long nodeId, String sourceId, Long rawCount,
-			Long hourCount, Long dailyCount, Long monthCount, Long propInCount, Long datumOutCount) {
+			Long hourCount, Long dailyCount, Boolean monthPresent, Long propInCount,
+			Long datumOutCount) {
 		jdbcTemplate.update(
-				"INSERT INTO solaragg.aud_datum_monthly (ts_start,node_id,source_id,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count,prop_count,datum_q_count) VALUES (?,?,?,?,?,?,?,?,?)",
-				new Timestamp(ts), nodeId, sourceId, rawCount, hourCount, dailyCount, monthCount,
+				"INSERT INTO solaragg.aud_datum_monthly (ts_start,node_id,source_id,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres,prop_count,datum_q_count) VALUES (?,?,?,?,?,?,?,?,?)",
+				new Timestamp(ts), nodeId, sourceId, rawCount, hourCount, dailyCount, monthPresent,
 				propInCount, datumOutCount);
 	}
 
@@ -219,19 +219,19 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 	}
 
 	private void assertAuditDatumDailyRow(String desc, Map<String, Object> row, long ts, Long nodeId,
-			String sourceId, Long rawCount, Long hourCount, Long dailyCount) {
+			String sourceId, Integer rawCount, Integer hourCount, Boolean dailyPresent) {
 		assertThat(desc + " not null", row, notNullValue());
 		assertThat(desc + " data", row,
 				allOf(hasEntry("ts_start", (Object) new Timestamp(ts)),
 						hasEntry("node_id", (Object) nodeId), hasEntry("source_id", (Object) sourceId),
 						hasEntry("datum_count", (Object) rawCount),
 						hasEntry("datum_hourly_count", (Object) hourCount),
-						hasEntry("datum_daily_count", (Object) dailyCount)));
+						hasEntry("datum_daily_pres", (Object) dailyPresent)));
 	}
 
 	@SuppressWarnings("unchecked")
 	private void assertAuditDatumDailyRow(String desc, Map<String, Object> row, long ts, Long nodeId,
-			String sourceId, Long rawCount, Long hourCount, Long dailyCount, Long propInCount,
+			String sourceId, Integer rawCount, Integer hourCount, Boolean dailyPresent, Long propInCount,
 			Long datumOutCount) {
 		assertThat(desc + " not null", row, notNullValue());
 		assertThat(desc + " data", row,
@@ -239,15 +239,15 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 						hasEntry("node_id", (Object) nodeId), hasEntry("source_id", (Object) sourceId),
 						hasEntry("datum_count", (Object) rawCount),
 						hasEntry("datum_hourly_count", (Object) hourCount),
-						hasEntry("datum_daily_count", (Object) dailyCount),
+						hasEntry("datum_daily_pres", (Object) dailyPresent),
 						hasEntry("prop_count", (Object) propInCount),
 						hasEntry("datum_q_count", (Object) datumOutCount)));
 	}
 
 	@SuppressWarnings("unchecked")
 	private void assertAuditDatumMonthlyRow(String desc, Map<String, Object> row, long ts, Long nodeId,
-			String sourceId, Long rawCount, Long hourCount, Long dailyCount, Long monthCount,
-			Long propInCount, Long datumOutCount) {
+			String sourceId, Integer rawCount, Integer hourCount, Integer dailyCount,
+			Boolean monthPresent, Long propInCount, Long datumOutCount) {
 		assertThat(desc + " not null", row, notNullValue());
 		assertThat(desc + " data", row,
 				allOf(hasEntry("ts_start", (Object) new Timestamp(ts)),
@@ -255,7 +255,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 						hasEntry("datum_count", (Object) rawCount),
 						hasEntry("datum_hourly_count", (Object) hourCount),
 						hasEntry("datum_daily_count", (Object) dailyCount),
-						hasEntry("datum_monthly_count", (Object) monthCount),
+						hasEntry("datum_monthly_pres", (Object) monthPresent),
 						hasEntry("prop_count", (Object) propInCount),
 						hasEntry("datum_q_count", (Object) datumOutCount)));
 	}
@@ -314,7 +314,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumDailyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
-				TEST_SOURCE_ID, 2L, 0L, 0L);
+				TEST_SOURCE_ID, 2, 0, false);
 	}
 
 	@Test
@@ -326,7 +326,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		insertAuditDatumDailyStaleRow("r", start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID);
 
 		// insert existing row with counts that we'll ignore or update
-		insertAuditDatumDailyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, 10L, 20L, 30L, 40L,
+		insertAuditDatumDailyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, 10, 20, false, 40L,
 				50L);
 
 		// when
@@ -340,7 +340,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumDailyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
-				TEST_SOURCE_ID, 2L, 20L, 30L, 40L, 50L);
+				TEST_SOURCE_ID, 2, 20, false, 40L, 50L);
 	}
 
 	@Test
@@ -358,6 +358,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 			insertAggDatumHourlyRow(start.getMillis() + TimeUnit.MINUTES.toMillis(i), TEST_NODE_ID,
 					"not.this.source", testData);
 		}
+
 		insertAuditDatumDailyStaleRow("h", start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID);
 
 		// when
@@ -371,7 +372,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumDailyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
-				TEST_SOURCE_ID, 0L, 3L, 0L);
+				TEST_SOURCE_ID, 0, 3, false);
 	}
 
 	@Test
@@ -381,18 +382,19 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		final DateTime start = new DateTime(DateTimeZone.UTC).hourOfDay().roundFloorCopy();
 
 		// insert existing row with counts that we'll ignore or update
-		insertAuditDatumDailyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, 10L, 20L, 30L, 40L,
+		insertAuditDatumDailyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, 10, 20, false, 40L,
 				50L);
 
-		// insert some day rows to drive hourly count value
+		// insert some hour rows to drive hourly count value
 		for ( int i = 0; i < 3; i++ ) {
-			insertAggDatumHourlyRow(start.getMillis() + TimeUnit.MINUTES.toMillis(i), TEST_NODE_ID,
+			insertAggDatumHourlyRow(start.hourOfDay().addToCopy(i).getMillis(), TEST_NODE_ID,
 					TEST_SOURCE_ID, testData);
 
 			// insert some other node data to verify just the node we're interested in comes back
-			insertAggDatumHourlyRow(start.getMillis() + TimeUnit.MINUTES.toMillis(i), TEST_NODE_ID,
+			insertAggDatumHourlyRow(start.hourOfDay().addToCopy(i).getMillis(), TEST_NODE_ID,
 					"not.this.source", testData);
 		}
+
 		insertAuditDatumDailyStaleRow("h", start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID);
 
 		// when
@@ -406,7 +408,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumDailyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
-				TEST_SOURCE_ID, 10L, 3L, 30L, 40L, 50L);
+				TEST_SOURCE_ID, 10, 3, false, 40L, 50L);
 	}
 
 	@Test
@@ -445,7 +447,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumDailyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
-				TEST_SOURCE_ID, 0L, 0L, 1L, propCount, datumQueryCount);
+				TEST_SOURCE_ID, 0, 0, true, propCount, datumQueryCount);
 	}
 
 	@Test
@@ -472,7 +474,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		}
 
 		// insert existing row with counts that we'll ignore or update
-		insertAuditDatumDailyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, 10L, 20L, 30L, 40L,
+		insertAuditDatumDailyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, 10, 20, false, 40L,
 				50L);
 
 		insertAuditDatumDailyStaleRow("d", start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID);
@@ -488,7 +490,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		rows = listAuditDatumDailyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumDailyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
-				TEST_SOURCE_ID, 10L, 20L, 1L, propCount, datumQueryCount);
+				TEST_SOURCE_ID, 10, 20, true, propCount, datumQueryCount);
 	}
 
 	@Test
@@ -499,18 +501,19 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		final DateTime start = new DateTime(DateTimeZone.UTC).dayOfMonth().roundFloorCopy();
 
 		// insert 5 daily rows to drive audit data
-		long rawCount = 0;
-		long hourCount = 0;
-		long dailyCount = 0;
+		int rawCount = 0;
+		int hourCount = 0;
+		int dailyCount = 0;
 		long propCount = 0;
 		long datumQueryCount = 0;
 		for ( int i = 0; i < 5; i++ ) {
 			long ts = start.getMillis() + TimeUnit.HOURS.toMillis(i);
-			long r = i, h = i + 10, d = i + 100, p = i + 1000, q = i + 10000;
-			insertAuditDatumDailyRow(ts, TEST_NODE_ID, TEST_SOURCE_ID, r, h, d, p, q);
+			int r = i, h = i + 10;
+			long p = i + 1000, q = i + 10000;
+			insertAuditDatumDailyRow(ts, TEST_NODE_ID, TEST_SOURCE_ID, r, h, true, p, q);
 			rawCount += r;
 			hourCount += h;
-			dailyCount += d;
+			dailyCount++;
 			propCount += p;
 			datumQueryCount += q;
 		}
@@ -522,7 +525,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		}
 
 		// insert existing row with counts that we'll ignore or update
-		insertAuditDatumMonthlyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, 10L, 20L, 30L, 40L,
+		insertAuditDatumMonthlyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, 10L, 20L, 30L, false,
 				50L, 60L);
 
 		insertAuditDatumDailyStaleRow("m", start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID);
@@ -538,7 +541,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		rows = listAuditDatumMonthlyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumMonthlyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
-				TEST_SOURCE_ID, rawCount, hourCount, dailyCount, 7L, propCount, datumQueryCount);
+				TEST_SOURCE_ID, rawCount, hourCount, dailyCount, true, propCount, datumQueryCount);
 	}
 
 	@Test
@@ -549,27 +552,25 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		final DateTime start = new DateTime(DateTimeZone.UTC).dayOfMonth().roundFloorCopy();
 
 		// insert 5 daily rows to drive audit data
-		long rawCount = 0;
-		long hourCount = 0;
-		long dailyCount = 0;
+		int rawCount = 0;
+		int hourCount = 0;
+		int dailyCount = 0;
 		long propCount = 0;
 		long datumQueryCount = 0;
 		for ( int i = 0; i < 5; i++ ) {
 			long ts = start.getMillis() + TimeUnit.HOURS.toMillis(i);
-			long r = i, h = i + 10, d = i + 100, p = i + 1000, q = i + 10000;
-			insertAuditDatumDailyRow(ts, TEST_NODE_ID, TEST_SOURCE_ID, r, h, d, p, q);
+			int r = i, h = i + 10;
+			long p = i + 1000, q = i + 10000;
+			insertAuditDatumDailyRow(ts, TEST_NODE_ID, TEST_SOURCE_ID, r, h, true, p, q);
 			rawCount += r;
 			hourCount += h;
-			dailyCount += d;
+			dailyCount++;
 			propCount += p;
 			datumQueryCount += q;
 		}
 
-		// insert a couple of month rows to drive day count value
-		for ( int i = 0; i < 7; i++ ) {
-			insertAggDatumMonthlyRow(start.getMillis() + TimeUnit.DAYS.toMillis(i), TEST_NODE_ID,
-					TEST_SOURCE_ID, testData);
-		}
+		// insert a month row to drive month present value
+		insertAggDatumMonthlyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, testData);
 
 		insertAuditDatumDailyStaleRow("m", start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID);
 
@@ -584,7 +585,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 		rows = listAuditDatumMonthlyRows();
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumMonthlyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
-				TEST_SOURCE_ID, rawCount, hourCount, dailyCount, 7L, propCount, datumQueryCount);
+				TEST_SOURCE_ID, rawCount, hourCount, dailyCount, true, propCount, datumQueryCount);
 	}
 
 	@Test
@@ -623,7 +624,7 @@ public class StaleAuditDataProcessorTests extends AbstractCentralTest {
 				+ TimeUnit.DAYS.toMillis(4); ts += TimeUnit.DAYS.toMillis(1) ) {
 			for ( long nodeId = TEST_NODE_ID - 4; nodeId <= TEST_NODE_ID; nodeId++ ) {
 				assertAuditDatumDailyRow("Audit row " + (i + 1), rows.get(i), ts, nodeId, TEST_SOURCE_ID,
-						2L, 0L, 0L);
+						2, 0, false);
 				i++;
 			}
 		}

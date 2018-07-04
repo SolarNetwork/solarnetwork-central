@@ -15,9 +15,9 @@ CREATE TABLE solaragg.aud_datum_daily (
 	source_id character varying(64) NOT NULL,
     prop_count bigint NOT NULL DEFAULT 0,
     datum_q_count bigint NOT NULL DEFAULT 0,
-	datum_count bigint NOT NULL DEFAULT 0,
-	datum_hourly_count bigint NOT NULL DEFAULT 0,
-	datum_daily_count bigint NOT NULL DEFAULT 0,
+	datum_count integer NOT NULL DEFAULT 0,
+	datum_hourly_count smallint NOT NULL DEFAULT 0,
+	datum_daily_pres BOOLEAN NOT NULL DEFAULT FALSE,
 	CONSTRAINT aud_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
@@ -28,10 +28,10 @@ CREATE TABLE solaragg.aud_datum_monthly (
 	source_id character varying(64) NOT NULL,
     prop_count bigint NOT NULL DEFAULT 0,
     datum_q_count bigint NOT NULL DEFAULT 0,
-	datum_count bigint NOT NULL DEFAULT 0,
-	datum_hourly_count bigint NOT NULL DEFAULT 0,
-	datum_daily_count bigint NOT NULL DEFAULT 0,
-	datum_monthly_count bigint NOT NULL DEFAULT 0,
+	datum_count integer NOT NULL DEFAULT 0,
+	datum_hourly_count smallint NOT NULL DEFAULT 0,
+	datum_daily_count smallint NOT NULL DEFAULT 0,
+	datum_monthly_pres boolean NOT NULL DEFAULT FALSE,
 	CONSTRAINT aud_datum_monthly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
@@ -332,20 +332,19 @@ BEGIN
 
 			WHEN 'd' THEN
 				-- day data counts, including sum of hourly audit prop_count, datum_q_count
-				INSERT INTO solaragg.aud_datum_daily (node_id, source_id, ts_start, datum_daily_count, prop_count, datum_q_count)
+				INSERT INTO solaragg.aud_datum_daily (node_id, source_id, ts_start, datum_daily_pres, prop_count, datum_q_count)
 				WITH datum AS (
-					SELECT count(*) AS datum_daily_count
+					SELECT count(*)::integer::boolean AS datum_daily_pres
 					FROM solaragg.agg_datum_daily d
 					WHERE d.node_id = stale.node_id
 					AND d.source_id = stale.source_id
-					AND d.ts_start >= stale.ts_start
-					AND d.ts_start < stale.ts_start + interval '1 day'
+					AND d.ts_start = stale.ts_start
 				)
 				SELECT
 					aud.node_id,
 					aud.source_id,
 					stale.ts_start,
-					min(d.datum_daily_count),
+					bool_or(d.datum_daily_pres) AS datum_daily_pres,
 					sum(aud.prop_count) AS prop_count,
 					sum(aud.datum_q_count) AS datum_q_count
 				FROM solaragg.aud_datum_hourly aud
@@ -356,22 +355,21 @@ BEGIN
 					AND aud.ts_start < stale.ts_start + interval '1 day'
 				GROUP BY aud.node_id, aud.source_id
 				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
-				SET datum_daily_count = EXCLUDED.datum_daily_count,
+				SET datum_daily_pres = EXCLUDED.datum_daily_pres,
 					prop_count = EXCLUDED.prop_count,
 					datum_q_count = EXCLUDED.datum_q_count;
 
 			ELSE
 				-- month data counts
 				INSERT INTO solaragg.aud_datum_monthly (node_id, source_id, ts_start,
-					datum_count, datum_hourly_count, datum_daily_count, datum_monthly_count,
+					datum_count, datum_hourly_count, datum_daily_count, datum_monthly_pres,
 					prop_count, datum_q_count)
 				WITH datum AS (
-					SELECT count(*) AS datum_monthly_count
+					SELECT count(*)::integer::boolean AS datum_monthly_pres
 					FROM solaragg.agg_datum_monthly d
 					WHERE d.node_id = stale.node_id
 					AND d.source_id = stale.source_id
-					AND d.ts_start >= stale.ts_start
-					AND d.ts_start < stale.ts_start + interval '1 month'
+					AND d.ts_start = stale.ts_start
 				)
 				SELECT
 					aud.node_id,
@@ -379,8 +377,8 @@ BEGIN
 					stale.ts_start,
 					sum(aud.datum_count) AS datum_count,
 					sum(aud.datum_hourly_count) AS datum_hourly_count,
-					sum(aud.datum_daily_count) AS datum_daily_count,
-					min(d.datum_monthly_count) AS datum_monthly_count,
+					sum(CASE aud.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END) AS datum_daily_count,
+					bool_or(d.datum_monthly_pres) AS datum_monthly_pres,
 					sum(aud.prop_count) AS prop_count,
 					sum(aud.datum_q_count) AS datum_q_count
 				FROM solaragg.aud_datum_daily aud
@@ -394,7 +392,7 @@ BEGIN
 				SET datum_count = EXCLUDED.datum_count,
 					datum_hourly_count = EXCLUDED.datum_hourly_count,
 					datum_daily_count = EXCLUDED.datum_daily_count,
-					datum_monthly_count = EXCLUDED.datum_monthly_count,
+					datum_monthly_pres = EXCLUDED.datum_monthly_pres,
 					prop_count = EXCLUDED.prop_count,
 					datum_q_count = EXCLUDED.datum_q_count;
 		END CASE;
