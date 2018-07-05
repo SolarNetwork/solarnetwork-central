@@ -187,7 +187,7 @@
 		{call solaragg.find_audit_datum_interval(?, ?, ?, ?, ?, ?)}
 	</update>
 
-	<select id="find-general-audit-hourly-prop-count" resultType="long" parameterType="map">
+	<select id="find-general-audit-hourly-prop-count" resultType="long">
 		SELECT SUM(CAST(
 			<choose>
 				<when test="dataPath == 'DatumQuery'">aud.datum_q_count</when>
@@ -207,6 +207,30 @@
 			</if>
 			<if test="endDate != null">
 				AND aud.ts_start &lt; #{endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+		</where>
+	</select>
+	
+	<select id="find-general-audit-datum-stored-count" resultType="long">
+		SELECT
+			SUM(CAST(datum_count 
+				+ datum_hourly_count 
+				+ datum_daily_count
+				+ datum_monthly_count
+				AS BIGINT)) AS total_datum_count
+		FROM solaragg.aud_acc_datum_daily
+		<where>
+			<if test="nodeIds != null and nodeIds.length > 0">
+				AND node_id = ANY(#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[])
+			</if>
+			<if test="sourceIds != null and sourceIds.length > 0">
+				AND source_id = ANY(#{sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
+			<if test="startDate != null">
+				AND ts_start &gt;= #{startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+			<if test="endDate != null">
+				AND ts_start &lt; #{endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
 			</if>
 		</where>
 	</select>

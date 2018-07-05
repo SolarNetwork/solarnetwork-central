@@ -56,7 +56,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -133,11 +133,20 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * The default query name for
-	 * {@link #getAuditPropertyCountTotal(GeneralNodeDatumFilter)}.
+	 * {@link #getAuditCountTotal(GeneralNodeDatumFilter)}.
 	 * 
 	 * @since 1.2
 	 */
 	public static final String QUERY_FOR_AUDIT_HOURLY_PROP_COUNT = "find-general-audit-hourly-prop-count";
+
+	/**
+	 * The default query name for
+	 * {@link #getAuditCountTotal(GeneralNodeDatumFilter)} when the
+	 * {@code dataPath} value is {@literal DatumStored}.
+	 * 
+	 * @since 1.7
+	 */
+	public static final String QUERY_FOR_AUDIT_DATUM_STORED_COUNT = "find-general-audit-datum-stored-count";
 
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
@@ -145,6 +154,7 @@ public class MyBatisGeneralNodeDatumDao
 	private String queryForMostRecentReporting;
 	private String queryForAuditInterval;
 	private String queryForAuditHourlyPropertyCount;
+	private String queryForAuditDatumStoredCount;
 
 	/**
 	 * Default constructor.
@@ -157,6 +167,7 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForMostRecentReporting = QUERY_FOR_MOST_RECENT_REPORTING;
 		this.queryForAuditInterval = QUERY_FOR_AUDIT_INTERVAL;
 		this.queryForAuditHourlyPropertyCount = QUERY_FOR_AUDIT_HOURLY_PROP_COUNT;
+		this.queryForAuditDatumStoredCount = QUERY_FOR_AUDIT_DATUM_STORED_COUNT;
 	}
 
 	/**
@@ -471,6 +482,9 @@ public class MyBatisGeneralNodeDatumDao
 	 * 
 	 * <dt>Property</dt>
 	 * <dd>The count of datum properties added.</dd>
+	 * 
+	 * <dt>DatumStored</dt>
+	 * <dd>The total count of datum stored across all time.</dd>
 	 * </dl>
 	 * 
 	 * <p>
@@ -483,7 +497,14 @@ public class MyBatisGeneralNodeDatumDao
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public long getAuditCountTotal(GeneralNodeDatumFilter filter) {
-		Long result = selectLong(queryForAuditHourlyPropertyCount, filter);
+		String auditType = filter.getDataPath();
+		String stmtName;
+		if ( "DatumStored".equals(auditType) ) {
+			stmtName = queryForAuditDatumStoredCount;
+		} else {
+			stmtName = queryForAuditHourlyPropertyCount;
+		}
+		Long result = selectLong(stmtName, filter);
 		return (result != null ? result : 0L);
 	}
 
@@ -540,6 +561,20 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setQueryForAuditInterval(String statementName) {
 		this.queryForAuditInterval = statementName;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #getAuditCountTotal(GeneralNodeDatumFilter)} method when
+	 * {@code dataPath} is {@literal DatumStored}.
+	 * 
+	 * @param queryForAuditDatumStoredCount
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_AUDIT_DATUM_STORED_COUNT}
+	 * @since 1.7
+	 */
+	public void setQueryForAuditDatumStoredCount(String queryForAuditDatumStoredCount) {
+		this.queryForAuditDatumStoredCount = queryForAuditDatumStoredCount;
 	}
 
 }

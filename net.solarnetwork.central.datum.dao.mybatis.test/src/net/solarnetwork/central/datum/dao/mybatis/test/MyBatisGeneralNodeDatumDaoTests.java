@@ -1726,4 +1726,62 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertEquals(expectedStartDate.plusHours(2).getMillis(), result.getEnd().getMillis());
 	}
 
+	@Test
+	public void findAuditDatumStoredCountNoData() {
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setDataPath("DatumStored");
+		long count = dao.getAuditCountTotal(criteria);
+		assertEquals("Total datum count", 0, count);
+	}
+
+	@Test
+	public void findAuditDatumStoredCountNodeAndSourceAllTime() {
+		executeSqlScript("/net/solarnetwork/central/datum/dao/mybatis/test/insert-audit-data-03.sql",
+				false);
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setDataPath("DatumStored");
+		long count = dao.getAuditCountTotal(criteria);
+		assertEquals("Total datum count", 740, count);
+	}
+
+	@Test
+	public void findAuditDatumStoredCountNodeAndSourceTimeRange() {
+		executeSqlScript("/net/solarnetwork/central/datum/dao/mybatis/test/insert-audit-data-03.sql",
+				false);
+		final DateTime expectedStartDate = new DateTime(2017, 1, 1, 0, 0, 0, DateTimeZone.UTC);
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setDataPath("DatumStored");
+		criteria.setStartDate(expectedStartDate);
+		criteria.setEndDate(expectedStartDate.dayOfMonth().addToCopy(1));
+		long count = dao.getAuditCountTotal(criteria);
+		assertEquals("Total datum count", 394, count);
+	}
+
+	@Test
+	public void findAuditDatumStoredCountNodeAndSourcesAllTime() {
+		executeSqlScript("/net/solarnetwork/central/datum/dao/mybatis/test/insert-audit-data-03.sql",
+				false);
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceIds(new String[] { TEST_SOURCE_ID, TEST_2ND_SOURCE });
+		criteria.setDataPath("DatumStored");
+		long count = dao.getAuditCountTotal(criteria);
+		assertEquals("No data", 1448, count);
+	}
+
+	@Test
+	public void findAuditDatumStoredCountAllNodeAllSourceAllTime() {
+		executeSqlScript("/net/solarnetwork/central/datum/dao/mybatis/test/insert-audit-data-03.sql",
+				false);
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setDataPath("DatumStored");
+		long count = dao.getAuditCountTotal(criteria);
+		assertEquals("No data", 2124, count);
+	}
 }
