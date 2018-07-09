@@ -50,6 +50,13 @@ BEGIN
 		AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs));
 	GET DIAGNOSTICS total_count = ROW_COUNT;
 
+	-- delete any triggered stale rows
+	DELETE FROM solaragg.agg_stale_datum d
+	WHERE d.node_id = ANY (node_ids)
+		AND d.ts_start < older_than
+		AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs))
+		AND d.agg_kind = 'h';
+
 	IF agg_kind IN ('h', 'd', 'm') THEN
 		-- delete hourly data
 		DELETE FROM solaragg.agg_datum_hourly d
