@@ -23,7 +23,9 @@
 package net.solarnetwork.central.user.expire.biz;
 
 import java.util.List;
+import java.util.Locale;
 import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
+import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
  * Service API for user datum expire feature.
@@ -32,6 +34,13 @@ import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
  * @version 1.0
  */
 public interface UserExpireBiz {
+
+	/**
+	 * Get a localized list of all available aggregation type information.
+	 * 
+	 * @return the aggregation type info
+	 */
+	Iterable<LocalizedServiceInfo> availableAggregationTypes(Locale locale);
 
 	/**
 	 * Get a specific configuration kind for a given user.

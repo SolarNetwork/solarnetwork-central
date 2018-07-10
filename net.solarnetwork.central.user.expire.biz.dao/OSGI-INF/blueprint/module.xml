@@ -26,6 +26,19 @@
 	
 	<bean id="userExpireBiz" class="net.solarnetwork.central.user.expire.biz.dao.DaoUserExpireBiz">
 		<argument ref="dataConfDao"/>
+		<property name="messageSource">
+			<bean class="net.solarnetwork.util.PrefixedMessageSource">
+				<property name="delegates">
+					<map>
+						<entry key="aggregation.">
+							<bean class="org.springframework.context.support.ResourceBundleMessageSource">
+								<property name="basename" value="net.solarnetwork.central.domain.Aggregation"/>
+							</bean>
+						</entry>
+					</map>
+				</property>
+			</bean>	
+		</property>
 	</bean>
 	
 </blueprint>

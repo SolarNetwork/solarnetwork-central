@@ -23,8 +23,10 @@
 package net.solarnetwork.central.user.expire.support;
 
 import java.util.List;
+import java.util.Locale;
 import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
+import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
  * Delegating implementation of {@link UserExpireBiz}, mostly to help with AOP.
@@ -45,6 +47,11 @@ public class DelegatingUserExpireBiz implements UserExpireBiz {
 	public DelegatingUserExpireBiz(UserExpireBiz delegate) {
 		super();
 		this.delegate = delegate;
+	}
+
+	@Override
+	public Iterable<LocalizedServiceInfo> availableAggregationTypes(Locale locale) {
+		return delegate.availableAggregationTypes(locale);
 	}
 
 	@Override

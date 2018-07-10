@@ -22,13 +22,20 @@
 
 package net.solarnetwork.central.user.expire.biz.dao;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import org.springframework.context.MessageSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.domain.BasicLocalizedServiceInfo;
+import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
  * DAO implementation of {@link UserExpireBiz}.
@@ -40,6 +47,8 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 
 	private final UserDataConfigurationDao dataConfigDao;
 
+	private MessageSource messageSource;
+
 	/**
 	 * Constructor.
 	 * 
@@ -49,6 +58,26 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	public DaoUserExpireBiz(UserDataConfigurationDao dataConfigDao) {
 		super();
 		this.dataConfigDao = dataConfigDao;
+	}
+
+	@Override
+	public Iterable<LocalizedServiceInfo> availableAggregationTypes(Locale locale) {
+		List<LocalizedServiceInfo> results = new ArrayList<>(4);
+		List<Aggregation> aggs = Arrays.asList(Aggregation.None, Aggregation.Hour, Aggregation.Day,
+				Aggregation.Month);
+		for ( Aggregation type : aggs ) {
+			String name = type.toString();
+			String desc = null;
+			if ( messageSource != null ) {
+				name = messageSource.getMessage("aggregation." + type.name() + ".key", null, name,
+						locale);
+				desc = messageSource.getMessage("aggregation." + type.name() + ".desc", null, desc,
+						locale);
+			}
+			results.add(new BasicLocalizedServiceInfo(String.valueOf(type.getKey()), locale, name, desc,
+					null));
+		}
+		return results;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -90,6 +119,16 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 			return dataConfigDao.store((UserDataConfiguration) configuration);
 		}
 		throw new IllegalArgumentException("Unsupported configuration: " + configuration);
+	}
+
+	/**
+	 * A message source for resolving messages with.
+	 * 
+	 * @param messageSource
+	 *        the message source
+	 */
+	public void setMessageSource(MessageSource messageSource) {
+		this.messageSource = messageSource;
 	}
 
 }
