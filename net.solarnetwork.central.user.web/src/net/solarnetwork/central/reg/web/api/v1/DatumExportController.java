@@ -86,8 +86,8 @@ public class DatumExportController extends WebServiceControllerSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param billingBiz
-	 *        the billing biz to use
+	 * @param exportBiz
+	 *        the export biz to use
 	 */
 	@Autowired
 	public DatumExportController(@Qualifier("exportBiz") OptionalService<UserExportBiz> exportBiz) {

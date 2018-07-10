@@ -147,43 +147,6 @@ $(document).ready(function() {
 		return configs;
 	}
 
-	/**
-	 * Either update an existing or add a new service configuration to an array of configurations.
-	 * 
-	 * If an existing object in `configurations` has an `id` that matches `config.id` then
-	 * that element's properties will be replaced by those on `config`. Otherwise `config` 
-	 * will be appended to `configurations`.
-	 * 
-	 * @param {Object} config the configuration to save
-	 * @param {Array} configurations the array of existing configurations
-	 */
-	function storeServiceConfiguration(config, configurations) {
-		if ( !(config && config.id && Array.isArray(configurations)) ) {
-			return;
-		}
-		var i, len, prop, existing;
-		for ( i = 0, len = configurations.length; i < len; i += 1 ) {
-			existing = configurations[i];
-			if ( config.id === existing.id ) {
-				// found an existing configuration; so update the properties on that
-				// to match the new configuration
-				for ( prop in config ) {
-					if ( !config.hasOwnProperty(prop)  ) {
-						continue;
-					}
-					existing[prop] = config[prop];
-				}
-				for ( prop in existing ) {
-					if ( !config.hasOwnProperty(prop) ) {
-						delete existing[prop];
-					}
-				}
-				return;
-			}
-		}
-		configurations.push(config);
-	}
-
 	function handleServiceIdentifierChange(event, services) {
 		var target = event.target;
 		console.log('change event on %o: %o', target, event);
@@ -209,7 +172,7 @@ $(document).ready(function() {
 	.on('submit', function(event) {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateDatumExportConfigs([res], true);
-			storeServiceConfiguration(res, exportConfigs.datumExportConfigs);
+			SolarReg.storeServiceConfiguration(res, exportConfigs.datumExportConfigs);
 		});
 		return false;
 	})
@@ -228,7 +191,7 @@ $(document).ready(function() {
 	.on('submit', function(event) {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateDataConfigs([res], true);
-			storeServiceConfiguration(res, exportConfigs.dataConfigs);
+			SolarReg.storeServiceConfiguration(res, exportConfigs.dataConfigs);
 		}, function serializeDataConfigForm(form) {
 			var data = SolarReg.Settings.encodeServiceItemForm(form);
 			if ( data.datumFilter ) {
@@ -268,7 +231,7 @@ $(document).ready(function() {
 	.on('submit', function(event) {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateDestinationConfigs([res], true);
-			storeServiceConfiguration(res, exportConfigs.destinationConfigs);
+			SolarReg.storeServiceConfiguration(res, exportConfigs.destinationConfigs);
 		});
 		return false;
 	})
@@ -292,7 +255,7 @@ $(document).ready(function() {
 	.on('submit', function(event) {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateOutputConfigs([res], true);
-			storeServiceConfiguration(res, exportConfigs.outputConfigs);
+			SolarReg.storeServiceConfiguration(res, exportConfigs.outputConfigs);
 		});
 		return false;
 	})

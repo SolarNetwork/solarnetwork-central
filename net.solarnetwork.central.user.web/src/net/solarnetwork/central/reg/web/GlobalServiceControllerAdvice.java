@@ -25,6 +25,7 @@ package net.solarnetwork.central.reg.web;
 import javax.annotation.Resource;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.util.OptionalService;
 
@@ -32,14 +33,24 @@ import net.solarnetwork.util.OptionalService;
  * Add global services to all MVC controllers.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.26
  */
 @ControllerAdvice(annotations = { GlobalServiceController.class })
 public class GlobalServiceControllerAdvice {
 
+	/**
+	 * The model attribute name for the {@code UserExpireBiz}.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String EXPIRE_BIZ_ATTRIBUTE = "expireBiz";
+
 	/** The model attribute name for the {@code UserExportBiz}. */
 	public static final String EXPORT_BIZ_ATTRIBUTE = "exportBiz";
+
+	@Resource(name = "expireBiz")
+	private OptionalService<UserExpireBiz> expireBiz;
 
 	@Resource(name = "exportBiz")
 	private OptionalService<UserExportBiz> exportBiz;
@@ -47,6 +58,18 @@ public class GlobalServiceControllerAdvice {
 	@ModelAttribute(value = EXPORT_BIZ_ATTRIBUTE)
 	public UserExportBiz exportBiz() {
 		final UserExportBiz biz = (exportBiz != null ? exportBiz.service() : null);
+		return biz;
+	}
+
+	/**
+	 * The expire service.
+	 * 
+	 * @return the service
+	 * @since 1.1
+	 */
+	@ModelAttribute(value = EXPIRE_BIZ_ATTRIBUTE)
+	public UserExpireBiz expireBiz() {
+		final UserExpireBiz biz = (expireBiz != null ? expireBiz.service() : null);
 		return biz;
 	}
 

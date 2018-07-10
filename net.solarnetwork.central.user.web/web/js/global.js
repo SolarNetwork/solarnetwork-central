@@ -1,3 +1,4 @@
+'use strict';
 /* Global SolarNetwork App Support */
 
 var SolarReg = {
@@ -86,7 +87,7 @@ SolarReg.arrayAsDelimitedString = function arrayAsDelimitedString(array, delimit
 };
 
 /**
- * Replace template variables on a string with coresponding values from a parameter object.
+ * Replace template variables on a string with corresponding values from a parameter object.
  * 
  * The template variables take the form of `{x}` where `x` is the parameter name.
  * 
@@ -100,6 +101,44 @@ SolarReg.replaceTemplateParameters = function replaceTemplateParameters(str, par
 		return params[p1] || '';
 	});
 };
+
+/**
+ * Either update an existing or add a new service configuration to an array of configurations.
+ * 
+ * If an existing object in `configurations` has an `id` that matches `config.id` then
+ * that element's properties will be replaced by those on `config`. Otherwise `config` 
+ * will be appended to `configurations`.
+ * 
+ * @param {Object} config the configuration to save
+ * @param {Array} configurations the array of existing configurations
+ */
+SolarReg.storeServiceConfiguration = function storeServiceConfiguration(config, configurations) {
+	if ( !(config && config.id && Array.isArray(configurations)) ) {
+		return;
+	}
+	var i, len, prop, existing;
+	for ( i = 0, len = configurations.length; i < len; i += 1 ) {
+		existing = configurations[i];
+		if ( config.id === existing.id ) {
+			// found an existing configuration; so update the properties on that
+			// to match the new configuration
+			for ( prop in config ) {
+				if ( !config.hasOwnProperty(prop)  ) {
+					continue;
+				}
+				existing[prop] = config[prop];
+			}
+			for ( prop in existing ) {
+				if ( !config.hasOwnProperty(prop) ) {
+					delete existing[prop];
+				}
+			}
+			return;
+		}
+	}
+	configurations.push(config);
+};
+
 
 $(document).ready(function() {
 	$('body').on('hidden', '.modal.dynamic', function () {

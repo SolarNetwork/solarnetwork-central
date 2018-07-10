@@ -1,0 +1,144 @@
+$(document).ready(function() {
+	'use strict';
+	
+	var expireConfigs = {};
+	var dataServices = [{
+		id : 'net.solarnetwork.central.user.expire.standard.DefaultUserExpireDataFilterService'
+	}];
+	var outputServices = [];
+	var destinationServices = [];
+	var compressionTypes = [];
+	var scheduleTypes = [];
+	var aggregationTypes = [];
+
+	var settingTemplates = $('#expire-setting-templates');
+	
+	function populateExpireConfigs(configs) {
+		if ( typeof configs !== 'object' ) {
+			configs = {};
+		}
+		configs.dataConfigs = populateDataConfigs(configs.dataConfigs);
+		return configs;
+	}
+	
+	function populateDataConfigs(configs, preserve) {
+		configs = Array.isArray(configs) ? configs : [];
+		var container = $('#expire-data-config-list-container');
+		var items = configs.map(function(config) {
+			var model = SolarReg.Settings.serviceConfigurationItem(config, dataServices);
+			var filter = config.datumFilter || {};
+			model.aggregation = SolarReg.Templates.serviceDisplayName(aggregationTypes, filter.aggregationKey) || '';
+			var nodeIds = SolarReg.arrayAsDelimitedString(filter.nodeIds);
+			model.nodes = nodeIds || '*';
+			var sourceIds = SolarReg.arrayAsDelimitedString(filter.sourceIds);
+			model.sources = sourceIds || '*';
+			model.expireDays = config.expireDays || 730;
+			return model;
+		});
+		SolarReg.Templates.populateTemplateItems(container, items, preserve);
+		container.closest('section').find('.listCount').text(configs.length);
+		return configs;
+	}
+	
+	function handleServiceIdentifierChange(event, services) {
+		var target = event.target;
+		console.log('change event on %o: %o', target, event);
+		if ( target.name === 'serviceIdentifier' ) {
+			var service = SolarReg.findByIdentifier(services, $(event.target).val());
+			var modal = $(target.form);
+			var container = modal.find('.service-props-container').first();
+			SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, modal.data('context-item'));
+		}
+	}
+
+	// ***** Edit data policy form
+	$('#edit-expire-data-config-modal').on('show.bs.modal', function(event) {
+		SolarReg.Settings.prepareEditServiceForm($(event.target), dataServices, settingTemplates);
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('change', function(event) {
+		handleServiceIdentifierChange(event, dataServices);
+	})
+	.on('submit', function(event) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			populateDataConfigs([res], true);
+			SolarReg.storeServiceConfiguration(res, expireConfigs.dataConfigs);
+		}, function serializeDataConfigForm(form) {
+			var data = SolarReg.Settings.encodeServiceItemForm(form);
+			if ( data.datumFilter ) {
+				var filter = data.datumFilter;
+				var nodeIds =  SolarReg.splitAsNumberArray(filter.nodeIds);
+				if ( nodeIds.length ) {
+					filter.nodeIds = nodeIds;
+				} else {
+					delete filter.nodeIds;
+				}
+				var sourceIds = (filter.sourceIds ? filter.sourceIds.split(/\s*,\s*/) : []);
+				if ( sourceIds.length ) {
+					filter.sourceIds = sourceIds;
+				} else {
+					delete filter.sourceIds;
+				}
+			}
+			return data;
+		});
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		SolarReg.Settings.resetEditServiceForm(this, $('#expire-data-config-list-container .list-container'));
+	});
+
+	$('#expire-data-config-list-container .list-container').on('click', function(event) {
+		SolarReg.Settings.handleEditServiceItemAction(event, dataServices, settingTemplates);
+	});
+	
+	$('.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
+
+	$('#expire-data-configs').first().each(function() {
+		var loadCountdown = 2;
+
+		function liftoff() {
+			loadCountdown -= 1;
+			if ( loadCountdown === 0 ) {
+				populateExpireConfigs(expireConfigs);
+				$('.datum-expire-getstarted').toggleClass('hidden', 
+					expireConfigs.dataConfigs && expireConfigs.dataConfigs.length > 0);
+			}
+		}
+
+		// get available aggregation services
+		$.getJSON(SolarReg.solarUserURL('/sec/expire/services/aggregation'), function(json) {
+			console.log('Got expire aggregation types: %o', json);
+			if ( json && json.success === true ) {
+				aggregationTypes = SolarReg.Templates.populateServiceSelectOptions(json.data, 'select.expire-data-aggregation-types');
+			}
+			liftoff();
+		});
+		
+		// list all configs
+		$.getJSON(SolarReg.solarUserURL('/sec/expire/configs'), function(json) {
+			console.log('Got expire configurations: %o', json);
+			if ( json && json.success === true ) {
+				expireConfigs = json.data;
+			}
+			liftoff();
+		});
+
+		$('#datum-expire-list-container').on('click', function(event) {
+			console.log('Got click on %o expire config: %o', event.target, event);
+			var target = event.target,
+				el = $(event.target),
+				configType = el.data('config-type');
+			if ( configType ) {
+				var config = SolarReg.Templates.findContextItem(el);
+				if ( configType === 'data' ) {
+					SolarReg.Settings.handleEditServiceItemAction(event, dataServices, settingTemplates);
+				}
+			} else {
+				SolarReg.Settings.handleEditServiceItemAction(event, [], settingTemplates);
+			}
+			event.preventDefault();
+		});
+	});
+	
+});

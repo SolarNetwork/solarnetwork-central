@@ -36,6 +36,11 @@
 					<li ${navloc == 'auth-tokens' ? 'class="active"' : ''}>
 						<a href="<c:url value='/u/sec/auth-tokens'/>"><fmt:message key="link.auth-tokens"/></a>
 					</li>
+					<c:if test="${not empty expireBiz}">
+						<li ${navloc == 'expire' ? 'class="active"' : ''}>
+							<a href="<c:url value='/u/sec/expire'/>"><fmt:message key="link.expire"/></a>
+						</li>
+					</c:if>
 					<sec:authorize access="hasRole('ROLE_BILLING')">
 						<sec:authorize access="hasRole('ROLE_EXPORT')"><%-- TODO: temporary, remove after beta period --%>
 						<c:if test="${not empty exportBiz}">
