@@ -58,7 +58,7 @@ public class ExpireDatumJob extends JobSupport {
 			long count = configDao.deleteExpiredDataForConfiguration(config);
 			if ( count > 0 && log.isInfoEnabled() ) {
 				log.info("Deleted {} datum in {}s for user {} older than {} days matching policy {}",
-						count, (start - System.currentTimeMillis()) / 1000, config.getUserId(),
+						count, (System.currentTimeMillis() - start) / 1000, config.getUserId(),
 						config.getExpireDays(), config.getFilterJson());
 			}
 		}
