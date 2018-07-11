@@ -21,5 +21,6 @@
 \i postgres-init-users.sql
 \i postgres-init-user-alerts.sql
 \i postgres-init-user-datum-export.sql
+\i postgres-init-user-datum-expire.sql
 \i postgres-init-controls.sql
 \i postgres-init-quartz.sql
