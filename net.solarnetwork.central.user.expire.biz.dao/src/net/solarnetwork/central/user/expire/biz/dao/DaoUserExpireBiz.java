@@ -33,6 +33,7 @@ import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -78,6 +79,12 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 					null));
 		}
 		return results;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public DatumRecordCounts countExpiredDataForConfiguration(UserDataConfiguration config) {
+		return dataConfigDao.countExpiredDataForConfiguration(config);
 	}
 
 	@SuppressWarnings("unchecked")

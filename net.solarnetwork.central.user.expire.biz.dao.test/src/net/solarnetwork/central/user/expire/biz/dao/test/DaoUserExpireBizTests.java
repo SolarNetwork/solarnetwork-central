@@ -22,18 +22,21 @@
 
 package net.solarnetwork.central.user.expire.biz.dao.test;
 
+import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserExpireBiz;
 import net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 
 /**
@@ -96,5 +99,23 @@ public class DaoUserExpireBizTests {
 
 		// then
 		assertThat("Results match", result, sameInstance(config));
+	}
+
+	@Test
+	public void countsForConfiguration() {
+		// given
+		DatumRecordCounts counts = new DatumRecordCounts();
+		Capture<UserDataConfiguration> configCaptor = new Capture<>();
+		expect(dataConfigurationDao.countExpiredDataForConfiguration(capture(configCaptor)))
+				.andReturn(counts);
+
+		// when
+		replayAll();
+		UserDataConfiguration config = new UserDataConfiguration();
+		DatumRecordCounts result = biz.countExpiredDataForConfiguration(config);
+
+		// then
+		assertThat("Results match", result, sameInstance(counts));
+		assertThat("Config passed", configCaptor.getValue(), sameInstance(config));
 	}
 }

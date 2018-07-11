@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Locale;
 import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
+import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
+import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
@@ -74,6 +76,11 @@ public class DelegatingUserExpireBiz implements UserExpireBiz {
 	public <T extends UserIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
 			Class<T> configurationClass) {
 		return delegate.configurationsForUser(userId, configurationClass);
+	}
+
+	@Override
+	public DatumRecordCounts countExpiredDataForConfiguration(UserDataConfiguration config) {
+		return delegate.countExpiredDataForConfiguration(config);
 	}
 
 }

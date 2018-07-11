@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.expire.aop;
 
+import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -35,6 +36,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * @author matt
  * @version 1.0
  */
+@Aspect
 public class UserExpireSecurityAspect extends AuthorizationSupport {
 
 	/**
@@ -59,12 +61,16 @@ public class UserExpireSecurityAspect extends AuthorizationSupport {
 	public void deleteConfiguration(UserRelatedEntity<?> config) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.expire.biz.UserExpireBiz.*ForConfiguration(..)) && args(config,..)")
+	public void actionForConfiguration(UserRelatedEntity<?> config) {
+	}
+
 	@Before("actionForUser(userId)")
 	public void actionForUserCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
 
-	@Before("saveConfiguration(config) || deleteConfiguration(config)")
+	@Before("saveConfiguration(config) || deleteConfiguration(config) || actionForConfiguration(config)")
 	public void saveConfigurationCheck(UserRelatedEntity<?> config) {
 		final Long userId = (config != null ? config.getUserId() : null);
 		requireUserWriteAccess(userId);

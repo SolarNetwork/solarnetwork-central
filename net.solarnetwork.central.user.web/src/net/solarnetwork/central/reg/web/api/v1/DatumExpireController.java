@@ -39,6 +39,7 @@ import net.solarnetwork.central.reg.web.domain.DatumExpireFullConfigurations;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.domain.DataConfiguration;
+import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.util.OptionalService;
@@ -127,5 +128,21 @@ public class DatumExpireController {
 			}
 		}
 		return response(null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/configs/data/{id}/preview", method = RequestMethod.GET)
+	public Response<DatumRecordCounts> previewDataConfiguration(@PathVariable("id") Long id) {
+		final UserExpireBiz biz = expireBiz.service();
+		DatumRecordCounts counts = null;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			UserDataConfiguration config = biz.configurationForUser(userId, UserDataConfiguration.class,
+					id);
+			if ( config != null ) {
+				counts = biz.countExpiredDataForConfiguration(config);
+			}
+		}
+		return response(counts);
 	}
 }
