@@ -66,6 +66,6 @@ public interface DataConfiguration extends IdentifiableConfiguration {
 	 * @return {@literal true} if the configuration is active, {@literal false}
 	 *         if the configuration should not be applied
 	 */
-	boolean isEnabled();
+	boolean isActive();
 
 }

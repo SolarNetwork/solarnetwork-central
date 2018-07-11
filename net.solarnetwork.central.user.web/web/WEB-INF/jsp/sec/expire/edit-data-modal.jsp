@@ -69,17 +69,17 @@
 		 		</div>
 		 		<div class="form-group">
 		 			<label class="col-sm-3 control-label">
-		 				<fmt:message key='expire.dataConfig.enabled.label'/>
+		 				<fmt:message key='expire.dataConfig.active.label'/>
 		 				${' '}
 		 			</label>
 		 			<div class="col-sm-8">
-						<button type="button" name="enabled" class="form-control setting-form-element toggle btn btn-default" 
+						<button type="button" name="active" class="form-control setting-form-element toggle btn btn-default" 
 							data-toggle="setting-toggle" aria-pressed="false"
 							data-on-text="<fmt:message key='settings.toggle.enabled'/>"
 							data-off-text="<fmt:message key='settings.toggle.disabled'/>">
 							<fmt:message key='settings.toggle.disabled'/>
 						</button>
-						<div class="caption"><fmt:message key='expire.dataConfig.enabled.caption'/></div>
+						<div class="caption"><fmt:message key='expire.dataConfig.active.caption'/></div>
 		 			</div>
 		 		</div>
 		 	</div>

@@ -51,7 +51,7 @@ public class ExpireDatumJob extends JobSupport {
 			return true;
 		}
 		for ( UserDataConfiguration config : configs ) {
-			if ( !config.isEnabled() ) {
+			if ( !config.isActive() ) {
 				continue;
 			}
 			long count = configDao.deleteExpiredDataForConfiguration(config);

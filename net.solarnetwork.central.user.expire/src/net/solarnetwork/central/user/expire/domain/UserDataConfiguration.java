@@ -37,7 +37,7 @@ import net.solarnetwork.util.JsonUtils;
  * @author matt
  * @version 1.0
  */
-@JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProps", "enabled",
+@JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProps", "active",
 		"expireDays", "datumFilter" })
 public class UserDataConfiguration extends BaseExpireConfigurationEntity
 		implements UserIdentifiableConfiguration, DataConfiguration, Serializable {
@@ -47,7 +47,7 @@ public class UserDataConfiguration extends BaseExpireConfigurationEntity
 	/** The default value for the {@code expireDays} property (5 years). */
 	public static final int DEFAULT_EXPIRE_DAYS = 1825;
 
-	private boolean enabled = false;
+	private boolean active = false;
 	private int expireDays = DEFAULT_EXPIRE_DAYS;
 	private DatumFilterCommand filter;
 	private String filterJson;
@@ -94,12 +94,12 @@ public class UserDataConfiguration extends BaseExpireConfigurationEntity
 	}
 
 	@Override
-	public boolean isEnabled() {
-		return enabled;
+	public boolean isActive() {
+		return active;
 	}
 
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
+	public void setActive(boolean enabled) {
+		this.active = enabled;
 	}
 
 }

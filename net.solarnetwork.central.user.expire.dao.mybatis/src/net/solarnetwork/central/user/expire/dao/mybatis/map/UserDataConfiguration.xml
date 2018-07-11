@@ -10,14 +10,14 @@
 			id, user_id, cname, sident
 			<if test="created != null">,created</if>
 			<if test="servicePropsJson != null">,sprops</if>
-			,expire_days
+			,expire_days, enabled
 			<if test="filterJson != null">,filter</if>
 			)
 		VALUES (
 			#{id}, #{userId}, #{name}, #{serviceIdentifier}
 			<if test="created != null">,#{created}</if>
 			<if test="servicePropsJson != null">,CAST(#{servicePropsJson} AS jsonb)</if>
-			,#{expireDays}
+			,#{expireDays}, #{active}
 			<if test="filterJson != null">,CAST(#{filterJson} AS jsonb)</if>
 			)
 	</insert>
@@ -30,6 +30,7 @@
 			, sident = #{serviceIdentifier}
 			, sprops = CAST(#{servicePropsJson} AS jsonb)
 			, expire_days = #{expireDays}
+			, enabled = #{active}
 			, filter = CAST(#{filterJson} AS jsonb)
 		WHERE
 			id = #{id} AND user_id = #{userId}
@@ -49,6 +50,7 @@
 		udac.sident AS user_expire_data_conf_sident,
 		udac.sprops AS user_expire_data_conf_sprops,
 		udac.expire_days AS user_expire_data_conf_expire_days,
+		udac.enabled AS user_expire_data_conf_enabled,
 		udac.filter AS user_expire_data_conf_filter
 	</sql>
 
@@ -60,6 +62,7 @@
 		<result property="serviceIdentifier" column="user_expire_data_conf_sident"/>
 		<result property="servicePropsJson" column="user_expire_data_conf_sprops"/>
 		<result property="expireDays" column="user_expire_data_conf_expire_days"/>
+		<result property="active" column="user_expire_data_conf_enabled"/>
 		<result property="filterJson" column="user_expire_data_conf_filter"/>
 	</resultMap>
 	

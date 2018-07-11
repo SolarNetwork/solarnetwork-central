@@ -155,6 +155,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		conf.setName("new.name");
 		conf.setServiceIdentifier("new.ident");
 		conf.setExpireDays(TEST_EXPIRE_DAYS + 1);
+		conf.setActive(true);
 
 		Map<String, Object> options = conf.getServiceProps();
 		options.put("string", "updated");
@@ -178,6 +179,8 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("Updated name", updatedConf.getName(), equalTo(conf.getName()));
 		assertThat("Updated service identifier", updatedConf.getServiceIdentifier(),
 				equalTo(conf.getServiceIdentifier()));
+		assertThat("Updated expire days", updatedConf.getExpireDays(), equalTo(conf.getExpireDays()));
+		assertThat("Updated active", updatedConf.isActive(), equalTo(true));
 
 		Map<String, ?> sprops = updatedConf.getServiceProperties();
 		assertThat("Service props", sprops, notNullValue());

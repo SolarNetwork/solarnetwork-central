@@ -31,7 +31,7 @@
 				<th><fmt:message key='expire.dataConfig.sources.label'/></th>
 				<th><fmt:message key='expire.dataConfig.aggregation.label'/></th>
 				<th><fmt:message key='expire.dataConfig.expireDays.label'/></th>
-				<th><fmt:message key='expire.dataConfig.enabled.label'/></th>
+				<th><fmt:message key='expire.dataConfig.active.label'/></th>
 				<th><fmt:message key='expire.dataConfig.preview.label'/></th>
 			</tr>
 			<%--
@@ -43,7 +43,7 @@
 				<td data-tprop="sources"></td>
 				<td data-tprop="aggregation"></td>
 				<td data-tprop="expireDays"></td>
-				<td data-tprop="enabled"></td>
+				<td><span class="label label-success" data-tprop="active"></span></td>
 				<td><a href="#"><span class="glyphicon glyphicon-eye-open action-link" aria-hidden="true" 
 					data-action-modal="#expire-data-config-preview-modal"></span></a>
 			</tr>
