@@ -88,6 +88,35 @@ $(document).ready(function() {
 		SolarReg.Settings.resetEditServiceForm(this, $('#expire-data-config-list-container .list-container'));
 	});
 
+	// ***** Preview data policy modal
+	$('#expire-data-config-preview-modal').on('show.bs.modal', function() {
+		var config = SolarReg.Templates.findContextItem(this);
+		$(this).find('.config-name').text(config ? config.name : '');
+	})
+	.on('shown.bs.modal', function(event) {
+		var me = this,
+			config = SolarReg.Templates.findContextItem(this);
+		if ( config && config.id ) {
+			$.getJSON(SolarReg.solarUserURL('/sec/expire/configs/data/' +encodeURIComponent(config.id) +'/preview'), function(json) {
+				if ( !(json && json.success) ) {
+					return;
+				}
+				var configNow = SolarReg.Templates.findContextItem(me),
+					modal = $(me);
+				if ( configNow && configNow.id === config.id ) {
+					SolarReg.Templates.replaceTemplateProperties(modal.find('.expire-preview-counts'), json.data);
+					modal.find('.ready').removeClass('hidden').end()
+						.find('.waiting').addClass('hidden');
+				}
+			});
+		}
+	})
+	.on('hidden.bs.modal', function() {
+		var modal = $(this);
+		modal.find('.ready').addClass('hidden').end()
+			.find('.waiting').removeClass('hidden');
+	});
+
 	$('#expire-data-config-list-container .list-container').on('click', function(event) {
 		SolarReg.Settings.handleEditServiceItemAction(event, dataServices, settingTemplates);
 	});
@@ -122,22 +151,6 @@ $(document).ready(function() {
 				expireConfigs = json.data;
 			}
 			liftoff();
-		});
-
-		$('#datum-expire-list-container').on('click', function(event) {
-			console.log('Got click on %o expire config: %o', event.target, event);
-			var target = event.target,
-				el = $(event.target),
-				configType = el.data('config-type');
-			if ( configType ) {
-				var config = SolarReg.Templates.findContextItem(el);
-				if ( configType === 'data' ) {
-					SolarReg.Settings.handleEditServiceItemAction(event, dataServices, settingTemplates);
-				}
-			} else {
-				SolarReg.Settings.handleEditServiceItemAction(event, [], settingTemplates);
-			}
-			event.preventDefault();
 		});
 	});
 	

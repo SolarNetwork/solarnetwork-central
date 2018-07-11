@@ -44,7 +44,8 @@
 				<td data-tprop="aggregation"></td>
 				<td data-tprop="expireDays"></td>
 				<td data-tprop="enabled"></td>
-				<td><a href="#" class="preview-link"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
+				<td><a href="#"><span class="glyphicon glyphicon-eye-open action-link" aria-hidden="true" 
+					data-action-modal="#expire-data-config-preview-modal"></span></a>
 			</tr>
 		</thead>
 		<%--
@@ -58,6 +59,48 @@
 <%-- Modal forms --%>
 
 <jsp:include page="edit-data-modal.jsp"/>
+
+<div id="expire-data-config-preview-modal" class="modal config-action fade" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="<fmt:message key='close.label'/>"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title"><fmt:message key='expire.dataConfig.preview.title'/></h4>
+			</div>
+		 	<div class="modal-body">
+		 		<p><fmt:message key='expire.dataConfig.preview.intro'/></p>
+		 		<div class="progress waiting">
+					<div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%"></div>
+				</div>
+				<p class="waiting"><fmt:message key='onemomentplease.label'/></p>
+		 		<table class="expire-preview-counts tally table ready hidden">
+		 			<tbody>
+		 				<tr>
+		 					<th><fmt:message key='expire.datumMonthlyCount.label'/></th><td data-tprop="datumMonthlyCount"></td>
+		 				</tr>
+		 				<tr>
+		 					<th><fmt:message key='expire.datumDailyCount.label'/></th><td data-tprop="datumDailyCount"></td>
+		 				</tr>
+		 				<tr>
+		 					<th><fmt:message key='expire.datumHourlyCount.label'/></th><td data-tprop="datumHourlyCount"></td>
+		 				</tr>
+		 				<tr>
+		 					<th><fmt:message key='expire.datumCount.label'/></th><td data-tprop="datumCount"></td>
+		 				</tr>
+		 			</tbody>
+		 			<tfoot>
+		 				<tr>
+		 					<th><fmt:message key='expire.datumTotalCount.label'/></th><th data-tprop="datumTotalCount"></th>
+		 				</tr>
+		 			</tfoot>
+		 		</table>
+		 	</div>
+		 	<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></button>
+		 	</div>
+		 </div>
+ 	</div>
+</div>
 
 <%-- Setting templates --%>
 
