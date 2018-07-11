@@ -800,6 +800,9 @@ END;$BODY$
  *  * `d` for solaragg.agg_datum_daily data rolled up to day values into the `solaragg.aud_datum_daily` table
  *  * `m` for solaragg.agg_datum_monthly data rolled up to month values into the `solaragg.aud_datum_monthly` table
  *
+ * When `m` values are processed, the `solaragg.populate_audit_acc_datum_daily()` function
+ * will be invoked as well to keep the accumulating audit data updated.
+ * 
  * @param kind the rollup kind to process
  * @returns the number of rows processed (always 1 or 0)
  */
@@ -921,9 +924,9 @@ BEGIN
 					datum_q_count = EXCLUDED.datum_q_count;
 		END CASE;
 
-		-- in case node tz changed, remove record(s) from other zone
 		CASE kind
 			WHEN 'm' THEN
+				-- in case node tz changed, remove record(s) from other zone
 				-- monthly records clean 1 month on either side
 				DELETE FROM solaragg.aud_datum_monthly
 				WHERE node_id = stale.node_id
@@ -931,7 +934,11 @@ BEGIN
 					AND ts_start > stale.ts_start - interval '1 month'
 					AND ts_start < stale.ts_start + interval '1 month'
 					AND ts_start <> stale.ts_start;
+
+				-- recalculate full accumulated audit counts for today
+				PERFORM solaragg.populate_audit_acc_datum_daily(stale.node_id, stale.source_id);
 			ELSE
+				-- in case node tz changed, remove record(s) from other zone
 				-- daily records clean 1 day on either side
 				DELETE FROM solaragg.aud_datum_daily
 				WHERE node_id = stale.node_id

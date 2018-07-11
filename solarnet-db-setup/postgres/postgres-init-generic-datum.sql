@@ -144,6 +144,73 @@ CREATE TABLE solaragg.agg_datum_monthly (
  CONSTRAINT agg_datum_monthly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
+-- track total accumulated counts per day
+CREATE TABLE solaragg.aud_acc_datum_daily (
+	ts_start timestamp with time zone NOT NULL,
+	node_id bigint NOT NULL,
+	source_id character varying(64) NOT NULL,
+	datum_count integer NOT NULL DEFAULT 0,
+	datum_hourly_count integer NOT NULL DEFAULT 0,
+	datum_daily_count integer NOT NULL DEFAULT 0,
+	datum_monthly_count integer NOT NULL DEFAULT 0,
+	CONSTRAINT aud_acc_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
+);
+
+CREATE OR REPLACE FUNCTION solaragg.find_audit_acc_datum_daily(node bigint, source text)
+	RETURNS TABLE(
+		ts_start timestamp with time zone,
+		node_id bigint,
+		source_id character varying(64),
+		datum_count integer ,
+		datum_hourly_count integer,
+		datum_daily_count integer,
+		datum_monthly_count integer
+	) LANGUAGE SQL VOLATILE AS
+$$
+	WITH acc AS (
+		SELECT
+			sum(d.datum_count) AS datum_count,
+			sum(d.datum_hourly_count) AS datum_hourly_count,
+			sum(d.datum_daily_count) AS datum_daily_count,
+			sum(CASE d.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END) AS datum_monthly_count
+		FROM solaragg.aud_datum_monthly d
+		WHERE d.node_id = node
+			AND d.source_id = source
+	)
+	SELECT
+		date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE nlt.time_zone) AT TIME ZONE nlt.time_zone,
+		node,
+		source,
+		acc.datum_count::integer,
+		acc.datum_hourly_count::integer,
+		acc.datum_daily_count::integer,
+		acc.datum_monthly_count::integer
+	FROM solarnet.node_local_time nlt
+	CROSS JOIN acc
+	WHERE nlt.node_id = node
+$$;
+
+CREATE OR REPLACE FUNCTION solaragg.populate_audit_acc_datum_daily(node bigint, source text)
+	RETURNS void LANGUAGE SQL VOLATILE AS
+$$
+	INSERT INTO solaragg.aud_acc_datum_daily (ts_start, node_id, source_id,
+		datum_count, datum_hourly_count, datum_daily_count, datum_monthly_count)
+	SELECT
+		ts_start,
+		node_id,
+		source_id,
+		datum_count,
+		datum_hourly_count,
+		datum_daily_count,
+		datum_monthly_count
+	FROM solaragg.find_audit_acc_datum_daily(node, source)
+	ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+	SET datum_count = EXCLUDED.datum_count,
+		datum_hourly_count = EXCLUDED.datum_hourly_count,
+		datum_daily_count = EXCLUDED.datum_daily_count,
+		datum_monthly_count = EXCLUDED.datum_monthly_count;
+$$;
+
 CREATE OR REPLACE FUNCTION solaragg.jdata_from_datum(datum solaragg.agg_datum_hourly)
 	RETURNS jsonb
 	LANGUAGE SQL IMMUTABLE AS
