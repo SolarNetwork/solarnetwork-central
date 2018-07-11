@@ -122,9 +122,18 @@ $(document).ready(function() {
 					return;
 				}
 				var configNow = SolarReg.Templates.findContextItem(me),
-					modal = $(me);
+					modal = $(me),
+					counts = json.data,
+					prop;
+				
+				// format numbers with commas for clarity (not i18n I know :)
+				for ( prop in counts ) {
+					if ( !isNaN(Number(counts[prop])) ) {
+						counts[prop+'Display'] = counts[prop].toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+					}
+				}
 				if ( configNow && configNow.id === config.id ) {
-					SolarReg.Templates.replaceTemplateProperties(modal.find('.expire-preview-counts'), json.data);
+					SolarReg.Templates.replaceTemplateProperties(modal.find('.expire-preview-counts'), counts);
 					modal.find('.ready').removeClass('hidden').end()
 						.find('.waiting').addClass('hidden');
 				}

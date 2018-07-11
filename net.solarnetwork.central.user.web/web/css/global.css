@@ -146,6 +146,11 @@ tfoot .ledger-amount-label {
 	text-align: right;
 }
 
+table.tally td:last-child,
+table.tally th:last-child {
+	text-align: right;
+}
+
 table.tally tfoot td,
 table.tally tfoot th {
 	border-top: 1px solid #666;

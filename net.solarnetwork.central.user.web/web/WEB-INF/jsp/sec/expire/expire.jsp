@@ -76,21 +76,21 @@
 		 		<table class="expire-preview-counts tally table ready hidden">
 		 			<tbody>
 		 				<tr>
-		 					<th><fmt:message key='expire.datumMonthlyCount.label'/></th><td data-tprop="datumMonthlyCount"></td>
+		 					<th><fmt:message key='expire.datumMonthlyCount.label'/></th><td data-tprop="datumMonthlyCountDisplay"></td>
 		 				</tr>
 		 				<tr>
-		 					<th><fmt:message key='expire.datumDailyCount.label'/></th><td data-tprop="datumDailyCount"></td>
+		 					<th><fmt:message key='expire.datumDailyCount.label'/></th><td data-tprop="datumDailyCountDisplay"></td>
 		 				</tr>
 		 				<tr>
-		 					<th><fmt:message key='expire.datumHourlyCount.label'/></th><td data-tprop="datumHourlyCount"></td>
+		 					<th><fmt:message key='expire.datumHourlyCount.label'/></th><td data-tprop="datumHourlyCountDisplay"></td>
 		 				</tr>
 		 				<tr>
-		 					<th><fmt:message key='expire.datumCount.label'/></th><td data-tprop="datumCount"></td>
+		 					<th><fmt:message key='expire.datumCount.label'/></th><td data-tprop="datumCountDisplay"></td>
 		 				</tr>
 		 			</tbody>
 		 			<tfoot>
 		 				<tr>
-		 					<th><fmt:message key='expire.datumTotalCount.label'/></th><th data-tprop="datumTotalCount"></th>
+		 					<th><fmt:message key='expire.datumTotalCount.label'/></th><th data-tprop="datumTotalCountDisplay"></th>
 		 				</tr>
 		 			</tfoot>
 		 		</table>
