@@ -1,4 +1,6 @@
 .DS_Store
 /solarnetwork-osgi-lib
 /solarnetwork-osgi-target
+build/
+target/
 
