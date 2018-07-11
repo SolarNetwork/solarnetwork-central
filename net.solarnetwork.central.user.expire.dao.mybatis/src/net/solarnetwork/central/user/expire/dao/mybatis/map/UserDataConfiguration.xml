@@ -102,6 +102,19 @@
 			lower(udac.cname), udac.id
 	</select>
 	
+	<resultMap id="DatumRecordCountsFullResult" type="net.solarnetwork.central.user.expire.domain.DatumRecordCounts">
+		<result property="date" column="query_date"/>
+		<result property="datumCount" column="datum_count"/>
+		<result property="datumHourlyCount" column="datum_hourly_count"/>
+		<result property="datumDailyCount" column="datum_daily_count"/>
+		<result property="datumMonthlyCount" column="datum_monthly_count"/>
+	</resultMap>
+
+	<select id="count-expired-data-for-UserDataConfiguration" parameterType="UserDataConfiguration" resultMap="DatumRecordCountsFullResult">
+		SELECT * FROM solaruser.preview_expire_datum_for_policy(
+			#{userId}, CAST(#{filterJson} AS jsonb), make_interval(days => #{expireDays}))
+	</select>
+	
 	<!--  Note this is called as a SELECT to a procedure that performs the delete -->
 	<select id="delete-expired-data-for-UserDataConfiguration" parameterType="UserDataConfiguration" resultType="long">
 		SELECT solaruser.expire_datum_for_policy(

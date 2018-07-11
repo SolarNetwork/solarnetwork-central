@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 
 /**
@@ -41,6 +42,12 @@ public class MyBatisUserDataConfigurationDao
 
 	/** The query name used for {@link #findConfigurationsForUser(Long)}. */
 	public static final String QUERY_CONFIGURATIONS_FOR_USER = "find-UserDataConfiguration-for-user";
+
+	/**
+	 * The query name used for
+	 * {@link #countExpiredDataForConfiguration(UserDataConfiguration)}.
+	 */
+	public static final String QUERY_COUNTS_FOR_CONFIG = "count-expired-data-for-UserDataConfiguration";
 
 	/**
 	 * The query name used for
@@ -59,6 +66,12 @@ public class MyBatisUserDataConfigurationDao
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserDataConfiguration> findConfigurationsForUser(Long userId) {
 		return selectList(QUERY_CONFIGURATIONS_FOR_USER, userId, null, null);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public DatumRecordCounts countExpiredDataForConfiguration(UserDataConfiguration config) {
+		return selectFirst(QUERY_COUNTS_FOR_CONFIG, config);
 	}
 
 	@Override

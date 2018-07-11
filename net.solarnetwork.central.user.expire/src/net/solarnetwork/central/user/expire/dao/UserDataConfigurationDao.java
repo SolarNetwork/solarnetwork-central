@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.expire.dao;
 
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
+import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 
 /**
@@ -33,6 +34,21 @@ import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
  */
 public interface UserDataConfigurationDao extends UserRelatedGenericDao<UserDataConfiguration, Long>,
 		UserConfigurationDao<UserDataConfiguration, Long> {
+
+	/**
+	 * Count all expired data for a given configuration.
+	 * 
+	 * <p>
+	 * These results show the number of records that <i>would</i> be deleted by
+	 * calling
+	 * {@link #deleteExpiredDataForConfiguration(UserDataConfiguration)}.
+	 * </p>
+	 * 
+	 * @param config
+	 *        the configuration to delete expired data for
+	 * @return the count of expired data deleted
+	 */
+	DatumRecordCounts countExpiredDataForConfiguration(UserDataConfiguration config);
 
 	/**
 	 * Delete all expired data for a given configuration.

@@ -46,6 +46,7 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 
 /**
@@ -345,6 +346,15 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		}
 	}
 
+	private void assertCounts(String desc, DatumRecordCounts counts, Long datumCount, Long hourlyCount,
+			Integer dailyCount, Integer monthlyCount) {
+		assertThat("Record counts " + desc, counts, notNullValue());
+		assertThat("Datum count " + desc, counts.getDatumCount(), equalTo(datumCount));
+		assertThat("Hourly datum count " + desc, counts.getDatumHourlyCount(), equalTo(hourlyCount));
+		assertThat("Daily datum count " + desc, counts.getDatumDailyCount(), equalTo(dailyCount));
+		assertThat("Monthly datum count " + desc, counts.getDatumMonthlyCount(), equalTo(monthlyCount));
+	}
+
 	@Test
 	public void expireRawData() {
 		final DateTime start = setupDataToExpire();
@@ -356,6 +366,11 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		filter.setAggregate(null);
 		this.conf.setFilter(filter);
 
+		// first verify "preview"
+		DatumRecordCounts counts = confDao.countExpiredDataForConfiguration(this.conf);
+		assertCounts("preview", counts, 3L, null, null, null);
+
+		// now execute delete
 		long result = confDao.deleteExpiredDataForConfiguration(this.conf);
 		assertThat("Deleted raw datum count", result, equalTo(3L));
 
@@ -383,11 +398,15 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		storeNew();
 
 		// include hourly agg deletion
-		// clear aggregation
 		DatumFilterCommand filter = this.conf.getFilter();
 		filter.setAggregate(Aggregation.Hour);
 		this.conf.setFilter(filter);
 
+		// first verify "preview"
+		DatumRecordCounts counts = confDao.countExpiredDataForConfiguration(this.conf);
+		assertCounts("preview", counts, 3L, 3L, null, null);
+
+		// now execute delete
 		long result = confDao.deleteExpiredDataForConfiguration(this.conf);
 		assertThat("Deleted raw + hourly datum count", result, equalTo(6L));
 
@@ -416,12 +435,16 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 		storeNew();
 
-		// include hourly agg deletion
-		// clear aggregation
+		// include daily agg deletion
 		DatumFilterCommand filter = this.conf.getFilter();
 		filter.setAggregate(Aggregation.Day);
 		this.conf.setFilter(filter);
 
+		// first verify "preview"
+		DatumRecordCounts counts = confDao.countExpiredDataForConfiguration(this.conf);
+		assertCounts("preview", counts, 3L, 3L, 3, null);
+
+		// now execute delete
 		long result = confDao.deleteExpiredDataForConfiguration(this.conf);
 		assertThat("Deleted raw + hourly + daily datum count", result, equalTo(9L));
 
@@ -452,12 +475,16 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 		storeNew();
 
-		// include hourly agg deletion
-		// clear aggregation
+		// include monthly agg deletion
 		DatumFilterCommand filter = this.conf.getFilter();
 		filter.setAggregate(Aggregation.Month);
 		this.conf.setFilter(filter);
 
+		// first verify "preview"
+		DatumRecordCounts counts = confDao.countExpiredDataForConfiguration(this.conf);
+		assertCounts("preview", counts, 3L, 3L, 3, 1);
+
+		// now execute delete
 		long result = confDao.deleteExpiredDataForConfiguration(this.conf);
 		assertThat("Deleted raw + hourly + daily + monthly datum count", result, equalTo(10L));
 

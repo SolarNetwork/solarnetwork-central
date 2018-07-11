@@ -51,6 +51,9 @@ public class ExpireDatumJob extends JobSupport {
 			return true;
 		}
 		for ( UserDataConfiguration config : configs ) {
+			if ( !config.isEnabled() ) {
+				continue;
+			}
 			long count = configDao.deleteExpiredDataForConfiguration(config);
 			if ( count > 0 ) {
 				log.info("Deleted {} datum for user {} older than {} days matching policy {}", count,

@@ -60,4 +60,12 @@ public interface DataConfiguration extends IdentifiableConfiguration {
 	 */
 	int getExpireDays();
 
+	/**
+	 * Flag indicating if the configuration is "active" and applicable.
+	 * 
+	 * @return {@literal true} if the configuration is active, {@literal false}
+	 *         if the configuration should not be applied
+	 */
+	boolean isEnabled();
+
 }

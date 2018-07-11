@@ -31,6 +31,8 @@
 				<th><fmt:message key='expire.dataConfig.sources.label'/></th>
 				<th><fmt:message key='expire.dataConfig.aggregation.label'/></th>
 				<th><fmt:message key='expire.dataConfig.expireDays.label'/></th>
+				<th><fmt:message key='expire.dataConfig.enabled.label'/></th>
+				<th><fmt:message key='expire.dataConfig.preview.label'/></th>
 			</tr>
 			<%--
 				The .template class defines the HTML structure for one object.
@@ -41,6 +43,8 @@
 				<td data-tprop="sources"></td>
 				<td data-tprop="aggregation"></td>
 				<td data-tprop="expireDays"></td>
+				<td data-tprop="enabled"></td>
+				<td><a href="#" class="preview-link"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></a>
 			</tr>
 		</thead>
 		<%--
