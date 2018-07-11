@@ -333,14 +333,37 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
 	}
 };
 
-SolarReg.Settings.handleEditServiceItemAction = function handleEditAction(event, services, settingTemplates) {
-	console.log('click: %o', event);
-	if ( event.target && event.target.classList && event.target.classList.contains('edit-link') ) {
-		var config = SolarReg.Templates.findContextItem(event.target);
-		var button = $(event.target);
-		var modal = $(button.data('edit-modal'));
+/**
+ * Handle a click on a service item, to display a edit form or action modal.
+ * 
+ * This function will examine the `event.target` for an `edit-link` class.
+ * If found, then a modal defined by the CSS selector found on the `edit-modal`
+ * data attribute will be opened. If `edit-link` is not available, then it
+ * will look for an `action-link` class. If found, then a modal defined by the
+ * CSS selector found on the `action-modal` data attribute will be opened.
+ * 
+ * For any opened modal, {@link SolarReg.Templates.setContextItem()} will be
+ * called on it before opening, setting whatever context item is returned by
+ * passing the event target to {@link SolarReg.Templates.findContextItem()}.
+ * 
+ * @param {Event} event the event that triggered the action
+ */
+SolarReg.Settings.handleEditServiceItemAction = function handleEditAction(event) {
+	if ( !(event.target && event.target.classList) ) {
+		return;
+	}
+	var config = SolarReg.Templates.findContextItem(event.target);
+	var button = $(event.target);
+	var modal;
+	if ( event.target.classList.contains('edit-link') ) {
+		modal = $(button.data('edit-modal'));
+	} else if ( event.target.classList.contains('action-link') ) {
+		modal = $(button.data('action-modal'));
+	}
+	if ( modal && modal.modal ) {
 		SolarReg.Templates.setContextItem(modal, config);
 		modal.modal('show');
+		event.preventDefault();
 	}
 };
 

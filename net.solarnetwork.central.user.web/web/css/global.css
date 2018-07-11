@@ -145,3 +145,28 @@ dd + dt {
 tfoot .ledger-amount-label {
 	text-align: right;
 }
+
+table.tally td:last-child,
+table.tally th:last-child {
+	text-align: right;
+}
+
+table.tally tfoot td,
+table.tally tfoot th {
+	border-top: 1px solid #666;
+}
+
+.edit-config span.config-name,
+.config-action span.config-name {
+	font-style: italic;
+}
+
+.edit-config span.config-name:before,
+.config-action span.config-name:before {
+	content: open-quote;
+}
+
+.edit-config span.config-name:after,
+.config-action span.config-name:after {
+	content: close-quote;
+}

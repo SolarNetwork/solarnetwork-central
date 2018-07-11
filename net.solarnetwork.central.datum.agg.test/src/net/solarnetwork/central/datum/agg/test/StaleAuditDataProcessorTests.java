@@ -186,6 +186,11 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 				"SELECT * FROM solaragg.aud_datum_monthly ORDER BY ts_start,node_id,source_id");
 	}
 
+	private List<Map<String, Object>> listAuditAccumulativeDatumDailyRows() {
+		return jdbcTemplate.queryForList(
+				"SELECT * FROM solaragg.aud_acc_datum_daily ORDER BY ts_start,node_id,source_id");
+	}
+
 	private void assertAuditDatumDailyStaleRow(String desc, Map<String, Object> row, long ts,
 			Long nodeId, String sourceId, String kind) {
 		assertThat(desc + " not null", row, notNullValue());
@@ -235,6 +240,20 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 						hasEntry("datum_monthly_pres", (Object) monthPresent),
 						hasEntry("prop_count", (Object) propInCount),
 						hasEntry("datum_q_count", (Object) datumOutCount)));
+	}
+
+	@SuppressWarnings("unchecked")
+	private void assertAuditAccumulativeDatumDailyRow(String desc, Map<String, Object> row, long ts,
+			Long nodeId, String sourceId, Integer rawCount, Integer hourCount, Integer dailyCount,
+			Integer monthCount) {
+		assertThat(desc + " not null", row, notNullValue());
+		assertThat(desc + " data", row,
+				allOf(hasEntry("ts_start", (Object) new Timestamp(ts)),
+						hasEntry("node_id", (Object) nodeId), hasEntry("source_id", (Object) sourceId),
+						hasEntry("datum_count", (Object) rawCount),
+						hasEntry("datum_hourly_count", (Object) hourCount),
+						hasEntry("datum_daily_count", (Object) dailyCount),
+						hasEntry("datum_monthly_count", (Object) monthCount)));
 	}
 
 	private void insertAuditDatumHourlyRow(long ts, Long nodeId, String sourceId, Integer datumCount,
@@ -531,6 +550,12 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumMonthlyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
 				TEST_SOURCE_ID, rawCount, hourCount, dailyCount, true, propCount, datumQueryCount);
+
+		rows = listAuditAccumulativeDatumDailyRows();
+		assertThat("Audit accumulative table row count", rows, hasSize(1));
+		assertAuditAccumulativeDatumDailyRow("Audit accumulative row", rows.get(0),
+				new DateTime(DateTimeZone.UTC).dayOfMonth().roundFloorCopy().getMillis(), TEST_NODE_ID,
+				TEST_SOURCE_ID, rawCount, hourCount, dailyCount, 1);
 	}
 
 	@Test
@@ -575,6 +600,12 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumMonthlyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
 				TEST_SOURCE_ID, rawCount, hourCount, dailyCount, true, propCount, datumQueryCount);
+
+		rows = listAuditAccumulativeDatumDailyRows();
+		assertThat("Audit accumulative table row count", rows, hasSize(1));
+		assertAuditAccumulativeDatumDailyRow("Audit accumulative row", rows.get(0),
+				new DateTime(DateTimeZone.UTC).dayOfMonth().roundFloorCopy().getMillis(), TEST_NODE_ID,
+				TEST_SOURCE_ID, rawCount, hourCount, dailyCount, 1);
 	}
 
 	@Test

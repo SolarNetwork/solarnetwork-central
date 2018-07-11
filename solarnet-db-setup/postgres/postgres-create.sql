@@ -6,9 +6,9 @@
  */
 CREATE ROLE solarnet LOGIN ENCRYPTED PASSWORD 'solarnet' VALID UNTIL 'infinity';
 
-CREATE DATABASE solarnet WITH ENCODING='UTF8' OWNER=solarnet TEMPLATE=template0;
+CREATE DATABASE solarnetwork WITH ENCODING='UTF8' OWNER=solarnet TEMPLATE=template0;
 
-\connect solarnet
+\connect solarnetwork
 
 -- pgpgsql is included by default in Postgres 9.x now
 -- CREATE LANGUAGE plpgsql;
