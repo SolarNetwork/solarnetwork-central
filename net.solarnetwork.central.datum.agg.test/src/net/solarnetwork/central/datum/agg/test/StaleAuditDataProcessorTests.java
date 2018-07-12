@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.agg.test;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -315,6 +316,10 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 				TEST_SOURCE_ID, 2, 0, false);
 	}
 
+	private long getTimestamp(String prop, Map<String, Object> row) {
+		return ((Timestamp) row.get(prop)).getTime();
+	}
+
 	@Test
 	public void processStaleRawRowUpdate() throws Exception {
 		// given
@@ -326,6 +331,9 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 		// insert existing row with counts that we'll ignore or update
 		insertAuditDatumDailyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, 10, 20, false, 40L,
 				50L);
+
+		List<Map<String, Object>> rowsAtBeginning = listAuditDatumDailyRows();
+		Thread.sleep(200); // to advance the clock a bit
 
 		// when
 		job.setTierProcessType("r");
@@ -341,6 +349,14 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumDailyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
 				TEST_SOURCE_ID, 2, 20, false, 40L, 50L);
+
+		assertThat("processed_count updated", getTimestamp("processed_count", rows.get(0)),
+				greaterThan(getTimestamp("processed_count", rowsAtBeginning.get(0))));
+		assertThat("processed_hourly_count unchanged",
+				getTimestamp("processed_hourly_count", rows.get(0)),
+				equalTo(getTimestamp("processed_hourly_count", rowsAtBeginning.get(0))));
+		assertThat("processed_io_count unchanged", getTimestamp("processed_io_count", rows.get(0)),
+				equalTo(getTimestamp("processed_io_count", rowsAtBeginning.get(0))));
 	}
 
 	@Test
@@ -399,6 +415,9 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 
 		insertAuditDatumDailyStaleRow("h", start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID);
 
+		List<Map<String, Object>> rowsAtBeginning = listAuditDatumDailyRows();
+		Thread.sleep(200); // to advance the clock a bit
+
 		// when
 		job.setTierProcessType("h");
 		assertThat("Job completed", job.executeJob(), equalTo(true));
@@ -413,6 +432,13 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumDailyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
 				TEST_SOURCE_ID, 10, 3, false, 40L, 50L);
+
+		assertThat("processed_count unchanged", getTimestamp("processed_count", rows.get(0)),
+				equalTo(getTimestamp("processed_count", rowsAtBeginning.get(0))));
+		assertThat("processed_hourly_count updated", getTimestamp("processed_hourly_count", rows.get(0)),
+				greaterThan(getTimestamp("processed_hourly_count", rowsAtBeginning.get(0))));
+		assertThat("processed_io_count unchanged", getTimestamp("processed_io_count", rows.get(0)),
+				equalTo(getTimestamp("processed_io_count", rowsAtBeginning.get(0))));
 	}
 
 	@Test
@@ -485,6 +511,9 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 
 		insertAuditDatumDailyStaleRow("d", start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID);
 
+		List<Map<String, Object>> rowsAtBeginning = listAuditDatumDailyRows();
+		Thread.sleep(200); // to advance the clock a bit
+
 		// when
 		job.setTierProcessType("d");
 		assertThat("Job completed", job.executeJob(), equalTo(true));
@@ -499,6 +528,14 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumDailyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
 				TEST_SOURCE_ID, 10, 20, true, propCount, datumQueryCount);
+
+		assertThat("processed_count unchanged", getTimestamp("processed_count", rows.get(0)),
+				equalTo(getTimestamp("processed_count", rowsAtBeginning.get(0))));
+		assertThat("processed_hourly_count unchanged",
+				getTimestamp("processed_hourly_count", rows.get(0)),
+				equalTo(getTimestamp("processed_hourly_count", rowsAtBeginning.get(0))));
+		assertThat("processed_io_count updated", getTimestamp("processed_io_count", rows.get(0)),
+				greaterThan(getTimestamp("processed_io_count", rowsAtBeginning.get(0))));
 	}
 
 	@Test
@@ -586,7 +623,14 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 		// insert a month row to drive month present value
 		insertAggDatumMonthlyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, testData);
 
+		// insert existing row with counts that we'll ignore or update
+		insertAuditDatumMonthlyRow(start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, 10L, 20L, 30L, false,
+				50L, 60L);
+
 		insertAuditDatumDailyStaleRow("m", start.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+		List<Map<String, Object>> rowsAtBeginning = listAuditDatumMonthlyRows();
+		Thread.sleep(200); // to advance the clock a bit
 
 		// when
 		job.setTierProcessType("m");
@@ -600,6 +644,9 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 		assertThat("Audit table row count", rows, hasSize(1));
 		assertAuditDatumMonthlyRow("Audit row", rows.get(0), start.getMillis(), TEST_NODE_ID,
 				TEST_SOURCE_ID, rawCount, hourCount, dailyCount, true, propCount, datumQueryCount);
+
+		assertThat("processed updated", getTimestamp("processed", rows.get(0)),
+				greaterThan(getTimestamp("processed", rowsAtBeginning.get(0))));
 
 		rows = listAuditAccumulativeDatumDailyRows();
 		assertThat("Audit accumulative table row count", rows, hasSize(1));
