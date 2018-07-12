@@ -166,4 +166,44 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 				TEST_PRICE_SOURCE_ID);
 	}
 
+	/**
+	 * Insert a test node record into the database.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param locationId
+	 *        the node's location ID
+	 */
+	protected void setupTestNode(Long nodeId, Long locationId) {
+		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id) values (?,?)", nodeId,
+				locationId);
+	}
+
+	/**
+	 * Insert a test location record into the database.
+	 * 
+	 * @param id
+	 *        the location ID
+	 * @param timeZoneId
+	 *        the time zone to use
+	 */
+	protected void setupTestLocation(Long id, String timeZoneId) {
+		jdbcTemplate.update(
+				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
+				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, timeZoneId);
+	}
+
+	/**
+	 * Insert a test UserNode record into the database.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param userId
+	 *        the user ID
+	 */
+	protected void setupUserNodeEntity(Long nodeId, Long userId) {
+		jdbcTemplate.update("INSERT INTO solaruser.user_node (node_id, user_id) VALUES (?,?)", nodeId,
+				userId);
+	}
+
 }

@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.Aggregation;
@@ -48,17 +49,18 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.10
+ * @version 1.11
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
-		"combiningType", "combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "tags", "dataPath",
-		"mostRecent", "startDate", "endDate", "max", "offset", "sorts", "type", "location" })
+		"combiningType", "combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "rollupTypes",
+		"rollupTypeKeys", "tags", "dataPath", "mostRecent", "startDate", "endDate", "max", "offset",
+		"sorts", "type", "location" })
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
 		GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter, Serializable {
 
-	private static final long serialVersionUID = -949767931549934411L;
+	private static final long serialVersionUID = 7514459682386461710L;
 
 	private final SolarLocation location;
 	private DateTime startDate;
@@ -81,6 +83,8 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	private CombiningType combiningType;
 	private Map<Long, Set<Long>> nodeIdMappings;
 	private Map<String, Set<String>> sourceIdMappings;
+
+	private DatumRollupType[] datumRollupTypes;
 
 	/**
 	 * Default constructor.
@@ -164,6 +168,9 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		setStartDate(other.getStartDate());
 		setMostRecent(other.isMostRecent());
 		setWithoutTotalResultsCount(other.isWithoutTotalResultsCount());
+		if ( other instanceof DatumRollupFilter ) {
+			setDatumRollupTypes(((DatumRollupFilter) other).getDatumRollupTypes());
+		}
 	}
 
 	@Override
@@ -765,6 +772,51 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		setSourceIdMappings(result.isEmpty() ? null : result);
 	}
 
+	@JsonIgnore
+	@Override
+	public DatumRollupType getDatumRollupType() {
+		return datumRollupTypes != null && datumRollupTypes.length > 0 ? datumRollupTypes[0] : null;
+	}
+
+	@JsonProperty("rollupTypes")
+	@Override
+	public DatumRollupType[] getDatumRollupTypes() {
+		return datumRollupTypes;
+	}
+
+	/**
+	 * Get the datum rollups as key values.
+	 * 
+	 * @return the datum rollup type key values, or {@literal null} if not
+	 *         defined
+	 * @since 1.11
+	 */
+	@JsonProperty("rollupTypeKeys")
+	public String[] getDatumRollupTypeKeys() {
+		DatumRollupType[] types = getDatumRollupTypes();
+		String[] keys = null;
+		if ( types != null && types.length > 0 ) {
+			keys = new String[types.length];
+			int i = 0;
+			for ( DatumRollupType type : types ) {
+				keys[i++] = type.getKey();
+			}
+		}
+		return keys;
+	}
+
+	/**
+	 * Set the datum rollup types to use.
+	 * 
+	 * @param datumRollupTypes
+	 *        the rollup types
+	 * @since 1.11
+	 */
+	@JsonProperty("rollupTypes")
+	public void setDatumRollupTypes(DatumRollupType[] datumRollupTypes) {
+		this.datumRollupTypes = datumRollupTypes;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -792,6 +844,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		result = prime * result + ((combiningType == null) ? 0 : combiningType.hashCode());
 		result = prime * result + ((nodeIdMappings == null) ? 0 : nodeIdMappings.hashCode());
 		result = prime * result + ((sourceIdMappings == null) ? 0 : sourceIdMappings.hashCode());
+		result = prime * result + Arrays.hashCode(datumRollupTypes);
 		return result;
 	}
 
@@ -904,6 +957,9 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 				return false;
 			}
 		} else if ( !sourceIdMappings.equals(other.sourceIdMappings) ) {
+			return false;
+		}
+		if ( !Arrays.equals(datumRollupTypes, other.datumRollupTypes) ) {
 			return false;
 		}
 		return true;

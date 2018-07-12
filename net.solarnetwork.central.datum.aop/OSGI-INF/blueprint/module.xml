@@ -29,14 +29,26 @@
 
 	<reference id="datumMetadataBiz"
 		interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz"
-		filter="(!(aop=true))"/>
+		filter="(!(secured=true))"/>
+	
+	<reference id="auditDatumBiz"
+		interface="net.solarnetwork.central.datum.biz.AuditDatumBiz"
+		filter="(!(secured=true))"/>
 	
 	<!-- Published Services -->
 
 	<service ref="aopDatumMetadataBiz" 
 			interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz" ranking="10">
 		<service-properties>
-			<entry key="aop" value="true"/>
+			<entry key="aop" value="true"/><!-- for backwards compat -->
+			<entry key="secured" value="true"/>
+		</service-properties>
+	</service>
+	
+	<service ref="aopAuditDatumBiz" 
+			interface="net.solarnetwork.central.datum.biz.AuditDatumBiz" ranking="10">
+		<service-properties>
+			<entry key="secured" value="true"/>
 		</service-properties>
 	</service>
 	
@@ -50,6 +62,14 @@
 	
 	<bean id="aopDatumMetadataBiz" class="net.solarnetwork.central.datum.support.DelegatingDatumMetadataBiz">
 		<argument ref="datumMetadataBiz"/>
+	</bean>
+	
+	<bean id="auditDatumSecurityAspect" class="net.solarnetwork.central.datum.aop.AuditDatumSecurityAspect">
+		<argument ref="userNodeDao"/>
+	</bean>
+	
+	<bean id="aopAuditDatumBiz" class="net.solarnetwork.central.datum.support.DelegatingAuditDatumBiz">
+		<argument ref="auditDatumBiz"/>
 	</bean>
 	
 </blueprint>

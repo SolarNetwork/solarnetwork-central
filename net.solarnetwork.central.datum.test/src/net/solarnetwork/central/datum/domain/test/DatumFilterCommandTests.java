@@ -44,13 +44,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Test cases for the {@link DatumFilterCommand} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DatumFilterCommandTests {
 
@@ -92,6 +93,18 @@ public class DatumFilterCommandTests {
 						+ ",\"nodeIdMappings\":{\"100\":[1,2,3]}"
 						+ ",\"sourceIdMappings\":{\"CON\":[\"A\",\"B\",\"C\"],\"GEN\":[\"E\",\"F\",\"G\"]}"
 						+ ",\"mostRecent\":false,\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+	}
+
+	@Test
+	public void serializeJsonWithRollupTypes() throws IOException {
+		DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setDatumRollupTypes(new DatumRollupType[] { DatumRollupType.Time, DatumRollupType.Node });
+
+		String json = objectMapper.writeValueAsString(cmd);
+		assertThat(json, notNullValue());
+		assertThat(json, equalTo("{\"aggregationKey\":\"0\",\"rollupTypes\":[\"Time\",\"Node\"]"
+				+ ",\"rollupTypeKeys\":[\"t\",\"n\"]"
+				+ ",\"mostRecent\":false,\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
 	}
 
 	@Test

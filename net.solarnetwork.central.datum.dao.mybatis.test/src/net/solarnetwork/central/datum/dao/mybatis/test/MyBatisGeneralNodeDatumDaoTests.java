@@ -34,6 +34,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,6 +44,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
 import org.joda.time.DateTimeZone;
@@ -51,7 +53,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumDao;
+import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
@@ -65,7 +69,7 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  * Test cases for the {@link MyBatisGeneralNodeDatumDao} class.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @SuppressWarnings("deprecation")
 public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSupport {
@@ -1783,5 +1787,329 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		criteria.setDataPath("DatumStored");
 		long count = dao.getAuditCountTotal(criteria);
 		assertEquals("No data", 2124, count);
+	}
+
+	private void insertAuditDatumHourlyRow(long ts, Long nodeId, String sourceId, Integer rawCount,
+			Integer propInCount, Integer datumOutCount) {
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.aud_datum_hourly (ts_start,node_id,source_id,datum_count,prop_count,datum_q_count) VALUES (?,?,?,?,?,?)",
+				new Timestamp(ts), nodeId, sourceId, rawCount, propInCount, datumOutCount);
+	}
+
+	private void insertAuditDatumDailyRow(long ts, Long nodeId, String sourceId, Integer rawCount,
+			Integer hourCount, Boolean dailyPresent, Integer propInCount, Integer datumOutCount) {
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.aud_datum_daily (ts_start,node_id,source_id,datum_count,datum_hourly_count,datum_daily_pres,prop_count,datum_q_count) VALUES (?,?,?,?,?,?,?,?)",
+				new Timestamp(ts), nodeId, sourceId, rawCount, hourCount, dailyPresent, propInCount,
+				datumOutCount);
+	}
+
+	private void insertAuditDatumMonthlyRow(long ts, Long nodeId, String sourceId, Integer rawCount,
+			Integer hourCount, Integer dailyCount, Boolean monthPresent, Integer propInCount,
+			Integer datumOutCount) {
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.aud_datum_monthly (ts_start,node_id,source_id,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres,prop_count,datum_q_count) VALUES (?,?,?,?,?,?,?,?,?)",
+				new Timestamp(ts), nodeId, sourceId, rawCount, hourCount, dailyCount, monthPresent,
+				propInCount, datumOutCount);
+	}
+
+	private void assertAuditDatumRecordCounts(String desc, AuditDatumRecordCounts row, DateTime ts,
+			Long nodeId, String sourceId, Long rawCount, Long hourCount, Integer dayCount,
+			Integer monthCount, Long propInCount, Long datumOutCount) {
+		assertThat(desc + " not null", row, notNullValue());
+		if ( ts != null ) {
+			assertThat(desc + " created", row.getCreated().withZone(DateTimeZone.forID(TEST_TZ)),
+					equalTo(ts));
+		} else {
+			assertThat(desc + " created", row.getCreated(), nullValue());
+		}
+		assertThat(desc + " node ID", row.getNodeId(), equalTo(nodeId));
+		assertThat(desc + " source ID", row.getSourceId(), equalTo(sourceId));
+		assertThat(desc + " datum count", row.getDatumCount(), equalTo(rawCount));
+		assertThat(desc + " datum hourly count", row.getDatumHourlyCount(), equalTo(hourCount));
+		assertThat(desc + " datum daily count", row.getDatumDailyCount(), equalTo(dayCount));
+		assertThat(desc + " datum monthly count", row.getDatumMonthlyCount(), equalTo(monthCount));
+		assertThat(desc + " prop posted count", row.getDatumPropertyPostedCount(), equalTo(propInCount));
+		assertThat(desc + " datum query count", row.getDatumQueryCount(), equalTo(datumOutCount));
+	}
+
+	private void setupTestAuditDatumRecords(DateTime start, Long nodeId, String sourceId, int count,
+			int hourStep, List<DateTime> hours, List<DateTime> days, List<DateTime> months) {
+		for ( int i = 0; i < count; i++ ) {
+			DateTime h = start.plusHours(i * hourStep);
+			insertAuditDatumHourlyRow(h.getMillis(), nodeId, sourceId, 60, 100, 5);
+			hours.add(h);
+
+			DateTime d = h.dayOfMonth().roundFloorCopy();
+			if ( days.isEmpty() || !days.get(days.size() - 1).isEqual(d) ) {
+				insertAuditDatumDailyRow(d.getMillis(), nodeId, sourceId, 100, 24, true, 1000, 10);
+				days.add(d);
+			}
+
+			DateTime m = h.monthOfYear().roundFloorCopy();
+			if ( months.isEmpty() || !months.get(months.size() - 1).isEqual(m) ) {
+				insertAuditDatumMonthlyRow(m.getMillis(), nodeId, sourceId, 3000, 720, 30, true, 30000,
+						300);
+				months.add(m);
+			}
+		}
+	}
+
+	@Test
+	public void findAuditDatumRecordCountsHourAggregationNoRollup() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> hours = new ArrayList<DateTime>();
+		List<DateTime> days = new ArrayList<DateTime>();
+		List<DateTime> months = new ArrayList<DateTime>();
+		setupTestAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8,
+				(int) TimeUnit.DAYS.toHours(7), hours, days, months);
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(start);
+		filter.setEndDate(start.plusWeeks(4));
+		filter.setUserId(TEST_USER_ID);
+		filter.setAggregate(Aggregation.Hour);
+		FilterResults<AuditDatumRecordCounts> results = dao.findAuditRecordCountsFiltered(filter, null,
+				null, null);
+
+		// then
+		assertThat("Hour rows for first 4 weeks returned", results.getReturnedResultCount(), equalTo(4));
+		int i = 0;
+		for ( AuditDatumRecordCounts row : results ) {
+			assertAuditDatumRecordCounts("Hour " + i, row, hours.get(i), TEST_NODE_ID, TEST_SOURCE_ID,
+					60L, null, null, null, 100L, 5L);
+			i++;
+		}
+	}
+
+	@Test
+	public void findAuditDatumRecordCountsHourAggregationTimeAndNodeRollup() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> hours = new ArrayList<DateTime>();
+		List<DateTime> days = new ArrayList<DateTime>();
+		List<DateTime> months = new ArrayList<DateTime>();
+		setupTestAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8,
+				(int) TimeUnit.DAYS.toHours(7), hours, days, months);
+		// add another source
+		setupTestAuditDatumRecords(start, TEST_NODE_ID, TEST_2ND_SOURCE, 8,
+				(int) TimeUnit.DAYS.toHours(7), new ArrayList<DateTime>(), new ArrayList<DateTime>(),
+				new ArrayList<DateTime>());
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(start);
+		filter.setEndDate(start.plusWeeks(4));
+		filter.setUserId(TEST_USER_ID);
+		filter.setAggregate(Aggregation.Hour);
+		filter.setDatumRollupTypes(new DatumRollupType[] { DatumRollupType.Time, DatumRollupType.Node });
+		FilterResults<AuditDatumRecordCounts> results = dao.findAuditRecordCountsFiltered(filter, null,
+				null, null);
+
+		// then
+		assertThat("Rolled up hour rows for first 4 weeks returned", results.getReturnedResultCount(),
+				equalTo(4));
+		int i = 0;
+		for ( AuditDatumRecordCounts row : results ) {
+			// audit counts doubled from rollup
+			assertAuditDatumRecordCounts("Hour " + i, row, hours.get(i), TEST_NODE_ID, null, 120L, null,
+					null, null, 200L, 10L);
+			i++;
+		}
+	}
+
+	@Test
+	public void findAuditDatumRecordCountsHourAggregationTimeRollup() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> hours = new ArrayList<DateTime>();
+		List<DateTime> days = new ArrayList<DateTime>();
+		List<DateTime> months = new ArrayList<DateTime>();
+		setupTestAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8,
+				(int) TimeUnit.DAYS.toHours(7), hours, days, months);
+		// add another source for same node
+		setupTestAuditDatumRecords(start, TEST_NODE_ID, TEST_2ND_SOURCE, 8,
+				(int) TimeUnit.DAYS.toHours(7), new ArrayList<DateTime>(), new ArrayList<DateTime>(),
+				new ArrayList<DateTime>());
+
+		// add another node
+		setupTestNode(TEST_2ND_NODE);
+		setupTestAuditDatumRecords(start, TEST_2ND_NODE, TEST_SOURCE_ID, 8,
+				(int) TimeUnit.DAYS.toHours(7), new ArrayList<DateTime>(), new ArrayList<DateTime>(),
+				new ArrayList<DateTime>());
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+		setupUserNodeEntity(TEST_2ND_NODE, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(start);
+		filter.setEndDate(start.plusWeeks(4));
+		filter.setUserId(TEST_USER_ID);
+		filter.setAggregate(Aggregation.Hour);
+		filter.setDatumRollupTypes(new DatumRollupType[] { DatumRollupType.Time });
+		FilterResults<AuditDatumRecordCounts> results = dao.findAuditRecordCountsFiltered(filter, null,
+				null, null);
+
+		// then
+		assertThat("Rolled up hour rows for first 4 weeks returned", results.getReturnedResultCount(),
+				equalTo(4));
+		int i = 0;
+		for ( AuditDatumRecordCounts row : results ) {
+			// audit counts tripled from rollup
+			assertAuditDatumRecordCounts("Hour " + i, row, hours.get(i), null, null, 180L, null, null,
+					null, 300L, 15L);
+			i++;
+		}
+	}
+
+	@Test
+	public void findAuditDatumRecordCountsHourAggregationAllRollup() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> hours = new ArrayList<DateTime>();
+		List<DateTime> days = new ArrayList<DateTime>();
+		List<DateTime> months = new ArrayList<DateTime>();
+		setupTestAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8,
+				(int) TimeUnit.DAYS.toHours(7), hours, days, months);
+		// add another source for same node
+		setupTestAuditDatumRecords(start, TEST_NODE_ID, TEST_2ND_SOURCE, 8,
+				(int) TimeUnit.DAYS.toHours(7), new ArrayList<DateTime>(), new ArrayList<DateTime>(),
+				new ArrayList<DateTime>());
+
+		// add another node
+		setupTestNode(TEST_2ND_NODE);
+		setupTestAuditDatumRecords(start, TEST_2ND_NODE, TEST_SOURCE_ID, 8,
+				(int) TimeUnit.DAYS.toHours(7), new ArrayList<DateTime>(), new ArrayList<DateTime>(),
+				new ArrayList<DateTime>());
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+		setupUserNodeEntity(TEST_2ND_NODE, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(start);
+		filter.setEndDate(start.plusWeeks(4));
+		filter.setUserId(TEST_USER_ID);
+		filter.setAggregate(Aggregation.Hour);
+		filter.setDatumRollupTypes(new DatumRollupType[] { DatumRollupType.All });
+		FilterResults<AuditDatumRecordCounts> results = dao.findAuditRecordCountsFiltered(filter, null,
+				null, null);
+
+		// then
+		assertThat("Rolled up hour rows for first 4 weeks returned", results.getReturnedResultCount(),
+				equalTo(1));
+		int i = 0;
+		for ( AuditDatumRecordCounts row : results ) {
+			// audit counts tripled * 4 from rollup
+			assertAuditDatumRecordCounts("Hour " + i, row, null, null, null, 720L, null, null, null,
+					1200L, 60L);
+			i++;
+		}
+	}
+
+	@Test
+	public void findAuditDatumRecordCountsDefaultAggregationNoRollup() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> hours = new ArrayList<DateTime>();
+		List<DateTime> days = new ArrayList<DateTime>();
+		List<DateTime> months = new ArrayList<DateTime>();
+		setupTestAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8,
+				(int) TimeUnit.DAYS.toHours(7), hours, days, months);
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(start);
+		filter.setEndDate(start.plusWeeks(4));
+		filter.setUserId(TEST_USER_ID);
+		FilterResults<AuditDatumRecordCounts> results = dao.findAuditRecordCountsFiltered(filter, null,
+				null, null);
+
+		// then
+		assertThat("Day rows for first 4 weeks returned", results.getReturnedResultCount(), equalTo(4));
+		int i = 0;
+		for ( AuditDatumRecordCounts row : results ) {
+			assertAuditDatumRecordCounts("Daily " + i, row, days.get(i), TEST_NODE_ID, TEST_SOURCE_ID,
+					100L, 24L, 1, null, 1000L, 10L);
+			i++;
+		}
+	}
+
+	@Test
+	public void findAuditDatumRecordCountsDayAggregationNoRollup() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> hours = new ArrayList<DateTime>();
+		List<DateTime> days = new ArrayList<DateTime>();
+		List<DateTime> months = new ArrayList<DateTime>();
+		setupTestAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8,
+				(int) TimeUnit.DAYS.toHours(7), hours, days, months);
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(start);
+		filter.setEndDate(start.plusWeeks(4));
+		filter.setUserId(TEST_USER_ID);
+		FilterResults<AuditDatumRecordCounts> results = dao.findAuditRecordCountsFiltered(filter, null,
+				null, null);
+
+		// then
+		assertThat("Day rows for first 4 weeks returned", results.getReturnedResultCount(), equalTo(4));
+		int i = 0;
+		for ( AuditDatumRecordCounts row : results ) {
+			assertAuditDatumRecordCounts("Daily " + i, row, days.get(i), TEST_NODE_ID, TEST_SOURCE_ID,
+					100L, 24L, 1, null, 1000L, 10L);
+			i++;
+		}
+	}
+
+	@Test
+	public void findAuditDatumRecordCountsMonthAggregationNoRollup() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> hours = new ArrayList<DateTime>();
+		List<DateTime> days = new ArrayList<DateTime>();
+		List<DateTime> months = new ArrayList<DateTime>();
+		setupTestAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8,
+				(int) TimeUnit.DAYS.toHours(7), hours, days, months);
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(start);
+		filter.setEndDate(start.plusWeeks(4));
+		filter.setUserId(TEST_USER_ID);
+		filter.setAggregate(Aggregation.Month);
+		FilterResults<AuditDatumRecordCounts> results = dao.findAuditRecordCountsFiltered(filter, null,
+				null, null);
+
+		// then
+		assertThat("Month rows for first 4 weeks returned", results.getReturnedResultCount(),
+				equalTo(1));
+		int i = 0;
+		for ( AuditDatumRecordCounts row : results ) {
+			assertAuditDatumRecordCounts("Month " + i, row, months.get(i), TEST_NODE_ID, TEST_SOURCE_ID,
+					3000L, 720L, 30, 1, 30000L, 300L);
+			i++;
+		}
 	}
 }
