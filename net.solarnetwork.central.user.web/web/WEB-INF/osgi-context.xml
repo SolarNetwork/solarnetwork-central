@@ -30,11 +30,14 @@
 		interface="net.solarnetwork.central.biz.AppConfigurationBiz"
 		filter="(app=user)"/>
 	
-	<osgi:reference id="instructorBiz" sticky="false"  filter="(secured=true)"
+	<osgi:reference id="instructorBiz" filter="(secured=true)"
 		interface="net.solarnetwork.central.instructor.biz.InstructorBiz"/>
 	
-	<osgi:reference id="queryBiz" sticky="false"
+	<osgi:reference id="queryBiz" filter="(secured=true)"
 		interface="net.solarnetwork.central.query.biz.QueryBiz"/>
+		
+	<osgi:reference id="auditDatumBiz" filter="(secured=true)"
+		interface="net.solarnetwork.central.datum.biz.AuditDatumBiz"/>
 	
 	<osgi:reference id="registrationBiz" sticky="false" depends-on="userValidator"
 		interface="net.solarnetwork.central.user.biz.RegistrationBiz"/>

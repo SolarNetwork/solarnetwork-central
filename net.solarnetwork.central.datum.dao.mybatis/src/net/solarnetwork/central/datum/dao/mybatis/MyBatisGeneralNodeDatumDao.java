@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.dao.mybatis;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +40,10 @@ import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -56,7 +59,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -148,6 +151,22 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String QUERY_FOR_AUDIT_DATUM_STORED_COUNT = "find-general-audit-datum-stored-count";
 
+	/**
+	 * The default query name for
+	 * {@link #findAuditRecordCountsFiltered(AggregateGeneralNodeDatumFilter, List, Integer, Integer)}.
+	 * 
+	 * @since 1.8
+	 */
+	public static final String QUERY_FOR_AUDIT_DATUM_RECORD_COUNTS = "findall-AuditNodeDatum-AuditDatumRecordCounts";
+
+	/**
+	 * The default query name for
+	 * {@link #findAccumulativeAuditRecordCountsFiltered(AggregateGeneralNodeDatumFilter, List, Integer, Integer)}.
+	 * 
+	 * @since 1.8
+	 */
+	public static final String QUERY_FOR_ACCUMULATIVE_AUDIT_DATUM_RECORD_COUNTS = "findall-AccumulativeAuditNodeDatum-AuditDatumRecordCounts";
+
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
 	private String queryForMostRecent;
@@ -155,6 +174,8 @@ public class MyBatisGeneralNodeDatumDao
 	private String queryForAuditInterval;
 	private String queryForAuditHourlyPropertyCount;
 	private String queryForAuditDatumStoredCount;
+	private String queryForAuditDatumRecordCounts;
+	private String queryForAccumulativeAuditDatumRecordCounts;
 
 	/**
 	 * Default constructor.
@@ -168,6 +189,8 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForAuditInterval = QUERY_FOR_AUDIT_INTERVAL;
 		this.queryForAuditHourlyPropertyCount = QUERY_FOR_AUDIT_HOURLY_PROP_COUNT;
 		this.queryForAuditDatumStoredCount = QUERY_FOR_AUDIT_DATUM_STORED_COUNT;
+		this.queryForAuditDatumRecordCounts = QUERY_FOR_AUDIT_DATUM_RECORD_COUNTS;
+		this.queryForAccumulativeAuditDatumRecordCounts = QUERY_FOR_ACCUMULATIVE_AUDIT_DATUM_RECORD_COUNTS;
 	}
 
 	/**
@@ -508,6 +531,121 @@ public class MyBatisGeneralNodeDatumDao
 		return (result != null ? result : 0L);
 	}
 
+	private Aggregation aggregationForAuditDatumRecordCounts(AggregateGeneralNodeDatumFilter filter) {
+		// limit aggregation to specific supported ones
+		Aggregation aggregation = Aggregation.Day;
+		if ( filter != null && filter.getAggregation() != null ) {
+			switch (filter.getAggregation()) {
+				case Hour:
+				case Day:
+				case Month:
+					aggregation = filter.getAggregation();
+					break;
+
+				default:
+					// ignore all others
+			}
+		}
+		return aggregation;
+	}
+
+	private Map<String, Object> sqlParametersForAuditDatumRecordCounts(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors) {
+		final Map<String, Object> sqlProps = new HashMap<String, Object>(3);
+		sqlProps.put(PARAM_FILTER, filter);
+
+		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
+			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
+		}
+
+		// limit aggregation to specific supported ones
+		Aggregation aggregation = aggregationForAuditDatumRecordCounts(filter);
+		sqlProps.put(PARAM_AGGREGATION, aggregation.name());
+
+		// setup rollup flags for query to use in form of map with keys that can be tested
+		DatumRollupType[] rollupTypes = filter.getDatumRollupTypes();
+		if ( rollupTypes != null && rollupTypes.length > 0 ) {
+			Map<String, Boolean> rollups = new LinkedHashMap<String, Boolean>(4);
+			for ( DatumRollupType type : rollupTypes ) {
+				switch (type) {
+					case None:
+						rollups.clear();
+						break;
+					default:
+						rollups.put(type.name(), true);
+				}
+			}
+			if ( !rollups.isEmpty() ) {
+				sqlProps.put("rollups", rollups);
+			}
+		}
+		return sqlProps;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.8
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	public FilterResults<AuditDatumRecordCounts> findAuditRecordCountsFiltered(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		Map<String, Object> sqlProps = sqlParametersForAuditDatumRecordCounts(filter, sortDescriptors);
+
+		// execute count query first, if max NOT specified as -1 and NOT a mostRecent query
+		Long totalCount = null;
+		if ( max != null && max.intValue() != -1 && !filter.isMostRecent()
+				&& !filter.isWithoutTotalResultsCount() ) {
+			totalCount = executeCountQuery(queryForAuditDatumRecordCounts + "-count", sqlProps);
+		}
+
+		// execute actual query
+		List<AuditDatumRecordCounts> rows = selectList(queryForAuditDatumRecordCounts, sqlProps, offset,
+				max);
+
+		BasicFilterResults<AuditDatumRecordCounts> results = new BasicFilterResults<AuditDatumRecordCounts>(
+				rows,
+				(totalCount != null ? totalCount
+						: filter.isWithoutTotalResultsCount() ? null : Long.valueOf(rows.size())),
+				offset, rows.size());
+		return results;
+
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.8
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	public FilterResults<AuditDatumRecordCounts> findAccumulativeAuditRecordCountsFiltered(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		Map<String, Object> sqlProps = sqlParametersForAuditDatumRecordCounts(filter, sortDescriptors);
+
+		// execute count query first, if max NOT specified as -1 and NOT a mostRecent query
+		Long totalCount = null;
+		if ( max != null && max.intValue() != -1 && !filter.isMostRecent()
+				&& !filter.isWithoutTotalResultsCount() ) {
+			totalCount = executeCountQuery(queryForAccumulativeAuditDatumRecordCounts + "-count",
+					sqlProps);
+		}
+
+		// execute actual query
+		List<AuditDatumRecordCounts> rows = selectList(queryForAccumulativeAuditDatumRecordCounts,
+				sqlProps, offset, max);
+
+		BasicFilterResults<AuditDatumRecordCounts> results = new BasicFilterResults<AuditDatumRecordCounts>(
+				rows,
+				(totalCount != null ? totalCount
+						: filter.isWithoutTotalResultsCount() ? null : Long.valueOf(rows.size())),
+				offset, rows.size());
+		return results;
+	}
+
 	public String getQueryForReportableInterval() {
 		return queryForReportableInterval;
 	}
@@ -575,6 +713,35 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setQueryForAuditDatumStoredCount(String queryForAuditDatumStoredCount) {
 		this.queryForAuditDatumStoredCount = queryForAuditDatumStoredCount;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #findAuditRecordCountsFiltered(AggregateGeneralNodeDatumFilter, List, Integer, Integer)}
+	 * method.
+	 * 
+	 * @param queryForAuditDatumRecordCounts
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_AUDIT_DATUM_RECORD_COUNTS}
+	 * @since 1.8
+	 */
+	public void setQueryForAuditDatumRecordCounts(String queryForAuditDatumRecordCounts) {
+		this.queryForAuditDatumRecordCounts = queryForAuditDatumRecordCounts;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #findAccumulativeAuditRecordCountsFiltered(AggregateGeneralNodeDatumFilter, List, Integer, Integer)}
+	 * method.
+	 * 
+	 * @param queryForAccumulativeAuditDatumRecordCounts
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_ACCUMULATIVE_AUDIT_DATUM_RECORD_COUNTS}
+	 * @since 1.8
+	 */
+	public void setQueryForAccumulativeAuditDatumRecordCounts(
+			String queryForAccumulativeAuditDatumRecordCounts) {
+		this.queryForAccumulativeAuditDatumRecordCounts = queryForAccumulativeAuditDatumRecordCounts;
 	}
 
 }

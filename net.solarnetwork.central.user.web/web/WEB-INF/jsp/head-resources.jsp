@@ -21,6 +21,7 @@
 	/js/auth-tokens.js
 	/js/alerts.js
 	/js/billing.js
+	/js/data-insight.js
 	/js/export.js
 	/js/expire.js
 </pack:script>

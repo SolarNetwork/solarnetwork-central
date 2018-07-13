@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.dao;
 
+import java.util.List;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.ReadableInterval;
@@ -29,17 +30,20 @@ import net.solarnetwork.central.dao.AggregationFilterableDao;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
 
 /**
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -147,5 +151,29 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @since 1.3
 	 */
 	long getAuditCountTotal(GeneralNodeDatumFilter filter);
+
+	/**
+	 * Find audit record counts for a given search criteria.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @return the matching records
+	 * @since 1.4
+	 */
+	FilterResults<AuditDatumRecordCounts> findAuditRecordCountsFiltered(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max);
+
+	/**
+	 * Find accumulative audit record counts for a given search criteria.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @return the matching records
+	 * @since 1.4
+	 */
+	FilterResults<AuditDatumRecordCounts> findAccumulativeAuditRecordCountsFiltered(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max);
 
 }

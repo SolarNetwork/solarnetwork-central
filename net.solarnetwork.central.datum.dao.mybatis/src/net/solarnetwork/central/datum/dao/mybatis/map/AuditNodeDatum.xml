@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Thu Nov 13 07:30:21 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.dao.mybatis.AuditNodeDatum">
+	
+	<resultMap id="AuditDatumRecordCountsFullResult" type="net.solarnetwork.central.datum.domain.AuditDatumRecordCounts">
+		<id property="nodeId" column="aud_node_id"/>
+		<id property="created" column="aud_ts"/>
+		<id property="sourceId" column="aud_source_id"/>
+		<result property="datumCount" column="aud_datum_count"/>
+		<result property="datumHourlyCount" column="aud_datum_hourly_count"/>
+		<result property="datumDailyCount" column="aud_datum_daily_count"/>
+		<result property="datumMonthlyCount" column="aud_datum_monthly_count"/>
+		<result property="datumPostedCount" column="aud_posted_datum_count"/>
+		<result property="datumPropertyPostedCount" column="aud_posted_prop_count"/>
+		<result property="datumQueryCount" column="aud_datum_query_count"/>
+	</resultMap>
+
+	<sql id="fragment-AuditDatumRecordCounts-pk-result">
+		<if test='rollups == null or rollups["All"] == null'>
+			<if test='rollups == null or rollups["Time"] != null'>
+				aud.ts_start AS aud_ts,
+			</if>
+			<if test='rollups == null or rollups["Node"] != null'>
+				aud.node_id AS aud_node_id,
+			</if>
+			<if test='rollups == null or rollups["Source"] != null'>
+				aud.source_id AS aud_source_id,
+			</if>
+		</if>
+	</sql>
+	
+	<sql id="fragment-AuditDatumRecordCounts-Hour-result">
+		<include refid="fragment-AuditDatumRecordCounts-pk-result"/>
+		<choose>
+			<when test="rollups != null">
+				SUM(aud.datum_count) AS aud_datum_count,
+				SUM(aud.prop_count) AS aud_posted_prop_count,
+				SUM(aud.datum_q_count) AS aud_datum_query_count
+			</when>
+			<otherwise>
+				aud.datum_count AS aud_datum_count,
+				aud.prop_count AS aud_posted_prop_count,
+				aud.datum_q_count AS aud_datum_query_count
+			</otherwise>
+		</choose>
+	</sql>
+
+	<sql id="fragment-AuditDatumRecordCounts-Day-result">
+		<include refid="fragment-AuditDatumRecordCounts-pk-result"/>
+		<choose>
+			<when test="rollups != null">
+				SUM(aud.datum_count) AS aud_datum_count,
+				SUM(aud.datum_hourly_count) AS aud_datum_hourly_count,
+				SUM(CASE aud.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_daily_count,
+				SUM(aud.prop_count) AS aud_posted_prop_count,
+				SUM(aud.datum_q_count) AS aud_datum_query_count
+			</when>
+			<otherwise>
+				aud.datum_count AS aud_datum_count,
+				aud.datum_hourly_count AS aud_datum_hourly_count,
+				CASE aud.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_daily_count,
+				aud.prop_count AS aud_posted_prop_count,
+				aud.datum_q_count AS aud_datum_query_count
+			</otherwise>
+		</choose>
+	</sql>
+
+	<sql id="fragment-AuditDatumRecordCounts-Month-result">
+		<include refid="fragment-AuditDatumRecordCounts-pk-result"/>
+		<choose>
+			<when test="rollups != null">
+				SUM(aud.datum_count) AS aud_datum_count,
+				SUM(aud.datum_hourly_count) AS aud_datum_hourly_count,
+				SUM(aud.datum_daily_count) AS aud_datum_daily_count,
+				SUM(CASE aud.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_monthly_count,
+				SUM(aud.prop_count) AS aud_posted_prop_count,
+				SUM(aud.datum_q_count) AS aud_datum_query_count
+			</when>
+			<otherwise>
+				aud.datum_count AS aud_datum_count,
+				aud.datum_hourly_count AS aud_datum_hourly_count,
+				aud.datum_daily_count AS aud_datum_daily_count,
+				CASE aud.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_monthly_count,
+				aud.prop_count AS aud_posted_prop_count,
+				aud.datum_q_count AS aud_datum_query_count
+			</otherwise>
+		</choose>
+	</sql>
+
+	<sql id="fragment-findall-AuditDatumRecordCounts-where">
+		<where>
+			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+				AND aud.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
+			<if test="filter.startDate != null">
+				AND aud.ts_start &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+			<if test="filter.endDate != null">
+				AND aud.ts_start &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+		</where>
+	</sql>
+
+	<sql id="fragment-findall-AuditDatumRecordCounts-rollup-group">
+		<if test='rollups != null and rollups["All"] == null'>
+			<foreach collection="rollups.keySet()" open="GROUP BY" separator="," item="rollup">
+				<choose>
+					<when test='rollup == "Time"'>aud.ts_start</when>
+					<when test='rollup == "Node"'>aud.node_id</when>
+					<when test='rollup == "Source"'>aud.source_id</when>
+				</choose>
+			</foreach>
+		</if>
+	</sql>
+	
+	<sql id="fragment-findall-AuditDatumRecordCounts-order">
+		<if test='rollups == null or rollups["All"] == null'>
+			ORDER BY
+			<choose>
+				<when test="filter.mostRecent == true">
+					aud_node_id, aud_source_id, aud_ts desc
+				</when>
+				<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+					 <foreach collection="SortDescriptors" item="item" separator=",">
+						<if test='item.sortKey == "created"'>aud_ts</if>
+						<if test='item.sortKey == "node"'>aud_node_id</if>
+						<if test='item.sortKey == "source"'>aud_source_id</if>
+						<if test='item.descending'>DESC</if>
+					</foreach>
+				</when>
+				<otherwise>
+					<trim suffixOverrides=",">
+						<if test='rollups == null or rollups["Time"] != null'>
+							aud_ts,
+						</if>
+						<if test='rollups == null or rollups["Node"] != null'>
+							aud_node_id,
+						</if>
+						<if test='rollups == null or rollups["Source"] != null'>
+							aud_source_id,
+						</if>
+					</trim>
+				</otherwise>
+			</choose>
+		</if>
+	</sql>
+	
+	<sql id="fragment-restrict-node-ids-to-user-cte">
+		nodes AS (
+			SELECT ARRAY(
+				SELECT node_id 
+				FROM solaruser.user_node
+				WHERE user_id = #{filter.userId}
+				<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+					AND node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[])
+				</if>
+			) AS node_ids
+		)
+	</sql>
+
+	<select id="findall-AuditNodeDatum-AuditDatumRecordCounts" resultMap="AuditDatumRecordCountsFullResult" fetchSize="1000" resultSetType="FORWARD_ONLY">
+		WITH
+			<include refid="fragment-restrict-node-ids-to-user-cte"/>
+		SELECT
+		<choose>
+			<when test='aggregation == "Hour"'>
+				<include refid="fragment-AuditDatumRecordCounts-Hour-result"/>
+			</when>
+			<when test='aggregation == "Month"'>
+				<include refid="fragment-AuditDatumRecordCounts-Month-result"/>
+			</when>
+			<otherwise>
+				<include refid="fragment-AuditDatumRecordCounts-Day-result"/>
+			</otherwise>
+		</choose>			
+		FROM
+		<choose>
+			<when test='aggregation == "Hour"'>solaragg.aud_datum_hourly aud</when>
+			<when test='aggregation == "Month"'>solaragg.aud_datum_monthly aud</when>
+			<otherwise>solaragg.aud_datum_daily aud</otherwise>
+		</choose>
+		INNER JOIN nodes ON aud.node_id = ANY(nodes.node_ids)
+		<include refid="fragment-findall-AuditDatumRecordCounts-where"/>
+		<include refid="fragment-findall-AuditDatumRecordCounts-rollup-group"/>
+		<include refid="fragment-findall-AuditDatumRecordCounts-order"/>
+	</select>
+
+
+	<sql id="fragment-AccumulativeAuditDatumRecordCounts-Day-result">
+		<include refid="fragment-AuditDatumRecordCounts-pk-result"/>
+		<choose>
+			<when test="rollups != null">
+				SUM(aud.datum_count) AS aud_datum_count,
+				SUM(aud.datum_hourly_count) AS aud_datum_hourly_count,
+				SUM(aud.datum_daily_count) AS aud_datum_daily_count,
+				SUM(aud.datum_monthly_count) AS aud_datum_monthly_count
+			</when>
+			<otherwise>
+				aud.datum_count AS aud_datum_count,
+				aud.datum_hourly_count AS aud_datum_hourly_count,
+				aud.datum_daily_count AS aud_datum_daily_count,
+				aud.datum_monthly_count AS aud_datum_monthly_count
+			</otherwise>
+		</choose>
+	</sql>
+
+	<sql id="fragment-accumulative-most-recent-cte">
+		most_recent AS (
+			SELECT aud.node_id, aud.source_id, max(aud.ts_start) as ts_start
+			FROM solaragg.aud_acc_datum_daily aud, nodes
+			WHERE
+				aud.node_id = ANY(nodes.node_ids)
+				<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+					AND aud.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+				</if>
+				<if test="filter.startDate != null">
+					AND aud.ts_start &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+				</if>
+				<if test="filter.endDate != null">
+					AND aud.ts_start &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+				</if>
+			GROUP BY aud.node_id, aud.source_id
+		)
+	</sql>
+
+	<select id="findall-AccumulativeAuditNodeDatum-AuditDatumRecordCounts" resultMap="AuditDatumRecordCountsFullResult" fetchSize="1000" resultSetType="FORWARD_ONLY">
+		WITH
+			<trim suffixOverrides=",">
+				<include refid="fragment-restrict-node-ids-to-user-cte"/>,
+				<include refid="fragment-accumulative-most-recent-cte"/>
+			</trim>
+		SELECT
+			<include refid="fragment-AccumulativeAuditDatumRecordCounts-Day-result"/>			
+		FROM solaragg.aud_acc_datum_daily aud
+		INNER JOIN
+		<choose>
+			<when test="filter.mostRecent == true">
+				most_recent ON aud.node_id = most_recent.node_id
+					AND aud.source_id = most_recent.source_id
+					AND aud.ts_start = most_recent.ts_start
+			</when>
+			<otherwise>
+				nodes ON aud.node_id = ANY(nodes.node_ids)
+			</otherwise>
+		</choose>
+		<include refid="fragment-findall-AuditDatumRecordCounts-where"/>
+		<include refid="fragment-findall-AuditDatumRecordCounts-rollup-group"/>
+		<include refid="fragment-findall-AuditDatumRecordCounts-order"/>
+	</select>
+	
+</mapper>
