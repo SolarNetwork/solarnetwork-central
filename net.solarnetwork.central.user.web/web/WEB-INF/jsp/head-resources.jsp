@@ -2,16 +2,19 @@
 <pack:style>
 	/css/bootstrap.css
 	/css/bootstrap-theme.css
+	/css/dataTables.bootstrap.css
 	/css/global.css
 	/css/edit-node.css
 </pack:style>
 <pack:script> 
-	/js-lib/jquery-2.1.1.js
+	/js-lib/jquery-2.2.4.js
 	/js-lib/jquery.form.js
 	/js-lib/jquery.maphilight.js
 	/js-lib/jquery.timezone-picker.js
+	/js-lib/jquery.dataTables.js
 	/js-lib/moment.js
 	/js-lib/bootstrap.js
+	/js-lib/dataTables.bootstrap.js
 	/js/global.js
 	/js/templates.js
 	/js/settings.js

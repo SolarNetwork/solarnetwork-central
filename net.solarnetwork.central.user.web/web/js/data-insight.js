@@ -23,6 +23,9 @@ $(document).ready(function() {
 			item.dateDisplay = moment(item.ts).format('D MMM YYYY');
 		}
 		SolarReg.Templates.populateTemplateItems(container, counts);
+		$('#data-insight-recent-table').DataTable({
+			"ordering": false
+		});
 	}
 
 	$('#data-insight-overview').first().each(function() {
