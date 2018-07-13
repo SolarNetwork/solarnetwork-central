@@ -58,4 +58,11 @@ public class DelegatingAuditDatumBiz implements AuditDatumBiz {
 		return delegate.findFilteredAuditRecordCounts(filter, sortDescriptors, offset, max);
 	}
 
+	@Override
+	public FilterResults<AuditDatumRecordCounts> findFilteredAccumulativeAuditRecordCounts(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		return delegate.findFilteredAccumulativeAuditRecordCounts(filter, sortDescriptors, offset, max);
+	}
+
 }

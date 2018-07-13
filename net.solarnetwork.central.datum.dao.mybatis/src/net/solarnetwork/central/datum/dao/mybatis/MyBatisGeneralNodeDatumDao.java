@@ -153,11 +153,19 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * The default query name for
-	 * {@link #findAuditRecordCounts(AggregateGeneralNodeDatumFilter)}.
+	 * {@link #findAuditRecordCountsFiltered(AggregateGeneralNodeDatumFilter, List, Integer, Integer)}.
 	 * 
 	 * @since 1.8
 	 */
 	public static final String QUERY_FOR_AUDIT_DATUM_RECORD_COUNTS = "findall-AuditNodeDatum-AuditDatumRecordCounts";
+
+	/**
+	 * The default query name for
+	 * {@link #findAccumulativeAuditRecordCountsFiltered(AggregateGeneralNodeDatumFilter, List, Integer, Integer)}.
+	 * 
+	 * @since 1.8
+	 */
+	public static final String QUERY_FOR_ACCUMULATIVE_AUDIT_DATUM_RECORD_COUNTS = "findall-AccumulativeAuditNodeDatum-AuditDatumRecordCounts";
 
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
@@ -167,6 +175,7 @@ public class MyBatisGeneralNodeDatumDao
 	private String queryForAuditHourlyPropertyCount;
 	private String queryForAuditDatumStoredCount;
 	private String queryForAuditDatumRecordCounts;
+	private String queryForAccumulativeAuditDatumRecordCounts;
 
 	/**
 	 * Default constructor.
@@ -181,6 +190,7 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForAuditHourlyPropertyCount = QUERY_FOR_AUDIT_HOURLY_PROP_COUNT;
 		this.queryForAuditDatumStoredCount = QUERY_FOR_AUDIT_DATUM_STORED_COUNT;
 		this.queryForAuditDatumRecordCounts = QUERY_FOR_AUDIT_DATUM_RECORD_COUNTS;
+		this.queryForAccumulativeAuditDatumRecordCounts = QUERY_FOR_ACCUMULATIVE_AUDIT_DATUM_RECORD_COUNTS;
 	}
 
 	/**
@@ -539,18 +549,14 @@ public class MyBatisGeneralNodeDatumDao
 		return aggregation;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @since 1.8
-	 */
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
-	public FilterResults<AuditDatumRecordCounts> findAuditRecordCountsFiltered(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
-			Integer max) {
+	private Map<String, Object> sqlParametersForAuditDatumRecordCounts(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors) {
 		final Map<String, Object> sqlProps = new HashMap<String, Object>(3);
 		sqlProps.put(PARAM_FILTER, filter);
+
+		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
+			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
+		}
 
 		// limit aggregation to specific supported ones
 		Aggregation aggregation = aggregationForAuditDatumRecordCounts(filter);
@@ -573,6 +579,20 @@ public class MyBatisGeneralNodeDatumDao
 				sqlProps.put("rollups", rollups);
 			}
 		}
+		return sqlProps;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.8
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	public FilterResults<AuditDatumRecordCounts> findAuditRecordCountsFiltered(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		Map<String, Object> sqlProps = sqlParametersForAuditDatumRecordCounts(filter, sortDescriptors);
 
 		// execute count query first, if max NOT specified as -1 and NOT a mostRecent query
 		Long totalCount = null;
@@ -592,6 +612,38 @@ public class MyBatisGeneralNodeDatumDao
 				offset, rows.size());
 		return results;
 
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.8
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	public FilterResults<AuditDatumRecordCounts> findAccumulativeAuditRecordCountsFiltered(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		Map<String, Object> sqlProps = sqlParametersForAuditDatumRecordCounts(filter, sortDescriptors);
+
+		// execute count query first, if max NOT specified as -1 and NOT a mostRecent query
+		Long totalCount = null;
+		if ( max != null && max.intValue() != -1 && !filter.isMostRecent()
+				&& !filter.isWithoutTotalResultsCount() ) {
+			totalCount = executeCountQuery(queryForAccumulativeAuditDatumRecordCounts + "-count",
+					sqlProps);
+		}
+
+		// execute actual query
+		List<AuditDatumRecordCounts> rows = selectList(queryForAccumulativeAuditDatumRecordCounts,
+				sqlProps, offset, max);
+
+		BasicFilterResults<AuditDatumRecordCounts> results = new BasicFilterResults<AuditDatumRecordCounts>(
+				rows,
+				(totalCount != null ? totalCount
+						: filter.isWithoutTotalResultsCount() ? null : Long.valueOf(rows.size())),
+				offset, rows.size());
+		return results;
 	}
 
 	public String getQueryForReportableInterval() {
@@ -665,7 +717,8 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * Set the statement name for the
-	 * {@link #findAuditRecordCounts(AggregateGeneralNodeDatumFilter)} method.
+	 * {@link #findAuditRecordCountsFiltered(AggregateGeneralNodeDatumFilter, List, Integer, Integer)}
+	 * method.
 	 * 
 	 * @param queryForAuditDatumRecordCounts
 	 *        the statement name; defaults to
@@ -674,6 +727,21 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setQueryForAuditDatumRecordCounts(String queryForAuditDatumRecordCounts) {
 		this.queryForAuditDatumRecordCounts = queryForAuditDatumRecordCounts;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #findAccumulativeAuditRecordCountsFiltered(AggregateGeneralNodeDatumFilter, List, Integer, Integer)}
+	 * method.
+	 * 
+	 * @param queryForAccumulativeAuditDatumRecordCounts
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_ACCUMULATIVE_AUDIT_DATUM_RECORD_COUNTS}
+	 * @since 1.8
+	 */
+	public void setQueryForAccumulativeAuditDatumRecordCounts(
+			String queryForAccumulativeAuditDatumRecordCounts) {
+		this.queryForAccumulativeAuditDatumRecordCounts = queryForAccumulativeAuditDatumRecordCounts;
 	}
 
 }

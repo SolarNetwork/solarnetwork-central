@@ -61,4 +61,12 @@ public class DaoAuditDatumBiz implements AuditDatumBiz {
 		return datumDao.findAuditRecordCountsFiltered(filter, sortDescriptors, offset, max);
 	}
 
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<AuditDatumRecordCounts> findFilteredAccumulativeAuditRecordCounts(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		return datumDao.findAccumulativeAuditRecordCountsFiltered(filter, sortDescriptors, offset, max);
+	}
+
 }

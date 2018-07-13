@@ -164,4 +164,16 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max);
 
+	/**
+	 * Find accumulative audit record counts for a given search criteria.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @return the matching records
+	 * @since 1.4
+	 */
+	FilterResults<AuditDatumRecordCounts> findAccumulativeAuditRecordCountsFiltered(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max);
+
 }

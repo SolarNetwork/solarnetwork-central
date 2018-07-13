@@ -2112,4 +2112,287 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 			i++;
 		}
 	}
+
+	private void insertAccumulativeAuditDatumDailyRow(long ts, Long nodeId, String sourceId,
+			Integer rawCount, Integer hourCount, Integer dayCount, Integer monthCount) {
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.aud_acc_datum_daily (ts_start,node_id,source_id,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count) VALUES (?,?,?,?,?,?,?)",
+				new Timestamp(ts), nodeId, sourceId, rawCount, hourCount, dayCount, monthCount);
+	}
+
+	private void setupTestAccumulativeAuditDatumRecords(DateTime start, Long nodeId, String sourceId,
+			int count, int dayStep, List<DateTime> days) {
+		DateTime currMonth = null;
+		int iMonth = 1;
+		for ( int i = 1; i <= count; i++ ) {
+			DateTime d = start.plusDays((i - 1) * dayStep);
+			DateTime m = d.monthOfYear().roundFloorCopy();
+			if ( currMonth == null ) {
+				currMonth = m;
+			} else if ( !m.isEqual(currMonth) ) {
+				iMonth++;
+				currMonth = m;
+			}
+			insertAccumulativeAuditDatumDailyRow(d.getMillis(), nodeId, sourceId, 100 * i, 24 * i, i,
+					iMonth);
+			days.add(d);
+		}
+	}
+
+	private void assertAuditDatumRecordCounts(String desc, AuditDatumRecordCounts row, DateTime ts,
+			Long nodeId, String sourceId, Long rawCount, Long hourCount, Integer dayCount,
+			Integer monthCount) {
+		assertThat(desc + " not null", row, notNullValue());
+		if ( ts != null ) {
+			assertThat(desc + " created", row.getCreated().withZone(DateTimeZone.forID(TEST_TZ)),
+					equalTo(ts));
+		} else {
+			assertThat(desc + " created", row.getCreated(), nullValue());
+		}
+		assertThat(desc + " node ID", row.getNodeId(), equalTo(nodeId));
+		assertThat(desc + " source ID", row.getSourceId(), equalTo(sourceId));
+		assertThat(desc + " datum count", row.getDatumCount(), equalTo(rawCount));
+		assertThat(desc + " datum hourly count", row.getDatumHourlyCount(), equalTo(hourCount));
+		assertThat(desc + " datum daily count", row.getDatumDailyCount(), equalTo(dayCount));
+		assertThat(desc + " datum monthly count", row.getDatumMonthlyCount(), equalTo(monthCount));
+	}
+
+	@Test
+	public void findAccumulativeAuditDatumRecordCountsDayAggregationNoRollup() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> days = new ArrayList<DateTime>();
+		setupTestAccumulativeAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8, 7, days);
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(start);
+		filter.setEndDate(start.plusWeeks(4));
+		filter.setUserId(TEST_USER_ID);
+		FilterResults<AuditDatumRecordCounts> results = dao
+				.findAccumulativeAuditRecordCountsFiltered(filter, null, null, null);
+
+		// then
+		assertThat("Day rows for first 4 weeks returned", results.getReturnedResultCount(), equalTo(4));
+		DateTime currMonth = null;
+		int i = 1, iMonth = 1;
+		for ( AuditDatumRecordCounts row : results ) {
+			DateTime d = days.get(i - 1);
+			DateTime m = d.monthOfYear().roundFloorCopy();
+			if ( currMonth == null ) {
+				currMonth = m;
+			} else if ( !m.isEqual(currMonth) ) {
+				iMonth++;
+				currMonth = m;
+			}
+			assertAuditDatumRecordCounts("Daily acc " + i, row, d, TEST_NODE_ID, TEST_SOURCE_ID,
+					100L * i, 24L * i, i, iMonth);
+			i++;
+		}
+	}
+
+	@Test
+	public void findAccumulativeAuditDatumRecordCountsDayAggregationTimeAndNodeRollup() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> days = new ArrayList<DateTime>();
+		setupTestAccumulativeAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8, 7, days);
+		// add another source
+		setupTestAccumulativeAuditDatumRecords(start, TEST_NODE_ID, TEST_2ND_SOURCE, 8, 7,
+				new ArrayList<DateTime>());
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(start);
+		filter.setEndDate(start.plusWeeks(4));
+		filter.setUserId(TEST_USER_ID);
+		filter.setDatumRollupTypes(new DatumRollupType[] { DatumRollupType.Time, DatumRollupType.Node });
+		FilterResults<AuditDatumRecordCounts> results = dao
+				.findAccumulativeAuditRecordCountsFiltered(filter, null, null, null);
+
+		// then
+		assertThat("Day rows for first 4 weeks returned", results.getReturnedResultCount(), equalTo(4));
+		DateTime currMonth = null;
+		int i = 1, iMonth = 1;
+		for ( AuditDatumRecordCounts row : results ) {
+			DateTime d = days.get(i - 1);
+			DateTime m = d.monthOfYear().roundFloorCopy();
+			if ( currMonth == null ) {
+				currMonth = m;
+			} else if ( !m.isEqual(currMonth) ) {
+				iMonth++;
+				currMonth = m;
+			}
+			// results doubled from rollup; no source ID
+			assertAuditDatumRecordCounts("Daily acc " + i, row, d, TEST_NODE_ID, null, 2 * 100L * i,
+					2 * 24L * i, 2 * i, 2 * iMonth);
+			i++;
+		}
+	}
+
+	@Test
+	public void findAccumulativeAuditDatumRecordCountsDayAggregationTimeRollup() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> days = new ArrayList<DateTime>();
+		setupTestAccumulativeAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8, 7, days);
+		// add another source
+		setupTestAccumulativeAuditDatumRecords(start, TEST_NODE_ID, TEST_2ND_SOURCE, 8, 7,
+				new ArrayList<DateTime>());
+
+		// add another node
+		setupTestNode(TEST_2ND_NODE);
+		setupTestAccumulativeAuditDatumRecords(start, TEST_2ND_NODE, TEST_SOURCE_ID, 8, 7,
+				new ArrayList<DateTime>());
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+		setupUserNodeEntity(TEST_2ND_NODE, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(start);
+		filter.setEndDate(start.plusWeeks(4));
+		filter.setUserId(TEST_USER_ID);
+		filter.setDatumRollupTypes(new DatumRollupType[] { DatumRollupType.Time });
+		FilterResults<AuditDatumRecordCounts> results = dao
+				.findAccumulativeAuditRecordCountsFiltered(filter, null, null, null);
+
+		// then
+		assertThat("Day rows for first 4 weeks returned", results.getReturnedResultCount(), equalTo(4));
+		DateTime currMonth = null;
+		int i = 1, iMonth = 1;
+		for ( AuditDatumRecordCounts row : results ) {
+			DateTime d = days.get(i - 1);
+			DateTime m = d.monthOfYear().roundFloorCopy();
+			if ( currMonth == null ) {
+				currMonth = m;
+			} else if ( !m.isEqual(currMonth) ) {
+				iMonth++;
+				currMonth = m;
+			}
+			// results tripled from rollup; no node ID; no source ID
+			assertAuditDatumRecordCounts("Daily acc " + i, row, d, null, null, 3 * 100L * i, 3 * 24L * i,
+					3 * i, 3 * iMonth);
+			i++;
+		}
+	}
+
+	@Test
+	public void findAccumulativeAuditDatumRecordCountsDayAggregationAllRollup() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> days = new ArrayList<DateTime>();
+		setupTestAccumulativeAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8, 7, days);
+		// add another source
+		setupTestAccumulativeAuditDatumRecords(start, TEST_NODE_ID, TEST_2ND_SOURCE, 8, 7,
+				new ArrayList<DateTime>());
+
+		// add another node
+		setupTestNode(TEST_2ND_NODE);
+		setupTestAccumulativeAuditDatumRecords(start, TEST_2ND_NODE, TEST_SOURCE_ID, 8, 7,
+				new ArrayList<DateTime>());
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+		setupUserNodeEntity(TEST_2ND_NODE, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(start);
+		filter.setEndDate(start.plusWeeks(4));
+		filter.setUserId(TEST_USER_ID);
+		filter.setDatumRollupTypes(new DatumRollupType[] { DatumRollupType.All });
+		FilterResults<AuditDatumRecordCounts> results = dao
+				.findAccumulativeAuditRecordCountsFiltered(filter, null, null, null);
+
+		// then
+		assertThat("Day rows for first 4 weeks returned", results.getReturnedResultCount(), equalTo(1));
+		// results combined from rollup; no ts; no node ID; no source ID
+		// e.g. raw = (3 * 100) + (3 * 100 * 2) + (3 * 100 * 3) + (3 * 100 * 4) = 3000
+		assertAuditDatumRecordCounts("Daily acc 1", results.iterator().next(), null, null, null, 3000L,
+				720L, 30, 12);
+	}
+
+	@Test
+	public void findAccumulativeAuditDatumRecordCountsDayAggregationMostRecentOneNodeOneSource() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> days = new ArrayList<DateTime>();
+		setupTestAccumulativeAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8, 7, days);
+		// add another source
+		setupTestAccumulativeAuditDatumRecords(start, TEST_NODE_ID, TEST_2ND_SOURCE, 8, 7,
+				new ArrayList<DateTime>());
+
+		// add another node
+		setupTestNode(TEST_2ND_NODE);
+		setupTestAccumulativeAuditDatumRecords(start, TEST_2ND_NODE, TEST_SOURCE_ID, 8, 7,
+				new ArrayList<DateTime>());
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+		setupUserNodeEntity(TEST_2ND_NODE, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setUserId(TEST_USER_ID);
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setMostRecent(true);
+		FilterResults<AuditDatumRecordCounts> results = dao
+				.findAccumulativeAuditRecordCountsFiltered(filter, null, null, null);
+
+		// then
+		assertThat("Most recent row returned", results.getReturnedResultCount(), equalTo(1));
+		// results are accumulation of 8 days over 2 months
+		// e.g. raw = (3 * 100) + (3 * 100 * 2) + (3 * 100 * 3) + (3 * 100 * 4) = 3000
+		assertAuditDatumRecordCounts("Daily acc most recent", results.iterator().next(),
+				days.get(days.size() - 1), TEST_NODE_ID, TEST_SOURCE_ID, 800L, 192L, 8, 2);
+	}
+
+	@Test
+	public void findAccumulativeAuditDatumRecordCountsDayAggregationMostRecent() {
+		// given
+		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
+				.minusMonths(2);
+		List<DateTime> days = new ArrayList<DateTime>();
+		setupTestAccumulativeAuditDatumRecords(start, TEST_NODE_ID, TEST_SOURCE_ID, 8, 7, days);
+		// add another source
+		setupTestAccumulativeAuditDatumRecords(start, TEST_NODE_ID, TEST_2ND_SOURCE, 8, 7,
+				new ArrayList<DateTime>());
+
+		// add another node
+		setupTestNode(TEST_2ND_NODE);
+		setupTestAccumulativeAuditDatumRecords(start, TEST_2ND_NODE, TEST_SOURCE_ID, 8, 7,
+				new ArrayList<DateTime>());
+
+		setupUserNodeEntity(TEST_NODE_ID, TEST_USER_ID);
+		setupUserNodeEntity(TEST_2ND_NODE, TEST_USER_ID);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setUserId(TEST_USER_ID);
+		filter.setMostRecent(true);
+		FilterResults<AuditDatumRecordCounts> results = dao
+				.findAccumulativeAuditRecordCountsFiltered(filter, null, null, null);
+
+		// then
+		assertThat("Most recent rows returned", results.getReturnedResultCount(), equalTo(3));
+		// results are accumulation of 8 days over 2 months for each node+source combo
+		// and order is node,source
+		Iterator<AuditDatumRecordCounts> itr = results.iterator();
+		assertAuditDatumRecordCounts("Daily acc most recent 1", itr.next(), days.get(days.size() - 1),
+				TEST_2ND_NODE, TEST_SOURCE_ID, 800L, 192L, 8, 2);
+		assertAuditDatumRecordCounts("Daily acc most recent 2", itr.next(), days.get(days.size() - 1),
+				TEST_NODE_ID, TEST_2ND_SOURCE, 800L, 192L, 8, 2);
+		assertAuditDatumRecordCounts("Daily acc most recent 3", itr.next(), days.get(days.size() - 1),
+				TEST_NODE_ID, TEST_SOURCE_ID, 800L, 192L, 8, 2);
+	}
+
 }
