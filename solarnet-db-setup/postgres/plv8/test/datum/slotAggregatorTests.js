@@ -157,11 +157,14 @@ test('datum:slotAggregator:processRecords:15mWithGaps', t => {
 
 	var expected = [
 		{ ts_start: moment('2016-10-10 11:00:00+13').toDate(), source_id: 'Foo',
-			jdata: {i: {foo:15, foo_min:13, foo_max:17}, a: {bar:18.333, fooHours:3.767}}},
+			jdata: {i: {foo:15, foo_min:13, foo_max:17}, a: {bar:18.333, fooHours:3.767}},
+			jmeta: {i: {foo:{count:3, min:13, max:17}}}},
 		{ ts_start: moment('2016-10-10 11:15:00+13').toDate(), source_id: 'Foo',
-			jdata: {i: {foo:20, foo_min:19, foo_max:21}, a: {bar:13.333, fooHours:1.267}}},
+			jdata: {i: {foo:20, foo_min:19, foo_max:21}, a: {bar:13.333, fooHours:1.267}},
+			jmeta: {i: {foo:{count:2, min:19, max:21}}}},
 		{ ts_start: moment('2016-10-10 12:30:00+13').toDate(), source_id: 'Foo',
-			jdata: {i: {foo:15, foo_min:13, foo_max:17}, a: {bar:30, fooHours:2.167}}},
+			jdata: {i: {foo:15, foo_min:13, foo_max:17}, a: {bar:30, fooHours:2.167}},
+			jmeta: {i: {foo:{count:3, min:13, max:17}}}},
 	];
 
 	t.deepEqual(aggResults, expected);
@@ -190,17 +193,23 @@ test('datum:slotAggregator:processRecords:5mWith10mData', t => {
 
 	var expected = [
 		{ ts_start: moment('2016-10-10 11:00:00+13').toDate(), source_id: 'Foo',
-			jdata: {i: {foo:120}, a: {fooHours:20}}},
+			jdata: {i: {foo:120}, a: {fooHours:20}},
+			jmeta: {i: {foo:{count:1}}}},
 		{ ts_start: moment('2016-10-10 11:10:00+13').toDate(), source_id: 'Foo',
-			jdata: {i: {foo:120}, a: {fooHours:20}}},
+			jdata: {i: {foo:120}, a: {fooHours:20}},
+			jmeta: {i: {foo:{count:1}}}},
 		{ ts_start: moment('2016-10-10 11:20:00+13').toDate(), source_id: 'Foo',
-			jdata: {i: {foo:120}, a: {fooHours:20}}},
+			jdata: {i: {foo:120}, a: {fooHours:20}},
+			jmeta: {i: {foo:{count:1}}}},
 		{ ts_start: moment('2016-10-10 11:30:00+13').toDate(), source_id: 'Foo',
-			jdata: {i: {foo:120}, a: {fooHours:20}}},
+			jdata: {i: {foo:120}, a: {fooHours:20}},
+			jmeta: {i: {foo:{count:1}}}},
 		{ ts_start: moment('2016-10-10 11:40:00+13').toDate(), source_id: 'Foo',
-			jdata: {i: {foo:120}, a: {fooHours:20}}},
+			jdata: {i: {foo:120}, a: {fooHours:20}},
+			jmeta: {i: {foo:{count:1}}}},
 		{ ts_start: moment('2016-10-10 11:50:00+13').toDate(), source_id: 'Foo',
-			jdata: {i: {foo:120}}},
+			jdata: {i: {foo:120}},
+			jmeta: {i: {foo:{count:1}}}},
 	];
 
 	t.deepEqual(aggResults, expected);

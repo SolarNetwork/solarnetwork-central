@@ -55,6 +55,7 @@ test('datum:datumAggregate:processRecords:15m:1', t => {
 	t.is(aggResult.ts_start.getTime(), slotTs);
 
 	t.deepEqual(aggResult.jdata.i, {foo:2, foo_min:1, foo_max:3});
+	t.deepEqual(aggResult.jmeta.i, {foo:{count:3, min:1, max:3}});
 	t.deepEqual(aggResult.jdata.a, {bar:25, fooHours:0.625});
 });
 
@@ -82,6 +83,7 @@ test('datum:datumAggregate:processRecords:15m:trailingFraction', t => {
 	t.is(aggResult.ts_start.getTime(), slotTs);
 
 	t.deepEqual(aggResult.jdata.i, {foo:15, foo_min:13, foo_max:17});
+	t.deepEqual(aggResult.jmeta.i, {foo:{count:3, min:13, max:17}});
 	t.deepEqual(aggResult.jdata.a, {bar:16.667}, '2/3 of last record\'s accumulation counts towards this result');
 
 	// verify call to startNext()
@@ -116,6 +118,7 @@ test('datum:datumAggregate:processRecords:15m:trailingPastTolerance', t => {
 	t.is(aggResult.ts_start.getTime(), slotTs);
 
 	t.deepEqual(aggResult.jdata.i, {foo:15, foo_min:13, foo_max:17});
+	t.deepEqual(aggResult.jmeta.i, {foo:{count:3, min:13, max:17}});
 	t.deepEqual(aggResult.jdata.a, {bar:10}, 'last record past tolerance so does not contribute');
 
 	// verify call to startNext()
@@ -178,6 +181,7 @@ test('datum:datumAggregate:processRecords:15m:leadingAndTrailingFractions', t =>
 	t.is(aggResult.ts_start.getTime(), slotTs);
 
 	t.deepEqual(aggResult.jdata.i, {foo:15, foo_min:13, foo_max:17});
+	t.deepEqual(aggResult.jmeta.i, {foo:{count:3, min:13, max:17}});
 	t.deepEqual(aggResult.jdata.a, {bar:18.333}, '1/6 of first; 2/3 of last record\'s accumulation counts towards this result');
 
 	// verify call to startNext()
@@ -212,6 +216,7 @@ test('datum:datumAggregate:processRecords:15m:endWithinSlot', t => {
 	t.is(aggResult.ts_start.getTime(), slotTs);
 
 	t.deepEqual(aggResult.jdata.i, {foo:15, foo_min:13, foo_max:17});
+	t.deepEqual(aggResult.jmeta.i, {foo:{count:3, min:13, max:17}});
 	t.deepEqual(aggResult.jdata.a, {bar:10});
 });
 
@@ -239,6 +244,7 @@ test('datum:datumAggregate:processRecords:15m:noPreviousSlot', t => {
 	t.is(aggResult.ts_start.getTime(), slotTs);
 
 	t.deepEqual(aggResult.jdata.i, {foo:15, foo_min:13, foo_max:17});
+	t.deepEqual(aggResult.jmeta.i, {foo:{count:3, min:13, max:17}});
 	t.deepEqual(aggResult.jdata.a, {bar:20});
 });
 
@@ -264,7 +270,9 @@ test('datum:datumAggregate:processRecords:15m:roundedStats', t => {
 
 	var expected =
 		{ ts_start: start.toDate(), source_id: sourceId,
-			jdata: {i: {foo:15.515, foo_min:13.123, foo_max:17.432}}};
+			jdata: {i: {foo:15.515, foo_min:13.123, foo_max:17.432}},
+			jmeta: {i: {foo:{count:3, min:13.123, max:17.432}}}
+		};
 
 	t.deepEqual(aggResult, expected);
 });

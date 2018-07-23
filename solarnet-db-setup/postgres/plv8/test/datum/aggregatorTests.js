@@ -174,7 +174,8 @@ test('datum:aggregator:processRecords:accumulatingPreferredOverHourFill', t => {
 
 	var expected = [
 		{ ts_start: start.toDate(), source_id: 'Main',
-			jdata: {i:{watts:12}, a: {wattHours:10}}},
+			jdata: {i:{watts:12}, a: {wattHours:10}},
+			jmeta: {i: {watts:{count:60}}}},
 	];
 
 	t.deepEqual(aggResults, expected);
