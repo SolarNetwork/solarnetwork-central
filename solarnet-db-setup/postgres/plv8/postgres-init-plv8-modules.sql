@@ -1,3 +1,4 @@
+\i ./dist/datum/aggAggregate.sql
 \i ./dist/datum/aggregator.sql
 \i ./dist/datum/datumAggregate.sql
 \i ./dist/datum/logLocationAggregateMessage.sql
