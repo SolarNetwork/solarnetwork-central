@@ -113,10 +113,9 @@ function aggAggregate(sourceId, ts) {
   * Add another datum record.
   *
   * @param {Object} record            The record to add.
-  * @param {Date}   record[ts]        The datum timestamp.
-  * @param {Date}   record[ts_start]  The datum time slot.
   * @param {String} record[source_id] The datum source ID.
   * @param {Object} record[jdata]     The datum JSON data object.
+  * @param {Object} record[jmeta]     The datum metadata JSON data object.
   */
 	function addDatumRecord(record) {
 		if (!(record && record.jdata)) {

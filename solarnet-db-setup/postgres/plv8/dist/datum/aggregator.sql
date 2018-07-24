@@ -19,8 +19,6 @@ var _mergeObjects = require('../util/mergeObjects');
 
 var _mergeObjects2 = _interopRequireDefault(_mergeObjects);
 
-var _constants = require('constants');
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
