@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.agg.test;
 
+import static java.util.Collections.singletonMap;
+import static net.solarnetwork.util.JsonUtils.getStringMap;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -53,6 +55,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * Test cases for the {@link StaleGeneralNodeDatumProcessor} class.
@@ -294,6 +297,54 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 		assertThat("Stale row " + desc + " node_id", row, hasEntry("node_id", (Object) nodeId));
 		assertThat("Stale row " + desc + " source_id", row, hasEntry("source_id", (Object) sourceId));
 		assertThat("Stale row " + desc + " agg_kind", row, hasEntry("agg_kind", (Object) aggKind));
+	}
+
+	private void insertAggDatumHourlyRow(long ts, Long nodeId, String sourceId,
+			Map<String, Object> iData, Map<String, Object> aData, Map<String, Object> jMeta) {
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.agg_datum_hourly (ts_start,local_date,node_id,source_id,jdata_i,jdata_a,jmeta)"
+						+ " VALUES (?,?,?,?,?::jsonb,?::jsonb,?::jsonb)",
+				new Timestamp(ts), new Timestamp(ts), nodeId, sourceId,
+				JsonUtils.getJSONString(iData, null), JsonUtils.getJSONString(aData, null),
+				JsonUtils.getJSONString(jMeta, null));
+	}
+
+	private List<Map<String, Object>> listAggDatumDailyRows() {
+		return jdbcTemplate.queryForList(
+				"SELECT node_id,ts_start,source_id,jdata_i::text as jdata_i,jdata_a::text as jdata_a,jdata_s::text as jdata_s,jmeta::text as jmeta "
+						+ "FROM solaragg.agg_datum_daily ORDER BY node_id,ts_start,source_id");
+	}
+
+	@Test
+	public void processStaleDailyAggProducesDailyAggRow() throws Exception {
+		DateTime start = new DateTime(2018, 7, 24, 15, 0, DateTimeZone.forID(TEST_TZ));
+		Map<String, Object> iData = singletonMap("foo", (Object) 10);
+		Map<String, Object> aData = singletonMap("bar", (Object) 150);
+		Map<String, Object> jMeta = getStringMap("{\"i\":{\"foo\":{\"count\":10}}}");
+		for ( int i = 0; i < 2; i++ ) {
+			DateTime ts = start.plusHours(i);
+			insertAggDatumHourlyRow(ts.getMillis(), TEST_NODE_ID, TEST_SOURCE_ID, iData, aData, jMeta);
+		}
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.agg_stale_datum (ts_start,node_id,source_id,agg_kind) VALUES (?,?,?,?)",
+				new Timestamp(start.dayOfMonth().roundFloorCopy().getMillis()), TEST_NODE_ID,
+				TEST_SOURCE_ID, "d");
+
+		int count = jdbcTemplate.queryForObject("SELECT solaragg.process_agg_stale_datum('d', -1)",
+				Integer.class);
+		assertThat("Processed stale row count", count, equalTo(1));
+
+		List<Map<String, Object>> rows = listAggDatumDailyRows();
+		assertThat("Daily agg row count", rows.size(), equalTo(1));
+		assertThat("Daily agg ts_start",
+				new DateTime(rows.get(0).get("ts_start"), DateTimeZone.forID(TEST_TZ)),
+				equalTo(start.dayOfMonth().roundFloorCopy()));
+		assertThat("Daily agg jdata_i", getStringMap((String) rows.get(0).get("jdata_i")),
+				equalTo(getStringMap("{\"foo\":10}")));
+		assertThat("Daily agg jdata_a", getStringMap((String) rows.get(0).get("jdata_a")),
+				equalTo(getStringMap("{\"bar\":300}")));
+		assertThat("Daily agg jmeta", getStringMap((String) rows.get(0).get("jmeta")),
+				equalTo(getStringMap("{\"i\":{\"foo\":{\"count\":20}}}")));
 	}
 
 	@Test
