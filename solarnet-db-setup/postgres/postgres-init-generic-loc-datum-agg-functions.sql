@@ -532,7 +532,8 @@ DECLARE
 	stale record;
 	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_loc_datum
 			WHERE agg_kind = kind
-			ORDER BY ts_start ASC, created ASC, loc_id ASC, source_id ASC
+			-- Too slow to order; not strictly fair but process much faster
+			-- ORDER BY ts_start ASC, created ASC, loc_id ASC, source_id ASC
 			LIMIT 1
 			FOR UPDATE SKIP LOCKED;
 	agg_span interval;
