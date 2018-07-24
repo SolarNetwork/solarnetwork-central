@@ -144,9 +144,9 @@ test('datum:aggregator:processRecords:sOnly', t => {
 
 	var expected = [
 		{ ts_start: moment('2017-01-01 10:00:00+13').toDate(), source_id: 'level',
-			jdata: {s: {val:555}}},
+			jdata: {s: {val:555}}, jmeta: null},
 		{ ts_start: moment('2017-01-01 10:00:00+13').toDate(), source_id: 'percent',
-			jdata: {s: {val:3330}}},
+			jdata: {s: {val:3330}}, jmeta: null},
 	];
 
 	t.deepEqual(aggResults, expected);
@@ -174,8 +174,77 @@ test('datum:aggregator:processRecords:accumulatingPreferredOverHourFill', t => {
 
 	var expected = [
 		{ ts_start: start.toDate(), source_id: 'Main',
-			jdata: {i:{watts:12}, a: {wattHours:10}}},
+			jdata: {i:{watts:12}, a: {wattHours:10}},
+			jmeta: {i: {watts:{count:60}}}},
 	];
 
 	t.deepEqual(aggResults, expected);
+});
+
+test('datum:aggregator:processAggregateRecords:1d', t => {
+	const start = moment('2016-10-10 00:00:00+13');
+	const end = start.clone().add(1, 'day');
+	const service = aggregator({
+		startTs : start.valueOf(),
+		endTs : end.valueOf(),
+	});
+
+	const data = parseDatumCSV('/agg-datum-h-01.csv');
+
+	data.forEach(rec => {
+		service.addDatumRecord(rec);
+	});
+
+	var aggResults = service.finish();
+
+	var expected = [
+		{jdata:{i:{watts:326.88, watts_min:225, watts_max:1014}, a:{wattHours:1056.252}}, 
+			jmeta:{i:{watts:{count:50, min:225, max:1014}}}},
+	];
+
+	t.is(aggResults.length, expected.length, 'there is one aggregate result');
+
+	aggResults.forEach((aggResult, i) => {
+		t.is(aggResult.source_id, 'Main');
+		t.is(aggResult.ts_start.getTime(), start.valueOf(), 'start time');
+		t.deepEqual(aggResult.jdata, expected[i].jdata, 'jdata '+i);
+		t.deepEqual(aggResult.jmeta, expected[i].jmeta, 'jmeta '+i);
+	});
+
+});
+
+test('datum:aggregator:processAggregateRecords:1d:multiSource', t => {
+	const start = moment('2016-10-10 00:00:00+13');
+	const end = start.clone().add(1, 'day');
+	const service = aggregator({
+		startTs : start.valueOf(),
+		endTs : end.valueOf(),
+	});
+
+	const data = parseDatumCSV('/agg-datum-h-02.csv');
+
+	data.forEach(rec => {
+		service.addDatumRecord(rec);
+	});
+
+	var aggResults = service.finish();
+
+	var expected = [
+		{source_id: 'Main',
+			jdata:{i:{watts:326.88, watts_min:225, watts_max:1014}, a:{wattHours:1056.252}}, 
+			jmeta:{i:{watts:{count:50, min:225, max:1014}}}},
+		{source_id: 'Foo',
+			jdata:{i:{watts:326.24, watts_min:225, watts_max:1014}, a:{wattHours:1054}}, 
+			jmeta:{i:{watts:{count:50, min:225, max:1014}}}},
+	];
+
+	t.is(aggResults.length, expected.length, 'there is one aggregate result');
+
+	aggResults.forEach((aggResult, i) => {
+		t.is(aggResult.source_id, expected[i].source_id);
+		t.is(aggResult.ts_start.getTime(), start.valueOf(), 'start time');
+		t.deepEqual(aggResult.jdata, expected[i].jdata, 'jdata '+i);
+		t.deepEqual(aggResult.jmeta, expected[i].jmeta, 'jmeta '+i);
+	});
+
 });

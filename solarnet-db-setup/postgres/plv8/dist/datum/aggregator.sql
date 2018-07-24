@@ -7,6 +7,10 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = aggregator;
 
+var _aggAggregate = require('datum/aggAggregate');
+
+var _aggAggregate2 = _interopRequireDefault(_aggAggregate);
+
 var _datumAggregate = require('datum/datumAggregate');
 
 var _datumAggregate2 = _interopRequireDefault(_datumAggregate);
@@ -25,6 +29,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * for each datum row. When all rows have been processed, call the
  * <code>finish()</code> method to complete the aggregate processing and return
  * all the aggregate result objects.
+ * 
+ * Aggregation of other aggregate data will be automatically performed if
+ * the records passed to `addDatumRecord` contain a `ts_start` property.
  *
  * @param {Object} configuration The set of configuration properties.
  * @param {Number} configuration.startTs     The timestamp associated with this
@@ -34,7 +41,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 function aggregator(configuration) {
 	var self = {
-		version: '1'
+		version: '2'
 	};
 
 	/** The overall starting timestamp. */
@@ -54,20 +61,22 @@ function aggregator(configuration) {
   *
   * @param {Object} record            The record to add.
   * @param {Date}   record[ts]        The datum timestamp.
+  * @param {Date}   record[ts_start]  The aggregate datum timestamp; only applicable when aggregating already aggregated data.
   * @param {String} record[source_id] The datum source ID.
   * @param {Object} record[jdata]     The datum JSON data object.
+  * @param {Object} record[jmeta]     The aggregate metadata object; only applicable when aggregating already aggregated data.
   */
 	function addDatumRecord(record) {
-		if (!(record || record.source_id || record.ts)) {
+		if (!(record && record.source_id && (record.ts || record.ts_start))) {
 			return;
 		}
 		var sourceId = record.source_id;
-		var recTs = record.ts.getTime();
+		var recTs = record.ts_start ? record.ts_start.getTime() : record.ts.getTime();
 		var currResult = resultsBySource[sourceId];
 		var recToAdd = record;
 
 		if (currResult === undefined) {
-			currResult = (0, _datumAggregate2.default)(sourceId, startTs, endTs, configuration);
+			currResult = record.ts_start ? (0, _aggAggregate2.default)(sourceId, startTs) : (0, _datumAggregate2.default)(sourceId, startTs, endTs, configuration);
 
 			// keep track of results by source ID for fast lookup
 			resultsBySource[sourceId] = currResult;
@@ -79,7 +88,7 @@ function aggregator(configuration) {
 		// when adding records within the time span, force the time slot to our start date so they all aggregate into one;
 		// otherwise set the time slot to the record date itself
 		recToAdd = (0, _mergeObjects2.default)({
-			ts_start: recTs > startTs && recTs < endTs ? startDate : record.ts }, record, undefined, true);
+			ts_start: recTs > startTs && recTs < endTs ? startDate : record.ts_start ? record.ts_start : record.ts }, record, undefined, true);
 
 		currResult.addDatumRecord(recToAdd);
 	}

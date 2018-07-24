@@ -696,6 +696,10 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		// immediately process reporting data as getting all sources scans daily table
 		processAggregateStaleData();
 
+		log.debug("Daily rows: {}", jdbcTemplate.queryForList("select * from solaragg.agg_datum_daily"));
+		log.debug("Monthly rows: {}",
+				jdbcTemplate.queryForList("select * from solaragg.agg_datum_monthly"));
+
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(TEST_NODE_ID);
 		filter.setSourceId(TEST_SOURCE_ID);
@@ -1073,8 +1077,8 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(TEST_NODE_ID);
 		criteria.setSourceId(TEST_SOURCE_ID);
-		criteria.setStartDate(lastDatum.getCreated().withTime(0, 0, 0, 0));
-		criteria.setEndDate(lastDatum.getCreated().plusDays(1));
+		criteria.setStartDate(lastDatum.getCreated().dayOfMonth().roundFloorCopy());
+		criteria.setEndDate(criteria.getStartDate().plusDays(1));
 		criteria.setAggregate(Aggregation.Day);
 
 		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
