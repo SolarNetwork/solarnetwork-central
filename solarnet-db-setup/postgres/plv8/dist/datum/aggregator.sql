@@ -19,6 +19,8 @@ var _mergeObjects = require('../util/mergeObjects');
 
 var _mergeObjects2 = _interopRequireDefault(_mergeObjects);
 
+var _constants = require('constants');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -31,7 +33,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * all the aggregate result objects.
  * 
  * Aggregation of other aggregate data will be automatically performed if
- * the records passed to `addDatumRecord` contain a `jmeta` property.
+ * the records passed to `addDatumRecord` contain a `ts_start` property.
  *
  * @param {Object} configuration The set of configuration properties.
  * @param {Number} configuration.startTs     The timestamp associated with this
@@ -71,12 +73,12 @@ function aggregator(configuration) {
 			return;
 		}
 		var sourceId = record.source_id;
-		var recTs = record.ts ? record.ts.getTime() : record.ts_start.getTime();
+		var recTs = record.ts_start ? record.ts_start.getTime() : record.ts.getTime();
 		var currResult = resultsBySource[sourceId];
 		var recToAdd = record;
 
 		if (currResult === undefined) {
-			currResult = record.jmeta ? (0, _aggAggregate2.default)(sourceId, startTs) : (0, _datumAggregate2.default)(sourceId, startTs, endTs, configuration);
+			currResult = record.ts_start ? (0, _aggAggregate2.default)(sourceId, startTs) : (0, _datumAggregate2.default)(sourceId, startTs, endTs, configuration);
 
 			// keep track of results by source ID for fast lookup
 			resultsBySource[sourceId] = currResult;
@@ -88,7 +90,7 @@ function aggregator(configuration) {
 		// when adding records within the time span, force the time slot to our start date so they all aggregate into one;
 		// otherwise set the time slot to the record date itself
 		recToAdd = (0, _mergeObjects2.default)({
-			ts_start: recTs > startTs && recTs < endTs ? startDate : record.ts }, record, undefined, true);
+			ts_start: recTs > startTs && recTs < endTs ? startDate : record.ts_start ? record.ts_start : record.ts }, record, undefined, true);
 
 		currResult.addDatumRecord(recToAdd);
 	}

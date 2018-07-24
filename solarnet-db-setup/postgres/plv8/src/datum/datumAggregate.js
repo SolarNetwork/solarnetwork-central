@@ -195,6 +195,7 @@ export default function datumAggregate(sourceId, ts, endTs, configuration) {
 				ts_start  : new Date(ts),
 				source_id : sourceId,
 				jdata     : {},
+				jmeta     : null,
 			},
 			prop,
 			aggInst,

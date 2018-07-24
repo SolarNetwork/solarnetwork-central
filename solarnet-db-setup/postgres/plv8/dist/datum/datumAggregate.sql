@@ -217,7 +217,8 @@ function datumAggregate(sourceId, ts, endTs, configuration) {
 		var aggRecord = {
 			ts_start: new Date(ts),
 			source_id: sourceId,
-			jdata: {}
+			jdata: {},
+			jmeta: null
 		},
 		    prop,
 		    aggInst,

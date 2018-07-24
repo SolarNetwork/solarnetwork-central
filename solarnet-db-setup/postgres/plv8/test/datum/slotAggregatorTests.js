@@ -125,10 +125,10 @@ test('datum:slotAggregator:processRecords:15mEven5s', t => {
 	aggResults = aggResults.concat(service.finish());
 
 	var expected = [
-		{ ts_start: moment('2016-10-10 11:00:00+13').toDate(), source_id: 'Foo', jdata: {a: {bar:30}}},
-		{ ts_start: moment('2016-10-10 11:15:00+13').toDate(), source_id: 'Foo', jdata: {a: {bar:30}}},
-		{ ts_start: moment('2016-10-10 11:30:00+13').toDate(), source_id: 'Foo', jdata: {a: {bar:30}}},
-		{ ts_start: moment('2016-10-10 11:45:00+13').toDate(), source_id: 'Foo', jdata: {a: {bar:20}}},
+		{ ts_start: moment('2016-10-10 11:00:00+13').toDate(), source_id: 'Foo', jdata: {a: {bar:30}}, jmeta: null},
+		{ ts_start: moment('2016-10-10 11:15:00+13').toDate(), source_id: 'Foo', jdata: {a: {bar:30}}, jmeta: null},
+		{ ts_start: moment('2016-10-10 11:30:00+13').toDate(), source_id: 'Foo', jdata: {a: {bar:30}}, jmeta: null},
+		{ ts_start: moment('2016-10-10 11:45:00+13').toDate(), source_id: 'Foo', jdata: {a: {bar:20}}, jmeta: null},
 	];
 
 	t.deepEqual(aggResults, expected);

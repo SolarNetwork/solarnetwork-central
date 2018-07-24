@@ -189,10 +189,10 @@ function aggAggregate(sourceId, ts) {
 		var aggRecord = {
 			ts_start: new Date(ts),
 			source_id: sourceId,
-			jdata: {}
+			jdata: {},
+			jmeta: null
 		},
 		    prop,
-		    prop2,
 		    aggInst;
 
 		// calculate our instantaneous average values
@@ -200,7 +200,7 @@ function aggAggregate(sourceId, ts) {
 
 		// add jmeta to result, removing any min/max values that are redundant
 		for (prop in imeta) {
-			if (aggRecord.jmeta === undefined) {
+			if (aggRecord.jmeta === null) {
 				aggRecord.jmeta = { i: imeta };
 			}
 			if (imeta[prop].min === imeta[prop].max) {

@@ -96,10 +96,9 @@ export default function aggAggregate(sourceId, ts) {
 	 * Add another datum record.
 	 *
 	 * @param {Object} record            The record to add.
-	 * @param {Date}   record[ts]        The datum timestamp.
-	 * @param {Date}   record[ts_start]  The datum time slot.
 	 * @param {String} record[source_id] The datum source ID.
 	 * @param {Object} record[jdata]     The datum JSON data object.
+	 * @param {Object} record[jmeta]     The datum metadata JSON data object.
 	 */
 	function addDatumRecord(record) {
 		if ( !(record && record.jdata) ) {
@@ -165,9 +164,9 @@ export default function aggAggregate(sourceId, ts) {
 				ts_start  : new Date(ts),
 				source_id : sourceId,
 				jdata     : {},
+				jmeta     : null,
 			},
 			prop,
-			prop2,
 			aggInst;
 
 		// calculate our instantaneous average values
@@ -175,7 +174,7 @@ export default function aggAggregate(sourceId, ts) {
 
 		// add jmeta to result, removing any min/max values that are redundant
 		for ( prop in imeta ) {
-			if ( aggRecord.jmeta === undefined ) {
+			if ( aggRecord.jmeta === null ) {
 				aggRecord.jmeta = {i:imeta};
 			}
 			if ( imeta[prop].min === imeta[prop].max ) {

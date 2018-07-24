@@ -144,9 +144,9 @@ test('datum:aggregator:processRecords:sOnly', t => {
 
 	var expected = [
 		{ ts_start: moment('2017-01-01 10:00:00+13').toDate(), source_id: 'level',
-			jdata: {s: {val:555}}},
+			jdata: {s: {val:555}}, jmeta: null},
 		{ ts_start: moment('2017-01-01 10:00:00+13').toDate(), source_id: 'percent',
-			jdata: {s: {val:3330}}},
+			jdata: {s: {val:3330}}, jmeta: null},
 	];
 
 	t.deepEqual(aggResults, expected);

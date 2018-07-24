@@ -14,7 +14,7 @@ import mergeObjects from 'util/mergeObjects'
  * all the aggregate result objects.
  * 
  * Aggregation of other aggregate data will be automatically performed if
- * the records passed to `addDatumRecord` contain a `jmeta` property.
+ * the records passed to `addDatumRecord` contain a `ts_start` property.
  *
  * @param {Object} configuration The set of configuration properties.
  * @param {Number} configuration.startTs     The timestamp associated with this
@@ -54,12 +54,12 @@ export default function aggregator(configuration) {
 			return;
 		}
 		var sourceId = record.source_id;
-		var recTs = (record.ts ? record.ts.getTime() : record.ts_start.getTime());
+		var recTs = (record.ts_start ? record.ts_start.getTime() : record.ts.getTime());
 		var currResult = resultsBySource[sourceId];
 		var recToAdd = record;
 
 		if ( currResult === undefined ) {
-			currResult = (record.jmeta 
+			currResult = (record.ts_start 
 					? aggAggregate(sourceId, startTs)
 					: datumAggregate(sourceId, startTs, endTs, configuration));
 
@@ -73,7 +73,8 @@ export default function aggregator(configuration) {
 		// when adding records within the time span, force the time slot to our start date so they all aggregate into one;
 		// otherwise set the time slot to the record date itself
 		recToAdd = mergeObjects({
-			ts_start: (recTs > startTs && recTs < endTs ? startDate : record.ts)}, record, undefined, true);
+			ts_start: (recTs > startTs && recTs < endTs ? startDate 
+				: record.ts_start ? record.ts_start : record.ts)}, record, undefined, true);
 
 		currResult.addDatumRecord(recToAdd);
 	}
