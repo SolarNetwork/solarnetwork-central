@@ -23,7 +23,6 @@ export default function aggAggregate(sourceId, ts) {
 	};
 
 	var aobj = {}; // output accumulating
-	var iobj = {}; // output instantaneous
 	var sobj = {}; // output static
 	var tarr = []; // output tags
 	var imeta = {}; // ouutput instantaneous metadata, e.g. {temp:{count:84,min:4,max:22}}
@@ -33,8 +32,6 @@ export default function aggAggregate(sourceId, ts) {
 
 	/** Object with value arrays per instantaneous property, e.g. {temp:[9, 12]} */
 	var iobjValues = {};
-
-	var finishRecord;
 
 	function addInstantaneousValues(inst, meta) {
 		var prop, val, count, propMeta, min, max, propStats;
