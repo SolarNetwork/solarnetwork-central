@@ -58,6 +58,7 @@ CREATE TABLE solaragg.agg_loc_datum_hourly (
   jdata_a jsonb,
   jdata_s jsonb,
   jdata_t text[],
+  jmeta jsonb,
   CONSTRAINT agg_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
@@ -78,6 +79,7 @@ CREATE TABLE solaragg.agg_loc_datum_daily (
   jdata_a jsonb,
   jdata_s jsonb,
   jdata_t text[],
+  jmeta jsonb,
   CONSTRAINT agg_loc_datum_daily_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
@@ -90,6 +92,7 @@ CREATE TABLE solaragg.agg_loc_datum_monthly (
   jdata_a jsonb,
   jdata_s jsonb,
   jdata_t text[],
+  jmeta jsonb,
   CONSTRAINT agg_loc_datum_monthly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
