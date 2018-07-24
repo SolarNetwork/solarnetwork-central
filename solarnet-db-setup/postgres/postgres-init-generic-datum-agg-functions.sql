@@ -926,7 +926,8 @@ BEGIN
 					AND ts < stale.ts_start + interval '1 day'
 				GROUP BY node_id, source_id
 				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
-				SET datum_count = EXCLUDED.datum_count;
+				SET datum_count = EXCLUDED.datum_count,
+					processed_count = CURRENT_TIMESTAMP;
 
 			WHEN 'h' THEN
 				-- hour data counts
@@ -943,7 +944,8 @@ BEGIN
 					AND ts_start < stale.ts_start + interval '1 day'
 				GROUP BY node_id, source_id
 				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
-				SET datum_hourly_count = EXCLUDED.datum_hourly_count;
+				SET datum_hourly_count = EXCLUDED.datum_hourly_count,
+					processed_hourly_count = CURRENT_TIMESTAMP;
 
 			WHEN 'd' THEN
 				-- day data counts, including sum of hourly audit prop_count, datum_q_count
@@ -972,7 +974,8 @@ BEGIN
 				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 				SET datum_daily_pres = EXCLUDED.datum_daily_pres,
 					prop_count = EXCLUDED.prop_count,
-					datum_q_count = EXCLUDED.datum_q_count;
+					datum_q_count = EXCLUDED.datum_q_count,
+					processed_io_count = CURRENT_TIMESTAMP;
 
 			ELSE
 				-- month data counts
@@ -1009,7 +1012,8 @@ BEGIN
 					datum_daily_count = EXCLUDED.datum_daily_count,
 					datum_monthly_pres = EXCLUDED.datum_monthly_pres,
 					prop_count = EXCLUDED.prop_count,
-					datum_q_count = EXCLUDED.datum_q_count;
+					datum_q_count = EXCLUDED.datum_q_count,
+					processed = CURRENT_TIMESTAMP;
 		END CASE;
 
 		CASE kind

@@ -117,6 +117,9 @@ CREATE TABLE solaragg.aud_datum_daily (
 	datum_count integer NOT NULL DEFAULT 0,
 	datum_hourly_count smallint NOT NULL DEFAULT 0,
 	datum_daily_pres BOOLEAN NOT NULL DEFAULT FALSE,
+	processed_count TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	processed_hourly_count TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	processed_io_count TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT aud_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
@@ -131,6 +134,7 @@ CREATE TABLE solaragg.aud_datum_monthly (
 	datum_hourly_count smallint NOT NULL DEFAULT 0,
 	datum_daily_count smallint NOT NULL DEFAULT 0,
 	datum_monthly_pres boolean NOT NULL DEFAULT FALSE,
+	processed TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT aud_datum_monthly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
@@ -156,6 +160,7 @@ CREATE TABLE solaragg.aud_acc_datum_daily (
 	datum_hourly_count integer NOT NULL DEFAULT 0,
 	datum_daily_count integer NOT NULL DEFAULT 0,
 	datum_monthly_count integer NOT NULL DEFAULT 0,
+	processed TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT aud_acc_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
@@ -211,7 +216,8 @@ $$
 	SET datum_count = EXCLUDED.datum_count,
 		datum_hourly_count = EXCLUDED.datum_hourly_count,
 		datum_daily_count = EXCLUDED.datum_daily_count,
-		datum_monthly_count = EXCLUDED.datum_monthly_count;
+		datum_monthly_count = EXCLUDED.datum_monthly_count,
+		processed = CURRENT_TIMESTAMP;
 $$;
 
 CREATE OR REPLACE FUNCTION solaragg.jdata_from_datum(datum solaragg.agg_datum_hourly)
