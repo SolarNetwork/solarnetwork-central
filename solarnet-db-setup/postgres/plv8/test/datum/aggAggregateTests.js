@@ -75,3 +75,25 @@ test('datum:aggAggregate:1dAggToMonth', t => {
 	t.deepEqual(aggResult.jmeta.i, {watts:{count:4753, min:144, max:4599}});
 	t.deepEqual(aggResult.jdata.a, {wattHours:48292.963});
 });
+
+test('datum:aggAggregate:1hAggToDay:noMinMax', t => {
+	const start = moment('2014-03-01 08:00:00+13');
+	const sourceId = 'Foo';
+	const service = aggAggregate(sourceId, start.valueOf());
+	t.is(service.sourceId, sourceId);
+	t.is(service.ts, start.valueOf());
+
+	const data = parseDatumCSV('/agg-datum-h-03.csv');
+
+	data.forEach(rec => {
+		service.addDatumRecord(rec);
+	});
+	const aggResult = service.finish();
+
+	t.is(aggResult.source_id, sourceId);
+	t.is(aggResult.ts_start.getTime(), start.valueOf());
+
+	t.deepEqual(aggResult.jdata.i, {watts:300.1});
+	t.deepEqual(aggResult.jmeta.i, {watts:{count:50}});
+	t.deepEqual(aggResult.jdata.a, {wattHours:1056.252});
+});

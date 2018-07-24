@@ -36,7 +36,7 @@ export default function aggAggregate(sourceId, ts) {
 	function addInstantaneousValues(inst, meta) {
 		var prop, val, count, propMeta, min, max, propStats;
 		for ( prop in inst ) {
-			if ( prop.endsWith('_min') || prop.endsWith('_max') ) {
+			if ( /_m(?:in|ax)$/.test(prop) ) {
 				continue;
 			}
 			val = inst[prop];
@@ -167,17 +167,25 @@ export default function aggAggregate(sourceId, ts) {
 				jdata     : {},
 			},
 			prop,
+			prop2,
 			aggInst;
 
 		// calculate our instantaneous average values
 		aggInst = calculateAggAverages(iobjValues, iobjCounts, imeta);
 
-		// use for:in as easy test for an enumerable prop
+		// add jmeta to result, removing any min/max values that are redundant
 		for ( prop in imeta ) {
-			aggRecord.jmeta = {i:imeta};
+			if ( aggRecord.jmeta === undefined ) {
+				aggRecord.jmeta = {i:imeta};
+			}
+			if ( imeta[prop].min === imeta[prop].max ) {
+				delete imeta[prop].min;
+				delete imeta[prop].max;
+			}
 			break;
 		}
 
+		// use for:in as easy test for an enumerable prop
 		for ( prop in aggInst ) {
 			aggRecord.jdata.i = aggInst;
 			break;

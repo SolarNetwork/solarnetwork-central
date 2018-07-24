@@ -1,5 +1,6 @@
 'use strict';
 
+import aggAggregate from 'datum/aggAggregate';
 import datumAggregate from 'datum/datumAggregate';
 import mergeObjects from 'util/mergeObjects'
 
@@ -11,6 +12,9 @@ import mergeObjects from 'util/mergeObjects'
  * for each datum row. When all rows have been processed, call the
  * <code>finish()</code> method to complete the aggregate processing and return
  * all the aggregate result objects.
+ * 
+ * Aggregation of other aggregate data will be automatically performed if
+ * the records passed to `addDatumRecord` contain a `jmeta` property.
  *
  * @param {Object} configuration The set of configuration properties.
  * @param {Number} configuration.startTs     The timestamp associated with this
@@ -20,7 +24,7 @@ import mergeObjects from 'util/mergeObjects'
  */
 export default function aggregator(configuration) {
 	var self = {
-		version : '1'
+		version : '2'
 	};
 
 	/** The overall starting timestamp. */
@@ -40,20 +44,24 @@ export default function aggregator(configuration) {
 	 *
 	 * @param {Object} record            The record to add.
 	 * @param {Date}   record[ts]        The datum timestamp.
+	 * @param {Date}   record[ts_start]  The aggregate datum timestamp; only applicable when aggregating already aggregated data.
 	 * @param {String} record[source_id] The datum source ID.
 	 * @param {Object} record[jdata]     The datum JSON data object.
+	 * @param {Object} record[jmeta]     The aggregate metadata object; only applicable when aggregating already aggregated data.
 	 */
 	function addDatumRecord(record) {
-		if ( !(record || record.source_id || record.ts) ) {
+		if ( !(record && record.source_id && (record.ts || record.ts_start)) ) {
 			return;
 		}
 		var sourceId = record.source_id;
-		var recTs = record.ts.getTime();
+		var recTs = (record.ts ? record.ts.getTime() : record.ts_start.getTime());
 		var currResult = resultsBySource[sourceId];
 		var recToAdd = record;
 
 		if ( currResult === undefined ) {
-			currResult = datumAggregate(sourceId, startTs, endTs, configuration);
+			currResult = (record.jmeta 
+					? aggAggregate(sourceId, startTs)
+					: datumAggregate(sourceId, startTs, endTs, configuration));
 
 			// keep track of results by source ID for fast lookup
 			resultsBySource[sourceId] = currResult;
