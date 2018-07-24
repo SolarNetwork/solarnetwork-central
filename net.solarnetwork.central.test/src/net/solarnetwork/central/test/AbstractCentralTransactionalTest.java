@@ -25,10 +25,12 @@ package net.solarnetwork.central.test;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
@@ -46,7 +48,7 @@ import net.solarnetwork.central.security.AuthenticatedNode;
  * Base test class for transactional unit tests.
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml",
 		"classpath:/net/solarnetwork/central/test/test-tx-context.xml" })
@@ -59,7 +61,7 @@ public abstract class AbstractCentralTransactionalTest
 	public final DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
 	/** A class-level logger. */
-	protected final Logger log = Logger.getLogger(getClass());
+	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	/**
 	 * Setup the {@link #dateTimeFormat} timezone.
@@ -248,12 +250,15 @@ public abstract class AbstractCentralTransactionalTest
 	 * @since 1.1
 	 */
 	protected void processAggregateStaleData() {
+		log.debug("Stale datum at start: "
+				+ jdbcTemplate.queryForList("SELECT * FROM solaragg.agg_stale_datum"));
+
 		jdbcTemplate.execute(new CallableStatementCreator() {
 
 			@Override
 			public CallableStatement createCallableStatement(Connection con) throws SQLException {
 				CallableStatement stmt = con
-						.prepareCall("{call solaragg.process_agg_stale_datum(?, ?)}");
+						.prepareCall("{? = call solaragg.process_agg_stale_datum(?, ?)}");
 				return stmt;
 			}
 		}, new CallableStatementCallback<Object>() {
@@ -261,22 +266,35 @@ public abstract class AbstractCentralTransactionalTest
 			@Override
 			public Object doInCallableStatement(CallableStatement cs)
 					throws SQLException, DataAccessException {
-				cs.setString(1, "h");
-				cs.setInt(2, -1);
+				cs.registerOutParameter(1, Types.INTEGER);
+				cs.setString(2, "h");
+				cs.setInt(3, -1);
 				cs.execute();
-				cs.setString(1, "d");
+				int processed = cs.getInt(1);
+				log.debug("Processed " + processed + " stale hourly datum");
+
+				cs.setString(2, "d");
 				cs.execute();
-				cs.setString(1, "m");
+				processed = cs.getInt(1);
+				log.debug("Processed " + processed + " stale daily datum");
+
+				cs.setString(2, "m");
 				cs.execute();
+				processed = cs.getInt(1);
+				log.debug("Processed " + processed + " stale monthly datum");
 				return null;
 			}
 		});
+
+		log.debug("Stale location datum at start: "
+				+ jdbcTemplate.queryForList("SELECT * FROM solaragg.agg_stale_loc_datum"));
+
 		jdbcTemplate.execute(new CallableStatementCreator() {
 
 			@Override
 			public CallableStatement createCallableStatement(Connection con) throws SQLException {
 				CallableStatement stmt = con
-						.prepareCall("{call solaragg.process_agg_stale_loc_datum(?, ?)}");
+						.prepareCall("{? = call solaragg.process_agg_stale_loc_datum(?, ?)}");
 				return stmt;
 			}
 		}, new CallableStatementCallback<Object>() {
@@ -284,13 +302,22 @@ public abstract class AbstractCentralTransactionalTest
 			@Override
 			public Object doInCallableStatement(CallableStatement cs)
 					throws SQLException, DataAccessException {
-				cs.setString(1, "h");
-				cs.setInt(2, -1);
+				cs.registerOutParameter(1, Types.INTEGER);
+				cs.setString(2, "h");
+				cs.setInt(3, -1);
 				cs.execute();
-				cs.setString(1, "d");
+				int processed = cs.getInt(1);
+				log.debug("Processed " + processed + " stale hourly location datum");
+
+				cs.setString(2, "d");
 				cs.execute();
-				cs.setString(1, "m");
+				processed = cs.getInt(1);
+				log.debug("Processed " + processed + " stale daily location datum");
+
+				cs.setString(2, "m");
 				cs.execute();
+				processed = cs.getInt(1);
+				log.debug("Processed " + processed + " stale monthly location datum");
 				return null;
 			}
 		});
