@@ -96,6 +96,13 @@ public class MyBatisGeneralNodeDatumDao
 	public static final String PARAM_FILTER = "filter";
 
 	/**
+	 * The query parameter for {@link Period} object value.
+	 * 
+	 * @since 1.9
+	 */
+	public static final String PARAM_TOLERANCE = "tolerance";
+
+	/**
 	 * The query parameter for a {@link CombiningConfig} data structure.
 	 * 
 	 * @since 1.5
@@ -177,6 +184,14 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String QUERY_FOR_DATUM_RECORDS_AT = "find-general-reporting-at-local";
 
+	/**
+	 * The default query name for
+	 * {@link #calculateBetween(GeneralNodeDatumFilter, LocalDateTime, LocalDateTime, Period)}.
+	 * 
+	 * @since 1.9
+	 */
+	public static final String QUERY_FOR_DATUM_RECORDS_BETWEEN = "find-general-reporting-between-local";
+
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
 	private String queryForMostRecent;
@@ -187,6 +202,7 @@ public class MyBatisGeneralNodeDatumDao
 	private String queryForAuditDatumRecordCounts;
 	private String queryForAccumulativeAuditDatumRecordCounts;
 	private String queryForDatumAt;
+	private String queryForDatumBetween;
 
 	/**
 	 * Default constructor.
@@ -203,6 +219,7 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForAuditDatumRecordCounts = QUERY_FOR_AUDIT_DATUM_RECORD_COUNTS;
 		this.queryForAccumulativeAuditDatumRecordCounts = QUERY_FOR_ACCUMULATIVE_AUDIT_DATUM_RECORD_COUNTS;
 		this.queryForDatumAt = QUERY_FOR_DATUM_RECORDS_AT;
+		this.queryForDatumBetween = QUERY_FOR_DATUM_RECORDS_BETWEEN;
 	}
 
 	/**
@@ -670,8 +687,28 @@ public class MyBatisGeneralNodeDatumDao
 		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
 		sqlProps.put(PARAM_FILTER, filter);
 		sqlProps.put(PARAM_DATE, date);
-		sqlProps.put("tolerance", tolerance);
+		sqlProps.put(PARAM_TOLERANCE, tolerance);
 		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumAt, sqlProps, null, null);
+		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
+				rows.size());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.9
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> calculateBetween(GeneralNodeDatumFilter filter,
+			LocalDateTime from, LocalDateTime to, Period tolerance) {
+		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
+		sqlProps.put(PARAM_FILTER, filter);
+		sqlProps.put(PARAM_START_DATE, from);
+		sqlProps.put(PARAM_END_DATE, to);
+		sqlProps.put(PARAM_TOLERANCE, tolerance);
+		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumBetween, sqlProps, null,
+				null);
 		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
 				rows.size());
 	}
@@ -785,6 +822,20 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setQueryForDatumAt(String queryForDatumAt) {
 		this.queryForDatumAt = queryForDatumAt;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #calculateBetween(GeneralNodeDatumFilter, LocalDateTime, LocalDateTime, Period)}
+	 * method.
+	 * 
+	 * @param queryForDatumBetween
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_DATUM_RECORDS_BETWEEN}
+	 * @since 1.9
+	 */
+	public void setQueryForDatumBetween(String queryForDatumBetween) {
+		this.queryForDatumBetween = queryForDatumBetween;
 	}
 
 }

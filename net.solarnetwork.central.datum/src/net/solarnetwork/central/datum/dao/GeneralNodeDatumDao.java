@@ -222,4 +222,35 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> calculateAt(GeneralNodeDatumFilter filter,
 			LocalDateTime date, Period tolerance);
+
+	/**
+	 * Calculate the change between two specific node-local dates.
+	 * 
+	 * <p>
+	 * This method calculates the change between datum calculated at two
+	 * specific dates, as in
+	 * {@link #calculateAt(GeneralNodeDatumFilter, LocalDateTime, Period)}. The
+	 * filter's {@link GeneralNodeDatumFilter#getCombiningType()} is then used
+	 * to calculate a combined value from the two times. Thus a single result
+	 * for each node and source ID combination will be returned.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the node and source ID search criteria
+	 * @param from
+	 *        the first date to calculate datum for; each node ID will use its
+	 *        associated time zone
+	 * @param to
+	 *        the second date to calculate datum for; each node ID will use its
+	 *        associated time zone
+	 * @param tolerance
+	 *        the maximum time span before and after {@code date} to consider
+	 *        when looking for before and after records to perform the
+	 *        calculation
+	 * @return the calculated records, never {@literal null}
+	 * @since 1.5
+	 */
+	FilterResults<ReportingGeneralNodeDatumMatch> calculateBetween(GeneralNodeDatumFilter filter,
+			LocalDateTime from, LocalDateTime to, Period tolerance);
+
 }

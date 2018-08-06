@@ -98,9 +98,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 	private GeneralNodeDatum getTestInstance(DateTime created, Long nodeId, String sourceId) {
 		GeneralNodeDatum datum = new GeneralNodeDatum();
 		datum.setCreated(created);
-		datum.setNodeId(TEST_NODE_ID);
+		datum.setNodeId(nodeId);
 		datum.setPosted(created);
-		datum.setSourceId(TEST_SOURCE_ID);
+		datum.setSourceId(sourceId);
 
 		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
 		datum.setSamples(samples);
@@ -2624,9 +2624,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 
 		DateTime ts2 = new DateTime(2018, 8, 1, 0, 0, 0, tz2);
 		GeneralNodeDatum d3 = getTestInstance(ts2.minusSeconds(20), nodeId2, TEST_SOURCE_ID);
-		d3.getId().setNodeId(nodeId2);
 		GeneralNodeDatum d4 = getTestInstance(ts2.plusSeconds(40), nodeId2, TEST_SOURCE_ID);
-		d4.getId().setNodeId(nodeId2);
 		d4.getSamples().putInstantaneousSampleValue("watts", 482);
 		d4.getSamples().putAccumulatingSampleValue("watt_hours", 8344);
 		dao.store(d3);
@@ -2658,6 +2656,125 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertThat("Watts avg", m.getSampleData().get("watts"), equalTo((Object) 288));
 		assertThat("Watt hours projection", (BigDecimal) m.getSampleData().get("watt_hours"),
 				closeTo(new BigDecimal("4337.666"), new BigDecimal("0.001")));
+	}
+
+	@Test
+	public void findDatumBetweenLocal() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putInstantaneousSampleValue("watts", 345);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum d3 = getTestInstance(ts2.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d3.getSamples().putInstantaneousSampleValue("watts", 462);
+		d3.getSamples().putAccumulatingSampleValue("watt_hours", 8044);
+		GeneralNodeDatum d4 = getTestInstance(ts2.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d4.getSamples().putInstantaneousSampleValue("watts", 482);
+		d4.getSamples().putAccumulatingSampleValue("watt_hours", 8344);
+		dao.store(d3);
+		dao.store(d4);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateBetween(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts avg", m.getSampleData().get("watts"), equalTo((Object) 380));
+		assertThat("Watt hours projection", m.getSampleData().get("watt_hours"), equalTo((Object) 3910));
+	}
+
+	@Test
+	public void findDatumBetweenLocalNoData() {
+		// given
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateBetween(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(0));
+	}
+
+	@Test
+	public void findDatumBetweenOnlyStart() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putInstantaneousSampleValue("watts", 345);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateBetween(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts avg", m.getSampleData().get("watts"), equalTo((Object) 288));
+		assertThat("Watt hours projection", m.getSampleData().get("watt_hours"), equalTo((Object) 0));
+	}
+
+	@Test
+	public void findDatumBetweenOnlyEnd() {
+		// given
+		DateTime ts = new DateTime(2018, 9, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putInstantaneousSampleValue("watts", 345);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateBetween(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts avg", m.getSampleData().get("watts"), equalTo((Object) 288));
+		assertThat("Watt hours projection", m.getSampleData().get("watt_hours"), equalTo((Object) 0));
 	}
 
 }

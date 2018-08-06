@@ -21,6 +21,60 @@ CREATE AGGREGATE solarcommon.first (
     stype    = anyelement
 );
 
+/** JSONB object diff aggregate state transition function. */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_diff_object_sfunc(agg_state jsonb, el jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var prop,
+		curr;
+	if ( !agg_state ) {
+		agg_state = {first:el, last:el};
+	} else if ( el ) {
+		curr = agg_state.last;
+		for ( prop in el ) {
+			curr[prop] = el[prop];
+		}
+	}
+	return agg_state;
+$$;
+
+/** JSONB object diff aggregate final calculation function. */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_diff_object_finalfunc(agg_state jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var prop,
+		val,
+		f = agg_state.first,
+		l = agg_state.last,
+		r = {};
+	for ( prop in l ) {
+		val = f[prop];
+		if ( val !== undefined ) {
+			r[prop] = l[prop] - val;
+		}
+	}
+    return r;
+$$;
+
+/**
+ * Difference aggregate for JSON object values, resulting in JSON object.
+ *
+ * This aggregate will subjtract the _properties_ of the first JSON object from the last
+ * JSON object, resulting in a JSON object. For example, if aggregating objects like:
+ *
+ *     {"watts":123, "wattHours":234}
+ *     {"watts":234, "wattHours":346}
+ *
+ * the resulting object would be:
+ *
+ *    {"watts":111, "wattHours":112}
+ */
+CREATE AGGREGATE solarcommon.jsonb_diff_object(jsonb) (
+    sfunc = solarcommon.jsonb_diff_object_sfunc,
+    stype = jsonb,
+    finalfunc = solarcommon.jsonb_diff_object_finalfunc
+);
+
 /* time weighted json object */
 
 /** JSONB object average aggregate state transition function. */

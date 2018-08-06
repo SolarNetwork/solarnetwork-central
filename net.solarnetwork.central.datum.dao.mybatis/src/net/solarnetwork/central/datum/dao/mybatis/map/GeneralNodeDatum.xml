@@ -256,10 +256,10 @@
 	<select id="find-general-reporting-at-local" resultMap="ReportingGeneralNodeDatumDirectResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT
 			datum.ts AS ts_start,
+			#{date,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp AS local_date,
 			datum.node_id,
 			datum.source_id,
-			solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, NULL, NULL) AS jdata,
-			#{date,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp AS local_date
+			solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, NULL, NULL) AS jdata
 		FROM solardatum.calculate_datum_at_local(
 				#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[],
 				#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
@@ -270,6 +270,41 @@
 			datum.node_id,
 			datum.source_id,
 			datum.ts
+	</select>
+	
+	<select id="find-general-reporting-between-local" resultMap="ReportingGeneralNodeDatumDirectResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		WITH datum AS (
+			SELECT * FROM solardatum.calculate_datum_at_local(
+				#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[],
+				#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
+				#{start,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp,
+				#{tolerance,javaType=org.joda.time.Period}::interval
+			)
+			UNION
+			SELECT * FROM solardatum.calculate_datum_at_local(
+				#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[],
+				#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
+				#{end,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp,
+				#{tolerance,javaType=org.joda.time.Period}::interval
+			)
+		), diff AS (
+			SELECT 
+				solarcommon.first(ts ORDER BY ts) AS ts_start,
+				node_id,
+				source_id,
+				solarcommon.jsonb_avg_object(jdata_i ORDER BY ts) AS jdata_i,
+				solarcommon.jsonb_diff_object(jdata_a ORDER BY ts) AS jdata_a
+			FROM datum
+			GROUP BY node_id, source_id
+		)
+		SELECT
+			ts_start,
+			#{start,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp AS local_date,
+			node_id,
+			source_id,
+			solarcommon.jdata_from_components(jdata_i, jdata_a, NULL, NULL) AS jdata
+		FROM diff
+		ORDER BY node_id, source_id
 	</select>
 
 	<sql id="fragment-GeneralNodeDatum-aggregation-result">
