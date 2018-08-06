@@ -33,6 +33,8 @@ import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.joda.time.LocalDateTime;
+import org.joda.time.Period;
 import org.joda.time.ReadableInterval;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +61,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -167,6 +169,14 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String QUERY_FOR_ACCUMULATIVE_AUDIT_DATUM_RECORD_COUNTS = "findall-AccumulativeAuditNodeDatum-AuditDatumRecordCounts";
 
+	/**
+	 * The default query name for
+	 * {@link #calculateAt(GeneralNodeDatumFilter, DateTime, Period)}.
+	 * 
+	 * @since 1.9
+	 */
+	public static final String QUERY_FOR_DATUM_RECORDS_AT = "find-general-reporting-at-local";
+
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
 	private String queryForMostRecent;
@@ -176,6 +186,7 @@ public class MyBatisGeneralNodeDatumDao
 	private String queryForAuditDatumStoredCount;
 	private String queryForAuditDatumRecordCounts;
 	private String queryForAccumulativeAuditDatumRecordCounts;
+	private String queryForDatumAt;
 
 	/**
 	 * Default constructor.
@@ -191,6 +202,7 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForAuditDatumStoredCount = QUERY_FOR_AUDIT_DATUM_STORED_COUNT;
 		this.queryForAuditDatumRecordCounts = QUERY_FOR_AUDIT_DATUM_RECORD_COUNTS;
 		this.queryForAccumulativeAuditDatumRecordCounts = QUERY_FOR_ACCUMULATIVE_AUDIT_DATUM_RECORD_COUNTS;
+		this.queryForDatumAt = QUERY_FOR_DATUM_RECORDS_AT;
 	}
 
 	/**
@@ -646,6 +658,24 @@ public class MyBatisGeneralNodeDatumDao
 		return results;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.9
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> calculateAt(GeneralNodeDatumFilter filter,
+			LocalDateTime date, Period tolerance) {
+		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
+		sqlProps.put(PARAM_FILTER, filter);
+		sqlProps.put(PARAM_DATE, date);
+		sqlProps.put("tolerance", tolerance);
+		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumAt, sqlProps, null, null);
+		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
+				rows.size());
+	}
+
 	public String getQueryForReportableInterval() {
 		return queryForReportableInterval;
 	}
@@ -742,6 +772,19 @@ public class MyBatisGeneralNodeDatumDao
 	public void setQueryForAccumulativeAuditDatumRecordCounts(
 			String queryForAccumulativeAuditDatumRecordCounts) {
 		this.queryForAccumulativeAuditDatumRecordCounts = queryForAccumulativeAuditDatumRecordCounts;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #calculateAt(GeneralNodeDatumFilter, DateTime, Period)} method.
+	 * 
+	 * @param queryForDatumAt
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_DATUM_RECORDS_AT}
+	 * @since 1.9
+	 */
+	public void setQueryForDatumAt(String queryForDatumAt) {
+		this.queryForDatumAt = queryForDatumAt;
 	}
 
 }

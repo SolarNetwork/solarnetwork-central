@@ -253,6 +253,25 @@
 		<result property="sampleJson" column="jdata"/>
 	</resultMap>
 
+	<select id="find-general-reporting-at-local" resultMap="ReportingGeneralNodeDatumDirectResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			datum.ts AS ts_start,
+			datum.node_id,
+			datum.source_id,
+			solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_a, NULL, NULL) AS jdata,
+			#{date,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp AS local_date
+		FROM solardatum.calculate_datum_at_local(
+				#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[],
+				#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
+				#{date,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp,
+				#{tolerance,javaType=org.joda.time.Period}::interval
+			) AS datum
+		ORDER BY
+			datum.node_id,
+			datum.source_id,
+			datum.ts
+	</select>
+
 	<sql id="fragment-GeneralNodeDatum-aggregation-result">
 		datum.ts_start AS r_datum_ts_start,
 		<choose>
