@@ -148,6 +148,7 @@ RETURNS TABLE(
 	FROM slice
 	WHERE ts = slot_ts
 	GROUP BY node_id, source_id
+	HAVING count(*) > 1 OR solarcommon.first(ts ORDER BY ts) = reading_ts OR solarcommon.first(ts ORDER BY ts DESC) = reading_ts
 	ORDER BY node_id, source_id
 $$;
 
@@ -223,5 +224,6 @@ RETURNS TABLE(
 	FROM slice
 	WHERE ts = slot_ts
 	GROUP BY ts_slot, node_id, source_id
+	HAVING count(*) > 1 OR solarcommon.first(ts ORDER BY ts) = ts_slot OR solarcommon.first(ts ORDER BY ts DESC) = ts_slot
 	ORDER BY ts_slot, node_id, source_id
 $$;
