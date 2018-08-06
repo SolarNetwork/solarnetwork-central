@@ -23,14 +23,15 @@
 package net.solarnetwork.central.dao.mybatis.type;
 
 import java.sql.CallableStatement;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.concurrent.TimeUnit;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
-import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 
 /**
@@ -38,7 +39,7 @@ import org.joda.time.LocalDateTime;
  * {@link LocalDateTime} objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JodaLocalDateTimeTypeHandler extends BaseTypeHandler<LocalDateTime> {
 
@@ -47,11 +48,19 @@ public class JodaLocalDateTimeTypeHandler extends BaseTypeHandler<LocalDateTime>
 			JdbcType jdbcType) throws SQLException {
 		switch (jdbcType) {
 			case DATE:
-				ps.setDate(i, new java.sql.Date(parameter.toDateTime(DateTimeZone.UTC).getMillis()));
+				@SuppressWarnings("deprecation")
+				Date date = new java.sql.Date(parameter.getYear() - 1900, parameter.getMonthOfYear() - 1,
+						parameter.getDayOfMonth());
+				ps.setDate(i, date);
 				break;
 
 			default:
-				ps.setTimestamp(i, new Timestamp(parameter.toDateTime(DateTimeZone.UTC).getMillis()));
+				@SuppressWarnings("deprecation")
+				Timestamp ts = new Timestamp(parameter.getYear() - 1900, parameter.getMonthOfYear() - 1,
+						parameter.getDayOfMonth(), parameter.getHourOfDay(), parameter.getMinuteOfHour(),
+						parameter.getSecondOfMinute(),
+						(int) TimeUnit.MILLISECONDS.toNanos(parameter.getMillisOfSecond()));
+				ps.setTimestamp(i, ts);
 				break;
 		}
 	}
