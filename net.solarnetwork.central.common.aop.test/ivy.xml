@@ -19,6 +19,6 @@
 		<!-- Testing support -->
 		
 		<!-- SolarNetwork -->
-		<dependency org="net.solarnetwork.central.test" name="net.solarnetwork.central.test" rev="1.7.0"/>
+		<dependency org="net.solarnetwork.central.test" name="net.solarnetwork.central.test" rev="[1.7.0,2.0.0)"/>
     </dependencies>
 </ivy-module>
