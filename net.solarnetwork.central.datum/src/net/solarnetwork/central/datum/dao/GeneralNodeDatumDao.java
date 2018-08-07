@@ -229,10 +229,8 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * <p>
 	 * This method calculates the change between datum calculated at two
 	 * specific dates, as in
-	 * {@link #calculateAt(GeneralNodeDatumFilter, LocalDateTime, Period)}. The
-	 * filter's {@link GeneralNodeDatumFilter#getCombiningType()} is then used
-	 * to calculate a combined value from the two times. Thus a single result
-	 * for each node and source ID combination will be returned.
+	 * {@link #calculateAt(GeneralNodeDatumFilter, LocalDateTime, Period)}. A
+	 * single result for each node and source ID combination will be returned.
 	 * </p>
 	 * 
 	 * @param filter
@@ -251,6 +249,48 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @since 1.5
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> calculateBetween(GeneralNodeDatumFilter filter,
+			LocalDateTime from, LocalDateTime to, Period tolerance);
+
+	/**
+	 * Find the change of accumulation properties between two specific
+	 * node-local dates.
+	 * 
+	 * <p>
+	 * This method calculates the change between datum with the nearest dates
+	 * less than or equal to given start and end dates. specific dates, as in
+	 * {@link #calculateAt(GeneralNodeDatumFilter, LocalDateTime, Period)}. A
+	 * single result for each node and source ID combination will be returned,
+	 * with the accumulation properties calculated as the difference between the
+	 * start and end values. In addition some status properties will be
+	 * included:
+	 * </p>
+	 * 
+	 * <dl>
+	 * <dt>endDate</dt>
+	 * <dd>The associated date found for the last datum record.</dd>
+	 * <dt>timeZone</dt>
+	 * <dd>The time zone of the node associated with the datum.</dd>
+	 * <dt>localEndDate</dt>
+	 * <dd>The <code>endDate</code> translated into the node's local time
+	 * zone.</dd>
+	 * </dl>
+	 * 
+	 * @param filter
+	 *        the node and source ID search criteria
+	 * @param from
+	 *        the first date to calculate datum for; each node ID will use its
+	 *        associated time zone
+	 * @param to
+	 *        the second date to calculate datum for; each node ID will use its
+	 *        associated time zone
+	 * @param tolerance
+	 *        the maximum time span before and after {@code date} to consider
+	 *        when looking for before and after records to perform the
+	 *        calculation
+	 * @return the calculated records, never {@literal null}
+	 * @since 1.5
+	 */
+	FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
 			LocalDateTime from, LocalDateTime to, Period tolerance);
 
 }

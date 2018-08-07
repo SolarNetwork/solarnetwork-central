@@ -50,6 +50,8 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	for ( prop in l ) {
 		val = f[prop];
 		if ( val !== undefined ) {
+			r[prop +'_start'] = val;
+			r[prop +'_end'] = l[prop];
 			r[prop] = l[prop] - val;
 		}
 	}
@@ -57,17 +59,21 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 $$;
 
 /**
- * Difference aggregate for JSON object values, resulting in JSON object.
+ * Difference aggregate for JSON object values, resulting in a JSON object.
  *
- * This aggregate will subjtract the _properties_ of the first JSON object from the last
- * JSON object, resulting in a JSON object. For example, if aggregating objects like:
+ * This aggregate will subtract the _property values_ of the first JSON object in the aggregate group
+ * from the last object in the group, resulting in a JSON object. An `ORDER BY` clause is thus essential
+ * to ensure the first/last values are captured correctly. The first and last values for each property
+ * will be included in the output JSON object with `_start` and `_end` suffixes added to their names.
  *
- *     {"watts":123, "wattHours":234}
- *     {"watts":234, "wattHours":346}
+ * For example, if aggregating objects like:
+ *
+ *     {"wattHours":234}
+ *     {"wattHours":346}
  *
  * the resulting object would be:
  *
- *    {"watts":111, "wattHours":112}
+ *    {"wattHours":112, "wattHours_start":234, "wattHours_end":346}
  */
 CREATE AGGREGATE solarcommon.jsonb_diff_object(jsonb) (
     sfunc = solarcommon.jsonb_diff_object_sfunc,
@@ -280,4 +286,114 @@ RETURNS TABLE(
 	GROUP BY ts_slot, node_id, source_id
 	HAVING count(*) > 1 OR solarcommon.first(ts ORDER BY ts) = ts_slot OR solarcommon.first(ts ORDER BY ts DESC) = ts_slot
 	ORDER BY ts_slot, node_id, source_id
+$$;
+
+/**
+ * Calculate the difference between the accumulating properties of datum between a time range.
+ *
+ * This returns at most one row. The returned `ts_start` and `ts_end` columns will
+ * the timestamps of the found starting/ending datum records. The `jdata_a` column will be computed as the difference
+ * between the starting/ending rows, using the `solarcommon.jsonb_diff_object()` aggregate function.
+ *
+ * @param node 			the node IDs to find
+ * @param source 		the source IDs to find
+ * @param ts_min		the timestamp of the start of the time range
+ * @param ts_max		the timestamp of the end of the time range
+ * @param tolerance		a maximum range before `ts_min` to consider when looking for the datum
+ */
+CREATE OR REPLACE FUNCTION solardatum.calculate_datum_diff_local(
+	node bigint, source text, ts_min timestamptz, ts_max timestamptz, tolerance interval)
+RETURNS TABLE(
+  ts_start timestamp with time zone,
+  ts_end timestamp with time zone,
+  node_id bigint,
+  source_id character varying(64),
+  jdata_a jsonb
+) LANGUAGE SQL STABLE AS $$
+	-- Efficiently find the "previous" record from a specific node-local (billing) date
+	WITH d1 AS (
+		SELECT d.*
+		FROM solardatum.da_datum d
+		WHERE d.node_id = node
+			AND d.source_id = source
+			AND d.ts <= ts_min
+			AND d.ts > ts_min - tolerance
+		ORDER BY d.ts DESC
+		LIMIT 1
+	), d2 AS (
+		SELECT d.*
+		FROM solardatum.da_datum d
+		WHERE d.node_id = node
+			AND d.source_id = source
+			AND d.ts <= ts_max
+			AND d.ts > ts_min - tolerance
+		ORDER BY d.ts DESC
+		LIMIT 1
+	), d AS (
+		SELECT * FROM d1
+		UNION
+		SELECT * FROM d2
+	)
+	SELECT min(d.ts) AS ts_start,
+		max(d.ts) AS ts_end,
+		d.node_id,
+		d.source_id,
+		solarcommon.jsonb_diff_object(d.jdata_a ORDER BY d.ts) AS jdata_a
+	FROM d
+	GROUP BY d.node_id, d.source_id
+	ORDER BY d.node_id, d.source_id;
+$$;
+
+/**
+ * Calculate the difference between the accumulating properties of datum between a time range.
+ *
+ * This returns one row per node ID and source ID combination found. The returned `ts_start` and `ts_end` columns will
+ * the timestamps of the found starting/ending datum records. The `jdata_a` column will be computed as the difference
+ * between the starting/ending rows, using the `solarcommon.jsonb_diff_object()` aggregate function.
+ *
+ * @param nodes 		the node IDs to find
+ * @param sources 		the source IDs to find
+ * @param ts_min		the timestamp of the start of the time range
+ * @param ts_max		the timestamp of the end of the time range
+ * @param tolerance		a maximum range before `ts_min` to consider when looking for the datum
+ */
+CREATE OR REPLACE FUNCTION solardatum.calculate_datum_diff_local(
+	nodes bigint[], sources text[], ts_min timestamp, ts_max timestamp, tolerance interval default interval '1 month')
+RETURNS TABLE(
+  ts_start timestamp with time zone,
+  ts_end timestamp with time zone,
+  time_zone text,
+  node_id bigint,
+  source_id character varying(64),
+  jdata_a jsonb
+) LANGUAGE plpgsql STABLE AS $$
+DECLARE
+	nas record;
+	r record;
+BEGIN
+	-- this manually looping function can generally execute much faster over a larger array of node IDs/source IDs
+	-- because looping over each node/source combo allows solardatum.calculate_datum_diff_local() to optimize
+	-- away most rows/hypertables
+	FOR nas IN
+		SELECT nlt.node_id, s.source_id, nlt.time_zone
+		FROM solarnet.node_local_time nlt
+		CROSS JOIN (
+			SELECT unnest(sources) AS source_id
+		) s
+		WHERE nlt.node_id = ANY(nodes)
+		ORDER BY nlt.node_id, s.source_id
+	LOOP
+		time_zone = nas.time_zone;
+		SELECT d.ts_start, d.ts_end, d.node_id, d.source_id, d.jdata_a
+		FROM solardatum.calculate_datum_diff_local(nas.node_id, nas.source_id,
+			ts_min AT TIME ZONE nas.time_zone,
+			ts_max AT TIME ZONE nas.time_zone,
+			tolerance) d
+		INTO ts_start, ts_end, node_id, source_id, jdata_a;
+		IF FOUND THEN
+			RETURN NEXT;
+		END IF;
+	END LOOP;
+	RETURN;
+END
 $$;

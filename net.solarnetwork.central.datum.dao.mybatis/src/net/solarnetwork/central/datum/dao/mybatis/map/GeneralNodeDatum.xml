@@ -307,6 +307,26 @@
 		ORDER BY node_id, source_id
 	</select>
 
+	<select id="find-general-reporting-diff-within-local" resultMap="ReportingGeneralNodeDatumDirectResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			ts_start,
+			ts_start AT TIME ZONE time_zone AS local_date,
+			node_id,
+			source_id,
+			solarcommon.jdata_from_components(NULL, jdata_a, jsonb_build_object(
+				'timeZone', time_zone,
+				'endDate', to_char(ts_end at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+				'localEndDate', to_char(ts_end AT TIME ZONE time_zone, 'YYYY-MM-DD"T"HH24:MI:SS.MS')), NULL) AS jdata
+		FROM solardatum.calculate_datum_diff_local(
+				#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[],
+				#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler},
+				#{start,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp,
+				#{end,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp,
+				#{tolerance,javaType=org.joda.time.Period}::interval
+			)
+		ORDER BY node_id, source_id
+	</select>
+
 	<sql id="fragment-GeneralNodeDatum-aggregation-result">
 		datum.ts_start AS r_datum_ts_start,
 		<choose>
