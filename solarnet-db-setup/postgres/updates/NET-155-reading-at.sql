@@ -156,7 +156,8 @@ CREATE AGGREGATE solarcommon.jsonb_weighted_proj_object(jsonb, float8) (
  * @param reading_ts	the timestamp to calculate the value of each datum at
  * @param span			a maximum range before and after `reading_ts` to consider when looking for the previous/next datum
  */
-CREATE OR REPLACE FUNCTION solardatum.calculate_datum_at(nodes bigint[], sources text[], reading_ts timestamptz, span interval)
+CREATE OR REPLACE FUNCTION solardatum.calculate_datum_at(
+	nodes bigint[], sources text[], reading_ts timestamptz, span interval default '1 month')
 RETURNS TABLE(
   ts timestamp with time zone,
   node_id bigint,
@@ -225,7 +226,8 @@ $$;
  * @param reading_ts	the timestamp to calculate the value of each datum at
  * @param span			a maximum range before and after `reading_ts` to consider when looking for the previous/next datum
  */
-CREATE OR REPLACE FUNCTION solardatum.calculate_datum_at_local(nodes bigint[], sources text[], reading_ts timestamp, span interval)
+CREATE OR REPLACE FUNCTION solardatum.calculate_datum_at_local(
+	nodes bigint[], sources text[], reading_ts timestamp, span interval default '1 month')
 RETURNS TABLE(
   ts timestamp with time zone,
   node_id bigint,
@@ -302,7 +304,7 @@ $$;
  * @param tolerance		a maximum range before `ts_min` to consider when looking for the datum
  */
 CREATE OR REPLACE FUNCTION solardatum.calculate_datum_diff_local(
-	node bigint, source text, ts_min timestamptz, ts_max timestamptz, tolerance interval)
+	node bigint, source text, ts_min timestamptz, ts_max timestamptz, tolerance interval default '1 month')
 RETURNS TABLE(
   ts_start timestamp with time zone,
   ts_end timestamp with time zone,
