@@ -2835,7 +2835,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				equalTo((Object) 4002));
 		assertThat("Watt hours end d3", m.getSampleData().get("watt_hours_end"), equalTo((Object) 8044));
 		assertThat("End date", m.getSampleData().get("endDate"), equalTo((Object) ISODateTimeFormat
-				.dateTime().print(d3.getCreated().withZone(DateTimeZone.UTC))));
+				.dateTime().print(d3.getCreated().withZone(DateTimeZone.UTC)).replace('T', ' ')));
 		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
 	}
 
@@ -2869,7 +2869,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				equalTo((Object) 4002));
 		assertThat("Watt hours end d1", m.getSampleData().get("watt_hours_end"), equalTo((Object) 4002));
 		assertThat("End date", m.getSampleData().get("endDate"), equalTo((Object) ISODateTimeFormat
-				.dateTime().print(d1.getCreated().withZone(DateTimeZone.UTC))));
+				.dateTime().print(d1.getCreated().withZone(DateTimeZone.UTC)).replace('T', ' ')));
 		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
 	}
 
@@ -2903,7 +2903,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				equalTo((Object) 4002));
 		assertThat("Watt hours end d1", m.getSampleData().get("watt_hours_end"), equalTo((Object) 4002));
 		assertThat("End date", m.getSampleData().get("endDate"), equalTo((Object) ISODateTimeFormat
-				.dateTime().print(d1.getCreated().withZone(DateTimeZone.UTC))));
+				.dateTime().print(d1.getCreated().withZone(DateTimeZone.UTC)).replace('T', ' ')));
 		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
 	}
 }
