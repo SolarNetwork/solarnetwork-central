@@ -23,13 +23,14 @@
 package net.solarnetwork.central.datum.domain;
 
 import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 import net.solarnetwork.central.domain.Filter;
 
 /**
  * API for common filter properties.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.22
  */
 public interface CommonFilter extends Filter {
@@ -55,6 +56,32 @@ public interface CommonFilter extends Filter {
 	 * @return the end date
 	 */
 	DateTime getEndDate();
+
+	/**
+	 * Get a start date in local time.
+	 * 
+	 * <p>
+	 * This is meant to be used as an alternative to {@link #getStartDate()} and
+	 * does not represent a local version of that instance.
+	 * </p>
+	 * 
+	 * @return the local start date
+	 * @since 1.1
+	 */
+	LocalDateTime getLocalStartDate();
+
+	/**
+	 * Get an end date in local time.
+	 * 
+	 * <p>
+	 * This is meant to be used as an alternative to {@link #getEndDate()} and
+	 * does not represent a local version of that instance.
+	 * </p>
+	 * 
+	 * @return the local end date
+	 * @since 1.1
+	 */
+	LocalDateTime getLocalEndDate();
 
 	/**
 	 * Get the first source ID. This returns the first available source ID from

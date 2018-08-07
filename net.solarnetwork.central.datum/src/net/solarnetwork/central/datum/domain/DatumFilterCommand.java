@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -49,22 +50,24 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.11
+ * @version 1.12
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"combiningType", "combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "rollupTypes",
-		"rollupTypeKeys", "tags", "dataPath", "mostRecent", "startDate", "endDate", "max", "offset",
-		"sorts", "type", "location" })
+		"rollupTypeKeys", "tags", "dataPath", "mostRecent", "startDate", "endDate", "localStartDate",
+		"localEndDate", "max", "offset", "sorts", "type", "location" })
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
 		GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter, Serializable {
 
-	private static final long serialVersionUID = 7514459682386461710L;
+	private static final long serialVersionUID = 1558448678453849298L;
 
 	private final SolarLocation location;
 	private DateTime startDate;
 	private DateTime endDate;
+	private LocalDateTime localStartDate;
+	private LocalDateTime localEndDate;
 	private boolean mostRecent = false;
 	private String type; // e.g. Power, Consumption, etc.
 	private List<MutableSortDescriptor> sorts;
@@ -164,6 +167,8 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		}
 		setDataPath(other.getDataPath());
 		setEndDate(other.getEndDate());
+		setLocalEndDate(other.getLocalEndDate());
+		setLocalStartDate(other.getLocalStartDate());
 		setSourceIds(other.getSourceIds());
 		setStartDate(other.getStartDate());
 		setMostRecent(other.isMostRecent());
@@ -197,6 +202,12 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		}
 		if ( endDate != null ) {
 			filter.put("end", endDate);
+		}
+		if ( localStartDate != null ) {
+			filter.put("localStart", localStartDate);
+		}
+		if ( localEndDate != null ) {
+			filter.put("localEnd", localEndDate);
 		}
 		if ( location != null ) {
 			filter.putAll(location.getFilter());
@@ -269,6 +280,24 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	public void setEndDate(DateTime endDate) {
 		this.endDate = endDate;
+	}
+
+	@Override
+	public LocalDateTime getLocalStartDate() {
+		return localStartDate;
+	}
+
+	public void setLocalStartDate(LocalDateTime localStartDate) {
+		this.localStartDate = localStartDate;
+	}
+
+	@Override
+	public LocalDateTime getLocalEndDate() {
+		return localEndDate;
+	}
+
+	public void setLocalEndDate(LocalDateTime localEndDate) {
+		this.localEndDate = localEndDate;
 	}
 
 	@Override
@@ -829,6 +858,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		result = prime * result + ((aggregation == null) ? 0 : aggregation.hashCode());
 		result = prime * result + ((dataPath == null) ? 0 : dataPath.hashCode());
 		result = prime * result + ((endDate == null) ? 0 : endDate.hashCode());
+		result = prime * result + ((localEndDate == null) ? 0 : localEndDate.hashCode());
 		result = prime * result + ((location == null) ? 0 : location.hashCode());
 		result = prime * result + Arrays.hashCode(locationIds);
 		result = prime * result + ((max == null) ? 0 : max.hashCode());
@@ -838,6 +868,7 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		result = prime * result + ((sorts == null) ? 0 : sorts.hashCode());
 		result = prime * result + Arrays.hashCode(sourceIds);
 		result = prime * result + ((startDate == null) ? 0 : startDate.hashCode());
+		result = prime * result + ((localStartDate == null) ? 0 : localStartDate.hashCode());
 		result = prime * result + Arrays.hashCode(tags);
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + Arrays.hashCode(userIds);
@@ -880,6 +911,13 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 				return false;
 			}
 		} else if ( !endDate.isEqual(other.endDate) ) {
+			return false;
+		}
+		if ( localEndDate == null ) {
+			if ( other.localEndDate != null ) {
+				return false;
+			}
+		} else if ( !localEndDate.isEqual(other.localEndDate) ) {
 			return false;
 		}
 		if ( location == null ) {
@@ -927,6 +965,13 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 				return false;
 			}
 		} else if ( !startDate.isEqual(other.startDate) ) {
+			return false;
+		}
+		if ( localStartDate == null ) {
+			if ( other.localStartDate != null ) {
+				return false;
+			}
+		} else if ( !localStartDate.isEqual(other.localStartDate) ) {
 			return false;
 		}
 		if ( !Arrays.equals(tags, other.tags) ) {

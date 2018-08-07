@@ -65,6 +65,7 @@
 				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler"/>
 				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTypeHandler"/>
 				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalTimeTypeHandler"/>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaPeriodTypeHandler"/>
 			</list>
 		</property>
 		<property name="mapperLocations">

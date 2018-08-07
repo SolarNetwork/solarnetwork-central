@@ -29,9 +29,11 @@ package net.solarnetwork.central.query.biz;
 import java.util.List;
 import java.util.Set;
 import org.joda.time.DateTime;
+import org.joda.time.Period;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
@@ -52,7 +54,7 @@ import net.solarnetwork.central.security.SecurityActor;
  * API for querying business logic.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public interface QueryBiz {
 
@@ -178,6 +180,29 @@ public interface QueryBiz {
 	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max);
+
+	/**
+	 * API for querying for a filtered set of "readings".
+	 * 
+	 * The {@code filter} must provide the required date(s) to use for the
+	 * reading type. If the reading type only requires one date, then the
+	 * {@link GeneralNodeDatumFilter#getLocalStartDate()} or
+	 * {@link GeneralNodeDatumFilter#getStartDate()} value should be provided.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the query filter, to specify the nodes/sources to find as well as
+	 *        the start/end dates
+	 * @param readingType
+	 *        the type of reading to perform
+	 * @param tolerance
+	 *        a time period of tolerance to use when querying around the
+	 *        start/end dates
+	 * @return the results, never {@literal null}
+	 * @since 2.4
+	 */
+	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(GeneralNodeDatumFilter filter,
+			DatumReadingType readingType, Period tolerance);
 
 	/**
 	 * API for querying for a filtered set of

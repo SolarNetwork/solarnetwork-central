@@ -26,6 +26,8 @@ import static net.solarnetwork.central.query.web.api.ReportableIntervalControlle
 import java.util.Set;
 import java.util.TimeZone;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
+import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
@@ -34,19 +36,22 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.JodaDateFormatEditor;
+import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
@@ -94,6 +99,8 @@ public class DatumController extends WebServiceControllerSupport {
 	public void initBinder(WebDataBinder binder) {
 		binder.registerCustomEditor(DateTime.class,
 				new JodaDateFormatEditor(this.requestDateFormats, TimeZone.getTimeZone("UTC")));
+		binder.registerCustomEditor(LocalDateTime.class,
+				new JodaDateFormatEditor(this.requestDateFormats, null, ParseMode.LocalDateTime));
 	}
 
 	private void resolveSourceIdPattern(DatumFilterCommand cmd) {
@@ -133,6 +140,31 @@ public class DatumController extends WebServiceControllerSupport {
 	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final DatumFilterCommand cmd) {
 		cmd.setMostRecent(true);
 		return filterGeneralDatumData(cmd);
+	}
+
+	/**
+	 * Query for reading datum.
+	 * 
+	 * @param cmd
+	 *        the filter
+	 * @param readingType
+	 *        the reading type
+	 * @param tolerance
+	 *        the query tolerance
+	 * @return
+	 * @since 2.3
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/reading", method = RequestMethod.GET)
+	public Response<FilterResults<?>> datumReading(final DatumFilterCommand cmd,
+			@RequestParam("readingType") DatumReadingType readingType,
+			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") Period tolerance) {
+
+		// support filtering based on sourceId path pattern, by simply finding the sources that match first
+		resolveSourceIdPattern(cmd);
+
+		FilterResults<?> results = queryBiz.findFilteredReading(cmd, readingType, tolerance);
+		return new Response<FilterResults<?>>(results);
 	}
 
 	public void setRequestDateFormats(String[] requestDateFormats) {

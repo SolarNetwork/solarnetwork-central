@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
+import org.joda.time.Period;
 import org.joda.time.ReadableInstant;
 import org.joda.time.ReadableInterval;
 import org.slf4j.Logger;
@@ -49,6 +51,7 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
@@ -78,7 +81,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -262,6 +265,41 @@ public class DaoQueryBiz implements QueryBiz {
 			return cmd;
 		}
 		return filter;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(
+			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
+		LocalDateTime from = filter.getLocalStartDate();
+		if ( from == null ) {
+			DateTime d = filter.getStartDate();
+			if ( d != null ) {
+				from = d.withZone(DateTimeZone.UTC).toLocalDateTime();
+			}
+		}
+		LocalDateTime to = filter.getLocalEndDate();
+		if ( to == null ) {
+			DateTime d = filter.getEndDate();
+			if ( d != null ) {
+				to = d.withZone(DateTimeZone.UTC).toLocalDateTime();
+			}
+		}
+
+		switch (readingType) {
+			case NearestDifference:
+				return generalNodeDatumDao.findAccumulation(filter, from, to, tolerance);
+
+			case CalcualtedAtDifference:
+				return generalNodeDatumDao.calculateBetween(filter, from, to, tolerance);
+
+			case CalculatedAt:
+				return generalNodeDatumDao.calculateAt(filter, from, tolerance);
+
+			default:
+				throw new IllegalArgumentException(
+						"The DatumReadingType [" + readingType + "] is not supported");
+		}
 	}
 
 	@Override
