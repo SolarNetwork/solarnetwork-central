@@ -5,7 +5,7 @@ CREATE SCHEMA IF NOT EXISTS solaragg;
 CREATE TABLE solardatum.da_datum (
   ts timestamp with time zone NOT NULL,
   node_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   posted timestamp with time zone NOT NULL,
   jdata_i jsonb,
   jdata_a jsonb,
@@ -35,7 +35,7 @@ CREATE OR REPLACE VIEW solardatum.da_datum_data AS
 
 CREATE TABLE solardatum.da_meta (
   node_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   created timestamp with time zone NOT NULL,
   updated timestamp with time zone NOT NULL,
   jdata jsonb NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE solardatum.da_meta (
 CREATE TABLE solaragg.agg_stale_datum (
   ts_start timestamp with time zone NOT NULL,
   node_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   agg_kind char(1) NOT NULL,
   created timestamp NOT NULL DEFAULT now(),
   CONSTRAINT agg_stale_datum_pkey PRIMARY KEY (agg_kind, ts_start, node_id, source_id)
@@ -54,7 +54,7 @@ CREATE TABLE solaragg.agg_stale_datum (
 CREATE TABLE solaragg.agg_messages (
   created timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   node_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   ts timestamp with time zone NOT NULL,
   msg text NOT NULL
 );
@@ -65,7 +65,7 @@ CREATE TABLE solaragg.agg_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
   local_date timestamp without time zone NOT NULL,
   node_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   jdata_i jsonb,
   jdata_a jsonb,
   jdata_s jsonb,
@@ -77,7 +77,7 @@ CREATE TABLE solaragg.agg_datum_hourly (
 CREATE TABLE solaragg.aud_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
   node_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   datum_count integer NOT NULL DEFAULT 0,
   prop_count integer NOT NULL DEFAULT 0,
   datum_q_count integer NOT NULL DEFAULT 0,
@@ -88,7 +88,7 @@ CREATE TABLE solaragg.agg_datum_daily (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
   node_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   jdata_i jsonb,
   jdata_a jsonb,
   jdata_s jsonb,
@@ -101,7 +101,7 @@ CREATE TABLE solaragg.agg_datum_daily (
 CREATE TABLE solaragg.aud_datum_daily_stale (
 	ts_start timestamp with time zone NOT NULL,
 	node_id bigint NOT NULL,
-	source_id text NOT NULL,
+	source_id character varying(64) NOT NULL,
 	aud_kind char(1) NOT NULL,
 	created timestamp NOT NULL DEFAULT now(),
 	CONSTRAINT aud_datum_daily_stale_pkey PRIMARY KEY (aud_kind, ts_start, node_id, source_id)
@@ -142,7 +142,7 @@ CREATE TABLE solaragg.agg_datum_monthly (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
   node_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   jdata_i jsonb,
   jdata_a jsonb,
   jdata_s jsonb,
