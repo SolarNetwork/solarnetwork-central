@@ -290,7 +290,7 @@ public class DaoQueryBiz implements QueryBiz {
 			case NearestDifference:
 				return generalNodeDatumDao.findAccumulation(filter, from, to, tolerance);
 
-			case CalcualtedAtDifference:
+			case CalculatedAtDifference:
 				return generalNodeDatumDao.calculateBetween(filter, from, to, tolerance);
 
 			case CalculatedAt:

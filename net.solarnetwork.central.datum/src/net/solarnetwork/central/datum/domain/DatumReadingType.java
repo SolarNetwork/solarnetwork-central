@@ -47,7 +47,7 @@ public enum DatumReadingType {
 	 * Calculate the difference between two reading values on two dates, using
 	 * the {@code CalcualtedAt} style of deriving the start and end readings.
 	 */
-	CalcualtedAtDifference("atd"),
+	CalculatedAtDifference("atd"),
 
 	/**
 	 * Find the difference between two datum that are nearest in time on or
