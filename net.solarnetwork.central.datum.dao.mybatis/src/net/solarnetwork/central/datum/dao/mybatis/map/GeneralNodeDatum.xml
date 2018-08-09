@@ -477,8 +477,20 @@
 	</sql>
 
 	<sql id="fragment-findall-ReportingGeneralNodeDatum-agg-where">
-		#{filter.nodeId,jdbcType=BIGINT},
-		#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		#{filter.nodeId,jdbcType=BIGINT}
+		,#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		<if test="filter.dataPathElements != null">
+			,#{filter.dataPathElements,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		</if>
+		<if test="filter != null and filter.startDate != null and filter.endDate != null">
+			,#{filter.startDate,jdbcType=TIMESTAMP}::timestamptz
+			,#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz
+		</if>
+	</sql>
+	
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-agg-nodes-where">
+		#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+		,#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 		<if test="filter.dataPathElements != null">
 			,#{filter.dataPathElements,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 		</if>
@@ -684,7 +696,17 @@
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM
 			solaragg.calc_running_datum_total(
-				<include refid="fragment-findall-ReportingGeneralNodeDatum-agg-where"/>
+				<choose>
+					<when test="filter.nodeIds.length > 1">
+						<include refid="fragment-findall-ReportingGeneralNodeDatum-agg-nodes-where"/>
+					</when>
+					<otherwise>
+						<include refid="fragment-findall-ReportingGeneralNodeDatum-agg-where"/>
+					</otherwise>
+				</choose>
+				<if test="filter != null and filter.endDate != null">
+					,#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz
+				</if>
 			) AS datum
 	</select>
 

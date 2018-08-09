@@ -1236,6 +1236,64 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
 	}
 
+	@Test
+	public void findFilteredAggregateRunningTotalTiered() {
+		// this query only loads raw data for latest hour of query end date; the rest is loaded
+		// from hourly/daily/monthly aggregate tables
+		executeSqlScript(
+				"/net/solarnetwork/central/datum/dao/mybatis/test/insert-running-total-data-01.sql",
+				false);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(-100L);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setAggregate(Aggregation.RunningTotal);
+		criteria.setEndDate(new DateTime(2017, 4, 4, 3, 3, DateTimeZone.UTC));
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertThat("Results", results, notNullValue());
+		assertThat("Running total query results", results.getTotalResults(), equalTo(1L));
+		assertThat("Running total returned query results", results.getReturnedResultCount(), equalTo(1));
+		Map<String, ?> data = results.getResults().iterator().next().getSampleData();
+		assertThat("Aggregate foo", data, hasEntry("foo", (Object) 947));
+	}
+
+	@Test
+	public void findFilteredAggregateRunningTotalTieredMultipleNodes() {
+		// this query only loads raw data for latest hour of query end date; the rest is loaded
+		// from hourly/daily/monthly aggregate tables
+		executeSqlScript(
+				"/net/solarnetwork/central/datum/dao/mybatis/test/insert-running-total-data-01.sql",
+				false);
+		executeSqlScript(
+				"/net/solarnetwork/central/datum/dao/mybatis/test/insert-running-total-data-02.sql",
+				false);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeIds(new Long[] { -100L, -101L });
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setAggregate(Aggregation.RunningTotal);
+		criteria.setEndDate(new DateTime(2017, 4, 4, 3, 3, DateTimeZone.UTC));
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertThat("Results", results, notNullValue());
+		assertThat("Running total query results", results.getTotalResults(), equalTo(2L));
+		assertThat("Running total returned query results", results.getReturnedResultCount(), equalTo(2));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		Map<String, ?> data;
+
+		data = itr.next().getSampleData();
+		assertThat("Aggregate foo node -101", data, hasEntry("foo", (Object) 9470));
+
+		data = itr.next().getSampleData();
+		assertThat("Aggregate foo node -100", data, hasEntry("foo", (Object) 947));
+	}
+
 	@Test(expected = IllegalArgumentException.class)
 	public void findFilteredAggregateRunningTotalNoSourceId() {
 		// populate 1 hour of data
