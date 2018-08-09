@@ -1,5 +1,5 @@
 /** Aggregate helper function that always returns the first non-NULL item. */
-CREATE OR REPLACE FUNCTION solarcommon.first_sfunc (anyelement, anyelement)
+CREATE OR REPLACE FUNCTION solarcommon.first_sfunc(anyelement, anyelement)
 RETURNS anyelement LANGUAGE SQL IMMUTABLE STRICT AS $$
     SELECT $1;
 $$;
@@ -15,7 +15,7 @@ $$;
  * 		FROM solardatum.da_datum
  * 		GROUP BY node_id, source_id
  */
-CREATE AGGREGATE solarcommon.first (
+CREATE AGGREGATE solarcommon.first(
 	sfunc    = solarcommon.first_sfunc,
 	basetype = anyelement,
     stype    = anyelement
