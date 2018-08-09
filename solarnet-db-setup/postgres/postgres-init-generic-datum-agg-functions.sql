@@ -173,13 +173,13 @@ END;$BODY$
  *                          look for adjacent rows
  */
 CREATE OR REPLACE FUNCTION solaragg.calc_datum_time_slots(
-	IN node bigint,
-	IN sources text[],
-	IN start_ts timestamp with time zone,
-	IN span interval,
-	IN slotsecs integer DEFAULT 600,
-	IN tolerance interval DEFAULT interval '1 hour')
-  RETURNS TABLE(node_id bigint, ts_start timestamp with time zone, source_id text, jdata jsonb)
+	node bigint,
+	sources text[],
+	start_ts timestamp with time zone,
+	span interval,
+	slotsecs integer DEFAULT 600,
+	tolerance interval DEFAULT interval '1 hour')
+  RETURNS TABLE(node_id bigint, ts_start timestamp with time zone, source_id text, jdata jsonb, jmeta jsonb)
   LANGUAGE plv8 STABLE AS
 $BODY$
 'use strict';
@@ -240,7 +240,72 @@ if ( Array.isArray(aggResult) ) {
 
 cur.close();
 stmt.free();
+$BODY$;
 
+
+/**
+ * Aggregate lower-level aggregate data into a higher aggregate level.
+ *
+ * Use this function to aggregate hourly data into daily, daily into monthly, etc.
+ * For example if `span` is `1 day` and `kind` is `h` then the hourly aggregate data
+ * starting at `start_ts` to `start_ts + interval '1 day'` would be aggregated and
+ * returned from this function.
+ *
+ * @param node          node ID
+ * @param sources       array of source IDs
+ * @param start_ts      the start timestamp
+ * @param end_ts        the ending timestamp (exclusive) of data to aggregate over; generally the desired output aggregate level
+ * @param kind          the type of aggregate data to aggregate, generally one level lower than the desired span
+ */
+CREATE OR REPLACE FUNCTION solaragg.calc_agg_datum_agg(
+	node bigint,
+	sources text[],
+	start_ts timestamp with time zone,
+	end_ts timestamp with time zone,
+	kind char)
+  RETURNS TABLE(node_id bigint, ts_start timestamp with time zone, source_id text, jdata jsonb, jmeta jsonb)
+  LANGUAGE plv8 STABLE AS
+$BODY$
+'use strict';
+
+var aggregator = require('datum/aggregator').default;
+
+var stmt,
+	cur,
+	rec,
+	helper,
+	aggResult,
+	i;
+
+helper = aggregator({
+	startTs : start_ts.getTime(),
+	endTs : end_ts.getTime(),
+});
+
+stmt = plv8.prepare(
+	'SELECT d.ts_start, d.source_id, solaragg.jdata_from_datum(d.*) AS jdata, d.jmeta FROM solaragg.agg_datum_'
+	+(kind === 'h' ? 'hourly' : kind === 'd' ? 'daily' : 'monthly')
+	+' d WHERE node_id = $1 AND source_id = ANY($2) AND ts_start >= $3 AND ts_start < $4',
+	['bigint', 'text[]', 'timestamp with time zone', 'timestamp with time zone']);
+
+cur = stmt.cursor([node, sources, start_ts, end_ts]);
+
+while ( rec = cur.fetch() ) {
+	if ( !rec.jdata ) {
+		continue;
+	}
+	helper.addDatumRecord(rec);
+}
+aggResult = helper.finish();
+if ( Array.isArray(aggResult) ) {
+	for ( i = 0; i < aggResult.length; i += 1 ) {
+		aggResult[i].node_id = node;
+		plv8.return_next(aggResult[i]);
+	}
+}
+
+cur.close();
+stmt.free();
 $BODY$;
 
 
@@ -588,13 +653,15 @@ DECLARE
 	stale record;
 	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum
 			WHERE agg_kind = kind
-			ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
+			-- Too slow to order; not strictly fair but process much faster
+			-- ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
 			LIMIT 1
 			FOR UPDATE SKIP LOCKED;
 	agg_span interval;
 	agg_json jsonb := NULL;
+	agg_jmeta jsonb := NULL;
 	node_tz text := 'UTC';
-	result integer := 0;
+	proc_count integer := 0;
 BEGIN
 	CASE kind
 		WHEN 'h' THEN
@@ -620,9 +687,23 @@ BEGIN
 			node_tz := 'UTC';
 		END IF;
 
-		SELECT jdata FROM solaragg.calc_datum_time_slots(stale.node_id, ARRAY[stale.source_id::text],
-			stale.ts_start, agg_span, 0, interval '1 hour')
-		INTO agg_json;
+		CASE kind
+			WHEN 'h' THEN
+				SELECT jdata, jmeta
+				FROM solaragg.calc_datum_time_slots(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, agg_span, 0, interval '1 hour')
+				INTO agg_json, agg_jmeta;
+
+			WHEN 'd' THEN
+				SELECT jdata, jmeta
+				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale.ts_start + agg_span, 'h')
+				INTO agg_json, agg_jmeta;
+
+			ELSE
+				SELECT jdata, jmeta
+				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale.ts_start + agg_span, 'd')
+				INTO agg_json, agg_jmeta;
+		END CASE;
+
 		IF agg_json IS NULL THEN
 			-- delete agg, using date range in case time zone of node has changed
 			CASE kind
@@ -650,7 +731,7 @@ BEGIN
 				WHEN 'h' THEN
 					INSERT INTO solaragg.agg_datum_hourly (
 						ts_start, local_date, node_id, source_id,
-						jdata_i, jdata_a, jdata_s, jdata_t)
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
 					VALUES (
 						stale.ts_start,
 						stale.ts_start at time zone node_tz,
@@ -659,13 +740,15 @@ BEGIN
 						agg_json->'i',
 						agg_json->'a',
 						agg_json->'s',
-						solarcommon.json_array_to_text_array(agg_json->'t')
+						solarcommon.json_array_to_text_array(agg_json->'t'),
+						agg_jmeta
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
-						jdata_t = EXCLUDED.jdata_t;
+						jdata_t = EXCLUDED.jdata_t,
+						jmeta = EXCLUDED.jmeta;
 
 					-- in case node tz changed, remove stale record(s)
 					DELETE FROM solaragg.agg_datum_hourly
@@ -677,7 +760,7 @@ BEGIN
 				WHEN 'd' THEN
 					INSERT INTO solaragg.agg_datum_daily (
 						ts_start, local_date, node_id, source_id,
-						jdata_i, jdata_a, jdata_s, jdata_t)
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
 					VALUES (
 						stale.ts_start,
 						CAST(stale.ts_start at time zone node_tz AS DATE),
@@ -686,13 +769,15 @@ BEGIN
 						agg_json->'i',
 						agg_json->'a',
 						agg_json->'s',
-						solarcommon.json_array_to_text_array(agg_json->'t')
+						solarcommon.json_array_to_text_array(agg_json->'t'),
+						agg_jmeta
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
-						jdata_t = EXCLUDED.jdata_t;
+						jdata_t = EXCLUDED.jdata_t,
+						jmeta = EXCLUDED.jmeta;
 
 					-- in case node tz changed, remove stale record(s)
 					DELETE FROM solaragg.agg_datum_daily
@@ -704,7 +789,7 @@ BEGIN
 				ELSE
 					INSERT INTO solaragg.agg_datum_monthly (
 						ts_start, local_date, node_id, source_id,
-						jdata_i, jdata_a, jdata_s, jdata_t)
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
 					VALUES (
 						stale.ts_start,
 						CAST(stale.ts_start at time zone node_tz AS DATE),
@@ -713,13 +798,15 @@ BEGIN
 						agg_json->'i',
 						agg_json->'a',
 						agg_json->'s',
-						solarcommon.json_array_to_text_array(agg_json->'t')
+						solarcommon.json_array_to_text_array(agg_json->'t'),
+						agg_jmeta
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
-						jdata_t = EXCLUDED.jdata_t;
+						jdata_t = EXCLUDED.jdata_t,
+						jmeta = EXCLUDED.jmeta;
 
 					-- in case node tz changed, remove stale record(s)
 					DELETE FROM solaragg.agg_datum_monthly
@@ -731,7 +818,7 @@ BEGIN
 			END CASE;
 		END IF;
 		DELETE FROM solaragg.agg_stale_datum WHERE CURRENT OF curs;
-		result := 1;
+		proc_count := 1;
 
 		-- now make sure we recalculate the next aggregate level by submitting a stale record for the next level
 		-- and also update daily audit stats
@@ -740,6 +827,7 @@ BEGIN
 				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
 				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'd')
 				ON CONFLICT DO NOTHING;
+
 			WHEN 'd' THEN
 				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
 				VALUES (date_trunc('month', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'm')
@@ -767,7 +855,7 @@ BEGIN
 		END CASE;
 	END IF;
 	CLOSE curs;
-	RETURN result;
+	RETURN proc_count;
 END;
 $BODY$;
 
@@ -802,7 +890,7 @@ END;$BODY$
  *
  * When `m` values are processed, the `solaragg.populate_audit_acc_datum_daily()` function
  * will be invoked as well to keep the accumulating audit data updated.
- * 
+ *
  * @param kind the rollup kind to process
  * @returns the number of rows processed (always 1 or 0)
  */
@@ -838,7 +926,8 @@ BEGIN
 					AND ts < stale.ts_start + interval '1 day'
 				GROUP BY node_id, source_id
 				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
-				SET datum_count = EXCLUDED.datum_count;
+				SET datum_count = EXCLUDED.datum_count,
+					processed_count = CURRENT_TIMESTAMP;
 
 			WHEN 'h' THEN
 				-- hour data counts
@@ -855,7 +944,8 @@ BEGIN
 					AND ts_start < stale.ts_start + interval '1 day'
 				GROUP BY node_id, source_id
 				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
-				SET datum_hourly_count = EXCLUDED.datum_hourly_count;
+				SET datum_hourly_count = EXCLUDED.datum_hourly_count,
+					processed_hourly_count = CURRENT_TIMESTAMP;
 
 			WHEN 'd' THEN
 				-- day data counts, including sum of hourly audit prop_count, datum_q_count
@@ -884,7 +974,8 @@ BEGIN
 				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 				SET datum_daily_pres = EXCLUDED.datum_daily_pres,
 					prop_count = EXCLUDED.prop_count,
-					datum_q_count = EXCLUDED.datum_q_count;
+					datum_q_count = EXCLUDED.datum_q_count,
+					processed_io_count = CURRENT_TIMESTAMP;
 
 			ELSE
 				-- month data counts
@@ -921,7 +1012,8 @@ BEGIN
 					datum_daily_count = EXCLUDED.datum_daily_count,
 					datum_monthly_pres = EXCLUDED.datum_monthly_pres,
 					prop_count = EXCLUDED.prop_count,
-					datum_q_count = EXCLUDED.datum_q_count;
+					datum_q_count = EXCLUDED.datum_q_count,
+					processed = CURRENT_TIMESTAMP;
 		END CASE;
 
 		CASE kind
@@ -1095,13 +1187,10 @@ STABLE AS
 $BODY$
 	-- get the node TZ, falling back to UTC if not available so we always have a time zone even if node not found
 	WITH nodetz AS (
-		SELECT n.node_id, COALESCE(l.time_zone, 'UTC') AS tz
-		FROM solarnet.sn_node n
+		SELECT nids.node_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM (SELECT node AS node_id) nids
+		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = nids.node_id
 		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-		WHERE n.node_id = node
-		UNION ALL
-		SELECT node::bigint AS node_id, 'UTC'::character varying AS tz
-		WHERE NOT EXISTS (SELECT node_id FROM solarnet.sn_node WHERE node_id = node)
 	)
 	SELECT d.ts_start, d.local_date, d.node_id, d.source_id, solaragg.jdata_from_datum(d),
 		CAST(extract(epoch from (local_date + interval '1 month') - local_date) / 3600 AS integer) AS weight
@@ -1218,13 +1307,10 @@ STABLE
 ROWS 10 AS
 $BODY$
 	WITH nodetz AS (
-		SELECT n.node_id, COALESCE(l.time_zone, 'UTC') AS tz
-		FROM solarnet.sn_node n
+		SELECT nids.node_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM (SELECT node AS node_id) nids
+		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = nids.node_id
 		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-		WHERE n.node_id = node
-		UNION ALL
-		SELECT node::bigint AS node_id, 'UTC'::character varying AS tz
-		WHERE NOT EXISTS (SELECT node_id FROM solarnet.sn_node WHERE node_id = node)
 	)
 	SELECT end_ts, end_ts AT TIME ZONE nodetz.tz AS local_date, node, r.source_id, r.jdata
 	FROM solaragg.calc_running_total(
@@ -1236,6 +1322,44 @@ $BODY$
 	INNER JOIN nodetz ON nodetz.node_id = node;
 $BODY$;
 
+
+/**
+ * Calculate a running average of datum up to a specific end date. There will
+ * be at most one result row per node ID + source ID in the returned data.
+ *
+ * @param nodes   The IDs of the nodes to query for.
+ * @param sources An array of source IDs to query for.
+ * @param end_ts  An optional date to limit the results to. If not provided the current date is used.
+ */
+CREATE OR REPLACE FUNCTION solaragg.calc_running_datum_total(
+	nodes bigint[],
+	sources text[],
+	end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
+RETURNS TABLE(
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
+	node_id bigint,
+	source_id text,
+	jdata jsonb)
+LANGUAGE sql STABLE ROWS 10 AS
+$BODY$
+	WITH nodetz AS (
+		SELECT nids.node_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM (SELECT unnest(nodes) AS node_id) AS nids
+		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = nids.node_id
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	)
+	SELECT end_ts, end_ts AT TIME ZONE nodetz.tz AS local_date, r.node_id, r.source_id, r.jdata
+	FROM nodetz
+	CROSS JOIN LATERAL (
+		SELECT nodetz.node_id, t.*
+		FROM solaragg.calc_running_total(
+			nodetz.node_id,
+			sources,
+			end_ts,
+			FALSE) t
+	) AS r
+$BODY$;
 
 /**
  * Find the minimum/maximum available dates for audit datum.

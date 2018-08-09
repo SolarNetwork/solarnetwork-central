@@ -63,8 +63,13 @@ function datumAggregate(sourceId, ts, endTs, configuration) {
 
 	var aobj = {};
 	var iobj = {};
+
+	/** Object with count values per instantaneous property, e.g. {temp:60}  */
 	var iobjCounts = {};
+
+	/** Object with min/max values per instantaneous property, e.g. {temp:{min:4,max:12}} */
 	var iobjStats = {};
+
 	var sobj = {};
 	var tarr = [];
 	var prevRecord;
@@ -212,10 +217,12 @@ function datumAggregate(sourceId, ts, endTs, configuration) {
 		var aggRecord = {
 			ts_start: new Date(ts),
 			source_id: sourceId,
-			jdata: {}
+			jdata: {},
+			jmeta: null
 		},
 		    prop,
 		    aggInst,
+		    aggInstMeta,
 		    aggInstStat;
 
 		// handle any fractional portion of the next record
@@ -235,24 +242,35 @@ function datumAggregate(sourceId, ts, endTs, configuration) {
 		// calculate our instantaneous average values
 		aggInst = (0, _calculateAverages2.default)(iobj, iobjCounts);
 
+		// store metadata about instantaneous calculations so further aggregation can be performed later
+		aggInstMeta = {};
+
 		// inject min/max statistic values for instantaneous average values
 		for (prop in aggInst) {
 			if (aggRecord.jdata.i === undefined) {
 				aggRecord.jdata.i = aggInst;
 			}
+			aggInstMeta[prop] = { count: iobjCounts[prop] || 0 };
 			if (iobjStats[prop] !== undefined) {
 				aggInstStat = (0, _fixPrecision2.default)(iobjStats[prop].min);
 				if (aggInstStat !== undefined && aggInstStat !== aggInst[prop]) {
 					aggInst[prop + '_min'] = aggInstStat;
+					aggInstMeta[prop].min = aggInstStat;
 				}
 				aggInstStat = (0, _fixPrecision2.default)(iobjStats[prop].max);
 				if (aggInstStat !== undefined && aggInstStat !== aggInst[prop]) {
 					aggInst[prop + '_max'] = aggInstStat;
+					aggInstMeta[prop].max = aggInstStat;
 				}
 			}
 		}
 
 		// use for:in as easy test for an enumerable prop
+		for (prop in aggInstMeta) {
+			aggRecord.jmeta = { i: aggInstMeta };
+			break;
+		}
+
 		for (prop in aobj) {
 			// add accumulating results via merge() to pick fixPrecision() values
 			aggRecord.jdata.a = (0, _mergeObjects2.default)({}, aobj);
@@ -260,7 +278,6 @@ function datumAggregate(sourceId, ts, endTs, configuration) {
 		}
 
 		for (prop in sobj) {
-			// add accumulating results via merge() to pick fixPrecision() values
 			aggRecord.jdata.s = sobj;
 			break;
 		}

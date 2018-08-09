@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.test;
@@ -32,17 +30,8 @@ import org.springframework.dao.DataAccessException;
 /**
  * Test case to validate unit test can connect to transactional datastore.
  * 
- * <p>
- * The configurable properties of this class are:
- * </p>
- * 
- * <dl class="class-properties">
- * <dt></dt>
- * <dd></dd>
- * </dl>
- * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 public class BootstrapTransactionalTest extends AbstractCentralTransactionalTest {
 

@@ -25,9 +25,11 @@ package net.solarnetwork.central.query.support;
 import java.util.List;
 import java.util.Set;
 import org.joda.time.DateTime;
+import org.joda.time.Period;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
@@ -47,7 +49,7 @@ import net.solarnetwork.central.security.SecurityActor;
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @SuppressWarnings("deprecation")
 public class DelegatingQueryBiz implements QueryBiz {
@@ -132,6 +134,12 @@ public class DelegatingQueryBiz implements QueryBiz {
 	@Override
 	public Set<NodeSourcePK> findAvailableSources(SecurityActor actor, DatumFilter filter) {
 		return delegate.findAvailableSources(actor, filter);
+	}
+
+	@Override
+	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(
+			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
+		return delegate.findFilteredReading(filter, readingType, tolerance);
 	}
 
 }

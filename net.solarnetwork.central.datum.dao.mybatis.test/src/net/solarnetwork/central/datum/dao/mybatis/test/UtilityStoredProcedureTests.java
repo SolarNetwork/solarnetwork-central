@@ -35,8 +35,6 @@ import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumDao;
@@ -65,8 +63,6 @@ public class UtilityStoredProcedureTests extends AbstractMyBatisDaoTestSupport {
 	private static final DateTime DATE_MAX = DATE_MIN.plusMinutes((DATA_SET_COUNT - 1) * 10);
 
 	private MyBatisGeneralNodeDatumDao dao;
-
-	private static final Logger log = LoggerFactory.getLogger(UtilityStoredProcedureTests.class);
 
 	@ClassRule
 	public static SystemPropertyMatchTestRule PROFILE_RULE = new SystemPropertyMatchTestRule("profile");

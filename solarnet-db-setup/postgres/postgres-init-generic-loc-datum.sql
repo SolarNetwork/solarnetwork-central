@@ -1,7 +1,7 @@
 CREATE TABLE solardatum.da_loc_datum (
   ts timestamp with time zone NOT NULL,
   loc_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   posted timestamp with time zone NOT NULL,
   jdata_i jsonb,
   jdata_a jsonb,
@@ -23,7 +23,7 @@ CREATE VIEW solardatum.da_loc_datum_data AS
 
 CREATE TABLE solardatum.da_loc_meta (
   loc_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   created timestamp with time zone NOT NULL,
   updated timestamp with time zone NOT NULL,
   jdata jsonb NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE solardatum.da_loc_meta (
 CREATE TABLE solaragg.agg_stale_loc_datum (
   ts_start timestamp with time zone NOT NULL,
   loc_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   agg_kind char(1) NOT NULL,
   created timestamp NOT NULL DEFAULT now(),
   CONSTRAINT agg_stale_loc_datum_pkey PRIMARY KEY (agg_kind, ts_start, loc_id, source_id)
@@ -42,7 +42,7 @@ CREATE TABLE solaragg.agg_stale_loc_datum (
 CREATE TABLE solaragg.agg_loc_messages (
   created timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
   loc_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   ts timestamp with time zone NOT NULL,
   msg text NOT NULL
 );
@@ -53,18 +53,19 @@ CREATE TABLE solaragg.agg_loc_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
   local_date timestamp without time zone NOT NULL,
   loc_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   jdata_i jsonb,
   jdata_a jsonb,
   jdata_s jsonb,
   jdata_t text[],
+  jmeta jsonb,
   CONSTRAINT agg_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
 CREATE TABLE solaragg.aud_loc_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
   loc_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   prop_count integer NOT NULL,
   CONSTRAINT aud_loc_datum_hourly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
@@ -73,11 +74,12 @@ CREATE TABLE solaragg.agg_loc_datum_daily (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
   loc_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   jdata_i jsonb,
   jdata_a jsonb,
   jdata_s jsonb,
   jdata_t text[],
+  jmeta jsonb,
   CONSTRAINT agg_loc_datum_daily_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 
@@ -85,11 +87,12 @@ CREATE TABLE solaragg.agg_loc_datum_monthly (
   ts_start timestamp with time zone NOT NULL,
   local_date date NOT NULL,
   loc_id bigint NOT NULL,
-  source_id text NOT NULL,
+  source_id character varying(64) NOT NULL,
   jdata_i jsonb,
   jdata_a jsonb,
   jdata_s jsonb,
   jdata_t text[],
+  jmeta jsonb,
   CONSTRAINT agg_loc_datum_monthly_pkey PRIMARY KEY (loc_id, ts_start, source_id)
 );
 

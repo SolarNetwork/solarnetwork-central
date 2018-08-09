@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
 import org.junit.Before;
 import org.junit.Test;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -77,6 +78,21 @@ public class DatumFilterCommandTests {
 		assertThat(json, notNullValue());
 		assertThat(json, equalTo(
 				"{\"nodeIds\":[1],\"sourceIds\":[\"test\"],\"aggregation\":\"Day\",\"aggregationKey\":\"d\",\"mostRecent\":false,\"startDate\":1490097600000,\"endDate\":1490702400000,\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+	}
+
+	@Test
+	public void serializeJsonWithLocalDates() throws IOException {
+		DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setAggregate(Aggregation.Day);
+		cmd.setNodeId(1L);
+		cmd.setSourceId("test");
+		cmd.setLocalStartDate(new LocalDateTime(2017, 3, 21, 12, 0, 0));
+		cmd.setLocalEndDate(new LocalDateTime(2017, 3, 28, 12, 0, 0));
+
+		String json = objectMapper.writeValueAsString(cmd);
+		assertThat(json, notNullValue());
+		assertThat(json, equalTo(
+				"{\"nodeIds\":[1],\"sourceIds\":[\"test\"],\"aggregation\":\"Day\",\"aggregationKey\":\"d\",\"mostRecent\":false,\"localStartDate\":[2017,3,21,12,0,0,0],\"localEndDate\":[2017,3,28,12,0,0,0],\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
 	}
 
 	@Test

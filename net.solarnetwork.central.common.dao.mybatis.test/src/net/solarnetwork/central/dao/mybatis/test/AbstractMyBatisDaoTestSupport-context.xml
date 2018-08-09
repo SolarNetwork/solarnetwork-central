@@ -45,6 +45,8 @@
 
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherSource.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherLocation.xml</value>
+				
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/type/test/TypeHandlerTests.xml</value>
 			</list>
 		</property>
 	</bean>

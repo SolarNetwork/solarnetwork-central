@@ -25,6 +25,9 @@ export default function parseDatumCSV(filename) {
 		if ( record.jdata ) {
 			record.jdata = JSON.parse(record.jdata);
 		}
+		if ( record.jmeta ) {
+			record.jmeta = JSON.parse(record.jmeta);
+		}
 	}
 	return records;
 }

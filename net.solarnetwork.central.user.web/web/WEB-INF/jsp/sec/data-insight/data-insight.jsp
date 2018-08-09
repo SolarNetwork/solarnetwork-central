@@ -33,7 +33,11 @@
 			
 		<section id="data-insight-overview-datum">
 			<h2><fmt:message key='dataInsight.overall.datum.header'/></h2>
-			<p><fmt:message key='dataInsight.overall.datum.intro'/></p>
+			<p>
+				<fmt:message key='dataInsight.overall.datum.intro'>
+					<fmt:param><c:url value='/u/sec/expire'/></fmt:param>
+				</fmt:message>
+			</p>
 			<div class="row">
 				<div class="col-md-6">
 					<table class="datum-counts tally table">
@@ -64,7 +68,7 @@
 		<section id="data-insight-recent">
 			<h2><fmt:message key='dataInsight.counts.header'/></h2>
 			<p><fmt:message key='dataInsight.counts.intro'/></p>
-			<table class="datum-counts tally table">
+			<table class="datum-counts tally table" id="data-insight-recent-table">
 				<thead>
 					<tr>
 						<th><fmt:message key="dataInsight.counts.date.label"/></th>

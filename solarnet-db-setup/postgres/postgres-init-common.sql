@@ -262,3 +262,146 @@ $$
 		E'[*]{2}', '(?<=/|^).*(?=/|$)', 'g')
 		|| '$';
 $$;
+
+/** Aggregate helper function that always returns the first non-NULL item. */
+CREATE OR REPLACE FUNCTION solarcommon.first_sfunc(anyelement, anyelement)
+RETURNS anyelement LANGUAGE SQL IMMUTABLE STRICT AS $$
+    SELECT $1;
+$$;
+
+/**
+ * First aggregate value.
+ *
+ * This aggregate will return the first value encountered in the aggregate group. Given
+ * the order within the group is generally undefined, using an `ORDER BY` clause is usually
+ * needed. For example, to select the first timestamp for each datum by node and source:
+ *
+ * 		SELECT solarcommon.first(ts ORDER BY ts) AS ts_start
+ * 		FROM solardatum.da_datum
+ * 		GROUP BY node_id, source_id
+ */
+CREATE AGGREGATE solarcommon.first(
+	sfunc    = solarcommon.first_sfunc,
+	basetype = anyelement,
+    stype    = anyelement
+);
+
+/** JSONB object diff aggregate state transition function. */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_diff_object_sfunc(agg_state jsonb, el jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var prop,
+		curr;
+	if ( !agg_state ) {
+		agg_state = {first:el, last:el};
+	} else if ( el ) {
+		curr = agg_state.last;
+		for ( prop in el ) {
+			curr[prop] = el[prop];
+		}
+	}
+	return agg_state;
+$$;
+
+/** JSONB object diff aggregate final calculation function. */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_diff_object_finalfunc(agg_state jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var prop,
+		val,
+		f = agg_state.first,
+		l = agg_state.last,
+		r = {};
+	for ( prop in l ) {
+		val = f[prop];
+		if ( val !== undefined ) {
+			r[prop +'_start'] = val;
+			r[prop +'_end'] = l[prop];
+			r[prop] = l[prop] - val;
+		}
+	}
+    return r;
+$$;
+
+/**
+ * Difference aggregate for JSON object values, resulting in a JSON object.
+ *
+ * This aggregate will subtract the _property values_ of the first JSON object in the aggregate group
+ * from the last object in the group, resulting in a JSON object. An `ORDER BY` clause is thus essential
+ * to ensure the first/last values are captured correctly. The first and last values for each property
+ * will be included in the output JSON object with `_start` and `_end` suffixes added to their names.
+ *
+ * For example, if aggregating objects like:
+ *
+ *     {"wattHours":234}
+ *     {"wattHours":346}
+ *
+ * the resulting object would be:
+ *
+ *    {"wattHours":112, "wattHours_start":234, "wattHours_end":346}
+ */
+CREATE AGGREGATE solarcommon.jsonb_diff_object(jsonb) (
+    sfunc = solarcommon.jsonb_diff_object_sfunc,
+    stype = jsonb,
+    finalfunc = solarcommon.jsonb_diff_object_finalfunc
+);
+
+/** JSONB object average aggregate state transition function. */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_weighted_proj_object_sfunc(agg_state jsonb, el jsonb, weight float8)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var prop;
+	if ( !agg_state ) {
+		agg_state = {weight:weight, first:el};
+	} else if ( el ) {
+		agg_state.last = el;
+	}
+	return agg_state;
+$$;
+
+/** JSONB object average aggregate final calculation function. */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_weighted_proj_object_finalfunc(agg_state jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var w = agg_state.weight,
+		f = agg_state.first,
+		l = agg_state.last,
+		prop,
+		firstVal,
+		res = {};
+	if ( !(f && l) ) {
+		return f;
+	}
+	for ( prop in l ) {
+		firstVal = f[prop];
+		if ( firstVal ) {
+			res[prop] = firstVal + ((l[prop] - firstVal) * w);
+		}
+	}
+	return res;
+$$;
+
+/**
+ * Weighted projection for JSON object values, resulting in a JSON object.
+ *
+ * This aggregate will project all _properties_ of a JSON object between the *first* and *last* values of each property,
+ * multiplied by a weight (e.g. a percentage from 0 to 1), resulting in a JSON object.
+ *
+ * For example, if aggregating objects like:
+ *
+ *     {"wattHours":234}
+ *     {"wattHours":345}
+ *
+ * with a call like `solarcommon.jsonb_weighted_proj_object(jdata_a, 0.25)`
+ *
+ * the resulting object would be:
+ *
+ *    {"wattHours":261.75}
+ *
+ * because the calculation is 345 + (345 - 234) * 0.25.
+ */
+CREATE AGGREGATE solarcommon.jsonb_weighted_proj_object(jsonb, float8) (
+    sfunc = solarcommon.jsonb_weighted_proj_object_sfunc,
+    stype = jsonb,
+    finalfunc = solarcommon.jsonb_weighted_proj_object_finalfunc
+);

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -48,7 +49,10 @@ import java.util.concurrent.TimeUnit;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
+import org.joda.time.Period;
 import org.joda.time.ReadableInterval;
+import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,7 +73,7 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  * Test cases for the {@link MyBatisGeneralNodeDatumDao} class.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 @SuppressWarnings("deprecation")
 public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSupport {
@@ -95,9 +99,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 	private GeneralNodeDatum getTestInstance(DateTime created, Long nodeId, String sourceId) {
 		GeneralNodeDatum datum = new GeneralNodeDatum();
 		datum.setCreated(created);
-		datum.setNodeId(TEST_NODE_ID);
+		datum.setNodeId(nodeId);
 		datum.setPosted(created);
-		datum.setSourceId(TEST_SOURCE_ID);
+		datum.setSourceId(sourceId);
 
 		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
 		datum.setSamples(samples);
@@ -696,6 +700,10 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		// immediately process reporting data as getting all sources scans daily table
 		processAggregateStaleData();
 
+		log.debug("Daily rows: {}", jdbcTemplate.queryForList("select * from solaragg.agg_datum_daily"));
+		log.debug("Monthly rows: {}",
+				jdbcTemplate.queryForList("select * from solaragg.agg_datum_monthly"));
+
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(TEST_NODE_ID);
 		filter.setSourceId(TEST_SOURCE_ID);
@@ -1073,8 +1081,8 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(TEST_NODE_ID);
 		criteria.setSourceId(TEST_SOURCE_ID);
-		criteria.setStartDate(lastDatum.getCreated().withTime(0, 0, 0, 0));
-		criteria.setEndDate(lastDatum.getCreated().plusDays(1));
+		criteria.setStartDate(lastDatum.getCreated().dayOfMonth().roundFloorCopy());
+		criteria.setEndDate(criteria.getStartDate().plusDays(1));
 		criteria.setAggregate(Aggregation.Day);
 
 		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
@@ -1226,6 +1234,64 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertNotNull("Aggregate sample data", data);
 		assertNotNull("Aggregate Wh", data.get("watt_hours"));
 		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
+	}
+
+	@Test
+	public void findFilteredAggregateRunningTotalTiered() {
+		// this query only loads raw data for latest hour of query end date; the rest is loaded
+		// from hourly/daily/monthly aggregate tables
+		executeSqlScript(
+				"/net/solarnetwork/central/datum/dao/mybatis/test/insert-running-total-data-01.sql",
+				false);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(-100L);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setAggregate(Aggregation.RunningTotal);
+		criteria.setEndDate(new DateTime(2017, 4, 4, 3, 3, DateTimeZone.UTC));
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertThat("Results", results, notNullValue());
+		assertThat("Running total query results", results.getTotalResults(), equalTo(1L));
+		assertThat("Running total returned query results", results.getReturnedResultCount(), equalTo(1));
+		Map<String, ?> data = results.getResults().iterator().next().getSampleData();
+		assertThat("Aggregate foo", data, hasEntry("foo", (Object) 947));
+	}
+
+	@Test
+	public void findFilteredAggregateRunningTotalTieredMultipleNodes() {
+		// this query only loads raw data for latest hour of query end date; the rest is loaded
+		// from hourly/daily/monthly aggregate tables
+		executeSqlScript(
+				"/net/solarnetwork/central/datum/dao/mybatis/test/insert-running-total-data-01.sql",
+				false);
+		executeSqlScript(
+				"/net/solarnetwork/central/datum/dao/mybatis/test/insert-running-total-data-02.sql",
+				false);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeIds(new Long[] { -100L, -101L });
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setAggregate(Aggregation.RunningTotal);
+		criteria.setEndDate(new DateTime(2017, 4, 4, 3, 3, DateTimeZone.UTC));
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertThat("Results", results, notNullValue());
+		assertThat("Running total query results", results.getTotalResults(), equalTo(2L));
+		assertThat("Running total returned query results", results.getReturnedResultCount(), equalTo(2));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		Map<String, ?> data;
+
+		data = itr.next().getSampleData();
+		assertThat("Aggregate foo node -101", data, hasEntry("foo", (Object) 9470));
+
+		data = itr.next().getSampleData();
+		assertThat("Aggregate foo node -100", data, hasEntry("foo", (Object) 947));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -2395,4 +2461,507 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				TEST_NODE_ID, TEST_SOURCE_ID, 800L, 192L, 8, 2);
 	}
 
+	@Test
+	public void findDatumAtLocalNoDifference() {
+		// given
+		DateTime ts = new DateTime(DateTimeZone.forID(TEST_TZ)).hourOfDay().roundFloorCopy();
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateAt(filter,
+				ts.toLocalDateTime(), Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		ReportingGeneralNodeDatumMatch m = results.getResults().iterator().next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts", m.getSampleData().get("watts"), equalTo((Object) 231));
+		assertThat("Watt hours", m.getSampleData().get("watt_hours"), equalTo((Object) 4123));
+	}
+
+	@Test
+	public void findDatumAtLocalExactDateStart() {
+		// given
+		DateTime ts = new DateTime(DateTimeZone.forID(TEST_TZ)).hourOfDay().roundFloorCopy();
+		GeneralNodeDatum d1 = getTestInstance(ts, TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putInstantaneousSampleValue("watts", 345);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateAt(filter,
+				ts.toLocalDateTime(), Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		ReportingGeneralNodeDatumMatch m = results.getResults().iterator().next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts", m.getSampleData().get("watts"), equalTo((Object) 231));
+		assertThat("Watt hours", m.getSampleData().get("watt_hours"), equalTo((Object) 4123));
+	}
+
+	@Test
+	public void findDatumAtLocalExactDateEnd() {
+		// given
+		DateTime ts = new DateTime(DateTimeZone.forID(TEST_TZ)).hourOfDay().roundFloorCopy();
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts, TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putInstantaneousSampleValue("watts", 345);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateAt(filter,
+				ts.toLocalDateTime(), Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		ReportingGeneralNodeDatumMatch m = results.getResults().iterator().next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts", m.getSampleData().get("watts"), equalTo((Object) 345));
+		assertThat("Watt hours", m.getSampleData().get("watt_hours"), equalTo((Object) 4445));
+	}
+
+	@Test
+	public void findDatumAtLocalNoDataInRange() {
+		// given
+		DateTime ts = new DateTime(DateTimeZone.forID(TEST_TZ)).hourOfDay().roundFloorCopy();
+		GeneralNodeDatum d1 = getTestInstance(ts.minusDays(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusDays(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateAt(filter,
+				ts.toLocalDateTime(), Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(0));
+	}
+
+	@Test
+	public void findDatumAtLocalOnlyDataBefore() {
+		// given
+		DateTime ts = new DateTime(DateTimeZone.forID(TEST_TZ)).hourOfDay().roundFloorCopy();
+		GeneralNodeDatum d1 = getTestInstance(ts.minusSeconds(90), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.minusSeconds(60), TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateAt(filter,
+				ts.toLocalDateTime(), Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(0));
+	}
+
+	@Test
+	public void findDatumAtLocalOnlyDataAfter() {
+		// given
+		DateTime ts = new DateTime(DateTimeZone.forID(TEST_TZ)).hourOfDay().roundFloorCopy();
+		GeneralNodeDatum d1 = getTestInstance(ts.plusSeconds(60), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusSeconds(90), TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateAt(filter,
+				ts.toLocalDateTime(), Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(0));
+	}
+
+	@Test
+	public void findDatumAtLocalEvenDifference() {
+		// given
+		DateTime ts = new DateTime(DateTimeZone.forID(TEST_TZ)).hourOfDay().roundFloorCopy();
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putInstantaneousSampleValue("watts", 345);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateAt(filter,
+				ts.toLocalDateTime(), Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		ReportingGeneralNodeDatumMatch m = results.getResults().iterator().next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts avg", m.getSampleData().get("watts"), equalTo((Object) 288));
+		assertThat("Watt hours projection", m.getSampleData().get("watt_hours"), equalTo((Object) 4284));
+	}
+
+	@Test
+	public void findDatumAtLocalSixtyFortyDifference() {
+		// given
+		DateTime ts = new DateTime(DateTimeZone.forID(TEST_TZ)).hourOfDay().roundFloorCopy();
+		GeneralNodeDatum d1 = getTestInstance(ts.minusSeconds(40), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusSeconds(20), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putInstantaneousSampleValue("watts", 345);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateAt(filter,
+				ts.toLocalDateTime(), Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		ReportingGeneralNodeDatumMatch m = results.getResults().iterator().next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts avg", m.getSampleData().get("watts"), equalTo((Object) 288));
+		assertThat("Watt hours projection", (BigDecimal) m.getSampleData().get("watt_hours"),
+				closeTo(new BigDecimal("4337.666"), new BigDecimal("0.001")));
+	}
+
+	@Test
+	public void findDatumAtLocalMultipleNodesDifferentTimeZones() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusSeconds(40), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusSeconds(20), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putInstantaneousSampleValue("watts", 345);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		final DateTimeZone tz2 = DateTimeZone.forID("America/Los_Angeles");
+		final Long nodeId2 = -19889L;
+		setupTestLocation(-9889L, tz2.getID());
+		setupTestNode(nodeId2, -9889L);
+
+		DateTime ts2 = new DateTime(2018, 8, 1, 0, 0, 0, tz2);
+		GeneralNodeDatum d3 = getTestInstance(ts2.minusSeconds(20), nodeId2, TEST_SOURCE_ID);
+		GeneralNodeDatum d4 = getTestInstance(ts2.plusSeconds(40), nodeId2, TEST_SOURCE_ID);
+		d4.getSamples().putInstantaneousSampleValue("watts", 482);
+		d4.getSamples().putAccumulatingSampleValue("watt_hours", 8344);
+		dao.store(d3);
+		dao.store(d4);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID, nodeId2 });
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateAt(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(2));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Date", m.getId().getCreated().withZone(ts2.getZone()), equalTo(ts2));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(nodeId2));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts avg", m.getSampleData().get("watts"),
+				equalTo((Object) new BigDecimal("356.5")));
+		assertThat("Watt hours projection", m.getSampleData().get("watt_hours"), equalTo((Object) 5530));
+
+		m = itr.next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts avg", m.getSampleData().get("watts"), equalTo((Object) 288));
+		assertThat("Watt hours projection", (BigDecimal) m.getSampleData().get("watt_hours"),
+				closeTo(new BigDecimal("4337.666"), new BigDecimal("0.001")));
+	}
+
+	@Test
+	public void findDatumBetweenLocal() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putInstantaneousSampleValue("watts", 345);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum d3 = getTestInstance(ts2.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d3.getSamples().putInstantaneousSampleValue("watts", 462);
+		d3.getSamples().putAccumulatingSampleValue("watt_hours", 8044);
+		GeneralNodeDatum d4 = getTestInstance(ts2.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d4.getSamples().putInstantaneousSampleValue("watts", 482);
+		d4.getSamples().putAccumulatingSampleValue("watt_hours", 8344);
+		dao.store(d3);
+		dao.store(d4);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateBetween(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts avg", m.getSampleData().get("watts"), equalTo((Object) 380));
+		assertThat("Watt hours projection", m.getSampleData().get("watt_hours"), equalTo((Object) 3910));
+	}
+
+	@Test
+	public void findDatumBetweenLocalNoData() {
+		// given
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateBetween(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(0));
+	}
+
+	@Test
+	public void findDatumBetweenOnlyStart() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putInstantaneousSampleValue("watts", 345);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateBetween(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts avg", m.getSampleData().get("watts"), equalTo((Object) 288));
+		assertThat("Watt hours projection", m.getSampleData().get("watt_hours"), equalTo((Object) 0));
+	}
+
+	@Test
+	public void findDatumBetweenOnlyEnd() {
+		// given
+		DateTime ts = new DateTime(2018, 9, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putInstantaneousSampleValue("watts", 345);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.calculateBetween(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.hours(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Date", m.getId().getCreated().withZone(ts.getZone()), equalTo(ts));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watts avg", m.getSampleData().get("watts"), equalTo((Object) 288));
+		assertThat("Watt hours projection", m.getSampleData().get("watt_hours"), equalTo((Object) 0));
+	}
+
+	@Test
+	public void findDatumAccumulationNoData() {
+		// given
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.months(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(0));
+	}
+
+	@Test
+	public void findDatumAccumulation() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d1.getSamples().putAccumulatingSampleValue("watt_hours", 4002);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum d3 = getTestInstance(ts2.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d3.getSamples().putAccumulatingSampleValue("watt_hours", 8044);
+		GeneralNodeDatum d4 = getTestInstance(ts2.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d4.getSamples().putAccumulatingSampleValue("watt_hours", 8344);
+		dao.store(d3);
+		dao.store(d4);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.months(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Date d1", m.getId().getCreated().withZone(ts.getZone()), equalTo(d1.getCreated()));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watt hours accumulation between d1 - d3", m.getSampleData().get("watt_hours"),
+				equalTo((Object) 4042));
+		assertThat("Watt hours start d1", m.getSampleData().get("watt_hours_start"),
+				equalTo((Object) 4002));
+		assertThat("Watt hours end d3", m.getSampleData().get("watt_hours_end"), equalTo((Object) 8044));
+		assertThat("End date", m.getSampleData().get("endDate"), equalTo((Object) ISODateTimeFormat
+				.dateTime().print(d3.getCreated().withZone(DateTimeZone.UTC)).replace('T', ' ')));
+		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
+	}
+
+	@Test
+	public void findDatumAccumulationOnlyStart() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d1.getSamples().putAccumulatingSampleValue("watt_hours", 4002);
+		dao.store(d1);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.months(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Date d1", m.getId().getCreated().withZone(ts.getZone()), equalTo(d1.getCreated()));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watt hours accumulation zero", m.getSampleData().get("watt_hours"),
+				equalTo((Object) 0));
+		assertThat("Watt hours start d1", m.getSampleData().get("watt_hours_start"),
+				equalTo((Object) 4002));
+		assertThat("Watt hours end d1", m.getSampleData().get("watt_hours_end"), equalTo((Object) 4002));
+		assertThat("End date", m.getSampleData().get("endDate"), equalTo((Object) ISODateTimeFormat
+				.dateTime().print(d1.getCreated().withZone(DateTimeZone.UTC)).replace('T', ' ')));
+		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
+	}
+
+	@Test
+	public void findDatumAccumulationOnlyEnd() {
+		// given
+		DateTime ts = new DateTime(2018, 9, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d1.getSamples().putAccumulatingSampleValue("watt_hours", 4002);
+		dao.store(d1);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0),
+				Period.months(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Date d1", m.getId().getCreated().withZone(ts.getZone()), equalTo(d1.getCreated()));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watt hours accumulation zero", m.getSampleData().get("watt_hours"),
+				equalTo((Object) 0));
+		assertThat("Watt hours start d1", m.getSampleData().get("watt_hours_start"),
+				equalTo((Object) 4002));
+		assertThat("Watt hours end d1", m.getSampleData().get("watt_hours_end"), equalTo((Object) 4002));
+		assertThat("End date", m.getSampleData().get("endDate"), equalTo((Object) ISODateTimeFormat
+				.dateTime().print(d1.getCreated().withZone(DateTimeZone.UTC)).replace('T', ' ')));
+		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
+	}
 }

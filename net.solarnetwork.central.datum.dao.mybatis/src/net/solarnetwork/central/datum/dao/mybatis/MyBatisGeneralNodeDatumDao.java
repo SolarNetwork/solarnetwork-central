@@ -33,6 +33,8 @@ import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.joda.time.LocalDateTime;
+import org.joda.time.Period;
 import org.joda.time.ReadableInterval;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +61,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -92,6 +94,13 @@ public class MyBatisGeneralNodeDatumDao
 
 	/** The query parameter for a general {@link Filter} object value. */
 	public static final String PARAM_FILTER = "filter";
+
+	/**
+	 * The query parameter for {@link Period} object value.
+	 * 
+	 * @since 1.9
+	 */
+	public static final String PARAM_TOLERANCE = "tolerance";
 
 	/**
 	 * The query parameter for a {@link CombiningConfig} data structure.
@@ -167,6 +176,30 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String QUERY_FOR_ACCUMULATIVE_AUDIT_DATUM_RECORD_COUNTS = "findall-AccumulativeAuditNodeDatum-AuditDatumRecordCounts";
 
+	/**
+	 * The default query name for
+	 * {@link #calculateAt(GeneralNodeDatumFilter, DateTime, Period)}.
+	 * 
+	 * @since 1.9
+	 */
+	public static final String QUERY_FOR_DATUM_RECORDS_AT = "find-general-reporting-at-local";
+
+	/**
+	 * The default query name for
+	 * {@link #calculateBetween(GeneralNodeDatumFilter, LocalDateTime, LocalDateTime, Period)}.
+	 * 
+	 * @since 1.9
+	 */
+	public static final String QUERY_FOR_DATUM_RECORDS_BETWEEN = "find-general-reporting-between-local";
+
+	/**
+	 * The default query name for
+	 * {@link #findAccumulation(GeneralNodeDatumFilter, LocalDateTime, LocalDateTime)}.
+	 * 
+	 * @since 1.9
+	 */
+	public static final String QUERY_FOR_DATUM_ACCUMULATION = "find-general-reporting-diff-within-local";
+
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
 	private String queryForMostRecent;
@@ -176,6 +209,9 @@ public class MyBatisGeneralNodeDatumDao
 	private String queryForAuditDatumStoredCount;
 	private String queryForAuditDatumRecordCounts;
 	private String queryForAccumulativeAuditDatumRecordCounts;
+	private String queryForDatumAt;
+	private String queryForDatumBetween;
+	private String queryForDatumAccumulation;
 
 	/**
 	 * Default constructor.
@@ -191,6 +227,9 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForAuditDatumStoredCount = QUERY_FOR_AUDIT_DATUM_STORED_COUNT;
 		this.queryForAuditDatumRecordCounts = QUERY_FOR_AUDIT_DATUM_RECORD_COUNTS;
 		this.queryForAccumulativeAuditDatumRecordCounts = QUERY_FOR_ACCUMULATIVE_AUDIT_DATUM_RECORD_COUNTS;
+		this.queryForDatumAt = QUERY_FOR_DATUM_RECORDS_AT;
+		this.queryForDatumBetween = QUERY_FOR_DATUM_RECORDS_BETWEEN;
+		this.queryForDatumAccumulation = QUERY_FOR_DATUM_ACCUMULATION;
 	}
 
 	/**
@@ -646,6 +685,64 @@ public class MyBatisGeneralNodeDatumDao
 		return results;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.9
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> calculateAt(GeneralNodeDatumFilter filter,
+			LocalDateTime date, Period tolerance) {
+		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
+		sqlProps.put(PARAM_FILTER, filter);
+		sqlProps.put(PARAM_DATE, date);
+		sqlProps.put(PARAM_TOLERANCE, tolerance);
+		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumAt, sqlProps, null, null);
+		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
+				rows.size());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.9
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> calculateBetween(GeneralNodeDatumFilter filter,
+			LocalDateTime from, LocalDateTime to, Period tolerance) {
+		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
+		sqlProps.put(PARAM_FILTER, filter);
+		sqlProps.put(PARAM_START_DATE, from);
+		sqlProps.put(PARAM_END_DATE, to);
+		sqlProps.put(PARAM_TOLERANCE, tolerance);
+		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumBetween, sqlProps, null,
+				null);
+		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
+				rows.size());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.9
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
+			LocalDateTime from, LocalDateTime to, Period tolerance) {
+		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
+		sqlProps.put(PARAM_FILTER, filter);
+		sqlProps.put(PARAM_START_DATE, from);
+		sqlProps.put(PARAM_END_DATE, to);
+		sqlProps.put(PARAM_TOLERANCE, tolerance);
+		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumAccumulation, sqlProps, null,
+				null);
+		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
+				rows.size());
+	}
+
 	public String getQueryForReportableInterval() {
 		return queryForReportableInterval;
 	}
@@ -742,6 +839,47 @@ public class MyBatisGeneralNodeDatumDao
 	public void setQueryForAccumulativeAuditDatumRecordCounts(
 			String queryForAccumulativeAuditDatumRecordCounts) {
 		this.queryForAccumulativeAuditDatumRecordCounts = queryForAccumulativeAuditDatumRecordCounts;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #calculateAt(GeneralNodeDatumFilter, DateTime, Period)} method.
+	 * 
+	 * @param queryForDatumAt
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_DATUM_RECORDS_AT}
+	 * @since 1.9
+	 */
+	public void setQueryForDatumAt(String queryForDatumAt) {
+		this.queryForDatumAt = queryForDatumAt;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #calculateBetween(GeneralNodeDatumFilter, LocalDateTime, LocalDateTime, Period)}
+	 * method.
+	 * 
+	 * @param queryForDatumBetween
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_DATUM_RECORDS_BETWEEN}
+	 * @since 1.9
+	 */
+	public void setQueryForDatumBetween(String queryForDatumBetween) {
+		this.queryForDatumBetween = queryForDatumBetween;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #findAccumulation(GeneralNodeDatumFilter, LocalDateTime, LocalDateTime)}
+	 * method.
+	 * 
+	 * @param queryForDatumAccumulation
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_DATUM_ACCUMULATION}
+	 * @since 1.9
+	 */
+	public void setQueryForDatumAccumulation(String queryForDatumAccumulation) {
+		this.queryForDatumAccumulation = queryForDatumAccumulation;
 	}
 
 }
