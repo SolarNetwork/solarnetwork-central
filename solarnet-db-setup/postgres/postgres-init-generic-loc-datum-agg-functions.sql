@@ -720,7 +720,7 @@ END;$BODY$
  * @param sources An array of source IDs to query for.
  * @param end_ts An optional date to limit the results to. If not provided the current date is used.
  */
-CREATE OR REPLACE FUNCTION solaragg.find_running_loc_datum(
+ CREATE OR REPLACE FUNCTION solaragg.find_running_loc_datum(
 	IN loc bigint,
 	IN sources text[],
 	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
@@ -735,12 +735,9 @@ LANGUAGE sql
 STABLE AS
 $BODY$
 	WITH loctz AS (
-		SELECT l.id as loc_id, COALESCE(l.time_zone, 'UTC') AS tz
-		FROM solarnet.sn_loc l
-		WHERE l.id = loc
-		UNION ALL
-		SELECT loc::bigint AS loc_id, 'UTC'::character varying AS tz
-		WHERE NOT EXISTS (SELECT id AS loc_id FROM solarnet.sn_loc WHERE id = loc)
+		SELECT lids.loc_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM (SELECT loc AS loc_id) lids
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = lids.loc_id
 	)
 	SELECT d.ts_start, d.local_date, d.loc_id, d.source_id, solaragg.jdata_from_datum(d), CAST(extract(epoch from (local_date + interval '1 month') - local_date) / 3600 AS integer) AS weight
 	FROM solaragg.agg_loc_datum_monthly d
@@ -798,12 +795,9 @@ STABLE
 ROWS 10 AS
 $BODY$
 	WITH loctz AS (
-		SELECT l.id as loc_id, COALESCE(l.time_zone, 'UTC') AS tz
-		FROM solarnet.sn_loc l
-		WHERE l.id = loc
-		UNION ALL
-		SELECT loc::bigint AS loc_id, 'UTC'::character varying AS tz
-		WHERE NOT EXISTS (SELECT id AS loc_id FROM solarnet.sn_loc WHERE id = loc)
+		SELECT lids.loc_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM (SELECT loc AS loc_id) lids
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = lids.loc_id
 	)
 	SELECT end_ts, end_ts AT TIME ZONE loctz.tz AS local_date, loc, r.source_id, r.jdata
 	FROM solaragg.calc_running_total(
@@ -813,4 +807,41 @@ $BODY$
 		TRUE
 	) AS r
 	INNER JOIN loctz ON loctz.loc_id = loc;
+$BODY$;
+
+/**
+ * Calculate a running average of location datum up to a specific end date. There will
+ * be at most one result row per source ID in the returned data.
+ *
+ * @param locs    The IDs of the locations to query for.
+ * @param sources An array of source IDs to query for.
+ * @param end_ts  An optional date to limit the results to. If not provided the current date is used.
+ */
+CREATE OR REPLACE FUNCTION solaragg.calc_running_loc_datum_total(
+	IN locs bigint[],
+	IN sources text[],
+	IN end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
+RETURNS TABLE(
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
+	loc_id bigint,
+	source_id text,
+	jdata jsonb)
+LANGUAGE sql STABLE ROWS 10 AS
+$BODY$
+	WITH loctz AS (
+		SELECT lids.loc_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM (SELECT unnest(locs) AS loc_id) AS lids
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = lids.loc_id
+	)
+	SELECT end_ts, end_ts AT TIME ZONE loctz.tz AS local_date, r.loc_id, r.source_id, r.jdata
+	FROM loctz
+	CROSS JOIN LATERAL (
+		SELECT loctz.loc_id, t.*
+		FROM solaragg.calc_running_total(
+			loctz.loc_id,
+			sources,
+			end_ts,
+			TRUE) t
+	) AS r
 $BODY$;

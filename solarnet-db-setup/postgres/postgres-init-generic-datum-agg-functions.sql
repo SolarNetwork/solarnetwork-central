@@ -1187,13 +1187,10 @@ STABLE AS
 $BODY$
 	-- get the node TZ, falling back to UTC if not available so we always have a time zone even if node not found
 	WITH nodetz AS (
-		SELECT n.node_id, COALESCE(l.time_zone, 'UTC') AS tz
-		FROM solarnet.sn_node n
+		SELECT nids.node_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM (SELECT node AS node_id) nids
+		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = nids.node_id
 		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-		WHERE n.node_id = node
-		UNION ALL
-		SELECT node::bigint AS node_id, 'UTC'::character varying AS tz
-		WHERE NOT EXISTS (SELECT node_id FROM solarnet.sn_node WHERE node_id = node)
 	)
 	SELECT d.ts_start, d.local_date, d.node_id, d.source_id, solaragg.jdata_from_datum(d),
 		CAST(extract(epoch from (local_date + interval '1 month') - local_date) / 3600 AS integer) AS weight
@@ -1310,13 +1307,10 @@ STABLE
 ROWS 10 AS
 $BODY$
 	WITH nodetz AS (
-		SELECT n.node_id, COALESCE(l.time_zone, 'UTC') AS tz
-		FROM solarnet.sn_node n
+		SELECT nids.node_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM (SELECT node AS node_id) nids
+		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = nids.node_id
 		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-		WHERE n.node_id = node
-		UNION ALL
-		SELECT node::bigint AS node_id, 'UTC'::character varying AS tz
-		WHERE NOT EXISTS (SELECT node_id FROM solarnet.sn_node WHERE node_id = node)
 	)
 	SELECT end_ts, end_ts AT TIME ZONE nodetz.tz AS local_date, node, r.source_id, r.jdata
 	FROM solaragg.calc_running_total(
@@ -1328,6 +1322,44 @@ $BODY$
 	INNER JOIN nodetz ON nodetz.node_id = node;
 $BODY$;
 
+
+/**
+ * Calculate a running average of datum up to a specific end date. There will
+ * be at most one result row per node ID + source ID in the returned data.
+ *
+ * @param nodes   The IDs of the nodes to query for.
+ * @param sources An array of source IDs to query for.
+ * @param end_ts  An optional date to limit the results to. If not provided the current date is used.
+ */
+CREATE OR REPLACE FUNCTION solaragg.calc_running_datum_total(
+	nodes bigint[],
+	sources text[],
+	end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
+RETURNS TABLE(
+	ts_start timestamp with time zone,
+	local_date timestamp without time zone,
+	node_id bigint,
+	source_id text,
+	jdata jsonb)
+LANGUAGE sql STABLE ROWS 10 AS
+$BODY$
+	WITH nodetz AS (
+		SELECT nids.node_id, COALESCE(l.time_zone, 'UTC') AS tz
+		FROM (SELECT unnest(nodes) AS node_id) AS nids
+		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = nids.node_id
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	)
+	SELECT end_ts, end_ts AT TIME ZONE nodetz.tz AS local_date, r.node_id, r.source_id, r.jdata
+	FROM nodetz
+	CROSS JOIN LATERAL (
+		SELECT nodetz.node_id, t.*
+		FROM solaragg.calc_running_total(
+			nodetz.node_id,
+			sources,
+			end_ts,
+			FALSE) t
+	) AS r
+$BODY$;
 
 /**
  * Find the minimum/maximum available dates for audit datum.
