@@ -19,7 +19,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security.web" rev="[1.10.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.web" rev="[1.15.2,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.28.0,2.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[2.7.0,3.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[2.8.0,3.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.26.0,3.0.0)"/>
 		<dependency org="commons-codec" name="commons-codec" rev="1.7"/>
 		<dependency org="javax.servlet" name="com.springsource.javax.servlet" rev="2.5.0" />

@@ -51,6 +51,7 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.Filter;
@@ -390,7 +391,7 @@ public class QuerySecurityAspectTests {
 	}
 
 	@Test
-	public void availableSourceIdsFilter() throws Throwable {
+	public void reportableSourceIdsFilter() throws Throwable {
 		final Long nodeId = -1L;
 		final Long nodeId2 = -2L;
 		final Long userId = -100L;
@@ -420,6 +421,44 @@ public class QuerySecurityAspectTests {
 		Set<String> result = (Set<String>) service.reportableSourcesFilterAccessCheck(pjp, criteria);
 		Assert.assertEquals("Filtered source IDs",
 				new LinkedHashSet<String>(Arrays.asList("/A/B/watts", "/A/C/watts")), result);
+	}
+
+	@Test
+	public void availableSourceIdsFilter() throws Throwable {
+		final Long nodeId = -1L;
+		final Long nodeId2 = -2L;
+		final Long userId = -100L;
+		final String[] policySourceIds = new String[] { "/A/**/watts" };
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
+				.withNodeIds(new HashSet<Long>(Arrays.asList(nodeId, nodeId2))).build();
+		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
+		final Set<NodeSourcePK> availableSourceIds = new LinkedHashSet<NodeSourcePK>(Arrays.asList(
+				new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"),
+				new NodeSourcePK(nodeId, "/B/B/watts"), new NodeSourcePK(nodeId2, "/A/B/watts")));
+		setAuthenticatedReadNodeDataToken(userId, policy);
+		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
+		userNode.setRequiresAuthorization(true);
+		UserNode userNode2 = new UserNode(new User(userId, null), new SolarNode(nodeId2, null));
+		userNode2.setRequiresAuthorization(true);
+
+		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		EasyMock.expect(userNodeDao.get(nodeId2)).andReturn(userNode2);
+		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
+
+		EasyMock.replay(pjp);
+		EasyMock.replay(userNodeDao);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeIds(new Long[] { nodeId, nodeId2 });
+		@SuppressWarnings("unchecked")
+		Set<NodeSourcePK> result = (Set<NodeSourcePK>) service.availableSourcesFilterAccessCheck(pjp,
+				criteria);
+		Assert.assertEquals("Filtered source IDs",
+				new LinkedHashSet<NodeSourcePK>(Arrays.asList(new NodeSourcePK(nodeId, "/A/B/watts"),
+						new NodeSourcePK(nodeId, "/A/C/watts"),
+						new NodeSourcePK(nodeId2, "/A/B/watts"))),
+				result);
 	}
 
 	@Test

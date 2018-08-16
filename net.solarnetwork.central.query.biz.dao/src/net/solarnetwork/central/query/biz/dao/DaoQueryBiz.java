@@ -137,6 +137,13 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 
 	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter) {
+		return generalNodeDatumDao.findAvailableSources(filter);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<NodeSourcePK> findAvailableSources(SecurityActor actor, DatumFilter filter) {
 		Set<NodeSourcePK> sources = null;
 		if ( actor instanceof SecurityNode ) {

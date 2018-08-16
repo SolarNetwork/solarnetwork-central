@@ -192,7 +192,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
-			"!metadataFilter" })
+			"!metadataFilter", "!withNodeIds" })
 	public Response<Set<String>> getAvailableSources(GeneralReportableIntervalCommand cmd) {
 		DatumFilterCommand f = new DatumFilterCommand();
 		f.setNodeIds(cmd.getNodeIds());
@@ -204,6 +204,66 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 		data = filterSources(data, this.pathMatcher, cmd.getSourceId());
 
 		return new Response<Set<String>>(data);
+	}
+
+	/**
+	 * Get all available node+source ID pairs.
+	 * 
+	 * <p>
+	 * A <code>sourceId</code> path pattern may also be provided, to restrict
+	 * the resulting source ID set to. Also {@code startDate} and
+	 * {@code endDate} values may be provided to restrict the query further.
+	 * </p>
+	 * 
+	 * <p>
+	 * Example URL:
+	 * <code>/api/v1/sec/range/sources?nodeIds=1,2&withNodeIds=true</code>
+	 * </p>
+	 *
+	 * <p>
+	 * Example JSON response:
+	 * </p>
+	 * 
+	 * <pre>
+	 * {
+	 *   "success": true,
+	 *   "data": [
+	 *     { nodeId: 1, sourceId: "A" },
+	 *     { nodeId: 2, "sourceId: "B" }
+	 *   ]
+	 * }
+	 * </pre>
+	 * 
+	 * <p>
+	 * If {@code withNodeIds} is specifed as {@literal false} then the result
+	 * will be simply a set of string source ID values.
+	 * </p>
+	 * 
+	 * @param cmd
+	 * @return the found source IDs
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
+			"!metadataFilter", "withNodeIds" })
+	public Response<Set<?>> findAvailableSources(GeneralReportableIntervalCommand cmd) {
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setNodeIds(cmd.getNodeIds());
+		f.setStartDate(cmd.getStartDate());
+		f.setEndDate(cmd.getEndDate());
+		Set<NodeSourcePK> data = queryBiz.findAvailableSources(f);
+
+		// support filtering based on sourceId path pattern
+		data = filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
+
+		if ( !cmd.isWithNodeIds() ) {
+			Set<String> sourceIds = new LinkedHashSet<String>(data.size());
+			for ( NodeSourcePK pk : data ) {
+				sourceIds.add(pk.getSourceId());
+			}
+			return new Response<Set<?>>(sourceIds);
+		}
+
+		return new Response<Set<?>>(data);
 	}
 
 	/**
@@ -253,7 +313,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 		// support filtering based on sourceId path pattern
 		data = filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
 
-		if ( cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
+		if ( !cmd.isWithNodeIds() && cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
 			// at most 1 node ID, so simplify results to just source ID values
 			Set<String> sourceIds = new LinkedHashSet<String>(data.size());
 			for ( NodeSourcePK pk : data ) {

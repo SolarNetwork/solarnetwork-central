@@ -24,6 +24,7 @@ package net.solarnetwork.central.query.aop;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,7 @@ import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.NodeDatumFilter;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
@@ -54,7 +56,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * Security enforcing AOP aspect for {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 @Aspect
 public class QuerySecurityAspect extends AuthorizationSupport {
@@ -88,6 +90,10 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(filter,..)")
 	public void nodesReportableSources(GeneralNodeDatumFilter filter) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.findAvailableSources(..)) && args(filter)")
+	public void nodesAvailableSources(GeneralNodeDatumFilter filter) {
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getMostRecentWeatherConditions(..)) && args(nodeId,..)")
@@ -175,6 +181,35 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Enforce node ID and source ID policy restrictions when requesting the
+	 * available sources of nodes.
+	 * 
+	 * First the node IDs are verified. Then, for all returned source ID values,
+	 * if the active policy has no source ID restrictions return all values,
+	 * otherwise remove any value not included in the policy.
+	 * 
+	 * @param pjp
+	 *        The join point.
+	 * @param filter
+	 *        The filter.
+	 * @return The set of String source IDs.
+	 * @throws Throwable
+	 * @since 1.6
+	 */
+	@Around("nodesAvailableSources(filter)")
+	public Object availableSourcesFilterAccessCheck(ProceedingJoinPoint pjp,
+			GeneralNodeDatumFilter filter) throws Throwable {
+		for ( Long nodeId : filter.getNodeIds() ) {
+			requireNodeReadAccess(nodeId);
+		}
+
+		// verify source IDs in result
+		@SuppressWarnings("unchecked")
+		Set<NodeSourcePK> result = (Set<NodeSourcePK>) pjp.proceed();
+		return verifyNodeSourcePkSet(result);
+	}
+
+	/**
+	 * Enforce node ID and source ID policy restrictions when requesting the
 	 * available sources of a node.
 	 * 
 	 * First the node ID is verified. Then, for all returned source ID values,
@@ -219,6 +254,53 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			String[] resultSourceIds = enforcer
 					.verifySourceIds(result.toArray(new String[result.size()]));
 			result = new LinkedHashSet<String>(Arrays.asList(resultSourceIds));
+		} catch ( AuthorizationException e ) {
+			// ignore, and just  map to empty set
+			result = Collections.emptySet();
+		}
+		return result;
+	}
+
+	private Set<NodeSourcePK> verifyNodeSourcePkSet(Set<NodeSourcePK> result) {
+		if ( result == null || result.isEmpty() ) {
+			return result;
+		}
+		SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy == null ) {
+			return result;
+		}
+		Set<String> allowedSourceIds = policy.getSourceIds();
+		if ( allowedSourceIds == null || allowedSourceIds.isEmpty() ) {
+			return result;
+		}
+		Authentication authentication = SecurityUtils.getCurrentAuthentication();
+		Object principal = (authentication != null ? authentication.getPrincipal() : null);
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, null,
+				getPathMatcher());
+
+		Map<String, Set<NodeSourcePK>> allSourceIds = new LinkedHashMap<String, Set<NodeSourcePK>>(
+				result.size());
+		for ( NodeSourcePK pk : result ) {
+			Set<NodeSourcePK> pkSet = allSourceIds.get(pk.getSourceId());
+			if ( pkSet == null ) {
+				pkSet = new LinkedHashSet<NodeSourcePK>(8);
+				allSourceIds.put(pk.getSourceId(), pkSet);
+			}
+			pkSet.add(pk);
+		}
+
+		try {
+			String[] resultSourceIds = enforcer
+					.verifySourceIds(allSourceIds.keySet().toArray(new String[allSourceIds.size()]));
+			if ( resultSourceIds.length != allowedSourceIds.size() ) {
+				result = new LinkedHashSet<NodeSourcePK>(resultSourceIds.length);
+				for ( String sourceId : resultSourceIds ) {
+					Set<NodeSourcePK> pks = allSourceIds.get(sourceId);
+					if ( pks != null ) {
+						result.addAll(pks);
+					}
+				}
+			}
 		} catch ( AuthorizationException e ) {
 			// ignore, and just  map to empty set
 			result = Collections.emptySet();

@@ -28,7 +28,7 @@ import org.joda.time.DateTime;
  * Command for general reportable interval queries.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class GeneralReportableIntervalCommand {
 
@@ -38,6 +38,7 @@ public class GeneralReportableIntervalCommand {
 	private DateTime startDate;
 	private DateTime endDate;
 	private String metadataFilter;
+	private boolean withNodeIds;
 
 	/**
 	 * Set a single node ID.
@@ -193,6 +194,31 @@ public class GeneralReportableIntervalCommand {
 	 */
 	public void setMetadataFilter(String metadataFilter) {
 		this.metadataFilter = metadataFilter;
+	}
+
+	/**
+	 * Get the "with node IDs" flag.
+	 * 
+	 * @return {@literal true} to always include node IDs in the response
+	 * @since 1.4
+	 */
+	public boolean isWithNodeIds() {
+		return withNodeIds;
+	}
+
+	/**
+	 * Set the "with node IDs" flag.
+	 * 
+	 * <p>
+	 * When {@literal true} then node IDs are desired in the response.
+	 * </p>
+	 * 
+	 * @param withNodeIds
+	 *        {@literal true} to always include node IDs in the response
+	 * @since 1.4
+	 */
+	public void setWithNodeIds(boolean withNodeIds) {
+		this.withNodeIds = withNodeIds;
 	}
 
 }
