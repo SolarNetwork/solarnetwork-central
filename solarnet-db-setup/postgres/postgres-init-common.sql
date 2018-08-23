@@ -309,8 +309,8 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	'use strict';
 	var prop,
 		val,
-		f = agg_state.first,
-		l = agg_state.last,
+		f = (agg_state ? agg_state.first : null),
+		l = (agg_state ? agg_state.last : null),
 		r;
 	if ( l ) {
 		r = {};
