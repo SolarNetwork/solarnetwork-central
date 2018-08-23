@@ -292,7 +292,7 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	'use strict';
 	var prop,
 		curr;
-	if ( !agg_state ) {
+	if ( !agg_state && el ) {
 		agg_state = {first:el, last:el};
 	} else if ( el ) {
 		curr = agg_state.last;
@@ -311,14 +311,19 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 		val,
 		f = agg_state.first,
 		l = agg_state.last,
+		r;
+	if ( l ) {
 		r = {};
-	for ( prop in l ) {
-		val = f[prop];
-		if ( val !== undefined ) {
-			r[prop +'_start'] = val;
-			r[prop +'_end'] = l[prop];
-			r[prop] = l[prop] - val;
+		for ( prop in l ) {
+			val = f[prop];
+			if ( val !== undefined ) {
+				r[prop +'_start'] = val;
+				r[prop +'_end'] = l[prop];
+				r[prop] = l[prop] - val;
+			}
 		}
+	} else {
+		r = null;
 	}
     return r;
 $$;
