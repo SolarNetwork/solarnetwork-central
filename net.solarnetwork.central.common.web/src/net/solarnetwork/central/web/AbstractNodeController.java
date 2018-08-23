@@ -27,7 +27,21 @@ package net.solarnetwork.central.web;
 import java.util.Locale;
 import java.util.TimeZone;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.util.StringUtils;
+import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.servlet.ModelAndView;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
@@ -36,25 +50,12 @@ import net.solarnetwork.util.CloningPropertyEditorRegistrar;
 import net.solarnetwork.util.JodaDateFormatEditor;
 import net.solarnetwork.web.domain.Response;
 import net.solarnetwork.web.support.WebUtils;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
-import org.springframework.util.StringUtils;
-import org.springframework.validation.BindException;
-import org.springframework.validation.Errors;
-import org.springframework.validation.ObjectError;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.ModelAndView;
 
 /**
  * Abstract base class to support node-related controllers.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class AbstractNodeController {
 
@@ -119,8 +120,8 @@ public abstract class AbstractNodeController {
 	 *        an optional node (required if {@code dateFormat} provided)
 	 * @return the registrar
 	 */
-	protected CloningPropertyEditorRegistrar setupViewPropertyEditorRegistrar(
-			HttpServletRequest request, String dateFormat, SolarNode node) {
+	protected CloningPropertyEditorRegistrar setupViewPropertyEditorRegistrar(HttpServletRequest request,
+			String dateFormat, SolarNode node) {
 		return setupViewPropertyEditorRegistrar(request, dateFormat,
 				(node == null ? null : node.getTimeZone()));
 	}
@@ -146,8 +147,8 @@ public abstract class AbstractNodeController {
 	 *        an optional node (required if {@code dateFormat} provided)
 	 * @return the registrar
 	 */
-	protected CloningPropertyEditorRegistrar setupViewPropertyEditorRegistrar(
-			HttpServletRequest request, String dateFormat, TimeZone timeZone) {
+	protected CloningPropertyEditorRegistrar setupViewPropertyEditorRegistrar(HttpServletRequest request,
+			String dateFormat, TimeZone timeZone) {
 		// set up a PropertyEditorRegistrar that can be used for serializing data into view-friendly values
 		CloningPropertyEditorRegistrar registrar = new CloningPropertyEditorRegistrar();
 		if ( dateFormat != null && timeZone != null ) {
@@ -170,8 +171,8 @@ public abstract class AbstractNodeController {
 	 *        the binder to add the editor to
 	 */
 	protected void initBinderDateFormatEditor(WebDataBinder binder) {
-		binder.registerCustomEditor(DateTime.class, new JodaDateFormatEditor(this.requestDateFormats,
-				null));
+		binder.registerCustomEditor(DateTime.class,
+				new JodaDateFormatEditor(this.requestDateFormats, null));
 	}
 
 	/**
@@ -179,17 +180,14 @@ public abstract class AbstractNodeController {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 */
 	@ExceptionHandler(AuthorizationException.class)
 	@ResponseBody
-	public Response<?> handleAuthorizationException(AuthorizationException e,
-			HttpServletResponse response) {
+	@ResponseStatus(code = HttpStatus.FORBIDDEN)
+	public Response<?> handleAuthorizationException(AuthorizationException e) {
 		log.debug("AuthorizationException in {} controller: {}", getClass().getSimpleName(),
 				e.getMessage());
-		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 		return new Response<Object>(Boolean.FALSE, null, e.getReason().toString(), null);
 	}
 
@@ -198,13 +196,12 @@ public abstract class AbstractNodeController {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 */
 	@ExceptionHandler(RuntimeException.class)
 	@ResponseBody
-	public Response<?> handleRuntimeException(RuntimeException e, HttpServletResponse response) {
+	@ResponseStatus
+	public Response<?> handleRuntimeException(RuntimeException e) {
 		log.error("RuntimeException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
 	}
@@ -214,15 +211,13 @@ public abstract class AbstractNodeController {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 */
 	@ExceptionHandler(BindException.class)
 	@ResponseBody
-	public Response<?> handleBindException(BindException e, HttpServletResponse response, Locale locale) {
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Input validation error")
+	public Response<?> handleBindException(BindException e, Locale locale) {
 		log.debug("BindException in {} controller", getClass().getSimpleName(), e);
-		response.setStatus(422);
 		String msg = generateErrorsMessage(e, locale, messageSource);
 		return new Response<Object>(Boolean.FALSE, null, msg, null);
 	}
@@ -232,24 +227,21 @@ public abstract class AbstractNodeController {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 */
 	@ExceptionHandler(ValidationException.class)
 	@ResponseBody
-	public Response<?> handleValidationException(ValidationException e, HttpServletResponse response,
-			Locale locale) {
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Input validation error")
+	public Response<?> handleValidationException(ValidationException e, Locale locale) {
 		log.debug("ValidationException in {} controller", getClass().getSimpleName(), e);
-		response.setStatus(422);
 		String msg = generateErrorsMessage(e.getErrors(), locale,
 				e.getMessageSource() != null ? e.getMessageSource() : messageSource);
 		return new Response<Object>(Boolean.FALSE, null, msg, null);
 	}
 
 	private String generateErrorsMessage(Errors e, Locale locale, MessageSource msgSrc) {
-		String msg = (msgSrc == null ? "Validation error" : msgSrc.getMessage("error.validation", null,
-				"Validation error", locale));
+		String msg = (msgSrc == null ? "Validation error"
+				: msgSrc.getMessage("error.validation", null, "Validation error", locale));
 		if ( msgSrc != null && e.hasErrors() ) {
 			StringBuilder buf = new StringBuilder();
 			for ( ObjectError error : e.getAllErrors() ) {
