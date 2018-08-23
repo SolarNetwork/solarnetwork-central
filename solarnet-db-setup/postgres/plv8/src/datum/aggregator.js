@@ -12,7 +12,7 @@ import mergeObjects from 'util/mergeObjects'
  * for each datum row. When all rows have been processed, call the
  * <code>finish()</code> method to complete the aggregate processing and return
  * all the aggregate result objects.
- * 
+ *
  * Aggregation of other aggregate data will be automatically performed if
  * the records passed to `addDatumRecord` contain a `ts_start` property.
  *
@@ -21,6 +21,12 @@ import mergeObjects from 'util/mergeObjects'
  *                                           aggregate result (e.g. time span).
  * @param {Number} configuration.endTs       The timestamp (exclusive) of the end of
  *                                           this aggregate result.
+ * @param {Number} configuration.toleranceMs The number of milliseconds tolerance before/after
+ *                                           time slot to allow calculating accumulating values
+ *                                           from. Defaults to 3600000.
+ * @param {Object} configuration.hourFill    An object whose keys represent instantaneous datum
+ *                                           properties that should used to derive accumulating
+ *                                           values named for the associated property value.
  */
 export default function aggregator(configuration) {
 	var self = {
@@ -59,7 +65,7 @@ export default function aggregator(configuration) {
 		var recToAdd = record;
 
 		if ( currResult === undefined ) {
-			currResult = (record.ts_start 
+			currResult = (record.ts_start
 					? aggAggregate(sourceId, startTs)
 					: datumAggregate(sourceId, startTs, endTs, configuration));
 
@@ -73,7 +79,7 @@ export default function aggregator(configuration) {
 		// when adding records within the time span, force the time slot to our start date so they all aggregate into one;
 		// otherwise set the time slot to the record date itself
 		recToAdd = mergeObjects({
-			ts_start: (recTs > startTs && recTs < endTs ? startDate 
+			ts_start: (recTs > startTs && recTs < endTs ? startDate
 				: record.ts_start ? record.ts_start : record.ts)}, record, undefined, true);
 
 		currResult.addDatumRecord(recToAdd);
