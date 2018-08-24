@@ -291,13 +291,19 @@ CREATE OR REPLACE FUNCTION solarcommon.jsonb_diff_object_sfunc(agg_state jsonb, 
 RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 	'use strict';
 	var prop,
+		f,
 		curr;
 	if ( !agg_state && el ) {
 		agg_state = {first:el, last:el};
 	} else if ( el ) {
+		f = agg_state.first;
 		curr = agg_state.last;
 		for ( prop in el ) {
 			curr[prop] = el[prop];
+			if ( f[prop] === undefined ) {
+				// property discovered mid-way while aggregating; add to "first" now
+				f[prop] = el[prop];
+			}
 		}
 	}
 	return agg_state;
