@@ -722,34 +722,49 @@ RETURNS TABLE(
   node_id bigint,
   source_id character varying(64),
   jdata_a jsonb
-) LANGUAGE plpgsql STABLE AS $$
-DECLARE
-	nas record;
-	r record;
-BEGIN
-	-- this manually looping function can generally execute much faster over a larger array of node IDs/source IDs
-	-- because looping over each node/source combo allows solardatum.calculate_datum_diff_local() to optimize
-	-- away most rows/hypertables
-	FOR nas IN
-		SELECT nlt.node_id, s.source_id, nlt.time_zone
+) LANGUAGE sql STABLE AS $$
+	WITH tz AS (
+		SELECT nlt.time_zone,
+			ts_min AT TIME ZONE nlt.time_zone AS sdate,
+			ts_max AT TIME ZONE nlt.time_zone AS edate,
+			array_agg(DISTINCT nlt.node_id) AS nodes,
+			array_agg(DISTINCT s.source_id) AS sources
 		FROM solarnet.node_local_time nlt
 		CROSS JOIN (
 			SELECT unnest(sources) AS source_id
 		) s
 		WHERE nlt.node_id = ANY(nodes)
-		ORDER BY nlt.node_id, s.source_id
-	LOOP
-		time_zone = nas.time_zone;
-		SELECT d.ts_start, d.ts_end, d.node_id, d.source_id, d.jdata_a
-		FROM solardatum.calculate_datum_diff_local(nas.node_id, nas.source_id,
-			ts_min AT TIME ZONE nas.time_zone,
-			ts_max AT TIME ZONE nas.time_zone,
-			tolerance) d
-		INTO ts_start, ts_end, node_id, source_id, jdata_a;
-		IF FOUND THEN
-			RETURN NEXT;
-		END IF;
-	END LOOP;
-	RETURN;
-END
+		GROUP BY nlt.time_zone
+	), d1 AS (
+		SELECT DISTINCT ON (d.node_id, d.source_id) tz.time_zone, d.*
+		FROM tz
+		INNER JOIN solardatum.da_datum d ON d.node_id = ANY(tz.nodes) AND d.source_id = ANY(tz.sources)
+		WHERE d.node_id = ANY(tz.nodes)
+			AND d.source_id = ANY(tz.sources)
+			AND d.ts <= tz.sdate
+			AND d.ts > tz.sdate - tolerance
+		ORDER BY d.node_id, d.source_id, d.ts DESC
+	), d2 AS (
+		SELECT DISTINCT ON (d.node_id, d.source_id) tz.time_zone, d.*
+		FROM tz
+		INNER JOIN solardatum.da_datum d ON d.node_id = ANY(tz.nodes) AND d.source_id = ANY(tz.sources)
+		WHERE d.node_id = ANY(tz.nodes)
+			AND d.source_id = ANY(tz.sources)
+			AND d.ts <= tz.edate
+			AND d.ts > tz.edate - tolerance
+		ORDER BY d.node_id, d.source_id, d.ts DESC
+	), d AS (
+		SELECT * FROM d1
+		UNION
+		SELECT * FROM d2
+	)
+	SELECT min(d.ts) AS ts_start,
+		max(d.ts) AS ts_end,
+		min(d.time_zone) AS time_zone,
+		d.node_id,
+		d.source_id,
+		solarcommon.jsonb_diff_object(d.jdata_a ORDER BY d.ts) AS jdata_a
+	FROM d
+	GROUP BY d.node_id, d.source_id
+	ORDER BY d.node_id, d.source_id
 $$;

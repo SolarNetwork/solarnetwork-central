@@ -34,12 +34,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import com.fasterxml.jackson.core.JsonParseException;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -58,7 +60,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public abstract class WebServiceControllerSupport {
 
@@ -79,17 +81,14 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 */
 	@ExceptionHandler(AuthorizationException.class)
 	@ResponseBody
-	public Response<?> handleAuthorizationException(AuthorizationException e,
-			HttpServletResponse response) {
+	@ResponseStatus(code = HttpStatus.FORBIDDEN)
+	public Response<?> handleAuthorizationException(AuthorizationException e) {
 		log.debug("AuthorizationException in {} controller: {}", getClass().getSimpleName(),
 				e.getMessage());
-		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 		return new Response<Object>(Boolean.FALSE, null, e.getReason().toString(), null);
 	}
 
@@ -98,17 +97,14 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 * @since 1.2
 	 */
 	@ExceptionHandler(net.solarnetwork.central.security.SecurityException.class)
 	@ResponseBody
-	public Response<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e,
-			HttpServletResponse response) {
+	@ResponseStatus(code = HttpStatus.FORBIDDEN)
+	public Response<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e) {
 		log.debug("SecurityException in {} controller: {}", getClass().getSimpleName(), e.getMessage());
-		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
 
@@ -117,13 +113,12 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 * @since 1.4
 	 */
 	@ExceptionHandler(TypeMismatchException.class)
 	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Illegal argument")
 	public Response<?> handleTypeMismatchException(TypeMismatchException e,
 			HttpServletResponse response) {
 		log.error("TypeMismatchException in {} controller", getClass().getSimpleName(), e);
@@ -135,15 +130,13 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 * @since 1.3
 	 */
 	@ExceptionHandler(IllegalArgumentException.class)
 	@ResponseBody
-	public Response<?> handleIllegalArgumentException(IllegalArgumentException e,
-			HttpServletResponse response) {
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Illegal argument")
+	public Response<?> handleIllegalArgumentException(IllegalArgumentException e) {
 		log.error("IllegalArgumentException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
 	}
@@ -153,14 +146,13 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 * @since 1.6
 	 */
 	@ExceptionHandler(JsonParseException.class)
 	@ResponseBody
-	public Response<?> handleJsonParseException(JsonParseException e, HttpServletResponse response) {
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Malformed JSON")
+	public Response<?> handleJsonParseException(JsonParseException e) {
 		log.error("JsonParseException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getMessage(), null);
 	}
@@ -171,18 +163,16 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 * @since 1.6
 	 */
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	@ResponseBody
-	public Response<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e,
-			HttpServletResponse response) {
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Malformed JSON")
+	public Response<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
 		Throwable t = e.getMostSpecificCause();
 		if ( t instanceof JsonParseException ) {
-			return handleJsonParseException((JsonParseException) t, response);
+			return handleJsonParseException((JsonParseException) t);
 		}
 		log.error("HttpMessageNotReadableException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getMessage(), null);
@@ -193,15 +183,14 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 * @since 1.8
 	 */
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	@ResponseBody
+	@ResponseStatus(reason = "Data integrity violation")
 	public Response<?> handleDataIntegrityViolationException(DataIntegrityViolationException e,
-			HttpServletResponse response, Locale locale) {
+			Locale locale) {
 		log.warn("DataIntegrityViolationException in {} controller", getClass().getSimpleName(), e);
 		String msg;
 		String msgKey;
@@ -228,20 +217,19 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 */
 	@ExceptionHandler(RuntimeException.class)
 	@ResponseBody
-	public Response<?> handleRuntimeException(RuntimeException e, HttpServletResponse response) {
+	@ResponseStatus
+	public Response<?> handleRuntimeException(RuntimeException e) {
 		// NOTE: in Spring 4.3 the root exception will be unwrapped; support Spring 4.2 here
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
 		}
 		if ( cause instanceof IllegalArgumentException ) {
-			return handleIllegalArgumentException((IllegalArgumentException) cause, response);
+			return handleIllegalArgumentException((IllegalArgumentException) cause);
 		}
 		log.error("RuntimeException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
@@ -252,16 +240,13 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 */
 	@ExceptionHandler(BindException.class)
 	@ResponseBody
-	public Response<?> handleBindException(BindException e, HttpServletResponse response,
-			Locale locale) {
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Input validation error")
+	public Response<?> handleBindException(BindException e, Locale locale) {
 		log.debug("BindException in {} controller", getClass().getSimpleName(), e);
-		response.setStatus(422);
 		String msg = generateErrorsMessage(e, locale, messageSource);
 		return new Response<Object>(Boolean.FALSE, null, msg, null);
 	}
@@ -293,10 +278,9 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(ValidationException.class)
 	@ResponseBody
-	public Response<?> handleValidationException(ValidationException e, HttpServletResponse response,
-			Locale locale) {
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Input validation error")
+	public Response<?> handleValidationException(ValidationException e, Locale locale) {
 		log.debug("ValidationException in {} controller", getClass().getSimpleName(), e);
-		response.setStatus(422);
 		String msg = generateErrorsMessage(e.getErrors(), locale,
 				e.getMessageSource() != null ? e.getMessageSource() : messageSource);
 		return new Response<Object>(Boolean.FALSE, null, msg, null);

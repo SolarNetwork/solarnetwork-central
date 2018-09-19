@@ -55,7 +55,44 @@
 			AND datum.source_id = #{sourceId}
 	</select>
 
-	<select id="find-general-distinct-sources" parameterType="net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter" resultType="string" statementType="CALLABLE">
+	<select id="find-general-distinct-sources" parameterType="net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter" resultType="string">
+		SELECT DISTINCT source_id
+		FROM 
+		<choose>
+			<when test="startDate != null and endDate != null">
+				solaragg.find_available_sources(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+					, #{startDate,jdbcType=TIMESTAMP}
+					, #{endDate,jdbcType=TIMESTAMP}
+				)
+			</when>
+			<when test="startDate != null">
+				solaragg.find_available_sources_since(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+					, #{startDate,jdbcType=TIMESTAMP}
+				)
+			</when>
+			<when test="endDate != null">
+				solaragg.find_available_sources_before(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+					, #{endDate,jdbcType=TIMESTAMP}
+				)
+			</when>
+			<otherwise>
+				solaragg.find_available_sources(
+					#{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+				)
+			</otherwise>
+		</choose>
+		ORDER BY source_id
+	</select>
+	
+	<resultMap id="NodeSourcePKResult" type="NodeSourcePK">
+		<id property="nodeId" column="node_id"/>
+		<id property="sourceId" column="source_id"/>
+	</resultMap>	
+	
+	<select id="find-general-distinct-node-sources" parameterType="net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter" resultMap="NodeSourcePKResult" statementType="CALLABLE">
 		<choose>
 			<when test="startDate != null and endDate != null">
 				{call solaragg.find_available_sources(

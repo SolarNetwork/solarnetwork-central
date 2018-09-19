@@ -81,7 +81,7 @@
 				AND meta.loc_id = ANY(#{filter.locationIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
 			</if>
 			<if test="fts != null">
-				l.address IS NULL
+				AND l.address IS NULL
 				AND l.latitude IS NULL
 				AND l.longitude IS NULL
 				AND l.elevation IS NULL

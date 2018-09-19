@@ -19,6 +19,12 @@ import datumAggregate from 'datum/datumAggregate';
  *                                           this aggregate result (e.g. next time slot).
  * @param {Number} configuration.slotSecs    The number of seconds per slot to allocate.
  *                                           Defaults to 600.
+ * @param {Number} configuration.toleranceMs The number of milliseconds tolerance before/after
+ *                                           time slot to allow calculating accumulating values
+ *                                           from. Defaults to 3600000.
+ * @param {Object} configuration.hourFill    An object whose keys represent instantaneous datum
+ *                                           properties that should used to derive accumulating
+ *                                           values named for the associated property value.
  */
 export default function slotAggregator(configuration) {
 	var self = {

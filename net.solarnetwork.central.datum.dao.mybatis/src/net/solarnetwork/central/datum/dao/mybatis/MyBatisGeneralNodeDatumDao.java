@@ -50,6 +50,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
@@ -61,7 +62,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.9
+ * @version 1.10
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -117,6 +118,12 @@ public class MyBatisGeneralNodeDatumDao
 	 * {@link #getAvailableSources(Long, DateTime, DateTime)}.
 	 */
 	public static final String QUERY_FOR_DISTINCT_SOURCES = "find-general-distinct-sources";
+
+	/**
+	 * The default query name used for
+	 * {@link #findAvailableSources(GeneralNodeDatumFilter)}.
+	 */
+	public static final String QUERY_FOR_DISTINCT_NODE_SOURCES = "find-general-distinct-node-sources";
 
 	/**
 	 * The default query name used for
@@ -202,6 +209,7 @@ public class MyBatisGeneralNodeDatumDao
 
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
+	private String queryForDistinctNodeSources;
 	private String queryForMostRecent;
 	private String queryForMostRecentReporting;
 	private String queryForAuditInterval;
@@ -220,6 +228,7 @@ public class MyBatisGeneralNodeDatumDao
 		super(GeneralNodeDatum.class, GeneralNodeDatumPK.class);
 		this.queryForReportableInterval = QUERY_FOR_REPORTABLE_INTERVAL;
 		this.queryForDistinctSources = QUERY_FOR_DISTINCT_SOURCES;
+		this.queryForDistinctNodeSources = QUERY_FOR_DISTINCT_NODE_SOURCES;
 		this.queryForMostRecent = QUERY_FOR_MOST_RECENT;
 		this.queryForMostRecentReporting = QUERY_FOR_MOST_RECENT_REPORTING;
 		this.queryForAuditInterval = QUERY_FOR_AUDIT_INTERVAL;
@@ -483,6 +492,26 @@ public class MyBatisGeneralNodeDatumDao
 		}
 		List<String> results = getSqlSession().selectList(this.queryForDistinctSources, f);
 		return new LinkedHashSet<String>(results);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter) {
+		GeneralNodeDatumFilter f = filter;
+		if ( f.getStartDate() != null || f.getEndDate() != null ) {
+			// round dates to days, because we are searching day data
+			DatumFilterCommand c = new DatumFilterCommand();
+			c.setNodeIds(f.getNodeIds());
+			if ( f.getStartDate() != null ) {
+				c.setStartDate(f.getStartDate().dayOfMonth().roundFloorCopy());
+			}
+			if ( f.getEndDate() != null ) {
+				c.setEndDate(f.getEndDate().dayOfMonth().roundCeilingCopy());
+			}
+			f = c;
+		}
+		List<NodeSourcePK> results = getSqlSession().selectList(this.queryForDistinctNodeSources, f);
+		return new LinkedHashSet<NodeSourcePK>(results);
 	}
 
 	private ReadableInterval selectInterval(String statement, Long nodeId, String sourceId) {
@@ -880,6 +909,19 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setQueryForDatumAccumulation(String queryForDatumAccumulation) {
 		this.queryForDatumAccumulation = queryForDatumAccumulation;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #findAvailableSources(GeneralNodeDatumFilter)} method.
+	 * 
+	 * @param queryForDistinctNodeSources
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_DISTINCT_NODE_SOURCES}
+	 * @since 1.10
+	 */
+	public void setQueryForDistinctNodeSources(String queryForDistinctNodeSources) {
+		this.queryForDistinctNodeSources = queryForDistinctNodeSources;
 	}
 
 }

@@ -37,6 +37,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -45,7 +46,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -103,6 +104,28 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @since 1.2
 	 */
 	Set<String> getAvailableSources(GeneralNodeDatumFilter filter);
+
+	/**
+	 * Find the available source IDs for a given filter.
+	 * 
+	 * <p>
+	 * The filter is expected to provide a node ID. Multiple node IDs may be
+	 * provided. Start and end dates may be provided to limit the query to a
+	 * specific date range.
+	 * </p>
+	 * 
+	 * <p>
+	 * <b>Note</b> that the precision of dates may be rounded by implementations
+	 * when executing the query, for performance reasons.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @return the distinct node and source IDs available (never
+	 *         {@literal null})
+	 * @since 1.6
+	 */
+	Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter);
 
 	/**
 	 * Find the earliest date audit data is available for a given node.

@@ -54,7 +54,7 @@ import net.solarnetwork.central.security.SecurityActor;
  * API for querying business logic.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public interface QueryBiz {
 
@@ -117,8 +117,31 @@ public interface QueryBiz {
 	 *        the query filter
 	 * @return the distinct source IDs available (never {@literal null})
 	 * @since 2.1
+	 * @see #findAvailableSources(GeneralNodeDatumFilter)
 	 */
 	Set<String> getAvailableSources(GeneralNodeDatumFilter filter);
+
+	/**
+	 * Get the available source IDs for a given filter.
+	 * 
+	 * <p>
+	 * The filter is expected to provide a node ID. Multiple node IDs may be
+	 * provided. Start and end dates may be provided to limit the query to a
+	 * specific date range.
+	 * </p>
+	 * 
+	 * <p>
+	 * <b>Note</b> that the precision of dates may be rounded by implementations
+	 * when executing the query, for performance reasons.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @return the distinct node and source IDs available (never
+	 *         {@literal null})
+	 * @since 2.5
+	 */
+	Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter);
 
 	/**
 	 * Find all available nodes for a given actor.

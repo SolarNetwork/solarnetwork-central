@@ -64,6 +64,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
@@ -449,6 +450,51 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 	}
 
 	@Test
+	public void findAvailableSourcesForNodesSingleNode() {
+		storeNew();
+		DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setNodeId(lastDatum.getNodeId());
+		Set<NodeSourcePK> sources = dao.findAvailableSources(cmd);
+		assertEquals("Sources set size", 0, sources.size());
+
+		// we are querying the reporting table, which requires two rows minimum	so add 2nd datum
+		// of same source to trigger data population there
+		GeneralNodeDatum d2 = getTestInstance();
+		d2.setCreated(d2.getCreated().plus(1000));
+		dao.store(d2);
+
+		// immediately process reporting data
+		processAggregateStaleData();
+
+		sources = dao.findAvailableSources(cmd);
+		assertEquals("Sources set size", 1, sources.size());
+		assertTrue("Source ID returned",
+				sources.contains(new NodeSourcePK(lastDatum.getNodeId(), d2.getSourceId())));
+
+		// add a 2nd source (two more datum to get into reporting table).
+		// we also make this on another day, to support getAllAvailableSourcesForNodeAndDateRange() test
+		GeneralNodeDatum d3 = getTestInstance();
+		d3.setSourceId(TEST_2ND_SOURCE);
+		d3.setCreated(d2.getCreated().plusDays(1));
+		dao.store(d3);
+
+		GeneralNodeDatum d4 = getTestInstance();
+		d4.setSourceId(d3.getSourceId());
+		d4.setCreated(d3.getCreated().plus(1000));
+		dao.store(d4);
+
+		// immediately process reporting data
+		processAggregateStaleData();
+
+		sources = dao.findAvailableSources(cmd);
+		assertEquals("Sources set size", 2, sources.size());
+		assertTrue("Source ID returned",
+				sources.contains(new NodeSourcePK(lastDatum.getNodeId(), d2.getSourceId())));
+		assertTrue("Source ID returned",
+				sources.contains(new NodeSourcePK(lastDatum.getNodeId(), d3.getSourceId())));
+	}
+
+	@Test
 	public void getAvailableSourcesForNodesMultipleNodes() {
 		storeNew();
 
@@ -496,6 +542,114 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		cmd.setEndDate(d2.getCreated());
 		sources = dao.getAvailableSources(cmd);
 		assertThat("Source IDs before", sources, contains(TEST_SOURCE_ID));
+	}
+
+	@Test
+	public void findAvailableSourcesForNodesMultipleNodes() {
+		storeNew();
+
+		GeneralNodeDatum d2 = getTestInstance();
+		d2.setCreated(d2.getCreated().plus(1000));
+		dao.store(d2);
+
+		setupTestNode(TEST_2ND_NODE);
+
+		// add another source but days later, to verify date filters
+		GeneralNodeDatum d3 = getTestInstance();
+		d3.setNodeId(TEST_2ND_NODE);
+		d3.setSourceId(TEST_2ND_SOURCE);
+		d3.setCreated(d2.getCreated().plusDays(10));
+		dao.store(d3);
+
+		GeneralNodeDatum d4 = getTestInstance();
+		d4.setNodeId(TEST_2ND_NODE);
+		d4.setSourceId(TEST_2ND_SOURCE);
+		d4.setCreated(d3.getCreated().plus(1000));
+		dao.store(d4);
+
+		// immediately process reporting data
+		processAggregateStaleData();
+
+		DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setNodeIds(new Long[] { TEST_NODE_ID, TEST_2ND_NODE });
+		Set<NodeSourcePK> sources = dao.findAvailableSources(cmd);
+		assertThat("Source IDs", sources, contains(new NodeSourcePK(TEST_2ND_NODE, TEST_2ND_SOURCE),
+				new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID)));
+
+		// now with start and end dates
+		cmd.setStartDate(lastDatum.getCreated());
+		cmd.setEndDate(d2.getCreated());
+		sources = dao.findAvailableSources(cmd);
+		assertThat("Source IDs within", sources,
+				contains(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID)));
+
+		// now with just start date
+		cmd.setStartDate(d3.getCreated());
+		cmd.setEndDate(null);
+		sources = dao.findAvailableSources(cmd);
+		assertThat("Source IDs since", sources,
+				contains(new NodeSourcePK(TEST_2ND_NODE, TEST_2ND_SOURCE)));
+
+		// now with just end date
+		cmd.setStartDate(null);
+		cmd.setEndDate(d2.getCreated());
+		sources = dao.findAvailableSources(cmd);
+		assertThat("Source IDs before", sources,
+				contains(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID)));
+	}
+
+	@Test
+	public void findAvailableSourcesForNodesMultipleNodesDuplicateSourceIds() {
+		storeNew();
+
+		GeneralNodeDatum d2 = getTestInstance();
+		d2.setCreated(d2.getCreated().plus(1000));
+		dao.store(d2);
+
+		setupTestNode(TEST_2ND_NODE);
+
+		// add another source but days later, to verify date filters
+		GeneralNodeDatum d3 = getTestInstance();
+		d3.setNodeId(TEST_2ND_NODE);
+		d3.setSourceId(TEST_SOURCE_ID);
+		d3.setCreated(d2.getCreated().plusDays(10));
+		dao.store(d3);
+
+		GeneralNodeDatum d4 = getTestInstance();
+		d4.setNodeId(TEST_2ND_NODE);
+		d4.setSourceId(TEST_SOURCE_ID);
+		d4.setCreated(d3.getCreated().plus(1000));
+		dao.store(d4);
+
+		// immediately process reporting data
+		processAggregateStaleData();
+
+		DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setNodeIds(new Long[] { TEST_NODE_ID, TEST_2ND_NODE });
+		Set<NodeSourcePK> sources = dao.findAvailableSources(cmd);
+		assertThat("Source IDs", sources, contains(new NodeSourcePK(TEST_2ND_NODE, TEST_SOURCE_ID),
+				new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID)));
+
+		// now with start and end dates
+		cmd.setStartDate(lastDatum.getCreated());
+		cmd.setEndDate(d2.getCreated());
+		sources = dao.findAvailableSources(cmd);
+		assertThat("Source IDs within", sources,
+				contains(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID)));
+
+		// now with just start date
+		cmd.setStartDate(d3.getCreated());
+		cmd.setEndDate(null);
+		sources = dao.findAvailableSources(cmd);
+		assertThat("Source IDs since", sources,
+				contains(new NodeSourcePK(TEST_2ND_NODE, TEST_SOURCE_ID)));
+
+		// now with just end date
+		cmd.setStartDate(null);
+		cmd.setEndDate(d2.getCreated());
+		sources = dao.findAvailableSources(cmd);
+		assertThat("Source IDs before", sources,
+				contains(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID)));
 	}
 
 	@Test

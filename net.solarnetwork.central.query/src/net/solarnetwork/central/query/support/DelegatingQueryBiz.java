@@ -49,7 +49,7 @@ import net.solarnetwork.central.security.SecurityActor;
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @SuppressWarnings("deprecation")
 public class DelegatingQueryBiz implements QueryBiz {
@@ -80,6 +80,11 @@ public class DelegatingQueryBiz implements QueryBiz {
 	@Override
 	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
 		return delegate.getAvailableSources(filter);
+	}
+
+	@Override
+	public Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter) {
+		return delegate.findAvailableSources(filter);
 	}
 
 	@Override
