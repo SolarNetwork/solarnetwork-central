@@ -81,6 +81,11 @@ public abstract class AggTestSupport extends AbstractCentralTest {
 		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_daily_stale");
 		jdbcTemplate.update("DELETE FROM solarnet.sn_node WHERE node_id = ?", TEST_NODE_ID);
 		jdbcTemplate.update("DELETE FROM solarnet.sn_loc WHERE id = ?", TEST_LOC_ID);
+		jdbcTemplate.update("DELETE FROM solardatum.da_loc_datum");
+		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_loc_datum");
+		jdbcTemplate.update("DELETE FROM solaragg.agg_loc_datum_hourly");
+		jdbcTemplate.update("DELETE FROM solaragg.agg_loc_datum_daily");
+		jdbcTemplate.update("DELETE FROM solaragg.agg_loc_datum_monthly");
 	}
 
 	protected void setupTestNode(Long nodeId, Long locationId) {
