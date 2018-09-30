@@ -159,12 +159,12 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 		}
 
 		final HttpServletRequest origRequest = (HttpServletRequest) request;
+		final String requestUri = origRequest.getRequestURI();
 		final HttpServletResponse origResponse = (HttpServletResponse) response;
 
 		final String method = origRequest.getMethod().toUpperCase();
 		if ( !methodsToCache.contains(method) ) {
-			log.debug("HTTP method {} not supported; caching disabled for {}", method,
-					origRequest.getRequestURI());
+			log.debug("[{}] HTTP method {} not supported; caching disabled", requestUri, method);
 			chain.doFilter(request, response);
 			return;
 		}
@@ -172,7 +172,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 		// get cache key for this request
 		final String key = service.keyForRequest(origRequest);
 		if ( key == null ) {
-			log.debug("HTTP request {} not cachable", origRequest.getRequestURI());
+			log.debug("[{}] HTTP request not cachable", requestUri);
 			chain.doFilter(request, response);
 			return;
 		}
@@ -181,7 +181,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 		final LockAndCount lock = requestLocks.computeIfAbsent(key, k -> {
 			try {
 				LockAndCount l = lockPool.poll(requestLockTimeout, TimeUnit.MILLISECONDS);
-				log.trace("Borrowed lock {} from pool for {}", l.getId(), origRequest.getRequestURI());
+				log.trace("[{}] Borrowed lock {} from pool", requestUri, l.getId());
 				return l;
 			} catch ( InterruptedException e ) {
 				return null;
@@ -194,7 +194,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 			return;
 		}
 
-		log.trace("Using lock {} for key {} for {}", lock.getId(), key, origRequest.getRequestURI());
+		log.trace("[{}] Using lock {} for key {}", requestUri, lock.getId(), key);
 
 		// increment concurrent count for key
 		lock.incrementCount();
@@ -216,7 +216,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 		// process request
 		try {
 			if ( service.sendCachedResponse(key, origRequest, origResponse) ) {
-				log.debug("Sent cached response for {}", origRequest.getRequestURI());
+				log.debug("[{}] Sent cached response for {}", requestUri);
 				return;
 			}
 
@@ -236,10 +236,9 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 			int count = lock.decrementCount();
 			if ( count < 1 ) {
 				if ( requestLocks.remove(key, lock) ) {
-					log.trace("Removed lock for key {} for {}", key, origRequest.getRequestURI());
+					log.trace("[{}] Removed lock for key {}", requestUri, key);
 					if ( lockPool.offer(lock) ) {
-						log.trace("Lock {} returned to pool for {}", lock.getId(),
-								origRequest.getRequestURI());
+						log.trace("[{}] Lock {} returned to pool", requestUri, lock.getId());
 					}
 				}
 			}

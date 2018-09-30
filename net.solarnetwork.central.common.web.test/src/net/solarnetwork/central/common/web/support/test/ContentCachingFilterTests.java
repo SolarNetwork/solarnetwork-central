@@ -176,4 +176,23 @@ public class ContentCachingFilterTests {
 				equalTo("text/plain"));
 		assertThat("Response body", response.getContentAsString(), equalTo("Hello, world."));
 	}
+
+	@Test
+	public void cacheHit() throws ServletException, IOException {
+		// given
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somewhere");
+
+		final String cacheKey = "test.key";
+		expect(service.keyForRequest(request)).andReturn(cacheKey);
+
+		// cache hit
+		expect(service.sendCachedResponse(eq(cacheKey), same(request), same(response))).andReturn(true);
+
+		// when
+		replayAll();
+
+		filter.doFilter(request, response, chain);
+
+		// then
+	}
 }
