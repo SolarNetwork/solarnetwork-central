@@ -11,6 +11,7 @@ Export-Package:
  net.solarnetwork.central.web.support;version="1.10.0"
 Import-Package: 
  com.fasterxml.jackson.core;version="[2.4,3.0)",
+ javax.cache;version="[1.0,2.0)",
  javax.servlet;version="2.5.0",
  javax.servlet.http;version="2.4.0",
  net.solarnetwork.central;version="1.2.0",
@@ -21,7 +22,10 @@ Import-Package:
  net.solarnetwork.central.user.domain;version="1.13.0",
  net.solarnetwork.util;version="1.0.0",
  net.solarnetwork.web.domain;version="1.0.0",
+ net.solarnetwork.web.security;version="1.2.2",
  net.solarnetwork.web.support;version="1.7.0",
+ org.apache.commons.codec.binary;version="[1.7,2.0)",
+ org.apache.commons.codec.digest;version="[1.7,2.0)",
  org.apache.commons.logging;version="[1.1.0,2.0.0)",
  org.joda.time;version="[2.4,3.0)",
  org.slf4j;version="[1.7,2.0)",

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.support;
 
+import java.io.IOException;
 import java.io.InputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -58,7 +59,8 @@ public interface ContentCachingService {
 	 * @return {@literal true} if the cached response was successfully handled,
 	 *         {@literal false} otherwise (for example a cache miss)
 	 */
-	boolean sendCachedResponse(String key, HttpServletRequest request, HttpServletResponse response);
+	boolean sendCachedResponse(String key, HttpServletRequest request, HttpServletResponse response)
+			throws IOException;
 
 	/**
 	 * Cache a response after completing an intercepted response.
@@ -76,5 +78,5 @@ public interface ContentCachingService {
 	 *        the resolved HTTP response content, or {@literal null} if none
 	 */
 	void cacheResponse(String key, HttpServletRequest request, int statusCode, HttpHeaders headers,
-			InputStream content);
+			InputStream content) throws IOException;
 }

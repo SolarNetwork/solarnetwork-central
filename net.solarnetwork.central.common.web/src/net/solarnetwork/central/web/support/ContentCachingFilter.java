@@ -40,6 +40,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -47,7 +48,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 import org.springframework.web.filter.GenericFilterBean;
 import net.solarnetwork.util.OptionalService;
 
@@ -134,6 +137,15 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 			return lock.newCondition();
 		}
 
+	}
+
+	@Override
+	protected void initFilterBean() throws ServletException {
+		FilterConfig config = getFilterConfig();
+		if ( config != null ) {
+			SpringBeanAutowiringSupport.processInjectionBasedOnServletContext(this,
+					config.getServletContext());
+		}
 	}
 
 	@Override
@@ -235,7 +247,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 
 			// cache the response
 			log.debug("{} [{}] Caching response", requestId, requestUri);
-			service.cacheResponse(key, origRequest, wrappedResponse.getStatus(),
+			service.cacheResponse(key, origRequest, wrappedResponse.getStatusCode(),
 					wrappedResponse.getHeaders(), wrappedResponse.getContentInputStream());
 
 			// send the response body
@@ -262,6 +274,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 	 * @param contentCachingService
 	 *        the caching service
 	 */
+	@Autowired
 	public void setContentCachingService(OptionalService<ContentCachingService> contentCachingService) {
 		this.contentCachingService = contentCachingService;
 	}
@@ -294,7 +307,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 	 * Set the size of the lock pool, which limits concurrency.
 	 * 
 	 * @param lockPoolCapacity
-	 *        the lock pool capacity
+	 *        the lock pool capacity; defaults to 128
 	 */
 	public void setLockPoolCapacity(int lockPoolCapacity) {
 		this.lockPoolCapacity = lockPoolCapacity;
