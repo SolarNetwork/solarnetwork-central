@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.web.support.test;
 
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -31,6 +32,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletResponse;
@@ -160,9 +162,8 @@ public class ContentCachingFilterTests {
 		}));
 
 		// cache response
-		Capture<HttpHeaders> headersCaptor = new Capture<>();
 		Capture<InputStream> bodyCaptor = new Capture<>();
-		service.cacheResponse(eq(cacheKey), same(request), eq(200), capture(headersCaptor),
+		service.cacheResponse(eq(cacheKey), same(request), eq(200), anyObject(HttpHeaders.class),
 				capture(bodyCaptor));
 
 		// when
@@ -194,5 +195,94 @@ public class ContentCachingFilterTests {
 		filter.doFilter(request, response, chain);
 
 		// then
+	}
+
+	@Test
+	public void cacheMissConcurrent() throws ServletException, IOException, InterruptedException {
+		// given
+		MockHttpServletRequest request1 = new MockHttpServletRequest("GET", "/somewhere");
+		MockHttpServletRequest request2 = new MockHttpServletRequest("GET", "/somewhere");
+
+		final String cacheKey = "test.key";
+		expect(service.keyForRequest(request1)).andReturn(cacheKey);
+		expect(service.keyForRequest(request2)).andReturn(cacheKey);
+
+		// cache miss
+		expect(service.sendCachedResponse(eq(cacheKey), same(request1), same(response)))
+				.andReturn(false);
+
+		MockHttpServletResponse response2 = new MockHttpServletResponse();
+		expect(service.sendCachedResponse(eq(cacheKey), same(request2), same(response2)))
+				.andReturn(true);
+
+		// handle request 1
+		chain.doFilter(same(request1), assertWith(new Assertion<ServletResponse>() {
+
+			private final AtomicBoolean handled = new AtomicBoolean(false);
+
+			@Override
+			public void check(ServletResponse argument) throws Throwable {
+				if ( !handled.compareAndSet(false, true) ) {
+					throw new RuntimeException("Response should only be called once.");
+				}
+				HttpServletResponse resp = (HttpServletResponse) argument;
+				resp.setStatus(200);
+				resp.setContentType("text/plain");
+				resp.getWriter().print("Hello, world.");
+
+				// sleep for a spell to make other threads wait
+				Thread.sleep(2000);
+			}
+
+		}));
+
+		// cache response
+		Capture<InputStream> bodyCaptor = new Capture<>();
+		service.cacheResponse(eq(cacheKey), same(request1), eq(200), anyObject(HttpHeaders.class),
+				capture(bodyCaptor));
+
+		// when
+		replayAll();
+
+		// start request 1
+		Thread req1Thread = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					filter.doFilter(request1, response, chain);
+				} catch ( Exception e ) {
+					throw new RuntimeException(e);
+				}
+
+			}
+		}, "Request 1");
+
+		Thread req2Thread = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(100); // give req1 a head start
+					filter.doFilter(request2, response2, chain);
+				} catch ( Exception e ) {
+					throw new RuntimeException(e);
+				}
+
+			}
+		}, "Request 2");
+
+		req1Thread.start();
+		req2Thread.start();
+
+		// wait for requests to complete
+		req1Thread.join(10000);
+		req2Thread.join(10000);
+
+		// then
+		assertThat("Response status", response.getStatus(), equalTo(200));
+		assertThat("Response content type", response.getHeader(HttpHeaders.CONTENT_TYPE),
+				equalTo("text/plain"));
+		assertThat("Response body", response.getContentAsString(), equalTo("Hello, world."));
 	}
 }

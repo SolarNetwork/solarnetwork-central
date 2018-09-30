@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -63,6 +64,10 @@ import net.solarnetwork.util.OptionalService;
  * @version 1.0
  */
 public class ContentCachingFilter extends GenericFilterBean implements Filter {
+
+	private static final long EPOCH = 1514764800000L; // 1 Jan 2018 GMT
+
+	private final AtomicLong requestCounter = new AtomicLong(System.currentTimeMillis() - EPOCH / 1000);
 
 	private OptionalService<ContentCachingService> contentCachingService;
 	private Set<String> methodsToCache = Collections.singleton("GET");
@@ -160,11 +165,13 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 
 		final HttpServletRequest origRequest = (HttpServletRequest) request;
 		final String requestUri = origRequest.getRequestURI();
+		final Long requestId = requestCounter.incrementAndGet();
 		final HttpServletResponse origResponse = (HttpServletResponse) response;
 
 		final String method = origRequest.getMethod().toUpperCase();
 		if ( !methodsToCache.contains(method) ) {
-			log.debug("[{}] HTTP method {} not supported; caching disabled", requestUri, method);
+			log.debug("{} [{}] HTTP method {} not supported; caching disabled", requestId, requestUri,
+					method);
 			chain.doFilter(request, response);
 			return;
 		}
@@ -181,7 +188,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 		final LockAndCount lock = requestLocks.computeIfAbsent(key, k -> {
 			try {
 				LockAndCount l = lockPool.poll(requestLockTimeout, TimeUnit.MILLISECONDS);
-				log.trace("[{}] Borrowed lock {} from pool", requestUri, l.getId());
+				log.trace("{} [{}] Borrowed lock {} from pool", requestId, requestUri, l.getId());
 				return l;
 			} catch ( InterruptedException e ) {
 				return null;
@@ -194,7 +201,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 			return;
 		}
 
-		log.trace("[{}] Using lock {} for key {}", requestUri, lock.getId(), key);
+		log.trace("{} [{}] Using lock {} for key {}", requestId, requestUri, lock.getId(), key);
 
 		// increment concurrent count for key
 		lock.incrementCount();
@@ -216,29 +223,33 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 		// process request
 		try {
 			if ( service.sendCachedResponse(key, origRequest, origResponse) ) {
-				log.debug("[{}] Sent cached response for {}", requestUri);
+				log.debug("{} [{}] Sent cached response", requestId, requestUri);
 				return;
 			}
 
 			// cache miss: pass on request and capture result for cache
 			final ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(
 					origResponse);
+			log.debug("{} [{}] Cache miss, passing on for processing", requestId, requestUri);
 			chain.doFilter(origRequest, wrappedResponse);
 
 			// cache the response
+			log.debug("{} [{}] Caching response", requestId, requestUri);
 			service.cacheResponse(key, origRequest, wrappedResponse.getStatus(),
 					wrappedResponse.getHeaders(), wrappedResponse.getContentInputStream());
 
 			// send the response body
 			wrappedResponse.copyBodyToResponse();
+			log.debug("{} [{}] Response cached and sent", requestId, requestUri);
 		} finally {
 			lock.unlock();
 			int count = lock.decrementCount();
 			if ( count < 1 ) {
 				if ( requestLocks.remove(key, lock) ) {
-					log.trace("[{}] Removed lock for key {}", requestUri, key);
+					log.trace("{} [{}] Removed lock for key {}", requestId, requestUri, key);
 					if ( lockPool.offer(lock) ) {
-						log.trace("[{}] Lock {} returned to pool", requestUri, lock.getId());
+						log.trace("{} [{}] Lock {} returned to pool", requestId, requestUri,
+								lock.getId());
 					}
 				}
 			}
