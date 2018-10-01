@@ -195,6 +195,12 @@ public class JCacheContentCachingService implements ContentCachingService {
 				// send already compressed content
 				response.setHeader(HttpHeaders.CONTENT_ENCODING, contentEncoding);
 				response.setContentLength(content.getContentLength());
+				String vary = response.getHeader(HttpHeaders.VARY);
+				if ( vary == null ) {
+					response.setHeader(HttpHeaders.VARY, HttpHeaders.ACCEPT_ENCODING);
+				} else if ( !"*".equals(vary) ) {
+					response.setHeader(HttpHeaders.VARY, vary + "," + HttpHeaders.ACCEPT_ENCODING);
+				}
 				FileCopyUtils.copy(in, response.getOutputStream());
 			} else if ( "gzip".equals(contentEncoding) ) {
 				// send decompressed content
