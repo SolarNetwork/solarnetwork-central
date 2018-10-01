@@ -45,6 +45,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import net.solarnetwork.central.web.support.ContentCacheStats.Counts;
 import net.solarnetwork.web.security.AuthenticationScheme;
 
 /**
@@ -55,11 +56,16 @@ import net.solarnetwork.web.security.AuthenticationScheme;
  */
 public class JCacheContentCachingService implements ContentCachingService {
 
+	/** The default value for the {@code statLogAccessCount} property. */
+	public static final int DEFAULT_STAT_LOG_ACCESS_COUNT = 500;
+
 	private static final Pattern SNWS_V1_KEY_PATTERN = Pattern
 			.compile("^" + AuthenticationScheme.V1.getSchemeName() + "\\s+([^:]+):");
 	private static final Pattern SNWS_V2_KEY_PATTERN = Pattern.compile("Credential=([^,]+)(?:,|$)");
 
 	private final Cache<String, CachedContent> cache;
+	private final ContentCacheStats stats;
+
 	private Set<MediaType> compressibleMediaTypes = new HashSet<>(
 			MediaType.parseMediaTypes("text/*, application/json, application/xml"));
 	private int compressMinimumLength = 2048;
@@ -73,6 +79,7 @@ public class JCacheContentCachingService implements ContentCachingService {
 	public JCacheContentCachingService(Cache<String, CachedContent> cache) {
 		super();
 		this.cache = cache;
+		this.stats = new ContentCacheStats(cache.getName(), DEFAULT_STAT_LOG_ACCESS_COUNT);
 	}
 
 	private void addAuthorization(HttpServletRequest request, MessageDigest digest) {
@@ -172,9 +179,11 @@ public class JCacheContentCachingService implements ContentCachingService {
 			HttpServletResponse response) throws IOException {
 		CachedContent content = cache.get(key);
 		if ( content == null ) {
+			stats.incrementAndGet(Counts.Miss);
 			return null;
 		}
 
+		stats.incrementAndGet(Counts.Hit);
 		response.reset();
 		response.setStatus(200);
 
@@ -237,6 +246,7 @@ public class JCacheContentCachingService implements ContentCachingService {
 		Map<String, ?> metadata = getCacheContentMetadata(key, request, statusCode, headers);
 		cache.put(key, new SimpleCachedContent(new LinkedMultiValueMap<>(headers), data, contentEncoding,
 				metadata));
+		stats.incrementAndGet(Counts.Stored);
 	}
 
 	/**
@@ -284,6 +294,23 @@ public class JCacheContentCachingService implements ContentCachingService {
 	 */
 	public void setCompressMinimumLength(int compressMinimumLength) {
 		this.compressMinimumLength = compressMinimumLength;
+	}
+
+	/**
+	 * Set the statistic log update count.
+	 * 
+	 * <p>
+	 * Setting this to something greater than {@literal 0} will cause
+	 * {@literal INFO} level statistic log entries to be emitted every
+	 * {@code statLogAccessCount} times a cachable request has been processed.
+	 * </p>
+	 * 
+	 * @param statLogAccessCount
+	 *        the access count the access count; defaults to
+	 *        {@link #DEFAULT_STAT_LOG_ACCESS_COUNT}
+	 */
+	public void setStatLogAccessCount(int statLogAccessCount) {
+		this.stats.setLogFrequency(statLogAccessCount);
 	}
 
 }
