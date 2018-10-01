@@ -25,7 +25,9 @@ package net.solarnetwork.central.web.support;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import org.springframework.http.HttpHeaders;
+import java.util.Collections;
+import java.util.Map;
+import org.springframework.util.MultiValueMap;
 
 /**
  * Simple cached content item.
@@ -37,7 +39,8 @@ public class SimpleCachedContent implements CachedContent {
 
 	private static final long serialVersionUID = 7168846971070309662L;
 
-	private final HttpHeaders headers;
+	private final MultiValueMap<String, String> headers;
+	private final Map<String, ?> metadata;
 	private final byte[] data;
 	private final String contentEncoding;
 
@@ -45,22 +48,58 @@ public class SimpleCachedContent implements CachedContent {
 	 * Constructor.
 	 * 
 	 * @param headers
-	 *        the headers
+	 *        the headers; must be fully serializable
+	 * @param data
+	 *        the data
+	 */
+	public SimpleCachedContent(MultiValueMap<String, String> headers, byte[] data) {
+		this(headers, data, null, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param headers
+	 *        the headers; must be fully serializable
 	 * @param data
 	 *        the data
 	 * @param contentEncoding
 	 *        the content encoding, or {@literal null}
 	 */
-	public SimpleCachedContent(HttpHeaders headers, byte[] data, String contentEncoding) {
+	public SimpleCachedContent(MultiValueMap<String, String> headers, byte[] data,
+			String contentEncoding) {
+		this(headers, data, contentEncoding, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param headers
+	 *        the headers; must be fully serializable
+	 * @param data
+	 *        the data
+	 * @param contentEncoding
+	 *        the content encoding, or {@literal null}
+	 * @param metadata
+	 *        the metadata, or {@literal null}; must be fully serializable
+	 */
+	public SimpleCachedContent(MultiValueMap<String, String> headers, byte[] data,
+			String contentEncoding, Map<String, ?> metadata) {
 		super();
 		this.headers = headers;
 		this.data = data;
 		this.contentEncoding = contentEncoding;
+		this.metadata = metadata;
 	}
 
 	@Override
-	public HttpHeaders getHeaders() {
+	public MultiValueMap<String, String> getHeaders() {
 		return headers;
+	}
+
+	@Override
+	public Map<String, ?> getMetadata() {
+		return (metadata != null ? metadata : Collections.emptyMap());
 	}
 
 	@Override
@@ -74,7 +113,7 @@ public class SimpleCachedContent implements CachedContent {
 	}
 
 	@Override
-	public long getContentLength() {
+	public int getContentLength() {
 		return (data != null ? data.length : 0);
 	}
 

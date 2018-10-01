@@ -47,6 +47,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import net.solarnetwork.central.web.support.ContentCachingFilter;
 import net.solarnetwork.central.web.support.ContentCachingService;
+import net.solarnetwork.central.web.support.SimpleCachedContent;
 import net.solarnetwork.test.Assertion;
 import net.solarnetwork.util.StaticOptionalService;
 
@@ -146,7 +147,7 @@ public class ContentCachingFilterTests {
 		expect(service.keyForRequest(request)).andReturn(cacheKey);
 
 		// cache miss
-		expect(service.sendCachedResponse(eq(cacheKey), same(request), same(response))).andReturn(false);
+		expect(service.sendCachedResponse(eq(cacheKey), same(request), same(response))).andReturn(null);
 
 		// handle request
 		chain.doFilter(same(request), assertWith(new Assertion<ServletResponse>() {
@@ -187,7 +188,9 @@ public class ContentCachingFilterTests {
 		expect(service.keyForRequest(request)).andReturn(cacheKey);
 
 		// cache hit
-		expect(service.sendCachedResponse(eq(cacheKey), same(request), same(response))).andReturn(true);
+		final SimpleCachedContent content = new SimpleCachedContent(new HttpHeaders(), new byte[0]);
+		expect(service.sendCachedResponse(eq(cacheKey), same(request), same(response)))
+				.andReturn(content);
 
 		// when
 		replayAll();
@@ -208,12 +211,12 @@ public class ContentCachingFilterTests {
 		expect(service.keyForRequest(request2)).andReturn(cacheKey);
 
 		// cache miss
-		expect(service.sendCachedResponse(eq(cacheKey), same(request1), same(response)))
-				.andReturn(false);
+		expect(service.sendCachedResponse(eq(cacheKey), same(request1), same(response))).andReturn(null);
 
 		MockHttpServletResponse response2 = new MockHttpServletResponse();
+		final SimpleCachedContent content = new SimpleCachedContent(new HttpHeaders(), new byte[0]);
 		expect(service.sendCachedResponse(eq(cacheKey), same(request2), same(response2)))
-				.andReturn(true);
+				.andReturn(content);
 
 		// handle request 1
 		chain.doFilter(same(request1), assertWith(new Assertion<ServletResponse>() {

@@ -56,11 +56,11 @@ public interface ContentCachingService {
 	 *        the active HTTP request
 	 * @param response
 	 *        the active HTTP response to send the cached data to
-	 * @return {@literal true} if the cached response was successfully handled,
-	 *         {@literal false} otherwise (for example a cache miss)
+	 * @return the cached content if the response was successfully handled,
+	 *         {@literal null} otherwise (for example a cache miss)
 	 */
-	boolean sendCachedResponse(String key, HttpServletRequest request, HttpServletResponse response)
-			throws IOException;
+	CachedContent sendCachedResponse(String key, HttpServletRequest request,
+			HttpServletResponse response) throws IOException;
 
 	/**
 	 * Cache a response after completing an intercepted response.

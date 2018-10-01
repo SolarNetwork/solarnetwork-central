@@ -25,6 +25,7 @@ package net.solarnetwork.central.web.support;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -42,6 +43,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import net.solarnetwork.web.security.AuthenticationScheme;
 
@@ -166,11 +168,11 @@ public class JCacheContentCachingService implements ContentCachingService {
 	}
 
 	@Override
-	public boolean sendCachedResponse(String key, HttpServletRequest request,
+	public CachedContent sendCachedResponse(String key, HttpServletRequest request,
 			HttpServletResponse response) throws IOException {
 		CachedContent content = cache.get(key);
 		if ( content == null ) {
-			return false;
+			return null;
 		}
 
 		response.reset();
@@ -189,23 +191,22 @@ public class JCacheContentCachingService implements ContentCachingService {
 		if ( in != null ) {
 			String contentEncoding = content.getContentEncoding();
 			String accept = request.getHeader(HttpHeaders.ACCEPT_ENCODING);
-			if ( accept != null && accept.contains("gzip")
-					&& "application/gzip".equals(contentEncoding) ) {
+			if ( accept != null && accept.contains("gzip") && "gzip".equals(contentEncoding) ) {
 				// send already compressed content
 				response.setHeader(HttpHeaders.CONTENT_ENCODING, contentEncoding);
-				response.setContentLength((int) content.getContentLength());
+				response.setContentLength(content.getContentLength());
 				FileCopyUtils.copy(in, response.getOutputStream());
-			} else if ( "application/gzip".equals(contentEncoding) ) {
+			} else if ( "gzip".equals(contentEncoding) ) {
 				// send decompressed content
 				FileCopyUtils.copy(new GZIPInputStream(in), response.getOutputStream());
 			} else {
 				// send raw content
-				response.setContentLength((int) content.getContentLength());
+				response.setContentLength(content.getContentLength());
 				FileCopyUtils.copy(in, response.getOutputStream());
 			}
 		}
 
-		return true;
+		return content;
 	}
 
 	@Override
@@ -221,14 +222,39 @@ public class JCacheContentCachingService implements ContentCachingService {
 							GZIPOutputStream out = new GZIPOutputStream(byos)) {
 						FileCopyUtils.copy(data, out);
 						data = byos.toByteArray();
-						contentEncoding = "application/gzip";
+						contentEncoding = "gzip";
 					}
 					break;
 				}
 			}
 		}
-		cache.put(key, new SimpleCachedContent(HttpHeaders.readOnlyHttpHeaders(headers), data,
-				contentEncoding));
+		Map<String, ?> metadata = getCacheContentMetadata(key, request, statusCode, headers);
+		cache.put(key, new SimpleCachedContent(new LinkedMultiValueMap<>(headers), data, contentEncoding,
+				metadata));
+	}
+
+	/**
+	 * Get metadata for the cache content.
+	 * 
+	 * <p>
+	 * This method returns {@literal null}, so extending classes can override.
+	 * Note that the returned object must implement {@link Serializable}, along
+	 * with all values in the map.
+	 * </p>
+	 * 
+	 * @param key
+	 *        the cache key
+	 * @param request
+	 *        the active request
+	 * @param statusCode
+	 *        the HTTP status code
+	 * @param headers
+	 *        the HTTP headers
+	 * @return the metadata, or {@literal null} if none
+	 */
+	protected Map<String, ?> getCacheContentMetadata(String key, HttpServletRequest request,
+			int statusCode, HttpHeaders headers) {
+		return null;
 	}
 
 	/**

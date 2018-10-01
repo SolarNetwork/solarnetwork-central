@@ -25,6 +25,7 @@ package net.solarnetwork.central.web.support;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.Map;
 import org.springframework.util.MultiValueMap;
 
 /**
@@ -43,10 +44,16 @@ public interface CachedContent extends Serializable {
 	MultiValueMap<String, String> getHeaders();
 
 	/**
+	 * Get metadata about the content.
+	 * 
+	 * @return the metadata, never {@literal null}
+	 */
+	Map<String, ?> getMetadata();
+
+	/**
 	 * Get the content encoding.
 	 * 
-	 * @return the encoding, for example {@literal application/gzip} or
-	 *         {@literal null}
+	 * @return the encoding, for example {@literal gzip} or {@literal null}
 	 */
 	String getContentEncoding();
 
@@ -62,5 +69,5 @@ public interface CachedContent extends Serializable {
 	 * 
 	 * @return the length
 	 */
-	long getContentLength();
+	int getContentLength();
 }

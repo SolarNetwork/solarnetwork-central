@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.web.support;
 
-import static org.springframework.util.Assert.notNull;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -49,9 +49,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 import org.springframework.web.filter.GenericFilterBean;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 import net.solarnetwork.util.OptionalService;
 
 /**
@@ -146,11 +150,11 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 			SpringBeanAutowiringSupport.processInjectionBasedOnServletContext(this,
 					config.getServletContext());
 		}
+		afterPropertiesSet();
 	}
 
 	@Override
 	public void afterPropertiesSet() {
-		notNull(contentCachingService, "A ContentCachingService is required");
 		List<LockAndCount> locks = new ArrayList<>(lockPoolCapacity);
 		for ( int i = 0; i < lockPoolCapacity; i++ ) {
 			locks.add(new LockAndCount(i, new ReentrantLock()));
@@ -234,7 +238,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 
 		// process request
 		try {
-			if ( service.sendCachedResponse(key, origRequest, origResponse) ) {
+			if ( service.sendCachedResponse(key, origRequest, origResponse) != null ) {
 				log.debug("{} [{}] Sent cached response", requestId, requestUri);
 				return;
 			}
@@ -247,8 +251,16 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 
 			// cache the response
 			log.debug("{} [{}] Caching response", requestId, requestUri);
-			service.cacheResponse(key, origRequest, wrappedResponse.getStatusCode(),
-					wrappedResponse.getHeaders(), wrappedResponse.getContentInputStream());
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.parseMediaType(origResponse.getContentType()));
+			for ( String headerName : origResponse.getHeaderNames() ) {
+				Collection<String> values = origResponse.getHeaders(headerName);
+				for ( String headerValue : values ) {
+					headers.add(headerName, headerValue);
+				}
+			}
+			service.cacheResponse(key, origRequest, wrappedResponse.getStatusCode(), headers,
+					wrappedResponse.getContentInputStream());
 
 			// send the response body
 			wrappedResponse.copyBodyToResponse();
@@ -275,6 +287,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 	 *        the caching service
 	 */
 	@Autowired
+	@Qualifier("content-caching-service")
 	public void setContentCachingService(OptionalService<ContentCachingService> contentCachingService) {
 		this.contentCachingService = contentCachingService;
 	}
