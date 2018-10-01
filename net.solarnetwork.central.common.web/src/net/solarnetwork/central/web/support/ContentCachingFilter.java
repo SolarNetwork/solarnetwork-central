@@ -69,6 +69,7 @@ import net.solarnetwork.util.OptionalService;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.16
  */
 public class ContentCachingFilter extends GenericFilterBean implements Filter {
 

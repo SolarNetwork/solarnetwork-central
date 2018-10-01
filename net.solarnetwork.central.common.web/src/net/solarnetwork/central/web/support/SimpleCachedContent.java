@@ -34,6 +34,7 @@ import org.springframework.util.MultiValueMap;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.16
  */
 public class SimpleCachedContent implements CachedContent {
 
