@@ -13,7 +13,7 @@
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.35.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.21.0,2.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[2.3.0,3.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[2.9.0,3.0.0)"/>
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>
 		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
 		<dependency org="org.springframework" name="spring-core" rev="4.2.6.RELEASE"/>

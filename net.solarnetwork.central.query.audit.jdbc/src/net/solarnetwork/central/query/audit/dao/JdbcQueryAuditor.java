@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.joda.time.DateTime;
@@ -52,7 +53,7 @@ import net.solarnetwork.central.query.biz.QueryAuditor;
  * data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcQueryAuditor implements QueryAuditor {
 
@@ -61,6 +62,9 @@ public class JdbcQueryAuditor implements QueryAuditor {
 
 	/** The default value for the {@code flushDelay} property. */
 	public static final long DEFAULT_FLUSH_DELAY = 10000;
+
+	/** The default value for the {@code statLogUpdateCount} property. */
+	public static final int DEFAULT_STAT_LOG_UPDATE_COUNT = 500;
 
 	/** The default value for the {@code connecitonRecoveryDelay} property. */
 	public static final long DEFAULT_CONNECTION_RECOVERY_DELAY = 15000;
@@ -75,6 +79,10 @@ public class JdbcQueryAuditor implements QueryAuditor {
 	public static final Pattern CALLABLE_STATEMENT_REGEX = Pattern.compile("^\\{call\\s.*\\}",
 			Pattern.CASE_INSENSITIVE);
 
+	private static final ThreadLocal<Map<GeneralNodeDatumPK, Integer>> auditResultMap = ThreadLocal
+			.withInitial(() -> new HashMap<>());
+
+	private final AtomicLong updateCount;
 	private final JdbcOperations jdbcOps;
 	private final ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters;
 
@@ -85,6 +93,7 @@ public class JdbcQueryAuditor implements QueryAuditor {
 	private long flushDelay;
 	private long connectionRecoveryDelay;
 	private String nodeSourceIncrementSql;
+	private int statLogUpdateCount;
 
 	/**
 	 * Constructor.
@@ -107,12 +116,14 @@ public class JdbcQueryAuditor implements QueryAuditor {
 	public JdbcQueryAuditor(JdbcOperations jdbcOperations,
 			ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters) {
 		super();
+		this.updateCount = new AtomicLong(0);
 		this.jdbcOps = jdbcOperations;
 		this.nodeSourceCounters = nodeSourceCounters;
 		setConnectionRecoveryDelay(DEFAULT_CONNECTION_RECOVERY_DELAY);
 		setFlushDelay(DEFAULT_FLUSH_DELAY);
 		setUpdateDelay(DEFAULT_UPDATE_DELAY);
 		setNodeSourceIncrementSql(DEFAULT_NODE_SOURCE_INCREMENT_SQL);
+		setStatLogUpdateCount(DEFAULT_STAT_LOG_UPDATE_COUNT);
 	}
 
 	@Override
@@ -130,12 +141,15 @@ public class JdbcQueryAuditor implements QueryAuditor {
 		DateTime hour = new DateTime();
 		hour = hour.withTime(hour.getHourOfDay(), 0, 0, 0);
 
+		final Map<GeneralNodeDatumPK, Integer> resultMap = auditResultMap.get();
+
 		// try shortcut for single node + source
 		Long[] nodeIds = filter.getNodeIds();
 		String[] sourceIds = filter.getSourceIds();
 		if ( nodeIds != null && nodeIds.length == 1 && sourceIds != null && sourceIds.length == 1 ) {
 			GeneralNodeDatumPK pk = nodeDatumKey(hour, nodeIds[0], sourceIds[0]);
 			addNodeSourceCount(pk, returnedCount);
+			resultMap.put(pk, resultMap.getOrDefault(pk, 0) + returnedCount);
 			return;
 		}
 
@@ -150,8 +164,30 @@ public class JdbcQueryAuditor implements QueryAuditor {
 
 		// insert counts
 		for ( Map.Entry<GeneralNodeDatumPK, Integer> me : counts.entrySet() ) {
-			addNodeSourceCount(me.getKey(), me.getValue());
+			GeneralNodeDatumPK key = me.getKey();
+			Integer val = me.getValue();
+			addNodeSourceCount(key, val);
+			resultMap.put(key, resultMap.getOrDefault(key, 0) + val);
 		}
+	}
+
+	@Override
+	public void addNodeDatumAuditResults(Map<GeneralNodeDatumPK, Integer> results) {
+		for ( Map.Entry<GeneralNodeDatumPK, Integer> me : results.entrySet() ) {
+			GeneralNodeDatumPK key = me.getKey();
+			Integer val = me.getValue();
+			addNodeSourceCount(key, val);
+		}
+	}
+
+	@Override
+	public Map<GeneralNodeDatumPK, Integer> currentAuditResults() {
+		return auditResultMap.get();
+	}
+
+	@Override
+	public void resetCurrentAuditResults() {
+		auditResultMap.get().clear();
 	}
 
 	private static GeneralNodeDatumPK nodeDatumKey(DateTime date, Long nodeId, String sourceId) {
@@ -184,6 +220,10 @@ public class JdbcQueryAuditor implements QueryAuditor {
 				stmt.setString(3, key.getSourceId());
 				stmt.setInt(4, count);
 				stmt.execute();
+				long currUpdateCount = updateCount.incrementAndGet();
+				if ( statLogUpdateCount > 0 && currUpdateCount % statLogUpdateCount == 0 ) {
+					log.info("Updated {} node source query count records", currUpdateCount);
+				}
 				if ( updateDelay > 0 ) {
 					Thread.sleep(updateDelay);
 				}
@@ -395,6 +435,24 @@ public class JdbcQueryAuditor implements QueryAuditor {
 		}
 		this.nodeSourceIncrementSql = sql;
 		reconnectWriter();
+	}
+
+	/**
+	 * Set the statistic log update count.
+	 * 
+	 * <p>
+	 * Setting this to something greater than {@literal 0} will cause
+	 * {@literal INFO} level statistic log entries to be emitted every
+	 * {@code statLogUpdateCount} records have been updated in the database.
+	 * </p>
+	 * 
+	 * @param statLogUpdateCount
+	 *        the update count; defaults to
+	 *        {@link #DEFAULT_STAT_LOG_UPDATE_COUNT}
+	 * @since 1.1
+	 */
+	public void setStatLogUpdateCount(int statLogUpdateCount) {
+		this.statLogUpdateCount = statLogUpdateCount;
 	}
 
 }
