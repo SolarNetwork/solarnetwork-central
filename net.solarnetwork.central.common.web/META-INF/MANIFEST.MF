@@ -12,8 +12,8 @@ Export-Package:
 Import-Package: 
  com.fasterxml.jackson.core;version="[2.4,3.0)",
  javax.cache;version="[1.0,2.0)",
- javax.servlet;version="2.5.0",
- javax.servlet.http;version="2.4.0",
+ javax.servlet;version="3.0.0",
+ javax.servlet.http;version="3.0.0",
  net.solarnetwork.central;version="1.2.0",
  net.solarnetwork.central.dao;version="1.0.0",
  net.solarnetwork.central.domain;version="1.21.0",

@@ -13,7 +13,7 @@
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
 		<dependency org="org.apache.servicemix.bundles" name="org.apache.servicemix.bundles.javax-cache-api" rev="1.0.0_1" />
 		<dependency org="com.fasterxml.jackson.core" name="jackson-core" rev="2.4.3" />
-		<dependency org="javax.servlet" name="com.springsource.javax.servlet" rev="2.5.0" />
+		<dependency org="javax.servlet" name="javax.servlet-api" rev="3.0.1" />
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.32.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.12.0,2.0.0)"/>
 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.24.0,2.0.0)"/>
