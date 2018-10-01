@@ -117,4 +117,35 @@
 		<property name="caseSensitive" value="false"/>
 	</bean>
 
+	<bean id="cacheManager" class="net.solarnetwork.central.support.JCacheManagerFactoryBean">
+		<property name="cacheManagerUri" value="classpath:/net/solarnetwork/central/query/web/ehcache.xml"/>
+	</bean>
+
+	<bean id="contentCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
+		<constructor-arg ref="cacheManager"/>
+		<constructor-arg value="java.lang.String"/>
+		<constructor-arg value="net.solarnetwork.central.web.support.CachedContent"/>
+		<property name="name" value="query-content"/>
+		<property name="expiryPolicy" value="Created"/>
+		<property name="expiryDuration">
+			<bean class="javax.cache.expiry.Duration">
+				<constructor-arg value="#{T(java.util.concurrent.TimeUnit).SECONDS}"/>
+				<constructor-arg value="${queryCache.ttl}"/>
+			</bean>
+		</property>
+		<property name="heapMaxEntries" value="${queryCache.heapMaxEntries}"/>
+		<property name="diskMaxSizeMB" value="${queryCache.diskMaxSizeMB}"/>
+	</bean>
+
+	<bean id="contentCachingService" class="net.solarnetwork.util.StaticOptionalService">
+		<qualifier type="org.springframework.beans.factory.annotation.Qualifier" value="content-caching-service"/>
+		<constructor-arg>
+			<bean class="net.solarnetwork.central.query.web.support.AuditingJCacheContentCachingService">
+				<constructor-arg ref="contentCache" />
+				<constructor-arg ref="queryAuditor" />
+				<property name="compressMinimumLength" value="${queryCache.compressMinimumLength}"/>
+			</bean>
+		</constructor-arg>
+	</bean>
+
 </beans>

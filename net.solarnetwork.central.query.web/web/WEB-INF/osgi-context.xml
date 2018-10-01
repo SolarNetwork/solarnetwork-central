@@ -15,6 +15,10 @@
 
 	<osgix:cm-properties id="query.web.cfg" persistent-id="net.solarnetwork.central.query.web">
 		<prop key="JSONView.indentAmount">0</prop>
+		<prop key="queryCache.ttl">60</prop>
+		<prop key="queryCache.heapMaxEntries">1000</prop>
+		<prop key="queryCache.diskMaxSizeMB">100</prop>
+		<prop key="queryCache.compressMinimumLength">512</prop>
 	</osgix:cm-properties>
 	
 	<!-- Service References -->
@@ -46,16 +50,16 @@
 
 	<osgi:list id="pingTests" availability="optional" interface="net.solarnetwork.central.domain.PingTest"/>
 	
+	<bean id="queryAuditor" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.query.biz.QueryAuditor"/>
+	</bean>
+	
 	<bean id="queryBiz" class="net.solarnetwork.central.query.support.AuditingQueryBiz">
 		<constructor-arg>
 			<osgi:reference sticky="false" interface="net.solarnetwork.central.query.biz.QueryBiz"/>
 		</constructor-arg>
-		<constructor-arg>
-			<bean class="net.solarnetwork.util.DynamicServiceTracker">
-				<property name="bundleContext" ref="bundleContext"/>
-				<property name="serviceClassName" value="net.solarnetwork.central.query.biz.QueryAuditor"/>
-			</bean>
-		</constructor-arg>
+		<constructor-arg ref="queryAuditor"/>
 	</bean>
-
+	
 </beans>
