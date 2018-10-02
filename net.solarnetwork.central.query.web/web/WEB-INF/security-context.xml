@@ -56,5 +56,5 @@
 	<beans:bean id="authenticationTokenService" class="net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTokenService">
 		<beans:constructor-arg ref="jdbcUserService"/>
 	</beans:bean>
-
+	
 </beans:beans>

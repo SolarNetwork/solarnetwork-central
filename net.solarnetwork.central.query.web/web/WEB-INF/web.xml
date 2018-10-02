@@ -50,31 +50,28 @@
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
 	
-	<!-- Compression filter -->
+	<!-- Content caching filter -->
 	<filter>
-		<filter-name>Compression Filter</filter-name>
-		<filter-class>org.mortbay.servlet.GzipFilter</filter-class>
+		<filter-name>Content Caching</filter-name>
+		<filter-class>net.solarnetwork.central.web.support.ContentCachingFilter</filter-class>
 		<init-param>
-			<param-name>minGzipSize</param-name>
-			<param-value>1024</param-value>
+			<param-name>lockPoolCapacity</param-name>
+			<param-value>128</param-value>
+		</init-param>
+		<init-param>
+			<param-name>requestLockTimeout</param-name>
+			<param-value>180000</param-value>
 		</init-param>
 	</filter>
 	
 	<filter-mapping>
-		<filter-name>Compression Filter</filter-name>
-		<url-pattern>*.do</url-pattern>
-	</filter-mapping>
-	<filter-mapping>
-		<filter-name>Compression Filter</filter-name>
-		<url-pattern>*.json</url-pattern>
-	</filter-mapping>
-	<filter-mapping>
-		<filter-name>Compression Filter</filter-name>
-		<url-pattern>*.xml</url-pattern>
-	</filter-mapping>
-	<filter-mapping>
-		<filter-name>Compression Filter</filter-name>
-		<url-pattern>/api/*</url-pattern>
+		<filter-name>Content Caching</filter-name>
+		<url-pattern>/api/v1/pub/datum/*</url-pattern>
+		<url-pattern>/api/v1/sec/datum/*</url-pattern>
+		<url-pattern>/api/v1/pub/location/datum/*</url-pattern>
+		<url-pattern>/api/v1/sec/location/datum/*</url-pattern>
+		<url-pattern>/api/v1/pub/range/*</url-pattern>
+		<url-pattern>/api/v1/sec/range/*</url-pattern>
 	</filter-mapping>
 	
 	<!-- Character encoding filter -->
@@ -90,7 +87,7 @@
 	<filter-mapping>
 		<filter-name>Set Character Encoding</filter-name>
 		<url-pattern>/*</url-pattern>
-	</filter-mapping>	
+	</filter-mapping>
 	
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>

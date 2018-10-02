@@ -24,6 +24,7 @@ package net.solarnetwork.central.support;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
+import javax.cache.configuration.Configuration;
 import javax.cache.configuration.Factory;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.AccessedExpiryPolicy;
@@ -34,6 +35,13 @@ import javax.cache.expiry.ModifiedExpiryPolicy;
 import javax.cache.expiry.TouchedExpiryPolicy;
 import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CacheWriter;
+import javax.cache.spi.CachingProvider;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.config.units.EntryUnit;
+import org.ehcache.config.units.MemoryUnit;
+import org.ehcache.expiry.Expirations;
+import org.ehcache.jsr107.Eh107Configuration;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -41,17 +49,17 @@ import org.springframework.beans.factory.InitializingBean;
  * Factory bean for {@link Cache} instances.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, InitializingBean {
 
 	/** Cache expiry policy type. */
 	public static enum ExpiryPolicy {
-		Accessed,
-		Created,
-		Updated,
-		Touched,
-		Eternal,
+	Accessed,
+	Created,
+	Updated,
+	Touched,
+	Eternal,
 	}
 
 	private final CacheManager cacheManager;
@@ -69,6 +77,9 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	private Factory<? extends CacheWriter<K, V>> writeThroughWriterFactory;
 	private boolean writeThrough = false;
 
+	private Integer heapMaxEntries = null;
+	private Integer diskMaxSizeMB = null;
+
 	private Cache<K, V> cache;
 
 	/**
@@ -83,38 +94,88 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		MutableConfiguration<K, V> configuration = new MutableConfiguration<K, V>()
-				.setTypes(keyType, valueType).setStoreByValue(storeByValue)
-				.setStatisticsEnabled(statisticsEnabled);
-		if ( expiryPolicy != null ) {
-			switch (expiryPolicy) {
-				case Accessed:
-					configuration.setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(expiryDuration));
-					break;
-
-				case Created:
-					configuration.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(expiryDuration));
-					break;
-
-				case Updated:
-					configuration.setExpiryPolicyFactory(ModifiedExpiryPolicy.factoryOf(expiryDuration));
-					break;
-
-				case Touched:
-					configuration.setExpiryPolicyFactory(TouchedExpiryPolicy.factoryOf(expiryDuration));
-
-				case Eternal:
-					configuration.setExpiryPolicyFactory(EternalExpiryPolicy.factoryOf());
-					break;
+		CachingProvider provider = cacheManager.getCachingProvider();
+		Configuration<K, V> cacheConfig = null;
+		if ( heapMaxEntries != null || diskMaxSizeMB != null
+				&& "org.ehcache.jsr107.EhcacheCachingProvider".equals(provider.getClass().getName()) ) {
+			CacheConfigurationBuilder<K, V> cacheConfigBuilder = CacheConfigurationBuilder
+					.newCacheConfigurationBuilder(keyType, valueType,
+							ResourcePoolsBuilder.heap(Integer.MAX_VALUE));
+			ResourcePoolsBuilder poolsBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder();
+			if ( heapMaxEntries != null ) {
+				poolsBuilder = poolsBuilder.heap(heapMaxEntries.longValue(), EntryUnit.ENTRIES);
 			}
+			if ( diskMaxSizeMB != null ) {
+				poolsBuilder = poolsBuilder.disk(diskMaxSizeMB.longValue(), MemoryUnit.MB);
+			}
+			cacheConfigBuilder = cacheConfigBuilder.withResourcePools(poolsBuilder);
+			if ( expiryPolicy != null ) {
+				switch (expiryPolicy) {
+					case Accessed:
+					case Updated:
+					case Touched:
+						cacheConfigBuilder = cacheConfigBuilder
+								.withExpiry(Expirations.timeToIdleExpiration(org.ehcache.expiry.Duration
+										.of(expiryDuration.getDurationAmount(),
+												expiryDuration.getTimeUnit())));
+						break;
+
+					case Created:
+						cacheConfigBuilder = cacheConfigBuilder
+								.withExpiry(Expirations.timeToLiveExpiration(org.ehcache.expiry.Duration
+										.of(expiryDuration.getDurationAmount(),
+												expiryDuration.getTimeUnit())));
+						break;
+
+					case Eternal:
+						cacheConfigBuilder = cacheConfigBuilder.withExpiry(Expirations.noExpiration());
+						break;
+				}
+			}
+
+			cacheConfig = Eh107Configuration.fromEhcacheCacheConfiguration(cacheConfigBuilder.build());
 		}
-		if ( readThroughLoaderFactory != null && readThrough ) {
-			configuration.setCacheLoaderFactory(readThroughLoaderFactory).setReadThrough(true);
+		if ( cacheConfig == null ) {
+			MutableConfiguration<K, V> configuration = new MutableConfiguration<K, V>()
+					.setTypes(keyType, valueType).setStoreByValue(storeByValue)
+					.setStatisticsEnabled(statisticsEnabled);
+			if ( expiryPolicy != null ) {
+				switch (expiryPolicy) {
+					case Accessed:
+						configuration
+								.setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(expiryDuration));
+						break;
+
+					case Created:
+						configuration
+								.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(expiryDuration));
+						break;
+
+					case Updated:
+						configuration
+								.setExpiryPolicyFactory(ModifiedExpiryPolicy.factoryOf(expiryDuration));
+						break;
+
+					case Touched:
+						configuration
+								.setExpiryPolicyFactory(TouchedExpiryPolicy.factoryOf(expiryDuration));
+
+					case Eternal:
+						configuration.setExpiryPolicyFactory(EternalExpiryPolicy.factoryOf());
+						break;
+				}
+			}
+			if ( readThroughLoaderFactory != null && readThrough ) {
+				configuration.setCacheLoaderFactory(readThroughLoaderFactory).setReadThrough(true);
+			}
+			if ( writeThroughWriterFactory != null && writeThrough ) {
+				configuration.setCacheWriterFactory(writeThroughWriterFactory).setWriteThrough(true);
+			}
+			cacheConfig = configuration;
 		}
-		if ( writeThroughWriterFactory != null && writeThrough ) {
-			configuration.setCacheWriterFactory(writeThroughWriterFactory).setWriteThrough(true);
-		}
-		cache = cacheManager.createCache(name, configuration);
+
+		cache = cacheManager.createCache(name, cacheConfig);
+
 	}
 
 	@Override
@@ -223,6 +284,38 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 */
 	public void setWriteThroughWriterFactory(Factory<? extends CacheWriter<K, V>> writeThroughWriter) {
 		this.writeThroughWriterFactory = writeThroughWriter;
+	}
+
+	/**
+	 * Set the maximum entries to store in main memory.
+	 * 
+	 * <p>
+	 * This is an EhCache specific vendor extension, that only works if EhCache
+	 * is available on the classpath.
+	 * </p>
+	 * 
+	 * @param heapMaxEntries
+	 *        the max heap entries to configure
+	 * @since 1.1
+	 */
+	public void setHeapMaxEntries(Integer heapMaxEntries) {
+		this.heapMaxEntries = heapMaxEntries;
+	}
+
+	/**
+	 * Set the maximum size, in MB, to store on disk.
+	 * 
+	 * <p>
+	 * This is an EhCache specific vendor extension, that only works if EhCache
+	 * is available on the classpath.
+	 * </p>
+	 * 
+	 * @param heapMaxEntries
+	 *        the max disk size to store
+	 * @since 1.1
+	 */
+	public void setDiskMaxSizeMB(Integer diskMaxSizeMB) {
+		this.diskMaxSizeMB = diskMaxSizeMB;
 	}
 
 }
