@@ -57,19 +57,18 @@ import net.solarnetwork.central.web.support.SimpleCachedContent;
  * Test cases for the {@link JCacheContentCachingService} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JCacheContentCachingServiceTests {
 
 	private Cache<String, CachedContent> cache;
-	private JCacheContentCachingService service;
 
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() {
 		cache = EasyMock.createMock(Cache.class);
 
-		service = new JCacheContentCachingService(cache);
+		expect(cache.getName()).andReturn("Test Cache").anyTimes();
 	}
 
 	private void replayAll() {
@@ -88,6 +87,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		String key = service.keyForRequest(req);
 
 		// then
@@ -102,6 +102,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		String key = service.keyForRequest(req);
 
 		// then
@@ -117,6 +118,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		String key = service.keyForRequest(req);
 
 		// then
@@ -133,6 +135,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		String key = service.keyForRequest(req);
 
 		// then
@@ -147,6 +150,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		String key = service.keyForRequest(req);
 
 		// then
@@ -163,6 +167,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		String key = service.keyForRequest(req);
 
 		// then
@@ -178,6 +183,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		String key = service.keyForRequest(req);
 
 		// then
@@ -195,10 +201,131 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		String key = service.keyForRequest(req);
 
 		// then
 		assertThat("Cache key", key, equalTo(md5Hex("foo@GET/somepath?bim=bam&yin=yang")));
+	}
+
+	@Test
+	public void keyWithAcceptTextCsv() {
+		// given
+		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
+		req.addHeader(HttpHeaders.ACCEPT, "text/csv");
+
+		// when
+		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
+		String key = service.keyForRequest(req);
+
+		// then
+		assertThat("Cache key", key, equalTo(md5Hex("GET/somepath+csv")));
+	}
+
+	@Test
+	public void keyWithAcceptApplicationJson() {
+		// given
+		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
+		req.addHeader(HttpHeaders.ACCEPT, "application/json");
+
+		// when
+		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
+		String key = service.keyForRequest(req);
+
+		// then
+		assertThat("Cache key", key, equalTo(md5Hex("GET/somepath+json")));
+	}
+
+	@Test
+	public void keyWithAcceptApplicationXml() {
+		// given
+		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
+		req.addHeader(HttpHeaders.ACCEPT, "application/xml");
+
+		// when
+		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
+		String key = service.keyForRequest(req);
+
+		// then
+		assertThat("Cache key", key, equalTo(md5Hex("GET/somepath+xml")));
+	}
+
+	@Test
+	public void keyWithAcceptTextXml() {
+		// given
+		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
+		req.addHeader(HttpHeaders.ACCEPT, "text/xml");
+
+		// when
+		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
+		String key = service.keyForRequest(req);
+
+		// then
+		assertThat("Cache key", key, equalTo(md5Hex("GET/somepath+xml")));
+	}
+
+	@Test
+	public void keyWithAcceptTextXmlApplicationJson() {
+		// given
+		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
+		req.addHeader(HttpHeaders.ACCEPT, "text/xml, application/json");
+
+		// when
+		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
+		String key = service.keyForRequest(req);
+
+		// then
+		assertThat("Cache key", key, equalTo(md5Hex("GET/somepath+xml")));
+	}
+
+	@Test
+	public void keyWithAcceptTextHtml() {
+		// given
+		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
+		req.addHeader(HttpHeaders.ACCEPT, "text/html");
+
+		// when
+		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
+		String key = service.keyForRequest(req);
+
+		// then
+		assertThat("Cache key", key, equalTo(md5Hex("GET/somepath+text/html")));
+	}
+
+	@Test
+	public void keyWithAcceptApplicationJsonWildcardQ() {
+		// given
+		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
+		req.addHeader(HttpHeaders.ACCEPT, "application/json, */*; q=0.01");
+
+		// when
+		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
+		String key = service.keyForRequest(req);
+
+		// then
+		assertThat("Cache key", key, equalTo(md5Hex("GET/somepath+json")));
+	}
+
+	@Test
+	public void keyWithAcceptWildcard() {
+		// given
+		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
+		req.addHeader(HttpHeaders.ACCEPT, "*/*");
+
+		// when
+		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
+		String key = service.keyForRequest(req);
+
+		// then
+		assertThat("Cache key", key, equalTo(md5Hex("GET/somepath")));
 	}
 
 	@Test
@@ -212,6 +339,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		CachedContent result = service.sendCachedResponse(key, request, response);
 
 		// then
@@ -235,6 +363,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		CachedContent result = service.sendCachedResponse(key, request, response);
 
 		// then
@@ -280,6 +409,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		CachedContent result = service.sendCachedResponse(key, request, response);
 
 		// then
@@ -310,6 +440,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		CachedContent result = service.sendCachedResponse(key, request, response);
 
 		// then
@@ -339,6 +470,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		service.cacheResponse(key, request, 200, headers,
 				new ByteArrayInputStream(body.getBytes("UTF-8")));
 
@@ -355,7 +487,6 @@ public class JCacheContentCachingServiceTests {
 	@Test
 	public void cacheContentCompressed() throws IOException {
 		// given
-		service.setCompressMinimumLength(8);
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somepath");
 
 		final String key = "test.key";
@@ -370,6 +501,8 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
+		service.setCompressMinimumLength(8);
 		service.cacheResponse(key, request, 200, headers,
 				new ByteArrayInputStream(body.getBytes("UTF-8")));
 
@@ -399,6 +532,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		service.cacheResponse(key, request, 200, headers, new ByteArrayInputStream(body));
 
 		// then
@@ -428,6 +562,7 @@ public class JCacheContentCachingServiceTests {
 
 		// when
 		replayAll();
+		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		service.cacheResponse(key, request, 200, headers,
 				new ByteArrayInputStream(body.getBytes("UTF-8")));
 
