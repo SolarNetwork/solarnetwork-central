@@ -4,7 +4,7 @@ Bundle-Name: SolarNet Common Web Tests
 Bundle-SymbolicName: net.solarnetwork.central.common.web.test
 Bundle-Version: 1.0.0
 Bundle-Vendor: SolarNetwork
-Fragment-Host: net.solarnetwork.central.common.web;bundle-version="1.16.0"
+Fragment-Host: net.solarnetwork.central.common.web;bundle-version="1.16.1"
 Automatic-Module-Name: net.solarnetwork.central.common.web.test
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 

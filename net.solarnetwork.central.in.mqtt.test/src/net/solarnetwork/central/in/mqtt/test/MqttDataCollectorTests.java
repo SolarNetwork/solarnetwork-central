@@ -159,6 +159,150 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		assertThat("Posted datum samples", postedDatum.getSamples(), equalTo(datum.getSamples()));
 	}
 
+	/*- the following test does not work; appears to be a bug in Moquette not re-sending in-flight messages without a PUBACK
+	@Test
+	public void processGeneralNodeDatumThrowsExceptionWithRetryEnabled() throws Exception {
+		// given
+		final String username = UUID.randomUUID().toString();
+		final String password = UUID.randomUUID().toString();
+		service.setUsername(username);
+		service.setPassword(password);
+		service.setRetryConnect(true);
+		service.init();
+	
+		// sleep for a bit to allow background thread to connect
+		Thread.sleep(1000);
+	
+		Capture<Iterable<GeneralNodeDatum>> postDatumCaptor = new Capture<>(CaptureType.ALL);
+		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
+		EasyMock.expectLastCall().andThrow(new RuntimeException("Egads!"));
+	
+		// second time OK
+		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
+	
+		replayAll();
+	
+		TestingMqttCallback nodeClientCallback = new TestingMqttCallback();
+		setupMqttClient("test.node", nodeClientCallback);
+		IMqttClient nodeClient = getClient();
+	
+		// when
+		String topic = datumTopic(TEST_NODE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum();
+		datum.setCreated(new DateTime());
+		datum.setNodeId(TEST_NODE_ID);
+		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
+		datum.setSamples(samples);
+		samples.putInstantaneousSampleValue("foo", 123);
+		String json = "{\"created\":" + datum.getCreated().getMillis() + ",\"sourceId\":\""
+				+ TEST_SOURCE_ID + "\",\"samples\":{\"i\":{\"foo\":123}}}";
+		MqttMessage msg = new MqttMessage(json.getBytes("UTF-8"));
+		msg.setQos(1);
+		nodeClient.publish(topic, msg);
+	
+		// sleep for a bit to allow failure and re-connect
+		Thread.sleep(10000);
+	
+		stopMqttServer();
+	
+		// then
+		assertThat("Datum posted", postDatumCaptor.getValue(), notNullValue());
+		List<GeneralNodeDatum> postedDatumList = StreamSupport
+				.stream(postDatumCaptor.getValue().spliterator(), false).collect(Collectors.toList());
+		assertThat("Posted datum count", postedDatumList, hasSize(1));
+		GeneralNodeDatum postedDatum = postedDatumList.get(0);
+		assertThat("Posted datum ID", postedDatum.getId(), equalTo(datum.getId()));
+		assertThat("Posted datum samples", postedDatum.getSamples(), equalTo(datum.getSamples()));
+	}
+	*/
+
+	/*- the following test requires an external MQTT server to test against
+	private MqttClient createMqttClient(String clientId, String host, int port, MqttCallback callback) {
+		try {
+			MemoryPersistence persistence = new MemoryPersistence();
+			MqttClient client = new MqttClient("tcp://" + host + ":" + port, clientId, persistence);
+			client.setCallback(callback);
+			MqttConnectOptions connOptions = new MqttConnectOptions();
+			connOptions.setCleanSession(false);
+			connOptions.setAutomaticReconnect(false);
+			client.connect(connOptions);
+			return client;
+		} catch ( MqttException e ) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	@Test
+	public void processGeneralNodeDatumThrowsExceptionWithRetryEnabledServer() throws Exception {
+		// given
+		stopMqttServer();
+	
+		service.setUsername("solarnet");
+		service.setPassword("solarnet");
+		service.setRetryConnect(true);
+		service.setServerUri("mqtt://vernemq:1883");
+		service.init();
+	
+		// sleep for a bit to allow background thread to connect
+		Thread.sleep(1000);
+	
+		Capture<Iterable<GeneralNodeDatum>> postDatumCaptor = new Capture<>(CaptureType.ALL);
+		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
+		EasyMock.expectLastCall().andThrow(new RuntimeException("Egads!"));
+	
+		// second time OK
+		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
+		EasyMock.expectLastCall().anyTimes();
+	
+		replayAll();
+	
+		TestingMqttCallback nodeClientCallback = new TestingMqttCallback();
+		IMqttClient nodeClient = createMqttClient(TEST_NODE_ID.toString(), "vernemq", 1883,
+				nodeClientCallback);
+	
+		// when
+		String topic = datumTopic(TEST_NODE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum();
+		datum.setCreated(new DateTime());
+		datum.setNodeId(TEST_NODE_ID);
+		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
+		datum.setSamples(samples);
+		samples.putInstantaneousSampleValue("foo", 123);
+		String json = "{\"created\":" + datum.getCreated().getMillis() + ",\"sourceId\":\""
+				+ TEST_SOURCE_ID + "\",\"samples\":{\"i\":{\"foo\":123}}}";
+		MqttMessage msg = new MqttMessage(json.getBytes("UTF-8"));
+		msg.setQos(1);
+		nodeClient.publish(topic, msg);
+	
+		nodeClient.disconnect();
+	
+		// sleep for a bit to allow failure and re-connect
+		Thread.sleep(4000);
+	
+		// then
+		assertThat("Datum posted", postDatumCaptor.getValues().size(), greaterThanOrEqualTo(2));
+		List<GeneralNodeDatum> postedDatumList = new ArrayList<>(2);
+		for ( Iterable<GeneralNodeDatum> iterable : postDatumCaptor.getValues() ) {
+			for ( GeneralNodeDatum d : iterable ) {
+				postedDatumList.add(d);
+				if ( postedDatumList.size() > 1 ) {
+					break;
+				}
+			}
+			if ( postedDatumList.size() > 1 ) {
+				break;
+			}
+		}
+		assertThat("Posted datum count", postedDatumList, hasSize(2));
+		for ( GeneralNodeDatum postedDatum : postedDatumList ) {
+			assertThat("Posted datum ID", postedDatum.getId(), equalTo(datum.getId()));
+			assertThat("Posted datum samples", postedDatum.getSamples(), equalTo(datum.getSamples()));
+		}
+	}
+	*/
+
 	@Test
 	public void processGeneralLocationDatum() throws Exception {
 		// given

@@ -53,6 +53,7 @@ import org.springframework.util.DigestUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.domain.PingTest;
@@ -123,6 +124,9 @@ public class MqttDataCollector
 
 	private static final long RETRY_CONNECT_DELAY = 2000L;
 	private static final long MAX_CONNECT_DELAY_MS = 120000L;
+
+	private static final long RETRY_SUBSCRIBE_DELAY = 1000L;
+	private static final long MAX_SUBSCRIBE_DELAY_MS = 60000L;
 
 	private final ExecutorService executorService;
 	private final ObjectMapper objectMapper;
@@ -376,8 +380,8 @@ public class MqttDataCollector
 	@Override
 	public void connectionLost(Throwable cause) {
 		IMqttAsyncClient client = clientRef.get();
-		log.info("Connection to MQTT server @ {} lost: {}",
-				(client != null ? client.getServerURI() : "N/A"), cause.getMessage());
+		log.info("Connection lost to MQTT server @ {}: {}",
+				(client != null ? client.getServerURI() : "N/A"), cause.toString());
 	}
 
 	@Override
@@ -392,37 +396,45 @@ public class MqttDataCollector
 			// re-subscribe
 			executorService.execute(new Runnable() {
 
+				final AtomicLong sleep = new AtomicLong(0);
+
 				@Override
 				public void run() {
 					final IMqttAsyncClient client = clientRef.get();
-					if ( client != null ) {
-						try {
-							Thread.sleep(200);
-						} catch ( InterruptedException e ) {
-							// just continue
+					if ( client == null || !client.isConnected() ) {
+						return;
+					}
+					final long sleepMs = sleep.get();
+					try {
+						Thread.sleep(sleepMs + 200);
+					} catch ( InterruptedException e ) {
+						// ignore
+					}
+					try {
+						subscribeToTopics(client);
+					} catch ( MqttException e ) {
+						if ( e.getReasonCode() == MqttException.REASON_CODE_CLIENT_NOT_CONNECTED ) {
+							// stop trying to subscribe
+							log.error(
+									"Error subscribing to MQTT server @ {} topics {}, will not try again: ",
+									serverUri, e.toString(), e);
+							return;
 						}
-						try {
-							subscribeToTopics(client);
-						} catch ( MqttException e ) {
-							log.error("Error subscribing to node topics: {}", e.getMessage(), e);
-							executorService.execute(new Runnable() {
-
-								@Override
-								public void run() {
-									try {
-										Thread.sleep(600);
-									} catch ( InterruptedException e ) {
-										// just continue
+						long delay = sleep.accumulateAndGet(sleep.get() / RETRY_SUBSCRIBE_DELAY,
+								(c, s) -> {
+									long d = (s * 2) * RETRY_SUBSCRIBE_DELAY;
+									if ( d == 0 ) {
+										d = RETRY_SUBSCRIBE_DELAY;
 									}
-									try {
-										client.disconnect();
-									} catch ( MqttException e ) {
-										log.warn("Error disconnecting from MQTT server @ {}: {}",
-												serverURI, e.getMessage());
+									if ( d > MAX_SUBSCRIBE_DELAY_MS ) {
+										d = MAX_SUBSCRIBE_DELAY_MS;
 									}
-								}
-							});
-						}
+									return d;
+								});
+						log.error(
+								"Error subscribing to MQTT server @ {} topics {}, will try again in {}s: ",
+								serverUri, TimeUnit.MILLISECONDS.toSeconds(delay), e.toString(), e);
+						executorService.execute(this);
 					}
 				}
 			});
@@ -451,10 +463,12 @@ public class MqttDataCollector
 			}
 		} catch ( IOException e ) {
 			log.debug("Communication error handling message on MQTT topic {}", topic, e);
-			throw e;
+			throw new RepeatableTaskException("Communication error handling message on MQTT topic "
+					+ topic + ": " + e.getMessage(), e);
 		} catch ( RuntimeException e ) {
 			log.error("Error handling MQTT message on topic {}", topic, e);
-			throw e;
+			throw new RepeatableTaskException(
+					"Error handling MQTT message on topic " + topic + ": " + e.getMessage(), e);
 		}
 	}
 

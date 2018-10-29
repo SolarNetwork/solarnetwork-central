@@ -28,6 +28,8 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +54,7 @@ import net.solarnetwork.web.security.AuthenticationScheme;
  * Caching service backed by a {@link javax.cache.Cache}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JCacheContentCachingService implements ContentCachingService {
 
@@ -148,6 +150,53 @@ public class JCacheContentCachingService implements ContentCachingService {
 		}
 	}
 
+	private static final MediaType CSV_MEDIA_TYPE = MediaType.parseMediaType("text/csv");
+	private static final byte[] CSV_MEDIA_TYPE_COMPONENT = "+csv".getBytes();
+	private static final byte[] JSON_MEDIA_TYPE_COMPONENT = "+json".getBytes();
+	private static final byte[] XML_MEDIA_TYPE_COMPONENT = "+xml".getBytes();
+
+	public List<MediaType> getAccept(HttpServletRequest request) {
+		Enumeration<String> acceptHeader = request.getHeaders(HttpHeaders.ACCEPT);
+		StringBuilder buf = new StringBuilder();
+		while ( acceptHeader.hasMoreElements() ) {
+			if ( buf.length() > 0 ) {
+				buf.append(",");
+			}
+			buf.append(acceptHeader.nextElement());
+		}
+		String value = buf.toString();
+		return (value != null && value.length() > 0 ? MediaType.parseMediaTypes(value)
+				: Collections.emptyList());
+	}
+
+	private void addNormalizedAccept(HttpServletRequest request, MessageDigest digest) {
+		List<MediaType> types = getAccept(request);
+		if ( types == null || types.isEmpty() ) {
+			return;
+		}
+		for ( MediaType type : types ) {
+			if ( type.isWildcardType() ) {
+				continue;
+			}
+			if ( MediaType.APPLICATION_JSON.isCompatibleWith(type) ) {
+				digest.update(JSON_MEDIA_TYPE_COMPONENT);
+				return;
+			} else if ( CSV_MEDIA_TYPE.isCompatibleWith(type) ) {
+				digest.update(CSV_MEDIA_TYPE_COMPONENT);
+				return;
+			} else if ( MediaType.APPLICATION_XML.isCompatibleWith(type)
+					|| MediaType.TEXT_XML.isCompatibleWith(type) ) {
+				digest.update(XML_MEDIA_TYPE_COMPONENT);
+				return;
+			} else if ( type.getType() != null && type.getSubtype() != null ) {
+				digest.update((byte) '+');
+				digest.update(type.getType().getBytes());
+				digest.update((byte) '/');
+				digest.update(type.getSubtype().getBytes());
+			}
+		}
+	}
+
 	/**
 	 * Get a cache key for a given request.
 	 * 
@@ -162,6 +211,7 @@ public class JCacheContentCachingService implements ContentCachingService {
 	 * <li>request method (via {@link HttpServletRequest#getMethod()})</li>
 	 * <li>request URI (via {@link HttpServletRequest#getRequestURI()})</li>
 	 * <li>request query parameters</li>
+	 * <li>Accept header value</li>
 	 * </ol>
 	 */
 	@Override
@@ -171,6 +221,7 @@ public class JCacheContentCachingService implements ContentCachingService {
 		digest.update(request.getMethod().getBytes());
 		digest.update(request.getRequestURI().getBytes());
 		addNormalizedQueryParameters(request, digest);
+		addNormalizedAccept(request, digest);
 		return Hex.encodeHexString(digest.digest());
 	}
 
