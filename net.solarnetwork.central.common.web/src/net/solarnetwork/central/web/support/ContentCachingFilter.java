@@ -68,7 +68,7 @@ import net.solarnetwork.util.OptionalService;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.16
  */
 public class ContentCachingFilter extends GenericFilterBean implements Filter {
@@ -250,22 +250,33 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 			log.debug("{} [{}] Cache miss, passing on for processing", requestId, requestUri);
 			chain.doFilter(origRequest, wrappedResponse);
 
-			// cache the response
-			log.debug("{} [{}] Caching response", requestId, requestUri);
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.parseMediaType(origResponse.getContentType()));
-			for ( String headerName : origResponse.getHeaderNames() ) {
-				Collection<String> values = origResponse.getHeaders(headerName);
-				for ( String headerValue : values ) {
-					headers.add(headerName, headerValue);
+			// cache the response, if OK range
+			HttpStatus status = HttpStatus.valueOf(origResponse.getStatus());
+			if ( status.is2xxSuccessful() ) {
+				log.debug("{} [{}] Caching response", requestId, requestUri);
+				HttpHeaders headers = new HttpHeaders();
+				if ( origResponse.getContentType() != null ) {
+					headers.setContentType(MediaType.parseMediaType(origResponse.getContentType()));
 				}
+				for ( String headerName : origResponse.getHeaderNames() ) {
+					Collection<String> values = origResponse.getHeaders(headerName);
+					for ( String headerValue : values ) {
+						headers.add(headerName, headerValue);
+					}
+				}
+				service.cacheResponse(key, origRequest, wrappedResponse.getStatusCode(), headers,
+						wrappedResponse.getContentInputStream());
 			}
-			service.cacheResponse(key, origRequest, wrappedResponse.getStatusCode(), headers,
-					wrappedResponse.getContentInputStream());
 
 			// send the response body
 			wrappedResponse.copyBodyToResponse();
-			log.debug("{} [{}] Response cached and sent", requestId, requestUri);
+			if ( log.isDebugEnabled() ) {
+				if ( status.is2xxSuccessful() ) {
+					log.debug("{} [{}] Response cached and sent", requestId, requestUri);
+				} else {
+					log.debug("{} [{}] Response sent without caching", requestId, requestUri);
+				}
+			}
 		} finally {
 			lock.unlock();
 			int count = lock.decrementCount();

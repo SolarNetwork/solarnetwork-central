@@ -55,7 +55,7 @@ import net.solarnetwork.util.StaticOptionalService;
  * Test cases for the {@link ContentCachingFilter} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ContentCachingFilterTests {
 
@@ -136,6 +136,42 @@ public class ContentCachingFilterTests {
 		filter.doFilter(request, response, chain);
 
 		// then
+	}
+
+	@Test
+	public void non200Result() throws ServletException, IOException {
+		// given
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somewhere");
+
+		final String cacheKey = "test.key";
+		expect(service.keyForRequest(request)).andReturn(cacheKey);
+
+		// cache miss
+		expect(service.sendCachedResponse(eq(cacheKey), same(request), same(response))).andReturn(null);
+
+		// handle request
+		chain.doFilter(same(request), assertWith(new Assertion<ServletResponse>() {
+
+			@Override
+			public void check(ServletResponse argument) throws Throwable {
+				HttpServletResponse resp = (HttpServletResponse) argument;
+				resp.setStatus(500);
+				resp.setContentType("text/html");
+				resp.getWriter().print("<html>Error!</html>");
+			}
+
+		}));
+
+		// when
+		replayAll();
+
+		filter.doFilter(request, response, chain);
+
+		// then
+		assertThat("Response status", response.getStatus(), equalTo(500));
+		assertThat("Response content type", response.getHeader(HttpHeaders.CONTENT_TYPE),
+				equalTo("text/html"));
+		assertThat("Response body", response.getContentAsString(), equalTo("<html>Error!</html>"));
 	}
 
 	@Test
