@@ -380,8 +380,43 @@ public class MqttDataCollector
 	@Override
 	public void connectionLost(Throwable cause) {
 		IMqttAsyncClient client = clientRef.get();
+		Throwable root = cause;
+		RepeatableTaskException rte = null;
+		while ( root.getCause() != null ) {
+			if ( root instanceof RepeatableTaskException ) {
+				rte = (RepeatableTaskException) root;
+				break;
+			}
+			root = root.getCause();
+		}
 		log.info("Connection lost to MQTT server @ {}: {}",
 				(client != null ? client.getServerURI() : "N/A"), cause.toString());
+		if ( rte != null ) {
+			// shutdown and re-connect
+			final RepeatableTaskException finalRte = rte;
+			executorService.execute(new Runnable() {
+
+				@Override
+				public void run() {
+					try {
+						// pause just a bit to give connectionLost chance to complete
+						Thread.sleep(200);
+					} catch ( InterruptedException e ) {
+						// just continue
+					}
+					log.info("Re-establishing connection to MQTT server @ {} after error [{}]",
+							(client != null ? client.getServerURI() : "N/A"), finalRte.getMessage());
+					close();
+					try {
+						// pause just a bit to give connection chance to close
+						Thread.sleep(200);
+					} catch ( InterruptedException e ) {
+						// just continue
+					}
+					init();
+				}
+			});
+		}
 	}
 
 	@Override
