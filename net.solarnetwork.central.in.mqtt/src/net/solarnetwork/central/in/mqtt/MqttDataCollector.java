@@ -243,7 +243,7 @@ public class MqttDataCollector
 						try {
 							IMqttAsyncClient client = setupClient();
 							if ( client != null ) {
-								synchronized ( connectThread ) {
+								synchronized ( clientRef ) {
 									connectThread = null;
 								}
 								return;
