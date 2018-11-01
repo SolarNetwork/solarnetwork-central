@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaign">
+
+	<update id="update-GlobalMetricCampaign" parameterType="net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaign">
+		INSERT INTO solarnet.sn_metric_campaign (
+			id
+			<if test="created != null">, created</if>
+			, enabled
+			, disp_name
+			, description
+		) VALUES (
+			#{id}
+			<if test="created != null">, #{created}</if>
+			, #{enabled}
+			, #{name}
+			, #{description}
+		)
+		ON CONFLICT (id) DO UPDATE
+		SET enabled = EXCLUDED.enabled,
+			disp_name = EXCLUDED.disp_name,
+			description = EXCLUDED.description
+	</update>
+	
+	<sql id="fragment-GlobalMetricCampaign-full-result">
+		mc.id AS sn_metric_campaign_id,
+		mc.created AS sn_metric_campaign_created,
+		mc.enabled AS sn_metric_campaign_enabled,
+		mc.disp_name AS sn_metric_campaign_disp_name,
+		mc.description AS sn_metric_campaign_description
+	</sql>
+	
+	<resultMap id="GlobalMetricCampaignFullResult" type="net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaign">
+		<id property="id" column="sn_metric_campaign_id"/>
+		<result property="created" column="sn_metric_campaign_created"/>
+		<result property="enabled" column="sn_metric_campaign_enabled"/>
+		<result property="name" column="sn_metric_campaign_disp_name"/>
+		<result property="description" column="sn_metric_campaign_description"/>
+	</resultMap>
+
+	<select id="get-GlobalMetricCampaign-for-id" parameterType="string" resultMap="GlobalMetricCampaignFullResult">
+		SELECT
+			<include refid="fragment-GlobalMetricCampaign-full-result"/>
+		FROM
+			solarnet.sn_metric_campaign mc
+		WHERE
+			mc.id = #{id}
+	</select>
+
+</mapper>
