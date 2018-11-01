@@ -29,7 +29,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * Implementation of {@link SortDescriptor}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SimpleSortDescriptor implements SortDescriptor, Serializable {
 
@@ -49,7 +49,7 @@ public class SimpleSortDescriptor implements SortDescriptor, Serializable {
 	 *        the sort key
 	 */
 	public SimpleSortDescriptor(String sortKey) {
-		this(sortKey, true);
+		this(sortKey, false);
 	}
 
 	public SimpleSortDescriptor(String sortKey, boolean descending) {
