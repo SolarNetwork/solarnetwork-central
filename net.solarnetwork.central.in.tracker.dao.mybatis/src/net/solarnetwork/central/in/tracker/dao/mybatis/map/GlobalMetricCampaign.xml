@@ -2,6 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaign">
 
+	<cache/>
+
 	<update id="update-GlobalMetricCampaign" parameterType="net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaign">
 		INSERT INTO solarnet.sn_metric_campaign (
 			id
@@ -47,4 +49,20 @@
 			mc.id = #{id}
 	</select>
 
+	<select id="findall-GlobalMetricCampaign" resultMap="GlobalMetricCampaignFullResult" fetchSize="1000" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GlobalMetricCampaign-full-result"/>
+		FROM
+			solarnet.sn_metric_campaign mc
+		ORDER BY
+			<if test="SortDescriptors != null">
+				<foreach collection="SortDescriptors" item="item" separator="," close=",">
+					<if test="item.sortKey == &quot;created&quot;">mc.created</if>
+					<if test="item.sortKey == &quot;name&quot;">lower(mc.disp_name)</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</if>
+			mc.id
+	</select>
+	
 </mapper>

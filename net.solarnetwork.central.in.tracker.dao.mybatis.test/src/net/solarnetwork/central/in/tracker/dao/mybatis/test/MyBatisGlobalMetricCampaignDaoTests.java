@@ -22,16 +22,23 @@
 
 package net.solarnetwork.central.in.tracker.dao.mybatis.test;
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.in.tracker.dao.mybatis.MyBatisGlobalMetricCampaignDao;
 import net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaign;
+import net.solarnetwork.central.support.SimpleSortDescriptor;
 
 /**
  * Test cases for the {@link MyBatisGlobalMetricCampaignDao} class.
@@ -94,6 +101,89 @@ public class MyBatisGlobalMetricCampaignDaoTests extends AbstractMyBatisDaoTestS
 		assertThat("Enabled", updated.isEnabled(), equalTo(false));
 		assertThat("Name", updated.getName(), equalTo(info.getName()));
 		assertThat("Description", updated.getDescription(), equalTo(info.getDescription()));
+	}
+
+	private static class CampaignById implements Comparator<GlobalMetricCampaign> {
+
+		@Override
+		public int compare(GlobalMetricCampaign o1, GlobalMetricCampaign o2) {
+			if ( o1 == o2 ) {
+				return 0;
+			}
+			String l = (o1 != null ? o1.getId() : null);
+			String r = (o2 != null ? o2.getId() : null);
+			if ( l == r ) {
+				return 0;
+			}
+			if ( l == null ) {
+				return -1;
+			}
+			return l.compareTo(r);
+		}
+
+	}
+
+	@Test
+	public void findAll() {
+		List<GlobalMetricCampaign> campaigns = new ArrayList<>(3);
+		for ( int i = 0; i < 3; i++ ) {
+			GlobalMetricCampaign info = new GlobalMetricCampaign();
+			info.setId(UUID.randomUUID().toString());
+			info.setEnabled(true);
+			info.setName(UUID.randomUUID().toString());
+			dao.store(info);
+			campaigns.add(info);
+		}
+
+		Collections.sort(campaigns, new CampaignById());
+
+		List<GlobalMetricCampaign> results = dao.getAll(null);
+		assertThat("Result count", results, hasSize(3));
+		for ( int i = 0; i < 3; i++ ) {
+			assertThat("Result " + (i + 1), results.get(i), equalTo(campaigns.get(i)));
+		}
+	}
+
+	private static class CampaignByName implements Comparator<GlobalMetricCampaign> {
+
+		@Override
+		public int compare(GlobalMetricCampaign o1, GlobalMetricCampaign o2) {
+			if ( o1 == o2 ) {
+				return 0;
+			}
+			String l = (o1 != null ? o1.getName() : null);
+			String r = (o2 != null ? o2.getName() : null);
+			if ( l == r ) {
+				return 0;
+			}
+			if ( l == null ) {
+				return -1;
+			}
+			return l.compareToIgnoreCase(r);
+		}
+
+	}
+
+	@Test
+	public void findAllSortByName() {
+		List<GlobalMetricCampaign> campaigns = new ArrayList<>(3);
+		for ( int i = 0; i < 3; i++ ) {
+			GlobalMetricCampaign info = new GlobalMetricCampaign();
+			info.setId(UUID.randomUUID().toString());
+			info.setEnabled(true);
+			info.setName(UUID.randomUUID().toString());
+			dao.store(info);
+			campaigns.add(info);
+		}
+
+		Collections.sort(campaigns, new CampaignByName());
+
+		List<GlobalMetricCampaign> results = dao
+				.getAll(singletonList(new SimpleSortDescriptor("name", false)));
+		assertThat("Result count", results, hasSize(3));
+		for ( int i = 0; i < 3; i++ ) {
+			assertThat("Result " + (i + 1), results.get(i), equalTo(campaigns.get(i)));
+		}
 	}
 
 }
