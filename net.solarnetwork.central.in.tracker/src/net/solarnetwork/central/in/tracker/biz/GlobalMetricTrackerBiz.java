@@ -24,7 +24,7 @@ package net.solarnetwork.central.in.tracker.biz;
 
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaign;
-import net.solarnetwork.central.in.tracker.domain.GlobalMetricNodeCampaignPropertyConfig;
+import net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaignOptIn;
 
 /**
  * API for integrating with the global metric tracker system.
@@ -50,7 +50,7 @@ public interface GlobalMetricTrackerBiz {
 	 *        the node source
 	 * @return the available configuration, never {@literal null}
 	 */
-	Iterable<GlobalMetricNodeCampaignPropertyConfig> optInConfigForNodeSource(String campaignId,
+	Iterable<GlobalMetricCampaignOptIn> optInConfigForNodeSource(String campaignId,
 			NodeSourcePK nodeSource);
 
 }

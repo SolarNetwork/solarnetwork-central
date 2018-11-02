@@ -1,5 +1,5 @@
 /* ==================================================================
- * GlobalMetricTrackerCollector.java - 1/11/2018 7:30:10 AM
+ * MyBatisGlobalMetricCampaignOptInDao.java - 2/11/2018 2:42:31 PM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,24 +20,28 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.tracker.biz;
+package net.solarnetwork.central.in.tracker.dao.mybatis;
 
-import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
+import net.solarnetwork.central.in.tracker.dao.GlobalMetricCampaignOptInDao;
+import net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaignOptIn;
+import net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaignNodePropertyPK;
 
 /**
- * API for collecting metric tracker data.
+ * MyBatis implementation of {@link GlobalMetricCampaignOptInDao}.
  * 
  * @author matt
  * @version 1.0
  */
-public interface GlobalMetricTrackerCollector {
+public class MyBatisGlobalMetricCampaignOptInDao extends
+		BaseMyBatisGenericDao<GlobalMetricCampaignOptIn, GlobalMetricCampaignNodePropertyPK>
+		implements GlobalMetricCampaignOptInDao {
 
 	/**
-	 * Add a collection of node datum to the tracking collector for tracking
-	 * purposes.
-	 * 
-	 * @param datums
-	 *        the datum to accept
+	 * Constructor.
 	 */
-	public void addGeneralNodeDatum(Iterable<GeneralNodeDatum> datums);
+	public MyBatisGlobalMetricCampaignOptInDao() {
+		super(GlobalMetricCampaignOptIn.class, GlobalMetricCampaignNodePropertyPK.class);
+	}
+
 }

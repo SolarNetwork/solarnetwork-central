@@ -1,5 +1,5 @@
 /* ==================================================================
- * GlobalMetricTrackerOptInDao.java - 1/11/2018 10:04:30 AM
+ * GlobalMetricCampaignOptInDao.java - 1/11/2018 10:04:30 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -22,8 +22,9 @@
 
 package net.solarnetwork.central.in.tracker.dao;
 
-import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.in.tracker.domain.GlobalMetricNodeCampaignPropertyConfig;
+import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaignOptIn;
+import net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaignNodePropertyPK;
 
 /**
  * DAO API for "opt-in" logic for global metric tracking.
@@ -31,18 +32,7 @@ import net.solarnetwork.central.in.tracker.domain.GlobalMetricNodeCampaignProper
  * @author matt
  * @version 1.0
  */
-public interface GlobalMetricTrackerOptInDao {
-
-	/**
-	 * Get the opt-in metric property configuration for a node campaign.
-	 * 
-	 * @param campaignId
-	 *        the global metric campaign ID
-	 * @param nodeSource
-	 *        the node source
-	 * @return the available configuration, never {@literal null}
-	 */
-	Iterable<GlobalMetricNodeCampaignPropertyConfig> optInConfigForNodeSource(String campaignId,
-			NodeSourcePK nodeSource);
+public interface GlobalMetricCampaignOptInDao
+		extends GenericDao<GlobalMetricCampaignOptIn, GlobalMetricCampaignNodePropertyPK> {
 
 }

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaignOptIn">
+
+	<cache/>
+
+	<update id="update-GlobalMetricCampaignOptIn" parameterType="net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaignOptIn">
+		INSERT INTO solarnet.sn_metric_campaign_optin (
+			campaign_id
+			, node_id
+			, source_id
+			, prop_type
+			, prop_name
+			<if test="created != null">, created</if>
+		) VALUES (
+			#{campaignId}
+			, #{nodeId}
+			, #{sourceId}
+			, #{propertyTypeKey}
+			, #{propertyName}
+			<if test="created != null">, #{created}</if>
+		)
+		ON CONFLICT (campaign_id, node_id, source_id, prop_type, prop_name) DO NOTHING
+	</update>
+	
+	<sql id="fragment-GlobalMetricCampaignOptIn-full-result">
+		mco.campaign_id AS sn_metric_campaign_optin_campaign_id,
+		mco.node_id AS sn_metric_campaign_optin_node_id,
+		mco.source_id AS sn_metric_campaign_optin_source_id,
+		mco.prop_type AS sn_metric_campaign_optin_prop_type,
+		mco.prop_name AS sn_metric_campaign_optin_prop_name,
+		mco.created AS sn_metric_campaign_optin_created
+	</sql>
+	
+	<resultMap id="GlobalMetricCampaignOptInFullResult" type="net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaignOptIn">
+		<id property="campaignId" column="sn_metric_campaign_optin_campaign_id"/>
+		<id property="nodeId" column="sn_metric_campaign_optin_node_id"/>
+		<id property="sourceId" column="sn_metric_campaign_optin_source_id"/>
+		<id property="propertyTypeKey" column="sn_metric_campaign_optin_prop_type"/>
+		<id property="propertyName" column="sn_metric_campaign_optin_prop_name"/>
+		<result property="created" column="sn_metric_campaign_optin_created"/>
+	</resultMap>
+
+	<select id="get-GlobalMetricCampaignOptIn-for-id" parameterType="net.solarnetwork.central.in.tracker.domain.GlobalMetricCampaignNodePropertyPK" resultMap="GlobalMetricCampaignOptInFullResult">
+		SELECT
+			<include refid="fragment-GlobalMetricCampaignOptIn-full-result"/>
+		FROM
+			solarnet.sn_metric_campaign_optin mco
+		WHERE
+			mco.campaign_id = #{campaignId}
+			AND mco.node_id = #{nodeId}
+			AND mco.source_id = #{sourceId}
+			AND mco.prop_type = #{propertyTypeKey}
+			AND mco.prop_name = #{propertyName}
+	</select>
+
+	<select id="findall-GlobalMetricCampaignOptIn" resultMap="GlobalMetricCampaignOptInFullResult" fetchSize="1000" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GlobalMetricCampaignOptIn-full-result"/>
+		FROM
+			solarnet.sn_metric_campaign_optin mco
+		ORDER BY
+			<if test="SortDescriptors != null">
+				<foreach collection="SortDescriptors" item="item" separator="," close=",">
+					<if test="item.sortKey == &quot;created&quot;">mco.created</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</if>
+			mco.campaign_id, mco.node_id, mco.source_id, mco.prop_type, mco.prop_name
+	</select>
+	
+</mapper>
