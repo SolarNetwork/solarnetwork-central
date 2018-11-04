@@ -16,7 +16,14 @@ CREATE TABLE solarnet.sn_metric_campaign_optin (
     prop_type CHARACTER(1) NOT NULL,
     prop_name CHARACTER VARYING(64) NOT NULL,
     created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	CONSTRAINT sn_metric_campaign_opt_in_pkey PRIMARY KEY (campaign_id, node_id, source_id, prop_type, prop_name)
+	CONSTRAINT sn_metric_campaign_optin_pkey 
+		PRIMARY KEY (campaign_id, node_id, source_id, prop_type, prop_name),
+	CONSTRAINT sn_metric_campaign_optin_campaign_fk FOREIGN KEY (campaign_id)
+		REFERENCES solarnet.sn_metric_campaign (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION,
+	CONSTRAINT sn_metric_campaign_optin_node_fk FOREIGN KEY (node_id)
+		REFERENCES solarnet.sn_node (node_id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
 -- table of stale time slots for tracking campaigns
