@@ -53,7 +53,7 @@ import net.solarnetwork.central.query.biz.QueryAuditor;
  * data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcQueryAuditor implements QueryAuditor {
 
@@ -156,7 +156,6 @@ public class JdbcQueryAuditor implements QueryAuditor {
 		// coalesce counts by key first to simplify inserts into counters
 		Map<GeneralNodeDatumPK, Integer> counts = new HashMap<>(returnedCount);
 		for ( FilterMatch<GeneralNodeDatumPK> result : results ) {
-			@SuppressWarnings("deprecation")
 			GeneralNodeDatumPK id = result.getId();
 			GeneralNodeDatumPK pk = nodeDatumKey(hour, id.getNodeId(), id.getSourceId());
 			counts.compute(pk, (k, v) -> v == null ? 1 : v.intValue() + 1);
