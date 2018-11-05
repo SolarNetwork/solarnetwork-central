@@ -265,6 +265,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 	}
 
 	private void insertDailyDatum(DateTime date, Long nodeId, String sourceId) {
+		log.debug("Inserting day datum {} {} @ {}", nodeId, sourceId, date);
 		jdbcTemplate.update(
 				"INSERT INTO solaragg.agg_datum_daily (ts_start, local_date, node_id, source_id, jdata_i) VALUES (?,?,?,?,?::jsonb) ON CONFLICT DO NOTHING",
 				new Timestamp(date.getMillis()),
@@ -273,6 +274,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 	}
 
 	private void insertMonthlyDatum(DateTime date, Long nodeId, String sourceId) {
+		log.debug("Inserting month datum {} {} @ {}", nodeId, sourceId, date);
 		jdbcTemplate.update(
 				"INSERT INTO solaragg.agg_datum_monthly (ts_start, local_date, node_id, source_id, jdata_i) VALUES (?,?,?,?,?::jsonb) ON CONFLICT DO NOTHING",
 				new Timestamp(date.getMillis()),
@@ -315,26 +317,62 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 				"SELECT * FROM solaragg.aud_datum_daily_stale ORDER BY aud_kind, node_id, ts_start, source_id");
 	}
 
-	private DateTime setupDataToExpire() {
-		DateTime today = new DateTime(DateTimeZone.forID(TEST_TZ)).dayOfMonth().roundFloorCopy();
+	private static final class DataToExpire {
 
-		DateTime day = today.minusWeeks(8);
+		private DateTime start;
+		private DateTime expire;
+		private long rawCount = 0L;
+		private long expiredCount = 0L;
+		private long hourCount = 0;
+		private long expiredHourCount = 0;
+		private int dayCount = 0;
+		private int expiredDayCount = 0;
+		private int monthCount = 0;
+		private int expiredMonthCount = 0;
+	}
+
+	private DataToExpire setupDataToExpire() {
+		DataToExpire result = new DataToExpire();
+		DateTime today = new DateTime(DateTimeZone.forID(TEST_TZ)).dayOfMonth().roundFloorCopy();
+		result.expire = new DateTime().minusDays(35).dayOfMonth().roundFloorCopy();
+
+		DateTime start = today.minusWeeks(8);
+		result.start = start;
+		DateTime month = start.minusMonths(1);
 		for ( int i = 0; i < 8; i++ ) {
-			DateTime currDay = day.plusWeeks(i);
+			DateTime currDay = start.plusWeeks(i);
+			DateTime currMonth = currDay.monthOfYear().roundFloorCopy();
+
 			insertDatum(currDay, TEST_NODE_ID, TEST_SOURCE_ID);
 			insertHourlyDatum(currDay, TEST_NODE_ID, TEST_SOURCE_ID);
 			insertDailyDatum(currDay, TEST_NODE_ID, TEST_SOURCE_ID);
-			insertMonthlyDatum(currDay.monthOfYear().roundFloorCopy(), TEST_NODE_ID, TEST_SOURCE_ID);
+
+			insertMonthlyDatum(currMonth, TEST_NODE_ID, TEST_SOURCE_ID);
 
 			// make sure monthly audit record exists, because "stale" records for these will be created
-			insertAuditDatumMonthly(currDay.monthOfYear().roundFloorCopy(), TEST_NODE_ID,
-					TEST_SOURCE_ID);
+			insertAuditDatumMonthly(currMonth, TEST_NODE_ID, TEST_SOURCE_ID);
+
+			result.rawCount++;
+			result.hourCount++;
+			result.dayCount++;
+			if ( currDay.isBefore(result.expire) ) {
+				result.expiredCount++;
+				result.expiredHourCount++;
+				result.expiredDayCount++;
+			}
+			if ( currMonth.isAfter(month) ) {
+				if ( month.isBefore(result.expire) && result.monthCount > 0 ) {
+					result.expiredMonthCount++;
+				}
+				result.monthCount++;
+				month = currMonth;
+			}
 		}
 
 		// delete any "stale hourly agg" records
 		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
 
-		return day;
+		return result;
 	}
 
 	private void assertAuditDatumDailyStaleMonths(DateTime start, int count) {
@@ -360,7 +398,8 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 	@Test
 	public void expireRawData() {
-		final DateTime start = setupDataToExpire();
+		final DataToExpire range = setupDataToExpire();
+		final DateTime start = range.start;
 
 		storeNew();
 
@@ -371,32 +410,33 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 		// first verify "preview"
 		DatumRecordCounts counts = confDao.countExpiredDataForConfiguration(this.conf);
-		assertCounts("preview", counts, 3L, null, null, null);
+		assertCounts("preview", counts, range.expiredCount, null, null, null);
 
 		// now execute delete
 		long result = confDao.deleteExpiredDataForConfiguration(this.conf);
-		assertThat("Deleted raw datum count", result, equalTo(3L));
+		assertThat("Deleted raw datum count", result, equalTo(range.expiredCount));
 
 		List<Map<String, Object>> datum = findAllDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Datum count", datum, hasSize(5));
-		assertThat("First datum date", datum.get(0),
-				hasEntry("ts", (Object) new Timestamp(start.plusWeeks(3).getMillis())));
+		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
+		assertThat("First datum date", datum.get(0), hasEntry("ts",
+				(Object) new Timestamp(start.plusWeeks((int) range.expiredCount).getMillis())));
 
 		datum = findAllHourlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Hourly datum count", datum, hasSize(8));
+		assertThat("Hourly datum count", datum, hasSize((int) range.hourCount));
 
 		datum = findAllDailyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Daily datum count", datum, hasSize(8));
+		assertThat("Daily datum count", datum, hasSize(range.dayCount));
 
 		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Monthly datum count", datum, hasSize(3));
+		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
-		assertAuditDatumDailyStaleMonths(start, 2);
+		assertAuditDatumDailyStaleMonths(start, range.monthCount - 1);
 	}
 
 	@Test
 	public void expireRawAndHourlyData() {
-		final DateTime start = setupDataToExpire();
+		final DataToExpire range = setupDataToExpire();
+		final DateTime start = range.start;
 
 		storeNew();
 
@@ -407,34 +447,37 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 		// first verify "preview"
 		DatumRecordCounts counts = confDao.countExpiredDataForConfiguration(this.conf);
-		assertCounts("preview", counts, 3L, 3L, null, null);
+		assertCounts("preview", counts, range.expiredCount, range.expiredHourCount, null, null);
 
 		// now execute delete
 		long result = confDao.deleteExpiredDataForConfiguration(this.conf);
-		assertThat("Deleted raw + hourly datum count", result, equalTo(6L));
+		assertThat("Deleted raw + hourly datum count", result,
+				equalTo(range.expiredCount + range.expiredHourCount));
 
 		List<Map<String, Object>> datum = findAllDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Datum count", datum, hasSize(5));
-		assertThat("First datum date", datum.get(0),
-				hasEntry("ts", (Object) new Timestamp(start.plusWeeks(3).getMillis())));
+		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
+		assertThat("First datum date", datum.get(0), hasEntry("ts",
+				(Object) new Timestamp(start.plusWeeks((int) range.expiredCount).getMillis())));
 
 		datum = findAllHourlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Hourly datum count", datum, hasSize(5));
-		assertThat("First hourly date", datum.get(0),
-				hasEntry("ts_start", (Object) new Timestamp(start.plusWeeks(3).getMillis())));
+		assertThat("Hourly datum count", datum,
+				hasSize((int) (range.hourCount - range.expiredHourCount)));
+		assertThat("First hourly date", datum.get(0), hasEntry("ts_start",
+				(Object) new Timestamp(start.plusWeeks((int) range.expiredHourCount).getMillis())));
 
 		datum = findAllDailyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Daily datum count", datum, hasSize(8));
+		assertThat("Daily datum count", datum, hasSize(range.dayCount));
 
 		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Monthly datum count", datum, hasSize(3));
+		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
-		assertAuditDatumDailyStaleMonths(start, 2);
+		assertAuditDatumDailyStaleMonths(start, range.monthCount - 1);
 	}
 
 	@Test
 	public void expireRawAndHourlyAndDailyData() {
-		final DateTime start = setupDataToExpire();
+		final DataToExpire range = setupDataToExpire();
+		final DateTime start = range.start;
 
 		storeNew();
 
@@ -445,36 +488,40 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 		// first verify "preview"
 		DatumRecordCounts counts = confDao.countExpiredDataForConfiguration(this.conf);
-		assertCounts("preview", counts, 3L, 3L, 3, null);
+		assertCounts("preview", counts, range.expiredCount, range.expiredHourCount,
+				range.expiredDayCount, null);
 
 		// now execute delete
 		long result = confDao.deleteExpiredDataForConfiguration(this.conf);
-		assertThat("Deleted raw + hourly + daily datum count", result, equalTo(9L));
+		assertThat("Deleted raw + hourly + daily datum count", result,
+				equalTo(range.expiredCount + range.expiredHourCount + range.expiredDayCount));
 
 		List<Map<String, Object>> datum = findAllDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Datum count", datum, hasSize(5));
-		assertThat("First datum date", datum.get(0),
-				hasEntry("ts", (Object) new Timestamp(start.plusWeeks(3).getMillis())));
+		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
+		assertThat("First datum date", datum.get(0), hasEntry("ts",
+				(Object) new Timestamp(start.plusWeeks((int) range.expiredCount).getMillis())));
 
 		datum = findAllHourlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Hourly datum count", datum, hasSize(5));
-		assertThat("First hourly date", datum.get(0),
-				hasEntry("ts_start", (Object) new Timestamp(start.plusWeeks(3).getMillis())));
+		assertThat("Hourly datum count", datum,
+				hasSize((int) (range.hourCount - range.expiredHourCount)));
+		assertThat("First hourly date", datum.get(0), hasEntry("ts_start",
+				(Object) new Timestamp(start.plusWeeks((int) range.expiredHourCount).getMillis())));
 
 		datum = findAllDailyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Daily datum count", datum, hasSize(5));
-		assertThat("First daily date", datum.get(0),
-				hasEntry("ts_start", (Object) new Timestamp(start.plusWeeks(3).getMillis())));
+		assertThat("Daily datum count", datum, hasSize(range.dayCount - range.expiredDayCount));
+		assertThat("First daily date", datum.get(0), hasEntry("ts_start",
+				(Object) new Timestamp(start.plusWeeks(range.expiredDayCount).getMillis())));
 
 		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Monthly datum count", datum, hasSize(3));
+		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
-		assertAuditDatumDailyStaleMonths(start, 2);
+		assertAuditDatumDailyStaleMonths(start, range.monthCount - 1);
 	}
 
 	@Test
 	public void expireRawAndHourlyAndDailyAndMonthlyData() {
-		final DateTime start = setupDataToExpire();
+		final DataToExpire range = setupDataToExpire();
+		final DateTime start = range.start;
 
 		storeNew();
 
@@ -485,32 +532,35 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 		// first verify "preview"
 		DatumRecordCounts counts = confDao.countExpiredDataForConfiguration(this.conf);
-		assertCounts("preview", counts, 3L, 3L, 3, 1);
+		assertCounts("preview", counts, range.expiredCount, range.expiredHourCount,
+				range.expiredDayCount, range.expiredMonthCount);
 
 		// now execute delete
 		long result = confDao.deleteExpiredDataForConfiguration(this.conf);
-		assertThat("Deleted raw + hourly + daily + monthly datum count", result, equalTo(10L));
+		assertThat("Deleted raw + hourly + daily datum count", result, equalTo(range.expiredCount
+				+ range.expiredHourCount + range.expiredDayCount + range.expiredMonthCount));
 
 		List<Map<String, Object>> datum = findAllDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Datum count", datum, hasSize(5));
-		assertThat("First datum date", datum.get(0),
-				hasEntry("ts", (Object) new Timestamp(start.plusWeeks(3).getMillis())));
+		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
+		assertThat("First datum date", datum.get(0), hasEntry("ts",
+				(Object) new Timestamp(start.plusWeeks((int) range.expiredCount).getMillis())));
 
 		datum = findAllHourlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Hourly datum count", datum, hasSize(5));
-		assertThat("First hourly date", datum.get(0),
-				hasEntry("ts_start", (Object) new Timestamp(start.plusWeeks(3).getMillis())));
+		assertThat("Hourly datum count", datum,
+				hasSize((int) (range.hourCount - range.expiredHourCount)));
+		assertThat("First hourly date", datum.get(0), hasEntry("ts_start",
+				(Object) new Timestamp(start.plusWeeks((int) range.expiredHourCount).getMillis())));
 
 		datum = findAllDailyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Daily datum count", datum, hasSize(5));
-		assertThat("First daily date", datum.get(0),
-				hasEntry("ts_start", (Object) new Timestamp(start.plusWeeks(3).getMillis())));
+		assertThat("Daily datum count", datum, hasSize(range.dayCount - range.expiredDayCount));
+		assertThat("First daily date", datum.get(0), hasEntry("ts_start",
+				(Object) new Timestamp(start.plusWeeks(range.expiredDayCount).getMillis())));
 
 		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		assertThat("Monthly datum count", datum, hasSize(2));
-		assertThat("First monthly date", datum.get(0), hasEntry("ts_start",
-				(Object) new Timestamp(start.plusWeeks(3).monthOfYear().roundFloorCopy().getMillis())));
+		assertThat("Monthly datum count", datum, hasSize(range.monthCount - range.expiredMonthCount));
+		assertThat("First monthly date", datum.get(0), hasEntry("ts_start", (Object) new Timestamp(
+				start.monthOfYear().roundFloorCopy().plusMonths(range.expiredMonthCount).getMillis())));
 
-		assertAuditDatumDailyStaleMonths(start, 2);
+		assertAuditDatumDailyStaleMonths(start, range.monthCount - range.expiredMonthCount);
 	}
 }
