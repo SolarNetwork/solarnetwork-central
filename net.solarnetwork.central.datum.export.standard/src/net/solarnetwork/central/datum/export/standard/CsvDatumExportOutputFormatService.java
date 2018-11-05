@@ -72,7 +72,7 @@ import net.solarnetwork.util.PropertySerializer;
  * {@link DatumExportOutputFormatService}
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.23
  */
 public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputFormatService {
@@ -200,7 +200,6 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			return processors;
 		}
 
-		@SuppressWarnings("deprecation")
 		private Map<String, Object> datumMap(GeneralNodeDatumFilterMatch match) {
 			if ( match == null || match.getId() == null ) {
 				return Collections.emptyMap();
