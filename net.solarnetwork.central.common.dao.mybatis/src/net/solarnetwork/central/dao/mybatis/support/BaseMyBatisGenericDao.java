@@ -40,8 +40,8 @@ import org.springframework.validation.Errors;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.domain.Entity;
-import net.solarnetwork.central.domain.Identity;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.domain.Identity;
 
 /**
  * Base implementation of {@link GenericDao} using MyBatis via
@@ -137,7 +137,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * @param <PK>
  *        The primary key type this DAO supports.
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Serializable>
 		extends BaseMyBatisDao implements GenericDao<T, PK> {
@@ -590,8 +590,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * @param relationClass
 	 *        the Class of the related object
 	 */
-	protected <E extends Identity<Long>> Long handleChildRelation(T parent, E child,
-			Class<? extends E> relationClass) {
+	protected <E extends net.solarnetwork.domain.Identity<Long>> Long handleChildRelation(T parent,
+			E child, Class<? extends E> relationClass) {
 		if ( parent == null ) {
 			return null;
 		}
