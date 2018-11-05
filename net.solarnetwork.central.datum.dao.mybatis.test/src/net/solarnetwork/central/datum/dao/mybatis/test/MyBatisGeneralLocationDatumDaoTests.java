@@ -64,9 +64,8 @@ import net.solarnetwork.domain.GeneralLocationDatumSamples;
  * Test cases for the {@link MyBatisGeneralLocationDatumDao} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-@SuppressWarnings("deprecation")
 public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private static final String TEST_SOURCE_ID = "test.source";

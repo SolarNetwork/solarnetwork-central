@@ -45,6 +45,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -62,7 +63,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for user alerts.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @GlobalServiceController
 @RequestMapping("/sec/alerts")
@@ -135,7 +136,11 @@ public class UserAlertController extends ControllerSupport {
 	public Response<List<String>> availableSourcesForNode(@PathVariable("nodeId") Long nodeId,
 			@RequestParam(value = "start", required = false) DateTime start,
 			@RequestParam(value = "end", required = false) DateTime end) {
-		Set<String> sources = queryBiz.getAvailableSources(nodeId, start, end);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(nodeId);
+		filter.setStartDate(start);
+		filter.setEndDate(end);
+		Set<String> sources = queryBiz.getAvailableSources(filter);
 		List<String> sourceList = new ArrayList<String>(sources);
 		return response(sourceList);
 	}

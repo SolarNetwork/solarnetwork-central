@@ -28,20 +28,13 @@ package net.solarnetwork.central.domain;
  * Common API for identity information in SolarNetwork participating services.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @param <PK>
  *        the primary data type that uniquely identifies the object
  * @deprecated in {@code 1.38}; use {@link net.solarnetwork.domain.Identity}
  *             instead
  */
 @Deprecated
-public interface Identity<PK> extends Comparable<PK> {
-
-	/**
-	 * Get the primary identifier of the object
-	 * 
-	 * @return the primary identifier
-	 */
-	PK getId();
+public interface Identity<PK> extends Comparable<PK>, net.solarnetwork.domain.Identity<PK> {
 
 }

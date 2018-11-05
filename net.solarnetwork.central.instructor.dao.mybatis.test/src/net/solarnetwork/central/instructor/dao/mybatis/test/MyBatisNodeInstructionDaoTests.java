@@ -50,9 +50,8 @@ import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
  * Test cases for the {@link MyBatisNodeInstructionDao} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-@SuppressWarnings("deprecation")
 public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private MyBatisNodeInstructionDao dao;

@@ -27,12 +27,13 @@ package net.solarnetwork.central.domain;
 import java.io.Serializable;
 
 /**
- * Base implementation of a Long-based {@link Identity}.
+ * Base implementation of a Long-based {@link net.solarnetwork.domain.Identity}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
-public abstract class BaseIdentity implements Cloneable, Serializable, Identity<Long> {
+public abstract class BaseIdentity
+		implements Cloneable, Serializable, net.solarnetwork.domain.Identity<Long> {
 
 	private static final long serialVersionUID = -5979349641482303093L;
 
@@ -42,7 +43,7 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 	public Object clone() {
 		try {
 			return super.clone();
-		} catch (CloneNotSupportedException e) {
+		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
 		}
@@ -70,7 +71,7 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 		if ( getClass() != obj.getClass() ) {
 			return false;
 		}
-		BaseIdentity other = (BaseIdentity)obj;
+		BaseIdentity other = (BaseIdentity) obj;
 		if ( id == null ) {
 			if ( other.id != null ) {
 				return false;
@@ -82,7 +83,8 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 	}
 
 	/**
-	 * Compare based on the primary key, with <em>null<em> values ordered before non-null values.
+	 * Compare based on the primary key, with <em>null<em> values ordered before
+	 * non-null values.
 	 */
 	@Override
 	public int compareTo(Long o) {
@@ -101,12 +103,14 @@ public abstract class BaseIdentity implements Cloneable, Serializable, Identity<
 	/**
 	 * @return the id
 	 */
+	@Override
 	public Long getId() {
 		return id;
 	}
 
 	/**
-	 * @param id the id to set
+	 * @param id
+	 *        the id to set
 	 */
 	public void setId(Long id) {
 		this.id = id;

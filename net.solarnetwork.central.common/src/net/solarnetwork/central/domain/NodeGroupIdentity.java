@@ -28,8 +28,8 @@ package net.solarnetwork.central.domain;
  * Node group identity information.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
-public interface NodeGroupIdentity extends Identity<Long> {
+public interface NodeGroupIdentity extends net.solarnetwork.domain.Identity<Long> {
 
 }

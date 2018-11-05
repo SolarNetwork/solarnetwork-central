@@ -53,10 +53,9 @@ import net.solarnetwork.central.user.domain.UserRelatedEntity;
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.11
  */
-@SuppressWarnings("deprecation")
 public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEntity<PK>, PK extends Serializable>
 		extends BaseMyBatisGenericDao<T, PK> implements UserRelatedGenericDao<T, PK> {
 

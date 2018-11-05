@@ -27,12 +27,14 @@ package net.solarnetwork.central.domain;
 import java.io.Serializable;
 
 /**
- * Base implementation of a String-based {@link Identity}.
+ * Base implementation of a String-based
+ * {@link net.solarnetwork.domain.Identity}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
-public abstract class BaseStringIdentity implements Cloneable, Serializable, Identity<String> {
+public abstract class BaseStringIdentity
+		implements Cloneable, Serializable, net.solarnetwork.domain.Identity<String> {
 
 	private static final long serialVersionUID = -2979855366308936650L;
 

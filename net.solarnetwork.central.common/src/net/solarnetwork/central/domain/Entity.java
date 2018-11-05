@@ -30,9 +30,9 @@ import org.joda.time.DateTime;
  * Base domain object API.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.1
  */
-public interface Entity<PK> extends Identity<PK> {
+public interface Entity<PK> extends net.solarnetwork.domain.Identity<PK> {
 
 	/**
 	 * Get the date this datum was created.

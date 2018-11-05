@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Instructor Biz DAO
 Bundle-SymbolicName: net.solarnetwork.central.instructor.biz.dao
-Bundle-Version: 1.7.0
+Bundle-Version: 1.8.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: 
@@ -12,6 +12,7 @@ Import-Package:
  net.solarnetwork.central.instructor.dao;version="[1.2.0,2.0.0)",
  net.solarnetwork.central.instructor.domain;version="[1.4.0,2.0.0)",
  net.solarnetwork.central.instructor.support;version="[1.5.0,2.0.0)",
+ net.solarnetwork.domain;version="1.14.0",
  org.aopalliance.aop;version="1.0.0",
  org.joda.time;version="[2.4,3.0)",
  org.joda.time.base;version="[2.4,3.0)",

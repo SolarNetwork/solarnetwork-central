@@ -26,8 +26,8 @@ package net.solarnetwork.central.domain;
  * Node identity information.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface NodeIdentity extends Identity<Long> {
+public interface NodeIdentity extends net.solarnetwork.domain.Identity<Long> {
 
 }

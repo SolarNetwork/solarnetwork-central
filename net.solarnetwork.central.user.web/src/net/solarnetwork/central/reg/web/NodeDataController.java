@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.JodaDateFormatEditor;
@@ -44,7 +45,7 @@ import net.solarnetwork.web.domain.Response;
  * REST controller to support data queries.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestController("v1NodeDataController")
 @RequestMapping(value = "/sec/node-data")
@@ -89,7 +90,9 @@ public class NodeDataController extends WebServiceControllerSupport {
 	@ResponseBody
 	@RequestMapping(value = "/{nodeId}/sources", method = RequestMethod.GET)
 	public Response<Set<String>> getAvailableSources(@PathVariable("nodeId") Long nodeId) {
-		Set<String> data = queryBiz.getAvailableSources(nodeId, null, null);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(nodeId);
+		Set<String> data = queryBiz.getAvailableSources(filter);
 		return new Response<Set<String>>(data);
 	}
 

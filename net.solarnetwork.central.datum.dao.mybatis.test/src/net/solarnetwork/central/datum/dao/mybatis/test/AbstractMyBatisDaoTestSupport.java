@@ -31,16 +31,15 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import net.solarnetwork.central.domain.Identity;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.domain.Identity;
 
 /**
  * Base class for MyBatis tests.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-@SuppressWarnings("deprecation")
 @ContextConfiguration
 public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
 
