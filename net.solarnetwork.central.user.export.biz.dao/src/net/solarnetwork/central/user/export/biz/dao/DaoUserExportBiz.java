@@ -79,7 +79,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO implementation of {@link UserExportBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, EventHandler {
 
@@ -401,9 +401,12 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 
 		if ( taskDatumFilter.getSourceId() != null ) {
 			Set<String> allSourceIds = new LinkedHashSet<>();
+			DatumFilterCommand filter = new DatumFilterCommand();
+			filter.setStartDate(currExportDate);
+			filter.setEndDate(nextExportDate);
 			for ( Long nodeId : taskDatumFilter.getNodeIds() ) {
-				Set<String> nodeSources = generalNodeDatumDao.getAvailableSources(nodeId, currExportDate,
-						nextExportDate);
+				filter.setNodeId(nodeId);
+				Set<String> nodeSources = generalNodeDatumDao.getAvailableSources(filter);
 				if ( nodeSources != null ) {
 					allSourceIds.addAll(nodeSources);
 				}
