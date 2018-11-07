@@ -70,19 +70,7 @@ public interface DatumImportInputFormatService extends DatumImportService {
 	 * A runtime context object for decoding datum from the input format
 	 * supported by this service.
 	 */
-	interface ImportContext extends Closeable {
-
-		/**
-		 * Decode the resource associated with this context.
-		 * 
-		 * @param progressListener
-		 *        a progress listener to report the overall progress of decoding
-		 *        the resource
-		 * @throws IOException
-		 *         if an IO error occurs
-		 */
-		Iterable<GeneralNodeDatum> decode(ProgressListener<DatumImportService> progressListener)
-				throws IOException;
+	interface ImportContext extends Closeable, Iterable<GeneralNodeDatum> {
 
 	}
 
@@ -93,8 +81,15 @@ public interface DatumImportInputFormatService extends DatumImportService {
 	 *        the configuration to create the context for
 	 * @param resource
 	 *        the resource to decode
+	 * @param progressListener
+	 *        the progress listener
 	 * @return the context
+	 * @throws IOException
+	 *         if an IO error occurs
+	 * @throws IllegalArgumentException
+	 *         if {@code config} is not valid for any reason
 	 */
-	ImportContext createImportContext(InputConfiguration config, DatumImportResource resource);
+	ImportContext createImportContext(InputConfiguration config, DatumImportResource resource,
+			ProgressListener<DatumImportService> progressListener) throws IOException;
 
 }
