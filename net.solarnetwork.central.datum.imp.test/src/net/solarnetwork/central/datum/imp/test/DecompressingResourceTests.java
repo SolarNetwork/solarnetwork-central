@@ -66,4 +66,13 @@ public class DecompressingResourceTests {
 		assertThat(r.getCompressionType(), equalTo("xz"));
 	}
 
+	@Test
+	public void lz4CompressionFormat() throws IOException {
+		DecompressingResource r = new DecompressingResource(
+				new ClassPathResource("text-file.txt.lz4", getClass()));
+		String data = FileCopyUtils.copyToString(new InputStreamReader(r.getInputStream(), "UTF-8"));
+		assertThat(data, equalTo("Hello, world!\n"));
+		assertThat(r.getCompressionType(), equalTo("lz4-framed"));
+	}
+
 }
