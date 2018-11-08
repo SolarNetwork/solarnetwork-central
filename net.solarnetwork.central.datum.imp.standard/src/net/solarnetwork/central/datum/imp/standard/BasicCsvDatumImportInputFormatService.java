@@ -123,6 +123,11 @@ public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFo
 				s.setStatus(parseMap(row, props.getStatusDataColumn()));
 				s.setTags(parseSet(row, props.getTagDataColumn()));
 
+				if ( s.getInstantaneous() != null || s.getAccumulating() != null
+						|| s.getStatus() != null ) {
+					d.setSamples(s);
+				}
+
 				return d;
 			}
 

@@ -24,7 +24,9 @@ package net.solarnetwork.central.datum.imp.standard;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -45,14 +47,14 @@ public class CsvDatumImportInputProperties {
 	/** The default date format. */
 	public static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
-	/** The default date column; contains just {@literal 1}. */
-	public static final List<Integer> DEFAULT_DATE_COLUMNS = Collections.singletonList(1);
+	/** The default node ID column: {@literal 1}. */
+	public static final Integer DEFAULT_NODE_ID_COLUMN = 1;
 
-	/** The default node ID column: {@literal 2}. */
-	public static final Integer DEFAULT_NODE_ID_COLUMN = 2;
+	/** The default source ID column: {@literal 2}. */
+	public static final Integer DEFAULT_SOURCE_ID_COLUMN = 2;
 
-	/** The default source ID column: {@literal 3}. */
-	public static final Integer DEFAULT_SOURCE_ID_COLUMN = 3;
+	/** The default date column; contains just {@literal 3}. */
+	public static final List<Integer> DEFAULT_DATE_COLUMNS = Collections.singletonList(3);
 
 	private Integer headerRowCount = DEFAULT_HEADER_ROW_COUNT;
 	private List<Integer> dateColumns = DEFAULT_DATE_COLUMNS;
@@ -92,6 +94,31 @@ public class CsvDatumImportInputProperties {
 	public boolean isValid() {
 		return (dateColumns != null && !dateColumns.isEmpty() && dateFormat != null
 				&& dateFormat.trim().length() > 0 && nodeIdColumn != null && sourceIdColumn != null);
+	}
+
+	/**
+	 * Create a map of service properties from this instance.
+	 * 
+	 * @return a map of service properties, never {@literal null}
+	 */
+	public Map<String, Object> toServiceProperties() {
+		Map<String, Object> result = new LinkedHashMap<>(8);
+		if ( headerRowCount != null ) {
+			result.put("headerRowCount", headerRowCount);
+		}
+		if ( dateColumns != null && !dateColumns.isEmpty() ) {
+			result.put("dateColumnsValue", getDateColumnsValue());
+		}
+		if ( dateFormat != null ) {
+			result.put("dateFormat", dateFormat);
+		}
+		if ( nodeIdColumn != null ) {
+			result.put("nodeIdColumn", nodeIdColumn);
+		}
+		if ( sourceIdColumn != null ) {
+			result.put("sourceIdColumn", sourceIdColumn);
+		}
+		return result;
 	}
 
 	public Integer getHeaderRowCount() {

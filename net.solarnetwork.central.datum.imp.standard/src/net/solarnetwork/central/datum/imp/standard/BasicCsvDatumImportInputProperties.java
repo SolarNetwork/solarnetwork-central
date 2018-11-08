@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.standard;
 
 import java.util.List;
+import java.util.Map;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
@@ -75,6 +76,24 @@ public class BasicCsvDatumImportInputProperties extends CsvDatumImportInputPrope
 					|| statusDataColumn != null);
 		}
 		return valid;
+	}
+
+	@Override
+	public Map<String, Object> toServiceProperties() {
+		Map<String, Object> result = super.toServiceProperties();
+		if ( instantaneousDataColumn != null ) {
+			result.put("instantaneousDataColumn", instantaneousDataColumn);
+		}
+		if ( accumulatingDataColumn != null ) {
+			result.put("accumulatingDataColumn", accumulatingDataColumn);
+		}
+		if ( statusDataColumn != null ) {
+			result.put("statusDataColumn", statusDataColumn);
+		}
+		if ( tagDataColumn != null ) {
+			result.put("tagDataColumn", tagDataColumn);
+		}
+		return result;
 	}
 
 	public Integer getInstantaneousDataColumn() {

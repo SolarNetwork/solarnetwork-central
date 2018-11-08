@@ -134,7 +134,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		if ( row == null || col == null || col.intValue() > row.size() ) {
 			return null;
 		}
-		return row.get(col);
+		return row.get(col - 1);
 	}
 
 	/**
@@ -211,10 +211,12 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		Map<String, Number> result = null;
 		if ( v != null ) {
 			Map<String, Object> m = JsonUtils.getStringMap(v);
-			result = m.entrySet().stream().filter(e -> e.getValue() instanceof Number)
-					.collect(toMap(e -> e.getKey(), e -> (Number) e.getValue()));
-			if ( result.isEmpty() ) {
-				result = null;
+			if ( m != null ) {
+				result = m.entrySet().stream().filter(e -> e.getValue() instanceof Number)
+						.collect(toMap(e -> e.getKey(), e -> (Number) e.getValue()));
+				if ( result.isEmpty() ) {
+					result = null;
+				}
 			}
 		}
 		return result;
@@ -294,7 +296,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 			nodeId = Long.valueOf(getColumnValue(row, props.getNodeIdColumn()));
 		} catch ( NumberFormatException e ) {
 			throw new DatumImportValidationException(
-					"Unable to parse node ID from column " + props.getNodeIdColumn(), e,
+					"Error parsing node ID from column " + props.getNodeIdColumn() + ".", e,
 					reader.getLineNumber(), reader.getUntokenizedRow());
 		}
 
@@ -309,10 +311,9 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		try {
 			date = dateFormatter.parseDateTime(getColumnsValue(row, props.getDateColumns(), " "));
 		} catch ( IllegalArgumentException e ) {
-			throw new DatumImportValidationException(
-					"Unable to parse date from columns "
-							+ StringUtils.commaDelimitedStringFromCollection(props.getDateColumns()),
-					e, reader.getLineNumber(), reader.getUntokenizedRow());
+			throw new DatumImportValidationException("Error parsing date from columns "
+					+ StringUtils.commaDelimitedStringFromCollection(props.getDateColumns()) + ".", e,
+					reader.getLineNumber(), reader.getUntokenizedRow());
 		}
 
 		GeneralNodeDatum d = new GeneralNodeDatum();
@@ -322,8 +323,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		return d;
 	}
 
-	@Override
-	public boolean hasNext() {
+	private E getNext() {
 		if ( next == null ) {
 			try {
 				// read in rows of data until we parse a non-null value
@@ -338,14 +338,18 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 				throw new RuntimeException(e);
 			}
 		}
-		return next != null;
+		return next;
+	}
+
+	@Override
+	public boolean hasNext() {
+		return (getNext() != null);
 	}
 
 	@Override
 	public E next() {
-		E result = null;
-		if ( hasNext() && next != null ) {
-			result = next;
+		E result = getNext();
+		if ( result != null ) {
 			next = null;
 		}
 		return result;
