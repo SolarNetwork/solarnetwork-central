@@ -20,11 +20,12 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.imp.domain;
+package net.solarnetwork.central.datum.imp.support;
 
 import java.io.IOException;
 import java.io.InputStream;
 import org.springframework.core.io.Resource;
+import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 
 /**
  * Basic implementation of {@link DatumImportResource} that delegates many
