@@ -22,6 +22,10 @@
 
 package net.solarnetwork.central.datum.imp.biz;
 
+import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
+import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
+import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+
 /**
  * API for a datum import service.
  * 
@@ -36,5 +40,16 @@ public interface DatumImportBiz {
 	 * @return the available services, never {@literal null}
 	 */
 	Iterable<DatumImportInputFormatService> availableInputFormatServices();
+
+	/**
+	 * Submit an import datum request.
+	 * 
+	 * @param request
+	 *        the request
+	 * @param resource
+	 *        the resource
+	 * @return the status
+	 */
+	DatumImportStatus submitDatumImportRequest(DatumImportRequest request, DatumImportResource resource);
 
 }

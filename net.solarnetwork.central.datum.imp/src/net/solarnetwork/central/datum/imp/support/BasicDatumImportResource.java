@@ -22,19 +22,29 @@
 
 package net.solarnetwork.central.datum.imp.support;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import org.springframework.core.io.Resource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
+import net.solarnetwork.io.TransferrableResource;
 
 /**
  * Basic implementation of {@link DatumImportResource} that delegates many
  * operations to a Spring {@link Resource}.
  * 
+ * <p>
+ * This class also implements {@link TransferrableResource}, and will delegate
+ * that API to the delegate {@link Resource} as long as the delegate also
+ * implements {@link TransferrableResource}. If the delegate does not implements
+ * {@link TransferrableResource} those methods will throw an
+ * {@link UnsupportedOperationException}.
+ * </p>
+ * 
  * @author matt
  * @version 1.0
  */
-public class BasicDatumImportResource implements DatumImportResource {
+public class BasicDatumImportResource implements DatumImportResource, TransferrableResource {
 
 	private final Resource delegate;
 	private final String contentType;
@@ -71,6 +81,15 @@ public class BasicDatumImportResource implements DatumImportResource {
 	@Override
 	public String getContentType() {
 		return contentType;
+	}
+
+	@Override
+	public void transferTo(File dest) throws IOException, IllegalStateException {
+		if ( delegate instanceof TransferrableResource ) {
+			((TransferrableResource) delegate).transferTo(dest);
+		} else {
+			throw new UnsupportedOperationException(delegate + " is not a TransferrableResource");
+		}
 	}
 
 	/**

@@ -36,11 +36,15 @@ import org.springframework.web.multipart.MultipartFile;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.imp.domain.BasicDatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.support.MultipartFileResource;
 
 /**
  * Web service API for datum import management.
@@ -91,8 +95,15 @@ public class DatumImportController extends WebServiceControllerSupport {
 	/**
 	 * Upload a datum import configuration with associated data.
 	 * 
-	 * @param config the import configuration
-	 * @param data the data to import
+	 * <p>
+	 * The actor must have an associated user ID as provided by
+	 * {@link SecurityUtils#getCurrentActorUserId()}.
+	 * </p>
+	 * 
+	 * @param config
+	 *        the import configuration
+	 * @param data
+	 *        the data to import
 	 * @return a status entity
 	 */
 	@ResponseBody
@@ -102,7 +113,11 @@ public class DatumImportController extends WebServiceControllerSupport {
 		final DatumImportBiz biz = importBiz.service();
 		DatumImportStatus result = null;
 		if ( biz != null ) {
-			// TODO
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			BasicDatumImportResource resource = new BasicDatumImportResource(
+					new MultipartFileResource(data), data.getContentType());
+			BasicDatumImportRequest request = new BasicDatumImportRequest(config, userId);
+			result = biz.submitDatumImportRequest(request, resource);
 		}
 		return response(result);
 	}
