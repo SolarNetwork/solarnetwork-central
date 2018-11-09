@@ -1,0 +1,20 @@
+<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
+    <info organisation="net.solarnetwork.central" module="${bundle.name}" />
+	<configurations defaultconf="compile,runtime">
+		<conf name="compile" visibility="public" description="Build dependencies"/>
+		<conf name="runtime" visibility="public" description="Runtime dependencies"/>
+		<conf name="sources"/>
+	</configurations>
+	<publications>
+		<artifact type="pom" ext="pom" conf="compile"/>
+		<artifact type="bundle" ext="jar" conf="runtime"/>
+		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
+	</publications>
+	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.dao.mybatis" rev="[1.5.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.imp" rev="[1.0,2.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.dao.mybatis" rev="[1.11,2.0)"/>
+		<dependency org="org.mybatis" name="mybatis" rev="3.2.8" />
+		<dependency org="org.mybatis" name="mybatis-spring" rev="1.2.2" />
+	</dependencies>
+</ivy-module>
