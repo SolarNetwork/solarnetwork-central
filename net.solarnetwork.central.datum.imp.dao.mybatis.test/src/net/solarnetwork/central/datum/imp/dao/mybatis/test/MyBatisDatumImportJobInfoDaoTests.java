@@ -23,7 +23,9 @@
 package net.solarnetwork.central.datum.imp.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.util.Collections;
 import java.util.UUID;
@@ -34,6 +36,7 @@ import net.solarnetwork.central.datum.imp.dao.mybatis.MyBatisDatumImportJobInfoD
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
+import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 
@@ -107,4 +110,56 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		this.info = info;
 	}
 
+	@Test
+	public void update() {
+		storeNew();
+
+		DatumImportJobInfo info = dao.get(this.info.getId());
+		DateTime originalCreated = info.getCreated();
+		info.setCreated(new DateTime()); // should not actually save
+		info.setImportState(DatumImportState.Completed);
+
+		UserUuidPK id = dao.store(info);
+		assertThat("PK unchanged", id, equalTo(this.info.getId()));
+
+		DatumImportJobInfo updated = dao.get(id);
+		assertThat("Found by PK", updated, notNullValue());
+		assertThat("New entity returned", updated, not(sameInstance(info)));
+		assertThat("PK", updated.getId(), equalTo(info.getId()));
+		assertThat("Created unchanged", updated.getCreated(), equalTo(originalCreated));
+		assertThat("State changed", updated.getImportState(), equalTo(info.getImportState()));
+	}
+
+	@Test
+	public void purgeCompletedNoneCompleted() {
+		getByPrimaryKey();
+		long result = dao.purgeCompletedJobs(new DateTime());
+		assertThat("Delete count", result, equalTo(0L));
+	}
+
+	@Test
+	public void purgeCompletedNoneExpired() {
+		getByPrimaryKey();
+
+		long result = dao.purgeCompletedJobs(new DateTime().hourOfDay().roundCeilingCopy());
+		assertThat("Delete count", result, equalTo(0L));
+	}
+
+	@Test
+	public void purgeCompleted() {
+		getByPrimaryKey();
+		DatumImportJobInfo info = new DatumImportJobInfo();
+		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setConfig(new BasicConfiguration());
+		info.setImportDate(new DateTime());
+		info.setImportState(DatumImportState.Completed);
+		info.setCompleted(new DateTime().hourOfDay().roundFloorCopy());
+		info = dao.get(dao.store(info));
+
+		long result = dao.purgeCompletedJobs(new DateTime().hourOfDay().roundCeilingCopy());
+		assertThat("Delete count", result, equalTo(1L));
+
+		DatumImportJobInfo notCompleted = dao.get(this.info.getId());
+		assertThat("Unfinished job still available", notCompleted, notNullValue());
+	}
 }

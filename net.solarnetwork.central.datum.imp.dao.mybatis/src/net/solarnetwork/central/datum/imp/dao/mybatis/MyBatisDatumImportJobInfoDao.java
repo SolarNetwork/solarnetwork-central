@@ -56,6 +56,8 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 */
 	public MyBatisDatumImportJobInfoDao() {
 		super(DatumImportJobInfo.class, UserUuidPK.class);
+		setQueryForClaimQueuedJob(QUERY_FOR_CLAIMING_JOB);
+		setUpdateDeleteCompletedJobs(UPDATE_PURGE_COMPLETED);
 	}
 
 	@Override
