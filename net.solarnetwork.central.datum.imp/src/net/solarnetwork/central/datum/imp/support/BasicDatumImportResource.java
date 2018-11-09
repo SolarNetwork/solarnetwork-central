@@ -23,9 +23,11 @@
 package net.solarnetwork.central.datum.imp.support;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import org.springframework.core.io.Resource;
+import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.io.TransferrableResource;
 
@@ -36,9 +38,7 @@ import net.solarnetwork.io.TransferrableResource;
  * <p>
  * This class also implements {@link TransferrableResource}, and will delegate
  * that API to the delegate {@link Resource} as long as the delegate also
- * implements {@link TransferrableResource}. If the delegate does not implements
- * {@link TransferrableResource} those methods will throw an
- * {@link UnsupportedOperationException}.
+ * implements {@link TransferrableResource}.
  * </p>
  * 
  * @author matt
@@ -83,12 +83,23 @@ public class BasicDatumImportResource implements DatumImportResource, Transferra
 		return contentType;
 	}
 
+	/**
+	 * Transfer the resource to a file.
+	 * 
+	 * <p>
+	 * If the delegate {@code resource} also implements
+	 * {@link TransferrableResource} then this method will delegate to that
+	 * directly. Otherwise the data stream will be copied to the given file.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void transferTo(File dest) throws IOException, IllegalStateException {
 		if ( delegate instanceof TransferrableResource ) {
 			((TransferrableResource) delegate).transferTo(dest);
 		} else {
-			throw new UnsupportedOperationException(delegate + " is not a TransferrableResource");
+			FileCopyUtils.copy(getInputStream(), new FileOutputStream(dest));
 		}
 	}
 
