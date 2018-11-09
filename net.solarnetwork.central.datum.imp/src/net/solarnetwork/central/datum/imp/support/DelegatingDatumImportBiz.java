@@ -25,12 +25,14 @@ package net.solarnetwork.central.datum.imp.support;
 import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.domain.FilterResults;
 
 /**
  * Delegating implementation of {@link DatumImportBiz}, mostly to help with AOP.
@@ -62,6 +64,16 @@ public class DelegatingDatumImportBiz implements DatumImportBiz {
 	public DatumImportStatus submitDatumImportRequest(DatumImportRequest request,
 			DatumImportResource resource) {
 		return delegate.submitDatumImportRequest(request, resource);
+	}
+
+	@Override
+	public FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, UUID jobId) {
+		return delegate.previewStagedImportForUser(userId, jobId);
+	}
+
+	@Override
+	public DatumImportStatus performImport(Long userId, UUID jobId) {
+		return delegate.performImport(userId, jobId);
 	}
 
 	@Override

@@ -25,10 +25,13 @@ package net.solarnetwork.central.datum.imp.biz;
 import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.domain.FilterResults;
 
 /**
  * API for a datum import service.
@@ -48,6 +51,14 @@ public interface DatumImportBiz {
 	/**
 	 * Submit an import datum request.
 	 * 
+	 * <p>
+	 * The import process is not expected to start after calling this method.
+	 * Rather it should enter the {@link DatumImportState#Queued} state. To
+	 * initiate the import process, the {@link #performImport(Long, UUID)} must
+	 * be called, passing in the same user ID and the returned
+	 * {@link DatumImportStatus#getJobId()}.
+	 * </p>
+	 * 
 	 * @param request
 	 *        the request
 	 * @param resource
@@ -55,6 +66,43 @@ public interface DatumImportBiz {
 	 * @return the status
 	 */
 	DatumImportStatus submitDatumImportRequest(DatumImportRequest request, DatumImportResource resource);
+
+	/**
+	 * Preview a staged import request.
+	 * 
+	 * <p>
+	 * This method can only be called after a job ID has been returned from a
+	 * previous call to
+	 * {@link #submitDatumImportRequest(DatumImportRequest, DatumImportResource)},
+	 * and only if the request's {@link Configuration#isStage()} was
+	 * {@literal true}.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user ID that owns the job
+	 * @param jobId
+	 *        the ID of the job to get
+	 * @return a sample of datum extracted from the import request data, never
+	 *         {@literal null}
+	 */
+	FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, UUID jobId);
+
+	/**
+	 * Perform a datum import.
+	 * 
+	 * <p>
+	 * This method can only be called after a job ID has been returned from a
+	 * previous call to
+	 * {@link #submitDatumImportRequest(DatumImportRequest, DatumImportResource)}.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user ID that owns the job
+	 * @param jobId
+	 *        the ID of the job to get
+	 * @return the job status, or {@literal null} if the job is not available
+	 */
+	DatumImportStatus performImport(Long userId, UUID jobId);
 
 	/**
 	 * Get the status of a specific job.
@@ -95,7 +143,7 @@ public interface DatumImportBiz {
 	 *        current state of the job does not matter
 	 * @return the job status, or {@literal null} if not available
 	 */
-	DatumImportStatus updateDatumImportJobStateForUser(Long userId, UUID jobId, DatumImportState desiredState,
-			Set<DatumImportState> expectedStates);
+	DatumImportStatus updateDatumImportJobStateForUser(Long userId, UUID jobId,
+			DatumImportState desiredState, Set<DatumImportState> expectedStates);
 
 }
