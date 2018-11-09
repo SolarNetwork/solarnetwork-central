@@ -65,7 +65,7 @@ public interface DatumImportBiz {
 	 *        the ID of the job to get
 	 * @return the job status, or {@literal null} if not available
 	 */
-	DatumImportStatus getDatumImportJobStatus(Long userId, UUID jobId);
+	DatumImportStatus datumImportJobStatusForUser(Long userId, UUID jobId);
 
 	/**
 	 * Find all available job statuses for a specific user.
@@ -77,7 +77,7 @@ public interface DatumImportBiz {
 	 *        for all states
 	 * @return the job statuses, never {@literal null}
 	 */
-	Collection<DatumImportStatus> allDatumImportJobStatusForUser(Long userId,
+	Collection<DatumImportStatus> datumImportJobStatusesForUser(Long userId,
 			Set<DatumImportState> states);
 
 	/**
@@ -95,7 +95,7 @@ public interface DatumImportBiz {
 	 *        current state of the job does not matter
 	 * @return the job status, or {@literal null} if not available
 	 */
-	DatumImportStatus updateDatumImportJobStatus(Long userId, UUID jobId, DatumImportState desiredState,
+	DatumImportStatus updateDatumImportJobStatusForUser(Long userId, UUID jobId, DatumImportState desiredState,
 			Set<DatumImportState> expectedStates);
 
 }

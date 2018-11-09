@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,7 +64,7 @@ import net.solarnetwork.web.support.MultipartFileResource;
  * @version 1.0
  * @since 1.33
  */
-@RestController("v1DatumExportController")
+@RestController("v1DatumImportController")
 @RequestMapping(value = { "/sec/import", "/v1/sec/user/import" })
 public class DatumImportController extends WebServiceControllerSupport {
 
@@ -74,7 +76,8 @@ public class DatumImportController extends WebServiceControllerSupport {
 	 * @param importBiz
 	 *        the import biz to use
 	 */
-	public DatumImportController(OptionalService<DatumImportBiz> importBiz) {
+	@Autowired
+	public DatumImportController(@Qualifier("importBiz") OptionalService<DatumImportBiz> importBiz) {
 		super();
 		this.importBiz = importBiz;
 	}
@@ -160,7 +163,7 @@ public class DatumImportController extends WebServiceControllerSupport {
 				stateFilter = EnumSet.copyOf(stateFilter);
 			}
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.allDatumImportJobStatusForUser(userId, stateFilter);
+			result = biz.datumImportJobStatusesForUser(userId, stateFilter);
 		}
 		return response(result);
 	}
@@ -184,7 +187,7 @@ public class DatumImportController extends WebServiceControllerSupport {
 		DatumImportStatus result = null;
 		if ( biz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.getDatumImportJobStatus(userId, id);
+			result = biz.datumImportJobStatusForUser(userId, id);
 		}
 		return response(result);
 	}
@@ -208,7 +211,7 @@ public class DatumImportController extends WebServiceControllerSupport {
 		DatumImportStatus result = null;
 		if ( biz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.updateDatumImportJobStatus(userId, id, DatumImportState.Queued,
+			result = biz.updateDatumImportJobStatusForUser(userId, id, DatumImportState.Queued,
 					Collections.singleton(DatumImportState.Staged));
 		}
 		return response(result);
@@ -233,8 +236,9 @@ public class DatumImportController extends WebServiceControllerSupport {
 		DatumImportStatus result = null;
 		if ( biz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.updateDatumImportJobStatus(userId, id, DatumImportState.Retracted, EnumSet
-					.of(DatumImportState.Staged, DatumImportState.Queued, DatumImportState.Claimed));
+			result = biz.updateDatumImportJobStatusForUser(userId, id, DatumImportState.Retracted,
+					EnumSet.of(DatumImportState.Staged, DatumImportState.Queued,
+							DatumImportState.Claimed));
 		}
 		return response(result);
 	}

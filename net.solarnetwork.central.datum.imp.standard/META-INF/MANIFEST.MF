@@ -31,6 +31,7 @@ Import-Package:
  org.osgi.service.event;version="[1.2,2.0)",
  org.slf4j;version="[1.7,2.0)",
  org.springframework.context;version="[4.2,5.0)",
+ org.springframework.context.support;version="[4.2,5.0)",
  org.springframework.core.io;version="[4.2,5.0)",
  org.springframework.util;version="[4.2,5.0)",
  org.supercsv.cellprocessor;version="[2.0,3.0)",

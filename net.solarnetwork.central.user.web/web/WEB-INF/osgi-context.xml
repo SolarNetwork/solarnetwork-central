@@ -78,6 +78,12 @@
 		<property name="serviceClassName" value="net.solarnetwork.central.user.nim.biz.SolarNodeImageMakerBiz"/>
 	</bean>
 
+	<bean id="importBiz" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.datum.imp.biz.DatumImportBiz"/>
+		<property name="serviceFilter" value="(secured=true)"/>
+	</bean>
+
 	<bean id="exportBiz" class="net.solarnetwork.util.DynamicServiceTracker">
 		<property name="bundleContext" ref="bundleContext"/>
 		<property name="serviceClassName" value="net.solarnetwork.central.user.export.biz.UserExportBiz"/>
