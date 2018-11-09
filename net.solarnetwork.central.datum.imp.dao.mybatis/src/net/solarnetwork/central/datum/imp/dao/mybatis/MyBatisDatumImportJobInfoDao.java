@@ -24,10 +24,15 @@ package net.solarnetwork.central.datum.imp.dao.mybatis;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
+import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
@@ -48,8 +53,15 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 */
 	public static final String UPDATE_PURGE_COMPLETED = "delete-DatumImportJobInfo-completed";
 
+	/**
+	 * The {@code UPDATE} query name used for
+	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)}.
+	 */
+	public static final String UPDATE_JOB_STATE = "update-DatumImportJobInfo-state";
+
 	private String queryForClaimQueuedJob;
 	private String updateDeleteCompletedJobs;
+	private String updateJobState;
 
 	/**
 	 * Constructor.
@@ -58,20 +70,39 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		super(DatumImportJobInfo.class, UserUuidPK.class);
 		setQueryForClaimQueuedJob(QUERY_FOR_CLAIMING_JOB);
 		setUpdateDeleteCompletedJobs(UPDATE_PURGE_COMPLETED);
+		setUpdateJobState(UPDATE_JOB_STATE);
 	}
 
 	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public DatumImportJobInfo claimQueuedJob() {
 		return selectFirst(queryForClaimQueuedJob, null);
 	}
 
 	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public long purgeCompletedJobs(DateTime olderThanDate) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("date", olderThanDate);
 		getSqlSession().update(updateDeleteCompletedJobs, params);
 		Long result = (Long) params.get("result");
 		return (result == null ? 0 : result.longValue());
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
+			Set<DatumImportState> expectedStates) {
+		Map<String, Object> params = new HashMap<>(2);
+		params.put("id", id);
+		params.put("desiredState", desiredState.getKey());
+		if ( expectedStates != null && !expectedStates.isEmpty() ) {
+			String[] array = expectedStates.stream().map(s -> String.valueOf(s.getKey()))
+					.collect(Collectors.toList()).toArray(new String[expectedStates.size()]);
+			params.put("expectedStates", array);
+		}
+		int count = getSqlSession().update(updateJobState, params);
+		return (count > 0);
 	}
 
 	/**
@@ -93,6 +124,17 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 */
 	public void setUpdateDeleteCompletedJobs(String updateDeleteCompletedJobs) {
 		this.updateDeleteCompletedJobs = updateDeleteCompletedJobs;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)} method to use.
+	 * 
+	 * @param updateJobState
+	 *        the statement name; defaults to {@link #UPDATE_JOB_STATE}
+	 */
+	public void setUpdateJobState(String updateJobState) {
+		this.updateJobState = updateJobState;
 	}
 
 }

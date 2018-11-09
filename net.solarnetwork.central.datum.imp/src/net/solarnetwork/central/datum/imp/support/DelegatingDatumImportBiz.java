@@ -76,9 +76,9 @@ public class DelegatingDatumImportBiz implements DatumImportBiz {
 	}
 
 	@Override
-	public DatumImportStatus updateDatumImportJobStatusForUser(Long userId, UUID jobId,
+	public DatumImportStatus updateDatumImportJobStateForUser(Long userId, UUID jobId,
 			DatumImportState desiredState, Set<DatumImportState> expectedStates) {
-		return delegate.updateDatumImportJobStatusForUser(userId, jobId, desiredState, expectedStates);
+		return delegate.updateDatumImportJobStateForUser(userId, jobId, desiredState, expectedStates);
 	}
 
 }

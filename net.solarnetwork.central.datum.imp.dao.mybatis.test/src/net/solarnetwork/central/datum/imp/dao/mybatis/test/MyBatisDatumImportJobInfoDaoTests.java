@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.UUID;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -161,5 +162,43 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 
 		DatumImportJobInfo notCompleted = dao.get(this.info.getId());
 		assertThat("Unfinished job still available", notCompleted, notNullValue());
+	}
+
+	@Test
+	public void updateStateNotFound() {
+		boolean updated = dao.updateJobState(new UserUuidPK(-123L, UUID.randomUUID()),
+				DatumImportState.Completed, null);
+		assertThat("Update result", updated, equalTo(false));
+	}
+
+	@Test
+	public void updateState() {
+		storeNew();
+		boolean updated = dao.updateJobState(this.info.getId(), DatumImportState.Completed, null);
+		assertThat("Update result", updated, equalTo(true));
+	}
+
+	@Test
+	public void updateStateWithExpectedStateNotFound() {
+		storeNew();
+		boolean updated = dao.updateJobState(this.info.getId(), DatumImportState.Completed,
+				Collections.singleton(DatumImportState.Staged));
+		assertThat("Update result", updated, equalTo(false));
+	}
+
+	@Test
+	public void updateStateWithExpectedState() {
+		storeNew();
+		boolean updated = dao.updateJobState(this.info.getId(), DatumImportState.Retracted,
+				Collections.singleton(DatumImportState.Unknown));
+		assertThat("Update result", updated, equalTo(true));
+	}
+
+	@Test
+	public void updateStateWithExpectedStates() {
+		storeNew();
+		boolean updated = dao.updateJobState(this.info.getId(), DatumImportState.Retracted,
+				EnumSet.of(DatumImportState.Unknown, DatumImportState.Staged, DatumImportState.Queued));
+		assertThat("Update result", updated, equalTo(true));
 	}
 }

@@ -211,7 +211,7 @@ public class DatumImportController extends WebServiceControllerSupport {
 		DatumImportStatus result = null;
 		if ( biz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.updateDatumImportJobStatusForUser(userId, id, DatumImportState.Queued,
+			result = biz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Queued,
 					Collections.singleton(DatumImportState.Staged));
 		}
 		return response(result);
@@ -236,7 +236,7 @@ public class DatumImportController extends WebServiceControllerSupport {
 		DatumImportStatus result = null;
 		if ( biz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.updateDatumImportJobStatusForUser(userId, id, DatumImportState.Retracted,
+			result = biz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Retracted,
 					EnumSet.of(DatumImportState.Staged, DatumImportState.Queued,
 							DatumImportState.Claimed));
 		}

@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.datum.imp.dao;
 
+import java.util.Set;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
+import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
@@ -57,5 +59,21 @@ public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, Us
 	 * @return the number of jobs deleted
 	 */
 	long purgeCompletedJobs(DateTime olderThanDate);
+
+	/**
+	 * Update the state of a specific job.
+	 * 
+	 * @param id
+	 *        the ID of the job to update
+	 * @param desiredState
+	 *        the state to change the job to
+	 * @param expectedStates
+	 *        a set of states that must include the job's current state in order
+	 *        to change it to {@code desiredState}, or {@literal null} if the
+	 *        current state of the job does not matter
+	 * @return {@literal true} if the job state was changed
+	 */
+	boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
+			Set<DatumImportState> expectedStates);
 
 }

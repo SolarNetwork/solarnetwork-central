@@ -95,7 +95,7 @@ public interface DatumImportBiz {
 	 *        current state of the job does not matter
 	 * @return the job status, or {@literal null} if not available
 	 */
-	DatumImportStatus updateDatumImportJobStatusForUser(Long userId, UUID jobId, DatumImportState desiredState,
+	DatumImportStatus updateDatumImportJobStateForUser(Long userId, UUID jobId, DatumImportState desiredState,
 			Set<DatumImportState> expectedStates);
 
 }

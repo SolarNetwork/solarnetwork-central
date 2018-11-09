@@ -102,5 +102,18 @@
 			#{date, mode=IN, jdbcType=TIMESTAMP}
 		)}
 	</delete>
+	
+	<update id="update-DatumImportJobInfo-state" parameterType="map">
+		UPDATE
+			solarnet.sn_datum_import_job
+		SET
+			state = #{desiredState}
+		WHERE
+			id = #{id.id}
+			AND user_id = #{id.userId}
+			<if test="expectedStates != null and expectedStates.length > 0">
+			AND state = ANY(#{expectedStates,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
+	</update>
 
 </mapper>
