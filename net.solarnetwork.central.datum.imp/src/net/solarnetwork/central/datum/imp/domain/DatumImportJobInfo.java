@@ -24,9 +24,12 @@ package net.solarnetwork.central.datum.imp.domain;
 
 import java.util.UUID;
 import org.joda.time.DateTime;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.BaseObjectEntity;
 import net.solarnetwork.central.user.domain.UserRelatedEntity;
+import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.util.JsonUtils;
 
 /**
@@ -35,12 +38,11 @@ import net.solarnetwork.util.JsonUtils;
  * @author matt
  * @version 1.0
  */
-public class DatumImportJobInfo extends BaseObjectEntity<UUID>
-		implements UserRelatedEntity<UUID>, DatumImportRequest, DatumImportResult {
+public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
+		implements UserRelatedEntity<UserUuidPK>, DatumImportRequest, DatumImportResult {
 
-	private static final long serialVersionUID = -1828899889946450249L;
+	private static final long serialVersionUID = -8345921319848339639L;
 
-	private Long userId;
 	private DateTime importDate;
 	private DatumImportState importState;
 	private BasicConfiguration config;
@@ -49,13 +51,41 @@ public class DatumImportJobInfo extends BaseObjectEntity<UUID>
 	private String message;
 	private DateTime completed;
 
+	@JsonIgnore
+	@Override
+	public UserUuidPK getId() {
+		return super.getId();
+	}
+
 	@Override
 	public Long getUserId() {
-		return userId;
+		UserUuidPK pk = getId();
+		return (pk != null ? pk.getUserId() : null);
 	}
 
 	public void setUserId(Long userId) {
-		this.userId = userId;
+		UserUuidPK pk = getId();
+		if ( pk == null ) {
+			setId(new UserUuidPK(userId, null));
+		} else {
+			pk.setUserId(userId);
+		}
+	}
+
+	@JsonGetter("id")
+	public UUID getUuid() {
+		UserUuidPK pk = getId();
+		return (pk != null ? pk.getId() : null);
+	}
+
+	@JsonSetter("id")
+	public void setUuid(UUID id) {
+		UserUuidPK pk = getId();
+		if ( pk == null ) {
+			setId(new UserUuidPK(null, id));
+		} else {
+			pk.setId(id);
+		}
 	}
 
 	@Override

@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.datum.imp.dao;
 
-import java.util.UUID;
 import org.joda.time.DateTime;
+import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
-import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
+import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
  * DAO API for {@link DatumImportJobInfo} entities.
@@ -33,29 +33,29 @@ import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
  * @author matt
  * @version 1.0
  */
-public interface DatumImportJobInfoDao extends UserRelatedGenericDao<DatumImportJobInfo, UUID> {
+public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, UserUuidPK> {
 
 	/**
-	 * Claim a queued task.
+	 * Claim a queued job.
 	 * 
-	 * This method will "claim" a task that is currently in the
+	 * This method will "claim" a job that is currently in the
 	 * {@link net.solarnetwork.central.datum.export.domain.DatumImportState#Queued}
 	 * state, changing the state to
 	 * {@link net.solarnetwork.central.datum.export.domain.DatumImportState#Claimed}.
 	 * 
-	 * @return a claimed task, or {@literal null} if none could be claimed
+	 * @return a claimed job, or {@literal null} if none could be claimed
 	 */
-	DatumImportJobInfo claimQueuedTask();
+	DatumImportJobInfo claimQueuedJob();
 
 	/**
-	 * Purge tasks that have reached a
+	 * Purge jobs that have reached a
 	 * {@link net.solarnetwork.central.datum.export.domain.DatumImportState#Completed}
 	 * and are older than a given date.
 	 * 
 	 * @param olderThanDate
-	 *        the maximum date for which to purge completed tasks
-	 * @return the number of tasks deleted
+	 *        the maximum date for which to purge completed jobs
+	 * @return the number of jobs deleted
 	 */
-	long purgeCompletedTasks(DateTime olderThanDate);
+	long purgeCompletedJobs(DateTime olderThanDate);
 
 }

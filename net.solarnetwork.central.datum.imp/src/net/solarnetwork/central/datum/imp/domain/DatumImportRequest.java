@@ -22,9 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.domain;
 
-import java.util.UUID;
 import org.joda.time.DateTime;
-import net.solarnetwork.domain.Identity;
 
 /**
  * API for an import request.
@@ -32,7 +30,7 @@ import net.solarnetwork.domain.Identity;
  * @author matt
  * @version 1.0
  */
-public interface DatumImportRequest extends Identity<UUID> {
+public interface DatumImportRequest {
 
 	/**
 	 * Get the configuration of the import.

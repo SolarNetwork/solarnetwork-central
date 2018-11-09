@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.imp.domain;
 
-import java.util.UUID;
 import org.joda.time.DateTime;
 
 /**
@@ -33,7 +32,6 @@ import org.joda.time.DateTime;
  */
 public class BasicDatumImportRequest implements DatumImportRequest {
 
-	private final UUID id;
 	private final Configuration configuration;
 	private final Long userId;
 	private final DateTime importDate;
@@ -51,14 +49,12 @@ public class BasicDatumImportRequest implements DatumImportRequest {
 	 *        the ID of the requesting user
 	 */
 	public BasicDatumImportRequest(Configuration configuration, Long userId) {
-		this(UUID.randomUUID(), configuration, userId, new DateTime());
+		this(configuration, userId, new DateTime());
 	}
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param id
-	 *        the unique ID
 	 * @param configuration
 	 *        the configuration
 	 * @param userId
@@ -66,30 +62,11 @@ public class BasicDatumImportRequest implements DatumImportRequest {
 	 * @param importDate
 	 *        the request date
 	 */
-	public BasicDatumImportRequest(UUID id, Configuration configuration, Long userId,
-			DateTime importDate) {
+	public BasicDatumImportRequest(Configuration configuration, Long userId, DateTime importDate) {
 		super();
-		this.id = id;
 		this.configuration = configuration;
 		this.userId = userId;
 		this.importDate = importDate;
-	}
-
-	@Override
-	public UUID getId() {
-		return id;
-	}
-
-	@Override
-	public int compareTo(UUID o) {
-		if ( o == id ) {
-			return 0;
-		} else if ( o == null ) {
-			return -1;
-		} else if ( id == null ) {
-			return 1;
-		}
-		return id.compareTo(o);
 	}
 
 	@Override
