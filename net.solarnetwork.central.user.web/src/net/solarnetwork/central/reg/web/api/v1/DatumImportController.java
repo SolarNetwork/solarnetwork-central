@@ -24,11 +24,19 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +45,7 @@ import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportRequest;
+import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -118,6 +127,114 @@ public class DatumImportController extends WebServiceControllerSupport {
 					new MultipartFileResource(data), data.getContentType());
 			BasicDatumImportRequest request = new BasicDatumImportRequest(config, userId);
 			result = biz.submitDatumImportRequest(request, resource);
+		}
+		return response(result);
+	}
+
+	/**
+	 * Get the status for a specific job.
+	 * 
+	 * <p>
+	 * The actor must have an associated user ID as provided by
+	 * {@link SecurityUtils#getCurrentActorUserId()}.
+	 * </p>
+	 * 
+	 * @param states
+	 *        an optional array of states to limit the results to, or
+	 *        {@literal null} to include all states
+	 * @return the statuses
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/jobs", method = RequestMethod.GET)
+	public Response<Collection<DatumImportStatus>> jobStatusesForUser(
+			@RequestParam(value = "states", required = false) DatumImportState[] states) {
+		final DatumImportBiz biz = importBiz.service();
+		Collection<DatumImportStatus> result = null;
+		if ( biz != null ) {
+			Set<DatumImportState> stateFilter = null;
+			if ( states != null && states.length > 0 ) {
+				stateFilter = new HashSet<>(states.length);
+				for ( DatumImportState state : states ) {
+					stateFilter.add(state);
+				}
+				stateFilter = EnumSet.copyOf(stateFilter);
+			}
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			result = biz.allDatumImportJobStatusForUser(userId, stateFilter);
+		}
+		return response(result);
+	}
+
+	/**
+	 * Get the status for a specific job.
+	 * 
+	 * <p>
+	 * The actor must have an associated user ID as provided by
+	 * {@link SecurityUtils#getCurrentActorUserId()}.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the ID of the job to get the status for
+	 * @return the status
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.GET)
+	public Response<DatumImportStatus> jobStatus(@PathVariable("id") UUID id) {
+		final DatumImportBiz biz = importBiz.service();
+		DatumImportStatus result = null;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			result = biz.getDatumImportJobStatus(userId, id);
+		}
+		return response(result);
+	}
+
+	/**
+	 * Change the state of a job from {@code Staged} to {@code Queued}.
+	 * 
+	 * <p>
+	 * The actor must have an associated user ID as provided by
+	 * {@link SecurityUtils#getCurrentActorUserId()}.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the ID of the job to get the status for
+	 * @return the status
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/jobs/{id}/confirm", method = RequestMethod.POST)
+	public Response<DatumImportStatus> confirmStagedJob(@PathVariable("id") UUID id) {
+		final DatumImportBiz biz = importBiz.service();
+		DatumImportStatus result = null;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			result = biz.updateDatumImportJobStatus(userId, id, DatumImportState.Queued,
+					Collections.singleton(DatumImportState.Staged));
+		}
+		return response(result);
+	}
+
+	/**
+	 * Retract a job from executing.
+	 * 
+	 * <p>
+	 * The actor must have an associated user ID as provided by
+	 * {@link SecurityUtils#getCurrentActorUserId()}.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the ID of the job to retract
+	 * @return the status
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.DELETE)
+	public Response<DatumImportStatus> retractJob(@PathVariable("id") UUID id) {
+		final DatumImportBiz biz = importBiz.service();
+		DatumImportStatus result = null;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			result = biz.updateDatumImportJobStatus(userId, id, DatumImportState.Retracted, EnumSet
+					.of(DatumImportState.Staged, DatumImportState.Queued, DatumImportState.Claimed));
 		}
 		return response(result);
 	}

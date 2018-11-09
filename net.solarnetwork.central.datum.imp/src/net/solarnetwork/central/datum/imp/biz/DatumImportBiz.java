@@ -22,8 +22,12 @@
 
 package net.solarnetwork.central.datum.imp.biz;
 
+import java.util.Collection;
+import java.util.Set;
+import java.util.UUID;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
+import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 
 /**
@@ -51,5 +55,47 @@ public interface DatumImportBiz {
 	 * @return the status
 	 */
 	DatumImportStatus submitDatumImportRequest(DatumImportRequest request, DatumImportResource resource);
+
+	/**
+	 * Get the status of a specific job.
+	 * 
+	 * @param userId
+	 *        the user ID that owns the job
+	 * @param jobId
+	 *        the ID of the job to get
+	 * @return the job status, or {@literal null} if not available
+	 */
+	DatumImportStatus getDatumImportJobStatus(Long userId, UUID jobId);
+
+	/**
+	 * Find all available job statuses for a specific user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to find the job statuses for
+	 * @param states
+	 *        the specific states to limit the results to, or {@literal null}
+	 *        for all states
+	 * @return the job statuses, never {@literal null}
+	 */
+	Collection<DatumImportStatus> allDatumImportJobStatusForUser(Long userId,
+			Set<DatumImportState> states);
+
+	/**
+	 * Update the state of a specific job.
+	 * 
+	 * @param userId
+	 *        the user ID that owns the job
+	 * @param jobId
+	 *        the ID of the job to update
+	 * @param desiredState
+	 *        the state to change the job to
+	 * @param expectedStates
+	 *        a set of states that must include the job's current state in order
+	 *        to change it to {@code desiredState}, or {@literal null} if the
+	 *        current state of the job does not matter
+	 * @return the job status, or {@literal null} if not available
+	 */
+	DatumImportStatus updateDatumImportJobStatus(Long userId, UUID jobId, DatumImportState desiredState,
+			Set<DatumImportState> expectedStates);
 
 }
