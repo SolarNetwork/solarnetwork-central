@@ -55,6 +55,11 @@ public enum DatumImportState {
 	Staged('s'),
 
 	/**
+	 * The import task has been cancelled.
+	 */
+	Retracted('r'),
+
+	/**
 	 * The import task has been queued, but not started yet.
 	 */
 	Queued('q'),
