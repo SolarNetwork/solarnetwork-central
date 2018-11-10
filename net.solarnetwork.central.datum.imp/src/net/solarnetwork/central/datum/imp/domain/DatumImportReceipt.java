@@ -1,5 +1,5 @@
 /* ==================================================================
- * BasicInputConfiguration.java - 7/11/2018 11:17:52 AM
+ * DatumImportReceipt.java - 11/11/2018 8:14:07 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -22,49 +22,26 @@
 
 package net.solarnetwork.central.datum.imp.domain;
 
-import java.io.Serializable;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.domain.BasicIdentifiableConfiguration;
-
 /**
- * Basic implementation of {@link InputConfiguration}.
+ * Receipt information about a datum import request.
  * 
  * @author matt
  * @version 1.0
  */
-@JsonPropertyOrder({ "name", "serviceIdentifier", "timeZoneId", "serviceProperties" })
-public class BasicInputConfiguration extends BasicIdentifiableConfiguration
-		implements InputConfiguration, Serializable {
+public interface DatumImportReceipt {
 
 	/**
-	 * Default constructor.
-	 */
-	public BasicInputConfiguration() {
-		super();
-	}
-
-	/**
-	 * Copy constructor.
+	 * Get a unique ID for this import job.
 	 * 
-	 * @param other
-	 *        the configuration to copy
+	 * @return the unique ID of this import job
 	 */
-	public BasicInputConfiguration(InputConfiguration other) {
-		super(other);
-		setTimeZoneId(other.getTimeZoneId());
-	}
+	String getJobId();
 
-	private static final long serialVersionUID = 4114494359629338909L;
-
-	private String timeZoneId;
-
-	@Override
-	public String getTimeZoneId() {
-		return timeZoneId;
-	}
-
-	public void setTimeZoneId(String timeZoneId) {
-		this.timeZoneId = timeZoneId;
-	}
+	/**
+	 * Get the state of the import job.
+	 * 
+	 * @return the state, never {@literal null}
+	 */
+	DatumImportState getJobState();
 
 }

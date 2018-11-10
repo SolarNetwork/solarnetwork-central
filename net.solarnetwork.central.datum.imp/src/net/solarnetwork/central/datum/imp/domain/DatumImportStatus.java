@@ -39,7 +39,7 @@ import org.osgi.service.event.Event;
  * @author matt
  * @version 1.0
  */
-public interface DatumImportStatus extends Future<DatumImportResult> {
+public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImportResult> {
 
 	/** Topic for an import job status change notification. */
 	String EVENT_TOPIC_JOB_STATUS_CHANGED = "net/solarnetwork/central/datum/import/JOB_STATUS_CHANGED";
@@ -65,18 +65,11 @@ public interface DatumImportStatus extends Future<DatumImportResult> {
 	String EVENT_PROP_MESSAGE = "message";
 
 	/**
-	 * Get a unique ID for this import job.
+	 * Get the owner ID of the import task.
 	 * 
-	 * @return the unique ID of this import job
+	 * @return the user ID
 	 */
-	String getJobId();
-
-	/**
-	 * Get the state of the import job.
-	 * 
-	 * @return the state, never {@literal null}
-	 */
-	DatumImportState getJobState();
+	Long getUserId();
 
 	/**
 	 * Get a percentage complete for the job overall.

@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.imp.support.test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.io.File;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -40,14 +42,25 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
+import net.solarnetwork.central.datum.imp.biz.DatumImportService;
+import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
+import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.datum.imp.domain.InputConfiguration;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportBiz;
+import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.domain.IdentifiableConfiguration;
+import net.solarnetwork.domain.Identity;
 import net.solarnetwork.io.TransferrableResource;
+import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.util.OptionalServiceCollection;
+import net.solarnetwork.util.ProgressListener;
+import net.solarnetwork.util.StaticOptionalServiceCollection;
 
 /**
  * Test cases for the {@link BaseDatumImportBiz} class.
@@ -60,6 +73,12 @@ public class BaseDatumImportBizTests {
 	private class TestDatumImportBiz extends BaseDatumImportBiz {
 
 		@Override
+		public <T extends Identity<String>> T optionalService(OptionalServiceCollection<T> collection,
+				IdentifiableConfiguration config) {
+			return super.optionalService(collection, config);
+		}
+
+		@Override
 		public File getImportDataFile(UserUuidPK id) {
 			return super.getImportDataFile(id);
 		}
@@ -70,17 +89,17 @@ public class BaseDatumImportBizTests {
 		}
 
 		@Override
-		public FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, UUID jobId) {
+		public FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, String jobId) {
 			return null;
 		}
 
 		@Override
-		public DatumImportStatus performImport(Long userId, UUID jobId) {
+		public DatumImportStatus performImport(Long userId, String jobId) {
 			return null;
 		}
 
 		@Override
-		public DatumImportStatus datumImportJobStatusForUser(Long userId, UUID jobId) {
+		public DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId) {
 			return null;
 		}
 
@@ -91,8 +110,14 @@ public class BaseDatumImportBizTests {
 		}
 
 		@Override
-		public DatumImportStatus updateDatumImportJobStateForUser(Long userId, UUID jobId,
+		public DatumImportStatus updateDatumImportJobStateForUser(Long userId, String jobId,
 				DatumImportState desiredState, Set<DatumImportState> expectedStates) {
+			return null;
+		}
+
+		@Override
+		public DatumImportStatus submitDatumImportRequest(DatumImportRequest request,
+				DatumImportResource resource) {
 			return null;
 		}
 
@@ -117,7 +142,7 @@ public class BaseDatumImportBizTests {
 	public void availableInputServices() {
 		List<DatumImportInputFormatService> services = new ArrayList<>();
 		TestDatumImportBiz biz = new TestDatumImportBiz();
-		biz.setInputServices(services);
+		biz.setInputServices(new StaticOptionalServiceCollection<>(services));
 		assertThat("Services returned", biz.availableInputFormatServices(), sameInstance(services));
 	}
 
@@ -176,5 +201,65 @@ public class BaseDatumImportBizTests {
 		assertThat("Saved file contents", Arrays.equals(data, contents), equalTo(true));
 		f.delete();
 		assertThat("Source file moved", srcFile.exists(), equalTo(false));
+	}
+
+	private static class TestInputFormatService extends BaseDatumImportInputFormatService {
+
+		public TestInputFormatService() {
+			super(TestInputFormatService.class.getName());
+		}
+
+		@Override
+		public ImportContext createImportContext(InputConfiguration config, DatumImportResource resource,
+				ProgressListener<DatumImportService> progressListener) throws IOException {
+			return null;
+		}
+
+		@Override
+		public String getDisplayName() {
+			return null;
+		}
+
+		@Override
+		public List<SettingSpecifier> getSettingSpecifiers() {
+			return null;
+		}
+
+	}
+
+	@Test
+	public void inputServiceForIdNoList() {
+		TestDatumImportBiz biz = new TestDatumImportBiz();
+		BasicInputConfiguration conf = new BasicInputConfiguration();
+		conf.setServiceIdentifier("foo");
+		assertThat("No service list", biz.optionalService(biz.getInputServices(), conf), nullValue());
+	}
+
+	@Test
+	public void inputServiceForIdNullId() {
+		TestDatumImportBiz biz = new TestDatumImportBiz();
+		DatumImportInputFormatService service = new TestInputFormatService();
+		biz.setInputServices(new StaticOptionalServiceCollection<>(Collections.singletonList(service)));
+		assertThat("No ID", biz.optionalService(biz.getInputServices(), null), nullValue());
+	}
+
+	@Test
+	public void inputServiceForIdNoMatch() {
+		TestDatumImportBiz biz = new TestDatumImportBiz();
+		DatumImportInputFormatService service = new TestInputFormatService();
+		biz.setInputServices(new StaticOptionalServiceCollection<>(Collections.singletonList(service)));
+		BasicInputConfiguration conf = new BasicInputConfiguration();
+		conf.setServiceIdentifier("foo");
+		assertThat("No match", biz.optionalService(biz.getInputServices(), conf), nullValue());
+	}
+
+	@Test
+	public void inputServiceForId() {
+		TestDatumImportBiz biz = new TestDatumImportBiz();
+		DatumImportInputFormatService service = new TestInputFormatService();
+		biz.setInputServices(new StaticOptionalServiceCollection<>(Collections.singletonList(service)));
+		BasicInputConfiguration conf = new BasicInputConfiguration();
+		conf.setServiceIdentifier(service.getId());
+		assertThat("Match", biz.optionalService(biz.getInputServices(), conf), sameInstance(service));
 	}
 }

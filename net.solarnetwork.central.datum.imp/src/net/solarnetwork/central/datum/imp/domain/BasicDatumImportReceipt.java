@@ -1,5 +1,5 @@
 /* ==================================================================
- * BasicInputConfiguration.java - 7/11/2018 11:17:52 AM
+ * BasicDatumImportReceipt.java - 11/11/2018 8:17:48 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -22,49 +22,39 @@
 
 package net.solarnetwork.central.datum.imp.domain;
 
-import java.io.Serializable;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.domain.BasicIdentifiableConfiguration;
-
 /**
- * Basic implementation of {@link InputConfiguration}.
+ * Basic immutable implementation of {@link DatumImportReceipt}.
  * 
  * @author matt
  * @version 1.0
  */
-@JsonPropertyOrder({ "name", "serviceIdentifier", "timeZoneId", "serviceProperties" })
-public class BasicInputConfiguration extends BasicIdentifiableConfiguration
-		implements InputConfiguration, Serializable {
+public class BasicDatumImportReceipt implements DatumImportReceipt {
+
+	private final String jobId;
+	private final DatumImportState jobState;
 
 	/**
-	 * Default constructor.
-	 */
-	public BasicInputConfiguration() {
-		super();
-	}
-
-	/**
-	 * Copy constructor.
+	 * Constructor.
 	 * 
-	 * @param other
-	 *        the configuration to copy
+	 * @param jobId
+	 *        the job ID
+	 * @param jobState
+	 *        the job state
 	 */
-	public BasicInputConfiguration(InputConfiguration other) {
-		super(other);
-		setTimeZoneId(other.getTimeZoneId());
+	public BasicDatumImportReceipt(String jobId, DatumImportState jobState) {
+		super();
+		this.jobId = jobId;
+		this.jobState = jobState;
 	}
-
-	private static final long serialVersionUID = 4114494359629338909L;
-
-	private String timeZoneId;
 
 	@Override
-	public String getTimeZoneId() {
-		return timeZoneId;
+	public String getJobId() {
+		return jobId;
 	}
 
-	public void setTimeZoneId(String timeZoneId) {
-		this.timeZoneId = timeZoneId;
+	@Override
+	public DatumImportState getJobState() {
+		return jobState;
 	}
 
 }

@@ -25,15 +25,21 @@ package net.solarnetwork.central.datum.imp.support;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.List;
+import org.osgi.service.event.EventAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
-import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
+import net.solarnetwork.central.datum.imp.domain.DatumImportResult;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.domain.IdentifiableConfiguration;
+import net.solarnetwork.domain.Identity;
 import net.solarnetwork.io.TransferrableResource;
+import net.solarnetwork.util.OptionalService;
+import net.solarnetwork.util.OptionalServiceCollection;
 
 /**
  * Abstract class for basic {@link DatumImportBiz} support.
@@ -43,8 +49,12 @@ import net.solarnetwork.io.TransferrableResource;
  */
 public abstract class BaseDatumImportBiz implements DatumImportBiz {
 
+	/** A class-level logger. */
+	protected final Logger log = LoggerFactory.getLogger(getClass());
+
 	private File workDirectory = defaultWorkDirectory();
-	private List<DatumImportInputFormatService> inputServices;
+	private OptionalServiceCollection<DatumImportInputFormatService> inputServices;
+	private OptionalService<EventAdmin> eventAdmin;
 
 	private static File defaultWorkDirectory() {
 		String path = System.getProperty("java.io.tmpdir");
@@ -67,14 +77,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 
 	@Override
 	public Iterable<DatumImportInputFormatService> availableInputFormatServices() {
-		return inputServices;
-	}
-
-	@Override
-	public DatumImportStatus submitDatumImportRequest(DatumImportRequest request,
-			DatumImportResource resource) {
-		// TODO Auto-generated method stub
-		return null;
+		return (inputServices != null ? inputServices.services() : null);
 	}
 
 	/**
@@ -116,6 +119,52 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 			FileCopyUtils.copy(resource.getInputStream(), new FileOutputStream(f));
 		}
 		return f;
+	}
+
+	/**
+	 * Find a specific service referenced by a service configuration.
+	 * 
+	 * @param collection
+	 *        the collection of services to search in
+	 * @param config
+	 *        the service configuration to find a matching service for
+	 * @return the found service, or {@literal null} if not found
+	 */
+	protected <T extends Identity<String>> T optionalService(OptionalServiceCollection<T> collection,
+			IdentifiableConfiguration config) {
+		if ( collection == null || config == null ) {
+			return null;
+		}
+		String id = config.getServiceIdentifier();
+		if ( id == null ) {
+			return null;
+		}
+		Iterable<T> services = collection.services();
+		for ( T service : services ) {
+			if ( id.equals(service.getId()) ) {
+				return service;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Post a job status changed event.
+	 * 
+	 * @param status
+	 *        the updated status
+	 * @param result
+	 *        any associated job result
+	 */
+	protected void postJobStatusChangedEvent(DatumImportStatus status, DatumImportResult result) {
+		if ( status == null ) {
+			return;
+		}
+		EventAdmin ea = (this.eventAdmin != null ? this.eventAdmin.service() : null);
+		if ( ea == null ) {
+			return;
+		}
+		ea.postEvent(status.asJobStatusChagnedEvent(result));
 	}
 
 	/**
@@ -177,7 +226,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * 
 	 * @return the inputServices the input services
 	 */
-	public List<DatumImportInputFormatService> getInputServices() {
+	public OptionalServiceCollection<DatumImportInputFormatService> getInputServices() {
 		return inputServices;
 	}
 
@@ -187,8 +236,27 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * @param inputServices
 	 *        the services to set
 	 */
-	public void setInputServices(List<DatumImportInputFormatService> inputServices) {
+	public void setInputServices(
+			OptionalServiceCollection<DatumImportInputFormatService> inputServices) {
 		this.inputServices = inputServices;
 	}
 
+	/**
+	 * Get the event admin service.
+	 * 
+	 * @return the service
+	 */
+	public OptionalService<EventAdmin> getEventAdmin() {
+		return eventAdmin;
+	}
+
+	/**
+	 * Configure an {@link EventAdmin} service for posting status events.
+	 * 
+	 * @param eventAdmin
+	 *        the optional event admin service
+	 */
+	public void setEventAdmin(OptionalService<EventAdmin> eventAdmin) {
+		this.eventAdmin = eventAdmin;
+	}
 }

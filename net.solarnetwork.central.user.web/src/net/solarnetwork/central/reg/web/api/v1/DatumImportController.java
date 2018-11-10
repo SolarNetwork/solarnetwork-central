@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,7 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -47,6 +47,7 @@ import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportRequest;
+import net.solarnetwork.central.datum.imp.domain.DatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
@@ -120,16 +121,20 @@ public class DatumImportController extends WebServiceControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/upload", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public Response<DatumImportStatus> startImport(@RequestPart("config") BasicConfiguration config,
+	public Response<DatumImportReceipt> startImport(@RequestPart("config") BasicConfiguration config,
 			@RequestPart("data") MultipartFile data) {
 		final DatumImportBiz biz = importBiz.service();
-		DatumImportStatus result = null;
+		DatumImportReceipt result = null;
 		if ( biz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			BasicDatumImportResource resource = new BasicDatumImportResource(
 					new MultipartFileResource(data), data.getContentType());
 			BasicDatumImportRequest request = new BasicDatumImportRequest(config, userId);
-			result = biz.submitDatumImportRequest(request, resource);
+			try {
+				result = biz.submitDatumImportRequest(request, resource);
+			} catch ( IOException e ) {
+				throw new RuntimeException(e);
+			}
 		}
 		return response(result);
 	}
@@ -182,7 +187,7 @@ public class DatumImportController extends WebServiceControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.GET)
-	public Response<DatumImportStatus> jobStatus(@PathVariable("id") UUID id) {
+	public Response<DatumImportStatus> jobStatus(@PathVariable("id") String id) {
 		final DatumImportBiz biz = importBiz.service();
 		DatumImportStatus result = null;
 		if ( biz != null ) {
@@ -206,7 +211,7 @@ public class DatumImportController extends WebServiceControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}/confirm", method = RequestMethod.POST)
-	public Response<DatumImportStatus> confirmStagedJob(@PathVariable("id") UUID id) {
+	public Response<DatumImportStatus> confirmStagedJob(@PathVariable("id") String id) {
 		final DatumImportBiz biz = importBiz.service();
 		DatumImportStatus result = null;
 		if ( biz != null ) {
@@ -231,14 +236,13 @@ public class DatumImportController extends WebServiceControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.DELETE)
-	public Response<DatumImportStatus> retractJob(@PathVariable("id") UUID id) {
+	public Response<DatumImportStatus> retractJob(@PathVariable("id") String id) {
 		final DatumImportBiz biz = importBiz.service();
 		DatumImportStatus result = null;
 		if ( biz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Retracted,
-					EnumSet.of(DatumImportState.Staged, DatumImportState.Queued,
-							DatumImportState.Claimed));
+			result = biz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Retracted, EnumSet
+					.of(DatumImportState.Staged, DatumImportState.Queued, DatumImportState.Claimed));
 		}
 		return response(result);
 	}

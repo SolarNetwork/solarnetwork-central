@@ -22,12 +22,13 @@
 
 package net.solarnetwork.central.datum.imp.support;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
-import java.util.UUID;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
+import net.solarnetwork.central.datum.imp.domain.DatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
@@ -61,23 +62,23 @@ public class DelegatingDatumImportBiz implements DatumImportBiz {
 	}
 
 	@Override
-	public DatumImportStatus submitDatumImportRequest(DatumImportRequest request,
-			DatumImportResource resource) {
+	public DatumImportReceipt submitDatumImportRequest(DatumImportRequest request,
+			DatumImportResource resource) throws IOException {
 		return delegate.submitDatumImportRequest(request, resource);
 	}
 
 	@Override
-	public FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, UUID jobId) {
+	public FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, String jobId) {
 		return delegate.previewStagedImportForUser(userId, jobId);
 	}
 
 	@Override
-	public DatumImportStatus performImport(Long userId, UUID jobId) {
+	public DatumImportStatus performImport(Long userId, String jobId) {
 		return delegate.performImport(userId, jobId);
 	}
 
 	@Override
-	public DatumImportStatus datumImportJobStatusForUser(Long userId, UUID jobId) {
+	public DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId) {
 		return delegate.datumImportJobStatusForUser(userId, jobId);
 	}
 
@@ -88,7 +89,7 @@ public class DelegatingDatumImportBiz implements DatumImportBiz {
 	}
 
 	@Override
-	public DatumImportStatus updateDatumImportJobStateForUser(Long userId, UUID jobId,
+	public DatumImportStatus updateDatumImportJobStateForUser(Long userId, String jobId,
 			DatumImportState desiredState, Set<DatumImportState> expectedStates) {
 		return delegate.updateDatumImportJobStateForUser(userId, jobId, desiredState, expectedStates);
 	}

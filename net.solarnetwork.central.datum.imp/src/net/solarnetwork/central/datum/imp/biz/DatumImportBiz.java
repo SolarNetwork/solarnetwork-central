@@ -22,11 +22,12 @@
 
 package net.solarnetwork.central.datum.imp.biz;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
-import java.util.UUID;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
+import net.solarnetwork.central.datum.imp.domain.DatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
@@ -54,8 +55,8 @@ public interface DatumImportBiz {
 	 * <p>
 	 * The import process is not expected to start after calling this method.
 	 * Rather it should enter the {@link DatumImportState#Queued} state. To
-	 * initiate the import process, the {@link #performImport(Long, UUID)} must
-	 * be called, passing in the same user ID and the returned
+	 * initiate the import process, the {@link #performImport(Long, String)}
+	 * must be called, passing in the same user ID and the returned
 	 * {@link DatumImportStatus#getJobId()}.
 	 * </p>
 	 * 
@@ -63,9 +64,12 @@ public interface DatumImportBiz {
 	 *        the request
 	 * @param resource
 	 *        the resource
-	 * @return the status
+	 * @return the receipt
+	 * @throws IOException
+	 *         if any IO error occurs
 	 */
-	DatumImportStatus submitDatumImportRequest(DatumImportRequest request, DatumImportResource resource);
+	DatumImportReceipt submitDatumImportRequest(DatumImportRequest request, DatumImportResource resource)
+			throws IOException;
 
 	/**
 	 * Preview a staged import request.
@@ -85,7 +89,7 @@ public interface DatumImportBiz {
 	 * @return a sample of datum extracted from the import request data, never
 	 *         {@literal null}
 	 */
-	FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, UUID jobId);
+	FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, String jobId);
 
 	/**
 	 * Perform a datum import.
@@ -102,7 +106,7 @@ public interface DatumImportBiz {
 	 *        the ID of the job to get
 	 * @return the job status, or {@literal null} if the job is not available
 	 */
-	DatumImportStatus performImport(Long userId, UUID jobId);
+	DatumImportStatus performImport(Long userId, String jobId);
 
 	/**
 	 * Get the status of a specific job.
@@ -113,7 +117,7 @@ public interface DatumImportBiz {
 	 *        the ID of the job to get
 	 * @return the job status, or {@literal null} if not available
 	 */
-	DatumImportStatus datumImportJobStatusForUser(Long userId, UUID jobId);
+	DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId);
 
 	/**
 	 * Find all available job statuses for a specific user.
@@ -143,7 +147,7 @@ public interface DatumImportBiz {
 	 *        current state of the job does not matter
 	 * @return the job status, or {@literal null} if not available
 	 */
-	DatumImportStatus updateDatumImportJobStateForUser(Long userId, UUID jobId,
+	DatumImportStatus updateDatumImportJobStateForUser(Long userId, String jobId,
 			DatumImportState desiredState, Set<DatumImportState> expectedStates);
 
 }
