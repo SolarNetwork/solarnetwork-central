@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.standard;
 
 import static java.util.stream.Collectors.toMap;
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -54,7 +55,7 @@ import net.solarnetwork.util.StringUtils;
  *        the properties type
  */
 public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties>
-		implements Iterator<E> {
+		implements Iterator<E>, Closeable {
 
 	/** A type reference for a List with string keys. */
 	public static final TypeReference<ArrayList<String>> STRING_LIST_TYPE = new StringListTypeReference();
@@ -321,6 +322,13 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		d.setCreated(date);
 		d.setSourceId(sourceId);
 		return d;
+	}
+
+	@Override
+	public void close() throws IOException {
+		if ( reader != null ) {
+			reader.close();
+		}
 	}
 
 	private E getNext() {
