@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.test;
 
+import java.util.logging.Level;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
@@ -32,7 +34,13 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
  * @version 1.0
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml" })
-public abstract class AbstractCentralTest extends AbstractJUnit4SpringContextTests implements
-		CentralTestConstants {
+public abstract class AbstractCentralTest extends AbstractJUnit4SpringContextTests
+		implements CentralTestConstants {
+
+	static {
+		SLF4JBridgeHandler.removeHandlersForRootLogger();
+		SLF4JBridgeHandler.install();
+		java.util.logging.Logger.getLogger("").setLevel(Level.FINEST);
+	}
 
 }
