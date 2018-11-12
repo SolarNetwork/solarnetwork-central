@@ -108,6 +108,7 @@ public class BulkLoadingDaoSupport {
 		private PreparedStatement stmt;
 		private TransactionStatus batchTransaction;
 		private Object transactionCheckpoint;
+		private T lastLoadedEntity;
 
 		public BulkLoadingContext(LoadingOptions options,
 				LoadingExceptionHandler<T, PK> exceptionHandler) throws SQLException {
@@ -166,7 +167,13 @@ public class BulkLoadingDaoSupport {
 		}
 
 		@Override
+		public T getLastLoadedEntity() {
+			return lastLoadedEntity;
+		}
+
+		@Override
 		public final void load(T entity) {
+			lastLoadedEntity = entity;
 			try {
 				if ( options.getTransactionMode() == BatchTransactions ) {
 					if ( numLoaded % batchSize == 0 ) {
