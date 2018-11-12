@@ -26,6 +26,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
+import net.solarnetwork.central.datum.imp.domain.DatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
@@ -57,6 +58,10 @@ public class DatumImportSecurityAspect extends AuthorizationSupport {
 	public void actionForRequest(DatumImportRequest request) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.previewStagedImportRequest(..)) && args(request,..)")
+	public void actionForPreviewRequest(DatumImportPreviewRequest request) {
+	}
+
 	@Before("actionForUser(userId)")
 	public void actionForUserCheck(Long userId) {
 		requireUserReadAccess(userId);
@@ -64,6 +69,12 @@ public class DatumImportSecurityAspect extends AuthorizationSupport {
 
 	@Before("actionForRequest(request)")
 	public void requestCheck(DatumImportRequest request) {
+		final Long userId = (request != null ? request.getUserId() : null);
+		requireUserWriteAccess(userId);
+	}
+
+	@Before("actionForPreviewRequest(request)")
+	public void previewRequestCheck(DatumImportPreviewRequest request) {
 		final Long userId = (request != null ? request.getUserId() : null);
 		requireUserWriteAccess(userId);
 	}

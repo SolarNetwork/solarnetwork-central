@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.biz.dao.test;
 
 import static java.util.Collections.singleton;
+import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
@@ -30,6 +31,7 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -47,7 +49,9 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.stream.StreamSupport;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
@@ -60,22 +64,26 @@ import org.springframework.core.io.ClassPathResource;
 import net.solarnetwork.central.dao.BulkLoadingDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
 import net.solarnetwork.central.datum.imp.biz.dao.DaoDatumImportBiz;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.imp.domain.BasicDatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResult;
+import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.datum.imp.domain.InputConfiguration;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatServiceImportContext;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
@@ -134,6 +142,7 @@ public class DaoDatumImportBizTests {
 
 		biz = new TestDaoDatumImportBiz(scheduledExecutorService, executorSercvice, userNodeDao,
 				jobInfoDao, datumDao);
+		biz.setPreviewExecutor(executorSercvice);
 	}
 
 	private void replayAll() {
@@ -219,9 +228,9 @@ public class DaoDatumImportBizTests {
 
 	private static class TestInputService extends BaseDatumImportInputFormatService {
 
-		private final Iterable<GeneralNodeDatum> data;
+		private final List<GeneralNodeDatum> data;
 
-		private TestInputService(Iterable<GeneralNodeDatum> data) {
+		private TestInputService(List<GeneralNodeDatum> data) {
 			super("foo");
 			this.data = data;
 		}
@@ -234,7 +243,29 @@ public class DaoDatumImportBizTests {
 
 				@Override
 				public Iterator<GeneralNodeDatum> iterator() {
-					return data.iterator();
+					final Iterator<GeneralNodeDatum> itr = data.iterator();
+					return new Iterator<GeneralNodeDatum>() {
+
+						private int count = 0;
+
+						@Override
+						public boolean hasNext() {
+							// TODO Auto-generated method stub
+							return itr.hasNext();
+						}
+
+						@Override
+						public GeneralNodeDatum next() {
+							GeneralNodeDatum d = itr.next();
+							count++;
+							if ( progressListener != null ) {
+								progressListener.progressChanged(TestInputService.this,
+										count / (double) data.size());
+							}
+							return d;
+						}
+
+					};
 				}
 
 			};
@@ -284,7 +315,59 @@ public class DaoDatumImportBizTests {
 		info.setId(pk);
 		info.setConfig(configuration);
 		info.setImportDate(new DateTime());
+		info.setImportState(DatumImportState.Queued);
 		return info;
+	}
+
+	@Test
+	public void previewRequest() throws Exception {
+		// given
+		List<GeneralNodeDatum> data = sampleData(100,
+				new DateTime().hourOfDay().roundFloorCopy().minusDays(1));
+		biz.setInputServices(
+				new StaticOptionalServiceCollection<>(singleton(new TestInputService(data))));
+		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
+		File dataFile = biz.getImportDataFile(pk);
+		copy(copyToByteArray(getClass().getResourceAsStream("test-data-01.csv")), dataFile);
+
+		DatumImportJobInfo info = createTestJobInfo(pk);
+		info.setImportState(DatumImportState.Staged);
+		expect(jobInfoDao.get(pk)).andReturn(info);
+
+		Capture<Callable<FilterResults<GeneralNodeDatumComponents>>> taskCaptor = new Capture<>();
+		CompletableFuture<FilterResults<GeneralNodeDatumComponents>> future = new CompletableFuture<>();
+		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
+
+		// allow updating the status as job progresses
+		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+
+		// make test node owned by job's user
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(singleton(TEST_NODE_ID))
+				.anyTimes();
+
+		String jobId = pk.getId().toString();
+
+		// when
+		replayAll();
+		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(TEST_USER_ID, jobId,
+				10);
+		Future<FilterResults<GeneralNodeDatumComponents>> preview = biz
+				.previewStagedImportRequest(request);
+
+		// pretend to perform work via executor service
+		FilterResults<GeneralNodeDatumComponents> result = taskCaptor.getValue().call();
+
+		// then
+		assertThat("Preview future available", preview, notNullValue());
+		assertThat("Preview result available", result, notNullValue());
+		assertThat("Preview starting offset", result.getStartingOffset(), equalTo(0));
+		assertThat("Preview returned result count", result.getReturnedResultCount(), equalTo(10));
+		assertThat("Preview returned total count", result.getTotalResults(), equalTo(100L));
+		assertThat("Preview result data", result.getResults(), notNullValue());
+
+		List<GeneralNodeDatumComponents> previewData = StreamSupport
+				.stream(result.getResults().spliterator(), false).collect(toList());
+		assertThat("Preview data count", previewData, hasSize(10));
 	}
 
 	@Test

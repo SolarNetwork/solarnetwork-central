@@ -25,8 +25,10 @@ package net.solarnetwork.central.datum.imp.biz;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import java.util.concurrent.Future;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
+import net.solarnetwork.central.datum.imp.domain.DatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
@@ -82,14 +84,13 @@ public interface DatumImportBiz {
 	 * {@literal true}.
 	 * </p>
 	 * 
-	 * @param userId
-	 *        the user ID that owns the job
-	 * @param jobId
-	 *        the ID of the job to get
+	 * @param request
+	 *        the request details
 	 * @return a sample of datum extracted from the import request data, never
 	 *         {@literal null}
 	 */
-	FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, String jobId);
+	Future<FilterResults<GeneralNodeDatumComponents>> previewStagedImportRequest(
+			DatumImportPreviewRequest request);
 
 	/**
 	 * Perform a datum import.

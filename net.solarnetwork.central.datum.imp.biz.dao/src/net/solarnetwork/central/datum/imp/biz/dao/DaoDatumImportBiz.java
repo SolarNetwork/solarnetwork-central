@@ -27,10 +27,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -47,6 +50,7 @@ import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
@@ -58,6 +62,7 @@ import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
+import net.solarnetwork.central.datum.imp.domain.DatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
@@ -71,6 +76,7 @@ import net.solarnetwork.central.datum.imp.support.BasicDatumImportResult;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserUuidPK;
@@ -84,12 +90,17 @@ import net.solarnetwork.util.ProgressListener;
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz {
 
+	/** The default value for the {@code maxPreviewCount} property. */
+	public static final int DEFAULT_MAX_PREVIEW_COUNT = 200;
+
 	private final ScheduledExecutorService scheduler;
 	private final ExecutorService executor;
 	private final UserNodeDao userNodeDao;
 	private final DatumImportJobInfoDao jobInfoDao;
 	private final GeneralNodeDatumDao datumDao;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
+	private ExecutorService previewExecutor;
+	private int maxPreviewCount = DEFAULT_MAX_PREVIEW_COUNT;
 
 	private boolean initialized = false;
 	private final ConcurrentMap<String, DatumImportStatus> taskMap = new ConcurrentHashMap<>(16, 0.9f,
@@ -157,28 +168,46 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz {
 
 		info = jobInfoDao.get(jobInfoDao.store(info));
 
+		DatumImportTask task = new DatumImportTask(info);
+		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
+		task.setDelegate(future);
+		taskMap.put(task.getJobId(), task);
+
 		return new BasicDatumImportReceipt(jobId.toString(), info.getImportState());
 	}
 
 	@Override
-	public FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, String jobId) {
-		// TODO Auto-generated method stub
-		return null;
+	public Future<FilterResults<GeneralNodeDatumComponents>> previewStagedImportRequest(
+			DatumImportPreviewRequest request) {
+		DatumImportStatus status = datumImportJobStatusForUser(request.getUserId(), request.getJobId());
+		DatumImportTask task = (DatumImportTask) status;
+
+		if ( task.getJobState() != DatumImportState.Staged ) {
+			throw new DatumImportValidationException(
+					"Cannot preview import request that is not currently staged; current state is "
+							+ task.getJobState());
+		}
+
+		DatumImportPreview preview = new DatumImportPreview(task.info,
+				Math.min(maxPreviewCount, request.getPreviewCount()));
+		if ( previewExecutor != null ) {
+			return previewExecutor.submit(preview);
+		}
+
+		CompletableFuture<FilterResults<GeneralNodeDatumComponents>> result = new CompletableFuture<>();
+		try {
+			result.complete(preview.call());
+		} catch ( Exception e ) {
+			result.completeExceptionally(e);
+		}
+		return result;
 	}
 
 	@Override
 	public DatumImportStatus performImport(Long userId, String jobId) {
-		UserUuidPK pk = new UserUuidPK(userId, UUID.fromString(jobId));
-		DatumImportJobInfo info = jobInfoDao.get(pk);
-		if ( info == null ) {
-			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, pk);
-		}
-		DatumImportTask task = new DatumImportTask(info);
+		DatumImportStatus status = datumImportJobStatusForUser(userId, jobId);
+		DatumImportTask task = (DatumImportTask) status;
 
-		DatumImportStatus other = taskMap.putIfAbsent(task.getJobId(), task);
-		if ( other != null ) {
-			return other;
-		}
 		Future<DatumImportResult> future = executor.submit(task);
 		task.setDelegate(future);
 
@@ -187,7 +216,19 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz {
 
 	@Override
 	public DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId) {
-		return taskMap.get(jobId);
+		DatumImportStatus status = taskMap.get(jobId);
+		if ( status == null ) {
+			UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
+			DatumImportJobInfo info = jobInfoDao.get(id);
+			if ( info == null ) {
+				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
+			}
+			DatumImportTask task = new DatumImportTask(info);
+			CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
+			task.setDelegate(future);
+			status = task;
+		}
+		return status;
 	}
 
 	@Override
@@ -200,26 +241,107 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz {
 	@Override
 	public DatumImportStatus updateDatumImportJobStateForUser(Long userId, String jobId,
 			DatumImportState desiredState, Set<DatumImportState> expectedStates) {
-		// TODO Auto-generated method stub
-		return null;
+		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
+		jobInfoDao.updateJobState(id, desiredState, expectedStates);
+		DatumImportJobInfo info = jobInfoDao.get(id);
+		DatumImportStatus status = datumImportJobStatusForUser(userId, jobId);
+		if ( status instanceof DatumImportTask ) {
+			DatumImportTask task = (DatumImportTask) status;
+			task.info.setImportState(info.getImportState());
+		}
+		return status;
 	}
 
-	/**
-	 * Set the minimum time, in milliseconds, to maintain import job status
-	 * information after the job has completed.
-	 * 
-	 * @param completedTaskMinimumCacheTime
-	 *        the time in milliseconds to set
-	 */
-	public void setCompletedTaskMinimumCacheTime(long completedTaskMinimumCacheTime) {
-		this.completedTaskMinimumCacheTime = completedTaskMinimumCacheTime;
+	private ImportContext createImportContext(DatumImportJobInfo info,
+			ProgressListener<DatumImportService> progressListener) throws IOException {
+		File dataFile = getImportDataFile(info.getId());
+		if ( !dataFile.canRead() ) {
+			throw new FileNotFoundException("Data file for job " + info.getId() + " not found");
+		}
+		Configuration config = info.getConfiguration();
+		if ( config == null || config.getInputConfiguration() == null ) {
+			throw new IllegalArgumentException("Configuration missing for job " + info.getId());
+		}
+		InputConfiguration inputConfig = config.getInputConfiguration();
+		DatumImportInputFormatService inputService = optionalService(getInputServices(), inputConfig);
+		if ( inputService == null ) {
+			throw new RuntimeException(
+					"No InputService found for ID " + inputConfig.getServiceIdentifier());
+		}
+
+		BasicDatumImportResource resource = new BasicDatumImportResource(
+				new FileSystemResource(dataFile), inputService.getInputContentType());
+		return inputService.createImportContext(inputConfig, resource, progressListener);
 	}
 
-	private class DatumImportTask implements Callable<DatumImportResult>, DatumImportStatus,
+	private class DatumImportPreview implements Callable<FilterResults<GeneralNodeDatumComponents>>,
 			ProgressListener<DatumImportService> {
 
 		private final DatumImportJobInfo info;
-		private DatumImportState jobState;
+		private final int previewCount;
+		private final List<GeneralNodeDatumComponents> results;
+		private double percentComplete;
+
+		/**
+		 * Construct from a task info.
+		 * 
+		 * @param info
+		 *        the info
+		 * @param previewCount
+		 *        the maximum number of datum to preview
+		 */
+		private DatumImportPreview(DatumImportJobInfo info, int previewCount) {
+			super();
+			this.info = info;
+			this.previewCount = previewCount;
+			results = new ArrayList<>(previewCount);
+			this.percentComplete = 0;
+		}
+
+		@Override
+		public FilterResults<GeneralNodeDatumComponents> call() throws Exception {
+			Configuration config = info.getConfiguration();
+			if ( config == null || config.getInputConfiguration() == null ) {
+				throw new IllegalArgumentException("Configuration missing for job " + info.getId());
+			}
+
+			Set<Long> allowedNodeIds = userNodeDao.findNodeIdsForUser(info.getUserId());
+
+			try (ImportContext input = createImportContext(info, this)) {
+				for ( GeneralNodeDatum d : input ) {
+					if ( !allowedNodeIds.contains(d.getNodeId()) ) {
+						throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
+					}
+					results.add(new GeneralNodeDatumComponents(d));
+					if ( results.size() >= previewCount ) {
+						break;
+					}
+				}
+			} catch ( RuntimeException e ) {
+				throw e;
+			} catch ( Exception e ) {
+				throw new RuntimeException(e);
+			}
+			// provide an estimate of the overall results by extrapolating percentComplete
+			Long totalCountEstimate = null;
+			if ( percentComplete > 0 ) {
+				totalCountEstimate = Math.round(results.size() / percentComplete);
+			}
+			return new BasicFilterResults<>(results, totalCountEstimate, 0, results.size());
+		}
+
+		@Override
+		public void progressChanged(DatumImportService context, double amountComplete) {
+			this.percentComplete = amountComplete;
+		}
+
+	}
+
+	private class DatumImportTask implements Callable<DatumImportResult>, DatumImportStatus,
+			ProgressListener<DatumImportService>,
+			LoadingExceptionHandler<GeneralNodeDatum, GeneralNodeDatumPK> {
+
+		private final DatumImportJobInfo info;
 		private double percentComplete;
 		private long completionDate;
 		private Future<DatumImportResult> delegate;
@@ -239,7 +361,6 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz {
 		private DatumImportTask(DatumImportJobInfo info) {
 			super();
 			this.info = info;
-			this.jobState = DatumImportState.Claimed;
 			this.loadedCount = 0;
 		}
 
@@ -311,7 +432,6 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz {
 				DateTime completionDate) {
 			log.info("Datum import job {} transitioned to state {} with success {}", info.getId(), state,
 					success);
-			this.jobState = state;
 			info.setImportState(state);
 			if ( success != null ) {
 				info.setJobSuccess(success);
@@ -327,50 +447,33 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz {
 			postJobStatusChangedEvent(this, info);
 		}
 
+		@Override
+		public void handleLoadingException(Throwable t,
+				LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> context) {
+			throw new DatumImportValidationException(
+					"Error importing datum " + context.getLastLoadedEntity(), t,
+					(int) context.getLoadedCount() + 1, null);
+		}
+
 		private void doImport() throws IOException {
-			File dataFile = getImportDataFile(info.getId());
-			if ( !dataFile.canRead() ) {
-				throw new FileNotFoundException("Data file for job " + info.getId() + " not found");
-			}
 			Configuration config = info.getConfiguration();
 			if ( config == null || config.getInputConfiguration() == null ) {
 				throw new IllegalArgumentException("Configuration missing for job " + info.getId());
 			}
-			InputConfiguration inputConfig = config.getInputConfiguration();
-			DatumImportInputFormatService inputService = optionalService(getInputServices(),
-					inputConfig);
-			if ( inputService == null ) {
-				throw new RuntimeException(
-						"No InputService found for ID " + inputConfig.getServiceIdentifier());
-			}
 
 			Set<Long> allowedNodeIds = userNodeDao.findNodeIdsForUser(info.getUserId());
-
-			BasicDatumImportResource resource = new BasicDatumImportResource(
-					new FileSystemResource(dataFile), inputService.getInputContentType());
 			SimpleBulkLoadingOptions loadingOptions = new SimpleBulkLoadingOptions(config.getName(),
 					null, LoadingTransactionMode.SingleTransaction, null);
-			try (ImportContext ctx = inputService.createImportContext(inputConfig, resource, this);
-					LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> bulk = datumDao
-							.createBulkLoadingContext(loadingOptions,
-									new LoadingExceptionHandler<GeneralNodeDatum, GeneralNodeDatumPK>() {
 
-										@Override
-										public void handleLoadingException(Throwable t,
-												LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> context) {
-											throw new DatumImportValidationException(
-													"Error importing datum "
-															+ context.getLastLoadedEntity(),
-													t, (int) context.getLoadedCount() + 1, null);
-										}
-
-									})) {
-				for ( GeneralNodeDatum d : ctx ) {
+			try (ImportContext input = createImportContext(info, this);
+					LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> loader = datumDao
+							.createBulkLoadingContext(loadingOptions, this)) {
+				for ( GeneralNodeDatum d : input ) {
 					if ( !allowedNodeIds.contains(d.getNodeId()) ) {
 						throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
 					}
 					d.setPosted(info.getImportDate());
-					bulk.load(d);
+					loader.load(d);
 					loadedCount++;
 				}
 			} catch ( RuntimeException e ) {
@@ -378,13 +481,13 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz {
 			} catch ( Exception e ) {
 				throw new RuntimeException(e);
 			} finally {
-				dataFile.delete();
+				getImportDataFile(info.getId()).delete();
 			}
 		}
 
 		@Override
 		public void progressChanged(DatumImportService context, double amountComplete) {
-			this.percentComplete += amountComplete;
+			this.percentComplete = amountComplete;
 			postJobStatusChangedEvent(this, info);
 		}
 
@@ -400,7 +503,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz {
 
 		@Override
 		public DatumImportState getJobState() {
-			return jobState;
+			return info.getImportState();
 		}
 
 		@Override
@@ -442,9 +545,49 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz {
 		@Override
 		public String toString() {
 			return "DatumImportTask{userId=" + getUserId() + ",jobId=" + getJobId() + ",config="
-					+ (info != null ? info.getConfig() : null) + ",jobState=" + jobState
+					+ (info != null ? info.getConfig() : null) + ",jobState=" + getJobState()
 					+ ",percentComplete=" + percentComplete + ",completionDate=" + completionDate + "}";
 		}
 
 	}
+
+	/**
+	 * Set the minimum time, in milliseconds, to maintain import job status
+	 * information after the job has completed.
+	 * 
+	 * @param completedTaskMinimumCacheTime
+	 *        the time in milliseconds to set
+	 */
+	public void setCompletedTaskMinimumCacheTime(long completedTaskMinimumCacheTime) {
+		this.completedTaskMinimumCacheTime = completedTaskMinimumCacheTime;
+	}
+
+	/**
+	 * Configure an {@link ExecutorService} to run import preview tasks with.
+	 * 
+	 * <p>
+	 * If configured, then all import preview requests via
+	 * {@link #previewStagedImportForUser(Long, String)} will be executed via
+	 * this service. If not configured, import preview requests will be
+	 * performed on the calling thread.
+	 * </p>
+	 * 
+	 * @param previewExecutor
+	 *        the executor to set
+	 */
+	public void setPreviewExecutor(ExecutorService previewExecutor) {
+		this.previewExecutor = previewExecutor;
+	}
+
+	/**
+	 * Set the maximum number of datum to preview in staged import jobs.
+	 * 
+	 * @param maxPreviewCount
+	 *        the maximum number of datum to preview; defaults to
+	 *        {@link #DEFAULT_MAX_PREVIEW_COUNT}
+	 */
+	public void setMaxPreviewCount(int maxPreviewCount) {
+		this.maxPreviewCount = maxPreviewCount;
+	}
+
 }

@@ -25,9 +25,11 @@ package net.solarnetwork.central.datum.imp.support;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import java.util.concurrent.Future;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
+import net.solarnetwork.central.datum.imp.domain.DatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
@@ -68,8 +70,9 @@ public class DelegatingDatumImportBiz implements DatumImportBiz {
 	}
 
 	@Override
-	public FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, String jobId) {
-		return delegate.previewStagedImportForUser(userId, jobId);
+	public Future<FilterResults<GeneralNodeDatumComponents>> previewStagedImportRequest(
+			DatumImportPreviewRequest request) {
+		return delegate.previewStagedImportRequest(request);
 	}
 
 	@Override

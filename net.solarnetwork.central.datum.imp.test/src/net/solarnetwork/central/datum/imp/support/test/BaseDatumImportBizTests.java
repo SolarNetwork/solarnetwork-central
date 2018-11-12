@@ -36,14 +36,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Future;
 import org.junit.Test;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.util.FileCopyUtils;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
 import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
+import net.solarnetwork.central.datum.imp.domain.DatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
@@ -89,7 +91,8 @@ public class BaseDatumImportBizTests {
 		}
 
 		@Override
-		public FilterResults<GeneralNodeDatum> previewStagedImportForUser(Long userId, String jobId) {
+		public Future<FilterResults<GeneralNodeDatumComponents>> previewStagedImportRequest(
+				DatumImportPreviewRequest request) {
 			return null;
 		}
 

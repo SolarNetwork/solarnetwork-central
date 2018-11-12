@@ -30,6 +30,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.datum.imp.aop.DatumImportSecurityAspect;
+import net.solarnetwork.central.datum.imp.domain.BasicDatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportRequest;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -127,6 +128,40 @@ public class DatumImportSecurityAspectTests {
 		replayAll();
 		BasicDatumImportRequest request = new BasicDatumImportRequest(null, TEST_USER_ID);
 		aspect.requestCheck(request);
+		verifyAll();
+	}
+
+	@Test(expected = AuthorizationException.class)
+	public void makePreviewRequestNoAuth() {
+		replayAll();
+		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(TEST_USER_ID, null,
+				1);
+		aspect.previewRequestCheck(request);
+	}
+
+	@Test(expected = AuthorizationException.class)
+	public void makePreviewRequestWrongUser() {
+		becomeUser("ROLE_USER");
+		replayAll();
+		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(-2L, null, 1);
+		aspect.previewRequestCheck(request);
+	}
+
+	@Test(expected = AuthorizationException.class)
+	public void makePreviewRequestMissingUser() {
+		becomeUser("ROLE_USER");
+		replayAll();
+		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(null, null, 1);
+		aspect.previewRequestCheck(request);
+	}
+
+	@Test
+	public void makePreviewRequestAllowed() {
+		becomeUser("ROLE_USER");
+		replayAll();
+		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(TEST_USER_ID, null,
+				1);
+		aspect.previewRequestCheck(request);
 		verifyAll();
 	}
 

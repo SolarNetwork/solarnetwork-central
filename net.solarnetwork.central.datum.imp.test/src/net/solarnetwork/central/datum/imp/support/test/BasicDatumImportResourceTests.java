@@ -69,8 +69,7 @@ public class BasicDatumImportResourceTests {
 		assertThat("Content type", r.getContentType(), equalTo("text/plain"));
 	}
 
-	@Test(expected = UnsupportedOperationException.class)
-	public void transferNotSupported() throws IOException {
+	public void transferFallsBackToCopy() throws IOException {
 		// given
 		byte[] data = "Hello, world.".getBytes("UTF-8");
 
@@ -79,8 +78,12 @@ public class BasicDatumImportResourceTests {
 				"text/plain");
 
 		File tmpFile = File.createTempFile("foo-", ".txt");
-		tmpFile.delete();
 		r.transferTo(tmpFile);
+
+		assertThat("Dest file available", tmpFile.exists(), equalTo(true));
+		assertThat("Dest file content", Arrays.equals(data, copyToByteArray(tmpFile)), equalTo(true));
+
+		tmpFile.delete();
 	}
 
 	private static class TransferrableFileSystemResource extends FileSystemResource
