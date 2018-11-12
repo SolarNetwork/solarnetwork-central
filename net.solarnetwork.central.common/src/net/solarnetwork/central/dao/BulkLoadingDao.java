@@ -105,6 +105,14 @@ public interface BulkLoadingDao<T extends Entity<PK>, PK extends Serializable> {
 	 */
 	interface LoadingExceptionHandler<T extends Entity<PK>, PK extends Serializable> {
 
+		/**
+		 * Handle a loading exception.
+		 * 
+		 * @param t
+		 *        the exception
+		 * @param context
+		 *        the context
+		 */
 		void handleLoadingException(Throwable t, LoadingContext<T, PK> context);
 
 	}
@@ -122,16 +130,81 @@ public interface BulkLoadingDao<T extends Entity<PK>, PK extends Serializable> {
 	 */
 	interface LoadingContext<T extends Entity<PK>, PK extends Serializable> extends AutoCloseable {
 
+		/**
+		 * Get the loading options used to create the context.
+		 * 
+		 * @return the loading options
+		 */
 		LoadingOptions getOptions();
 
+		/**
+		 * Load an entity.
+		 * 
+		 * @param entity
+		 *        the entity to load
+		 */
 		void load(T entity);
 
+		/**
+		 * Get a count of entities loaded thus far using this context.
+		 * 
+		 * @return the loaded count
+		 */
 		long getLoadedCount();
 
+		/**
+		 * Get the entity that was last passed to the {@link #load(Entity)}
+		 * method.
+		 * 
+		 * @return the last loaded entity
+		 */
+		T getLastLoadedEntity();
+
+		/**
+		 * Create a checkpoint that can be rolled back to.
+		 * 
+		 * <p>
+		 * The {@link LoadingTransactionMode#TransactionCheckpoints} mode must
+		 * have been set in the options used to create this context.
+		 * </p>
+		 */
 		void createCheckpoint();
 
+		/**
+		 * Commit the current transaction.
+		 * 
+		 * <p>
+		 * The nature of the current transaction depends on the transaction mode
+		 * set in the options used to create this context:
+		 * </p>
+		 * <dl>
+		 * <dt>{@code TransactionCheckpoints} or {@code SingleTransaction}</dt>
+		 * <dd>All datum loaded via {@link #load(Entity)} are committed.</dd>
+		 * <dt>{@code BatchTransactions}</dt>
+		 * <dd>The datum loaded via {@link #load(Entity)} since the last
+		 * automatic batch commit are committed.</dd>
+		 * </dl>
+		 */
 		void commit();
 
+		/**
+		 * Discard the datum loaded within the current transaction.
+		 * 
+		 * <p>
+		 * The nature of the current transaction depends on the transaction mode
+		 * set in the options used to create this context:
+		 * </p>
+		 * <dl>
+		 * <dt>{@code SingleTransaction}</dt>
+		 * <dd>All datum loaded are discarded.</dd>
+		 * <dt>{@code TransactionCheckpoints}</dt>
+		 * <dd>All datum loaded via {@link #load(Entity)} since the last call to
+		 * {@link #createCheckpoint()} are discarded.</dd>
+		 * <dt>{@code BatchTransactions}</dt>
+		 * <dd>The datum loaded via {@link #load(Entity)} since the last
+		 * automatic batch commit are discarded.</dd>
+		 * </dl>
+		 */
 		void rollback();
 
 	}
