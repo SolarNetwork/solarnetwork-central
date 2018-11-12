@@ -36,7 +36,6 @@ import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import net.solarnetwork.central.dao.BulkLoadingDao;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
@@ -222,13 +221,9 @@ public class BulkLoadingDaoSupport {
 						numLoaded);
 				txManager.commit(transaction);
 			}
-			try {
-				close();
-				stmt = null;
-				con = null;
-			} catch ( SQLException e ) {
-				throw new TransactionSystemException("Unable to close load statement", e);
-			}
+			close();
+			stmt = null;
+			con = null;
 		}
 
 		@Override
@@ -247,21 +242,27 @@ public class BulkLoadingDaoSupport {
 		}
 
 		@Override
-		public void close() throws SQLException {
-			if ( stmt != null && !stmt.isClosed() ) {
+		public void close() {
+			if ( stmt != null ) {
 				try {
-					stmt.close();
+					if ( !stmt.isClosed() ) {
+						stmt.close();
+					}
 				} catch ( SQLException e ) {
 					log.warn("Error closing bulk loading statement", e);
 				}
 			}
-			if ( con != null && !con.isClosed() ) {
+			if ( con != null ) {
 				try {
-					if ( batchTransaction != null && !batchTransaction.isCompleted() ) {
-						txManager.rollback(batchTransaction);
-					} else if ( transaction != null && !transaction.isCompleted() ) {
-						txManager.rollback(transaction);
+					if ( !con.isClosed() ) {
+						if ( batchTransaction != null && !batchTransaction.isCompleted() ) {
+							txManager.rollback(batchTransaction);
+						} else if ( transaction != null && !transaction.isCompleted() ) {
+							txManager.rollback(transaction);
+						}
 					}
+				} catch ( SQLException e ) {
+					log.warn("Error closing bulk loading connection", e);
 				} finally {
 					DataSourceUtils.releaseConnection(con, dataSource);
 				}

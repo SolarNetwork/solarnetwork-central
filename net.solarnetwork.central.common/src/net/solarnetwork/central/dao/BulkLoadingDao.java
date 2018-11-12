@@ -207,6 +207,12 @@ public interface BulkLoadingDao<T extends Entity<PK>, PK extends Serializable> {
 		 */
 		void rollback();
 
+		/**
+		 * Close any temporary resources.
+		 */
+		@Override
+		void close();
+
 	}
 
 	/**
