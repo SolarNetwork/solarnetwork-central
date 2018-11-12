@@ -73,7 +73,7 @@ public class BasicConfiguration implements Configuration, Serializable {
 		}
 		this.name = other.getName();
 		this.stage = other.isStage();
-		this.inputConfiguration = other.getInputConfiguration();
+		this.inputConfiguration = new BasicInputConfiguration(other.getInputConfiguration());
 	}
 
 	@Override
