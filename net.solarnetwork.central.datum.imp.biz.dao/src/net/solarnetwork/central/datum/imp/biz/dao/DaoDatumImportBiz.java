@@ -518,7 +518,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 		@Override
 		public String getJobId() {
-			return info.getId().toString();
+			return info.getId().getId().toString();
 		}
 
 		@Override
