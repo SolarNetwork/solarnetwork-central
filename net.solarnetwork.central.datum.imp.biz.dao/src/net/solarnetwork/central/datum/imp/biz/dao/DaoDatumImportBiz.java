@@ -29,7 +29,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -45,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.springframework.core.io.FileSystemResource;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
@@ -53,6 +56,7 @@ import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService.ImportContext;
@@ -81,6 +85,7 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.util.ProgressListener;
 
@@ -105,8 +110,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	private int maxPreviewCount = DEFAULT_MAX_PREVIEW_COUNT;
 
 	private ScheduledFuture<?> taskPurgerTask = null;
-	private final ConcurrentMap<String, DatumImportStatus> taskMap = new ConcurrentHashMap<>(16, 0.9f,
-			1);
+	private final ConcurrentMap<UserUuidPK, DatumImportStatus> taskMap = new ConcurrentHashMap<>(16,
+			0.9f, 1);
 
 	/**
 	 * Constructor.
@@ -181,7 +186,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		DatumImportTask task = new DatumImportTask(info);
 		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
 		task.setDelegate(future);
-		taskMap.put(task.getJobId(), task);
+		taskMap.put(pk, task);
 
 		return new BasicDatumImportReceipt(jobId.toString(), info.getImportState());
 	}
@@ -231,9 +236,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 	@Override
 	public DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId) {
-		DatumImportStatus status = taskMap.get(jobId);
+		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
+		DatumImportStatus status = taskMap.get(id);
 		if ( status == null ) {
-			UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
 			DatumImportJobInfo info = jobInfoDao.get(id);
 			if ( info == null ) {
 				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);

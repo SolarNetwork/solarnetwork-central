@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
  * A {@link Runnable} for removing tasks that have completed and expired after a
@@ -47,7 +48,7 @@ public class DatumImportTaskPurger implements Runnable {
 	private static final Logger log = LoggerFactory.getLogger(DatumImportTaskPurger.class);
 
 	private final long completedTaskMinimumCacheTime;
-	private final WeakReference<ConcurrentMap<String, DatumImportStatus>> taskMapRef;
+	private final WeakReference<ConcurrentMap<UserUuidPK, DatumImportStatus>> taskMapRef;
 
 	/**
 	 * Constructor.
@@ -59,15 +60,15 @@ public class DatumImportTaskPurger implements Runnable {
 	 *        the map of tasks to maintain and purge expired tasks from
 	 */
 	public DatumImportTaskPurger(long completedTaskMinimumCacheTime,
-			ConcurrentMap<String, DatumImportStatus> taskMap) {
+			ConcurrentMap<UserUuidPK, DatumImportStatus> taskMap) {
 		super();
 		this.completedTaskMinimumCacheTime = completedTaskMinimumCacheTime;
-		this.taskMapRef = new WeakReference<ConcurrentMap<String, DatumImportStatus>>(taskMap);
+		this.taskMapRef = new WeakReference<ConcurrentMap<UserUuidPK, DatumImportStatus>>(taskMap);
 	}
 
 	@Override
 	public void run() {
-		ConcurrentMap<String, DatumImportStatus> taskMap = taskMapRef.get();
+		ConcurrentMap<UserUuidPK, DatumImportStatus> taskMap = taskMapRef.get();
 		if ( taskMap == null ) {
 			throw new RuntimeException("Task map no longer available; exiting.");
 		}
