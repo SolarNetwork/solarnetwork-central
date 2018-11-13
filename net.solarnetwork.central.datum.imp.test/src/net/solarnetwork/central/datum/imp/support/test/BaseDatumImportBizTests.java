@@ -97,11 +97,6 @@ public class BaseDatumImportBizTests {
 		}
 
 		@Override
-		public DatumImportStatus performImport(Long userId, String jobId) {
-			return null;
-		}
-
-		@Override
 		public DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId) {
 			return null;
 		}

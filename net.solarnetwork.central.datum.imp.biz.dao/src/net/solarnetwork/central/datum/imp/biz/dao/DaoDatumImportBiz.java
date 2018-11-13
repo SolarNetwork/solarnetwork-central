@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -55,6 +56,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService.ImportContext;
+import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
 import net.solarnetwork.central.datum.imp.biz.DatumImportValidationException;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
@@ -88,7 +90,7 @@ import net.solarnetwork.util.ProgressListener;
  * @author matt
  * @version 1.0
  */
-public class DaoDatumImportBiz extends BaseDatumImportBiz {
+public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImportJobBiz {
 
 	/** The default value for the {@code maxPreviewCount} property. */
 	public static final int DEFAULT_MAX_PREVIEW_COUNT = 200;
@@ -102,7 +104,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz {
 	private ExecutorService previewExecutor;
 	private int maxPreviewCount = DEFAULT_MAX_PREVIEW_COUNT;
 
-	private boolean initialized = false;
+	private ScheduledFuture<?> taskPurgerTask = null;
 	private final ConcurrentMap<String, DatumImportStatus> taskMap = new ConcurrentHashMap<>(16, 0.9f,
 			1);
 
@@ -140,16 +142,24 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz {
 	 * </p>
 	 */
 	public synchronized void init() {
-		if ( initialized ) {
+		if ( taskPurgerTask != null ) {
 			return;
 		}
 		// purge completed tasks every hour
 		if ( scheduler != null ) {
-			this.scheduler.scheduleWithFixedDelay(
+			taskPurgerTask = scheduler.scheduleWithFixedDelay(
 					new DatumImportTaskPurger(completedTaskMinimumCacheTime, taskMap), 1L, 1L,
 					TimeUnit.HOURS);
 		}
-		initialized = true;
+	}
+
+	/**
+	 * Shutdown after the service is no longer needed.
+	 */
+	public synchronized void shutdown() {
+		if ( taskPurgerTask != null ) {
+			taskPurgerTask.cancel(true);
+		}
 	}
 
 	@Override

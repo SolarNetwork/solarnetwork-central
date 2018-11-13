@@ -93,23 +93,6 @@ public interface DatumImportBiz {
 			DatumImportPreviewRequest request);
 
 	/**
-	 * Perform a datum import.
-	 * 
-	 * <p>
-	 * This method can only be called after a job ID has been returned from a
-	 * previous call to
-	 * {@link #submitDatumImportRequest(DatumImportRequest, DatumImportResource)}.
-	 * </p>
-	 * 
-	 * @param userId
-	 *        the user ID that owns the job
-	 * @param jobId
-	 *        the ID of the job to get
-	 * @return the job status, or {@literal null} if the job is not available
-	 */
-	DatumImportStatus performImport(Long userId, String jobId);
-
-	/**
 	 * Get the status of a specific job.
 	 * 
 	 * @param userId

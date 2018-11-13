@@ -210,7 +210,8 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * Set the work directory, as a string.
 	 * 
 	 * @param path
-	 *        the path of the directory to set
+	 *        the path of the directory to set, or an empty string to use a
+	 *        default work directory
 	 * @throws IllegalArgumentException
 	 *         if {@code path} is {@literal null}
 	 */
@@ -218,7 +219,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 		if ( path == null ) {
 			throw new IllegalArgumentException("The path must not be null");
 		}
-		setWorkDirectory(new File(path));
+		setWorkDirectory(path.isEmpty() ? defaultWorkDirectory() : new File(path));
 	}
 
 	/**
