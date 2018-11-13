@@ -165,6 +165,25 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	}
 
 	@Test
+	public void purgeStaged() {
+		getByPrimaryKey();
+
+		DatumImportJobInfo info = new DatumImportJobInfo();
+		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setConfig(new BasicConfiguration());
+		info.setImportDate(new DateTime());
+		info.setImportState(DatumImportState.Staged);
+		info.setCreated(new DateTime().hourOfDay().roundFloorCopy());
+		info = dao.get(dao.store(info));
+
+		long result = dao.purgeCompletedJobs(new DateTime().hourOfDay().roundCeilingCopy());
+		assertThat("Delete count", result, equalTo(1L));
+
+		DatumImportJobInfo notCompleted = dao.get(this.info.getId());
+		assertThat("Unfinished job still available", notCompleted, notNullValue());
+	}
+
+	@Test
 	public void updateStateNotFound() {
 		boolean updated = dao.updateJobState(new UserUuidPK(-123L, UUID.randomUUID()),
 				DatumImportState.Completed, null);

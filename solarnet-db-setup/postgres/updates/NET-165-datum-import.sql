@@ -51,8 +51,9 @@ $$;
 /**************************************************************************************************
  * FUNCTION solarnet.purge_completed_datum_import_jobs(timestamp with time zone)
  *
- * Delete sn_datum_import_job rows that have reached the 'c' status, and whose
- * completed date is older than the given date.
+ * Delete sn_datum_import_job rows that have reached the 'c' state and whose
+ * completed date is older than the given date, or are in the 's' state and whose
+ * creation date is older than the given date.
  *
  * @param older_date The maximum date to delete tasks for.
  * @return The number of rows deleted.
@@ -64,7 +65,11 @@ DECLARE
 	num_rows BIGINT := 0;
 BEGIN
 	DELETE FROM solarnet.sn_datum_import_job
-	WHERE completed < older_date AND state = 'c';
+	WHERE (
+		(completed < older_date AND state = 'c')
+		OR
+		(created < older_date AND state = 's')
+	);
 	GET DIAGNOSTICS num_rows = ROW_COUNT;
 	RETURN num_rows;
 END;
