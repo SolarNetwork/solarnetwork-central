@@ -14,7 +14,7 @@
 					<property name="basenames">
 						<array>
 							<value>net.solarnetwork.central.datum.imp.standard.BasicCsvDatumImportInputFormatService</value>
-							<value>net.solarnetwork.central.datum.imp.standard.CsvDatumImportInputFormatService</value>
+							<value>net.solarnetwork.central.datum.imp.standard.CsvDatumImportInputProperties</value>
 						</array>
 					</property>
 				</bean>
