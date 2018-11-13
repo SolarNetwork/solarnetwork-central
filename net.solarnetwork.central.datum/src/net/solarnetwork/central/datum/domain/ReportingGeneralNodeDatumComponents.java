@@ -1,7 +1,7 @@
 /* ==================================================================
- * ReportingGeneralLocationDatum.java - Oct 17, 2014 2:27:14 PM
+ * ReportingGeneralNodeDatumComponents.java - 14/11/2018 9:44:34 AM
  * 
- * Copyright 2007-2014 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -30,19 +30,37 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.util.SerializeIgnore;
 
 /**
- * Extension of {@link GeneralLocationDatum} with some additional properties
- * geared towards reporting.
+ * Extension of {@link GeneralNodeDatumComponents} with some additional
+ * properties geared towards reporting.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.30
  */
-@JsonPropertyOrder({ "created", "locationId", "sourceId", "localDate", "localTime" })
-public class ReportingGeneralLocationDatum extends GeneralLocationDatum
-		implements ReportingGeneralLocationDatumMatch {
+@JsonPropertyOrder({ "created", "nodeId", "sourceId", "localDate", "localTime" })
+public class ReportingGeneralNodeDatumComponents extends GeneralNodeDatumComponents
+		implements ReportingGeneralNodeDatumMatch {
 
-	private static final long serialVersionUID = 5597767213979321230L;
+	private static final long serialVersionUID = -7585151200343112934L;
 
 	private LocalDateTime localDateTime;
+
+	/**
+	 * Default constructor.
+	 */
+	public ReportingGeneralNodeDatumComponents() {
+		super();
+	}
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the datum to copy
+	 */
+	public ReportingGeneralNodeDatumComponents(GeneralNodeDatum other) {
+		super(other);
+	}
 
 	@Override
 	public LocalDate getLocalDate() {
@@ -69,5 +87,4 @@ public class ReportingGeneralLocationDatum extends GeneralLocationDatum
 	public void setLocalDateTime(LocalDateTime localDateTime) {
 		this.localDateTime = localDateTime;
 	}
-
 }

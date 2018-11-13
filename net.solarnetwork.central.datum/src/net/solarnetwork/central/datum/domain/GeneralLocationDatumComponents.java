@@ -24,7 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import net.solarnetwork.domain.GeneralLocationDatumSamples;
+import net.solarnetwork.domain.GeneralDatumSamples;
 
 /**
  * Extension of {@link GeneralLocationDatum} to facilitate serializing into
@@ -61,7 +61,7 @@ public class GeneralLocationDatumComponents extends GeneralLocationDatum {
 	}
 
 	@JsonUnwrapped
-	public GeneralLocationDatumSamples getSampleComponents() {
+	public GeneralDatumSamples getSampleComponents() {
 		return getSamples();
 	}
 
