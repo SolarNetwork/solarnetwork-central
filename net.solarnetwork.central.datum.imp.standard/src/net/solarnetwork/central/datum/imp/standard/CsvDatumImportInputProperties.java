@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.standard;
 
+import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -73,7 +74,8 @@ public class CsvDatumImportInputProperties {
 		List<SettingSpecifier> result = new ArrayList<>(8);
 		result.add(new BasicTextFieldSettingSpecifier("headerRowCount",
 				DEFAULT_HEADER_ROW_COUNT.toString()));
-		result.add(new BasicTextFieldSettingSpecifier("dateColumnsValue", "1"));
+		result.add(new BasicTextFieldSettingSpecifier("dateColumnsValue",
+				commaDelimitedStringFromCollection(DEFAULT_DATE_COLUMNS)));
 		result.add(new BasicTextFieldSettingSpecifier("dateFormat", DEFAULT_DATE_FORMAT));
 		result.add(
 				new BasicTextFieldSettingSpecifier("nodeIdColumn", DEFAULT_NODE_ID_COLUMN.toString()));
