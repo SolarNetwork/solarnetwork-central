@@ -35,9 +35,14 @@ public class BasicDatumImportPreviewRequest implements DatumImportPreviewRequest
 	private final int previewCount;
 
 	/**
+	 * Constructor.
+	 * 
 	 * @param userId
+	 *        the user ID
 	 * @param jobId
+	 *        the job ID
 	 * @param previewCount
+	 *        the number of datum to preview
 	 */
 	public BasicDatumImportPreviewRequest(Long userId, String jobId, int previewCount) {
 		super();
