@@ -405,11 +405,9 @@ public class DaoDatumImportBizTests {
 
 		loadingContext.close();
 
-		String jobId = pk.getId().toString();
-
 		// when
 		replayAll();
-		DatumImportStatus status = biz.performImport(TEST_USER_ID, jobId);
+		DatumImportStatus status = biz.performImport(pk);
 
 		// pretend to perform work via executor service
 		DatumImportResult result = taskCaptor.getValue().call();
@@ -462,11 +460,9 @@ public class DaoDatumImportBizTests {
 
 		loadingContext.close();
 
-		String jobId = pk.getId().toString();
-
 		// when
 		replayAll();
-		DatumImportStatus status = biz.performImport(TEST_USER_ID, jobId);
+		DatumImportStatus status = biz.performImport(pk);
 
 		// pretend to perform work via executor service
 		DatumImportResult result = taskCaptor.getValue().call();

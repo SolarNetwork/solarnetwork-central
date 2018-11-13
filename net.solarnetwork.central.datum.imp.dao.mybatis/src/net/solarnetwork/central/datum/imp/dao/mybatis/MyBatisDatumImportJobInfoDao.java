@@ -49,7 +49,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	/**
 	 * The {@code DELETE} query name used for
-	 * {@link #purgeCompletedJobs(DateTime)}.
+	 * {@link #purgeOldJobs(DateTime)}.
 	 */
 	public static final String UPDATE_PURGE_COMPLETED = "delete-DatumImportJobInfo-completed";
 
@@ -81,7 +81,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public long purgeCompletedJobs(DateTime olderThanDate) {
+	public long purgeOldJobs(DateTime olderThanDate) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("date", olderThanDate);
 		getSqlSession().update(updateDeleteCompletedJobs, params);
@@ -116,7 +116,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	}
 
 	/**
-	 * Set the statement name for the {@link #purgeCompletedJobs(DateTime)}
+	 * Set the statement name for the {@link #purgeOldJobs(DateTime)}
 	 * method to use.
 	 * 
 	 * @param updateDeleteCompletedJobs

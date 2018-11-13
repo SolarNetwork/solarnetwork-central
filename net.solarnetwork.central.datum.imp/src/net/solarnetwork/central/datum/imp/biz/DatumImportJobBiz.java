@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.datum.imp.biz;
 
+import org.joda.time.DateTime;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
+import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
+import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
  * Service API for operations related to datum import jobs.
@@ -47,12 +50,27 @@ public interface DatumImportJobBiz {
 	 * {@link DatumImportBiz#submitDatumImportRequest(DatumImportRequest, DatumImportResource)}.
 	 * </p>
 	 * 
-	 * @param userId
-	 *        the user ID that owns the job
-	 * @param jobId
-	 *        the ID of the job to get
+	 * @param id
+	 *        the ID of the import job to perform
 	 * @return the job status, or {@literal null} if the job is not available
 	 */
-	DatumImportStatus performImport(Long userId, String jobId);
+	DatumImportStatus performImport(UserUuidPK id);
+
+	/**
+	 * Purge old jobs.
+	 * 
+	 * <p>
+	 * This method will delete the job status associated with jobs that have
+	 * reached a {@link DatumImportState#Completed} state and whose completion
+	 * date is older than a given date, <b>or</b> are in the
+	 * {@link DatumImportState#Staged} state and whose creation date is older
+	 * than a given date.
+	 * </p>
+	 * 
+	 * @param olderThanDate
+	 *        the maximum date for which to purge jobs
+	 * @return the number of jobs deleted
+	 */
+	long purgeOldJobs(DateTime olderThanDate);
 
 }

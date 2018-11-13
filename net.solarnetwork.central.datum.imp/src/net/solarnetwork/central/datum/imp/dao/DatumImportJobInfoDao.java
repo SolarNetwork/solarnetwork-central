@@ -50,15 +50,21 @@ public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, Us
 	DatumImportJobInfo claimQueuedJob();
 
 	/**
-	 * Purge jobs that have reached a
-	 * {@link net.solarnetwork.central.datum.export.domain.DatumImportState#Completed}
-	 * and are older than a given date.
+	 * Purge old jobs.
+	 * 
+	 * <p>
+	 * This method will delete the job status associated with jobs that have
+	 * reached a {@link DatumImportState#Completed} state and whose completion
+	 * date is older than a given date, <b>or</b> are in the
+	 * {@link DatumImportState#Staged} state and whose creation date is older
+	 * than a given date.
+	 * </p>
 	 * 
 	 * @param olderThanDate
-	 *        the maximum date for which to purge completed jobs
+	 *        the maximum date for which to purge old jobs
 	 * @return the number of jobs deleted
 	 */
-	long purgeCompletedJobs(DateTime olderThanDate);
+	long purgeOldJobs(DateTime olderThanDate);
 
 	/**
 	 * Update the state of a specific job.

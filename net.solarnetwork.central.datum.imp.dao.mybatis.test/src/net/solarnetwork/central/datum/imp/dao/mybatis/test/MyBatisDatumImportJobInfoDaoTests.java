@@ -134,7 +134,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void purgeCompletedNoneCompleted() {
 		getByPrimaryKey();
-		long result = dao.purgeCompletedJobs(new DateTime());
+		long result = dao.purgeOldJobs(new DateTime());
 		assertThat("Delete count", result, equalTo(0L));
 	}
 
@@ -142,7 +142,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void purgeCompletedNoneExpired() {
 		getByPrimaryKey();
 
-		long result = dao.purgeCompletedJobs(new DateTime().hourOfDay().roundCeilingCopy());
+		long result = dao.purgeOldJobs(new DateTime().hourOfDay().roundCeilingCopy());
 		assertThat("Delete count", result, equalTo(0L));
 	}
 
@@ -157,7 +157,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setCompleted(new DateTime().hourOfDay().roundFloorCopy());
 		info = dao.get(dao.store(info));
 
-		long result = dao.purgeCompletedJobs(new DateTime().hourOfDay().roundCeilingCopy());
+		long result = dao.purgeOldJobs(new DateTime().hourOfDay().roundCeilingCopy());
 		assertThat("Delete count", result, equalTo(1L));
 
 		DatumImportJobInfo notCompleted = dao.get(this.info.getId());
@@ -176,7 +176,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setCreated(new DateTime().hourOfDay().roundFloorCopy());
 		info = dao.get(dao.store(info));
 
-		long result = dao.purgeCompletedJobs(new DateTime().hourOfDay().roundCeilingCopy());
+		long result = dao.purgeOldJobs(new DateTime().hourOfDay().roundCeilingCopy());
 		assertThat("Delete count", result, equalTo(1L));
 
 		DatumImportJobInfo notCompleted = dao.get(this.info.getId());

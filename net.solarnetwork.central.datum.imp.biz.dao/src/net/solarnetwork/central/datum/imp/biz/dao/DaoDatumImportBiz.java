@@ -214,14 +214,19 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	}
 
 	@Override
-	public DatumImportStatus performImport(Long userId, String jobId) {
-		DatumImportStatus status = datumImportJobStatusForUser(userId, jobId);
+	public DatumImportStatus performImport(UserUuidPK id) {
+		DatumImportStatus status = datumImportJobStatusForUser(id.getUserId(), id.getId().toString());
 		DatumImportTask task = (DatumImportTask) status;
 
 		Future<DatumImportResult> future = executor.submit(task);
 		task.setDelegate(future);
 
 		return task;
+	}
+
+	@Override
+	public long purgeOldJobs(DateTime olderThanDate) {
+		return jobInfoDao.purgeOldJobs(olderThanDate);
 	}
 
 	@Override

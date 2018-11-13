@@ -42,7 +42,7 @@ import org.osgi.service.event.Event;
 public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImportResult> {
 
 	/** Topic for an import job status change notification. */
-	String EVENT_TOPIC_JOB_STATUS_CHANGED = "net/solarnetwork/central/datum/import/JOB_STATUS_CHANGED";
+	String EVENT_TOPIC_JOB_STATUS_CHANGED = "net/solarnetwork/central/datum/imp/JOB_STATUS_CHANGED";
 
 	/** Event property for the import job ID. */
 	String EVENT_PROP_JOB_ID = "jobId";
