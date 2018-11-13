@@ -32,25 +32,36 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
+import net.solarnetwork.central.datum.imp.biz.DatumImportValidationException;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.imp.domain.BasicDatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -81,6 +92,32 @@ public class DatumImportController extends WebServiceControllerSupport {
 	public DatumImportController(@Qualifier("importBiz") OptionalService<DatumImportBiz> importBiz) {
 		super();
 		this.importBiz = importBiz;
+	}
+
+	/**
+	 * Handle an {@link ExecutionException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 * @since 1.10
+	 */
+	@ExceptionHandler(DatumImportValidationException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Response<?> handleDatumImportValidationException(DatumImportValidationException e) {
+		log.debug("DatumImportValidationException in {} controller", getClass().getSimpleName(), e);
+		Throwable cause = e;
+		while ( cause.getCause() != null ) {
+			cause = cause.getCause();
+		}
+		StringBuilder buf = new StringBuilder(e.getMessage());
+		if ( cause != null && cause != e ) {
+			buf.append(" Root cause: ").append(cause.toString());
+		}
+		return new Response<Object>(Boolean.FALSE, "DI.00400", buf.toString(), null);
 	}
 
 	/**
@@ -137,6 +174,61 @@ public class DatumImportController extends WebServiceControllerSupport {
 			}
 		}
 		return response(result);
+	}
+
+	/**
+	 * Preview a previously staged import request.
+	 * 
+	 * @param jobId
+	 *        the ID of the staged import job to preview
+	 * @param count
+	 *        the maximum number of datum to preview
+	 * @return an asynchronous result
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/jobs/{id}/preview", method = RequestMethod.GET)
+	public Callable<Response<FilterResults<GeneralNodeDatumComponents>>> previewStagedImport(
+			@PathVariable("id") String jobId,
+			@RequestParam(value = "count", required = false, defaultValue = "100") int count) {
+		final DatumImportBiz biz = importBiz.service();
+		final Future<FilterResults<GeneralNodeDatumComponents>> future;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			BasicDatumImportPreviewRequest req = new BasicDatumImportPreviewRequest(userId, jobId,
+					count);
+			future = biz.previewStagedImportRequest(req);
+		} else {
+			future = null;
+		}
+		// we have to wrap our FilterResults response with a Response; hence the Callable result here
+		return new Callable<Response<FilterResults<GeneralNodeDatumComponents>>>() {
+
+			@Override
+			public Response<FilterResults<GeneralNodeDatumComponents>> call() throws Exception {
+				if ( future == null ) {
+					return new Response<FilterResults<GeneralNodeDatumComponents>>(false, null,
+							"Import service not available", null);
+				}
+				try {
+					FilterResults<GeneralNodeDatumComponents> result = future.get();
+					return response(result);
+				} catch ( ExecutionException e ) {
+					Throwable t = e.getCause();
+					if ( t instanceof AuthorizationException ) {
+						AuthorizationException ae = (AuthorizationException) t;
+						if ( ae.getId() instanceof Long ) {
+							// treat as node ID, and re-throw as validation exception for preview
+							throw new DatumImportValidationException(
+									"Import not allowed for node " + ae.getId());
+						}
+					}
+					if ( t instanceof Exception ) {
+						throw (Exception) t;
+					}
+					throw e;
+				}
+			}
+		};
 	}
 
 	/**

@@ -30,6 +30,7 @@
 	</bean>
 	
 	<mvc:annotation-driven conversion-service="isoDateConversionService">
+		<mvc:async-support default-timeout="300000" task-executor="asyncTaskExecutor"/>
 		<mvc:message-converters register-defaults="true">
 			<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
 				<property name="prefixJson" value="false" />
