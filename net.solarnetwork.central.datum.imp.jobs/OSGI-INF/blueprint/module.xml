@@ -22,7 +22,7 @@
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.imp.jobs">
 		<beans:prop key="DatumImportProcessor.jobCron">0 1/10 * * * ?</beans:prop>
 		<beans:prop key="DatumImportProcessor.maximumWaitMs">5400000</beans:prop>
-		<beans:prop key="DatumImportProcessor.maximumClaimCount">100</beans:prop>
+		<beans:prop key="DatumImportProcessor.maximumClaimCount">2</beans:prop>
 		<beans:prop key="DatumImportJobInfoCleaner.jobCron">0 47 * * * ?</beans:prop>
 		<beans:prop key="DatumImportJobInfoCleaner.minimumAgeMinutes">720</beans:prop>
 	</osgix:cm-properties>
