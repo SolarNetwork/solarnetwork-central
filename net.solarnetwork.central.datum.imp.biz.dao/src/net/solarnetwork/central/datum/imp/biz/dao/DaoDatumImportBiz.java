@@ -326,13 +326,25 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			}
 
 			Set<Long> allowedNodeIds = userNodeDao.findNodeIdsForUser(info.getUserId());
+			Map<Long, DateTimeZone> tzMap = new HashMap<>();
 
 			try (ImportContext input = createImportContext(info, this)) {
 				for ( GeneralNodeDatum d : input ) {
 					if ( !allowedNodeIds.contains(d.getNodeId()) ) {
 						throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
 					}
-					results.add(new GeneralNodeDatumComponents(d));
+					ReportingGeneralNodeDatumComponents dc = new ReportingGeneralNodeDatumComponents(d);
+					DateTimeZone tz = tzMap.computeIfAbsent(dc.getNodeId(), sourceId -> {
+						UserNode userNode = userNodeDao.get(dc.getNodeId());
+						DateTimeZone zone = DateTimeZone.UTC;
+						if ( userNode != null && userNode.getNodeLocation() != null
+								&& userNode.getNodeLocation().getTimeZoneId() != null ) {
+							zone = DateTimeZone.forID(userNode.getNodeLocation().getTimeZoneId());
+						}
+						return zone;
+					});
+					dc.setLocalDateTime(d.getCreated().withZone(tz).toLocalDateTime());
+					results.add(dc);
 					if ( results.size() >= previewCount ) {
 						break;
 					}
