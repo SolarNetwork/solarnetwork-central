@@ -95,14 +95,13 @@ public class DatumImportController extends WebServiceControllerSupport {
 	}
 
 	/**
-	 * Handle an {@link ExecutionException}.
+	 * Handle an {@link DatumImportValidationException}.
 	 * 
 	 * @param e
 	 *        the exception
 	 * @param response
 	 *        the response
 	 * @return an error response object
-	 * @since 1.10
 	 */
 	@ExceptionHandler(DatumImportValidationException.class)
 	@ResponseBody
