@@ -25,6 +25,7 @@
 	/js/alerts.js
 	/js/billing.js
 	/js/data-insight.js
+	/js/import.js
 	/js/export.js
 	/js/expire.js
 </pack:script>

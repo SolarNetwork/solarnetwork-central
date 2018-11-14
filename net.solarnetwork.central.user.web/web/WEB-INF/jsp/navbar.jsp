@@ -53,6 +53,13 @@
 									<a href="<c:url value='/u/sec/expire'/>"><fmt:message key="link.expire"/></a>
 								</li>
 							</c:if>
+							<sec:authorize access="hasRole('ROLE_IMPORT')"><%-- TODO: temporary, remove after beta period --%>
+							<c:if test="${not empty importBiz}">
+								<li ${navloc == 'import' ? 'class="active"' : ''}>
+									<a href="<c:url value='/u/sec/import'/>"><fmt:message key="link.import"/></a>
+								</li>
+							</c:if>
+							</sec:authorize>
 							<sec:authorize access="hasRole('ROLE_BILLING')">
 								<sec:authorize access="hasRole('ROLE_EXPORT')"><%-- TODO: temporary, remove after beta period --%>
 								<c:if test="${not empty exportBiz}">
