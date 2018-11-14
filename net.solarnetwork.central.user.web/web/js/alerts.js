@@ -6,7 +6,7 @@ $(document).ready(function() {
 		$(radio.form).find('.alert-status-help').text(help);
 	}
 	
-	$('.alert-form input[name=status]').change(function(event) {
+	$('.alert-form input[name=status]').on('change', function(event) {
 		setupAlertStatusHelp(this);
 	}).filter(':checked').each(function() {
 		// make sure the form starts with the first selected element
@@ -35,7 +35,7 @@ $(document).ready(function() {
 		}
 	}
 	
-	$('.alert-form select[name=nodeId]').change(function(event) {
+	$('.alert-form select[name=nodeId]').on('change', function(event) {
 		populateSourceList($(this).val(), $('#create-node-data-alert-sources-list'));
 	});
 	
