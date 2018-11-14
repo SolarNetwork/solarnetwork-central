@@ -432,7 +432,7 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
  * @param {event} event the submit event that triggered form submission
  * @param {function} onSuccess a callback to invoke on success; will be passed the upload body object and the response body object
  * @param {function} [serializer] a callback to invoke to serialize the form data; will be passed the form object and must return
- *                                an object that will be serialized into JSON via `JSON.stringify`
+ *                                an object that will be serialized into JSON via `JSON.stringify` or a FormData object
  * @returns {jqXHR} the jQuery XHR object
  */
 SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess, serializer) {
@@ -443,16 +443,31 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		? serializer(form) 
 		: SolarReg.Settings.encodeServiceItemForm(form));
 	var submitUrl = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(form.action), body));
-	return $.ajax({
-		type: 'POST',
-		url: submitUrl,
-		contentType: "application/json; charset=utf-8",
-		data : JSON.stringify(body),
-		dataType: 'json',
-		beforeSend: function(xhr) {
-			SolarReg.csrf(xhr);
-		}
-	}).done(function(json, statusText) {
+	var jqXhr;
+	if ( body instanceof FormData ) {
+		jqXhr = $.ajax({
+			type: 'POST',
+			url: submitUrl,
+			data : body,
+			processData: false,
+	        contentType: false,
+	        beforeSend: function(xhr) {
+				SolarReg.csrf(xhr);
+			}
+		});
+	} else {
+		jqXhr = $.ajax({
+			type: 'POST',
+			url: submitUrl,
+			contentType: "application/json; charset=utf-8",
+			data : JSON.stringify(body),
+			dataType: 'json',
+			beforeSend: function(xhr) {
+				SolarReg.csrf(xhr);
+			}
+		});
+	}
+	jqXhr.done(function(json, statusText) {
 		console.log('Save config result: %o', json);
 		if ( json && json.success === true ) {
 			if ( typeof onSuccess === 'function' ) {
@@ -466,4 +481,5 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 	}).fail(function(xhr, statusText, error) {
 		SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', statusText);
 	});
+	return jqXhr;
 };
