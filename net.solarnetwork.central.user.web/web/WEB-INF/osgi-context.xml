@@ -16,7 +16,7 @@
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.web">
 		<prop key="JSONView.indentAmount">0</prop>
 		<prop key="security.maxRequestBodySize">512000</prop>
-		<prop key="upload.maxRequestBodySize">10485760</prop>
+		<prop key="upload.maxRequestBodySize">262144000</prop>
 	</osgix:cm-properties>
 	
 	<!-- Service References -->
