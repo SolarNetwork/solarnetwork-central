@@ -17,26 +17,26 @@
 			<fmt:param value='0'/>
 		</fmt:message>
 	</p>
-	<div id="datum-import-job-list-container" class="table configs hidden">
-		<ol class="list-container">
-		</ol>
-		<ol class="hidden">
-			<li class="template">
-				<p>
-					TODO
-				</p>
-			</li>
-		</ol>
-	</div>
 	<table id="datum-import-job-list-container" class="table configs hidden">
 		<thead>
 			<tr>
+				<th><fmt:message key='import.job.id.label'/></th>
 				<th><fmt:message key='import.job.name.label'/></th>
-				<th><fmt:message key='import.serviceProps.label'/></th>
+				<th><fmt:message key='import.job.state.label'/></th>
+				<th><fmt:message key='import.job.percentComplete.label'/></th>
+				<th><fmt:message key='import.job.serviceProps.label'/></th>
 			</tr>
 			<tr class="template">
-				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-datum-import-job-modal"></a></td>
-				<td data-tprop="type"></td>
+				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#edit-datum-import-job-modal"></a></td>
+				<td data-tprop="name"></td>
+				<td data-tprop="state"></td>
+				<td>
+					<div class="progress">
+						<div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
+							<span data-tprop="progressAmount">0</span>%
+						</div>
+					</div>
+				</td>
 				<td>
 					<%--
 						The .service-props-container here serves as a nested template for dynamic service properties.

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.dao;
 
+import java.util.List;
 import java.util.Set;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.dao.GenericDao;
@@ -81,5 +82,17 @@ public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, Us
 	 */
 	boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
 			Set<DatumImportState> expectedStates);
+
+	/**
+	 * Find all available job info entities for a specific user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the entities for
+	 * @param states
+	 *        an optional set of states to restrict the results to, or
+	 *        {@literal null} for any state
+	 * @return the matching results, never {@literal null}
+	 */
+	List<DatumImportJobInfo> findForUser(Long userId, Set<DatumImportState> states);
 
 }

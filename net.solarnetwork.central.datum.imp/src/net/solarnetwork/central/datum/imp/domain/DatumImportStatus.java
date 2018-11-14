@@ -79,11 +79,33 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	double getPercentComplete();
 
 	/**
-	 * Get the completion date, as milliseconds since the epoch.
+	 * Get the date the import job was submitted.
 	 * 
-	 * @return the completion date, or {@literal 0} if not complete.
+	 * @return the date the job was submitted, as milliseconds since the epoch.
+	 */
+	long getSubmitDate();
+
+	/**
+	 * Get the configured import date.
+	 * 
+	 * @return the import date, as milliseconds since the epoch.
+	 */
+	long getImportDate();
+
+	/**
+	 * Get the completion date.
+	 * 
+	 * @return the completion date, as milliseconds since the epoch, or
+	 *         {@literal 0} if not complete
 	 */
 	long getCompletionDate();
+
+	/**
+	 * Get the configuration associated with this job.
+	 * 
+	 * @return the configuration
+	 */
+	Configuration getConfiguration();
 
 	/**
 	 * Create a job status changed event out of this instance.

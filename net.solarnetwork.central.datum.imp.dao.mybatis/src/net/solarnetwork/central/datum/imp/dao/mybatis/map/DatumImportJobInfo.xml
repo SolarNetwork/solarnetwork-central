@@ -82,19 +82,22 @@
 			dij.id = #{id} AND dij.user_id = #{userId}
 	</select>
 
-	<select id="find-DatumImportJobInfo-for-user" parameterType="long" resultMap="DatumImportJobInfoFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+	<select id="get-DatumImportJobInfo-for-claim" resultMap="DatumImportJobInfoDirectResult" statementType="CALLABLE">
+		{call solarnet.claim_datum_import_job()}
+	</select>
+	
+	<select id="find-DatumImportJobInfo-for-user" parameterType="map" resultMap="DatumImportJobInfoFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-DatumImportJobInfo-full-result"/>
 		FROM
 			solarnet.sn_datum_import_job dij
 		WHERE
-			dij.user_id = #{id}
+			dij.user_id = #{userId}
+			<if test="states != null and states.length > 0">
+			AND state = ANY(#{states,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
 		ORDER BY
-			lower(dij.name), dij.created, dij.id
-	</select>
-
-	<select id="get-DatumImportJobInfo-for-claim" resultMap="DatumImportJobInfoDirectResult" statementType="CALLABLE">
-		{call solarnet.claim_datum_import_job()}
+			dij.created, dij.id
 	</select>
 	
 	<delete id="delete-DatumImportJobInfo-completed" parameterType="map" statementType="CALLABLE">

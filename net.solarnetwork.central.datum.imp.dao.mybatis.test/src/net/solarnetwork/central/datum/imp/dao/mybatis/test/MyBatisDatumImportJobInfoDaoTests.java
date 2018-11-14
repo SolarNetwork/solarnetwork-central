@@ -22,13 +22,16 @@
 
 package net.solarnetwork.central.datum.imp.dao.mybatis.test;
 
+import static java.util.Collections.singleton;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.UUID;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -219,5 +222,79 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		boolean updated = dao.updateJobState(this.info.getId(), DatumImportState.Retracted,
 				EnumSet.of(DatumImportState.Unknown, DatumImportState.Staged, DatumImportState.Queued));
 		assertThat("Update result", updated, equalTo(true));
+	}
+
+	@Test
+	public void findForUserNotFound() {
+		List<DatumImportJobInfo> results = dao.findForUser(user.getId(), null);
+		assertThat("Empty results returned", results, hasSize(0));
+	}
+
+	@Test
+	public void findForUserNotFoundWithState() {
+		storeNew();
+		List<DatumImportJobInfo> results = dao.findForUser(user.getId(),
+				singleton(DatumImportState.Completed));
+		assertThat("Empty results returned", results, hasSize(0));
+	}
+
+	@Test
+	public void findForUserFound() {
+		storeNew();
+
+		// add another job that should _not_ be found
+		DatumImportJobInfo info = new DatumImportJobInfo();
+		info.setId(new UserUuidPK(this.user.getId() - 1L, UUID.randomUUID()));
+		info.setConfig(new BasicConfiguration());
+		info.setImportDate(new DateTime());
+		info.setImportState(DatumImportState.Staged);
+		info.setCreated(new DateTime().hourOfDay().roundFloorCopy());
+		info = dao.get(dao.store(info));
+
+		List<DatumImportJobInfo> results = dao.findForUser(user.getId(), null);
+		assertThat("Results returned", results, hasSize(1));
+		assertThat("Result matches", results.get(0), equalTo(this.info));
+	}
+
+	@Test
+	public void findForUserFoundWithState() {
+		// add job that should _not_ be found
+		storeNew();
+
+		// add another job that _should_ be found
+		DatumImportJobInfo info = new DatumImportJobInfo();
+		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setConfig(new BasicConfiguration());
+		info.setImportDate(new DateTime());
+		info.setImportState(DatumImportState.Staged);
+		info.setCreated(new DateTime().hourOfDay().roundFloorCopy());
+		info = dao.get(dao.store(info));
+
+		List<DatumImportJobInfo> results = dao.findForUser(user.getId(),
+				singleton(DatumImportState.Staged));
+		assertThat("Results returned", results, hasSize(1));
+		assertThat("Result matches", results.get(0), equalTo(info));
+	}
+
+	@Test
+	public void findForUserFoundMultiple() {
+		storeNew();
+
+		// add another job
+		DatumImportJobInfo info = new DatumImportJobInfo();
+		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setConfig(new BasicConfiguration());
+		info.setImportDate(new DateTime());
+		info.setImportState(DatumImportState.Staged);
+		info.setCreated(new DateTime().minusHours(1));
+		info = dao.get(dao.store(info));
+
+		List<DatumImportJobInfo> results = dao.findForUser(user.getId(),
+				EnumSet.of(DatumImportState.Staged, DatumImportState.Unknown));
+		assertThat("Results returned", results, hasSize(2));
+
+		// should be ordered by creation date
+		assertThat("Result matches", results.get(0), equalTo(info));
+		assertThat("Result matches", results.get(1), equalTo(this.info));
 	}
 }

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.dao.mybatis;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,8 +49,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	public static final String QUERY_FOR_CLAIMING_JOB = "get-DatumImportJobInfo-for-claim";
 
 	/**
-	 * The {@code DELETE} query name used for
-	 * {@link #purgeOldJobs(DateTime)}.
+	 * The {@code DELETE} query name used for {@link #purgeOldJobs(DateTime)}.
 	 */
 	public static final String UPDATE_PURGE_COMPLETED = "delete-DatumImportJobInfo-completed";
 
@@ -59,9 +59,15 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 */
 	public static final String UPDATE_JOB_STATE = "update-DatumImportJobInfo-state";
 
+	/**
+	 * The query name used for {@link #findForUser(Long, Set)}.
+	 */
+	public static final String QUERY_FOR_USER = "find-DatumImportJobInfo-for-user";
+
 	private String queryForClaimQueuedJob;
 	private String updateDeleteCompletedJobs;
 	private String updateJobState;
+	private String queryForUser;
 
 	/**
 	 * Constructor.
@@ -71,6 +77,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		setQueryForClaimQueuedJob(QUERY_FOR_CLAIMING_JOB);
 		setUpdateDeleteCompletedJobs(UPDATE_PURGE_COMPLETED);
 		setUpdateJobState(UPDATE_JOB_STATE);
+		setQueryForUser(QUERY_FOR_USER);
 	}
 
 	@Override
@@ -105,6 +112,19 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		return (count > 0);
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public List<DatumImportJobInfo> findForUser(Long userId, Set<DatumImportState> states) {
+		Map<String, Object> params = new HashMap<>(2);
+		params.put("userId", userId);
+		if ( states != null && !states.isEmpty() ) {
+			String[] array = states.stream().map(s -> String.valueOf(s.getKey()))
+					.collect(Collectors.toList()).toArray(new String[states.size()]);
+			params.put("states", array);
+		}
+		return selectList(queryForUser, params, null, null);
+	}
+
 	/**
 	 * Set the query name for the {@link #claimQueuedJob()} method to use.
 	 * 
@@ -116,8 +136,8 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	}
 
 	/**
-	 * Set the statement name for the {@link #purgeOldJobs(DateTime)}
-	 * method to use.
+	 * Set the statement name for the {@link #purgeOldJobs(DateTime)} method to
+	 * use.
 	 * 
 	 * @param updateDeleteCompletedJobs
 	 *        the statement name; defaults to {@link #UPDATE_PURGE_COMPLETED}
@@ -135,6 +155,17 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 */
 	public void setUpdateJobState(String updateJobState) {
 		this.updateJobState = updateJobState;
+	}
+
+	/**
+	 * Set the statement name for the {@link #findForUser(Long, Set)} method to
+	 * use.
+	 * 
+	 * @param queryForUser
+	 *        the statement name; defaults to {@link #QUERY_FOR_USER}
+	 */
+	public void setQueryForUser(String queryForUser) {
+		this.queryForUser = queryForUser;
 	}
 
 }

@@ -5,8 +5,29 @@ $(document).ready(function() {
 	
 	var settingTemplates = $('#import-setting-templates');
 
+	function loadDatumImportJobs() {
+		return $.getJSON(SolarReg.solarUserURL('/sec/import/jobs?states=Queued,Staged,Claimed,Executing'), function(json) {
+			console.log('Got import jobs: %o', json);
+			if ( json && json.success === true && Array.isArray(json.data) ) {
+				populateDatumImportJobs(json.data);
+			}
+		});
+	}
+	
 	function populateDatumImportJobs(jobs, preserve) {
-		// TODO
+		jobs = Array.isArray(jobs) ? jobs : [];
+		var container = $('#datum-import-job-list-container');
+		var items = jobs.map(function(job) {
+			var item = SolarReg.Settings.serviceConfigurationItem(job.configuration.inputConfiguration, inputServices);
+			var id = job.jobId.replace(/-.*/, '');
+			item.id = id;
+			item.state = job.jobState;
+			item.progressAmount = (job.percentComplete * 100).toFixed(0);
+			return item;
+		});
+		SolarReg.Templates.populateTemplateItems(container, items, preserve);
+		container.closest('section').find('.listCount').text(jobs.length);
+		return jobs;
 	}
 	
 	function handleServiceIdentifierChange(event, services) {
@@ -81,11 +102,7 @@ $(document).ready(function() {
 		});
 
 		// list all jobs for user
-		$.getJSON(SolarReg.solarUserURL('/sec/import/jobs'), function(json) {
-			console.log('Got import jobs: %o', json);
-			if ( json && json.success === true ) {
-				// TODO render job statuses
-			}
+		loadDatumImportJobs().then(function() {
 			liftoff();
 		});
 	});

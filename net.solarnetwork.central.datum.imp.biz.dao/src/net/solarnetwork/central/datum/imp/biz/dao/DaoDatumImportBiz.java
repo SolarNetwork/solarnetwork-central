@@ -234,6 +234,14 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		return jobInfoDao.purgeOldJobs(olderThanDate);
 	}
 
+	private DatumImportStatus statusForJobInfo(DatumImportJobInfo info) {
+		DatumImportTask task = new DatumImportTask(info);
+		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
+		task.setDelegate(future);
+		DatumImportStatus already = taskMap.putIfAbsent(info.getId(), task);
+		return (already != null ? already : task);
+	}
+
 	@Override
 	public DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId) {
 		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
@@ -243,10 +251,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			if ( info == null ) {
 				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
 			}
-			DatumImportTask task = new DatumImportTask(info);
-			CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
-			task.setDelegate(future);
-			status = task;
+			status = statusForJobInfo(info);
 		}
 		return status;
 	}
@@ -254,7 +259,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	@Override
 	public Collection<DatumImportStatus> datumImportJobStatusesForUser(Long userId,
 			Set<DatumImportState> states) {
-		return taskMap.values().stream().filter(d -> d.getUserId().equals(userId))
+		return jobInfoDao.findForUser(userId, states).stream().map(d -> statusForJobInfo(d))
 				.collect(Collectors.toList());
 	}
 
@@ -375,7 +380,6 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 		private final DatumImportJobInfo info;
 		private double percentComplete;
-		private long completionDate;
 		private Future<DatumImportResult> delegate;
 		private long loadedCount;
 
@@ -524,6 +528,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		}
 
 		@Override
+		public Configuration getConfiguration() {
+			return info.getConfiguration();
+		}
+
+		@Override
 		public Long getUserId() {
 			return info.getUserId();
 		}
@@ -544,8 +553,21 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		}
 
 		@Override
+		public long getSubmitDate() {
+			DateTime d = info.getCreated();
+			return (d != null ? d.getMillis() : 0);
+		}
+
+		@Override
+		public long getImportDate() {
+			DateTime d = info.getImportDate();
+			return (d != null ? d.getMillis() : 0);
+		}
+
+		@Override
 		public long getCompletionDate() {
-			return completionDate;
+			DateTime d = info.getCompleted();
+			return (d != null ? d.getMillis() : 0);
 		}
 
 		@Override
@@ -578,7 +600,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		public String toString() {
 			return "DatumImportTask{userId=" + getUserId() + ",jobId=" + getJobId() + ",config="
 					+ (info != null ? info.getConfig() : null) + ",jobState=" + getJobState()
-					+ ",percentComplete=" + percentComplete + ",completionDate=" + completionDate + "}";
+					+ ",percentComplete=" + percentComplete + ",completionDate=" + getCompletionDate()
+					+ "}";
 		}
 
 	}
