@@ -2,6 +2,8 @@
 
 SolarReg.Settings = {};
 
+SolarReg.Settings.modalAlertBeforeSelector = '.modal-body:not(.hidden):first > *:first-child';
+
 /**
  * Reset an edit service form for reuse.
  * 
@@ -77,13 +79,13 @@ SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditService
 					modal.modal('hide');
 				} else {
 					var msg = (json && json.message ? json.message : 'Unknown error: ' +statusText);
-					SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', msg);
+					SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', msg);
 				}
 			}).fail(function(xhr, statusText, error) {
 				modal.removeClass('danger');
 				modal.find('.delete-confirm').addClass('hidden');
 				submitBtn.prop('disabled', false);
-				SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', statusText);
+				SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', statusText);
 			});
 		} else {
 			modal.modal('hide');
@@ -433,9 +435,10 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
  * @param {function} onSuccess a callback to invoke on success; will be passed the upload body object and the response body object
  * @param {function} [serializer] a callback to invoke to serialize the form data; will be passed the form object and must return
  *                                an object that will be serialized into JSON via `JSON.stringify` or a FormData object
+ * @param {object} [progress] an object with optional `upload` and `download` "progress" event handler functions
  * @returns {jqXHR} the jQuery XHR object
  */
-SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess, serializer) {
+SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess, serializer, progress) {
 	event.preventDefault();
 	var form = event.target;
 	var modal = $(form);
@@ -443,31 +446,35 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		? serializer(form) 
 		: SolarReg.Settings.encodeServiceItemForm(form));
 	var submitUrl = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(form.action), body));
-	var jqXhr;
+	var origXhr = $.ajaxSettings.xhr;
+	var jqXhrOpts = {
+		type: 'POST',
+		url: submitUrl,
+		xhr: function() {
+			var xhr = origXhr.apply(this, arguments);
+			if ( progress && typeof progress.upload === 'function' && xhr.upload ) {
+				xhr.upload.addEventListener('progress', progress.upload);
+			}
+			if ( progress && typeof progress.download === 'function' ) {
+				xhr.addEventListener('progress', progress.upload);
+			}
+			return xhr;
+		},
+		beforeSend: function(xhr) {
+			SolarReg.csrf(xhr);
+		}
+	};
+	modal.find('button[type=submit]').prop('disabled', true);
 	if ( body instanceof FormData ) {
-		jqXhr = $.ajax({
-			type: 'POST',
-			url: submitUrl,
-			data : body,
-			processData: false,
-	        contentType: false,
-	        beforeSend: function(xhr) {
-				SolarReg.csrf(xhr);
-			}
-		});
+		jqXhrOpts.data = body;
+		jqXhrOpts.contentType = false;
+		jqXhrOpts.processData = false;
 	} else {
-		jqXhr = $.ajax({
-			type: 'POST',
-			url: submitUrl,
-			contentType: "application/json; charset=utf-8",
-			data : JSON.stringify(body),
-			dataType: 'json',
-			beforeSend: function(xhr) {
-				SolarReg.csrf(xhr);
-			}
-		});
+		jqXhrOpts.data = JSON.stringify(body);
+		jqXhrOpts.contentType = 'application/json; charset=utf-8';
+		jqXhrOpts.dataType = 'json';
 	}
-	jqXhr.done(function(json, statusText) {
+	return $.ajax(jqXhrOpts).done(function(json, statusText) {
 		console.log('Save config result: %o', json);
 		if ( json && json.success === true ) {
 			if ( typeof onSuccess === 'function' ) {
@@ -476,10 +483,17 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 			modal.modal('hide');
 		} else {
 			var msg = (json && json.message ? json.message : 'Unknown error: ' +statusText);
-			SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', msg);
+			SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', msg);
 		}
 	}).fail(function(xhr, statusText, error) {
-		SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', statusText);
+		var json = {};
+		if ( xhr.responseJSON ) {
+			json = xhr.responseJSON;
+		} else if ( xhr.responseText ) {
+			json = JSON.parse(xhr.responseText);
+		}
+		var msg = 'Error: ' +(json && json.message ? json.message : statusText);
+		var el = modal.find(SolarReg.Settings.modalAlertBeforeSelector);
+		SolarReg.showAlertBefore(el, 'alert-warning', msg);
 	});
-	return jqXhr;
 };

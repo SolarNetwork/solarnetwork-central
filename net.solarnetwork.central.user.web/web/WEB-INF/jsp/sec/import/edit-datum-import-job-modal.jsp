@@ -8,7 +8,7 @@
 				<button type="button" class="close" data-dismiss="modal" aria-label="<fmt:message key='close.label'/>"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title"><fmt:message key='import.job.edit.title'/></h4>
 			</div>
-		 	<div class="modal-body form-horizontal">
+		 	<div class="modal-body form-horizontal before">
 		 		<p><fmt:message key='import.job.edit.intro'/></p>
 		 		<div class="form-group">
 		 			<label class="col-sm-3 control-label">
@@ -66,8 +66,16 @@
 		 	<%--
 		 		The .service-props-container class defines where dynamic setting form elements will be rendered.
 		 	 --%>
-		 	<div class="modal-body form-horizontal service-props-container hidden">
+		 	<div class="modal-body form-horizontal service-props-container before hidden">
 		 	</div>
+		 	<div class="modal-body upload hidden">
+		 		<p><fmt:message key='import.job.upload.progress.intro'/></p>
+				<div class="progress">
+					<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
+						<span class="amount">0</span>%
+					</div>
+				</div>
+			</div>
 		 	<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></button>
 				<%--

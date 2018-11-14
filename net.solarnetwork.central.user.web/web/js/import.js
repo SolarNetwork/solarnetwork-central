@@ -5,11 +5,11 @@ $(document).ready(function() {
 	
 	var settingTemplates = $('#import-setting-templates');
 
-	function loadDatumImportJobs() {
+	function loadDatumImportJobs(preserve) {
 		return $.getJSON(SolarReg.solarUserURL('/sec/import/jobs?states=Queued,Staged,Claimed,Executing'), function(json) {
 			console.log('Got import jobs: %o', json);
 			if ( json && json.success === true && Array.isArray(json.data) ) {
-				populateDatumImportJobs(json.data);
+				populateDatumImportJobs(json.data, preserve);
 			}
 		});
 	}
@@ -18,8 +18,9 @@ $(document).ready(function() {
 		jobs = Array.isArray(jobs) ? jobs : [];
 		var container = $('#datum-import-job-list-container');
 		var items = jobs.map(function(job) {
-			var item = SolarReg.Settings.serviceConfigurationItem(job.configuration.inputConfiguration, inputServices);
 			var id = job.jobId.replace(/-.*/, '');
+			job.configuration.inputConfiguration.id = id; // so _contextItem.id is set
+			var item = SolarReg.Settings.serviceConfigurationItem(job.configuration.inputConfiguration, inputServices);
 			item.id = id;
 			item.state = job.jobState;
 			item.progressAmount = (job.percentComplete * 100).toFixed(0);
@@ -32,12 +33,22 @@ $(document).ready(function() {
 	
 	function handleServiceIdentifierChange(event, services) {
 		var target = event.target;
-		console.log('change event on %o: %o', target, event);
 		if ( target.name === 'serviceIdentifier' ) {
 			var service = SolarReg.findByIdentifier(services, $(event.target).val());
 			var modal = $(target.form);
 			var container = modal.find('.service-props-container').first();
 			SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, modal.data('context-item'));
+		}
+	}
+	
+	function updateProgressAmount(bar, barAmount, percentComplete) {
+		var value = (percentComplete * 100).toFixed(0);
+		console.log('Progress now ' +percentComplete);
+		if ( bar ) {
+			bar.attr('aria-valuenow', value).css('width', value+'%');
+		}
+		if ( barAmount ) {
+			barAmount.text(value);
 		}
 	}
 
@@ -50,8 +61,15 @@ $(document).ready(function() {
 		handleServiceIdentifierChange(event, inputServices);
 	})
 	.on('submit', function(event) {
+		var uploadProgressBar = $('.upload .progress-bar', event.target);
+		var uploadProgressBarAmount = $('.amount', uploadProgressBar);
+		
+		var modal = $(event.target);
+		modal.find('.before').addClass('hidden');
+		modal.find('.upload').removeClass('hidden');
+		
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
-			populateDatumImportJobs([res], true);
+			loadDatumImportJobs(true);
 		}, function serializeDatumImportUploadForm(form) {
 			var formData = new FormData(form);
 			
@@ -75,11 +93,21 @@ $(document).ready(function() {
 			formData.append('config', configData, 'config.json');
 			
 			return formData;
+		}, {
+			upload: function(event) {
+				if ( event.lengthComputable ) {  
+					updateProgressAmount(uploadProgressBar, uploadProgressBarAmount, event.loaded / event.total);
+				}
+			}
 		});
 		return false;
 	})
 	.on('hidden.bs.modal', function() {
 		SolarReg.Settings.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'));
+		var modal = $(this);
+		modal.find('.before').removeClass('hidden');
+		modal.find('.upload').addClass('hidden');
+		updateProgressAmount(modal.find('.upload .progress-bar'), modal.find('.upload .progress-bar .amount'), 0);
 	});
 
 	$('#datum-import-jobs').first().each(function() {
