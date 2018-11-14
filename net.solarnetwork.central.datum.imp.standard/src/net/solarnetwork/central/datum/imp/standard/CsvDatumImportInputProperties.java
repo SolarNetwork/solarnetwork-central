@@ -74,13 +74,13 @@ public class CsvDatumImportInputProperties {
 		List<SettingSpecifier> result = new ArrayList<>(8);
 		result.add(new BasicTextFieldSettingSpecifier("headerRowCount",
 				DEFAULT_HEADER_ROW_COUNT.toString()));
-		result.add(new BasicTextFieldSettingSpecifier("dateColumnsValue",
-				commaDelimitedStringFromCollection(DEFAULT_DATE_COLUMNS)));
 		result.add(new BasicTextFieldSettingSpecifier("dateFormat", DEFAULT_DATE_FORMAT));
 		result.add(
 				new BasicTextFieldSettingSpecifier("nodeIdColumn", DEFAULT_NODE_ID_COLUMN.toString()));
 		result.add(new BasicTextFieldSettingSpecifier("sourceIdColumn",
 				DEFAULT_SOURCE_ID_COLUMN.toString()));
+		result.add(new BasicTextFieldSettingSpecifier("dateColumnsValue",
+				commaDelimitedStringFromCollection(DEFAULT_DATE_COLUMNS)));
 		return result;
 	}
 
