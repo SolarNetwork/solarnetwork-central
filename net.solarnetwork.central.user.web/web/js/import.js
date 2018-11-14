@@ -5,6 +5,10 @@ $(document).ready(function() {
 	
 	var settingTemplates = $('#import-setting-templates');
 
+	function populateDatumImportJobs(jobs, preserve) {
+		// TODO
+	}
+	
 	function handleServiceIdentifierChange(event, services) {
 		var target = event.target;
 		console.log('change event on %o: %o', target, event);
@@ -25,7 +29,32 @@ $(document).ready(function() {
 		handleServiceIdentifierChange(event, inputServices);
 	})
 	.on('submit', function(event) {
-		// TODO use FormData to post multi-part form
+		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			populateDatumImportJobs([res], true);
+		}, function serializeDatumImportUploadForm(form) {
+			var formData = new FormData(form);
+			
+			var inputConfig = SolarReg.Settings.encodeServiceItemForm(form);
+			delete inputConfig.data; // delete file field
+			var config = {
+					name: inputConfig.name,
+					stage: true,
+					inputConfiguration: inputConfig,
+			};
+			
+			// remove formData elements except for 'data'
+			for ( var key of formData.keys() ) {
+				if ( key !== 'data' ) {
+					formData.delete(key);
+				}
+			}
+			
+			// add 'config' formData element as JSON
+			var configData = new Blob([JSON.stringify(config)], {type : 'application/json'});
+			formData.append('config', configData, 'config.json');
+			
+			return formData;
+		});
 		return false;
 	})
 	.on('hidden.bs.modal', function() {
