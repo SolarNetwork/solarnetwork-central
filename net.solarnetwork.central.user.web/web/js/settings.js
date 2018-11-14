@@ -9,7 +9,7 @@ SolarReg.Settings = {};
  * @param {jQuery} container a container element of existing list items to delete from, if the form closed after a delete action
  */
 SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, container) {
-	var id = form.elements['id'].value;
+	var id = (form.elements['id'] ? form.elements['id'].value : undefined);
 	var f = $(form);
 	// look if we deleted an item, which will only be true if form in "danger" mode
 	if ( id && f.hasClass('deleted') ) {
