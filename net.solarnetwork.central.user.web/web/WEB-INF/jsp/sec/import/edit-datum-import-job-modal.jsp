@@ -48,7 +48,7 @@
 		 				 --%>
 		 				<input type="text" class="form-control" name="timeZoneId" 
 		 					placeholder="<fmt:message key='import.job.timeZoneId.placeholder'/>"
-		 					maxlength="64" required="required">
+		 					maxlength="64">
 		 				<span id="helpBlock" class="help-block"><fmt:message key='import.job.timeZoneId.caption'/></span>
 			 		</div>
 		 		</div>
