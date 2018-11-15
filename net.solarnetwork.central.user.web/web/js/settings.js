@@ -14,7 +14,7 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 	var id = (form.elements['id'] ? form.elements['id'].value : undefined);
 	var f = $(form);
 	// look if we deleted an item, which will only be true if form in "danger" mode
-	if ( id && f.hasClass('deleted') ) {
+	if ( id && container && f.hasClass('deleted') ) {
 		var existing = SolarReg.Templates.findExistingTemplateItem(container, id);
 		if ( existing.length > 0 ) {
 			existing.remove();
