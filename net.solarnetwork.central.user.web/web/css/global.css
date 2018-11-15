@@ -134,8 +134,25 @@ section + section {
 	margin-right: 2px;
 }
 
-dd + dt {
+dl:not(.hbox):not(.dl-horizontal) dd + dt {
 	margin-top: 12px;
+}
+
+dl.hbox {
+	flex-wrap: wrap;
+	margin-left: -1em;
+}
+
+dl.hbox > * {
+	margin-left: 1em;
+}
+
+dl.hbox dt {
+	margin-right: -0.5em;
+}
+
+dl.hbox dt::after {
+	content: ':';
 }
 
 .nav-pills.form-group {
@@ -155,6 +172,19 @@ table.tally tfoot td,
 table.tally tfoot th {
 	border-top: 1px solid #666;
 }
+
+table.table-body-borderless tbody td,
+table.table-body-borderless tbody th {
+	border: none;
+}
+
+table.table-body-borderless tbody tr.rule + tr td,
+table.table-body-borderless tbody tr.rule + tr th {
+	border-top: inherit;
+}
+
+
+
 
 .edit-config span.config-name,
 .config-action span.config-name {
