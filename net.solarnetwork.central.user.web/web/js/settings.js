@@ -95,7 +95,7 @@ SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditService
 
 SolarReg.Settings.focusEditServiceForm = function focusEditServiceForm(event) {
 	var form = event.target;
-	$(form).find('input[type=text]').first().focus();
+	$(form).find('input[type=text]').first().trigger('focus');
 };
 
 /**
