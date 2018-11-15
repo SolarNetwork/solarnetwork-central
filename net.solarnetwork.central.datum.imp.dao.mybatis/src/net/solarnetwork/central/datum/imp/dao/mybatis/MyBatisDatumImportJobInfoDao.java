@@ -32,6 +32,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
+import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.user.domain.UserUuidPK;
@@ -60,6 +62,12 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	public static final String UPDATE_JOB_STATE = "update-DatumImportJobInfo-state";
 
 	/**
+	 * The {@code UPDATE} query name used for
+	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)}.
+	 */
+	public static final String UPDATE_JOB_CONFIG = "update-DatumImportJobInfo-config";
+
+	/**
 	 * The query name used for {@link #findForUser(Long, Set)}.
 	 */
 	public static final String QUERY_FOR_USER = "find-DatumImportJobInfo-for-user";
@@ -67,6 +75,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	private String queryForClaimQueuedJob;
 	private String updateDeleteCompletedJobs;
 	private String updateJobState;
+	private String updateJobConfiguration;
 	private String queryForUser;
 
 	/**
@@ -74,10 +83,11 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 */
 	public MyBatisDatumImportJobInfoDao() {
 		super(DatumImportJobInfo.class, UserUuidPK.class);
+		setQueryForUser(QUERY_FOR_USER);
 		setQueryForClaimQueuedJob(QUERY_FOR_CLAIMING_JOB);
 		setUpdateDeleteCompletedJobs(UPDATE_PURGE_COMPLETED);
 		setUpdateJobState(UPDATE_JOB_STATE);
-		setQueryForUser(QUERY_FOR_USER);
+		setUpdateJobConfiguration(UPDATE_JOB_CONFIG);
 	}
 
 	@Override
@@ -109,6 +119,20 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 			params.put("expectedStates", array);
 		}
 		int count = getSqlSession().update(updateJobState, params);
+		return (count > 0);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public boolean updateJobConfiguration(UserUuidPK id, Configuration configuration) {
+		DatumImportJobInfo info = new DatumImportJobInfo();
+		info.setConfig(new BasicConfiguration(configuration));
+
+		Map<String, Object> params = new HashMap<>(2);
+		params.put("id", id);
+		params.put("configJson", info.getConfigJson());
+		params.put("expectedStates", new String[] { String.valueOf(DatumImportState.Staged.getKey()) });
+		int count = getSqlSession().update(updateJobConfiguration, params);
 		return (count > 0);
 	}
 
@@ -166,6 +190,18 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 */
 	public void setQueryForUser(String queryForUser) {
 		this.queryForUser = queryForUser;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #updateJobConfigurtation(UserUuidPK, net.solarnetwork.central.datum.imp.domain.Configuration)}
+	 * method to use.
+	 * 
+	 * @param updateJobConfiguration
+	 *        the statement name; defaults to {@link #UPDATE_JOB_CONFIG}
+	 */
+	public void setUpdateJobConfiguration(String updateJobConfiguration) {
+		this.updateJobConfiguration = updateJobConfiguration;
 	}
 
 }

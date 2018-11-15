@@ -301,4 +301,47 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		assertThat("Result matches", results.get(0), equalTo(info));
 		assertThat("Result matches", results.get(1), equalTo(this.info));
 	}
+
+	@Test
+	public void updateConfigNotFound() {
+		BasicConfiguration config = new BasicConfiguration("Foo", true);
+		boolean updated = dao.updateJobConfiguration(new UserUuidPK(-123L, UUID.randomUUID()), config);
+		assertThat("Update result", updated, equalTo(false));
+	}
+
+	@Test
+	public void updateConfig() {
+		storeNew();
+		dao.updateJobState(info.getId(), DatumImportState.Staged, null);
+
+		BasicConfiguration config = new BasicConfiguration(info.getConfiguration());
+		config.setName("Updated");
+		config.getInputConfig().setTimeZoneId("UTC");
+		boolean updated = dao.updateJobConfiguration(info.getId(), config);
+		assertThat("Update result", updated, equalTo(true));
+
+		DatumImportJobInfo modified = dao.get(info.getId());
+		assertThat("New instance", modified, not(sameInstance(info)));
+		assertThat("Modified config name", modified.getConfiguration().getName(),
+				equalTo(config.getName()));
+		assertThat("Modified time zone",
+				modified.getConfiguration().getInputConfiguration().getTimeZoneId(),
+				equalTo(config.getInputConfiguration().getTimeZoneId()));
+	}
+
+	@Test
+	public void updateConfigWithExpectedStateNotFound() {
+		storeNew();
+
+		BasicConfiguration config = new BasicConfiguration(info.getConfiguration());
+		config.setName("Updated");
+		config.getInputConfig().setTimeZoneId("UTC");
+		boolean updated = dao.updateJobConfiguration(info.getId(), config);
+		assertThat("Update result", updated, equalTo(false));
+
+		DatumImportJobInfo unchanged = dao.get(info.getId());
+		assertThat("New instance", unchanged, not(sameInstance(info)));
+		assertThat("Unchanged config name", unchanged.getConfiguration().getName(),
+				equalTo(info.getConfiguration().getName()));
+	}
 }

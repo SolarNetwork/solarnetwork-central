@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.user.domain.UserUuidPK;
@@ -82,6 +83,18 @@ public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, Us
 	 */
 	boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
 			Set<DatumImportState> expectedStates);
+
+	/**
+	 * Update the configuration for a specific job.
+	 * 
+	 * @param id
+	 *        the ID of the job to update
+	 * @param configuration
+	 *        the configuration to save with the job, completely replacing any
+	 *        existing configuration
+	 * @return {@literal true} if the job configuration was changed
+	 */
+	boolean updateJobConfiguration(UserUuidPK id, Configuration configuration);
 
 	/**
 	 * Find all available job info entities for a specific user.

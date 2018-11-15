@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.domain;
 
 import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
@@ -90,7 +91,9 @@ public class BasicConfiguration implements Configuration, Serializable {
 		setName(other.getName());
 		setStage(other.isStage());
 		setBatchSize(other.getBatchSize());
-		setInputConfiguration(new BasicInputConfiguration(other.getInputConfiguration()));
+		if ( other.getInputConfiguration() != null ) {
+			setInputConfiguration(new BasicInputConfiguration(other.getInputConfiguration()));
+		}
 	}
 
 	@Override
@@ -123,6 +126,13 @@ public class BasicConfiguration implements Configuration, Serializable {
 	@Override
 	public InputConfiguration getInputConfiguration() {
 		return inputConfiguration;
+	}
+
+	@JsonIgnore
+	public BasicInputConfiguration getInputConfig() {
+		return (inputConfiguration instanceof BasicInputConfiguration
+				? ((BasicInputConfiguration) inputConfiguration)
+				: null);
 	}
 
 	@JsonDeserialize(as = BasicInputConfiguration.class)

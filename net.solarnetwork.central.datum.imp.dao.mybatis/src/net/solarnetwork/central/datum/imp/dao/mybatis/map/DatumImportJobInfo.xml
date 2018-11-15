@@ -125,4 +125,18 @@
 			</if>
 	</update>
 
+	<update id="update-DatumImportJobInfo-config" parameterType="map">
+		UPDATE
+			solarnet.sn_datum_import_job
+		SET
+			config = #{configJson}::jsonb
+			, modified = CURRENT_TIMESTAMP
+		WHERE
+			id = #{id.id}
+			AND user_id = #{id.userId}
+			<if test="expectedStates != null and expectedStates.length > 0">
+			AND state = ANY(#{expectedStates,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
+	</update>
+
 </mapper>
