@@ -57,10 +57,12 @@ SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(
  * @param {jQuery} container the container that holds the template item
  * @param {Array} items  the array of parameter objects to populate into cloned templates
  * @param {boolean} preserve `true` to only append items, do not clear out any existing items
+ * @param {Function} [callback] a callback function, will be passed an item and the jQuery object associated with that item,
+ *                              after template properties have been applied
  * @see #appendTemplateItem
  */
-SolarReg.Templates.populateTemplateItems = function populateTemplateItems(container, items, preserve) {
-	var itemTemplate = container.find('.template').first();
+SolarReg.Templates.populateTemplateItems = function populateTemplateItems(container, items, preserve, callback) {
+	var itemTemplate = container.find('.template').not('.template .template'); // find top-level templates 
 	var itemContainer = container.find('.list-container').first();
 	if ( itemContainer.length < 1 ) {
 		itemContainer = itemTemplate.parent();
@@ -69,15 +71,18 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 		itemTemplate.nextAll().remove();
 	}
 	items.forEach(function(item) {
-		var existing;
+		var el;
 		if ( preserve && item._contextItem && item._contextItem.id ) {
 			// look for existing row to update, rather than append
-			existing = SolarReg.Templates.findExistingTemplateItem(itemContainer, item._contextItem.id);
+			el = SolarReg.Templates.findExistingTemplateItem(itemContainer, item._contextItem.id);
 		}
-		if ( existing && existing.length > 0 ) {
-			SolarReg.Templates.replaceTemplateProperties(existing, item);
+		if ( el && el.length > 0 ) {
+			SolarReg.Templates.replaceTemplateProperties(el, item);
 		} else {
-			SolarReg.Templates.appendTemplateItem(itemContainer, itemTemplate, item);
+			el = SolarReg.Templates.appendTemplateItem(itemContainer, itemTemplate, item);
+		}
+		if ( typeof callback === 'function' ) {
+			callback(item, el);
 		}
 	});
 	container.toggleClass('hidden', items.length < 1);
