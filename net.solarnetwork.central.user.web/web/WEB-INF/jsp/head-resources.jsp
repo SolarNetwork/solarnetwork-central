@@ -7,7 +7,7 @@
 	/css/edit-node.css
 </pack:style>
 <pack:script> 
-	/js-lib/jquery-2.2.4.js
+	/js-lib/jquery-3.3.1.js
 	/js-lib/jquery.form.js
 	/js-lib/jquery.maphilight.js
 	/js-lib/jquery.timezone-picker.js
