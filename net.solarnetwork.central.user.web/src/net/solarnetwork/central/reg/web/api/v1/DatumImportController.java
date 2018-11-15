@@ -29,8 +29,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -51,6 +53,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
+import net.solarnetwork.central.datum.imp.biz.DatumImportException;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.DatumImportValidationException;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
@@ -108,6 +111,26 @@ public class DatumImportController extends WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleDatumImportValidationException(DatumImportValidationException e) {
 		log.debug("DatumImportValidationException in {} controller", getClass().getSimpleName(), e);
+		return datumImportExceptionResponse(e, "DI.00400");
+	}
+
+	/**
+	 * Handle an {@link DatumImportValidationException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 */
+	@ExceptionHandler(DatumImportException.class)
+	@ResponseBody
+	public Response<?> handleDatumImportException(DatumImportException e) {
+		log.debug("DatumImportException in {} controller", getClass().getSimpleName(), e);
+		return datumImportExceptionResponse(e, "DI.00401");
+	}
+
+	private static Response<Object> datumImportExceptionResponse(DatumImportException e, String code) {
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
@@ -116,7 +139,17 @@ public class DatumImportController extends WebServiceControllerSupport {
 		if ( cause != null && cause != e ) {
 			buf.append(" Root cause: ").append(cause.toString());
 		}
-		return new Response<Object>(Boolean.FALSE, "DI.00400", buf.toString(), null);
+		Map<String, Object> data = new LinkedHashMap<>(4);
+		if ( e.getLoadedCount() != null ) {
+			data.put("loadedCount", e.getLoadedCount());
+		}
+		if ( e.getLineNumber() != null ) {
+			data.put("lineNumber", e.getLineNumber());
+		}
+		if ( e.getLine() != null ) {
+			data.put("line", e.getLine());
+		}
+		return new Response<Object>(Boolean.FALSE, code, buf.toString(), data);
 	}
 
 	/**
