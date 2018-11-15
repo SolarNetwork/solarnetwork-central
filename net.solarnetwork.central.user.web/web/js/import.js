@@ -19,14 +19,19 @@ $(document).ready(function() {
 		var container = $('#datum-import-job-list-container');
 		var items = jobs.map(function(job) {
 			var id = job.jobId.replace(/-.*/, '');
-			job.configuration.inputConfiguration.id = id; // so _contextItem.id is set
-			var item = SolarReg.Settings.serviceConfigurationItem(job.configuration.inputConfiguration, inputServices);
+			var ctx = job.configuration.inputConfiguration;
+			ctx.id = id; // so _contextItem.id is set
+			ctx.jobId = job.jobId;
+			var item = SolarReg.Settings.serviceConfigurationItem(ctx, inputServices);
 			item.id = id;
+			item.jobId = job.jobId;
 			item.state = job.jobState;
 			item.progressAmount = (job.percentComplete * 100).toFixed(0);
 			return item;
 		});
-		SolarReg.Templates.populateTemplateItems(container, items, preserve);
+		SolarReg.Templates.populateTemplateItems(container, items, preserve, function(item, el) {
+			el.find('.progress').toggleClass('hidden', item.state === 'Staged');
+		});
 		container.closest('section').find('.listCount').text(jobs.length);
 		return jobs;
 	}
@@ -52,7 +57,7 @@ $(document).ready(function() {
 		}
 	}
 
-	// ***** Edit output format form
+	// ***** Upload form
 	$('#edit-datum-import-job-modal').on('show.bs.modal', function(event) {
 		SolarReg.Settings.prepareEditServiceForm($(event.target), inputServices, settingTemplates);
 	})
@@ -103,11 +108,76 @@ $(document).ready(function() {
 		return false;
 	})
 	.on('hidden.bs.modal', function() {
-		SolarReg.Settings.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'));
 		var modal = $(this);
 		modal.find('.before').removeClass('hidden');
 		modal.find('.upload').addClass('hidden');
 		updateProgressAmount(modal.find('.upload .progress-bar'), modal.find('.upload .progress-bar .amount'), 0);
+	});
+	
+	// ***** Manage job form
+	$('#update-datum-import-job-modal').on('show.bs.modal', function(event) {
+		// TODO SolarReg.Settings.prepareEditServiceForm($(event.target), inputServices, settingTemplates);
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('submit', function(event) {
+		// TODO
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		// TODO
+	});
+	
+	// ***** Preview job form
+	$('#preview-datum-import-job-modal').on('show.bs.modal', function(event) {
+		var modal = $(event.target);
+		var container = $('#datum-import-preview-list-container');
+		var item = SolarReg.Templates.findContextItem(modal);
+		
+		if ( !item.jobId ) {
+			return;
+		}
+		
+		// clear out current preview, if any
+		SolarReg.Templates.populateTemplateItems(container, []);
+
+		$.getJSON(SolarReg.solarUserURL('/sec/import/jobs/'+encodeURIComponent(item.jobId)+'/preview'), function(json) {
+			if ( json && json.success === true && json.data && Array.isArray(json.data.results) ) {
+				// TODO: display estimated row count via json.data.totalResults
+				SolarReg.Templates.populateTemplateItems(container, json.data.results, false, function(item, el) {
+					if ( item.i ) {
+						// TODO: render i props
+					}
+					if ( item.a ) {
+						// TODO: render a props
+					}
+					if ( item.s ) {
+						// TODO: render s props
+					}
+					if ( item.t ) {
+						// TODO: render t array
+					}
+				});
+			}
+		}).fail(function(xhr, statusText, error) {
+			var json = {};
+			if ( xhr.responseJSON ) {
+				json = xhr.responseJSON;
+			} else if ( xhr.responseText ) {
+				json = JSON.parse(xhr.responseText);
+			}
+			var msg = 'Error: ' +(json && json.message ? json.message : statusText);
+			var el = modal.find(SolarReg.Settings.modalAlertBeforeSelector);
+			SolarReg.showAlertBefore(el, 'alert-warning', msg);
+		});
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('hidden.bs.modal', function() {
+		// TODO
+	});
+	
+	// ***** Init page
+	$('#datum-import-job-list-container .list-container').on('click', function(event) {
+		SolarReg.Settings.handleEditServiceItemAction(event, inputServices, settingTemplates);
 	});
 
 	$('#datum-import-jobs').first().each(function() {

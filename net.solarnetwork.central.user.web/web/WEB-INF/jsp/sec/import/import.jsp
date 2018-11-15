@@ -17,31 +17,48 @@
 			<fmt:param value='0'/>
 		</fmt:message>
 	</p>
-	<table id="datum-import-job-list-container" class="table configs hidden">
+	<table id="datum-import-job-list-container" class="table table-body-borderless configs hidden">
 		<thead>
 			<tr>
 				<th><fmt:message key='import.job.id.label'/></th>
 				<th><fmt:message key='import.job.name.label'/></th>
 				<th><fmt:message key='import.job.state.label'/></th>
 				<th><fmt:message key='import.job.percentComplete.label'/></th>
-				<th><fmt:message key='import.job.serviceProps.label'/></th>
+				<th></th>
 			</tr>
 			<tr class="template">
-				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#edit-datum-import-job-modal"></a></td>
+				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#update-datum-import-job-modal"></a></td>
 				<td data-tprop="name"></td>
 				<td data-tprop="state"></td>
 				<td>
-					<div class="progress">
+					<div class="progress hidden">
 						<div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
 							<span data-tprop="progressAmount">0</span>%
 						</div>
 					</div>
 				</td>
-				<td>
+				<td class="col-sm-2 text-right">
+					<div class="btn-group preview">
+						<button type="button" class="btn btn-small btn-default action-link"
+							 data-action-modal="#preview-datum-import-job-modal"><fmt:message key='import.job.action.preview'/></button>
+						<button type="button" class="btn btn-small btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+							<span class="caret"></span>
+							<span class="sr-only"><fmt:message key='toggle.dropdown.label'/></span>
+						</button>
+						<ul class="dropdown-menu dropdown-menu-right" role="menu">
+							<li>
+								<a href="#" class="import-confirm"><fmt:message key="import.job.action.confirm"/></a>
+							</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+			<tr class="template rule">
+				<td colspan="4">
 					<%--
 						The .service-props-container here serves as a nested template for dynamic service properties.
 					 --%>
-					<dl class="service-props-container">
+					<dl class="service-props-container hbox" style="font-size: 86%">
 					</dl>
 					<dl class="service-props-template hidden">
 						<dt class="template" data-tprop="serviceProperties.name"></dt>
@@ -58,6 +75,8 @@
 <%-- Modal forms --%>
 
 <jsp:include page="edit-datum-import-job-modal.jsp"/>
+<jsp:include page="update-datum-import-job-modal.jsp"/>
+<jsp:include page="preview-datum-import-job-modal.jsp"/>
 
 <%-- Setting templates --%>
 
