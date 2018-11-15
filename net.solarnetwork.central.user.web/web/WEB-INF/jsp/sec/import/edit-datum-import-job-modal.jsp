@@ -2,7 +2,7 @@
 	The .edit-config class attached to .modal activates "modal configuration edit form" mode.
  --%>
 <form id="edit-datum-import-job-modal" class="modal fade edit-config import" action="<c:url value='/u/sec/import/upload'/>" method="post" tabindex="-1" role="dialog">
-	<div class="modal-dialog" role="document">
+	<div class="modal-dialog" style="width: 66%;" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="<fmt:message key='close.label'/>"><span aria-hidden="true">&times;</span></button>
@@ -16,9 +16,6 @@
 		 				${' '}
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<%--
-		 					Form field names correspond to model object property names.
-		 				 --%>
 		 				<input type="text" class="form-control" name="name" 
 		 					placeholder="<fmt:message key='import.job.name.placeholder'/>"
 		 					maxlength="64" required="required">
@@ -30,9 +27,6 @@
 		 				${' '}
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<%--
-		 					Form field names correspond to model object property names.
-		 				 --%>
 		 				<input type="file" class="form-control" name="data" required="required">
 		 				<span id="helpBlock" class="help-block"><fmt:message key='import.job.file.caption'/></span>
 			 		</div>
@@ -43,13 +37,21 @@
 		 				${' '}
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<%--
-		 					Form field names correspond to model object property names.
-		 				 --%>
 		 				<input type="text" class="form-control" name="timeZoneId" 
 		 					placeholder="<fmt:message key='import.job.timeZoneId.placeholder'/>"
 		 					maxlength="64">
 		 				<span id="helpBlock" class="help-block"><fmt:message key='import.job.timeZoneId.caption'/></span>
+			 		</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label">
+		 				<fmt:message key='import.job.batchSize.label'/>
+		 				${' '}
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<input type="number" class="form-control" name="batchSize" min="0"
+		 					placeholder="<fmt:message key='import.job.batchSize.placeholder'/>">
+		 				<span id="helpBlock" class="help-block"><fmt:message key='import.job.batchSize.caption'/></span>
 			 		</div>
 		 		</div>
 		 		<div class="form-group">

@@ -22,6 +22,8 @@
 			<tr>
 				<th><fmt:message key='import.job.id.label'/></th>
 				<th><fmt:message key='import.job.name.label'/></th>
+				<th><fmt:message key='import.job.timeZoneId.label'/></th>
+				<th><fmt:message key='import.job.batchSize.label'/></th>
 				<th><fmt:message key='import.job.state.label'/></th>
 				<th><fmt:message key='import.job.percentComplete.label'/></th>
 				<th></th>
@@ -31,6 +33,8 @@
 			<tr>
 				<td><a href="#" class="edit-link" data-tprop="shortId" data-edit-modal="#update-datum-import-job-modal"></a></td>
 				<td data-tprop="name"></td>
+				<td data-tprop="timeZoneId"></td>
+				<td data-tprop="batchSize"></td>
 				<td data-tprop="state"></td>
 				<td>
 					<div class="progress hidden">
@@ -56,7 +60,7 @@
 				</td>
 			</tr>
 			<tr class="rule">
-				<td colspan="4">
+				<td colspan="6">
 					<%--
 						The .service-props-container here serves as a nested template for dynamic service properties.
 					 --%>

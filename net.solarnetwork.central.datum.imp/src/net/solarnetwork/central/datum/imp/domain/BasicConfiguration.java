@@ -87,9 +87,10 @@ public class BasicConfiguration implements Configuration, Serializable {
 		if ( other == null ) {
 			return;
 		}
-		this.name = other.getName();
-		this.stage = other.isStage();
-		this.inputConfiguration = new BasicInputConfiguration(other.getInputConfiguration());
+		setName(other.getName());
+		setStage(other.isStage());
+		setBatchSize(other.getBatchSize());
+		setInputConfiguration(new BasicInputConfiguration(other.getInputConfiguration()));
 	}
 
 	@Override

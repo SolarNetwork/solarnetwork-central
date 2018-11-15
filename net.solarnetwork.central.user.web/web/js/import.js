@@ -26,6 +26,8 @@ $(document).ready(function() {
 			var item = SolarReg.Settings.serviceConfigurationItem(ctx, inputServices);
 			item.id = id;
 			item.shortId = shortId;
+			item.timeZoneId = ctx.timeZoneId;
+			item.batchSize = job.configuration.batchSize;
 			item.state = job.jobState;
 			item.progressAmount = (job.percentComplete * 100).toFixed(0);
 			return item;
@@ -93,13 +95,16 @@ $(document).ready(function() {
 			var formData = new FormData(form);
 			
 			var inputConfig = SolarReg.Settings.encodeServiceItemForm(form);
-			delete inputConfig.data; // delete file field
 			var config = {
 					name: inputConfig.name,
 					stage: true,
+					batchSize: inputConfig.batchSize,
 					inputConfiguration: inputConfig,
 			};
-			
+
+			delete inputConfig.data; // delete file field
+			delete inputConfig.batchSize; // this is overall config, not input
+
 			// remove formData elements except for 'data'
 			for ( var key of formData.keys() ) {
 				if ( key !== 'data' ) {
