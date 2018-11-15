@@ -1,7 +1,7 @@
 <%--
 	The .edit-config class attached to .modal activates "modal configuration edit form" mode.
  --%>
-<form id="edit-datum-import-job-modal" class="modal fade edit-config" action="<c:url value='/u/sec/import/upload'/>" method="post" tabindex="-1" role="dialog">
+<form id="edit-datum-import-job-modal" class="modal fade edit-config import" action="<c:url value='/u/sec/import/upload'/>" method="post" tabindex="-1" role="dialog">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">

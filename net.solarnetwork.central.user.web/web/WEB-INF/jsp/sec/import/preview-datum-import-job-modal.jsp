@@ -1,4 +1,4 @@
-<div id="preview-datum-import-job-modal" class="modal fade edit-config" tabindex="-1" role="dialog">
+<div id="preview-datum-import-job-modal" class="modal fade edit-config import" tabindex="-1" role="dialog">
 	<div class="modal-dialog" style="width: 90%;" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -7,6 +7,8 @@
 			</div>
 		 	<div class="modal-body form-horizontal before">
 		 		<p><fmt:message key='import.job.preview.intro'/></p>
+		 		<div style="max-height: 400px; overflow-y: auto;">
+		 		
 		 		<table id="datum-import-preview-list-container" class="table">
 					<thead>
 						<tr>
@@ -21,29 +23,20 @@
 						<tr class="template">
 							<td data-tprop="nodeId"></td>
 							<td data-tprop="sourceId"></td>
-							<td data-tprop="created"></td>
+							<td>
+								<span data-tprop="created"></span><br>
+								<span data-tprop="localDate"></span> <span data-tprop="localTime"></span>
+							</td>
 							<td>
 								<dl class="instantaneous-sample-container">
-								</dl>
-								<dl class="template hidden">
-									<dt class="template" data-tprop="name"></dt>
-									<dd class="template" data-tprop="value"></dd>
 								</dl>
 							</td>
 							<td>
 								<dl class="accumulating-sample-container">
 								</dl>
-								<dl class="template hidden">
-									<dt class="template" data-tprop="name"></dt>
-									<dd class="template" data-tprop="value"></dd>
-								</dl>
 							</td>
 							<td>
 								<dl class="status-sample-container">
-								</dl>
-								<dl class="template hidden">
-									<dt class="template" data-tprop="name"></dt>
-									<dd class="template" data-tprop="value"></dd>
 								</dl>
 							</td>
 							<td class="tag-list"></td>
@@ -52,6 +45,11 @@
 					<tbody class="list-container">
 					</tbody>
 		 		</table>
+		 		</div>
+				<dl class="sample-template hidden">
+					<dt class="template" data-tprop="name"></dt>
+					<dd class="template" data-tprop="value"></dd>
+				</dl>
 		 	</div>
 		 	<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></button>

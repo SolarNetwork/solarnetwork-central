@@ -1,7 +1,7 @@
 <%--
 	The .update-config class attached to .modal activates "modal configuration edit form" mode.
  --%>
-<form id="update-datum-import-job-modal" class="modal fade edit-config" action="<c:url value='/u/sec/import/jobs'/>" method="post" tabindex="-1" role="dialog">
+<form id="update-datum-import-job-modal" class="modal fade edit-config import" action="<c:url value='/u/sec/import/jobs'/>" method="post" tabindex="-1" role="dialog">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -24,7 +24,7 @@
 			 	<%--
 			 		The .delete-config button defines the button used to initiate the delete action.
 			 	 --%>
-		 		<button type="button" class="btn btn-danger pull-left delete-config hidden">
+		 		<button type="button" class="btn btn-danger pull-left delete-config">
 		 			<span class="glyphicon glyphicon-trash"></span>
 		 			<fmt:message key='import.job.action.delete'/>
 		 		</button>

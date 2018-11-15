@@ -26,8 +26,10 @@
 				<th><fmt:message key='import.job.percentComplete.label'/></th>
 				<th></th>
 			</tr>
-			<tr class="template">
-				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#update-datum-import-job-modal"></a></td>
+		</thead>
+		<tbody class="template">
+			<tr>
+				<td><a href="#" class="edit-link" data-tprop="shortId" data-edit-modal="#update-datum-import-job-modal"></a></td>
 				<td data-tprop="name"></td>
 				<td data-tprop="state"></td>
 				<td>
@@ -53,7 +55,7 @@
 					</div>
 				</td>
 			</tr>
-			<tr class="template rule">
+			<tr class="rule">
 				<td colspan="4">
 					<%--
 						The .service-props-container here serves as a nested template for dynamic service properties.
@@ -66,8 +68,6 @@
 					</dl>
 				</td>
 			</tr>
-		</thead>
-		<tbody class="list-container">
 		</tbody>
 	</table>
 </section>

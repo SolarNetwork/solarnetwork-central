@@ -18,13 +18,14 @@ $(document).ready(function() {
 		jobs = Array.isArray(jobs) ? jobs : [];
 		var container = $('#datum-import-job-list-container');
 		var items = jobs.map(function(job) {
-			var id = job.jobId.replace(/-.*/, '');
+			var id = job.jobId;
+			var shortId = id.replace(/-.*/, '');
 			var ctx = job.configuration.inputConfiguration;
 			ctx.id = id; // so _contextItem.id is set
-			ctx.jobId = job.jobId;
+			ctx.shortId = shortId;
 			var item = SolarReg.Settings.serviceConfigurationItem(ctx, inputServices);
 			item.id = id;
-			item.jobId = job.jobId;
+			item.shortId = shortId;
 			item.state = job.jobState;
 			item.progressAmount = (job.percentComplete * 100).toFixed(0);
 			return item;
@@ -57,6 +58,19 @@ $(document).ready(function() {
 		}
 	}
 
+	function renderTemplateProperties(container, template, item) {
+		var prop, data;
+		if ( !item ) {
+			return;
+		}
+		data = {};
+		for ( prop in item ) {
+			data.name = prop;
+			data.value = item[prop];
+			SolarReg.Templates.appendTemplateItem(container, template, data);
+		}
+	}
+	
 	// ***** Upload form
 	$('#edit-datum-import-job-modal').on('show.bs.modal', function(event) {
 		SolarReg.Settings.prepareEditServiceForm($(event.target), inputServices, settingTemplates);
@@ -112,19 +126,21 @@ $(document).ready(function() {
 		modal.find('.before').removeClass('hidden');
 		modal.find('.upload').addClass('hidden');
 		updateProgressAmount(modal.find('.upload .progress-bar'), modal.find('.upload .progress-bar .amount'), 0);
+		SolarReg.Settings.resetEditServiceForm(this);
 	});
 	
 	// ***** Manage job form
 	$('#update-datum-import-job-modal').on('show.bs.modal', function(event) {
-		// TODO SolarReg.Settings.prepareEditServiceForm($(event.target), inputServices, settingTemplates);
+		SolarReg.Settings.prepareEditServiceForm($(event.target), []);
 	})
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 	.on('submit', function(event) {
+		event.preventDefault();
 		// TODO
 		return false;
 	})
 	.on('hidden.bs.modal', function() {
-		// TODO
+		SolarReg.Settings.resetEditServiceForm(this, $('#datum-import-job-list-container'));
 	});
 	
 	// ***** Preview job form
@@ -133,28 +149,31 @@ $(document).ready(function() {
 		var container = $('#datum-import-preview-list-container');
 		var item = SolarReg.Templates.findContextItem(modal);
 		
-		if ( !item.jobId ) {
+		if ( !item.id ) {
 			return;
 		}
 		
 		// clear out current preview, if any
 		SolarReg.Templates.populateTemplateItems(container, []);
 
-		$.getJSON(SolarReg.solarUserURL('/sec/import/jobs/'+encodeURIComponent(item.jobId)+'/preview'), function(json) {
+		$.getJSON(SolarReg.solarUserURL('/sec/import/jobs/'+encodeURIComponent(item.id)+'/preview'), function(json) {
+			var sampleTemplate = modal.find('.sample-template .template');
+			
 			if ( json && json.success === true && json.data && Array.isArray(json.data.results) ) {
 				// TODO: display estimated row count via json.data.totalResults
 				SolarReg.Templates.populateTemplateItems(container, json.data.results, false, function(item, el) {
+					var itemContainer;
 					if ( item.i ) {
-						// TODO: render i props
+						renderTemplateProperties(el.find('.instantaneous-sample-container'), sampleTemplate, item.i);
 					}
 					if ( item.a ) {
-						// TODO: render a props
+						renderTemplateProperties(el.find('.accumulating-sample-container'), sampleTemplate, item.a);
 					}
 					if ( item.s ) {
-						// TODO: render s props
+						renderTemplateProperties(el.find('.status-sample-container'), sampleTemplate, item.s);
 					}
-					if ( item.t ) {
-						// TODO: render t array
+					if ( Array.isArray(item.t) ) {
+						el.find('.tag-list').text(item.t.join(', '));
 					}
 				});
 			}
@@ -176,9 +195,11 @@ $(document).ready(function() {
 	});
 	
 	// ***** Init page
-	$('#datum-import-job-list-container .list-container').on('click', function(event) {
+	$('#datum-import-job-list-container').on('click', function(event) {
 		SolarReg.Settings.handleEditServiceItemAction(event, inputServices, settingTemplates);
 	});
+
+	$('.import.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
 
 	$('#datum-import-jobs').first().each(function() {
 		var loadCountdown = 2;
