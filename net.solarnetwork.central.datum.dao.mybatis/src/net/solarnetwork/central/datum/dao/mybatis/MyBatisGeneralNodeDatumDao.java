@@ -801,7 +801,7 @@ public class MyBatisGeneralNodeDatumDao
 		}
 
 		@Override
-		protected void doLoad(GeneralNodeDatum d, PreparedStatement stmt, long index)
+		protected boolean doLoad(GeneralNodeDatum d, PreparedStatement stmt, long index)
 				throws SQLException {
 			stmt.setTimestamp(1, new Timestamp(d.getCreated().getMillis()));
 			stmt.setLong(2, d.getNodeId());
@@ -810,6 +810,7 @@ public class MyBatisGeneralNodeDatumDao
 					d.getPosted() != null ? new Timestamp(d.getPosted().getMillis()) : start);
 			stmt.setString(5, d.getSampleJson());
 			stmt.executeUpdate();
+			return true;
 		}
 
 	}

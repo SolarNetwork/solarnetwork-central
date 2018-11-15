@@ -81,6 +81,18 @@ public class BulkLoadingDaoSupport {
 		this.log = log;
 	}
 
+	private static class CountAwareCheckpoint {
+
+		private final long count;
+		private final Object savepoint;
+
+		private CountAwareCheckpoint(Object savepoint, long count) {
+			super();
+			this.savepoint = savepoint;
+			this.count = count;
+		}
+	}
+
 	/**
 	 * Abstract implementation of a bulk loading context.
 	 * 
@@ -102,11 +114,12 @@ public class BulkLoadingDaoSupport {
 		private final LoadingExceptionHandler<T, PK> exceptionHandler;
 		private final int batchSize;
 		private long numLoaded;
+		private long numCommitted;
 		private final TransactionStatus transaction;
 		private Connection con;
 		private PreparedStatement stmt;
 		private TransactionStatus batchTransaction;
-		private Object transactionCheckpoint;
+		private CountAwareCheckpoint transactionCheckpoint;
 		private T lastLoadedEntity;
 
 		public BulkLoadingContext(LoadingOptions options,
@@ -142,6 +155,11 @@ public class BulkLoadingDaoSupport {
 		@Override
 		public long getLoadedCount() {
 			return numLoaded;
+		}
+
+		@Override
+		public long getCommittedCount() {
+			return numCommitted;
 		}
 
 		private Connection getConnection() throws SQLException {
@@ -186,8 +204,9 @@ public class BulkLoadingDaoSupport {
 						batchTransaction = txManager.getTransaction(txDef);
 					}
 				}
-				doLoad(entity, getPreparedStatement(), numLoaded);
-				numLoaded++;
+				if ( doLoad(entity, getPreparedStatement(), numLoaded) ) {
+					numLoaded++;
+				}
 			} catch ( Exception e ) {
 				if ( exceptionHandler != null ) {
 					exceptionHandler.handleLoadingException(e, this);
@@ -195,7 +214,8 @@ public class BulkLoadingDaoSupport {
 			}
 		}
 
-		protected abstract void doLoad(T entity, PreparedStatement stmt, long index) throws SQLException;
+		protected abstract boolean doLoad(T entity, PreparedStatement stmt, long index)
+				throws SQLException;
 
 		@Override
 		public void createCheckpoint() {
@@ -203,9 +223,10 @@ public class BulkLoadingDaoSupport {
 					&& !transaction.isCompleted() ) {
 				Object checkpoint = transaction.createSavepoint();
 				if ( transactionCheckpoint != null ) {
-					transaction.releaseSavepoint(transactionCheckpoint);
+					transaction.releaseSavepoint(transactionCheckpoint.savepoint);
 				}
-				transactionCheckpoint = checkpoint;
+				transactionCheckpoint = new CountAwareCheckpoint(checkpoint, numLoaded);
+				numCommitted = numLoaded;
 			}
 		}
 
@@ -221,6 +242,7 @@ public class BulkLoadingDaoSupport {
 						numLoaded);
 				txManager.commit(transaction);
 			}
+			numCommitted = numLoaded;
 			close();
 			stmt = null;
 			con = null;
@@ -229,15 +251,18 @@ public class BulkLoadingDaoSupport {
 		@Override
 		public void rollback() {
 			if ( transactionCheckpoint != null && transaction != null ) {
-				transaction.rollbackToSavepoint(transactionCheckpoint);
-				transaction.releaseSavepoint(transactionCheckpoint);
+				transaction.rollbackToSavepoint(transactionCheckpoint.savepoint);
+				transaction.releaseSavepoint(transactionCheckpoint.savepoint);
+				numLoaded = transactionCheckpoint.count;
 				transactionCheckpoint = null;
 			} else if ( batchTransaction != null && !batchTransaction.isCompleted() ) {
 				batchTransaction.setRollbackOnly();
 				txManager.rollback(batchTransaction);
+				numLoaded = numCommitted;
 				batchTransaction = null;
 			} else if ( transaction != null && !transaction.isCompleted() ) {
 				txManager.rollback(transaction);
+				numLoaded = numCommitted;
 			}
 		}
 

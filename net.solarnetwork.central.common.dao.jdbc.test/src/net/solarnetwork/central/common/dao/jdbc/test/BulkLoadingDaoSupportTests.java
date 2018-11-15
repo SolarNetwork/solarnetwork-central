@@ -136,12 +136,13 @@ public class BulkLoadingDaoSupportTests extends AbstractCentralTest {
 		}
 
 		@Override
-		protected void doLoad(BulkLoadThingy entity, PreparedStatement stmt, long index)
+		protected boolean doLoad(BulkLoadThingy entity, PreparedStatement stmt, long index)
 				throws SQLException {
 			stmt.setLong(1, index);
 			stmt.setTimestamp(2, creation);
 			stmt.setString(3, "Thing " + index);
 			stmt.executeUpdate();
+			return true;
 		}
 
 		@Override
@@ -173,9 +174,13 @@ public class BulkLoadingDaoSupportTests extends AbstractCentralTest {
 				})) {
 			for ( long i = 0; i < rowCount; i++ ) {
 				ctx.load(new BulkLoadThingy(i));
+				assertThat("Running loaded count", ctx.getLoadedCount(), equalTo(i + 1));
+				assertThat("Running committed count", ctx.getCommittedCount(), equalTo(0L));
 			}
 			ctx.commit();
 			assertThat("Commit count", ctx.commitCount, equalTo(1));
+			assertThat("Loaded count", ctx.getLoadedCount(), equalTo((long) rowCount));
+			assertThat("Committed count", ctx.getCommittedCount(), equalTo((long) rowCount));
 		}
 		assertThat("Inserted row count", countOfBulkLoadThingy(), equalTo(rowCount));
 	}
@@ -196,6 +201,8 @@ public class BulkLoadingDaoSupportTests extends AbstractCentralTest {
 				})) {
 			for ( long i = 0; i < rowCount; i++ ) {
 				ctx.load(new BulkLoadThingy(i));
+				assertThat("Running loaded count", ctx.getLoadedCount(), equalTo(i + 1));
+				assertThat("Running committed count", ctx.getCommittedCount(), equalTo(0L));
 			}
 			ctx.rollback();
 			assertThat("Commit count", ctx.commitCount, equalTo(0));
@@ -219,9 +226,13 @@ public class BulkLoadingDaoSupportTests extends AbstractCentralTest {
 				})) {
 			for ( long i = 0; i < rowCount; i++ ) {
 				ctx.load(new BulkLoadThingy(i));
+				assertThat("Running loaded count", ctx.getLoadedCount(), equalTo(i + 1));
+				assertThat("Running committed count", ctx.getCommittedCount(), equalTo(0L));
 			}
 			// no explicit rollback here...
 			assertThat("Commit count", ctx.commitCount, equalTo(0));
+			assertThat("Loaded count", ctx.getLoadedCount(), equalTo((long) rowCount));
+			assertThat("Committed count", ctx.getCommittedCount(), equalTo(0L));
 		}
 		assertThat("Inserted row count", countOfBulkLoadThingy(), equalTo(0));
 	}
@@ -242,9 +253,13 @@ public class BulkLoadingDaoSupportTests extends AbstractCentralTest {
 				})) {
 			for ( long i = 0; i < rowCount; i++ ) {
 				ctx.load(new BulkLoadThingy(i));
+				assertThat("Running loaded count", ctx.getLoadedCount(), equalTo(i + 1));
+				assertThat("Running committed count", ctx.getCommittedCount(), equalTo(i - i % 10));
 			}
 			ctx.commit();
 			assertThat("Commit count", ctx.commitCount, equalTo(5));
+			assertThat("Loaded count", ctx.getLoadedCount(), equalTo((long) rowCount));
+			assertThat("Committed count", ctx.getCommittedCount(), equalTo((long) rowCount));
 		}
 		assertThat("Inserted row count", countOfBulkLoadThingy(), equalTo(rowCount));
 	}
@@ -265,9 +280,15 @@ public class BulkLoadingDaoSupportTests extends AbstractCentralTest {
 				})) {
 			for ( long i = 0; i < rowCount; i++ ) {
 				ctx.load(new BulkLoadThingy(i));
+				assertThat("Running loaded count", ctx.getLoadedCount(), equalTo(i + 1));
+				assertThat("Running committed count", ctx.getCommittedCount(), equalTo(i - i % 10));
 			}
 			ctx.rollback();
 			assertThat("Commit count", ctx.commitCount, equalTo(4));
+			assertThat("Loaded count", ctx.getLoadedCount(),
+					equalTo((long) (rowCount - options.getBatchSize())));
+			assertThat("Committed count in batch", ctx.getCommittedCount(),
+					equalTo((long) (rowCount - options.getBatchSize())));
 		}
 		assertThat("Inserted row count", countOfBulkLoadThingy(),
 				equalTo(rowCount - options.getBatchSize()));

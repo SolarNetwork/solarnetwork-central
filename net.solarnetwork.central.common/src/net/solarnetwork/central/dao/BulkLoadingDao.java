@@ -146,11 +146,47 @@ public interface BulkLoadingDao<T extends Entity<PK>, PK extends Serializable> {
 		void load(T entity);
 
 		/**
-		 * Get a count of entities loaded thus far using this context.
+		 * Get the count of entities loaded thus far using this context.
+		 * 
+		 * <p>
+		 * If {@link #rollback()} is called, this value will reset back to the
+		 * count of currently committed entities.
+		 * </p>
 		 * 
 		 * @return the loaded count
 		 */
 		long getLoadedCount();
+
+		/**
+		 * Get the count of entities committed thus far using this context.
+		 * 
+		 * <p>
+		 * How this value increments depends on the
+		 * {@Link LoadingTransactionMode} defined in the options that were used
+		 * to create this context:
+		 * </p>
+		 * 
+		 * <dl>
+		 * <dt>{@link LoadingTransactionMode#NoTransaction}</dt>
+		 * <dd>This count will match {@link #getLoadedCount()} and increment as
+		 * each entity is loaded.</dd>
+		 * <dt>{@link LoadingTransactionMode#BatchTransactions}</dt>
+		 * <dd>This count will increment only after each batch of loaded entity
+		 * have been committed, and thus can lag behind
+		 * {@link #getLoadedCount()}.</dd>
+		 * <dd>{@link LoadingTransactionMode#TransactionCheckpoints}</dd>
+		 * <dt>This count will only increment after calls to
+		 * {@link #createCheckpoint()} are made. If {@link #rollback()} is
+		 * called, this count will reset back to the count at the previous time
+		 * {@link #createCheckpoint()} was called.</dt>
+		 * <dt>{@link LoadingTransactionMode#SingleTransaction}</dt>
+		 * <dd>This count will remain at {@literal 0} until {@link #commit()} is
+		 * called, at which point it will match {@link #getLoadedCount()}.</dd>
+		 * </dl>
+		 * 
+		 * @return the committed entity count
+		 */
+		long getCommittedCount();
 
 		/**
 		 * Get the entity that was last passed to the {@link #load(Entity)}
@@ -179,29 +215,30 @@ public interface BulkLoadingDao<T extends Entity<PK>, PK extends Serializable> {
 		 * </p>
 		 * <dl>
 		 * <dt>{@code TransactionCheckpoints} or {@code SingleTransaction}</dt>
-		 * <dd>All datum loaded via {@link #load(Entity)} are committed.</dd>
+		 * <dd>All entities loaded via {@link #load(Entity)} are committed.</dd>
 		 * <dt>{@code BatchTransactions}</dt>
-		 * <dd>The datum loaded via {@link #load(Entity)} since the last
+		 * <dd>The entities loaded via {@link #load(Entity)} since the last
 		 * automatic batch commit are committed.</dd>
 		 * </dl>
 		 */
 		void commit();
 
 		/**
-		 * Discard the datum loaded within the current transaction.
+		 * Discard the entities loaded within the current transaction.
 		 * 
 		 * <p>
 		 * The nature of the current transaction depends on the transaction mode
 		 * set in the options used to create this context:
 		 * </p>
+		 * 
 		 * <dl>
 		 * <dt>{@code SingleTransaction}</dt>
-		 * <dd>All datum loaded are discarded.</dd>
+		 * <dd>All entities loaded are discarded.</dd>
 		 * <dt>{@code TransactionCheckpoints}</dt>
-		 * <dd>All datum loaded via {@link #load(Entity)} since the last call to
-		 * {@link #createCheckpoint()} are discarded.</dd>
+		 * <dd>All entities loaded via {@link #load(Entity)} since the last call
+		 * to {@link #createCheckpoint()} are discarded.</dd>
 		 * <dt>{@code BatchTransactions}</dt>
-		 * <dd>The datum loaded via {@link #load(Entity)} since the last
+		 * <dd>The entities loaded via {@link #load(Entity)} since the last
 		 * automatic batch commit are discarded.</dd>
 		 * </dl>
 		 */
