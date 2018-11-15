@@ -58,4 +58,17 @@ public interface DatumImportResult {
 	 */
 	DateTime getCompletionDate();
 
+	/**
+	 * Get the number of datum successfully loaded.
+	 * 
+	 * <p>
+	 * Note that even if {@link #isSuccess()} is {@literal false} this method
+	 * can return a value greater than {@literal 0}, if partial results are
+	 * supported by the transaction mode of the import process.
+	 * </p>
+	 * 
+	 * @return the number of successfully loaded datum
+	 */
+	long getLoadedCount();
+
 }

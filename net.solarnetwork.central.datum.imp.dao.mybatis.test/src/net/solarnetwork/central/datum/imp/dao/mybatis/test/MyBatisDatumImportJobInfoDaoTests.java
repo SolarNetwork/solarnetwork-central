@@ -122,6 +122,8 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		DateTime originalCreated = info.getCreated();
 		info.setCreated(new DateTime()); // should not actually save
 		info.setImportState(DatumImportState.Completed);
+		info.setJobSuccess(Boolean.TRUE);
+		info.setLoadedCount(1234);
 
 		UserUuidPK id = dao.store(info);
 		assertThat("PK unchanged", id, equalTo(this.info.getId()));
@@ -132,6 +134,8 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		assertThat("PK", updated.getId(), equalTo(info.getId()));
 		assertThat("Created unchanged", updated.getCreated(), equalTo(originalCreated));
 		assertThat("State changed", updated.getImportState(), equalTo(info.getImportState()));
+		assertThat("Success changed", updated.isSuccess(), equalTo(info.isSuccess()));
+		assertThat("Loaded count changed", updated.getLoadedCount(), equalTo(info.getLoadedCount()));
 	}
 
 	@Test

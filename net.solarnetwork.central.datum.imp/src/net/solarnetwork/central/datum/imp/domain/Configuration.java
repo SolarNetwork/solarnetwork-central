@@ -53,6 +53,30 @@ public interface Configuration {
 	boolean isStage();
 
 	/**
+	 * Get a batch loading size.
+	 * 
+	 * <p>
+	 * This specifies how frequently datum will be committed to the database
+	 * during the load process. If {@literal null} or anything less than
+	 * {@literal 1}, an all-or-nothing approach will be used, and no datum will
+	 * be committed unless the entire data set is parsed and loaded
+	 * successfully. If anything greater than {@code 0}, then datum will be
+	 * committed each time this many have been loaded, resulting in the
+	 * potential for a partially loaded set of data if any error occurs during
+	 * the load process.
+	 * </p>
+	 * 
+	 * <p>
+	 * In general configuring a batch size greater than {@literal 0} may allow
+	 * the data to be loaded faster, but dealing with a partially loaded data
+	 * set is left to the caller to handle.
+	 * </p>
+	 * 
+	 * @return a batch size
+	 */
+	Integer getBatchSize();
+
+	/**
 	 * Get the configuration of the input format of the data to import.
 	 * 
 	 * @return the input configuration

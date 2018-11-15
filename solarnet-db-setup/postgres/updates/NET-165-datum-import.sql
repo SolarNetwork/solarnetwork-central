@@ -11,10 +11,11 @@ CREATE TABLE solarnet.sn_datum_import_job (
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	import_date		TIMESTAMP WITH TIME ZONE NOT NULL,
 	state			CHARACTER(1) NOT NULL,
-	config			jsonb NOT NULL,
 	success 		BOOLEAN,
-	message			TEXT,
+	load_count		BIGINT NOT NULL DEFAULT 0,
 	completed 		TIMESTAMP WITH TIME ZONE,
+	message			TEXT,
+	config			jsonb NOT NULL,
 	CONSTRAINT datum_import_job_pkey PRIMARY KEY (user_id, id)
 );
 

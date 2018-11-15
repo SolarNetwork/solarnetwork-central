@@ -34,6 +34,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.springframework.util.FileCopyUtils.copy;
@@ -62,6 +63,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
 import net.solarnetwork.central.dao.BulkLoadingDao;
+import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
@@ -84,7 +86,11 @@ import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatServ
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatServiceImportContext;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -319,6 +325,14 @@ public class DaoDatumImportBizTests {
 		return info;
 	}
 
+	private UserNode createTestUserNode(Long userId, Long nodeId, String timeZoneId) {
+		SolarLocation loc = new SolarLocation();
+		loc.setTimeZoneId("Pacific/Auckland");
+		SolarNode node = new SolarNode(TEST_NODE_ID, null);
+		node.setLocation(loc);
+		return new UserNode(new User(TEST_USER_ID, "foo@localhost"), node);
+	}
+
 	@Test
 	public void previewRequest() throws Exception {
 		// given
@@ -344,6 +358,10 @@ public class DaoDatumImportBizTests {
 		// make test node owned by job's user
 		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(singleton(TEST_NODE_ID))
 				.anyTimes();
+
+		// make node time zone available
+		UserNode un = createTestUserNode(TEST_USER_ID, TEST_NODE_ID, "Pacific/Auckland");
+		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(un);
 
 		String jobId = pk.getId().toString();
 
@@ -403,6 +421,19 @@ public class DaoDatumImportBizTests {
 		loadingContext.load(capture(loadedDataCaptor));
 		expectLastCall().times(data.size());
 
+		expect(loadingContext.getLoadedCount()).andAnswer(new IAnswer<Long>() {
+
+			private long count = 0;
+
+			@Override
+			public Long answer() throws Throwable {
+				return ++count;
+			}
+		}).times(data.size());
+
+		Long committedCount = 5L;
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+
 		loadingContext.close();
 
 		// when
@@ -423,10 +454,96 @@ public class DaoDatumImportBizTests {
 					equalTo(info.getImportDate()));
 		}
 
+		BulkLoadingDao.LoadingOptions loadingOpts = loadingOptionsCaptor.getValue();
+		assertThat("Loading tx mode", loadingOpts.getTransactionMode(),
+				equalTo(LoadingTransactionMode.SingleTransaction));
+		assertThat("Loading batch size", loadingOpts.getBatchSize(), nullValue());
+
 		assertThat("Import result available", result, notNullValue());
 		assertThat("Import completion date set", result.getCompletionDate(), notNullValue());
 		assertThat("Import succeeded", result.isSuccess(), equalTo(true));
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
+		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+	}
+
+	@Test
+	public void performImportWithBatch() throws Exception {
+		// given
+		List<GeneralNodeDatum> data = sampleData(5,
+				new DateTime().hourOfDay().roundFloorCopy().minusHours(1));
+		biz.setInputServices(
+				new StaticOptionalServiceCollection<>(singleton(new TestInputService(data))));
+		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
+		File dataFile = biz.getImportDataFile(pk);
+		copy(copyToByteArray(getClass().getResourceAsStream("test-data-01.csv")), dataFile);
+
+		DatumImportJobInfo info = createTestJobInfo(pk);
+		info.getConfig().setBatchSize(2);
+		expect(jobInfoDao.get(pk)).andReturn(info);
+
+		Capture<Callable<DatumImportResult>> taskCaptor = new Capture<>();
+		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
+		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
+
+		// allow updating the status as job progresses
+		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+
+		// make test node owned by job's user
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(singleton(TEST_NODE_ID))
+				.anyTimes();
+
+		Capture<BulkLoadingDao.LoadingOptions> loadingOptionsCaptor = new Capture<>();
+		expect(datumDao.createBulkLoadingContext(capture(loadingOptionsCaptor), anyObject()))
+				.andReturn(loadingContext);
+
+		Capture<GeneralNodeDatum> loadedDataCaptor = new Capture<GeneralNodeDatum>(CaptureType.ALL);
+		loadingContext.load(capture(loadedDataCaptor));
+		expectLastCall().times(data.size());
+
+		expect(loadingContext.getLoadedCount()).andAnswer(new IAnswer<Long>() {
+
+			private long count = 0;
+
+			@Override
+			public Long answer() throws Throwable {
+				return ++count;
+			}
+		}).times(data.size());
+
+		Long committedCount = 5L;
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+
+		loadingContext.close();
+
+		// when
+		replayAll();
+		DatumImportStatus status = biz.performImport(pk);
+
+		// pretend to perform work via executor service
+		DatumImportResult result = taskCaptor.getValue().call();
+
+		// then
+		assertThat("Status returned", status, notNullValue());
+		for ( int i = 0; i < data.size(); i++ ) {
+			assertThat("Loaded data PK " + i, loadedDataCaptor.getValues().get(i).getId(),
+					equalTo(data.get(i).getId()));
+			assertThat("Loaded data samples " + i, loadedDataCaptor.getValues().get(i).getSamples(),
+					equalTo(data.get(i).getSamples()));
+			assertThat("Loaded data posted data set to import date", data.get(i).getPosted(),
+					equalTo(info.getImportDate()));
+		}
+
+		BulkLoadingDao.LoadingOptions loadingOpts = loadingOptionsCaptor.getValue();
+		assertThat("Loading tx mode", loadingOpts.getTransactionMode(),
+				equalTo(LoadingTransactionMode.BatchTransactions));
+		assertThat("Loading batch size", loadingOpts.getBatchSize(),
+				equalTo(info.getConfig().getBatchSize()));
+
+		assertThat("Import result available", result, notNullValue());
+		assertThat("Import completion date set", result.getCompletionDate(), notNullValue());
+		assertThat("Import succeeded", result.isSuccess(), equalTo(true));
+		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
+		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 	}
 
 	@Test
@@ -458,6 +575,9 @@ public class DaoDatumImportBizTests {
 		expect(datumDao.createBulkLoadingContext(capture(loadingOptionsCaptor), anyObject()))
 				.andReturn(loadingContext);
 
+		Long committedCount = 5L;
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+
 		loadingContext.close();
 
 		// when
@@ -475,6 +595,7 @@ public class DaoDatumImportBizTests {
 		assertThat("Import failed", result.isSuccess(), equalTo(false));
 		assertThat("Import message", result.getMessage(),
 				equalTo("Not authorized to load data for node " + TEST_NODE_ID + "."));
+		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 
 	}
 }

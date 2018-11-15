@@ -33,10 +33,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  */
 public class BasicConfiguration implements Configuration, Serializable {
 
-	private static final long serialVersionUID = -5243790644288188821L;
+	private static final long serialVersionUID = -2834408245202599062L;
 
 	private String name;
 	private boolean stage;
+	private Integer batchSize;
 	private InputConfiguration inputConfiguration;
 
 	/**
@@ -55,9 +56,24 @@ public class BasicConfiguration implements Configuration, Serializable {
 	 *        {@literal true} to stage the import
 	 */
 	public BasicConfiguration(String name, boolean stage) {
+		this(name, stage, null);
+	}
+
+	/**
+	 * Construct with values.
+	 * 
+	 * @param name
+	 *        the name
+	 * @param stage
+	 *        {@literal true} to stage the import
+	 * @param batchSize
+	 *        the batch size
+	 */
+	public BasicConfiguration(String name, boolean stage, Integer batchSize) {
 		super();
 		setName(name);
 		setStage(stage);
+		setBatchSize(batchSize);
 	}
 
 	/**
@@ -92,6 +108,15 @@ public class BasicConfiguration implements Configuration, Serializable {
 
 	public void setStage(boolean stage) {
 		this.stage = stage;
+	}
+
+	@Override
+	public Integer getBatchSize() {
+		return batchSize;
+	}
+
+	public void setBatchSize(Integer batchSize) {
+		this.batchSize = batchSize;
 	}
 
 	@Override

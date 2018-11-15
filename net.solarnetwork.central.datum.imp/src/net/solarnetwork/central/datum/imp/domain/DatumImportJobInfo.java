@@ -41,7 +41,7 @@ import net.solarnetwork.util.JsonUtils;
 public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
 		implements UserRelatedEntity<UserUuidPK>, DatumImportRequest, DatumImportResult {
 
-	private static final long serialVersionUID = -8345921319848339639L;
+	private static final long serialVersionUID = 5777793086887701965L;
 
 	private DateTime importDate;
 	private DatumImportState importState;
@@ -50,6 +50,7 @@ public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
 	private Boolean jobSuccess;
 	private String message;
 	private DateTime completed;
+	private long loadedCount;
 
 	@JsonIgnore
 	@Override
@@ -187,6 +188,15 @@ public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
 
 	public void setCompleted(DateTime completed) {
 		this.completed = completed;
+	}
+
+	@Override
+	public long getLoadedCount() {
+		return loadedCount;
+	}
+
+	public void setLoadedCount(long loadedCount) {
+		this.loadedCount = loadedCount;
 	}
 
 }

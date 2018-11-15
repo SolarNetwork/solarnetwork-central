@@ -42,7 +42,7 @@ public interface DatumInputReaderFeedback {
 	 * 
 	 * @return the line number, or {@literal null} if not known
 	 */
-	Integer getLineNumber();
+	Long getLineNumber();
 
 	/**
 	 * Get the original line from the input data.
@@ -50,5 +50,13 @@ public interface DatumInputReaderFeedback {
 	 * @return the line, or {@literal null} if not available
 	 */
 	String getLine();
+
+	/**
+	 * Get the number of datum successfully loaded, if partially loaded data is
+	 * supported.
+	 * 
+	 * @return the successfully loaded datum count, or {@code null} if not known
+	 */
+	Long getLoadedCount();
 
 }

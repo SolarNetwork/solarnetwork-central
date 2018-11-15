@@ -58,6 +58,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
+import net.solarnetwork.central.datum.imp.biz.DatumImportException;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService.ImportContext;
 import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
@@ -486,9 +487,13 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		@Override
 		public void handleLoadingException(Throwable t,
 				LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> context) {
-			throw new DatumImportValidationException(
-					"Error importing datum " + context.getLastLoadedEntity(), t,
-					(int) context.getLoadedCount() + 1, null);
+			if ( t instanceof DatumImportValidationException ) {
+				DatumImportValidationException ve = (DatumImportValidationException) t;
+				throw new DatumImportException(ve.getMessage(), ve.getCause(), ve.getLineNumber(),
+						ve.getLine(), context.getCommittedCount());
+			}
+			throw new DatumImportException("Error importing datum " + context.getLastLoadedEntity(), t,
+					context.getLoadedCount() + 1, null, context.getCommittedCount());
 		}
 
 		private void doImport() throws IOException {
@@ -498,19 +503,35 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			}
 
 			Set<Long> allowedNodeIds = userNodeDao.findNodeIdsForUser(info.getUserId());
+
+			LoadingTransactionMode txMode = LoadingTransactionMode.SingleTransaction;
+			Integer batchSize = null;
+			if ( config.getBatchSize() != null ) {
+				int bs = config.getBatchSize();
+				if ( bs == 1 ) {
+					txMode = LoadingTransactionMode.NoTransaction;
+				} else if ( bs > 1 ) {
+					txMode = LoadingTransactionMode.BatchTransactions;
+					batchSize = config.getBatchSize();
+				}
+			}
 			SimpleBulkLoadingOptions loadingOptions = new SimpleBulkLoadingOptions(config.getName(),
-					null, LoadingTransactionMode.SingleTransaction, null);
+					batchSize, txMode, null);
 
 			try (ImportContext input = createImportContext(info, this);
 					LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> loader = datumDao
 							.createBulkLoadingContext(loadingOptions, this)) {
-				for ( GeneralNodeDatum d : input ) {
-					if ( !allowedNodeIds.contains(d.getNodeId()) ) {
-						throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
+				try {
+					for ( GeneralNodeDatum d : input ) {
+						if ( !allowedNodeIds.contains(d.getNodeId()) ) {
+							throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
+						}
+						d.setPosted(info.getImportDate());
+						loader.load(d);
+						loadedCount = loader.getLoadedCount();
 					}
-					d.setPosted(info.getImportDate());
-					loader.load(d);
-					loadedCount++;
+				} finally {
+					info.setLoadedCount(loader.getCommittedCount());
 				}
 			} catch ( RuntimeException e ) {
 				throw e;

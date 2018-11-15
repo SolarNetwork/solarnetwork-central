@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumImportValidationException.java - 8/11/2018 9:57:45 AM
+ * DatumImportException.java - 16/11/2018 5:58:09 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -23,14 +23,18 @@
 package net.solarnetwork.central.datum.imp.biz;
 
 /**
- * Exception thrown when a validation error occurs while importing data.
+ * General exception for the datum import process.
  * 
  * @author matt
  * @version 1.0
  */
-public class DatumImportValidationException extends DatumImportException {
+public class DatumImportException extends RuntimeException implements DatumInputReaderFeedback {
 
-	private static final long serialVersionUID = -3585428227737077666L;
+	private static final long serialVersionUID = 182518709233660990L;
+
+	private final Long lineNumber;
+	private final String line;
+	private final Long loadedCount;
 
 	/**
 	 * Construct with a message.
@@ -38,8 +42,11 @@ public class DatumImportValidationException extends DatumImportException {
 	 * @param message
 	 *        the message
 	 */
-	public DatumImportValidationException(String message) {
+	public DatumImportException(String message) {
 		super(message);
+		this.lineNumber = null;
+		this.line = null;
+		this.loadedCount = null;
 	}
 
 	/**
@@ -50,7 +57,7 @@ public class DatumImportValidationException extends DatumImportException {
 	 * @param cause
 	 *        the cause
 	 */
-	public DatumImportValidationException(String message, Throwable cause) {
+	public DatumImportException(String message, Throwable cause) {
 		this(message, cause, null, null);
 	}
 
@@ -67,9 +74,45 @@ public class DatumImportValidationException extends DatumImportException {
 	 * @param line
 	 *        the original line of input data being processed
 	 */
-	public DatumImportValidationException(String message, Throwable cause, Integer lineNumber,
-			String line) {
+	public DatumImportException(String message, Throwable cause, Long lineNumber, String line) {
+		this(message, cause, lineNumber, line, null);
+	}
+
+	/**
+	 * Construct with a full details.
+	 * 
+	 * @param message
+	 *        the message
+	 * @param cause
+	 *        the cause
+	 * @param lineNumber
+	 *        the line number the input error occurred on
+	 * @param line
+	 *        the original line of input data being processed
+	 * @param loadedCount
+	 *        the loaded count
+	 */
+	public DatumImportException(String message, Throwable cause, Long lineNumber, String line,
+			Long loadedCount) {
 		super(message, cause);
+		this.lineNumber = lineNumber;
+		this.line = line;
+		this.loadedCount = loadedCount;
+	}
+
+	@Override
+	public Long getLineNumber() {
+		return lineNumber;
+	}
+
+	@Override
+	public String getLine() {
+		return line;
+	}
+
+	@Override
+	public Long getLoadedCount() {
+		return loadedCount;
 	}
 
 }

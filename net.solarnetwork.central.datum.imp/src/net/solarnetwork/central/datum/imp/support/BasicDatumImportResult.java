@@ -36,6 +36,7 @@ public class BasicDatumImportResult implements DatumImportResult {
 	private final boolean success;
 	private final String message;
 	private final DateTime completionDate;
+	private final long loadedCount;
 
 	/**
 	 * Constructor.
@@ -46,12 +47,16 @@ public class BasicDatumImportResult implements DatumImportResult {
 	 *        a message
 	 * @param completionDate
 	 *        the completion date
+	 * @param loadedCount
+	 *        the loaded count
 	 */
-	public BasicDatumImportResult(boolean success, String message, DateTime completionDate) {
+	public BasicDatumImportResult(boolean success, String message, DateTime completionDate,
+			long loadedCount) {
 		super();
 		this.success = success;
 		this.message = message;
 		this.completionDate = completionDate;
+		this.loadedCount = loadedCount;
 	}
 
 	/**
@@ -62,7 +67,8 @@ public class BasicDatumImportResult implements DatumImportResult {
 	 */
 	public BasicDatumImportResult(DatumImportResult other) {
 		this((other != null ? other.isSuccess() : false), (other != null ? other.getMessage() : null),
-				(other != null ? other.getCompletionDate() : null));
+				(other != null ? other.getCompletionDate() : null),
+				(other != null ? other.getLoadedCount() : 0));
 	}
 
 	@Override
@@ -78,6 +84,11 @@ public class BasicDatumImportResult implements DatumImportResult {
 	@Override
 	public DateTime getCompletionDate() {
 		return completionDate;
+	}
+
+	@Override
+	public long getLoadedCount() {
+		return loadedCount;
 	}
 
 }
