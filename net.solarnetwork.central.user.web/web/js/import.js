@@ -6,7 +6,7 @@ $(document).ready(function() {
 	var settingTemplates = $('#import-setting-templates');
 
 	function loadDatumImportJobs(preserve) {
-		return $.getJSON(SolarReg.solarUserURL('/sec/import/jobs?states=Queued,Staged,Claimed,Executing'), function(json) {
+		return $.getJSON(SolarReg.solarUserURL('/sec/import/jobs?states=Queued,Staged,Claimed,Executing,Completed'), function(json) {
 			console.log('Got import jobs: %o', json);
 			if ( json && json.success === true && Array.isArray(json.data) ) {
 				populateDatumImportJobs(json.data, preserve);
@@ -31,11 +31,17 @@ $(document).ready(function() {
 			item.batchSize = job.configuration.batchSize;
 			item.state = job.jobState;
 			item.progressAmount = (job.percentComplete * 100).toFixed(0);
+			item.success = job.success;
+			item.message = job.message;
 			return item;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve, function(item, el) {
-			el.find('.progress').toggleClass('hidden', item.state === 'Staged');
+			el.find('.progress').toggleClass('hidden', item.state === 'Staged' || item.state === 'Completed')
+				.find('.progress-bar').attr('aria-valuenow', item.progressAmount).css('width', item.progressAmount +'%');
 			el.find('.preview').toggleClass('hidden', item.state !== 'Staged');
+			el.find('.success-ok').toggleClass('hidden', item.state !== 'Completed' || !item.success);
+			el.find('.success-error').toggleClass('hidden', item.state !== 'Completed' || item.success);
+			el.find('.complete').toggleClass('hidden', item.state !== 'Completed');
 		});
 		container.closest('section').find('.listCount').text(jobs.length);
 		return jobs;

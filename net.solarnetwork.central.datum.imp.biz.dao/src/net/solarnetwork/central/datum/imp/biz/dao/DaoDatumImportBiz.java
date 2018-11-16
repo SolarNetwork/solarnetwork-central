@@ -550,6 +550,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 						loader.load(d);
 						loadedCount = loader.getLoadedCount();
 					}
+					loader.commit();
 				} finally {
 					info.setLoadedCount(loader.getCommittedCount());
 				}
@@ -635,6 +636,21 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		public DatumImportResult get(long timeout, TimeUnit unit)
 				throws InterruptedException, ExecutionException, TimeoutException {
 			return delegate.get(timeout, unit);
+		}
+
+		@Override
+		public boolean isSuccess() {
+			return info.isSuccess();
+		}
+
+		@Override
+		public String getMessage() {
+			return info.getMessage();
+		}
+
+		@Override
+		public long getLoadedCount() {
+			return info.getLoadedCount();
 		}
 
 		@Override
