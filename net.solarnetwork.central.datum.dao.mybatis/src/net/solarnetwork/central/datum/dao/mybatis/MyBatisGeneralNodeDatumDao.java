@@ -71,7 +71,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
-		GeneralNodeDatumDao {
+		GeneralNodeDatumDao, ConfigurableBulkLoadingDao {
 
 	/** The query parameter for a class name value. */
 	public static final String PARAM_CLASS_NAME = "class";
@@ -1006,6 +1006,7 @@ public class MyBatisGeneralNodeDatumDao
 	 * @return the support
 	 * @since 1.11
 	 */
+	@Override
 	public BulkLoadingDaoSupport getLoadingSupport() {
 		return loadingSupport;
 	}

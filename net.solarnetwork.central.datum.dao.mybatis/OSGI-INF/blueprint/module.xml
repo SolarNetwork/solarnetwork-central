@@ -77,6 +77,11 @@
 		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
+	<bean id="loadingSupport" factory-ref="generalNodeDatumDao" factory-method="getLoadingSupport">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="transactionManager" ref="txManager"/>
+	</bean>
+	
 	<bean id="generalNodeDatumMetadataDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumMetadataDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 		<property name="messageSource" ref="messageSource"/>
