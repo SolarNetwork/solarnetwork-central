@@ -40,17 +40,19 @@
 				<td data-tprop="batchSize"></td>
 				<td>
 					<span data-tprop="state"></span>
-					<div class="complete" data-tprop="completionDateDisplay"></div>
+					<div class="complete hidden" data-tprop="completionDateDisplay"></div>
 				</td>
 				<td>
-					<span class="label label-danger success-error"><fmt:message key='import.job.success.error'/></span>
-					<span class="label label-success success-ok"><fmt:message key='import.job.success.ok'/></span>
+					<span class="label label-danger success-error hidden"><fmt:message key='import.job.success.error'/></span>
+					<span class="label label-success success-ok hidden"><fmt:message key='import.job.success.ok'/></span>
 					<div class="progress hidden">
 						<div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
 							<span data-tprop="progressAmount">0</span>%
 						</div>
 					</div>
-					<p class="complete" data-tprop="message"></p>
+					<p class="running hidden"><fmt:message key='import.job.loadedCount.label'/>: <span data-tprop="loadedCount"></span></p>
+					<p class="success-error hidden" data-tprop="message"></p>
+					<p class="complete hidden"><fmt:message key='import.job.loadedCount.label'/>: <span data-tprop="loadedCount"></span></p>
 				</td>
 				<td class="col-sm-2 text-right">
 					<div class="btn-group preview">

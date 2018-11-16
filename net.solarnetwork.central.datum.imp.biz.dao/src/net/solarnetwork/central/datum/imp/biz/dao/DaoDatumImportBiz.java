@@ -25,8 +25,6 @@ package net.solarnetwork.central.datum.imp.biz.dao;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -454,17 +452,21 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 						msg.append(ae.getMessage());
 					}
 				} else {
-					msg.append(root.getClass().getSimpleName());
-					if ( root.getMessage() != null ) {
-						msg.append(": ").append(root.getMessage());
+					if ( root.getMessage() == null && e.getMessage() != null ) {
+						msg.append(e.getMessage());
+					} else if ( root.getMessage() == null ) {
+						msg.append(root.getClass().getSimpleName());
+					} else {
+						msg.append(root.getMessage());
 					}
-					msg.append("\n");
-					try (StringWriter sout = new StringWriter();
-							PrintWriter out = new PrintWriter(sout)) {
-						root.printStackTrace(out);
-						msg.append(sout.toString());
-					} catch ( IOException e2 ) {
-						// ignore
+					if ( e instanceof DatumImportValidationException ) {
+						DatumImportValidationException dive = (DatumImportValidationException) e;
+						if ( dive.getLineNumber() != null ) {
+							msg.append("; line ").append(dive.getLineNumber());
+						}
+						if ( dive.getLine() != null ) {
+							msg.append("; ").append(dive.getLine());
+						}
 					}
 				}
 				updateTaskStatus(DatumImportState.Completed, Boolean.FALSE, msg.toString(),

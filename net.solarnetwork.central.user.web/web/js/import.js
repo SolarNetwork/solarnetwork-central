@@ -23,7 +23,7 @@ $(document).ready(function() {
 				} else if ( pending && !refreshToken ) {
 					refreshToken = setInterval(function() {
 						loadDatumImportJobs(true);
-					}, 30000);
+					}, 10000);
 				}
 			}
 		});
@@ -47,6 +47,7 @@ $(document).ready(function() {
 			item.batchSize = job.configuration.batchSize;
 			item.state = job.jobState;
 			item.progressAmount = (job.percentComplete * 100).toFixed(0);
+			item.loadedCount = (job.loadedCount ? job.loadedCount.toLocaleString() : 0);
 			item.success = job.success;
 			item.message = job.message;
 			item.submitDateDisplay = moment(job.submitDate).format('D MMM YYYY HH:mm');
@@ -56,6 +57,7 @@ $(document).ready(function() {
 			return item;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve, function(item, el) {
+			el.find('.running').toggleClass('hidden', item.state !== 'Queued' && item.state !== 'Claimed' && item.state !== 'Executing');
 			el.find('.progress').toggleClass('hidden', item.state === 'Staged' || item.state === 'Completed')
 				.find('.progress-bar').attr('aria-valuenow', item.progressAmount).css('width', item.progressAmount +'%');
 			el.find('.preview').toggleClass('hidden', item.state !== 'Staged');
@@ -105,15 +107,14 @@ $(document).ready(function() {
 	$('#edit-datum-import-job-modal').on('show.bs.modal', function(event) {
 		var modal = $(event.target);
 		var item = SolarReg.Templates.findContextItem(modal);
+		var readonly = !!(item && item.state !== 'Staged');
 
 		SolarReg.Settings.prepareEditServiceForm(modal, inputServices, settingTemplates);
 
 		// disable create-only reqiured items
 		modal.find('.create').toggleClass('hidden', !!item).find('input[required]').prop('required', !item);
-		if ( item && item.state !== 'Staged' ) {
-			modal.find('input:not([type=hidden])').prop('readonly', true);
-			modal.find('select,button[type=submit]').prop('disabled', true);
-		}
+		modal.find('input:not([type=hidden])').prop('readonly', readonly);
+		modal.find('select,button[type=submit]').prop('disabled', readonly);
 	})
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 	.on('change', function(event) {
