@@ -11,7 +11,7 @@ SolarReg.Settings.modalAlertBeforeSelector = '.modal-body:not(.hidden):first > *
  * @param {jQuery} container a container element of existing list items to delete from, if the form closed after a delete action
  */
 SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, container) {
-	var id = (form.elements['id'] ? form.elements['id'].value : undefined);
+	var id = (form.elements && form.elements['id'] ? form.elements['id'].value : undefined);
 	var f = $(form);
 	// look if we deleted an item, which will only be true if form in "danger" mode
 	if ( id && container && f.hasClass('deleted') ) {
@@ -29,7 +29,9 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 	f.find('.service-props-container').empty().addClass('hidden');
 
 	// reset form and modal for next item
-	form.reset();
+	if ( typeof form.reset === 'function' ) {
+		form.reset();
+	}
 	f.find('input[type=hidden]').val('');
 
 	// clear delete status
