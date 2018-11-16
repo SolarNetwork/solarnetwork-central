@@ -297,9 +297,9 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 				EnumSet.of(DatumImportState.Staged, DatumImportState.Unknown));
 		assertThat("Results returned", results, hasSize(2));
 
-		// should be ordered by creation date
-		assertThat("Result matches", results.get(0), equalTo(info));
-		assertThat("Result matches", results.get(1), equalTo(this.info));
+		// should be ordered by creation date (descending)
+		assertThat("Result matches", results.get(0), equalTo(this.info));
+		assertThat("Result matches", results.get(1), equalTo(info));
 	}
 
 	@Test

@@ -103,7 +103,7 @@
 			AND state = ANY(#{states,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 		ORDER BY
-			dij.created, dij.id
+			dij.created DESC, dij.id
 	</select>
 	
 	<delete id="delete-DatumImportJobInfo-completed" parameterType="map" statementType="CALLABLE">
