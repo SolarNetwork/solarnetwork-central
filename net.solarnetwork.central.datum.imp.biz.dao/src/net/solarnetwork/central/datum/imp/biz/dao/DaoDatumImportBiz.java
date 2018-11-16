@@ -246,6 +246,10 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	@Override
 	public DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId) {
 		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
+		return datumImportJobStatusForUser(id);
+	}
+
+	private DatumImportStatus datumImportJobStatusForUser(UserUuidPK id) {
 		DatumImportStatus status = taskMap.get(id);
 		if ( status == null ) {
 			DatumImportJobInfo info = jobInfoDao.get(id);
@@ -265,12 +269,26 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	}
 
 	@Override
+	public DatumImportStatus updateDatumImportJobConfigurationForUser(Long userId, String jobId,
+			Configuration configuration) {
+		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
+		jobInfoDao.updateJobConfiguration(id, configuration);
+		DatumImportJobInfo info = jobInfoDao.get(id);
+		DatumImportStatus status = datumImportJobStatusForUser(id);
+		if ( status instanceof DatumImportTask ) {
+			DatumImportTask task = (DatumImportTask) status;
+			task.info.setConfig(info.getConfig());
+		}
+		return status;
+	}
+
+	@Override
 	public DatumImportStatus updateDatumImportJobStateForUser(Long userId, String jobId,
 			DatumImportState desiredState, Set<DatumImportState> expectedStates) {
 		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
 		jobInfoDao.updateJobState(id, desiredState, expectedStates);
 		DatumImportJobInfo info = jobInfoDao.get(id);
-		DatumImportStatus status = datumImportJobStatusForUser(userId, jobId);
+		DatumImportStatus status = datumImportJobStatusForUser(id);
 		if ( status instanceof DatumImportTask ) {
 			DatumImportTask task = (DatumImportTask) status;
 			task.info.setImportState(info.getImportState());

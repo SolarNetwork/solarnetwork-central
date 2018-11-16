@@ -104,6 +104,25 @@ public interface DatumImportBiz {
 	DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId);
 
 	/**
+	 * Replace the configuration of an existing job.
+	 * 
+	 * <p>
+	 * This method can only be called on a job in the
+	 * {@link DatumImportState#Staged} state.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user ID that owns the job
+	 * @param jobId
+	 *        the ID of the job to get
+	 * @param configuration
+	 *        the configuration to save with the job
+	 * @return the job status, or {@literal null} if not available
+	 */
+	DatumImportStatus updateDatumImportJobConfigurationForUser(Long userId, String jobId,
+			Configuration configuration);
+
+	/**
 	 * Find all available job statuses for a specific user.
 	 * 
 	 * @param userId

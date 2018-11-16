@@ -62,7 +62,9 @@ SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(
  * @see #appendTemplateItem
  */
 SolarReg.Templates.populateTemplateItems = function populateTemplateItems(container, items, preserve, callback) {
-	var itemTemplate = container.find('.template').not('.template .template'); // find top-level templates 
+	var itemTemplate = container.find('.template')
+		.not('.service-props-template .template') // ignore service prop templates that might be in container
+		.not('.template .template');              // ignore nested templates 
 	var itemContainer = container.find('.list-container').first();
 	if ( itemContainer.length < 1 ) {
 		itemContainer = itemTemplate.parent();
@@ -78,6 +80,7 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 		}
 		if ( el && el.length > 0 ) {
 			SolarReg.Templates.replaceTemplateProperties(el, item);
+			SolarReg.Templates.setContextItem(el, item._contextItem);
 		} else {
 			el = SolarReg.Templates.appendTemplateItem(itemContainer, itemTemplate, item);
 		}

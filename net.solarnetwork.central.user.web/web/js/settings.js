@@ -435,28 +435,39 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
  * @param {function} onSuccess a callback to invoke on success; will be passed the upload body object and the response body object
  * @param {function} [serializer] a callback to invoke to serialize the form data; will be passed the form object and must return
  *                                an object that will be serialized into JSON via `JSON.stringify` or a FormData object
- * @param {object} [progress] an object with optional `upload` and `download` "progress" event handler functions
+ * @param {object} [options] an object with optional configuration properties
+ * @param {function} [options.download] an optional download progress event callback function
+ * @param {function} [options.upload] an optional upload progress event callback function
+ * @param {function} [options.urlSerializer] an optional function to generate the submit URL; will be passed the form action (decoded) and the serialized body content;
+ *                                           defaults to `SolarReg.replaceTemplateParameters`
+ * @param {function} [options.urlId] if `true` then if the form as an `id` input with a non-empty value, add the value to the submit URL after a `/`
  * @returns {jqXHR} the jQuery XHR object
  */
-SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess, serializer, progress) {
+SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess, serializer, options) {
 	event.preventDefault();
 	var form = event.target;
 	var modal = $(form);
 	var body = (typeof serializer === 'function' 
 		? serializer(form) 
 		: SolarReg.Settings.encodeServiceItemForm(form));
-	var submitUrl = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(form.action), body));
+	var urlFn = (options && typeof options.urlSerializer === 'function' 
+		? options.urlSerializer 
+		: SolarReg.replaceTemplateParameters);
+	var action = (options && options.urlId && form.elements['id'] && form.elements['id'].value
+		? form.action + '/' + encodeURIComponent(form.elements['id'].value)
+		: form.action);
+	var submitUrl = encodeURI(urlFn(decodeURI(action), body));
 	var origXhr = $.ajaxSettings.xhr;
 	var jqXhrOpts = {
 		type: 'POST',
 		url: submitUrl,
 		xhr: function() {
 			var xhr = origXhr.apply(this, arguments);
-			if ( progress && typeof progress.upload === 'function' && xhr.upload ) {
-				xhr.upload.addEventListener('progress', progress.upload);
+			if ( options && typeof options.upload === 'function' && xhr.upload ) {
+				xhr.upload.addEventListener('progress', options.upload);
 			}
-			if ( progress && typeof progress.download === 'function' ) {
-				xhr.addEventListener('progress', progress.upload);
+			if ( options && typeof options.download === 'function' ) {
+				xhr.addEventListener('progress', options.upload);
 			}
 			return xhr;
 		},

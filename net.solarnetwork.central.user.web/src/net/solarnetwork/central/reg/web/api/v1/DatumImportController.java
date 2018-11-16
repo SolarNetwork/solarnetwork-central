@@ -43,6 +43,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -189,8 +190,9 @@ public class DatumImportController extends WebServiceControllerSupport {
 	 * @return a status entity
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/upload", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public Response<DatumImportReceipt> startImport(@RequestPart("config") BasicConfiguration config,
+	@RequestMapping(value = { "/jobs",
+			"/jobs/" }, method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public Response<DatumImportReceipt> createJob(@RequestPart("config") BasicConfiguration config,
 			@RequestPart("data") MultipartFile data) {
 		final DatumImportBiz biz = importBiz.service();
 		DatumImportReceipt result = null;
@@ -342,6 +344,33 @@ public class DatumImportController extends WebServiceControllerSupport {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = biz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Queued,
 					Collections.singleton(DatumImportState.Staged));
+		}
+		return response(result);
+	}
+
+	/**
+	 * Update the configuration of a job.
+	 * 
+	 * <p>
+	 * The actor must have an associated user ID as provided by
+	 * {@link SecurityUtils#getCurrentActorUserId()}.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the ID of the job to update
+	 * @param config
+	 *        the configuration to save with the job
+	 * @return the status
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.POST)
+	public Response<DatumImportStatus> updateJob(@PathVariable("id") String id,
+			@RequestBody BasicConfiguration config) {
+		final DatumImportBiz biz = importBiz.service();
+		DatumImportStatus result = null;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			result = biz.updateDatumImportJobConfigurationForUser(userId, id, config);
 		}
 		return response(result);
 	}

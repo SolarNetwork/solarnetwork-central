@@ -31,7 +31,7 @@
 		</thead>
 		<tbody class="template">
 			<tr>
-				<td><a href="#" class="edit-link" data-tprop="shortId" data-edit-modal="#update-datum-import-job-modal"></a></td>
+				<td><a href="#" class="edit-link" data-tprop="shortId" data-edit-modal="#edit-datum-import-job-modal"></a></td>
 				<td data-tprop="name"></td>
 				<td data-tprop="timeZoneId"></td>
 				<td data-tprop="batchSize"></td>
@@ -61,9 +61,6 @@
 			</tr>
 			<tr class="rule">
 				<td colspan="6">
-					<%--
-						The .service-props-container here serves as a nested template for dynamic service properties.
-					 --%>
 					<dl class="service-props-container hbox" style="font-size: 86%">
 					</dl>
 					<dl class="service-props-template hidden">
@@ -79,7 +76,6 @@
 <%-- Modal forms --%>
 
 <jsp:include page="edit-datum-import-job-modal.jsp"/>
-<jsp:include page="update-datum-import-job-modal.jsp"/>
 <jsp:include page="preview-datum-import-job-modal.jsp"/>
 
 <%-- Setting templates --%>

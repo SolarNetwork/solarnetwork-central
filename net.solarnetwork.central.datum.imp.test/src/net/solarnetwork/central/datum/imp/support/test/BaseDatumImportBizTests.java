@@ -45,6 +45,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
 import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
+import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
@@ -104,6 +105,12 @@ public class BaseDatumImportBizTests {
 		@Override
 		public Collection<DatumImportStatus> datumImportJobStatusesForUser(Long userId,
 				Set<DatumImportState> states) {
+			return null;
+		}
+
+		@Override
+		public DatumImportStatus updateDatumImportJobConfigurationForUser(Long userId, String jobId,
+				Configuration configuration) {
 			return null;
 		}
 

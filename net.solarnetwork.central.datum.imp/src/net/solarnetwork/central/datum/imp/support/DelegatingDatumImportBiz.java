@@ -29,6 +29,7 @@ import java.util.concurrent.Future;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
+import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
@@ -78,6 +79,20 @@ public class DelegatingDatumImportBiz implements DatumImportBiz {
 	@Override
 	public DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId) {
 		return delegate.datumImportJobStatusForUser(userId, jobId);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see net.solarnetwork.central.datum.imp.biz.DatumImportBiz#
+	 * updateDatumImportJobConfigurationForUser(java.lang.Long,
+	 * java.lang.String,
+	 * net.solarnetwork.central.datum.imp.domain.Configuration)
+	 */
+	@Override
+	public DatumImportStatus updateDatumImportJobConfigurationForUser(Long userId, String jobId,
+			Configuration configuration) {
+		return delegate.updateDatumImportJobConfigurationForUser(userId, jobId, configuration);
 	}
 
 	@Override

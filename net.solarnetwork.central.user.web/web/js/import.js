@@ -21,8 +21,9 @@ $(document).ready(function() {
 			var id = job.jobId;
 			var shortId = id.replace(/-.*/, '');
 			var ctx = job.configuration.inputConfiguration;
-			ctx.id = id; // so _contextItem.id is set
+			ctx.id = id;
 			ctx.shortId = shortId;
+			ctx.batchSize = job.configuration.batchSize;
 			var item = SolarReg.Settings.serviceConfigurationItem(ctx, inputServices);
 			item.id = id;
 			item.shortId = shortId;
@@ -73,9 +74,17 @@ $(document).ready(function() {
 		}
 	}
 	
-	// ***** Upload form
+	// ***** Upload/edit form
 	$('#edit-datum-import-job-modal').on('show.bs.modal', function(event) {
-		SolarReg.Settings.prepareEditServiceForm($(event.target), inputServices, settingTemplates);
+		var modal = $(event.target);
+		var item = SolarReg.Templates.findContextItem(modal);
+
+		SolarReg.Settings.prepareEditServiceForm(modal, inputServices, settingTemplates);
+
+		// disable create-only reqiured items
+		modal.find('.create').toggleClass('hidden', !!item).find('input[required]').each(function(idx, e) {
+			$(e).prop('required', !item);
+		});
 	})
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 	.on('change', function(event) {
@@ -84,27 +93,36 @@ $(document).ready(function() {
 	.on('submit', function(event) {
 		var uploadProgressBar = $('.upload .progress-bar', event.target);
 		var uploadProgressBarAmount = $('.amount', uploadProgressBar);
-		
+		var editing = !!event.target.elements['id'].value;
 		var modal = $(event.target);
-		modal.find('.before').addClass('hidden');
-		modal.find('.upload').removeClass('hidden');
+		
+		if ( !editing ) {
+			modal.find('.before').addClass('hidden');
+			modal.find('.upload').removeClass('hidden');
+		}
 		
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			loadDatumImportJobs(true);
 		}, function serializeDatumImportUploadForm(form) {
-			var formData = new FormData(form);
-			
 			var inputConfig = SolarReg.Settings.encodeServiceItemForm(form);
+			
 			var config = {
 					name: inputConfig.name,
 					stage: true,
-					batchSize: inputConfig.batchSize,
+					batchSize: (inputConfig.batchSize ? inputConfig.batchSize : null),
 					inputConfiguration: inputConfig,
 			};
 
+			delete inputConfig.id;
 			delete inputConfig.data; // delete file field
 			delete inputConfig.batchSize; // this is overall config, not input
-
+			
+			if ( editing ) {
+				return config;
+			}
+			
+			// create
+			var formData = new FormData(form);
 			// remove formData elements except for 'data'
 			for ( var key of formData.keys() ) {
 				if ( key !== 'data' ) {
@@ -118,6 +136,7 @@ $(document).ready(function() {
 			
 			return formData;
 		}, {
+			urlId : editing,
 			upload: function(event) {
 				if ( event.lengthComputable ) {  
 					updateProgressAmount(uploadProgressBar, uploadProgressBarAmount, event.loaded / event.total);
@@ -131,20 +150,6 @@ $(document).ready(function() {
 		modal.find('.before').removeClass('hidden');
 		modal.find('.upload').addClass('hidden');
 		updateProgressAmount(modal.find('.upload .progress-bar'), modal.find('.upload .progress-bar .amount'), 0);
-		SolarReg.Settings.resetEditServiceForm(this);
-	});
-	
-	// ***** Manage job form
-	$('#update-datum-import-job-modal').on('show.bs.modal', function(event) {
-		SolarReg.Settings.prepareEditServiceForm($(event.target), []);
-	})
-	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
-	.on('submit', function(event) {
-		event.preventDefault();
-		// TODO
-		return false;
-	})
-	.on('hidden.bs.modal', function() {
 		SolarReg.Settings.resetEditServiceForm(this, $('#datum-import-job-list-container'));
 	});
 	
@@ -162,26 +167,26 @@ $(document).ready(function() {
 		SolarReg.Templates.populateTemplateItems(container, []);
 
 		$.getJSON(SolarReg.solarUserURL('/sec/import/jobs/'+encodeURIComponent(item.id)+'/preview'), function(json) {
-			var sampleTemplate = modal.find('.sample-template .template');
-			
-			if ( json && json.success === true && json.data && Array.isArray(json.data.results) ) {
-				// TODO: display estimated row count via json.data.totalResults
-				SolarReg.Templates.populateTemplateItems(container, json.data.results, false, function(item, el) {
-					var itemContainer;
-					if ( item.i ) {
-						renderTemplateProperties(el.find('.instantaneous-sample-container'), sampleTemplate, item.i);
-					}
-					if ( item.a ) {
-						renderTemplateProperties(el.find('.accumulating-sample-container'), sampleTemplate, item.a);
-					}
-					if ( item.s ) {
-						renderTemplateProperties(el.find('.status-sample-container'), sampleTemplate, item.s);
-					}
-					if ( Array.isArray(item.t) ) {
-						el.find('.tag-list').text(item.t.join(', '));
-					}
-				});
+			if ( !(json && json.success === true && json.data && Array.isArray(json.data.results)) ) {
+				return;
 			}
+			var sampleTemplate = modal.find('.sample-template .template');
+			// TODO: display estimated row count via json.data.totalResults
+			SolarReg.Templates.populateTemplateItems(container, json.data.results, false, function(item, el) {
+				var itemContainer;
+				if ( item.i ) {
+					renderTemplateProperties(el.find('.instantaneous-sample-container'), sampleTemplate, item.i);
+				}
+				if ( item.a ) {
+					renderTemplateProperties(el.find('.accumulating-sample-container'), sampleTemplate, item.a);
+				}
+				if ( item.s ) {
+					renderTemplateProperties(el.find('.status-sample-container'), sampleTemplate, item.s);
+				}
+				if ( Array.isArray(item.t) ) {
+					el.find('.tag-list').text(item.t.join(', '));
+				}
+			});
 		}).fail(function(xhr, statusText, error) {
 			var json = {};
 			if ( xhr.responseJSON ) {
@@ -196,7 +201,7 @@ $(document).ready(function() {
 	})
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 	.on('hidden.bs.modal', function() {
-		// TODO
+		SolarReg.Settings.resetEditServiceForm(this);
 	});
 	
 	// ***** Init page
