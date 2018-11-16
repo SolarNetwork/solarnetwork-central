@@ -88,7 +88,6 @@ import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserUuidPK;
-import net.solarnetwork.io.DecompressingResource;
 import net.solarnetwork.util.ProgressListener;
 
 /**
@@ -315,8 +314,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		}
 
 		BasicDatumImportResource resource = new BasicDatumImportResource(
-				new DecompressingResource(new FileSystemResource(dataFile)),
-				inputService.getInputContentType());
+				new FileSystemResource(dataFile), inputService.getInputContentType());
 		return inputService.createImportContext(inputConfig, resource, progressListener);
 	}
 
@@ -402,7 +400,6 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		private final DatumImportJobInfo info;
 		private double percentComplete;
 		private Future<DatumImportResult> delegate;
-		private long loadedCount;
 
 		/**
 		 * Construct from a task info.
@@ -418,7 +415,6 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		private DatumImportTask(DatumImportJobInfo info) {
 			super();
 			this.info = info;
-			this.loadedCount = 0;
 		}
 
 		/**
@@ -440,7 +436,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 			try {
 				doImport();
-				String msg = "Loaded " + loadedCount + " datum.";
+				String msg = "Loaded " + getLoadedCount() + " datum.";
 				updateTaskStatus(DatumImportState.Completed, Boolean.TRUE, msg, new DateTime());
 			} catch ( Exception e ) {
 				log.error("Error importing datum for task {}", this, e);
@@ -548,7 +544,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 						}
 						d.setPosted(info.getImportDate());
 						loader.load(d);
-						loadedCount = loader.getLoadedCount();
+						info.setLoadedCount(loader.getLoadedCount());
 					}
 					loader.commit();
 				} finally {

@@ -4,12 +4,27 @@ $(document).ready(function() {
 	var inputServices = [];
 	
 	var settingTemplates = $('#import-setting-templates');
+	
+	var refreshToken;
 
 	function loadDatumImportJobs(preserve) {
 		return $.getJSON(SolarReg.solarUserURL('/sec/import/jobs?states=Queued,Staged,Claimed,Executing,Completed'), function(json) {
 			console.log('Got import jobs: %o', json);
 			if ( json && json.success === true && Array.isArray(json.data) ) {
 				populateDatumImportJobs(json.data, preserve);
+				
+				// turn on auto-refresh if we have any pending jobs
+				var pending = json.data.find(function(job) {
+					return /^(Queued|Claimed|Executing)$/.test(job.jobState);
+				});
+				if ( !pending && refreshToken ) {
+					clearInterval(refreshToken);
+					refreshToken = null;
+				} else if ( pending && !refreshToken ) {
+					refreshToken = setInterval(function() {
+						loadDatumImportJobs(true);
+					}, 30000);
+				}
 			}
 		});
 	}
@@ -24,6 +39,7 @@ $(document).ready(function() {
 			ctx.id = id;
 			ctx.shortId = shortId;
 			ctx.batchSize = job.configuration.batchSize;
+			ctx.state = job.jobState;
 			var item = SolarReg.Settings.serviceConfigurationItem(ctx, inputServices);
 			item.id = id;
 			item.shortId = shortId;
@@ -33,6 +49,10 @@ $(document).ready(function() {
 			item.progressAmount = (job.percentComplete * 100).toFixed(0);
 			item.success = job.success;
 			item.message = job.message;
+			item.submitDateDisplay = moment(job.submitDate).format('D MMM YYYY HH:mm');
+			if ( job.completionDate ) {
+				item.completionDateDisplay = moment(job.completionDate).format('D MMM YYYY HH:mm');
+			}
 			return item;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve, function(item, el) {
@@ -89,9 +109,11 @@ $(document).ready(function() {
 		SolarReg.Settings.prepareEditServiceForm(modal, inputServices, settingTemplates);
 
 		// disable create-only reqiured items
-		modal.find('.create').toggleClass('hidden', !!item).find('input[required]').each(function(idx, e) {
-			$(e).prop('required', !item);
-		});
+		modal.find('.create').toggleClass('hidden', !!item).find('input[required]').prop('required', !item);
+		if ( item && item.state !== 'Staged' ) {
+			modal.find('input:not([type=hidden])').prop('readonly', true);
+			modal.find('select,button[type=submit]').prop('disabled', true);
+		}
 	})
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 	.on('change', function(event) {
@@ -109,7 +131,7 @@ $(document).ready(function() {
 		}
 		
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
-			loadDatumImportJobs(true);
+			loadDatumImportJobs(false);
 		}, function serializeDatumImportUploadForm(form) {
 			var inputConfig = SolarReg.Settings.encodeServiceItemForm(form);
 			
@@ -245,27 +267,14 @@ $(document).ready(function() {
 	$('.import.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
 
 	$('#datum-import-jobs').first().each(function() {
-		var loadCountdown = 2;
-
-		function liftoff() {
-			loadCountdown -= 1;
-			if ( loadCountdown === 0 ) {
-				// TODO start the party
-			}
-		}
-
 		// get available input services
 		$.getJSON(SolarReg.solarUserURL('/sec/import/services/input'), function(json) {
 			console.log('Got import input services: %o', json);
 			if ( json && json.success === true ) {
 				inputServices = json.data;
 			}
-			liftoff();
-		});
-
-		// list all jobs for user
-		loadDatumImportJobs().then(function() {
-			liftoff();
+			// list all jobs for user
+			loadDatumImportJobs();
 		});
 	});
 });

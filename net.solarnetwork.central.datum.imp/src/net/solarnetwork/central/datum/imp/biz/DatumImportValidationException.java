@@ -67,9 +67,9 @@ public class DatumImportValidationException extends DatumImportException {
 	 * @param line
 	 *        the original line of input data being processed
 	 */
-	public DatumImportValidationException(String message, Throwable cause, Integer lineNumber,
+	public DatumImportValidationException(String message, Throwable cause, Long lineNumber,
 			String line) {
-		super(message, cause);
+		super(message, cause, lineNumber, line, null);
 	}
 
 }

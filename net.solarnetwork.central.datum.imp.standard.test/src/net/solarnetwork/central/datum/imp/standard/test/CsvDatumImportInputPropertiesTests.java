@@ -49,8 +49,8 @@ public class CsvDatumImportInputPropertiesTests {
 
 		List<String> keys = settings.stream().filter(s -> s instanceof KeyedSettingSpecifier<?>)
 				.map(s -> ((KeyedSettingSpecifier<?>) s).getKey()).collect(Collectors.toList());
-		assertThat("Setting keys", keys, contains("headerRowCount", "dateColumnsValue", "dateFormat",
-				"nodeIdColumn", "sourceIdColumn"));
+		assertThat("Setting keys", keys, contains("headerRowCount", "dateFormat", "nodeIdColumn",
+				"sourceIdColumn", "dateColumnsValue"));
 	}
 
 	@Test

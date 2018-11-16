@@ -431,6 +431,8 @@ public class DaoDatumImportBizTests {
 			}
 		}).times(data.size());
 
+		loadingContext.commit();
+
 		Long committedCount = 5L;
 		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
 
@@ -509,6 +511,8 @@ public class DaoDatumImportBizTests {
 				return ++count;
 			}
 		}).times(data.size());
+
+		loadingContext.commit();
 
 		Long committedCount = 5L;
 		expect(loadingContext.getCommittedCount()).andReturn(committedCount);

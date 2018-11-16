@@ -22,8 +22,11 @@
 
 package net.solarnetwork.central.datum.imp.support;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService.ImportContext;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
@@ -74,8 +77,26 @@ public abstract class BaseDatumImportInputFormatServiceImportContext implements 
 	 *         if any IO error occurs
 	 */
 	protected InputStream getResourceProgressInputStream(DatumImportService context) throws IOException {
-		return new DatumImportProgressInputStream(resource.getInputStream(), resource.contentLength(),
-				context, progressListener);
+		InputStream in = new DatumImportProgressInputStream(resource.getInputStream(),
+				resource.contentLength(), context, progressListener);
+
+		// see if we can decompress
+		BufferedInputStream bufIn = new BufferedInputStream(in);
+		String compressionType = null;
+		try {
+			compressionType = CompressorStreamFactory.detect(bufIn);
+		} catch ( CompressorException e ) {
+			// ignore and treat as "not compressed"
+		}
+		if ( compressionType != null ) {
+			try {
+				return new CompressorStreamFactory().createCompressorInputStream(compressionType, bufIn);
+			} catch ( CompressorException e ) {
+				throw new IOException(
+						"Error handling compression of resource " + resource + ": " + e.getMessage());
+			}
+		}
+		return bufIn;
 	}
 
 	/**

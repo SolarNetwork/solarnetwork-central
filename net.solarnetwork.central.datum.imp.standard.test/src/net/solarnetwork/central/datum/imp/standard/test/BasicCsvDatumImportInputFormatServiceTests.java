@@ -71,8 +71,8 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		List<String> keys = settings.stream().filter(s -> s instanceof KeyedSettingSpecifier<?>)
 				.map(s -> ((KeyedSettingSpecifier<?>) s).getKey()).collect(Collectors.toList());
 		assertThat("Setting keys", keys,
-				contains("headerRowCount", "dateColumnsValue", "dateFormat", "nodeIdColumn",
-						"sourceIdColumn", "instantaneousDataColumn", "accumulatingDataColumn",
+				contains("headerRowCount", "dateFormat", "nodeIdColumn", "sourceIdColumn",
+						"dateColumnsValue", "instantaneousDataColumn", "accumulatingDataColumn",
 						"statusDataColumn", "tagDataColumn"));
 	}
 
@@ -255,7 +255,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 			fail("Should have thrown DatumImportValidationException");
 		} catch ( DatumImportValidationException e ) {
 			assertThat("Message", e.getMessage(), equalTo("Error parsing node ID from column 1."));
-			assertThat("Line number", e.getLineNumber(), equalTo(2));
+			assertThat("Line number", e.getLineNumber(), equalTo(2L));
 			assertThat("Line", e.getLine(),
 					equalTo("A,/DE/G1/B600/GEN/1,2017-04-17 14:30:00,\"{\"\"watts\"\":11899}\""));
 		}

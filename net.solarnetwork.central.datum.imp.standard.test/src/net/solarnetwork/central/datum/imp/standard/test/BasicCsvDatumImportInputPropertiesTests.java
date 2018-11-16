@@ -53,8 +53,8 @@ public class BasicCsvDatumImportInputPropertiesTests {
 		List<String> keys = settings.stream().filter(s -> s instanceof KeyedSettingSpecifier<?>)
 				.map(s -> ((KeyedSettingSpecifier<?>) s).getKey()).collect(Collectors.toList());
 		assertThat("Setting keys", keys,
-				contains("headerRowCount", "dateColumnsValue", "dateFormat", "nodeIdColumn",
-						"sourceIdColumn", "instantaneousDataColumn", "accumulatingDataColumn",
+				contains("headerRowCount", "dateFormat", "nodeIdColumn", "sourceIdColumn",
+						"dateColumnsValue", "instantaneousDataColumn", "accumulatingDataColumn",
 						"statusDataColumn", "tagDataColumn"));
 	}
 

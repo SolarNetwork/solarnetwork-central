@@ -241,7 +241,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 				result = objectMapper.readValue(v, STRING_LIST_TYPE);
 			} catch ( IOException e ) {
 				throw new DatumImportValidationException("Unable to parse JSON array from column " + col,
-						e, reader.getLineNumber(), reader.getUntokenizedRow());
+						e, (long) reader.getLineNumber(), reader.getUntokenizedRow());
 			}
 			if ( result.isEmpty() ) {
 				result = null;
@@ -298,14 +298,15 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		} catch ( NumberFormatException e ) {
 			throw new DatumImportValidationException(
 					"Error parsing node ID from column " + props.getNodeIdColumn() + ".", e,
-					reader.getLineNumber(), reader.getUntokenizedRow());
+					(long) reader.getLineNumber(), reader.getUntokenizedRow());
 		}
 
 		String sourceId = getColumnValue(row, props.getSourceIdColumn());
 		if ( sourceId == null ) {
 			throw new DatumImportValidationException(
 					"Unable to parse source ID from column " + props.getSourceIdColumn(),
-					new NullPointerException(), reader.getLineNumber(), reader.getUntokenizedRow());
+					new NullPointerException(), (long) reader.getLineNumber(),
+					reader.getUntokenizedRow());
 		}
 
 		DateTime date;
@@ -314,7 +315,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		} catch ( IllegalArgumentException e ) {
 			throw new DatumImportValidationException("Error parsing date from columns "
 					+ StringUtils.commaDelimitedStringFromCollection(props.getDateColumns()) + ".", e,
-					reader.getLineNumber(), reader.getUntokenizedRow());
+					(long) reader.getLineNumber(), reader.getUntokenizedRow());
 		}
 
 		GeneralNodeDatum d = new GeneralNodeDatum();

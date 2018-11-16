@@ -31,11 +31,17 @@
 		</thead>
 		<tbody class="template">
 			<tr>
-				<td><a href="#" class="edit-link" data-tprop="shortId" data-edit-modal="#edit-datum-import-job-modal"></a></td>
+				<td>
+					<a href="#" class="edit-link" data-tprop="shortId" data-edit-modal="#edit-datum-import-job-modal"></a>
+					<div data-tprop="submitDateDisplay"></div>
+				</td>
 				<td data-tprop="name"></td>
 				<td data-tprop="timeZoneId"></td>
 				<td data-tprop="batchSize"></td>
-				<td data-tprop="state"></td>
+				<td>
+					<span data-tprop="state"></span>
+					<div class="complete" data-tprop="completionDateDisplay"></div>
+				</td>
 				<td>
 					<span class="label label-danger success-error"><fmt:message key='import.job.success.error'/></span>
 					<span class="label label-success success-ok"><fmt:message key='import.job.success.ok'/></span>
