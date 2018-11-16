@@ -35,6 +35,7 @@ $(document).ready(function() {
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve, function(item, el) {
 			el.find('.progress').toggleClass('hidden', item.state === 'Staged');
+			el.find('.preview').toggleClass('hidden', item.state !== 'Staged');
 		});
 		container.closest('section').find('.listCount').text(jobs.length);
 		return jobs;
@@ -202,6 +203,32 @@ $(document).ready(function() {
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 	.on('hidden.bs.modal', function() {
 		SolarReg.Settings.resetEditServiceForm(this);
+	});
+	
+	// ***** Confirm import form
+	$('#confirm-datum-import-job-modal').on('show.bs.modal', function(event) {
+		var modal = $(event.target),
+			ctx = SolarReg.Templates.findContextItem(modal);
+		SolarReg.Settings.prepareEditServiceForm(modal, inputServices, settingTemplates);
+		SolarReg.Templates.replaceTemplateProperties(modal, ctx);
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('submit', function(event) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			loadDatumImportJobs(true);
+		}, function() {
+			return null;
+		}, {
+			urlSerializer: function(url, item) {
+				var id = event.target.elements['id'].value;
+				return SolarReg.replaceTemplateParameters(url, {id:id});
+			}
+		});
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		SolarReg.Settings.resetEditServiceForm(this);
+		$(this).find('[data-tprop]').text('');
 	});
 	
 	// ***** Init page

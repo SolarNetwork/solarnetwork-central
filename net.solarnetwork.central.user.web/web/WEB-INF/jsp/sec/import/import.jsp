@@ -53,7 +53,7 @@
 						</button>
 						<ul class="dropdown-menu dropdown-menu-right" role="menu">
 							<li>
-								<a href="#" class="import-confirm"><fmt:message key="import.job.action.confirm"/></a>
+								<a href="#" class="action-link" data-action-modal="#confirm-datum-import-job-modal"><fmt:message key="import.job.action.confirm"/></a>
 							</li>
 						</ul>
 					</div>
@@ -77,6 +77,7 @@
 
 <jsp:include page="edit-datum-import-job-modal.jsp"/>
 <jsp:include page="preview-datum-import-job-modal.jsp"/>
+<jsp:include page="confirm-datum-import-job-modal.jsp"/>
 
 <%-- Setting templates --%>
 

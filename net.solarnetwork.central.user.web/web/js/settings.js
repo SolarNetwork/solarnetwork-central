@@ -481,8 +481,10 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		jqXhrOpts.contentType = false;
 		jqXhrOpts.processData = false;
 	} else {
-		jqXhrOpts.data = JSON.stringify(body);
-		jqXhrOpts.contentType = 'application/json; charset=utf-8';
+		if ( body ) {
+			jqXhrOpts.data = JSON.stringify(body);
+			jqXhrOpts.contentType = 'application/json; charset=utf-8';
+		}
 		jqXhrOpts.dataType = 'json';
 	}
 	return $.ajax(jqXhrOpts).done(function(json, statusText) {
