@@ -88,6 +88,7 @@ import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.io.DecompressingResource;
 import net.solarnetwork.util.ProgressListener;
 
 /**
@@ -314,7 +315,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		}
 
 		BasicDatumImportResource resource = new BasicDatumImportResource(
-				new FileSystemResource(dataFile), inputService.getInputContentType());
+				new DecompressingResource(new FileSystemResource(dataFile)),
+				inputService.getInputContentType());
 		return inputService.createImportContext(inputConfig, resource, progressListener);
 	}
 
