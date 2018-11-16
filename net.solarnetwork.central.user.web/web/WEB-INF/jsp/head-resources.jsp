@@ -12,7 +12,6 @@
 	/js-lib/jquery.maphilight.js
 	/js-lib/jquery.timezone-picker.js
 	/js-lib/jquery.dataTables.js
-	/js-lib/jquery-migrate-3.0.1.js
 	/js-lib/moment.js
 	/js-lib/bootstrap.js
 	/js-lib/dataTables.bootstrap.js
