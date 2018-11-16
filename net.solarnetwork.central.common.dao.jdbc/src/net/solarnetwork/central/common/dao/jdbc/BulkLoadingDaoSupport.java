@@ -133,7 +133,7 @@ public class BulkLoadingDaoSupport {
 			this.numLoaded = 0;
 			if ( options.getTransactionMode() == SingleTransaction
 					|| options.getTransactionMode() == TransactionCheckpoints ) {
-				log.debug("Starting new bulk load {} overall transaction", options.getName());
+				log.debug("Starting new bulk load [{}] overall transaction", options.getName());
 				DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
 				txDef.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 				transaction = txManager.getTransaction(txDef);
@@ -197,7 +197,7 @@ public class BulkLoadingDaoSupport {
 						if ( batchTransaction != null ) {
 							commit();
 						}
-						log.debug("Starting new bulk load {} batch transaction @ row {}",
+						log.debug("Starting new bulk load [{}] batch transaction @ row {}",
 								options.getName(), numLoaded);
 						DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
 						txDef.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -233,12 +233,12 @@ public class BulkLoadingDaoSupport {
 		@Override
 		public void commit() {
 			if ( batchTransaction != null ) {
-				log.debug("Committing bulk load {} batch transaction @ row {}", options.getName(),
+				log.debug("Committing bulk load [{}] batch transaction @ row {}", options.getName(),
 						numLoaded);
 				txManager.commit(batchTransaction);
 				batchTransaction = null;
 			} else if ( transaction != null && !transaction.isCompleted() ) {
-				log.debug("Committing bulk load {} overall transaction @ row {}", options.getName(),
+				log.debug("Committing bulk load [{}] overall transaction @ row {}", options.getName(),
 						numLoaded);
 				txManager.commit(transaction);
 			}
