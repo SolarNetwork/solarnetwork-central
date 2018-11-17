@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static java.util.Collections.singleton;
 import static net.solarnetwork.web.domain.Response.response;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -396,6 +397,9 @@ public class DatumImportController extends WebServiceControllerSupport {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = biz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Retracted, EnumSet
 					.of(DatumImportState.Staged, DatumImportState.Queued, DatumImportState.Claimed));
+			if ( result != null ) {
+				biz.deleteDatumImportJobsForUser(userId, singleton(id));
+			}
 		}
 		return response(result);
 	}

@@ -95,8 +95,9 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 * Replace the textual content of DOM elements who have data attributes matching template parameter names.
 * 
 * This method replaces parameters in a DOM structure, based on parameter names encoded as HTML
-* `data-tprop` attributes. For any element with a matching `data-tprop` value, its content will 
-* be replaced by the parameter value.
+* `data-tprop` attributes. For any element with a matching `data-tprop` value, its text content will 
+* be replaced by the parameter value. If the parameter value is an array, then it is treated as HTML
+* instead of text. 
 * 
 * Imagine a DOM structure like:
 * 
@@ -162,7 +163,11 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 			}
 		} else {
 			sel = "[data-tprop='" +(prefix || '') +prop +"']";
-			el.find(sel).addBack(sel).text(val);
+			if ( Array.isArray(val) ) {
+				el.find(sel).addBack(sel).html(val);
+			} else {
+				el.find(sel).addBack(sel).text(val);
+			}
 		}
 	}
 	return el;

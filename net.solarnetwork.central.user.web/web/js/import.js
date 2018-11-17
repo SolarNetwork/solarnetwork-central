@@ -50,6 +50,9 @@ $(document).ready(function() {
 			item.loadedCount = (job.loadedCount ? job.loadedCount.toLocaleString() : 0);
 			item.success = job.success;
 			item.message = job.message;
+			if ( job.message ) {
+				item.messageHtml = $.parseHTML(job.message);
+			}
 			item.submitDateDisplay = moment(job.submitDate).format('D MMM YYYY HH:mm');
 			if ( job.completionDate ) {
 				item.completionDateDisplay = moment(job.completionDate).format('D MMM YYYY HH:mm');

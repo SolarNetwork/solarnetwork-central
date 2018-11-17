@@ -183,9 +183,6 @@ table.table-body-borderless tbody tr.rule + tr th {
 	border-top: inherit;
 }
 
-
-
-
 .edit-config span.config-name,
 .config-action span.config-name {
 	font-style: italic;
@@ -199,4 +196,14 @@ table.table-body-borderless tbody tr.rule + tr th {
 .edit-config span.config-name:after,
 .config-action span.config-name:after {
 	content: close-quote;
+}
+
+.input-line {
+	display: inline-block;
+	font-family: monospace;
+	font-size: 80%;
+	background-color: #ededed;
+	border-radius: 4px;
+	padding: 4px;
+	border: 1px solid #ccc;
 }

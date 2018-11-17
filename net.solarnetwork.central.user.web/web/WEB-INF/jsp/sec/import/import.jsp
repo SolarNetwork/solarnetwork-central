@@ -51,7 +51,7 @@
 						</div>
 					</div>
 					<p class="running hidden"><fmt:message key='import.job.loadedCount.label'/>: <span data-tprop="loadedCount"></span></p>
-					<p class="success-error hidden" data-tprop="message"></p>
+					<p class="success-error hidden" data-tprop="messageHtml"></p>
 					<p class="complete hidden"><fmt:message key='import.job.loadedCount.label'/>: <span data-tprop="loadedCount"></span></p>
 				</td>
 				<td class="col-sm-2 text-right">

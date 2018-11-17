@@ -42,6 +42,9 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 
 	// clear any context item
 	SolarReg.Templates.setContextItem(f, null);
+	
+	// clean any alert
+	f.find(SolarReg.Settings.modalAlertBeforeSelector +'.alert-warning').remove();
 };
 
 /**

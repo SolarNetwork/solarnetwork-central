@@ -488,11 +488,16 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 					}
 					if ( e instanceof DatumImportValidationException ) {
 						DatumImportValidationException dive = (DatumImportValidationException) e;
+						if ( root.getMessage() != null ) {
+							msg.insert(0, " ");
+							msg.insert(0, dive.getMessage());
+						}
 						if ( dive.getLineNumber() != null ) {
 							msg.append("; line ").append(dive.getLineNumber());
 						}
 						if ( dive.getLine() != null ) {
-							msg.append("; ").append(dive.getLine());
+							msg.append("; <span class=\"input-line\">").append(dive.getLine())
+									.append("</span>");
 						}
 					}
 				}
