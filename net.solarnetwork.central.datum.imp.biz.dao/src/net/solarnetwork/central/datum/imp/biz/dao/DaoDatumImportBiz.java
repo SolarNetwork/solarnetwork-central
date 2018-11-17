@@ -429,6 +429,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		public DatumImportResult call() throws Exception {
 			percentComplete = 0;
 
+			log.info("Starting datum import job {} for user {} from resource", info.getId().getId(),
+					info.getUserId(), getImportDataFile(info.getId()));
+
 			// update status to indicate we've started
 			updateTaskStatus(DatumImportState.Executing);
 
@@ -485,8 +488,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 		private void updateTaskStatus(DatumImportState state, Boolean success, String message,
 				DateTime completionDate) {
-			log.info("Datum import job {} transitioned to state {} with success {}", info.getId(), state,
-					success);
+			log.info(
+					"Datum import job {} for user {} transitioned to state {} with success {}; loaded {} datum",
+					info.getId().getId(), info.getUserId(), state, success, getLoadedCount());
 			info.setImportState(state);
 			if ( success != null ) {
 				info.setJobSuccess(success);
