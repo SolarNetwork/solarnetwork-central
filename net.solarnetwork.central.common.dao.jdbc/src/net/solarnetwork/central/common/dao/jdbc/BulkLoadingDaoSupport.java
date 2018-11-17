@@ -277,14 +277,19 @@ public class BulkLoadingDaoSupport {
 					log.warn("Error closing bulk loading statement", e);
 				}
 			}
+			try {
+				if ( batchTransaction != null && !batchTransaction.isCompleted() ) {
+					txManager.rollback(batchTransaction);
+				} else if ( transaction != null && !transaction.isCompleted() ) {
+					txManager.rollback(transaction);
+				}
+			} catch ( Exception e ) {
+				log.warn("Error rolling back transaction", e);
+			}
 			if ( con != null ) {
 				try {
 					if ( !con.isClosed() ) {
-						if ( batchTransaction != null && !batchTransaction.isCompleted() ) {
-							txManager.rollback(batchTransaction);
-						} else if ( transaction != null && !transaction.isCompleted() ) {
-							txManager.rollback(transaction);
-						}
+						con.close();
 					}
 				} catch ( SQLException e ) {
 					log.warn("Error closing bulk loading connection", e);
