@@ -191,6 +191,79 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	}
 
 	@Test
+	public void deleteForUserNoMatchingUser() {
+		storeNew();
+		int count = dao.deleteForUser(this.user.getId() - 1, null, null);
+		assertThat("Delete count", count, equalTo(0));
+	}
+
+	@Test
+	public void deleteForUserNoMatchingId() {
+		storeNew();
+		int count = dao.deleteForUser(this.user.getId(), singleton(UUID.randomUUID()), null);
+		assertThat("Delete count", count, equalTo(0));
+	}
+
+	@Test
+	public void deleteForUserNoMatchingState() {
+		storeNew();
+		int count = dao.deleteForUser(this.user.getId(), null, EnumSet.of(DatumImportState.Completed));
+		assertThat("Delete count", count, equalTo(0));
+	}
+
+	@Test
+	public void deleteForUserMatchingUser() {
+		storeNew();
+		int count = dao.deleteForUser(this.user.getId(), null, null);
+		assertThat("Delete count", count, equalTo(1));
+	}
+
+	@Test
+	public void deleteForUserMatchingId() {
+		storeNew();
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()), null);
+		assertThat("Delete count", count, equalTo(1));
+	}
+
+	@Test
+	public void deleteForUserMatchingState() {
+		storeNew();
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+				EnumSet.of(DatumImportState.Unknown));
+		assertThat("Delete count", count, equalTo(1));
+	}
+
+	@Test
+	public void deleteForUserMatchingAll() {
+		storeNew();
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+				EnumSet.of(DatumImportState.Unknown));
+		assertThat("Delete count", count, equalTo(1));
+	}
+
+	@Test
+	public void deleteForUserIgnoresNonMatchingRecords() {
+		storeNew();
+
+		// add another job
+		DatumImportJobInfo info = new DatumImportJobInfo();
+		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setConfig(new BasicConfiguration());
+		info.setImportDate(new DateTime());
+		info.setImportState(DatumImportState.Staged);
+		info.setCreated(new DateTime().minusHours(1));
+		info = dao.get(dao.store(info));
+
+		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+				EnumSet.of(DatumImportState.Unknown));
+		assertThat("Delete count", count, equalTo(1));
+
+		List<DatumImportJobInfo> infos = dao.findForUser(this.user.getId(), null);
+		assertThat("Remaining jobs", infos, hasSize(1));
+		assertThat("Remaining job ID", infos.get(0).getId(), equalTo(info.getId()));
+	}
+
+	@Test
 	public void updateStateNotFound() {
 		boolean updated = dao.updateJobState(new UserUuidPK(-123L, UUID.randomUUID()),
 				DatumImportState.Completed, null);

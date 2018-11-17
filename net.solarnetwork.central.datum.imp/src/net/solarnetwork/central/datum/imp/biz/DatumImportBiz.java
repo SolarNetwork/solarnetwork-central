@@ -153,4 +153,22 @@ public interface DatumImportBiz {
 	DatumImportStatus updateDatumImportJobStateForUser(Long userId, String jobId,
 			DatumImportState desiredState, Set<DatumImportState> expectedStates);
 
+	/**
+	 * Delete jobs.
+	 * 
+	 * <p>
+	 * Note that currently claimed or executing jobs will not be removed.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user ID that owns the job
+	 * @param jobIds
+	 *        the set of job IDs to delete
+	 * @return the job status, or {@literal null} if not available
+	 * @return the job statuses specified by {@code jobIds} that were <b>not</b>
+	 *         removed, i.e. because of their current execution state, never
+	 *         {@literal null}
+	 */
+	Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds);
+
 }

@@ -27,6 +27,7 @@ import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.hamcrest.Matchers.allOf;
@@ -43,9 +44,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -57,6 +60,7 @@ import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
@@ -600,6 +604,60 @@ public class DaoDatumImportBizTests {
 		assertThat("Import message", result.getMessage(),
 				equalTo("Not authorized to load data for node " + TEST_NODE_ID + "."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+	}
 
+	@Test
+	public void deleteForUser() {
+		UUID uuid = UUID.randomUUID();
+		Capture<Set<DatumImportState>> statesCaptor = new Capture<>();
+
+		expect(jobInfoDao.deleteForUser(eq(TEST_USER_ID), eq(singleton(uuid)), capture(statesCaptor)))
+				.andReturn(1);
+
+		List<DatumImportJobInfo> result = new ArrayList<>();
+		expect(jobInfoDao.findForUser(TEST_USER_ID, null)).andReturn(result);
+
+		// when
+		replayAll();
+		Set<String> jobIds = Collections.singleton(uuid.toString());
+		Collection<DatumImportStatus> results = biz.deleteDatumImportJobsForUser(TEST_USER_ID, jobIds);
+
+		assertThat("Queried states", statesCaptor.getValue(),
+				Matchers.containsInAnyOrder(DatumImportState.Completed, DatumImportState.Retracted,
+						DatumImportState.Queued, DatumImportState.Staged, DatumImportState.Unknown));
+		assertThat("Results empty", results, hasSize(0));
+	}
+
+	@Test
+	public void deleteForUserExecutingSkipped() {
+		UUID uuid = UUID.randomUUID();
+		Capture<Set<DatumImportState>> statesCaptor = new Capture<>();
+
+		expect(jobInfoDao.deleteForUser(eq(TEST_USER_ID), eq(singleton(uuid)), capture(statesCaptor)))
+				.andReturn(0);
+
+		// after delete, DAO returns list that still includes the requested job ID, along with
+		// another job not requested; we need to verify that the Biz filters out the non-requested job
+		DatumImportJobInfo info = new DatumImportJobInfo();
+		info.setId(new UserUuidPK(TEST_USER_ID, uuid));
+		info.setImportState(DatumImportState.Executing);
+		DatumImportJobInfo info2 = new DatumImportJobInfo();
+		info2.setId(new UserUuidPK(TEST_USER_ID, UUID.randomUUID()));
+		info2.setImportState(DatumImportState.Queued);
+		List<DatumImportJobInfo> result = new ArrayList<>(Arrays.asList(info, info2));
+		expect(jobInfoDao.findForUser(TEST_USER_ID, null)).andReturn(result);
+
+		// when
+		replayAll();
+		Set<String> jobIds = Collections.singleton(uuid.toString());
+		Collection<DatumImportStatus> results = biz.deleteDatumImportJobsForUser(TEST_USER_ID, jobIds);
+
+		assertThat("Queried states", statesCaptor.getValue(),
+				Matchers.containsInAnyOrder(DatumImportState.Completed, DatumImportState.Retracted,
+						DatumImportState.Queued, DatumImportState.Staged, DatumImportState.Unknown));
+		assertThat("Results count", results, hasSize(1));
+		DatumImportStatus status = results.iterator().next();
+		assertThat("Result is requested info", status.getJobId(),
+				equalTo(info.getId().getId().toString()));
 	}
 }

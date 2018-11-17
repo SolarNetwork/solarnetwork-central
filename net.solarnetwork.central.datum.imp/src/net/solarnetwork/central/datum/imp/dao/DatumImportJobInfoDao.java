@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.imp.dao;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
@@ -107,5 +108,20 @@ public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, Us
 	 * @return the matching results, never {@literal null}
 	 */
 	List<DatumImportJobInfo> findForUser(Long userId, Set<DatumImportState> states);
+
+	/**
+	 * Delete job info entities for a specific user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the entities for
+	 * @param jobIds
+	 *        if provided, a set of job IDs to delete; otherwise all jobs for
+	 *        user are deleted
+	 * @param states
+	 *        an optional set of states to restrict the deletion to, or
+	 *        {@literal null} for any state
+	 * @return the number of deleted jobs
+	 */
+	int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumImportState> states);
 
 }

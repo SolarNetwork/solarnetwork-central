@@ -1,7 +1,7 @@
 /* ==================================================================
- * TextArrayTypeHandler.java - Nov 8, 2014 11:24:54 AM
+ * UUIDArrayTypeHandler.java - 18/11/2018 7:53:25 AM
  * 
- * Copyright 2007-2014 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,18 +23,19 @@
 package net.solarnetwork.central.dao.mybatis.type;
 
 /**
- * Text array type handler.
+ * UUID array type handler.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.10
  */
-public class TextArrayTypeHandler extends BaseArrayTypeHandler {
+public class UUIDArrayTypeHandler extends BaseArrayTypeHandler {
 
 	/**
-	 * Default constructor.
+	 * Constructor.
 	 */
-	public TextArrayTypeHandler() {
-		super("text");
+	public UUIDArrayTypeHandler() {
+		super("uuid");
 	}
 
 }

@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.springframework.transaction.annotation.Propagation;
@@ -56,6 +57,11 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	public static final String UPDATE_PURGE_COMPLETED = "delete-DatumImportJobInfo-completed";
 
 	/**
+	 * The {@code DELETE} query name used for {@link #purgeOldJobs(DateTime)}.
+	 */
+	public static final String UPDATE_DELETE_FOR_USER = "delete-DatumImportJobInfo-for-user";
+
+	/**
 	 * The {@code UPDATE} query name used for
 	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)}.
 	 */
@@ -74,6 +80,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	private String queryForClaimQueuedJob;
 	private String updateDeleteCompletedJobs;
+	private String updateDeleteForUser;
 	private String updateJobState;
 	private String updateJobConfiguration;
 	private String queryForUser;
@@ -88,6 +95,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		setUpdateDeleteCompletedJobs(UPDATE_PURGE_COMPLETED);
 		setUpdateJobState(UPDATE_JOB_STATE);
 		setUpdateJobConfiguration(UPDATE_JOB_CONFIG);
+		setUpdateDeleteForUser(UPDATE_DELETE_FOR_USER);
 	}
 
 	@Override
@@ -149,6 +157,24 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		return selectList(queryForUser, params, null, null);
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumImportState> states) {
+		Map<String, Object> params = new HashMap<>(2);
+		params.put("userId", userId);
+		if ( jobIds != null && !jobIds.isEmpty() ) {
+			String[] array = jobIds.stream().map(id -> id.toString()).collect(Collectors.toList())
+					.toArray(new String[jobIds.size()]);
+			params.put("ids", array);
+		}
+		if ( states != null && !states.isEmpty() ) {
+			String[] array = states.stream().map(s -> String.valueOf(s.getKey()))
+					.collect(Collectors.toList()).toArray(new String[states.size()]);
+			params.put("states", array);
+		}
+		return getSqlSession().update(updateDeleteForUser, params);
+	}
+
 	/**
 	 * Set the query name for the {@link #claimQueuedJob()} method to use.
 	 * 
@@ -202,6 +228,17 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 */
 	public void setUpdateJobConfiguration(String updateJobConfiguration) {
 		this.updateJobConfiguration = updateJobConfiguration;
+	}
+
+	/**
+	 * Set the statement name for the {@link #deleteForUser(Long, Set, Set)}
+	 * method to use.
+	 * 
+	 * @param updateDeleteForUser
+	 *        the statement name; defaults to {@link #UPDATE_DELETE_FOR_USER}
+	 */
+	public void setUpdateDeleteForUser(String updateDeleteForUser) {
+		this.updateDeleteForUser = updateDeleteForUser;
 	}
 
 }

@@ -81,14 +81,6 @@ public class DelegatingDatumImportBiz implements DatumImportBiz {
 		return delegate.datumImportJobStatusForUser(userId, jobId);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see net.solarnetwork.central.datum.imp.biz.DatumImportBiz#
-	 * updateDatumImportJobConfigurationForUser(java.lang.Long,
-	 * java.lang.String,
-	 * net.solarnetwork.central.datum.imp.domain.Configuration)
-	 */
 	@Override
 	public DatumImportStatus updateDatumImportJobConfigurationForUser(Long userId, String jobId,
 			Configuration configuration) {
@@ -105,6 +97,11 @@ public class DelegatingDatumImportBiz implements DatumImportBiz {
 	public DatumImportStatus updateDatumImportJobStateForUser(Long userId, String jobId,
 			DatumImportState desiredState, Set<DatumImportState> expectedStates) {
 		return delegate.updateDatumImportJobStateForUser(userId, jobId, desiredState, expectedStates);
+	}
+
+	@Override
+	public Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds) {
+		return delegate.deleteDatumImportJobsForUser(userId, jobIds);
 	}
 
 }

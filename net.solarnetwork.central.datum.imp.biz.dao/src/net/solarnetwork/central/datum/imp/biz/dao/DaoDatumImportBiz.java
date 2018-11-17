@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.datum.imp.biz.dao;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +46,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.core.io.FileSystemResource;
@@ -263,7 +265,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	public Collection<DatumImportStatus> datumImportJobStatusesForUser(Long userId,
 			Set<DatumImportState> states) {
 		return jobInfoDao.findForUser(userId, states).stream().map(d -> statusForJobInfo(d))
-				.collect(Collectors.toList());
+				.collect(toList());
 	}
 
 	@Override
@@ -292,6 +294,28 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			task.info.setImportState(info.getImportState());
 		}
 		return status;
+	}
+
+	@Override
+	public Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds) {
+		Set<DatumImportState> allowStates = EnumSet
+				.complementOf(EnumSet.of(DatumImportState.Claimed, DatumImportState.Executing));
+		Set<UUID> ids = (jobIds != null ? jobIds.stream().map(s -> UUID.fromString(s)).collect(toSet())
+				: null);
+		int deleted = jobInfoDao.deleteForUser(userId, ids, allowStates);
+		log.debug("Deleted {} import jobs for user {} matching ids {} in states {}", deleted, userId,
+				jobIds, allowStates);
+		taskMap.entrySet().removeIf(e -> {
+			if ( e.getValue() instanceof DatumImportTask ) {
+				DatumImportTask task = (DatumImportTask) e.getValue();
+				return userId.equals(task.getUserId()) && jobIds.contains(task.getJobId())
+						&& allowStates.contains(task.getJobState());
+			}
+			return false;
+		});
+		return jobInfoDao.findForUser(userId, null).stream().filter(job -> {
+			return userId.equals(job.getUserId()) && jobIds.contains(job.getId().getId().toString());
+		}).map(job -> statusForJobInfo(job)).collect(toList());
 	}
 
 	private ImportContext createImportContext(DatumImportJobInfo info,

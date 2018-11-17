@@ -112,6 +112,19 @@
 		)}
 	</delete>
 	
+	<delete id="delete-DatumImportJobInfo-for-user" parameterType="map" statementType="CALLABLE">
+		DELETE FROM 
+			solarnet.sn_datum_import_job
+		WHERE
+			user_id = #{userId}
+			<if test="ids != null and ids.length > 0">
+			AND id = ANY(#{ids,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.UUIDArrayTypeHandler})
+			</if>
+			<if test="states != null and states.length > 0">
+			AND state = ANY(#{states,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
+	</delete>
+
 	<update id="update-DatumImportJobInfo-state" parameterType="map">
 		UPDATE
 			solarnet.sn_datum_import_job
