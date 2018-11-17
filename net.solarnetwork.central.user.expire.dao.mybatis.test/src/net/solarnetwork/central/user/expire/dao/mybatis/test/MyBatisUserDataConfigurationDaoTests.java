@@ -312,6 +312,11 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 				nodeId, sourceId);
 	}
 
+	private List<Map<String, Object>> findAllAggStaleDatum() {
+		return jdbcTemplate.queryForList(
+				"SELECT * FROM solaragg.agg_stale_datum ORDER BY agg_kind, node_id, ts_start, source_id");
+	}
+
 	private List<Map<String, Object>> findAllAuditDatumDailyStale() {
 		return jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.aud_datum_daily_stale ORDER BY aud_kind, node_id, ts_start, source_id");
@@ -361,7 +366,8 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 				result.expiredDayCount++;
 			}
 			if ( currMonth.isAfter(month) ) {
-				if ( month.isBefore(result.expire) && result.monthCount > 0 ) {
+				if ( month.isBefore(result.expire.monthOfYear().roundFloorCopy())
+						&& result.monthCount > 0 ) {
 					result.expiredMonthCount++;
 				}
 				result.monthCount++;
@@ -394,6 +400,11 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("Hourly datum count " + desc, counts.getDatumHourlyCount(), equalTo(hourlyCount));
 		assertThat("Daily datum count " + desc, counts.getDatumDailyCount(), equalTo(dailyCount));
 		assertThat("Monthly datum count " + desc, counts.getDatumMonthlyCount(), equalTo(monthlyCount));
+	}
+
+	private void assertNoAggStaleDatum() {
+		List<Map<String, Object>> datum = findAllAggStaleDatum();
+		assertThat("Agg stale datum count", datum, hasSize(0));
 	}
 
 	@Test
@@ -431,6 +442,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
 		assertAuditDatumDailyStaleMonths(start, range.monthCount - 1);
+		assertNoAggStaleDatum();
 	}
 
 	@Test
@@ -472,6 +484,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
 		assertAuditDatumDailyStaleMonths(start, range.monthCount - 1);
+		assertNoAggStaleDatum();
 	}
 
 	@Test
@@ -516,6 +529,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
 		assertAuditDatumDailyStaleMonths(start, range.monthCount - 1);
+		assertNoAggStaleDatum();
 	}
 
 	@Test
@@ -562,5 +576,6 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 				start.monthOfYear().roundFloorCopy().plusMonths(range.expiredMonthCount).getMillis())));
 
 		assertAuditDatumDailyStaleMonths(start, range.monthCount - range.expiredMonthCount);
+		assertNoAggStaleDatum();
 	}
 }
