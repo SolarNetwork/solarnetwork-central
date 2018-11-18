@@ -50,9 +50,21 @@
 							<span data-tprop="progressAmount">0</span>%
 						</div>
 					</div>
-					<p class="running hidden"><fmt:message key='import.job.loadedCount.label'/>: <span data-tprop="loadedCount"></span></p>
+					<div class="running"  style="font-size: 86%">
+						<p class="running hidden"><b><fmt:message key='import.job.loadedCount.label'/>:</b> <span data-tprop="loadedCount"></span></p>
+						<p class="running hidden"><b><fmt:message key='import.job.duration.label'/>:</b> <span data-tprop="duration"></span></p>
+						<p class="running hidden"><b><fmt:message key='import.job.eta.label'/>:</b> <span data-tprop="eta"></span></p>
+					</div>
 					<p class="success-error hidden" data-tprop="messageHtml"></p>
-					<p class="complete hidden"><fmt:message key='import.job.loadedCount.label'/>: <span data-tprop="loadedCount"></span></p>
+					<p class="complete hidden">
+						<fmt:message key='import.job.loadedCount.label'/>
+						${' '}
+						<span data-tprop="loadedCount"></span>
+						${' '}
+						<fmt:message key='in.label'/>
+						${' '}
+						<span data-tprop="duration"></span>
+					</p>
 				</td>
 				<td class="col-sm-2 text-right">
 					<div class="btn-group preview">

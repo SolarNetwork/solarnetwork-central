@@ -29,6 +29,25 @@ $(document).ready(function() {
 		});
 	}
 	
+	function durationDisplay(start, end) {
+		var s = (start ? moment(start) : null);
+		var e = (end ? moment(end) : start ? moment() : null);
+		if ( s && e ) {
+			return moment.duration(s.diff(e)).locale('en').humanize();
+		}
+		return '-';
+	}
+	
+	function jobEta(job) {
+		if ( job.completionDate || !(job.startedDate && job.loadedCount && job.percentComplete) ) {
+			return '-';
+		}
+		var numMinutes = (Date.now() - job.startedDate) / 60000;
+		var estimatedMinutes = numMinutes / job.percentComplete;
+		var estimatedRemainingMinutes = estimatedMinutes - numMinutes;
+		return moment.duration(estimatedRemainingMinutes, 'minutes').locale('en').humanize();
+	}
+	
 	function populateDatumImportJobs(jobs, preserve) {
 		jobs = Array.isArray(jobs) ? jobs : [];
 		var container = $('#datum-import-job-list-container');
@@ -50,6 +69,8 @@ $(document).ready(function() {
 			item.loadedCount = (job.loadedCount ? job.loadedCount.toLocaleString() : 0);
 			item.success = job.success;
 			item.message = job.message;
+			item.duration = durationDisplay(job.startedDate, job.completionDate);
+			item.eta = jobEta(job);
 			if ( job.message ) {
 				item.messageHtml = $.parseHTML(job.message);
 			}
