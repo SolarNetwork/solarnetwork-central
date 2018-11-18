@@ -324,7 +324,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			ProgressListener<DatumImportService> progressListener) throws IOException {
 		File dataFile = getImportDataFile(info.getId());
 		if ( !dataFile.canRead() ) {
-			throw new FileNotFoundException("Data file for job " + info.getId() + " not found");
+			throw new FileNotFoundException("Data file for job " + info.getId().getId() + " not found");
 		}
 		Configuration config = info.getConfiguration();
 		if ( config == null || config.getInputConfiguration() == null ) {
@@ -469,7 +469,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 				String msg = "Loaded " + getLoadedCount() + " datum.";
 				updateTaskStatus(DatumImportState.Completed, Boolean.TRUE, msg, new DateTime());
 			} catch ( Exception e ) {
-				log.error("Error importing datum for task {}", this, e);
+				log.warn("Error importing datum for task {}", this, e);
 				Throwable root = e;
 				while ( root.getCause() != null ) {
 					root = root.getCause();
