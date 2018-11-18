@@ -35,6 +35,8 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +59,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ConnectionCallback;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
@@ -3180,5 +3185,19 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 
 		// then
 		assertThat("Datum rows imported", datumRowCount(), equalTo(data.size()));
+
+		// manually clean up transactionally circumvented data import data
+		TestTransaction.end();
+		jdbcTemplate.execute(new ConnectionCallback<Object>() {
+
+			@Override
+			public Object doInConnection(Connection con) throws SQLException, DataAccessException {
+				con.setAutoCommit(true);
+				con.createStatement().executeUpdate("delete from solardatum.da_datum");
+				con.createStatement().executeUpdate("delete from solaragg.agg_stale_datum");
+				con.createStatement().executeUpdate("delete from solaragg.aud_datum_hourly");
+				return null;
+			}
+		});
 	}
 }
