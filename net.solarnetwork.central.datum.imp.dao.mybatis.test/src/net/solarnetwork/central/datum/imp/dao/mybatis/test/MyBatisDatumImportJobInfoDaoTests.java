@@ -319,9 +319,11 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void findForUserFound() {
 		storeNew();
 
+		User user2 = createNewUser("user2@localhost");
+
 		// add another job that should _not_ be found
 		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.user.getId() - 1L, UUID.randomUUID()));
+		info.setId(new UserUuidPK(user2.getId(), UUID.randomUUID()));
 		info.setConfig(new BasicConfiguration());
 		info.setImportDate(new DateTime());
 		info.setImportState(DatumImportState.Staged);
