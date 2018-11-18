@@ -109,6 +109,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		assertThat("User ID", info.getUserId(), equalTo(this.user.getId()));
 		assertThat("Config", info.getConfig(), notNullValue());
 		assertThat("Import date", info.getImportDate(), notNullValue());
+		assertThat("Percent complete", info.getPercentComplete(), equalTo(0.0));
 
 		// stash results for other tests to use
 		this.info = info;
@@ -122,8 +123,11 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		DateTime originalCreated = info.getCreated();
 		info.setCreated(new DateTime()); // should not actually save
 		info.setImportState(DatumImportState.Completed);
+		info.setStarted(new DateTime().minus(1000).secondOfMinute().roundFloorCopy());
+		info.setCompleted(new DateTime().secondOfMinute().roundCeilingCopy());
 		info.setJobSuccess(Boolean.TRUE);
 		info.setLoadedCount(1234);
+		info.setPercentComplete(50.0);
 
 		UserUuidPK id = dao.store(info);
 		assertThat("PK unchanged", id, equalTo(this.info.getId()));
@@ -136,6 +140,10 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		assertThat("State changed", updated.getImportState(), equalTo(info.getImportState()));
 		assertThat("Success changed", updated.isSuccess(), equalTo(info.isSuccess()));
 		assertThat("Loaded count changed", updated.getLoadedCount(), equalTo(info.getLoadedCount()));
+		assertThat("Percent complete changed", updated.getPercentComplete(),
+				equalTo(info.getPercentComplete()));
+		assertThat("Started date changed", updated.getStarted(), equalTo(info.getStarted()));
+		assertThat("Completed date changed", updated.getCompleted(), equalTo(info.getCompleted()));
 	}
 
 	@Test
@@ -418,5 +426,24 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		assertThat("New instance", unchanged, not(sameInstance(info)));
 		assertThat("Unchanged config name", unchanged.getConfiguration().getName(),
 				equalTo(info.getConfiguration().getName()));
+	}
+
+	@Test
+	public void updateProgress() {
+		storeNew();
+		boolean updated = dao.updateJobProgress(this.info.getId(), 0.1);
+		assertThat("Update result", updated, equalTo(true));
+		DatumImportJobInfo info = dao.get(this.info.getId());
+		assertThat("Progress updated", info.getPercentComplete(), equalTo(0.1));
+	}
+
+	@Test
+	public void updateProgressNotFound() {
+		storeNew();
+		UserUuidPK id = new UserUuidPK(this.user.getId(), UUID.randomUUID());
+		boolean updated = dao.updateJobProgress(id, 0.1);
+		assertThat("Update result", updated, equalTo(false));
+		DatumImportJobInfo info = dao.get(this.info.getId());
+		assertThat("Progress updated", info.getPercentComplete(), equalTo(0.0));
 	}
 }

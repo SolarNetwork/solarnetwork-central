@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -101,6 +102,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	/** The default value for the {@code maxPreviewCount} property. */
 	public static final int DEFAULT_MAX_PREVIEW_COUNT = 200;
 
+	/** The default value for the {@code progressLogCount} property. */
+	public static final int DEFAULT_PROGRESS_LOG_COUNT = 25000;
+
 	private final ScheduledExecutorService scheduler;
 	private final ExecutorService executor;
 	private final UserNodeDao userNodeDao;
@@ -109,10 +113,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
 	private ExecutorService previewExecutor;
 	private int maxPreviewCount = DEFAULT_MAX_PREVIEW_COUNT;
+	private int progressLogCount = DEFAULT_PROGRESS_LOG_COUNT;
 
 	private ScheduledFuture<?> taskPurgerTask = null;
-	private final ConcurrentMap<UserUuidPK, DatumImportStatus> taskMap = new ConcurrentHashMap<>(16,
-			0.9f, 1);
+	private final ConcurrentMap<UserUuidPK, DatumImportTask> taskMap = new ConcurrentHashMap<>(16, 0.9f,
+			1);
 
 	/**
 	 * Constructor.
@@ -153,8 +158,10 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		}
 		// purge completed tasks every hour
 		if ( scheduler != null ) {
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			ConcurrentMap<UserUuidPK, DatumImportStatus> map = (ConcurrentMap) taskMap;
 			taskPurgerTask = scheduler.scheduleWithFixedDelay(
-					new DatumImportTaskPurger(completedTaskMinimumCacheTime, taskMap), 1L, 1L,
+					new DatumImportTaskPurger(completedTaskMinimumCacheTime, map), 1L, 1L,
 					TimeUnit.HOURS);
 		}
 	}
@@ -172,22 +179,22 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	public DatumImportReceipt submitDatumImportRequest(DatumImportRequest request,
 			DatumImportResource resource) throws IOException {
 		UUID jobId = UUID.randomUUID();
-		UserUuidPK pk = new UserUuidPK(request.getUserId(), jobId);
+		UserUuidPK id = new UserUuidPK(request.getUserId(), jobId);
 		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(pk);
+		info.setId(id);
 		info.setConfig(new BasicConfiguration(request.getConfiguration()));
 		info.setImportDate(request.getImportDate());
 		info.setImportState(
 				info.getConfig().isStage() ? DatumImportState.Staged : DatumImportState.Queued);
 
-		saveToWorkDirectory(resource, pk);
+		saveToWorkDirectory(resource, id);
 
-		info = jobInfoDao.get(jobInfoDao.store(info));
+		jobInfoDao.store(info);
 
-		DatumImportTask task = new DatumImportTask(info);
+		DatumImportTask task = taskForId(id);
+
 		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
 		task.setDelegate(future);
-		taskMap.put(pk, task);
 
 		return new BasicDatumImportReceipt(jobId.toString(), info.getImportState());
 	}
@@ -195,8 +202,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	@Override
 	public Future<FilterResults<GeneralNodeDatumComponents>> previewStagedImportRequest(
 			DatumImportPreviewRequest request) {
-		DatumImportStatus status = datumImportJobStatusForUser(request.getUserId(), request.getJobId());
-		DatumImportTask task = (DatumImportTask) status;
+		UserUuidPK id = new UserUuidPK(request.getUserId(), UUID.fromString(request.getJobId()));
+		DatumImportTask task = taskForId(id);
 
 		if ( task.getJobState() != DatumImportState.Staged ) {
 			throw new DatumImportValidationException(
@@ -221,8 +228,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 	@Override
 	public DatumImportStatus performImport(UserUuidPK id) {
-		DatumImportStatus status = datumImportJobStatusForUser(id);
-		DatumImportTask task = (DatumImportTask) status;
+		DatumImportTask task = taskForId(id);
 
 		Future<DatumImportResult> future = executor.submit(task);
 		task.setDelegate(future);
@@ -235,36 +241,41 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		return jobInfoDao.purgeOldJobs(olderThanDate);
 	}
 
-	private DatumImportStatus statusForJobInfo(DatumImportJobInfo info) {
-		DatumImportTask task = new DatumImportTask(info);
-		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
-		task.setDelegate(future);
-		DatumImportStatus already = taskMap.putIfAbsent(info.getId(), task);
-		return (already != null ? already : task);
-	}
-
 	@Override
 	public DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId) {
 		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
-		return datumImportJobStatusForUser(id);
+		return taskForId(id);
 	}
 
-	private DatumImportStatus datumImportJobStatusForUser(UserUuidPK id) {
-		DatumImportStatus status = taskMap.get(id);
-		if ( status == null ) {
-			DatumImportJobInfo info = jobInfoDao.get(id);
-			if ( info == null ) {
-				throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
-			}
-			status = statusForJobInfo(info);
+	private DatumImportTask taskForId(UserUuidPK id) {
+		DatumImportTask task = taskMap.get(id);
+		if ( task != null && task.isExecuting() ) {
+			// don't get state from database if we are the one executing the task
+			return task;
 		}
-		return status;
+		DatumImportJobInfo info = jobInfoDao.get(id);
+		if ( info == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
+		}
+		return taskForJobInfo(info);
+	}
+
+	private DatumImportTask taskForJobInfo(DatumImportJobInfo info) {
+		DatumImportTask task = new DatumImportTask(info);
+		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
+		task.setDelegate(future);
+		DatumImportTask already = taskMap.putIfAbsent(info.getId(), task);
+		if ( already != null && !already.isExecuting() ) {
+			// refresh info in task
+			already.setInfo(info);
+		}
+		return (already != null ? already : task);
 	}
 
 	@Override
 	public Collection<DatumImportStatus> datumImportJobStatusesForUser(Long userId,
 			Set<DatumImportState> states) {
-		return jobInfoDao.findForUser(userId, states).stream().map(d -> statusForJobInfo(d))
+		return jobInfoDao.findForUser(userId, states).stream().map(d -> taskForJobInfo(d))
 				.collect(toList());
 	}
 
@@ -274,12 +285,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
 		jobInfoDao.updateJobConfiguration(id, configuration);
 		DatumImportJobInfo info = jobInfoDao.get(id);
-		DatumImportStatus status = datumImportJobStatusForUser(id);
-		if ( status instanceof DatumImportTask ) {
-			DatumImportTask task = (DatumImportTask) status;
-			task.info.setConfig(info.getConfig());
-		}
-		return status;
+		DatumImportTask task = taskForId(id);
+		task.info.setConfig(info.getConfig());
+		return task;
 	}
 
 	@Override
@@ -288,12 +296,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
 		jobInfoDao.updateJobState(id, desiredState, expectedStates);
 		DatumImportJobInfo info = jobInfoDao.get(id);
-		DatumImportStatus status = datumImportJobStatusForUser(id);
-		if ( status instanceof DatumImportTask ) {
-			DatumImportTask task = (DatumImportTask) status;
-			task.info.setImportState(info.getImportState());
-		}
-		return status;
+		DatumImportTask task = taskForId(id);
+		task.info.setImportState(info.getImportState());
+		return task;
 	}
 
 	@Override
@@ -306,16 +311,13 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		log.debug("Deleted {} import jobs for user {} matching ids {} in states {}", deleted, userId,
 				jobIds, allowStates);
 		taskMap.entrySet().removeIf(e -> {
-			if ( e.getValue() instanceof DatumImportTask ) {
-				DatumImportTask task = (DatumImportTask) e.getValue();
-				return userId.equals(task.getUserId()) && jobIds.contains(task.getJobId())
-						&& allowStates.contains(task.getJobState());
-			}
-			return false;
+			DatumImportTask task = e.getValue();
+			return userId.equals(task.getUserId()) && jobIds.contains(task.getJobId())
+					&& allowStates.contains(task.getJobState());
 		});
 		return jobInfoDao.findForUser(userId, null).stream().filter(job -> {
 			return userId.equals(job.getUserId()) && jobIds.contains(job.getId().getId().toString());
-		}).map(job -> statusForJobInfo(job)).collect(toList());
+		}).map(job -> taskForJobInfo(job)).collect(toList());
 	}
 
 	private ImportContext createImportContext(DatumImportJobInfo info,
@@ -419,9 +421,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			ProgressListener<DatumImportService>,
 			LoadingExceptionHandler<GeneralNodeDatum, GeneralNodeDatumPK> {
 
-		private final DatumImportJobInfo info;
-		private double percentComplete;
+		private DatumImportJobInfo info;
 		private Future<DatumImportResult> delegate;
+		private ExecutorService progressExecutor;
 
 		/**
 		 * Construct from a task info.
@@ -436,27 +438,30 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		 */
 		private DatumImportTask(DatumImportJobInfo info) {
 			super();
-			this.info = info;
+			setInfo(info);
 		}
 
-		/**
-		 * Set the delegate {@code Future}.
-		 * 
-		 * @param delegate
-		 *        the delegate
-		 */
 		private void setDelegate(Future<DatumImportResult> delegate) {
 			this.delegate = delegate;
 		}
 
+		private void setInfo(DatumImportJobInfo info) {
+			this.info = info;
+		}
+
+		private boolean isExecuting() {
+			return progressExecutor != null;
+		}
+
 		@Override
 		public DatumImportResult call() throws Exception {
-			percentComplete = 0;
+			progressChanged(null, 0);
 
 			log.info("Starting datum import job {} for user {} from resource {}", info.getId().getId(),
 					info.getUserId(), getImportDataFile(info.getId()));
 
 			// update status to indicate we've started
+			info.setStarted(new DateTime());
 			updateTaskStatus(DatumImportState.Executing);
 
 			try {
@@ -506,6 +511,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			} finally {
 				if ( info.getImportState() != DatumImportState.Completed ) {
 					updateTaskStatus(DatumImportState.Completed);
+				}
+				if ( progressExecutor != null && !progressExecutor.isShutdown() ) {
+					progressExecutor.shutdown();
 				}
 			}
 			return new BasicDatumImportResult(info);
@@ -579,7 +587,13 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 						}
 						d.setPosted(info.getImportDate());
 						loader.load(d);
-						info.setLoadedCount(loader.getLoadedCount());
+						long count = loader.getLoadedCount();
+						info.setLoadedCount(count);
+						if ( progressLogCount > 0 && count % progressLogCount == 0 ) {
+							log.info("Datum import job {} for user {} loaded {} datum with progress {}",
+									info.getId().getId(), info.getUserId(), count,
+									info.getPercentComplete());
+						}
 					}
 					loader.commit();
 				} finally {
@@ -595,8 +609,16 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		}
 
 		@Override
-		public void progressChanged(DatumImportService context, double amountComplete) {
-			this.percentComplete = amountComplete;
+		public synchronized void progressChanged(DatumImportService context, double amountComplete) {
+			log.trace("Datum import job {} for user {} progress changed: {}", info.getId().getId(),
+					info.getUserId(), amountComplete);
+			// update progress in different thread, so state updated outside import transaction
+			DatumImportJobInfo info = this.info;
+			if ( progressExecutor == null ) {
+				progressExecutor = Executors.newSingleThreadExecutor();
+			}
+			progressExecutor.submit(new ProgressUpdater(info.getId(), amountComplete));
+			info.setPercentComplete(amountComplete);
 			postJobStatusChangedEvent(this, info);
 		}
 
@@ -622,7 +644,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 		@Override
 		public double getPercentComplete() {
-			return percentComplete;
+			return info.getPercentComplete();
 		}
 
 		@Override
@@ -634,6 +656,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		@Override
 		public long getImportDate() {
 			DateTime d = info.getImportDate();
+			return (d != null ? d.getMillis() : 0);
+		}
+
+		@Override
+		public long getStartedDate() {
+			DateTime d = info.getStarted();
 			return (d != null ? d.getMillis() : 0);
 		}
 
@@ -688,8 +716,26 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		public String toString() {
 			return "DatumImportTask{userId=" + getUserId() + ",jobId=" + getJobId() + ",config="
 					+ (info != null ? info.getConfig() : null) + ",jobState=" + getJobState()
-					+ ",percentComplete=" + percentComplete + ",completionDate=" + getCompletionDate()
-					+ "}";
+					+ ",percentComplete=" + getPercentComplete() + ",completionDate="
+					+ getCompletionDate() + "}";
+		}
+
+	}
+
+	private class ProgressUpdater implements Runnable {
+
+		private final UserUuidPK id;
+		private final double percentComplete;
+
+		private ProgressUpdater(UserUuidPK id, double percentComplete) {
+			super();
+			this.id = id;
+			this.percentComplete = percentComplete;
+		}
+
+		@Override
+		public void run() {
+			jobInfoDao.updateJobProgress(id, percentComplete);
 		}
 
 	}
@@ -731,6 +777,21 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	 */
 	public void setMaxPreviewCount(int maxPreviewCount) {
 		this.maxPreviewCount = maxPreviewCount;
+	}
+
+	/**
+	 * Set the import progress log frequency.
+	 * 
+	 * <p>
+	 * This controls how often a status log will be emitted, based on the number
+	 * of datum imported.
+	 * </p>
+	 * 
+	 * @param progressLogCount
+	 *        the count of datum imported to emit a status log
+	 */
+	public void setProgressLogCount(int progressLogCount) {
+		this.progressLogCount = progressLogCount;
 	}
 
 }

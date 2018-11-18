@@ -20,6 +20,7 @@
 		<beans:prop key="executor.parallelism">2</beans:prop>
 		<beans:prop key="preview.executor.parallelism">4</beans:prop>
 		<beans:prop key="preview.maxCount">100</beans:prop>
+		<beans:prop key="progressLogCount">25000</beans:prop>
 		<beans:prop key="completedTaskMinimumCacheTime">14400000</beans:prop>
 		<beans:prop key="workPath"></beans:prop>
 	</osgix:cm-properties>
@@ -52,6 +53,7 @@
 		<argument ref="generalNodeDatumDao"/>
 		<property name="previewExecutor" ref="previewExecutor"/>
 		<property name="maxPreviewCount" value="${preview.maxCount}"/>
+		<property name="progressLogCount" value="${progressLogCount}"/>
 		<property name="completedTaskMinimumCacheTime" value="${completedTaskMinimumCacheTime}"/>
 		<property name="workPath" value="${workPath}"/>
 		<property name="inputServices">

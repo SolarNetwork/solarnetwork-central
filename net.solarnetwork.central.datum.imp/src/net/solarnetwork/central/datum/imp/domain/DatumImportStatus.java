@@ -93,6 +93,14 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	long getImportDate();
 
 	/**
+	 * Get the date the import task started.
+	 * 
+	 * @return the started date, as milliseconds since the epoch, or
+	 *         {@literal 0} if not started
+	 */
+	long getStartedDate();
+
+	/**
 	 * Get the completion date.
 	 * 
 	 * @return the completion date, as milliseconds since the epoch, or

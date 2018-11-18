@@ -74,6 +74,12 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	public static final String UPDATE_JOB_CONFIG = "update-DatumImportJobInfo-config";
 
 	/**
+	 * The {@code UPDATE} query name used for
+	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)}.
+	 */
+	public static final String UPDATE_JOB_PROGRESS = "update-DatumImportJobInfo-progress";
+
+	/**
 	 * The query name used for {@link #findForUser(Long, Set)}.
 	 */
 	public static final String QUERY_FOR_USER = "find-DatumImportJobInfo-for-user";
@@ -83,6 +89,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	private String updateDeleteForUser;
 	private String updateJobState;
 	private String updateJobConfiguration;
+	private String updateJobProgress;
 	private String queryForUser;
 
 	/**
@@ -95,6 +102,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		setUpdateDeleteCompletedJobs(UPDATE_PURGE_COMPLETED);
 		setUpdateJobState(UPDATE_JOB_STATE);
 		setUpdateJobConfiguration(UPDATE_JOB_CONFIG);
+		setUpdateJobProgress(UPDATE_JOB_PROGRESS);
 		setUpdateDeleteForUser(UPDATE_DELETE_FOR_USER);
 	}
 
@@ -118,7 +126,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
 			Set<DatumImportState> expectedStates) {
-		Map<String, Object> params = new HashMap<>(2);
+		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
 		params.put("desiredState", desiredState.getKey());
 		if ( expectedStates != null && !expectedStates.isEmpty() ) {
@@ -136,11 +144,21 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		DatumImportJobInfo info = new DatumImportJobInfo();
 		info.setConfig(new BasicConfiguration(configuration));
 
-		Map<String, Object> params = new HashMap<>(2);
+		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
 		params.put("configJson", info.getConfigJson());
 		params.put("expectedStates", new String[] { String.valueOf(DatumImportState.Staged.getKey()) });
 		int count = getSqlSession().update(updateJobConfiguration, params);
+		return (count > 0);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public boolean updateJobProgress(UserUuidPK id, double percentComplete) {
+		Map<String, Object> params = new HashMap<>(2);
+		params.put("id", id);
+		params.put("progress", percentComplete);
+		int count = getSqlSession().update(updateJobProgress, params);
 		return (count > 0);
 	}
 
@@ -228,6 +246,17 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 */
 	public void setUpdateJobConfiguration(String updateJobConfiguration) {
 		this.updateJobConfiguration = updateJobConfiguration;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #updateJobProgress(UserUuidPK, double)} method to use.
+	 * 
+	 * @param updateJobProgress
+	 *        the statement name; defaults to {@link #UPDATE_JOB_PROGRESS}
+	 */
+	public void setUpdateJobProgress(String updateJobProgress) {
+		this.updateJobProgress = updateJobProgress;
 	}
 
 	/**

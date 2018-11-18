@@ -98,6 +98,17 @@ public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, Us
 	boolean updateJobConfiguration(UserUuidPK id, Configuration configuration);
 
 	/**
+	 * Update the progress of a specific job.
+	 * 
+	 * @param id
+	 *        the ID of the job to update
+	 * @param percentComplete
+	 *        the percent complete, from 0 to 1
+	 * @return {@literal true} if the job progress was updated
+	 */
+	boolean updateJobProgress(UserUuidPK id, double percentComplete);
+
+	/**
 	 * Find all available job info entities for a specific user.
 	 * 
 	 * @param userId

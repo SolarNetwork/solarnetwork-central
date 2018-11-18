@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.imp.domain;
 
 import java.util.UUID;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -41,7 +42,7 @@ import net.solarnetwork.util.JsonUtils;
 public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
 		implements UserRelatedEntity<UserUuidPK>, DatumImportRequest, DatumImportResult {
 
-	private static final long serialVersionUID = 5777793086887701965L;
+	private static final long serialVersionUID = 4226240680637197476L;
 
 	private DateTime importDate;
 	private DatumImportState importState;
@@ -49,8 +50,34 @@ public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
 	private String configJson;
 	private Boolean jobSuccess;
 	private String message;
+	private DateTime started;
 	private DateTime completed;
 	private long loadedCount;
+	private double percentComplete;
+
+	/**
+	 * Get the job execution duration.
+	 * 
+	 * <p>
+	 * This will return the overall job execution duration, based on the
+	 * {@code started} and {@code completed} dates. If both are available, the
+	 * duration returned is the difference between the two. If just
+	 * {@code started} is available, the difference between now and then is
+	 * returned. Otherwise a zero-duration value is returned.
+	 * </p>
+	 * 
+	 * @return the duration, never {@literal null}
+	 */
+	public Duration getJobDuration() {
+		DateTime s = getStarted();
+		DateTime e = getCompleted();
+		if ( s != null && e != null ) {
+			return new Duration(s.getMillis(), e.getMillis());
+		} else if ( s != null ) {
+			return new Duration(s.getMillis(), System.currentTimeMillis());
+		}
+		return Duration.ZERO;
+	}
 
 	@JsonIgnore
 	@Override
@@ -190,6 +217,15 @@ public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
 		this.completed = completed;
 	}
 
+	@JsonIgnore
+	public DateTime getStarted() {
+		return started;
+	}
+
+	public void setStarted(DateTime started) {
+		this.started = started;
+	}
+
 	@Override
 	public long getLoadedCount() {
 		return loadedCount;
@@ -197,6 +233,14 @@ public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
 
 	public void setLoadedCount(long loadedCount) {
 		this.loadedCount = loadedCount;
+	}
+
+	public double getPercentComplete() {
+		return percentComplete;
+	}
+
+	public void setPercentComplete(double percentComplete) {
+		this.percentComplete = percentComplete;
 	}
 
 }
