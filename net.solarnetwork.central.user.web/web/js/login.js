@@ -1,10 +1,10 @@
 $(document).ready(function() {
 	// main login form
-	$('#login-username').select().focus();
+	$('#login-username').trigger('select').trigger('focus');
 	
 	// reset pass form
-	$('#reset-pass-email').select().focus();
+	$('#reset-pass-email').trigger('select').trigger('focus');
 	
 	// reset pass confirm
-	$('#reset-pass-password').select().focus();
+	$('#reset-pass-password').trigger('select').trigger('focus');
 });

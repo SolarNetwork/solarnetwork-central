@@ -23,7 +23,7 @@
 package net.solarnetwork.central.dao.mybatis.type;
 
 /**
- * Text array type hanlder.
+ * Text array type handler.
  * 
  * @author matt
  * @version 1.1

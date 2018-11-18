@@ -30,7 +30,8 @@
 	
 	<!-- Service references -->
 	
-	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager"/>
+	<reference id="scheduler" interface="java.util.concurrent.ScheduledExecutorService" filter="(function=central)"/>
+	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager" filter="(db=central)"/>
 	
 	<reference id="taskDao" interface="net.solarnetwork.central.datum.export.dao.DatumExportTaskInfoDao"/>
 	
@@ -43,15 +44,6 @@
 
 	<!--  Supporting services -->
 
-	<bean id="threadFactory" class="org.springframework.scheduling.concurrent.CustomizableThreadFactory">
-		<argument value="DatumExport-"/>
-	</bean>
-	
-	<bean id="scheduler" class="java.util.concurrent.ScheduledThreadPoolExecutor" destroy-method="shutdown">
-		<argument value="${scheduler.corePoolSize}"/>
-		<argument ref="threadFactory"/>
-	</bean>
-	
 	<bean id="executor" class="java.util.concurrent.Executors" factory-method="newWorkStealingPool" destroy-method="shutdown">
 		<argument value="${executor.parallelism}"/>
 	</bean>
@@ -66,7 +58,7 @@
 		</argument>
 	</bean>
 	
-	<bean id="datumExportBiz" class="net.solarnetwork.central.datum.export.biz.dao.DaoDatumExportBiz">
+	<bean id="datumExportBiz" class="net.solarnetwork.central.datum.export.biz.dao.DaoDatumExportBiz" init-method="init" destroy-method="shutdown">
 		<argument ref="taskDao"/>
 		<argument ref="auditingQueryBiz"/>
 		<argument ref="scheduler"/>

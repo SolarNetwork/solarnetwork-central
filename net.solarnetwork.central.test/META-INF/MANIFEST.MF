@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Test
 Bundle-SymbolicName: net.solarnetwork.central.test
-Bundle-Version: 1.10.0
+Bundle-Version: 1.11.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: net.solarnetwork.central.test;version="1.9.0"
@@ -19,7 +19,8 @@ Import-Package:
  org.junit.runners.model;version="[4.9,5.0)",
  org.osgi.service.jdbc;version="[1.0,2.0)",
  org.postgresql;version="8.4";resolution:=optional,
- org.slf4j;version="[1.6.1,2.0.0)",
+ org.slf4j;version="[1.7,2.0)",
+ org.slf4j.bridge;version="[1.7,2.0)",
  org.springframework.aop;version="[4.2,5.0)",
  org.springframework.asm;version="[4.2,5.0)",
  org.springframework.beans;version="[4.2,5.0)",

@@ -72,4 +72,12 @@
 		</property>
 	</bean>
 	
+	<bean id="asyncTaskExecutor" class="org.springframework.scheduling.concurrent.ConcurrentTaskExecutor">
+		<constructor-arg>
+			<bean class="org.springframework.scheduling.concurrent.ForkJoinPoolFactoryBean">
+				<property name="commonPool" value="true"/>
+			</bean>
+		</constructor-arg>
+	</bean>
+	
 </beans>

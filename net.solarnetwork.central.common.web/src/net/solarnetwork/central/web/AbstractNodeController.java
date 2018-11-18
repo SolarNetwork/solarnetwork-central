@@ -55,7 +55,7 @@ import net.solarnetwork.web.support.WebUtils;
  * Abstract base class to support node-related controllers.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class AbstractNodeController {
 
@@ -215,7 +215,7 @@ public abstract class AbstractNodeController {
 	 */
 	@ExceptionHandler(BindException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Input validation error")
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleBindException(BindException e, Locale locale) {
 		log.debug("BindException in {} controller", getClass().getSimpleName(), e);
 		String msg = generateErrorsMessage(e, locale, messageSource);
@@ -231,7 +231,7 @@ public abstract class AbstractNodeController {
 	 */
 	@ExceptionHandler(ValidationException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Input validation error")
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleValidationException(ValidationException e, Locale locale) {
 		log.debug("ValidationException in {} controller", getClass().getSimpleName(), e);
 		String msg = generateErrorsMessage(e.getErrors(), locale,

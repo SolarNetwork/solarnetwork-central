@@ -1,7 +1,7 @@
 <%--
 	The .edit-config class attached to .modal activates "modal configuration edit form" mode.
  --%>
-<form id="edit-expire-data-config-modal" class="modal fade edit-config" action="<c:url value='/u/sec/expire/configs/data'/>" method="post" tabindex="-1" role="dialog">
+<form id="edit-expire-data-config-modal" class="modal fade edit-config expire" action="<c:url value='/u/sec/expire/configs/data'/>" method="post" tabindex="-1" role="dialog">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">

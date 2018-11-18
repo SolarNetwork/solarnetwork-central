@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xmlns:osgi="http://www.eclipse.org/gemini/blueprint/schema/blueprint"
+	xmlns:osgix="http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xsi:schemaLocation="
+		http://www.osgi.org/xmlns/blueprint/v1.0.0
+		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint/gemini-blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.imp.jobs">
+		<beans:prop key="DatumImportProcessor.jobCron">0 1/10 * * * ?</beans:prop>
+		<beans:prop key="DatumImportProcessor.maximumWaitMs">5400000</beans:prop>
+		<beans:prop key="DatumImportProcessor.maximumClaimCount">2</beans:prop>
+		<beans:prop key="DatumImportJobInfoCleaner.jobCron">0 47 * * * ?</beans:prop>
+		<beans:prop key="DatumImportJobInfoCleaner.minimumAgeMinutes">720</beans:prop>
+	</osgix:cm-properties>
+
+	<ctx:property-placeholder properties-ref="cfg"/>
+	
+	<!-- Service references -->
+
+	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
+
+	<reference id="importJobBiz" interface="net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz"/>
+
+	<reference id="jobInfoDao" interface="net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao"/>
+
+	<!-- Published Services -->
+
+	<service ref="datumImportProcessorJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{datumImportProcessorJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<bean id="datumImportProcessorJob" class="net.solarnetwork.central.datum.imp.jobs.DatumImportProcessorJob">
+		<argument ref="eventAdmin"/>
+		<argument ref="importJobBiz"/>
+		<argument ref="jobInfoDao"/>
+		<property name="jobCron" value="${DatumImportProcessor.jobCron}"/>
+		<property name="maximumWaitMs" value="${DatumImportProcessor.maximumWaitMs}"/>
+		<property name="maximumClaimCount" value="${DatumImportProcessor.maximumClaimCount}"/>
+		<property name="jobId" value="DatumImportProcessor"/>
+		<property name="jobGroup" value="DatumImport"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/imp/DatumImportProcessor"/>
+	</bean>
+
+	<service ref="datumImportJobInfoCleanerJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{datumImportJobInfoCleanerJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<bean id="datumImportJobInfoCleanerJob" class="net.solarnetwork.central.datum.imp.jobs.DatumImportJobInfoCleanerJob">
+		<argument ref="eventAdmin"/>
+		<argument ref="importJobBiz"/>
+		<property name="jobCron" value="${DatumImportJobInfoCleaner.jobCron}"/>
+		<property name="minimumAgeMinutes" value="${DatumImportJobInfoCleaner.minimumAgeMinutes}"/>
+		<property name="jobId" value="DatumImportJobInfoCleaner"/>
+		<property name="jobGroup" value="DatumImport"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/imp/DatumImportJobInfoCleaner"/>
+	</bean>
+
+</blueprint>

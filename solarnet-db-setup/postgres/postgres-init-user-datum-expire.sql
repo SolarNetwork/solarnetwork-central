@@ -303,21 +303,23 @@ BEGIN
 	END IF;
 
 	-- mark all monthly audit data as stale for recalculation
-	INSERT INTO solaragg.aud_datum_daily_stale (node_id, ts_start, source_id, aud_kind)
-	WITH nlt AS (
-		SELECT
-			node_id,
-			(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-		FROM solarnet.node_local_time
-		WHERE node_id = ANY (node_ids)
-	)
-	SELECT d.node_id, d.ts_start, d.source_id, 'm'
-	FROM solaragg.aud_datum_monthly d
-	INNER JOIN nlt ON nlt.node_id = d.node_id
-	WHERE d.ts_start < nlt.older_than
-		AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs))
-	ON CONFLICT DO NOTHING;
-
+	IF total_count > 0 THEN
+		INSERT INTO solaragg.aud_datum_daily_stale (node_id, ts_start, source_id, aud_kind)
+		WITH nlt AS (
+			SELECT
+				node_id,
+				(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
+			FROM solarnet.node_local_time
+			WHERE node_id = ANY (node_ids)
+		)
+		SELECT d.node_id, d.ts_start, d.source_id, 'm'
+		FROM solaragg.aud_datum_monthly d
+		INNER JOIN nlt ON nlt.node_id = d.node_id
+		WHERE d.ts_start < nlt.older_than
+			AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs))
+		ON CONFLICT DO NOTHING;
+	END IF;
+	
 	RETURN total_count;
 END;
 $$;

@@ -29,8 +29,10 @@ import java.sql.Types;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
@@ -62,6 +64,12 @@ public abstract class AbstractCentralTransactionalTest
 
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
+
+	static {
+		SLF4JBridgeHandler.removeHandlersForRootLogger();
+		SLF4JBridgeHandler.install();
+		java.util.logging.Logger.getLogger("").setLevel(Level.FINEST);
+	}
 
 	/**
 	 * Setup the {@link #dateTimeFormat} timezone.

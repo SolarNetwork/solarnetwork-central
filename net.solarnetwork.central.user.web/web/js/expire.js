@@ -150,7 +150,7 @@ $(document).ready(function() {
 		SolarReg.Settings.handleEditServiceItemAction(event, dataServices, settingTemplates);
 	});
 	
-	$('.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
+	$('.expire.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
 
 	$('#expire-data-configs').first().each(function() {
 		var loadCountdown = 2;

@@ -287,7 +287,7 @@ $(document).ready(function() {
 		SolarReg.Settings.handleEditServiceItemAction(event, outputServices, settingTemplates);
 	});
 
-	$('.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
+	$('.export.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
 
 	$('#datum-export-configs').first().each(function() {
 		var loadCountdown = 6;

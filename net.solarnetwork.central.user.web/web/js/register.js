@@ -1,3 +1,3 @@
 $(document).ready(function() {
-	$('#user-name').select().focus();
+	$('#user-name').trigger('select').trigger('focus');
 });

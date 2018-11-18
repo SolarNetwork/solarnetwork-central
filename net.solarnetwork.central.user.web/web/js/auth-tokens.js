@@ -31,7 +31,7 @@ $(document).ready(function() {
 		}
 	}).on('hidden.bs.modal', reloadIfTokenCreated);
 	
-	$('.action-user-token').find('button').click(function(event) {
+	$('.action-user-token').find('button').on('click', function(event) {
 		//.user-token-change-status or .user-token-delete
 		event.preventDefault();
 		var button = $(this);
@@ -262,7 +262,7 @@ $(document).ready(function() {
 		}
 	});
 	
-	$('.action-data-token').find('button').click(function(event) {
+	$('.action-data-token').find('button').on('click', function(event) {
 		//.user-token-change-status or .user-token-delete
 		event.preventDefault();
 		var button = $(this);
