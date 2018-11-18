@@ -49,7 +49,7 @@
 		 				${' '}
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<input type="number" class="form-control" name="batchSize" min="0"
+		 				<input type="number" class="form-control" name="batchSize" min="0" value="10000"
 		 					placeholder="<fmt:message key='import.job.batchSize.placeholder'/>">
 		 				<span id="helpBlock" class="help-block"><fmt:message key='import.job.batchSize.caption'/></span>
 			 		</div>
