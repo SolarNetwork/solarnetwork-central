@@ -221,7 +221,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 	@Override
 	public DatumImportStatus performImport(UserUuidPK id) {
-		DatumImportStatus status = datumImportJobStatusForUser(id.getUserId(), id.getId().toString());
+		DatumImportStatus status = datumImportJobStatusForUser(id);
 		DatumImportTask task = (DatumImportTask) status;
 
 		Future<DatumImportResult> future = executor.submit(task);
@@ -453,7 +453,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		public DatumImportResult call() throws Exception {
 			percentComplete = 0;
 
-			log.info("Starting datum import job {} for user {} from resource", info.getId().getId(),
+			log.info("Starting datum import job {} for user {} from resource {}", info.getId().getId(),
 					info.getUserId(), getImportDataFile(info.getId()));
 
 			// update status to indicate we've started
