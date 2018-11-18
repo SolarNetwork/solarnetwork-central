@@ -431,19 +431,21 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void updateProgress() {
 		storeNew();
-		boolean updated = dao.updateJobProgress(this.info.getId(), 0.1);
+		boolean updated = dao.updateJobProgress(this.info.getId(), 0.1, 2);
 		assertThat("Update result", updated, equalTo(true));
 		DatumImportJobInfo info = dao.get(this.info.getId());
 		assertThat("Progress updated", info.getPercentComplete(), equalTo(0.1));
+		assertThat("Loaded updated", info.getLoadedCount(), equalTo(2L));
 	}
 
 	@Test
 	public void updateProgressNotFound() {
 		storeNew();
 		UserUuidPK id = new UserUuidPK(this.user.getId(), UUID.randomUUID());
-		boolean updated = dao.updateJobProgress(id, 0.1);
+		boolean updated = dao.updateJobProgress(id, 0.1, 2);
 		assertThat("Update result", updated, equalTo(false));
 		DatumImportJobInfo info = dao.get(this.info.getId());
-		assertThat("Progress updated", info.getPercentComplete(), equalTo(0.0));
+		assertThat("Progress not updated", info.getPercentComplete(), equalTo(0.0));
+		assertThat("Loaded not updated", info.getLoadedCount(), equalTo(0L));
 	}
 }

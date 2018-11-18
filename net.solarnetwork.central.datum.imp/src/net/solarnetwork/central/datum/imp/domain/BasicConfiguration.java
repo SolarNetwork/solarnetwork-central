@@ -97,6 +97,12 @@ public class BasicConfiguration implements Configuration, Serializable {
 	}
 
 	@Override
+	public String toString() {
+		return "BasicConfiguration{name=" + name + ",batchSize=" + batchSize + ",inputConfiguration="
+				+ inputConfiguration + "}";
+	}
+
+	@Override
 	public String getName() {
 		return name;
 	}

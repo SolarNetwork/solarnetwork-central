@@ -36,6 +36,8 @@ import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 		implements InputConfiguration, Serializable {
 
+	private static final long serialVersionUID = 4114494359629338909L;
+
 	/**
 	 * Default constructor.
 	 */
@@ -54,8 +56,6 @@ public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 		setTimeZoneId(other.getTimeZoneId());
 	}
 
-	private static final long serialVersionUID = 4114494359629338909L;
-
 	private String timeZoneId;
 
 	@Override
@@ -65,6 +65,12 @@ public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 
 	public void setTimeZoneId(String timeZoneId) {
 		this.timeZoneId = timeZoneId;
+	}
+
+	@Override
+	public String toString() {
+		return "BasicInputConfiguration{timeZoneId=" + timeZoneId + ",service=" + getServiceIdentifier()
+				+ ",properties=" + getServiceProperties() + "}";
 	}
 
 }

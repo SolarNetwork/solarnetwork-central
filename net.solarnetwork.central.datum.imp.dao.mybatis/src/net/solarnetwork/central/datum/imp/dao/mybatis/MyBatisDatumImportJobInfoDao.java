@@ -154,10 +154,11 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public boolean updateJobProgress(UserUuidPK id, double percentComplete) {
-		Map<String, Object> params = new HashMap<>(2);
+	public boolean updateJobProgress(UserUuidPK id, double percentComplete, long loadedCount) {
+		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
 		params.put("progress", percentComplete);
+		params.put("loadedCount", loadedCount);
 		int count = getSqlSession().update(updateJobProgress, params);
 		return (count > 0);
 	}

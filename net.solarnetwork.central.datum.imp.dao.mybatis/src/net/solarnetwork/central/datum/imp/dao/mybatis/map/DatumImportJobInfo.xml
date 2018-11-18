@@ -170,6 +170,7 @@
 			solarnet.sn_datum_import_job
 		SET
 			progress = #{progress}
+			, load_count = #{loadedCount}
 			, modified = CURRENT_TIMESTAMP
 		WHERE
 			id = #{id.id}

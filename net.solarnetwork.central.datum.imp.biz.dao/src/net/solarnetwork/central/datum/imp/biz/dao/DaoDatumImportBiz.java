@@ -455,12 +455,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 		@Override
 		public DatumImportResult call() throws Exception {
-			progressChanged(null, 0);
-
-			log.info("Starting datum import job {} for user {} from resource {}", info.getId().getId(),
-					info.getUserId(), getImportDataFile(info.getId()));
-
 			// update status to indicate we've started
+			info.setPercentComplete(0);
 			info.setStarted(new DateTime());
 			updateTaskStatus(DatumImportState.Executing);
 
@@ -577,6 +573,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			SimpleBulkLoadingOptions loadingOptions = new SimpleBulkLoadingOptions(config.getName(),
 					batchSize, txMode, null);
 
+			log.info(
+					"Starting datum import job {} for user {} from resource {} and tx mode {}; configuration: {}",
+					info.getId().getId(), info.getUserId(), getImportDataFile(info.getId()), txMode,
+					config);
+
 			try (ImportContext input = createImportContext(info, this);
 					LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> loader = datumDao
 							.createBulkLoadingContext(loadingOptions, this)) {
@@ -617,7 +618,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			if ( progressExecutor == null ) {
 				progressExecutor = Executors.newSingleThreadExecutor();
 			}
-			progressExecutor.submit(new ProgressUpdater(info.getId(), amountComplete));
+			progressExecutor.submit(new ProgressUpdater(info.getId(), amountComplete, getLoadedCount()));
 			info.setPercentComplete(amountComplete);
 			postJobStatusChangedEvent(this, info);
 		}
@@ -726,16 +727,18 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 		private final UserUuidPK id;
 		private final double percentComplete;
+		private final long loadedCount;
 
-		private ProgressUpdater(UserUuidPK id, double percentComplete) {
+		private ProgressUpdater(UserUuidPK id, double percentComplete, long loadedCount) {
 			super();
 			this.id = id;
 			this.percentComplete = percentComplete;
+			this.loadedCount = loadedCount;
 		}
 
 		@Override
 		public void run() {
-			jobInfoDao.updateJobProgress(id, percentComplete);
+			jobInfoDao.updateJobProgress(id, percentComplete, loadedCount);
 		}
 
 	}
