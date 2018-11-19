@@ -43,8 +43,10 @@
 					<div class="complete hidden" data-tprop="completionDateDisplay"></div>
 				</td>
 				<td>
-					<span class="label label-danger success-error hidden"><fmt:message key='import.job.success.error'/></span>
-					<span class="label label-success success-ok hidden"><fmt:message key='import.job.success.ok'/></span>
+					<p>
+						<span class="label label-danger success-error hidden"><fmt:message key='import.job.success.error'/></span>
+						<span class="label label-success success-ok hidden"><fmt:message key='import.job.success.ok'/></span>
+					</p>
 					<div class="progress hidden">
 						<div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
 							<span data-tprop="progressAmount">0</span>%
