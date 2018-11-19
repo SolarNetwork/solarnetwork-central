@@ -348,7 +348,8 @@ public class DailyUsageUpdaterService implements ExecutableService {
 
 		String nextStartDate = ISO_DATE_FORMATTER.print(usageEndDay.toLocalDate());
 		if ( !recordsToAdd.isEmpty() ) {
-			Bundle bundle = bundleForUserNode(userNode, account);
+			DateTime bundleReqDate = (mostRecentUsageDate != null ? usageStartDay : null);
+			Bundle bundle = bundleForUserNode(userNode, account, bundleReqDate);
 			Subscription subscription = (bundle != null
 					? bundle.subscriptionWithPlanName(
 							addOnPlanName != null ? addOnPlanName : basePlanName)
@@ -469,7 +470,8 @@ public class DailyUsageUpdaterService implements ExecutableService {
 		return map;
 	}
 
-	protected Bundle bundleForUserNode(UserNode userNode, Account account) {
+	protected Bundle bundleForUserNode(UserNode userNode, Account account,
+			DateTime newBundleRequestDate) {
 		final String bundleKey = String.format(this.bundleKeyTemplate, userNode.getNode().getId());
 		Bundle bundle = client.bundleForExternalKey(account, bundleKey);
 		if ( bundle == null ) {
@@ -493,17 +495,22 @@ public class DailyUsageUpdaterService implements ExecutableService {
 				bundle.setSubscriptions(Arrays.asList(base, addOn));
 			}
 
-			// find requestedDate based on earliest data date
+			// find requestedDate based on earliest data date, if newBundleRequestDate not provided
 			DateTime oldestPostedDatumDate = null;
-			ReadableInterval dataInterval = nodeDatumDao
-					.getReportableInterval(userNode.getNode().getId(), null);
-			if ( dataInterval != null && dataInterval.getStart() != null ) {
-				oldestPostedDatumDate = dataInterval.getStart();
+			if ( newBundleRequestDate == null ) {
+				ReadableInterval dataInterval = nodeDatumDao
+						.getReportableInterval(userNode.getNode().getId(), null);
+				if ( dataInterval != null && dataInterval.getStart() != null ) {
+					oldestPostedDatumDate = dataInterval.getStart();
+				}
 			}
 
-			LocalDate requestedDate = (oldestPostedDatumDate != null ? oldestPostedDatumDate
-					.withZone(DateTimeZone.forTimeZone(timeZoneForAccount(account))).toLocalDate()
-					: null);
+			LocalDate requestedDate = (newBundleRequestDate != null ? newBundleRequestDate.toLocalDate()
+					: (oldestPostedDatumDate != null
+							? oldestPostedDatumDate
+									.withZone(DateTimeZone.forTimeZone(timeZoneForAccount(account)))
+									.toLocalDate()
+							: null));
 			String bundleId = client.createBundle(account, requestedDate, bundle);
 			log.info("Created bundle {} with ID {} with plan {} for user {} node {}", bundleKey,
 					bundleId, basePlanName, userNode.getUser().getEmail(), userNode.getNode().getId());
