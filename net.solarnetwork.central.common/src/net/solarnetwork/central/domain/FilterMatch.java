@@ -28,8 +28,8 @@ package net.solarnetwork.central.domain;
  * A filter result instance, e.g. search result.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
-public interface FilterMatch<PK> extends Identity<PK> {
+public interface FilterMatch<PK> extends net.solarnetwork.domain.Identity<PK> {
 
 }

@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -42,6 +43,7 @@ import org.junit.Test;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
@@ -55,12 +57,14 @@ import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
+import net.solarnetwork.test.Assertion;
+import net.solarnetwork.test.EasyMockUtils;
 
 /**
  * Test cases for the {@link UserExportBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserExportBizTests {
 
@@ -164,8 +168,9 @@ public class DaoUserExportBizTests {
 
 		Set<String> allSourceIds = new LinkedHashSet<>(
 				Arrays.asList("/foo/bar", "/test/foo", "/test/bar"));
-		expect(generalNodeDatumDao.getAvailableSources(TEST_NODE_ID, exportDate,
-				ScheduleType.Hourly.nextExportDate(exportDate))).andReturn(allSourceIds);
+		Capture<GeneralNodeDatumFilter> sourceFilterCaptor = new Capture<>();
+		expect(generalNodeDatumDao.getAvailableSources(capture(sourceFilterCaptor)))
+				.andReturn(allSourceIds);
 
 		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
 
@@ -190,6 +195,12 @@ public class DaoUserExportBizTests {
 		assertThat("Source IDs populated",
 				task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds(),
 				arrayContaining("/test/foo", "/test/bar"));
+
+		GeneralNodeDatumFilter sourceFilter = sourceFilterCaptor.getValue();
+		assertThat("Source filter node", sourceFilter.getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source filter start date", sourceFilter.getStartDate(), equalTo(exportDate));
+		assertThat("Source filter end date", sourceFilter.getEndDate(),
+				equalTo(ScheduleType.Hourly.nextExportDate(exportDate)));
 	}
 
 	@Test
@@ -213,10 +224,39 @@ public class DaoUserExportBizTests {
 		Set<String> allSourceIdsNode1 = new LinkedHashSet<>(
 				Arrays.asList("/foo/bar", "/test/foo", "/test/bar"));
 		Set<String> allSourceIdsNode2 = new LinkedHashSet<>(Arrays.asList("/test/bam"));
-		expect(generalNodeDatumDao.getAvailableSources(TEST_NODE_ID, exportDate,
-				ScheduleType.Hourly.nextExportDate(exportDate))).andReturn(allSourceIdsNode1);
-		expect(generalNodeDatumDao.getAvailableSources(TEST_NODE_ID_2, exportDate,
-				ScheduleType.Hourly.nextExportDate(exportDate))).andReturn(allSourceIdsNode2);
+		expect(generalNodeDatumDao
+				.getAvailableSources(EasyMockUtils.assertWith(new Assertion<GeneralNodeDatumFilter>() {
+
+					private int call = 0;
+
+					@Override
+					public void check(GeneralNodeDatumFilter sourceFilter) throws Throwable {
+						call++;
+						switch (call) {
+							case 1:
+								assertThat("Source filter 1 node", sourceFilter.getNodeId(),
+										equalTo(TEST_NODE_ID));
+								assertThat("Source filter 1 start date", sourceFilter.getStartDate(),
+										equalTo(exportDate));
+								assertThat("Source filter 1 end date", sourceFilter.getEndDate(),
+										equalTo(ScheduleType.Hourly.nextExportDate(exportDate)));
+								break;
+
+							case 2:
+								assertThat("Source filter 2 node", sourceFilter.getNodeId(),
+										equalTo(TEST_NODE_ID_2));
+								assertThat("Source filter 2 start date", sourceFilter.getStartDate(),
+										equalTo(exportDate));
+								assertThat("Source filter 2 end date", sourceFilter.getEndDate(),
+										equalTo(ScheduleType.Hourly.nextExportDate(exportDate)));
+								break;
+
+							default:
+								fail("Expected only 2 calls to getAvailableSources(filter)");
+						}
+
+					}
+				}))).andReturn(allSourceIdsNode1).andReturn(allSourceIdsNode2);
 
 		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
 

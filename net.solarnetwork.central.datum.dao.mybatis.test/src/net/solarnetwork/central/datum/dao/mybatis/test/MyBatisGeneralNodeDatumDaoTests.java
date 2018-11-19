@@ -35,6 +35,8 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +58,14 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ConnectionCallback;
+import org.springframework.test.context.transaction.TestTransaction;
+import org.springframework.transaction.PlatformTransactionManager;
+import net.solarnetwork.central.dao.BulkLoadingDao.LoadingContext;
+import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
+import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -68,15 +78,15 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
 /**
  * Test cases for the {@link MyBatisGeneralNodeDatumDao} class.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.8
  */
-@SuppressWarnings("deprecation")
 public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private static final String TEST_SOURCE_ID = "test.source";
@@ -87,10 +97,16 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 
 	private GeneralNodeDatum lastDatum;
 
+	@Autowired
+	private PlatformTransactionManager txManager;
+
 	@Before
 	public void setup() {
 		dao = new MyBatisGeneralNodeDatumDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
+
+		dao.getLoadingSupport().setDataSource(jdbcTemplate.getDataSource());
+		dao.getLoadingSupport().setTransactionManager(txManager);
 	}
 
 	private GeneralNodeDatum getTestInstance() {
@@ -3117,5 +3133,71 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertThat("End date", m.getSampleData().get("endDate"), equalTo((Object) ISODateTimeFormat
 				.dateTime().print(d1.getCreated().withZone(DateTimeZone.UTC)).replace('T', ' ')));
 		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
+	}
+
+	private List<GeneralNodeDatum> createSampleData(int count, DateTime start) {
+		List<GeneralNodeDatum> data = new ArrayList<>(4);
+		long wh = (long) (Math.random() * 1000000000.0);
+		for ( int i = 0; i < count; i++ ) {
+			GeneralNodeDatum d = new GeneralNodeDatum();
+			d.setNodeId(TEST_NODE_ID);
+			d.setCreated(start.plusMinutes(i));
+			d.setSourceId(TEST_SOURCE_ID);
+
+			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
+			int watts = (int) (Math.random() * 50000);
+			s.putInstantaneousSampleValue("watts", watts);
+			wh += wh + (long) (watts / 60.0);
+			s.putAccumulatingSampleValue("wattHours", wh);
+			d.setSamples(s);
+			data.add(d);
+		}
+		return data;
+	}
+
+	private int datumRowCount() {
+		return jdbcTemplate.queryForObject("select count(*) from solardatum.da_datum", Integer.class);
+	}
+
+	@Test
+	public void bulkImport() {
+		// given
+		SimpleBulkLoadingOptions options = new SimpleBulkLoadingOptions("Test load", null,
+				LoadingTransactionMode.SingleTransaction, null);
+
+		// when
+		List<GeneralNodeDatum> data = createSampleData(59,
+				new DateTime().hourOfDay().roundCeilingCopy().minusHours(1));
+		try (LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> ctx = dao.createBulkLoadingContext(
+				options, new LoadingExceptionHandler<GeneralNodeDatum, GeneralNodeDatumPK>() {
+
+					@Override
+					public void handleLoadingException(Throwable t,
+							LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> context) {
+						throw new RuntimeException(t);
+					}
+				})) {
+			for ( GeneralNodeDatum d : data ) {
+				ctx.load(d);
+			}
+			ctx.commit();
+		}
+
+		// then
+		assertThat("Datum rows imported", datumRowCount(), equalTo(data.size()));
+
+		// manually clean up transactionally circumvented data import data
+		TestTransaction.end();
+		jdbcTemplate.execute(new ConnectionCallback<Object>() {
+
+			@Override
+			public Object doInConnection(Connection con) throws SQLException, DataAccessException {
+				con.setAutoCommit(true);
+				con.createStatement().executeUpdate("delete from solardatum.da_datum");
+				con.createStatement().executeUpdate("delete from solaragg.agg_stale_datum");
+				con.createStatement().executeUpdate("delete from solaragg.aud_datum_hourly");
+				return null;
+			}
+		});
 	}
 }

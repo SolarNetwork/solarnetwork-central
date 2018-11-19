@@ -48,9 +48,8 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * Test cases for the {@link MyBatisGeneralNodeDatumMetadataDao} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-@SuppressWarnings("deprecation")
 public class MyBatisGeneralNodeDatumMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private static final String TEST_SOURCE_ID = "test.source";

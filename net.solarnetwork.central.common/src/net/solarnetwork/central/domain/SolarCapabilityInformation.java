@@ -25,18 +25,20 @@
 package net.solarnetwork.central.domain;
 
 /**
- * API for capability information for some identifiable object,
- * such as a node, node group, etc.
+ * API for capability information for some identifiable object, such as a node,
+ * node group, etc.
  * 
- * <p>This API is meant to be used for both atomic measurements
- * and aggregated measurements, depending on the context it is
- * used in.</p>
+ * <p>
+ * This API is meant to be used for both atomic measurements and aggregated
+ * measurements, depending on the context it is used in.
+ * </p>
  * 
- * @param <PK> the identity type
+ * @param <PK>
+ *        the identity type
  * @author matt
- * @version $Revision$
+ * @version 1.1
  */
-public interface SolarCapabilityInformation<PK> extends Identity<PK> {
+public interface SolarCapabilityInformation<PK> extends net.solarnetwork.domain.Identity<PK> {
 
 	/**
 	 * Get the name of the object.
@@ -51,14 +53,14 @@ public interface SolarCapabilityInformation<PK> extends Identity<PK> {
 	 * @return generation capacity watts
 	 */
 	Long getGenerationCapacityWatts();
-	
+
 	/**
 	 * Get a theoretical maximum power storage capacity.
 	 * 
 	 * @return storage capacity in watt hours
 	 */
 	Long getStorageCapacityWattHours();
-	
+
 	/**
 	 * Get the location of the node.
 	 * 

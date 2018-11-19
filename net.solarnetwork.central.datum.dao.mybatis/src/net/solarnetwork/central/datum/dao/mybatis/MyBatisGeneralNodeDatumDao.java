@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.dao.mybatis;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,8 +38,10 @@ import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.joda.time.ReadableInterval;
+import org.springframework.jdbc.support.SQLExceptionSubclassTranslator;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.common.dao.jdbc.BulkLoadingDaoSupport;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
@@ -62,12 +66,12 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.10
+ * @version 1.11
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
-		GeneralNodeDatumDao {
+		GeneralNodeDatumDao, ConfigurableBulkLoadingDao {
 
 	/** The query parameter for a class name value. */
 	public static final String PARAM_CLASS_NAME = "class";
@@ -207,6 +211,16 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String QUERY_FOR_DATUM_ACCUMULATION = "find-general-reporting-diff-within-local";
 
+	/**
+	 * The default value for the {@code BulkLoadingDaoSupport.jdbcCall}
+	 * property.
+	 * 
+	 * @since 1.11
+	 */
+	public static final String DEFAULT_BULK_LOADING_JDBC_CALL = "{call solardatum.store_datum(?, ?, ?, ?, ?)}";
+
+	private final BulkLoadingDaoSupport loadingSupport;
+
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
 	private String queryForDistinctNodeSources;
@@ -239,6 +253,8 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForDatumAt = QUERY_FOR_DATUM_RECORDS_AT;
 		this.queryForDatumBetween = QUERY_FOR_DATUM_RECORDS_BETWEEN;
 		this.queryForDatumAccumulation = QUERY_FOR_DATUM_ACCUMULATION;
+		this.loadingSupport = new BulkLoadingDaoSupport(log);
+		this.loadingSupport.setJdbcCall(DEFAULT_BULK_LOADING_JDBC_CALL);
 	}
 
 	/**
@@ -772,6 +788,66 @@ public class MyBatisGeneralNodeDatumDao
 				rows.size());
 	}
 
+	private class GeneralNodeDatumBulkLoadingContext
+			extends BulkLoadingDaoSupport.BulkLoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> {
+
+		private final Timestamp start;
+
+		private GeneralNodeDatumBulkLoadingContext(LoadingOptions options,
+				LoadingExceptionHandler<GeneralNodeDatum, GeneralNodeDatumPK> exceptionHandler)
+				throws SQLException {
+			loadingSupport.super(options, exceptionHandler);
+			start = new Timestamp(System.currentTimeMillis());
+		}
+
+		@Override
+		protected boolean doLoad(GeneralNodeDatum d, PreparedStatement stmt, long index)
+				throws SQLException {
+			stmt.setTimestamp(1, new Timestamp(d.getCreated().getMillis()));
+			stmt.setLong(2, d.getNodeId());
+			stmt.setString(3, d.getSourceId());
+			stmt.setTimestamp(4,
+					d.getPosted() != null ? new Timestamp(d.getPosted().getMillis()) : start);
+			stmt.setString(5, d.getSampleJson());
+			stmt.executeUpdate();
+			return true;
+		}
+
+	}
+
+	/**
+	 * Bulk import general node datum.
+	 * 
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * This implementation relies on the JDBC statement configured in
+	 * {@link BulkLoadingDaoSupport#setJdbcCall(String)}. That statement must
+	 * accept the following parameters, in the following order:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li>datum date - the date of the datum as a {@link Timestamp}</li>
+	 * <li>node ID</li>
+	 * <li>source ID</li>
+	 * <li>post date - the "post" or import date as a {@link Timestamp}</li>
+	 * <li>sample data - the datum sample data, in JSON form</li>
+	 * </ol>
+	 * 
+	 * @since 1.11
+	 */
+	@Override
+	public LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> createBulkLoadingContext(
+			LoadingOptions options,
+			LoadingExceptionHandler<GeneralNodeDatum, GeneralNodeDatumPK> exceptionHandler) {
+		try {
+			return new GeneralNodeDatumBulkLoadingContext(options, exceptionHandler);
+		} catch ( SQLException e ) {
+			throw new SQLExceptionSubclassTranslator()
+					.translate("Bulk loading [" + options.getName() + "]", null, e);
+		}
+	}
+
 	public String getQueryForReportableInterval() {
 		return queryForReportableInterval;
 	}
@@ -922,6 +998,17 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setQueryForDistinctNodeSources(String queryForDistinctNodeSources) {
 		this.queryForDistinctNodeSources = queryForDistinctNodeSources;
+	}
+
+	/**
+	 * Get the bulk loading support.
+	 * 
+	 * @return the support
+	 * @since 1.11
+	 */
+	@Override
+	public BulkLoadingDaoSupport getLoadingSupport() {
+		return loadingSupport;
 	}
 
 }

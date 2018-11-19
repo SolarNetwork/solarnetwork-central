@@ -22,21 +22,23 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import net.solarnetwork.util.SerializeIgnore;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import net.solarnetwork.util.SerializeIgnore;
 
 /**
  * Extension of {@link GeneralLocationDatum} with some additional properties
  * geared towards reporting.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class ReportingGeneralLocationDatum extends GeneralLocationDatum implements
-		ReportingGeneralLocationDatumMatch {
+@JsonPropertyOrder({ "created", "locationId", "sourceId", "localDate", "localTime" })
+public class ReportingGeneralLocationDatum extends GeneralLocationDatum
+		implements ReportingGeneralLocationDatumMatch {
 
 	private static final long serialVersionUID = 5597767213979321230L;
 

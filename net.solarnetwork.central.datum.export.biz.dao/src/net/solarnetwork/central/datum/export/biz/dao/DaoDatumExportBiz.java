@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
@@ -77,7 +78,7 @@ import net.solarnetwork.util.ProgressListener;
  * DAO-based implementation of {@link DatumExportBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoDatumExportBiz implements DatumExportBiz {
 
@@ -97,6 +98,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	private final ScheduledExecutorService scheduler;
 	private final ExecutorService executor;
 	private final TransactionTemplate transactionTemplate;
+	private ScheduledFuture<?> taskPurgerTask;
 
 	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, QueryBiz queryBiz,
 			ScheduledExecutorService scheduler, ExecutorService executor,
@@ -107,9 +109,38 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 		this.scheduler = scheduler;
 		this.executor = executor;
 		this.transactionTemplate = transactionTemplate;
+	}
 
-		// purge completed tasks every hour
-		this.scheduler.scheduleWithFixedDelay(new TaskPurger(), 1L, 1L, TimeUnit.HOURS);
+	/**
+	 * Initialize after properties configured.
+	 * 
+	 * <p>
+	 * Call this method once all properties have been configured on the
+	 * instance.
+	 * </p>
+	 * 
+	 * @since 1.1
+	 */
+	public void init() {
+		if ( taskPurgerTask != null ) {
+			return;
+		}
+		if ( scheduler != null ) {
+			// purge completed tasks every hour
+			this.taskPurgerTask = scheduler.scheduleWithFixedDelay(new TaskPurger(), 1L, 1L,
+					TimeUnit.HOURS);
+		}
+	}
+
+	/**
+	 * Shutdown after the service is no longer needed.
+	 * 
+	 * @since 1.1
+	 */
+	public void shutdown() {
+		if ( taskPurgerTask != null ) {
+			taskPurgerTask.cancel(true);
+		}
 	}
 
 	private final class TaskPurger implements Runnable {

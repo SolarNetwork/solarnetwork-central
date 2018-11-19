@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.9
+ * @version 1.10
  */
 public abstract class WebServiceControllerSupport {
 
@@ -118,7 +119,7 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(TypeMismatchException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Illegal argument")
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleTypeMismatchException(TypeMismatchException e,
 			HttpServletResponse response) {
 		log.error("TypeMismatchException in {} controller", getClass().getSimpleName(), e);
@@ -135,7 +136,7 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(IllegalArgumentException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Illegal argument")
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleIllegalArgumentException(IllegalArgumentException e) {
 		log.error("IllegalArgumentException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
@@ -151,7 +152,7 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(JsonParseException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Malformed JSON")
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleJsonParseException(JsonParseException e) {
 		log.error("JsonParseException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getMessage(), null);
@@ -168,7 +169,7 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Malformed JSON")
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
 		Throwable t = e.getMostSpecificCause();
 		if ( t instanceof JsonParseException ) {
@@ -188,7 +189,7 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	@ResponseBody
-	@ResponseStatus(reason = "Data integrity violation")
+	@ResponseStatus
 	public Response<?> handleDataIntegrityViolationException(DataIntegrityViolationException e,
 			Locale locale) {
 		log.warn("DataIntegrityViolationException in {} controller", getClass().getSimpleName(), e);
@@ -244,7 +245,7 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(BindException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Input validation error")
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleBindException(BindException e, Locale locale) {
 		log.debug("BindException in {} controller", getClass().getSimpleName(), e);
 		String msg = generateErrorsMessage(e, locale, messageSource);
@@ -278,12 +279,37 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(ValidationException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY, reason = "Input validation error")
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleValidationException(ValidationException e, Locale locale) {
 		log.debug("ValidationException in {} controller", getClass().getSimpleName(), e);
 		String msg = generateErrorsMessage(e.getErrors(), locale,
 				e.getMessageSource() != null ? e.getMessageSource() : messageSource);
 		return new Response<Object>(Boolean.FALSE, null, msg, null);
+	}
+
+	/**
+	 * Handle an {@link ExecutionException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param response
+	 *        the response
+	 * @return an error response object
+	 * @since 1.10
+	 */
+	@ExceptionHandler(ExecutionException.class)
+	@ResponseBody
+	@ResponseStatus
+	public Response<?> handleExecutionException(ExecutionException e) {
+		log.debug("ExecutionException in {} controller", getClass().getSimpleName(), e);
+		Throwable cause = e;
+		while ( cause.getCause() != null ) {
+			cause = cause.getCause();
+		}
+		if ( cause instanceof IllegalArgumentException ) {
+			return handleIllegalArgumentException((IllegalArgumentException) cause);
+		}
+		return new Response<Object>(Boolean.FALSE, "EE.00500", cause.getMessage(), null);
 	}
 
 	/**

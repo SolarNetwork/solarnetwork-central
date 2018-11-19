@@ -23,7 +23,7 @@
 package net.solarnetwork.central.common.security.web.test;
 
 import static net.solarnetwork.web.security.AuthenticationData.nullSafeHeaderValue;
-import static net.solarnetwork.web.security.AuthenticationData.uriEncode;
+import static net.solarnetwork.web.security.AuthenticationUtils.uriEncode;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
@@ -51,7 +51,7 @@ import net.solarnetwork.web.security.WebConstants;
  * Utilities for unit tests.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class SecurityWebTestUtils {
 

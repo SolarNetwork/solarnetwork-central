@@ -48,7 +48,7 @@ import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
  * DAO based implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 @Service
 public class DaoInstructorBiz implements InstructorBiz {
@@ -82,7 +82,6 @@ public class DaoInstructorBiz implements InstructorBiz {
 				: Collections.<NodeInstructionQueueHook> emptyList());
 	}
 
-	@SuppressWarnings("deprecation")
 	private List<Instruction> asResultList(FilterResults<EntityMatch> matches) {
 		List<Instruction> results = new ArrayList<Instruction>(matches.getReturnedResultCount());
 		for ( EntityMatch match : matches.getResults() ) {
@@ -95,7 +94,6 @@ public class DaoInstructorBiz implements InstructorBiz {
 		return results;
 	}
 
-	@SuppressWarnings("deprecation")
 	private List<NodeInstruction> asNodeInstructionList(FilterResults<EntityMatch> matches) {
 		List<NodeInstruction> results = new ArrayList<NodeInstruction>(matches.getReturnedResultCount());
 		for ( EntityMatch match : matches.getResults() ) {

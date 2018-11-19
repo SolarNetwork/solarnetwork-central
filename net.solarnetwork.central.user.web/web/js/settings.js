@@ -2,6 +2,8 @@
 
 SolarReg.Settings = {};
 
+SolarReg.Settings.modalAlertBeforeSelector = '.modal-body:not(.hidden):first > *:first-child';
+
 /**
  * Reset an edit service form for reuse.
  * 
@@ -9,10 +11,10 @@ SolarReg.Settings = {};
  * @param {jQuery} container a container element of existing list items to delete from, if the form closed after a delete action
  */
 SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, container) {
-	var id = form.elements['id'].value;
+	var id = (form.elements && form.elements['id'] ? form.elements['id'].value : undefined);
 	var f = $(form);
 	// look if we deleted an item, which will only be true if form in "danger" mode
-	if ( id && f.hasClass('deleted') ) {
+	if ( id && container && f.hasClass('deleted') ) {
 		var existing = SolarReg.Templates.findExistingTemplateItem(container, id);
 		if ( existing.length > 0 ) {
 			existing.remove();
@@ -27,7 +29,9 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 	f.find('.service-props-container').empty().addClass('hidden');
 
 	// reset form and modal for next item
-	form.reset();
+	if ( typeof form.reset === 'function' ) {
+		form.reset();
+	}
 	f.find('input[type=hidden]').val('');
 
 	// clear delete status
@@ -38,6 +42,9 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 
 	// clear any context item
 	SolarReg.Templates.setContextItem(f, null);
+	
+	// clean any alert
+	f.find(SolarReg.Settings.modalAlertBeforeSelector +'.alert-warning').remove();
 };
 
 /**
@@ -77,13 +84,13 @@ SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditService
 					modal.modal('hide');
 				} else {
 					var msg = (json && json.message ? json.message : 'Unknown error: ' +statusText);
-					SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', msg);
+					SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', msg);
 				}
 			}).fail(function(xhr, statusText, error) {
 				modal.removeClass('danger');
 				modal.find('.delete-confirm').addClass('hidden');
 				submitBtn.prop('disabled', false);
-				SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', statusText);
+				SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', statusText);
 			});
 		} else {
 			modal.modal('hide');
@@ -93,7 +100,7 @@ SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditService
 
 SolarReg.Settings.focusEditServiceForm = function focusEditServiceForm(event) {
 	var form = event.target;
-	$(form).find('input[type=text]').first().focus();
+	$(form).find('input[type=text]').first().trigger('focus');
 };
 
 /**
@@ -432,27 +439,60 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
  * @param {event} event the submit event that triggered form submission
  * @param {function} onSuccess a callback to invoke on success; will be passed the upload body object and the response body object
  * @param {function} [serializer] a callback to invoke to serialize the form data; will be passed the form object and must return
- *                                an object that will be serialized into JSON via `JSON.stringify`
+ *                                an object that will be serialized into JSON via `JSON.stringify` or a FormData object
+ * @param {object} [options] an object with optional configuration properties
+ * @param {function} [options.download] an optional download progress event callback function
+ * @param {function} [options.upload] an optional upload progress event callback function
+ * @param {function} [options.urlSerializer] an optional function to generate the submit URL; will be passed the form action (decoded) and the serialized body content;
+ *                                           defaults to `SolarReg.replaceTemplateParameters`
+ * @param {function} [options.urlId] if `true` then if the form as an `id` input with a non-empty value, add the value to the submit URL after a `/`
  * @returns {jqXHR} the jQuery XHR object
  */
-SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess, serializer) {
+SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess, serializer, options) {
 	event.preventDefault();
 	var form = event.target;
 	var modal = $(form);
 	var body = (typeof serializer === 'function' 
 		? serializer(form) 
 		: SolarReg.Settings.encodeServiceItemForm(form));
-	var submitUrl = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(form.action), body));
-	return $.ajax({
+	var urlFn = (options && typeof options.urlSerializer === 'function' 
+		? options.urlSerializer 
+		: SolarReg.replaceTemplateParameters);
+	var action = (options && options.urlId && form.elements['id'] && form.elements['id'].value
+		? form.action + '/' + encodeURIComponent(form.elements['id'].value)
+		: form.action);
+	var submitUrl = encodeURI(urlFn(decodeURI(action), body));
+	var origXhr = $.ajaxSettings.xhr;
+	var jqXhrOpts = {
 		type: 'POST',
 		url: submitUrl,
-		contentType: "application/json; charset=utf-8",
-		data : JSON.stringify(body),
-		dataType: 'json',
+		xhr: function() {
+			var xhr = origXhr.apply(this, arguments);
+			if ( options && typeof options.upload === 'function' && xhr.upload ) {
+				xhr.upload.addEventListener('progress', options.upload);
+			}
+			if ( options && typeof options.download === 'function' ) {
+				xhr.addEventListener('progress', options.upload);
+			}
+			return xhr;
+		},
 		beforeSend: function(xhr) {
 			SolarReg.csrf(xhr);
 		}
-	}).done(function(json, statusText) {
+	};
+	modal.find('button[type=submit]').prop('disabled', true);
+	if ( body instanceof FormData ) {
+		jqXhrOpts.data = body;
+		jqXhrOpts.contentType = false;
+		jqXhrOpts.processData = false;
+	} else {
+		if ( body ) {
+			jqXhrOpts.data = JSON.stringify(body);
+			jqXhrOpts.contentType = 'application/json; charset=utf-8';
+		}
+		jqXhrOpts.dataType = 'json';
+	}
+	return $.ajax(jqXhrOpts).done(function(json, statusText) {
 		console.log('Save config result: %o', json);
 		if ( json && json.success === true ) {
 			if ( typeof onSuccess === 'function' ) {
@@ -461,9 +501,17 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 			modal.modal('hide');
 		} else {
 			var msg = (json && json.message ? json.message : 'Unknown error: ' +statusText);
-			SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', msg);
+			SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', msg);
 		}
 	}).fail(function(xhr, statusText, error) {
-		SolarReg.showAlertBefore(modal.find('.modal-body:first > *:first-child'), 'alert-warning', statusText);
+		var json = {};
+		if ( xhr.responseJSON ) {
+			json = xhr.responseJSON;
+		} else if ( xhr.responseText ) {
+			json = JSON.parse(xhr.responseText);
+		}
+		var msg = 'Error: ' +(json && json.message ? json.message : statusText);
+		var el = modal.find(SolarReg.Settings.modalAlertBeforeSelector);
+		SolarReg.showAlertBefore(el, 'alert-warning', msg);
 	});
 };
