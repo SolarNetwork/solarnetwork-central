@@ -43,10 +43,10 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDataConfigurationDao;
-import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 
 /**

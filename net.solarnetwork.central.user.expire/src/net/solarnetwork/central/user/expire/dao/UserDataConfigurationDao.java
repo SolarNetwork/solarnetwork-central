@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.user.expire.dao;
 
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
-import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 
 /**

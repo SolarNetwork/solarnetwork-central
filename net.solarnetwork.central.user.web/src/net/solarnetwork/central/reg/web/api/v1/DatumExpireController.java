@@ -35,11 +35,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.reg.web.domain.DatumExpireFullConfigurations;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.domain.DataConfiguration;
-import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.util.OptionalService;
@@ -49,7 +49,7 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for datum expire management.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.29
  */
 @RestController("v1DatumExpireController")

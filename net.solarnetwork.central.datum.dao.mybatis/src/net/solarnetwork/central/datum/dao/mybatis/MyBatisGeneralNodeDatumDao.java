@@ -49,6 +49,7 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
@@ -66,7 +67,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.11
+ * @version 1.12
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -219,6 +220,21 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String DEFAULT_BULK_LOADING_JDBC_CALL = "{call solardatum.store_datum(?, ?, ?, ?, ?)}";
 
+	/**
+	 * The default value for the {@code BulkLoadingDaoSupport.jdbcCall}
+	 * property.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String QUERY_FOR_DATUM_RECORD_COUNTS = "TODO";
+	/**
+	 * The default value for the {@code BulkLoadingDaoSupport.jdbcCall}
+	 * property.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String DELETE_FILTERED = "TODO";
+
 	private final BulkLoadingDaoSupport loadingSupport;
 
 	private String queryForReportableInterval;
@@ -234,6 +250,8 @@ public class MyBatisGeneralNodeDatumDao
 	private String queryForDatumAt;
 	private String queryForDatumBetween;
 	private String queryForDatumAccumulation;
+	private String queryForDatumRecordCounts;
+	private String deleteFiltered;
 
 	/**
 	 * Default constructor.
@@ -255,6 +273,8 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForDatumAccumulation = QUERY_FOR_DATUM_ACCUMULATION;
 		this.loadingSupport = new BulkLoadingDaoSupport(log);
 		this.loadingSupport.setJdbcCall(DEFAULT_BULK_LOADING_JDBC_CALL);
+		this.queryForDatumRecordCounts = QUERY_FOR_DATUM_RECORD_COUNTS;
+		this.deleteFiltered = DELETE_FILTERED;
 	}
 
 	/**
@@ -788,6 +808,30 @@ public class MyBatisGeneralNodeDatumDao
 				rows.size());
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.12
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public DatumRecordCounts countDatumRecords(GeneralNodeDatumFilter filter) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.12
+	 */
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public long deleteFiltered(GeneralNodeDatumFilter filter) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 	private class GeneralNodeDatumBulkLoadingContext
 			extends BulkLoadingDaoSupport.BulkLoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> {
 
@@ -1009,6 +1053,31 @@ public class MyBatisGeneralNodeDatumDao
 	@Override
 	public BulkLoadingDaoSupport getLoadingSupport() {
 		return loadingSupport;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #countDatumRecords(GeneralNodeDatumFilter)} method.
+	 * 
+	 * @param queryForDatumRecordCounts
+	 *        the statement name; defaults to
+	 *        {@link QUERY_FOR_DATUM_RECORD_COUNTS}
+	 * @since 1.12
+	 */
+	public void setQueryForDatumRecordCounts(String queryForDatumRecordCounts) {
+		this.queryForDatumRecordCounts = queryForDatumRecordCounts;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #deleteFiltered(GeneralNodeDatumFilter)} method.
+	 * 
+	 * @param deleteFiltered
+	 *        the statement name; defaults to {@link DELETE_FILTERED}
+	 * @since 1.12
+	 */
+	public void setDeleteDatumRecordCounts(String deleteFiltered) {
+		this.deleteFiltered = deleteFiltered;
 	}
 
 }

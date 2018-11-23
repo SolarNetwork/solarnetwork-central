@@ -105,7 +105,7 @@
 			lower(udac.cname), udac.id
 	</select>
 	
-	<resultMap id="DatumRecordCountsFullResult" type="net.solarnetwork.central.user.expire.domain.DatumRecordCounts">
+	<resultMap id="DatumRecordCountsFullResult" type="net.solarnetwork.central.datum.domain.DatumRecordCounts">
 		<result property="date" column="query_date"/>
 		<result property="datumCount" column="datum_count"/>
 		<result property="datumHourlyCount" column="datum_hourly_count"/>
