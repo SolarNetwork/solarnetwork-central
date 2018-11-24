@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
@@ -69,6 +70,7 @@ import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -85,7 +87,7 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  * Test cases for the {@link MyBatisGeneralNodeDatumDao} class.
  * 
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -2393,6 +2395,15 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertThat(desc + " datum monthly count", row.getDatumMonthlyCount(), equalTo(monthCount));
 	}
 
+	private void assertDatumRecordCounts(String desc, DatumRecordCounts row, Long rawCount,
+			Long hourCount, Integer dayCount, Integer monthCount) {
+		assertThat(desc + " not null", row, notNullValue());
+		assertThat(desc + " datum count", row.getDatumCount(), equalTo(rawCount));
+		assertThat(desc + " datum hourly count", row.getDatumHourlyCount(), equalTo(hourCount));
+		assertThat(desc + " datum daily count", row.getDatumDailyCount(), equalTo(dayCount));
+		assertThat(desc + " datum monthly count", row.getDatumMonthlyCount(), equalTo(monthCount));
+	}
+
 	@Test
 	public void findAccumulativeAuditDatumRecordCountsDayAggregationNoRollup() {
 		// given
@@ -3200,4 +3211,112 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 			}
 		});
 	}
+
+	private List<Map<String, Object>> getDatum() {
+		return jdbcTemplate
+				.queryForList("select * from solardatum.da_datum order by node_id,ts,source_id");
+	}
+
+	private List<Map<String, Object>> getDatumAggregateHourly() {
+		return jdbcTemplate.queryForList(
+				"select * from solaragg.agg_datum_hourly order by node_id,ts_start,source_id");
+	}
+
+	private List<Map<String, Object>> getDatumAggregateDaily() {
+		return jdbcTemplate.queryForList(
+				"select * from solaragg.agg_datum_daily order by node_id,ts_start,source_id");
+	}
+
+	private List<Map<String, Object>> getDatumAggregateMonthly() {
+		return jdbcTemplate.queryForList(
+				"select * from solaragg.agg_datum_monthly order by node_id,ts_start,source_id");
+	}
+
+	@Test
+	public void findDatumRecordCountsLocal() {
+		// given
+		DateTime ts = new DateTime(2018, 11, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.store(d1);
+		dao.store(d2);
+
+		DateTime ts2 = new DateTime(2018, 11, 2, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum d3 = getTestInstance(ts2.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d4 = getTestInstance(ts2.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.store(d3);
+		dao.store(d4);
+
+		DateTime ts3 = new DateTime(2018, 11, 3, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum d5 = getTestInstance(ts3.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		GeneralNodeDatum d6 = getTestInstance(ts3.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.store(d5);
+		dao.store(d6);
+
+		processAggregateStaleData();
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setLocalStartDate(new LocalDateTime(2018, 11, 1, 0, 0));
+		filter.setLocalEndDate(new LocalDateTime(2018, 11, 3, 0, 0));
+		DatumRecordCounts result = dao.countDatumRecords(filter);
+
+		// then
+		assertDatumRecordCounts("Counts ", result, 4L /* d2, d3, d4, d5 */,
+				4L /* 2018-11-01 00, 2018-11-01 23, 2018-11-02 00, 2018-02-23 */,
+				2 /* 2018-11-01, 2018-11-02 */, 0);
+	}
+
+	@Test
+	public void deleteForFilterLocal() {
+		// given
+		findDatumRecordCountsLocal();
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setLocalStartDate(new LocalDateTime(2018, 11, 1, 0, 0));
+		filter.setLocalEndDate(new LocalDateTime(2018, 11, 3, 0, 0));
+		long result = dao.deleteFiltered(filter);
+
+		processAggregateStaleData();
+
+		// then
+		assertThat("Raw delete count", result, equalTo(4L));
+
+		DateTime ts = new DateTime(2018, 11, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts3 = new DateTime(2018, 11, 3, 0, 0, 0, ts.getZone());
+
+		List<Map<String, Object>> rawData = getDatum();
+		assertThat("Remaining raw count", rawData, hasSize(2));
+		assertThat("Raw 1 date", rawData.get(0).get("ts"),
+				equalTo(new Timestamp(ts.minusMinutes(1).getMillis())));
+		assertThat("Raw 2 date", rawData.get(1).get("ts"),
+				equalTo(new Timestamp(ts3.plusMinutes(1).getMillis())));
+
+		List<Map<String, Object>> hourData = getDatumAggregateHourly();
+		assertThat("Remaining hour count", hourData, hasSize(2));
+		assertThat("Hour 1 date", hourData.get(0).get("ts_start"),
+				equalTo(new Timestamp(ts.minusMinutes(1).hourOfDay().roundFloorCopy().getMillis())));
+		assertThat("Hour 2 date", hourData.get(1).get("ts_start"),
+				equalTo(new Timestamp(ts3.plusMinutes(1).hourOfDay().roundFloorCopy().getMillis())));
+
+		List<Map<String, Object>> dayData = getDatumAggregateDaily();
+		assertThat("Remaining day count", dayData, hasSize(2));
+		assertThat("Day 1 date", dayData.get(0).get("ts_start"),
+				equalTo(new Timestamp(ts.minusMinutes(1).dayOfMonth().roundFloorCopy().getMillis())));
+		assertThat("Day 2 date", dayData.get(1).get("ts_start"),
+				equalTo(new Timestamp(ts3.plusMinutes(1).dayOfMonth().roundFloorCopy().getMillis())));
+
+		List<Map<String, Object>> monthData = getDatumAggregateMonthly();
+		assertThat("Remaining month count", monthData, hasSize(2));
+		assertThat("Month 1 date", monthData.get(0).get("ts_start"),
+				equalTo(new Timestamp(ts.minusMinutes(1).monthOfYear().roundFloorCopy().getMillis())));
+		assertThat("Month 2 date", monthData.get(1).get("ts_start"),
+				equalTo(new Timestamp(ts3.plusMinutes(1).monthOfYear().roundFloorCopy().getMillis())));
+	}
+
 }

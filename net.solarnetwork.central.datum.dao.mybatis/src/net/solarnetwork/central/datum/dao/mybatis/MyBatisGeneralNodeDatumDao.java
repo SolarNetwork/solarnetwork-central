@@ -62,6 +62,7 @@ import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
@@ -221,19 +222,20 @@ public class MyBatisGeneralNodeDatumDao
 	public static final String DEFAULT_BULK_LOADING_JDBC_CALL = "{call solardatum.store_datum(?, ?, ?, ?, ?)}";
 
 	/**
-	 * The default value for the {@code BulkLoadingDaoSupport.jdbcCall}
-	 * property.
+	 * The default query name for the
+	 * {@link #countDatumRecords(GeneralNodeDatumFilter)} method.
 	 * 
 	 * @since 1.12
 	 */
-	public static final String QUERY_FOR_DATUM_RECORD_COUNTS = "TODO";
+	public static final String QUERY_FOR_DATUM_RECORD_COUNTS = "find-datum-record-counts-for-filter";
+
 	/**
-	 * The default value for the {@code BulkLoadingDaoSupport.jdbcCall}
-	 * property.
+	 * The default query name for the
+	 * {@link #deleteFiltered(GeneralNodeDatumFilter)} method.
 	 * 
 	 * @since 1.12
 	 */
-	public static final String DELETE_FILTERED = "TODO";
+	public static final String DELETE_FILTERED = "delete-GeneralNodeDatum-for-filter";
 
 	private final BulkLoadingDaoSupport loadingSupport;
 
@@ -816,8 +818,10 @@ public class MyBatisGeneralNodeDatumDao
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public DatumRecordCounts countDatumRecords(GeneralNodeDatumFilter filter) {
-		// TODO Auto-generated method stub
-		return null;
+		Map<String, Object> sqlProps = new HashMap<>(2);
+		sqlProps.put(PARAM_FILTER, filter);
+		sqlProps.put("filterJson", JsonUtils.getJSONString(filter, null));
+		return selectFirst(queryForDatumRecordCounts, sqlProps);
 	}
 
 	/**
@@ -828,8 +832,10 @@ public class MyBatisGeneralNodeDatumDao
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public long deleteFiltered(GeneralNodeDatumFilter filter) {
-		// TODO Auto-generated method stub
-		return 0;
+		Map<String, Object> sqlProps = new HashMap<>(2);
+		sqlProps.put(PARAM_FILTER, filter);
+		sqlProps.put("filterJson", JsonUtils.getJSONString(filter, null));
+		return selectLong(deleteFiltered, sqlProps);
 	}
 
 	private class GeneralNodeDatumBulkLoadingContext
