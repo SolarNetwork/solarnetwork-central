@@ -16,9 +16,19 @@
 		interface="net.solarnetwork.central.user.expire.biz.UserExpireBiz"
 		filter="(!(secured=true))"/>
 	
+	<reference id="userDatumDeleteBiz"
+		interface="net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz"
+		filter="(!(secured=true))"/>
+	
 	<!-- Published Services -->
 
 	<service ref="aopUserExpireBiz" interface="net.solarnetwork.central.user.expire.biz.UserExpireBiz" ranking="10">
+		<service-properties>
+			<entry key="secured" value="true"/>
+		</service-properties>
+	</service>
+
+	<service ref="aopUserDatumDeleteBiz" interface="net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz" ranking="10">
 		<service-properties>
 			<entry key="secured" value="true"/>
 		</service-properties>
@@ -34,6 +44,10 @@
 	
 	<bean id="aopUserExpireBiz" class="net.solarnetwork.central.user.expire.support.DelegatingUserExpireBiz">
 		<argument ref="userExportBiz"/>
+	</bean>
+	
+	<bean id="aopUserDatumDeleteBiz" class="net.solarnetwork.central.user.expire.support.DelegatingUserDatumDeleteBiz">
+		<argument ref="userDatumDeleteBiz"/>
 	</bean>
 
 </blueprint>
