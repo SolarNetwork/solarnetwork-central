@@ -56,6 +56,10 @@
 	</table>
 </section>
 
+<c:if test="${not empty datumDeleteBiz}">
+	<jsp:include page="datum-delete.jsp"/>
+</c:if>
+
 <%-- Modal forms --%>
 
 <jsp:include page="edit-data-modal.jsp"/>

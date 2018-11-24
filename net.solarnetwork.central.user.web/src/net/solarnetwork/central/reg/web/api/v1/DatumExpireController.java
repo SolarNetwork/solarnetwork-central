@@ -35,9 +35,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.reg.web.domain.DatumExpireFullConfigurations;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.domain.DataConfiguration;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
@@ -49,7 +51,7 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for datum expire management.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.29
  */
 @RestController("v1DatumExpireController")
@@ -57,17 +59,22 @@ import net.solarnetwork.web.domain.Response;
 public class DatumExpireController {
 
 	private final OptionalService<UserExpireBiz> expireBiz;
+	private final OptionalService<UserDatumDeleteBiz> datumDeleteBiz;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param expireBiz
-	 *        the expire biz to use
+	 *        the expire service to use
+	 * @param datumDeleteBiz
+	 *        the datum delete service to use
 	 */
 	@Autowired
-	public DatumExpireController(@Qualifier("expireBiz") OptionalService<UserExpireBiz> expireBiz) {
+	public DatumExpireController(@Qualifier("expireBiz") OptionalService<UserExpireBiz> expireBiz,
+			@Qualifier("datumDeleteBiz") OptionalService<UserDatumDeleteBiz> datumDeleteBiz) {
 		super();
 		this.expireBiz = expireBiz;
+		this.datumDeleteBiz = datumDeleteBiz;
 	}
 
 	@ResponseBody
@@ -144,5 +151,30 @@ public class DatumExpireController {
 			}
 		}
 		return response(counts);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/datum-delete", method = RequestMethod.POST)
+	public Response<DatumRecordCounts> previewDataDelete(DatumFilterCommand filter) {
+		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
+		DatumRecordCounts counts = null;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			filter.setUserIds(new Long[] { userId });
+			counts = biz.countDatumRecords(filter);
+		}
+		return response(counts);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/datum-delete/confirm", method = RequestMethod.POST)
+	public Response<Void> confirmDataDelete(DatumFilterCommand filter) {
+		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			filter.setUserIds(new Long[] { userId });
+			biz.deleteFiltered(filter);
+		}
+		return response(null);
 	}
 }
