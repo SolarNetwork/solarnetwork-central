@@ -22,8 +22,17 @@
 
 package net.solarnetwork.central.user.expire.biz.dao;
 
+import static java.util.Arrays.stream;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
@@ -45,17 +54,24 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz {
 
 	private final UserNodeDao userNodeDao;
 	private final GeneralNodeDatumDao datumDao;
+	private final ExecutorService executor;
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	/**
 	 * Constructor.
 	 * 
+	 * @param executor
+	 *        the executor service to use
 	 * @param userNodeDao
 	 *        the user node DAO to use
 	 * @param datumDao
 	 *        the datum DAO to use
 	 */
-	public DaoUserDatumDeleteBiz(UserNodeDao userNodeDao, GeneralNodeDatumDao datumDao) {
+	public DaoUserDatumDeleteBiz(ExecutorService executor, UserNodeDao userNodeDao,
+			GeneralNodeDatumDao datumDao) {
 		super();
+		this.executor = executor;
 		this.userNodeDao = userNodeDao;
 		this.datumDao = datumDao;
 	}
@@ -89,13 +105,40 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public long deleteFiltered(GeneralNodeDatumFilter filter) {
-		filter = prepareFilter(filter);
-		if ( filter.getNodeId() == null ) {
-			return 0L;
+	public Future<Long> deleteFiltered(GeneralNodeDatumFilter filter) {
+		GeneralNodeDatumFilter f = prepareFilter(filter);
+		if ( f.getNodeId() == null ) {
+			CompletableFuture<Long> result = new CompletableFuture<>();
+			result.complete(0L);
+			return result;
 		}
-		return datumDao.deleteFiltered(filter);
+		final UUID id = UUID.randomUUID();
+		final String nodeIds = (filter.getNodeIds() != null
+				? stream(filter.getNodeIds()).map(n -> n.toString()).collect(Collectors.joining(","))
+				: "*");
+		final String sourceIds = (filter.getSourceIds() != null
+				? stream(filter.getSourceIds()).collect(Collectors.joining(","))
+				: "*");
+		log.info("Submitting user {} datum delete request {}: nodes = {}; sources = {}; {} - {}",
+				filter.getUserId(), id, nodeIds, sourceIds, filter.getLocalStartDate(),
+				filter.getLocalEndDate());
+		return executor.submit(new Callable<Long>() {
+
+			@Override
+			public Long call() throws Exception {
+				log.info("Executing user {} datum delete request {}: nodes = {}; sources = {}; {} - {}",
+						filter.getUserId(), id, nodeIds, sourceIds, filter.getLocalStartDate(),
+						filter.getLocalEndDate());
+				final long start = System.currentTimeMillis();
+				long result = datumDao.deleteFiltered(f);
+				log.info(
+						"Deleted {} datum in {}s for user {} request {}: nodes = {}; sources = {}; {} - {}",
+						result, (int) ((System.currentTimeMillis() - start) / 1000.0),
+						filter.getUserId(), id, nodeIds, sourceIds, filter.getLocalStartDate(),
+						filter.getLocalEndDate());
+				return result;
+			}
+		});
 	}
 
 }

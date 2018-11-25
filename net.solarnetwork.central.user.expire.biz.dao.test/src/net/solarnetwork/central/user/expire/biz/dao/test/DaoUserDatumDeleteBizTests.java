@@ -42,6 +42,7 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserDatumDeleteBiz;
 
@@ -62,7 +63,7 @@ public class DaoUserDatumDeleteBizTests {
 	public void setup() {
 		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
-		biz = new DaoUserDatumDeleteBiz(userNodeDao, datumDao);
+		biz = new DaoUserDatumDeleteBiz(new CallingThreadExecutorService(), userNodeDao, datumDao);
 	}
 
 	@After
@@ -141,7 +142,7 @@ public class DaoUserDatumDeleteBizTests {
 	}
 
 	@Test
-	public void deleteFiltered() {
+	public void deleteFiltered() throws Exception {
 		// given
 		Capture<GeneralNodeDatumFilter> filterCaptor = new Capture<>();
 		final long count = 123;
@@ -152,7 +153,7 @@ public class DaoUserDatumDeleteBizTests {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setUserId(1L);
 		filter.setNodeId(2L);
-		long result = biz.deleteFiltered(filter);
+		long result = biz.deleteFiltered(filter).get();
 
 		// then
 		assertThat("Result", result, equalTo(count));
@@ -171,7 +172,7 @@ public class DaoUserDatumDeleteBizTests {
 	}
 
 	@Test
-	public void deleteFilteredFillNodeIds() {
+	public void deleteFilteredFillNodeIds() throws Exception {
 		// given
 		final Long userId = 1L;
 		final Long[] userNodeIds = new Long[] { 2L, 3L, 4L };
@@ -190,7 +191,7 @@ public class DaoUserDatumDeleteBizTests {
 		filter.setSourceIds(sourceIds);
 		filter.setLocalStartDate(new LocalDateTime(2018, 11, 1, 0, 0));
 		filter.setLocalEndDate(new LocalDateTime(2018, 12, 1, 0, 0));
-		long result = biz.deleteFiltered(filter);
+		long result = biz.deleteFiltered(filter).get();
 
 		// then
 		assertThat("Result returned", result, equalTo(count));

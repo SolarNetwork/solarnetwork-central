@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.expire.support;
 
+import java.util.concurrent.Future;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz;
@@ -54,7 +55,7 @@ public class DelegatingUserDatumDeleteBiz implements UserDatumDeleteBiz {
 	}
 
 	@Override
-	public long deleteFiltered(GeneralNodeDatumFilter filter) {
+	public Future<Long> deleteFiltered(GeneralNodeDatumFilter filter) {
 		return delegate.deleteFiltered(filter);
 	}
 

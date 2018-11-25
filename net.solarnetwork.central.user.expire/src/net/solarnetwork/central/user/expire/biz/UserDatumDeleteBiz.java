@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.expire.biz;
 
+import java.util.concurrent.Future;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 
@@ -80,6 +81,6 @@ public interface UserDatumDeleteBiz {
 	 * @return the number of datum deleted
 	 * @since 1.8
 	 */
-	long deleteFiltered(GeneralNodeDatumFilter filter);
+	Future<Long> deleteFiltered(GeneralNodeDatumFilter filter);
 
 }
