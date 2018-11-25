@@ -183,4 +183,85 @@ $(document).ready(function() {
 		});
 	});
 	
+	$('#datum-delete-form').on('submit', function(event) {
+		event.preventDefault();
+		var form = event.target;
+		var modal = $('#datum-delete-preview-modal');
+		var modalForm = modal.get(0);
+		var names = ['nodeIds', 'sourceIds', 'localStartDate', 'localEndDate'];
+		names.forEach(function(el) {
+			modalForm.elements[el].value = form.elements[el].value;
+		});
+		modal.modal('show');
+		return false;
+	});
+
+	$('#datum-delete-preview-modal').on('show.bs.modal', function() {
+		var modal = $(this);
+		$('#datum-delete-form').ajaxSubmit({
+			dataType: 'json',
+			success: function(json, status, xhr, form) {
+				if ( !json && json.success ) {
+					// TODO handle error
+					return;
+				}
+				var counts = json.data,
+					prop;
+				for ( prop in counts ) {
+					if ( !isNaN(Number(counts[prop])) ) {
+						counts[prop+'Display'] = counts[prop].toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+					}
+				}
+				SolarReg.Templates.replaceTemplateProperties(modal.find('.expire-preview-counts'), counts);
+				modal.find('.ready').removeClass('hidden').end()
+					.find('.waiting').addClass('hidden');
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', statusText);
+			}
+		});
+	})
+	.on('hidden.bs.modal', function() {
+		var modal = $(this);
+		modal.find('.ready').addClass('hidden').end()
+			.find('.waiting').removeClass('hidden');
+	});
+	
+	$('#datum-delete-preview-modal button.delete-config').on('click', function(event) {
+		var deleteBtn = event.target;
+		var modal = $(deleteBtn).closest('.modal');
+		var confirmEl = modal.find('.delete-confirm');
+		var submitBtn = modal.find('button[type=submit]');
+		if ( confirmEl && confirmEl.hasClass('hidden') ) {
+			// show confirm
+			confirmEl.removeClass('hidden');
+
+			// disable submit button
+			submitBtn.prop('disabled', true);
+
+			// enable "danger" mode in modal
+			modal.addClass('danger');
+		} else {
+			// perform delete
+			modal.ajaxSubmit({
+				dataType: 'json',
+				success: function(json, status, xhr, form) {
+					if ( !json && json.success ) {
+						// TODO handle error
+						return;
+					}
+					if ( json && json.success === true ) {
+						modal.modal('hide');
+					} else {
+						var msg = (json && json.message ? json.message : 'Unknown error: ' +statusText);
+						SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', msg);
+					}
+				},
+				error: function(xhr, status, statusText) {
+					SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', statusText);
+				}
+			});
+		}
+	});
+
 });

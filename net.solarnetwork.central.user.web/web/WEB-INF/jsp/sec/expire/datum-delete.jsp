@@ -21,7 +21,7 @@
 				<fmt:message key='datumDelete.sources.label'/>
 			</label>
 			<div class="col-sm-10">
-				<input type="text" name="sources" class="form-control" id="datum-delete-source-ids"
+				<input type="text" name="sourceIds" class="form-control" id="datum-delete-source-ids"
 					placeholder="<fmt:message key='datumDelete.sources.placeholder'/>">
 		 		<span id="helpBlock" class="help-block"><fmt:message key='datumDelete.sources.caption'/></span>
 			</div>
@@ -31,7 +31,7 @@
 				<fmt:message key='datumDelete.minDate.label'/>
 			</label>
 			<div class="col-sm-10">
-				<input type="text" name="sources" class="form-control" id="datum-delete-min-date"
+				<input type="text" name="localStartDate" class="form-control" id="datum-delete-min-date"
 					placeholder="<fmt:message key='datumDelete.minDate.placeholder'/>" required>
 		 		<span id="helpBlock" class="help-block"><fmt:message key='datumDelete.minDate.caption'/></span>
 			</div>
@@ -41,16 +41,17 @@
 				<fmt:message key='datumDelete.maxDate.label'/>
 			</label>
 			<div class="col-sm-10">
-				<input type="text" name="sources" class="form-control" id="datum-delete-max-date"
+				<input type="text" name="localEndDate" class="form-control" id="datum-delete-max-date"
 					placeholder="<fmt:message key='datumDelete.maxDate.placeholder'/>" required>
 		 		<span id="helpBlock" class="help-block"><fmt:message key='datumDelete.maxDate.caption'/></span>
 			</div>
 		</div>
 		<div class="form-group">
 			<div class="col-sm-offset-2 col-sm-10">
-				<button type="submit" class="btn btn-default"><fmt:message key='datumDelete.action.preview'/></button>
+				<button type="submit" class="btn btn-primary"><fmt:message key='datumDelete.action.preview'/></button>
 			</div>
 		</div>
+	 	<sec:csrfInput/>
 	</form>
 </section>
 
@@ -105,6 +106,7 @@
  	</div>
  	<input type="hidden" name="nodeIds">
  	<input type="hidden" name="sourceIds">
- 	<input type="hidden" name="minDate">
- 	<input type="hidden" name="maxDate">
+ 	<input type="hidden" name="localStartDate">
+ 	<input type="hidden" name="localEndDate">
+ 	<sec:csrfInput/>
 </form>

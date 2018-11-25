@@ -83,11 +83,19 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz {
 		if ( filter.getUserId() == null ) {
 			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
 		}
+		DatumFilterCommand f = null;
 		if ( filter.getNodeId() == null ) {
-			DatumFilterCommand f = new DatumFilterCommand(filter);
+			f = new DatumFilterCommand(filter);
 			Set<Long> nodes = userNodeDao.findNodeIdsForUser(filter.getUserId());
 			f.setNodeIds(nodes.toArray(new Long[nodes.size()]));
 			filter = f;
+		}
+		if ( filter.getSourceIds() != null && filter.getSourceIds().length < 1 ) {
+			if ( f == null ) {
+				f = new DatumFilterCommand(filter);
+				filter = f;
+			}
+			f.setSourceIds(null);
 		}
 		return filter;
 	}
@@ -113,29 +121,27 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz {
 			return result;
 		}
 		final UUID id = UUID.randomUUID();
-		final String nodeIds = (filter.getNodeIds() != null
-				? stream(filter.getNodeIds()).map(n -> n.toString()).collect(Collectors.joining(","))
+		final String nodeIds = (f.getNodeIds() != null
+				? stream(f.getNodeIds()).map(n -> n.toString()).collect(Collectors.joining(","))
 				: "*");
-		final String sourceIds = (filter.getSourceIds() != null
-				? stream(filter.getSourceIds()).collect(Collectors.joining(","))
+		final String sourceIds = (f.getSourceIds() != null
+				? stream(f.getSourceIds()).collect(Collectors.joining(","))
 				: "*");
 		log.info("Submitting user {} datum delete request {}: nodes = {}; sources = {}; {} - {}",
-				filter.getUserId(), id, nodeIds, sourceIds, filter.getLocalStartDate(),
-				filter.getLocalEndDate());
+				f.getUserId(), id, nodeIds, sourceIds, f.getLocalStartDate(), f.getLocalEndDate());
 		return executor.submit(new Callable<Long>() {
 
 			@Override
 			public Long call() throws Exception {
 				log.info("Executing user {} datum delete request {}: nodes = {}; sources = {}; {} - {}",
-						filter.getUserId(), id, nodeIds, sourceIds, filter.getLocalStartDate(),
-						filter.getLocalEndDate());
+						f.getUserId(), id, nodeIds, sourceIds, f.getLocalStartDate(),
+						f.getLocalEndDate());
 				final long start = System.currentTimeMillis();
 				long result = datumDao.deleteFiltered(f);
 				log.info(
 						"Deleted {} datum in {}s for user {} request {}: nodes = {}; sources = {}; {} - {}",
-						result, (int) ((System.currentTimeMillis() - start) / 1000.0),
-						filter.getUserId(), id, nodeIds, sourceIds, filter.getLocalStartDate(),
-						filter.getLocalEndDate());
+						result, (int) ((System.currentTimeMillis() - start) / 1000.0), f.getUserId(), id,
+						nodeIds, sourceIds, f.getLocalStartDate(), f.getLocalEndDate());
 				return result;
 			}
 		});

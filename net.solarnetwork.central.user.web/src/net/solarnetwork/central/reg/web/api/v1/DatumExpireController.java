@@ -26,9 +26,13 @@ import static net.solarnetwork.web.domain.Response.response;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,7 +47,10 @@ import net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.domain.DataConfiguration;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.util.JodaDateFormatEditor;
+import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.web.domain.Response;
 
@@ -56,10 +63,16 @@ import net.solarnetwork.web.domain.Response;
  */
 @RestController("v1DatumExpireController")
 @RequestMapping(value = { "/sec/expire", "/v1/sec/user/expire" })
-public class DatumExpireController {
+public class DatumExpireController extends WebServiceControllerSupport {
+
+	/** Another default value for the {@code requestDateFormat} property. */
+	public static final String ALT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
 
 	private final OptionalService<UserExpireBiz> expireBiz;
 	private final OptionalService<UserDatumDeleteBiz> datumDeleteBiz;
+
+	private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, ALT_DATE_TIME_FORMAT,
+			DEFAULT_DATE_FORMAT };
 
 	/**
 	 * Constructor.
@@ -75,6 +88,24 @@ public class DatumExpireController {
 		super();
 		this.expireBiz = expireBiz;
 		this.datumDeleteBiz = datumDeleteBiz;
+	}
+
+	/**
+	 * Web binder initialization.
+	 * 
+	 * @param binder
+	 *        the binder to initialize
+	 */
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		binder.registerCustomEditor(DateTime.class,
+				new JodaDateFormatEditor(this.requestDateFormats, TimeZone.getTimeZone("UTC")));
+		binder.registerCustomEditor(LocalDateTime.class,
+				new JodaDateFormatEditor(this.requestDateFormats, null, ParseMode.LocalDateTime));
+	}
+
+	public void setRequestDateFormats(String[] requestDateFormats) {
+		this.requestDateFormats = requestDateFormats;
 	}
 
 	@ResponseBody
