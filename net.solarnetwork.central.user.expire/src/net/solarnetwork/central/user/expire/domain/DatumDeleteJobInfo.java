@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.expire.domain;
 
 import java.util.UUID;
+import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -115,6 +116,7 @@ public class DatumDeleteJobInfo
 		this.configJson = null;
 	}
 
+	@JsonIgnore
 	public String getConfigJson() {
 		if ( configJson == null ) {
 			configJson = JsonUtils.getJSONString(super.getConfiguration(), null);
@@ -146,6 +148,50 @@ public class DatumDeleteJobInfo
 
 	public void setResultCount(long deletedCount) {
 		setResult(deletedCount);
+	}
+
+	@JsonIgnore
+	@Override
+	public DateTime getStarted() {
+		return super.getStarted();
+	}
+
+	@JsonIgnore
+	@Override
+	public DateTime getCompleted() {
+		return super.getCompleted();
+	}
+
+	@JsonIgnore
+	@Override
+	public DateTime getCreated() {
+		return super.getCreated();
+	}
+
+	@JsonIgnore
+	@Override
+	public DateTime getModified() {
+		return super.getModified();
+	}
+
+	public long getSubmitDate() {
+		DateTime dt = super.getCreated();
+		return (dt != null ? dt.getMillis() : 0);
+	}
+
+	public long getModifiedDate() {
+		DateTime dt = super.getModified();
+		return (dt != null ? dt.getMillis() : 0);
+	}
+
+	public long getStartedDate() {
+		DateTime dt = super.getStarted();
+		return (dt != null ? dt.getMillis() : 0);
+	}
+
+	public long getCompletionDate() {
+		DateTime dt = super.getCompleted();
+		return (dt != null ? dt.getMillis() : 0);
 	}
 
 }

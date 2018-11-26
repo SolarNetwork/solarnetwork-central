@@ -206,14 +206,15 @@ public class DatumExpireController extends WebServiceControllerSupport {
 
 	@ResponseBody
 	@RequestMapping(value = "/datum-delete/confirm", method = RequestMethod.POST)
-	public Response<Void> confirmDataDelete(DatumFilterCommand filter) {
+	public Response<DatumDeleteJobInfo> confirmDataDelete(DatumFilterCommand filter) {
 		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
+		DatumDeleteJobInfo result = null;
 		if ( biz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			filter.setUserIds(new Long[] { userId });
-			biz.submitDatumDeleteRequest(filter);
+			result = biz.submitDatumDeleteRequest(filter);
 		}
-		return response(null);
+		return response(result);
 	}
 
 	@ResponseBody

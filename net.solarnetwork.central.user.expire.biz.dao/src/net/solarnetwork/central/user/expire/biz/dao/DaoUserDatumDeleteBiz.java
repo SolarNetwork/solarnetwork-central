@@ -371,6 +371,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 			final long start = System.currentTimeMillis();
 			long result = datumDao.deleteFiltered(f);
 			info.setResultCount(result);
+			info.setPercentComplete(1.0);
 			log.info("Deleted {} datum in {}s for user {} request {}: nodes = {}; sources = {}; {} - {}",
 					result, (int) ((System.currentTimeMillis() - start) / 1000.0), f.getUserId(), id,
 					nodeIds, sourceIds, f.getLocalStartDate(), f.getLocalEndDate());

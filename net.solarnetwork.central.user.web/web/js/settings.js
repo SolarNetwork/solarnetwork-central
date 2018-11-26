@@ -32,7 +32,7 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 	if ( typeof form.reset === 'function' ) {
 		form.reset();
 	}
-	f.find('input[type=hidden]').val('');
+	f.find('input[type=hidden]').not('[name=_csrf]').val('');
 
 	// clear delete status
 	f.removeClass('danger').removeClass('deleted');

@@ -10,6 +10,9 @@ $(document).ready(function() {
 	var compressionTypes = [];
 	var scheduleTypes = [];
 	var aggregationTypes = [];
+	
+	var deleteJobs = [];
+	var deleteJobsRefreshToken;
 
 	var settingTemplates = $('#expire-setting-templates');
 	
@@ -183,22 +186,104 @@ $(document).ready(function() {
 		});
 	});
 	
-	$('#datum-delete-form').on('submit', function(event) {
+	function loadDatumDeleteJobs(preserve) {
+		return $.getJSON(SolarReg.solarUserURL('/sec/expire/datum-delete/jobs'), function(json) {
+			console.log('Got datum delete jobs: %o', json);
+			if ( json && json.success === true && Array.isArray(json.data) ) {
+				deleteJobs = json.data;
+				handleDatumDeleteJobs(json.data, preserve);
+			}
+		});
+	}
+	
+	function handleDatumDeleteJobs(jobs, preserve) {
+		populateDatumDeleteJobs(jobs, preserve);
+		
+		// turn on auto-refresh if we have any pending jobs
+		var pending = jobs.find(function(job) {
+			return /^(Queued|Claimed|Executing)$/.test(job.jobState);
+		});
+		if ( !pending && deleteJobsRefreshToken ) {
+			clearInterval(deleteJobsRefreshToken);
+			deleteJobsRefreshToken = null;
+		} else if ( pending && !deleteJobsRefreshToken ) {
+			deleteJobsRefreshToken = setInterval(function() {
+				loadDatumDeleteJobs(true);
+			}, 10000);
+		}
+	}
+	
+	function durationDisplay(start, end) {
+		var s = (start ? moment(start) : null);
+		var e = (end ? moment(end) : start ? moment() : null);
+		if ( s && e ) {
+			return moment.duration(s.diff(e)).locale('en').humanize();
+		}
+		return '-';
+	}
+
+	function populateDatumDeleteJobs(jobs, preserve) {
+		jobs = Array.isArray(jobs) ? jobs : [];
+		var container = $('#datum-delete-job-list-container');
+		var items = jobs.map(function(job) {
+			var item, shortId;
+			job.id = job.jobId; // needed for Settings support
+			item = SolarReg.Settings.serviceConfigurationItem(job, []);
+			item.shortId = job.id.replace(/-.*/, '');
+			item.nodes = (job.configuration.nodeIds && job.configuration.nodeIds.length > 0
+					? job.configuration.nodeIds.join(', ')
+					: '*');
+			item.sources = (job.configuration.sourceIds && job.configuration.sourceIds.length > 0
+					? job.configuration.sourceIds.join(', ')
+					: '*');
+			item.minDate = moment(job.configuration.localStartDate).format('D MMM YYYY HH:mm');
+			item.maxDate = moment(job.configuration.localEndDate).format('D MMM YYYY HH:mm');
+			item.state = job.jobState;
+			item.resultCount = (job.resultCount ? job.resultCount.toLocaleString() : 0);
+			item.success = job.success;
+			item.message = job.message;
+			item.duration = durationDisplay(job.startedDate, job.completionDate);
+			if ( job.message ) {
+				item.messageHtml = $.parseHTML(job.message);
+			}
+			item.submitDateDisplay = moment(job.submitDate).format('D MMM YYYY HH:mm');
+			if ( job.completionDate ) {
+				item.completionDateDisplay = moment(job.completionDate).format('D MMM YYYY HH:mm');
+			}
+			return item;
+		});
+		SolarReg.Templates.populateTemplateItems(container, items, preserve, function(item, el) {
+			el.find('.running').toggleClass('hidden', item.state !== 'Queued' && item.state !== 'Claimed' && item.state !== 'Executing');
+			el.find('.success-ok').toggleClass('hidden', item.state !== 'Completed' || !item.success);
+			el.find('.success-error').toggleClass('hidden', item.state !== 'Completed' || item.success);
+			el.find('.complete').toggleClass('hidden', item.state !== 'Completed');
+		});
+		container.closest('section').find('.listCount').text(jobs.length);
+		return jobs;
+	}
+	
+	$('#datum-delete-jobs').first().each(function() {
+		loadDatumDeleteJobs();
+	});
+	
+	$('#edit-datum-delete-job-modal').on('submit', function(event) {
 		event.preventDefault();
 		var form = event.target;
-		var modal = $('#datum-delete-preview-modal');
-		var modalForm = modal.get(0);
+		var modal = $(form);
+		var previewModal = $('#datum-delete-preview-modal');
+		var modalForm = previewModal.get(0);
 		var names = ['nodeIds', 'sourceIds', 'localStartDate', 'localEndDate'];
 		names.forEach(function(el) {
 			modalForm.elements[el].value = form.elements[el].value;
 		});
-		modal.modal('show');
+		modal.modal('hide');
+		previewModal.modal('show');
 		return false;
 	});
 
 	$('#datum-delete-preview-modal').on('show.bs.modal', function() {
 		var modal = $(this);
-		$('#datum-delete-form').ajaxSubmit({
+		$('#edit-datum-delete-job-modal').ajaxSubmit({
 			dataType: 'json',
 			success: function(json, status, xhr, form) {
 				if ( !json && json.success ) {
@@ -223,8 +308,10 @@ $(document).ready(function() {
 	})
 	.on('hidden.bs.modal', function() {
 		var modal = $(this);
+		SolarReg.Settings.resetEditServiceForm(this);
 		modal.find('.ready').addClass('hidden').end()
 			.find('.waiting').removeClass('hidden');
+		modal.find('button.delete-config').removeClass('hidden');
 	});
 	
 	$('#datum-delete-preview-modal button.delete-config').on('click', function(event) {
@@ -246,11 +333,9 @@ $(document).ready(function() {
 			modal.ajaxSubmit({
 				dataType: 'json',
 				success: function(json, status, xhr, form) {
-					if ( !json && json.success ) {
-						// TODO handle error
-						return;
-					}
 					if ( json && json.success === true ) {
+						deleteJobs = [json.data].concat(deleteJobs);
+						handleDatumDeleteJobs(deleteJobs, false);
 						modal.modal('hide');
 					} else {
 						var msg = (json && json.message ? json.message : 'Unknown error: ' +statusText);
