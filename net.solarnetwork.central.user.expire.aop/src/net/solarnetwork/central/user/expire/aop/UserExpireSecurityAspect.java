@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.expire.aop;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserRelatedEntity;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
@@ -49,7 +50,7 @@ public class UserExpireSecurityAspect extends AuthorizationSupport {
 		super(userNodeDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.expire.biz.UserExpireBiz.*ForUser(..)) && args(userId,..)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.expire.biz.*Biz.*ForUser(..)) && args(userId,..)")
 	public void actionForUser(Long userId) {
 	}
 
@@ -65,6 +66,11 @@ public class UserExpireSecurityAspect extends AuthorizationSupport {
 	public void actionForConfiguration(UserRelatedEntity<?> config) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz.*(..)) && args(filter,..)")
+	public void actionForDatumFilter(GeneralNodeDatumFilter filter) {
+
+	}
+
 	@Before("actionForUser(userId)")
 	public void actionForUserCheck(Long userId) {
 		requireUserReadAccess(userId);
@@ -74,6 +80,19 @@ public class UserExpireSecurityAspect extends AuthorizationSupport {
 	public void saveConfigurationCheck(UserRelatedEntity<?> config) {
 		final Long userId = (config != null ? config.getUserId() : null);
 		requireUserWriteAccess(userId);
+	}
+
+	@Before("actionForDatumFilter(filter)")
+	public void datumFilterCheck(GeneralNodeDatumFilter filter) {
+		final Long userId = (filter != null ? filter.getUserId() : null);
+		requireUserWriteAccess(userId);
+
+		final Long[] nodeIds = filter.getNodeIds();
+		if ( nodeIds != null ) {
+			for ( Long nodeId : nodeIds ) {
+				requireNodeWriteAccess(nodeId);
+			}
+		}
 	}
 
 }

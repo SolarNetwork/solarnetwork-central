@@ -34,6 +34,7 @@ import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -47,7 +48,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -317,5 +318,45 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
 			LocalDateTime from, LocalDateTime to, Period tolerance);
+
+	/**
+	 * Get a count of datum records that match a search criteria.
+	 * 
+	 * <p>
+	 * At a minimum, the following criteria are supported:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li>node IDs</li>
+	 * <li>source IDs</li>
+	 * <li>date range (start/end dates)</li>
+	 * </ul>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @return the count of matching records
+	 * @since 1.8
+	 */
+	DatumRecordCounts countDatumRecords(GeneralNodeDatumFilter filter);
+
+	/**
+	 * Delete datum matching a search criteria.
+	 * 
+	 * <p>
+	 * At a minimum, the following criteria are supported:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li>node IDs</li>
+	 * <li>source IDs</li>
+	 * <li>date range (start/end dates)</li>
+	 * </ul>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @return the number of datum deleted
+	 * @since 1.8
+	 */
+	long deleteFiltered(GeneralNodeDatumFilter filter);
 
 }

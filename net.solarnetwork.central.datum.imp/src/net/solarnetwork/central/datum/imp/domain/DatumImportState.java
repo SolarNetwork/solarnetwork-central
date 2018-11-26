@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.imp.domain;
 
+import net.solarnetwork.central.domain.ClaimableJobState;
+
 /**
  * The state of a datum import task.
  * 
@@ -39,14 +41,14 @@ package net.solarnetwork.central.datum.imp.domain;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public enum DatumImportState {
+public enum DatumImportState implements ClaimableJobState {
 
 	/**
 	 * The state is not known.
 	 */
-	Unknown('u'),
+	Unknown(UNKNOWN_KEY),
 
 	/**
 	 * The import task has been staged (for testing/previewing), but is not yet
@@ -62,23 +64,23 @@ public enum DatumImportState {
 	/**
 	 * The import task has been queued, but not started yet.
 	 */
-	Queued('q'),
+	Queued(QUEUED_KEY),
 
 	/**
 	 * The import task as been "claimed" for execution but has not started
 	 * execution yet.
 	 */
-	Claimed('p'),
+	Claimed(CLAIMED_KEY),
 
 	/**
 	 * The import task is being executed currently.
 	 */
-	Executing('e'),
+	Executing(EXECUTING_KEY),
 
 	/**
 	 * The import task has completed.
 	 */
-	Completed('c');
+	Completed(COMPLETED_KEY);
 
 	private final char key;
 
@@ -91,6 +93,7 @@ public enum DatumImportState {
 	 * 
 	 * @return the key value
 	 */
+	@Override
 	public char getKey() {
 		return key;
 	}

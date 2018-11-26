@@ -96,6 +96,12 @@
 		<property name="serviceFilter" value="(secured=true)"/>
 	</bean>
 
+	<bean id="datumDeleteBiz" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz"/>
+		<property name="serviceFilter" value="(secured=true)"/>
+	</bean>
+
 	<!-- Published Services -->
 	
 	<osgi:service ref="userValidator" 

@@ -27,7 +27,7 @@ import static org.junit.Assert.assertThat;
 import org.junit.Test;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 
 /**
  * Test cases for the {@link DatumRecordCounts} class.

@@ -25,7 +25,7 @@ package net.solarnetwork.central.datum.imp.dao;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.joda.time.DateTime;
+import net.solarnetwork.central.dao.ClaimableJobDao;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
@@ -36,79 +36,10 @@ import net.solarnetwork.central.user.domain.UserUuidPK;
  * DAO API for {@link DatumImportJobInfo} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, UserUuidPK> {
-
-	/**
-	 * Claim a queued job.
-	 * 
-	 * This method will "claim" a job that is currently in the
-	 * {@link net.solarnetwork.central.datum.export.domain.DatumImportState#Queued}
-	 * state, changing the state to
-	 * {@link net.solarnetwork.central.datum.export.domain.DatumImportState#Claimed}.
-	 * 
-	 * @return a claimed job, or {@literal null} if none could be claimed
-	 */
-	DatumImportJobInfo claimQueuedJob();
-
-	/**
-	 * Purge old jobs.
-	 * 
-	 * <p>
-	 * This method will delete the job status associated with jobs that have
-	 * reached a {@link DatumImportState#Completed} state and whose completion
-	 * date is older than a given date, <b>or</b> are in the
-	 * {@link DatumImportState#Staged} state and whose creation date is older
-	 * than a given date.
-	 * </p>
-	 * 
-	 * @param olderThanDate
-	 *        the maximum date for which to purge old jobs
-	 * @return the number of jobs deleted
-	 */
-	long purgeOldJobs(DateTime olderThanDate);
-
-	/**
-	 * Update the state of a specific job.
-	 * 
-	 * @param id
-	 *        the ID of the job to update
-	 * @param desiredState
-	 *        the state to change the job to
-	 * @param expectedStates
-	 *        a set of states that must include the job's current state in order
-	 *        to change it to {@code desiredState}, or {@literal null} if the
-	 *        current state of the job does not matter
-	 * @return {@literal true} if the job state was changed
-	 */
-	boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
-			Set<DatumImportState> expectedStates);
-
-	/**
-	 * Update the configuration for a specific job.
-	 * 
-	 * @param id
-	 *        the ID of the job to update
-	 * @param configuration
-	 *        the configuration to save with the job, completely replacing any
-	 *        existing configuration
-	 * @return {@literal true} if the job configuration was changed
-	 */
-	boolean updateJobConfiguration(UserUuidPK id, Configuration configuration);
-
-	/**
-	 * Update the progress of a specific job.
-	 * 
-	 * @param id
-	 *        the ID of the job to update
-	 * @param percentComplete
-	 *        the percent complete, from 0 to 1
-	 * @param loadedCount
-	 *        the loaded count
-	 * @return {@literal true} if the job progress was updated
-	 */
-	boolean updateJobProgress(UserUuidPK id, double percentComplete, long loadedCount);
+public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, UserUuidPK>,
+		ClaimableJobDao<Configuration, Long, DatumImportState, DatumImportJobInfo, UserUuidPK> {
 
 	/**
 	 * Find all available job info entities for a specific user.

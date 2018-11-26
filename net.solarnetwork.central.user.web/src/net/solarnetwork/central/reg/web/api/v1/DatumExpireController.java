@@ -23,25 +23,41 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.reg.web.domain.DatumExpireFullConfigurations;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.domain.DataConfiguration;
-import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.util.JodaDateFormatEditor;
+import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.web.domain.Response;
 
@@ -49,25 +65,54 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for datum expire management.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  * @since 1.29
  */
 @RestController("v1DatumExpireController")
 @RequestMapping(value = { "/sec/expire", "/v1/sec/user/expire" })
-public class DatumExpireController {
+public class DatumExpireController extends WebServiceControllerSupport {
+
+	/** Another default value for the {@code requestDateFormat} property. */
+	public static final String ALT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
 
 	private final OptionalService<UserExpireBiz> expireBiz;
+	private final OptionalService<UserDatumDeleteBiz> datumDeleteBiz;
+
+	private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, ALT_DATE_TIME_FORMAT,
+			DEFAULT_DATE_FORMAT };
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param expireBiz
-	 *        the expire biz to use
+	 *        the expire service to use
+	 * @param datumDeleteBiz
+	 *        the datum delete service to use
 	 */
 	@Autowired
-	public DatumExpireController(@Qualifier("expireBiz") OptionalService<UserExpireBiz> expireBiz) {
+	public DatumExpireController(@Qualifier("expireBiz") OptionalService<UserExpireBiz> expireBiz,
+			@Qualifier("datumDeleteBiz") OptionalService<UserDatumDeleteBiz> datumDeleteBiz) {
 		super();
 		this.expireBiz = expireBiz;
+		this.datumDeleteBiz = datumDeleteBiz;
+	}
+
+	/**
+	 * Web binder initialization.
+	 * 
+	 * @param binder
+	 *        the binder to initialize
+	 */
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		binder.registerCustomEditor(DateTime.class,
+				new JodaDateFormatEditor(this.requestDateFormats, TimeZone.getTimeZone("UTC")));
+		binder.registerCustomEditor(LocalDateTime.class,
+				new JodaDateFormatEditor(this.requestDateFormats, null, ParseMode.LocalDateTime));
+	}
+
+	public void setRequestDateFormats(String[] requestDateFormats) {
+		this.requestDateFormats = requestDateFormats;
 	}
 
 	@ResponseBody
@@ -145,4 +190,64 @@ public class DatumExpireController {
 		}
 		return response(counts);
 	}
+
+	@ResponseBody
+	@RequestMapping(value = "/datum-delete", method = RequestMethod.POST)
+	public Response<DatumRecordCounts> previewDataDelete(DatumFilterCommand filter) {
+		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
+		DatumRecordCounts counts = null;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			filter.setUserIds(new Long[] { userId });
+			counts = biz.countDatumRecords(filter);
+		}
+		return response(counts);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/datum-delete/confirm", method = RequestMethod.POST)
+	public Response<DatumDeleteJobInfo> confirmDataDelete(DatumFilterCommand filter) {
+		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
+		DatumDeleteJobInfo result = null;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			filter.setUserIds(new Long[] { userId });
+			result = biz.submitDatumDeleteRequest(filter);
+		}
+		return response(result);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/datum-delete/jobs", method = RequestMethod.GET)
+	public Response<Collection<DatumDeleteJobInfo>> jobsForUser(
+			@RequestParam(value = "states", required = false) DatumDeleteJobState[] states) {
+		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
+		Collection<DatumDeleteJobInfo> result = null;
+		if ( biz != null ) {
+			Set<DatumDeleteJobState> stateFilter = null;
+			if ( states != null && states.length > 0 ) {
+				stateFilter = new HashSet<>(states.length);
+				for ( DatumDeleteJobState state : states ) {
+					stateFilter.add(state);
+				}
+				stateFilter = EnumSet.copyOf(stateFilter);
+			}
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			result = biz.datumDeleteJobsForUser(userId, stateFilter);
+		}
+		return response(result);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/datum-delete/jobs/{id}", method = RequestMethod.GET)
+	public Response<DatumDeleteJobInfo> jobStatus(@PathVariable("id") String id) {
+		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
+		DatumDeleteJobInfo result = null;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			result = biz.datumDeleteJobForUser(userId, id);
+		}
+		return response(result);
+	}
+
 }

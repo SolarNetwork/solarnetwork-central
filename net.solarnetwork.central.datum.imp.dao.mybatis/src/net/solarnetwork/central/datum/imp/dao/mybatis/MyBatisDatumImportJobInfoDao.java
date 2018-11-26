@@ -43,7 +43,7 @@ import net.solarnetwork.central.user.domain.UserUuidPK;
  * MyBatis implementation of {@link DatumImportJobInfoDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImportJobInfo, UserUuidPK>
 		implements DatumImportJobInfoDao {
@@ -154,7 +154,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public boolean updateJobProgress(UserUuidPK id, double percentComplete, long loadedCount) {
+	public boolean updateJobProgress(UserUuidPK id, double percentComplete, Long loadedCount) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
 		params.put("progress", percentComplete);

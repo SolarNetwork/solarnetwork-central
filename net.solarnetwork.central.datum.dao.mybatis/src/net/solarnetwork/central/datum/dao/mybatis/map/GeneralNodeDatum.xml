@@ -218,6 +218,25 @@
 		<include refid="fragment-findall-GeneralNodeDatum-GeneralNodeDatumMatch-where"/>
 	</select>
 	
+	<!-- Delete support -->
+	
+	<resultMap id="DatumRecordCountsFullResult" type="net.solarnetwork.central.datum.domain.DatumRecordCounts">
+		<result property="date" column="query_date"/>
+		<result property="datumCount" column="datum_count"/>
+		<result property="datumHourlyCount" column="datum_hourly_count"/>
+		<result property="datumDailyCount" column="datum_daily_count"/>
+		<result property="datumMonthlyCount" column="datum_monthly_count"/>
+	</resultMap>
+
+	<select id="find-datum-record-counts-for-filter" resultMap="DatumRecordCountsFullResult">
+		SELECT * FROM solardatum.datum_record_counts_for_filter(CAST(#{filterJson} AS jsonb))
+	</select>
+	
+	<!--  Note this is called as a SELECT to a procedure that performs the delete -->
+	<select id="delete-GeneralNodeDatum-for-filter" resultType="long">
+		SELECT solardatum.delete_datum_for_filter(CAST(#{filterJson} AS jsonb))
+	</select>
+
 	<!-- Audit support -->
 	
 	<update id="find-general-audit-interval" parameterMap="pmap-reportable-interval" statementType="CALLABLE">

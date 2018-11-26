@@ -34,9 +34,9 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserExpireBiz;
 import net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao;
-import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 
 /**
