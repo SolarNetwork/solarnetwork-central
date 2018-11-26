@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
 import org.joda.time.DateTimeZone;
@@ -3408,6 +3409,70 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 				new Timestamp(ts_z2.minusMinutes(1).monthOfYear().roundFloorCopy().getMillis())));
 		assertThat("Month 2 date", monthData.get(1).get("ts_start"), equalTo(
 				new Timestamp(ts_z1.minusMinutes(1).monthOfYear().roundFloorCopy().getMillis())));
+	}
+
+	private void createNodeAndSourceData(DateTime start, int numMinutes, Long[] nodes,
+			String[] sources) {
+		for ( int i = 0; i < numMinutes; i++ ) {
+			for ( Long nodeId : nodes ) {
+				for ( String sourceId : sources ) {
+					GeneralNodeDatum d = getTestInstance(start.plusMinutes(i), nodeId, sourceId);
+					dao.store(d);
+				}
+			}
+		}
+	}
+
+	private DateTime createNodeAndSourceData() {
+		final Long[] nodes = new Long[] { TEST_NODE_ID, TEST_2ND_NODE };
+		final String[] sources = new String[] { TEST_SOURCE_ID, TEST_2ND_SOURCE };
+		final DateTime start = new DateTime(2018, 11, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		final int numMinutes = 10;
+		createNodeAndSourceData(start, numMinutes, nodes, sources);
+		return start;
+	}
+
+	@Test
+	public void deleteFilteredSpecificNodeAndSourceAndDateRange() {
+		// given
+		setupTestNode(TEST_2ND_NODE);
+		final DateTime start = createNodeAndSourceData();
+		final int totalRows = 40;
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_2ND_NODE);
+		filter.setSourceId(TEST_2ND_SOURCE);
+		filter.setLocalStartDate(start.toLocalDateTime());
+		filter.setLocalEndDate(start.plusMinutes(5).toLocalDateTime());
+		int result = (int) dao.deleteFiltered(filter);
+
+		// then
+		assertThat("Delete count", result, equalTo(5));
+
+		List<Map<String, Object>> rawData = getDatum();
+		assertThat("Remaining row count", rawData, hasSize(totalRows - result));
+
+		List<Map<String, Object>> node1Data = rawData.stream()
+				.filter(m -> m.get("node_id").equals(TEST_NODE_ID)).collect(Collectors.toList());
+		assertThat("Remaining node 1 count", node1Data, hasSize(totalRows / 2));
+
+		List<Map<String, Object>> node2Data = rawData.stream()
+				.filter(m -> m.get("node_id").equals(TEST_2ND_NODE)).collect(Collectors.toList());
+		assertThat("Remaining node 2 count", node2Data, hasSize(totalRows / 2 - result));
+
+		List<Map<String, Object>> node2Sourcd1Data = node2Data.stream()
+				.filter(m -> m.get("source_id").equals(TEST_SOURCE_ID)).collect(Collectors.toList());
+		assertThat("Remaining node 2 source 1 count", node2Sourcd1Data, hasSize(totalRows / 2 / 2));
+
+		List<Map<String, Object>> node2Sourcd2Data = node2Data.stream()
+				.filter(m -> m.get("source_id").equals(TEST_2ND_SOURCE)).collect(Collectors.toList());
+		assertThat("Remaining node 2 source 2 count", node2Sourcd2Data,
+				hasSize(totalRows / 2 / 2 - result));
+		for ( int i = 0; i < node2Sourcd2Data.size(); i++ ) {
+			assertThat("Remaining node 2 source 2 date " + i, node2Sourcd2Data.get(i).get("ts"),
+					equalTo(new Timestamp(start.plusMinutes(5 + i).getMillis())));
+		}
 	}
 
 }
