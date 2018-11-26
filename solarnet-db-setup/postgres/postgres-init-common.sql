@@ -416,3 +416,24 @@ CREATE AGGREGATE solarcommon.jsonb_weighted_proj_object(jsonb, float8) (
     stype = jsonb,
     finalfunc = solarcommon.jsonb_weighted_proj_object_finalfunc
 );
+
+/**
+ * Cast a JSON array to a BIGINT array.
+ *
+ * @param json the JSON array to cast
+ */
+CREATE OR REPLACE FUNCTION solarcommon.json_array_to_bigint_array(json)
+RETURNS bigint[] LANGUAGE sql IMMUTABLE AS $$
+    SELECT array_agg(x)::bigint[] || ARRAY[]::bigint[] FROM json_array_elements_text($1) t(x);
+$$;
+
+/**
+ * Cast a JSONB array to a BIGINT array.
+ *
+ * @param jsonb the JSONB array to cast
+ */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_array_to_bigint_array(jsonb)
+RETURNS bigint[] LANGUAGE sql IMMUTABLE AS $$
+    SELECT array_agg(x)::bigint[] || ARRAY[]::bigint[] FROM jsonb_array_elements_text($1) t(x);
+$$;
+

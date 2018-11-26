@@ -117,6 +117,39 @@ CREATE OR REPLACE VIEW solarnet.node_local_time AS
 	FROM solarnet.sn_node n
 	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id;
 
+/**
+ * Calculate the minimum number of absolute time spans required for a given set of nodes.
+ *
+ * The time zones of each node are used to group them into rows where all nodes have the
+ * same absolute start/end dates.
+ * 
+ * @param nodes the list of nodes to resolve absolute dates for
+ * @param sources a list of source IDs to include in the results (optional)
+ * @param ts_min the starting local date
+ * @param ts_max the ending local date
+ */
+CREATE OR REPLACE FUNCTION solarnet.node_source_time_ranges_local(
+	nodes bigint[], sources text[], ts_min timestamp, ts_max timestamp)
+RETURNS TABLE(
+  ts_start timestamp with time zone,
+  ts_end timestamp with time zone,
+  time_zone text,
+  node_ids bigint[],
+  source_ids character varying(64)[]
+) LANGUAGE sql STABLE AS $$
+	SELECT ts_min AT TIME ZONE nlt.time_zone AS sdate,
+		ts_max AT TIME ZONE nlt.time_zone AS edate,
+		nlt.time_zone AS time_zone,
+		array_agg(DISTINCT nlt.node_id) AS nodes,
+		array_agg(DISTINCT s.source_id::character varying(64)) FILTER (WHERE s.source_id IS NOT NULL) AS sources
+	FROM solarnet.node_local_time nlt
+	LEFT JOIN (
+		SELECT unnest(sources) AS source_id
+	) s ON TRUE
+	WHERE nlt.node_id = ANY(nodes)
+	GROUP BY time_zone
+$$;
+
 /******************************************************************************
  * TABLE solarnet.sn_node_meta
  *
