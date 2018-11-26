@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.user.expire.biz;
 
-import java.util.concurrent.Future;
+import java.util.Collection;
+import java.util.Set;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 
 /**
  * API that provides a way for users to delete datum associated with their
@@ -61,7 +64,15 @@ public interface UserDatumDeleteBiz {
 	DatumRecordCounts countDatumRecords(GeneralNodeDatumFilter filter);
 
 	/**
-	 * Delete datum matching a search criteria.
+	 * Submit a delete datum request.
+	 * 
+	 * <p>
+	 * The delete process is not expected to start after calling this method.
+	 * Rather it should enter the {@link DatumDeleteJobState#Queued} state. To
+	 * initiate the import process, the {@link #deleteFiltered(Long, String)}
+	 * must be called, passing in the same user ID and the returned
+	 * {@link DatumDeleteJobInfo#getJobId()}.
+	 * </p>
 	 * 
 	 * <p>
 	 * At a minimum, the following criteria are supported:
@@ -74,13 +85,32 @@ public interface UserDatumDeleteBiz {
 	 * <li>date range (start/end dates)</li>
 	 * </ul>
 	 * 
-	 * @param userId
-	 *        the account owner ID
-	 * @param filter
-	 *        the search criteria
-	 * @return the number of datum deleted
-	 * @since 1.8
+	 * @param request
+	 *        the request
+	 * @return the job info
 	 */
-	Future<Long> deleteFiltered(GeneralNodeDatumFilter filter);
+	DatumDeleteJobInfo submitDatumDeleteRequest(GeneralNodeDatumFilter request);
 
+	/**
+	 * Get the status of a specific datum delete job.
+	 * 
+	 * @param userId
+	 *        the user ID that owns the job
+	 * @param jobId
+	 *        the ID of the job to get
+	 * @return the job status, or {@literal null} if not available
+	 */
+	DatumDeleteJobInfo datumDeleteJobForUser(Long userId, String jobId);
+
+	/**
+	 * Find all available datum delete job statuses for a specific user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to find the job statuses for
+	 * @param states
+	 *        the specific states to limit the results to, or {@literal null}
+	 *        for all states
+	 * @return the job statuses, never {@literal null}
+	 */
+	Collection<DatumDeleteJobInfo> datumDeleteJobsForUser(Long userId, Set<DatumDeleteJobState> states);
 }

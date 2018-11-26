@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisDatumImportJobInfoDao.java - 9/11/2018 5:34:08 PM
+ * MyBatisUserDatumDeleteJobInfoDao.java - 26/11/2018 9:25:21 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.imp.dao.mybatis;
+package net.solarnetwork.central.user.expire.dao.mybatis;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,57 +32,57 @@ import org.joda.time.DateTime;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
-import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
-import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
-import net.solarnetwork.central.datum.imp.domain.Configuration;
-import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
-import net.solarnetwork.central.datum.imp.domain.DatumImportState;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 
 /**
- * MyBatis implementation of {@link DatumImportJobInfoDao}.
+ * MyBatis implementation of {@link UserDatumDeleteJobInfoDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImportJobInfo, UserUuidPK>
-		implements DatumImportJobInfoDao {
+public class MyBatisUserDatumDeleteJobInfoDao extends
+		BaseMyBatisGenericDao<DatumDeleteJobInfo, UserUuidPK> implements UserDatumDeleteJobInfoDao {
 
 	/** The default query name used for {@link #claimQueuedJob()}. */
-	public static final String QUERY_FOR_CLAIMING_JOB = "get-DatumImportJobInfo-for-claim";
+	public static final String QUERY_FOR_CLAIMING_JOB = "get-DatumDeleteJobInfo-for-claim";
 
 	/**
 	 * The {@code DELETE} query name used for {@link #purgeOldJobs(DateTime)}.
 	 */
-	public static final String UPDATE_PURGE_COMPLETED = "delete-DatumImportJobInfo-completed";
+	public static final String UPDATE_PURGE_COMPLETED = "delete-DatumDeleteJobInfo-completed";
 
 	/**
 	 * The {@code DELETE} query name used for {@link #purgeOldJobs(DateTime)}.
 	 */
-	public static final String UPDATE_DELETE_FOR_USER = "delete-DatumImportJobInfo-for-user";
+	public static final String UPDATE_DELETE_FOR_USER = "delete-DatumDeleteJobInfo-for-user";
 
 	/**
 	 * The {@code UPDATE} query name used for
 	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)}.
 	 */
-	public static final String UPDATE_JOB_STATE = "update-DatumImportJobInfo-state";
+	public static final String UPDATE_JOB_STATE = "update-DatumDeleteJobInfo-state";
 
 	/**
 	 * The {@code UPDATE} query name used for
 	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)}.
 	 */
-	public static final String UPDATE_JOB_CONFIG = "update-DatumImportJobInfo-config";
+	public static final String UPDATE_JOB_CONFIG = "update-DatumDeleteJobInfo-config";
 
 	/**
 	 * The {@code UPDATE} query name used for
 	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)}.
 	 */
-	public static final String UPDATE_JOB_PROGRESS = "update-DatumImportJobInfo-progress";
+	public static final String UPDATE_JOB_PROGRESS = "update-DatumDeleteJobInfo-progress";
 
 	/**
 	 * The query name used for {@link #findForUser(Long, Set)}.
 	 */
-	public static final String QUERY_FOR_USER = "find-DatumImportJobInfo-for-user";
+	public static final String QUERY_FOR_USER = "find-DatumDeleteJobInfo-for-user";
 
 	private String queryForClaimQueuedJob;
 	private String updateDeleteCompletedJobs;
@@ -95,8 +95,8 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	/**
 	 * Constructor.
 	 */
-	public MyBatisDatumImportJobInfoDao() {
-		super(DatumImportJobInfo.class, UserUuidPK.class);
+	public MyBatisUserDatumDeleteJobInfoDao() {
+		super(DatumDeleteJobInfo.class, UserUuidPK.class);
 		setQueryForUser(QUERY_FOR_USER);
 		setQueryForClaimQueuedJob(QUERY_FOR_CLAIMING_JOB);
 		setUpdateDeleteCompletedJobs(UPDATE_PURGE_COMPLETED);
@@ -108,7 +108,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public DatumImportJobInfo claimQueuedJob() {
+	public DatumDeleteJobInfo claimQueuedJob() {
 		return selectFirst(queryForClaimQueuedJob, null);
 	}
 
@@ -124,8 +124,8 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
-			Set<DatumImportState> expectedStates) {
+	public boolean updateJobState(UserUuidPK id, DatumDeleteJobState desiredState,
+			Set<DatumDeleteJobState> expectedStates) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
 		params.put("desiredState", desiredState.getKey());
@@ -140,14 +140,15 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public boolean updateJobConfiguration(UserUuidPK id, Configuration configuration) {
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setConfig(new BasicConfiguration(configuration));
+	public boolean updateJobConfiguration(UserUuidPK id, GeneralNodeDatumFilter configuration) {
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
+		info.setConfiguration(new DatumFilterCommand(configuration));
 
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
 		params.put("configJson", info.getConfigJson());
-		params.put("expectedStates", new String[] { String.valueOf(DatumImportState.Staged.getKey()) });
+		params.put("expectedStates",
+				new String[] { String.valueOf(DatumDeleteJobState.Queued.getKey()) });
 		int count = getSqlSession().update(updateJobConfiguration, params);
 		return (count > 0);
 	}
@@ -165,7 +166,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public List<DatumImportJobInfo> findForUser(Long userId, Set<DatumImportState> states) {
+	public List<DatumDeleteJobInfo> findForUser(Long userId, Set<DatumDeleteJobState> states) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("userId", userId);
 		if ( states != null && !states.isEmpty() ) {
@@ -178,7 +179,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumImportState> states) {
+	public int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumDeleteJobState> states) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("userId", userId);
 		if ( jobIds != null && !jobIds.isEmpty() ) {
@@ -270,5 +271,4 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	public void setUpdateDeleteForUser(String updateDeleteForUser) {
 		this.updateDeleteForUser = updateDeleteForUser;
 	}
-
 }

@@ -33,6 +33,7 @@
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/expire/dao/mybatis/map/DatumDeleteJobInfo.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/expire/dao/mybatis/map/UserDataConfiguration.xml</value>
 			</list>
 		</property>

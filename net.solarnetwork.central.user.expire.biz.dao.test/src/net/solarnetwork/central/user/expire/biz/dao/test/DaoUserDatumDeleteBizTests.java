@@ -22,17 +22,21 @@
 
 package net.solarnetwork.central.user.expire.biz.dao.test;
 
+import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.easymock.IAnswer;
 import org.joda.time.LocalDateTime;
 import org.junit.After;
 import org.junit.Before;
@@ -44,7 +48,13 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserDatumDeleteBiz;
+import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobStatus;
+import net.solarnetwork.test.Assertion;
 
 /**
  * Test cases for the {@link DaoUserDatumDeleteBiz} class.
@@ -56,6 +66,7 @@ public class DaoUserDatumDeleteBizTests {
 
 	private GeneralNodeDatumDao datumDao;
 	private UserNodeDao userNodeDao;
+	private UserDatumDeleteJobInfoDao jobInfoDao;
 
 	private DaoUserDatumDeleteBiz biz;
 
@@ -63,16 +74,18 @@ public class DaoUserDatumDeleteBizTests {
 	public void setup() {
 		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
-		biz = new DaoUserDatumDeleteBiz(new CallingThreadExecutorService(), userNodeDao, datumDao);
+		jobInfoDao = EasyMock.createMock(UserDatumDeleteJobInfoDao.class);
+		biz = new DaoUserDatumDeleteBiz(new CallingThreadExecutorService(), userNodeDao, datumDao,
+				jobInfoDao);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(datumDao, userNodeDao);
+		EasyMock.verify(datumDao, userNodeDao, jobInfoDao);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(datumDao, userNodeDao);
+		EasyMock.replay(datumDao, userNodeDao, jobInfoDao);
 	}
 
 	@Test
@@ -142,8 +155,19 @@ public class DaoUserDatumDeleteBizTests {
 	}
 
 	@Test
-	public void deleteFiltered() throws Exception {
+	public void performDelete() throws Exception {
 		// given
+		final UserUuidPK id = new UserUuidPK(-1L, UUID.randomUUID());
+
+		DatumDeleteJobInfo jobInfo = new DatumDeleteJobInfo();
+		jobInfo.setId(id);
+		jobInfo.setConfiguration(new DatumFilterCommand());
+
+		expect(jobInfoDao.get(id)).andReturn(jobInfo).anyTimes();
+
+		// allow updating the status as job progresses
+		expect(jobInfoDao.store(jobInfo)).andReturn(id).anyTimes();
+
 		Capture<GeneralNodeDatumFilter> filterCaptor = new Capture<>();
 		final long count = 123;
 		expect(datumDao.deleteFiltered(capture(filterCaptor))).andReturn(count);
@@ -153,35 +177,54 @@ public class DaoUserDatumDeleteBizTests {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setUserId(1L);
 		filter.setNodeId(2L);
-		long result = biz.deleteFiltered(filter).get();
+		DatumDeleteJobStatus result = biz.performDatumDelete(id);
 
 		// then
-		assertThat("Result", result, equalTo(count));
-		assertThat("Filter passed through", filterCaptor.getValue(), sameInstance(filter));
+		assertThat("Result", result, notNullValue());
+		assertThat("Result delete count", result.get().getResultCount(), equalTo(count));
 	}
 
 	@Test(expected = AuthorizationException.class)
-	public void deleteFilteredWithoutUser() {
+	public void submitDeleteRequestWithoutUser() {
 		// given
 
 		// when
 		replayAll();
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(2L);
-		biz.deleteFiltered(filter);
+		biz.submitDatumDeleteRequest(filter);
 	}
 
 	@Test
-	public void deleteFilteredFillNodeIds() throws Exception {
+	public void submitDeleteRequestFillNodeIds() throws Exception {
 		// given
 		final Long userId = 1L;
 		final Long[] userNodeIds = new Long[] { 2L, 3L, 4L };
 		expect(userNodeDao.findNodeIdsForUser(userId))
 				.andReturn(new LinkedHashSet<>(Arrays.asList(userNodeIds)));
 
-		Capture<GeneralNodeDatumFilter> filterCaptor = new Capture<>();
-		final long count = 234L;
-		expect(datumDao.deleteFiltered(capture(filterCaptor))).andReturn(count);
+		Capture<DatumDeleteJobInfo> jobInfoCaptor = new Capture<>();
+		expect(jobInfoDao.store(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
+
+			@Override
+			public UserUuidPK answer() throws Throwable {
+				return jobInfoCaptor.getValue().getId();
+			}
+		});
+		expect(jobInfoDao.get(assertWith(new Assertion<UserUuidPK>() {
+
+			@Override
+			public void check(UserUuidPK argument) throws Throwable {
+				assertThat(argument, equalTo(jobInfoCaptor.getValue().getId()));
+			}
+		}))).andAnswer(new IAnswer<DatumDeleteJobInfo>() {
+
+			@Override
+			public DatumDeleteJobInfo answer() throws Throwable {
+				return jobInfoCaptor.getValue();
+			}
+
+		});
 
 		// when
 		replayAll();
@@ -191,20 +234,13 @@ public class DaoUserDatumDeleteBizTests {
 		filter.setSourceIds(sourceIds);
 		filter.setLocalStartDate(new LocalDateTime(2018, 11, 1, 0, 0));
 		filter.setLocalEndDate(new LocalDateTime(2018, 12, 1, 0, 0));
-		long result = biz.deleteFiltered(filter).get();
+		DatumDeleteJobInfo result = biz.submitDatumDeleteRequest(filter);
 
 		// then
-		assertThat("Result returned", result, equalTo(count));
-		assertThat("Filter not passed through", filterCaptor.getValue(), not(sameInstance(filter)));
-		assertThat("Filter user ID unchanged", filterCaptor.getValue().getUserId(), equalTo(userId));
-		assertThat("Filter node IDs populated", filterCaptor.getValue().getNodeIds(),
+		assertThat("Result returned", result, equalTo(jobInfoCaptor.getValue()));
+		assertThat("Job state", result.getJobState(), equalTo(DatumDeleteJobState.Queued));
+		assertThat("Node IDs filled in", result.getConfiguration().getNodeIds(),
 				arrayContaining(userNodeIds));
-		assertThat("Filter source IDs unchanged", filterCaptor.getValue().getSourceIds(),
-				arrayContaining(sourceIds));
-		assertThat("Filter local start date unchanged", filterCaptor.getValue().getLocalStartDate(),
-				equalTo(filter.getLocalStartDate()));
-		assertThat("Filter local end date unchanged", filterCaptor.getValue().getLocalEndDate(),
-				equalTo(filter.getLocalEndDate()));
 	}
 
 }

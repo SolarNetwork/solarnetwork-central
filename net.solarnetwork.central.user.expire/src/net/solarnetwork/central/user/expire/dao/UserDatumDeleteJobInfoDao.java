@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumImportJobInfoDao.java - 7/11/2018 11:24:47 AM
+ * UserDatumDeleteJobInfoDao.java - 26/11/2018 7:00:56 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,26 +20,26 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.imp.dao;
+package net.solarnetwork.central.user.expire.dao;
 
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import net.solarnetwork.central.dao.ClaimableJobDao;
 import net.solarnetwork.central.dao.GenericDao;
-import net.solarnetwork.central.datum.imp.domain.Configuration;
-import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
-import net.solarnetwork.central.datum.imp.domain.DatumImportState;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 
 /**
- * DAO API for {@link DatumImportJobInfo} entities.
+ * DAO API for {@link DatumDeleteJobInfo} entities.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, UserUuidPK>,
-		ClaimableJobDao<Configuration, Long, DatumImportState, DatumImportJobInfo, UserUuidPK> {
+public interface UserDatumDeleteJobInfoDao extends GenericDao<DatumDeleteJobInfo, UserUuidPK>,
+		ClaimableJobDao<GeneralNodeDatumFilter, Long, DatumDeleteJobState, DatumDeleteJobInfo, UserUuidPK> {
 
 	/**
 	 * Find all available job info entities for a specific user.
@@ -51,7 +51,7 @@ public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, Us
 	 *        {@literal null} for any state
 	 * @return the matching results, never {@literal null}
 	 */
-	List<DatumImportJobInfo> findForUser(Long userId, Set<DatumImportState> states);
+	List<DatumDeleteJobInfo> findForUser(Long userId, Set<DatumDeleteJobState> states);
 
 	/**
 	 * Delete job info entities for a specific user.
@@ -66,6 +66,6 @@ public interface DatumImportJobInfoDao extends GenericDao<DatumImportJobInfo, Us
 	 *        {@literal null} for any state
 	 * @return the number of deleted jobs
 	 */
-	int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumImportState> states);
+	int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumDeleteJobState> states);
 
 }

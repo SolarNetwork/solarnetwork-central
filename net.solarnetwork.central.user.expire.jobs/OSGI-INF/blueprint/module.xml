@@ -18,23 +18,26 @@
 		http://www.springframework.org/schema/context/spring-context-4.2.xsd">
 
 
-	<!-- Configuration -->
-	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.expire.jobs">
 		<beans:prop key="ExpireDatum.jobCron">0 15 1/8 * * ?</beans:prop>
 		<beans:prop key="ExpireDatum.maximumWaitMs">21600000</beans:prop>
+		<beans:prop key="DatumDeleteProcessor.jobCron">0 1/10 * * * ?</beans:prop>
+		<beans:prop key="DatumDeleteProcessor.maximumWaitMs">5400000</beans:prop>
+		<beans:prop key="DatumDeleteProcessor.maximumClaimCount">1</beans:prop>
+		<beans:prop key="DatumDeleteJobInfoCleaner.jobCron">0 47 * * * ?</beans:prop>
+		<beans:prop key="DatumDeleteJobInfoCleaner.minimumAgeMinutes">720</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
 	
-	<!-- Service References -->
-
 	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
 	
 	<reference id="configurationDao" interface="net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao"/>
 
-	<!-- Published Services -->
+	<reference id="datumDeleteJobBiz" interface="net.solarnetwork.central.user.expire.biz.UserDatumDeleteJobBiz"/>
 	
+	<reference id="jobInfoDao" interface="net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao"/>
+
 	<service ref="expireDatumJob" interface="org.osgi.service.event.EventHandler">
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
@@ -46,8 +49,6 @@
 		</service-properties>
 	</service>
 
-	<!-- Supporting Services -->
-	
 	<bean id="expireDatumJob" class="net.solarnetwork.central.user.expire.jobs.ExpireDatumJob">
 		<argument ref="eventAdmin"/>
 		<argument ref="configurationDao"/>
@@ -58,4 +59,48 @@
 		<property name="jobTopic" value="net/solarnetwork/central/user/expire/ExpireDatum"/>
 	</bean>
 	
+	<service ref="datumDeleteProcessorJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{datumDeleteProcessorJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<bean id="datumDeleteProcessorJob" class="net.solarnetwork.central.user.expire.jobs.DatumDeleteProcessorJob">
+		<argument ref="eventAdmin"/>
+		<argument ref="datumDeleteJobBiz"/>
+		<argument ref="jobInfoDao"/>
+		<property name="jobCron" value="${DatumDeleteProcessor.jobCron}"/>
+		<property name="maximumWaitMs" value="${DatumDeleteProcessor.maximumWaitMs}"/>
+		<property name="maximumClaimCount" value="${DatumDeleteProcessor.maximumClaimCount}"/>
+		<property name="jobId" value="DatumDeleteProcessor"/>
+		<property name="jobGroup" value="UserExpire"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/expire/DatumDeleteProcessor"/>
+	</bean>
+
+	<service ref="datumDeleteJobInfoCleanerJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{datumDeleteJobInfoCleanerJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<bean id="datumDeleteJobInfoCleanerJob" class="net.solarnetwork.central.user.expire.jobs.DatumDeleteJobInfoCleanerJob">
+		<argument ref="eventAdmin"/>
+		<argument ref="datumDeleteJobBiz"/>
+		<property name="jobCron" value="${DatumDeleteJobInfoCleaner.jobCron}"/>
+		<property name="minimumAgeMinutes" value="${DatumDeleteJobInfoCleaner.minimumAgeMinutes}"/>
+		<property name="jobId" value="DatumDeleteJobInfoCleaner"/>
+		<property name="jobGroup" value="UserExpire"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/expire/DatumDeleteJobInfoCleaner"/>
+	</bean>
+
 </blueprint>

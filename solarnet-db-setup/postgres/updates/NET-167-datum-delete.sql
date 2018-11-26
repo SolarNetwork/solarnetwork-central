@@ -234,3 +234,80 @@ BEGIN
 	RETURN total_count;
 END
 $$;
+
+/**************************************************************************************************
+ * TABLE solaruser.user_datum_delete_job
+ *
+ * Holds records for datum delete jobs, where `status` represents the execution status
+ * of the job and `config` holds a complete delete configuration document.
+ */
+CREATE TABLE solaruser.user_datum_delete_job (
+	id				uuid NOT NULL,
+	user_id			BIGINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	progress		DOUBLE PRECISION NOT NULL DEFAULT 0,
+	started 		TIMESTAMP WITH TIME ZONE,
+	completed 		TIMESTAMP WITH TIME ZONE,
+	result_count	BIGINT,
+	state			CHARACTER(1) NOT NULL,
+	success 		BOOLEAN,
+	message			TEXT,
+	config			jsonb NOT NULL,
+	CONSTRAINT user_datum_delete_job_pkey PRIMARY KEY (user_id, id),
+	CONSTRAINT user_datum_delete_user_fk FOREIGN KEY (user_id)
+		REFERENCES solaruser.user_user (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+/**************************************************************************************************
+ * FUNCTION solaruser.claim_datum_delete_job()
+ *
+ * "Claim" a delete job from the `solaruser.user_datum_delete_job` table that has a status of 'q'
+ * and change the status to 'p' and return it. The tasks will be claimed from oldest to newest
+ * based on the created column.
+ *
+ * @return the claimed row, if one was able to be claimed
+ */
+CREATE OR REPLACE FUNCTION solaruser.claim_datum_delete_job()
+  RETURNS solaruser.user_datum_delete_job LANGUAGE plpgsql VOLATILE AS
+$$
+DECLARE
+	rec solaruser.user_datum_delete_job;
+	curs CURSOR FOR SELECT * FROM solaruser.user_datum_delete_job
+			WHERE state = 'q'
+			ORDER BY created ASC, ID ASC
+			LIMIT 1
+			FOR UPDATE SKIP LOCKED;
+BEGIN
+	OPEN curs;
+	FETCH NEXT FROM curs INTO rec;
+	IF FOUND THEN
+		UPDATE solaruser.user_datum_delete_job SET state = 'p' WHERE CURRENT OF curs;
+	END IF;
+	CLOSE curs;
+	RETURN rec;
+END;
+$$;
+
+/**************************************************************************************************
+ * FUNCTION solaruser.purge_completed_datum_delete_jobs(timestamp with time zone)
+ *
+ * Delete `solaruser.user_datum_delete_job` rows that have reached the 'c' state and whose
+ * completed date is older than the given date.
+ *
+ * @param older_date The maximum date to delete jobs for.
+ * @return The number of rows deleted.
+ */
+CREATE OR REPLACE FUNCTION solaruser.purge_completed_datum_delete_jobs(older_date timestamp with time zone)
+  RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS
+$$
+DECLARE
+	num_rows BIGINT := 0;
+BEGIN
+	DELETE FROM solaruser.user_datum_delete_job
+	WHERE completed < older_date AND state = 'c';
+	GET DIAGNOSTICS num_rows = ROW_COUNT;
+	RETURN num_rows;
+END;
+$$;

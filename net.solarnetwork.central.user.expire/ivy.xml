@@ -11,8 +11,10 @@
 		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.44,2.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.31,2.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.29,2.0)"/>
+		<dependency org="org.osgi" name="org.osgi.enterprise" rev="4.2.0"/>
     	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
 		<dependency org="org.springframework" name="spring-core" rev="4.2.6.RELEASE"/>
 	</dependencies>

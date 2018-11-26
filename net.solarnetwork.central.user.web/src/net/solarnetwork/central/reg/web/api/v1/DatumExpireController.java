@@ -23,9 +23,13 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.TimeZone;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
@@ -37,6 +41,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -46,6 +51,8 @@ import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.domain.DataConfiguration;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -204,8 +211,42 @@ public class DatumExpireController extends WebServiceControllerSupport {
 		if ( biz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			filter.setUserIds(new Long[] { userId });
-			biz.deleteFiltered(filter);
+			biz.submitDatumDeleteRequest(filter);
 		}
 		return response(null);
 	}
+
+	@ResponseBody
+	@RequestMapping(value = "/datum-delete/jobs", method = RequestMethod.GET)
+	public Response<Collection<DatumDeleteJobInfo>> jobsForUser(
+			@RequestParam(value = "states", required = false) DatumDeleteJobState[] states) {
+		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
+		Collection<DatumDeleteJobInfo> result = null;
+		if ( biz != null ) {
+			Set<DatumDeleteJobState> stateFilter = null;
+			if ( states != null && states.length > 0 ) {
+				stateFilter = new HashSet<>(states.length);
+				for ( DatumDeleteJobState state : states ) {
+					stateFilter.add(state);
+				}
+				stateFilter = EnumSet.copyOf(stateFilter);
+			}
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			result = biz.datumDeleteJobsForUser(userId, stateFilter);
+		}
+		return response(result);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/datum-delete/jobs/{id}", method = RequestMethod.GET)
+	public Response<DatumDeleteJobInfo> jobStatus(@PathVariable("id") String id) {
+		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
+		DatumDeleteJobInfo result = null;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			result = biz.datumDeleteJobForUser(userId, id);
+		}
+		return response(result);
+	}
+
 }

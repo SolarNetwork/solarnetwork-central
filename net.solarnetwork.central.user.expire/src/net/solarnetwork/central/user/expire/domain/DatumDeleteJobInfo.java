@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumImportJobInfo.java - 7/11/2018 11:04:40 AM
+ * DatumDeleteJobInfo.java - 26/11/2018 7:01:23 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,31 +20,31 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.imp.domain;
+package net.solarnetwork.central.user.expire.domain;
 
 import java.util.UUID;
-import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.domain.BaseClaimableJob;
 import net.solarnetwork.central.user.domain.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.util.JsonUtils;
 
 /**
- * Entity for user-specific datum import jobs.
+ * Entity for user-specific datum delete job status information.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class DatumImportJobInfo
-		extends BaseClaimableJob<Configuration, Long, DatumImportState, UserUuidPK>
-		implements UserRelatedEntity<UserUuidPK>, DatumImportRequest, DatumImportResult {
+public class DatumDeleteJobInfo
+		extends BaseClaimableJob<GeneralNodeDatumFilter, Long, DatumDeleteJobState, UserUuidPK>
+		implements UserRelatedEntity<UserUuidPK> {
 
-	private static final long serialVersionUID = 8208441028181856685L;
+	private static final long serialVersionUID = 464029861491855667L;
 
-	private DateTime importDate;
 	private String configJson;
 
 	@JsonIgnore
@@ -84,64 +84,37 @@ public class DatumImportJobInfo
 		}
 	}
 
-	@Override
-	public DateTime getImportDate() {
-		return importDate;
+	public String getJobId() {
+		UserUuidPK id = getId();
+		return (id != null && id.getId() != null ? id.getId().toString() : null);
 	}
 
-	public void setImportDate(DateTime importDate) {
-		this.importDate = importDate;
-	}
-
-	@JsonIgnore
-	public DatumImportState getImportState() {
-		return getJobState();
-	}
-
-	public void setImportState(DatumImportState state) {
-		setJobState(state);
-	}
-
-	public char getImportStateKey() {
-		return getJobStateKey();
-	}
-
-	public void setImportStateKey(char key) {
-		DatumImportState state;
+	public void setJobStateKey(char key) {
+		DatumDeleteJobState state;
 		try {
-			state = DatumImportState.forKey(key);
+			state = DatumDeleteJobState.forKey(key);
 		} catch ( IllegalArgumentException e ) {
-			state = DatumImportState.Unknown;
+			state = DatumDeleteJobState.Unknown;
 		}
 		setJobState(state);
 	}
 
-	public BasicConfiguration getConfig() {
-		return (BasicConfiguration) getConfiguration();
-	}
-
-	public void setConfig(BasicConfiguration config) {
-		setConfiguration(config);
-	}
-
-	@JsonIgnore
 	@Override
-	public Configuration getConfiguration() {
-		Configuration config = super.getConfiguration();
+	public GeneralNodeDatumFilter getConfiguration() {
+		GeneralNodeDatumFilter config = super.getConfiguration();
 		if ( config == null && configJson != null ) {
-			config = JsonUtils.getObjectFromJSON(configJson, BasicConfiguration.class);
+			config = JsonUtils.getObjectFromJSON(configJson, DatumFilterCommand.class);
 			super.setConfiguration(config);
 		}
 		return config;
 	}
 
 	@Override
-	public void setConfiguration(Configuration config) {
+	public void setConfiguration(GeneralNodeDatumFilter config) {
 		super.setConfiguration(config);
 		this.configJson = null;
 	}
 
-	@JsonIgnore
 	public String getConfigJson() {
 		if ( configJson == null ) {
 			configJson = JsonUtils.getJSONString(super.getConfiguration(), null);
@@ -161,30 +134,18 @@ public class DatumImportJobInfo
 	}
 
 	@Override
-	public DateTime getCompletionDate() {
-		return getCompleted();
-	}
-
-	@Override
 	@JsonIgnore
-	public DateTime getCompleted() {
-		return super.getCompleted();
+	public Long getResult() {
+		return super.getResult();
 	}
 
-	@Override
-	@JsonIgnore
-	public DateTime getStarted() {
-		return super.getStarted();
-	}
-
-	@Override
-	public long getLoadedCount() {
+	public long getResultCount() {
 		Long result = getResult();
 		return (result != null ? result : 0L);
 	}
 
-	public void setLoadedCount(long loadedCount) {
-		setResult(loadedCount);
+	public void setResultCount(long deletedCount) {
+		setResult(deletedCount);
 	}
 
 }

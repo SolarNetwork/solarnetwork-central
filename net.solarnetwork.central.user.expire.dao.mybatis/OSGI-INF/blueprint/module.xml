@@ -19,6 +19,8 @@
 	
 	<service ref="userDataConfigurationDao" interface="net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao"/>
 
+	<service ref="userDatumDeleteJobInfoDao" interface="net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao"/>
+
 	<service ref="sqlSessionFactory" interface="org.apache.ibatis.session.SqlSessionFactory">
 		<service-properties>
 			<entry key="db" value="central"/>
@@ -32,6 +34,10 @@
 	<tx:annotation-driven transaction-manager="txManager"/>
 
 	<bean id="userDataConfigurationDao" class="net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDataConfigurationDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
+	<bean id="userDatumDeleteJobInfoDao" class="net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDatumDeleteJobInfoDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean>
 	
@@ -63,6 +69,7 @@
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/expire/dao/mybatis/map/DatumDeleteJobInfo.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/expire/dao/mybatis/map/UserDataConfiguration.xml</value>
 			</list>
 		</property>

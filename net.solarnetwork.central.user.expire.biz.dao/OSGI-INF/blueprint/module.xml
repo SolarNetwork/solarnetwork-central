@@ -21,6 +21,7 @@
 
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.expire.biz.dao">
 		<beans:prop key="executor.parallelism">1</beans:prop>
+		<beans:prop key="completedTaskMinimumCacheTime">14400000</beans:prop>
 	</osgix:cm-properties>
 	
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -34,6 +35,10 @@
 	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
+
+	<reference id="datumDeleteJobInfoDao" interface="net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao"/>
+
+	<reference id="scheduler" interface="java.util.concurrent.ScheduledExecutorService" filter="(function=central)"/>
 
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="transactionManager"/>
@@ -59,7 +64,12 @@
 		</property>
 	</bean>
 	
-	<service ref="userDatumDeleteBiz" interface="net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz"/>
+	<service ref="userDatumDeleteBiz">
+		<interfaces>
+			<value>net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz</value>
+			<value>net.solarnetwork.central.user.expire.biz.UserDatumDeleteJobBiz</value>
+		</interfaces>
+	</service>
 	
 	<bean id="executor" class="java.util.concurrent.Executors" factory-method="newWorkStealingPool" destroy-method="shutdown">
 		<argument value="${executor.parallelism}"/>
@@ -69,6 +79,15 @@
 		<argument ref="executor"/>
 		<argument ref="userNodeDao"/>
 		<argument ref="generalNodeDatumDao"/>
+		<argument ref="datumDeleteJobInfoDao"/>
+		<property name="scheduler" ref="scheduler"/>
+		<property name="completedTaskMinimumCacheTime" value="${completedTaskMinimumCacheTime}"/>
+		<property name="eventAdmin">
+			<bean class="net.solarnetwork.util.DynamicServiceTracker">
+				<property name="bundleContext" ref="bundleContext"/>
+				<property name="serviceClassName" value="org.osgi.service.event.EventAdmin"/>
+			</bean>
+		</property>
 	</bean>
 	
 </blueprint>

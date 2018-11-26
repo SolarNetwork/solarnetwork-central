@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisDatumImportJobInfoDaoTests.java - 10/11/2018 7:17:14 AM
+ * MyBatisUserDatumDeleteJobInfoDaoTests.java - 26/11/2018 11:44:24 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,9 +20,10 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.imp.dao.mybatis.test;
+package net.solarnetwork.central.user.expire.dao.mybatis.test;
 
 import static java.util.Collections.singleton;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
@@ -36,30 +37,29 @@ import java.util.UUID;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import net.solarnetwork.central.datum.imp.dao.mybatis.MyBatisDatumImportJobInfoDao;
-import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
-import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
-import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
-import net.solarnetwork.central.datum.imp.domain.DatumImportState;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDatumDeleteJobInfoDao;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
+import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 
 /**
- * Test cases for the {@link MyBatisDatumImportJobInfoDao} class.
+ * Test cases for the {@link MyBatisUserDatumDeleteJobInfoDao} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImportDaoTestSupport {
+public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
-	private MyBatisDatumImportJobInfoDao dao;
+	private MyBatisUserDatumDeleteJobInfoDao dao;
 
 	private User user;
-	private DatumImportJobInfo info;
+	private DatumDeleteJobInfo info;
 
 	@Before
 	public void setUp() throws Exception {
-		dao = new MyBatisDatumImportJobInfoDao();
+		dao = new MyBatisUserDatumDeleteJobInfoDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
 
 		this.user = createNewUser(TEST_EMAIL);
@@ -68,27 +68,19 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info = null;
 	}
 
-	private BasicConfiguration createNewConfig() {
-		BasicConfiguration conf = new BasicConfiguration();
-		conf.setName(TEST_NAME);
-		conf.setStage(true);
-
-		BasicInputConfiguration inputConfig = new BasicInputConfiguration();
-		inputConfig.setName(TEST_NAME);
-		inputConfig.setServiceIdentifier("foo.bar");
-		inputConfig.setTimeZoneId("Pacific/Auckland");
-		inputConfig.setServiceProps(Collections.singletonMap("foo", "bar"));
-		conf.setInputConfiguration(inputConfig);
-
+	private DatumFilterCommand createNewConfig() {
+		DatumFilterCommand conf = new DatumFilterCommand();
+		conf.setNodeIds(new Long[] { TEST_NODE_ID, -2L });
+		conf.setUserId(this.user.getId());
+		conf.setSourceIds(new String[] { "a", "b" });
 		return conf;
 	}
 
 	@Test
 	public void storeNew() {
-		DatumImportJobInfo info = new DatumImportJobInfo();
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
 		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
-		info.setImportDate(new DateTime());
-		info.setConfig(createNewConfig());
+		info.setConfiguration(createNewConfig());
 
 		UserUuidPK id = dao.store(info);
 		assertThat("Primary key assigned", id, notNullValue());
@@ -102,13 +94,12 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void getByPrimaryKey() {
 		storeNew();
-		DatumImportJobInfo info = dao.get(this.info.getId());
+		DatumDeleteJobInfo info = dao.get(this.info.getId());
 		assertThat("Found by PK", info, notNullValue());
 		assertThat("PK", info.getId(), equalTo(this.info.getId()));
 		assertThat("Created assigned", info.getCreated(), notNullValue());
 		assertThat("User ID", info.getUserId(), equalTo(this.user.getId()));
-		assertThat("Config", info.getConfig(), notNullValue());
-		assertThat("Import date", info.getImportDate(), notNullValue());
+		assertThat("Config", info.getConfiguration(), notNullValue());
 		assertThat("Percent complete", info.getPercentComplete(), equalTo(0.0));
 
 		// stash results for other tests to use
@@ -119,27 +110,27 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void update() {
 		storeNew();
 
-		DatumImportJobInfo info = dao.get(this.info.getId());
+		DatumDeleteJobInfo info = dao.get(this.info.getId());
 		DateTime originalCreated = info.getCreated();
 		info.setCreated(new DateTime()); // should not actually save
-		info.setImportState(DatumImportState.Completed);
+		info.setJobState(DatumDeleteJobState.Completed);
 		info.setStarted(new DateTime().minus(1000).secondOfMinute().roundFloorCopy());
 		info.setCompleted(new DateTime().secondOfMinute().roundCeilingCopy());
 		info.setJobSuccess(Boolean.TRUE);
-		info.setLoadedCount(1234);
+		info.setResult(1234L);
 		info.setPercentComplete(50.0);
 
 		UserUuidPK id = dao.store(info);
 		assertThat("PK unchanged", id, equalTo(this.info.getId()));
 
-		DatumImportJobInfo updated = dao.get(id);
+		DatumDeleteJobInfo updated = dao.get(id);
 		assertThat("Found by PK", updated, notNullValue());
 		assertThat("New entity returned", updated, not(sameInstance(info)));
 		assertThat("PK", updated.getId(), equalTo(info.getId()));
 		assertThat("Created unchanged", updated.getCreated(), equalTo(originalCreated));
-		assertThat("State changed", updated.getImportState(), equalTo(info.getImportState()));
+		assertThat("State changed", updated.getJobState(), equalTo(info.getJobState()));
 		assertThat("Success changed", updated.isSuccess(), equalTo(info.isSuccess()));
-		assertThat("Loaded count changed", updated.getLoadedCount(), equalTo(info.getLoadedCount()));
+		assertThat("Loaded count changed", updated.getResult(), equalTo(info.getResult()));
 		assertThat("Percent complete changed", updated.getPercentComplete(),
 				equalTo(info.getPercentComplete()));
 		assertThat("Started date changed", updated.getStarted(), equalTo(info.getStarted()));
@@ -164,37 +155,17 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void purgeCompleted() {
 		getByPrimaryKey();
-		DatumImportJobInfo info = new DatumImportJobInfo();
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
 		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(new DateTime());
-		info.setImportState(DatumImportState.Completed);
+		info.setConfiguration(new DatumFilterCommand());
+		info.setJobState(DatumDeleteJobState.Completed);
 		info.setCompleted(new DateTime().hourOfDay().roundFloorCopy());
 		info = dao.get(dao.store(info));
 
 		long result = dao.purgeOldJobs(new DateTime().hourOfDay().roundCeilingCopy());
 		assertThat("Delete count", result, equalTo(1L));
 
-		DatumImportJobInfo notCompleted = dao.get(this.info.getId());
-		assertThat("Unfinished job still available", notCompleted, notNullValue());
-	}
-
-	@Test
-	public void purgeStaged() {
-		getByPrimaryKey();
-
-		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(new DateTime());
-		info.setImportState(DatumImportState.Staged);
-		info.setCreated(new DateTime().hourOfDay().roundFloorCopy());
-		info = dao.get(dao.store(info));
-
-		long result = dao.purgeOldJobs(new DateTime().hourOfDay().roundCeilingCopy());
-		assertThat("Delete count", result, equalTo(1L));
-
-		DatumImportJobInfo notCompleted = dao.get(this.info.getId());
+		DatumDeleteJobInfo notCompleted = dao.get(this.info.getId());
 		assertThat("Unfinished job still available", notCompleted, notNullValue());
 	}
 
@@ -215,7 +186,8 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void deleteForUserNoMatchingState() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), null, EnumSet.of(DatumImportState.Completed));
+		int count = dao.deleteForUser(this.user.getId(), null,
+				EnumSet.of(DatumDeleteJobState.Completed));
 		assertThat("Delete count", count, equalTo(0));
 	}
 
@@ -237,7 +209,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void deleteForUserMatchingState() {
 		storeNew();
 		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
-				EnumSet.of(DatumImportState.Unknown));
+				EnumSet.of(DatumDeleteJobState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 	}
 
@@ -245,7 +217,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void deleteForUserMatchingAll() {
 		storeNew();
 		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
-				EnumSet.of(DatumImportState.Unknown));
+				EnumSet.of(DatumDeleteJobState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 	}
 
@@ -254,19 +226,18 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		storeNew();
 
 		// add another job
-		DatumImportJobInfo info = new DatumImportJobInfo();
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
 		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(new DateTime());
-		info.setImportState(DatumImportState.Staged);
+		info.setConfiguration(new DatumFilterCommand());
+		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(new DateTime().minusHours(1));
 		info = dao.get(dao.store(info));
 
 		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
-				EnumSet.of(DatumImportState.Unknown));
+				EnumSet.of(DatumDeleteJobState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 
-		List<DatumImportJobInfo> infos = dao.findForUser(this.user.getId(), null);
+		List<DatumDeleteJobInfo> infos = dao.findForUser(this.user.getId(), null);
 		assertThat("Remaining jobs", infos, hasSize(1));
 		assertThat("Remaining job ID", infos.get(0).getId(), equalTo(info.getId()));
 	}
@@ -274,52 +245,68 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void updateStateNotFound() {
 		boolean updated = dao.updateJobState(new UserUuidPK(-123L, UUID.randomUUID()),
-				DatumImportState.Completed, null);
+				DatumDeleteJobState.Completed, null);
 		assertThat("Update result", updated, equalTo(false));
 	}
 
 	@Test
 	public void updateState() {
 		storeNew();
-		boolean updated = dao.updateJobState(this.info.getId(), DatumImportState.Completed, null);
+		boolean updated = dao.updateJobState(this.info.getId(), DatumDeleteJobState.Completed, null);
 		assertThat("Update result", updated, equalTo(true));
+
+		DatumDeleteJobInfo info = dao.get(this.info.getId());
+		assertThat("New instance", info, not(sameInstance(this.info)));
+		assertThat("State updated", info.getJobState(), equalTo(DatumDeleteJobState.Completed));
 	}
 
 	@Test
 	public void updateStateWithExpectedStateNotFound() {
 		storeNew();
-		boolean updated = dao.updateJobState(this.info.getId(), DatumImportState.Completed,
-				Collections.singleton(DatumImportState.Staged));
+		boolean updated = dao.updateJobState(this.info.getId(), DatumDeleteJobState.Completed,
+				Collections.singleton(DatumDeleteJobState.Queued));
 		assertThat("Update result", updated, equalTo(false));
+
+		DatumDeleteJobInfo info = dao.get(this.info.getId());
+		assertThat("New instance", info, not(sameInstance(this.info)));
+		assertThat("State unchanged", info.getJobState(), equalTo(DatumDeleteJobState.Unknown));
 	}
 
 	@Test
 	public void updateStateWithExpectedState() {
 		storeNew();
-		boolean updated = dao.updateJobState(this.info.getId(), DatumImportState.Retracted,
-				Collections.singleton(DatumImportState.Unknown));
+		boolean updated = dao.updateJobState(this.info.getId(), DatumDeleteJobState.Completed,
+				Collections.singleton(DatumDeleteJobState.Unknown));
 		assertThat("Update result", updated, equalTo(true));
+
+		DatumDeleteJobInfo info = dao.get(this.info.getId());
+		assertThat("New instance", info, not(sameInstance(this.info)));
+		assertThat("State updated", info.getJobState(), equalTo(DatumDeleteJobState.Completed));
 	}
 
 	@Test
 	public void updateStateWithExpectedStates() {
 		storeNew();
-		boolean updated = dao.updateJobState(this.info.getId(), DatumImportState.Retracted,
-				EnumSet.of(DatumImportState.Unknown, DatumImportState.Staged, DatumImportState.Queued));
+		boolean updated = dao.updateJobState(this.info.getId(), DatumDeleteJobState.Completed,
+				EnumSet.of(DatumDeleteJobState.Unknown, DatumDeleteJobState.Queued));
 		assertThat("Update result", updated, equalTo(true));
+
+		DatumDeleteJobInfo info = dao.get(this.info.getId());
+		assertThat("New instance", info, not(sameInstance(this.info)));
+		assertThat("State updated", info.getJobState(), equalTo(DatumDeleteJobState.Completed));
 	}
 
 	@Test
 	public void findForUserNotFound() {
-		List<DatumImportJobInfo> results = dao.findForUser(user.getId(), null);
+		List<DatumDeleteJobInfo> results = dao.findForUser(user.getId(), null);
 		assertThat("Empty results returned", results, hasSize(0));
 	}
 
 	@Test
 	public void findForUserNotFoundWithState() {
 		storeNew();
-		List<DatumImportJobInfo> results = dao.findForUser(user.getId(),
-				singleton(DatumImportState.Completed));
+		List<DatumDeleteJobInfo> results = dao.findForUser(user.getId(),
+				singleton(DatumDeleteJobState.Completed));
 		assertThat("Empty results returned", results, hasSize(0));
 	}
 
@@ -330,15 +317,14 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		User user2 = createNewUser("user2@localhost");
 
 		// add another job that should _not_ be found
-		DatumImportJobInfo info = new DatumImportJobInfo();
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
 		info.setId(new UserUuidPK(user2.getId(), UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(new DateTime());
-		info.setImportState(DatumImportState.Staged);
+		info.setConfiguration(new DatumFilterCommand());
+		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(new DateTime().hourOfDay().roundFloorCopy());
 		info = dao.get(dao.store(info));
 
-		List<DatumImportJobInfo> results = dao.findForUser(user.getId(), null);
+		List<DatumDeleteJobInfo> results = dao.findForUser(user.getId(), null);
 		assertThat("Results returned", results, hasSize(1));
 		assertThat("Result matches", results.get(0), equalTo(this.info));
 	}
@@ -349,16 +335,15 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		storeNew();
 
 		// add another job that _should_ be found
-		DatumImportJobInfo info = new DatumImportJobInfo();
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
 		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(new DateTime());
-		info.setImportState(DatumImportState.Staged);
+		info.setConfiguration(new DatumFilterCommand());
+		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(new DateTime().hourOfDay().roundFloorCopy());
 		info = dao.get(dao.store(info));
 
-		List<DatumImportJobInfo> results = dao.findForUser(user.getId(),
-				singleton(DatumImportState.Staged));
+		List<DatumDeleteJobInfo> results = dao.findForUser(user.getId(),
+				singleton(DatumDeleteJobState.Queued));
 		assertThat("Results returned", results, hasSize(1));
 		assertThat("Result matches", results.get(0), equalTo(info));
 	}
@@ -368,16 +353,15 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		storeNew();
 
 		// add another job
-		DatumImportJobInfo info = new DatumImportJobInfo();
+		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
 		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
-		info.setConfig(new BasicConfiguration());
-		info.setImportDate(new DateTime());
-		info.setImportState(DatumImportState.Staged);
+		info.setConfiguration(new DatumFilterCommand());
+		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(new DateTime().minusHours(1));
 		info = dao.get(dao.store(info));
 
-		List<DatumImportJobInfo> results = dao.findForUser(user.getId(),
-				EnumSet.of(DatumImportState.Staged, DatumImportState.Unknown));
+		List<DatumDeleteJobInfo> results = dao.findForUser(user.getId(),
+				EnumSet.of(DatumDeleteJobState.Queued, DatumDeleteJobState.Unknown));
 		assertThat("Results returned", results, hasSize(2));
 
 		// should be ordered by creation date (descending)
@@ -387,7 +371,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 
 	@Test
 	public void updateConfigNotFound() {
-		BasicConfiguration config = new BasicConfiguration("Foo", true);
+		DatumFilterCommand config = new DatumFilterCommand();
 		boolean updated = dao.updateJobConfiguration(new UserUuidPK(-123L, UUID.randomUUID()), config);
 		assertThat("Update result", updated, equalTo(false));
 	}
@@ -395,37 +379,32 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void updateConfig() {
 		storeNew();
-		dao.updateJobState(info.getId(), DatumImportState.Staged, null);
+		dao.updateJobState(info.getId(), DatumDeleteJobState.Queued, null);
 
-		BasicConfiguration config = new BasicConfiguration(info.getConfiguration());
-		config.setName("Updated");
-		config.getInputConfig().setTimeZoneId("UTC");
+		DatumFilterCommand config = new DatumFilterCommand(info.getConfiguration());
+		config.setNodeId(-4L);
 		boolean updated = dao.updateJobConfiguration(info.getId(), config);
 		assertThat("Update result", updated, equalTo(true));
 
-		DatumImportJobInfo modified = dao.get(info.getId());
+		DatumDeleteJobInfo modified = dao.get(info.getId());
 		assertThat("New instance", modified, not(sameInstance(info)));
-		assertThat("Modified config name", modified.getConfiguration().getName(),
-				equalTo(config.getName()));
-		assertThat("Modified time zone",
-				modified.getConfiguration().getInputConfiguration().getTimeZoneId(),
-				equalTo(config.getInputConfiguration().getTimeZoneId()));
+		assertThat("Modified config nodeId", modified.getConfiguration().getNodeId(),
+				equalTo(config.getNodeId()));
 	}
 
 	@Test
 	public void updateConfigWithExpectedStateNotFound() {
 		storeNew();
 
-		BasicConfiguration config = new BasicConfiguration(info.getConfiguration());
-		config.setName("Updated");
-		config.getInputConfig().setTimeZoneId("UTC");
+		DatumFilterCommand config = new DatumFilterCommand(info.getConfiguration());
+		config.setNodeId(-4L);
 		boolean updated = dao.updateJobConfiguration(info.getId(), config);
 		assertThat("Update result", updated, equalTo(false));
 
-		DatumImportJobInfo unchanged = dao.get(info.getId());
+		DatumDeleteJobInfo unchanged = dao.get(info.getId());
 		assertThat("New instance", unchanged, not(sameInstance(info)));
-		assertThat("Unchanged config name", unchanged.getConfiguration().getName(),
-				equalTo(info.getConfiguration().getName()));
+		assertThat("Unchanged config nodeId", unchanged.getConfiguration().getNodeId(),
+				equalTo(info.getConfiguration().getNodeId()));
 	}
 
 	@Test
@@ -433,9 +412,9 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		storeNew();
 		boolean updated = dao.updateJobProgress(this.info.getId(), 0.1, 2L);
 		assertThat("Update result", updated, equalTo(true));
-		DatumImportJobInfo info = dao.get(this.info.getId());
+		DatumDeleteJobInfo info = dao.get(this.info.getId());
 		assertThat("Progress updated", info.getPercentComplete(), equalTo(0.1));
-		assertThat("Loaded updated", info.getLoadedCount(), equalTo(2L));
+		assertThat("Loaded updated", info.getResult(), equalTo(2L));
 	}
 
 	@Test
@@ -444,8 +423,9 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		UserUuidPK id = new UserUuidPK(this.user.getId(), UUID.randomUUID());
 		boolean updated = dao.updateJobProgress(id, 0.1, 2L);
 		assertThat("Update result", updated, equalTo(false));
-		DatumImportJobInfo info = dao.get(this.info.getId());
+		DatumDeleteJobInfo info = dao.get(this.info.getId());
 		assertThat("Progress not updated", info.getPercentComplete(), equalTo(0.0));
-		assertThat("Loaded not updated", info.getLoadedCount(), equalTo(0L));
+		assertThat("Loaded not updated", info.getResult(), nullValue());
 	}
+
 }

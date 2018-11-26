@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumImportState.java - 6/11/2018 4:33:38 PM
+ * DatumDeleteJobState.java - 6/11/2018 4:33:38 PM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,46 +20,29 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.imp.domain;
+package net.solarnetwork.central.user.expire.domain;
 
 import net.solarnetwork.central.domain.ClaimableJobState;
 
 /**
- * The state of a datum import task.
+ * The state of a datum delete job.
  * 
  * <p>
- * At a basic level, an import task starts in the {@code Queued} state, then
- * will transition to {@code Executing} and then finally {@code Completed}. The
+ * At a basic level, a delete job starts in the {@code Queued} state, then will
+ * transition to {@code Executing} and then finally {@code Completed}. The
  * {@code Claimed} state may be used before the {@code Executing} state to
  * assist with execution locking support.
  * </p>
- * <p>
- * The {@code Staged} state can be used to test or preview a task, by uploading
- * the data and associated configuration but not actually importing it. A user
- * must initiate a change from {@code Stated} to {@code Queued} for task
- * processing to proceed.
- * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public enum DatumImportState implements ClaimableJobState {
+public enum DatumDeleteJobState implements ClaimableJobState {
 
 	/**
 	 * The state is not known.
 	 */
 	Unknown(UNKNOWN_KEY),
-
-	/**
-	 * The import task has been staged (for testing/previewing), but is not yet
-	 * queued.
-	 */
-	Staged('s'),
-
-	/**
-	 * The import task has been cancelled.
-	 */
-	Retracted('r'),
 
 	/**
 	 * The import task has been queued, but not started yet.
@@ -84,7 +67,7 @@ public enum DatumImportState implements ClaimableJobState {
 
 	private final char key;
 
-	private DatumImportState(char key) {
+	private DatumDeleteJobState(char key) {
 		this.key = key;
 	}
 
@@ -103,16 +86,16 @@ public enum DatumImportState implements ClaimableJobState {
 	 * 
 	 * @param key
 	 *        the key of the enum to get
-	 * @return the enum with the given key, or {@link DatumImportState#Unknown}
-	 *         if not recognized
+	 * @return the enum with the given key, or
+	 *         {@link DatumDeleteJobState#Unknown} if not recognized
 	 */
-	public static DatumImportState forKey(char key) {
-		for ( DatumImportState type : DatumImportState.values() ) {
+	public static DatumDeleteJobState forKey(char key) {
+		for ( DatumDeleteJobState type : DatumDeleteJobState.values() ) {
 			if ( type.key == key ) {
 				return type;
 			}
 		}
-		return DatumImportState.Unknown;
+		return DatumDeleteJobState.Unknown;
 	}
 
 }

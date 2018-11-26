@@ -50,7 +50,7 @@ public class UserExpireSecurityAspect extends AuthorizationSupport {
 		super(userNodeDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.expire.biz.UserExpireBiz.*ForUser(..)) && args(userId,..)")
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.expire.biz.*Biz.*ForUser(..)) && args(userId,..)")
 	public void actionForUser(Long userId) {
 	}
 
