@@ -62,6 +62,12 @@
 				<property name="serviceClassName" value="net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService"/>
 			</bean>
 		</property>
+		<property name="eventAdmin">
+			<bean class="net.solarnetwork.util.DynamicServiceTracker">
+				<property name="bundleContext" ref="bundleContext"/>
+				<property name="serviceClassName" value="org.osgi.service.event.EventAdmin"/>
+			</bean>
+		</property>
 	</bean>
 	
 	<!--  Supporting services -->

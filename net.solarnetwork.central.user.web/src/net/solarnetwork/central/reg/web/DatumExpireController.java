@@ -22,21 +22,47 @@
 
 package net.solarnetwork.central.reg.web;
 
+import javax.annotation.Resource;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz;
+import net.solarnetwork.util.OptionalService;
 
 /**
  * Controller for the expire page.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @GlobalServiceController
 public class DatumExpireController {
 
+	/**
+	 * The model attribute name for the {@code UserDatumDeleteBiz}.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String DATUM_DELETE_BIZ_ATTRIBUTE = "datumDeleteBiz";
+
+	@Resource(name = "datumDeleteBiz")
+	private OptionalService<UserDatumDeleteBiz> datumDeleteBiz;
+
 	@RequestMapping(value = "/sec/expire", method = RequestMethod.GET)
 	public String home() {
 		return "expire/expire";
+	}
+
+	/**
+	 * The datum delete service.
+	 * 
+	 * @return the service
+	 * @since 1.1
+	 */
+	@ModelAttribute(value = DATUM_DELETE_BIZ_ATTRIBUTE)
+	public UserDatumDeleteBiz datumDeleteBiz() {
+		final UserDatumDeleteBiz biz = (datumDeleteBiz != null ? datumDeleteBiz.service() : null);
+		return biz;
 	}
 
 }

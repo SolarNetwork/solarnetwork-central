@@ -24,11 +24,10 @@ package net.solarnetwork.central.datum.imp.domain;
 
 import java.util.UUID;
 import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import net.solarnetwork.central.domain.BaseObjectEntity;
+import net.solarnetwork.central.domain.BaseClaimableJob;
 import net.solarnetwork.central.user.domain.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.util.JsonUtils;
@@ -37,47 +36,16 @@ import net.solarnetwork.util.JsonUtils;
  * Entity for user-specific datum import jobs.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
+public class DatumImportJobInfo
+		extends BaseClaimableJob<Configuration, Long, DatumImportState, UserUuidPK>
 		implements UserRelatedEntity<UserUuidPK>, DatumImportRequest, DatumImportResult {
 
-	private static final long serialVersionUID = 4226240680637197476L;
+	private static final long serialVersionUID = 8208441028181856685L;
 
 	private DateTime importDate;
-	private DatumImportState importState;
-	private BasicConfiguration config;
 	private String configJson;
-	private Boolean jobSuccess;
-	private String message;
-	private DateTime started;
-	private DateTime completed;
-	private long loadedCount;
-	private double percentComplete;
-
-	/**
-	 * Get the job execution duration.
-	 * 
-	 * <p>
-	 * This will return the overall job execution duration, based on the
-	 * {@code started} and {@code completed} dates. If both are available, the
-	 * duration returned is the difference between the two. If just
-	 * {@code started} is available, the difference between now and then is
-	 * returned. Otherwise a zero-duration value is returned.
-	 * </p>
-	 * 
-	 * @return the duration, never {@literal null}
-	 */
-	public Duration getJobDuration() {
-		DateTime s = getStarted();
-		DateTime e = getCompleted();
-		if ( s != null && e != null ) {
-			return new Duration(s.getMillis(), e.getMillis());
-		} else if ( s != null ) {
-			return new Duration(s.getMillis(), System.currentTimeMillis());
-		}
-		return Duration.ZERO;
-	}
 
 	@JsonIgnore
 	@Override
@@ -127,16 +95,15 @@ public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
 
 	@JsonIgnore
 	public DatumImportState getImportState() {
-		return importState;
+		return getJobState();
 	}
 
-	public void setImportState(DatumImportState status) {
-		this.importState = status;
+	public void setImportState(DatumImportState state) {
+		setJobState(state);
 	}
 
 	public char getImportStateKey() {
-		DatumImportState state = getImportState();
-		return (state != null ? state.getKey() : DatumImportState.Unknown.getKey());
+		return getJobStateKey();
 	}
 
 	public void setImportStateKey(char key) {
@@ -146,61 +113,51 @@ public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
 		} catch ( IllegalArgumentException e ) {
 			state = DatumImportState.Unknown;
 		}
-		setImportState(state);
+		setJobState(state);
 	}
 
 	public BasicConfiguration getConfig() {
-		if ( config == null && configJson != null ) {
-			config = JsonUtils.getObjectFromJSON(configJson, BasicConfiguration.class);
-		}
-		return config;
+		return (BasicConfiguration) getConfiguration();
 	}
 
 	public void setConfig(BasicConfiguration config) {
-		this.config = config;
-		configJson = null;
+		setConfiguration(config);
 	}
 
 	@JsonIgnore
 	@Override
 	public Configuration getConfiguration() {
-		return getConfig();
+		Configuration config = super.getConfiguration();
+		if ( config == null && configJson != null ) {
+			config = JsonUtils.getObjectFromJSON(configJson, BasicConfiguration.class);
+			super.setConfiguration(config);
+		}
+		return config;
+	}
+
+	@Override
+	public void setConfiguration(Configuration config) {
+		super.setConfiguration(config);
+		this.configJson = null;
 	}
 
 	@JsonIgnore
 	public String getConfigJson() {
 		if ( configJson == null ) {
-			configJson = JsonUtils.getJSONString(config, null);
+			configJson = JsonUtils.getJSONString(super.getConfiguration(), null);
 		}
 		return configJson;
 	}
 
 	public void setConfigJson(String configJson) {
 		this.configJson = configJson;
-		config = null;
+		super.setConfiguration(null);
 	}
 
 	@Override
-	public boolean isSuccess() {
-		return (jobSuccess != null && jobSuccess.booleanValue());
-	}
-
 	@JsonIgnore
 	public Boolean getJobSuccess() {
-		return jobSuccess;
-	}
-
-	public void setJobSuccess(Boolean jobSuccess) {
-		this.jobSuccess = jobSuccess;
-	}
-
-	@Override
-	public String getMessage() {
-		return message;
-	}
-
-	public void setMessage(String message) {
-		this.message = message;
+		return super.getJobSuccess();
 	}
 
 	@Override
@@ -208,39 +165,26 @@ public class DatumImportJobInfo extends BaseObjectEntity<UserUuidPK>
 		return getCompleted();
 	}
 
+	@Override
 	@JsonIgnore
 	public DateTime getCompleted() {
-		return completed;
+		return super.getCompleted();
 	}
 
-	public void setCompleted(DateTime completed) {
-		this.completed = completed;
-	}
-
+	@Override
 	@JsonIgnore
 	public DateTime getStarted() {
-		return started;
-	}
-
-	public void setStarted(DateTime started) {
-		this.started = started;
+		return super.getStarted();
 	}
 
 	@Override
 	public long getLoadedCount() {
-		return loadedCount;
+		Long result = getResult();
+		return (result != null ? result : 0L);
 	}
 
 	public void setLoadedCount(long loadedCount) {
-		this.loadedCount = loadedCount;
-	}
-
-	public double getPercentComplete() {
-		return percentComplete;
-	}
-
-	public void setPercentComplete(double percentComplete) {
-		this.percentComplete = percentComplete;
+		setResult(loadedCount);
 	}
 
 }

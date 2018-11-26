@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.expire.aop.test;
 
+import static org.easymock.EasyMock.expect;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -29,10 +30,14 @@ import org.junit.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.test.AbstractCentralTest;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.expire.aop.UserExpireSecurityAspect;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 
@@ -135,6 +140,49 @@ public class UserExpireSecurityAspectTests extends AbstractCentralTest {
 		config.setUserId(TEST_USER_ID);
 		aspect.saveConfigurationCheck(config);
 		verifyAll();
+	}
+
+	@Test
+	public void datumFilterAllowed() {
+		becomeUser("ROLE_USER");
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setUserId(TEST_USER_ID);
+		aspect.datumFilterCheck(filter);
+		verifyAll();
+	}
+
+	@Test(expected = AuthorizationException.class)
+	public void datumFilterMissingUser() {
+		becomeUser("ROLE_USER");
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		aspect.datumFilterCheck(filter);
+	}
+
+	@Test
+	public void datumFilterWithNode() {
+		becomeUser("ROLE_USER");
+		final Long nodeId = 2L;
+		expect(userNodeDao.get(nodeId))
+				.andReturn(new UserNode(new User(TEST_USER_ID, ""), new SolarNode(nodeId, null)));
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setUserId(TEST_USER_ID);
+		filter.setNodeId(2L);
+		aspect.datumFilterCheck(filter);
+	}
+
+	@Test(expected = AuthorizationException.class)
+	public void datumFilterNodeNotAllowed() {
+		becomeUser("ROLE_USER");
+		final Long nodeId = 2L;
+		expect(userNodeDao.get(nodeId)).andReturn(null);
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setUserId(TEST_USER_ID);
+		filter.setNodeId(2L);
+		aspect.datumFilterCheck(filter);
 	}
 
 }

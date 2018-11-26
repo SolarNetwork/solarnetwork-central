@@ -25,9 +25,9 @@ package net.solarnetwork.central.user.expire.dao.mybatis;
 import java.util.List;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao;
-import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 
 /**

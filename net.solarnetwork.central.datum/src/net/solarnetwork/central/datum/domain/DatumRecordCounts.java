@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.expire.domain;
+package net.solarnetwork.central.datum.domain;
 
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * 
  * @author matt
  * @version 1.0
+ * @since 1.31
  */
 @JsonPropertyOrder({ "date", "datumTotalCount", "datumCount", "datumHourlyCount", "datumDailyCount",
 		"datumMonthlyCount" })

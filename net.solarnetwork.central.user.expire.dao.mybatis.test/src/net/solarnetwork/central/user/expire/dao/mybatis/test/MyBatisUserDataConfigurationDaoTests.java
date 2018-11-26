@@ -39,14 +39,15 @@ import java.util.List;
 import java.util.Map;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Period;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDataConfigurationDao;
-import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 
 /**
@@ -343,7 +344,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 		DateTime start = today.minusWeeks(8);
 		result.start = start;
-		DateTime month = start.minusMonths(1);
+		DateTime month = start.monthOfYear().roundFloorCopy();
 		for ( int i = 0; i < 8; i++ ) {
 			DateTime currDay = start.plusWeeks(i);
 			DateTime currMonth = currDay.monthOfYear().roundFloorCopy();
@@ -365,9 +366,11 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 				result.expiredHourCount++;
 				result.expiredDayCount++;
 			}
-			if ( currMonth.isAfter(month) ) {
-				if ( month.isBefore(result.expire.monthOfYear().roundFloorCopy())
-						&& result.monthCount > 0 ) {
+			if ( result.monthCount < 1 ) {
+				result.monthCount = 1;
+			}
+			if ( month.isBefore(currMonth) ) {
+				if ( month.isBefore(result.expire.monthOfYear().roundFloorCopy()) ) {
 					result.expiredMonthCount++;
 				}
 				result.monthCount++;
@@ -575,7 +578,9 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("First monthly date", datum.get(0), hasEntry("ts_start", (Object) new Timestamp(
 				start.monthOfYear().roundFloorCopy().plusMonths(range.expiredMonthCount).getMillis())));
 
-		assertAuditDatumDailyStaleMonths(start, range.monthCount - range.expiredMonthCount);
+		Period p = new Period(range.start.monthOfYear().roundFloorCopy(),
+				range.expire.monthOfYear().roundCeilingCopy());
+		assertAuditDatumDailyStaleMonths(start, p.getMonths());
 		assertNoAggStaleDatum();
 	}
 }

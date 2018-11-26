@@ -24,9 +24,9 @@ package net.solarnetwork.central.user.expire.support;
 
 import java.util.List;
 import java.util.Locale;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
-import net.solarnetwork.central.user.expire.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 
