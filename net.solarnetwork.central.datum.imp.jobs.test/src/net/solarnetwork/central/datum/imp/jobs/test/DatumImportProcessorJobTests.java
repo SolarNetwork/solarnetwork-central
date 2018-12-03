@@ -37,7 +37,6 @@ import org.junit.Test;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
-import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.datum.imp.jobs.DatumImportProcessorJob;
@@ -58,7 +57,6 @@ public class DatumImportProcessorJobTests {
 
 	private EventAdmin eventAdmin;
 	private DatumImportJobBiz importJobBiz;
-	private DatumImportJobInfoDao jobInfoDao;
 
 	private DatumImportProcessorJob job;
 
@@ -66,21 +64,20 @@ public class DatumImportProcessorJobTests {
 	public void setup() {
 		eventAdmin = EasyMock.createMock(EventAdmin.class);
 		importJobBiz = EasyMock.createMock(DatumImportJobBiz.class);
-		jobInfoDao = EasyMock.createMock(DatumImportJobInfoDao.class);
 
-		job = new DatumImportProcessorJob(eventAdmin, importJobBiz, jobInfoDao);
+		job = new DatumImportProcessorJob(eventAdmin, importJobBiz);
 		job.setJobId(JOB_ID);
 		job.setMaximumClaimCount(2);
 		job.setExecutorService(new CallingThreadExecutorService());
 	}
 
 	private void replayAll() {
-		EasyMock.replay(eventAdmin, importJobBiz, jobInfoDao);
+		EasyMock.replay(eventAdmin, importJobBiz);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(eventAdmin, importJobBiz, jobInfoDao);
+		EasyMock.verify(eventAdmin, importJobBiz);
 	}
 
 	@Test
@@ -88,12 +85,12 @@ public class DatumImportProcessorJobTests {
 		// given
 		DatumImportJobInfo info1 = new DatumImportJobInfo();
 		info1.setId(new UserUuidPK(TEST_USER_ID, UUID.randomUUID()));
-		expect(jobInfoDao.claimQueuedJob()).andReturn(info1);
+		expect(importJobBiz.claimQueuedJob()).andReturn(info1);
 		DatumImportStatus status1 = EasyMock.createNiceMock(DatumImportStatus.class);
 		expect(importJobBiz.performImport(info1.getId())).andReturn(status1);
 
 		DatumImportJobInfo info2 = new DatumImportJobInfo();
-		expect(jobInfoDao.claimQueuedJob()).andReturn(info2);
+		expect(importJobBiz.claimQueuedJob()).andReturn(info2);
 		DatumImportStatus status2 = EasyMock.createNiceMock(DatumImportStatus.class);
 		expect(importJobBiz.performImport(info2.getId())).andReturn(status2);
 

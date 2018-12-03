@@ -242,6 +242,16 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	}
 
 	@Override
+	public DatumImportJobInfo claimQueuedJob() {
+		return jobInfoDao.claimQueuedJob();
+	}
+
+	@Override
+	public UserUuidPK saveJobInfo(DatumImportJobInfo jobInfo) {
+		return jobInfoDao.store(jobInfo);
+	}
+
+	@Override
 	public DatumImportStatus datumImportJobStatusForUser(Long userId, String jobId) {
 		UserUuidPK id = new UserUuidPK(userId, UUID.fromString(jobId));
 		return taskForId(id);
