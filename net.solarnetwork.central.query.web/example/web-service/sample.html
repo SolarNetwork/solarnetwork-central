@@ -134,6 +134,11 @@
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=Month&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Datum, by month</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=RunningTotal">Datum, running total</option>
 							</optgroup>
+							<optgroup label="Datum Reading">
+								<option value="/solarquery/api/v1/sec/datum/reading?readingType=NearestDifference&tolerance=P1D&nodeId={nodeId}&sourceIds={sourceId}&localStartDate=2018-10-01&localEndDate=2018-11-01">Nearest difference</option>
+								<option value="/solarquery/api/v1/sec/datum/reading?readingType=CalculatedAt&tolerance=P1D&nodeId={nodeId}&sourceIds={sourceId}&localStartDate=2018-10-01">Calculated at</option>
+								<option value="/solarquery/api/v1/sec/datum/reading?readingType=CalcualtedAtDifference&tolerance=P1D&nodeId={nodeId}&sourceIds={sourceId}&localStartDate=2018-10-01&localEndDate=2018-11-01">Calculated at difference</option>
+							</optgroup>
 							<optgroup label="Datum Metadata">
 								<option value="/solarquery/api/v1/sec/datum/meta/{nodeId}">View all datum metadata</option>
 								<option value="/solarquery/api/v1/sec/datum/meta/{nodeId}/{sourceId}">View datum metadata for a specific source</option>
