@@ -35,7 +35,7 @@ import net.solarnetwork.central.user.expire.domain.DatumDeleteJobStatus;
  * Job to claim datum delete jobs for processing and submit them for execution.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DatumDeleteProcessorJob extends JobSupport {
 
@@ -73,9 +73,9 @@ public class DatumDeleteProcessorJob extends JobSupport {
 			}
 			try {
 				DatumDeleteJobStatus status = datumDeleteJobBiz.performDatumDelete(info.getId());
-				log.info("Submitted datum import task {}", status);
+				log.info("Submitted datum delete task {}", status);
 			} catch ( RuntimeException e ) {
-				log.error("Error submitting datum import task {}", info, e);
+				log.error("Error submitting datum delete task {}", info, e);
 				info.setMessage(e.getMessage());
 				info.setJobSuccess(Boolean.FALSE);
 				info.setJobState(DatumDeleteJobState.Completed);
