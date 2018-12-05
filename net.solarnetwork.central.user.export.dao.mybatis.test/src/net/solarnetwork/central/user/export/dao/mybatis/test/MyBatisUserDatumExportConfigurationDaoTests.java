@@ -55,7 +55,7 @@ import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
  * Test cases for the {@link MyBatisUserDatumExportConfigurationDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -349,7 +349,31 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 	}
 
 	@Test
+	public void findForExecutionNotFullyConfigured() {
+		DateTime exportDate = new DateTime(2017, 4, 18, 8, 0, 0, DateTimeZone.UTC);
+
+		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
+		conf.setCreated(new DateTime());
+		conf.setUserId(this.user.getId());
+		conf.setName(TEST_NAME);
+		conf.setHourDelayOffset(2);
+		conf.setSchedule(ScheduleType.Hourly);
+		conf.setMinimumExportDate(exportDate);
+
+		Long id = dao.store(conf);
+		conf.setId(id);
+
+		List<UserDatumExportConfiguration> found = dao.findForExecution(exportDate.plusHours(1),
+				ScheduleType.Hourly);
+		assertThat("0900 query export date finds nothing because not configured", found, hasSize(0));
+	}
+
+	@Test
 	public void findForExecution() {
+		UserDataConfiguration dataConf = addDataConf();
+		UserDestinationConfiguration destConf = addDestConf();
+		UserOutputConfiguration outpConf = addOutpConf();
+
 		List<UserDatumExportConfiguration> confs = new ArrayList<>(3);
 		DateTime exportDate = new DateTime(2017, 4, 18, 8, 0, 0, DateTimeZone.UTC);
 		for ( int i = 0; i < 3; i++ ) {
@@ -360,6 +384,10 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 			conf.setHourDelayOffset(2);
 			conf.setSchedule(ScheduleType.Hourly);
 			conf.setMinimumExportDate(exportDate.plusHours(i));
+
+			conf.setUserDataConfiguration(dataConf);
+			conf.setUserDestinationConfiguration(destConf);
+			conf.setUserOutputConfiguration(outpConf);
 
 			Long id = dao.store(conf);
 			conf.setId(id);

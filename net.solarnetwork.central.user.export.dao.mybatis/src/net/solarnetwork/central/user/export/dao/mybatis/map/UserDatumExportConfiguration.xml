@@ -127,6 +127,9 @@
 		WHERE
 			udexc.schedule = #{schedule}
 			AND udexc.min_export_date &lt; #{date}
+			AND udexc.data_conf_id IS NOT NULL
+			AND udexc.dest_conf_id IS NOT NULL
+			AND udexc.outp_conf_id IS NOT NULL
 		ORDER BY
 			udexc.min_export_date, udexc.id
 	</select>
