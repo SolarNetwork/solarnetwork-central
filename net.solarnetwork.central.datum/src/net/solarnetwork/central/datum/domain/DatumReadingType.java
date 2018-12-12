@@ -32,7 +32,7 @@ package net.solarnetwork.central.datum.domain;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.28
  */
 public enum DatumReadingType {
@@ -53,7 +53,15 @@ public enum DatumReadingType {
 	 * Find the difference between two datum that are nearest in time on or
 	 * before two dates.
 	 */
-	NearestDifference("diff");
+	NearestDifference("diff"),
+
+	/**
+	 * Find the difference between two datum that occurs between two dates,
+	 * without any limits on how near to those dates the datum are.
+	 * 
+	 * @since 1.1
+	 */
+	Difference("delta");
 
 	private final String key;
 

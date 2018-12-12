@@ -135,6 +135,7 @@
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=RunningTotal">Datum, running total</option>
 							</optgroup>
 							<optgroup label="Datum Reading">
+								<option value="/solarquery/api/v1/sec/datum/reading?readingType=Difference&nodeId={nodeId}&sourceIds={sourceId}&localStartDate=2018-10-01&localEndDate=2018-11-01">Difference</option>
 								<option value="/solarquery/api/v1/sec/datum/reading?readingType=NearestDifference&tolerance=P1D&nodeId={nodeId}&sourceIds={sourceId}&localStartDate=2018-10-01&localEndDate=2018-11-01">Nearest difference</option>
 								<option value="/solarquery/api/v1/sec/datum/reading?readingType=CalculatedAt&tolerance=P1D&nodeId={nodeId}&sourceIds={sourceId}&localStartDate=2018-10-01">Calculated at</option>
 								<option value="/solarquery/api/v1/sec/datum/reading?readingType=CalcualtedAtDifference&tolerance=P1D&nodeId={nodeId}&sourceIds={sourceId}&localStartDate=2018-10-01&localEndDate=2018-11-01">Calculated at difference</option>

@@ -54,7 +54,7 @@ import net.solarnetwork.central.security.SecurityActor;
  * API for querying business logic.
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public interface QueryBiz {
 
@@ -220,7 +220,8 @@ public interface QueryBiz {
 	 *        the type of reading to perform
 	 * @param tolerance
 	 *        a time period of tolerance to use when querying around the
-	 *        start/end dates
+	 *        start/end dates, or {@literal null} for a default tolerance based
+	 *        on {@code readingType}
 	 * @return the results, never {@literal null}
 	 * @since 2.4
 	 */

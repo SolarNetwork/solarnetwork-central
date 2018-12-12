@@ -81,7 +81,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.6
+ * @version 2.7
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -296,6 +296,9 @@ public class DaoQueryBiz implements QueryBiz {
 		switch (readingType) {
 			case NearestDifference:
 				return generalNodeDatumDao.findAccumulation(filter, from, to, tolerance);
+
+			case Difference:
+				return generalNodeDatumDao.findAccumulation(filter, from, to, null);
 
 			case CalculatedAtDifference:
 				return generalNodeDatumDao.calculateBetween(filter, from, to, tolerance);

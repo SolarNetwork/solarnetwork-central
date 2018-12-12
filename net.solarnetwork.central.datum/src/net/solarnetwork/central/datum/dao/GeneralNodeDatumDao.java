@@ -48,7 +48,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -312,7 +312,7 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @param tolerance
 	 *        the maximum time span before and after {@code date} to consider
 	 *        when looking for before and after records to perform the
-	 *        calculation
+	 *        calculation, or {@code null} for no limit
 	 * @return the calculated records, never {@literal null}
 	 * @since 1.5
 	 */
