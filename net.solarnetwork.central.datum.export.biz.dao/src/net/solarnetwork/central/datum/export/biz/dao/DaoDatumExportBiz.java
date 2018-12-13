@@ -217,7 +217,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 
 				updateTaskStatus(DatumExportState.Completed, Boolean.TRUE, null, new DateTime());
 			} catch ( Exception e ) {
-				log.error("Error exporting datum for task {}", this, e);
+				log.warn("Error exporting datum for task {}", this, e);
 				Throwable root = e;
 				while ( root.getCause() != null ) {
 					root = root.getCause();
