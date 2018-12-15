@@ -12,6 +12,7 @@
 CREATE OR REPLACE VIEW solaruser.user_auth_token_node_ids AS
 SELECT t.auth_token,
  	t.user_id,
+ 	t.token_type,
 	t.jpolicy,
 	array_agg(un.node_id) AS node_ids
 FROM solaruser.user_auth_token t
