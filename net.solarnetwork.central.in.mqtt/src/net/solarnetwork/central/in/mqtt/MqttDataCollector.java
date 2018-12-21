@@ -152,6 +152,7 @@ public class MqttDataCollector
 	private long mqttTimeout = DEFAULT_MQTT_TIMEOUT;
 	private String nodeInstructionTopicTemplate = DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE;
 	private String nodeDatumTopicTemplate = DEFAULT_NODE_DATUM_TOPIC_TEMPLATE;
+	private boolean publishOnly;
 
 	private Runnable connectThread = null;
 
@@ -384,6 +385,9 @@ public class MqttDataCollector
 	}
 
 	private void subscribeToTopics(IMqttAsyncClient client) throws MqttException {
+		if ( publishOnly ) {
+			return;
+		}
 		final String datumTopics = String.format(nodeDatumTopicTemplate, "+");
 		IMqttToken token = client.subscribe(datumTopics, subscribeQos);
 		token.waitForCompletion(mqttTimeout);
@@ -899,6 +903,22 @@ public class MqttDataCollector
 	 */
 	public void setNodeDatumTopicTemplate(String nodeDatumTopicTemplate) {
 		this.nodeDatumTopicTemplate = nodeDatumTopicTemplate;
+	}
+
+	/**
+	 * Set the "publish only" mode.
+	 * 
+	 * <p>
+	 * In "publish only" mode the collector does not subscribe to any topics. It
+	 * will only publish node instructions that arrive via
+	 * {@link #didQueueNodeInstruction(NodeInstruction, Long)}.
+	 * </p>
+	 * 
+	 * @param publishOnly
+	 *        if {@literal true} then do <b>not</b> subscribe to any topics
+	 */
+	public void setPublishOnly(boolean publishOnly) {
+		this.publishOnly = publishOnly;
 	}
 
 }
