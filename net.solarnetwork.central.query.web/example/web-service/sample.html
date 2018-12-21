@@ -158,7 +158,10 @@
 								<option value="/solaruser/api/v1/sec/whoami">Verify authentication</option>
 							</optgroup>
 							<optgroup label="Instructions">
-								<option value="/solaruser/api/v1/sec/instr/add?nodeIds={nodeIds}&topic=SetControlParameter&parameters%5B0%5D.name={controlId}&parameters%5B0%5D.value={controlValue}" data-method="POST">Set control parameter</option>
+								<option value="/solaruser/api/v1/sec/instr/add?topic=DisableOperationalModes&nodeIds={nodeIds}&parameters%5B0%5D.name=OpMode&parameters%5B0%5D.value=hyper" data-method="POST">Disable operational mode</option>
+								<option value="/solaruser/api/v1/sec/instr/add?topic=EnableOperationalModes&nodeIds={nodeIds}&parameters%5B0%5D.name=OpMode&parameters%5B0%5D.value=hyper" data-method="POST">Enable operational mode</option>
+								<option value="/solaruser/api/v1/sec/instr/add?topic=SetControlParameter&nodeIds={nodeIds}&parameters%5B0%5D.name={controlId}&parameters%5B0%5D.value={controlValue}" data-method="POST">Set control parameter</option>
+								<option value="/solaruser/api/v1/sec/instr/add?topic=UpdatePlatform&nodeIds={nodeIds}&parameters%5B0%5D.name=Version&parameters%5B0%5D.value=00001" data-method="POST">Update platform</option>
 								<option value="/solaruser/api/v1/sec/instr/viewActive?nodeIds={nodeIds}">View active instructions</option>
 								<option value="/solaruser/api/v1/sec/instr/viewPending?nodeIds={nodeIds}">View pending instructions</option>
 								<option value="/solaruser/api/v1/sec/instr/view?ids={instructionIds}">View instructions</option>
