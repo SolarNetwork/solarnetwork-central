@@ -48,7 +48,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.9
+ * @version 1.10
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -250,6 +250,50 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 			LocalDateTime date, Period tolerance);
 
 	/**
+	 * Calculate the value of datum at a specific point in time, using before
+	 * and after records to derive values from.
+	 * 
+	 * <p>
+	 * Use this method to estimate the values a datum would have at a specific
+	 * point in time. For example if you want to know the value of a datum at
+	 * exactly midnight on the 1st of a month for the purposes of billing, you'd
+	 * pass that date to this method and it will calculate the values based on
+	 * the datum records on either side of that date under the assumption the
+	 * datum records are near, not not exactly on, that date. If a datum does
+	 * exist at exactly the given {@code date} that record will be returned
+	 * directly. Otherwise the result will be derived from the found before and
+	 * after records.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method will return one record for every node ID and source ID
+	 * combination provided in {@code filter} and also found in the database.
+	 * </p>
+	 * 
+	 * <p>
+	 * The {@code filter} must provide the following properties:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li><b>nodeIds</b> - the node IDs to look for</li>
+	 * <li><b>sourceIds</b> - the source IDs to look for</li>
+	 * </ul>
+	 * 
+	 * @param filter
+	 *        the node and source ID search criteria
+	 * @param date
+	 *        the date to calculate datum for
+	 * @param tolerance
+	 *        the maximum time span before and after {@code date} to consider
+	 *        when looking for before and after records to perform the
+	 *        calculation
+	 * @return the calculated records, never {@literal null}
+	 * @since 1.10
+	 */
+	FilterResults<ReportingGeneralNodeDatumMatch> calculateAt(GeneralNodeDatumFilter filter,
+			DateTime date, Period tolerance);
+
+	/**
 	 * Calculate the change between two specific node-local dates.
 	 * 
 	 * <p>
@@ -276,6 +320,32 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> calculateBetween(GeneralNodeDatumFilter filter,
 			LocalDateTime from, LocalDateTime to, Period tolerance);
+
+	/**
+	 * Calculate the change between two specific dates.
+	 * 
+	 * <p>
+	 * This method calculates the change between datum calculated at two
+	 * specific dates, as in
+	 * {@link #calculateAt(GeneralNodeDatumFilter, LocalDateTime, Period)}. A
+	 * single result for each node and source ID combination will be returned.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the node and source ID search criteria
+	 * @param from
+	 *        the first date to calculate datum for
+	 * @param to
+	 *        the second date to calculate datum for
+	 * @param tolerance
+	 *        the maximum time span before and after {@code date} to consider
+	 *        when looking for before and after records to perform the
+	 *        calculation
+	 * @return the calculated records, never {@literal null}
+	 * @since 1.10
+	 */
+	FilterResults<ReportingGeneralNodeDatumMatch> calculateBetween(GeneralNodeDatumFilter filter,
+			DateTime from, DateTime to, Period tolerance);
 
 	/**
 	 * Find the change of accumulation properties between two specific
@@ -318,6 +388,45 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
 			LocalDateTime from, LocalDateTime to, Period tolerance);
+
+	/**
+	 * Find the change of accumulation properties between two specific dates.
+	 * 
+	 * <p>
+	 * This method calculates the change between datum with the nearest dates
+	 * less than or equal to given start and end dates. specific dates, as in
+	 * {@link #calculateAt(GeneralNodeDatumFilter, LocalDateTime, Period)}. A
+	 * single result for each node and source ID combination will be returned,
+	 * with the accumulation properties calculated as the difference between the
+	 * start and end values. In addition some status properties will be
+	 * included:
+	 * </p>
+	 * 
+	 * <dl>
+	 * <dt>endDate</dt>
+	 * <dd>The associated date found for the last datum record.</dd>
+	 * <dt>timeZone</dt>
+	 * <dd>The time zone of the node associated with the datum.</dd>
+	 * <dt>localEndDate</dt>
+	 * <dd>The <code>endDate</code> translated into the node's local time
+	 * zone.</dd>
+	 * </dl>
+	 * 
+	 * @param filter
+	 *        the node and source ID search criteria
+	 * @param from
+	 *        the first date to calculate datum for
+	 * @param to
+	 *        the second date to calculate datum for
+	 * @param tolerance
+	 *        the maximum time span before and after {@code date} to consider
+	 *        when looking for before and after records to perform the
+	 *        calculation, or {@code null} for no limit
+	 * @return the calculated records, never {@literal null}
+	 * @since 1.10
+	 */
+	FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
+			DateTime from, DateTime to, Period tolerance);
 
 	/**
 	 * Get a count of datum records that match a search criteria.
