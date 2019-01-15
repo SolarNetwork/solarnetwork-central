@@ -1,3 +1,63 @@
+DROP FUNCTION solardatum.calculate_datum_diff_local(
+	bigint, text, timestamptz, timestamptz, interval);
+	
+/**
+ * Calculate the difference between the accumulating properties of datum between a time range.
+ *
+ * This returns one row per node ID and source ID combination found. The returned `ts_start` and `ts_end` columns will
+ * the timestamps of the found starting/ending datum records. The `jdata_a` column will be computed as the difference
+ * between the starting/ending rows, using the `solarcommon.jsonb_diff_object()` aggregate function.
+ *
+ * @param nodes 		the node IDs to find
+ * @param sources 		the source IDs to find
+ * @param ts_min		the timestamp of the start of the time range
+ * @param ts_max		the timestamp of the end of the time range
+ * @param tolerance		a maximum range before `ts_min` to consider when looking for the datum
+ */
+CREATE OR REPLACE FUNCTION solardatum.calculate_datum_diff(
+	nodes bigint[], sources text[], ts_min timestamptz, ts_max timestamptz, tolerance interval default interval '1 month')
+RETURNS TABLE(
+  ts_start timestamp with time zone,
+  ts_end timestamp with time zone,
+  time_zone text,
+  node_id bigint,
+  source_id character varying(64),
+  jdata_a jsonb
+) LANGUAGE sql STABLE AS $$
+	WITH d1 AS (
+		SELECT DISTINCT ON (d.node_id, d.source_id) d.*
+		FROM solardatum.da_datum d 
+		WHERE d.node_id = ANY(nodes)
+			AND d.source_id = ANY(sources)
+			AND d.ts <= ts_min
+			AND d.ts > ts_min - tolerance
+		ORDER BY d.node_id, d.source_id, d.ts DESC
+	), d2 AS (
+		SELECT DISTINCT ON (d.node_id, d.source_id) d.*
+		FROM solardatum.da_datum d
+		WHERE d.node_id = ANY(nodes)
+			AND d.source_id = ANY(sources)
+			AND d.ts <= ts_max
+			AND d.ts > ts_max - tolerance
+		ORDER BY d.node_id, d.source_id, d.ts DESC
+	), d AS (
+		SELECT * FROM d1
+		UNION
+		SELECT * FROM d2
+	)
+	SELECT min(d.ts) AS ts_start,
+		max(d.ts) AS ts_end,
+		min(nlt.time_zone) AS time_zone,
+		d.node_id,
+		d.source_id,
+		solarcommon.jsonb_diff_object(d.jdata_a ORDER BY d.ts) AS jdata_a
+	FROM d
+	INNER JOIN solarnet.node_local_time nlt ON nlt.node_id = d.node_id
+	GROUP BY d.node_id, d.source_id
+	ORDER BY d.node_id, d.source_id
+$$;
+
+	
 /**
  * Calculate the difference between the accumulating properties of datum over a time range.
  *

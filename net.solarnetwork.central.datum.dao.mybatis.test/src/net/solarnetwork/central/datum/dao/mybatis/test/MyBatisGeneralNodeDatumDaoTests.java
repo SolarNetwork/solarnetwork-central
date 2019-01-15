@@ -3091,7 +3091,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 	}
 
 	@Test
-	public void findDatumAccumulationNoData() {
+	public void findDatumAccumulationLocalNoData() {
 		// given
 
 		// when
@@ -3107,7 +3107,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 	}
 
 	@Test
-	public void findDatumAccumulation() {
+	public void findDatumAccumulationLocal() {
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
@@ -3151,6 +3151,50 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
 	}
 
+	@Test
+	public void findDatumAccumulation() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d1.getSamples().putAccumulatingSampleValue("watt_hours", 4002);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 4445);
+		dao.store(d1);
+		dao.store(d2);
+
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum d3 = getTestInstance(ts2.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d3.getSamples().putAccumulatingSampleValue("watt_hours", 8044);
+		GeneralNodeDatum d4 = getTestInstance(ts2.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		d4.getSamples().putAccumulatingSampleValue("watt_hours", 8344);
+		dao.store(d3);
+		dao.store(d4);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter, ts, ts2,
+				Period.months(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("Date d1", m.getId().getCreated().withZone(ts.getZone()), equalTo(d1.getCreated()));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watt hours accumulation between d1 - d3", m.getSampleData().get("watt_hours"),
+				equalTo((Object) 4042));
+		assertThat("Watt hours start d1", m.getSampleData().get("watt_hours_start"),
+				equalTo((Object) 4002));
+		assertThat("Watt hours end d3", m.getSampleData().get("watt_hours_end"), equalTo((Object) 8044));
+		assertThat("End date", m.getSampleData().get("endDate"), equalTo((Object) ISODateTimeFormat
+				.dateTime().print(d3.getCreated().withZone(DateTimeZone.UTC)).replace('T', ' ')));
+		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
+	}
+
 	private Date[] sqlDates(String... str) {
 		return Arrays.stream(str)
 				.map(s -> new Date(ISODateTimeFormat.localDateParser().parseLocalDate(s)
@@ -3164,7 +3208,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 	}
 
 	@Test
-	public void findDatumAccumulationOnlyStart() {
+	public void findDatumAccumulationLocalOnlyStart() {
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
@@ -3198,7 +3242,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 	}
 
 	@Test
-	public void findDatumAccumulationOnlyEnd() {
+	public void findDatumAccumulationLocalOnlyEnd() {
 		// given
 		DateTime ts = new DateTime(2018, 9, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
