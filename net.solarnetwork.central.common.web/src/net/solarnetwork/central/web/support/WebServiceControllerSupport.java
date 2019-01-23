@@ -35,12 +35,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -61,7 +63,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.10
+ * @version 1.11
  */
 public abstract class WebServiceControllerSupport {
 
@@ -370,6 +372,22 @@ public abstract class WebServiceControllerSupport {
 			}
 		}
 		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+	}
+
+	/**
+	 * Add a {@literal Vary} HTTP response header.
+	 * 
+	 * <p>
+	 * This is so the responses work well with caching proxies.
+	 * </p>
+	 * 
+	 * @param response
+	 *        the response to add the header to
+	 * @since 1.11
+	 */
+	@ModelAttribute
+	public void addVaryResponseHeader(HttpServletResponse response) {
+		response.addHeader(HttpHeaders.VARY, HttpHeaders.ACCEPT);
 	}
 
 	public MessageSource getMessageSource() {
