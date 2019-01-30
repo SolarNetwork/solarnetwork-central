@@ -17,6 +17,8 @@
 	
 	<!-- Published Services -->
 	
+	<service ref="userAdhocDatumExportTaskInfoDao" interface="net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao"/>
+
 	<service ref="userDataConfigurationDao" interface="net.solarnetwork.central.user.export.dao.UserDataConfigurationDao"/>
 
 	<service ref="userDatumExportConfigurationDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao"/>
@@ -39,6 +41,10 @@
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="txManager"/>
 
+	<bean id="userAdhocDatumExportTaskInfoDao" class="net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserAdhocDatumExportTaskInfoDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+	</bean>
+	
 	<bean id="userDataConfigurationDao" class="net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDataConfigurationDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean>
@@ -69,6 +75,7 @@
 				<value>net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo</value>
 				<value>net.solarnetwork.central.user.domain.User</value>
 				<value>net.solarnetwork.central.user.domain.UserMatch</value>
+				<value>net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo</value>
 				<value>net.solarnetwork.central.user.export.domain.UserDataConfiguration</value>
 				<value>net.solarnetwork.central.user.export.domain.UserDestinationConfiguration</value>
 				<value>net.solarnetwork.central.user.export.domain.UserOutputConfiguration</value>
@@ -95,6 +102,7 @@
 				<value>classpath:/net/solarnetwork/central/datum/export/dao/mybatis/map/DatumExportTaskInfo.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDatumAdhocExportTaskInfo.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDataConfiguration.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDestinationConfiguration.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserOutputConfiguration.xml</value>
