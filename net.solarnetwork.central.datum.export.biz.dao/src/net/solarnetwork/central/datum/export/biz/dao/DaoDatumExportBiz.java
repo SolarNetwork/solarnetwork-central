@@ -299,8 +299,19 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 					? DateTimeZone.forID(config.getTimeZoneId())
 					: DateTimeZone.UTC);
 			DatumFilterCommand filter = new DatumFilterCommand(datumFilter);
-			filter.setStartDate(info.getExportDate().withZone(zone));
-			filter.setEndDate(schedule.nextExportDate(filter.getStartDate()));
+			if ( schedule == ScheduleType.Adhoc ) {
+				DateTime s = datumFilter.getStartDate();
+				DateTime e = datumFilter.getEndDate();
+				if ( s == null || e == null ) {
+					throw new DatumExportException(info.getId(),
+							"Adhoc export missing start or end date in data configuration", null);
+				}
+				filter.setStartDate(s);
+				filter.setEndDate(e);
+			} else {
+				filter.setStartDate(info.getExportDate().withZone(zone));
+				filter.setEndDate(schedule.nextExportDate(filter.getStartDate()));
+			}
 			int offset = 0;
 			final int pageSize = queryPageSize;
 			long totalResultCount = COUNT_UNDEFINED; // used only for progress tracking
