@@ -22,9 +22,14 @@
 
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
+import static java.util.Collections.emptyList;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +37,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
+import org.junit.Before;
 import org.junit.Test;
+import org.springframework.jdbc.core.CallableStatementCreator;
+import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumDao;
+import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -45,6 +55,14 @@ public class SupportingProceduresTests extends AbstractMyBatisDaoTestSupport {
 
 	private static final Long TEST_NODE_ID2 = -2L;
 	private static final String TEST_SOURCE_ID = "test.source";
+
+	private MyBatisGeneralNodeDatumDao datumDao;
+
+	@Before
+	public void setup() {
+		datumDao = new MyBatisGeneralNodeDatumDao();
+		datumDao.setSqlSessionFactory(getSqlSessionFactory());
+	}
 
 	private List<Map<String, Object>> nlt(Long[] nodeIds, String[] sourceIds, LocalDateTime s,
 			LocalDateTime e) {
@@ -83,4 +101,62 @@ public class SupportingProceduresTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Range 2 sources", nlt.get(1).get("source_ids"), equalTo(TEST_SOURCE_ID));
 	}
 
+	private List<Map<String, Object>> diffSum(Long[] nodeIds, String[] sourceIds) {
+		return jdbcTemplate.queryForList(
+		// @formatter:off
+				"SELECT node_id, source_id, solarcommon.jsonb_diffsum_object(jdata_a)::text AS jdata_a "
+						+ "FROM solardatum.da_datum "
+						+ "WHERE node_id = ANY(?::bigint[]) "
+						+ "AND source_id = ANY(?::text[]) "
+						+ "GROUP BY node_id, source_id "
+						+ "ORDER BY node_id, source_id",
+				// @formatter:on
+				"{" + StringUtils.commaDelimitedStringFromCollection(Arrays.asList(nodeIds)) + "}",
+				"{" + Arrays.stream(sourceIds).collect(Collectors.joining(",")) + "}");
+	}
+
+	@Test
+	public void diffSumNoData() {
+		List<Map<String, Object>> data = diffSum(new Long[] { TEST_NODE_ID },
+				new String[] { TEST_SOURCE_ID });
+		assertThat("Empty result", data, hasSize(0));
+	}
+
+	private void insertDatum(long date, Long nodeId, String sourceId, GeneralNodeDatumSamples samples) {
+		jdbcTemplate.call(new CallableStatementCreator() {
+
+			@Override
+			public CallableStatement createCallableStatement(Connection con) throws SQLException {
+				CallableStatement stmt = con.prepareCall("{call solardatum.store_datum(?, ?, ?, ?, ?)}");
+				stmt.setTimestamp(1, new Timestamp(date));
+				stmt.setLong(2, nodeId);
+				stmt.setString(3, sourceId);
+				stmt.setTimestamp(4, new Timestamp(date));
+				stmt.setString(5, JsonUtils.getJSONString(samples, null));
+				return stmt;
+			}
+		}, emptyList());
+	}
+
+	@Test
+	public void diffSumOneRow() {
+		GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
+		s.putAccumulatingSampleValue("foo", 1L);
+		insertDatum(System.currentTimeMillis(), TEST_NODE_ID, TEST_SOURCE_ID, s);
+		List<Map<String, Object>> data = diffSum(new Long[] { TEST_NODE_ID },
+				new String[] { TEST_SOURCE_ID });
+		log.debug("Got data: {}", data);
+		assertThat("Got result", data, hasSize(1));
+
+		Map<String, Object> r = data.get(0);
+		assertThat("Result prop count", r.entrySet(), hasSize(3));
+		assertThat("Result node", r, hasEntry("node_id", TEST_NODE_ID));
+		assertThat("Result source", r, hasEntry("source_id", TEST_SOURCE_ID));
+
+		Map<String, Object> a = JsonUtils.getStringMap((String) r.get("jdata_a"));
+		assertThat("Result jdata_a prop count", a.entrySet(), hasSize(3));
+		assertThat("Result jdata_a foo", a, hasEntry("foo", 0));
+		assertThat("Result jdata_a foo_start", a, hasEntry("foo_start", 1));
+		assertThat("Result jdata_a foo_end", a, hasEntry("foo_end", 1));
+	}
 }
