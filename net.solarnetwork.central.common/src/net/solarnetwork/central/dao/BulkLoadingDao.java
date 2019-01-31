@@ -29,6 +29,10 @@ import net.solarnetwork.central.domain.Entity;
 /**
  * API for entity batch loading DAO operations.
  * 
+ * @param <T>
+ *        the domain object type
+ * @param <PK>
+ *        the primary key type
  * @author matt
  * @version 1.0
  * @since 1.43
