@@ -26,7 +26,7 @@ package net.solarnetwork.central.datum.export.domain;
  * Enumeration of output compression types.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.23
  */
 public enum OutputCompressionType {
@@ -35,7 +35,14 @@ public enum OutputCompressionType {
 	None('n', "", ""),
 
 	/** Gzip compression. */
-	GZIP('g', "gz", "application/gzip");
+	GZIP('g', "gz", "application/gzip"),
+
+	/**
+	 * XZ compression.
+	 * 
+	 * @since 1.1
+	 */
+	XZ('x', "xz", "application/x-xz");
 
 	private final char key;
 	private final String ext;
