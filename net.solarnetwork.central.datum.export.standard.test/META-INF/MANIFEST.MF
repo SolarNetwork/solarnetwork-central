@@ -2,9 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Standard Datum Export Tests
 Bundle-SymbolicName: net.solarnetwork.central.datum.export.standard.test
-Bundle-Version: 1.0.0
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork
-Fragment-Host: net.solarnetwork.central.datum.export.standard;bundle-version="0.1.0"
+Fragment-Host: net.solarnetwork.central.datum.export.standard;bundle-version="1.1.0"
 Automatic-Module-Name: net.solarnetwork.central.datum.export.standard.test
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
