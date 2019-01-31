@@ -67,6 +67,9 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.PlatformTransactionManager;
+import net.solarnetwork.central.dao.BulkExportingDao.ExportCallback;
+import net.solarnetwork.central.dao.BulkExportingDao.ExportCallbackAction;
+import net.solarnetwork.central.dao.BulkExportingDao.ExportResult;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
@@ -83,6 +86,7 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.support.FilterableBulkExportOptions;
 import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
@@ -3853,6 +3857,40 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 			assertThat("Remaining node 2 source 2 date " + i, node2Sourcd2Data.get(i).get("ts"),
 					equalTo(new Timestamp(start.plusMinutes(5 + i).getMillis())));
 		}
+	}
+
+	@Test
+	public void bulkExport() {
+		DateTime date = new DateTime(2018, 11, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		for ( int i = 0; i < 10; i++ ) {
+			GeneralNodeDatum d = getTestInstance(date.plusMinutes(i), TEST_NODE_ID, TEST_SOURCE_ID);
+			dao.store(d);
+		}
+
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setStartDate(date);
+		filter.setEndDate(date.plusDays(1));
+
+		FilterableBulkExportOptions options = new FilterableBulkExportOptions("test", filter, null);
+
+		ExportResult result = dao.batchExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
+
+			private int count = 0;
+
+			@Override
+			public ExportCallbackAction handle(GeneralNodeDatumFilterMatch d) {
+				assertThat("Datum ts", d.getId().getCreated(), equalTo(date.plusMinutes(count)));
+				assertThat("Datum node ID", d.getId().getNodeId(), equalTo(TEST_NODE_ID));
+				assertThat("Datum source ID", d.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+				count++;
+				return ExportCallbackAction.CONTINUE;
+			}
+		}, options);
+
+		assertThat("Result available", result, notNullValue());
+		assertThat("Num processed count", result.getNumProcessed(), equalTo(10L));
 	}
 
 }

@@ -32,6 +32,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.ibatis.session.ResultContext;
+import org.apache.ibatis.session.ResultHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -61,6 +63,7 @@ import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.support.BasicBulkExportResult;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.util.JsonUtils;
 
@@ -68,7 +71,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.13
+ * @version 1.14
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -985,6 +988,86 @@ public class MyBatisGeneralNodeDatumDao
 			throw new SQLExceptionSubclassTranslator()
 					.translate("Bulk loading [" + options.getName() + "]", null, e);
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.14
+	 */
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Override
+	public ExportResult batchExport(ExportCallback<GeneralNodeDatumFilterMatch> callback,
+			ExportOptions options) {
+		if ( options == null ) {
+			throw new IllegalArgumentException("ExportOptions is required");
+		}
+
+		Map<String, Object> params = options.getParameters();
+
+		// filter
+		GeneralNodeDatumFilter filter = (params != null
+				&& params.get("filter") instanceof GeneralNodeDatumFilter
+						? (GeneralNodeDatumFilter) params.get("filter")
+						: null);
+		if ( filter == null ) {
+			throw new IllegalArgumentException(
+					"GeneralNodeDatumFilter is required for parameter 'filter'");
+		}
+
+		// sorts
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		List<SortDescriptor> sortDescriptors = (params != null && params.get("sorts") instanceof List
+				? (List) params.get("sorts")
+				: null);
+
+		Map<String, Object> sqlProps = new HashMap<String, Object>(2);
+		sqlProps.put(PARAM_FILTER, filter);
+		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
+			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
+		}
+		if ( filter.isMostRecent() && filter instanceof net.solarnetwork.central.domain.AggregationFilter
+				&& ((AggregationFilter) filter).getAggregation() != null ) {
+			throw new IllegalArgumentException(
+					"Aggregation not allowed on a filter for most recent datum");
+		}
+
+		// combining
+		CombiningConfig combining = getCombiningFilterProperties(filter);
+		if ( combining != null ) {
+			sqlProps.put(PARAM_COMBINING, combining);
+		}
+
+		String query = getQueryForFilter(filter);
+		ExportResultHandler handler = new ExportResultHandler(callback);
+		getSqlSession().select(query, sqlProps, handler);
+		return new BasicBulkExportResult(handler.getCount());
+	}
+
+	private static class ExportResultHandler implements ResultHandler {
+
+		private final ExportCallback<GeneralNodeDatumFilterMatch> callback;
+		private long count = 0;
+
+		private ExportResultHandler(ExportCallback<GeneralNodeDatumFilterMatch> callback) {
+			super();
+			this.callback = callback;
+		}
+
+		@Override
+		public void handleResult(ResultContext context) {
+			GeneralNodeDatumFilterMatch match = (GeneralNodeDatumFilterMatch) context.getResultObject();
+			count++;
+			ExportCallbackAction action = callback.handle(match);
+			if ( action == ExportCallbackAction.STOP ) {
+				context.stop();
+			}
+		}
+
+		private long getCount() {
+			return count;
+		}
+
 	}
 
 	public String getQueryForReportableInterval() {
