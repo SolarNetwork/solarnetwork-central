@@ -50,6 +50,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.export.domain.BasicDestinationConfiguration;
+import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DataConfiguration;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
@@ -66,6 +69,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.domain.IdentifiableConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifierProvider;
@@ -194,7 +198,7 @@ public class DatumExportController extends WebServiceControllerSupport {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends UserIdentifiableConfiguration> T maskConfiguration(T config,
+	private <T extends IdentifiableConfiguration> T maskConfiguration(T config,
 			Function<Void, Iterable<? extends SettingSpecifierProvider>> settingProviderFunction) {
 		String id = config.getServiceIdentifier();
 		if ( id == null ) {
@@ -471,10 +475,31 @@ public class DatumExportController extends WebServiceControllerSupport {
 			UserAdhocDatumExportTaskInfo info = biz.saveAdhocDatumExportTaskForConfiguration(config,
 					new DateTime());
 			if ( info != null ) {
+				info.setConfig(maskConfiguration(info.getConfig(), biz));
 				return response(info);
 			}
 		}
 		return new Response<UserAdhocDatumExportTaskInfo>(false, null, null, null);
+	}
+
+	private Configuration maskConfiguration(Configuration config, UserExportBiz biz) {
+		if ( config == null || biz == null ) {
+			return config;
+		}
+		BasicConfiguration respConfig = (config instanceof BasicConfiguration
+				? (BasicConfiguration) config
+				: new BasicConfiguration(config));
+
+		// mask destination config settings, such as S3 password
+		BasicDestinationConfiguration respDestConfig = (respConfig
+				.getDestinationConfiguration() instanceof BasicDestinationConfiguration
+						? (BasicDestinationConfiguration) respConfig.getDestinationConfiguration()
+						: new BasicDestinationConfiguration(respConfig.getDestinationConfiguration()));
+		respDestConfig = maskConfiguration(respDestConfig, (Void) -> {
+			return biz.availableDestinationServices();
+		});
+		respConfig.setDestinationConfiguration(respDestConfig);
+		return respConfig;
 	}
 
 	/**
@@ -521,6 +546,9 @@ public class DatumExportController extends WebServiceControllerSupport {
 			}
 			List<UserAdhocDatumExportTaskInfo> tasks = biz.adhocExportTasksForUser(userId, states,
 					success);
+			for ( UserAdhocDatumExportTaskInfo task : tasks ) {
+				task.setConfig(maskConfiguration(task.getConfig(), biz));
+			}
 			return response(tasks);
 		}
 		return new Response<List<UserAdhocDatumExportTaskInfo>>(false, null, null, null);
