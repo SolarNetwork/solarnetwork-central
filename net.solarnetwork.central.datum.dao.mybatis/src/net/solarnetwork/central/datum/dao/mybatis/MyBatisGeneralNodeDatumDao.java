@@ -1038,7 +1038,27 @@ public class MyBatisGeneralNodeDatumDao
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
 
+		// get query name to execute
 		String query = getQueryForFilter(filter);
+
+		// attempt count first, if NOT mostRecent query and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
+		Long totalCount = null;
+		Aggregation agg = (filter instanceof AggregationFilter
+				? ((AggregationFilter) filter).getAggregation()
+				: null);
+		if ( agg == null ) {
+			agg = Aggregation.None;
+		}
+		if ( !filter.isMostRecent() && !filter.isWithoutTotalResultsCount()
+				&& (agg.getLevel() < 1 || agg.compareTo(Aggregation.Hour) >= 0)
+				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
+				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
+				&& agg != Aggregation.RunningTotal ) {
+			totalCount = executeCountQuery(query + "-count", sqlProps);
+		}
+
+		callback.didBegin(totalCount);
+
 		ExportResultHandler handler = new ExportResultHandler(callback);
 		getSqlSession().select(query, sqlProps, handler);
 		return new BasicBulkExportResult(handler.getCount());

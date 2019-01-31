@@ -3875,9 +3875,16 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 
 		FilterableBulkExportOptions options = new FilterableBulkExportOptions("test", filter, null);
 
+		List<Long> totalResultCountEstimates = new ArrayList<>(1);
+
 		ExportResult result = dao.batchExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
 
 			private int count = 0;
+
+			@Override
+			public void didBegin(Long totalResultCountEstimate) {
+				totalResultCountEstimates.add(totalResultCountEstimate);
+			}
 
 			@Override
 			public ExportCallbackAction handle(GeneralNodeDatumFilterMatch d) {
@@ -3891,6 +3898,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 
 		assertThat("Result available", result, notNullValue());
 		assertThat("Num processed count", result.getNumProcessed(), equalTo(10L));
+		assertThat("Total result count estimates", totalResultCountEstimates, contains(10L));
 	}
 
 }

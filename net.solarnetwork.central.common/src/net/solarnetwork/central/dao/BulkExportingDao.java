@@ -76,6 +76,21 @@ public interface BulkExportingDao<T> {
 	interface ExportCallback<T> {
 
 		/**
+		 * Called when the export has begun, before any call to
+		 * {@link #handle(Object)}.
+		 * 
+		 * <p>
+		 * This method will always be called once, before any calls to
+		 * {@link #handle(Object)}.
+		 * </p>
+		 * 
+		 * @param totalResultCountEstimate
+		 *        the total result count estimate, or {@literal null} if not
+		 *        known
+		 */
+		void didBegin(Long totalResultCountEstimate);
+
+		/**
 		 * Handle a single domain instance batch operation.
 		 * 
 		 * @param domainObject
