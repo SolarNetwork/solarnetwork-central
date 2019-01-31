@@ -104,7 +104,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 	private static final CellProcessor ARRAY_JOIN_CELL_PROCESSOR = new ArrayJoinCellProcessor(",");
 
 	public CsvDatumExportOutputFormatService() {
-		super("net.solarnetwork.central.datum.biz.impl.CsvDatumExportOutputFormatService");
+		super("net.solarnetwork.central.datum.export.standard.CsvDatumExportOutputFormatService");
 	}
 
 	@Override
