@@ -1,7 +1,7 @@
 /* ==================================================================
- * BasicDestinationConfiguration.java - 21/03/2018 11:23:25 AM
+ * BasicBulkExportResult.java - 31/01/2019 2:16:37 pm
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2019 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,39 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.export.domain;
+package net.solarnetwork.central.support;
 
-import java.io.Serializable;
-import net.solarnetwork.domain.BasicIdentifiableConfiguration;
+import net.solarnetwork.central.dao.BulkExportingDao.ExportResult;
 
 /**
- * Basic implementation of {@link DestinationConfiguration}.
+ * Basic implementation of {@link ExportResult}.
  * 
  * @author matt
- * @version 1.1
- * @since 1.23
+ * @version 1.0
+ * @since 1.45
  */
-public class BasicDestinationConfiguration extends BasicIdentifiableConfiguration
-		implements DestinationConfiguration, Serializable {
+public class BasicBulkExportResult implements ExportResult {
 
-	private static final long serialVersionUID = 7134357946005308817L;
+	private final long numProcessed;
 
 	/**
-	 * Default constructor.
+	 * Constructor.
 	 */
-	public BasicDestinationConfiguration() {
+	public BasicBulkExportResult(long numProcessed) {
 		super();
+		this.numProcessed = numProcessed;
 	}
 
-	/**
-	 * Copy constructor.
-	 * 
-	 * @param other
-	 *        the configuration to copy
-	 * @since 1.1
-	 */
-	public BasicDestinationConfiguration(DestinationConfiguration other) {
-		super(other);
+	@Override
+	public long getNumProcessed() {
+		return numProcessed;
 	}
 
 }

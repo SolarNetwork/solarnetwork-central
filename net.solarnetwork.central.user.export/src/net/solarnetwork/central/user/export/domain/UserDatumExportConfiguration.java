@@ -27,6 +27,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DataConfiguration;
 import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
@@ -39,7 +40,7 @@ import net.solarnetwork.central.user.domain.UserRelatedEntity;
  * User related {@link Configuration} entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UserDatumExportConfiguration extends BaseEntity
 		implements Configuration, UserRelatedEntity<Long>, Serializable {
@@ -128,6 +129,7 @@ public class UserDatumExportConfiguration extends BaseEntity
 		return userDataConfiguration;
 	}
 
+	@JsonSetter("dataConfiguration")
 	public void setUserDataConfiguration(UserDataConfiguration userDataConfiguration) {
 		this.userDataConfiguration = userDataConfiguration;
 	}
@@ -153,6 +155,7 @@ public class UserDatumExportConfiguration extends BaseEntity
 		return userOutputConfiguration;
 	}
 
+	@JsonSetter("outputConfiguration")
 	public void setUserOutputConfiguration(UserOutputConfiguration userOutputConfiguration) {
 		this.userOutputConfiguration = userOutputConfiguration;
 	}
@@ -178,6 +181,7 @@ public class UserDatumExportConfiguration extends BaseEntity
 		return userDestinationConfiguration;
 	}
 
+	@JsonSetter("destinationConfiguration")
 	public void setUserDestinationConfiguration(
 			UserDestinationConfiguration userDestinationConfiguration) {
 		this.userDestinationConfiguration = userDestinationConfiguration;

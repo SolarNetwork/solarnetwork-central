@@ -101,8 +101,10 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 	private static final CellProcessor DATE_TIME_CELL_PROCESSOR = new FmtDate(
 			"yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
+	private static final CellProcessor ARRAY_JOIN_CELL_PROCESSOR = new ArrayJoinCellProcessor(",");
+
 	public CsvDatumExportOutputFormatService() {
-		super("net.solarnetwork.central.datum.biz.impl.CsvDatumExportOutputFormatService");
+		super("net.solarnetwork.central.datum.export.standard.CsvDatumExportOutputFormatService");
 	}
 
 	@Override
@@ -177,6 +179,8 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 				return JODA_TIME_CELL_PROCESSOR;
 			} else if ( value instanceof Date ) {
 				return DATE_TIME_CELL_PROCESSOR;
+			} else if ( value.getClass().isArray() ) {
+				return ARRAY_JOIN_CELL_PROCESSOR;
 			}
 			return null;
 		}

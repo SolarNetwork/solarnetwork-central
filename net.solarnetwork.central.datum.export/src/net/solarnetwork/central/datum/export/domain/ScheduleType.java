@@ -29,7 +29,7 @@ import org.joda.time.DurationFieldType;
  * Enumeration of export job schedule options.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.23
  */
 public enum ScheduleType {
@@ -40,7 +40,9 @@ public enum ScheduleType {
 
 	Weekly('w'),
 
-	Monthly('m');
+	Monthly('m'),
+
+	Adhoc('a');
 
 	private final char key;
 
@@ -144,6 +146,11 @@ public enum ScheduleType {
 	 * has been rounded by flooring based on this schedule type.
 	 * </p>
 	 * 
+	 * <p>
+	 * Note for the {@code Adhoc} type {@code date} will be returned, or the
+	 * current time if {@literal null}.
+	 * </p>
+	 * 
 	 * @param date
 	 *        the date to get an export date for, or {@literal null} for the
 	 *        current date
@@ -151,8 +158,10 @@ public enum ScheduleType {
 	 */
 	public DateTime exportDate(DateTime date) {
 		DateTime exportDate = (date != null ? date : new DateTime());
-		DateTime.Property dateProperty = dateTimeProperty(exportDate);
-		exportDate = dateProperty.roundFloorCopy();
+		if ( this != Adhoc ) {
+			DateTime.Property dateProperty = dateTimeProperty(exportDate);
+			exportDate = dateProperty.roundFloorCopy();
+		}
 		return exportDate;
 	}
 
@@ -163,6 +172,7 @@ public enum ScheduleType {
 	 *        the date to get the "next" export date for, or {@literal null} for
 	 *        the current date
 	 * @return the "next" export date
+	 * @see #offsetExportDate(DateTime, int)
 	 */
 	public DateTime nextExportDate(DateTime date) {
 		return offsetExportDate(date, 1);
@@ -175,6 +185,7 @@ public enum ScheduleType {
 	 *        the date to get the "previous" export date for, or {@literal null}
 	 *        for the current date
 	 * @return the "previous" export date
+	 * @see #offsetExportDate(DateTime, int)
 	 */
 	public DateTime previousExportDate(DateTime date) {
 		return offsetExportDate(date, -1);
@@ -182,6 +193,11 @@ public enum ScheduleType {
 
 	/**
 	 * Get an offset export date from a given date.
+	 * 
+	 * <p>
+	 * Note for the {@code Adhoc} type {@link #exportDate(DateTime)} will be
+	 * returned, with no offset applied.
+	 * </p>
 	 * 
 	 * @param date
 	 *        the date to get the offset export date for, or {@literal null} for
@@ -192,6 +208,9 @@ public enum ScheduleType {
 	 */
 	public DateTime offsetExportDate(DateTime date, int offset) {
 		DateTime exportDate = exportDate(date);
+		if ( this == Adhoc ) {
+			return exportDate;
+		}
 		DurationFieldType fieldType = durationFieldType();
 		return exportDate.withFieldAdded(fieldType, offset);
 	}

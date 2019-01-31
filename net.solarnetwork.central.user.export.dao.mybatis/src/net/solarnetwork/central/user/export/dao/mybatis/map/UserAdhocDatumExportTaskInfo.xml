@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo">
+
+<!-- 
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	user_id			BIGINT NOT NULL,
+	schedule		CHARACTER(1) NOT NULL,
+	export_date		TIMESTAMP WITH TIME ZONE NOT NULL,
+	task_id			uuid NOT NULL,
+ -->
+ 
+	<parameterMap id="pmap-UserAdhocDatumExportTaskInfo" type="UserAdhocDatumExportTaskInfo">
+		<parameter property="userId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="scheduleTypeKey" jdbcType="CHAR" mode="IN"/>
+		<parameter property="exportDate" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="configJson" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+ 	<insert id="insert-UserAdhocDatumExportTaskInfo" parameterMap="pmap-UserAdhocDatumExportTaskInfo" statementType="CALLABLE">
+ 		{call solaruser.store_adhoc_export_task(?, ?, ?, ?)}
+	</insert>
+
+	<update id="update-UserAdhocDatumExportTaskInfo" parameterMap="pmap-UserAdhocDatumExportTaskInfo" statementType="CALLABLE">
+ 		{call solaruser.store_adhoc_export_task(?, ?, ?, ?)}
+	</update>
+
+	<delete id="delete-UserAdhocDatumExportTaskInfo" parameterType="UserAdhocDatumExportTaskInfo">
+		DELETE FROM solaruser.user_adhoc_export_task
+		WHERE user_id = #{userId} AND schedule = #{scheduleTypeKey} AND export_date = #{exportDate}
+	</delete>
+	
+	<sql id="fragment-UserAdhocDatumExportTaskInfo-full-result">
+		uaet.created AS user_adhoc_export_task_created,
+		uaet.user_id AS user_adhoc_export_task_user_id,
+		uaet.schedule AS user_adhoc_export_task_schedule,
+		uaet.export_date AS user_adhoc_export_task_export_date,
+		uaet.task_id AS user_adhoc_export_task_task_id
+	</sql>
+
+	<resultMap id="UserAdhocDatumExportTaskInfoFullResult" type="UserAdhocDatumExportTaskInfo">
+		<id property="userId" column="user_adhoc_export_task_user_id"/>
+		<id property="scheduleTypeKey" column="user_adhoc_export_task_schedule"/>
+		<id property="exportDate" column="user_adhoc_export_task_export_date"/>
+		<result property="created" column="user_adhoc_export_task_created"/>
+		<result property="taskId" column="user_adhoc_export_task_task_id"/>
+		
+		<association property="task" resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult" />
+	</resultMap>
+	
+	<sql id="fragment-UserAdhocDatumExportTaskInfo-select-full">
+		SELECT
+			<include refid="fragment-UserAdhocDatumExportTaskInfo-full-result"/>,
+			<include refid="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.fragment-DatumExportTaskInfo-full-result"/>
+		FROM
+			solaruser.user_adhoc_export_task uaet
+		LEFT OUTER JOIN
+			solarnet.sn_datum_export_task det ON det.id = uaet.task_id
+	</sql>
+
+	<select id="get-UserAdhocDatumExportTaskInfo-for-id" parameterType="map" resultMap="UserAdhocDatumExportTaskInfoFullResult">
+		<include refid="fragment-UserAdhocDatumExportTaskInfo-select-full"/>
+		WHERE
+			uaet.user_id = #{userId} AND uaet.schedule = #{id.scheduleTypeKey} AND uaet.export_date = #{id.date}
+	</select>
+	
+	<select id="get-UserAdhocDatumExportTaskInfo-for-task-id" parameterType="java.util.UUID" resultMap="UserAdhocDatumExportTaskInfoFullResult">
+		<include refid="fragment-UserAdhocDatumExportTaskInfo-select-full"/>
+		WHERE
+			uaet.task_id = #{id}
+	</select>
+	
+	<select id="find-UserAdhocDatumExportTaskInfo-for-user" parameterType="map" resultMap="UserAdhocDatumExportTaskInfoFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-UserAdhocDatumExportTaskInfo-select-full"/>
+		WHERE
+			uaet.user_id = #{user}
+			<if test="success != null">AND det.success = #{success}</if>
+			<if test="states != null">AND det.status = ANY(#{states,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})</if>
+		ORDER BY
+			uaet.schedule, uaet.export_date
+	</select>
+
+	<delete id="delete-UserAdhocDatumExportTaskInfo-completed" parameterType="map" statementType="CALLABLE">
+		{#{result, mode=OUT, jdbcType=BIGINT} = call solaruser.purge_completed_user_adhoc_export_tasks(
+			#{date, mode=IN, jdbcType=TIMESTAMP}
+		)}
+	</delete>
+ 
+</mapper>

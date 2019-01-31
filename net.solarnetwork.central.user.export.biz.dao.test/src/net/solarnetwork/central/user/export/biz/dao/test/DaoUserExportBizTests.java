@@ -48,11 +48,13 @@ import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.biz.dao.DaoUserExportBiz;
+import net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.dao.UserDataConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao;
+import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
@@ -64,7 +66,7 @@ import net.solarnetwork.test.EasyMockUtils;
  * Test cases for the {@link UserExportBiz} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoUserExportBizTests {
 
@@ -78,6 +80,7 @@ public class DaoUserExportBizTests {
 	private UserDestinationConfigurationDao destConfigurationDao;
 	private UserOutputConfigurationDao outputConfigurationDao;
 	private UserDatumExportTaskInfoDao taskDao;
+	private UserAdhocDatumExportTaskInfoDao adhocTaskDao;
 	private UserNodeDao userNodeDao;
 	private GeneralNodeDatumDao generalNodeDatumDao;
 
@@ -90,22 +93,23 @@ public class DaoUserExportBizTests {
 		destConfigurationDao = EasyMock.createMock(UserDestinationConfigurationDao.class);
 		outputConfigurationDao = EasyMock.createMock(UserOutputConfigurationDao.class);
 		taskDao = EasyMock.createMock(UserDatumExportTaskInfoDao.class);
+		adhocTaskDao = EasyMock.createMock(UserAdhocDatumExportTaskInfoDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
 		generalNodeDatumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
 
 		biz = new DaoUserExportBiz(configurationDao, dataConfigurationDao, destConfigurationDao,
-				outputConfigurationDao, taskDao, userNodeDao, generalNodeDatumDao);
+				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, generalNodeDatumDao);
 	}
 
 	private void replayAll() {
 		EasyMock.replay(configurationDao, dataConfigurationDao, destConfigurationDao,
-				outputConfigurationDao, taskDao, userNodeDao, generalNodeDatumDao);
+				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, generalNodeDatumDao);
 	}
 
 	@After
 	public void teardown() {
 		EasyMock.verify(configurationDao, dataConfigurationDao, destConfigurationDao,
-				outputConfigurationDao, taskDao, userNodeDao, generalNodeDatumDao);
+				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, generalNodeDatumDao);
 	}
 
 	private UserDatumExportConfiguration createConfiguration() {
@@ -232,29 +236,16 @@ public class DaoUserExportBizTests {
 					@Override
 					public void check(GeneralNodeDatumFilter sourceFilter) throws Throwable {
 						call++;
-						switch (call) {
-							case 1:
-								assertThat("Source filter 1 node", sourceFilter.getNodeId(),
-										equalTo(TEST_NODE_ID));
-								assertThat("Source filter 1 start date", sourceFilter.getStartDate(),
-										equalTo(exportDate));
-								assertThat("Source filter 1 end date", sourceFilter.getEndDate(),
-										equalTo(ScheduleType.Hourly.nextExportDate(exportDate)));
-								break;
-
-							case 2:
-								assertThat("Source filter 2 node", sourceFilter.getNodeId(),
-										equalTo(TEST_NODE_ID_2));
-								assertThat("Source filter 2 start date", sourceFilter.getStartDate(),
-										equalTo(exportDate));
-								assertThat("Source filter 2 end date", sourceFilter.getEndDate(),
-										equalTo(ScheduleType.Hourly.nextExportDate(exportDate)));
-								break;
-
-							default:
-								fail("Expected only 2 calls to getAvailableSources(filter)");
+						if ( call < 3 ) {
+							assertThat("Source filter node " + call, sourceFilter.getNodeId(),
+									equalTo(call == 1 ? TEST_NODE_ID : TEST_NODE_ID_2));
+							assertThat("Source filter start date " + call, sourceFilter.getStartDate(),
+									equalTo(exportDate));
+							assertThat("Source filter end date " + call, sourceFilter.getEndDate(),
+									equalTo(ScheduleType.Hourly.nextExportDate(exportDate)));
+						} else {
+							fail("Expected only 2 calls to getAvailableSources(filter)");
 						}
-
 					}
 				}))).andReturn(allSourceIdsNode1).andReturn(allSourceIdsNode2);
 
@@ -281,6 +272,41 @@ public class DaoUserExportBizTests {
 		assertThat("Source IDs populated",
 				task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds(),
 				arrayContaining("/test/foo", "/test/bar", "/test/bam"));
+	}
+
+	@Test
+	public void submitAdhocTask() {
+		// given
+		DateTime now = new DateTime();
+		UserDatumExportConfiguration config = createConfiguration();
+
+		// make ad hoc with no ID
+		config.setId(null);
+
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID))
+				.andReturn(Collections.singleton(TEST_NODE_ID));
+
+		Capture<UserAdhocDatumExportTaskInfo> taskCaptor = new Capture<>();
+
+		DateTime exportDate = now;
+		expect(adhocTaskDao.store(capture(taskCaptor)))
+				.andReturn(new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Adhoc, exportDate));
+
+		// when
+		replayAll();
+		UserAdhocDatumExportTaskInfo task = biz.submitAdhocDatumExportConfiguration(config, exportDate);
+
+		// then
+		assertThat("Task created", task, notNullValue());
+
+		assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
+		assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Adhoc));
+		assertThat("Task date", task.getExportDate(), equalTo(exportDate));
+		assertThat("Task config available", task.getConfig(), notNullValue());
+		assertThat("Config name", task.getConfig().getName(), equalTo(config.getName()));
+		assertThat("Node ID populated",
+				task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds(),
+				arrayContaining(TEST_NODE_ID));
 	}
 
 }

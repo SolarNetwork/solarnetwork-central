@@ -1,7 +1,7 @@
 /* ==================================================================
- * BasicDestinationConfiguration.java - 21/03/2018 11:23:25 AM
+ * IdentityCellProcessor.java - 1/02/2019 7:44:11 am
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2019 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,39 +20,40 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.export.domain;
+package net.solarnetwork.central.datum.export.standard.test;
 
-import java.io.Serializable;
-import net.solarnetwork.domain.BasicIdentifiableConfiguration;
+import org.supercsv.cellprocessor.CellProcessorAdaptor;
+import org.supercsv.cellprocessor.ift.CellProcessor;
+import org.supercsv.util.CsvContext;
 
 /**
- * Basic implementation of {@link DestinationConfiguration}.
+ * CSV cell processor for testing.
  * 
  * @author matt
- * @version 1.1
- * @since 1.23
+ * @version 1.0
  */
-public class BasicDestinationConfiguration extends BasicIdentifiableConfiguration
-		implements DestinationConfiguration, Serializable {
-
-	private static final long serialVersionUID = 7134357946005308817L;
+public class IdentityCellProcessor extends CellProcessorAdaptor {
 
 	/**
-	 * Default constructor.
+	 * Constructor.
 	 */
-	public BasicDestinationConfiguration() {
+	public IdentityCellProcessor() {
 		super();
 	}
 
 	/**
-	 * Copy constructor.
+	 * Constructor with a chain.
 	 * 
-	 * @param other
-	 *        the configuration to copy
-	 * @since 1.1
+	 * @param next
+	 *        the next processor in the chain
 	 */
-	public BasicDestinationConfiguration(DestinationConfiguration other) {
-		super(other);
+	public IdentityCellProcessor(CellProcessor next) {
+		super(next);
+	}
+
+	@Override
+	public <T> T execute(Object value, CsvContext context) {
+		return next.execute(value, context);
 	}
 
 }

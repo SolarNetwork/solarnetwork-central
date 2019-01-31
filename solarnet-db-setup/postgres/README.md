@@ -12,6 +12,29 @@ requires the [plv8][plv8] extension.
 
 ## Create database
 
+The `bin/setup-db.sh` script is the easiest way to setup or re-create the database.
+To create a database **solarnetwork** and database user **solarnet** for development:
+
+```sh
+./bin/setup-db.sh -mrv -u solarnet -d solarnetwork
+```
+
+To create a database **solarnet_unittest** and database user **solarnet_test** for testing,
+the defaults can be used:
+
+```sh
+./bin/setup-db.sh -mrv
+```
+
+If Postgres is running on a non-standard port, or on a remote host, pass `psql` connection
+arguments via the `-c` switch:
+
+```sh
+./bin/setup-db.sh -mrv -c '-p 5496 -h postgres96.example.com'
+```
+
+### SQL only database creation
+
 The `postgres-create.sql` script can be used to
 
  1. Create a **solarnet** database user.
