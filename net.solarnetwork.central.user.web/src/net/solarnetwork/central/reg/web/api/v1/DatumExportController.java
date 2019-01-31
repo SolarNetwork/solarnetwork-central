@@ -25,9 +25,12 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -42,11 +45,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.DataConfiguration;
+import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
@@ -55,6 +60,7 @@ import net.solarnetwork.central.reg.web.domain.DatumExportProperties;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
+import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
@@ -73,7 +79,7 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for datum export management.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.26
  */
 @RestController("v1DatumExportController")
@@ -440,6 +446,84 @@ public class DatumExportController extends WebServiceControllerSupport {
 			}
 		}
 		return response(null);
+	}
+
+	/**
+	 * Submit an ad hoc export job request.
+	 * 
+	 * @param config
+	 *        the export job configuration
+	 * @return the task info
+	 * @since 1.1
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/adhoc", method = RequestMethod.POST)
+	public Response<UserAdhocDatumExportTaskInfo> submitAdhocExportJobRequest(
+			@RequestBody UserDatumExportConfiguration config) {
+		final UserExportBiz biz = exportBiz.service();
+		if ( biz != null ) {
+			if ( config.getUserId() == null ) {
+				config.setUserId(SecurityUtils.getCurrentActorUserId());
+			}
+			if ( config.getCreated() == null ) {
+				config.setCreated(new DateTime());
+			}
+			UserAdhocDatumExportTaskInfo info = biz.saveAdhocDatumExportTaskForConfiguration(config,
+					new DateTime());
+			if ( info != null ) {
+				return response(info);
+			}
+		}
+		return new Response<UserAdhocDatumExportTaskInfo>(false, null, null, null);
+	}
+
+	/**
+	 * Get the available ad hoc export tasks for the active actor.
+	 * 
+	 * @param stateKeys
+	 *        an optional list of {@link DatumExportState} keys (or names) to
+	 *        filter the results by, or {@literal null} for any state
+	 * @param success
+	 *        an optional "success" flag to filter the results by, or
+	 *        {@literal null} for any success value (including {@literal null})
+	 * @return the results
+	 * @since 1.1
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/adhoc", method = RequestMethod.GET)
+	public Response<List<UserAdhocDatumExportTaskInfo>> allAdhocTasks(
+			@RequestParam(value = "states", required = false) String[] stateKeys,
+			@RequestParam(value = "success", required = false) Boolean success) {
+		final UserExportBiz biz = exportBiz.service();
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			Set<DatumExportState> states = null;
+			if ( stateKeys != null && stateKeys.length > 0 ) {
+				states = new HashSet<>(stateKeys.length);
+				for ( String key : stateKeys ) {
+					if ( key.isEmpty() ) {
+						continue;
+					}
+					DatumExportState state = DatumExportState.forKey(key.charAt(0));
+					if ( state == DatumExportState.Unknown ) {
+						// try via full name
+						try {
+							state = DatumExportState.valueOf(key);
+						} catch ( IllegalArgumentException e ) {
+							throw new IllegalArgumentException("Unsupported state value [" + key + "]");
+						}
+					}
+					if ( state != null && state != DatumExportState.Unknown ) {
+						states.add(state);
+					}
+				}
+				states = EnumSet.copyOf(states);
+			}
+			List<UserAdhocDatumExportTaskInfo> tasks = biz.adhocExportTasksForUser(userId, states,
+					success);
+			return response(tasks);
+		}
+		return new Response<List<UserAdhocDatumExportTaskInfo>>(false, null, null, null);
 	}
 
 }
