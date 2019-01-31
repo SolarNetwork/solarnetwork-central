@@ -29,12 +29,30 @@ import net.solarnetwork.domain.BasicIdentifiableConfiguration;
  * Basic implementation of {@link DestinationConfiguration}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.23
  */
 public class BasicDestinationConfiguration extends BasicIdentifiableConfiguration
 		implements DestinationConfiguration, Serializable {
 
 	private static final long serialVersionUID = 7134357946005308817L;
+
+	/**
+	 * Default constructor.
+	 */
+	public BasicDestinationConfiguration() {
+		super();
+	}
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the configuration to copy
+	 * @since 1.1
+	 */
+	public BasicDestinationConfiguration(DestinationConfiguration other) {
+		super(other);
+	}
 
 }
