@@ -23,11 +23,17 @@
 package net.solarnetwork.central.user.export.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
@@ -96,6 +102,13 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		return conf;
 	}
 
+	private UserDatumExportTaskPK storeTask(Long userId, DateTime date) {
+		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo();
+		info.setId(new UserDatumExportTaskPK(userId, ScheduleType.Adhoc, date));
+		info.setConfig(this.userDatumExportConfig);
+		return dao.store(info);
+	}
+
 	@Test
 	public void storeNew() {
 		DateTime date = new DateTime(2017, 4, 18, 9, 0, 0, DateTimeZone.UTC);
@@ -103,7 +116,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		info.setId(new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Adhoc, date));
 		info.setConfig(this.userDatumExportConfig);
 
-		UserDatumExportTaskPK id = dao.store(info);
+		UserDatumExportTaskPK id = storeTask(this.user.getId(), date);
 		assertThat("Primary key assigned", id, notNullValue());
 		assertThat("Primary key matches", id, equalTo(info.getId()));
 
@@ -189,5 +202,91 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 
 		long result = dao.purgeCompletedTasks(new DateTime().hourOfDay().roundCeilingCopy());
 		assertThat("Delete count", result, equalTo(2L));
+	}
+
+	@Test
+	public void findForUserNone() {
+		List<UserAdhocDatumExportTaskInfo> tasks = dao.findTasksForUser(user.getId(), null, null);
+		assertThat("Empty result", tasks, hasSize(0));
+	}
+
+	@Test
+	public void findForUserAndStatesNone() {
+		Set<DatumExportState> states = EnumSet.of(DatumExportState.Completed);
+		List<UserAdhocDatumExportTaskInfo> tasks = dao.findTasksForUser(user.getId(), states, null);
+		assertThat("Empty result", tasks, hasSize(0));
+	}
+
+	@Test
+	public void findForUserAndStatesAndSuccessNone() {
+		Set<DatumExportState> states = EnumSet.of(DatumExportState.Completed);
+		List<UserAdhocDatumExportTaskInfo> tasks = dao.findTasksForUser(user.getId(), states, false);
+		assertThat("Empty result", tasks, hasSize(0));
+	}
+
+	@Test
+	public void findForUser() {
+		DateTime date = new DateTime(2017, 4, 18, 9, 0, 0, DateTimeZone.UTC);
+		List<UserDatumExportTaskPK> pks = new ArrayList<>(3);
+		for ( int i = 0; i < 3; i++ ) {
+			pks.add(storeTask(this.user.getId(), date.plusMinutes(i)));
+		}
+		List<UserAdhocDatumExportTaskInfo> tasks = dao.findTasksForUser(user.getId(), null, null);
+		assertThat("Result count", tasks, hasSize(3));
+		for ( int i = 0; i < 3; i++ ) {
+			UserAdhocDatumExportTaskInfo info = tasks.get(i);
+			assertThat("Result PK " + i, info.getId(), equalTo(pks.get(i)));
+		}
+	}
+
+	@Test
+	public void findForUserAndStates() {
+		DateTime date = new DateTime(2017, 4, 18, 9, 0, 0, DateTimeZone.UTC);
+		List<UserDatumExportTaskPK> pks = new ArrayList<>(3);
+		for ( int i = 0; i < 3; i++ ) {
+			pks.add(storeTask(this.user.getId(), date.plusMinutes(i)));
+			if ( i == 1 ) {
+				// update first two tasks to 'complete' state
+				jdbcTemplate.update("update solarnet.sn_datum_export_task set status = 'c'");
+			}
+		}
+		Set<DatumExportState> states = EnumSet.of(DatumExportState.Completed);
+		List<UserAdhocDatumExportTaskInfo> tasks = dao.findTasksForUser(user.getId(), states, null);
+		assertThat("Result count", tasks, hasSize(2));
+		for ( int i = 0; i < 2; i++ ) {
+			UserAdhocDatumExportTaskInfo info = tasks.get(i);
+			assertThat("Result PK " + i, info.getId(), equalTo(pks.get(i)));
+		}
+	}
+
+	@Test
+	public void findForUserAndStatesAndSuccess() {
+		DateTime date = new DateTime(2017, 4, 18, 9, 0, 0, DateTimeZone.UTC);
+		List<UserDatumExportTaskPK> pks = new ArrayList<>(3);
+		for ( int i = 0; i < 3; i++ ) {
+			DateTime taskDate = date.plusMinutes(i);
+			pks.add(storeTask(this.user.getId(), taskDate));
+			if ( i == 0 ) {
+				// update first task to 'failed' success
+				jdbcTemplate.update("update solarnet.sn_datum_export_task set success = FALSE");
+			} else if ( i == 1 ) {
+				// update first two tasks to 'complete' state
+				jdbcTemplate.update("update solarnet.sn_datum_export_task set status = 'c'");
+
+				// update second task to 'ok' success
+				jdbcTemplate.update("update solarnet.sn_datum_export_task set success = TRUE "
+						+ "where export_date = ?", new Timestamp(taskDate.getMillis()));
+			}
+		}
+		Set<DatumExportState> states = EnumSet.of(DatumExportState.Completed);
+		List<UserAdhocDatumExportTaskInfo> tasks = dao.findTasksForUser(user.getId(), states, false);
+		assertThat("Result count", tasks, hasSize(1));
+		UserAdhocDatumExportTaskInfo info = tasks.get(0);
+		assertThat("Failed result PK", info.getId(), equalTo(pks.get(0)));
+
+		tasks = dao.findTasksForUser(user.getId(), states, true);
+		assertThat("Result count", tasks, hasSize(1));
+		info = tasks.get(0);
+		assertThat("Ok result PK", info.getId(), equalTo(pks.get(1)));
 	}
 }

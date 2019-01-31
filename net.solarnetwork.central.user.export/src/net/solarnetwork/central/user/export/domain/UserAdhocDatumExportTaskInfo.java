@@ -25,6 +25,8 @@ package net.solarnetwork.central.user.export.domain;
 import java.util.UUID;
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.Configuration;
@@ -41,6 +43,8 @@ import net.solarnetwork.util.JsonUtils;
  * @version 1.0
  * @since 1.1
  */
+@JsonIgnoreProperties("id")
+@JsonPropertyOrder({ "userId", "exportDate", "scheduleTypeKey", "created", "taskId", "config", "task" })
 public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTaskPK>
 		implements UserRelatedEntity<UserDatumExportTaskPK> {
 

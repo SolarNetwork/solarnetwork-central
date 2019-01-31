@@ -23,9 +23,12 @@
 package net.solarnetwork.central.user.export.dao.mybatis;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.joda.time.DateTime;
+import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
@@ -60,6 +63,11 @@ public class MyBatisUserAdhocDatumExportTaskInfoDao
 	public static final String ADD_AD_HOC_TASK = "add-ad-hoc-task";
 
 	/**
+	 * The query name used for {@link #findTasksForUser(Long, Set, Boolean)}.
+	 */
+	public static final String QUERY_TASKS_FOR_USER = "find-UserAdhocDatumExportTaskInfo-for-user";
+
+	/**
 	 * Default constructor.
 	 */
 	public MyBatisUserAdhocDatumExportTaskInfoDao() {
@@ -84,6 +92,19 @@ public class MyBatisUserAdhocDatumExportTaskInfoDao
 	public UUID addAdHocDatumExport(UserAdhocDatumExportTaskInfo info) {
 		UUID uuid = getSqlSession().selectOne(ADD_AD_HOC_TASK, info);
 		return uuid;
+	}
+
+	@Override
+	public List<UserAdhocDatumExportTaskInfo> findTasksForUser(Long userId, Set<DatumExportState> states,
+			Boolean success) {
+		Map<String, Object> params = new HashMap<>(3);
+		params.put("user", userId);
+		if ( states != null && !states.isEmpty() ) {
+			String[] array = states.stream().map(s -> String.valueOf(s.getKey())).toArray(String[]::new);
+			params.put("states", array);
+		}
+		params.put("success", success);
+		return selectList(QUERY_TASKS_FOR_USER, params, null, null);
 	}
 
 }

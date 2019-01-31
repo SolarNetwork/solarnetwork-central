@@ -102,7 +102,7 @@
 				<value>classpath:/net/solarnetwork/central/datum/export/dao/mybatis/map/DatumExportTaskInfo.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
-				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDatumAdhocExportTaskInfo.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserAdhocDatumExportTaskInfo.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDataConfiguration.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserDestinationConfiguration.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/export/dao/mybatis/map/UserOutputConfiguration.xml</value>

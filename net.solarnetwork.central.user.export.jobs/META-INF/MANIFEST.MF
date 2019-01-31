@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarUser Export Jobs
 Bundle-SymbolicName: net.solarnetwork.central.user.export.jobs
-Bundle-Version: 1.0.0
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.user.export.jobs
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -15,14 +15,14 @@ Import-Package:
  net.solarnetwork.central.dao;version="1.14.0",
  net.solarnetwork.central.datum.domain;version="1.19.0",
  net.solarnetwork.central.datum.export.biz;version="1.0.0",
- net.solarnetwork.central.datum.export.domain;version="1.0.0",
+ net.solarnetwork.central.datum.export.domain;version="1.1.0",
  net.solarnetwork.central.domain;version="1.24.1",
  net.solarnetwork.central.scheduler;version="1.5.0",
  net.solarnetwork.central.user.dao;version="1.10.0",
  net.solarnetwork.central.user.domain;version="1.15.0",
- net.solarnetwork.central.user.export.biz;version="1.0.0",
- net.solarnetwork.central.user.export.dao;version="0.1.0",
- net.solarnetwork.central.user.export.domain;version="0.1.0",
+ net.solarnetwork.central.user.export.biz;version="1.1.0",
+ net.solarnetwork.central.user.export.dao;version="1.1.0",
+ net.solarnetwork.central.user.export.domain;version="1.1.0",
  net.solarnetwork.domain;version="1.13.0",
  org.joda.time;version="[2.4,3.0)",
  org.joda.time.base;version="[2.4,3.0)",

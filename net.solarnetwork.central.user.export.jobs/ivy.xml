@@ -15,7 +15,7 @@
 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.38,2.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.23,2.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.28,2.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.export" rev="[1.0,2.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.export" rev="[1.1,2.0)"/>
 		<dependency org="org.aopalliance" name="com.springsource.org.aopalliance" rev="1.0.0" />
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>
 		<dependency org="org.osgi" name="org.osgi.enterprise" rev="4.2.0"/>

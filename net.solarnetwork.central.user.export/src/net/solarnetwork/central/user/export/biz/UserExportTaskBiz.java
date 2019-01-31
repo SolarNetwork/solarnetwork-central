@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.export.biz;
 
 import org.joda.time.DateTime;
+import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 
@@ -34,7 +35,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserExportTaskBiz {
 
@@ -51,6 +52,22 @@ public interface UserExportTaskBiz {
 	 *         export task
 	 */
 	UserDatumExportTaskInfo submitDatumExportConfiguration(UserDatumExportConfiguration config,
+			DateTime exportDate);
+
+	/**
+	 * Submit an ad hoc datum export configuration for task execution.
+	 * 
+	 * @param config
+	 *        the export configuration to create tasks for
+	 * @param exportDate
+	 *        the export date to use
+	 * @return the created task, never {@literal null}
+	 * @throws IllegalArgumentException
+	 *         if {@code configuration} is not complete enough to create an
+	 *         export task
+	 * @since 1.1
+	 */
+	UserAdhocDatumExportTaskInfo submitAdhocDatumExportConfiguration(UserDatumExportConfiguration config,
 			DateTime exportDate);
 
 }

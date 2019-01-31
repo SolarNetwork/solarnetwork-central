@@ -22,8 +22,11 @@
 
 package net.solarnetwork.central.user.export.dao;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.joda.time.DateTime;
+import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
@@ -73,5 +76,21 @@ public interface UserAdhocDatumExportTaskInfoDao
 	 * @return the resulting datum export task UUID
 	 */
 	UUID addAdHocDatumExport(UserAdhocDatumExportTaskInfo info);
+
+	/**
+	 * Find all available ad hoc export tasks for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get tasks for
+	 * @param state
+	 *        if provided, a specific set of states to filter the results by
+	 *        (only tasks in one of the given states are returned)
+	 * @param success
+	 *        if provided, filter the results to only include jobs with a
+	 *        matching success flag
+	 * @return the matching tasks, never {@literal null}
+	 */
+	List<UserAdhocDatumExportTaskInfo> findTasksForUser(Long userId, Set<DatumExportState> states,
+			Boolean success);
 
 }

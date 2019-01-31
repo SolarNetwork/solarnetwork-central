@@ -70,10 +70,12 @@
 			uaet.task_id = #{id}
 	</select>
 	
-	<select id="find-UserAdhocDatumExportTaskInfo-for-user" parameterType="long" resultMap="UserAdhocDatumExportTaskInfoFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+	<select id="find-UserAdhocDatumExportTaskInfo-for-user" parameterType="map" resultMap="UserAdhocDatumExportTaskInfoFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		<include refid="fragment-UserAdhocDatumExportTaskInfo-select-full"/>
 		WHERE
-			uaet.user_id = #{id}
+			uaet.user_id = #{user}
+			<if test="success != null">AND det.success = #{success}</if>
+			<if test="states != null">AND det.status = ANY(#{states,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})</if>
 		ORDER BY
 			uaet.schedule, uaet.export_date
 	</select>
