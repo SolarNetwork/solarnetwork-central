@@ -13,7 +13,7 @@ CREATE TABLE solaruser.user_adhoc_export_task (
 	CONSTRAINT user_adhoc_export_task_pkey PRIMARY KEY (user_id, schedule, export_date),
 	CONSTRAINT user_adhoc_export_task_datum_export_task_fk
 		FOREIGN KEY (task_id) REFERENCES solarnet.sn_datum_export_task (id)
-		ON UPDATE NO ACTION ON DELETE NO ACTION
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 /**
