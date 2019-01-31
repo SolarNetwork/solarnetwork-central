@@ -55,6 +55,7 @@ import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.export.biz.DatumExportBiz;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
@@ -328,6 +329,10 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 					auditor.resetCurrentAuditResults();
 				}
 
+				// all exported data will be audited on the hour we start the export at
+				GeneralNodeDatumPK auditDatumKey = new GeneralNodeDatumPK();
+				auditDatumKey.setCreated(new DateTime().hourOfDay().roundFloorCopy());
+
 				datumDao.batchExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
 
 					@Override
@@ -343,8 +348,10 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 
 					@Override
 					public ExportCallbackAction handle(GeneralNodeDatumFilterMatch d) {
-						if ( d != null && auditor != null ) {
-							auditor.addNodeDatumAuditResults(singletonMap(d.getId(), 1));
+						if ( d != null && d.getId() != null && auditor != null ) {
+							auditDatumKey.setNodeId(d.getId().getNodeId());
+							auditDatumKey.setSourceId(d.getId().getSourceId());
+							auditor.addNodeDatumAuditResults(singletonMap(auditDatumKey, 1));
 						}
 						try {
 							exportContext.appendDatumMatch(singleton(d), DatumExportTask.this);
