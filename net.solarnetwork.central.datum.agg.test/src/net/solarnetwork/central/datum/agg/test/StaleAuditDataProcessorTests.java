@@ -658,7 +658,7 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 	@Test
 	public void runParallelTasks() throws Exception {
 		// start at midnight UTC
-		final DateTime start = new DateTime(DateTimeZone.UTC).dayOfMonth().roundFloorCopy();
+		final DateTime start = new DateTime(2018, 1, 1, 0, 0, 0, DateTimeZone.UTC);
 
 		// 5 nodes posting 8 samples 12 hours apart (2 per day, 4 days)
 		for ( long nodeId = TEST_NODE_ID; nodeId > TEST_NODE_ID - 5; nodeId-- ) {
@@ -704,7 +704,7 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 
 	@Test
 	public void runParallelTasksWithLockedRow() throws Exception {
-		final DateTime start = new DateTime(DateTimeZone.UTC).hourOfDay().roundFloorCopy();
+		final DateTime start = new DateTime(2018, 1, 1, 0, 0, 0, DateTimeZone.UTC);
 
 		// 5 nodes posting 8 samples 12 hours apart (2 per day, 4 days)
 		for ( long nodeId = TEST_NODE_ID; nodeId > TEST_NODE_ID - 5; nodeId-- ) {

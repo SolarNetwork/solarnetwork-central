@@ -21,6 +21,7 @@
 	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 	<reference id="outputConfDao" interface="net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao"/>
 	<reference id="taskDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao"/>
+	<reference id="adhocTaskDao" interface="net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao"/>
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 
 	<!-- Use Java @Transactional annotations to declare transactions. -->
@@ -49,6 +50,7 @@
 		<argument ref="destinationConfDao"/>
 		<argument ref="outputConfDao"/>
 		<argument ref="taskDao"/>
+		<argument ref="adhocTaskDao"/>
 		<argument ref="userNodeDao"/>
 		<argument ref="generalNodeDatumDao"/>
 		<property name="outputFormatServices">

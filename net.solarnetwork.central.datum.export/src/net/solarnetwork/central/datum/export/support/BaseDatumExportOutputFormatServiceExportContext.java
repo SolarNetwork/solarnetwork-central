@@ -25,6 +25,8 @@ package net.solarnetwork.central.datum.export.support;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService.ExportContext;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
@@ -84,6 +86,14 @@ public abstract class BaseDatumExportOutputFormatServiceExportContext implements
 				case GZIP:
 					out = new GZIPOutputStream(out);
 					break;
+
+				case XZ:
+					try {
+						out = new CompressorStreamFactory()
+								.createCompressorOutputStream(CompressorStreamFactory.XZ, out);
+					} catch ( CompressorException e ) {
+						throw new IOException(e);
+					}
 
 				default:
 					// nothing more

@@ -54,12 +54,14 @@ import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
+import net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.dao.UserDataConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao;
 import net.solarnetwork.central.user.export.domain.BaseExportConfigurationEntity;
+import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
@@ -79,7 +81,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO implementation of {@link UserExportBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, EventHandler {
 
@@ -88,6 +90,7 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	private final UserDestinationConfigurationDao destinationConfigDao;
 	private final UserOutputConfigurationDao outputConfigDao;
 	private final UserDatumExportTaskInfoDao taskDao;
+	private final UserAdhocDatumExportTaskInfoDao adhocTaskDao;
 	private final UserNodeDao userNodeDao;
 	private final GeneralNodeDatumDao generalNodeDatumDao;
 
@@ -112,6 +115,8 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	 *        the output configuration DAO to use
 	 * @param taskDao
 	 *        the task DAO to use
+	 * @param adhocTaskDao
+	 *        the ad hoc task DAO to use
 	 * @param userNodeDao
 	 *        the user node DAO to use
 	 * @param generalNodeDatumDao
@@ -120,13 +125,15 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	public DaoUserExportBiz(UserDatumExportConfigurationDao datumExportConfigDao,
 			UserDataConfigurationDao dataConfigDao, UserDestinationConfigurationDao destinationConfigDao,
 			UserOutputConfigurationDao outputConfigDao, UserDatumExportTaskInfoDao taskDao,
-			UserNodeDao userNodeDao, GeneralNodeDatumDao generalNodeDatumDao) {
+			UserAdhocDatumExportTaskInfoDao adhocTaskDao, UserNodeDao userNodeDao,
+			GeneralNodeDatumDao generalNodeDatumDao) {
 		super();
 		this.datumExportConfigDao = datumExportConfigDao;
 		this.dataConfigDao = dataConfigDao;
 		this.destinationConfigDao = destinationConfigDao;
 		this.outputConfigDao = outputConfigDao;
 		this.taskDao = taskDao;
+		this.adhocTaskDao = adhocTaskDao;
 		this.userNodeDao = userNodeDao;
 		this.generalNodeDatumDao = generalNodeDatumDao;
 	}
@@ -165,6 +172,10 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	public Iterable<LocalizedServiceInfo> availableScheduleTypes(Locale locale) {
 		List<LocalizedServiceInfo> results = new ArrayList<>(ScheduleType.values().length);
 		for ( ScheduleType type : ScheduleType.values() ) {
+			if ( type == ScheduleType.Adhoc ) {
+				// ad hoc not a supported user export type here
+				continue;
+			}
 			String name = type.toString();
 			String desc = null;
 			if ( messageSource != null ) {
@@ -342,8 +353,10 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	 * Filter a set of sources using a source ID path pattern.
 	 * 
 	 * <p>
-	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
-	 * path pattern, then {@code sources} will be returned without filtering.
+	 * If any arguments are {@literal null}, or {@code pattern} is
+	 * {@literal null} or empty, then {@code sources} will be returned without
+	 * filtering. Otherwise a singleton set with just {@code pattern} will be
+	 * returned.
 	 * </p>
 	 * 
 	 * @param sources
@@ -358,7 +371,7 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 			String pattern) {
 		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
 				|| !pathMatcher.isPattern(pattern) ) {
-			return sources;
+			return (pattern == null || pattern.isEmpty() ? sources : Collections.singleton(pattern));
 		}
 		for ( Iterator<String> itr = sources.iterator(); itr.hasNext(); ) {
 			String source = itr.next();
@@ -376,6 +389,9 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 		ScheduleType scheduleType = config.getSchedule();
 		if ( scheduleType == null ) {
 			throw new IllegalArgumentException("The schedule type is required.");
+		}
+		if ( scheduleType == ScheduleType.Adhoc ) {
+			throw new IllegalArgumentException("The Adhoc schedule type is not allowed.");
 		}
 		// set up the configuration for the task(s), in which we must resolve
 		// the node IDs associated with the export
@@ -442,6 +458,86 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	public UserDatumExportTaskInfo saveDatumExportTaskForConfiguration(
 			UserDatumExportConfiguration configuration, DateTime exportDate) {
 		return submitDatumExportConfiguration(configuration, exportDate);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	@Override
+	public UserAdhocDatumExportTaskInfo saveAdhocDatumExportTaskForConfiguration(
+			UserDatumExportConfiguration config, DateTime exportDate) {
+		return submitAdhocDatumExportConfiguration(config, exportDate);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	@Override
+	public UserAdhocDatumExportTaskInfo submitAdhocDatumExportConfiguration(
+			UserDatumExportConfiguration config, DateTime exportDate) {
+		ScheduleType scheduleType = ScheduleType.Adhoc;
+
+		// set up the configuration for the task(s), in which we must resolve
+		// the node IDs associated with the export
+		BasicConfiguration taskConfig = new BasicConfiguration(config);
+		taskConfig.setSchedule(scheduleType);
+		BasicDataConfiguration taskDataConfig = new BasicDataConfiguration(
+				taskConfig.getDataConfiguration());
+		DatumFilterCommand taskDatumFilter = new DatumFilterCommand(taskDataConfig.getDatumFilter());
+
+		if ( taskDatumFilter.getNodeId() == null ) {
+			// set to all available node IDs
+			Set<Long> nodeIds = userNodeDao.findNodeIdsForUser(config.getUserId());
+			if ( nodeIds != null && !nodeIds.isEmpty() ) {
+				taskDatumFilter.setNodeIds(nodeIds.toArray(new Long[nodeIds.size()]));
+			} else {
+				log.info("User {} has no nodes available for datum export", config.getUserId());
+				return null;
+			}
+		}
+
+		// if there is exactly one source ID, support pattern matching
+		if ( taskDatumFilter.getSourceId() != null ) {
+			DateTime startDate = taskDatumFilter.getStartDate();
+			DateTime endDate = taskDatumFilter.getEndDate();
+
+			Set<String> allSourceIds = new LinkedHashSet<>();
+			DatumFilterCommand filter = new DatumFilterCommand();
+			filter.setStartDate(startDate);
+			filter.setEndDate(endDate);
+			for ( Long nodeId : taskDatumFilter.getNodeIds() ) {
+				filter.setNodeId(nodeId);
+				Set<String> nodeSources = generalNodeDatumDao.getAvailableSources(filter);
+				if ( nodeSources != null ) {
+					allSourceIds.addAll(nodeSources);
+				}
+			}
+			Set<String> resolvedSourceIds = new LinkedHashSet<>(allSourceIds.size());
+			for ( String sourceId : taskDatumFilter.getSourceIds() ) {
+				Set<String> sources = filterSources(allSourceIds, this.pathMatcher, sourceId);
+				if ( sources != null ) {
+					resolvedSourceIds.addAll(sources);
+				}
+			}
+			taskDatumFilter
+					.setSourceIds(resolvedSourceIds.toArray(new String[resolvedSourceIds.size()]));
+		}
+
+		taskDataConfig.setDatumFilter(taskDatumFilter);
+		taskConfig.setDataConfiguration(taskDataConfig);
+
+		UserAdhocDatumExportTaskInfo task = new UserAdhocDatumExportTaskInfo();
+		task.setCreated(new DateTime());
+		task.setUserId(config.getUserId());
+		task.setExportDate(exportDate);
+		task.setScheduleType(scheduleType);
+		task.setConfig(taskConfig);
+		UserDatumExportTaskPK pk = adhocTaskDao.store(task);
+		task.setId(pk);
+		return task;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	@Override
+	public List<UserAdhocDatumExportTaskInfo> adhocExportTasksForUser(Long userId,
+			Set<DatumExportState> states, Boolean success) {
+		return adhocTaskDao.findTasksForUser(userId, states, success);
 	}
 
 	@Override

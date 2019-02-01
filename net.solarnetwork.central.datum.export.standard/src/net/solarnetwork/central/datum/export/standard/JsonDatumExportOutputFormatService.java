@@ -68,7 +68,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 	 *        the object mapper to use
 	 */
 	public JsonDatumExportOutputFormatService(ObjectMapper objectMapper) {
-		super("net.solarnetwork.central.datum.support.JsonDatumExportOutputFormatService");
+		super("net.solarnetwork.central.datum.export.standard.JsonDatumExportOutputFormatService");
 		if ( objectMapper == null ) {
 			objectMapper = JsonUtils.newObjectMapper();
 		}
