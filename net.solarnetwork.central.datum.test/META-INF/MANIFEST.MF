@@ -2,9 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Datum Test
 Bundle-SymbolicName: net.solarnetwork.central.datum.test
-Bundle-Version: 1.8.0
+Bundle-Version: 1.9.0
 Bundle-Vendor: SolarNetwork
-Fragment-Host: net.solarnetwork.central.datum;bundle-version="1.30.0"
+Fragment-Host: net.solarnetwork.central.datum;bundle-version="1.35.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
  com.fasterxml.jackson.datatype.joda;version="[2.4,3.0)",

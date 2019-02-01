@@ -30,7 +30,7 @@ import org.joda.time.DateTime;
  * Primary key for a general node datum.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class GeneralNodeDatumPK implements Serializable, Cloneable, Comparable<GeneralNodeDatumPK> {
 
@@ -41,32 +41,81 @@ public class GeneralNodeDatumPK implements Serializable, Cloneable, Comparable<G
 	private String sourceId;
 
 	/**
-	 * Get a computed string ID value for this primary key. Note this value is
-	 * derived from the properties of this class, and not assigned by the
-	 * system.
+	 * Default constructor.
+	 */
+	public GeneralNodeDatumPK() {
+		super();
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param sourceId
+	 *        the source ID
+	 * @since 1.3
+	 */
+	public GeneralNodeDatumPK(Long nodeId, DateTime created, String sourceId) {
+		super();
+		this.nodeId = nodeId;
+		this.created = created;
+		this.sourceId = sourceId;
+	}
+
+	/**
+	 * Populate a string builder with an ID value.
+	 * 
+	 * <p>
+	 * This method is called from {@link #getId()}. Extending classes can add
+	 * more data as necessary.
+	 * </p>
+	 * 
+	 * @param buf
+	 *        the buffer to populate
+	 * @since 1.3
+	 */
+	protected void populateIdValue(StringBuilder buf) {
+		buf.append("n=");
+		if ( nodeId != null ) {
+			buf.append(nodeId);
+		}
+		buf.append(";c=");
+		if ( created != null ) {
+			buf.append(created);
+		}
+		buf.append(";s=");
+		if ( sourceId != null ) {
+			buf.append(sourceId);
+		}
+	}
+
+	/**
+	 * Get a computed string ID value for this primary key.
+	 * 
+	 * <p>
+	 * Note this value is derived from the properties of this class, and not
+	 * assigned by the system. This method calls
+	 * {@link #populateIdValue(StringBuilder)} and then computes a hex-encoded
+	 * SHA1 value from that as the final ID value.
+	 * </p>
 	 * 
 	 * @return computed ID string
 	 */
-	public String getId() {
+	public final String getId() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("n=");
-		if ( nodeId != null ) {
-			builder.append(nodeId);
-		}
-		builder.append(";c=");
-		if ( created != null ) {
-			builder.append(created);
-		}
-		builder.append(";s=");
-		if ( sourceId != null ) {
-			builder.append(sourceId);
-		}
+		populateIdValue(builder);
 		return DigestUtils.sha1Hex(builder.toString());
 	}
 
 	/**
-	 * Compare two {@code GeneralNodeDautumPK} objects. Keys are ordered based
-	 * on:
+	 * Compare two {@code GeneralNodeDautumPK} objects.
+	 * 
+	 * <p>
+	 * Keys are ordered based on:
+	 * </p>
 	 * 
 	 * <ol>
 	 * <li>nodeId</li>
@@ -74,7 +123,7 @@ public class GeneralNodeDatumPK implements Serializable, Cloneable, Comparable<G
 	 * <li>created</li>
 	 * </ol>
 	 * 
-	 * <em>Null</em> values will be sorted before non-<em>null</em> values.
+	 * {@literal null} values will be sorted before non-{@literal null} values.
 	 */
 	@Override
 	public int compareTo(GeneralNodeDatumPK o) {
@@ -107,24 +156,59 @@ public class GeneralNodeDatumPK implements Serializable, Cloneable, Comparable<G
 		return created.compareTo(o.created);
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("GeneralNodeDatumPK{");
+	/**
+	 * Populate a string builder with a friendly string value.
+	 * 
+	 * <p>
+	 * This method is called from {@link #toString()}. Extending classes can add
+	 * more data as necessary. The buffer will be initially empty when invoked.
+	 * </p>
+	 * 
+	 * @param buf
+	 *        the buffer to populate
+	 * @since 1.3
+	 */
+	protected void populateStringValue(StringBuilder buf) {
 		if ( nodeId != null ) {
-			builder.append("nodeId=");
-			builder.append(nodeId);
-			builder.append(", ");
+			if ( buf.length() > 0 ) {
+				buf.append(", ");
+			}
+			buf.append("nodeId=");
+			buf.append(nodeId);
 		}
 		if ( created != null ) {
-			builder.append("created=");
-			builder.append(created);
-			builder.append(", ");
+			if ( buf.length() > 0 ) {
+				buf.append(", ");
+			}
+			buf.append("created=");
+			buf.append(created);
 		}
 		if ( sourceId != null ) {
-			builder.append("sourceId=");
-			builder.append(sourceId);
+			if ( buf.length() > 0 ) {
+				buf.append(", ");
+			}
+			buf.append("sourceId=");
+			buf.append(sourceId);
 		}
+	}
+
+	/**
+	 * Generate a string value.
+	 * 
+	 * <p>
+	 * This method generates a string like <code>Class{data}</code> where
+	 * {@code data} is generated via
+	 * {@link #populateStringValue(StringBuilder)}.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
+	@Override
+	public final String toString() {
+		StringBuilder builder = new StringBuilder();
+		populateStringValue(builder);
+		builder.insert(0, '{');
+		builder.insert(0, getClass().getSimpleName());
 		builder.append("}");
 		return builder.toString();
 	}
