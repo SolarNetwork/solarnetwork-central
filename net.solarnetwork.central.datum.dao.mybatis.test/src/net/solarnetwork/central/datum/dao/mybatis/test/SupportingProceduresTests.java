@@ -138,11 +138,35 @@ public class SupportingProceduresTests extends AbstractMyBatisDaoTestSupport {
 		}, emptyList());
 	}
 
+	private interface SamplePopulator {
+
+		void populateSample(GeneralNodeDatumSamples sample, int i);
+	}
+
+	private long populateDiffSumDatum(long start, int count, int firstReading, int step) {
+		return populateDiffSumDatum(start, count, firstReading, step, null);
+	}
+
+	private long populateDiffSumDatum(long start, int count, int firstReading, int step,
+			SamplePopulator populator) {
+		long date = System.currentTimeMillis();
+		for ( long i = 0; i < count; i++ ) {
+			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
+			s.putAccumulatingSampleValue("foo", ((i * step) + firstReading));
+			if ( populator != null ) {
+				populator.populateSample(s, (int) i);
+			}
+			insertDatum(date, TEST_NODE_ID, TEST_SOURCE_ID, s);
+			date += 1000L;
+		}
+		return date;
+	}
+
 	@Test
 	public void diffSumOneRow() {
-		GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
-		s.putAccumulatingSampleValue("foo", 1L);
-		insertDatum(System.currentTimeMillis(), TEST_NODE_ID, TEST_SOURCE_ID, s);
+		long start = System.currentTimeMillis();
+		populateDiffSumDatum(start, 1, 1, 1);
+
 		List<Map<String, Object>> data = diffSum(new Long[] { TEST_NODE_ID },
 				new String[] { TEST_SOURCE_ID });
 		log.debug("Got data: {}", data);
@@ -159,4 +183,178 @@ public class SupportingProceduresTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Result jdata_a foo_start", a, hasEntry("foo_start", 1));
 		assertThat("Result jdata_a foo_end", a, hasEntry("foo_end", 1));
 	}
+
+	@Test
+	public void diffSumTwoRows() {
+		long start = System.currentTimeMillis();
+		populateDiffSumDatum(start, 2, 1, 1);
+
+		List<Map<String, Object>> data = diffSum(new Long[] { TEST_NODE_ID },
+				new String[] { TEST_SOURCE_ID });
+		log.debug("Got data: {}", data);
+		assertThat("Got result", data, hasSize(1));
+
+		Map<String, Object> r = data.get(0);
+		assertThat("Result prop count", r.entrySet(), hasSize(3));
+		assertThat("Result node", r, hasEntry("node_id", TEST_NODE_ID));
+		assertThat("Result source", r, hasEntry("source_id", TEST_SOURCE_ID));
+
+		Map<String, Object> a = JsonUtils.getStringMap((String) r.get("jdata_a"));
+		assertThat("Result jdata_a prop count", a.entrySet(), hasSize(3));
+		assertThat("Result jdata_a foo", a, hasEntry("foo", 1));
+		assertThat("Result jdata_a foo_start", a, hasEntry("foo_start", 1));
+		assertThat("Result jdata_a foo_end", a, hasEntry("foo_end", 2));
+	}
+
+	@Test
+	public void diffSumThreeRows() {
+		long start = System.currentTimeMillis();
+		populateDiffSumDatum(start, 3, 1, 1);
+
+		List<Map<String, Object>> data = diffSum(new Long[] { TEST_NODE_ID },
+				new String[] { TEST_SOURCE_ID });
+		log.debug("Got data: {}", data);
+		assertThat("Got result", data, hasSize(1));
+
+		Map<String, Object> r = data.get(0);
+		assertThat("Result prop count", r.entrySet(), hasSize(3));
+		assertThat("Result node", r, hasEntry("node_id", TEST_NODE_ID));
+		assertThat("Result source", r, hasEntry("source_id", TEST_SOURCE_ID));
+
+		Map<String, Object> a = JsonUtils.getStringMap((String) r.get("jdata_a"));
+		assertThat("Result jdata_a prop count", a.entrySet(), hasSize(3));
+		assertThat("Result jdata_a foo", a, hasEntry("foo", 1));
+		assertThat("Result jdata_a foo_start", a, hasEntry("foo_start", 1));
+		assertThat("Result jdata_a foo_end", a, hasEntry("foo_end", 3));
+	}
+
+	@Test
+	public void diffSumFourRows() {
+		long start = System.currentTimeMillis();
+		start = populateDiffSumDatum(start, 2, 1, 1); // 1-2, diff 1
+		populateDiffSumDatum(start, 2, 1000, 100); // 1000-1100, diff of 100
+
+		List<Map<String, Object>> data = diffSum(new Long[] { TEST_NODE_ID },
+				new String[] { TEST_SOURCE_ID });
+		log.debug("Got data: {}", data);
+		assertThat("Got result", data, hasSize(1));
+
+		Map<String, Object> r = data.get(0);
+		assertThat("Result prop count", r.entrySet(), hasSize(3));
+		assertThat("Result node", r, hasEntry("node_id", TEST_NODE_ID));
+		assertThat("Result source", r, hasEntry("source_id", TEST_SOURCE_ID));
+
+		Map<String, Object> a = JsonUtils.getStringMap((String) r.get("jdata_a"));
+		assertThat("Result jdata_a prop count", a.entrySet(), hasSize(3));
+		assertThat("Result jdata_a foo", a, hasEntry("foo", 101));
+		assertThat("Result jdata_a foo_start", a, hasEntry("foo_start", 1));
+		assertThat("Result jdata_a foo_end", a, hasEntry("foo_end", 1100));
+	}
+
+	@Test
+	public void diffSumTwoRowsIntroducedProp() {
+		long start = System.currentTimeMillis();
+		populateDiffSumDatum(start, 2, 0, 1, new SamplePopulator() {
+
+			@Override
+			public void populateSample(GeneralNodeDatumSamples sample, int i) {
+				if ( i > 0 ) {
+					sample.putAccumulatingSampleValue("bar", 20L);
+				}
+
+			}
+		});
+
+		List<Map<String, Object>> data = diffSum(new Long[] { TEST_NODE_ID },
+				new String[] { TEST_SOURCE_ID });
+		log.debug("Got data: {}", data);
+		assertThat("Got result", data, hasSize(1));
+
+		Map<String, Object> r = data.get(0);
+		assertThat("Result prop count", r.entrySet(), hasSize(3));
+		assertThat("Result node", r, hasEntry("node_id", TEST_NODE_ID));
+		assertThat("Result source", r, hasEntry("source_id", TEST_SOURCE_ID));
+
+		Map<String, Object> a = JsonUtils.getStringMap((String) r.get("jdata_a"));
+		assertThat("Result jdata_a prop count", a.entrySet(), hasSize(6));
+		assertThat("Result jdata_a foo", a, hasEntry("foo", 1));
+		assertThat("Result jdata_a foo_start", a, hasEntry("foo_start", 0));
+		assertThat("Result jdata_a foo_end", a, hasEntry("foo_end", 1));
+		assertThat("Result jdata_a bar", a, hasEntry("bar", 0));
+		assertThat("Result jdata_a bar_start", a, hasEntry("bar_start", 20));
+		assertThat("Result jdata_a bar_end", a, hasEntry("bar_end", 20));
+	}
+
+	@Test
+	public void diffSumFourRowsIntroducedPropSecondPair() {
+		long start = System.currentTimeMillis();
+		start = populateDiffSumDatum(start, 2, 0, 1); // 0-1, diff 1
+
+		populateDiffSumDatum(start, 2, 100, 2, new SamplePopulator() {
+
+			// foo: 100-102, diff 2
+			// bar: 20-40, diff 20
+
+			@Override
+			public void populateSample(GeneralNodeDatumSamples sample, int i) {
+				sample.putAccumulatingSampleValue("bar", 20L + (i * 20));
+			}
+		});
+
+		List<Map<String, Object>> data = diffSum(new Long[] { TEST_NODE_ID },
+				new String[] { TEST_SOURCE_ID });
+		log.debug("Got data: {}", data);
+		assertThat("Got result", data, hasSize(1));
+
+		Map<String, Object> r = data.get(0);
+		assertThat("Result prop count", r.entrySet(), hasSize(3));
+		assertThat("Result node", r, hasEntry("node_id", TEST_NODE_ID));
+		assertThat("Result source", r, hasEntry("source_id", TEST_SOURCE_ID));
+
+		Map<String, Object> a = JsonUtils.getStringMap((String) r.get("jdata_a"));
+		assertThat("Result jdata_a prop count", a.entrySet(), hasSize(6));
+		assertThat("Result jdata_a foo", a, hasEntry("foo", 3));
+		assertThat("Result jdata_a foo_start", a, hasEntry("foo_start", 0));
+		assertThat("Result jdata_a foo_end", a, hasEntry("foo_end", 102));
+		assertThat("Result jdata_a bar", a, hasEntry("bar", 20));
+		assertThat("Result jdata_a bar_start", a, hasEntry("bar_start", 20));
+		assertThat("Result jdata_a bar_end", a, hasEntry("bar_end", 40));
+	}
+
+	@Test
+	public void diffSumFourRowsChangePropSecondPair() {
+		long start = System.currentTimeMillis();
+		start = populateDiffSumDatum(start, 2, 0, 1); // 0-1, diff 1
+
+		populateDiffSumDatum(start, 2, 100, 2, new SamplePopulator() {
+
+			// bar: 20-40, diff 20
+
+			@Override
+			public void populateSample(GeneralNodeDatumSamples sample, int i) {
+				sample.putAccumulatingSampleValue("foo", null);
+				sample.putAccumulatingSampleValue("bar", 20L + (i * 20));
+			}
+		});
+
+		List<Map<String, Object>> data = diffSum(new Long[] { TEST_NODE_ID },
+				new String[] { TEST_SOURCE_ID });
+		log.debug("Got data: {}", data);
+		assertThat("Got result", data, hasSize(1));
+
+		Map<String, Object> r = data.get(0);
+		assertThat("Result prop count", r.entrySet(), hasSize(3));
+		assertThat("Result node", r, hasEntry("node_id", TEST_NODE_ID));
+		assertThat("Result source", r, hasEntry("source_id", TEST_SOURCE_ID));
+
+		Map<String, Object> a = JsonUtils.getStringMap((String) r.get("jdata_a"));
+		assertThat("Result jdata_a prop count", a.entrySet(), hasSize(6));
+		assertThat("Result jdata_a foo", a, hasEntry("foo", 1));
+		assertThat("Result jdata_a foo_start", a, hasEntry("foo_start", 0));
+		assertThat("Result jdata_a foo_end", a, hasEntry("foo_end", 1));
+		assertThat("Result jdata_a bar", a, hasEntry("bar", 20));
+		assertThat("Result jdata_a bar_start", a, hasEntry("bar_start", 20));
+		assertThat("Result jdata_a bar_end", a, hasEntry("bar_end", 40));
+	}
+
 }
