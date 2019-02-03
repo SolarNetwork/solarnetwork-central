@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumFilter.java - Dec 2, 2013 5:08:29 PM
+ * GeneralNodeDatumAuxiliaryFilterMatch.java - 4/02/2019 8:21:57 am
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2019 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,22 +22,33 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import net.solarnetwork.central.domain.DateRangeFilter;
-import net.solarnetwork.central.domain.Filter;
+import java.util.Map;
+import net.solarnetwork.central.domain.FilterMatch;
 
 /**
- * Filter for Datum entities.
+ * API for a {@link GeneralNodeDatumAuxiliary} search or filter match result.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
+ * @since 1.35
  */
-public interface DatumFilter extends Filter, DateRangeFilter {
+public interface GeneralNodeDatumAuxiliaryFilterMatch
+		extends FilterMatch<GeneralNodeDatumAuxiliaryPK>, ReportingDatum {
 
 	/**
-	 * Get a type of datum.
+	 * Get all available starting sample data as a Map.
 	 * 
-	 * @return the datum type
+	 * @return the sample data as a Map, or {@literal null} if no sample data
+	 *         available
 	 */
-	String getType();
+	public Map<String, ?> getSampleDataStart();
+
+	/**
+	 * Get all available final sample data as a Map.
+	 * 
+	 * @return the sample data as a Map, or {@literal null} if no sample data
+	 *         available
+	 */
+	public Map<String, ?> getSampleDataFinal();
 
 }

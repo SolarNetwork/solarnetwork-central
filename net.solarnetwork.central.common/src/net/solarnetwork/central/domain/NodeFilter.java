@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumFilter.java - Dec 2, 2013 5:08:29 PM
+ * NodeFilter.java - 4/02/2019 7:32:37 am
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2019 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,24 +20,30 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
-
-import net.solarnetwork.central.domain.DateRangeFilter;
-import net.solarnetwork.central.domain.Filter;
+package net.solarnetwork.central.domain;
 
 /**
- * Filter for Datum entities.
+ * Filter API for node related data.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
+ * @since 1.46
  */
-public interface DatumFilter extends Filter, DateRangeFilter {
+public interface NodeFilter extends Filter {
 
 	/**
-	 * Get a type of datum.
+	 * Get the first node ID. This returns the first available node ID from the
+	 * {@link #getNodeIds()} array, or {@literal null} if not available.
 	 * 
-	 * @return the datum type
+	 * @return the node ID, or {@literal null} if not available
 	 */
-	String getType();
+	public Long getNodeId();
+
+	/**
+	 * Get an array of node IDs.
+	 * 
+	 * @return array of node IDs (may be {@literal null})
+	 */
+	public Long[] getNodeIds();
 
 }

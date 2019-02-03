@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumFilter.java - Dec 2, 2013 5:08:29 PM
+ * OptimizedQueryFilter.java - 4/02/2019 7:42:18 am
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2019 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,24 +20,30 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
-
-import net.solarnetwork.central.domain.DateRangeFilter;
-import net.solarnetwork.central.domain.Filter;
+package net.solarnetwork.central.domain;
 
 /**
- * Filter for Datum entities.
+ * Filter API for query optimizations to apply.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
+ * @since 1.46
  */
-public interface DatumFilter extends Filter, DateRangeFilter {
+public interface OptimizedQueryFilter extends Filter {
 
 	/**
-	 * Get a type of datum.
+	 * Hint that a total result count is not necessary.
 	 * 
-	 * @return the datum type
+	 * <p>
+	 * Setting this to {@literal true} can improve the performance of most
+	 * queries, when the overall total count of results is not needed. When set,
+	 * features like
+	 * {@link net.solarnetwork.central.domain.FilterResults#getTotalResults()}
+	 * will not be available in the results.
+	 * </p>
+	 * 
+	 * @return {@literal true} to optimize query to omit a total result count
 	 */
-	String getType();
+	boolean isWithoutTotalResultsCount();
 
 }

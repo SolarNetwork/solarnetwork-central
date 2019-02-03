@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumFilter.java - Dec 2, 2013 5:08:29 PM
+ * GeneralNodeDatumAuxiliaryDao.java - 4/02/2019 7:25:28 am
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2019 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,24 +20,23 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.datum.dao;
 
-import net.solarnetwork.central.domain.DateRangeFilter;
-import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.dao.FilterableDao;
+import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 
 /**
- * Filter for Datum entities.
+ * DAO API for {@link GeneralNodeDatumAuxiliary} entities.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
  */
-public interface DatumFilter extends Filter, DateRangeFilter {
-
-	/**
-	 * Get a type of datum.
-	 * 
-	 * @return the datum type
-	 */
-	String getType();
+public interface GeneralNodeDatumAuxiliaryDao
+		extends GenericDao<GeneralNodeDatumAuxiliary, GeneralNodeDatumAuxiliaryPK>,
+		FilterableDao<GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryPK, GeneralNodeDatumAuxiliaryFilter> {
 
 }

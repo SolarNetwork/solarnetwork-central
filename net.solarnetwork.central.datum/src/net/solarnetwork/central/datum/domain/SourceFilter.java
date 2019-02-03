@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumFilter.java - Dec 2, 2013 5:08:29 PM
+ * SourceFilter.java - 4/02/2019 7:35:15 am
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2019 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,22 +22,30 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import net.solarnetwork.central.domain.DateRangeFilter;
 import net.solarnetwork.central.domain.Filter;
 
 /**
- * Filter for Datum entities.
+ * Filter API for source related data.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
+ * @since 1.35
  */
-public interface DatumFilter extends Filter, DateRangeFilter {
+public interface SourceFilter extends Filter {
 
 	/**
-	 * Get a type of datum.
+	 * Get the first source ID. This returns the first available source ID from
+	 * the {@link #getSourceIds()} array, or {@literal null} if not available.
 	 * 
-	 * @return the datum type
+	 * @return the first source ID, or {@literal null} if not available
 	 */
-	String getType();
+	public String getSourceId();
+
+	/**
+	 * Get an array of source IDs.
+	 * 
+	 * @return array of source IDs (may be {@literal null})
+	 */
+	public String[] getSourceIds();
 
 }

@@ -30,6 +30,7 @@ import net.solarnetwork.central.domain.SourceMappingFilter;
  * 
  * @author matt
  * @version 1.5
+ * @since 1.35
  */
 public interface GeneralNodeDatumFilter extends CommonFilter, CombiningFilter, DatumRollupFilter,
 		NodeMappingFilter, SourceMappingFilter {

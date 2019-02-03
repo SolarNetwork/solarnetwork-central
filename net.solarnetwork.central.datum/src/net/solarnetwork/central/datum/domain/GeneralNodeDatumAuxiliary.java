@@ -43,17 +43,19 @@ import net.solarnetwork.util.SerializeIgnore;
  * @version 1.0
  * @since 1.35
  */
-@JsonPropertyOrder({ "created", "nodeId", "sourceId", "type" })
+@JsonPropertyOrder({ "created", "nodeId", "sourceId", "type", "updated", "notes", "final", "start" })
 public class GeneralNodeDatumAuxiliary
 		implements Entity<GeneralNodeDatumAuxiliaryPK>, Cloneable, Serializable {
 
-	private static final long serialVersionUID = 4458346623126424619L;
+	private static final long serialVersionUID = 7232227691014611603L;
 
 	private GeneralNodeDatumAuxiliaryPK id = new GeneralNodeDatumAuxiliaryPK();
+	private DateTime updated;
 	private GeneralNodeDatumSamples samplesFinal;
 	private String sampleJsonFinal;
 	private GeneralNodeDatumSamples samplesStart;
 	private String sampleJsonStart;
+	private String notes;
 
 	/**
 	 * Convenience getter for {@link GeneralNodeDatumPK#getNodeId()}.
@@ -118,6 +120,37 @@ public class GeneralNodeDatumAuxiliary
 	@Override
 	public DateTime getCreated() {
 		return (id == null ? null : id.getCreated());
+	}
+
+	/**
+	 * Convenience getter for {@link GeneralNodeDatumAuxiliaryPK#getType()}.
+	 * 
+	 * @return the type
+	 */
+	public DatumAuxiliaryType getType() {
+		return (id == null ? null : id.getType());
+	}
+
+	/**
+	 * Convenience setter for
+	 * {@link GeneralNodeDatumAuxiliaryPK#setType(DatumAuxiliaryType)}.
+	 * 
+	 * @param type
+	 *        the type to set
+	 */
+	public void setType(DatumAuxiliaryType type) {
+		if ( id == null ) {
+			id = new GeneralNodeDatumAuxiliaryPK();
+		}
+		id.setType(type);
+	}
+
+	public DateTime getUpdated() {
+		return updated;
+	}
+
+	public void setUpdated(DateTime updated) {
+		this.updated = updated;
 	}
 
 	@Override
@@ -319,6 +352,14 @@ public class GeneralNodeDatumAuxiliary
 	public Map<String, ?> getSampleDataStart() {
 		GeneralNodeDatumSamples s = getSamplesStart();
 		return (s == null ? null : s.getSampleData());
+	}
+
+	public String getNotes() {
+		return notes;
+	}
+
+	public void setNotes(String notes) {
+		this.notes = notes;
 	}
 
 }

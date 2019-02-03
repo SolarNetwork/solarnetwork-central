@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumFilter.java - Dec 2, 2013 5:08:29 PM
+ * UserFilter.java - 4/02/2019 7:33:16 am
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2019 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,22 +22,30 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import net.solarnetwork.central.domain.DateRangeFilter;
 import net.solarnetwork.central.domain.Filter;
 
 /**
- * Filter for Datum entities.
+ * Filter API for user related data.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
+ * @since 1.35
  */
-public interface DatumFilter extends Filter, DateRangeFilter {
+public interface UserFilter extends Filter {
 
 	/**
-	 * Get a type of datum.
+	 * Get the first user ID. This returns the first available user ID from the
+	 * {@link #getUserIds()} array, or {@literal null} if not available.
 	 * 
-	 * @return the datum type
+	 * @return the first user ID, or {@literal null} if not available
 	 */
-	String getType();
+	public Long getUserId();
+
+	/**
+	 * Get an array of user IDs.
+	 * 
+	 * @return array of user IDs (may be {@literal null})
+	 */
+	public Long[] getUserIds();
 
 }

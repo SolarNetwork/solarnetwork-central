@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
+import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
@@ -62,6 +63,7 @@ public class GeneralNodeDatumAuxiliaryTests {
 		datum.setCreated(new DateTime(2014, 8, 22, 12, 0, 0, 0));
 		datum.setNodeId(TEST_NODE_ID);
 		datum.setSourceId(TEST_SOURCE_ID);
+		datum.setType(DatumAuxiliaryType.Reset);
 
 		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
 		samples.putInstantaneousSampleValue("watts", 231);
@@ -79,20 +81,22 @@ public class GeneralNodeDatumAuxiliaryTests {
 	@Test
 	public void serializeJson() throws Exception {
 		String json = objectMapper.writeValueAsString(getTestInstance());
-		assertThat("JSON", json,
-				equalTo("{\"created\":1408665600000,\"nodeId\":-1,\"sourceId\":\"test.source\","
-						+ "\"final\":{\"i\":{\"watts\":231},\"a\":{\"watt_hours\":4123}}"
+		assertThat("JSON", json, equalTo(
+				"{\"created\":1408665600000,\"nodeId\":-1,\"sourceId\":\"test.source\",\"type\":\"Reset\""
+						+ ",\"final\":{\"i\":{\"watts\":231},\"a\":{\"watt_hours\":4123}}"
 						+ ",\"start\":{\"i\":{\"watts\":321},\"a\":{\"watt_hours\":4321}}}"));
 	}
 
 	@Test
 	public void deserializeJson() throws Exception {
-		String json = "{\"created\":1408665600000,\"sourceId\":\"Main\",\"final\":{\"i\":{\"watts\":89}}}";
+		String json = "{\"created\":1408665600000,\"nodeId\":-1,\"sourceId\":\"Main\",\"type\":\"Reset\",\"final\":{\"i\":{\"watts\":89}}}";
 		GeneralNodeDatumAuxiliary datum = objectMapper.readValue(json, GeneralNodeDatumAuxiliary.class);
 		assertThat("Result from JSON", datum, notNullValue());
 		assertThat("Created", datum.getCreated(),
 				allOf(notNullValue(), equalTo(new DateTime(1408665600000L, DateTimeZone.UTC))));
+		assertThat("Node ID", datum.getNodeId(), equalTo(-1L));
 		assertThat("Source ID", datum.getSourceId(), equalTo("Main"));
+		assertThat("Type", datum.getType(), equalTo(DatumAuxiliaryType.Reset));
 		assertThat("Final samples", datum.getSamplesFinal(), notNullValue());
 		assertThat("Final samples data", datum.getSamplesFinal().getInstantaneousSampleInteger("watts"),
 				equalTo(89));
