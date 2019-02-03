@@ -17,11 +17,68 @@ CREATE TABLE solardatum.da_datum_aux (
   node_id bigint NOT NULL,
   source_id character varying(64) NOT NULL,
   atype solardatum.da_datum_aux_type NOT NULL DEFAULT 'Reset'::solardatum.da_datum_aux_type,
+  updated timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  notes text,
   jdata_af jsonb,
   jdata_as jsonb,
-  notes text,
   CONSTRAINT da_datum_aux_pkey PRIMARY KEY (node_id, ts, source_id, atype)
 );
+
+/**
+ * FUNCTION solardatum.store_aux(timestamp with time zone,bigint,character varying,solardatum.da_datum_aux_type,text,text,text)
+ *
+ * Add or replace datum auxiliary record data.
+ */
+CREATE OR REPLACE FUNCTION solardatum.store_datum_aux(
+	cdate timestamp with time zone,
+	node bigint,
+	src character varying(64),
+	aux_type solardatum.da_datum_aux_type,
+	aux_notes text,
+	jdata_final text,
+	jdata_start text)
+  RETURNS void LANGUAGE plpgsql VOLATILE AS
+$$
+DECLARE
+	udate timestamp with time zone := now();
+	jdata_final_json json := jdata_final::jsonb;
+	jdata_start_json json := jdata_start::jsonb;
+BEGIN
+	INSERT INTO solardatum.da_datum_aux(ts, node_id, source_id, atype, updated, notes, jdata_af, jdata_as)
+	VALUES (cdate, node, src, aux_type, udate, aux_notes, jdata_final_json->'a', jdata_start_json->'a')
+	ON CONFLICT (ts, node_id, source_id, atype) DO UPDATE
+	SET notes = EXCLUDED.notes,
+		jdata_af = EXCLUDED.jdata_af,
+		jdata_as = EXCLUDED.jdata_as, 
+		updated = EXCLUDED.updated;
+END;
+$$;
+
+/**
+ * FUNCTION solardatum.jdata_from_datum_aux_final(datum solardatum.da_datum_aux)
+ *
+ * Get a full jdata object from the "final" data elements of a datum auxiliary record.
+ */
+CREATE OR REPLACE FUNCTION solardatum.jdata_from_datum_aux_final(datum solardatum.da_datum_aux)
+	RETURNS jsonb
+	LANGUAGE SQL IMMUTABLE AS
+$$
+	SELECT solarcommon.jdata_from_components(NULL, datum.jdata_af, NULL, ARRAY[datum.atype::text, 'final']);
+$$;
+
+
+/**
+ * FUNCTION solardatum.jdata_from_datum_aux_start(datum solardatum.da_datum_aux)
+ *
+ * Get a full jdata object from the "starting" data elements of a datum auxiliary record.
+ */
+CREATE OR REPLACE FUNCTION solardatum.jdata_from_datum_aux_start(datum solardatum.da_datum_aux)
+	RETURNS jsonb
+	LANGUAGE SQL IMMUTABLE AS
+$$
+	SELECT solarcommon.jdata_from_components(NULL, datum.jdata_as, NULL, ARRAY[datum.atype::text, 'start']);
+$$;
+
 
 /** JSONB object diffsum aggregate state transition function. */
 CREATE OR REPLACE FUNCTION solarcommon.jsonb_diffsum_object_sfunc(agg_state jsonb, el jsonb)
