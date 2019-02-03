@@ -81,13 +81,13 @@ public class GeneralNodeDatumAuxiliaryTests {
 		String json = objectMapper.writeValueAsString(getTestInstance());
 		assertThat("JSON", json,
 				equalTo("{\"created\":1408665600000,\"nodeId\":-1,\"sourceId\":\"test.source\","
-						+ "\"final\":{\"watts\":231,\"watt_hours\":4123}"
-						+ ",\"start\":{\"watts\":321,\"watt_hours\":4321}}"));
+						+ "\"final\":{\"i\":{\"watts\":231},\"a\":{\"watt_hours\":4123}}"
+						+ ",\"start\":{\"i\":{\"watts\":321},\"a\":{\"watt_hours\":4321}}}"));
 	}
 
 	@Test
 	public void deserializeJson() throws Exception {
-		String json = "{\"created\":1408665600000,\"sourceId\":\"Main\",\"samplesFinal\":{\"i\":{\"watts\":89}}}";
+		String json = "{\"created\":1408665600000,\"sourceId\":\"Main\",\"final\":{\"i\":{\"watts\":89}}}";
 		GeneralNodeDatumAuxiliary datum = objectMapper.readValue(json, GeneralNodeDatumAuxiliary.class);
 		assertThat("Result from JSON", datum, notNullValue());
 		assertThat("Created", datum.getCreated(),

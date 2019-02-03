@@ -208,8 +208,7 @@ public class GeneralNodeDatumAuxiliary
 		samplesFinal = null;
 	}
 
-	@SerializeIgnore
-	@JsonIgnore
+	@JsonProperty("final")
 	public GeneralNodeDatumSamples getSamplesFinal() {
 		if ( samplesFinal == null && sampleJsonFinal != null ) {
 			samplesFinal = DatumUtils.getObjectFromJSON(sampleJsonFinal, GeneralNodeDatumSamples.class);
@@ -228,8 +227,7 @@ public class GeneralNodeDatumAuxiliary
 	 * @param samples
 	 *        the samples instance to set
 	 */
-	@JsonProperty
-	// @JsonProperty needed because of @JsonIgnore on getter
+	@JsonProperty("final")
 	public void setSamplesFinal(GeneralNodeDatumSamples samples) {
 		samplesFinal = samples;
 		sampleJsonFinal = null;
@@ -241,7 +239,8 @@ public class GeneralNodeDatumAuxiliary
 	 * 
 	 * @return the sample data, or {@literal null} if none available
 	 */
-	@JsonProperty("final")
+	@SerializeIgnore
+	@JsonIgnore
 	public Map<String, ?> getSampleDataFinal() {
 		GeneralNodeDatumSamples s = getSamplesFinal();
 		return (s == null ? null : s.getSampleData());
@@ -284,8 +283,7 @@ public class GeneralNodeDatumAuxiliary
 		samplesStart = null;
 	}
 
-	@SerializeIgnore
-	@JsonIgnore
+	@JsonProperty("start")
 	public GeneralNodeDatumSamples getSamplesStart() {
 		if ( samplesStart == null && sampleJsonStart != null ) {
 			samplesStart = DatumUtils.getObjectFromJSON(sampleJsonStart, GeneralNodeDatumSamples.class);
@@ -304,8 +302,7 @@ public class GeneralNodeDatumAuxiliary
 	 * @param samples
 	 *        the samples instance to set
 	 */
-	@JsonProperty
-	// @JsonProperty needed because of @JsonIgnore on getter
+	@JsonProperty("start")
 	public void setSamplesStart(GeneralNodeDatumSamples samples) {
 		samplesStart = samples;
 		sampleJsonStart = null;
@@ -317,7 +314,8 @@ public class GeneralNodeDatumAuxiliary
 	 * 
 	 * @return the sample data, or {@literal null} if none available
 	 */
-	@JsonProperty("start")
+	@JsonIgnore
+	@SerializeIgnore
 	public Map<String, ?> getSampleDataStart() {
 		GeneralNodeDatumSamples s = getSamplesStart();
 		return (s == null ? null : s.getSampleData());
