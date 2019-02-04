@@ -11,39 +11,33 @@
  -->
  
 	<parameterMap id="pmap-UserAdhocDatumExportTaskInfo" type="UserAdhocDatumExportTaskInfo">
+		<parameter property="id" jdbcType="OTHER" javaType="java.util.UUID" mode="OUT" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
 		<parameter property="userId" jdbcType="BIGINT" mode="IN"/>
 		<parameter property="scheduleTypeKey" jdbcType="CHAR" mode="IN"/>
-		<parameter property="exportDate" jdbcType="TIMESTAMP" mode="IN"/>
 		<parameter property="configJson" jdbcType="VARCHAR" mode="IN"/>
 	</parameterMap>
 
  	<insert id="insert-UserAdhocDatumExportTaskInfo" parameterMap="pmap-UserAdhocDatumExportTaskInfo" statementType="CALLABLE">
- 		{call solaruser.store_adhoc_export_task(?, ?, ?, ?)}
+ 		{? = call solaruser.store_adhoc_export_task(?, ?, ?)}
 	</insert>
-
-	<update id="update-UserAdhocDatumExportTaskInfo" parameterMap="pmap-UserAdhocDatumExportTaskInfo" statementType="CALLABLE">
- 		{call solaruser.store_adhoc_export_task(?, ?, ?, ?)}
-	</update>
 
 	<delete id="delete-UserAdhocDatumExportTaskInfo" parameterType="UserAdhocDatumExportTaskInfo">
 		DELETE FROM solaruser.user_adhoc_export_task
-		WHERE user_id = #{userId} AND schedule = #{scheduleTypeKey} AND export_date = #{exportDate}
+		WHERE user_id = #{userId} AND task_id = #{id,typeHandler=net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler}
 	</delete>
 	
 	<sql id="fragment-UserAdhocDatumExportTaskInfo-full-result">
 		uaet.created AS user_adhoc_export_task_created,
 		uaet.user_id AS user_adhoc_export_task_user_id,
 		uaet.schedule AS user_adhoc_export_task_schedule,
-		uaet.export_date AS user_adhoc_export_task_export_date,
 		uaet.task_id AS user_adhoc_export_task_task_id
 	</sql>
 
 	<resultMap id="UserAdhocDatumExportTaskInfoFullResult" type="UserAdhocDatumExportTaskInfo">
-		<id property="userId" column="user_adhoc_export_task_user_id"/>
-		<id property="scheduleTypeKey" column="user_adhoc_export_task_schedule"/>
-		<id property="exportDate" column="user_adhoc_export_task_export_date"/>
+		<id property="id" column="user_adhoc_export_task_task_id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+		<result property="userId" column="user_adhoc_export_task_user_id"/>
+		<result property="scheduleTypeKey" column="user_adhoc_export_task_schedule"/>
 		<result property="created" column="user_adhoc_export_task_created"/>
-		<result property="taskId" column="user_adhoc_export_task_task_id"/>
 		
 		<association property="task" resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult" />
 	</resultMap>
@@ -61,14 +55,14 @@
 	<select id="get-UserAdhocDatumExportTaskInfo-for-id" parameterType="map" resultMap="UserAdhocDatumExportTaskInfoFullResult">
 		<include refid="fragment-UserAdhocDatumExportTaskInfo-select-full"/>
 		WHERE
-			uaet.user_id = #{userId} AND uaet.schedule = #{id.scheduleTypeKey} AND uaet.export_date = #{id.date}
+			uaet.user_id = #{userId} AND uaet.task_id = #{id}
 	</select>
 	
-	<select id="get-UserAdhocDatumExportTaskInfo-for-task-id" parameterType="java.util.UUID" resultMap="UserAdhocDatumExportTaskInfoFullResult">
+	<!--select id="get-UserAdhocDatumExportTaskInfo-for-task-id" parameterType="java.util.UUID" resultMap="UserAdhocDatumExportTaskInfoFullResult">
 		<include refid="fragment-UserAdhocDatumExportTaskInfo-select-full"/>
 		WHERE
 			uaet.task_id = #{id}
-	</select>
+	</select-->
 	
 	<select id="find-UserAdhocDatumExportTaskInfo-for-user" parameterType="map" resultMap="UserAdhocDatumExportTaskInfoFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		<include refid="fragment-UserAdhocDatumExportTaskInfo-select-full"/>
@@ -77,7 +71,7 @@
 			<if test="success != null">AND det.success = #{success}</if>
 			<if test="states != null">AND det.status = ANY(#{states,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})</if>
 		ORDER BY
-			uaet.schedule, uaet.export_date
+			uaet.schedule, uaet.created
 	</select>
 
 	<delete id="delete-UserAdhocDatumExportTaskInfo-completed" parameterType="map" statementType="CALLABLE">

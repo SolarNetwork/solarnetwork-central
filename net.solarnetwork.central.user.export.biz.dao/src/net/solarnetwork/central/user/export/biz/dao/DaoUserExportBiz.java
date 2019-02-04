@@ -463,14 +463,14 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
 	@Override
 	public UserAdhocDatumExportTaskInfo saveAdhocDatumExportTaskForConfiguration(
-			UserDatumExportConfiguration config, DateTime exportDate) {
-		return submitAdhocDatumExportConfiguration(config, exportDate);
+			UserDatumExportConfiguration config) {
+		return submitAdhocDatumExportConfiguration(config);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
 	@Override
 	public UserAdhocDatumExportTaskInfo submitAdhocDatumExportConfiguration(
-			UserDatumExportConfiguration config, DateTime exportDate) {
+			UserDatumExportConfiguration config) {
 		ScheduleType scheduleType = ScheduleType.Adhoc;
 
 		// set up the configuration for the task(s), in which we must resolve
@@ -525,10 +525,9 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 		UserAdhocDatumExportTaskInfo task = new UserAdhocDatumExportTaskInfo();
 		task.setCreated(new DateTime());
 		task.setUserId(config.getUserId());
-		task.setExportDate(exportDate);
 		task.setScheduleType(scheduleType);
 		task.setConfig(taskConfig);
-		UserDatumExportTaskPK pk = adhocTaskDao.store(task);
+		UUID pk = adhocTaskDao.store(task);
 		task.setId(pk);
 		return task;
 	}

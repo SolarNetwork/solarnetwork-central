@@ -472,8 +472,7 @@ public class DatumExportController extends WebServiceControllerSupport {
 			if ( config.getCreated() == null ) {
 				config.setCreated(new DateTime());
 			}
-			UserAdhocDatumExportTaskInfo info = biz.saveAdhocDatumExportTaskForConfiguration(config,
-					new DateTime());
+			UserAdhocDatumExportTaskInfo info = biz.saveAdhocDatumExportTaskForConfiguration(config);
 			if ( info != null ) {
 				info.setConfig(maskConfiguration(info.getConfig(), biz));
 				return response(info);

@@ -24,20 +24,18 @@ package net.solarnetwork.central.user.export.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
+import org.mybatis.spring.MyBatisSystemException;
 import net.solarnetwork.central.datum.export.dao.mybatis.MyBatisDatumExportTaskInfoDao;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
@@ -48,7 +46,6 @@ import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserAdhocDatumExp
 import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
-import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
 
 /**
  * Test cases for the {@link MyBatisUserAdhocDatumExportTaskInfoDao} class.
@@ -64,7 +61,6 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 	private MyBatisUserAdhocDatumExportTaskInfoDao dao;
 
 	private User user;
-	private UserDatumExportConfiguration userDatumExportConfig;
 	private UserAdhocDatumExportTaskInfo info;
 
 	@Before
@@ -81,9 +77,6 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		this.user = createNewUser(TEST_EMAIL);
 		assertThat("Test user", this.user, notNullValue());
 
-		this.userDatumExportConfig = createNewUserDatumExportConfig();
-		assertThat("Test user datum export config", this.userDatumExportConfig, notNullValue());
-
 		info = null;
 	}
 
@@ -94,29 +87,23 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		conf.setName(TEST_NAME);
 		conf.setHourDelayOffset(2);
 		conf.setSchedule(ScheduleType.Weekly);
-
-		Long id = confDao.store(conf);
-		assertThat("Primary key assigned", id, notNullValue());
-
-		conf.setId(id);
 		return conf;
 	}
 
-	private UserDatumExportTaskPK storeTask(Long userId, DateTime date) {
+	private UUID storeTask(Long userId) {
 		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo();
-		info.setId(new UserDatumExportTaskPK(userId, ScheduleType.Adhoc, date));
-		info.setConfig(this.userDatumExportConfig);
+		info.setUserId(this.user.getId());
+		info.setConfig(createNewUserDatumExportConfig());
 		return dao.store(info);
 	}
 
 	@Test
 	public void storeNew() {
-		DateTime date = new DateTime(2017, 4, 18, 9, 0, 0, DateTimeZone.UTC);
 		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo();
-		info.setId(new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Adhoc, date));
-		info.setConfig(this.userDatumExportConfig);
+		info.setConfig(createNewUserDatumExportConfig());
+		info.setUserId(this.user.getId());
 
-		UserDatumExportTaskPK id = storeTask(this.user.getId(), date);
+		UUID id = dao.store(info);
 		assertThat("Primary key assigned", id, notNullValue());
 		assertThat("Primary key matches", id, equalTo(info.getId()));
 
@@ -135,15 +122,13 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		assertThat("User ID", info.getUserId(), equalTo(this.user.getId()));
 		assertThat("Schedule type", info.getScheduleType(), equalTo(ScheduleType.Adhoc));
 		assertThat("Config", info.getConfig(), notNullValue());
-		assertThat("Export date", info.getExportDate(), sameInstance(info.getId().getDate()));
 		assertThat("Modified date not used", info.getModified(), nullValue());
-		assertThat("Task ID", info.getTaskId(), notNullValue());
 
 		// stash results for other tests to use
 		this.info = info;
 	}
 
-	@Test
+	@Test(expected = MyBatisSystemException.class)
 	public void update() {
 		storeNew();
 
@@ -151,20 +136,10 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		// no properties will change when we check
 
 		UserAdhocDatumExportTaskInfo info = dao.get(this.info.getId(), this.user.getId());
-		DateTime originalCreated = info.getCreated();
 		info.setCreated(new DateTime());
 		((BasicConfiguration) info.getConfig()).setHourDelayOffset(1);
 
-		UserDatumExportTaskPK id = dao.store(info);
-		assertThat("PK unchanged", id, equalTo(this.info.getId()));
-
-		UserAdhocDatumExportTaskInfo updatedConf = dao.get(id, this.user.getId());
-		assertThat("Found by PK", updatedConf, notNullValue());
-		assertThat("New entity returned", updatedConf, not(sameInstance(this.info)));
-		assertThat("PK", updatedConf.getId(), equalTo(this.info.getId()));
-		assertThat("Created unchanged", updatedConf.getCreated(), equalTo(originalCreated));
-		assertThat("Config unchanged", updatedConf.getConfig().getHourDelayOffset(),
-				equalTo(this.info.getConfig().getHourDelayOffset()));
+		dao.store(info);
 	}
 
 	@Test
@@ -185,17 +160,16 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 	@Test
 	public void purgeCompleted() {
 		getByPrimaryKey();
-		DatumExportTaskInfo datumTask = datumTaskDao.get(this.info.getTaskId());
+		DatumExportTaskInfo datumTask = datumTaskDao.get(this.info.getId());
 		datumTask.setStatus(DatumExportState.Completed);
 		datumTask.setCompleted(new DateTime().secondOfMinute().roundFloorCopy());
 		datumTaskDao.store(datumTask);
 
 		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo();
-		info.setId(new UserDatumExportTaskPK(this.user.getId(), ScheduleType.Adhoc,
-				new DateTime(2017, 4, 18, 10, 0, 0, DateTimeZone.UTC)));
-		info.setConfig(this.userDatumExportConfig);
+		info.setUserId(this.info.getUserId());
+		info.setConfig(createNewUserDatumExportConfig());
 		info = dao.get(dao.store(info), this.user.getId());
-		datumTask = datumTaskDao.get(info.getTaskId());
+		datumTask = datumTaskDao.get(info.getId());
 		datumTask.setStatus(DatumExportState.Completed);
 		datumTask.setCompleted(new DateTime().hourOfDay().roundFloorCopy());
 		datumTaskDao.store(datumTask);
@@ -226,10 +200,9 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 
 	@Test
 	public void findForUser() {
-		DateTime date = new DateTime(2017, 4, 18, 9, 0, 0, DateTimeZone.UTC);
-		List<UserDatumExportTaskPK> pks = new ArrayList<>(3);
+		List<UUID> pks = new ArrayList<>(3);
 		for ( int i = 0; i < 3; i++ ) {
-			pks.add(storeTask(this.user.getId(), date.plusMinutes(i)));
+			pks.add(storeTask(this.user.getId()));
 		}
 		List<UserAdhocDatumExportTaskInfo> tasks = dao.findTasksForUser(user.getId(), null, null);
 		assertThat("Result count", tasks, hasSize(3));
@@ -241,10 +214,9 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 
 	@Test
 	public void findForUserAndStates() {
-		DateTime date = new DateTime(2017, 4, 18, 9, 0, 0, DateTimeZone.UTC);
-		List<UserDatumExportTaskPK> pks = new ArrayList<>(3);
+		List<UUID> pks = new ArrayList<>(3);
 		for ( int i = 0; i < 3; i++ ) {
-			pks.add(storeTask(this.user.getId(), date.plusMinutes(i)));
+			pks.add(storeTask(this.user.getId()));
 			if ( i == 1 ) {
 				// update first two tasks to 'complete' state
 				jdbcTemplate.update("update solarnet.sn_datum_export_task set status = 'c'");
@@ -261,11 +233,9 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 
 	@Test
 	public void findForUserAndStatesAndSuccess() {
-		DateTime date = new DateTime(2017, 4, 18, 9, 0, 0, DateTimeZone.UTC);
-		List<UserDatumExportTaskPK> pks = new ArrayList<>(3);
+		List<UUID> pks = new ArrayList<>(3);
 		for ( int i = 0; i < 3; i++ ) {
-			DateTime taskDate = date.plusMinutes(i);
-			pks.add(storeTask(this.user.getId(), taskDate));
+			pks.add(storeTask(this.user.getId()));
 			if ( i == 0 ) {
 				// update first task to 'failed' success
 				jdbcTemplate.update("update solarnet.sn_datum_export_task set success = FALSE");
@@ -275,7 +245,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 
 				// update second task to 'ok' success
 				jdbcTemplate.update("update solarnet.sn_datum_export_task set success = TRUE "
-						+ "where export_date = ?", new Timestamp(taskDate.getMillis()));
+						+ "where id = ?::uuid", pks.get(i));
 			}
 		}
 		Set<DatumExportState> states = EnumSet.of(DatumExportState.Completed);

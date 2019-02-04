@@ -132,8 +132,8 @@ public class DelegatingUserExportBiz implements UserExportBiz {
 
 	@Override
 	public UserAdhocDatumExportTaskInfo saveAdhocDatumExportTaskForConfiguration(
-			UserDatumExportConfiguration configuration, DateTime exportDate) {
-		return delegate.saveAdhocDatumExportTaskForConfiguration(configuration, exportDate);
+			UserDatumExportConfiguration configuration) {
+		return delegate.saveAdhocDatumExportTaskForConfiguration(configuration);
 	}
 
 	@Override

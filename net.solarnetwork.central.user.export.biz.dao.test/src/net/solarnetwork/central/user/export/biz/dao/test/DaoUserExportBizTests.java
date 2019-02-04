@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -277,7 +278,6 @@ public class DaoUserExportBizTests {
 	@Test
 	public void submitAdhocTask() {
 		// given
-		DateTime now = new DateTime();
 		UserDatumExportConfiguration config = createConfiguration();
 
 		// make ad hoc with no ID
@@ -288,20 +288,18 @@ public class DaoUserExportBizTests {
 
 		Capture<UserAdhocDatumExportTaskInfo> taskCaptor = new Capture<>();
 
-		DateTime exportDate = now;
-		expect(adhocTaskDao.store(capture(taskCaptor)))
-				.andReturn(new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Adhoc, exportDate));
+		UUID pk = UUID.randomUUID();
+		expect(adhocTaskDao.store(capture(taskCaptor))).andReturn(pk);
 
 		// when
 		replayAll();
-		UserAdhocDatumExportTaskInfo task = biz.submitAdhocDatumExportConfiguration(config, exportDate);
+		UserAdhocDatumExportTaskInfo task = biz.submitAdhocDatumExportConfiguration(config);
 
 		// then
 		assertThat("Task created", task, notNullValue());
 
 		assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
 		assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Adhoc));
-		assertThat("Task date", task.getExportDate(), equalTo(exportDate));
 		assertThat("Task config available", task.getConfig(), notNullValue());
 		assertThat("Config name", task.getConfig().getName(), equalTo(config.getName()));
 		assertThat("Node ID populated",
