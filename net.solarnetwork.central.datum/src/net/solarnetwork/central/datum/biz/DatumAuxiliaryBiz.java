@@ -69,7 +69,7 @@ public interface DatumAuxiliaryBiz {
 	 *        an optional maximum number of returned results
 	 * @return the results, never {@literal null}
 	 */
-	FilterResults<GeneralNodeDatumAuxiliaryFilterMatch> findGeneralNodeDatumMetadata(
+	FilterResults<GeneralNodeDatumAuxiliaryFilterMatch> findGeneralNodeDatumAuxiliary(
 			GeneralNodeDatumAuxiliaryFilter criteria, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
 

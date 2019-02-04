@@ -1,5 +1,5 @@
 /* ==================================================================
- * DelegatingDatumAuxiliaryBiz.java - 4/02/2019 9:09:14 am
+ * DaoDatumAuxiliaryBiz.java - 4/02/2019 12:24:16 pm
  * 
  * Copyright 2019 SolarNetwork.net Dev Team
  * 
@@ -20,10 +20,13 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.support;
+package net.solarnetwork.central.daum.biz.dao;
 
 import java.util.List;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
+import net.solarnetwork.central.datum.dao.GeneralNodeDatumAuxiliaryDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
@@ -32,43 +35,49 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 
 /**
- * Implementation of {@link DatumAuxiliaryBiz} that delegates to another
- * {@link DatumAuxiliaryBiz}, designed primarily for use with AOP.
+ * DAO based implementation of {@link DatumAuxiliaryBiz}.
  * 
  * @author matt
  * @version 1.0
- * @since 1.35
+ * @since 1.4
  */
-public class DelegatingDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
+public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 
-	private final DatumAuxiliaryBiz delegate;
+	private final GeneralNodeDatumAuxiliaryDao datumAuxiliaryDao;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param delegate
-	 *        the delegate
+	 * @param datumAuxiliaryDao
+	 *        the DAO to use
 	 */
-	public DelegatingDatumAuxiliaryBiz(DatumAuxiliaryBiz delegate) {
+	public DaoDatumAuxiliaryBiz(GeneralNodeDatumAuxiliaryDao datumAuxiliaryDao) {
 		super();
-		this.delegate = delegate;
+		this.datumAuxiliaryDao = datumAuxiliaryDao;
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void storeGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliary datum) {
-		delegate.storeGeneralNodeDatumAuxiliary(datum);
+		datumAuxiliaryDao.store(datum);
+
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void removeGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
-		delegate.removeGeneralNodeDatumAuxiliary(id);
+		GeneralNodeDatumAuxiliary aux = datumAuxiliaryDao.get(id);
+		if ( aux != null ) {
+			datumAuxiliaryDao.delete(aux);
+		}
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<GeneralNodeDatumAuxiliaryFilterMatch> findGeneralNodeDatumAuxiliary(
 			GeneralNodeDatumAuxiliaryFilter criteria, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
-		return delegate.findGeneralNodeDatumAuxiliary(criteria, sortDescriptors, offset, max);
+		return datumAuxiliaryDao.findFiltered(criteria, sortDescriptors, offset, max);
 	}
 
 }

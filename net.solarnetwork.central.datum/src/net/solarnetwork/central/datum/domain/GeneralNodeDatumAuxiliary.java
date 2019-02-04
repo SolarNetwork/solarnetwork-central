@@ -58,6 +58,31 @@ public class GeneralNodeDatumAuxiliary
 	private String notes;
 
 	/**
+	 * Default constructor.
+	 */
+	public GeneralNodeDatumAuxiliary() {
+		super();
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the primary key
+	 * @param samplesFinal
+	 *        the final samples
+	 * @param samplesStart
+	 *        the starting samples
+	 */
+	public GeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id,
+			GeneralNodeDatumSamples samplesFinal, GeneralNodeDatumSamples samplesStart) {
+		super();
+		setId(id);
+		setSamplesFinal(samplesFinal);
+		setSamplesStart(samplesStart);
+	}
+
+	/**
 	 * Convenience getter for {@link GeneralNodeDatumPK#getNodeId()}.
 	 * 
 	 * @return the nodeId
@@ -158,6 +183,10 @@ public class GeneralNodeDatumAuxiliary
 	@SerializeIgnore
 	public GeneralNodeDatumAuxiliaryPK getId() {
 		return id;
+	}
+
+	public void setId(GeneralNodeDatumAuxiliaryPK id) {
+		this.id = id;
 	}
 
 	@Override

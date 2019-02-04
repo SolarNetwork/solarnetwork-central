@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.datum.dao.mybatis;
 
+import java.util.List;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumAuxiliaryDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
@@ -29,6 +32,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
 
 /**
  * MyBatis implementation of {@link GeneralNodeDatumAuxiliaryDao}.
@@ -47,6 +52,14 @@ public class MyBatisGeneralNodeDatumAuxiliaryDao extends
 	public MyBatisGeneralNodeDatumAuxiliaryDao() {
 		super(GeneralNodeDatumAuxiliary.class, GeneralNodeDatumAuxiliaryPK.class,
 				GeneralNodeDatumAuxiliaryMatch.class);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Override
+	public FilterResults<GeneralNodeDatumAuxiliaryFilterMatch> findFiltered(
+			GeneralNodeDatumAuxiliaryFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		return super.findFiltered(filter, sortDescriptors, offset, max);
 	}
 
 }
