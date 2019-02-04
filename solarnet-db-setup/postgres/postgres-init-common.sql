@@ -237,7 +237,7 @@ CREATE AGGREGATE solarcommon.jsonb_avg_object(jsonb) (
 CREATE OR REPLACE FUNCTION solarcommon.to_rfc1123_utc(d timestamptz)
 RETURNS text LANGUAGE SQL STRICT IMMUTABLE AS
 $$
-	SELECT to_char(d at time zone 'UTC', 'Dy, FMDD Mon YYYY HH24:MI:SS "GMT"');
+	SELECT to_char(d at time zone 'UTC', 'Dy, DD Mon YYYY HH24:MI:SS "GMT"');
 $$;
 
 /**
