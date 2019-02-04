@@ -3901,4 +3901,91 @@ public class MyBatisGeneralNodeDatumDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertThat("Total result count estimates", totalResultCountEstimates, contains(10L));
 	}
 
+	@Test
+	public void bulkExportAggregate15Minute() {
+		DateTime date = new DateTime(2018, 11, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		for ( int i = 0; i < 60; i += 2 ) {
+			GeneralNodeDatum d = getTestInstance(date.plusMinutes(i), TEST_NODE_ID, TEST_SOURCE_ID);
+			dao.store(d);
+		}
+
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setStartDate(date);
+		filter.setEndDate(date.plusHours(1));
+		filter.setAggregation(Aggregation.FifteenMinute);
+
+		FilterableBulkExportOptions options = new FilterableBulkExportOptions("test", filter, null);
+
+		List<Long> totalResultCountEstimates = new ArrayList<>(1);
+
+		ExportResult result = dao.batchExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
+
+			private int count = 0;
+
+			@Override
+			public void didBegin(Long totalResultCountEstimate) {
+				totalResultCountEstimates.add(totalResultCountEstimate);
+			}
+
+			@Override
+			public ExportCallbackAction handle(GeneralNodeDatumFilterMatch d) {
+				assertThat("Datum ts", d.getId().getCreated(), equalTo(date.plusMinutes(count * 15)));
+				assertThat("Datum node ID", d.getId().getNodeId(), equalTo(TEST_NODE_ID));
+				assertThat("Datum source ID", d.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+				count++;
+				return ExportCallbackAction.CONTINUE;
+			}
+		}, options);
+
+		assertThat("Result available", result, notNullValue());
+		assertThat("Num processed count", result.getNumProcessed(), equalTo(4L));
+		assertThat("Total result count estimates", totalResultCountEstimates, contains((Long) null));
+	}
+
+	@Test
+	public void bulkExportAggregateHour() {
+		DateTime date = new DateTime(2018, 11, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		for ( int i = 0; i < 300; i += 10 ) {
+			GeneralNodeDatum d = getTestInstance(date.plusMinutes(i), TEST_NODE_ID, TEST_SOURCE_ID);
+			dao.store(d);
+		}
+
+		processAggregateStaleData();
+
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setStartDate(date);
+		filter.setEndDate(date.plusHours(5));
+		filter.setAggregation(Aggregation.Hour);
+
+		FilterableBulkExportOptions options = new FilterableBulkExportOptions("test", filter, null);
+
+		List<Long> totalResultCountEstimates = new ArrayList<>(1);
+
+		ExportResult result = dao.batchExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
+
+			private int count = 0;
+
+			@Override
+			public void didBegin(Long totalResultCountEstimate) {
+				totalResultCountEstimates.add(totalResultCountEstimate);
+			}
+
+			@Override
+			public ExportCallbackAction handle(GeneralNodeDatumFilterMatch d) {
+				assertThat("Datum ts", d.getId().getCreated(), equalTo(date.plusHours(count)));
+				assertThat("Datum node ID", d.getId().getNodeId(), equalTo(TEST_NODE_ID));
+				assertThat("Datum source ID", d.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+				count++;
+				return ExportCallbackAction.CONTINUE;
+			}
+		}, options);
+
+		assertThat("Result available", result, notNullValue());
+		assertThat("Num processed count", result.getNumProcessed(), equalTo(5L));
+		assertThat("Total result count estimates", totalResultCountEstimates, contains(5L));
+	}
 }

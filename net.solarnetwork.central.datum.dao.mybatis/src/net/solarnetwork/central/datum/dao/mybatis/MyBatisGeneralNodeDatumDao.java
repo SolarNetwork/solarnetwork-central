@@ -1026,10 +1026,36 @@ public class MyBatisGeneralNodeDatumDao
 		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
 			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
 		}
-		if ( filter.isMostRecent() && filter instanceof net.solarnetwork.central.domain.AggregationFilter
-				&& ((AggregationFilter) filter).getAggregation() != null ) {
+
+		Aggregation agg = null;
+		if ( filter instanceof AggregationFilter ) {
+			agg = ((AggregationFilter) filter).getAggregation();
+		}
+
+		if ( filter.isMostRecent() && agg != null ) {
 			throw new IllegalArgumentException(
 					"Aggregation not allowed on a filter for most recent datum");
+		}
+
+		if ( agg != null ) {
+			setupAggregationParam(filter, sqlProps);
+
+			if ( agg.getLevel() > 0 && agg.compareLevel(Aggregation.Hour) < 1 ) {
+				// make sure start/end date provided for minute level aggregation queries as query expects it
+				DateTime forced = null;
+				if ( filter.getStartDate() == null || filter.getEndDate() == null ) {
+					forced = new DateTime();
+					int minutes = agg.getLevel() / 60;
+					forced = forced.withMinuteOfHour((forced.getMinuteOfHour() / minutes) * minutes)
+							.minuteOfHour().roundFloorCopy();
+				}
+				sqlProps.put(PARAM_START_DATE,
+						filter.getStartDate() != null ? filter.getStartDate() : forced);
+				sqlProps.put(PARAM_END_DATE, filter.getEndDate() != null ? filter.getEndDate() : forced);
+			} else if ( agg == Aggregation.RunningTotal && filter.getSourceId() == null ) {
+				// source ID is required for RunningTotal currently
+				throw new IllegalArgumentException("sourceId is required for RunningTotal aggregation");
+			}
 		}
 
 		// combining
@@ -1043,9 +1069,6 @@ public class MyBatisGeneralNodeDatumDao
 
 		// attempt count first, if NOT mostRecent query and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
 		Long totalCount = null;
-		Aggregation agg = (filter instanceof AggregationFilter
-				? ((AggregationFilter) filter).getAggregation()
-				: null);
 		if ( agg == null ) {
 			agg = Aggregation.None;
 		}
