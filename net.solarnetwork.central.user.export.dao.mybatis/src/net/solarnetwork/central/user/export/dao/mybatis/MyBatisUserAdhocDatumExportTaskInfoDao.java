@@ -34,7 +34,6 @@ import net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
-import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
 
 /**
  * MyBatis implementation of {@link UserDatumExportTaskInfoDao}.
@@ -44,7 +43,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
  * @since 1.1
  */
 public class MyBatisUserAdhocDatumExportTaskInfoDao
-		extends BaseMyBatisUserRelatedGenericDao<UserAdhocDatumExportTaskInfo, UserDatumExportTaskPK>
+		extends BaseMyBatisUserRelatedGenericDao<UserAdhocDatumExportTaskInfo, UUID>
 		implements UserAdhocDatumExportTaskInfoDao {
 
 	/** The query name used for {@link #getForTaskId(UUID)}. */
@@ -71,13 +70,13 @@ public class MyBatisUserAdhocDatumExportTaskInfoDao
 	 * Default constructor.
 	 */
 	public MyBatisUserAdhocDatumExportTaskInfoDao() {
-		super(UserAdhocDatumExportTaskInfo.class, UserDatumExportTaskPK.class);
+		super(UserAdhocDatumExportTaskInfo.class, UUID.class);
 	}
 
-	@Override
-	public UserAdhocDatumExportTaskInfo getForTaskId(UUID taskId) {
-		return selectFirst(QUERY_TASK_INFO_FOR_TASK_ID, taskId);
-	}
+	//	@Override
+	//	public UserAdhocDatumExportTaskInfo getForTaskId(UUID taskId) {
+	//		return selectFirst(QUERY_TASK_INFO_FOR_TASK_ID, taskId);
+	//	}
 
 	@Override
 	public long purgeCompletedTasks(DateTime olderThanDate) {
@@ -88,11 +87,11 @@ public class MyBatisUserAdhocDatumExportTaskInfoDao
 		return (result == null ? 0 : result.longValue());
 	}
 
-	@Override
-	public UUID addAdHocDatumExport(UserAdhocDatumExportTaskInfo info) {
-		UUID uuid = getSqlSession().selectOne(ADD_AD_HOC_TASK, info);
-		return uuid;
-	}
+	//	@Override
+	//	public UUID addAdHocDatumExport(UserAdhocDatumExportTaskInfo info) {
+	//		UUID uuid = getSqlSession().selectOne(ADD_AD_HOC_TASK, info);
+	//		return uuid;
+	//	}
 
 	@Override
 	public List<UserAdhocDatumExportTaskInfo> findTasksForUser(Long userId, Set<DatumExportState> states,

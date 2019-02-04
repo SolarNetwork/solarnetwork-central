@@ -178,8 +178,6 @@ public interface UserExportBiz {
 	 * 
 	 * @param configuration
 	 *        the configuration to save the task for
-	 * @param exportDate
-	 *        the export date to use
 	 * @return the created task, never {@literal null}
 	 * @throws IllegalArgumentException
 	 *         if {@code configuration} is not complete enough to create an
@@ -187,7 +185,7 @@ public interface UserExportBiz {
 	 * @since 1.1
 	 */
 	UserAdhocDatumExportTaskInfo saveAdhocDatumExportTaskForConfiguration(
-			UserDatumExportConfiguration configuration, DateTime exportDate);
+			UserDatumExportConfiguration configuration);
 
 	/**
 	 * Find all available ad hoc export tasks for a given user.

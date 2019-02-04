@@ -59,15 +59,13 @@ public interface UserExportTaskBiz {
 	 * 
 	 * @param config
 	 *        the export configuration to create tasks for
-	 * @param exportDate
-	 *        the export date to use
 	 * @return the created task, never {@literal null}
 	 * @throws IllegalArgumentException
 	 *         if {@code configuration} is not complete enough to create an
 	 *         export task
 	 * @since 1.1
 	 */
-	UserAdhocDatumExportTaskInfo submitAdhocDatumExportConfiguration(UserDatumExportConfiguration config,
-			DateTime exportDate);
+	UserAdhocDatumExportTaskInfo submitAdhocDatumExportConfiguration(
+			UserDatumExportConfiguration config);
 
 }

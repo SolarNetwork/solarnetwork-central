@@ -30,7 +30,6 @@ import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
-import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
 
 /**
  * DAO API for {@link UserDatumExportTaskInfo} entities for ad hoc export tasks.
@@ -46,16 +45,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
  * @since 1.1
  */
 public interface UserAdhocDatumExportTaskInfoDao
-		extends UserRelatedGenericDao<UserAdhocDatumExportTaskInfo, UserDatumExportTaskPK> {
-
-	/**
-	 * Get an export task by its task ID.
-	 * 
-	 * @param taskId
-	 *        the task ID to get
-	 * @return the export task, or {@literal null} if not available
-	 */
-	UserAdhocDatumExportTaskInfo getForTaskId(UUID taskId);
+		extends UserRelatedGenericDao<UserAdhocDatumExportTaskInfo, UUID> {
 
 	/**
 	 * Purge tasks that have reached a
@@ -67,15 +57,6 @@ public interface UserAdhocDatumExportTaskInfoDao
 	 * @return the number of tasks deleted
 	 */
 	long purgeCompletedTasks(DateTime olderThanDate);
-
-	/**
-	 * Add an ad hoc datum export task.
-	 * 
-	 * @param info
-	 *        the ad-hoc task to submit
-	 * @return the resulting datum export task UUID
-	 */
-	UUID addAdHocDatumExport(UserAdhocDatumExportTaskInfo info);
 
 	/**
 	 * Find all available ad hoc export tasks for a given user.
