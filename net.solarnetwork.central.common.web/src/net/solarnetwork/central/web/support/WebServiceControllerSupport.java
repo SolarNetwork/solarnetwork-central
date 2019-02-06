@@ -63,15 +63,72 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.11
+ * @version 1.12
  */
 public abstract class WebServiceControllerSupport {
 
-	/** The default value for the {@code requestDateFormat} property. */
+	/** The default format pattern for a date property. */
 	public static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
 
-	/** The default value for the {@code requestDateFormat} property. */
+	/** The default format pattern for a date and time property. */
 	public static final String DEFAULT_DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm";
+
+	/**
+	 * The default format pattern for adate and time property with an explicit
+	 * {@literal Z} time zone.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String DEFAULT_DATE_TIME_FORMAT_Z = "yyyy-MM-dd'T'HH:mm'Z'";
+
+	/**
+	 * An alternate format pattern for a date and time property using a space
+	 * delimiter between the date and time.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String ALT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
+
+	/**
+	 * An alternate format pattern for a date and time property with an explicit
+	 * {@literal Z} time zone using a space delimiter between the date and time.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String ALT_DATE_TIME_FORMAT_Z = "yyyy-MM-dd HH:mm'Z'";
+
+	/**
+	 * The default format pattern for a millisecond-precise date and time
+	 * property.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String DEFAULT_TIMESTAMP_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+
+	/**
+	 * The default format pattern for a millisecond-precise date and time
+	 * property with an explicit {@literal Z} time zone.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String DEFAULT_TIMESTAMP_FORMAT_Z = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+
+	/**
+	 * An alternate format pattern for a millisecond-precise date and time
+	 * property using a space delimiter between the date and time.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String ALT_TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS";
+
+	/**
+	 * An alternate format pattern for a millisecond-precise date and time
+	 * property with an explicit {@literal Z} time zone using a space delimiter
+	 * between the date and time.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String ALT_TIMESTAMP_FORMAT_Z = "yyyy-MM-dd HH:mm:ss.SSS'Z'";
 
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
