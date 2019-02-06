@@ -1166,7 +1166,7 @@ END
 $$;
 
 /**
- * Calculate the count of rows matching a set of nodes, sources, and a local date range.
+ * Delete rows matching a set of nodes, sources, and a local date range.
  *
  * The `jfilter` parameter must provide the following items:
  * 
@@ -1193,4 +1193,3 @@ BEGIN
 	RETURN total_count;
 END
 $$;
-
