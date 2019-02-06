@@ -55,6 +55,11 @@ public class DelegatingDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 	}
 
 	@Override
+	public GeneralNodeDatumAuxiliary getGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
+		return delegate.getGeneralNodeDatumAuxiliary(id);
+	}
+
+	@Override
 	public void storeGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliary datum) {
 		delegate.storeGeneralNodeDatumAuxiliary(datum);
 	}

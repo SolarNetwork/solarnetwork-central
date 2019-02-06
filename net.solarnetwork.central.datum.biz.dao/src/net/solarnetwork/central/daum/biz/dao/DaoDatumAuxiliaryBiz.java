@@ -33,6 +33,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatc
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 
 /**
  * DAO based implementation of {@link DatumAuxiliaryBiz}.
@@ -56,6 +58,16 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 		this.datumAuxiliaryDao = datumAuxiliaryDao;
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public GeneralNodeDatumAuxiliary getGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
+		GeneralNodeDatumAuxiliary aux = datumAuxiliaryDao.get(id);
+		if ( aux == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
+		}
+		return aux;
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void storeGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliary datum) {
@@ -67,9 +79,10 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 	@Override
 	public void removeGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
 		GeneralNodeDatumAuxiliary aux = datumAuxiliaryDao.get(id);
-		if ( aux != null ) {
-			datumAuxiliaryDao.delete(aux);
+		if ( aux == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
 		}
+		datumAuxiliaryDao.delete(aux);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

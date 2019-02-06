@@ -70,6 +70,10 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 		setPathMatcher(antMatch);
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.getGeneralNodeDatumAuxiliary(..)) && args(id)")
+	public void viewAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.storeGeneralNodeDatumAuxiliary(..)) && args(datum)")
 	public void storeAuxiliary(GeneralNodeDatumAuxiliary datum) {
 	}
@@ -99,6 +103,22 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 	public void removeAuxiliaryCheck(GeneralNodeDatumAuxiliaryPK id) {
 		if ( id != null ) {
 			requireNodeWriteAccess(id.getNodeId());
+		}
+	}
+
+	@Before("viewAuxiliary(id)")
+	public void viewAuxiliaryCheck(GeneralNodeDatumAuxiliaryPK id) {
+		if ( id == null ) {
+			return;
+		}
+		requireNodeReadAccess(id.getNodeId());
+
+		final SecurityPolicy policy = getActiveSecurityPolicy();
+		if ( policy != null ) {
+			DatumFilterCommand filter = new DatumFilterCommand();
+			filter.setNodeId(id.getNodeId());
+			filter.setSourceId(id.getSourceId());
+			userNodeAccessCheck(filter);
 		}
 	}
 

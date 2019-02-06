@@ -56,7 +56,7 @@ import net.solarnetwork.web.domain.Response;
  * @since 1.35
  */
 @RestController("v1DatumAuxiliaryController")
-@RequestMapping(value = { "/sec/auxiliary", "/v1/sec/user/auxiliary" })
+@RequestMapping(value = { "/sec/datum/auxiliary", "/v1/sec/datum/auxiliary" })
 public class DatumAuxiliaryController extends WebServiceControllerSupport {
 
 	private final DatumAuxiliaryBiz datumAuxiliaryBiz;
@@ -89,6 +89,51 @@ public class DatumAuxiliaryController extends WebServiceControllerSupport {
 	}
 
 	/**
+	 * Get a specific auxiliary record.
+	 * 
+	 * @param type
+	 *        the type
+	 * @param nodeId
+	 *        the node ID
+	 * @param date
+	 *        the date
+	 * @param sourceId
+	 *        the source ID
+	 * @return empty response
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/{type}/{node}/{date}/{source}", method = RequestMethod.GET)
+	public Response<GeneralNodeDatumAuxiliary> viewNodeDatumAuxiliary(
+			@PathVariable("type") DatumAuxiliaryType type, @PathVariable("node") Long nodeId,
+			@PathVariable("date") DateTime date, @PathVariable("source") String sourceId) {
+		GeneralNodeDatumAuxiliary aux = datumAuxiliaryBiz.getGeneralNodeDatumAuxiliary(
+				new GeneralNodeDatumAuxiliaryPK(nodeId, date, sourceId, type));
+		return response(aux);
+	}
+
+	/**
+	 * View a specific auxiliary record via web post.
+	 * 
+	 * @param type
+	 *        the type
+	 * @param nodeId
+	 *        the node ID
+	 * @param date
+	 *        the date
+	 * @param sourceId
+	 *        the source ID
+	 * @return empty response
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = "date")
+	public Response<GeneralNodeDatumAuxiliary> viewNodeDatumAuxiliaryFormPost(
+			@RequestParam(value = "type", required = false, defaultValue = "Reset") DatumAuxiliaryType type,
+			@RequestParam("nodeId") Long nodeId, @RequestParam("date") DateTime date,
+			@RequestParam("sourceId") String sourceId) {
+		return viewNodeDatumAuxiliary(type, nodeId, date, sourceId);
+	}
+
+	/**
 	 * Find auxiliary records matching a search filter.
 	 * 
 	 * @param criteria
@@ -96,7 +141,7 @@ public class DatumAuxiliaryController extends WebServiceControllerSupport {
 	 * @return the results
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/list", method = RequestMethod.GET)
+	@RequestMapping(value = { "", "," }, method = RequestMethod.GET, params = "!date")
 	public Response<FilterResults<GeneralNodeDatumAuxiliaryFilterMatch>> findNodeDatumAuxiliary(
 			DatumFilterCommand criteria) {
 		Long userId = SecurityUtils.getCurrentActorUserId();
@@ -151,9 +196,9 @@ public class DatumAuxiliaryController extends WebServiceControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/{type}/{node}/{date}/{source}", method = RequestMethod.DELETE)
-	public Response<GeneralNodeDatumAuxiliary> removeNodeDatumAuxiliary(
-			@PathVariable("type") DatumAuxiliaryType type, @PathVariable("node") Long nodeId,
-			@PathVariable("date") DateTime date, @PathVariable("source") String sourceId) {
+	public Response<Void> removeNodeDatumAuxiliary(@PathVariable("type") DatumAuxiliaryType type,
+			@PathVariable("node") Long nodeId, @PathVariable("date") DateTime date,
+			@PathVariable("source") String sourceId) {
 		datumAuxiliaryBiz.removeGeneralNodeDatumAuxiliary(
 				new GeneralNodeDatumAuxiliaryPK(nodeId, date, sourceId, type));
 		return response(null);
@@ -190,7 +235,7 @@ public class DatumAuxiliaryController extends WebServiceControllerSupport {
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.DELETE, params = { "nodeId", "date",
 			"sourceId" })
-	public Response<GeneralNodeDatumAuxiliary> removeNodeDatumAuxiliaryFormPost(
+	public Response<Void> removeNodeDatumAuxiliaryFormPost(
 			@RequestParam(value = "type", required = false, defaultValue = "Reset") DatumAuxiliaryType type,
 			@RequestParam("nodeId") Long nodeId, @RequestParam("date") DateTime date,
 			@RequestParam("sourceId") String sourceId) {

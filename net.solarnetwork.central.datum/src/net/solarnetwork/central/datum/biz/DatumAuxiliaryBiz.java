@@ -40,6 +40,14 @@ import net.solarnetwork.central.domain.SortDescriptor;
 public interface DatumAuxiliaryBiz {
 
 	/**
+	 * Get a specific datum auxiliary data.
+	 * 
+	 * @param id
+	 *        the primary key of the data to get
+	 */
+	GeneralNodeDatumAuxiliary getGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id);
+
+	/**
 	 * Store datum auxiliary data, replacing any existing auxiliary data with
 	 * the provided auxiliary data.
 	 * 
