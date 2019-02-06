@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Thu Nov 13 07:30:21 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatumAuxiliary">
+
+	<parameterMap id="pmap-GeneralNodeDatumAuxiliary" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary">
+		<parameter property="created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="nodeId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="sourceId" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="type" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="notes" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="sampleJsonFinal" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="sampleJsonStart" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+	<update id="insert-GeneralNodeDatumAuxiliary" parameterMap="pmap-GeneralNodeDatumAuxiliary" statementType="CALLABLE">
+		{call solardatum.store_datum_aux(?, ?, ?, ?::solardatum.da_datum_aux_type, ?, ?, ?)}
+	</update>
+	
+	<update id="update-GeneralNodeDatumAuxiliary" parameterMap="pmap-GeneralNodeDatumAuxiliary" statementType="CALLABLE">
+		{call solardatum.store_datum_aux(?, ?, ?, ?::solardatum.da_datum_aux_type, ?, ?, ?)}
+	</update>
+	
+	<delete id="delete-GeneralNodeDatumAuxiliary" parameterType="net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK">
+		DELETE FROM solardatum.da_datum_aux
+		WHERE 
+			ts = #{created}
+			AND node_id = #{nodeId} 
+			AND source_id = #{sourceId}
+			AND atype = #{type}::solardatum.da_datum_aux_type
+	</delete>
+	
+	<sql id="fragment-GeneralNodeDatumAuxiliary-pk-result">
+		aux.ts AS aux_ts,
+		aux.node_id AS aux_node_id,
+		aux.source_id AS aux_source_id,
+		aux.atype AS aux_atype
+	</sql>
+	
+	<sql id="fragment-GeneralNodeDatumAuxiliary-full-result">
+		<include refid="fragment-GeneralNodeDatumAuxiliary-pk-result"/>,		
+		aux.updated AS aux_updated,
+		aux.notes AS aux_notes,
+		solardatum.jdata_from_datum_aux_final(aux) AS aux_jdata_f,
+		solardatum.jdata_from_datum_aux_start(aux) AS aux_jdata_s
+	</sql>
+	
+	<resultMap id="GeneralNodeDatumAuxiliaryPKResult" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK">
+		<id property="created" column="aux_ts"/>
+		<id property="nodeId" column="aux_node_id"/>
+		<id property="sourceId" column="aux_source_id"/>
+		<id property="type" column="aux_atype"/>
+	</resultMap>
+	
+	<resultMap id="GeneralNodeDatumAuxiliaryFullResult" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary"
+		extends="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatumAuxiliary.GeneralNodeDatumAuxiliaryPKResult">
+		<result property="updated" column="aux_updated"/>
+		<result property="notes" column="aux_notes"/>
+		<result property="sampleJsonFinal" column="aux_jdata_f"/>
+		<result property="sampleJsonStart" column="aux_jdata_s"/>
+	</resultMap>
+	
+	<select id="get-GeneralNodeDatumAuxiliary-for-id" parameterType="net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK" resultMap="GeneralNodeDatumAuxiliaryFullResult">
+		SELECT
+			<include refid="fragment-GeneralNodeDatumAuxiliary-full-result"/>
+		FROM
+			solardatum.da_datum_aux aux
+		WHERE
+			aux.ts = #{created}
+			AND aux.node_id = #{nodeId}
+			AND aux.source_id = #{sourceId}
+			AND aux.atype = #{type}::solardatum.da_datum_aux_type
+	</select>
+
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<sql id="fragment-GeneralNodeDatumAuxiliaryMatch-result">
+		<include refid="fragment-GeneralNodeDatumAuxiliary-full-result"/>,
+		aux.ts AT TIME ZONE nlt.time_zone AS aux_local_date
+	</sql>
+	
+	<resultMap id="GeneralNodeDatumAuxiliaryMatchResult" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryMatch" extends="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatumAuxiliary.GeneralNodeDatumAuxiliaryFullResult">
+		<result property="localDateTime" column="aux_local_date"/>
+	</resultMap>
+
+	<sql id="fragment-findall-GeneralNodeDatumAuxiliary-GeneralNodeDatumAuxiliaryMatch-where">
+		<where>
+			<if test="filter.startDate != null">
+				AND aux.ts &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+			<if test="filter.endDate != null">
+				AND aux.ts &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+				AND aux.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+				AND aux.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
+			<if test="filter.type != null">
+				AND aux.atype = #{filter.type}::solardatum.da_datum_aux_type
+			</if>
+		</where>
+	</sql>
+
+
+	<select id="findall-GeneralNodeDatumAuxiliary-GeneralNodeDatumAuxiliaryMatch" resultMap="GeneralNodeDatumAuxiliaryMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatumAuxiliaryMatch-result"/>
+		FROM solardatum.da_datum_aux aux
+		INNER JOIN solarnet.node_local_time nlt ON nlt.node_id = aux.node_id
+		<include refid="fragment-findall-GeneralNodeDatumAuxiliary-GeneralNodeDatumAuxiliaryMatch-where"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item.sortKey == &quot;created&quot;">aux.created</if>
+					<if test="item.sortKey == &quot;updated&quot;">aux.updated</if>
+					<if test="item.sortKey == &quot;node&quot;">aux.node_id</if>
+					<if test="item.sortKey == &quot;source&quot;">aux.source_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				aux.ts, aux.node_id, aux.source_id, aux.atype
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findall-GeneralNodeDatumAuxiliary-GeneralNodeDatumAuxiliaryMatch-count" resultType="long">
+		SELECT count(aux.created)
+		FROM solardatum.da_datum_aux aux
+		<include refid="fragment-findall-GeneralNodeDatumAuxiliary-GeneralNodeDatumAuxiliaryMatch-where"/>
+	</select>
+
+</mapper>

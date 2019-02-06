@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.scheduler.internal;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
@@ -45,7 +46,7 @@ import net.solarnetwork.central.scheduler.SchedulerConstants;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class NotificationJob implements Job {
 
@@ -86,7 +87,7 @@ public class NotificationJob implements Job {
 			return;
 		}
 
-		final Event event = new Event(jobTopic, jobContext.getMergedJobDataMap());
+		final Event event = new Event(jobTopic, jobDataMap);
 
 		// save a ref to jobContext for finished callback
 		ctx = jobContext;
@@ -99,6 +100,10 @@ public class NotificationJob implements Job {
 			synchronized ( this ) {
 				// post the job event now, waiting for our acknowledgment event
 				// within maxWait milliseconds
+				if ( log.isDebugEnabled() ) {
+					log.debug("Posting job start event {}: {}", jobTopic,
+							new LinkedHashMap<String, Object>(jobDataMap));
+				}
 				eventAdmin.postEvent(event);
 				while ( !complete ) {
 					this.wait(maxWait);
@@ -113,6 +118,10 @@ public class NotificationJob implements Job {
 		}
 
 		if ( !success ) {
+			if ( log.isDebugEnabled() ) {
+				log.debug("Job {} with props {} failed", jobTopic,
+						new LinkedHashMap<String, Object>(jobDataMap), throwable);
+			}
 			throw new JobExecutionException("Job did not complete successfully", throwable);
 		}
 	}
@@ -132,6 +141,21 @@ public class NotificationJob implements Job {
 		complete = true;
 		if ( SchedulerConstants.TOPIC_JOB_FAILURE.equals(event.getTopic()) ) {
 			success = false;
+		}
+
+		if ( log.isDebugEnabled() ) {
+			final JobDataMap jobDataMap = (ctx != null ? ctx.getMergedJobDataMap() : null);
+			final String jobTopic = (jobDataMap != null
+					? jobDataMap.getString(SchedulerConstants.JOB_TOPIC)
+					: null);
+			final String[] eventPropNames = event.getPropertyNames();
+			final Map<String, Object> eventData = new LinkedHashMap<String, Object>(
+					eventPropNames.length);
+			for ( String propName : eventPropNames ) {
+				eventData.put(propName, event.getProperty(propName));
+			}
+			log.debug("Job {} with props {} completed; success = {}; props = {}", jobTopic,
+					new LinkedHashMap<String, Object>(jobDataMap), success, eventData);
 		}
 
 		@SuppressWarnings("unchecked")

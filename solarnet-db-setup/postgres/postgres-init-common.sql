@@ -237,7 +237,7 @@ CREATE AGGREGATE solarcommon.jsonb_avg_object(jsonb) (
 CREATE OR REPLACE FUNCTION solarcommon.to_rfc1123_utc(d timestamptz)
 RETURNS text LANGUAGE SQL STRICT IMMUTABLE AS
 $$
-	SELECT to_char(d at time zone 'UTC', 'Dy, FMDD Mon YYYY HH24:MI:SS "GMT"');
+	SELECT to_char(d at time zone 'UTC', 'Dy, DD Mon YYYY HH24:MI:SS "GMT"');
 $$;
 
 /**
@@ -437,3 +437,121 @@ RETURNS bigint[] LANGUAGE sql IMMUTABLE AS $$
     SELECT array_agg(x)::bigint[] || ARRAY[]::bigint[] FROM jsonb_array_elements_text($1) t(x);
 $$;
 
+
+/** JSONB object diffsum aggregate state transition function. */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_diffsum_object_sfunc(agg_state jsonb, el jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var prop,
+		f,
+		p,
+		l,
+		t,
+		val;
+	if ( !agg_state && el ) {
+		agg_state = {first:el, last:el, prev:el, total:{}};
+	} else if ( el ) {
+		f = agg_state.first;
+		p = agg_state.prev;
+		t = agg_state.total;
+		l = agg_state.last;
+		if ( p ) {
+			// right-hand side; diff from prev and add to total
+			for ( prop in el ) {
+				// stash current val on "last" record
+				l[prop] = el[prop];
+				
+				if ( f[prop] === undefined ) {
+					// property discovered mid-way while aggregating; add to "first" now
+					f[prop] = el[prop];
+				}
+				if ( p[prop] === undefined ) {
+					// property discovered mid-way while aggregating; diff is 0
+					val = 0;
+				} else {
+					val = el[prop] - p[prop];
+				}
+				if ( t[prop] ) {
+					t[prop] += val;
+				} else {
+					t[prop] = val;
+				}
+			}
+			
+			// clear prev record
+			delete agg_state.prev;
+		} else {
+			for ( prop in el ) {
+				// stash current val on "last" record
+				l[prop] = el[prop];
+
+				if ( f[prop] === undefined ) {
+					// property discovered mid-way while aggregating; add to "first" now
+					f[prop] = el[prop];
+				}
+			}
+
+			// stash prev side for next diff
+			agg_state.prev = el;
+		}
+	}
+	return agg_state;
+$$;
+
+/** JSONB object diffsum aggregate final calculation function. */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_diffsum_object_finalfunc(agg_state jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var prop,
+		val,
+		f = (agg_state ? agg_state.first : null),
+		p = (agg_state ? agg_state.prev : null),
+		t = (agg_state ? agg_state.total : null),
+		l = (agg_state ? agg_state.last : null);
+	if ( p ) {
+		for ( prop in p ) {
+			if ( t[prop] === undefined ) {
+				t[prop] = 0;
+			}
+		}
+	}
+	
+	// add in _start/_end props
+	for ( prop in t ) {
+		val = f[prop];
+		if ( val !== undefined ) {
+			t[prop +'_start'] = val;
+			t[prop +'_end'] = l[prop];
+		}
+	}
+	for ( prop in t ) {
+		return t;
+	}
+    return null;
+$$;
+
+/**
+ * Difference and sum aggregate for JSON object values, resulting in a JSON object.
+ *
+ * This aggregate will subtract the _property values_ of the odd JSON objects in the aggregate group
+ * from the next even object in the group, resulting in a JSON object. Each pair or objects are then 
+ * added together to form a final aggregate value. An `ORDER BY` clause is thus essential
+ * to ensure the odd/even values are captured correctly. The first and last values for each property
+ * will be included in the output JSON object with `_start` and `_end` suffixes added to their names.
+ *
+ * For example, if aggregating objects like:
+ *
+ *     {"wattHours":234}
+ *     {"wattHours":346}
+ *     {"wattHours":1000}
+ *     {"wattHours":1100}
+ *
+ * the resulting object would be:
+ *
+ *    {"wattHours":212, "wattHours_start":234, "wattHours_end":1100}
+ */
+CREATE AGGREGATE solarcommon.jsonb_diffsum_object(jsonb) (
+    sfunc = solarcommon.jsonb_diffsum_object_sfunc,
+    stype = jsonb,
+    finalfunc = solarcommon.jsonb_diffsum_object_finalfunc
+);

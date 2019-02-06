@@ -50,7 +50,7 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.12
+ * @version 1.13
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"combiningType", "combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "rollupTypes",
@@ -59,9 +59,10 @@ import net.solarnetwork.util.StringUtils;
 public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
-		GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter, Serializable {
+		GeneralNodeDatumAuxiliaryFilter, GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter,
+		Serializable {
 
-	private static final long serialVersionUID = 1558448678453849298L;
+	private static final long serialVersionUID = -1991217374281570027L;
 
 	private final SolarLocation location;
 	private DateTime startDate;

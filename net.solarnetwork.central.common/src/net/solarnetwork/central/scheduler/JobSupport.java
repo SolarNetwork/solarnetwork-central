@@ -23,6 +23,7 @@
 package net.solarnetwork.central.scheduler;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,7 +57,7 @@ import org.osgi.service.event.EventAdmin;
  * </dl>
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public abstract class JobSupport extends EventHandlerSupport {
 
@@ -97,9 +98,18 @@ public abstract class JobSupport extends EventHandlerSupport {
 				Event ack = null;
 				Throwable thrown = null;
 				boolean complete = false;
+				if ( log.isDebugEnabled() ) {
+					final String[] eventPropNames = event.getPropertyNames();
+					final Map<String, Object> eventData = new LinkedHashMap<String, Object>(
+							eventPropNames.length);
+					for ( String propName : eventPropNames ) {
+						eventData.put(propName, event.getProperty(propName));
+					}
+					log.debug("Executing job {}.{}; props = {}", jobGroup, jobId, eventData);
+				}
 				try {
 					complete = handleJob(event);
-				} catch ( Exception e ) {
+				} catch ( Throwable e ) {
 					log.warn("Exception in job {}", event.getTopic(), e);
 					thrown = e;
 				} finally {
@@ -133,6 +143,16 @@ public abstract class JobSupport extends EventHandlerSupport {
 	 * @since 1.3
 	 */
 	protected Event handleJobCompleteEvent(Event jobEvent, boolean complete, Throwable thrown) {
+		if ( log.isDebugEnabled() ) {
+			final String[] eventPropNames = jobEvent.getPropertyNames();
+			final Map<String, Object> eventData = new LinkedHashMap<String, Object>(
+					eventPropNames.length);
+			for ( String propName : eventPropNames ) {
+				eventData.put(propName, jobEvent.getProperty(propName));
+			}
+			log.debug("Completed job {}.{}; success = {}; props = {}", jobGroup, jobId, complete,
+					eventData);
+		}
 		if ( complete ) {
 			return SchedulerUtils.createJobCompleteEvent(jobEvent);
 		}

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.export.biz.dao;
 
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonMap;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -47,9 +49,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.dao.BulkExportingDao.ExportCallback;
+import net.solarnetwork.central.dao.BulkExportingDao.ExportCallbackAction;
+import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.export.biz.DatumExportBiz;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
@@ -66,8 +72,8 @@ import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.datum.export.support.DatumExportException;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.central.query.biz.QueryAuditor;
+import net.solarnetwork.central.support.FilterableBulkExportOptions;
 import net.solarnetwork.domain.IdentifiableConfiguration;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.util.OptionalService;
@@ -78,7 +84,7 @@ import net.solarnetwork.util.ProgressListener;
  * DAO-based implementation of {@link DatumExportBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoDatumExportBiz implements DatumExportBiz {
 
@@ -88,24 +94,24 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	private OptionalServiceCollection<DatumExportDestinationService> destinationServices;
 	private OptionalService<EventAdmin> eventAdmin;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
-	private int queryPageSize = DEFAULT_QUERY_PAGE_SIZE;
 
 	private final ConcurrentMap<String, DatumExportTask> taskMap = new ConcurrentHashMap<>(16);
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final DatumExportTaskInfoDao taskDao;
-	private final QueryBiz queryBiz;
+	private final GeneralNodeDatumDao datumDao;
 	private final ScheduledExecutorService scheduler;
 	private final ExecutorService executor;
 	private final TransactionTemplate transactionTemplate;
 	private ScheduledFuture<?> taskPurgerTask;
+	private OptionalService<QueryAuditor> queryAuditor;
 
-	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, QueryBiz queryBiz,
+	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, GeneralNodeDatumDao datumDao,
 			ScheduledExecutorService scheduler, ExecutorService executor,
 			TransactionTemplate transactionTemplate) {
 		super();
 		this.taskDao = taskDao;
-		this.queryBiz = queryBiz;
+		this.datumDao = datumDao;
 		this.scheduler = scheduler;
 		this.executor = executor;
 		this.transactionTemplate = transactionTemplate;
@@ -165,7 +171,6 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 			ProgressListener<DatumExportService> {
 
 		private static final int COUNT_UNKNOWN = -1;
-		private static final int COUNT_UNDEFINED = -2;
 		private final DatumExportTaskInfo info;
 		private DatumExportState jobState;
 		private double percentComplete;
@@ -217,7 +222,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 
 				updateTaskStatus(DatumExportState.Completed, Boolean.TRUE, null, new DateTime());
 			} catch ( Exception e ) {
-				log.error("Error exporting datum for task {}", this, e);
+				log.warn("Error exporting datum for task {}", this, e);
 				Throwable root = e;
 				while ( root.getCause() != null ) {
 					root = root.getCause();
@@ -299,30 +304,64 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 					? DateTimeZone.forID(config.getTimeZoneId())
 					: DateTimeZone.UTC);
 			DatumFilterCommand filter = new DatumFilterCommand(datumFilter);
-			filter.setStartDate(info.getExportDate().withZone(zone));
-			filter.setEndDate(schedule.nextExportDate(filter.getStartDate()));
-			int offset = 0;
-			final int pageSize = queryPageSize;
-			long totalResultCount = COUNT_UNDEFINED; // used only for progress tracking
-			FilterResults<ReportingGeneralNodeDatumMatch> pageResults;
+			if ( schedule == ScheduleType.Adhoc ) {
+				DateTime s = datumFilter.getStartDate();
+				DateTime e = datumFilter.getEndDate();
+				if ( s == null || e == null ) {
+					throw new DatumExportException(info.getId(),
+							"Adhoc export missing start or end date in data configuration", null);
+				}
+				filter.setStartDate(s);
+				filter.setEndDate(e);
+			} else {
+				filter.setStartDate(info.getExportDate().withZone(zone));
+				filter.setEndDate(schedule.nextExportDate(filter.getStartDate()));
+			}
+
 			try (DatumExportOutputFormatService.ExportContext exportContext = outputService
 					.createExportContext(config.getOutputConfiguration())) {
-				do {
-					pageResults = queryBiz.findFilteredAggregateGeneralNodeDatum(filter, null, offset,
-							pageSize);
-					if ( totalResultCount == COUNT_UNDEFINED ) {
-						totalResultCount = pageResults.getTotalResults() != null
-								? pageResults.getTotalResults()
-								: COUNT_UNKNOWN;
-						exportContext.start(totalResultCount);
+
+				FilterableBulkExportOptions options = new FilterableBulkExportOptions("test", filter,
+						null);
+
+				QueryAuditor auditor = (queryAuditor != null ? queryAuditor.service() : null);
+				if ( auditor != null ) {
+					auditor.resetCurrentAuditResults();
+				}
+
+				// all exported data will be audited on the hour we start the export at
+				GeneralNodeDatumPK auditDatumKey = new GeneralNodeDatumPK();
+				auditDatumKey.setCreated(new DateTime().hourOfDay().roundFloorCopy());
+
+				datumDao.batchExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
+
+					@Override
+					public void didBegin(Long totalResultCountEstimate) {
+						try {
+							exportContext
+									.start(totalResultCountEstimate != null ? totalResultCountEstimate
+											: COUNT_UNKNOWN);
+						} catch ( IOException e ) {
+							throw new DatumExportException(info.getId(), e.getMessage(), e);
+						}
 					}
-					exportContext.appendDatumMatch(pageResults, this);
-					// once we've done the first query and got the total results count, we can turn
-					// that off for better performance
-					filter.setWithoutTotalResultsCount(true);
-					offset += pageSize;
-				} while ( pageResults != null && pageResults.getReturnedResultCount() != null
-						&& pageResults.getReturnedResultCount() == pageSize );
+
+					@Override
+					public ExportCallbackAction handle(GeneralNodeDatumFilterMatch d) {
+						if ( d != null && d.getId() != null && auditor != null ) {
+							auditDatumKey.setNodeId(d.getId().getNodeId());
+							auditDatumKey.setSourceId(d.getId().getSourceId());
+							auditor.addNodeDatumAuditResults(singletonMap(auditDatumKey, 1));
+						}
+						try {
+							exportContext.appendDatumMatch(singleton(d), DatumExportTask.this);
+						} catch ( IOException e ) {
+							throw new DatumExportException(info.getId(), e.getMessage(), e);
+						}
+						return ExportCallbackAction.CONTINUE;
+					}
+				}, options);
+
 				return exportContext.finish();
 			} catch ( IOException e ) {
 				throw new DatumExportException(info.getId(), e.getMessage(), e);
@@ -515,16 +554,6 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	}
 
 	/**
-	 * Configure the query pagination size (max results per query).
-	 * 
-	 * @param queryPageSize
-	 *        the query page size; defaults to {@link #DEFAULT_QUERY_PAGE_SIZE}
-	 */
-	public void setQueryPageSize(int queryPageSize) {
-		this.queryPageSize = queryPageSize;
-	}
-
-	/**
 	 * Configure an {@link EventAdmin} service for posting status events.
 	 * 
 	 * @param eventAdmin
@@ -532,6 +561,17 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	 */
 	public void setEventAdmin(OptionalService<EventAdmin> eventAdmin) {
 		this.eventAdmin = eventAdmin;
+	}
+
+	/**
+	 * Configure an auditor for export results.
+	 * 
+	 * @param queryAuditor
+	 *        the auditor
+	 * @since 1.2
+	 */
+	public void setQueryAuditor(OptionalService<QueryAuditor> queryAuditor) {
+		this.queryAuditor = queryAuditor;
 	}
 
 }

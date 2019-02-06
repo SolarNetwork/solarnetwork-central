@@ -35,8 +35,6 @@
 
 	<reference id="importJobBiz" interface="net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz"/>
 
-	<reference id="jobInfoDao" interface="net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao"/>
-
 	<!-- Published Services -->
 
 	<service ref="datumImportProcessorJob" interface="org.osgi.service.event.EventHandler">
@@ -53,7 +51,6 @@
 	<bean id="datumImportProcessorJob" class="net.solarnetwork.central.datum.imp.jobs.DatumImportProcessorJob">
 		<argument ref="eventAdmin"/>
 		<argument ref="importJobBiz"/>
-		<argument ref="jobInfoDao"/>
 		<property name="jobCron" value="${DatumImportProcessor.jobCron}"/>
 		<property name="maximumWaitMs" value="${DatumImportProcessor.maximumWaitMs}"/>
 		<property name="maximumClaimCount" value="${DatumImportProcessor.maximumClaimCount}"/>

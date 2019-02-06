@@ -135,6 +135,7 @@ public class MqttDataCollector
 	private final OptionalService<SSLService> sslServiceRef;
 	private final AtomicReference<IMqttAsyncClient> clientRef;
 	private final MqttStats stats;
+	private MqttConnectOptions connOptions;
 
 	private String uid = UUID.randomUUID().toString();
 	private String groupUid;
@@ -151,6 +152,7 @@ public class MqttDataCollector
 	private long mqttTimeout = DEFAULT_MQTT_TIMEOUT;
 	private String nodeInstructionTopicTemplate = DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE;
 	private String nodeDatumTopicTemplate = DEFAULT_NODE_DATUM_TOPIC_TEMPLATE;
+	private boolean publishOnly;
 
 	private Runnable connectThread = null;
 
@@ -220,77 +222,90 @@ public class MqttDataCollector
 	/**
 	 * Immediately connect.
 	 */
-	public void init() {
+	public synchronized void init() {
 		if ( retryConnect ) {
-			synchronized ( clientRef ) {
-				if ( connectThread != null ) {
-					return;
-				}
-				Runnable connector = new Runnable() {
+			if ( connectThread != null ) {
+				return;
+			}
+			this.connOptions = null;
+			MqttConnectOptions newConnOptions = new MqttConnectOptions();
+			Runnable connector = new Runnable() {
 
-					final AtomicLong sleep = new AtomicLong(0);
+				final AtomicLong sleep = new AtomicLong(0);
 
-					@Override
-					public void run() {
-						final long sleepMs = sleep.get();
-						if ( sleepMs > 0 ) {
-							try {
-								Thread.sleep(sleepMs);
-							} catch ( InterruptedException e ) {
-								// ignore
-							}
-						}
+				@Override
+				public void run() {
+					final long sleepMs = sleep.get();
+					if ( sleepMs > 0 ) {
 						try {
-							IMqttAsyncClient client = setupClient();
-							if ( client != null ) {
-								synchronized ( clientRef ) {
-									connectThread = null;
-								}
-								return;
-							}
-						} catch ( RuntimeException e ) {
+							Thread.sleep(sleepMs);
+						} catch ( InterruptedException e ) {
 							// ignore
 						}
-						long delay = sleep.accumulateAndGet(sleep.get() / RETRY_CONNECT_DELAY,
-								(c, s) -> {
-									long d = (s * 2) * RETRY_CONNECT_DELAY;
-									if ( d == 0 ) {
-										d = RETRY_CONNECT_DELAY;
-									}
-									if ( d > MAX_CONNECT_DELAY_MS ) {
-										d = MAX_CONNECT_DELAY_MS;
-									}
-									return d;
-								});
-						log.info("Failed to connect to MQTT server {}, will try again in {}s", serverUri,
-								TimeUnit.MILLISECONDS.toSeconds(delay));
-						executorService.execute(this);
 					}
-				};
-				connectThread = connector;
-				executorService.execute(connector);
-			}
+					try {
+						IMqttAsyncClient client = setupClient(newConnOptions);
+						if ( client != null ) {
+							synchronized ( MqttDataCollector.this ) {
+								connectThread = null;
+								connOptions = newConnOptions;
+							}
+							return;
+						}
+					} catch ( RuntimeException e ) {
+						// ignore
+					}
+					long delay = sleep.accumulateAndGet(sleep.get() / RETRY_CONNECT_DELAY, (c, s) -> {
+						long d = (s * 2) * RETRY_CONNECT_DELAY;
+						if ( d == 0 ) {
+							d = RETRY_CONNECT_DELAY;
+						}
+						if ( d > MAX_CONNECT_DELAY_MS ) {
+							d = MAX_CONNECT_DELAY_MS;
+						}
+						return d;
+					});
+					log.info("Failed to connect to MQTT server {}, will try again in {}s", serverUri,
+							TimeUnit.MILLISECONDS.toSeconds(delay));
+					executorService.execute(this);
+				}
+			};
+			connectThread = connector;
+			executorService.execute(connector);
 		} else {
-			setupClient();
+			this.connOptions = null;
+			MqttConnectOptions newConnOptions = new MqttConnectOptions();
+			IMqttAsyncClient client = setupClient(newConnOptions);
+			if ( client != null ) {
+				connOptions = newConnOptions;
+			}
 		}
 	}
 
 	/**
 	 * Close down the service.
 	 */
-	public void close() {
+	public synchronized void close() {
 		shutdownClient(clientRef.get());
 	}
 
-	private void shutdownClient(IMqttAsyncClient client) {
+	private synchronized void shutdownClient(IMqttAsyncClient client) {
 		if ( client == null ) {
 			return;
 		}
+		if ( this.connOptions != null ) {
+			this.connOptions.setAutomaticReconnect(false);
+		}
 		try {
-			client.disconnectForcibly();
+			client.disconnect().waitForCompletion(mqttTimeout);
 		} catch ( MqttException e ) {
 			log.warn("Error disconnecting MQTT connection to {}: {}", client.getServerURI(),
 					e.toString());
+			try {
+				client.disconnectForcibly();
+			} catch ( MqttException e2 ) {
+				// ignore
+			}
 		} finally {
 			try {
 				client.close();
@@ -302,13 +317,12 @@ public class MqttDataCollector
 		}
 	}
 
-	private IMqttAsyncClient setupClient() {
+	private synchronized IMqttAsyncClient setupClient(MqttConnectOptions connOptions) {
 		IMqttAsyncClient client = null;
 		shutdownClient(clientRef.get());
 		try {
 			client = createClient();
 			if ( client != null ) {
-				MqttConnectOptions connOptions = new MqttConnectOptions();
 				connOptions.setCleanSession(false);
 				connOptions.setAutomaticReconnect(true);
 				connOptions.setConnectionTimeout((int) TimeUnit.MILLISECONDS.toSeconds(mqttTimeout));
@@ -338,7 +352,7 @@ public class MqttDataCollector
 		return client;
 	}
 
-	private IMqttAsyncClient createClient() throws MqttException {
+	private synchronized IMqttAsyncClient createClient() throws MqttException {
 		URI uri;
 		try {
 			uri = new URI(serverUri);
@@ -371,6 +385,9 @@ public class MqttDataCollector
 	}
 
 	private void subscribeToTopics(IMqttAsyncClient client) throws MqttException {
+		if ( publishOnly ) {
+			return;
+		}
 		final String datumTopics = String.format(nodeDatumTopicTemplate, "+");
 		IMqttToken token = client.subscribe(datumTopics, subscribeQos);
 		token.waitForCompletion(mqttTimeout);
@@ -478,6 +495,7 @@ public class MqttDataCollector
 
 	@Override
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
+		log.trace("SolarIn MQTT message arrived on {}", topic);
 		try {
 			stats.incrementAndGet(Counts.MessagesReceived);
 			Matcher m = NODE_TOPIC_REGEX.matcher(topic);
@@ -885,6 +903,22 @@ public class MqttDataCollector
 	 */
 	public void setNodeDatumTopicTemplate(String nodeDatumTopicTemplate) {
 		this.nodeDatumTopicTemplate = nodeDatumTopicTemplate;
+	}
+
+	/**
+	 * Set the "publish only" mode.
+	 * 
+	 * <p>
+	 * In "publish only" mode the collector does not subscribe to any topics. It
+	 * will only publish node instructions that arrive via
+	 * {@link #didQueueNodeInstruction(NodeInstruction, Long)}.
+	 * </p>
+	 * 
+	 * @param publishOnly
+	 *        if {@literal true} then do <b>not</b> subscribe to any topics
+	 */
+	public void setPublishOnly(boolean publishOnly) {
+		this.publishOnly = publishOnly;
 	}
 
 }

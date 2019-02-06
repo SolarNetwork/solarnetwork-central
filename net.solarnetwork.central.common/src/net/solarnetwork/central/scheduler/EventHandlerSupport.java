@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.scheduler;
@@ -32,18 +30,20 @@ import org.slf4j.LoggerFactory;
 /**
  * Base implementation of {@link EventHandler}.
  * 
- * <p>This class traps all Exceptions and logs an error message. This
- * helps prevent the event handler from becoming black-listed by the
- * EventAdmin service, as the Apache Felix implementation does.</p>
+ * <p>
+ * This class traps all Exceptions and logs an error message. This helps prevent
+ * the event handler from becoming black-listed by the EventAdmin service, as
+ * the Apache Felix implementation does.
+ * </p>
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public abstract class EventHandlerSupport implements EventHandler {
 
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
-	
+
 	@Override
 	public final void handleEvent(Event event) {
 		try {
@@ -52,14 +52,15 @@ public abstract class EventHandlerSupport implements EventHandler {
 			log.error("Exception in OSGi Event handler", e);
 		}
 	}
-	
+
 	/**
 	 * Execute the event handler.
 	 * 
-	 * @param event the event
-	 * @throws Exception if any error occurs
+	 * @param event
+	 *        the event
+	 * @throws Exception
+	 *         if any error occurs
 	 */
-	protected abstract void handleEventInternal(Event event)
-	throws Exception;
-	
+	protected abstract void handleEventInternal(Event event) throws Exception;
+
 }

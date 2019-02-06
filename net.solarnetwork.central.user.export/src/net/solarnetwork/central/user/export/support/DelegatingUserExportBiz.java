@@ -24,10 +24,13 @@ package net.solarnetwork.central.user.export.support;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
+import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
@@ -37,7 +40,7 @@ import net.solarnetwork.domain.LocalizedServiceInfo;
  * Delegating implementation of {@link UserExportBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelegatingUserExportBiz implements UserExportBiz {
 
@@ -125,6 +128,18 @@ public class DelegatingUserExportBiz implements UserExportBiz {
 	public UserDatumExportTaskInfo saveDatumExportTaskForConfiguration(
 			UserDatumExportConfiguration configuration, DateTime exportDate) {
 		return delegate.saveDatumExportTaskForConfiguration(configuration, exportDate);
+	}
+
+	@Override
+	public UserAdhocDatumExportTaskInfo saveAdhocDatumExportTaskForConfiguration(
+			UserDatumExportConfiguration configuration) {
+		return delegate.saveAdhocDatumExportTaskForConfiguration(configuration);
+	}
+
+	@Override
+	public List<UserAdhocDatumExportTaskInfo> adhocExportTasksForUser(Long userId,
+			Set<DatumExportState> states, Boolean success) {
+		return delegate.adhocExportTasksForUser(userId, states, success);
 	}
 
 }

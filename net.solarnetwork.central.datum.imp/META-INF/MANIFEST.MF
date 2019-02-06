@@ -2,12 +2,12 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Datum Import
 Bundle-SymbolicName: net.solarnetwork.central.datum.imp
-Bundle-Version: 1.1.0
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.datum.imp
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: 
- net.solarnetwork.central.datum.imp.biz;version="1.0.0",
+ net.solarnetwork.central.datum.imp.biz;version="1.1.0",
  net.solarnetwork.central.datum.imp.dao;version="1.1.0",
  net.solarnetwork.central.datum.imp.domain;version="1.1.0",
  net.solarnetwork.central.datum.imp.support;version="1.0.0"

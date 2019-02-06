@@ -25,6 +25,9 @@ package net.solarnetwork.central.user.export.aop;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.export.domain.Configuration;
+import net.solarnetwork.central.datum.export.domain.DataConfiguration;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserRelatedEntity;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
@@ -70,6 +73,24 @@ public class UserExportSecurityAspect extends AuthorizationSupport {
 	public void saveConfigurationCheck(UserRelatedEntity<?> config) {
 		final Long userId = (config != null ? config.getUserId() : null);
 		requireUserWriteAccess(userId);
+
+		DataConfiguration dataConfiguration = null;
+		if ( config instanceof Configuration ) {
+			Configuration fullConfig = (Configuration) config;
+			dataConfiguration = fullConfig.getDataConfiguration();
+		}
+
+		if ( dataConfiguration != null ) {
+			AggregateGeneralNodeDatumFilter filter = dataConfiguration.getDatumFilter();
+			if ( filter != null ) {
+				Long[] nodeIds = filter.getNodeIds();
+				if ( nodeIds != null ) {
+					for ( Long nodeId : nodeIds ) {
+						requireNodeReadAccess(nodeId);
+					}
+				}
+			}
+		}
 	}
 
 }

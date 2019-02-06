@@ -192,10 +192,12 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info = dao.get(dao.store(info));
 
 		long result = dao.purgeOldJobs(new DateTime().hourOfDay().roundCeilingCopy());
-		assertThat("Delete count", result, equalTo(1L));
+		assertThat("Delete count", result, equalTo(0L));
 
 		DatumImportJobInfo notCompleted = dao.get(this.info.getId());
 		assertThat("Unfinished job still available", notCompleted, notNullValue());
+		DatumImportJobInfo staged = dao.get(info.getId());
+		assertThat("Staged job still available", staged, notNullValue());
 	}
 
 	@Test

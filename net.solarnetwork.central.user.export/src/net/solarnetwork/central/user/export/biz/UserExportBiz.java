@@ -24,9 +24,12 @@ package net.solarnetwork.central.user.export.biz;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.domain.DatumExportState;
+import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
@@ -36,7 +39,7 @@ import net.solarnetwork.domain.LocalizedServiceInfo;
  * Service API for user export feature.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserExportBiz {
 
@@ -154,7 +157,7 @@ public interface UserExportBiz {
 			Class<T> configurationClass);
 
 	/**
-	 * Submit a datum export configuration for execution, returning the tasks
+	 * Submit a datum export configuration for execution, returning the task
 	 * created.
 	 * 
 	 * @param configuration
@@ -168,5 +171,37 @@ public interface UserExportBiz {
 	 */
 	UserDatumExportTaskInfo saveDatumExportTaskForConfiguration(
 			UserDatumExportConfiguration configuration, DateTime exportDate);
+
+	/**
+	 * Submit an ad hoc datum export configuration for execution, returning the
+	 * task created.
+	 * 
+	 * @param configuration
+	 *        the configuration to save the task for
+	 * @return the created task, never {@literal null}
+	 * @throws IllegalArgumentException
+	 *         if {@code configuration} is not complete enough to create an
+	 *         export task
+	 * @since 1.1
+	 */
+	UserAdhocDatumExportTaskInfo saveAdhocDatumExportTaskForConfiguration(
+			UserDatumExportConfiguration configuration);
+
+	/**
+	 * Find all available ad hoc export tasks for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get tasks for
+	 * @param state
+	 *        if provided, a specific set of states to filter the results by
+	 *        (only tasks in one of the given states are returned)
+	 * @param success
+	 *        if provided, filter the results to only include jobs with a
+	 *        matching success flag
+	 * @return the matching tasks, never {@literal null}
+	 * @since 1.1
+	 */
+	List<UserAdhocDatumExportTaskInfo> adhocExportTasksForUser(Long userId, Set<DatumExportState> states,
+			Boolean success);
 
 }

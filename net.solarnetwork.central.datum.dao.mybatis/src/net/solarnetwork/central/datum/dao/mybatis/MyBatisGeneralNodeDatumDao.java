@@ -32,6 +32,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.ibatis.session.ResultContext;
+import org.apache.ibatis.session.ResultHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -61,6 +63,7 @@ import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.support.BasicBulkExportResult;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.util.JsonUtils;
 
@@ -68,7 +71,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.12
+ * @version 1.14
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -191,11 +194,19 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * The default query name for
-	 * {@link #calculateAt(GeneralNodeDatumFilter, DateTime, Period)}.
+	 * {@link #calculateAt(GeneralNodeDatumFilter, LocalDateTime, Period)}.
 	 * 
 	 * @since 1.9
 	 */
 	public static final String QUERY_FOR_DATUM_RECORDS_AT = "find-general-reporting-at-local";
+
+	/**
+	 * The default query name for
+	 * {@link #calculateAt(GeneralNodeDatumFilter, DateTime, Period)}.
+	 * 
+	 * @since 1.13
+	 */
+	public static final String QUERY_FOR_DATUM_RECORDS_AT_ABSOLUTE = "find-general-reporting-at";
 
 	/**
 	 * The default query name for
@@ -207,11 +218,27 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * The default query name for
+	 * {@link #calculateBetween(GeneralNodeDatumFilter, DateTime, DateTime, Period)}.
+	 * 
+	 * @since 1.13
+	 */
+	public static final String QUERY_FOR_DATUM_RECORDS_BETWEEN_ABSOLUTE = "find-general-reporting-between";
+
+	/**
+	 * The default query name for
 	 * {@link #findAccumulation(GeneralNodeDatumFilter, LocalDateTime, LocalDateTime)}.
 	 * 
 	 * @since 1.9
 	 */
 	public static final String QUERY_FOR_DATUM_ACCUMULATION = "find-general-reporting-diff-within-local";
+
+	/**
+	 * The default query name for
+	 * {@link #findAccumulation(GeneralNodeDatumFilter, DateTime, DateTime)}.
+	 * 
+	 * @since 1.13
+	 */
+	public static final String QUERY_FOR_DATUM_ACCUMULATION_ABSOLUTE = "find-general-reporting-diff-within";
 
 	/**
 	 * The default value for the {@code BulkLoadingDaoSupport.jdbcCall}
@@ -252,6 +279,9 @@ public class MyBatisGeneralNodeDatumDao
 	private String queryForDatumAt;
 	private String queryForDatumBetween;
 	private String queryForDatumAccumulation;
+	private String queryForDatumAtAbsolute;
+	private String queryForDatumBetweenAbsolute;
+	private String queryForDatumAccumulationAbsolute;
 	private String queryForDatumRecordCounts;
 	private String deleteFiltered;
 
@@ -273,6 +303,9 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForDatumAt = QUERY_FOR_DATUM_RECORDS_AT;
 		this.queryForDatumBetween = QUERY_FOR_DATUM_RECORDS_BETWEEN;
 		this.queryForDatumAccumulation = QUERY_FOR_DATUM_ACCUMULATION;
+		this.queryForDatumAtAbsolute = QUERY_FOR_DATUM_RECORDS_AT_ABSOLUTE;
+		this.queryForDatumBetweenAbsolute = QUERY_FOR_DATUM_RECORDS_BETWEEN_ABSOLUTE;
+		this.queryForDatumAccumulationAbsolute = QUERY_FOR_DATUM_ACCUMULATION_ABSOLUTE;
 		this.loadingSupport = new BulkLoadingDaoSupport(log);
 		this.loadingSupport.setJdbcCall(DEFAULT_BULK_LOADING_JDBC_CALL);
 		this.queryForDatumRecordCounts = QUERY_FOR_DATUM_RECORD_COUNTS;
@@ -773,6 +806,25 @@ public class MyBatisGeneralNodeDatumDao
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * @since 1.13
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> calculateAt(GeneralNodeDatumFilter filter,
+			DateTime date, Period tolerance) {
+		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
+		sqlProps.put(PARAM_FILTER, filter);
+		sqlProps.put(PARAM_DATE, date);
+		sqlProps.put(PARAM_TOLERANCE, tolerance);
+		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumAtAbsolute, sqlProps, null,
+				null);
+		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
+				rows.size());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
 	 * @since 1.9
 	 */
 	@Override
@@ -793,6 +845,26 @@ public class MyBatisGeneralNodeDatumDao
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * @since 1.13
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> calculateBetween(GeneralNodeDatumFilter filter,
+			DateTime from, DateTime to, Period tolerance) {
+		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
+		sqlProps.put(PARAM_FILTER, filter);
+		sqlProps.put(PARAM_START_DATE, from);
+		sqlProps.put(PARAM_END_DATE, to);
+		sqlProps.put(PARAM_TOLERANCE, tolerance);
+		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumBetweenAbsolute, sqlProps,
+				null, null);
+		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
+				rows.size());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
 	 * @since 1.9
 	 */
 	@Override
@@ -806,6 +878,26 @@ public class MyBatisGeneralNodeDatumDao
 		sqlProps.put(PARAM_TOLERANCE, tolerance);
 		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumAccumulation, sqlProps, null,
 				null);
+		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
+				rows.size());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.13
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
+			DateTime from, DateTime to, Period tolerance) {
+		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
+		sqlProps.put(PARAM_FILTER, filter);
+		sqlProps.put(PARAM_START_DATE, from);
+		sqlProps.put(PARAM_END_DATE, to);
+		sqlProps.put(PARAM_TOLERANCE, tolerance);
+		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumAccumulationAbsolute,
+				sqlProps, null, null);
 		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
 				rows.size());
 	}
@@ -896,6 +988,129 @@ public class MyBatisGeneralNodeDatumDao
 			throw new SQLExceptionSubclassTranslator()
 					.translate("Bulk loading [" + options.getName() + "]", null, e);
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.14
+	 */
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Override
+	public ExportResult batchExport(ExportCallback<GeneralNodeDatumFilterMatch> callback,
+			ExportOptions options) {
+		if ( options == null ) {
+			throw new IllegalArgumentException("ExportOptions is required");
+		}
+
+		Map<String, Object> params = options.getParameters();
+
+		// filter
+		GeneralNodeDatumFilter filter = (params != null
+				&& params.get("filter") instanceof GeneralNodeDatumFilter
+						? (GeneralNodeDatumFilter) params.get("filter")
+						: null);
+		if ( filter == null ) {
+			throw new IllegalArgumentException(
+					"GeneralNodeDatumFilter is required for parameter 'filter'");
+		}
+
+		// sorts
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		List<SortDescriptor> sortDescriptors = (params != null && params.get("sorts") instanceof List
+				? (List) params.get("sorts")
+				: null);
+
+		Map<String, Object> sqlProps = new HashMap<String, Object>(2);
+		sqlProps.put(PARAM_FILTER, filter);
+		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
+			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
+		}
+
+		Aggregation agg = null;
+		if ( filter instanceof AggregationFilter ) {
+			agg = ((AggregationFilter) filter).getAggregation();
+		}
+
+		if ( filter.isMostRecent() && agg != null ) {
+			throw new IllegalArgumentException(
+					"Aggregation not allowed on a filter for most recent datum");
+		}
+
+		if ( agg != null ) {
+			setupAggregationParam(filter, sqlProps);
+
+			if ( agg.getLevel() > 0 && agg.compareLevel(Aggregation.Hour) < 1 ) {
+				// make sure start/end date provided for minute level aggregation queries as query expects it
+				DateTime forced = null;
+				if ( filter.getStartDate() == null || filter.getEndDate() == null ) {
+					forced = new DateTime();
+					int minutes = agg.getLevel() / 60;
+					forced = forced.withMinuteOfHour((forced.getMinuteOfHour() / minutes) * minutes)
+							.minuteOfHour().roundFloorCopy();
+				}
+				sqlProps.put(PARAM_START_DATE,
+						filter.getStartDate() != null ? filter.getStartDate() : forced);
+				sqlProps.put(PARAM_END_DATE, filter.getEndDate() != null ? filter.getEndDate() : forced);
+			} else if ( agg == Aggregation.RunningTotal && filter.getSourceId() == null ) {
+				// source ID is required for RunningTotal currently
+				throw new IllegalArgumentException("sourceId is required for RunningTotal aggregation");
+			}
+		}
+
+		// combining
+		CombiningConfig combining = getCombiningFilterProperties(filter);
+		if ( combining != null ) {
+			sqlProps.put(PARAM_COMBINING, combining);
+		}
+
+		// get query name to execute
+		String query = getQueryForFilter(filter);
+
+		// attempt count first, if NOT mostRecent query and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
+		Long totalCount = null;
+		if ( agg == null ) {
+			agg = Aggregation.None;
+		}
+		if ( !filter.isMostRecent() && !filter.isWithoutTotalResultsCount()
+				&& (agg.getLevel() < 1 || agg.compareTo(Aggregation.Hour) >= 0)
+				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
+				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
+				&& agg != Aggregation.RunningTotal ) {
+			totalCount = executeCountQuery(query + "-count", sqlProps);
+		}
+
+		callback.didBegin(totalCount);
+
+		ExportResultHandler handler = new ExportResultHandler(callback);
+		getSqlSession().select(query, sqlProps, handler);
+		return new BasicBulkExportResult(handler.getCount());
+	}
+
+	private static class ExportResultHandler implements ResultHandler {
+
+		private final ExportCallback<GeneralNodeDatumFilterMatch> callback;
+		private long count = 0;
+
+		private ExportResultHandler(ExportCallback<GeneralNodeDatumFilterMatch> callback) {
+			super();
+			this.callback = callback;
+		}
+
+		@Override
+		public void handleResult(ResultContext context) {
+			GeneralNodeDatumFilterMatch match = (GeneralNodeDatumFilterMatch) context.getResultObject();
+			count++;
+			ExportCallbackAction action = callback.handle(match);
+			if ( action == ExportCallbackAction.STOP ) {
+				context.stop();
+			}
+		}
+
+		private long getCount() {
+			return count;
+		}
+
 	}
 
 	public String getQueryForReportableInterval() {
@@ -998,7 +1213,8 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * Set the statement name for the
-	 * {@link #calculateAt(GeneralNodeDatumFilter, DateTime, Period)} method.
+	 * {@link #calculateAt(GeneralNodeDatumFilter, LocalDateTime, Period)}
+	 * method.
 	 * 
 	 * @param queryForDatumAt
 	 *        the statement name; defaults to
@@ -1084,6 +1300,47 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setDeleteDatumRecordCounts(String deleteFiltered) {
 		this.deleteFiltered = deleteFiltered;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #calculateAt(GeneralNodeDatumFilter, DateTime, Period)} method.
+	 * 
+	 * @param queryForDatumAtAbsolute
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_DATUM_RECORDS_AT_ABSOLUTE}
+	 * @since 1.13
+	 */
+	public void setQueryForDatumAtAbsolute(String queryForDatumAtAbsolute) {
+		this.queryForDatumAtAbsolute = queryForDatumAtAbsolute;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #calculateBetween(GeneralNodeDatumFilter, DateTime, DateTime, Period)}
+	 * method.
+	 * 
+	 * @param queryForDatumBetweenAbsolute
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_DATUM_RECORDS_BETWEEN_ABSOLUTE}
+	 * @since 1.13
+	 */
+	public void setQueryForDatumBetweenAbsolute(String queryForDatumBetweenAbsolute) {
+		this.queryForDatumBetweenAbsolute = queryForDatumBetweenAbsolute;
+	}
+
+	/**
+	 * Set the statement name for the
+	 * {@link #findAccumulation(GeneralNodeDatumFilter, DateTime, DateTime)}
+	 * method.
+	 * 
+	 * @param queryForDatumAccumulationAbsolute
+	 *        the statement name; defaults to
+	 *        {@link #QUERY_FOR_DATUM_ACCUMULATION_ABSOLUTE}
+	 * @since 1.13
+	 */
+	public void setQueryForDatumAccumulationAbsolute(String queryForDatumAccumulationAbsolute) {
+		this.queryForDatumAccumulationAbsolute = queryForDatumAccumulationAbsolute;
 	}
 
 }

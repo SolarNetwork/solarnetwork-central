@@ -25,7 +25,6 @@ package net.solarnetwork.central.datum.imp.jobs;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
-import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
@@ -40,7 +39,6 @@ import net.solarnetwork.central.scheduler.JobSupport;
 public class DatumImportProcessorJob extends JobSupport {
 
 	private final DatumImportJobBiz importJobBiz;
-	private final DatumImportJobInfoDao jobInfoDao;
 	private int maximumClaimCount = 1000;
 
 	/**
@@ -50,14 +48,10 @@ public class DatumImportProcessorJob extends JobSupport {
 	 *        the EventAdmin
 	 * @param importJobBiz
 	 *        the service to use
-	 * @param jobInfoDao
-	 *        the DAO to use
 	 */
-	public DatumImportProcessorJob(EventAdmin eventAdmin, DatumImportJobBiz importJobBiz,
-			DatumImportJobInfoDao jobInfoDao) {
+	public DatumImportProcessorJob(EventAdmin eventAdmin, DatumImportJobBiz importJobBiz) {
 		super(eventAdmin);
 		this.importJobBiz = importJobBiz;
-		this.jobInfoDao = jobInfoDao;
 		setJobGroup("DatumImport");
 		setMaximumWaitMs(5400000L);
 		setMaximumClaimCount(1000);
@@ -66,7 +60,7 @@ public class DatumImportProcessorJob extends JobSupport {
 	@Override
 	protected boolean handleJob(Event job) throws Exception {
 		for ( int i = 0; i < maximumClaimCount; i++ ) {
-			DatumImportJobInfo info = jobInfoDao.claimQueuedJob();
+			DatumImportJobInfo info = importJobBiz.claimQueuedJob();
 			if ( info == null ) {
 				// nothing left to claim
 				break;
@@ -79,7 +73,7 @@ public class DatumImportProcessorJob extends JobSupport {
 				info.setMessage(e.getMessage());
 				info.setJobSuccess(Boolean.FALSE);
 				info.setImportState(DatumImportState.Completed);
-				jobInfoDao.store(info);
+				importJobBiz.saveJobInfo(info);
 			}
 		}
 		return true;

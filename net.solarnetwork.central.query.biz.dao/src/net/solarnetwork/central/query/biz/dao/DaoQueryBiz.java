@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.joda.time.ReadableInstant;
 import org.joda.time.ReadableInterval;
@@ -81,7 +80,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.6
+ * @version 2.8
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -278,30 +277,46 @@ public class DaoQueryBiz implements QueryBiz {
 	@Override
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(
 			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
-		LocalDateTime from = filter.getLocalStartDate();
-		if ( from == null ) {
-			DateTime d = filter.getStartDate();
-			if ( d != null ) {
-				from = d.withZone(DateTimeZone.UTC).toLocalDateTime();
-			}
-		}
-		LocalDateTime to = filter.getLocalEndDate();
-		if ( to == null ) {
-			DateTime d = filter.getEndDate();
-			if ( d != null ) {
-				to = d.withZone(DateTimeZone.UTC).toLocalDateTime();
+		if ( filter.getLocalStartDate() != null ) {
+			switch (readingType) {
+				case NearestDifference:
+					return generalNodeDatumDao.findAccumulation(filter, filter.getLocalStartDate(),
+							filter.getLocalEndDate(), tolerance);
+
+				case Difference:
+					return generalNodeDatumDao.findAccumulation(filter, filter.getLocalStartDate(),
+							filter.getLocalEndDate(), null);
+
+				case CalculatedAtDifference:
+					return generalNodeDatumDao.calculateBetween(filter, filter.getLocalStartDate(),
+							filter.getLocalEndDate(), tolerance);
+
+				case CalculatedAt:
+					return generalNodeDatumDao.calculateAt(filter, filter.getLocalStartDate(),
+							tolerance);
+
+				default:
+					throw new IllegalArgumentException(
+							"The DatumReadingType [" + readingType + "] is not supported");
 			}
 		}
 
+		// absolute dates
 		switch (readingType) {
 			case NearestDifference:
-				return generalNodeDatumDao.findAccumulation(filter, from, to, tolerance);
+				return generalNodeDatumDao.findAccumulation(filter, filter.getStartDate(),
+						filter.getEndDate(), tolerance);
+
+			case Difference:
+				return generalNodeDatumDao.findAccumulation(filter, filter.getStartDate(),
+						filter.getEndDate(), null);
 
 			case CalculatedAtDifference:
-				return generalNodeDatumDao.calculateBetween(filter, from, to, tolerance);
+				return generalNodeDatumDao.calculateBetween(filter, filter.getStartDate(),
+						filter.getEndDate(), tolerance);
 
 			case CalculatedAt:
-				return generalNodeDatumDao.calculateAt(filter, from, tolerance);
+				return generalNodeDatumDao.calculateAt(filter, filter.getStartDate(), tolerance);
 
 			default:
 				throw new IllegalArgumentException(

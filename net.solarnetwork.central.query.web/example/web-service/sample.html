@@ -134,6 +134,12 @@
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=Month&startDate=2013-01-01T12%3A00&endDate=2013-01-02T12%3A00&offset=0&max=50">Datum, by month</option>
 								<option value="/solarquery/api/v1/sec/datum/list?nodeId={nodeId}&sourceIds={sourceId}&withoutTotalResultsCount=true&aggregation=RunningTotal">Datum, running total</option>
 							</optgroup>
+							<optgroup label="Datum Reading">
+								<option value="/solarquery/api/v1/sec/datum/reading?readingType=Difference&nodeId={nodeId}&sourceIds={sourceId}&localStartDate=2018-10-01&localEndDate=2018-11-01">Difference</option>
+								<option value="/solarquery/api/v1/sec/datum/reading?readingType=NearestDifference&tolerance=P1D&nodeId={nodeId}&sourceIds={sourceId}&localStartDate=2018-10-01&localEndDate=2018-11-01">Nearest difference</option>
+								<option value="/solarquery/api/v1/sec/datum/reading?readingType=CalculatedAt&tolerance=P1D&nodeId={nodeId}&sourceIds={sourceId}&localStartDate=2018-10-01">Calculated at</option>
+								<option value="/solarquery/api/v1/sec/datum/reading?readingType=CalcualtedAtDifference&tolerance=P1D&nodeId={nodeId}&sourceIds={sourceId}&localStartDate=2018-10-01&localEndDate=2018-11-01">Calculated at difference</option>
+							</optgroup>
 							<optgroup label="Datum Metadata">
 								<option value="/solarquery/api/v1/sec/datum/meta/{nodeId}">View all datum metadata</option>
 								<option value="/solarquery/api/v1/sec/datum/meta/{nodeId}/{sourceId}">View datum metadata for a specific source</option>
@@ -152,7 +158,10 @@
 								<option value="/solaruser/api/v1/sec/whoami">Verify authentication</option>
 							</optgroup>
 							<optgroup label="Instructions">
-								<option value="/solaruser/api/v1/sec/instr/add?nodeIds={nodeIds}&topic=SetControlParameter&parameters%5B0%5D.name={controlId}&parameters%5B0%5D.value={controlValue}" data-method="POST">Set control parameter</option>
+								<option value="/solaruser/api/v1/sec/instr/add?topic=DisableOperationalModes&nodeIds={nodeIds}&parameters%5B0%5D.name=OpMode&parameters%5B0%5D.value=hyper" data-method="POST">Disable operational mode</option>
+								<option value="/solaruser/api/v1/sec/instr/add?topic=EnableOperationalModes&nodeIds={nodeIds}&parameters%5B0%5D.name=OpMode&parameters%5B0%5D.value=hyper" data-method="POST">Enable operational mode</option>
+								<option value="/solaruser/api/v1/sec/instr/add?topic=SetControlParameter&nodeIds={nodeIds}&parameters%5B0%5D.name={controlId}&parameters%5B0%5D.value={controlValue}" data-method="POST">Set control parameter</option>
+								<option value="/solaruser/api/v1/sec/instr/add?topic=UpdatePlatform&nodeIds={nodeIds}&parameters%5B0%5D.name=Version&parameters%5B0%5D.value=00001" data-method="POST">Update platform</option>
 								<option value="/solaruser/api/v1/sec/instr/viewActive?nodeIds={nodeIds}">View active instructions</option>
 								<option value="/solaruser/api/v1/sec/instr/viewPending?nodeIds={nodeIds}">View pending instructions</option>
 								<option value="/solaruser/api/v1/sec/instr/view?ids={instructionIds}">View instructions</option>

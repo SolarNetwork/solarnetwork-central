@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.biz;
 
 import org.joda.time.DateTime;
+import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
@@ -37,7 +38,7 @@ import net.solarnetwork.central.user.domain.UserUuidPK;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface DatumImportJobBiz {
 
@@ -73,4 +74,22 @@ public interface DatumImportJobBiz {
 	 */
 	long purgeOldJobs(DateTime olderThanDate);
 
+	/**
+	 * Claim a queued job.
+	 * 
+	 * This method will "claim" a job that is currently in a "queued" state,
+	 * changing the state to "claimed".
+	 * 
+	 * @return a claimed job, or {@literal null} if none could be claimed
+	 */
+	DatumImportJobInfo claimQueuedJob();
+
+	/**
+	 * Save job info.
+	 * 
+	 * @param jobInfo
+	 *        the job info to save
+	 * @return the job primary key
+	 */
+	UserUuidPK saveJobInfo(DatumImportJobInfo jobInfo);
 }

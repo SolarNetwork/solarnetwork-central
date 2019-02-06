@@ -11,9 +11,9 @@
 		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.38,2.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.23,2.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.export" rev="[1.0,2.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.45,2.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.34,2.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.export" rev="[1.1,2.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[2.3,3.0)"/>
     	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
 		<dependency org="org.springframework" name="spring-core" rev="4.2.6.RELEASE"/>

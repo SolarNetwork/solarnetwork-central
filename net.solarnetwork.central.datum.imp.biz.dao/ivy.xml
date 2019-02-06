@@ -15,7 +15,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.43,2.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.15,2.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[1.30,2.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.imp" rev="[1.0,2.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.imp" rev="[1.2,2.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.30,2.0)"/>
 	</dependencies>
 </ivy-module>

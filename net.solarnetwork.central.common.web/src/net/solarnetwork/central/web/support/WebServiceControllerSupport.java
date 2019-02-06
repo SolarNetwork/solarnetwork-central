@@ -35,12 +35,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -61,15 +63,72 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.10
+ * @version 1.12
  */
 public abstract class WebServiceControllerSupport {
 
-	/** The default value for the {@code requestDateFormat} property. */
+	/** The default format pattern for a date property. */
 	public static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
 
-	/** The default value for the {@code requestDateFormat} property. */
+	/** The default format pattern for a date and time property. */
 	public static final String DEFAULT_DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm";
+
+	/**
+	 * The default format pattern for adate and time property with an explicit
+	 * {@literal Z} time zone.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String DEFAULT_DATE_TIME_FORMAT_Z = "yyyy-MM-dd'T'HH:mm'Z'";
+
+	/**
+	 * An alternate format pattern for a date and time property using a space
+	 * delimiter between the date and time.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String ALT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
+
+	/**
+	 * An alternate format pattern for a date and time property with an explicit
+	 * {@literal Z} time zone using a space delimiter between the date and time.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String ALT_DATE_TIME_FORMAT_Z = "yyyy-MM-dd HH:mm'Z'";
+
+	/**
+	 * The default format pattern for a millisecond-precise date and time
+	 * property.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String DEFAULT_TIMESTAMP_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+
+	/**
+	 * The default format pattern for a millisecond-precise date and time
+	 * property with an explicit {@literal Z} time zone.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String DEFAULT_TIMESTAMP_FORMAT_Z = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+
+	/**
+	 * An alternate format pattern for a millisecond-precise date and time
+	 * property using a space delimiter between the date and time.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String ALT_TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS";
+
+	/**
+	 * An alternate format pattern for a millisecond-precise date and time
+	 * property with an explicit {@literal Z} time zone using a space delimiter
+	 * between the date and time.
+	 * 
+	 * @since 1.12
+	 */
+	public static final String ALT_TIMESTAMP_FORMAT_Z = "yyyy-MM-dd HH:mm:ss.SSS'Z'";
 
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -370,6 +429,22 @@ public abstract class WebServiceControllerSupport {
 			}
 		}
 		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+	}
+
+	/**
+	 * Add a {@literal Vary} HTTP response header.
+	 * 
+	 * <p>
+	 * This is so the responses work well with caching proxies.
+	 * </p>
+	 * 
+	 * @param response
+	 *        the response to add the header to
+	 * @since 1.11
+	 */
+	@ModelAttribute
+	public void addVaryResponseHeader(HttpServletResponse response) {
+		response.addHeader(HttpHeaders.VARY, HttpHeaders.ACCEPT);
 	}
 
 	public MessageSource getMessageSource() {

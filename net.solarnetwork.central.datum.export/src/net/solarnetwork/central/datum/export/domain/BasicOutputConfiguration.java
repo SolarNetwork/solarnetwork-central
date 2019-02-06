@@ -31,7 +31,7 @@ import net.solarnetwork.domain.BasicIdentifiableConfiguration;
  * Basic implementation of {@link OutputConfiguration}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.23
  */
 @JsonPropertyOrder({ "name", "serviceIdentifier", "compressionTypeKey", "serviceProperties" })
@@ -41,6 +41,25 @@ public class BasicOutputConfiguration extends BasicIdentifiableConfiguration
 	private static final long serialVersionUID = -588365600656134370L;
 
 	private OutputCompressionType compressionType;
+
+	/**
+	 * Default constructor.
+	 */
+	public BasicOutputConfiguration() {
+		super();
+	}
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *        the configuration to copy
+	 * @since 1.1
+	 */
+	public BasicOutputConfiguration(OutputConfiguration other) {
+		super(other);
+		setCompressionType(other.getCompressionType());
+	}
 
 	@JsonIgnore
 	@Override
