@@ -22,18 +22,20 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import org.joda.time.DateTime;
-import org.joda.time.LocalDateTime;
+import net.solarnetwork.central.domain.DateRangeFilter;
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.domain.LocalDateRangeFilter;
+import net.solarnetwork.central.domain.OptimizedQueryFilter;
 
 /**
  * API for common filter properties.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.22
  */
-public interface CommonFilter extends Filter {
+public interface CommonFilter
+		extends Filter, DateRangeFilter, LocalDateRangeFilter, SourceFilter, OptimizedQueryFilter {
 
 	/**
 	 * Flag to indicate that only the most recently available data should be
@@ -44,64 +46,9 @@ public interface CommonFilter extends Filter {
 	boolean isMostRecent();
 
 	/**
-	 * Get a start date.
-	 * 
-	 * @return the start date
-	 */
-	DateTime getStartDate();
-
-	/**
-	 * Get an end date.
-	 * 
-	 * @return the end date
-	 */
-	DateTime getEndDate();
-
-	/**
-	 * Get a start date in local time.
-	 * 
-	 * <p>
-	 * This is meant to be used as an alternative to {@link #getStartDate()} and
-	 * does not represent a local version of that instance.
-	 * </p>
-	 * 
-	 * @return the local start date
-	 * @since 1.1
-	 */
-	LocalDateTime getLocalStartDate();
-
-	/**
-	 * Get an end date in local time.
-	 * 
-	 * <p>
-	 * This is meant to be used as an alternative to {@link #getEndDate()} and
-	 * does not represent a local version of that instance.
-	 * </p>
-	 * 
-	 * @return the local end date
-	 * @since 1.1
-	 */
-	LocalDateTime getLocalEndDate();
-
-	/**
-	 * Get the first source ID. This returns the first available source ID from
-	 * the {@link #getSourceIds()} array, or <em>null</em> if not available.
-	 * 
-	 * @return the first source ID, or <em>null</em> if not available
-	 */
-	String getSourceId();
-
-	/**
-	 * Get an array of source IDs.
-	 * 
-	 * @return array of source IDs (may be <em>null</em>)
-	 */
-	String[] getSourceIds();
-
-	/**
 	 * Get a bean object path to a specific data value key to extract and return
 	 * from the results, instead of all data. For example a path like
-	 * {@code i.watts} might return a watt value.
+	 * {@code i.watts} might return a power value.
 	 * 
 	 * @return bean object path to extract
 	 */
@@ -115,20 +62,5 @@ public interface CommonFilter extends Filter {
 	 * @return the data path elements, or <em>null</em>
 	 */
 	String[] getDataPathElements();
-
-	/**
-	 * Hint that a total result count is not necessary.
-	 * 
-	 * <p>
-	 * Setting this to {@literal true} can improve the performance of most
-	 * queries, when the overall total count of results is not needed. When set,
-	 * features like
-	 * {@link net.solarnetwork.central.domain.FilterResults#getTotalResults()}
-	 * will not be available in the results.
-	 * </p>
-	 * 
-	 * @return {@literal true} to optimize query to omit a total result count
-	 */
-	boolean isWithoutTotalResultsCount();
 
 }

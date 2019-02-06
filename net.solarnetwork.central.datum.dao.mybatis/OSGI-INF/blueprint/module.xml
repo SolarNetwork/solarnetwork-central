@@ -32,6 +32,7 @@
 	<service ref="generalLocationDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumDao" ranking="5"/>
 	<service ref="generalLocationDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao" ranking="5"/>
 	<service ref="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao" ranking="5"/>
+	<service ref="generalNodeDatumAuxiliaryDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumAuxiliaryDao" ranking="5"/>
 	<service ref="generalNodeDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao" ranking="5"/>
 
 	<service ref="sqlSessionFactory" interface="org.apache.ibatis.session.SqlSessionFactory">
@@ -80,6 +81,11 @@
 	<bean id="loadingSupport" factory-ref="generalNodeDatumDao" factory-method="getLoadingSupport">
 		<property name="dataSource" ref="dataSource"/>
 		<property name="transactionManager" ref="txManager"/>
+	</bean>
+	
+	<bean id="generalNodeDatumAuxiliaryDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumAuxiliaryDao">
+		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
 	<bean id="generalNodeDatumMetadataDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumMetadataDao">
@@ -133,6 +139,7 @@
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatum.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatumMetadata.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum.xml</value>
+				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumAuxiliary.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumMetadata.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/AuditNodeDatum.xml</value>

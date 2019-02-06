@@ -46,11 +46,11 @@ import net.solarnetwork.web.domain.Response;
  * Controller for user metadata.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.18
  */
 @Controller("v1UserMetadataController")
-@RequestMapping(value = "/v1/sec/users/meta")
+@RequestMapping(value = { "/v1/sec/user/meta", "/v1/sec/users/meta" })
 public class UserMetadataController extends WebServiceControllerSupport {
 
 	private final UserMetadataBiz userMetadataBiz;

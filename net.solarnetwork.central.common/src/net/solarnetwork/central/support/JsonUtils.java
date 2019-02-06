@@ -41,7 +41,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * Utilities for JSON data.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class JsonUtils {
 
@@ -66,6 +66,17 @@ public final class JsonUtils {
 	// don't construct me
 	private JsonUtils() {
 		super();
+	}
+
+	/**
+	 * Create a new {@link ObjectMapper} based on the internal configuration
+	 * used by other methods in this class.
+	 * 
+	 * @return a new {@link ObjectMapper}
+	 * @since 1.3
+	 */
+	public static ObjectMapper newObjectMapper() {
+		return OBJECT_MAPPER.copy();
 	}
 
 	/**
@@ -117,6 +128,34 @@ public final class JsonUtils {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Convert a JSON string to a Map with string keys.
+	 * 
+	 * <p>
+	 * This is designed for simple values. An internal {@link ObjectMapper} will
+	 * be used, and all floating point values will be converted to
+	 * {@link BigDecimal} values to faithfully represent the data. All
+	 * exceptions while deserializing the object are caught and ignored.
+	 * </p>
+	 * 
+	 * @param json
+	 *        the JSON to convert
+	 * @return the map, or {@literal null} if {@code json} is {@literal null} or
+	 *         empty, or any exception occurs generating the JSON
+	 * @since 1.3
+	 */
+	public static Map<String, Object> getStringMap(final String json) {
+		if ( json == null || json.length() < 1 ) {
+			return null;
+		}
+		try {
+			return OBJECT_MAPPER.readValue(json, STRING_MAP_TYPE);
+		} catch ( Exception e ) {
+			LOG.error("Exception deserialzing JSON {} to Map<String, Object>", json, e);
+		}
+		return null;
 	}
 
 	/**

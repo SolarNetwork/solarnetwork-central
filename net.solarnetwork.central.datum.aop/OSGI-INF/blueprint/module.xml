@@ -27,6 +27,12 @@
 
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 
+	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
+
+	<reference id="datumAuxiliaryBiz"
+		interface="net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz"
+		filter="(!(secured=true))"/>
+	
 	<reference id="datumMetadataBiz"
 		interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz"
 		filter="(!(secured=true))"/>
@@ -36,6 +42,13 @@
 		filter="(!(secured=true))"/>
 	
 	<!-- Published Services -->
+
+	<service ref="aopDatumAuxiliaryBiz" 
+			interface="net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz" ranking="10">
+		<service-properties>
+			<entry key="secured" value="true"/>
+		</service-properties>
+	</service>
 
 	<service ref="aopDatumMetadataBiz" 
 			interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz" ranking="10">
@@ -56,6 +69,15 @@
 
 	<aop:aspectj-autoproxy/>
 
+	<bean id="datumAuxiliarySecurityAspect" class="net.solarnetwork.central.datum.aop.DatumAuxiliarySecurityAspect">
+		<argument ref="userNodeDao"/>
+		<argument ref="generalNodeDatumDao"/>
+	</bean>
+	
+	<bean id="aopDatumAuxiliaryBiz" class="net.solarnetwork.central.datum.support.DelegatingDatumAuxiliaryBiz">
+		<argument ref="datumAuxiliaryBiz"/>
+	</bean>
+	
 	<bean id="datumMetadataSecurityAspect" class="net.solarnetwork.central.datum.aop.DatumMetadataSecurityAspect">
 		<argument ref="userNodeDao"/>
 	</bean>
