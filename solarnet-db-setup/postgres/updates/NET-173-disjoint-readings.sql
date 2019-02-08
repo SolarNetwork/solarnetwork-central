@@ -407,6 +407,8 @@ RETURNS TABLE(
   source_id character varying(64),
   jdata_a jsonb
 ) LANGUAGE sql STABLE AS $$
+	-- generate rows of nodes grouped by time zone, get absolute start/end dates for all nodes
+	-- but grouped into as few rows as possible to minimize subsequent query times
 	WITH tz AS (
 		SELECT nlt.time_zone,
 			ts_min AT TIME ZONE nlt.time_zone AS sdate,
@@ -419,29 +421,71 @@ RETURNS TABLE(
 		) s
 		WHERE nlt.node_id = ANY(nodes)
 		GROUP BY nlt.time_zone
-	), d1 AS (
-		SELECT DISTINCT ON (d.node_id, d.source_id) tz.time_zone, d.ts, d.node_id, d.source_id, d.jdata_a
-		FROM tz
-		INNER JOIN solardatum.da_datum d ON d.node_id = ANY(tz.nodes) AND d.source_id = ANY(tz.sources)
-		WHERE d.node_id = ANY(tz.nodes)
-			AND d.source_id = ANY(tz.sources)
-			AND d.ts <= tz.sdate
-			AND d.ts > tz.sdate - tolerance
-		ORDER BY d.node_id, d.source_id, d.ts DESC
-	), d2 AS (
-		SELECT DISTINCT ON (d.node_id, d.source_id) tz.time_zone, d.ts, d.node_id, d.source_id, d.jdata_a
-		FROM tz
-		INNER JOIN solardatum.da_datum d ON d.node_id = ANY(tz.nodes) AND d.source_id = ANY(tz.sources)
-		WHERE d.node_id = ANY(tz.nodes)
-			AND d.source_id = ANY(tz.sources)
-			AND d.ts <= tz.edate
-			AND d.ts > tz.edate - tolerance
-		ORDER BY d.node_id, d.source_id, d.ts DESC
-	), d AS (
-		SELECT * FROM d1
-		UNION
-		SELECT * FROM d2
 	)
+	-- find records closest to, but not after, min date
+	-- also considering reset records, using their STARTING sample value
+	, latest_before_start AS (
+		SELECT DISTINCT ON (d.node_id, d.source_id) d.*
+		FROM (
+			(
+				SELECT DISTINCT ON (d.node_id, d.source_id) tz.time_zone, d.ts, d.node_id, d.source_id, d.jdata_a
+				FROM tz
+				INNER JOIN solardatum.da_datum d ON d.node_id = ANY(tz.nodes) AND d.source_id = ANY(tz.sources)
+				WHERE d.node_id = ANY(tz.nodes)
+					AND d.source_id = ANY(tz.sources)
+					AND d.ts <= tz.sdate
+					AND d.ts > tz.sdate - tolerance
+				ORDER BY d.node_id, d.source_id, d.ts DESC
+			)
+			UNION
+			(
+				SELECT DISTINCT ON (tz.time_zone, aux.node_id, aux.source_id)
+					tz.time_zone, aux.ts, aux.node_id, aux.source_id, aux.jdata_as AS jdata_a
+				FROM tz
+				INNER JOIN solardatum.da_datum_aux aux ON aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
+				WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
+					AND aux.ts < tz.sdate
+				ORDER BY tz.time_zone, aux.node_id, aux.source_id, aux.ts DESC
+			)
+		) d
+		ORDER BY d.node_id, d.source_id, d.ts DESC
+	)
+	-- find records closest to, but not after max date (could be same as latest_before_start or earliest_after_start)
+	-- also considering reset records, using their FINAL sample value
+	, latest_before_end AS (
+		SELECT DISTINCT ON (d.node_id, d.source_id) d.*
+		FROM (
+			(
+				SELECT DISTINCT ON (d.node_id, d.source_id) tz.time_zone, d.ts, d.node_id, d.source_id, d.jdata_a
+				FROM tz
+				INNER JOIN solardatum.da_datum d ON d.node_id = ANY(tz.nodes) AND d.source_id = ANY(tz.sources)
+				WHERE d.node_id = ANY(tz.nodes)
+					AND d.source_id = ANY(tz.sources)
+					AND d.ts <= tz.edate
+					AND d.ts > tz.edate - tolerance
+				ORDER BY d.node_id, d.source_id, d.ts DESC
+			)
+			UNION
+			(
+				SELECT DISTINCT ON (tz.time_zone, aux.node_id, aux.source_id)
+					tz.time_zone, aux.ts, aux.node_id, aux.source_id, aux.jdata_af AS jdata_a
+				FROM tz
+				INNER JOIN solardatum.da_datum_aux aux ON aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
+				WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
+					AND aux.ts < tz.edate
+				ORDER BY tz.time_zone, aux.node_id, aux.source_id, aux.ts DESC
+			)
+		) d
+		ORDER BY d.node_id, d.source_id, d.ts DESC
+	)
+	-- narrow data to [start, final] pairs of rows by node,source by choosing
+	-- latest_before_start in preference to earliest_after_start
+	, d AS (
+		SELECT * FROM latest_before_start
+		UNION
+		SELECT * FROM latest_before_end
+	)
+	-- begin search for reset records WITHIN [start, final] date ranges via table of found [start, final] dates
 	, ranges AS (
 		SELECT time_zone
 			, node_id
@@ -451,6 +495,8 @@ RETURNS TABLE(
 		FROM d
 		GROUP BY time_zone, node_id, source_id
 	)
+	-- find all reset records per node, source within [start, final] date ranges, producing pairs
+	-- of rows for each matching record, of [FINAL, STARTING] data
 	, resets AS (
 		SELECT ranges.time_zone
 			, aux.ts - unnest(ARRAY['1 millisecond','0'])::interval AS ts
@@ -459,14 +505,16 @@ RETURNS TABLE(
 			, unnest(ARRAY[aux.jdata_af, aux.jdata_as]) AS jdata_a
 		FROM ranges
 		INNER JOIN solardatum.da_datum_aux aux ON aux.node_id = ranges.node_id AND aux.source_id = ranges.source_id
-			AND aux.ts >= ranges.sdate AND aux.ts <= ranges.edate
+			AND aux.ts > ranges.sdate AND aux.ts < ranges.edate
 		WHERE atype = 'Reset'::solardatum.da_datum_aux_type
 	)
+	-- combine [start, final] pairs with reset pairs
 	, combined AS (
 		SELECT * FROM d
 		UNION
 		SELECT * FROM resets
 	)
+	-- calculate difference by node,source, of {start[, resetFinal1, resetStart1, ...], final}
 	SELECT min(d.ts) AS ts_start,
 		max(d.ts) AS ts_end,
 		min(d.time_zone) AS time_zone,
