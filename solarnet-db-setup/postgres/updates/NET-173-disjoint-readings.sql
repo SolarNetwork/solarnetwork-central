@@ -19,13 +19,13 @@ RETURNS TABLE(
 			FROM  solardatum.find_latest_before(nodes, sources, ts_min) dates
 			INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
 			UNION
-			SELECT max(ts), node_id, source_id, solarcommon.first(jdata_as ORDER BY ts DESC) AS jdata_a
+			SELECT DISTINCT ON (node_id, source_id) ts, node_id, source_id, jdata_as AS jdata_a
 			FROM solardatum.da_datum_aux
 			WHERE atype = 'Reset'::solardatum.da_datum_aux_type
 				AND node_id = ANY(nodes)
 				AND source_id = ANY(sources)
 				AND ts < ts_min
-			GROUP BY node_id, source_id
+			ORDER BY node_id, source_id, ts DESC
 		) d
 		ORDER BY d.node_id, d.source_id, d.ts DESC
 	)
@@ -34,17 +34,21 @@ RETURNS TABLE(
 	, earliest_after_start AS (
 		SELECT DISTINCT ON (d.node_id, d.source_id) d.*
 		FROM (
-			SELECT d.ts, d.node_id, d.source_id, d.jdata_a
-			FROM solardatum.find_earliest_after(nodes, sources, ts_min) dates
-			INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
+			(
+				SELECT d.ts, d.node_id, d.source_id, d.jdata_a
+				FROM solardatum.find_earliest_after(nodes, sources, ts_min) dates
+				INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
+			)
 			UNION
-			SELECT min(ts), node_id, source_id, solarcommon.first(jdata_as ORDER BY ts) AS jdata_a
-			FROM solardatum.da_datum_aux
-			WHERE atype = 'Reset'::solardatum.da_datum_aux_type
-				AND node_id = ANY(nodes)
-				AND source_id = ANY(sources)
-				AND ts >= ts_min
-			GROUP BY node_id, source_id
+			(
+				SELECT DISTINCT ON (node_id, source_id) ts, node_id, source_id, jdata_as AS jdata_a
+				FROM solardatum.da_datum_aux
+				WHERE atype = 'Reset'::solardatum.da_datum_aux_type
+					AND node_id = ANY(nodes)
+					AND source_id = ANY(sources)
+					AND ts >= ts_min
+				ORDER BY node_id, source_id, ts
+			)
 		) d
 		ORDER BY d.node_id, d.source_id, d.ts
 	)
@@ -53,17 +57,21 @@ RETURNS TABLE(
 	, latest_before_end AS (
 		SELECT DISTINCT ON (d.node_id, d.source_id) d.*
 		FROM (
-			SELECT d.ts, d.node_id, d.source_id, d.jdata_a
-			FROM solardatum.find_latest_before(nodes, sources, ts_max) dates
-			INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
+			(
+				SELECT d.ts, d.node_id, d.source_id, d.jdata_a
+				FROM solardatum.find_latest_before(nodes, sources, ts_max) dates
+				INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
+			)
 			UNION
-			SELECT max(ts), node_id, source_id, solarcommon.first(jdata_af ORDER BY ts DESC) AS jdata_a
-			FROM solardatum.da_datum_aux
-			WHERE atype = 'Reset'::solardatum.da_datum_aux_type
-				AND node_id = ANY(nodes)
-				AND source_id = ANY(sources)
-				AND ts < ts_max
-			GROUP BY node_id, source_id
+			(
+				SELECT DISTINCT ON (node_id, source_id) ts, node_id, source_id, jdata_af AS jdata_a
+				FROM solardatum.da_datum_aux
+				WHERE atype = 'Reset'::solardatum.da_datum_aux_type
+					AND node_id = ANY(nodes)
+					AND source_id = ANY(sources)
+					AND ts < ts_max
+				ORDER BY node_id, source_id, ts DESC
+			)
 		) d
 		ORDER BY d.node_id, d.source_id, d.ts DESC
 	)
@@ -153,16 +161,21 @@ RETURNS TABLE(
 	, latest_before_start AS (
 		SELECT DISTINCT ON (d.node_id, d.source_id) d.*
 		FROM (
-			SELECT tz.time_zone, d.ts, d.node_id, d.source_id, d.jdata_a
-			FROM tz
-			INNER JOIN solardatum.find_latest_before(tz.nodes, tz.sources, tz.sdate) dates ON dates.node_id = ANY(tz.nodes) AND dates.source_id = ANY(tz.sources)
-			INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
+			(
+				SELECT tz.time_zone, d.ts, d.node_id, d.source_id, d.jdata_a
+				FROM tz
+				INNER JOIN solardatum.find_latest_before(tz.nodes, tz.sources, tz.sdate) dates ON dates.node_id = ANY(tz.nodes) AND dates.source_id = ANY(tz.sources)
+				INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
+			)
 			UNION
-			SELECT tz.time_zone, max(aux.ts), aux.node_id, aux.source_id, solarcommon.first(aux.jdata_as ORDER BY ts DESC) AS jdata_a
-			FROM tz
-			INNER JOIN solardatum.da_datum_aux aux ON aux.ts < tz.sdate AND aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
-			WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
-			GROUP BY tz.time_zone, aux.node_id, aux.source_id
+			(
+				SELECT DISTINCT ON (tz.time_zone, aux.node_id, aux.source_id)
+					tz.time_zone, aux.ts, aux.node_id, aux.source_id, aux.jdata_as AS jdata_a
+				FROM tz
+				INNER JOIN solardatum.da_datum_aux aux ON aux.ts < tz.sdate AND aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
+				WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
+				ORDER BY tz.time_zone, aux.node_id, aux.source_id, aux.ts DESC
+			)
 		) d
 		ORDER BY d.node_id, d.source_id, d.ts DESC
 	)
@@ -171,16 +184,21 @@ RETURNS TABLE(
 	, earliest_after_start AS (
 		SELECT DISTINCT ON (d.node_id, d.source_id) d.*
 		FROM (
-			SELECT tz.time_zone, d.ts, d.node_id, d.source_id, d.jdata_a
-			FROM tz
-			INNER JOIN solardatum.find_earliest_after(tz.nodes, tz.sources, tz.sdate) dates ON dates.node_id = ANY(tz.nodes) AND dates.source_id = ANY(tz.sources)
-			INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
+			(
+				SELECT tz.time_zone, d.ts, d.node_id, d.source_id, d.jdata_a
+				FROM tz
+				INNER JOIN solardatum.find_earliest_after(tz.nodes, tz.sources, tz.sdate) dates ON dates.node_id = ANY(tz.nodes) AND dates.source_id = ANY(tz.sources)
+				INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
+			)
 			UNION
-			SELECT tz.time_zone, min(aux.ts), aux.node_id, aux.source_id, solarcommon.first(aux.jdata_as ORDER BY ts) AS jdata_a
-			FROM tz
-			INNER JOIN solardatum.da_datum_aux aux ON aux.ts >= tz.sdate AND aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
-			WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
-			GROUP BY tz.time_zone, aux.node_id, aux.source_id
+			(
+				SELECT DISTINCT ON (tz.time_zone, aux.node_id, aux.source_id)
+					tz.time_zone, aux.ts, aux.node_id, aux.source_id, aux.jdata_as AS jdata_a
+				FROM tz
+				INNER JOIN solardatum.da_datum_aux aux ON aux.ts >= tz.sdate AND aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
+				WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
+				ORDER BY tz.time_zone, aux.node_id, aux.source_id, aux.ts
+			)
 		) d
 		ORDER BY d.node_id, d.source_id, d.ts
 	)
@@ -189,16 +207,21 @@ RETURNS TABLE(
 	, latest_before_end AS (
 		SELECT DISTINCT ON (d.node_id, d.source_id) d.*
 		FROM (
-			SELECT tz.time_zone, d.ts, d.node_id, d.source_id, d.jdata_a
-			FROM tz
-			INNER JOIN solardatum.find_latest_before(tz.nodes, tz.sources, tz.edate) dates ON dates.node_id = ANY(tz.nodes) AND dates.source_id = ANY(tz.sources)
-			INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
+			(
+				SELECT tz.time_zone, d.ts, d.node_id, d.source_id, d.jdata_a
+				FROM tz
+				INNER JOIN solardatum.find_latest_before(tz.nodes, tz.sources, tz.edate) dates ON dates.node_id = ANY(tz.nodes) AND dates.source_id = ANY(tz.sources)
+				INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
+			)
 			UNION
-			SELECT tz.time_zone, max(aux.ts), aux.node_id, aux.source_id, solarcommon.first(aux.jdata_af ORDER BY ts DESC) AS jdata_a
-			FROM tz
-			INNER JOIN solardatum.da_datum_aux aux ON aux.ts < tz.edate AND aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
-			WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
-			GROUP BY tz.time_zone, aux.node_id, aux.source_id
+			(
+				SELECT DISTINCT ON (tz.time_zone, aux.node_id, aux.source_id)
+					tz.time_zone, aux.ts, aux.node_id, aux.source_id, aux.jdata_af AS jdata_a
+				FROM tz
+				INNER JOIN solardatum.da_datum_aux aux ON aux.ts < tz.edate AND aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
+				WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
+				ORDER BY tz.time_zone, aux.node_id, aux.source_id, aux.ts DESC
+			)
 		) d
 		ORDER BY d.node_id, d.source_id, d.ts DESC
 	)
