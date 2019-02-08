@@ -172,8 +172,9 @@ RETURNS TABLE(
 				SELECT DISTINCT ON (tz.time_zone, aux.node_id, aux.source_id)
 					tz.time_zone, aux.ts, aux.node_id, aux.source_id, aux.jdata_as AS jdata_a
 				FROM tz
-				INNER JOIN solardatum.da_datum_aux aux ON aux.ts < tz.sdate AND aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
+				INNER JOIN solardatum.da_datum_aux aux ON aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
 				WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
+					AND aux.ts < tz.sdate
 				ORDER BY tz.time_zone, aux.node_id, aux.source_id, aux.ts DESC
 			)
 		) d
@@ -195,8 +196,9 @@ RETURNS TABLE(
 				SELECT DISTINCT ON (tz.time_zone, aux.node_id, aux.source_id)
 					tz.time_zone, aux.ts, aux.node_id, aux.source_id, aux.jdata_as AS jdata_a
 				FROM tz
-				INNER JOIN solardatum.da_datum_aux aux ON aux.ts >= tz.sdate AND aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
+				INNER JOIN solardatum.da_datum_aux aux ON aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
 				WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
+					AND aux.ts >= tz.sdate
 				ORDER BY tz.time_zone, aux.node_id, aux.source_id, aux.ts
 			)
 		) d
@@ -218,8 +220,9 @@ RETURNS TABLE(
 				SELECT DISTINCT ON (tz.time_zone, aux.node_id, aux.source_id)
 					tz.time_zone, aux.ts, aux.node_id, aux.source_id, aux.jdata_af AS jdata_a
 				FROM tz
-				INNER JOIN solardatum.da_datum_aux aux ON aux.ts < tz.edate AND aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
+				INNER JOIN solardatum.da_datum_aux aux ON aux.node_id = ANY(tz.nodes) AND aux.source_id = ANY(tz.sources)
 				WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
+					AND aux.ts < tz.edate
 				ORDER BY tz.time_zone, aux.node_id, aux.source_id, aux.ts DESC
 			)
 		) d
