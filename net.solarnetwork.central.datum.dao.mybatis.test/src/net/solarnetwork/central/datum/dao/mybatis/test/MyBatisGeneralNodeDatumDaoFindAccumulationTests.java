@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
+import org.joda.time.Period;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
@@ -84,6 +86,11 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 	}
 
 	private List<GeneralNodeDatumPK> setupDefaultDatumAccumulationData(DateTime ts, DateTime ts2) {
+		return setupDefaultDatumAccumulationData(ts, ts2, true);
+	}
+
+	private List<GeneralNodeDatumPK> setupDefaultDatumAccumulationData(DateTime ts, DateTime ts2,
+			boolean processAggregateStaleData) {
 		List<GeneralNodeDatumPK> result = new ArrayList<>(4);
 
 		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
@@ -100,19 +107,21 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		result.add(dao.store(d3));
 		result.add(dao.store(d4));
 
-		// query depends on aggregate data
-		processAggregateStaleData();
+		if ( processAggregateStaleData ) {
+			// query depends on aggregate data
+			processAggregateStaleData();
 
-		DateTimeFormatter dateFormat = ISODateTimeFormat.date().withZone(ts.getZone());
-		assertThat("Aggregate days", sqlDatesFromLocalDates(getDatumAggregateDaily()),
-				contains(sqlDates(dateFormat.print(ts.minusDays(1)), dateFormat.print(ts),
-						dateFormat.print(ts2.minusDays(1)), dateFormat.print(ts2))));
+			DateTimeFormatter dateFormat = ISODateTimeFormat.date().withZone(ts.getZone());
+			assertThat("Aggregate days", sqlDatesFromLocalDates(getDatumAggregateDaily()),
+					contains(sqlDates(dateFormat.print(ts.minusDays(1)), dateFormat.print(ts),
+							dateFormat.print(ts2.minusDays(1)), dateFormat.print(ts2))));
+		}
 
 		return result;
 	}
 
 	@Test
-	public void findDatumAccumulationOver() {
+	public void accumulationOver() {
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
@@ -135,7 +144,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 	}
 
 	@Test
-	public void findDatumAccumulationOverWithResetRecord() {
+	public void accumulationOverWithResetRecord() {
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
@@ -164,7 +173,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 	}
 
 	@Test
-	public void findDatumAccumulationOverWithResetRecordsSequential() {
+	public void accumulationOverWithResetRecordsSequential() {
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
@@ -199,13 +208,13 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 	}
 
 	@Test
-	public void findDatumAccumulationOverWithResetRecordAtStart() {
+	public void accumulationOverWithResetRecordAtStart() {
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
 		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2);
 
-		// add reset record, closer to requested end start than d1
+		// add reset record, closer to requested start date than d1
 		DateTime resetDate = ts.minusSeconds(30);
 		Map<String, Number> finalSamples = singletonMap(WH_PROP, 8000);
 		Map<String, Number> startSamples = singletonMap(WH_PROP, 4400);
@@ -229,7 +238,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 	}
 
 	@Test
-	public void findDatumAccumulationOverWithResetRecordAtEnd() {
+	public void accumulationOverWithResetRecordAtEnd() {
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
@@ -259,7 +268,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 	}
 
 	@Test
-	public void findDatumAccumulationOverWithResetRecordAtStartAndEnd() {
+	public void accumulationOverWithResetRecordAtStartAndEnd() {
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
@@ -296,7 +305,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 	}
 
 	@Test
-	public void findDatumAccumulationOverWithResetRecordAtStartAndEndAndMiddle() {
+	public void accumulationOverWithResetRecordAtStartAndEndAndMiddle() {
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
@@ -339,4 +348,385 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 				resetDate2, resetDate, 8100, 4400, 6700);
 	}
 
+	/*-============================================================================================
+	 * Accumulation over(no time constraint), local dates 
+	 *-==========================================================================================*/
+
+	@Test
+	public void accumulationOverLocal() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0), null);
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		verifyAccumulationResult("(d3 - d1) = (8044 - 4002)", m, ids.get(2).getCreated(),
+				ids.get(0).getCreated(), 8044, 4002, 4042);
+	}
+
+	@Test
+	public void accumulationOverLocalWithResetRecord() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2);
+
+		// add reset record
+		Map<String, Number> finalSamples = Collections.singletonMap("watt_hours", 5000);
+		Map<String, Number> startSamples = Collections.singletonMap("watt_hours", 8000);
+		insertResetDatumAuxiliaryRecord(new DateTime(2018, 8, 2, 0, 0, 0, ts.getZone()), TEST_NODE_ID,
+				TEST_SOURCE_ID, finalSamples, startSamples);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0), null);
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		verifyAccumulationResult("(rF - d1) + (d3 - rS) == (5000 - 4002) + (8044 - 8000)", m,
+				ids.get(2).getCreated(), ids.get(0).getCreated(), 8044, 4002, 1042);
+	}
+
+	@Test
+	public void accumulationOverLocalWithResetRecordAtStart() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2);
+
+		// add reset record, closer to requested start date than d1
+		DateTime resetDate = ts.minusSeconds(30);
+		Map<String, Number> finalSamples = singletonMap(WH_PROP, 8000);
+		Map<String, Number> startSamples = singletonMap(WH_PROP, 4400);
+		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0), null);
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		verifyAccumulationResult("(d3 - rS) == (8044 - 4400)", m, ids.get(2).getCreated(), resetDate,
+				8044, 4400, 3644);
+	}
+
+	@Test
+	public void accumulationOverLocalWithResetRecordAtEnd() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2);
+
+		// add reset record, closer to requested end date than d3
+		DateTime resetDate = ts2.minusSeconds(30);
+		Map<String, Number> finalSamples = singletonMap(WH_PROP, 8100);
+		Map<String, Number> startSamples = singletonMap(WH_PROP, 8000);
+		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0), null);
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		verifyAccumulationResult("(rF - d1) == (8100 - 4002)", m, resetDate, ids.get(0).getCreated(),
+				8100, 4002, 4098);
+	}
+
+	@Test
+	public void accumulationOverLocalExactTimeBoundaries() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts, TEST_NODE_ID, TEST_SOURCE_ID);
+		d1.getSamples().putAccumulatingSampleValue("watt_hours", 4002);
+		dao.store(d1);
+
+		DateTime tsMid = new DateTime(2018, 8, 15, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum dMid = getTestInstance(tsMid, TEST_NODE_ID, TEST_SOURCE_ID);
+		dMid.getSamples().putAccumulatingSampleValue("watt_hours", 6000);
+		dao.store(dMid);
+
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum d2 = getTestInstance(ts2, TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 8044);
+		dao.store(d2);
+
+		// query depends on aggregate data
+		processAggregateStaleData();
+		assertThat("Aggregate days", sqlDatesFromLocalDates(getDatumAggregateDaily()),
+				contains(sqlDates("2018-08-01", "2018-08-15", "2018-09-01")));
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0), null);
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("First date latest before start", m.getId().getCreated().withZone(ts.getZone()),
+				equalTo(d1.getCreated()));
+		assertThat("Last date latest before end", m.getSampleData().get("endDate"),
+				equalTo((Object) ISODateTimeFormat.dateTime()
+						.print(d2.getCreated().withZone(DateTimeZone.UTC)).replace('T', ' ')));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watt hours accumulation between d1 - d2", m.getSampleData().get("watt_hours"),
+				equalTo((Object) 4042));
+		assertThat("Watt hours start d1", m.getSampleData().get("watt_hours_start"),
+				equalTo((Object) 4002));
+		assertThat("Watt hours end d2", m.getSampleData().get("watt_hours_end"), equalTo((Object) 8044));
+		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
+	}
+
+	@Test
+	public void accumulationOverLocalNoDataBeforeStartDate() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 2, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts, TEST_NODE_ID, TEST_SOURCE_ID);
+		d1.getSamples().putAccumulatingSampleValue("watt_hours", 4002);
+		dao.store(d1);
+
+		DateTime tsMid = new DateTime(2018, 8, 15, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum dMid = getTestInstance(tsMid, TEST_NODE_ID, TEST_SOURCE_ID);
+		dMid.getSamples().putAccumulatingSampleValue("watt_hours", 6000);
+		dao.store(dMid);
+
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum d2 = getTestInstance(ts2, TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 8044);
+		dao.store(d2);
+
+		// query depends on aggregate data
+		processAggregateStaleData();
+		assertThat("Aggregate days", sqlDatesFromLocalDates(getDatumAggregateDaily()),
+				contains(sqlDates("2018-08-02", "2018-08-15", "2018-09-01")));
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0), null);
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("First date latest before start", m.getId().getCreated().withZone(ts.getZone()),
+				equalTo(d1.getCreated()));
+		assertThat("Last date latest before end", m.getSampleData().get("endDate"),
+				equalTo((Object) ISODateTimeFormat.dateTime()
+						.print(d2.getCreated().withZone(DateTimeZone.UTC)).replace('T', ' ')));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watt hours accumulation between d1 - d2", m.getSampleData().get("watt_hours"),
+				equalTo((Object) 4042));
+		assertThat("Watt hours start d1", m.getSampleData().get("watt_hours_start"),
+				equalTo((Object) 4002));
+		assertThat("Watt hours end d2", m.getSampleData().get("watt_hours_end"), equalTo((Object) 8044));
+		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
+	}
+
+	@Test
+	public void accumulationOverLocalNoDataAfterStartDate() {
+		// given
+		DateTime ts = new DateTime(2018, 7, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d1 = getTestInstance(ts, TEST_NODE_ID, TEST_SOURCE_ID);
+		d1.getSamples().putAccumulatingSampleValue("watt_hours", 4002);
+		dao.store(d1);
+
+		DateTime tsMid = new DateTime(2018, 7, 15, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum dMid = getTestInstance(tsMid, TEST_NODE_ID, TEST_SOURCE_ID);
+		dMid.getSamples().putAccumulatingSampleValue("watt_hours", 6000);
+		dao.store(dMid);
+
+		DateTime ts2 = new DateTime(2018, 7, 31, 0, 0, 0, ts.getZone());
+		GeneralNodeDatum d2 = getTestInstance(ts2, TEST_NODE_ID, TEST_SOURCE_ID);
+		d2.getSamples().putAccumulatingSampleValue("watt_hours", 8044);
+		dao.store(d2);
+
+		// query depends on aggregate data
+		processAggregateStaleData();
+		assertThat("Aggregate days", sqlDatesFromLocalDates(getDatumAggregateDaily()),
+				contains(sqlDates("2018-07-01", "2018-07-15", "2018-07-31")));
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0), null);
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		assertThat("First date latest before start", m.getId().getCreated().withZone(ts.getZone()),
+				equalTo(d2.getCreated()));
+		assertThat("Last date latest before end", m.getSampleData().get("endDate"),
+				equalTo((Object) ISODateTimeFormat.dateTime()
+						.print(d2.getCreated().withZone(DateTimeZone.UTC)).replace('T', ' ')));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watt hours accumulation between d2 - d2", m.getSampleData().get("watt_hours"),
+				equalTo((Object) 0));
+		assertThat("Watt hours start d1", m.getSampleData().get("watt_hours_start"),
+				equalTo((Object) 8044));
+		assertThat("Watt hours end d2", m.getSampleData().get("watt_hours_end"), equalTo((Object) 8044));
+		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
+	}
+
+	/*-============================================================================================
+	 * Accumulation limited (by time constraint, e.g. interval '1 month')
+	 *-==========================================================================================*/
+
+	@Test
+	public void accumulationLimited() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2, false);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter, ts, ts2,
+				Period.months(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		verifyAccumulationResult("(d3 - d1) == (8044 - 4002)", m, ids.get(2).getCreated(),
+				ids.get(0).getCreated(), 8044, 4002, 4042);
+	}
+
+	@Test
+	public void accumulationLimitedWithResetRecord() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2, false);
+
+		// add reset record
+		Map<String, Number> finalSamples = Collections.singletonMap("watt_hours", 5000);
+		Map<String, Number> startSamples = Collections.singletonMap("watt_hours", 8000);
+		insertResetDatumAuxiliaryRecord(ts.plusDays(1), TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter, ts, ts2,
+				Period.months(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		verifyAccumulationResult("(rF - d1) + (d3 - rS) == (5000 - 4002) + (8044 - 8000)", m,
+				ids.get(2).getCreated(), ids.get(0).getCreated(), 8044, 4002, 1042);
+	}
+
+	@Test
+	public void accumulationLimitedWithResetRecordAtStart() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2, false);
+
+		// add reset record, closer to requested start date than d1
+		DateTime resetDate = ts.minusSeconds(30);
+		Map<String, Number> finalSamples = singletonMap(WH_PROP, 8000);
+		Map<String, Number> startSamples = singletonMap(WH_PROP, 4400);
+		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter, ts, ts2,
+				Period.months(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		verifyAccumulationResult("(d3 - rS) == (8044 - 4400)", m, ids.get(2).getCreated(), resetDate,
+				8044, 4400, 3644);
+	}
+
+	@Test
+	public void accumulationLimitedWithResetRecordAtEnd() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2, false);
+
+		// add reset record, closer to requested end date than d3
+		DateTime resetDate = ts2.minusSeconds(30);
+		Map<String, Number> finalSamples = singletonMap(WH_PROP, 8100);
+		Map<String, Number> startSamples = singletonMap(WH_PROP, 8000);
+		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter, ts, ts2,
+				Period.months(1));
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		verifyAccumulationResult("(rF - d1) == (8100 - 4002)", m, resetDate, ids.get(0).getCreated(),
+				8100, 4002, 4098);
+	}
 }
