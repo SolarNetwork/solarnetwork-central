@@ -113,12 +113,12 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 	}
 
 	private void verifyCalculateDatumDiffOverResult(String msg, GeneralNodeDatumReadingAggregate m,
-			Object endValue, Object startValue, Object accumulation) {
-		verifyCalculateDatumDiffOverResult(msg, m, WH_PROP, endValue, startValue, accumulation);
+			Object startValue, Object endValue, Object accumulation) {
+		verifyCalculateDatumDiffOverResult(msg, m, WH_PROP, startValue, endValue, accumulation);
 	}
 
 	private void verifyCalculateDatumDiffOverResult(String msg, GeneralNodeDatumReadingAggregate m,
-			String propName, Object endValue, Object startValue, Object accumulation) {
+			String propName, Object startValue, Object endValue, Object accumulation) {
 		assertThat(msg + " " + propName + " start value", m.getAs().get(propName), equalTo(startValue));
 		assertThat(msg + " " + propName + " end value", m.getAf().get(propName), equalTo(endValue));
 		assertThat(msg + " " + propName + " accumulation", m.getA().get(propName),
@@ -410,27 +410,28 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 				ts2);
 
 		// then
-		verifyCalculateDatumDiffOverResult("(d3 - d1) = (8044 - 4002)", m, 8044, 4002, 4042);
+		String msg = "(d3 - d1) = (8044 - 4002)";
+		verifyCalculateDatumDiffOverResult(msg, m, 4002, 8044, 4042);
 
-		verifyAggregateReadings("(d3 - d1) = (8044 - 4002)", WH_PROP, new Object[][] {
+		verifyAggregateReadings(msg, WH_PROP, new Object[][] {
 			// @formatter:off
 			new Object[] { ts.minusHours(1),  4002, 4002, 0 },
 			new Object[] { ts,                4002, 4445, 443 },
-			new Object[] { ts2.minusHours(1), 4445, 8044, 3599 }, 
+			new Object[] { ts2.minusHours(1), 4445, 8044, 3599 },
 			new Object[] { ts2,               8044, 8344, 300 },
 			// @formatter:on
 		}, new Object[][] {
 			// @formatter:off
 			new Object[] { ts.minusDays(1),  4002, 4002, 0 },
 			new Object[] { ts,               4002, 4445, 443 },
-			new Object[] { ts2.minusDays(1), 4445, 8044, 3599 }, 
+			new Object[] { ts2.minusDays(1), 4445, 8044, 3599 },
 			new Object[] { ts2,              8044, 8344, 300 },
 			// @formatter:on
 		}, new Object[][] {
 			// @formatter:off
 			new Object[] { ts.minusMonths(1), 4002, 4002, 0 },
 			new Object[] { ts,                4002, 8044, 4042 },
-			new Object[] { ts.plusMonths(1),  8044, 8344, 300 }, 
+			new Object[] { ts.plusMonths(1),  8044, 8344, 300 },
 			// @formatter:on
 		});
 	}
@@ -440,41 +441,47 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
-		setupDefaultDatumAccumulationData(ts, ts2);
+		setupDefaultDatumAccumulationData(ts, ts2, false);
 
 		// add reset record
+		DateTime resetDate = ts.plusDays(1);
 		Map<String, Number> finalSamples = Collections.singletonMap(WH_PROP, 5000);
 		Map<String, Number> startSamples = Collections.singletonMap(WH_PROP, 8000);
-		insertResetDatumAuxiliaryRecord(ts.plusDays(1), TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
 				startSamples);
+
+		// process aggregates (with reset data)
+		processAggregateStaleData();
 
 		// when
 		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
 				ts2);
 
 		// then
-		verifyCalculateDatumDiffOverResult("(rF - d1) + (d3 - rS) == (5000 - 4002) + (8044 - 8000)", m,
-				8044, 4002, 1042);
+		String msg = "(rF - d1) + (d3 - rS) == (5000 - 4002) + (8044 - 8000)";
+		verifyCalculateDatumDiffOverResult(msg, m, 4002, 8044, 1042);
 
-		verifyAggregateReadings("(d3 - d1) = (8044 - 4002)", WH_PROP, new Object[][] {
+		verifyAggregateReadings(msg, WH_PROP, new Object[][] {
 			// @formatter:off
-			new Object[] { ts.minusHours(1),  4002, 4002, 0 },
-			new Object[] { ts,                4002, 4445, 443 },
-			new Object[] { ts2.minusHours(1), 4445, 8044, 3599 }, 
-			new Object[] { ts2,               8044, 8344, 300 },
+			new Object[] { ts.minusHours(1),	4002, 4002, 0 },
+			new Object[] { ts,					4002, 4445, 443 },
+			new Object[] { resetDate,			4445, 5000, 555 },
+			new Object[] { ts2.minusHours(1),	8000, 8044, 44 }, 
+			new Object[] { ts2,					8044, 8344, 300 },
 			// @formatter:on
 		}, new Object[][] {
 			// @formatter:off
-			new Object[] { ts.minusDays(1),  4002, 4002, 0 },
-			new Object[] { ts,               4002, 4445, 443 },
-			new Object[] { ts2.minusDays(1), 4445, 8044, 3599 }, 
-			new Object[] { ts2,              8044, 8344, 300 },
+			new Object[] { ts.minusDays(1),		4002, 4002, 0 },
+			new Object[] { ts,					4002, 4445, 443 },
+			new Object[] { resetDate,			4445, 5000, 555 },
+			new Object[] { ts2.minusDays(1),	8000, 8044, 44 }, 
+			new Object[] { ts2,					8044, 8344, 300 },
 			// @formatter:on
 		}, new Object[][] {
 			// @formatter:off
-			new Object[] { ts.minusMonths(1), 4002, 4002, 0 },
-			new Object[] { ts,                4002, 8044, 4042 },
-			new Object[] { ts.plusMonths(1),  8044, 8344, 300 }, 
+			new Object[] { ts.minusMonths(1),	4002, 4002, 0 },
+			new Object[] { ts,					4002, 8044, 1042 },
+			new Object[] { ts.plusMonths(1),	8044, 8344, 300 }, 
 			// @formatter:on
 		});
 	}
@@ -484,28 +491,58 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
-		setupDefaultDatumAccumulationData(ts, ts2);
+		setupDefaultDatumAccumulationData(ts, ts2, false);
 
 		// add reset record 1
+		DateTime resetDate = new DateTime(2018, 8, 2, 0, 0, 0, ts.getZone());
 		Map<String, Number> finalSamples = Collections.singletonMap(WH_PROP, 5000);
 		Map<String, Number> startSamples = Collections.singletonMap(WH_PROP, 8000);
-		insertResetDatumAuxiliaryRecord(new DateTime(2018, 8, 2, 0, 0, 0, ts.getZone()), TEST_NODE_ID,
-				TEST_SOURCE_ID, finalSamples, startSamples);
+		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
 
 		// add reset record 2
+		DateTime resetDate2 = new DateTime(2018, 8, 3, 0, 0, 0, ts.getZone());
 		Map<String, Number> finalSamples2 = Collections.singletonMap(WH_PROP, 8010);
 		Map<String, Number> startSamples2 = Collections.singletonMap(WH_PROP, 7000);
-		insertResetDatumAuxiliaryRecord(new DateTime(2018, 8, 3, 0, 0, 0, ts.getZone()), TEST_NODE_ID,
-				TEST_SOURCE_ID, finalSamples2, startSamples2);
+		insertResetDatumAuxiliaryRecord(resetDate2, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples2,
+				startSamples2);
+
+		// process aggregates (with reset data)
+		processAggregateStaleData();
 
 		// when
 		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
 				ts2);
 
 		// then
-		verifyCalculateDatumDiffOverResult(
-				"(rF1 - d1) + (rF2 - rS1) + (d3 - rS2) == (5000 - 4002) + (8010 - 8000) + (8044 - 7000)",
-				m, 8044, 4002, 2052);
+		String msg = "(rF1 - d1) + (rF2 - rS1) + (d3 - rS2) == (5000 - 4002) + (8010 - 8000) + (8044 - 7000)";
+		verifyCalculateDatumDiffOverResult(msg, m, 4002, 8044, 2052);
+
+		verifyAggregateReadings(msg, WH_PROP, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusHours(1),	4002, 4002, 0 },
+			new Object[] { ts,					4002, 4445, 443 },
+			new Object[] { resetDate,			4445, 5000, 555 },
+			new Object[] { resetDate2,			8000, 8010, 10 },
+			new Object[] { ts2.minusHours(1),	7000, 8044, 1044 }, 
+			new Object[] { ts2,					8044, 8344, 300 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusDays(1),		4002, 4002, 0 },
+			new Object[] { ts,					4002, 4445, 443 },
+			new Object[] { resetDate,			4445, 5000, 555 },
+			new Object[] { resetDate2,			8000, 8010, 10 },
+			new Object[] { ts2.minusDays(1),	7000, 8044, 1044 }, 
+			new Object[] { ts2,					8044, 8344, 300 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusMonths(1),	4002, 4002, 0 },
+			new Object[] { ts,					4002, 8044, 2052 },
+			new Object[] { ts.plusMonths(1),	8044, 8344, 300 }, 
+			// @formatter:on
+		});
 	}
 
 	@Test
@@ -513,7 +550,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
-		setupDefaultDatumAccumulationData(ts, ts2);
+		setupDefaultDatumAccumulationData(ts, ts2, false);
 
 		// add reset record, closer to requested start date than d1
 		DateTime resetDate = ts.minusSeconds(30);
@@ -522,12 +559,38 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
 				startSamples);
 
+		// process aggregates (with reset data)
+		processAggregateStaleData();
+
 		// when
 		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
 				ts2);
 
 		// then
-		verifyCalculateDatumDiffOverResult("(d3 - rS) == (8044 - 4400)", m, 8044, 4400, 3644);
+		String msg = "(d3 - rS) == (8044 - 4400)";
+		verifyCalculateDatumDiffOverResult(msg, m, 4400, 8044, 3644);
+
+		verifyAggregateReadings(msg, WH_PROP, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusHours(1),	4002, 8000, 3998 },
+			new Object[] { ts,					4400, 4445, 45 },
+			new Object[] { ts2.minusHours(1),	4445, 8044, 3599 },
+			new Object[] { ts2,					8044, 8344, 300 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusDays(1),		4002, 8000, 3998 },
+			new Object[] { ts,					4400, 4445, 45 },
+			new Object[] { ts2.minusDays(1),	4445, 8044, 3599 },
+			new Object[] { ts2,					8044, 8344, 300 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusMonths(1),	4002, 8000, 3998 },
+			new Object[] { ts,					4400, 8044, 3644 },
+			new Object[] { ts.plusMonths(1),	8044, 8344, 300 },
+			// @formatter:on
+		});
 	}
 
 	@Test
@@ -535,7 +598,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
-		setupDefaultDatumAccumulationData(ts, ts2);
+		setupDefaultDatumAccumulationData(ts, ts2, false);
 
 		// add reset record, closer to requested end date than d3
 		DateTime resetDate = ts2.minusSeconds(30);
@@ -544,12 +607,38 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
 				startSamples);
 
+		// process aggregates (with reset data)
+		processAggregateStaleData();
+
 		// when
 		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
 				ts2);
 
 		// then
-		verifyCalculateDatumDiffOverResult("(rF - d1) == (8100 - 4002)", m, 8100, 4002, 4098);
+		String msg = "(rF - d1) == (8100 - 4002)";
+		verifyCalculateDatumDiffOverResult(msg, m, 4002, 8100, 4098);
+
+		verifyAggregateReadings(msg, WH_PROP, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusHours(1),	4002, 4002, 0 },
+			new Object[] { ts,					4002, 4445, 443 },
+			new Object[] { ts2.minusHours(1),	4445, 8100, 3655 },
+			new Object[] { ts2,					8000, 8344, 344 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusDays(1),		4002, 4002, 0 },
+			new Object[] { ts,					4002, 4445, 443 },
+			new Object[] { ts2.minusDays(1),	4445, 8100, 3655 },
+			new Object[] { ts2,					8000, 8344, 344 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusMonths(1),	4002, 4002, 0 },
+			new Object[] { ts,					4002, 8100, 4098 },
+			new Object[] { ts.plusMonths(1),	8000, 8344, 344 },
+			// @formatter:on
+		});
 	}
 
 	@Test
@@ -557,7 +646,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
-		setupDefaultDatumAccumulationData(ts, ts2);
+		setupDefaultDatumAccumulationData(ts, ts2, false);
 
 		// add reset record, closer to requested end date than d3
 		DateTime resetDate = ts.minusSeconds(30);
@@ -573,12 +662,38 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		insertResetDatumAuxiliaryRecord(resetDate2, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples2,
 				startSamples2);
 
+		// process aggregates (with reset data)
+		processAggregateStaleData();
+
 		// when
 		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
 				ts2);
 
 		// then
-		verifyCalculateDatumDiffOverResult("(r2F - rS) == (8100 - 4400)", m, 8100, 4400, 3700);
+		String msg = "(r2F - rS) == (8100 - 4400)";
+		verifyCalculateDatumDiffOverResult(msg, m, 4400, 8100, 3700);
+
+		verifyAggregateReadings(msg, WH_PROP, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusHours(1),	4002, 8000, 3998 },
+			new Object[] { ts,					4400, 4445, 45 },
+			new Object[] { ts2.minusHours(1),	4445, 8100, 3655 },
+			new Object[] { ts2,					8000, 8344, 344 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusDays(1),		4002, 8000, 3998 },
+			new Object[] { ts,					4400, 4445, 45 },
+			new Object[] { ts2.minusDays(1),	4445, 8100, 3655 },
+			new Object[] { ts2,					8000, 8344, 344 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusMonths(1),	4002, 8000, 3998 },
+			new Object[] { ts,					4400, 8100, 3700 },
+			new Object[] { ts.plusMonths(1),	8000, 8344, 344 },
+			// @formatter:on
+		});
 	}
 
 	@Test
@@ -586,7 +701,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		// given
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
-		setupDefaultDatumAccumulationData(ts, ts2);
+		setupDefaultDatumAccumulationData(ts, ts2, false);
 
 		// add reset record, closer to requested end date than d3
 		DateTime resetDate = ts.minusSeconds(30);
@@ -609,13 +724,40 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		insertResetDatumAuxiliaryRecord(resetDate2, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples2,
 				startSamples2);
 
+		// process aggregates (with reset data)
+		processAggregateStaleData();
+
 		// when
 		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
 				ts2);
 
 		// then
-		verifyCalculateDatumDiffOverResult(
-				"(rMidF - rS) + (r2F - rMidS) == (10000 - 4400) + (8100 - 7000)", m, 8100, 4400, 6700);
+		String msg = "(rMidF - rS) + (r2F - rMidS) == (10000 - 4400) + (8100 - 7000)";
+		verifyCalculateDatumDiffOverResult(msg, m, 4400, 8100, 6700);
+
+		verifyAggregateReadings(msg, WH_PROP, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusHours(1),	4002, 8000,  3998 },
+			new Object[] { ts,					4400, 4445,  45 },
+			new Object[] { resetDateMid,		4445, 10000, 5555 },
+			new Object[] { ts2.minusHours(1),	7000, 8100,  1100 }, 
+			new Object[] { ts2,					8000, 8344,  344 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusDays(1),		4002, 8000,  3998 },
+			new Object[] { ts,					4400, 4445,  45 },
+			new Object[] { resetDateMid,		4445, 10000, 5555 },
+			new Object[] { ts2.minusDays(1),	7000, 8100,  1100 }, 
+			new Object[] { ts2,					8000, 8344,  344 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusMonths(1),	4002, 8000, 3998 },
+			new Object[] { ts,					4400, 8100, 6700 },
+			new Object[] { ts.plusMonths(1),	8000, 8344, 344 }, 
+			// @formatter:on
+		});
 	}
 
 	/*-============================================================================================

@@ -630,19 +630,20 @@ CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
   RETURNS integer LANGUAGE plpgsql VOLATILE AS
 $$
 DECLARE
-	stale record;
-	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum
-			WHERE agg_kind = kind
-			-- Too slow to order; not strictly fair but process much faster
-			-- ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
-			LIMIT 1
-			FOR UPDATE SKIP LOCKED;
-	agg_span interval;
-	agg_json jsonb := NULL;
-	agg_jmeta jsonb := NULL;
-	agg_reading jsonb := NULL;
-	node_tz text := 'UTC';
-	proc_count integer := 0;
+	stale 					record;
+	agg_span 				interval;
+	agg_json 				jsonb := NULL;
+	agg_jmeta 				jsonb := NULL;
+	agg_reading 			jsonb := NULL;
+	agg_reading_ts_start 	timestamptz := NULL;
+	agg_reading_ts_end 		timestamptz := NULL;
+	node_tz 				text := 'UTC';
+	proc_count 				integer := 0;
+	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum WHERE agg_kind = kind
+		-- Too slow to order; not strictly fair but process much faster
+		-- ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
+		LIMIT 1
+		FOR UPDATE SKIP LOCKED;
 BEGIN
 	CASE kind
 		WHEN 'h' THEN
@@ -674,9 +675,9 @@ BEGIN
 				FROM solaragg.calc_datum_time_slots(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, agg_span, 0, interval '1 hour')
 				INTO agg_json, agg_jmeta;
 				
-				SELECT jdata
+				SELECT jdata, ts_start, ts_end
 				FROM solardatum.calculate_datum_diff_over(stale.node_id, stale.source_id::text, stale.ts_start, stale.ts_start + agg_span)
-				INTO agg_reading;
+				INTO agg_reading, agg_reading_ts_start, agg_reading_ts_end;
 
 			WHEN 'd' THEN
 				SELECT jdata, jmeta
@@ -715,7 +716,9 @@ BEGIN
 				INTO agg_reading;
 		END CASE;
 
-		IF agg_json IS NULL THEN
+		IF agg_json IS NULL AND (agg_reading IS NULL 
+				OR (agg_reading_ts_start IS NOT NULL AND agg_reading_ts_start = agg_reading_ts_end)
+				) THEN
 			-- delete agg, using date range in case time zone of node has changed
 			CASE kind
 				WHEN 'h' THEN

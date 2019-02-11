@@ -1262,12 +1262,12 @@ RETURNS TABLE(
 	-- calculate difference by node,source, of {start[, resetFinal1, resetStart1, ...], final}
 	SELECT min(d.ts) AS ts_start,
 		max(d.ts) AS ts_end,
-		min(nlt.time_zone) AS time_zone,
+		min(COALESCE(nlt.time_zone, 'UTC')) AS time_zone,
 		d.node_id,
 		d.source_id,
 		solarcommon.jsonb_diffsum_jdata(d.jdata_a ORDER BY d.ts) AS jdata
 	FROM combined d
-	INNER JOIN solarnet.node_local_time nlt ON nlt.node_id = d.node_id
+	LEFT OUTER JOIN solarnet.node_local_time nlt ON nlt.node_id = d.node_id
 	GROUP BY d.node_id, d.source_id
 $$;
 
@@ -1410,12 +1410,12 @@ RETURNS TABLE(
 	-- calculate difference by node,source, of {start[, resetFinal1, resetStart1, ...], final}
 	SELECT min(d.ts) AS ts_start,
 		max(d.ts) AS ts_end,
-		min(nlt.time_zone) AS time_zone,
+		min(COALESCE(nlt.time_zone, 'UTC')) AS time_zone,
 		d.node_id,
 		d.source_id,
 		solarcommon.jsonb_diffsum_object(d.jdata_a ORDER BY d.ts) AS jdata_a
 	FROM combined d
-	INNER JOIN solarnet.node_local_time nlt ON nlt.node_id = d.node_id
+	LEFT OUTER JOIN solarnet.node_local_time nlt ON nlt.node_id = d.node_id
 	GROUP BY d.node_id, d.source_id
 	ORDER BY d.node_id, d.source_id
 $$;

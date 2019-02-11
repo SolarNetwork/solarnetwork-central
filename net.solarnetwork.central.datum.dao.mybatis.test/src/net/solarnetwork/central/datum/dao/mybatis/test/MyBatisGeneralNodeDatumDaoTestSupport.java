@@ -133,7 +133,7 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 						+ "'date', extract('epoch' from ts_start)::int8 * 1000::int8, "
 						+ "'nodeId', node_id, 'sourceId', source_id, "
 						+ "'as', jdata_as, 'af', jdata_af, 'a', jdata_ad))::text AS jdata "
-						+ "FROM solaragg.agg_datum_hourly");
+						+ "FROM solaragg.agg_datum_hourly ORDER BY ts_start, node_id, source_id");
 
 		return rows.stream().map(d -> JsonUtils.getObjectFromJSON((String) d.get("jdata"),
 				GeneralNodeDatumReadingAggregate.class)).collect(toList());
@@ -145,7 +145,7 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 						+ "'date', extract('epoch' from ts_start)::int8 * 1000::int8, "
 						+ "'nodeId', node_id, 'sourceId', source_id, "
 						+ "'as', jdata_as, 'af', jdata_af, 'a', jdata_ad))::text AS jdata "
-						+ "FROM solaragg.agg_datum_daily");
+						+ "FROM solaragg.agg_datum_daily ORDER BY ts_start, node_id, source_id");
 
 		return rows.stream().map(d -> JsonUtils.getObjectFromJSON((String) d.get("jdata"),
 				GeneralNodeDatumReadingAggregate.class)).collect(toList());
@@ -157,7 +157,7 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 						+ "'date', extract('epoch' from ts_start)::int8 * 1000::int8, "
 						+ "'nodeId', node_id, 'sourceId', source_id, "
 						+ "'as', jdata_as, 'af', jdata_af, 'a', jdata_ad))::text AS jdata "
-						+ "FROM solaragg.agg_datum_monthly");
+						+ "FROM solaragg.agg_datum_monthly ORDER BY ts_start, node_id, source_id");
 
 		return rows.stream().map(d -> JsonUtils.getObjectFromJSON((String) d.get("jdata"),
 				GeneralNodeDatumReadingAggregate.class)).collect(toList());

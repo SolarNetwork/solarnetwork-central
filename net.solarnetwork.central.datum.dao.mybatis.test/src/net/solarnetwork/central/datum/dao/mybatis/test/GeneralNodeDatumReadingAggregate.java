@@ -40,6 +40,25 @@ public class GeneralNodeDatumReadingAggregate {
 	private Map<String, Number> as;
 	private Map<String, Number> af;
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("GeneralNodeDatumReadingAggregate{date=");
+		builder.append(date);
+		builder.append(",nodeId=");
+		builder.append(nodeId);
+		builder.append(",sourceId=");
+		builder.append(sourceId);
+		builder.append(",a=");
+		builder.append(a);
+		builder.append(",as=");
+		builder.append(as);
+		builder.append(",af=");
+		builder.append(af);
+		builder.append("}");
+		return builder.toString();
+	}
+
 	public DateTime getDate() {
 		return date;
 	}
