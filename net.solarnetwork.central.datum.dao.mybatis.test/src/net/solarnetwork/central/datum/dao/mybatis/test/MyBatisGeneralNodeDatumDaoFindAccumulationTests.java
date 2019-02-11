@@ -455,6 +455,28 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		// then
 		verifyCalculateDatumDiffOverResult("(rF - d1) + (d3 - rS) == (5000 - 4002) + (8044 - 8000)", m,
 				8044, 4002, 1042);
+
+		verifyAggregateReadings("(d3 - d1) = (8044 - 4002)", WH_PROP, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusHours(1),  4002, 4002, 0 },
+			new Object[] { ts,                4002, 4445, 443 },
+			new Object[] { ts2.minusHours(1), 4445, 8044, 3599 }, 
+			new Object[] { ts2,               8044, 8344, 300 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusDays(1),  4002, 4002, 0 },
+			new Object[] { ts,               4002, 4445, 443 },
+			new Object[] { ts2.minusDays(1), 4445, 8044, 3599 }, 
+			new Object[] { ts2,              8044, 8344, 300 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusMonths(1), 4002, 4002, 0 },
+			new Object[] { ts,                4002, 8044, 4042 },
+			new Object[] { ts.plusMonths(1),  8044, 8344, 300 }, 
+			// @formatter:on
+		});
 	}
 
 	@Test

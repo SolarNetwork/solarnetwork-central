@@ -1,4 +1,5 @@
--- update to simplify by eliminating exceptions in favor of ON CONFLICT
+-- update to simplify by eliminating exceptions in favor of ON CONFLICT and supporting marking 
+-- any "next" time slot as stale (instead of only next hour) to handle reading re-calculations
 CREATE OR REPLACE FUNCTION solardatum.trigger_agg_stale_datum()
   RETURNS trigger AS
 $BODY$
@@ -11,7 +12,7 @@ BEGIN
 		VALUES (date_trunc('hour', NEW.ts), NEW.node_id, NEW.source_id, 'h')
 		ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 
-		-- prev hour; if the previous record for this source falls on the previous hour; we have to mark that hour as stale as well
+		-- prev hour; if the previous record for this source falls on the previous hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts < NEW.ts
 			AND d.ts > NEW.ts - interval '1 hour'
@@ -26,10 +27,9 @@ BEGIN
 			ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 		END IF;
 
-		-- next hour; if the next record for this source falls on the next hour; we have to mark that hour as stale as well
+		-- next slot; if there is another record in a future hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts > NEW.ts
-			AND d.ts < NEW.ts + interval '1 hour'
 			AND d.node_id = NEW.node_id
 			AND d.source_id = NEW.source_id
 		ORDER BY d.ts ASC
@@ -48,7 +48,7 @@ BEGIN
 		VALUES (date_trunc('hour', OLD.ts), OLD.node_id, OLD.source_id, 'h')
 		ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 
-		-- prev hour; if the previous record for this source falls on the previous hour; we have to mark that hour as stale as well
+		-- prev hour; if the previous record for this source falls on the previous hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts < OLD.ts
 			AND d.ts > OLD.ts - interval '1 hour'
@@ -63,10 +63,9 @@ BEGIN
 			ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 		END IF;
 
-		-- next hour; if the next record for this source falls on the next hour; we have to mark that hour as stale as well
+		-- next slot; if there is another record in a future hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts > OLD.ts
-			AND d.ts < OLD.ts + interval '1 hour'
 			AND d.node_id = OLD.node_id
 			AND d.source_id = OLD.source_id
 		ORDER BY d.ts ASC
@@ -87,6 +86,13 @@ BEGIN
 	END CASE;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
+
+-- also use same stale data population trigger on aux data
+CREATE TRIGGER aa_agg_stale_datum_aux
+    BEFORE INSERT OR DELETE OR UPDATE 
+    ON solardatum.da_datum_aux
+    FOR EACH ROW
+    EXECUTE PROCEDURE solardatum.trigger_agg_stale_datum();
 
 -- update to simplify by eliminating exceptions in favor of ON CONFLICT
 CREATE OR REPLACE FUNCTION solardatum.trigger_agg_stale_loc_datum()
