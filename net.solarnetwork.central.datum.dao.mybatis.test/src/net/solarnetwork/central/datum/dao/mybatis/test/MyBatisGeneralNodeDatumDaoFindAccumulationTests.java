@@ -85,6 +85,19 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 				equalTo(accumulation));
 	}
 
+	private void verifyCalculateDatumDiffOverResult(String msg, GeneralNodeDatumReadingAggregate m,
+			Object endValue, Object startValue, Object accumulation) {
+		verifyCalculateDatumDiffOverResult(msg, m, WH_PROP, endValue, startValue, accumulation);
+	}
+
+	private void verifyCalculateDatumDiffOverResult(String msg, GeneralNodeDatumReadingAggregate m,
+			String propName, Object endValue, Object startValue, Object accumulation) {
+		assertThat(msg + " " + propName + " start value", m.getAs().get(propName), equalTo(startValue));
+		assertThat(msg + " " + propName + " end value", m.getAf().get(propName), equalTo(endValue));
+		assertThat(msg + " " + propName + " accumulation", m.getA().get(propName),
+				equalTo(accumulation));
+	}
+
 	private List<GeneralNodeDatumPK> setupDefaultDatumAccumulationData(DateTime ts, DateTime ts2) {
 		return setupDefaultDatumAccumulationData(ts, ts2, true);
 	}
@@ -121,6 +134,10 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 
 		return result;
 	}
+
+	/*-============================================================================================
+	 * Accumulation over(no time constraint)
+	 *-==========================================================================================*/
 
 	@Test
 	public void accumulationOver() {
@@ -348,6 +365,186 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(rMidF - rS) + (r2F - rMidS) == (10000 - 4400) + (8100 - 7000)", m,
 				resetDate2, resetDate, 8100, 4400, 6700);
+	}
+
+	/*-============================================================================================
+	 * Low-level accumulation over single node (no time constraint)
+	 *-==========================================================================================*/
+
+	@Test
+	public void calculateDatumDiffOver() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		setupDefaultDatumAccumulationData(ts, ts2);
+
+		// when
+		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
+				ts2);
+
+		// then
+		verifyCalculateDatumDiffOverResult("(d3 - d1) = (8044 - 4002)", m, 8044, 4002, 4042);
+	}
+
+	@Test
+	public void calculateDatumDiffOverWithResetRecord() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		setupDefaultDatumAccumulationData(ts, ts2);
+
+		// add reset record
+		Map<String, Number> finalSamples = Collections.singletonMap(WH_PROP, 5000);
+		Map<String, Number> startSamples = Collections.singletonMap(WH_PROP, 8000);
+		insertResetDatumAuxiliaryRecord(ts.plusDays(1), TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
+
+		// when
+		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
+				ts2);
+
+		// then
+		verifyCalculateDatumDiffOverResult("(rF - d1) + (d3 - rS) == (5000 - 4002) + (8044 - 8000)", m,
+				8044, 4002, 1042);
+	}
+
+	@Test
+	public void calculateDatumDiffOverWithResetRecordsSequential() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		setupDefaultDatumAccumulationData(ts, ts2);
+
+		// add reset record 1
+		Map<String, Number> finalSamples = Collections.singletonMap(WH_PROP, 5000);
+		Map<String, Number> startSamples = Collections.singletonMap(WH_PROP, 8000);
+		insertResetDatumAuxiliaryRecord(new DateTime(2018, 8, 2, 0, 0, 0, ts.getZone()), TEST_NODE_ID,
+				TEST_SOURCE_ID, finalSamples, startSamples);
+
+		// add reset record 2
+		Map<String, Number> finalSamples2 = Collections.singletonMap(WH_PROP, 8010);
+		Map<String, Number> startSamples2 = Collections.singletonMap(WH_PROP, 7000);
+		insertResetDatumAuxiliaryRecord(new DateTime(2018, 8, 3, 0, 0, 0, ts.getZone()), TEST_NODE_ID,
+				TEST_SOURCE_ID, finalSamples2, startSamples2);
+
+		// when
+		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
+				ts2);
+
+		// then
+		verifyCalculateDatumDiffOverResult(
+				"(rF1 - d1) + (rF2 - rS1) + (d3 - rS2) == (5000 - 4002) + (8010 - 8000) + (8044 - 7000)",
+				m, 8044, 4002, 2052);
+	}
+
+	@Test
+	public void calculateDatumDiffOverWithResetRecordAtStart() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		setupDefaultDatumAccumulationData(ts, ts2);
+
+		// add reset record, closer to requested start date than d1
+		DateTime resetDate = ts.minusSeconds(30);
+		Map<String, Number> finalSamples = singletonMap(WH_PROP, 8000);
+		Map<String, Number> startSamples = singletonMap(WH_PROP, 4400);
+		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
+
+		// when
+		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
+				ts2);
+
+		// then
+		verifyCalculateDatumDiffOverResult("(d3 - rS) == (8044 - 4400)", m, 8044, 4400, 3644);
+	}
+
+	@Test
+	public void calculateDatumDiffOverWithResetRecordAtEnd() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		setupDefaultDatumAccumulationData(ts, ts2);
+
+		// add reset record, closer to requested end date than d3
+		DateTime resetDate = ts2.minusSeconds(30);
+		Map<String, Number> finalSamples = singletonMap(WH_PROP, 8100);
+		Map<String, Number> startSamples = singletonMap(WH_PROP, 8000);
+		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
+
+		// when
+		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
+				ts2);
+
+		// then
+		verifyCalculateDatumDiffOverResult("(rF - d1) == (8100 - 4002)", m, 8100, 4002, 4098);
+	}
+
+	@Test
+	public void calculateDatumDiffOverWithResetRecordAtStartAndEnd() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		setupDefaultDatumAccumulationData(ts, ts2);
+
+		// add reset record, closer to requested end date than d3
+		DateTime resetDate = ts.minusSeconds(30);
+		Map<String, Number> finalSamples = singletonMap(WH_PROP, 8000);
+		Map<String, Number> startSamples = singletonMap(WH_PROP, 4400);
+		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
+
+		// add reset record, closer to requested end date than d3
+		DateTime resetDate2 = ts2.minusSeconds(30);
+		Map<String, Number> finalSamples2 = singletonMap(WH_PROP, 8100);
+		Map<String, Number> startSamples2 = singletonMap(WH_PROP, 8000);
+		insertResetDatumAuxiliaryRecord(resetDate2, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples2,
+				startSamples2);
+
+		// when
+		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
+				ts2);
+
+		// then
+		verifyCalculateDatumDiffOverResult("(r2F - rS) == (8100 - 4400)", m, 8100, 4400, 3700);
+	}
+
+	@Test
+	public void calculateDatumDiffOverWithResetRecordAtStartAndEndAndMiddle() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		setupDefaultDatumAccumulationData(ts, ts2);
+
+		// add reset record, closer to requested end date than d3
+		DateTime resetDate = ts.minusSeconds(30);
+		Map<String, Number> finalSamples = singletonMap(WH_PROP, 8000);
+		Map<String, Number> startSamples = singletonMap(WH_PROP, 4400);
+		insertResetDatumAuxiliaryRecord(resetDate, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
+
+		// add reset record in middle
+		DateTime resetDateMid = ts.plusDays(1);
+		Map<String, Number> finalSamplesMid = singletonMap(WH_PROP, 10000);
+		Map<String, Number> startSamplesMid = singletonMap(WH_PROP, 7000);
+		insertResetDatumAuxiliaryRecord(resetDateMid, TEST_NODE_ID, TEST_SOURCE_ID, finalSamplesMid,
+				startSamplesMid);
+
+		// add reset record, closer to requested end date than d3
+		DateTime resetDate2 = ts2.minusSeconds(30);
+		Map<String, Number> finalSamples2 = singletonMap(WH_PROP, 8100);
+		Map<String, Number> startSamples2 = singletonMap(WH_PROP, 8000);
+		insertResetDatumAuxiliaryRecord(resetDate2, TEST_NODE_ID, TEST_SOURCE_ID, finalSamples2,
+				startSamples2);
+
+		// when
+		GeneralNodeDatumReadingAggregate m = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, ts,
+				ts2);
+
+		// then
+		verifyCalculateDatumDiffOverResult(
+				"(rMidF - rS) + (r2F - rMidS) == (10000 - 4400) + (8100 - 7000)", m, 8100, 4400, 6700);
 	}
 
 	/*-============================================================================================

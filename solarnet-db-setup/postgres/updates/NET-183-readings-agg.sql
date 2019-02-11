@@ -177,3 +177,502 @@ BEGIN
 	END CASE;
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
+
+
+
+-- ======================
+-- agg
+
+/** JSONB object diffsum aggregate final calculation function for jdata result structure. */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_diffsum_jdata_finalfunc(agg_state jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var prop,
+		val,
+		f = (agg_state ? agg_state.first : null),
+		p = (agg_state ? agg_state.prev : null),
+		t = (agg_state ? agg_state.total : null),
+		l = (agg_state ? agg_state.last : null);
+	if ( p ) {
+		for ( prop in p ) {
+			if ( t[prop] === undefined ) {
+				t[prop] = 0;
+			}
+		}
+	}
+	
+	for ( prop in t ) {
+		return {'a':t, 'af':l, 'as':f};
+	}
+    return null;
+$$;
+
+/**
+ * Difference and sum aggregate for JSON object values, resulting in a JSON object.
+ *
+ * This aggregate will subtract the _property values_ of the odd JSON objects in the aggregate group
+ * from the next even object in the group, resulting in a JSON object. Each pair or objects are then 
+ * added together to form a final aggregate value. An `ORDER BY` clause is thus essential
+ * to ensure the odd/even values are captured correctly.
+ *
+ * The difference result object will be returned under a `a` property. The first and last values for
+ * each property will be included in the output JSON object under `as` and `af` properties.
+ *
+ * For example, if aggregating objects like:
+ *
+ *     {"wattHours":234}
+ *     {"wattHours":346}
+ *     {"wattHours":1000}
+ *     {"wattHours":1100}
+ *
+ * the resulting object would be:
+ *
+ *    {"a":{"wattHours":212}, "as":{"wattHours_start":234}, "af":{"wattHours_end":1100}}
+ */
+CREATE AGGREGATE solarcommon.jsonb_diffsum_jdata(jsonb) (
+    sfunc = solarcommon.jsonb_diffsum_object_sfunc,
+    stype = jsonb,
+    finalfunc = solarcommon.jsonb_diffsum_jdata_finalfunc
+);
+
+-- agg
+-- ======================
+
+
+/**
+ * Calculate the difference between the accumulating properties of datum over a time range.
+ *
+ * This returns at most one row. The returned `ts_start` and `ts_end` columns will
+ * the timestamps of the found starting/ending datum records. The `jdata` column will be computed as the difference
+ * between the starting/ending rows, using the `solarcommon.jsonb_diffsum_jdata()` aggregate function.
+ *
+ * @param node 			the node ID to find
+ * @param source 		the source ID to find
+ * @param ts_min		the timestamp of the start of the time range (inclusive)
+ * @param ts_max		the timestamp of the end of the time range (exclusive)
+ */
+CREATE OR REPLACE FUNCTION solardatum.calculate_datum_diff_over(
+	node bigint, source text, ts_min timestamptz, ts_max timestamptz)
+RETURNS TABLE(
+  ts_start timestamp with time zone,
+  ts_end timestamp with time zone,
+  time_zone text,
+  node_id bigint,
+  source_id character varying(64),
+  jdata jsonb
+) LANGUAGE sql STABLE ROWS 1 AS $$
+	WITH latest_before_start AS (
+		SELECT ts, node_id, source_id, jdata_a FROM (
+			(
+				-- find latest before
+				SELECT ts, node_id, source_id, jdata_a, 0 AS rr
+				FROM solardatum.da_datum
+				WHERE node_id = node
+					AND source_id = source
+					AND ts < ts_min
+				ORDER BY ts DESC 
+				LIMIT 1
+			)
+			UNION
+			(
+				-- find latest before reset
+				SELECT ts, node_id, source_id, jdata_as AS jdata_a, 1 AS rr
+				FROM solardatum.da_datum_aux
+				WHERE atype = 'Reset'::solardatum.da_datum_aux_type
+					AND node_id = node
+					AND source_id = source
+					AND ts < ts_min
+				ORDER BY ts DESC
+				LIMIT 1
+			)
+		) d
+		-- add order by rr so that when datum & reset have equivalent ts, reset has priority
+		ORDER BY d.ts DESC, rr DESC
+		LIMIT 1
+	)
+	, earliest_after_start AS (
+		SELECT ts, node_id, source_id, jdata_a FROM (
+			(
+				-- find earliest on/after
+				SELECT ts, node_id, source_id, jdata_a, 0 AS rr
+				FROM solardatum.da_datum
+				WHERE node_id = node
+					AND source_id = source
+					AND ts >= ts_min
+				ORDER BY ts 
+				LIMIT 1
+			)
+			UNION ALL
+			(
+				-- find earliest on/after reset
+				SELECT ts, node_id, source_id, jdata_as AS jdata_a, 1 AS rr
+				FROM solardatum.da_datum_aux
+				WHERE atype = 'Reset'::solardatum.da_datum_aux_type
+					AND node_id = node
+					AND source_id = source
+					AND ts >= ts_min
+				ORDER BY ts
+				LIMIT 1
+			)
+		) d
+		-- add order by rr so that when datum & reset have equivalent ts, reset has priority
+		ORDER BY d.ts, rr DESC
+		LIMIT 1
+	)
+	, latest_before_end AS (
+		SELECT ts, node_id, source_id, jdata_a FROM (
+			(
+				-- find latest before
+				SELECT ts, node_id, source_id, jdata_a, 0 AS rr
+				FROM solardatum.da_datum
+				WHERE node_id = node
+					AND source_id = source
+					AND ts < ts_max
+				ORDER BY ts DESC 
+				LIMIT 1
+			)
+			UNION ALL
+			(
+				-- find latest before reset
+				SELECT ts, node_id, source_id, jdata_af AS jdata_a, 1 AS rr
+				FROM solardatum.da_datum_aux
+				WHERE atype = 'Reset'::solardatum.da_datum_aux_type
+					AND node_id = node
+					AND source_id = source
+					AND ts < ts_max
+				ORDER BY ts DESC
+				LIMIT 1
+			)
+		) d
+		-- add order by rr so that when datum & reset have equivalent ts, reset has priority
+		ORDER BY d.ts DESC, rr DESC
+		LIMIT 1
+	)
+	, d AS (
+		SELECT * FROM (
+			SELECT *
+			FROM (
+				SELECT * FROM latest_before_start
+				UNION
+				SELECT * FROM earliest_after_start
+			) d
+			ORDER BY d.ts
+			LIMIT 1
+		) earliest
+	
+		UNION ALL
+		SELECT * FROM latest_before_end
+	)
+	, ranges AS (
+		SELECT min(ts) AS sdate
+			, max(ts) AS edate
+		FROM d
+	)
+	, combined AS (
+		SELECT * FROM d
+	
+		UNION ALL
+		SELECT aux.ts - unnest(ARRAY['1 millisecond','0'])::interval AS ts
+			, aux.node_id
+			, aux.source_id
+			, unnest(ARRAY[aux.jdata_af, aux.jdata_as]) AS jdata_a
+		FROM ranges, solardatum.da_datum_aux aux 
+		WHERE atype = 'Reset'::solardatum.da_datum_aux_type
+			AND aux.node_id = node 
+			AND aux.source_id = source
+			AND aux.ts > ranges.sdate
+			AND aux.ts < ranges.edate
+	)
+	-- calculate difference by node,source, of {start[, resetFinal1, resetStart1, ...], final}
+	SELECT min(d.ts) AS ts_start,
+		max(d.ts) AS ts_end,
+		min(nlt.time_zone) AS time_zone,
+		d.node_id,
+		d.source_id,
+		solarcommon.jsonb_diffsum_jdata(d.jdata_a ORDER BY d.ts) AS jdata
+	FROM combined d
+	INNER JOIN solarnet.node_local_time nlt ON nlt.node_id = d.node_id
+	GROUP BY d.node_id, d.source_id
+$$;
+
+ALTER TABLE solaragg.agg_datum_hourly 
+	ADD COLUMN jdata_as jsonb
+	, ADD COLUMN jdata_af jsonb
+	, ADD COLUMN jdata_ad jsonb;
+
+ALTER TABLE solaragg.agg_datum_daily 
+	ADD COLUMN jdata_as jsonb
+	, ADD COLUMN jdata_af jsonb
+	, ADD COLUMN jdata_ad jsonb;
+
+ALTER TABLE solaragg.agg_datum_monthly 
+	ADD COLUMN jdata_as jsonb
+	, ADD COLUMN jdata_af jsonb
+	, ADD COLUMN jdata_ad jsonb;
+
+
+
+CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
+  RETURNS integer LANGUAGE plpgsql VOLATILE AS
+$$
+DECLARE
+	stale record;
+	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum
+			WHERE agg_kind = kind
+			-- Too slow to order; not strictly fair but process much faster
+			-- ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
+			LIMIT 1
+			FOR UPDATE SKIP LOCKED;
+	agg_span interval;
+	agg_json jsonb := NULL;
+	agg_jmeta jsonb := NULL;
+	agg_reading jsonb := NULL;
+	node_tz text := 'UTC';
+	proc_count integer := 0;
+BEGIN
+	CASE kind
+		WHEN 'h' THEN
+			agg_span := interval '1 hour';
+		WHEN 'd' THEN
+			agg_span := interval '1 day';
+		ELSE
+			agg_span := interval '1 month';
+	END CASE;
+
+	OPEN curs;
+	FETCH NEXT FROM curs INTO stale;
+
+	IF FOUND THEN
+		-- get the node TZ for local date/time
+		SELECT l.time_zone  FROM solarnet.sn_node n
+		INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE n.node_id = stale.node_id
+		INTO node_tz;
+
+		IF NOT FOUND THEN
+			RAISE NOTICE 'Node % has no time zone, will use UTC.', stale.node_id;
+			node_tz := 'UTC';
+		END IF;
+
+		CASE kind
+			WHEN 'h' THEN
+				SELECT jdata, jmeta
+				FROM solaragg.calc_datum_time_slots(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, agg_span, 0, interval '1 hour')
+				INTO agg_json, agg_jmeta;
+				
+				SELECT jdata
+				FROM solardatum.calculate_datum_diff_over(stale.node_id, stale.source_id::text, stale.ts_start, stale.ts_start + agg_span)
+				INTO agg_reading;
+
+			WHEN 'd' THEN
+				SELECT jdata, jmeta
+				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale.ts_start + agg_span, 'h')
+				INTO agg_json, agg_jmeta;
+				
+				SELECT jsonb_strip_nulls(jsonb_build_object(
+					 'as', first_value(jdata_as) OVER win,
+					 'af', last_value(jdata_af) OVER win,
+					 'ad', solarcommon.jsonb_sum_object(jdata_ad) OVER win
+				))
+				FROM solaragg.agg_datum_hourly
+				WHERE node_id = stale.node_id
+					AND source_id = stale.source_id
+					AND ts_start >= stale.ts_start
+					AND ts_start < (stale.ts_start + agg_span)
+				WINDOW win AS (ORDER BY ts_start ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+				INTO agg_reading;
+
+			ELSE
+				SELECT jdata, jmeta
+				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale.ts_start + agg_span, 'd')
+				INTO agg_json, agg_jmeta;
+				
+				SELECT jsonb_strip_nulls(jsonb_build_object(
+					 'as', first_value(jdata_as) OVER win,
+					 'af', last_value(jdata_af) OVER win,
+					 'ad', solarcommon.jsonb_sum_object(jdata_ad) OVER win
+				))
+				FROM solaragg.agg_datum_daily
+				WHERE node_id = stale.node_id
+					AND source_id = stale.source_id
+					AND ts_start >= stale.ts_start
+					AND ts_start < (stale.ts_start + agg_span)
+				WINDOW win AS (ORDER BY ts_start ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+				INTO agg_reading;
+		END CASE;
+
+		IF agg_json IS NULL THEN
+			-- delete agg, using date range in case time zone of node has changed
+			CASE kind
+				WHEN 'h' THEN
+					DELETE FROM solaragg.agg_datum_hourly
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span;
+				WHEN 'd' THEN
+					DELETE FROM solaragg.agg_datum_daily
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span;
+				ELSE
+					DELETE FROM solaragg.agg_datum_monthly
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span;
+			END CASE;
+		ELSE
+			CASE kind
+				WHEN 'h' THEN
+					INSERT INTO solaragg.agg_datum_hourly (
+						ts_start, local_date, node_id, source_id,
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta,
+						jdata_as, jdata_af, jdata_ad)
+					VALUES (
+						stale.ts_start,
+						stale.ts_start at time zone node_tz,
+						stale.node_id,
+						stale.source_id,
+						agg_json->'i',
+						agg_json->'a',
+						agg_json->'s',
+						solarcommon.json_array_to_text_array(agg_json->'t'),
+						agg_jmeta,
+						agg_reading->'as',
+						agg_reading->'af',
+						agg_reading->'ad'
+					)
+					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+					SET jdata_i = EXCLUDED.jdata_i,
+						jdata_a = EXCLUDED.jdata_a,
+						jdata_s = EXCLUDED.jdata_s,
+						jdata_t = EXCLUDED.jdata_t,
+						jmeta = EXCLUDED.jmeta,
+						jdata_as = EXCLUDED.jdata_as,
+						jdata_af = EXCLUDED.jdata_af,
+						jdata_ad = EXCLUDED.jdata_ad;
+
+					-- in case node tz changed, remove stale record(s)
+					DELETE FROM solaragg.agg_datum_hourly
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span
+						AND ts_start <> stale.ts_start;
+				WHEN 'd' THEN
+					INSERT INTO solaragg.agg_datum_daily (
+						ts_start, local_date, node_id, source_id,
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta,
+						jdata_as, jdata_af, jdata_ad)
+					VALUES (
+						stale.ts_start,
+						CAST(stale.ts_start at time zone node_tz AS DATE),
+						stale.node_id,
+						stale.source_id,
+						agg_json->'i',
+						agg_json->'a',
+						agg_json->'s',
+						solarcommon.json_array_to_text_array(agg_json->'t'),
+						agg_jmeta,
+						agg_reading->'as',
+						agg_reading->'af',
+						agg_reading->'ad'
+					)
+					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+					SET jdata_i = EXCLUDED.jdata_i,
+						jdata_a = EXCLUDED.jdata_a,
+						jdata_s = EXCLUDED.jdata_s,
+						jdata_t = EXCLUDED.jdata_t,
+						jmeta = EXCLUDED.jmeta,
+						jdata_as = EXCLUDED.jdata_as,
+						jdata_af = EXCLUDED.jdata_af,
+						jdata_ad = EXCLUDED.jdata_ad;
+
+					-- in case node tz changed, remove stale record(s)
+					DELETE FROM solaragg.agg_datum_daily
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span
+						AND ts_start <> stale.ts_start;
+				ELSE
+					INSERT INTO solaragg.agg_datum_monthly (
+						ts_start, local_date, node_id, source_id,
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta,
+						jdata_as, jdata_af, jdata_ad)
+					VALUES (
+						stale.ts_start,
+						CAST(stale.ts_start at time zone node_tz AS DATE),
+						stale.node_id,
+						stale.source_id,
+						agg_json->'i',
+						agg_json->'a',
+						agg_json->'s',
+						solarcommon.json_array_to_text_array(agg_json->'t'),
+						agg_jmeta,
+						agg_reading->'as',
+						agg_reading->'af',
+						agg_reading->'ad'
+					)
+					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
+					SET jdata_i = EXCLUDED.jdata_i,
+						jdata_a = EXCLUDED.jdata_a,
+						jdata_s = EXCLUDED.jdata_s,
+						jdata_t = EXCLUDED.jdata_t,
+						jmeta = EXCLUDED.jmeta,
+						jdata_as = EXCLUDED.jdata_as,
+						jdata_af = EXCLUDED.jdata_af,
+						jdata_ad = EXCLUDED.jdata_ad;
+
+					-- in case node tz changed, remove stale record(s)
+					DELETE FROM solaragg.agg_datum_monthly
+					WHERE node_id = stale.node_id
+						AND source_id = stale.source_id
+						AND ts_start > stale.ts_start - agg_span
+						AND ts_start < stale.ts_start + agg_span
+						AND ts_start <> stale.ts_start;
+			END CASE;
+		END IF;
+		DELETE FROM solaragg.agg_stale_datum WHERE CURRENT OF curs;
+		proc_count := 1;
+
+		-- now make sure we recalculate the next aggregate level by submitting a stale record for the next level
+		-- and also update daily audit stats
+		CASE kind
+			WHEN 'h' THEN
+				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'd')
+				ON CONFLICT DO NOTHING;
+
+			WHEN 'd' THEN
+				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+				VALUES (date_trunc('month', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'm')
+				ON CONFLICT DO NOTHING;
+
+				-- handle update to raw audit data
+				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
+				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'r')
+				ON CONFLICT DO NOTHING;
+
+				-- handle update to hourly audit data
+				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
+				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'h')
+				ON CONFLICT DO NOTHING;
+
+				-- handle update to daily audit data
+				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
+				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'd')
+				ON CONFLICT DO NOTHING;
+			ELSE
+				-- handle update to monthly audit data
+				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
+				VALUES (date_trunc('month', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'm')
+				ON CONFLICT DO NOTHING;
+		END CASE;
+	END IF;
+	CLOSE curs;
+	RETURN proc_count;
+END;
+$$;

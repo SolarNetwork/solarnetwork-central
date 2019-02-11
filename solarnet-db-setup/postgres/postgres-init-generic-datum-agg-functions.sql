@@ -630,7 +630,7 @@ $BODY$;
 
 CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
   RETURNS integer LANGUAGE plpgsql VOLATILE AS
-$BODY$
+$$
 DECLARE
 	stale record;
 	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum
@@ -642,6 +642,7 @@ DECLARE
 	agg_span interval;
 	agg_json jsonb := NULL;
 	agg_jmeta jsonb := NULL;
+	agg_reading jsonb := NULL;
 	node_tz text := 'UTC';
 	proc_count integer := 0;
 BEGIN
@@ -674,16 +675,46 @@ BEGIN
 				SELECT jdata, jmeta
 				FROM solaragg.calc_datum_time_slots(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, agg_span, 0, interval '1 hour')
 				INTO agg_json, agg_jmeta;
+				
+				SELECT jdata
+				FROM solardatum.calculate_datum_diff_over(stale.node_id, stale.source_id::text, stale.ts_start, stale.ts_start + agg_span)
+				INTO agg_reading;
 
 			WHEN 'd' THEN
 				SELECT jdata, jmeta
 				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale.ts_start + agg_span, 'h')
 				INTO agg_json, agg_jmeta;
+				
+				SELECT jsonb_strip_nulls(jsonb_build_object(
+					 'as', first_value(jdata_as) OVER win,
+					 'af', last_value(jdata_af) OVER win,
+					 'a', solarcommon.jsonb_sum_object(jdata_ad) OVER win
+				))
+				FROM solaragg.agg_datum_hourly
+				WHERE node_id = stale.node_id
+					AND source_id = stale.source_id
+					AND ts_start >= stale.ts_start
+					AND ts_start < (stale.ts_start + agg_span)
+				WINDOW win AS (ORDER BY ts_start ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+				INTO agg_reading;
 
 			ELSE
 				SELECT jdata, jmeta
 				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale.ts_start + agg_span, 'd')
 				INTO agg_json, agg_jmeta;
+				
+				SELECT jsonb_strip_nulls(jsonb_build_object(
+					 'as', first_value(jdata_as) OVER win,
+					 'af', last_value(jdata_af) OVER win,
+					 'a', solarcommon.jsonb_sum_object(jdata_ad) OVER win
+				))
+				FROM solaragg.agg_datum_daily
+				WHERE node_id = stale.node_id
+					AND source_id = stale.source_id
+					AND ts_start >= stale.ts_start
+					AND ts_start < (stale.ts_start + agg_span)
+				WINDOW win AS (ORDER BY ts_start ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+				INTO agg_reading;
 		END CASE;
 
 		IF agg_json IS NULL THEN
@@ -713,7 +744,8 @@ BEGIN
 				WHEN 'h' THEN
 					INSERT INTO solaragg.agg_datum_hourly (
 						ts_start, local_date, node_id, source_id,
-						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta,
+						jdata_as, jdata_af, jdata_ad)
 					VALUES (
 						stale.ts_start,
 						stale.ts_start at time zone node_tz,
@@ -723,14 +755,20 @@ BEGIN
 						agg_json->'a',
 						agg_json->'s',
 						solarcommon.json_array_to_text_array(agg_json->'t'),
-						agg_jmeta
+						agg_jmeta,
+						agg_reading->'as',
+						agg_reading->'af',
+						agg_reading->'a'
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
 						jdata_t = EXCLUDED.jdata_t,
-						jmeta = EXCLUDED.jmeta;
+						jmeta = EXCLUDED.jmeta,
+						jdata_as = EXCLUDED.jdata_as,
+						jdata_af = EXCLUDED.jdata_af,
+						jdata_ad = EXCLUDED.jdata_ad;
 
 					-- in case node tz changed, remove stale record(s)
 					DELETE FROM solaragg.agg_datum_hourly
@@ -742,7 +780,8 @@ BEGIN
 				WHEN 'd' THEN
 					INSERT INTO solaragg.agg_datum_daily (
 						ts_start, local_date, node_id, source_id,
-						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta,
+						jdata_as, jdata_af, jdata_ad)
 					VALUES (
 						stale.ts_start,
 						CAST(stale.ts_start at time zone node_tz AS DATE),
@@ -752,14 +791,20 @@ BEGIN
 						agg_json->'a',
 						agg_json->'s',
 						solarcommon.json_array_to_text_array(agg_json->'t'),
-						agg_jmeta
+						agg_jmeta,
+						agg_reading->'as',
+						agg_reading->'af',
+						agg_reading->'a'
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
 						jdata_t = EXCLUDED.jdata_t,
-						jmeta = EXCLUDED.jmeta;
+						jmeta = EXCLUDED.jmeta,
+						jdata_as = EXCLUDED.jdata_as,
+						jdata_af = EXCLUDED.jdata_af,
+						jdata_ad = EXCLUDED.jdata_ad;
 
 					-- in case node tz changed, remove stale record(s)
 					DELETE FROM solaragg.agg_datum_daily
@@ -771,7 +816,8 @@ BEGIN
 				ELSE
 					INSERT INTO solaragg.agg_datum_monthly (
 						ts_start, local_date, node_id, source_id,
-						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta,
+						jdata_as, jdata_af, jdata_ad)
 					VALUES (
 						stale.ts_start,
 						CAST(stale.ts_start at time zone node_tz AS DATE),
@@ -781,14 +827,20 @@ BEGIN
 						agg_json->'a',
 						agg_json->'s',
 						solarcommon.json_array_to_text_array(agg_json->'t'),
-						agg_jmeta
+						agg_jmeta,
+						agg_reading->'as',
+						agg_reading->'af',
+						agg_reading->'a'
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
 						jdata_t = EXCLUDED.jdata_t,
-						jmeta = EXCLUDED.jmeta;
+						jmeta = EXCLUDED.jmeta,
+						jdata_as = EXCLUDED.jdata_as,
+						jdata_af = EXCLUDED.jdata_af,
+						jdata_ad = EXCLUDED.jdata_ad;
 
 					-- in case node tz changed, remove stale record(s)
 					DELETE FROM solaragg.agg_datum_monthly
@@ -839,7 +891,7 @@ BEGIN
 	CLOSE curs;
 	RETURN proc_count;
 END;
-$BODY$;
+$$;
 
 CREATE OR REPLACE FUNCTION solaragg.process_agg_stale_datum(kind char, max integer)
   RETURNS INTEGER AS

@@ -143,6 +143,22 @@ CREATE TABLE solaragg.agg_messages (
 
 CREATE INDEX agg_messages_ts_node_idx ON solaragg.agg_messages (ts, node_id);
 
+/**
+ * TABLE solaragg.agg_datum_hourly
+ *
+ * @param ts_start		the starting date of the hourly time slot
+ * @param local_date		the `ts_start` in the node's local time zone
+ * @param node_id		the node ID
+ * @param source_id		the source ID
+ * @param jdata_i		the instantaneous sample data, averaged for the time slot
+ * @param jdata_a		the accumulating sample data, summed for the time slot
+ * @param jdata_s		the status sample data; FILO values for the time slot
+ * @param jdata_t		the tags seen over the time slot
+ * @param jmeta			aggregate metadata used for aggregating higher levels
+ * @param jdata_as		start reading values of the accumulating sample data in the time slot
+ * @param jdata_af		final reading values of the accumulating sample data in the time slot
+ * @param jdata_ad		difference reading values of the accumulating sample data in the time slot
+ */
 CREATE TABLE solaragg.agg_datum_hourly (
   ts_start timestamp with time zone NOT NULL,
   local_date timestamp without time zone NOT NULL,
@@ -153,6 +169,9 @@ CREATE TABLE solaragg.agg_datum_hourly (
   jdata_s jsonb,
   jdata_t text[],
   jmeta jsonb,
+  jdata_as jsonb,
+  jdata_af jsonb,
+  jdata_ad jsonb,
  CONSTRAINT agg_datum_hourly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
@@ -176,6 +195,9 @@ CREATE TABLE solaragg.agg_datum_daily (
   jdata_s jsonb,
   jdata_t text[],
   jmeta jsonb,
+  jdata_as jsonb,
+  jdata_af jsonb,
+  jdata_ad jsonb,
  CONSTRAINT agg_datum_daily_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
@@ -230,6 +252,9 @@ CREATE TABLE solaragg.agg_datum_monthly (
   jdata_s jsonb,
   jdata_t text[],
   jmeta jsonb,
+  jdata_as jsonb,
+  jdata_af jsonb,
+  jdata_ad jsonb,
  CONSTRAINT agg_datum_monthly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
@@ -1086,6 +1111,163 @@ RETURNS TABLE(
 	INNER JOIN solardatum.da_datum d ON d.node_id = ANY(mdg.nodes) AND d.source_id = ANY(mdg.sources)
 	WHERE d.ts >= ts_min
 		AND d.ts <= mdg.ts_start + interval '1 day'
+	GROUP BY d.node_id, d.source_id
+$$;
+
+
+/**
+ * Calculate the difference between the accumulating properties of datum over a time range.
+ *
+ * This returns at most one row. The returned `ts_start` and `ts_end` columns will
+ * the timestamps of the found starting/ending datum records. The `jdata` column will be computed as the difference
+ * between the starting/ending rows, using the `solarcommon.jsonb_diffsum_jdata()` aggregate function.
+ *
+ * @param node 			the node ID to find
+ * @param source 		the source ID to find
+ * @param ts_min		the timestamp of the start of the time range (inclusive)
+ * @param ts_max		the timestamp of the end of the time range (exclusive)
+ */
+CREATE OR REPLACE FUNCTION solardatum.calculate_datum_diff_over(
+	node bigint, source text, ts_min timestamptz, ts_max timestamptz)
+RETURNS TABLE(
+  ts_start timestamp with time zone,
+  ts_end timestamp with time zone,
+  time_zone text,
+  node_id bigint,
+  source_id character varying(64),
+  jdata jsonb
+) LANGUAGE sql STABLE ROWS 1 AS $$
+	WITH latest_before_start AS (
+		SELECT ts, node_id, source_id, jdata_a FROM (
+			(
+				-- find latest before
+				SELECT ts, node_id, source_id, jdata_a, 0 AS rr
+				FROM solardatum.da_datum
+				WHERE node_id = node
+					AND source_id = source
+					AND ts < ts_min
+				ORDER BY ts DESC 
+				LIMIT 1
+			)
+			UNION
+			(
+				-- find latest before reset
+				SELECT ts, node_id, source_id, jdata_as AS jdata_a, 1 AS rr
+				FROM solardatum.da_datum_aux
+				WHERE atype = 'Reset'::solardatum.da_datum_aux_type
+					AND node_id = node
+					AND source_id = source
+					AND ts < ts_min
+				ORDER BY ts DESC
+				LIMIT 1
+			)
+		) d
+		-- add order by rr so that when datum & reset have equivalent ts, reset has priority
+		ORDER BY d.ts DESC, rr DESC
+		LIMIT 1
+	)
+	, earliest_after_start AS (
+		SELECT ts, node_id, source_id, jdata_a FROM (
+			(
+				-- find earliest on/after
+				SELECT ts, node_id, source_id, jdata_a, 0 AS rr
+				FROM solardatum.da_datum
+				WHERE node_id = node
+					AND source_id = source
+					AND ts >= ts_min
+				ORDER BY ts 
+				LIMIT 1
+			)
+			UNION ALL
+			(
+				-- find earliest on/after reset
+				SELECT ts, node_id, source_id, jdata_as AS jdata_a, 1 AS rr
+				FROM solardatum.da_datum_aux
+				WHERE atype = 'Reset'::solardatum.da_datum_aux_type
+					AND node_id = node
+					AND source_id = source
+					AND ts >= ts_min
+				ORDER BY ts
+				LIMIT 1
+			)
+		) d
+		-- add order by rr so that when datum & reset have equivalent ts, reset has priority
+		ORDER BY d.ts, rr DESC
+		LIMIT 1
+	)
+	, latest_before_end AS (
+		SELECT ts, node_id, source_id, jdata_a FROM (
+			(
+				-- find latest before
+				SELECT ts, node_id, source_id, jdata_a, 0 AS rr
+				FROM solardatum.da_datum
+				WHERE node_id = node
+					AND source_id = source
+					AND ts < ts_max
+				ORDER BY ts DESC 
+				LIMIT 1
+			)
+			UNION ALL
+			(
+				-- find latest before reset
+				SELECT ts, node_id, source_id, jdata_af AS jdata_a, 1 AS rr
+				FROM solardatum.da_datum_aux
+				WHERE atype = 'Reset'::solardatum.da_datum_aux_type
+					AND node_id = node
+					AND source_id = source
+					AND ts < ts_max
+				ORDER BY ts DESC
+				LIMIT 1
+			)
+		) d
+		-- add order by rr so that when datum & reset have equivalent ts, reset has priority
+		ORDER BY d.ts DESC, rr DESC
+		LIMIT 1
+	)
+	, d AS (
+		SELECT * FROM (
+			SELECT *
+			FROM (
+				SELECT * FROM latest_before_start
+				UNION
+				SELECT * FROM earliest_after_start
+			) d
+			ORDER BY d.ts
+			LIMIT 1
+		) earliest
+	
+		UNION ALL
+		SELECT * FROM latest_before_end
+	)
+	, ranges AS (
+		SELECT min(ts) AS sdate
+			, max(ts) AS edate
+		FROM d
+	)
+	, combined AS (
+		SELECT * FROM d
+	
+		UNION ALL
+		SELECT aux.ts - unnest(ARRAY['1 millisecond','0'])::interval AS ts
+			, aux.node_id
+			, aux.source_id
+			, unnest(ARRAY[aux.jdata_af, aux.jdata_as]) AS jdata_a
+		FROM ranges, solardatum.da_datum_aux aux 
+		WHERE atype = 'Reset'::solardatum.da_datum_aux_type
+			AND aux.node_id = node 
+			AND aux.source_id = source
+			AND aux.ts > ranges.sdate
+			AND aux.ts < ranges.edate
+	)
+	-- calculate difference by node,source, of {start[, resetFinal1, resetStart1, ...], final}
+	SELECT min(d.ts) AS ts_start,
+		max(d.ts) AS ts_end,
+		min(nlt.time_zone) AS time_zone,
+		d.node_id,
+		d.source_id,
+		solarcommon.jsonb_diffsum_jdata(d.jdata_a ORDER BY d.ts) AS jdata
+	FROM combined d
+	INNER JOIN solarnet.node_local_time nlt ON nlt.node_id = d.node_id
 	GROUP BY d.node_id, d.source_id
 $$;
 
