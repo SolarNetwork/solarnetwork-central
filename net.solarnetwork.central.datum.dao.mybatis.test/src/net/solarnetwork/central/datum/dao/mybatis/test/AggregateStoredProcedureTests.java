@@ -67,7 +67,7 @@ public class AggregateStoredProcedureTests extends AbstractMyBatisDaoTestSupport
 	}
 
 	@Test
-	public void cacAggDatumAggHourlyToDayNoData() {
+	public void calcAggDatumAggHourlyToDayNoData() {
 		DateTime start = new DateTime(2018, 7, 1, 0, 0, DateTimeZone.UTC);
 		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.calc_agg_datum_agg(?,ARRAY[?],?,?, 'h')", TEST_NODE_ID,
@@ -77,7 +77,7 @@ public class AggregateStoredProcedureTests extends AbstractMyBatisDaoTestSupport
 	}
 
 	@Test
-	public void cacAggDatumAggHourlyToDay() {
+	public void calcAggDatumAggHourlyToDay() {
 		DateTime start = new DateTime(2018, 7, 1, 0, 0, 0, DateTimeZone.UTC);
 		Map<String, Object> iData = new HashMap<String, Object>(2);
 		iData.put("foo", 1.234f);
@@ -115,7 +115,7 @@ public class AggregateStoredProcedureTests extends AbstractMyBatisDaoTestSupport
 	}
 
 	@Test
-	public void cacAggDatumAggDailyToMonthNoData() {
+	public void calcAggDatumAggDailyToMonthNoData() {
 		DateTime start = new DateTime(2018, 7, 1, 0, 0, DateTimeZone.UTC);
 		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.calc_agg_datum_agg(?,ARRAY[?],?,?, 'd')", TEST_NODE_ID,
@@ -125,7 +125,7 @@ public class AggregateStoredProcedureTests extends AbstractMyBatisDaoTestSupport
 	}
 
 	@Test
-	public void cacAggDatumAggDailyToMonth() {
+	public void calcAggDatumAggDailyToMonth() {
 		DateTime start = new DateTime(2018, 7, 1, 0, 0, 0, DateTimeZone.UTC);
 		DateTime end = null;
 		Map<String, Object> iData = new HashMap<String, Object>(2);
