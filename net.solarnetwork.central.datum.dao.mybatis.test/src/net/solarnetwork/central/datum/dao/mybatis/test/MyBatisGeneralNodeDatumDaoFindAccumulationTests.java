@@ -89,15 +89,27 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 	private void verifyAggregateReadings(String msg, List<GeneralNodeDatumReadingAggregate> aggData,
 			String propName, Object[][] expected) {
 		assertThat(msg + " count", aggData, hasSize(expected.length));
+		DateTimeZone zone = DateTimeZone.forID(TEST_TZ);
 		for ( int i = 0; i < expected.length; i++ ) {
 			GeneralNodeDatumReadingAggregate m = aggData.get(i);
-			assertThat(msg + " [" + i + "] " + propName + " start value", m.getAs().get(propName),
+			assertThat(msg + " [" + i + "] " + propName + " date", m.getDate().withZone(zone),
 					equalTo(expected[i][0]));
-			assertThat(msg + " [" + i + "] " + propName + " end value", m.getAf().get(propName),
+			assertThat(msg + " [" + i + "] " + propName + " start value", m.getAs().get(propName),
 					equalTo(expected[i][1]));
-			assertThat(msg + " [" + i + "] " + propName + " accumulation", m.getA().get(propName),
+			assertThat(msg + " [" + i + "] " + propName + " end value", m.getAf().get(propName),
 					equalTo(expected[i][2]));
+			assertThat(msg + " [" + i + "] " + propName + " accumulation", m.getA().get(propName),
+					equalTo(expected[i][3]));
 		}
+	}
+
+	private void verifyAggregateReadings(String msg, String propName, Object[][] expectedHourly,
+			Object[][] expectedDaily, Object[][] expectedMonthly) {
+		verifyAggregateReadings(msg + " hourly", getDatumReadingAggregteHourly(), propName,
+				expectedHourly);
+		verifyAggregateReadings(msg + " daily", getDatumReadingAggregteDaily(), propName, expectedDaily);
+		verifyAggregateReadings(msg + " monthly", getDatumReadingAggregteMonthly(), propName,
+				expectedMonthly);
 	}
 
 	private void verifyCalculateDatumDiffOverResult(String msg, GeneralNodeDatumReadingAggregate m,
@@ -400,14 +412,26 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		// then
 		verifyCalculateDatumDiffOverResult("(d3 - d1) = (8044 - 4002)", m, 8044, 4002, 4042);
 
-		List<GeneralNodeDatumReadingAggregate> aggDataHourly = getDatumReadingAggregteHourly();
-		verifyAggregateReadings("Hourly", aggDataHourly, WH_PROP, new Object[][] {
+		verifyAggregateReadings("(d3 - d1) = (8044 - 4002)", WH_PROP, new Object[][] {
 			// @formatter:off
-				new Object[] { 4002, 4002, 0 },
-				new Object[] { 4002, 4445, 443 },
-				new Object[] { 4445, 8044, 3599 }, 
-				new Object[] { 8044, 8344, 300 },
-				// @formatter:on
+			new Object[] { ts.minusHours(1),  4002, 4002, 0 },
+			new Object[] { ts,                4002, 4445, 443 },
+			new Object[] { ts2.minusHours(1), 4445, 8044, 3599 }, 
+			new Object[] { ts2,               8044, 8344, 300 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusDays(1),  4002, 4002, 0 },
+			new Object[] { ts,               4002, 4445, 443 },
+			new Object[] { ts2.minusDays(1), 4445, 8044, 3599 }, 
+			new Object[] { ts2,              8044, 8344, 300 },
+			// @formatter:on
+		}, new Object[][] {
+			// @formatter:off
+			new Object[] { ts.minusMonths(1), 4002, 4002, 0 },
+			new Object[] { ts,                4002, 8044, 4042 },
+			new Object[] { ts.plusMonths(1),  8044, 8344, 300 }, 
+			// @formatter:on
 		});
 	}
 

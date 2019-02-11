@@ -130,8 +130,34 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 	protected List<GeneralNodeDatumReadingAggregate> getDatumReadingAggregteHourly() {
 		List<Map<String, Object>> rows = jdbcTemplate
 				.queryForList("SELECT jsonb_strip_nulls(jsonb_build_object("
-						+ "'as', jdata_as, 'af', jdata_af, 'a', jdata_ad"
-						+ "))::text AS jdata FROM solaragg.agg_datum_hourly");
+						+ "'date', extract('epoch' from ts_start)::int8 * 1000::int8, "
+						+ "'nodeId', node_id, 'sourceId', source_id, "
+						+ "'as', jdata_as, 'af', jdata_af, 'a', jdata_ad))::text AS jdata "
+						+ "FROM solaragg.agg_datum_hourly");
+
+		return rows.stream().map(d -> JsonUtils.getObjectFromJSON((String) d.get("jdata"),
+				GeneralNodeDatumReadingAggregate.class)).collect(toList());
+	}
+
+	protected List<GeneralNodeDatumReadingAggregate> getDatumReadingAggregteDaily() {
+		List<Map<String, Object>> rows = jdbcTemplate
+				.queryForList("SELECT jsonb_strip_nulls(jsonb_build_object("
+						+ "'date', extract('epoch' from ts_start)::int8 * 1000::int8, "
+						+ "'nodeId', node_id, 'sourceId', source_id, "
+						+ "'as', jdata_as, 'af', jdata_af, 'a', jdata_ad))::text AS jdata "
+						+ "FROM solaragg.agg_datum_daily");
+
+		return rows.stream().map(d -> JsonUtils.getObjectFromJSON((String) d.get("jdata"),
+				GeneralNodeDatumReadingAggregate.class)).collect(toList());
+	}
+
+	protected List<GeneralNodeDatumReadingAggregate> getDatumReadingAggregteMonthly() {
+		List<Map<String, Object>> rows = jdbcTemplate
+				.queryForList("SELECT jsonb_strip_nulls(jsonb_build_object("
+						+ "'date', extract('epoch' from ts_start)::int8 * 1000::int8, "
+						+ "'nodeId', node_id, 'sourceId', source_id, "
+						+ "'as', jdata_as, 'af', jdata_af, 'a', jdata_ad))::text AS jdata "
+						+ "FROM solaragg.agg_datum_monthly");
 
 		return rows.stream().map(d -> JsonUtils.getObjectFromJSON((String) d.get("jdata"),
 				GeneralNodeDatumReadingAggregate.class)).collect(toList());

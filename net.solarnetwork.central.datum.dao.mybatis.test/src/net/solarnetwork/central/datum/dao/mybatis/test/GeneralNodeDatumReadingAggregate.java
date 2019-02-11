@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
 import java.util.Map;
+import org.joda.time.DateTime;
 
 /**
  * Reading aggregate for testing.
@@ -32,9 +33,36 @@ import java.util.Map;
  */
 public class GeneralNodeDatumReadingAggregate {
 
+	private DateTime date;
+	private Long nodeId;
+	private String sourceId;
 	private Map<String, Number> a;
 	private Map<String, Number> as;
 	private Map<String, Number> af;
+
+	public DateTime getDate() {
+		return date;
+	}
+
+	public void setDate(DateTime date) {
+		this.date = date;
+	}
+
+	public Long getNodeId() {
+		return nodeId;
+	}
+
+	public void setNodeId(Long nodeId) {
+		this.nodeId = nodeId;
+	}
+
+	public String getSourceId() {
+		return sourceId;
+	}
+
+	public void setSourceId(String sourceId) {
+		this.sourceId = sourceId;
+	}
 
 	public Map<String, Number> getA() {
 		return a;
