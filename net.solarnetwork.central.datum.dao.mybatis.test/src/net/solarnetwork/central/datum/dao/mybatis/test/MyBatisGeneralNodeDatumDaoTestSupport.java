@@ -127,6 +127,16 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 				"select * from solaragg.agg_datum_hourly order by node_id,ts_start,source_id");
 	}
 
+	protected List<GeneralNodeDatumReadingAggregate> getDatumReadingAggregteHourly() {
+		List<Map<String, Object>> rows = jdbcTemplate
+				.queryForList("SELECT jsonb_strip_nulls(jsonb_build_object("
+						+ "'as', jdata_as, 'af', jdata_af, 'a', jdata_ad"
+						+ "))::text AS jdata FROM solaragg.agg_datum_hourly");
+
+		return rows.stream().map(d -> JsonUtils.getObjectFromJSON((String) d.get("jdata"),
+				GeneralNodeDatumReadingAggregate.class)).collect(toList());
+	}
+
 	protected List<Map<String, Object>> getDatumAggregateDaily() {
 		return jdbcTemplate.queryForList(
 				"select * from solaragg.agg_datum_daily order by node_id,ts_start,source_id");

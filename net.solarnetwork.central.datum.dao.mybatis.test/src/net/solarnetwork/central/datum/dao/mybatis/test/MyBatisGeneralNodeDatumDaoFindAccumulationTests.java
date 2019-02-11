@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.dao.mybatis.test;
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertThat;
 import java.util.ArrayList;
@@ -83,6 +84,20 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 				equalTo(endValue));
 		assertThat(msg + " " + propName + " accumulation", m.getSampleData().get(propName),
 				equalTo(accumulation));
+	}
+
+	private void verifyAggregateReadings(String msg, List<GeneralNodeDatumReadingAggregate> aggData,
+			String propName, Object[][] expected) {
+		assertThat(msg + " count", aggData, hasSize(expected.length));
+		for ( int i = 0; i < expected.length; i++ ) {
+			GeneralNodeDatumReadingAggregate m = aggData.get(i);
+			assertThat(msg + " [" + i + "] " + propName + " start value", m.getAs().get(propName),
+					equalTo(expected[i][0]));
+			assertThat(msg + " [" + i + "] " + propName + " end value", m.getAf().get(propName),
+					equalTo(expected[i][1]));
+			assertThat(msg + " [" + i + "] " + propName + " accumulation", m.getA().get(propName),
+					equalTo(expected[i][2]));
+		}
 	}
 
 	private void verifyCalculateDatumDiffOverResult(String msg, GeneralNodeDatumReadingAggregate m,
@@ -384,6 +399,16 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 
 		// then
 		verifyCalculateDatumDiffOverResult("(d3 - d1) = (8044 - 4002)", m, 8044, 4002, 4042);
+
+		List<GeneralNodeDatumReadingAggregate> aggDataHourly = getDatumReadingAggregteHourly();
+		verifyAggregateReadings("Hourly", aggDataHourly, WH_PROP, new Object[][] {
+			// @formatter:off
+				new Object[] { 4002, 4002, 0 },
+				new Object[] { 4002, 4445, 443 },
+				new Object[] { 4445, 8044, 3599 }, 
+				new Object[] { 8044, 8344, 300 },
+				// @formatter:on
+		});
 	}
 
 	@Test
