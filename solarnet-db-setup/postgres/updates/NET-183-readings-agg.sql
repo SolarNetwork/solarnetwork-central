@@ -444,7 +444,7 @@ BEGIN
 
 	IF FOUND THEN
 		-- get the node TZ for local date/time
-		SELECT l.time_zone  FROM solarnet.sn_node n
+		SELECT l.time_zone FROM solarnet.sn_node n
 		INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 		WHERE n.node_id = stale.node_id
 		INTO node_tz;
@@ -472,7 +472,7 @@ BEGIN
 				SELECT jsonb_strip_nulls(jsonb_build_object(
 					 'as', first_value(jdata_as) OVER win,
 					 'af', last_value(jdata_af) OVER win,
-					 'ad', solarcommon.jsonb_sum_object(jdata_ad) OVER win
+					 'a', solarcommon.jsonb_sum_object(jdata_ad) OVER win
 				))
 				FROM solaragg.agg_datum_hourly
 				WHERE node_id = stale.node_id
@@ -490,7 +490,7 @@ BEGIN
 				SELECT jsonb_strip_nulls(jsonb_build_object(
 					 'as', first_value(jdata_as) OVER win,
 					 'af', last_value(jdata_af) OVER win,
-					 'ad', solarcommon.jsonb_sum_object(jdata_ad) OVER win
+					 'a', solarcommon.jsonb_sum_object(jdata_ad) OVER win
 				))
 				FROM solaragg.agg_datum_daily
 				WHERE node_id = stale.node_id
@@ -542,7 +542,7 @@ BEGIN
 						agg_jmeta,
 						agg_reading->'as',
 						agg_reading->'af',
-						agg_reading->'ad'
+						agg_reading->'a'
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
@@ -578,7 +578,7 @@ BEGIN
 						agg_jmeta,
 						agg_reading->'as',
 						agg_reading->'af',
-						agg_reading->'ad'
+						agg_reading->'a'
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
@@ -614,7 +614,7 @@ BEGIN
 						agg_jmeta,
 						agg_reading->'as',
 						agg_reading->'af',
-						agg_reading->'ad'
+						agg_reading->'a'
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,

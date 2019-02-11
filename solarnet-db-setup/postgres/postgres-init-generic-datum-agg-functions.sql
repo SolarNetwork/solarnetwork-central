@@ -660,7 +660,7 @@ BEGIN
 
 	IF FOUND THEN
 		-- get the node TZ for local date/time
-		SELECT l.time_zone  FROM solarnet.sn_node n
+		SELECT l.time_zone FROM solarnet.sn_node n
 		INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 		WHERE n.node_id = stale.node_id
 		INTO node_tz;
