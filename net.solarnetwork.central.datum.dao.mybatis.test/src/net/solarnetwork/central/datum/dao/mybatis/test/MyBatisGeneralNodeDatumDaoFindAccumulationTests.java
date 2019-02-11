@@ -81,7 +81,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 				equalTo(startValue));
 		assertThat(msg + " " + propName + " end value", m.getSampleData().get(propName + "_end"),
 				equalTo(endValue));
-		assertThat(msg + " " + propName + " accumulation", m.getSampleData().get(WH_PROP),
+		assertThat(msg + " " + propName + " accumulation", m.getSampleData().get(propName),
 				equalTo(accumulation));
 	}
 
