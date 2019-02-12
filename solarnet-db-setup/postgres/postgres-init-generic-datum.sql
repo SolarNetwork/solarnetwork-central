@@ -1126,9 +1126,10 @@ $$;
  * @param source 		the source ID to find
  * @param ts_min		the timestamp of the start of the time range (inclusive)
  * @param ts_max		the timestamp of the end of the time range (exclusive)
+ * @param tolerance 	the maximum time span to look backwards for the previous reading record; smaller == faster
  */
 CREATE OR REPLACE FUNCTION solardatum.calculate_datum_diff_over(
-	node bigint, source text, ts_min timestamptz, ts_max timestamptz)
+	node bigint, source text, ts_min timestamptz, ts_max timestamptz, tolerance interval default interval '1 year')
 RETURNS TABLE(
   ts_start timestamp with time zone,
   ts_end timestamp with time zone,
@@ -1146,6 +1147,7 @@ RETURNS TABLE(
 				WHERE node_id = node
 					AND source_id = source
 					AND ts < ts_min
+					AND ts >= ts_min - tolerance
 				ORDER BY ts DESC 
 				LIMIT 1
 			)
@@ -1158,6 +1160,7 @@ RETURNS TABLE(
 					AND node_id = node
 					AND source_id = source
 					AND ts < ts_min
+					AND ts >= ts_min - tolerance
 				ORDER BY ts DESC
 				LIMIT 1
 			)
@@ -1175,6 +1178,7 @@ RETURNS TABLE(
 				WHERE node_id = node
 					AND source_id = source
 					AND ts >= ts_min
+					AND ts < ts_max
 				ORDER BY ts 
 				LIMIT 1
 			)
@@ -1187,6 +1191,7 @@ RETURNS TABLE(
 					AND node_id = node
 					AND source_id = source
 					AND ts >= ts_min
+					AND ts < ts_max
 				ORDER BY ts
 				LIMIT 1
 			)
@@ -1204,6 +1209,7 @@ RETURNS TABLE(
 				WHERE node_id = node
 					AND source_id = source
 					AND ts < ts_max
+					AND ts >= ts_min
 				ORDER BY ts DESC 
 				LIMIT 1
 			)
@@ -1216,6 +1222,7 @@ RETURNS TABLE(
 					AND node_id = node
 					AND source_id = source
 					AND ts < ts_max
+					AND ts >= ts_min
 				ORDER BY ts DESC
 				LIMIT 1
 			)
@@ -1225,7 +1232,7 @@ RETURNS TABLE(
 		LIMIT 1
 	)
 	, d AS (
-		SELECT * FROM (
+		(
 			SELECT *
 			FROM (
 				SELECT * FROM latest_before_start
@@ -1234,10 +1241,11 @@ RETURNS TABLE(
 			) d
 			ORDER BY d.ts
 			LIMIT 1
-		) earliest
-	
+		)
 		UNION ALL
-		SELECT * FROM latest_before_end
+		(
+			SELECT * FROM latest_before_end
+		)
 	)
 	, ranges AS (
 		SELECT min(ts) AS sdate
