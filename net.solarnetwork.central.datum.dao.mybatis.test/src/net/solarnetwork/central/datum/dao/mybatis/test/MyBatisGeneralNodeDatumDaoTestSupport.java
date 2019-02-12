@@ -168,6 +168,12 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 				"select * from solaragg.agg_datum_daily order by node_id,ts_start,source_id");
 	}
 
+	protected List<Map<String, Object>> getDatumAggregateDaily(Long nodeId) {
+		return jdbcTemplate.queryForList(
+				"select * from solaragg.agg_datum_daily where node_id = ? order by ts_start,source_id",
+				nodeId);
+	}
+
 	protected List<Map<String, Object>> getDatumAggregateMonthly() {
 		return jdbcTemplate.queryForList(
 				"select * from solaragg.agg_datum_monthly order by node_id,ts_start,source_id");

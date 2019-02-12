@@ -62,15 +62,28 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 
 	private static final String WH_PROP = "watt_hours";
 
+	@Override
+	public void setup() {
+		super.setup();
+		setupTestNode(TEST_2ND_NODE);
+	}
+
 	private void verifyAccumulationResult(String msg, ReportingGeneralNodeDatumMatch m, DateTime endDate,
-			DateTime startDate, Object endValue, Object startValue, Object accumulation) {
+			DateTime startDate, Object startValue, Object endValue, Object accumulation) {
 		verifyAccumulationResult(msg, m, TEST_NODE_ID, TEST_SOURCE_ID, WH_PROP, endDate, startDate,
-				endValue, startValue, accumulation);
+				startValue, endValue, accumulation);
+	}
+
+	private void verifyAccumulationResult2(String msg, ReportingGeneralNodeDatumMatch m,
+			DateTime endDate, DateTime startDate, Object startValue, Object endValue,
+			Object accumulation) {
+		verifyAccumulationResult(msg, m, TEST_2ND_NODE, TEST_2ND_SOURCE, WH_PROP, endDate, startDate,
+				startValue, endValue, accumulation);
 	}
 
 	private void verifyAccumulationResult(String msg, ReportingGeneralNodeDatumMatch m, Long nodeId,
-			String sourceId, String propName, DateTime endDate, DateTime startDate, Object endValue,
-			Object startValue, Object accumulation) {
+			String sourceId, String propName, DateTime endDate, DateTime startDate, Object startValue,
+			Object endValue, Object accumulation) {
 		assertThat(msg + " node ID", m.getId().getNodeId(), equalTo(nodeId));
 		assertThat(msg + " source ID", m.getId().getSourceId(), equalTo(sourceId));
 		assertThat(msg + " time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
@@ -125,26 +138,46 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 				equalTo(accumulation));
 	}
 
+	private static final Long[] DATUM_ACCUMULATION_WH_1 = new Long[] { 4002L, 4445L, 8044L, 8344L };
+	private static final Long[] DATUM_ACCUMULATION_WH_2 = new Long[] { 4020L, 4454L, 8004L, 8234L };
+
 	private List<GeneralNodeDatumPK> setupDefaultDatumAccumulationData(DateTime ts, DateTime ts2) {
 		return setupDefaultDatumAccumulationData(ts, ts2, true);
 	}
 
+	private List<GeneralNodeDatumPK> setupDefaultDatumAccumulationData2(DateTime ts, DateTime ts2) {
+		return setupDefaultDatumAccumulationData2(ts, ts2, true);
+	}
+
 	private List<GeneralNodeDatumPK> setupDefaultDatumAccumulationData(DateTime ts, DateTime ts2,
 			boolean processAggregateStaleData) {
+		return setupDefaultDatumAccumulationData(ts, ts2, TEST_NODE_ID, TEST_SOURCE_ID,
+				processAggregateStaleData, DATUM_ACCUMULATION_WH_1);
+	}
+
+	private List<GeneralNodeDatumPK> setupDefaultDatumAccumulationData2(DateTime ts, DateTime ts2,
+			boolean processAggregateStaleData) {
+		return setupDefaultDatumAccumulationData(ts, ts2, TEST_2ND_NODE, TEST_2ND_SOURCE,
+				processAggregateStaleData, DATUM_ACCUMULATION_WH_2);
+	}
+
+	private List<GeneralNodeDatumPK> setupDefaultDatumAccumulationData(DateTime ts, DateTime ts2,
+			Long nodeId, String sourceId, boolean processAggregateStaleData, Long[] data) {
+		assert data != null && data.length > 3;
 		List<GeneralNodeDatumPK> result = new ArrayList<>(4);
 
-		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
-		d1.getSamples().putAccumulatingSampleValue(WH_PROP, 4002);
-		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
-		d2.getSamples().putAccumulatingSampleValue(WH_PROP, 4445);
+		GeneralNodeDatum d1 = getTestInstance(ts.minusMinutes(1), nodeId, sourceId);
+		d1.getSamples().putAccumulatingSampleValue(WH_PROP, data[0]);
+		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), nodeId, sourceId);
+		d2.getSamples().putAccumulatingSampleValue(WH_PROP, data[1]);
 		result.add(dao.store(d1));
 		result.add(dao.store(d2));
 
 		if ( ts2 != null ) {
-			GeneralNodeDatum d3 = getTestInstance(ts2.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
-			d3.getSamples().putAccumulatingSampleValue(WH_PROP, 8044);
-			GeneralNodeDatum d4 = getTestInstance(ts2.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
-			d4.getSamples().putAccumulatingSampleValue(WH_PROP, 8344);
+			GeneralNodeDatum d3 = getTestInstance(ts2.minusMinutes(1), nodeId, sourceId);
+			d3.getSamples().putAccumulatingSampleValue(WH_PROP, data[2]);
+			GeneralNodeDatum d4 = getTestInstance(ts2.plusMinutes(1), nodeId, sourceId);
+			d4.getSamples().putAccumulatingSampleValue(WH_PROP, data[3]);
 			result.add(dao.store(d3));
 			result.add(dao.store(d4));
 
@@ -153,7 +186,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 				processAggregateStaleData();
 
 				DateTimeFormatter dateFormat = ISODateTimeFormat.date().withZone(ts.getZone());
-				assertThat("Aggregate days", sqlDatesFromLocalDates(getDatumAggregateDaily()),
+				assertThat("Aggregate days", sqlDatesFromLocalDates(getDatumAggregateDaily(nodeId)),
 						contains(sqlDates(dateFormat.print(ts.minusDays(1)), dateFormat.print(ts),
 								dateFormat.print(ts2.minusDays(1)), dateFormat.print(ts2))));
 			}
@@ -186,7 +219,58 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(d3 - d1) = (8044 - 4002)", m, ids.get(2).getCreated(),
-				ids.get(0).getCreated(), 8044, 4002, 4042);
+				ids.get(0).getCreated(), 4002, 8044, 4042);
+	}
+
+	@Test
+	public void accumulationOverMultiIgnoreOtherData() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		setupDefaultDatumAccumulationData(ts, ts2, false);
+		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData2(ts, ts2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_2ND_NODE);
+		filter.setSourceId(TEST_2ND_SOURCE);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter, ts, ts2,
+				null);
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(1));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		verifyAccumulationResult2("(d3 - d1) = (8004 - 4020)", m, ids.get(2).getCreated(),
+				ids.get(0).getCreated(), 4020, 8004, 3984);
+	}
+
+	@Test
+	public void accumulationOverMulti() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2, false);
+		List<GeneralNodeDatumPK> ids2 = setupDefaultDatumAccumulationData2(ts, ts2);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID, TEST_2ND_NODE });
+		filter.setSourceIds(new String[] { TEST_SOURCE_ID, TEST_2ND_SOURCE });
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter, ts, ts2,
+				null);
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(2));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		verifyAccumulationResult2("N2 (d3 - d1) = (8004 - 4020)", m, ids2.get(2).getCreated(),
+				ids2.get(0).getCreated(), 4020, 8004, 3984);
+		m = itr.next();
+		verifyAccumulationResult("N1 (d3 - d1) = (8044 - 4002)", m, ids.get(2).getCreated(),
+				ids.get(0).getCreated(), 4002, 8044, 4042);
 	}
 
 	@Test
@@ -215,7 +299,42 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(rF - d1) + (d3 - rS) == (5000 - 4002) + (8044 - 8000)", m,
-				ids.get(2).getCreated(), ids.get(0).getCreated(), 8044, 4002, 1042);
+				ids.get(2).getCreated(), ids.get(0).getCreated(), 4002, 8044, 1042);
+	}
+
+	@Test
+	public void accumulationOverWithResetRecordMulti() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2, false);
+		List<GeneralNodeDatumPK> ids2 = setupDefaultDatumAccumulationData2(ts, ts2);
+
+		// add reset record
+		Map<String, Number> finalSamples = Collections.singletonMap(WH_PROP, 5000);
+		Map<String, Number> startSamples = Collections.singletonMap(WH_PROP, 8000);
+		insertResetDatumAuxiliaryRecord(ts.plusDays(1), TEST_NODE_ID, TEST_SOURCE_ID, finalSamples,
+				startSamples);
+		insertResetDatumAuxiliaryRecord(ts.plusDays(1), TEST_2ND_NODE, TEST_2ND_SOURCE, finalSamples,
+				startSamples);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID, TEST_2ND_NODE });
+		filter.setSourceIds(new String[] { TEST_SOURCE_ID, TEST_2ND_SOURCE });
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter, ts, ts2,
+				null);
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(2));
+
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+		verifyAccumulationResult2("N2 (rF - d1) + (d3 - rS) == (5000 - 4020) + (8004 - 8000)", m,
+				ids2.get(2).getCreated(), ids2.get(0).getCreated(), 4020, 8004, 984);
+		m = itr.next();
+		verifyAccumulationResult("N1 (rF - d1) + (d3 - rS) == (5000 - 4002) + (8044 - 8000)", m,
+				ids.get(2).getCreated(), ids.get(0).getCreated(), 4002, 8044, 1042);
 	}
 
 	@Test
@@ -250,7 +369,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult(
 				"(rF1 - d1) + (rF2 - rS1) + (d3 - rS2) == (5000 - 4002) + (8010 - 8000) + (8044 - 7000)",
-				m, ids.get(2).getCreated(), ids.get(0).getCreated(), 8044, 4002, 2052);
+				m, ids.get(2).getCreated(), ids.get(0).getCreated(), 4002, 8044, 2052);
 	}
 
 	@Test
@@ -280,7 +399,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(d3 - rS) == (8044 - 4400)", m, ids.get(2).getCreated(), resetDate,
-				8044, 4400, 3644);
+				4400, 8044, 3644);
 	}
 
 	@Test
@@ -310,7 +429,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(rF - d1) == (8100 - 4002)", m, resetDate, ids.get(0).getCreated(),
-				8100, 4002, 4098);
+				4002, 8100, 4098);
 	}
 
 	@Test
@@ -346,7 +465,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
-		verifyAccumulationResult("(r2F - rS) == (8100 - 4400)", m, resetDate2, resetDate, 8100, 4400,
+		verifyAccumulationResult("(r2F - rS) == (8100 - 4400)", m, resetDate2, resetDate, 4400, 8100,
 				3700);
 	}
 
@@ -391,7 +510,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(rMidF - rS) + (r2F - rMidS) == (10000 - 4400) + (8100 - 7000)", m,
-				resetDate2, resetDate, 8100, 4400, 6700);
+				resetDate2, resetDate, 4400, 8100, 6700);
 	}
 
 	/*-============================================================================================
@@ -784,7 +903,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(d3 - d1) = (8044 - 4002)", m, ids.get(2).getCreated(),
-				ids.get(0).getCreated(), 8044, 4002, 4042);
+				ids.get(0).getCreated(), 4002, 8044, 4042);
 	}
 
 	@Test
@@ -813,7 +932,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(rF - d1) + (d3 - rS) == (5000 - 4002) + (8044 - 8000)", m,
-				ids.get(2).getCreated(), ids.get(0).getCreated(), 8044, 4002, 1042);
+				ids.get(2).getCreated(), ids.get(0).getCreated(), 4002, 8044, 1042);
 	}
 
 	@Test
@@ -843,7 +962,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(d3 - rS) == (8044 - 4400)", m, ids.get(2).getCreated(), resetDate,
-				8044, 4400, 3644);
+				4400, 8044, 3644);
 	}
 
 	@Test
@@ -873,7 +992,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(rF - d1) == (8100 - 4002)", m, resetDate, ids.get(0).getCreated(),
-				8100, 4002, 4098);
+				4002, 8100, 4098);
 	}
 
 	@Test
@@ -1050,7 +1169,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(d3 - d1) == (8044 - 4002)", m, ids.get(2).getCreated(),
-				ids.get(0).getCreated(), 8044, 4002, 4042);
+				ids.get(0).getCreated(), 4002, 8044, 4042);
 	}
 
 	@Test
@@ -1079,7 +1198,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(rF - d1) + (d3 - rS) == (5000 - 4002) + (8044 - 8000)", m,
-				ids.get(2).getCreated(), ids.get(0).getCreated(), 8044, 4002, 1042);
+				ids.get(2).getCreated(), ids.get(0).getCreated(), 4002, 8044, 1042);
 	}
 
 	@Test
@@ -1109,7 +1228,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(d3 - rS) == (8044 - 4400)", m, ids.get(2).getCreated(), resetDate,
-				8044, 4400, 3644);
+				4400, 8044, 3644);
 	}
 
 	@Test
@@ -1139,7 +1258,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(rF - d1) == (8100 - 4002)", m, resetDate, ids.get(0).getCreated(),
-				8100, 4002, 4098);
+				4002, 8100, 4098);
 	}
 
 	/*-============================================================================================
@@ -1183,7 +1302,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(d3 - d1) == (8044 - 4002)", m, ids.get(2).getCreated(),
-				ids.get(0).getCreated(), 8044, 4002, 4042);
+				ids.get(0).getCreated(), 4002, 8044, 4042);
 	}
 
 	@Test
@@ -1213,7 +1332,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(rF - d1) + (d3 - rS) == (5000 - 4002) + (8044 - 8000)", m,
-				ids.get(2).getCreated(), ids.get(0).getCreated(), 8044, 4002, 1042);
+				ids.get(2).getCreated(), ids.get(0).getCreated(), 4002, 8044, 1042);
 	}
 
 	@Test
@@ -1244,7 +1363,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(d3 - rS) == (8044 - 4400)", m, ids.get(2).getCreated(), resetDate,
-				8044, 4400, 3644);
+				4400, 8044, 3644);
 	}
 
 	@Test
@@ -1275,7 +1394,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(rF - d1) == (8100 - 4002)", m, resetDate, ids.get(0).getCreated(),
-				8100, 4002, 4098);
+				4002, 8100, 4098);
 	}
 
 	@Test
