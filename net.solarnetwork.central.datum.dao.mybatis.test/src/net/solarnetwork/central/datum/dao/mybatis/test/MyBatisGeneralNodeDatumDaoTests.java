@@ -81,7 +81,6 @@ import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.support.FilterableBulkExportOptions;
 import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
-import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
 /**
  * Test cases for the {@link MyBatisGeneralNodeDatumDao} class.
@@ -3035,26 +3034,6 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
 		assertThat("Watts avg", m.getSampleData().get("watts"), equalTo((Object) 288));
 		assertThat("Watt hours projection", m.getSampleData().get("watt_hours"), equalTo((Object) 0));
-	}
-
-	private List<GeneralNodeDatum> createSampleData(int count, DateTime start) {
-		List<GeneralNodeDatum> data = new ArrayList<>(4);
-		long wh = (long) (Math.random() * 1000000000.0);
-		for ( int i = 0; i < count; i++ ) {
-			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setNodeId(TEST_NODE_ID);
-			d.setCreated(start.plusMinutes(i));
-			d.setSourceId(TEST_SOURCE_ID);
-
-			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
-			int watts = (int) (Math.random() * 50000);
-			s.putInstantaneousSampleValue("watts", watts);
-			wh += wh + (long) (watts / 60.0);
-			s.putAccumulatingSampleValue("wattHours", wh);
-			d.setSamples(s);
-			data.add(d);
-		}
-		return data;
 	}
 
 	@Test

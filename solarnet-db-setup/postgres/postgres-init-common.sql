@@ -555,3 +555,55 @@ CREATE AGGREGATE solarcommon.jsonb_diffsum_object(jsonb) (
     stype = jsonb,
     finalfunc = solarcommon.jsonb_diffsum_object_finalfunc
 );
+
+/** JSONB object diffsum aggregate final calculation function for jdata result structure. */
+CREATE OR REPLACE FUNCTION solarcommon.jsonb_diffsum_jdata_finalfunc(agg_state jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var prop,
+		val,
+		f = (agg_state ? agg_state.first : null),
+		p = (agg_state ? agg_state.prev : null),
+		t = (agg_state ? agg_state.total : null),
+		l = (agg_state ? agg_state.last : null);
+	if ( p ) {
+		for ( prop in p ) {
+			if ( t[prop] === undefined ) {
+				t[prop] = 0;
+			}
+		}
+	}
+	
+	for ( prop in t ) {
+		return {'a':t, 'af':l, 'as':f};
+	}
+    return null;
+$$;
+
+/**
+ * Difference and sum aggregate for JSON object values, resulting in a JSON object.
+ *
+ * This aggregate will subtract the _property values_ of the odd JSON objects in the aggregate group
+ * from the next even object in the group, resulting in a JSON object. Each pair or objects are then 
+ * added together to form a final aggregate value. An `ORDER BY` clause is thus essential
+ * to ensure the odd/even values are captured correctly.
+ *
+ * The difference result object will be returned under a `a` property. The first and last values for
+ * each property will be included in the output JSON object under `as` and `af` properties.
+ *
+ * For example, if aggregating objects like:
+ *
+ *     {"wattHours":234}
+ *     {"wattHours":346}
+ *     {"wattHours":1000}
+ *     {"wattHours":1100}
+ *
+ * the resulting object would be:
+ *
+ *    {"a":{"wattHours":212}, "as":{"wattHours_start":234}, "af":{"wattHours_end":1100}}
+ */
+CREATE AGGREGATE solarcommon.jsonb_diffsum_jdata(jsonb) (
+    sfunc = solarcommon.jsonb_diffsum_object_sfunc,
+    stype = jsonb,
+    finalfunc = solarcommon.jsonb_diffsum_jdata_finalfunc
+);

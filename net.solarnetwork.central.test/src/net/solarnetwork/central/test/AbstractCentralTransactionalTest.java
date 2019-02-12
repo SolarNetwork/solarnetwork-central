@@ -258,8 +258,8 @@ public abstract class AbstractCentralTransactionalTest
 	 * @since 1.1
 	 */
 	protected void processAggregateStaleData() {
-		log.debug("Stale datum at start: "
-				+ jdbcTemplate.queryForList("SELECT * FROM solaragg.agg_stale_datum"));
+		log.debug("Stale datum at start: " + jdbcTemplate.queryForList(
+				"SELECT * FROM solaragg.agg_stale_datum ORDER BY ts_start, node_id, source_id"));
 
 		jdbcTemplate.execute(new CallableStatementCreator() {
 

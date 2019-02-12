@@ -57,14 +57,11 @@ DECLARE
 BEGIN
 	IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
 		-- curr hour
-		BEGIN
-			INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
-			VALUES (date_trunc('hour', NEW.ts), NEW.node_id, NEW.source_id, 'h');
-		EXCEPTION WHEN unique_violation THEN
-			-- Nothing to do, just continue
-		END;
+		INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+		VALUES (date_trunc('hour', NEW.ts), NEW.node_id, NEW.source_id, 'h')
+		ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 
-		-- prev hour; if the previous record for this source falls on the previous hour; we have to mark that hour as stale as well
+		-- prev hour; if the previous record for this source falls on the previous hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts < NEW.ts
 			AND d.ts > NEW.ts - interval '1 hour'
@@ -74,43 +71,33 @@ BEGIN
 		LIMIT 1
 		INTO neighbor;
 		IF FOUND AND neighbor.ts < date_trunc('hour', NEW.ts) THEN
-			BEGIN
-				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
-				VALUES (date_trunc('hour', neighbor.ts), neighbor.node_id, neighbor.source_id, 'h');
-			EXCEPTION WHEN unique_violation THEN
-				-- Nothing to do, just continue
-			END;
+			INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+			VALUES (date_trunc('hour', neighbor.ts), neighbor.node_id, neighbor.source_id, 'h')
+			ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 		END IF;
 
-		-- next hour; if the next record for this source falls on the next hour; we have to mark that hour as stale as well
+		-- next slot; if there is another record in a future hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts > NEW.ts
-			AND d.ts < NEW.ts + interval '1 hour'
 			AND d.node_id = NEW.node_id
 			AND d.source_id = NEW.source_id
 		ORDER BY d.ts ASC
 		LIMIT 1
 		INTO neighbor;
 		IF FOUND AND neighbor.ts > date_trunc('hour', NEW.ts) THEN
-			BEGIN
-				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
-				VALUES (date_trunc('hour', neighbor.ts), neighbor.node_id, neighbor.source_id, 'h');
-			EXCEPTION WHEN unique_violation THEN
-				-- Nothing to do, just continue
-			END;
+			INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+			VALUES (date_trunc('hour', neighbor.ts), neighbor.node_id, neighbor.source_id, 'h')
+			ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 		END IF;
 	END IF;
 
 	IF TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND (OLD.source_id <> NEW.source_id OR OLD.node_id <> NEW.node_id)) THEN
 		-- curr hour
-		BEGIN
-			INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
-			VALUES (date_trunc('hour', OLD.ts), OLD.node_id, OLD.source_id, 'h');
-		EXCEPTION WHEN unique_violation THEN
-			-- Nothing to do, just continue
-		END;
+		INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+		VALUES (date_trunc('hour', OLD.ts), OLD.node_id, OLD.source_id, 'h')
+		ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 
-		-- prev hour; if the previous record for this source falls on the previous hour; we have to mark that hour as stale as well
+		-- prev hour; if the previous record for this source falls on the previous hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts < OLD.ts
 			AND d.ts > OLD.ts - interval '1 hour'
@@ -120,30 +107,23 @@ BEGIN
 		LIMIT 1
 		INTO neighbor;
 		IF FOUND AND neighbor.ts < date_trunc('hour', OLD.ts) THEN
-			BEGIN
-				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
-				VALUES (date_trunc('hour', neighbor.ts), neighbor.node_id, neighbor.source_id, 'h');
-			EXCEPTION WHEN unique_violation THEN
-				-- Nothing to do, just continue
-			END;
+			INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+			VALUES (date_trunc('hour', neighbor.ts), neighbor.node_id, neighbor.source_id, 'h')
+			ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 		END IF;
 
-		-- next hour; if the next record for this source falls on the next hour; we have to mark that hour as stale as well
+		-- next slot; if there is another record in a future hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts > OLD.ts
-			AND d.ts < OLD.ts + interval '1 hour'
 			AND d.node_id = OLD.node_id
 			AND d.source_id = OLD.source_id
 		ORDER BY d.ts ASC
 		LIMIT 1
 		INTO neighbor;
 		IF FOUND AND neighbor.ts > date_trunc('hour', OLD.ts) THEN
-			BEGIN
-				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
-				VALUES (date_trunc('hour', neighbor.ts), neighbor.node_id, neighbor.source_id, 'h');
-			EXCEPTION WHEN unique_violation THEN
-				-- Nothing to do, just continue
-			END;
+			INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+			VALUES (date_trunc('hour', neighbor.ts), neighbor.node_id, neighbor.source_id, 'h')
+			ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
 		END IF;
 	END IF;
 
@@ -648,20 +628,22 @@ $BODY$;
 
 CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
   RETURNS integer LANGUAGE plpgsql VOLATILE AS
-$BODY$
+$$
 DECLARE
-	stale record;
-	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum
-			WHERE agg_kind = kind
-			-- Too slow to order; not strictly fair but process much faster
-			-- ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
-			LIMIT 1
-			FOR UPDATE SKIP LOCKED;
-	agg_span interval;
-	agg_json jsonb := NULL;
-	agg_jmeta jsonb := NULL;
-	node_tz text := 'UTC';
-	proc_count integer := 0;
+	stale 					record;
+	agg_span 				interval;
+	agg_json 				jsonb := NULL;
+	agg_jmeta 				jsonb := NULL;
+	agg_reading 			jsonb := NULL;
+	agg_reading_ts_start 	timestamptz := NULL;
+	agg_reading_ts_end 		timestamptz := NULL;
+	node_tz 				text := 'UTC';
+	proc_count 				integer := 0;
+	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum WHERE agg_kind = kind
+		-- Too slow to order; not strictly fair but process much faster
+		-- ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
+		LIMIT 1
+		FOR UPDATE SKIP LOCKED;
 BEGIN
 	CASE kind
 		WHEN 'h' THEN
@@ -677,7 +659,7 @@ BEGIN
 
 	IF FOUND THEN
 		-- get the node TZ for local date/time
-		SELECT l.time_zone  FROM solarnet.sn_node n
+		SELECT l.time_zone FROM solarnet.sn_node n
 		INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 		WHERE n.node_id = stale.node_id
 		INTO node_tz;
@@ -692,19 +674,51 @@ BEGIN
 				SELECT jdata, jmeta
 				FROM solaragg.calc_datum_time_slots(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, agg_span, 0, interval '1 hour')
 				INTO agg_json, agg_jmeta;
+				
+				SELECT jdata, ts_start, ts_end
+				FROM solardatum.calculate_datum_diff_over(stale.node_id, stale.source_id::text, stale.ts_start, stale.ts_start + agg_span)
+				INTO agg_reading, agg_reading_ts_start, agg_reading_ts_end;
 
 			WHEN 'd' THEN
 				SELECT jdata, jmeta
 				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale.ts_start + agg_span, 'h')
 				INTO agg_json, agg_jmeta;
+				
+				SELECT jsonb_strip_nulls(jsonb_build_object(
+					 'as', first_value(jdata_as) OVER win,
+					 'af', last_value(jdata_af) OVER win,
+					 'a', solarcommon.jsonb_sum_object(jdata_ad) OVER win
+				))
+				FROM solaragg.agg_datum_hourly
+				WHERE node_id = stale.node_id
+					AND source_id = stale.source_id
+					AND ts_start >= stale.ts_start
+					AND ts_start < (stale.ts_start + agg_span)
+				WINDOW win AS (ORDER BY ts_start ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+				INTO agg_reading;
 
 			ELSE
 				SELECT jdata, jmeta
 				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale.ts_start + agg_span, 'd')
 				INTO agg_json, agg_jmeta;
+				
+				SELECT jsonb_strip_nulls(jsonb_build_object(
+					 'as', first_value(jdata_as) OVER win,
+					 'af', last_value(jdata_af) OVER win,
+					 'a', solarcommon.jsonb_sum_object(jdata_ad) OVER win
+				))
+				FROM solaragg.agg_datum_daily
+				WHERE node_id = stale.node_id
+					AND source_id = stale.source_id
+					AND ts_start >= stale.ts_start
+					AND ts_start < (stale.ts_start + agg_span)
+				WINDOW win AS (ORDER BY ts_start ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+				INTO agg_reading;
 		END CASE;
 
-		IF agg_json IS NULL THEN
+		IF agg_json IS NULL AND (agg_reading IS NULL 
+				OR (agg_reading_ts_start IS NOT NULL AND agg_reading_ts_start = agg_reading_ts_end)
+				) THEN
 			-- delete agg, using date range in case time zone of node has changed
 			CASE kind
 				WHEN 'h' THEN
@@ -731,7 +745,8 @@ BEGIN
 				WHEN 'h' THEN
 					INSERT INTO solaragg.agg_datum_hourly (
 						ts_start, local_date, node_id, source_id,
-						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta,
+						jdata_as, jdata_af, jdata_ad)
 					VALUES (
 						stale.ts_start,
 						stale.ts_start at time zone node_tz,
@@ -741,14 +756,20 @@ BEGIN
 						agg_json->'a',
 						agg_json->'s',
 						solarcommon.json_array_to_text_array(agg_json->'t'),
-						agg_jmeta
+						agg_jmeta,
+						agg_reading->'as',
+						agg_reading->'af',
+						agg_reading->'a'
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
 						jdata_t = EXCLUDED.jdata_t,
-						jmeta = EXCLUDED.jmeta;
+						jmeta = EXCLUDED.jmeta,
+						jdata_as = EXCLUDED.jdata_as,
+						jdata_af = EXCLUDED.jdata_af,
+						jdata_ad = EXCLUDED.jdata_ad;
 
 					-- in case node tz changed, remove stale record(s)
 					DELETE FROM solaragg.agg_datum_hourly
@@ -760,7 +781,8 @@ BEGIN
 				WHEN 'd' THEN
 					INSERT INTO solaragg.agg_datum_daily (
 						ts_start, local_date, node_id, source_id,
-						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta,
+						jdata_as, jdata_af, jdata_ad)
 					VALUES (
 						stale.ts_start,
 						CAST(stale.ts_start at time zone node_tz AS DATE),
@@ -770,14 +792,20 @@ BEGIN
 						agg_json->'a',
 						agg_json->'s',
 						solarcommon.json_array_to_text_array(agg_json->'t'),
-						agg_jmeta
+						agg_jmeta,
+						agg_reading->'as',
+						agg_reading->'af',
+						agg_reading->'a'
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
 						jdata_t = EXCLUDED.jdata_t,
-						jmeta = EXCLUDED.jmeta;
+						jmeta = EXCLUDED.jmeta,
+						jdata_as = EXCLUDED.jdata_as,
+						jdata_af = EXCLUDED.jdata_af,
+						jdata_ad = EXCLUDED.jdata_ad;
 
 					-- in case node tz changed, remove stale record(s)
 					DELETE FROM solaragg.agg_datum_daily
@@ -789,7 +817,8 @@ BEGIN
 				ELSE
 					INSERT INTO solaragg.agg_datum_monthly (
 						ts_start, local_date, node_id, source_id,
-						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
+						jdata_i, jdata_a, jdata_s, jdata_t, jmeta,
+						jdata_as, jdata_af, jdata_ad)
 					VALUES (
 						stale.ts_start,
 						CAST(stale.ts_start at time zone node_tz AS DATE),
@@ -799,14 +828,20 @@ BEGIN
 						agg_json->'a',
 						agg_json->'s',
 						solarcommon.json_array_to_text_array(agg_json->'t'),
-						agg_jmeta
+						agg_jmeta,
+						agg_reading->'as',
+						agg_reading->'af',
+						agg_reading->'a'
 					)
 					ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 					SET jdata_i = EXCLUDED.jdata_i,
 						jdata_a = EXCLUDED.jdata_a,
 						jdata_s = EXCLUDED.jdata_s,
 						jdata_t = EXCLUDED.jdata_t,
-						jmeta = EXCLUDED.jmeta;
+						jmeta = EXCLUDED.jmeta,
+						jdata_as = EXCLUDED.jdata_as,
+						jdata_af = EXCLUDED.jdata_af,
+						jdata_ad = EXCLUDED.jdata_ad;
 
 					-- in case node tz changed, remove stale record(s)
 					DELETE FROM solaragg.agg_datum_monthly
@@ -857,7 +892,7 @@ BEGIN
 	CLOSE curs;
 	RETURN proc_count;
 END;
-$BODY$;
+$$;
 
 CREATE OR REPLACE FUNCTION solaragg.process_agg_stale_datum(kind char, max integer)
   RETURNS INTEGER AS

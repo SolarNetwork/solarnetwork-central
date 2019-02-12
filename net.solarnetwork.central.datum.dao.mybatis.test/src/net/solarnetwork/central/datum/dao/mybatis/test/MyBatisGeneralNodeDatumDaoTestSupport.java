@@ -23,8 +23,11 @@
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
 import static java.util.stream.Collectors.toList;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertThat;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -124,9 +127,51 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 				"select * from solaragg.agg_datum_hourly order by node_id,ts_start,source_id");
 	}
 
+	protected List<GeneralNodeDatumReadingAggregate> getDatumReadingAggregteHourly() {
+		List<Map<String, Object>> rows = jdbcTemplate
+				.queryForList("SELECT jsonb_strip_nulls(jsonb_build_object("
+						+ "'date', extract('epoch' from ts_start)::int8 * 1000::int8, "
+						+ "'nodeId', node_id, 'sourceId', source_id, "
+						+ "'as', jdata_as, 'af', jdata_af, 'a', jdata_ad))::text AS jdata "
+						+ "FROM solaragg.agg_datum_hourly ORDER BY ts_start, node_id, source_id");
+
+		return rows.stream().map(d -> JsonUtils.getObjectFromJSON((String) d.get("jdata"),
+				GeneralNodeDatumReadingAggregate.class)).collect(toList());
+	}
+
+	protected List<GeneralNodeDatumReadingAggregate> getDatumReadingAggregteDaily() {
+		List<Map<String, Object>> rows = jdbcTemplate
+				.queryForList("SELECT jsonb_strip_nulls(jsonb_build_object("
+						+ "'date', extract('epoch' from ts_start)::int8 * 1000::int8, "
+						+ "'nodeId', node_id, 'sourceId', source_id, "
+						+ "'as', jdata_as, 'af', jdata_af, 'a', jdata_ad))::text AS jdata "
+						+ "FROM solaragg.agg_datum_daily ORDER BY ts_start, node_id, source_id");
+
+		return rows.stream().map(d -> JsonUtils.getObjectFromJSON((String) d.get("jdata"),
+				GeneralNodeDatumReadingAggregate.class)).collect(toList());
+	}
+
+	protected List<GeneralNodeDatumReadingAggregate> getDatumReadingAggregteMonthly() {
+		List<Map<String, Object>> rows = jdbcTemplate
+				.queryForList("SELECT jsonb_strip_nulls(jsonb_build_object("
+						+ "'date', extract('epoch' from ts_start)::int8 * 1000::int8, "
+						+ "'nodeId', node_id, 'sourceId', source_id, "
+						+ "'as', jdata_as, 'af', jdata_af, 'a', jdata_ad))::text AS jdata "
+						+ "FROM solaragg.agg_datum_monthly ORDER BY ts_start, node_id, source_id");
+
+		return rows.stream().map(d -> JsonUtils.getObjectFromJSON((String) d.get("jdata"),
+				GeneralNodeDatumReadingAggregate.class)).collect(toList());
+	}
+
 	protected List<Map<String, Object>> getDatumAggregateDaily() {
 		return jdbcTemplate.queryForList(
 				"select * from solaragg.agg_datum_daily order by node_id,ts_start,source_id");
+	}
+
+	protected List<Map<String, Object>> getDatumAggregateDaily(Long nodeId) {
+		return jdbcTemplate.queryForList(
+				"select * from solaragg.agg_datum_daily where node_id = ? order by ts_start,source_id",
+				nodeId);
 	}
 
 	protected List<Map<String, Object>> getDatumAggregateMonthly() {
@@ -142,6 +187,40 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 				new Timestamp(date.getMillis()), nodeId, sourceId,
 				JsonUtils.getJSONString(finalSamples, null),
 				JsonUtils.getJSONString(startSamples, null));
+	}
+
+	protected List<GeneralNodeDatum> createSampleData(int count, DateTime start) {
+		List<GeneralNodeDatum> data = new ArrayList<>(4);
+		long wh = (long) (Math.random() * 1000000000.0);
+		for ( int i = 0; i < count; i++ ) {
+			GeneralNodeDatum d = new GeneralNodeDatum();
+			d.setNodeId(TEST_NODE_ID);
+			d.setCreated(start.plusMinutes(i));
+			d.setSourceId(TEST_SOURCE_ID);
+
+			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
+			int watts = (int) (Math.random() * 50000);
+			s.putInstantaneousSampleValue("watts", watts);
+			wh += (long) (watts / 60.0);
+			s.putAccumulatingSampleValue("wattHours", wh);
+			d.setSamples(s);
+			data.add(d);
+		}
+		return data;
+	}
+
+	protected GeneralNodeDatumReadingAggregate calculateDatumDiffOver(Long nodeId, String sourceId,
+			DateTime start, DateTime end) {
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+				"SELECT jsonb_strip_nulls(jsonb_build_object("
+						+ "'as', jdata->'as', 'af', jdata->'af', 'a', jdata->'a'"
+						+ "))::text AS jdata FROM solardatum.calculate_datum_diff_over(?, ?, ?, ?)",
+				nodeId, sourceId, new Timestamp(start.getMillis()), new Timestamp(end.getMillis()));
+
+		assertThat(rows, hasSize(1));
+		Map<String, Object> d = rows.get(0);
+		return JsonUtils.getObjectFromJSON((String) d.get("jdata"),
+				GeneralNodeDatumReadingAggregate.class);
 	}
 
 }

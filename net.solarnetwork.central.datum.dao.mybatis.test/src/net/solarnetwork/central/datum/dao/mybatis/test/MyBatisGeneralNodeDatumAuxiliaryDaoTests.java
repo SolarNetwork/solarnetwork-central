@@ -32,8 +32,10 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.StreamSupport;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -42,10 +44,12 @@ import org.junit.Test;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumAuxiliaryDao;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
@@ -55,25 +59,28 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  * @author matt
  * @version 1.0
  */
-public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends AbstractMyBatisDaoTestSupport {
+public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends MyBatisGeneralNodeDatumDaoTestSupport {
 
 	private static final String TEST_SOURCE_ID = "test.source";
 
-	private MyBatisGeneralNodeDatumAuxiliaryDao dao;
+	private MyBatisGeneralNodeDatumAuxiliaryDao auxDao;
 
 	private GeneralNodeDatumAuxiliary lastDatum;
 
+	@Override
 	@Before
 	public void setup() {
-		dao = new MyBatisGeneralNodeDatumAuxiliaryDao();
-		dao.setSqlSessionFactory(getSqlSessionFactory());
+		super.setup();
+		auxDao = new MyBatisGeneralNodeDatumAuxiliaryDao();
+		auxDao.setSqlSessionFactory(getSqlSessionFactory());
 	}
 
-	private GeneralNodeDatumAuxiliary getTestInstance() {
-		return getTestInstance(new DateTime(), TEST_NODE_ID, TEST_SOURCE_ID);
+	private GeneralNodeDatumAuxiliary getTestAuxInstance() {
+		return getTestAuxInstance(new DateTime(), TEST_NODE_ID, TEST_SOURCE_ID);
 	}
 
-	private GeneralNodeDatumAuxiliary getTestInstance(DateTime created, Long nodeId, String sourceId) {
+	private GeneralNodeDatumAuxiliary getTestAuxInstance(DateTime created, Long nodeId,
+			String sourceId) {
 		GeneralNodeDatumAuxiliary datum = new GeneralNodeDatumAuxiliary();
 		datum.setCreated(created);
 		datum.setNodeId(nodeId);
@@ -93,10 +100,87 @@ public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends AbstractMyBatisDao
 
 	@Test
 	public void storeNew() {
-		GeneralNodeDatumAuxiliary datum = getTestInstance();
-		GeneralNodeDatumPK id = dao.store(datum);
+		GeneralNodeDatumAuxiliary datum = getTestAuxInstance();
+		GeneralNodeDatumPK id = auxDao.store(datum);
 		assertNotNull(id);
 		lastDatum = datum;
+	}
+
+	protected void verifyStaleDatumRow(String msg, Map<String, Object> s, DateTime date, Long nodeId,
+			String sourceId) {
+		assertThat(msg + " date", s.get("ts_start"), equalTo(new Timestamp(date.getMillis())));
+		assertThat(msg + " node ID", s.get("node_id"), equalTo(nodeId));
+		assertThat(msg + " source ID", s.get("source_id"), equalTo(sourceId));
+	}
+
+	@Test
+	public void storeNewPopulatesStaleDatumRow() {
+		// when
+		storeNew();
+
+		// then
+		List<Map<String, Object>> stale = getStaleDatum(Aggregation.Hour);
+		assertThat("Stale hourly records", stale, hasSize(1));
+		verifyStaleDatumRow("stale", stale.get(0), lastDatum.getCreated().hourOfDay().roundFloorCopy(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+	}
+
+	@Test
+	public void storeNewWithImmediateHistoryPopulatesTwoStaleDatumRows() {
+		// given
+		DateTime date = new DateTime(2019, 2, 12, 7, 20, DateTimeZone.forID(TEST_TZ));
+		GeneralNodeDatum d = getTestInstance(date.minusMinutes(30), TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.store(d);
+		deleteStaleDatum();
+
+		// when
+		GeneralNodeDatumAuxiliary aux = getTestAuxInstance(date, TEST_NODE_ID, TEST_SOURCE_ID);
+		auxDao.store(aux);
+
+		// then
+		List<Map<String, Object>> stale = getStaleDatum(Aggregation.Hour);
+		assertThat("Two stale hourly records for reset with immediate history", stale, hasSize(2));
+		verifyStaleDatumRow("stale", stale.get(0), d.getCreated().hourOfDay().roundFloorCopy(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+		verifyStaleDatumRow("stale", stale.get(1), aux.getCreated().hourOfDay().roundFloorCopy(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+	}
+
+	@Test
+	public void storeNewWithDistantHistoryPopulatesStaleDatumRow() {
+		// given
+		GeneralNodeDatum d = getTestInstance(new DateTime().minusDays(1), TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.store(d);
+		deleteStaleDatum();
+
+		// when
+		storeNew();
+
+		// then
+		List<Map<String, Object>> stale = getStaleDatum(Aggregation.Hour);
+		assertThat("One stale hourly record for reset with distant history", stale, hasSize(1));
+		verifyStaleDatumRow("stale", stale.get(0), lastDatum.getCreated().hourOfDay().roundFloorCopy(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+	}
+
+	@Test
+	public void storeNewInPastPopulatesTwoStaleDatumRows() {
+		// given
+		GeneralNodeDatum d = getTestInstance(new DateTime().plusMinutes(61), TEST_NODE_ID,
+				TEST_SOURCE_ID);
+		dao.store(d);
+		deleteStaleDatum();
+
+		// when
+		storeNew();
+
+		// then
+		List<Map<String, Object>> stale = getStaleDatum(Aggregation.Hour);
+		assertThat("Two stale hourly records for reset and future datum records", stale, hasSize(2));
+		verifyStaleDatumRow("stale for reset", stale.get(0),
+				lastDatum.getCreated().hourOfDay().roundFloorCopy(), TEST_NODE_ID, TEST_SOURCE_ID);
+		verifyStaleDatumRow("stale for datum", stale.get(1), d.getCreated().hourOfDay().roundFloorCopy(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
 	}
 
 	private void validate(GeneralNodeDatumAuxiliary src, GeneralNodeDatumAuxiliary entity) {
@@ -118,7 +202,7 @@ public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends AbstractMyBatisDao
 	@Test
 	public void getByPrimaryKey() {
 		storeNew();
-		GeneralNodeDatumAuxiliary datum = dao.get(lastDatum.getId());
+		GeneralNodeDatumAuxiliary datum = auxDao.get(lastDatum.getId());
 		validate(lastDatum, datum);
 	}
 
@@ -145,7 +229,7 @@ public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends AbstractMyBatisDao
 			startingReadings.add(ss.getAccumulatingSampleInteger("watt_hours"));
 			d.setSamplesStart(ss);
 
-			GeneralNodeDatumAuxiliaryPK pk = dao.store(d);
+			GeneralNodeDatumAuxiliaryPK pk = auxDao.store(d);
 			pks.add(pk);
 		}
 
@@ -155,7 +239,7 @@ public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends AbstractMyBatisDao
 		criteria.setStartDate(start);
 		criteria.setEndDate(start.plusMinutes(60));
 
-		FilterResults<GeneralNodeDatumAuxiliaryFilterMatch> results = dao.findFiltered(criteria, null,
+		FilterResults<GeneralNodeDatumAuxiliaryFilterMatch> results = auxDao.findFiltered(criteria, null,
 				null, null);
 
 		final int expectedCount = 6;
