@@ -407,6 +407,9 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 	private void assertNoAggStaleDatum() {
 		List<Map<String, Object>> datum = findAllAggStaleDatum();
+		if ( !datum.isEmpty() ) {
+			log.warn("Unexpected agg stale datum: {}", datum);
+		}
 		assertThat("Agg stale datum count", datum, hasSize(0));
 	}
 

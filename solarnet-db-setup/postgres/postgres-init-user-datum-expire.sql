@@ -199,7 +199,7 @@ BEGIN
 	DELETE FROM solaragg.agg_stale_datum d
 	USING nlt
 	WHERE d.node_id = nlt.node_id
-		AND d.ts_start < nlt.older_than
+		AND d.ts_start <= nlt.older_than
 		AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs))
 		AND d.agg_kind = 'h';
 
