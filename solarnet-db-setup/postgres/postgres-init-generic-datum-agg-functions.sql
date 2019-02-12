@@ -685,16 +685,16 @@ BEGIN
 				INTO agg_json, agg_jmeta;
 				
 				SELECT jsonb_strip_nulls(jsonb_build_object(
-					 'as', first_value(jdata_as) OVER win,
-					 'af', last_value(jdata_af) OVER win,
-					 'a', solarcommon.jsonb_sum_object(jdata_ad) OVER win
+					 'as', solarcommon.first(jdata_as ORDER BY ts_start),
+					 'af', solarcommon.first(jdata_af ORDER BY ts_start DESC),
+					 'a', solarcommon.jsonb_sum_object(jdata_ad)
 				))
 				FROM solaragg.agg_datum_hourly
 				WHERE node_id = stale.node_id
 					AND source_id = stale.source_id
 					AND ts_start >= stale.ts_start
 					AND ts_start < (stale.ts_start + agg_span)
-				WINDOW win AS (ORDER BY ts_start ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+				GROUP BY node_id, source_id
 				INTO agg_reading;
 
 			ELSE
@@ -703,16 +703,16 @@ BEGIN
 				INTO agg_json, agg_jmeta;
 				
 				SELECT jsonb_strip_nulls(jsonb_build_object(
-					 'as', first_value(jdata_as) OVER win,
-					 'af', last_value(jdata_af) OVER win,
-					 'a', solarcommon.jsonb_sum_object(jdata_ad) OVER win
+					 'as', solarcommon.first(jdata_as ORDER BY ts_start),
+					 'af', solarcommon.first(jdata_af ORDER BY ts_start DESC),
+					 'a', solarcommon.jsonb_sum_object(jdata_ad)
 				))
 				FROM solaragg.agg_datum_daily
 				WHERE node_id = stale.node_id
 					AND source_id = stale.source_id
 					AND ts_start >= stale.ts_start
 					AND ts_start < (stale.ts_start + agg_span)
-				WINDOW win AS (ORDER BY ts_start ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+				GROUP BY node_id, source_id
 				INTO agg_reading;
 		END CASE;
 
