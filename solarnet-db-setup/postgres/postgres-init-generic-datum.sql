@@ -1129,7 +1129,7 @@ $$;
  * @param tolerance 	the maximum time span to look backwards for the previous reading record; smaller == faster
  */
 CREATE OR REPLACE FUNCTION solardatum.calculate_datum_diff_over(
-	node bigint, source text, ts_min timestamptz, ts_max timestamptz, tolerance interval default interval '1 year')
+	node bigint, source text, ts_min timestamptz, ts_max timestamptz, tolerance interval default interval '4 months')
 RETURNS TABLE(
   ts_start timestamp with time zone,
   ts_end timestamp with time zone,
