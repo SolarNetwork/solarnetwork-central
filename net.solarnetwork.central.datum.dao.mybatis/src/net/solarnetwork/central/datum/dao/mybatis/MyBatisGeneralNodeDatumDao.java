@@ -911,7 +911,8 @@ public class MyBatisGeneralNodeDatumDao
 	 * @since 1.15
 	 */
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	// Propagation.REQUIRED for server-side cursors
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public FilterResults<ReportingGeneralNodeDatumMatch> findAggregationFilteredReadings(
 			AggregateGeneralNodeDatumFilter filter, DatumReadingType type, Period tolerance,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
