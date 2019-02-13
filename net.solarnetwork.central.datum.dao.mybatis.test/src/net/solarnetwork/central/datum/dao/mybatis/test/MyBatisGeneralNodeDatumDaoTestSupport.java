@@ -223,4 +223,39 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 				GeneralNodeDatumReadingAggregate.class);
 	}
 
+	protected void insertAggDatumHourlyRow(long ts, Long nodeId, String sourceId, Map<String, ?> iData,
+			Map<String, ?> aData, Map<String, ?> jMeta, Map<String, ?> asData, Map<String, ?> afData,
+			Map<String, ?> adData) {
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.agg_datum_hourly (ts_start,local_date,node_id,source_id,jdata_i,jdata_a,jmeta,jdata_as,jdata_af,jdata_ad)"
+						+ " VALUES (?,?,?,?,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb)",
+				new Timestamp(ts), new Timestamp(ts), nodeId, sourceId,
+				JsonUtils.getJSONString(iData, null), JsonUtils.getJSONString(aData, null),
+				JsonUtils.getJSONString(jMeta, null), JsonUtils.getJSONString(asData, null),
+				JsonUtils.getJSONString(afData, null), JsonUtils.getJSONString(adData, null));
+	}
+
+	protected void insertAggDatumDailyRow(long ts, Long nodeId, String sourceId, Map<String, ?> iData,
+			Map<String, ?> aData, Map<String, ?> jMeta, Map<String, ?> asData, Map<String, ?> afData,
+			Map<String, ?> adData) {
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.agg_datum_daily (ts_start,local_date,node_id,source_id,jdata_i,jdata_a,jmeta,jdata_as,jdata_af,jdata_ad)"
+						+ " VALUES (?,?,?,?,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb)",
+				new Timestamp(ts), new Timestamp(ts), nodeId, sourceId,
+				JsonUtils.getJSONString(iData, null), JsonUtils.getJSONString(aData, null),
+				JsonUtils.getJSONString(jMeta, null), JsonUtils.getJSONString(asData, null),
+				JsonUtils.getJSONString(afData, null), JsonUtils.getJSONString(adData, null));
+	}
+
+	protected void insertAggDatumMonthlyRow(long ts, Long nodeId, String sourceId, Map<String, ?> iData,
+			Map<String, ?> aData, Map<String, ?> jMeta, Map<String, ?> asData, Map<String, ?> afData,
+			Map<String, ?> adData) {
+		jdbcTemplate.update(
+				"INSERT INTO solaragg.agg_datum_monthly (ts_start,local_date,node_id,source_id,jdata_i,jdata_a,jmeta,jdata_as,jdata_af,jdata_ad)"
+						+ " VALUES (?,?,?,?,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb)",
+				new Timestamp(ts), new Timestamp(ts), nodeId, sourceId,
+				JsonUtils.getJSONString(iData, null), JsonUtils.getJSONString(aData, null),
+				JsonUtils.getJSONString(jMeta, null), JsonUtils.getJSONString(asData, null),
+				JsonUtils.getJSONString(afData, null), JsonUtils.getJSONString(adData, null));
+	}
 }

@@ -51,6 +51,7 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -71,7 +72,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.14
+ * @version 1.15
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -337,6 +338,27 @@ public class MyBatisGeneralNodeDatumDao
 			aggregation = Aggregation.Minute;
 		}
 		return (getQueryForAll() + "-ReportingGeneralNodeDatum-" + aggregation.toString());
+	}
+
+	/**
+	 * Get the filter query name for a reading query.
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @param type
+	 *        the reading type
+	 * @return query name
+	 */
+	protected String getQueryForReadingFilter(GeneralNodeDatumFilter filter, DatumReadingType type) {
+		Aggregation aggregation = null;
+		if ( filter instanceof AggregationFilter ) {
+			aggregation = ((AggregationFilter) filter).getAggregation();
+		}
+		if ( aggregation.compareTo(Aggregation.Hour) < 0 ) {
+			// all *Minute aggregates are mapped to the Minute query name
+			aggregation = Aggregation.Minute;
+		}
+		return ("find-general-reading-" + type + "-ReportingGeneralNodeDatum-" + aggregation.toString());
 	}
 
 	private void setupAggregationParam(GeneralNodeDatumFilter filter, Map<String, Object> sqlProps) {
@@ -880,6 +902,77 @@ public class MyBatisGeneralNodeDatumDao
 				null);
 		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
 				rows.size());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.15
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> findAggregationFilteredReadings(
+			AggregateGeneralNodeDatumFilter filter, DatumReadingType type, Period tolerance,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		final String query = getQueryForReadingFilter(filter, type);
+		final Map<String, Object> sqlProps = new HashMap<String, Object>(1);
+		sqlProps.put(PARAM_FILTER, filter);
+		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
+			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
+		}
+		setupAggregationParam(filter, sqlProps);
+
+		final Aggregation agg = filter.getAggregation();
+		if ( agg != null && agg.getLevel() > 0 && agg.compareLevel(Aggregation.Hour) < 1 ) {
+			// make sure start/end date provided for minute level aggregation queries as query expects it
+			DateTime forced = null;
+			if ( filter.getStartDate() == null || filter.getEndDate() == null ) {
+				forced = new DateTime();
+				int minutes = agg.getLevel() / 60;
+				forced = forced.withMinuteOfHour((forced.getMinuteOfHour() / minutes) * minutes)
+						.minuteOfHour().roundFloorCopy();
+			}
+			sqlProps.put(PARAM_START_DATE,
+					filter.getStartDate() != null ? filter.getStartDate() : forced);
+			sqlProps.put(PARAM_END_DATE, filter.getEndDate() != null ? filter.getEndDate() : forced);
+		}
+
+		// attempt count first, if NOT mostRecent query and max NOT specified as -1
+		// and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
+		Long totalCount = null;
+		if ( !filter.isMostRecent() && !filter.isWithoutTotalResultsCount() && max != null
+				&& max.intValue() != -1 && (agg.getLevel() < 1 || agg.compareTo(Aggregation.Hour) >= 0)
+				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
+				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
+				&& agg != Aggregation.RunningTotal ) {
+			totalCount = executeCountQuery(query + "-count", sqlProps);
+		}
+
+		List<ReportingGeneralNodeDatumMatch> rows;
+		try {
+			rows = selectList(query, sqlProps, offset, max);
+		} catch ( RuntimeException e ) {
+			Throwable cause = e;
+			while ( cause.getCause() != null ) {
+				cause = cause.getCause();
+			}
+			if ( cause instanceof IllegalArgumentException ) {
+				// assume this is "query not found" so aggregate not supported
+				log.debug("Unsupported query [{}]", query, e);
+				throw new IllegalArgumentException("Aggregate " + agg + " not supported");
+			}
+			throw e;
+		}
+
+		// rows = postProcessAggregationFilterQuery(filter, rows);
+
+		BasicFilterResults<ReportingGeneralNodeDatumMatch> results = new BasicFilterResults<ReportingGeneralNodeDatumMatch>(
+				rows,
+				(totalCount != null ? totalCount
+						: filter.isWithoutTotalResultsCount() ? null : Long.valueOf(rows.size())),
+				offset, rows.size());
+
+		return results;
 	}
 
 	/**

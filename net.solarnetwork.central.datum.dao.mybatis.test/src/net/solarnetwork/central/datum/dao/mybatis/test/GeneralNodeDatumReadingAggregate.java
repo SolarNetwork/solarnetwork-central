@@ -40,6 +40,40 @@ public class GeneralNodeDatumReadingAggregate {
 	private Map<String, Number> as;
 	private Map<String, Number> af;
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param date
+	 *        the date
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param a
+	 *        the reading differences
+	 * @param as
+	 *        the reading starting values
+	 * @param af
+	 *        the reading final values
+	 */
+	public GeneralNodeDatumReadingAggregate(DateTime date, Long nodeId, String sourceId,
+			Map<String, Number> a, Map<String, Number> as, Map<String, Number> af) {
+		super();
+		this.date = date;
+		this.nodeId = nodeId;
+		this.sourceId = sourceId;
+		this.a = a;
+		this.as = as;
+		this.af = af;
+	}
+
+	/**
+	 * Default constructor.
+	 */
+	public GeneralNodeDatumReadingAggregate() {
+		super();
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
