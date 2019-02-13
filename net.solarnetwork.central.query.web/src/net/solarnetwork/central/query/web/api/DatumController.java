@@ -165,7 +165,7 @@ public class DatumController extends WebServiceControllerSupport {
 		resolveSourceIdPattern(cmd);
 
 		FilterResults<?> results;
-		if ( cmd.getAggregation() != null || cmd.getAggregation() != Aggregation.None ) {
+		if ( cmd.getAggregation() != null && cmd.getAggregation() != Aggregation.None ) {
 			results = queryBiz.findFilteredAggregateReading(cmd, readingType, tolerance,
 					cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
 		} else {
