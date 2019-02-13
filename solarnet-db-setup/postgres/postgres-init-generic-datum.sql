@@ -908,17 +908,8 @@ RETURNS TABLE(
 	-- generate rows of nodes grouped by time zone, get absolute start/end dates for all nodes
 	-- but grouped into as few rows as possible to minimize subsequent query times
 	WITH tz AS (
-		SELECT nlt.time_zone,
-			ts_min AT TIME ZONE nlt.time_zone AS sdate,
-			ts_max AT TIME ZONE nlt.time_zone AS edate,
-			array_agg(DISTINCT nlt.node_id) AS nodes,
-			array_agg(DISTINCT s.source_id) AS sources
-		FROM solarnet.node_local_time nlt
-		CROSS JOIN (
-			SELECT unnest(sources) AS source_id
-		) s
-		WHERE nlt.node_id = ANY(nodes)
-		GROUP BY nlt.time_zone
+		SELECT time_zone, ts_start AS sdate, ts_end AS edate, node_ids AS nodes, source_ids AS sources
+		FROM solarnet.node_source_time_ranges_local(nodes, sources, ts_min, ts_max)
 	)
 	-- find records closest to, but not after, min date
 	-- also considering reset records, using their STARTING sample value
@@ -1460,17 +1451,8 @@ RETURNS TABLE(
 	-- generate rows of nodes grouped by time zone, get absolute start/end dates for all nodes
 	-- but grouped into as few rows as possible to minimize subsequent query times
 	WITH tz AS (
-		SELECT nlt.time_zone,
-			ts_min AT TIME ZONE nlt.time_zone AS sdate,
-			ts_max AT TIME ZONE nlt.time_zone AS edate,
-			array_agg(DISTINCT nlt.node_id) AS nodes,
-			array_agg(DISTINCT s.source_id) AS sources
-		FROM solarnet.node_local_time nlt
-		CROSS JOIN (
-			SELECT unnest(sources) AS source_id
-		) s
-		WHERE nlt.node_id = ANY(nodes)
-		GROUP BY nlt.time_zone
+		SELECT time_zone, ts_start AS sdate, ts_end AS edate, node_ids AS nodes, source_ids AS sources
+		FROM solarnet.node_source_time_ranges_local(nodes, sources, ts_min, ts_max)
 	)
 	-- find records closest to, but not after, min date
 	-- also considering reset records, using their STARTING sample value

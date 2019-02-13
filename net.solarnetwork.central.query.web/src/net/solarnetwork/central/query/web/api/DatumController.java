@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -51,7 +52,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
@@ -163,7 +164,13 @@ public class DatumController extends WebServiceControllerSupport {
 		// support filtering based on sourceId path pattern, by simply finding the sources that match first
 		resolveSourceIdPattern(cmd);
 
-		FilterResults<?> results = queryBiz.findFilteredReading(cmd, readingType, tolerance);
+		FilterResults<?> results;
+		if ( cmd.getAggregation() != null || cmd.getAggregation() != Aggregation.None ) {
+			results = queryBiz.findFilteredAggregateReading(cmd, readingType, tolerance,
+					cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
+		} else {
+			results = queryBiz.findFilteredReading(cmd, readingType, tolerance);
+		}
 		return new Response<FilterResults<?>>(results);
 	}
 

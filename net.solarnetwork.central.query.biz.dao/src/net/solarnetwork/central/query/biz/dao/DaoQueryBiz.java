@@ -80,7 +80,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.8
+ * @version 2.9
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -271,6 +271,20 @@ public class DaoQueryBiz implements QueryBiz {
 			return cmd;
 		}
 		return filter;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateReading(
+			AggregateGeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		if ( readingType != DatumReadingType.Difference ) {
+			throw new IllegalArgumentException("The DatumReadingType [" + readingType
+					+ "] is not supported for aggregate level [" + filter.getAggregation() + "]");
+		}
+		filter = enforceGeneralAggregateLevel(filter);
+		return generalNodeDatumDao.findAggregationFilteredReadings(filter, readingType, tolerance,
+				sortDescriptors, offset, max);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

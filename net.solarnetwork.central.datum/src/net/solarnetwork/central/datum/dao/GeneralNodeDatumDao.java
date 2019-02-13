@@ -35,6 +35,7 @@ import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
@@ -49,7 +50,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.11
+ * @version 1.12
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -429,6 +430,30 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
 			DateTime from, DateTime to, Period tolerance);
+
+	/**
+	 * Query for aggregated datum readings over a time range.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param type
+	 *        the reading type
+	 * @param tolerance
+	 *        the maximum time span before and after {@code date} to consider
+	 *        when looking for before and after records to perform the
+	 *        calculation, or {@code null} for no limit
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never {@literal null}
+	 * @since 1.12
+	 */
+	FilterResults<ReportingGeneralNodeDatumMatch> findAggregationFilteredReadings(
+			AggregateGeneralNodeDatumFilter filter, DatumReadingType type, Period tolerance,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
 
 	/**
 	 * Get a count of datum records that match a search criteria.
