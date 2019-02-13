@@ -112,16 +112,18 @@
 		SELECT count(datum.ts_start)
 		FROM 
 			<choose>
-				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0">
-					solarnet.node_date_ranges(
+				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0">
+					solarnet.node_source_time_ranges_local(
 						#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
 						, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 						, #{filter.localStartDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 						, #{filter.localEndDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 					) tz
 					INNER JOIN solaragg.agg_datum_hourly datum 
-						ON datum.node_id = ANY(tz.nodes) 
-						AND datum.source_id = ANY(tz.sources)
+						ON datum.node_id = ANY(tz.node_ids) 
+						<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+						AND datum.source_id = ANY(tz.source_ids)
+						</if>
 						AND datum.ts_start &gt;= tz.ts_start
 						AND datum.ts_start &lt; tz.ts_end
 				</when>
@@ -130,7 +132,7 @@
 				</otherwise>
 			</choose>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
-		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0)">
+		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0)">
 			<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 		</if>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
@@ -142,16 +144,18 @@
 			<include refid="fragment-general-reading-GeneralNodeDatum-aggregation-result"/>
 		FROM 
 			<choose>
-				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0">
-					solarnet.node_date_ranges(
+				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0">
+					solarnet.node_source_time_ranges_local(
 						#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
 						, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 						, #{filter.localStartDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 						, #{filter.localEndDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 					) tz
 					INNER JOIN solaragg.agg_datum_hourly datum 
-						ON datum.node_id = ANY(tz.nodes) 
-						AND datum.source_id = ANY(tz.sources)
+						ON datum.node_id = ANY(tz.node_ids) 
+						<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+						AND datum.source_id = ANY(tz.source_ids)
+						</if>
 						AND datum.ts_start &gt;= tz.ts_start
 						AND datum.ts_start &lt; tz.ts_end
 				</when>
@@ -160,7 +164,7 @@
 				</otherwise>
 			</choose>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
-		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0)">
+		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0)">
 			<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 		</if>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
@@ -172,16 +176,18 @@
 		SELECT count(datum.ts_start)
 		FROM 
 			<choose>
-				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0">
-					solarnet.node_date_ranges(
+				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0">
+					solarnet.node_source_time_ranges_local(
 						#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
 						, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 						, #{filter.localStartDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 						, #{filter.localEndDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 					) tz
 					INNER JOIN solaragg.agg_datum_daily datum 
-						ON datum.node_id = ANY(tz.nodes) 
-						AND datum.source_id = ANY(tz.sources)
+						ON datum.node_id = ANY(tz.node_ids) 
+						<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+						AND datum.source_id = ANY(tz.source_ids)
+						</if>
 						AND datum.ts_start &gt;= tz.ts_start
 						AND datum.ts_start &lt; tz.ts_end
 				</when>
@@ -190,7 +196,7 @@
 				</otherwise>
 			</choose>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
-		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0)">
+		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0)">
 			<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 		</if>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
@@ -202,16 +208,18 @@
 			<include refid="fragment-general-reading-GeneralNodeDatum-aggregation-result"/>
 		FROM 
 			<choose>
-				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0">
-					solarnet.node_date_ranges(
+				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0">
+					solarnet.node_source_time_ranges_local(
 						#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
 						, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 						, #{filter.localStartDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 						, #{filter.localEndDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 					) tz
 					INNER JOIN solaragg.agg_datum_daily datum 
-						ON datum.node_id = ANY(tz.nodes) 
-						AND datum.source_id = ANY(tz.sources)
+						ON datum.node_id = ANY(tz.node_ids) 
+						<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+						AND datum.source_id = ANY(tz.source_ids)
+						</if>
 						AND datum.ts_start &gt;= tz.ts_start
 						AND datum.ts_start &lt; tz.ts_end
 				</when>
@@ -220,7 +228,7 @@
 				</otherwise>
 			</choose>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
-		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0)">
+		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0)">
 			<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 		</if>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
@@ -232,16 +240,18 @@
 		SELECT count(datum.ts_start)
 		FROM 
 			<choose>
-				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0">
-					solarnet.node_date_ranges(
+				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0">
+					solarnet.node_source_time_ranges_local(
 						#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
 						, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 						, #{filter.localStartDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 						, #{filter.localEndDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 					) tz
 					INNER JOIN solaragg.agg_datum_monthly datum 
-						ON datum.node_id = ANY(tz.nodes) 
-						AND datum.source_id = ANY(tz.sources)
+						ON datum.node_id = ANY(tz.node_ids) 
+						<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+						AND datum.source_id = ANY(tz.source_ids)
+						</if>
 						AND datum.ts_start &gt;= tz.ts_start
 						AND datum.ts_start &lt; tz.ts_end
 				</when>
@@ -250,7 +260,7 @@
 				</otherwise>
 			</choose>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
-		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0)">
+		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0)">
 			<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 		</if>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
@@ -262,16 +272,18 @@
 			<include refid="fragment-general-reading-GeneralNodeDatum-aggregation-result"/>
 		FROM 
 			<choose>
-				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0">
-					solarnet.node_date_ranges(
+				<when test="filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0">
+					solarnet.node_source_time_ranges_local(
 						#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
 						, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 						, #{filter.localStartDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 						, #{filter.localEndDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 					) tz
 					INNER JOIN solaragg.agg_datum_monthly datum 
-						ON datum.node_id = ANY(tz.nodes) 
-						AND datum.source_id = ANY(tz.sources)
+						ON datum.node_id = ANY(tz.node_ids) 
+						<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+						AND datum.source_id = ANY(tz.source_ids)
+						</if>
 						AND datum.ts_start &gt;= tz.ts_start
 						AND datum.ts_start &lt; tz.ts_end
 				</when>
@@ -280,7 +292,7 @@
 				</otherwise>
 			</choose>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
-		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds.length > 0)">
+		<if test="!(filter.localStartDate != null and filter.localEndDate != null and filter.nodeIds != null and filter.nodeIds.length > 0)">
 			<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
 		</if>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
