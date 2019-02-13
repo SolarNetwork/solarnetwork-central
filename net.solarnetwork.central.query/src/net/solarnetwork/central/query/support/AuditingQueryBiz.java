@@ -23,7 +23,9 @@
 package net.solarnetwork.central.query.support;
 
 import java.util.List;
+import org.joda.time.Period;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
@@ -38,7 +40,7 @@ import net.solarnetwork.util.OptionalService;
  * {@link QueryAuditor}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AuditingQueryBiz extends DelegatingQueryBiz {
 
@@ -80,6 +82,18 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 			Integer max) {
 		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredAggregateGeneralNodeDatum(
 				filter, sortDescriptors, offset, max);
+		QueryAuditor auditor = getQueryAuditor();
+		if ( auditor != null ) {
+			auditor.auditNodeDatumFilterResults(filter, results);
+		}
+		return results;
+	}
+
+	@Override
+	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(
+			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
+		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredReading(filter,
+				readingType, tolerance);
 		QueryAuditor auditor = getQueryAuditor();
 		if ( auditor != null ) {
 			auditor.auditNodeDatumFilterResults(filter, results);
