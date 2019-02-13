@@ -49,7 +49,7 @@ import net.solarnetwork.central.security.SecurityActor;
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 @SuppressWarnings("deprecation")
 public class DelegatingQueryBiz implements QueryBiz {
@@ -145,6 +145,14 @@ public class DelegatingQueryBiz implements QueryBiz {
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(
 			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
 		return delegate.findFilteredReading(filter, readingType, tolerance);
+	}
+
+	@Override
+	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateReading(
+			AggregateGeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		return delegate.findFilteredAggregateReading(filter, readingType, tolerance, sortDescriptors,
+				offset, max);
 	}
 
 }

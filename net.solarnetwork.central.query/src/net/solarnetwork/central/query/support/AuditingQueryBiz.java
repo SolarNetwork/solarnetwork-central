@@ -101,4 +101,17 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 		return results;
 	}
 
+	@Override
+	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateReading(
+			AggregateGeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredAggregateReading(
+				filter, readingType, tolerance, sortDescriptors, offset, max);
+		QueryAuditor auditor = getQueryAuditor();
+		if ( auditor != null ) {
+			auditor.auditNodeDatumFilterResults(filter, results);
+		}
+		return results;
+	}
+
 }
