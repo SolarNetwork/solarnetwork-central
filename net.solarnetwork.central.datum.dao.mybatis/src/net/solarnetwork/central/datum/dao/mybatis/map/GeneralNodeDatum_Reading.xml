@@ -52,4 +52,120 @@
 		ORDER BY node_id, source_id
 	</select>
 
+	<sql id="fragment-general-reading-GeneralNodeDatum-aggregation-result">
+		datum.ts_start AS r_datum_ts_start,
+		<choose>
+			<when test="combine != null">
+				min(datum.local_date) AS r_datum_local_date,
+				<choose>
+					<when test="combine.withNodeIds">
+						node_mappings.vid AS r_datum_node_id,
+					</when>
+					<otherwise>
+						datum.node_id AS r_datum_node_id,
+					</otherwise>
+				</choose>
+				<choose>
+					<when test="combine.withSourceIds">
+						source_mappings.vid AS r_datum_source_id,
+					</when>
+					<otherwise>
+						datum.source_id AS r_datum_source_id,
+					</otherwise>
+				</choose>
+				<choose>
+					<when test="combine.type == 'Average'">
+						solarcommon.jdata_from_components(
+							solarcommon.jsonb_avg_object(datum.jdata_i),
+							solarcommon.jsonb_avg_object(datum.jdata_ad),
+							NULL,
+							NULL) AS r_datum_jdata
+					</when>
+					<otherwise>
+						<!--  sum -->
+						solarcommon.jdata_from_components(
+							solarcommon.jsonb_sum_object(datum.jdata_i),
+							solarcommon.jsonb_sum_object(datum.jdata_ad),
+							NULL,
+							NULL) AS r_datum_jdata
+					</otherwise>
+				</choose>
+			</when>
+			<otherwise>
+				datum.local_date AS r_datum_local_date,
+				datum.node_id AS r_datum_node_id,
+				datum.source_id AS r_datum_source_id,
+				solarcommon.jdata_from_components(datum.jdata_i, datum.jdata_ad, datum.jdata_s, datum.jdata_t) AS r_datum_jdata,
+				solarcommon.jdata_from_components(NULL, datum.jdata_as, NULL, NULL) AS r_datum_jdata_start,
+				solarcommon.jdata_from_components(NULL, datum.jdata_af, NULL, NULL) AS r_datum_jdata_final
+			</otherwise>
+		</choose>
+	</sql>
+
+	<resultMap id="ReportingGeneralNodeDatumReadingMatchResult" type="net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumReading" extends="ReportingGeneralNodeDatumMatchResult">
+		<result property="sampleJsonStart" column="r_datum_jdata_start"/>
+		<result property="sampleJsonFinal" column="r_datum_jdata_final"/>
+	</resultMap>
+
+	
+	<select id="findall-general-reading-Difference-ReportingGeneralNodeDatum-Hour-count" resultType="long">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
+		SELECT count(datum.ts_start)
+		FROM solaragg.agg_datum_hourly datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
+	</select>
+	
+	<select id="findall-general-reading-Difference-ReportingGeneralNodeDatum-Hour" resultMap="ReportingGeneralNodeDatumReadingMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
+		SELECT
+			<include refid="fragment-general-reading-GeneralNodeDatum-aggregation-result"/>
+		FROM solaragg.agg_datum_hourly datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
+	<select id="findall-general-reading-Difference-ReportingGeneralNodeDatum-Day-count" resultType="long">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
+		SELECT count(datum.ts_start)
+		FROM solaragg.agg_datum_daily datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
+	</select>
+	
+	<select id="findall-general-reading-Difference-ReportingGeneralNodeDatum-Day" resultMap="ReportingGeneralNodeDatumReadingMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
+		SELECT
+			<include refid="fragment-general-reading-GeneralNodeDatum-aggregation-result"/>
+		FROM solaragg.agg_datum_daily datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
+	<select id="findall-general-reading-Difference-ReportingGeneralNodeDatum-Month-count" resultType="long">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
+		SELECT count(datum.ts_start)
+		FROM solaragg.agg_datum_monthly datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
+	</select>
+	
+	<select id="findall-general-reading-Difference-ReportingGeneralNodeDatum-Month" resultMap="ReportingGeneralNodeDatumReadingMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
+		SELECT
+			<include refid="fragment-general-reading-GeneralNodeDatum-aggregation-result"/>
+		FROM solaragg.agg_datum_monthly datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
 </mapper>

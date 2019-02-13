@@ -358,7 +358,8 @@ public class MyBatisGeneralNodeDatumDao
 			// all *Minute aggregates are mapped to the Minute query name
 			aggregation = Aggregation.Minute;
 		}
-		return ("find-general-reading-" + type + "-ReportingGeneralNodeDatum-" + aggregation.toString());
+		return ("findall-general-reading-" + type + "-ReportingGeneralNodeDatum-"
+				+ aggregation.toString());
 	}
 
 	private void setupAggregationParam(GeneralNodeDatumFilter filter, Map<String, Object> sqlProps) {
