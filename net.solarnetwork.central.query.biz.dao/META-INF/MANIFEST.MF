@@ -2,12 +2,12 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork DAO Query Biz
 Bundle-SymbolicName: net.solarnetwork.central.query.biz.dao
-Bundle-Version: 2.9.0
+Bundle-Version: 2.10.0
 Bundle-Vendor: SolarNetwork
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
  net.solarnetwork.central.dao;version="1.15.0",
- net.solarnetwork.central.datum.dao;version="2.10.0",
+ net.solarnetwork.central.datum.dao;version="2.13.0",
  net.solarnetwork.central.datum.domain;version="1.26.0",
  net.solarnetwork.central.domain;version="1.26.0",
  net.solarnetwork.central.query.biz;version="2.7.1",

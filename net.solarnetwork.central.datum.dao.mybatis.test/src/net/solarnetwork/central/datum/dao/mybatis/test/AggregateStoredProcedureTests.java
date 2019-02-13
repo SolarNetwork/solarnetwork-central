@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import java.sql.Timestamp;
@@ -32,6 +33,7 @@ import java.util.Map;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.util.JsonUtils;
 
 /**
@@ -39,10 +41,10 @@ import net.solarnetwork.util.JsonUtils;
  * calculations.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.10
  */
-public class AggregateStoredProcedureTests extends AbstractMyBatisDaoTestSupport {
+public class AggregateStoredProcedureTests extends MyBatisGeneralNodeDatumDaoTestSupport {
 
 	private final static String TEST_SOURCE_ID = "test.source";
 
@@ -67,7 +69,7 @@ public class AggregateStoredProcedureTests extends AbstractMyBatisDaoTestSupport
 	}
 
 	@Test
-	public void cacAggDatumAggHourlyToDayNoData() {
+	public void calcAggDatumAggHourlyToDayNoData() {
 		DateTime start = new DateTime(2018, 7, 1, 0, 0, DateTimeZone.UTC);
 		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.calc_agg_datum_agg(?,ARRAY[?],?,?, 'h')", TEST_NODE_ID,
@@ -77,7 +79,7 @@ public class AggregateStoredProcedureTests extends AbstractMyBatisDaoTestSupport
 	}
 
 	@Test
-	public void cacAggDatumAggHourlyToDay() {
+	public void calcAggDatumAggHourlyToDay() {
 		DateTime start = new DateTime(2018, 7, 1, 0, 0, 0, DateTimeZone.UTC);
 		Map<String, Object> iData = new HashMap<String, Object>(2);
 		iData.put("foo", 1.234f);
@@ -115,7 +117,7 @@ public class AggregateStoredProcedureTests extends AbstractMyBatisDaoTestSupport
 	}
 
 	@Test
-	public void cacAggDatumAggDailyToMonthNoData() {
+	public void calcAggDatumAggDailyToMonthNoData() {
 		DateTime start = new DateTime(2018, 7, 1, 0, 0, DateTimeZone.UTC);
 		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.calc_agg_datum_agg(?,ARRAY[?],?,?, 'd')", TEST_NODE_ID,
@@ -125,7 +127,7 @@ public class AggregateStoredProcedureTests extends AbstractMyBatisDaoTestSupport
 	}
 
 	@Test
-	public void cacAggDatumAggDailyToMonth() {
+	public void calcAggDatumAggDailyToMonth() {
 		DateTime start = new DateTime(2018, 7, 1, 0, 0, 0, DateTimeZone.UTC);
 		DateTime end = null;
 		Map<String, Object> iData = new HashMap<String, Object>(2);
@@ -166,6 +168,28 @@ public class AggregateStoredProcedureTests extends AbstractMyBatisDaoTestSupport
 		Map<String, Object> expectedMeta = JsonUtils.getStringMap(
 				"{\"i\": {\"bar\": {\"count\": 31}, \"foo\": {\"max\": 31.234, \"min\": 1.234, \"count\": 31}}}");
 		assertThat("jmeta", JsonUtils.getStringMap((String) row.get("jmeta")), equalTo(expectedMeta));
+	}
+
+	@Test
+	public void calcReadingAggDatumWithOneHourData() {
+		DateTime start = new DateTime(2018, 7, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		List<GeneralNodeDatum> data = createSampleData(59, start);
+		for ( GeneralNodeDatum d : data ) {
+			dao.store(d);
+		}
+
+		GeneralNodeDatumReadingAggregate r = calculateDatumDiffOver(TEST_NODE_ID, TEST_SOURCE_ID, start,
+				start.plusHours(1));
+
+		Integer whStart = data.get(0).getSamples().getAccumulatingSampleInteger("wattHours");
+		assertThat("agg reading start sample data", r.getAs(), hasEntry("wattHours", whStart));
+
+		Integer whFinal = data.get(data.size() - 1).getSamples()
+				.getAccumulatingSampleInteger("wattHours");
+		assertThat("agg reading final sample data", r.getAf(), hasEntry("wattHours", whFinal));
+
+		Integer whDiff = whFinal - whStart;
+		assertThat("agg reading diff sample data", r.getA(), hasEntry("wattHours", whDiff));
 	}
 
 }
