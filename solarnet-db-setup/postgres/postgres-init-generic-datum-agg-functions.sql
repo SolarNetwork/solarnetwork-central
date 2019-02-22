@@ -79,6 +79,7 @@ BEGIN
 		-- next slot; if there is another record in a future hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts > NEW.ts
+			AND d.ts < NEW.ts + interval '3 months'
 			AND d.node_id = NEW.node_id
 			AND d.source_id = NEW.source_id
 		ORDER BY d.ts ASC
@@ -115,6 +116,7 @@ BEGIN
 		-- next slot; if there is another record in a future hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts > OLD.ts
+			AND d.ts < OLD.ts + interval '3 months'
 			AND d.node_id = OLD.node_id
 			AND d.source_id = OLD.source_id
 		ORDER BY d.ts ASC
