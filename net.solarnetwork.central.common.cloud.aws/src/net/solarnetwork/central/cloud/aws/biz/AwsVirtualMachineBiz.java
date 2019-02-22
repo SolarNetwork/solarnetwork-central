@@ -59,7 +59,7 @@ import net.solarnetwork.central.cloud.domain.VirtualMachineState;
  * AWS SDK implementation of {@link VirtualMachineBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AwsVirtualMachineBiz implements VirtualMachineBiz {
 
@@ -78,6 +78,16 @@ public class AwsVirtualMachineBiz implements VirtualMachineBiz {
 	 * Call after all properties have been configured or changed.
 	 */
 	public void init() {
+		configurationChanged(null);
+	}
+
+	/**
+	 * Callback after properties have been changed.
+	 * 
+	 * @param properties
+	 *        the changed properties
+	 */
+	public void configurationChanged(Map<String, Object> properties) {
 		AmazonEC2ClientBuilder builder = AmazonEC2ClientBuilder.standard().withRegion(region);
 		if ( accessKey != null && secretKey != null ) {
 			builder.setCredentials(
