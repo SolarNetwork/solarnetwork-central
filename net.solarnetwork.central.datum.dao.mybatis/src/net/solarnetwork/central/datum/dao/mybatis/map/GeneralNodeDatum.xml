@@ -130,9 +130,18 @@
 		<parameter property="node_tz_offset" jdbcType="INTEGER" mode="OUT"/>
 	</parameterMap>
 
-	<update id="find-general-reportable-interval" parameterMap="pmap-reportable-interval" statementType="CALLABLE">
-		{call solardatum.find_reportable_interval(?, ?, ?, ?, ?, ?)}
-	</update>
+	<resultMap id="result-map-reportable-interval" type="net.solarnetwork.central.datum.dao.mybatis.NodeSourceRange">
+		<id property="nodeId" column="node_id" jdbcType="BIGINT"/>
+		<id property="sourceId" column="source_id" jdbcType="VARCHAR"/>
+		<result property="startDate" column="ts_start" jdbcType="TIMESTAMP"/>
+		<result property="endDate" column="ts_end" jdbcType="TIMESTAMP"/>
+		<result property="timeZoneId" column="node_tz" jdbcType="VARCHAR"/>
+		<result property="timeZoneOffset" column="node_tz_offset" jdbcType="INTEGER"/>
+	</resultMap>	
+
+	<select id="find-general-reportable-interval" parameterType="net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter" resultMap="result-map-reportable-interval" statementType="CALLABLE">
+		{call solardatum.find_reportable_interval(#{nodeId}, #{sourceId})}
+	</select>
 
 	<!-- 
 		FilterableDao support 

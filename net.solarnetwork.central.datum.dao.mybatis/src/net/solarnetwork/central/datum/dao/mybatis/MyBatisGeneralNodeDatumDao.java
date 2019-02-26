@@ -558,7 +558,11 @@ public class MyBatisGeneralNodeDatumDao
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReadableInterval getReportableInterval(Long nodeId, String sourceId) {
-		return selectInterval(this.queryForReportableInterval, nodeId, sourceId);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(nodeId);
+		filter.setSourceId(sourceId);
+		NodeSourceRange range = selectFirst(this.queryForReportableInterval, filter);
+		return (range != null ? range.getInterval() : null);
 	}
 
 	@Override
