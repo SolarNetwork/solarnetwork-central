@@ -72,7 +72,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.15
+ * @version 1.16
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -247,7 +247,7 @@ public class MyBatisGeneralNodeDatumDao
 	 * 
 	 * @since 1.11
 	 */
-	public static final String DEFAULT_BULK_LOADING_JDBC_CALL = "{call solardatum.store_datum(?, ?, ?, ?, ?)}";
+	public static final String DEFAULT_BULK_LOADING_JDBC_CALL = "{call solardatum.store_datum(?, ?, ?, ?, ?, FALSE)}";
 
 	/**
 	 * The default query name for the

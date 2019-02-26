@@ -699,6 +699,75 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		assertEquals(d2.getCreated().getMillis(), result.getEnd().getMillis());
 	}
 
+	private List<Map<String, Object>> selectAllDatumMostRecent() {
+		return jdbcTemplate.queryForList(
+				"select * from solardatum.da_datum_most_recent ORDER BY node_id, source_id");
+	}
+
+	@Test
+	public void mostRecentTablePopulatedOnInsert() {
+		List<Map<String, Object>> mrRows = selectAllDatumMostRecent();
+		assertThat("No most recent rows at start", mrRows, hasSize(0));
+
+		storeNew();
+		mrRows = selectAllDatumMostRecent();
+		assertThat("Most recent row inserted", mrRows, hasSize(1));
+		Map<String, Object> mrRow = mrRows.get(0);
+		assertThat(mrRow, hasEntry("node_id", lastDatum.getNodeId()));
+		assertThat(mrRow, hasEntry("source_id", lastDatum.getSourceId()));
+		assertThat(mrRow, hasEntry("ts", new Timestamp(lastDatum.getCreated().getMillis())));
+	}
+
+	@Test
+	public void mostRecentTablePopulatedOnUpdateNewer() {
+		List<Map<String, Object>> mrRows = selectAllDatumMostRecent();
+		assertThat("No most recent rows at start", mrRows, hasSize(0));
+
+		storeNew();
+		mrRows = selectAllDatumMostRecent();
+		assertThat("Most recent row inserted", mrRows, hasSize(1));
+		Map<String, Object> mrRow = mrRows.get(0);
+		assertThat(mrRow, hasEntry("node_id", lastDatum.getNodeId()));
+		assertThat(mrRow, hasEntry("source_id", lastDatum.getSourceId()));
+		assertThat(mrRow, hasEntry("ts", new Timestamp(lastDatum.getCreated().getMillis())));
+
+		GeneralNodeDatum datum = getTestInstance();
+		datum.setCreated(lastDatum.getCreated().plusMinutes(1));
+		GeneralNodeDatumPK id = dao.store(datum);
+
+		mrRows = selectAllDatumMostRecent();
+		assertThat("Most recent row updated", mrRows, hasSize(1));
+		mrRow = mrRows.get(0);
+		assertThat(mrRow, hasEntry("node_id", lastDatum.getNodeId()));
+		assertThat(mrRow, hasEntry("source_id", lastDatum.getSourceId()));
+		assertThat(mrRow, hasEntry("ts", new Timestamp(id.getCreated().getMillis())));
+	}
+
+	@Test
+	public void mostRecentTablePopulatedOnUpdateOlder() {
+		List<Map<String, Object>> mrRows = selectAllDatumMostRecent();
+		assertThat("No most recent rows at start", mrRows, hasSize(0));
+
+		storeNew();
+		mrRows = selectAllDatumMostRecent();
+		assertThat("Most recent row inserted", mrRows, hasSize(1));
+		Map<String, Object> mrRow = mrRows.get(0);
+		assertThat(mrRow, hasEntry("node_id", lastDatum.getNodeId()));
+		assertThat(mrRow, hasEntry("source_id", lastDatum.getSourceId()));
+		assertThat(mrRow, hasEntry("ts", new Timestamp(lastDatum.getCreated().getMillis())));
+
+		GeneralNodeDatum datum = getTestInstance();
+		datum.setCreated(lastDatum.getCreated().minusMinutes(1));
+		dao.store(datum);
+
+		mrRows = selectAllDatumMostRecent();
+		assertThat("Most recent row NOT updated", mrRows, hasSize(1));
+		mrRow = mrRows.get(0);
+		assertThat(mrRow, hasEntry("node_id", lastDatum.getNodeId()));
+		assertThat(mrRow, hasEntry("source_id", lastDatum.getSourceId()));
+		assertThat(mrRow, hasEntry("ts", new Timestamp(lastDatum.getCreated().getMillis())));
+	}
+
 	@Test
 	public void findMostRecentAllSources() {
 		storeNew();
@@ -3071,6 +3140,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 			public Object doInConnection(Connection con) throws SQLException, DataAccessException {
 				con.setAutoCommit(true);
 				con.createStatement().executeUpdate("delete from solardatum.da_datum");
+				con.createStatement().executeUpdate("delete from solardatum.da_datum_most_recent");
 				con.createStatement().executeUpdate("delete from solaragg.agg_stale_datum");
 				con.createStatement().executeUpdate("delete from solaragg.aud_datum_hourly");
 				return null;
