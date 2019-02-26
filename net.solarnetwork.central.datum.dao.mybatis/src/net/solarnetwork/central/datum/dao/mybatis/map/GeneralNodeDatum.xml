@@ -800,6 +800,7 @@
 					,#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz
 				</if>
 			) AS datum
+		ORDER BY datum.node_id, datum.source_id
 	</select>
 
 </mapper>
