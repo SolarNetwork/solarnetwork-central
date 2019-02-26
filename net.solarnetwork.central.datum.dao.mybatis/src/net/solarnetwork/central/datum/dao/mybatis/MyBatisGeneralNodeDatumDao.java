@@ -120,7 +120,10 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String PARAM_COMBINING = "combine";
 
-	/** The default query name used for {@link #getReportableInterval(Long)}. */
+	/**
+	 * The default query name used for
+	 * {@link #getReportableInterval(Long, String)}.
+	 */
 	public static final String QUERY_FOR_REPORTABLE_INTERVAL = "find-general-reportable-interval";
 
 	/**
@@ -154,7 +157,7 @@ public class MyBatisGeneralNodeDatumDao
 	public static final String QUERY_FOR_MOST_RECENT_REPORTING = "find-general-reporting-most-recent";
 
 	/**
-	 * The default query name for {@link #getAuditInterval(Long)}.
+	 * The default query name for {@link #getAuditInterval(Long, String)}.
 	 * 
 	 * @since 1.2
 	 */
