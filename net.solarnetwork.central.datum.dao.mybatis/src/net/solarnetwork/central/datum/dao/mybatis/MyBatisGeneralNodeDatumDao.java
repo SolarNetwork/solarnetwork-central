@@ -72,7 +72,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.15
+ * @version 1.16
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -120,7 +120,10 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String PARAM_COMBINING = "combine";
 
-	/** The default query name used for {@link #getReportableInterval(Long)}. */
+	/**
+	 * The default query name used for
+	 * {@link #getReportableInterval(Long, String)}.
+	 */
 	public static final String QUERY_FOR_REPORTABLE_INTERVAL = "find-general-reportable-interval";
 
 	/**
@@ -154,7 +157,7 @@ public class MyBatisGeneralNodeDatumDao
 	public static final String QUERY_FOR_MOST_RECENT_REPORTING = "find-general-reporting-most-recent";
 
 	/**
-	 * The default query name for {@link #getAuditInterval(Long)}.
+	 * The default query name for {@link #getAuditInterval(Long, String)}.
 	 * 
 	 * @since 1.2
 	 */
@@ -247,7 +250,7 @@ public class MyBatisGeneralNodeDatumDao
 	 * 
 	 * @since 1.11
 	 */
-	public static final String DEFAULT_BULK_LOADING_JDBC_CALL = "{call solardatum.store_datum(?, ?, ?, ?, ?)}";
+	public static final String DEFAULT_BULK_LOADING_JDBC_CALL = "{call solardatum.store_datum(?, ?, ?, ?, ?, FALSE)}";
 
 	/**
 	 * The default query name for the
@@ -555,7 +558,11 @@ public class MyBatisGeneralNodeDatumDao
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReadableInterval getReportableInterval(Long nodeId, String sourceId) {
-		return selectInterval(this.queryForReportableInterval, nodeId, sourceId);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(nodeId);
+		filter.setSourceId(sourceId);
+		NodeSourceRange range = selectFirst(this.queryForReportableInterval, filter);
+		return (range != null ? range.getInterval() : null);
 	}
 
 	@Override

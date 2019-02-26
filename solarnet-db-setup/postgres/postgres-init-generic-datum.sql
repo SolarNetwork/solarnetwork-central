@@ -124,6 +124,64 @@ $$
 $$;
 
 
+/**
+ * TABLE solardatum.da_datum_range
+ *
+ * Table with one row per node+source combination, with associated timestamps that are meant to 
+ * be the "most/least recent" timestamps for that node+source in the `solardatum.da_datum` table. This
+ * is used for query performance only, as finding the most recent data directly from `solardatum.da_datum`
+ * can be prohibitively expensive.
+ *
+ * @see solardatum.update_datum_most_recent(bigint, character varying(64), timestamp with time zone)
+ * @see solardatum.update_datum_least_recent(bigint, character varying(64), timestamp with time zone)
+ */
+CREATE TABLE IF NOT EXISTS solardatum.da_datum_range (
+  ts_min timestamp with time zone NOT NULL,
+  ts_max timestamp with time zone NOT NULL,
+  node_id bigint NOT NULL,
+  source_id character varying(64) NOT NULL,
+  CONSTRAINT da_datum_range_pkey PRIMARY KEY (node_id, source_id)
+);
+
+
+/**
+ * FUNCTION solardatum.update_datum_range_dates(bigint, character varying(64), timestamp with time zone)
+ *
+ * Update the "most/least recent" dates of the `solardatum.da_datum_range` table to `rdate` if and only if
+ * the current value is less/more than `rdate`.
+ *
+ * @param node the node ID
+ * @param source the source ID
+ * @param rdate the timestamp of the data, possibly the "most/least recent" date
+ */
+CREATE OR REPLACE FUNCTION solardatum.update_datum_range_dates(node bigint, source character varying(64), rdate timestamp with time zone)
+RETURNS VOID LANGUAGE plpgsql VOLATILE AS
+$$
+DECLARE
+	tsmin timestamp with time zone;
+	tsmax timestamp with time zone;
+BEGIN
+	SELECT ts_min, ts_max
+	FROM solardatum.da_datum_range
+	WHERE node_id = node AND source_id = source
+	INTO tsmin, tsmax;
+
+	IF tsmin IS NULL THEN
+		INSERT INTO solardatum.da_datum_range (ts_min, ts_max, node_id, source_id)
+		VALUES (rdate, rdate, node, source)
+		ON CONFLICT (node_id, source_id) DO NOTHING;
+	ELSEIF rdate > tsmax THEN
+		UPDATE solardatum.da_datum_range SET ts_max = rdate
+		WHERE node_id = node AND source_id = source;
+	ELSEIF rdate < tsmin THEN
+		UPDATE solardatum.da_datum_range SET ts_min = rdate
+		WHERE node_id = node AND source_id = source;
+	END IF;
+
+END;
+$$;
+
+
 CREATE TABLE solaragg.agg_stale_datum (
   ts_start timestamp with time zone NOT NULL,
   node_id bigint NOT NULL,
@@ -411,56 +469,51 @@ BEGIN
 END;
 $BODY$;
 
-CREATE OR REPLACE FUNCTION solardatum.find_available_sources(
-	IN node bigint,
-	IN st timestamp with time zone DEFAULT NULL,
-	IN en timestamp with time zone DEFAULT NULL)
-  RETURNS TABLE(source_id text) AS
-$BODY$
-DECLARE
-	node_tz text;
-BEGIN
-	IF st IS NOT NULL OR en IS NOT NULL THEN
-		-- get the node TZ for local date/time
-		SELECT l.time_zone  FROM solarnet.sn_node n
-		INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-		WHERE n.node_id = node
-		INTO node_tz;
+/**
+ * FUNCTION solardatum.find_available_sources(bigint[])
+ *
+ * Find the available sources for a given set of node IDs.
+ * This query relies on the `solardatum.da_datum_range` table.
+ *
+ * @param nodes the node IDs to find
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_available_sources(nodes bigint[])
+RETURNS TABLE(node_id bigint, source_id text) LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	SELECT node_id, source_id
+	FROM solardatum.da_datum_range
+	WHERE node_id = ANY(nodes)
+$$;
 
-		IF NOT FOUND THEN
-			RAISE NOTICE 'Node % has no time zone, will use UTC.', node;
-			node_tz := 'UTC';
-		END IF;
-	END IF;
+/**
+ * FUNCTION solardatum.find_available_sources(bigint, timestamp with time zone, timestamp with time zone)
+ *
+ * Find the available sources for a given node and date range.
+ * This query relies on the `solaragg.agg_datum_daily` table.
+ *
+ * @param node the node ID to find
+ * @param st the minimum date, inclusive
+ * @param en the maximum date, inclusive
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_available_sources(node bigint, st timestamp with time zone, en timestamp with time zone)
+RETURNS TABLE(source_id text) LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	SELECT DISTINCT CAST(d.source_id AS text)
+	FROM solaragg.agg_datum_daily d
+	WHERE d.node_id = node
+		AND d.ts_start >= st
+		AND d.ts_start <= en;
+$$;
 
-	CASE
-		WHEN st IS NULL AND en IS NULL THEN
-			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
-			FROM solaragg.agg_datum_daily d
-			WHERE d.node_id = node;
-
-		WHEN en IS NULL THEN
-			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
-			FROM solaragg.agg_datum_daily d
-			WHERE d.node_id = node
-				AND d.ts_start >= CAST(st at time zone node_tz AS DATE);
-
-		WHEN st IS NULL THEN
-			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
-			FROM solaragg.agg_datum_daily d
-			WHERE d.node_id = node
-				AND d.ts_start <= CAST(en at time zone node_tz AS DATE);
-
-		ELSE
-			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
-			FROM solaragg.agg_datum_daily d
-			WHERE d.node_id = node
-				AND d.ts_start >= CAST(st at time zone node_tz AS DATE)
-				AND d.ts_start <= CAST(en at time zone node_tz AS DATE);
-	END CASE;
-END;$BODY$
-  LANGUAGE plpgsql STABLE ROWS 50;
-
+/**
+ * FUNCTION solardatum.find_reportable_interval(bigint, text)
+ * 
+ * Find the least and highest available dates for the given source ID and node ID.
+ * This query relies on the `solardatum.da_datum_range` table.
+ *
+ * @param node the node ID to find
+ * @param src the optional source ID to find
+ */
 CREATE OR REPLACE FUNCTION solardatum.find_reportable_interval(
 	IN node bigint,
 	IN src text DEFAULT NULL,
@@ -468,43 +521,97 @@ CREATE OR REPLACE FUNCTION solardatum.find_reportable_interval(
 	OUT ts_end timestamp with time zone,
 	OUT node_tz TEXT,
 	OUT node_tz_offset INTEGER)
-  RETURNS RECORD AS
-$BODY$
-BEGIN
-	CASE
-		WHEN src IS NULL THEN
-			SELECT min(ts) FROM solardatum.da_datum WHERE node_id = node
-			INTO ts_start;
-		ELSE
-			SELECT min(ts) FROM solardatum.da_datum WHERE node_id = node AND source_id = src
-			INTO ts_start;
-	END CASE;
+  RETURNS RECORD LANGUAGE SQL STABLE AS
+$$
+	WITH range AS (
+		SELECT min(r.ts_min) AS ts_start, max(r.ts_max) AS ts_end
+		FROM solardatum.da_datum_range r
+		WHERE r.node_id = node
+			AND (src IS NULL OR r.source_id = src)
+	)
+	SELECT r.ts_start
+		, r.ts_end
+		, COALESCE(l.time_zone, 'UTC') AS node_tz
+		, COALESCE(CAST(EXTRACT(epoch FROM z.utc_offset) / 60 AS INTEGER), 0) AS node_tz_offset
+	FROM range r
+	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = node
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	LEFT OUTER JOIN pg_timezone_names z ON z.name = l.time_zone
+$$;
 
-	CASE
-		WHEN src IS NULL THEN
-			SELECT max(ts) FROM solardatum.da_datum WHERE node_id = node
-			INTO ts_end;
-		ELSE
-			SELECT max(ts) FROM solardatum.da_datum WHERE node_id = node AND source_id = src
-			INTO ts_end;
-	END CASE;
+/**
+ * FUNCTION solardatum.find_reportable_intervals(bigint[])
+ *
+ * Get the min/max date range for all source IDs of a given set of node IDs.
+ * This query relies on the `solardatum.da_datum_range` table.
+ *
+ * @param nodes the node IDs to find
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_reportable_intervals(nodes bigint[])
+RETURNS TABLE (
+	node_id bigint,
+	source_id text,
+	ts_start timestamp with time zone,
+	ts_end timestamp with time zone,
+	node_tz text,
+	node_tz_offset integer
+) LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	WITH range AS (
+		SELECT r.node_id, r.source_id, min(r.ts_min) AS ts_min, max(r.ts_max) AS ts_max
+		FROM solardatum.da_datum_range r
+		WHERE r.node_id = ANY(nodes)
+		GROUP BY r.node_id, r.source_id
+	)
+	SELECT r.node_id
+		, r.source_id
+		, r.ts_min AS ts_start
+		, r.ts_max AS ts_end
+		, COALESCE(l.time_zone, 'UTC') AS node_tz
+		, COALESCE(CAST(EXTRACT(epoch FROM z.utc_offset) / 60 AS INTEGER), 0) AS node_tz_offset
+	FROM range r
+	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = r.node_id
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	LEFT OUTER JOIN pg_timezone_names z ON z.name = l.time_zone
+$$;
 
-	SELECT
-		l.time_zone,
-		CAST(EXTRACT(epoch FROM z.utc_offset) / 60 AS INTEGER)
-	FROM solarnet.sn_node n
-	INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-	INNER JOIN pg_timezone_names z ON z.name = l.time_zone
-	WHERE n.node_id = node
-	INTO node_tz, node_tz_offset;
-
-	IF NOT FOUND THEN
-		node_tz := 'UTC';
-		node_tz_offset := 0;
-	END IF;
-
-END;$BODY$
-  LANGUAGE plpgsql STABLE;
+/**
+ * FUNCTION solardatum.find_reportable_intervals(bigint[], text[])
+ *
+ * Get the min/max date range for a given set of source IDs and node IDs.
+ * This query relies on the `solardatum.da_datum_range` table.
+ *
+ * @param nodes the node IDs to find
+ * @param source the source IDs to find
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_reportable_intervals(nodes bigint[], sources text[])
+RETURNS TABLE (
+	node_id bigint,
+	source_id text,
+	ts_start timestamp with time zone,
+	ts_end timestamp with time zone,
+	node_tz text,
+	node_tz_offset integer
+) LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	WITH range AS (
+		SELECT r.node_id, r.source_id, min(r.ts_min) AS ts_min, max(r.ts_max) AS ts_max
+		FROM solardatum.da_datum_range r
+		WHERE r.node_id = ANY(nodes)
+			AND r.source_id = ANY(sources)
+		GROUP BY r.node_id, r.source_id
+	)
+	SELECT r.node_id
+		, r.source_id
+		, r.ts_min AS ts_start
+		, r.ts_max AS ts_end
+		, COALESCE(l.time_zone, 'UTC') AS node_tz
+		, COALESCE(CAST(EXTRACT(epoch FROM z.utc_offset) / 60 AS INTEGER), 0) AS node_tz_offset
+	FROM range r
+	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = r.node_id
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	LEFT OUTER JOIN pg_timezone_names z ON z.name = l.time_zone
+$$;
 
 CREATE OR REPLACE FUNCTION solardatum.populate_updated()
   RETURNS "trigger" AS

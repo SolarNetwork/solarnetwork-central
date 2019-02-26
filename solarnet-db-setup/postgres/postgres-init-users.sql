@@ -518,20 +518,40 @@ END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
 /**
- * Return most recent datum records for all available sources for all nodes owned by a given user ID.
+ * FUNCTION solaruser.find_most_recent_datum_for_user_direct(bigint[])
+ * 
+ * Find the highest available dates for all source IDs for all node IDs owned by the given user IDs.
+ * This query does **not** rely on the `solardatum.da_datum_range` table.
  *
- * @param users An array of user IDs to return results for.
- * @returns Set of solardatum.da_datum records.
+ * @param users the user IDs to find
  */
-CREATE OR REPLACE FUNCTION solaruser.find_most_recent_datum_for_user(users bigint[])
-  RETURNS SETOF solardatum.da_datum_data AS
-$BODY$
+CREATE OR REPLACE FUNCTION solaruser.find_most_recent_datum_for_user_direct(users bigint[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE sql STABLE ROWS 100 AS
+$$
 	SELECT r.*
 	FROM (SELECT node_id FROM solaruser.user_node WHERE user_id = ANY(users)) AS n,
-	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
+	LATERAL (SELECT * FROM solardatum.find_most_recent_direct(n.node_id)) AS r
 	ORDER BY r.node_id, r.source_id;
-$BODY$
-  LANGUAGE sql STABLE;
+$$;
+
+/**
+ * FUNCTION solaruser.find_most_recent_datum_for_user_direct(bigint[])
+ * 
+ * Find the highest available dates for all source IDs for all node IDs owned by the given user IDs.
+ * This query relies on the `solardatum.da_datum_range` table.
+ *
+ * @param users the user IDs to find
+ */
+CREATE OR REPLACE FUNCTION solaruser.find_most_recent_datum_for_user(users bigint[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE sql STABLE ROWS 100 AS
+$$
+	SELECT d.*
+	FROM solaruser.user_node un
+	INNER JOIN solardatum.da_datum_range mr ON mr.node_id = un.node_id
+	INNER JOIN solardatum.da_datum_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id AND d.ts = mr.ts_max
+	WHERE un.user_id = ANY(users)
+	ORDER BY d.node_id, d.source_id
+$$;
 
 /**
  * TRIGGER function that automatically transfers rows related to a user_node to

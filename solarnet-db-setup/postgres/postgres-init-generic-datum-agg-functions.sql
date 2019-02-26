@@ -79,6 +79,7 @@ BEGIN
 		-- next slot; if there is another record in a future hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts > NEW.ts
+			AND d.ts < NEW.ts + interval '3 months'
 			AND d.node_id = NEW.node_id
 			AND d.source_id = NEW.source_id
 		ORDER BY d.ts ASC
@@ -115,6 +116,7 @@ BEGIN
 		-- next slot; if there is another record in a future hour, we have to mark that hour as stale as well
 		SELECT * FROM solardatum.da_datum d
 		WHERE d.ts > OLD.ts
+			AND d.ts < OLD.ts + interval '3 months'
 			AND d.node_id = OLD.node_id
 			AND d.source_id = OLD.source_id
 		ORDER BY d.ts ASC
@@ -1453,16 +1455,19 @@ END;$BODY$
 
 
 /**
+ * FUNCTION solaragg.find_available_sources(bigint[])
+ * 
  * Find distinct sources for a set of node IDs.
+ * This query relies on the `solardatum.da_datum_range` table.
  *
  * @param nodes The IDs of the nodes to query for.
  */
 CREATE OR REPLACE FUNCTION solaragg.find_available_sources(nodes bigint[])
-	RETURNS TABLE(node_id bigint, source_id text) LANGUAGE sql STABLE ROWS 50 AS
+RETURNS TABLE(node_id bigint, source_id text) LANGUAGE sql STABLE ROWS 50 AS
 $$
-	SELECT DISTINCT d.node_id, CAST(d.source_id AS text)
-	FROM solaragg.agg_datum_daily d
-	WHERE d.node_id = ANY(nodes)
+	SELECT node_id, source_id
+	FROM solardatum.da_datum_range
+	WHERE node_id = ANY(nodes)
 	ORDER BY source_id, node_id
 $$;
 
