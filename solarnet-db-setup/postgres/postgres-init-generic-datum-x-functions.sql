@@ -1,49 +1,175 @@
 -- solardatum datum functions that rely on other namespaces like solaragg
 
 /**
- * Return most recent datum records for a specific set of sources for a given node.
+ * FUNCTION solardatum.find_least_recent_direct(bigint)
+ * 
+ * Find the smallest available dates for all source IDs for the given node ID. This does **not**
+ * use the `solardatum.da_datum_range` table.
  *
- * @param node The node ID to return results for.
- * @param sources The source IDs to return results for, or <code>null</code> for all available sources.
- * @returns Set of solardatum.da_datum records.
+ * @param node the node ID to find
  */
-CREATE OR REPLACE FUNCTION solardatum.find_most_recent(
-	node bigint,
-	sources text[] DEFAULT NULL)
-  RETURNS SETOF solardatum.da_datum_data AS
-$BODY$
-	SELECT dd.* FROM solardatum.da_datum_data dd
-	INNER JOIN (
-		-- to speed up query for sources (which can be very slow when queried directly on da_datum),
-		-- we find the most recent hour time slot in agg_datum_hourly, and then join to da_datum with that narrow time range
-		SELECT max(d.ts) as ts, d.source_id FROM solardatum.da_datum d
-		INNER JOIN (SELECT node_id, ts_start, source_id FROM solaragg.find_most_recent_hourly(node, sources)) AS days
-			ON days.node_id = d.node_id
-				AND days.ts_start <= d.ts
-				AND days.ts_start + interval '1 hour' > d.ts
-				AND days.source_id = d.source_id
+CREATE OR REPLACE FUNCTION solardatum.find_least_recent_direct(node bigint)
+RETURNS SETOF solardatum.da_datum_data LANGUAGE SQL STABLE ROWS 20 AS
+$$
+	-- first look for least recent hours, because this more quickly narrows down the time range for each source
+	WITH hours AS (
+		SELECT min(d.ts_start) as ts_start, d.source_id, node AS node_id
+		FROM solaragg.agg_datum_hourly d
+		WHERE d. node_id = node
 		GROUP BY d.source_id
-	) AS r ON r.ts = dd.ts AND r.source_id = dd.source_id AND dd.node_id = node
-	ORDER BY dd.source_id ASC;
-$BODY$
-  LANGUAGE sql STABLE
-  ROWS 20;
+	)
+	-- next find the exact maximum time per source within each found hour, which is an index-only scan so quick
+	, mins AS (
+		SELECT min(d.ts) AS ts, d.source_id, node AS node_id
+		FROM solardatum.da_datum d
+		INNER JOIN hours ON d.node_id = hours.node_id AND d.source_id = hours.source_id AND d.ts >= hours.ts_start AND d.ts < hours.ts_start + interval '1 hour'
+		GROUP BY d.source_id
+	)
+	-- finally query the raw data using the exact found timestamps, so loop over each (ts,source) tuple found in mins
+	SELECT d.* 
+	FROM solardatum.da_datum_data d
+	INNER JOIN mins ON mins.node_id = d.node_id AND mins.source_id = d.source_id AND mins.ts = d.ts
+	ORDER BY d.source_id ASC
+$$;
 
 /**
- * Return most recent datum records for all available sources for a given set of node IDs.
+ * FUNCTION solardatum.find_most_recent_direct(bigint)
+ * 
+ * Find the highest available dates for all source IDs for the given node ID. This does **not**
+ * use the `solardatum.da_datum_range` table.
  *
- * @param nodes An array of node IDs to return results for.
- * @returns Set of solardatum.da_datum records.
+ * @param node the node ID to find
  */
-CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes bigint[])
-  RETURNS SETOF solardatum.da_datum_data AS
-$BODY$
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent_direct(node bigint)
+RETURNS SETOF solardatum.da_datum_data LANGUAGE SQL STABLE ROWS 20 AS
+$$
+	-- first look for most recent hours, because this more quickly narrows down the time range for each source
+	WITH hours AS (
+		SELECT max(d.ts_start) as ts_start, d.source_id, node AS node_id
+		FROM solaragg.agg_datum_hourly d
+		WHERE d. node_id = node
+		GROUP BY d.source_id
+	)
+	-- next find the exact maximum time per source within each found hour, which is an index-only scan so quick
+	, maxes AS (
+		SELECT max(d.ts) AS ts, d.source_id, node AS node_id
+		FROM solardatum.da_datum d
+		INNER JOIN hours ON d.node_id = hours.node_id AND d.source_id = hours.source_id AND d.ts >= hours.ts_start AND d.ts < hours.ts_start + interval '1 hour'
+		GROUP BY d.source_id
+	)
+	-- finally query the raw data using the exact found timestamps, so loop over each (ts,source) tuple found in maxes
+	SELECT d.* 
+	FROM solardatum.da_datum_data d
+	INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts = d.ts
+	ORDER BY d.source_id ASC
+$$;
+
+/**
+ * FUNCTION solardatum.find_most_recent_direct(bigint, text[])
+ * 
+ * Find the highest available dates for the given source IDs for the given node ID. This query does **not** rely on
+ * the `solardatum.da_datum_range` table.
+ *
+ * @param node the node ID to find
+ * @param sources the source IDs to find
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent_direct(node bigint, sources text[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	-- first look for most recent hours, because this more quickly narrows down the time range for each source
+	WITH hours AS (
+		SELECT max(d.ts_start) as ts_start, d.source_id, node AS node_id
+		FROM solaragg.agg_datum_hourly d
+		INNER JOIN (SELECT unnest(sources) AS source_id) AS s ON s.source_id = d.source_id
+		WHERE d. node_id = node
+		GROUP BY d.source_id
+	)
+	-- next find the exact maximum time per source within each found hour, which is an index-only scan so quick
+	, maxes AS (
+		SELECT max(d.ts) AS ts, d.source_id, node AS node_id
+		FROM solardatum.da_datum d
+		INNER JOIN hours ON d.node_id = hours.node_id AND d.source_id = hours.source_id AND d.ts >= hours.ts_start AND d.ts < hours.ts_start + interval '1 hour'
+		GROUP BY d.source_id
+	)
+	-- finally query the raw data using the exact found timestamps, so loop over each (ts,source) tuple found in maxes
+	SELECT d.* 
+	FROM solardatum.da_datum_data d
+	INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts = d.ts
+	ORDER BY d.source_id ASC
+$$;
+
+/**
+ * FUNCTION solardatum.find_most_recent(bigint)
+ * 
+ * Find the highest available dates for all source IDs for the given node ID. This query relies on
+ * the `solardatum.da_datum_range` table.
+ *
+ * @param node the node ID to find
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(node bigint)
+RETURNS SETOF solardatum.da_datum_data LANGUAGE SQL STABLE ROWS 20 AS
+$$
+	SELECT d.*
+	FROM  solardatum.da_datum_range mr
+	INNER JOIN solardatum.da_datum_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id AND d.ts = mr.ts_max
+	WHERE mr.node_id = node
+	ORDER BY d.source_id
+$$;
+
+/**
+ * FUNCTION solardatum.find_most_recent(bigint, text[])
+ * 
+ * Find the highest available dates for the given source IDs for the given node ID. This query relies on
+ * the `solardatum.da_datum_range` table.
+ *
+ * @param node the node ID to find
+ * @param sources the source IDs to find
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(node bigint, sources text[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	SELECT d.*
+	FROM  solardatum.da_datum_range mr
+	INNER JOIN solardatum.da_datum_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id AND d.ts = mr.ts_max
+	WHERE mr.node_id = node
+		AND mr.source_id = ANY(sources)
+	ORDER BY d.source_id
+$$;
+
+/**
+ * FUNCTION solardatum.find_most_recent_direct(bigint[])
+ * 
+ * Find the highest available dates for all source IDs for the given node IDs. This query does **not** rely on
+ * the `solardatum.da_datum_range` table.
+ *
+ * @param nodes the node IDs to find
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent_direct(nodes bigint[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE sql STABLE ROWS 100 AS
+$$
 	SELECT r.*
 	FROM (SELECT unnest(nodes) AS node_id) AS n,
-	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
+	LATERAL (SELECT * FROM solardatum.find_most_recent_direct(n.node_id)) AS r
 	ORDER BY r.node_id, r.source_id;
-$BODY$
-  LANGUAGE sql STABLE;
+$$;
+
+/**
+ * FUNCTION solardatum.find_most_recent(bigint[])
+ * 
+ * Find the highest available dates for all source IDs for the given node IDs. This query relies on
+ * the `solardatum.da_datum_range` table.
+ *
+ * @param nodes the node IDs to find
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes bigint[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE sql STABLE ROWS 100 AS
+$$
+	SELECT d.*
+	FROM  solardatum.da_datum_range mr
+	INNER JOIN solardatum.da_datum_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id AND d.ts = mr.ts_max
+	WHERE mr.node_id = ANY(nodes)
+	ORDER BY d.node_id, d.source_id
+$$;
 
 /**
  * Add or update a datum record. The data is stored in the <code>solardatum.da_datum</code> table.
@@ -53,13 +179,15 @@ $BODY$
  * @param src The source ID.
  * @param pdate The date the datum was posted to SolarNet.
  * @param jdata The datum JSON document.
+ * @param track_recent if `TRUE` then also call solardatum.update_datum_range_dates() to keep the da_datum_range table up-to-date 
  */
 CREATE OR REPLACE FUNCTION solardatum.store_datum(
 	cdate timestamp with time zone,
 	node bigint,
 	src text,
 	pdate timestamp with time zone,
-	jdata text)
+	jdata text,
+	track_recent boolean DEFAULT TRUE)
   RETURNS void LANGUAGE plpgsql VOLATILE AS
 $BODY$
 DECLARE
@@ -87,6 +215,10 @@ BEGIN
 	ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 	SET datum_count = aud_datum_hourly.datum_count + (CASE is_insert WHEN TRUE THEN 1 ELSE 0 END),
 		prop_count = aud_datum_hourly.prop_count + EXCLUDED.prop_count;
+		
+	IF track_recent AND is_insert THEN
+		PERFORM solardatum.update_datum_range_dates(node, src, cdate);
+	END IF;
 END;
 $BODY$;
 
