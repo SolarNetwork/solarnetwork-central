@@ -152,15 +152,15 @@
 					#{filter.userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
 				)}
 			</when>
-			<when test="filter.nodeIds.length > 1 and filter.sourceId == null">
+			<when test="filter.sourceIds != null and filter.sourceIds.length > 0">
 				{call solardatum.find_most_recent(
-					#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+					#{filter.nodeId,jdbcType=BIGINT}, 
+					#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 				)}
 			</when>
 			<otherwise>
 				{call solardatum.find_most_recent(
-					#{filter.nodeId,jdbcType=BIGINT}, 
-					#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+					#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
 				)}
 			</otherwise>
 		</choose>
