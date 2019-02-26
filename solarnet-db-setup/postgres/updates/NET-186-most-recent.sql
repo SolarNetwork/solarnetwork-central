@@ -22,7 +22,8 @@ WITH d AS (
 	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
 )
 INSERT INTO solardatum.da_datum_most_recent (ts, node_id, source_id)
-SELECT ts, node_id, source_id FROM d;
+SELECT ts, node_id, source_id FROM d
+ON CONFLICT (node_id, source_id) DO NOTHING;
 
 /**
  * FUNCTION solardatum.update_datum_most_recent(bigint, character varying(64), timestamp with time zone)
@@ -111,8 +112,7 @@ BEGIN
 END;
 $BODY$;
 
-
-CREATE OR REPLACE FUNCTION solardatum.find_most_recent(node bigint)
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent_direct(node bigint)
 RETURNS SETOF solardatum.da_datum_data LANGUAGE SQL STABLE ROWS 20 AS
 $$
 	-- first look for most recent hours, because this more quickly narrows down the time range for each source
@@ -136,9 +136,18 @@ $$
 	ORDER BY d.source_id ASC
 $$;
 
-DROP FUNCTION IF EXISTS solardatum.find_most_recent(bigint, text[]);
-CREATE OR REPLACE FUNCTION solardatum.find_most_recent(node bigint, sources text[])
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(node bigint)
 RETURNS SETOF solardatum.da_datum_data LANGUAGE SQL STABLE ROWS 20 AS
+$$
+	SELECT d.*
+	FROM  solardatum.da_datum_most_recent mr
+	INNER JOIN solardatum.da_datum_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id AND d.ts = mr.ts
+	WHERE mr.node_id = node
+	ORDER BY d.source_id
+$$;
+
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent_direct(node bigint, sources text[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE SQL STABLE ROWS 50 AS
 $$
 	-- first look for most recent hours, because this more quickly narrows down the time range for each source
 	WITH hours AS (
@@ -160,4 +169,55 @@ $$
 	FROM solardatum.da_datum_data d
 	INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts = d.ts
 	ORDER BY d.source_id ASC
+$$;
+
+DROP FUNCTION IF EXISTS solardatum.find_most_recent(bigint, text[]);
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(node bigint, sources text[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	SELECT d.*
+	FROM  solardatum.da_datum_most_recent mr
+	INNER JOIN solardatum.da_datum_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id AND d.ts = mr.ts
+	WHERE mr.node_id = node
+		AND mr.source_id = ANY(sources)
+	ORDER BY d.source_id
+$$;
+
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent_direct(nodes bigint[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE sql STABLE ROWS 100 AS
+$$
+	SELECT r.*
+	FROM (SELECT unnest(nodes) AS node_id) AS n,
+	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
+	ORDER BY r.node_id, r.source_id;
+$$;
+
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes bigint[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE sql STABLE ROWS 100 AS
+$$
+	SELECT d.*
+	FROM  solardatum.da_datum_most_recent mr
+	INNER JOIN solardatum.da_datum_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id AND d.ts = mr.ts
+	WHERE mr.node_id = ANY(nodes)
+	ORDER BY d.node_id, d.source_id
+$$;
+
+CREATE OR REPLACE FUNCTION solaruser.find_most_recent_datum_for_user(users bigint[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE sql STABLE ROWS 100 AS
+$$
+	SELECT r.*
+	FROM (SELECT node_id FROM solaruser.user_node WHERE user_id = ANY(users)) AS n,
+	LATERAL (SELECT * FROM solardatum.find_most_recent(n.node_id)) AS r
+	ORDER BY r.node_id, r.source_id;
+$$;
+
+CREATE OR REPLACE FUNCTION solaruser.find_most_recent_datum_for_user(users bigint[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE sql STABLE ROWS 100 AS
+$$
+	SELECT d.*
+	FROM solaruser.user_node un
+	INNER JOIN solardatum.da_datum_most_recent mr ON mr.node_id = un.node_id
+	INNER JOIN solardatum.da_datum_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id AND d.ts = mr.ts
+	WHERE un.user_id = ANY(users)
+	ORDER BY d.node_id, d.source_id
 $$;
