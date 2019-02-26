@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
 import org.joda.time.DateTimeZone;
@@ -338,40 +339,17 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	public void getAvailableSourcesForNode() {
 		storeNew();
 		Set<String> sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
-		assertEquals("Sources set size", 0, sources.size());
+		assertThat("Source returned", sources, contains(lastDatum.getSourceId()));
 
-		// we are querying the reporting table, which requires two rows minimum	so add 2nd datum
-		// of same source to trigger data population there
-		GeneralNodeDatum d2 = getTestInstance();
-		d2.setCreated(d2.getCreated().plus(1000));
-		dao.store(d2);
-
-		// immediately process reporting data
-		processAggregateStaleData();
-
-		sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
-		assertEquals("Sources set size", 1, sources.size());
-		assertTrue("Source ID returned", sources.contains(d2.getSourceId()));
-
-		// add a 2nd source (two more datum to get into reporting table).
-		// we also make this on another day, to support getAllAvailableSourcesForNodeAndDateRange() test
+		// add a 2nd source
 		GeneralNodeDatum d3 = getTestInstance();
 		d3.setSourceId(TEST_2ND_SOURCE);
-		d3.setCreated(d2.getCreated().plusDays(1));
+		d3.setCreated(lastDatum.getCreated().plusDays(1));
 		dao.store(d3);
 
-		GeneralNodeDatum d4 = getTestInstance();
-		d4.setSourceId(d3.getSourceId());
-		d4.setCreated(d3.getCreated().plus(1000));
-		dao.store(d4);
-
-		// immediately process reporting data
-		processAggregateStaleData();
-
 		sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
-		assertEquals("Sources set size", 2, sources.size());
-		assertTrue("Source ID returned", sources.contains(d2.getSourceId()));
-		assertTrue("Source ID returned", sources.contains(d3.getSourceId()));
+		assertThat("Sources set", sources,
+				Matchers.containsInAnyOrder(lastDatum.getSourceId(), d3.getSourceId()));
 	}
 
 	@Test
@@ -380,40 +358,17 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		cmd.setNodeId(lastDatum.getNodeId());
 		Set<String> sources = dao.getAvailableSources(cmd);
-		assertEquals("Sources set size", 0, sources.size());
-
-		// we are querying the reporting table, which requires two rows minimum	so add 2nd datum
-		// of same source to trigger data population there
-		GeneralNodeDatum d2 = getTestInstance();
-		d2.setCreated(d2.getCreated().plus(1000));
-		dao.store(d2);
-
-		// immediately process reporting data
-		processAggregateStaleData();
-
-		sources = dao.getAvailableSources(cmd);
-		assertEquals("Sources set size", 1, sources.size());
-		assertTrue("Source ID returned", sources.contains(d2.getSourceId()));
+		assertThat("Sources", sources, contains(lastDatum.getSourceId()));
 
 		// add a 2nd source (two more datum to get into reporting table).
-		// we also make this on another day, to support getAllAvailableSourcesForNodeAndDateRange() test
 		GeneralNodeDatum d3 = getTestInstance();
 		d3.setSourceId(TEST_2ND_SOURCE);
-		d3.setCreated(d2.getCreated().plusDays(1));
+		d3.setCreated(lastDatum.getCreated().plusDays(1));
 		dao.store(d3);
 
-		GeneralNodeDatum d4 = getTestInstance();
-		d4.setSourceId(d3.getSourceId());
-		d4.setCreated(d3.getCreated().plus(1000));
-		dao.store(d4);
-
-		// immediately process reporting data
-		processAggregateStaleData();
-
 		sources = dao.getAvailableSources(cmd);
-		assertEquals("Sources set size", 2, sources.size());
-		assertTrue("Source ID returned", sources.contains(d2.getSourceId()));
-		assertTrue("Source ID returned", sources.contains(d3.getSourceId()));
+		assertThat("Sources set", sources,
+				Matchers.containsInAnyOrder(lastDatum.getSourceId(), d3.getSourceId()));
 	}
 
 	@Test
@@ -421,42 +376,24 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		storeNew();
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		cmd.setNodeId(lastDatum.getNodeId());
+
+		// we are querying da_datum_range table, so results available without 2nd row
 		Set<NodeSourcePK> sources = dao.findAvailableSources(cmd);
-		assertEquals("Sources set size", 0, sources.size());
-
-		// we are querying the reporting table, which requires two rows minimum	so add 2nd datum
-		// of same source to trigger data population there
-		GeneralNodeDatum d2 = getTestInstance();
-		d2.setCreated(d2.getCreated().plus(1000));
-		dao.store(d2);
-
-		// immediately process reporting data
-		processAggregateStaleData();
-
-		sources = dao.findAvailableSources(cmd);
 		assertEquals("Sources set size", 1, sources.size());
 		assertTrue("Source ID returned",
-				sources.contains(new NodeSourcePK(lastDatum.getNodeId(), d2.getSourceId())));
+				sources.contains(new NodeSourcePK(lastDatum.getNodeId(), lastDatum.getSourceId())));
 
 		// add a 2nd source (two more datum to get into reporting table).
 		// we also make this on another day, to support getAllAvailableSourcesForNodeAndDateRange() test
 		GeneralNodeDatum d3 = getTestInstance();
 		d3.setSourceId(TEST_2ND_SOURCE);
-		d3.setCreated(d2.getCreated().plusDays(1));
+		d3.setCreated(lastDatum.getCreated().plusDays(1));
 		dao.store(d3);
-
-		GeneralNodeDatum d4 = getTestInstance();
-		d4.setSourceId(d3.getSourceId());
-		d4.setCreated(d3.getCreated().plus(1000));
-		dao.store(d4);
-
-		// immediately process reporting data
-		processAggregateStaleData();
 
 		sources = dao.findAvailableSources(cmd);
 		assertEquals("Sources set size", 2, sources.size());
 		assertTrue("Source ID returned",
-				sources.contains(new NodeSourcePK(lastDatum.getNodeId(), d2.getSourceId())));
+				sources.contains(new NodeSourcePK(lastDatum.getNodeId(), lastDatum.getSourceId())));
 		assertTrue("Source ID returned",
 				sources.contains(new NodeSourcePK(lastDatum.getNodeId(), d3.getSourceId())));
 	}

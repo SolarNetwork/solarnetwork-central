@@ -311,6 +311,15 @@ $$
 	ORDER BY d.node_id, d.source_id
 $$;
 
+/**
+ * FUNCTION solardatum.find_reportable_interval(bigint, text)
+ * 
+ * Find the least and highest available dates for the given source ID and node ID.
+ * This query relies on the `solardatum.da_datum_range` table.
+ *
+ * @param node the node ID to find
+ * @param src the optional source ID to find
+ */
 CREATE OR REPLACE FUNCTION solardatum.find_reportable_interval(
 	IN node bigint,
 	IN src text DEFAULT NULL,
@@ -340,6 +349,7 @@ $$;
  * FUNCTION solardatum.find_reportable_intervals(bigint[])
  *
  * Get the min/max date range for all source IDs of a given set of node IDs.
+ * This query relies on the `solardatum.da_datum_range` table.
  *
  * @param nodes the node IDs to find
  */
@@ -372,9 +382,10 @@ $$
 $$;
 
 /**
- * FUNCTION solardatum.find_reportable_intervals(bigint[])
+ * FUNCTION solardatum.find_reportable_intervals(bigint[], text[])
  *
  * Get the min/max date range for a given set of source IDs and node IDs.
+ * This query relies on the `solardatum.da_datum_range` table.
  *
  * @param nodes the node IDs to find
  * @param source the source IDs to find
@@ -406,6 +417,63 @@ $$
 	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = r.node_id
 	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 	LEFT OUTER JOIN pg_timezone_names z ON z.name = l.time_zone
+$$;
+
+
+/**
+ * FUNCTION solardatum.find_available_sources(bigint[])
+ *
+ * Find the available sources for a given set of node IDs.
+ * This query relies on the `solardatum.da_datum_range` table.
+ *
+ * @param nodes the node IDs to find
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_available_sources(nodes bigint[])
+RETURNS TABLE(node_id bigint, source_id text) LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	SELECT node_id, source_id
+	FROM solardatum.da_datum_range
+	WHERE node_id = ANY(nodes)
+$$;
+
+-- recreate with non-optional args
+DROP FUNCTION solardatum.find_available_sources(bigint, timestamp with time zone, timestamp with time zone);
+
+/**
+ * FUNCTION solardatum.find_available_sources(bigint, timestamp with time zone, timestamp with time zone)
+ *
+ * Find the available sources for a given node and date range.
+ * This query relies on the `solaragg.agg_datum_daily` table.
+ *
+ * @param node the node ID to find
+ * @param st the minimum date, inclusive
+ * @param en the maximum date, inclusive
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_available_sources(node bigint, st timestamp with time zone, en timestamp with time zone)
+RETURNS TABLE(source_id text) LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	SELECT DISTINCT CAST(d.source_id AS text)
+	FROM solaragg.agg_datum_daily d
+	WHERE d.node_id = node
+		AND d.ts_start >= st
+		AND d.ts_start <= en;
+$$;
+
+/**
+ * FUNCTION solaragg.find_available_sources(bigint[])
+ * 
+ * Find distinct sources for a set of node IDs.
+ * This query relies on the `solardatum.da_datum_range` table.
+ *
+ * @param nodes The IDs of the nodes to query for.
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_available_sources(nodes bigint[])
+RETURNS TABLE(node_id bigint, source_id text) LANGUAGE sql STABLE ROWS 50 AS
+$$
+	SELECT node_id, source_id
+	FROM solardatum.da_datum_range
+	WHERE node_id = ANY(nodes)
+	ORDER BY source_id, node_id
 $$;
 
 -- provide initial population of most-recent rows

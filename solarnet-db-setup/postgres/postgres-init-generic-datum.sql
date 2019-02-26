@@ -469,55 +469,41 @@ BEGIN
 END;
 $BODY$;
 
-CREATE OR REPLACE FUNCTION solardatum.find_available_sources(
-	IN node bigint,
-	IN st timestamp with time zone DEFAULT NULL,
-	IN en timestamp with time zone DEFAULT NULL)
-  RETURNS TABLE(source_id text) AS
-$BODY$
-DECLARE
-	node_tz text;
-BEGIN
-	IF st IS NOT NULL OR en IS NOT NULL THEN
-		-- get the node TZ for local date/time
-		SELECT l.time_zone  FROM solarnet.sn_node n
-		INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-		WHERE n.node_id = node
-		INTO node_tz;
+/**
+ * FUNCTION solardatum.find_available_sources(bigint[])
+ *
+ * Find the available sources for a given set of node IDs.
+ * This query relies on the `solardatum.da_datum_range` table.
+ *
+ * @param nodes the node IDs to find
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_available_sources(nodes bigint[])
+RETURNS TABLE(node_id bigint, source_id text) LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	SELECT node_id, source_id
+	FROM solardatum.da_datum_range
+	WHERE node_id = ANY(nodes)
+$$;
 
-		IF NOT FOUND THEN
-			RAISE NOTICE 'Node % has no time zone, will use UTC.', node;
-			node_tz := 'UTC';
-		END IF;
-	END IF;
-
-	CASE
-		WHEN st IS NULL AND en IS NULL THEN
-			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
-			FROM solaragg.agg_datum_daily d
-			WHERE d.node_id = node;
-
-		WHEN en IS NULL THEN
-			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
-			FROM solaragg.agg_datum_daily d
-			WHERE d.node_id = node
-				AND d.ts_start >= CAST(st at time zone node_tz AS DATE);
-
-		WHEN st IS NULL THEN
-			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
-			FROM solaragg.agg_datum_daily d
-			WHERE d.node_id = node
-				AND d.ts_start <= CAST(en at time zone node_tz AS DATE);
-
-		ELSE
-			RETURN QUERY SELECT DISTINCT CAST(d.source_id AS text)
-			FROM solaragg.agg_datum_daily d
-			WHERE d.node_id = node
-				AND d.ts_start >= CAST(st at time zone node_tz AS DATE)
-				AND d.ts_start <= CAST(en at time zone node_tz AS DATE);
-	END CASE;
-END;$BODY$
-  LANGUAGE plpgsql STABLE ROWS 50;
+/**
+ * FUNCTION solardatum.find_available_sources(bigint, timestamp with time zone, timestamp with time zone)
+ *
+ * Find the available sources for a given node and date range.
+ * This query relies on the `solaragg.agg_datum_daily` table.
+ *
+ * @param node the node ID to find
+ * @param st the minimum date, inclusive
+ * @param en the maximum date, inclusive
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_available_sources(node bigint, st timestamp with time zone, en timestamp with time zone)
+RETURNS TABLE(source_id text) LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	SELECT DISTINCT CAST(d.source_id AS text)
+	FROM solaragg.agg_datum_daily d
+	WHERE d.node_id = node
+		AND d.ts_start >= st
+		AND d.ts_start <= en;
+$$;
 
 /**
  * FUNCTION solardatum.find_reportable_interval(bigint, text)
