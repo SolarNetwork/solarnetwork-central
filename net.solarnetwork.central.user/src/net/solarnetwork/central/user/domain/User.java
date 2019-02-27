@@ -37,7 +37,7 @@ import net.solarnetwork.util.SerializeIgnore;
  * A user domain object.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class User extends BaseEntity implements UserInfo {
 
@@ -139,7 +139,8 @@ public class User extends BaseEntity implements UserInfo {
 	 */
 	public TimeZone getTimeZone() {
 		return (this.location != null && this.location.getTimeZoneId() != null
-				? TimeZone.getTimeZone(this.location.getTimeZoneId()) : null);
+				? TimeZone.getTimeZone(this.location.getTimeZoneId())
+				: null);
 	}
 
 	/**
@@ -213,6 +214,8 @@ public class User extends BaseEntity implements UserInfo {
 	 * @since 1.4
 	 */
 	@Override
+	@JsonIgnore
+	@SerializeIgnore
 	public Map<String, Object> getInternalData() {
 		if ( internalData == null && internalDataJson != null ) {
 			internalData = JsonUtils.getStringMap(internalDataJson);
