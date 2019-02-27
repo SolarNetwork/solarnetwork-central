@@ -22,13 +22,18 @@
 
 package net.solarnetwork.central.user.biz.dao.test;
 
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -109,7 +114,7 @@ import net.solarnetwork.util.JavaBeanXmlSerializer;
  * Unit tests for the {@link DaoRegistrationBiz}.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DaoRegistrationBizTest {
 
@@ -283,6 +288,89 @@ public class DaoRegistrationBizTest {
 		registrationBiz.cancelNodeAssociation(testConfId);
 
 		verifyAll();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void createNewNodeManually() throws Exception {
+		// given
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+
+		expect(nodeDao.getUnusedNodeId()).andReturn(TEST_NODE_ID);
+
+		final SolarLocation loc = new SolarLocation();
+		loc.setId(TEST_LOC_ID);
+		loc.setCountry("NZ");
+		loc.setTimeZoneId("Pacific/Auckland");
+		expect(solarLocationDao.getSolarLocationForTimeZone(loc.getCountry(), loc.getTimeZoneId()))
+				.andReturn(loc);
+
+		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
+		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
+
+		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
+		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+
+		final String nodeSubjectDN = String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString());
+
+		final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+		keyGen.initialize(1024, new SecureRandom());
+		final KeyPair keypair = keyGen.generateKeyPair();
+
+		final X509Certificate certificate = certificateService.generateCertificate(nodeSubjectDN,
+				keypair.getPublic(), keypair.getPrivate());
+		expect(nodePKIBiz.generateCertificate(eq(nodeSubjectDN), anyObject(PublicKey.class),
+				anyObject(PrivateKey.class))).andReturn(certificate);
+		expect(nodePKIBiz.submitCSR(EasyMock.eq(certificate), EasyMock.anyObject(PrivateKey.class)))
+				.andReturn(TEST_CERT_REQ_ID);
+		expect(userNodeCertificateDao.store(anyObject(UserNodeCertificate.class)))
+				.andReturn(TEST_CERT_ID);
+
+		final UserNodeCertificate userNodeCertificate = new UserNodeCertificate();
+		userNodeCertificate.setUser(testUser);
+		userNodeCertificate.setStatus(UserNodeCertificateStatus.a);
+		expect(executorService.submit(anyObject(Callable.class)))
+				.andReturn(new Future<UserNodeCertificate>() {
+
+					@Override
+					public boolean cancel(boolean mayInterruptIfRunning) {
+						return false;
+					}
+
+					@Override
+					public boolean isCancelled() {
+						return false;
+					}
+
+					@Override
+					public boolean isDone() {
+						return true;
+					}
+
+					@Override
+					public UserNodeCertificate get() throws InterruptedException, ExecutionException {
+						return userNodeCertificate;
+					}
+
+					@Override
+					public UserNodeCertificate get(long timeout, TimeUnit unit)
+							throws InterruptedException, ExecutionException, TimeoutException {
+						return userNodeCertificate;
+					}
+				});
+
+		// when
+		replayAll();
+
+		NewNodeRequest req = new NewNodeRequest(testUser.getId(), "foobar",
+				TimeZone.getTimeZone(loc.getTimeZoneId()), new Locale("en", loc.getCountry()));
+		UserNode result = registrationBiz.createNodeManually(req);
+
+		// then
+		assertThat("UserNode created", result, notNullValue());
+		assertThat("UserNode user", result.getUser(), sameInstance(testUser));
+		assertThat("UserNode certificate returned", result.getCertificate(),
+				sameInstance(userNodeCertificate));
 	}
 
 	@Test
