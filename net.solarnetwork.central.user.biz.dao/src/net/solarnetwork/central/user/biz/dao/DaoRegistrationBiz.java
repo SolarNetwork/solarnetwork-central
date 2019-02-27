@@ -83,6 +83,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.PasswordEncoder;
+import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
@@ -415,6 +416,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 
 		final Long nodeId = solarNodeDao.getUnusedNodeId();
+
 		return createNewNode(request.getLocale().getCountry(), request.getTimeZone().getID(), user,
 				nodeId, request.getSecurityPhrase());
 	}
@@ -939,8 +941,12 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		UserNodeCertificate cert = null;
 		if ( keystorePassword != null ) {
-			// we must become the User now for CSR to be generated
-			SecurityUtils.becomeUser(user.getEmail(), user.getName(), user.getId());
+			// we must become the User now for CSR to be generated (if we are a node actor)
+			try {
+				SecurityUtils.getCurrentActorUserId();
+			} catch ( SecurityException e ) {
+				SecurityUtils.becomeUser(user.getEmail(), user.getName(), user.getId());
+			}
 
 			// we'll generate a key and CSR for the user, encrypting with the provided password
 			cert = generateNodeCSR(keystorePassword, certSubjectDN);
