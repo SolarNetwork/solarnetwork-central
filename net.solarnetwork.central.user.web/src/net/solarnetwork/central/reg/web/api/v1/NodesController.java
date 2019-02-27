@@ -24,6 +24,8 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,7 +35,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
+import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -44,14 +48,15 @@ import net.solarnetwork.web.domain.Response;
  * Controller for user nodes web service API.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Controller("v1nodesController")
 @RequestMapping(value = "/v1/sec/nodes")
 public class NodesController extends WebServiceControllerSupport {
 
-	public final UserBiz userBiz;
-	public final CertificateService certificateService;
+	private final UserBiz userBiz;
+	private final CertificateService certificateService;
+	private final RegistrationBiz registrationBiz;
 
 	/**
 	 * Constructor.
@@ -60,12 +65,16 @@ public class NodesController extends WebServiceControllerSupport {
 	 *        The {@link UserBiz}.
 	 * @param certificateService
 	 *        The {@link CertificateService}.
+	 * @param registrationBiz
+	 *        the {@link RegistrationBiz}
 	 */
 	@Autowired
-	public NodesController(UserBiz userBiz, CertificateService certificateService) {
+	public NodesController(UserBiz userBiz, CertificateService certificateService,
+			RegistrationBiz registrationBiz) {
 		super();
 		this.userBiz = userBiz;
 		this.certificateService = certificateService;
+		this.registrationBiz = registrationBiz;
 	}
 
 	/**
@@ -107,7 +116,7 @@ public class NodesController extends WebServiceControllerSupport {
 	@ResponseBody
 	public Response<List<UserNode>> getArchivedNodes() {
 		List<UserNode> nodes = userBiz.getArchivedUserNodes(SecurityUtils.getCurrentActorUserId());
-		return Response.response(nodes);
+		return response(nodes);
 	}
 
 	/**
@@ -125,6 +134,30 @@ public class NodesController extends WebServiceControllerSupport {
 	public Response<Object> updateArchivedStatus(@RequestParam("nodeIds") Long[] nodeIds,
 			@RequestParam("archived") boolean archived) {
 		userBiz.updateUserNodeArchivedStatus(SecurityUtils.getCurrentActorUserId(), nodeIds, archived);
-		return Response.response(null);
+		return response(null);
+	}
+
+	/**
+	 * Manually create a new node, without going through the
+	 * invitation/association process.
+	 * 
+	 * @return the new node details
+	 * @since 1.2
+	 */
+	@RequestMapping(value = "/new", method = RequestMethod.POST)
+	@ResponseBody
+	public Response<UserNode> manuallyCreateNode(@RequestParam("timeZone") String timeZoneId,
+			@RequestParam("country") String countryCode) {
+		String lang = "en";
+		for ( Locale locale : Locale.getAvailableLocales() ) {
+			if ( locale.getCountry().equals(countryCode) ) {
+				lang = locale.getLanguage();
+			}
+		}
+		final Locale locale = new Locale(lang, countryCode);
+		final TimeZone timeZone = TimeZone.getTimeZone(timeZoneId);
+		NewNodeRequest req = new NewNodeRequest(SecurityUtils.getCurrentActorUserId(), (String) null,
+				timeZone, locale);
+		return response(registrationBiz.createNodeManually(req));
 	}
 }
