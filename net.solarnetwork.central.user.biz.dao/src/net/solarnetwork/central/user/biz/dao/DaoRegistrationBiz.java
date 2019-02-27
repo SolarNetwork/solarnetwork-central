@@ -673,23 +673,23 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		Long instructionId;
 		try {
 			instructionId = Long.valueOf(confirmationKey);
-		} catch ( RuntimeException e ) {
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT,
-					confirmationKey);
+		} catch ( NumberFormatException e ) {
+			// might be ID from certificate creation and not a renewal instruction number
+			return null;
 		}
 		NodeInstruction instruction = instructorBiz.getInstruction(instructionId);
 		if ( instruction == null ) {
 			return null;
 		}
 
-		// verify the node ID matches
+		// verify the node ID matches and actually a renew instruction
 		Long nodeId = userNode.getId();
 		if ( nodeId == null && userNode.getNode() != null ) {
 			nodeId = userNode.getNode().getId();
 		}
-		if ( !instruction.getNodeId().equals(nodeId) ) {
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
-					confirmationKey);
+		if ( !(instruction.getNodeId().equals(nodeId)
+				&& INSTRUCTION_TOPIC_RENEW_CERTIFICATE.equals(instruction.getTopic())) ) {
+			return null;
 		}
 
 		BasicUserNodeCertificateRenewal details = new BasicUserNodeCertificateRenewal();
