@@ -141,13 +141,20 @@ public class NodesController extends WebServiceControllerSupport {
 	 * Manually create a new node, without going through the
 	 * invitation/association process.
 	 * 
+	 * @param timeZoneId
+	 *        the time zone ID
+	 * @param countryCode
+	 *        the country code
+	 * @param keystorePassword
+	 *        the password to use for the certificate store
 	 * @return the new node details
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/new", method = RequestMethod.POST)
 	@ResponseBody
 	public Response<UserNode> manuallyCreateNode(@RequestParam("timeZone") String timeZoneId,
-			@RequestParam("country") String countryCode) {
+			@RequestParam("country") String countryCode,
+			@RequestParam("keystorePassword") String keystorePassword) {
 		String lang = "en";
 		for ( Locale locale : Locale.getAvailableLocales() ) {
 			if ( locale.getCountry().equals(countryCode) ) {
@@ -156,7 +163,7 @@ public class NodesController extends WebServiceControllerSupport {
 		}
 		final Locale locale = new Locale(lang, countryCode);
 		final TimeZone timeZone = TimeZone.getTimeZone(timeZoneId);
-		NewNodeRequest req = new NewNodeRequest(SecurityUtils.getCurrentActorUserId(), (String) null,
+		NewNodeRequest req = new NewNodeRequest(SecurityUtils.getCurrentActorUserId(), keystorePassword,
 				timeZone, locale);
 		return response(registrationBiz.createNodeManually(req));
 	}
