@@ -1025,7 +1025,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 					"UserNodeCertificate " + cert.getId() + " does not have a private key.");
 		}
 
-		log.info("Installing node certificate reply {} issued by {}",
+		log.info("Saving node certificate reply {} issued by {}",
 				(chain != null && chain.length > 0 ? chain[0].getSubjectDN().getName() : null),
 				(chain != null && chain.length > 0 ? chain[0].getIssuerDN().getName() : null));
 		try {
