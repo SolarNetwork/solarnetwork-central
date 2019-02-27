@@ -43,6 +43,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.reg.web.domain.DatumAuxiliaryMove;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.util.JodaDateFormatEditor;
@@ -52,7 +53,7 @@ import net.solarnetwork.web.domain.Response;
  * Web controller for datum auxiliary record management.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.35
  */
 @RestController("v1DatumAuxiliaryController")
@@ -179,6 +180,34 @@ public class DatumAuxiliaryController extends WebServiceControllerSupport {
 			"/" }, method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	public Response<Void> storeNodeDatumAuxiliaryFormPost(GeneralNodeDatumAuxiliary auxiliary) {
 		return storeNodeDatumAuxiliary(auxiliary);
+	}
+
+	/**
+	 * Move (delete/insert) a datum auxiliary record.
+	 * 
+	 * @param move
+	 *        the record to move
+	 * @return empty result
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/move", method = RequestMethod.POST, consumes = "!"
+			+ MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	public Response<Boolean> moveNodeDatumAuxiliary(@RequestBody DatumAuxiliaryMove move) {
+		boolean moved = datumAuxiliaryBiz.moveGeneralNodeDatumAuxiliary(move.getFrom(), move.getTo());
+		return response(moved);
+	}
+
+	/**
+	 * Move (delete/insert) a datum auxiliary record via a web form post.
+	 * 
+	 * @param move
+	 *        the record to move
+	 * @return empty result
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/move", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	public Response<Boolean> moveNodeDatumAuxiliaryFormPost(DatumAuxiliaryMove move) {
+		return moveNodeDatumAuxiliary(move);
 	}
 
 	/**

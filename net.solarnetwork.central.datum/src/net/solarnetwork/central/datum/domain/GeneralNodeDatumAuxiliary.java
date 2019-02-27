@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.SerializeIgnore;
 
@@ -40,10 +41,11 @@ import net.solarnetwork.util.SerializeIgnore;
  * before/after samples at a specific point in time for a node data stream.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.35
  */
-@JsonPropertyOrder({ "created", "nodeId", "sourceId", "type", "updated", "notes", "final", "start" })
+@JsonPropertyOrder({ "created", "nodeId", "sourceId", "type", "updated", "notes", "final", "start",
+		"meta" })
 public class GeneralNodeDatumAuxiliary
 		implements Entity<GeneralNodeDatumAuxiliaryPK>, Cloneable, Serializable {
 
@@ -56,6 +58,8 @@ public class GeneralNodeDatumAuxiliary
 	private GeneralNodeDatumSamples samplesStart;
 	private String sampleJsonStart;
 	private String notes;
+	private GeneralDatumMetadata meta;
+	private String metaJson;
 
 	/**
 	 * Default constructor.
@@ -383,12 +387,91 @@ public class GeneralNodeDatumAuxiliary
 		return (s == null ? null : s.getSampleData());
 	}
 
+	/**
+	 * Get the notes.
+	 * 
+	 * @return the notes
+	 */
 	public String getNotes() {
 		return notes;
 	}
 
+	/**
+	 * Set the notes.
+	 * 
+	 * @param notes
+	 *        the notes
+	 */
 	public void setNotes(String notes) {
 		this.notes = notes;
 	}
 
+	/**
+	 * Get the metadata.
+	 * 
+	 * <p>
+	 * This will parse the {code metaJson} property if that is available.
+	 * </p>
+	 * 
+	 * @return the metadata
+	 * @since 1.1
+	 */
+	public GeneralDatumMetadata getMeta() {
+		if ( meta == null && metaJson != null ) {
+			meta = DatumUtils.getObjectFromJSON(metaJson, GeneralDatumMetadata.class);
+			metaJson = null; // clear this out, because we might mutate meta and invalidate our cached JSON value
+		}
+		return meta;
+	}
+
+	/**
+	 * Set the metadata.
+	 * 
+	 * <p>
+	 * This will clear the {code metaJson} property.
+	 * </p>
+	 * 
+	 * @param meta
+	 *        the metadata to set
+	 * @since 1.1
+	 */
+	public void setMeta(GeneralDatumMetadata meta) {
+		this.meta = meta;
+		this.metaJson = null;
+	}
+
+	/**
+	 * Get the metadata as JSON.
+	 * 
+	 * <p>
+	 * This will serialize the {@code meta} property if that is available.
+	 * </p>
+	 * 
+	 * @return the metadata JSON
+	 * @since 1.1
+	 */
+	@JsonIgnore
+	@SerializeIgnore
+	public String getMetaJson() {
+		if ( metaJson == null ) {
+			metaJson = DatumUtils.getJSONString(meta, "{}");
+			meta = null; // clear this out, because we might otherwise mutate it and invalidate our cached JSON value
+		}
+		return metaJson;
+	}
+
+	/**
+	 * Set the metadata as JSON.
+	 * 
+	 * <p>
+	 * This will clear the {@code meta} property if that is available.
+	 * </p>
+	 * 
+	 * @param metaJson
+	 *        the metadata
+	 */
+	public void setMetaJson(String metaJson) {
+		this.metaJson = metaJson;
+		this.meta = null;
+	}
 }

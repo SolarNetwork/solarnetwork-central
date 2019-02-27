@@ -36,7 +36,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * {@link DatumAuxiliaryBiz}, designed primarily for use with AOP.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.35
  */
 public class DelegatingDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
@@ -62,6 +62,12 @@ public class DelegatingDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 	@Override
 	public void storeGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliary datum) {
 		delegate.storeGeneralNodeDatumAuxiliary(datum);
+	}
+
+	@Override
+	public boolean moveGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK from,
+			GeneralNodeDatumAuxiliary to) {
+		return delegate.moveGeneralNodeDatumAuxiliary(from, to);
 	}
 
 	@Override

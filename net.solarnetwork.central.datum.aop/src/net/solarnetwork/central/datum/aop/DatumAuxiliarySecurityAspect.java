@@ -45,7 +45,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * Security AOP support for {@link DatumAuxiliaryBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.5
  */
 @Aspect
@@ -78,6 +78,10 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 	public void storeAuxiliary(GeneralNodeDatumAuxiliary datum) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.moveGeneralNodeDatumAuxiliary(..)) && args(from,to)")
+	public void moveAuxiliary(GeneralNodeDatumAuxiliaryPK from, GeneralNodeDatumAuxiliary to) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.removeGeneralNodeDatumAuxiliary(..)) && args(id)")
 	public void removeAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
 	}
@@ -89,13 +93,31 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 	/**
 	 * Check access to modifying datum auxiliary data.
 	 * 
-	 * @param nodeId
-	 *        the ID of the node to verify
+	 * @param datum
+	 *        the datum verify
 	 */
 	@Before("storeAuxiliary(datum)")
 	public void storeAuxiliaryCheck(GeneralNodeDatumAuxiliary datum) {
 		if ( datum != null ) {
 			requireNodeWriteAccess(datum.getNodeId());
+		}
+	}
+
+	/**
+	 * Check access to moving datum auxiliary data.
+	 * 
+	 * @param from
+	 *        the ID of the datum to move
+	 * @param to
+	 *        the new datum
+	 */
+	@Before("moveAuxiliary(from,to)")
+	public void moveAuxiliaryCheck(GeneralNodeDatumAuxiliaryPK from, GeneralNodeDatumAuxiliary to) {
+		if ( from != null ) {
+			requireNodeWriteAccess(from.getNodeId());
+		}
+		if ( to != null ) {
+			requireNodeWriteAccess(to.getNodeId());
 		}
 	}
 
