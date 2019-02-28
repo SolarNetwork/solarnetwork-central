@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.datum.domain.test;
 
+import static java.util.Collections.singletonMap;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import org.joda.time.DateTime;
@@ -36,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
 /**
@@ -100,6 +103,44 @@ public class GeneralNodeDatumAuxiliaryTests {
 		assertThat("Final samples", datum.getSamplesFinal(), notNullValue());
 		assertThat("Final samples data", datum.getSamplesFinal().getInstantaneousSampleInteger("watts"),
 				equalTo(89));
+	}
+
+	private GeneralDatumMetadata getTestMetadataInstance() {
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bar");
+		meta.putInfoValue("bim", "bam", "pow");
+		return meta;
+	}
+
+	@Test
+	public void serializeJsonWithMetadata() throws Exception {
+		GeneralNodeDatumAuxiliary aux = getTestInstance();
+		aux.setMeta(getTestMetadataInstance());
+		String json = objectMapper.writeValueAsString(aux);
+		assertThat("JSON", json, equalTo(
+				"{\"created\":1408665600000,\"nodeId\":-1,\"sourceId\":\"test.source\",\"type\":\"Reset\""
+						+ ",\"final\":{\"i\":{\"watts\":231},\"a\":{\"watt_hours\":4123}}"
+						+ ",\"start\":{\"i\":{\"watts\":321},\"a\":{\"watt_hours\":4321}}"
+						+ ",\"meta\":{\"m\":{\"foo\":\"bar\"},\"pm\":{\"bim\":{\"bam\":\"pow\"}}}}"));
+	}
+
+	@Test
+	public void deserializeJsonWithMetadata() throws Exception {
+		String json = "{\"created\":1408665600000,\"nodeId\":-1,\"sourceId\":\"Main\",\"type\":\"Reset\",\"final\":{\"i\":{\"watts\":89}},\"meta\":{\"m\":{\"foo\":\"bar\"},\"pm\":{\"bim\":{\"bam\":\"pow\"}}}}";
+		GeneralNodeDatumAuxiliary datum = objectMapper.readValue(json, GeneralNodeDatumAuxiliary.class);
+		assertThat("Result from JSON", datum, notNullValue());
+		assertThat("Created", datum.getCreated(),
+				allOf(notNullValue(), equalTo(new DateTime(1408665600000L, DateTimeZone.UTC))));
+		assertThat("Node ID", datum.getNodeId(), equalTo(-1L));
+		assertThat("Source ID", datum.getSourceId(), equalTo("Main"));
+		assertThat("Type", datum.getType(), equalTo(DatumAuxiliaryType.Reset));
+		assertThat("Final samples", datum.getSamplesFinal(), notNullValue());
+		assertThat("Final samples data", datum.getSamplesFinal().getInstantaneousSampleInteger("watts"),
+				equalTo(89));
+		assertThat("Metadata available", datum.getMeta(), notNullValue());
+		assertThat("Metadata m", datum.getMeta().getInfo(), hasEntry("foo", "bar"));
+		assertThat("Metadata pm", datum.getMeta().getPropertyInfo(),
+				hasEntry("bim", singletonMap("bam", "pow")));
 	}
 
 }

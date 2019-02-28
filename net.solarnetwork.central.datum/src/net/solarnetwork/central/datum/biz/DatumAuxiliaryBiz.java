@@ -34,7 +34,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * API for manipulating datum auxiliary data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.35
  */
 public interface DatumAuxiliaryBiz {
@@ -55,6 +55,27 @@ public interface DatumAuxiliaryBiz {
 	 *        the auxiliary data to store
 	 */
 	void storeGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliary datum);
+
+	/**
+	 * Move datum auxiliary data, moving any existing auxiliary data to the
+	 * provided auxiliary data.
+	 * 
+	 * <p>
+	 * This provides a way to update the primary key of an existing datum and
+	 * update its properties in one step. If no datum exists with the primary
+	 * key {@code from} then no changes will be performed. Note that {@code to}
+	 * must specify the complete set of properties desired in the new datum.
+	 * </p>
+	 * 
+	 * @param from
+	 *        the auxiliary primary key to move the data from
+	 * @param to
+	 *        the auxiliary data to store, including the primary key to store
+	 *        the data at
+	 * @since 1.1
+	 */
+	boolean moveGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK from,
+			GeneralNodeDatumAuxiliary to);
 
 	/**
 	 * Remove a specific datum auxiliary data.

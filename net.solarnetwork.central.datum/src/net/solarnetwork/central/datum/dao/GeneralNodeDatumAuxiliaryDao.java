@@ -33,10 +33,28 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
  * DAO API for {@link GeneralNodeDatumAuxiliary} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface GeneralNodeDatumAuxiliaryDao
 		extends GenericDao<GeneralNodeDatumAuxiliary, GeneralNodeDatumAuxiliaryPK>,
 		FilterableDao<GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryPK, GeneralNodeDatumAuxiliaryFilter> {
+
+	/**
+	 * Move auxiliary data from one primary key to another.
+	 * 
+	 * <p>
+	 * This essentially performs an update of an existing record, so no changes
+	 * will be made if a record with a primary key of {@code from} does not
+	 * exist.
+	 * </p>
+	 * 
+	 * @param from
+	 *        the primary key to move the data from
+	 * @param to
+	 *        the data to store, including the primary key to store it at
+	 * @return {@literal true} if the record existed and was moved
+	 * @since 1.1
+	 */
+	boolean move(GeneralNodeDatumAuxiliaryPK from, GeneralNodeDatumAuxiliary to);
 
 }
