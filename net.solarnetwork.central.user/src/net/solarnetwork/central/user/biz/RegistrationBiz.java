@@ -40,7 +40,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
  * API for user registration tasks.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public interface RegistrationBiz {
 
@@ -130,6 +130,22 @@ public interface RegistrationBiz {
 	 * @return new NodeAssociationDetails entity
 	 */
 	NetworkAssociation createNodeAssociation(NewNodeRequest request);
+
+	/**
+	 * Manually create a new node, without going through the node
+	 * invitation/association process.
+	 * 
+	 * <p>
+	 * Note that the {@link NewNodeRequest#getSecurityPhrase()} <b>must</b> be
+	 * provided and will be used as the certificate keystore password.
+	 * </p>
+	 * 
+	 * @param request
+	 *        the node request details
+	 * @return the newly created node, with the new node certificate if possible
+	 * @since 1.6
+	 */
+	UserNode createNodeManually(NewNodeRequest request);
 
 	/**
 	 * Get a {@link NetworkAssociationDetails} previously created via

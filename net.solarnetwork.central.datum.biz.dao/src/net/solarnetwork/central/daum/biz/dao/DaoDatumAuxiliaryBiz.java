@@ -72,7 +72,13 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 	@Override
 	public void storeGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliary datum) {
 		datumAuxiliaryDao.store(datum);
+	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public boolean moveGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK from,
+			GeneralNodeDatumAuxiliary to) {
+		return datumAuxiliaryDao.move(from, to);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)

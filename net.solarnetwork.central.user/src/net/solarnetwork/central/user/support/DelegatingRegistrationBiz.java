@@ -41,7 +41,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
  * AOP.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DelegatingRegistrationBiz implements RegistrationBiz {
 
@@ -142,6 +142,11 @@ public class DelegatingRegistrationBiz implements RegistrationBiz {
 	@Override
 	public void resetPassword(RegistrationReceipt receipt, PasswordEntry password) {
 		delegate.resetPassword(receipt, password);
+	}
+
+	@Override
+	public UserNode createNodeManually(NewNodeRequest request) {
+		return delegate.createNodeManually(request);
 	}
 
 }

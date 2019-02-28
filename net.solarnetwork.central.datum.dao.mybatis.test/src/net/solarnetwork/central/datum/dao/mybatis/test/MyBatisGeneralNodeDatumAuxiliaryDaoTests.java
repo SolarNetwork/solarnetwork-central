@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
@@ -51,6 +53,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
 /**
@@ -106,6 +109,18 @@ public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends MyBatisGeneralNode
 		lastDatum = datum;
 	}
 
+	@Test
+	public void storeNewWithMetadata() {
+		GeneralNodeDatumAuxiliary datum = getTestAuxInstance();
+		GeneralDatumMetadata meta = new GeneralDatumMetadata();
+		meta.putInfoValue("foo", "bar");
+		datum.setMeta(meta);
+
+		GeneralNodeDatumPK id = auxDao.store(datum);
+		assertNotNull(id);
+		lastDatum = datum;
+	}
+
 	protected void verifyStaleDatumRow(String msg, Map<String, Object> s, DateTime date, Long nodeId,
 			String sourceId) {
 		assertThat(msg + " date", s.get("ts_start"), equalTo(new Timestamp(date.getMillis())));
@@ -122,6 +137,33 @@ public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends MyBatisGeneralNode
 		List<Map<String, Object>> stale = getStaleDatum(Aggregation.Hour);
 		assertThat("Stale hourly records", stale, hasSize(1));
 		verifyStaleDatumRow("stale", stale.get(0), lastDatum.getCreated().hourOfDay().roundFloorCopy(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+	}
+
+	@Test
+	public void movePopulatesStaleDatumRows() {
+		// given
+		storeNew();
+		deleteStaleDatum();
+
+		GeneralNodeDatumAuxiliary to = new GeneralNodeDatumAuxiliary(
+				new GeneralNodeDatumAuxiliaryPK(lastDatum.getNodeId(),
+						lastDatum.getCreated().plusHours(1), lastDatum.getSourceId()),
+				lastDatum.getSamplesFinal(), lastDatum.getSamplesStart());
+
+		// when
+		boolean moved = auxDao.move(lastDatum.getId(), to);
+
+		// then
+		assertThat("Was moved", moved, equalTo(true));
+		GeneralNodeDatumAuxiliary aux = auxDao.get(lastDatum.getId());
+		assertThat("Datum was moved", aux, nullValue());
+
+		List<Map<String, Object>> stale = getStaleDatum(Aggregation.Hour);
+		assertThat("Stale hourly records", stale, hasSize(2));
+		verifyStaleDatumRow("stale old", stale.get(0),
+				lastDatum.getCreated().hourOfDay().roundFloorCopy(), TEST_NODE_ID, TEST_SOURCE_ID);
+		verifyStaleDatumRow("stale new", stale.get(1), to.getCreated().hourOfDay().roundFloorCopy(),
 				TEST_NODE_ID, TEST_SOURCE_ID);
 	}
 
@@ -204,6 +246,53 @@ public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends MyBatisGeneralNode
 		storeNew();
 		GeneralNodeDatumAuxiliary datum = auxDao.get(lastDatum.getId());
 		validate(lastDatum, datum);
+	}
+
+	@Test
+	public void getByPrimaryKeyWithMetadata() {
+		storeNewWithMetadata();
+		GeneralNodeDatumAuxiliary datum = auxDao.get(lastDatum.getId());
+		validate(lastDatum, datum);
+		assertThat("Metadata exists", datum.getMeta(), notNullValue());
+		assertThat("Metadata", datum.getMeta().getInfo(), Matchers.hasEntry("foo", "bar"));
+	}
+
+	@Test
+	public void move() {
+		storeNew();
+
+		GeneralNodeDatumAuxiliary to = new GeneralNodeDatumAuxiliary(
+				new GeneralNodeDatumAuxiliaryPK(lastDatum.getNodeId(),
+						lastDatum.getCreated().minusHours(1), lastDatum.getSourceId()),
+				lastDatum.getSamplesFinal(), lastDatum.getSamplesStart());
+
+		boolean moved = auxDao.move(lastDatum.getId(), to);
+		assertThat("Was moved", moved, equalTo(true));
+
+		GeneralNodeDatumAuxiliary aux = auxDao.get(lastDatum.getId());
+		assertThat("Datum was moved", aux, nullValue());
+
+		aux = auxDao.get(to.getId());
+		validate(lastDatum, aux);
+	}
+
+	@Test
+	public void moveNothing() {
+		storeNew();
+
+		GeneralNodeDatumAuxiliary to = new GeneralNodeDatumAuxiliary(
+				new GeneralNodeDatumAuxiliaryPK(lastDatum.getNodeId(),
+						lastDatum.getCreated().minusHours(1), lastDatum.getSourceId()),
+				lastDatum.getSamplesFinal(), lastDatum.getSamplesStart());
+
+		GeneralNodeDatumAuxiliaryPK notOld = new GeneralNodeDatumAuxiliaryPK(lastDatum.getNodeId(),
+				lastDatum.getCreated().minusHours(1), lastDatum.getSourceId());
+		boolean moved = auxDao.move(notOld, to);
+		assertThat("Was moved", moved, equalTo(false));
+
+		GeneralNodeDatumAuxiliary aux = auxDao.get(lastDatum.getId());
+		assertThat("Datum was not moved", aux, notNullValue());
+		validate(lastDatum, aux);
 	}
 
 	@Test

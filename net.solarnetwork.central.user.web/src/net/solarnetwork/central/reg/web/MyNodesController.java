@@ -23,8 +23,6 @@
 package net.solarnetwork.central.reg.web;
 
 import static net.solarnetwork.web.domain.Response.response;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,30 +32,21 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import javax.servlet.http.HttpServletResponse;
-import org.joda.time.DateTime;
-import org.joda.time.ReadablePeriod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
-import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
 import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
-import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
@@ -68,15 +57,10 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAlertStatus;
 import net.solarnetwork.central.user.domain.UserAlertType;
 import net.solarnetwork.central.user.domain.UserNode;
-import net.solarnetwork.central.user.domain.UserNodeCertificate;
-import net.solarnetwork.central.user.domain.UserNodeCertificateInstallationStatus;
-import net.solarnetwork.central.user.domain.UserNodeCertificateRenewal;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.domain.NetworkAssociation;
-import net.solarnetwork.domain.NetworkCertificate;
 import net.solarnetwork.support.CertificateException;
-import net.solarnetwork.support.CertificateService;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -92,7 +76,6 @@ public class MyNodesController extends ControllerSupport {
 	private final UserBiz userBiz;
 	private final RegistrationBiz registrationBiz;
 	private final NodeOwnershipBiz nodeOwnershipBiz;
-	private final CertificateService certificateService;
 
 	@Autowired(required = false)
 	private MailService mailService;
@@ -109,16 +92,13 @@ public class MyNodesController extends ControllerSupport {
 	 *        The {@link RegistrationBiz} to use.
 	 * @param nodeOwnershipBiz
 	 *        the {@link NodeOwnershipBiz} to use.
-	 * @param certificateService
-	 *        The {@link CertificateService} to use.
 	 */
 	@Autowired
 	public MyNodesController(UserBiz userBiz, RegistrationBiz registrationBiz,
-			NodeOwnershipBiz nodeOwnershipBiz, CertificateService certificateService) {
+			NodeOwnershipBiz nodeOwnershipBiz) {
 		super();
 		this.userBiz = userBiz;
 		this.registrationBiz = registrationBiz;
-		this.certificateService = certificateService;
 		this.nodeOwnershipBiz = nodeOwnershipBiz;
 	}
 
@@ -189,39 +169,6 @@ public class MyNodesController extends ControllerSupport {
 	}
 
 	/**
-	 * Get a list of all archived nodes.
-	 * 
-	 * @return All archived nodes.
-	 * @since 1.4
-	 */
-	@RequestMapping(value = "/archived", method = RequestMethod.GET)
-	@ResponseBody
-	public Response<List<UserNode>> getArchivedNodes() {
-		final SecurityUser actor = SecurityUtils.getCurrentUser();
-		List<UserNode> nodes = userBiz.getArchivedUserNodes(actor.getUserId());
-		return Response.response(nodes);
-	}
-
-	/**
-	 * Update the archived status of a set of nodes.
-	 * 
-	 * @param nodeIds
-	 *        The node IDs to update the archived status of.
-	 * @param archived
-	 *        {@code true} to archive, {@code false} to un-archive
-	 * @return A success response.
-	 * @since 1.4
-	 */
-	@RequestMapping(value = "/archived", method = RequestMethod.POST)
-	@ResponseBody
-	public Response<Object> updateArchivedStatus(@RequestParam("nodeIds") Long[] nodeIds,
-			@RequestParam("archived") boolean archived) {
-		final SecurityUser actor = SecurityUtils.getCurrentUser();
-		userBiz.updateUserNodeArchivedStatus(actor.getUserId(), nodeIds, archived);
-		return Response.response(null);
-	}
-
-	/**
 	 * Generate a new node confirmation code.
 	 * 
 	 * @param userId
@@ -273,88 +220,7 @@ public class MyNodesController extends ControllerSupport {
 	}
 
 	/**
-	 * Get a certificate, either as a {@link UserNodeCertificate} object or the
-	 * PEM encoded value file attachment.
-	 * 
-	 * @param certId
-	 *        the ID of the certificate to get
-	 * @param download
-	 *        if TRUE, then download the certificate as a PEM file
-	 * @return the response data
-	 */
-	@RequestMapping(value = "/cert/{nodeId}", method = RequestMethod.GET)
-	@ResponseBody
-	public ResponseEntity<byte[]> viewCert(@PathVariable("nodeId") Long nodeId) {
-		SecurityUser actor = SecurityUtils.getCurrentUser();
-		UserNodeCertificate cert = userBiz.getUserNodeCertificate(actor.getUserId(), nodeId);
-		if ( cert == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
-		}
-
-		final byte[] data = cert.getKeystoreData();
-
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentLength(data.length);
-		headers.setContentType(MediaType.parseMediaType("application/x-pkcs12"));
-		headers.setLastModified(System.currentTimeMillis());
-		headers.setCacheControl("no-cache");
-
-		headers.set("Content-Disposition",
-				"attachment; filename=solarnode-" + cert.getNode().getId() + ".p12");
-
-		return new ResponseEntity<byte[]>(data, headers, HttpStatus.OK);
-	}
-
-	/**
-	 * Get a certificate as a {@link UserNodeCertificate} object or the PEM
-	 * encoded value file attachment.
-	 * 
-	 * @param certId
-	 *        the ID of the certificate to get
-	 * @param password
-	 *        the password to decrypt the certificate store with
-	 * @return the response data
-	 * @since 1.3
-	 */
-	@RequestMapping(value = "/cert/{nodeId}", method = RequestMethod.POST)
-	@ResponseBody
-	public UserNodeCertificate viewCert(@PathVariable("nodeId") Long nodeId,
-			@RequestParam(value = "password") String password) {
-		SecurityUser actor = SecurityUtils.getCurrentUser();
-		UserNodeCertificate cert = userBiz.getUserNodeCertificate(actor.getUserId(), nodeId);
-		if ( cert == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
-		}
-
-		final byte[] data = cert.getKeystoreData();
-
-		// see if a renewal is pending
-		UserNodeCertificateInstallationStatus installationStatus = null;
-		if ( cert.getRequestId() != null ) {
-			UserNode userNode = new UserNode(cert.getUser(), cert.getNode());
-			UserNodeCertificateRenewal renewal = registrationBiz
-					.getPendingNodeCertificateRenewal(userNode, cert.getRequestId());
-			if ( renewal != null ) {
-				installationStatus = renewal.getInstallationStatus();
-			}
-		}
-
-		String pkcs7 = "";
-		X509Certificate nodeCert = null;
-		if ( data != null ) {
-			KeyStore keystore = cert.getKeyStore(password);
-			X509Certificate[] chain = cert.getNodeCertificateChain(keystore);
-			if ( chain != null && chain.length > 0 ) {
-				nodeCert = chain[0];
-			}
-			pkcs7 = certificateService.generatePKCS7CertificateChainString(chain);
-		}
-		return new UserNodeCertificateDecoded(cert, installationStatus, nodeCert, pkcs7,
-				registrationBiz.getNodeCertificateRenewalPeriod());
-	}
-
-	/**
-	 * AuthorizationException handler.
+	 * CertificateException handler.
 	 * 
 	 * <p>
 	 * Logs a WARN log and returns HTTP 403 (Forbidden).
@@ -371,123 +237,6 @@ public class MyNodesController extends ControllerSupport {
 			log.warn("Certificate exception: " + e.getMessage());
 		}
 		res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-	}
-
-	@RequestMapping(value = "/cert/renew/{nodeId}", method = RequestMethod.POST)
-	@ResponseBody
-	public UserNodeCertificate renewCert(@PathVariable("nodeId") final Long nodeId,
-			@RequestParam("password") final String password) {
-		SecurityUser actor = SecurityUtils.getCurrentUser();
-		UserNode userNode = userBiz.getUserNode(actor.getUserId(), nodeId);
-		if ( userNode == null ) {
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
-		}
-		NetworkCertificate renewed = registrationBiz.renewNodeCertificate(userNode, password);
-		if ( renewed != null && renewed.getNetworkCertificate() != null ) {
-			return viewCert(nodeId, password);
-		}
-		throw new RepeatableTaskException("Certificate renewal processing");
-	}
-
-	public static class UserNodeCertificateDecoded extends UserNodeCertificate {
-
-		private static final long serialVersionUID = -2314002517991208690L;
-
-		private final UserNodeCertificateInstallationStatus installationStatus;
-		private final String pemValue;
-		private final X509Certificate nodeCert;
-		private final DateTime renewAfter;
-
-		private UserNodeCertificateDecoded(UserNodeCertificate cert,
-				UserNodeCertificateInstallationStatus installationStatus, X509Certificate nodeCert,
-				String pkcs7, ReadablePeriod renewPeriod) {
-			super();
-			setCreated(cert.getCreated());
-			setId(cert.getId());
-			setNodeId(cert.getNodeId());
-			setRequestId(cert.getRequestId());
-			setUserId(cert.getUserId());
-			this.installationStatus = installationStatus;
-			this.pemValue = pkcs7;
-			this.nodeCert = nodeCert;
-			if ( nodeCert != null ) {
-				if ( renewPeriod != null ) {
-					this.renewAfter = new DateTime(nodeCert.getNotAfter()).minus(renewPeriod);
-				} else {
-					this.renewAfter = null;
-				}
-			} else {
-				this.renewAfter = null;
-			}
-		}
-
-		public String getPemValue() {
-			return pemValue;
-		}
-
-		/**
-		 * Get a hexidecimal string value of the certificate serial number.
-		 * 
-		 * @return The certificate serial number.
-		 */
-		public String getCertificateSerialNumber() {
-			return (nodeCert != null ? "0x" + nodeCert.getSerialNumber().toString(16) : null);
-		}
-
-		/**
-		 * Get the date the certificate is valid from.
-		 * 
-		 * @return The valid from date.
-		 */
-		public DateTime getCertificateValidFromDate() {
-			return (nodeCert != null ? new DateTime(nodeCert.getNotBefore()) : null);
-		}
-
-		/**
-		 * Get the date the certificate is valid until.
-		 * 
-		 * @return The valid until date.
-		 */
-		public DateTime getCertificateValidUntilDate() {
-			return (nodeCert != null ? new DateTime(nodeCert.getNotAfter()) : null);
-		}
-
-		/**
-		 * Get the certificate subject DN.
-		 * 
-		 * @return The certificate subject DN.
-		 */
-		public String getCertificateSubjectDN() {
-			return (nodeCert != null ? nodeCert.getSubjectDN().getName() : null);
-		}
-
-		/**
-		 * Get the certificate issuer DN.
-		 * 
-		 * @return The certificate issuer DN.
-		 */
-		public String getCertificateIssuerDN() {
-			return (nodeCert != null ? nodeCert.getIssuerDN().getName() : null);
-		}
-
-		/**
-		 * Get a date after which the certificate may be renewed.
-		 * 
-		 * @return A renewal minimum date.
-		 */
-		public DateTime getCertificateRenewAfterDate() {
-			return renewAfter;
-		}
-
-		/**
-		 * Get the status of the installation process, if available.
-		 * 
-		 * @return The installation status, or <em>null</em>.
-		 */
-		public UserNodeCertificateInstallationStatus getInstallationStatus() {
-			return installationStatus;
-		}
-
 	}
 
 	@RequestMapping(value = "/editNode", method = RequestMethod.GET)

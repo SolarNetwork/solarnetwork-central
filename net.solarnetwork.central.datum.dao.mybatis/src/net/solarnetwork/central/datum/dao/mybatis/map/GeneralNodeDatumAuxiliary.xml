@@ -10,14 +10,36 @@
 		<parameter property="notes" jdbcType="VARCHAR" mode="IN"/>
 		<parameter property="sampleJsonFinal" jdbcType="VARCHAR" mode="IN"/>
 		<parameter property="sampleJsonStart" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="metaJson" jdbcType="VARCHAR" mode="IN"/>
 	</parameterMap>
 
 	<update id="insert-GeneralNodeDatumAuxiliary" parameterMap="pmap-GeneralNodeDatumAuxiliary" statementType="CALLABLE">
-		{call solardatum.store_datum_aux(?, ?, ?, ?::solardatum.da_datum_aux_type, ?, ?, ?)}
+		{call solardatum.store_datum_aux(?, ?, ?, ?::solardatum.da_datum_aux_type, ?, ?, ?, ?)}
 	</update>
 	
 	<update id="update-GeneralNodeDatumAuxiliary" parameterMap="pmap-GeneralNodeDatumAuxiliary" statementType="CALLABLE">
-		{call solardatum.store_datum_aux(?, ?, ?, ?::solardatum.da_datum_aux_type, ?, ?, ?)}
+		{call solardatum.store_datum_aux(?, ?, ?, ?::solardatum.da_datum_aux_type, ?, ?, ?, ?)}
+	</update>
+	
+	<parameterMap id="pmap-GeneralNodeDatumAuxiliary-move" type="map">
+		<parameter property="moved" jdbcType="BOOLEAN" mode="OUT"/>
+		<parameter property="from.created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="from.nodeId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="from.sourceId" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="from.type" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="to.created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="to.nodeId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="to.sourceId" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="to.type" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="to.notes" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="to.sampleJsonFinal" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="to.sampleJsonStart" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="to.metaJson" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+	<update id="move-GeneralNodeDatumAuxiliary" parameterMap="pmap-GeneralNodeDatumAuxiliary-move" statementType="CALLABLE">
+		{? = call solardatum.move_datum_aux(?, ?, ?, ?::solardatum.da_datum_aux_type, 
+			?, ?, ?, ?::solardatum.da_datum_aux_type, ?, ?, ?, ?)}
 	</update>
 	
 	<delete id="delete-GeneralNodeDatumAuxiliary" parameterType="net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK">
@@ -41,7 +63,8 @@
 		aux.updated AS aux_updated,
 		aux.notes AS aux_notes,
 		solardatum.jdata_from_datum_aux_final(aux) AS aux_jdata_f,
-		solardatum.jdata_from_datum_aux_start(aux) AS aux_jdata_s
+		solardatum.jdata_from_datum_aux_start(aux) AS aux_jdata_s,
+		aux.jmeta AS aux_jmeta
 	</sql>
 	
 	<resultMap id="GeneralNodeDatumAuxiliaryPKResult" type="net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK">
@@ -57,6 +80,7 @@
 		<result property="notes" column="aux_notes"/>
 		<result property="sampleJsonFinal" column="aux_jdata_f"/>
 		<result property="sampleJsonStart" column="aux_jdata_s"/>
+		<result property="metaJson" column="aux_jmeta"/>
 	</resultMap>
 	
 	<select id="get-GeneralNodeDatumAuxiliary-for-id" parameterType="net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK" resultMap="GeneralNodeDatumAuxiliaryFullResult">

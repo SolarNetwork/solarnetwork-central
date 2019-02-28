@@ -270,7 +270,7 @@
 		 				${' '}
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<input type="text" class="form-control" name="phrase" 
+		 				<input type="password" class="form-control" name="phrase" 
 		 					placeholder="<fmt:message key='my-nodes.invitation.securityPhrase.label'/>"
 		 					maxlength="128" required="required"/>
 			 			<span class="help-block"><small><fmt:message key='my-nodes.invitation.securityPhrase.caption'/></small></span>
@@ -292,8 +292,17 @@
 		 		</div>
 	 			<div id="tz-picker-container" class="tz-picker-container"></div>
 		 	</div>
+		 	<div class="modal-body cert-create">
+		 		<p class="alert alert-warning">
+		 			<b><fmt:message key='my-nodes.create.warning'/></b>
+		 			<fmt:message key='my-nodes.create.intro'/>
+		 		</p>
+		 	</div>
 		 	<div class="modal-footer">
-		 		<a href="#" class="btn" data-dismiss="modal"><fmt:message key='close.label'/></a>
+		 		<button type="button" id="node-cert-create" class="btn btn-default pull-left" 
+		 			data-confirm-title="<fmt:message key='my-nodes.create.reaffirm'/>"
+		 			><fmt:message key='my-nodes.create.link'/></button>
+		 		<a href="#" class="btn btn-default" data-dismiss="modal"><fmt:message key='close.label'/></a>
 		 		<input type="hidden" name="country" id="invite-country"/>
 		 		<button type="submit" class="btn btn-primary"><fmt:message key='my-nodes.inviteNode'/></button>
 		 	</div>

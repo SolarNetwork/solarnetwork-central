@@ -498,10 +498,27 @@ $(document).ready(function() {
 		});
 	});
 	
+	function makeInviteCertCreateVisible(form, visible) {
+		form.find('.cert-create').toggleClass('hidden', !visible);
+		var btn = $('#node-cert-create');
+		btn.toggleClass('btn-default', !visible)
+			.toggleClass('btn-warning', visible);
+		if ( visible ) {
+			btn.data('default-title', btn.text());
+			btn.text(btn.attr('data-confirm-title'));
+		} else  if ( btn.data('default-title') ) {
+			btn.text(btn.data('default-title'));
+			btn.removeData('default-title');
+		}
+	}
+	
 	$('#invite-modal').on('show.bs.modal', function() {
 		var form = $(this);
 		var url = form.attr('action').replace(/\/[^\/]+$/, '/tzpicker.html');
 		var tzcontainer = $('#tz-picker-container');
+		
+		makeInviteCertCreateVisible(form, false);
+
 		if ( tzcontainer.children().length == 0 ) {
 			tzcontainer.load(url, function() {
 				var picker = tzcontainer.find('.timezone-image');
@@ -514,6 +531,38 @@ $(document).ready(function() {
 				});
 				picker.timezonePicker('detectLocation');
 			});
+		}
+	});
+	
+	$('#node-cert-create').on('click', function() {
+		var btn = $(this),
+			form = $(this.form),
+			pwdInput = $(this.form.elements['phrase']),
+			tzInput = $(this.form.elements['timeZone']),
+			countryInput = $(this.form.elements['country']);
+		if ( btn.hasClass('btn-warning') ) {
+			// verify fields
+			if ( !pwdInput.val() ) {
+				pwdInput.trigger('focus');
+				return;
+			} else if ( !(tzInput.val() && countryInput.val()) ) {
+				tzInput.trigger('focus');
+				return;
+			}
+			// do it!
+			$.post(SolarReg.solarUserURL('/sec/my-nodes/create-cert'), { 
+					timeZone : tzInput.val(), 
+					country : countryInput.val(),
+					keystorePassword : pwdInput.val(),
+					_csrf : SolarReg.csrf() 
+				}, function(json) {
+				document.location.reload(true);
+			}).fail(function(data, statusText, xhr) {
+				SolarReg.showAlertBefore('#node-cert-create .modal-body > *:first-child', 'alert-warning', statusText);
+			});
+		} else {
+			// show warning
+			makeInviteCertCreateVisible(form, true);
 		}
 	});
 	

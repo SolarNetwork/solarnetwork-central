@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.datum.dao.mybatis;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
@@ -39,12 +41,14 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * MyBatis implementation of {@link GeneralNodeDatumAuxiliaryDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.19
  */
 public class MyBatisGeneralNodeDatumAuxiliaryDao extends
 		BaseMyBatisFilterableDao<GeneralNodeDatumAuxiliary, GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryFilter, GeneralNodeDatumAuxiliaryPK>
 		implements GeneralNodeDatumAuxiliaryDao {
+
+	public static final String UPDATE_MOVE = "move-GeneralNodeDatumAuxiliary";
 
 	/**
 	 * Constructor.
@@ -52,6 +56,18 @@ public class MyBatisGeneralNodeDatumAuxiliaryDao extends
 	public MyBatisGeneralNodeDatumAuxiliaryDao() {
 		super(GeneralNodeDatumAuxiliary.class, GeneralNodeDatumAuxiliaryPK.class,
 				GeneralNodeDatumAuxiliaryMatch.class);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Override
+	public boolean move(GeneralNodeDatumAuxiliaryPK from, GeneralNodeDatumAuxiliary to) {
+		Map<String, Object> params = new HashMap<>(3);
+		params.put("from", from);
+		params.put("to", to);
+
+		getSqlSession().update(UPDATE_MOVE, params);
+		return (params.get("moved") instanceof Boolean ? ((Boolean) params.get("moved")).booleanValue()
+				: false);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
