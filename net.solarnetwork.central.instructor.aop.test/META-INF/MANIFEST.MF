@@ -2,10 +2,10 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Instructor AOP Test
 Bundle-SymbolicName: net.solarnetwork.central.instructor.aop.test
-Bundle-Version: 1.0.0
+Bundle-Version: 1.0.1
 Bundle-Vendor: SolarNetwork
 Fragment-Host: net.solarnetwork.central.instructor.aop;bundle-version="1.6.0"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
  net.solarnetwork.central.support;version="1.14.0",
  net.solarnetwork.central.test;version="1.0",
