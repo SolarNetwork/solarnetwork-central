@@ -1,5 +1,6 @@
 'use strict';
 
+import auxiliaryHelper from 'datum/auxiliaryHelper'
 import calculateAverages from 'math/calculateAverages'
 import calculateAverageOverHours from 'math/calculateAverageOverHours'
 import fixPrecision from 'math/fixPrecision'
@@ -7,6 +8,8 @@ import addTo from 'util/addTo'
 import mergeObjects from 'util/mergeObjects'
 
 var kDefaultHourFill = {watts: 'wattHours'};
+
+var kAuxHelper = auxiliaryHelper();
 
 /**
  * An aggregate record object that helps keep track of the raw data needed to
@@ -156,11 +159,12 @@ export default function datumAggregate(sourceId, ts, endTs, configuration) {
 			accu = record.jdata.a,
 			inst = record.jdata.i,
 			stat = record.jdata.s,
-			tags = record.jdata.t;
+			tags = record.jdata.t,
+			resetType = kAuxHelper.datumResetKind(record.jdata);
 
 		// as long as this record's time slot falls within the configured time slot,
 		// handle instantaneous, static, and tag values
-		if ( recTs === ts ) {
+		if ( recTs === ts && !resetType ) {
 			if ( inst ) {
 				// add instantaneous values
 				addInstantaneousValues(inst);
@@ -179,8 +183,8 @@ export default function datumAggregate(sourceId, ts, endTs, configuration) {
 
 		addAccumulatingValues(accu, inst, recTs, record.ts);
 
-		// save curr record as previous for future calculations
-		prevRecord = record;
+		// save curr record as previous for future calculations, unless we have a `start` reset type
+		prevRecord = (resetType === kAuxHelper.resetFinalTag ? undefined : record);
 	}
 
 	/**
