@@ -276,3 +276,31 @@ test('datum:datumAggregate:processRecords:15m:roundedStats', t => {
 
 	t.deepEqual(aggResult, expected);
 });
+
+test('datum:datumAggregate:processRecords:reset:1h', t => {
+	const slotTs = 1476046800000;
+	const endTs = slotTs + (60 * 60 * 1000);
+	const sourceId = 'Foo';
+	const service = datumAggregate(sourceId, slotTs, endTs, {hourFill:{foo:'fooHours'}});
+	t.is(service.sourceId, sourceId);
+	t.is(service.ts, slotTs);
+	t.is(service.endTs, endTs);
+
+	const data = parseDatumCSV('/find-datum-for-minute-time-slots-16.csv');
+
+	var aggResult;
+	data.forEach(rec => {
+		if ( rec.ts_start.getTime() < endTs ) {
+			service.addDatumRecord(rec);
+		} else {
+			aggResult = service.finish(rec);
+		}
+	});
+
+	t.is(aggResult.source_id, sourceId);
+	t.is(aggResult.ts_start.getTime(), slotTs);
+
+	t.deepEqual(aggResult.jdata.i, {foo:5.125, foo_min:1, foo_max:11});
+	t.deepEqual(aggResult.jmeta.i, {foo:{count:8, min:1, max:11}});
+	t.deepEqual(aggResult.jdata.a, {bar:105, fooHours:5.125});
+});

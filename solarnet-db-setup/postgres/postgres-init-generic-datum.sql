@@ -407,10 +407,10 @@ $$
 		ts_start,
 		node_id,
 		source_id,
-		COALESCE(datum_count, 0),
-		COALESCE(datum_hourly_count, 0),
-		COALESCE(datum_daily_count, 0),
-		COALESCE(datum_monthly_count, 0)
+		COALESCE(datum_count, 0) AS datum_count,
+		COALESCE(datum_hourly_count, 0) AS datum_hourly_count,
+		COALESCE(datum_daily_count, 0) AS datum_daily_count,
+		COALESCE(datum_monthly_count, 0) AS datum_monthly_count
 	FROM solaragg.find_audit_acc_datum_daily(node, source)
 	ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 	SET datum_count = EXCLUDED.datum_count,

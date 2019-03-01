@@ -70,6 +70,14 @@
 				<bean class="net.solarnetwork.central.user.support.UserMetadataSerializer"/>
 			</list>
 		</property>
+		<property name="deserializers">
+			<list>
+				<bean class="net.solarnetwork.util.JodaDateTimeDeserializer"/>
+				<bean class="net.solarnetwork.util.JodaLocalDateDeserializer"/>
+				<bean class="net.solarnetwork.util.JodaLocalDateTimeDeserializer"/>
+				<bean class="net.solarnetwork.util.JodaLocalTimeDeserializer"/>
+			</list>
+		</property>
 	</bean>
 	
 	<bean id="asyncTaskExecutor" class="org.springframework.scheduling.concurrent.ConcurrentTaskExecutor">
@@ -80,4 +88,10 @@
 		</constructor-arg>
 	</bean>
 	
+	<!-- PathMatcher for testing against source IDs -->
+	<bean id="sourceIdPathMatcher" class="org.springframework.util.AntPathMatcher" >
+		<property name="cachePatterns" value="true"/>
+		<property name="caseSensitive" value="false"/>
+	</bean>
+
 </beans>

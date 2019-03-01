@@ -23,10 +23,14 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.TimeZone;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
+import org.springframework.util.PathMatcher;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,6 +47,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.reg.web.domain.DatumAuxiliaryMove;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -53,7 +58,7 @@ import net.solarnetwork.web.domain.Response;
  * Web controller for datum auxiliary record management.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.35
  */
 @RestController("v1DatumAuxiliaryController")
@@ -61,6 +66,8 @@ import net.solarnetwork.web.domain.Response;
 public class DatumAuxiliaryController extends WebServiceControllerSupport {
 
 	private final DatumAuxiliaryBiz datumAuxiliaryBiz;
+	private final QueryBiz queryBiz;
+	private final PathMatcher pathMatcher;
 
 	private String[] requestDateFormats = new String[] { DEFAULT_TIMESTAMP_FORMAT,
 			DEFAULT_TIMESTAMP_FORMAT_Z, ALT_TIMESTAMP_FORMAT, ALT_TIMESTAMP_FORMAT_Z };
@@ -70,11 +77,18 @@ public class DatumAuxiliaryController extends WebServiceControllerSupport {
 	 * 
 	 * @param datumAuxiliaryBiz
 	 *        the biz to use
+	 * @param queryBiz
+	 *        the QueryBiz to use
+	 * @param pathMatcher
+	 *        the source ID path matcher to use
 	 */
 	@Autowired
-	public DatumAuxiliaryController(DatumAuxiliaryBiz datumAuxiliaryBiz) {
+	public DatumAuxiliaryController(DatumAuxiliaryBiz datumAuxiliaryBiz, QueryBiz queryBiz,
+			@Qualifier("sourceIdPathMatcher") PathMatcher pathMatcher) {
 		super();
 		this.datumAuxiliaryBiz = datumAuxiliaryBiz;
+		this.queryBiz = queryBiz;
+		this.pathMatcher = pathMatcher;
 	}
 
 	/**
@@ -145,12 +159,45 @@ public class DatumAuxiliaryController extends WebServiceControllerSupport {
 	@RequestMapping(value = { "", "," }, method = RequestMethod.GET, params = "!date")
 	public Response<FilterResults<GeneralNodeDatumAuxiliaryFilterMatch>> findNodeDatumAuxiliary(
 			DatumFilterCommand criteria) {
+		// support filtering based on sourceId path pattern, by simply finding the sources that match first
+		// FIXME: this is copy/pasted from DatumController... should move this somewhere shared
+		resolveSourceIdPattern(criteria);
+
 		Long userId = SecurityUtils.getCurrentActorUserId();
 		criteria.setUserId(userId);
 		FilterResults<GeneralNodeDatumAuxiliaryFilterMatch> results = datumAuxiliaryBiz
 				.findGeneralNodeDatumAuxiliary(criteria, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());
 		return response(results);
+	}
+
+	private void resolveSourceIdPattern(DatumFilterCommand cmd) {
+		if ( cmd == null || pathMatcher == null || queryBiz == null ) {
+			return;
+		}
+		String sourceId = cmd.getSourceId();
+		if ( sourceId != null && pathMatcher.isPattern(sourceId) && cmd.getNodeIds() != null ) {
+			Set<String> allSources = queryBiz.getAvailableSources(cmd);
+			allSources = filterSources(allSources, pathMatcher, sourceId);
+			if ( !allSources.isEmpty() ) {
+				cmd.setSourceIds(allSources.toArray(new String[allSources.size()]));
+			}
+		}
+	}
+
+	private static Set<String> filterSources(Set<String> sources, PathMatcher pathMatcher,
+			String pattern) {
+		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
+				|| !pathMatcher.isPattern(pattern) ) {
+			return sources;
+		}
+		for ( Iterator<String> itr = sources.iterator(); itr.hasNext(); ) {
+			String source = itr.next();
+			if ( !pathMatcher.match(pattern, source) ) {
+				itr.remove();
+			}
+		}
+		return sources;
 	}
 
 	/**
