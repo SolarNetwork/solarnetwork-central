@@ -28,7 +28,6 @@
 CREATE OR REPLACE FUNCTION solaragg.find_datum_for_time_span(node bigint, sources text[], start_ts timestamp with time zone, span interval, tolerance interval DEFAULT '01:00:00'::interval)
 RETURNS TABLE(ts timestamp with time zone, source_id text, jdata jsonb) LANGUAGE SQL STABLE ROWS 500 AS
 $$
-$$
 	-- find raw data with support for filtering out "extra" leading/lagging rows from results
 	WITH d AS (
 		SELECT
