@@ -14,6 +14,9 @@ var kAuxHelper = auxiliaryHelper();
 /**
  * An aggregate record object that helps keep track of the raw data needed to
  * calculate a single aggregate result from many input records.
+ * 
+ * Datum records that include a `Reset` tag, along with a `final` or `start` tag, are handled
+ * such that aggregate processing starts over again at the `start` values.
  *
  * @param {String} sourceId    The source ID.
  * @param {Number} ts          The timestamp associated with this aggregate result (e.g. time slot).
@@ -29,7 +32,7 @@ var kAuxHelper = auxiliaryHelper();
  */
 export default function datumAggregate(sourceId, ts, endTs, configuration) {
 	var self = {
-		version : '1'
+		version : '2'
 	};
 
 	/** The number of milliseconds tolerance before/after time span to allow finding prev/next records. */
@@ -213,6 +216,8 @@ export default function datumAggregate(sourceId, ts, endTs, configuration) {
 				// calling addDatumRecord will update prevRecord, so keep a reference to the current value
 				finishRecord = prevRecord;
 				addDatumRecord(nextRecord);
+				prevRecord = finishRecord;
+			} else if ( !prevRecord && kAuxHelper.datumResetKind(nextRecord.jdata) === kAuxHelper.resetStartTag ) {
 				prevRecord = finishRecord;
 			} else {
 				prevRecord = undefined;
