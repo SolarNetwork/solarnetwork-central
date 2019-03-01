@@ -29,7 +29,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * for each datum row. When all rows have been processed, call the
  * <code>finish()</code> method to complete the aggregate processing and return
  * all the aggregate result objects.
- * 
+ *
  * Aggregation of other aggregate data will be automatically performed if
  * the records passed to `addDatumRecord` contain a `ts_start` property.
  *
@@ -38,6 +38,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  *                                           aggregate result (e.g. time span).
  * @param {Number} configuration.endTs       The timestamp (exclusive) of the end of
  *                                           this aggregate result.
+ * @param {Number} configuration.toleranceMs The number of milliseconds tolerance before/after
+ *                                           time slot to allow calculating accumulating values
+ *                                           from. Defaults to 3600000.
+ * @param {Object} configuration.hourFill    An object whose keys represent instantaneous datum
+ *                                           properties that should used to derive accumulating
+ *                                           values named for the associated property value.
  */
 function aggregator(configuration) {
 	var self = {

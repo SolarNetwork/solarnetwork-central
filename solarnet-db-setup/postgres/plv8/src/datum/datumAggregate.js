@@ -1,5 +1,6 @@
 'use strict';
 
+import auxiliaryHelper from 'datum/auxiliaryHelper'
 import calculateAverages from 'math/calculateAverages'
 import calculateAverageOverHours from 'math/calculateAverageOverHours'
 import fixPrecision from 'math/fixPrecision'
@@ -8,9 +9,14 @@ import mergeObjects from 'util/mergeObjects'
 
 var kDefaultHourFill = {watts: 'wattHours'};
 
+var kAuxHelper = auxiliaryHelper();
+
 /**
  * An aggregate record object that helps keep track of the raw data needed to
  * calculate a single aggregate result from many input records.
+ * 
+ * Datum records that include a `Reset` tag, along with a `final` or `start` tag, are handled
+ * such that aggregate processing starts over again at the `start` values.
  *
  * @param {String} sourceId    The source ID.
  * @param {Number} ts          The timestamp associated with this aggregate result (e.g. time slot).
@@ -26,7 +32,7 @@ var kDefaultHourFill = {watts: 'wattHours'};
  */
 export default function datumAggregate(sourceId, ts, endTs, configuration) {
 	var self = {
-		version : '1'
+		version : '2'
 	};
 
 	/** The number of milliseconds tolerance before/after time span to allow finding prev/next records. */
@@ -156,11 +162,12 @@ export default function datumAggregate(sourceId, ts, endTs, configuration) {
 			accu = record.jdata.a,
 			inst = record.jdata.i,
 			stat = record.jdata.s,
-			tags = record.jdata.t;
+			tags = record.jdata.t,
+			resetType = kAuxHelper.datumResetKind(record.jdata);
 
 		// as long as this record's time slot falls within the configured time slot,
 		// handle instantaneous, static, and tag values
-		if ( recTs === ts ) {
+		if ( recTs === ts && !resetType ) {
 			if ( inst ) {
 				// add instantaneous values
 				addInstantaneousValues(inst);
@@ -179,8 +186,8 @@ export default function datumAggregate(sourceId, ts, endTs, configuration) {
 
 		addAccumulatingValues(accu, inst, recTs, record.ts);
 
-		// save curr record as previous for future calculations
-		prevRecord = record;
+		// save curr record as previous for future calculations, unless we have a `start` reset type
+		prevRecord = (resetType === kAuxHelper.resetFinalTag ? undefined : record);
 	}
 
 	/**
@@ -209,6 +216,8 @@ export default function datumAggregate(sourceId, ts, endTs, configuration) {
 				// calling addDatumRecord will update prevRecord, so keep a reference to the current value
 				finishRecord = prevRecord;
 				addDatumRecord(nextRecord);
+				prevRecord = finishRecord;
+			} else if ( !prevRecord && kAuxHelper.datumResetKind(nextRecord.jdata) === kAuxHelper.resetStartTag ) {
 				prevRecord = finishRecord;
 			} else {
 				prevRecord = undefined;
