@@ -88,4 +88,10 @@
 		</constructor-arg>
 	</bean>
 	
+	<!-- PathMatcher for testing against source IDs -->
+	<bean id="sourceIdPathMatcher" class="org.springframework.util.AntPathMatcher" >
+		<property name="cachePatterns" value="true"/>
+		<property name="caseSensitive" value="false"/>
+	</bean>
+
 </beans>
