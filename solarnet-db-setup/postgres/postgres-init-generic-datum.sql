@@ -1,7 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS solardatum;
-
-CREATE SCHEMA IF NOT EXISTS solaragg;
-
 CREATE TABLE solardatum.da_datum (
   ts timestamp with time zone NOT NULL,
   node_id bigint NOT NULL,

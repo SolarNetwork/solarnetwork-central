@@ -1,5 +1,3 @@
-CREATE SCHEMA solarnet;
-
 CREATE SEQUENCE solarnet.solarnet_seq;
 CREATE SEQUENCE solarnet.node_seq;
 

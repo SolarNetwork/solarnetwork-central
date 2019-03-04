@@ -1,7 +1,3 @@
-/* === USER ================================================================ */
-
-CREATE SCHEMA solaruser;
-
 CREATE SEQUENCE solaruser.solaruser_seq;
 
 /**
