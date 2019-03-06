@@ -10,6 +10,9 @@ CREATE TABLE solardatum.da_datum (
   CONSTRAINT da_datum_pkey PRIMARY KEY (node_id, ts, source_id)
 );
 
+-- add similar index with reverse time to make several "most recent" style queries faster
+CREATE UNIQUE INDEX IF NOT EXISTS da_datum_reverse_pkey ON solardatum.da_datum (node_id, ts DESC, source_id);
+
 CREATE OR REPLACE FUNCTION solardatum.jdata_from_datum(datum solardatum.da_datum)
 	RETURNS jsonb
 	LANGUAGE SQL IMMUTABLE AS
