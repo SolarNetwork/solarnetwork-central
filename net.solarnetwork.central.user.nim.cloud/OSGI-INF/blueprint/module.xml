@@ -13,7 +13,7 @@
 
 	<!-- Service References -->
 
-	<reference id="userBiz" interface="net.solarnetwork.central.user.biz.UserBiz" filter="(secured=true)"/>
+	<reference id="userBiz" interface="net.solarnetwork.central.user.biz.UserBiz"/>
 
 	<bean id="appsVirtualMachineBiz" class="net.solarnetwork.util.DynamicServiceTracker">
 		<property name="bundleContext" ref="bundleContext"/>
