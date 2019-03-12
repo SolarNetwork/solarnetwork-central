@@ -13,7 +13,7 @@
 
 	<!-- Service References -->
 	
-	<reference id="nodePKIBiz" interface="net.solarnetwork.central.user.biz.NodePKIBiz"/>
+	<reference id="nodePKIBiz" interface="net.solarnetwork.central.user.biz.NodePKIBiz" availability="optional"/>
 	<reference id="instructorBiz" interface="net.solarnetwork.central.instructor.biz.InstructorBiz"/>
 	<reference id="certificateService" interface="net.solarnetwork.support.CertificateService"/>
 	
