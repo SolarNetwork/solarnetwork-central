@@ -22,7 +22,8 @@
 
 package net.solarnetwork.central.in.mqtt.test;
 
-import java.nio.charset.Charset;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -36,7 +37,6 @@ import io.moquette.interception.messages.InterceptMessage;
 import io.moquette.interception.messages.InterceptPublishMessage;
 import io.moquette.interception.messages.InterceptSubscribeMessage;
 import io.moquette.interception.messages.InterceptUnsubscribeMessage;
-import io.netty.buffer.ByteBuf;
 
 /**
  * An {@link InterceptHandler} for unit testing.
@@ -52,7 +52,7 @@ public class TestingInterceptHandler extends AbstractInterceptHandler {
 	public final List<InterceptDisconnectMessage> disconnectMessages = new ArrayList<>(8);
 	public final List<InterceptConnectionLostMessage> connectionLostMessages = new ArrayList<>(8);
 	public final List<InterceptPublishMessage> publishMessages = new ArrayList<>(8);
-	public final List<ByteBuf> publishPayloads = new ArrayList<>(8);
+	public final List<ByteBuffer> publishPayloads = new ArrayList<>(8);
 	public final List<InterceptSubscribeMessage> subscribeMessages = new ArrayList<>(8);
 	public final List<InterceptUnsubscribeMessage> unsubscribeMessages = new ArrayList<>(8);
 	public final List<InterceptAcknowledgedMessage> acknowledgedMessages = new ArrayList<>(8);
@@ -90,7 +90,9 @@ public class TestingInterceptHandler extends AbstractInterceptHandler {
 
 	@Override
 	public void onPublish(InterceptPublishMessage msg) {
-		publishPayloads.add(msg.getPayload().copy());
+		byte[] copy = new byte[msg.getPayload().readableBytes()];
+		msg.getPayload().duplicate().readBytes(copy);
+		publishPayloads.add(ByteBuffer.wrap(copy));
 		publishMessages.add(msg);
 		notifiyCallback(msg);
 	}
@@ -116,7 +118,11 @@ public class TestingInterceptHandler extends AbstractInterceptHandler {
 	 * @return the string
 	 */
 	public String getPublishPayloadStringAtIndex(int index, String charsetName) {
-		return publishPayloads.get(index).toString(Charset.forName(charsetName));
+		try {
+			return new String(publishPayloads.get(index).array(), charsetName);
+		} catch ( UnsupportedEncodingException e ) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
