@@ -26,6 +26,8 @@ import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
@@ -47,6 +49,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.moquette.interception.messages.InterceptConnectMessage;
+import io.moquette.interception.messages.InterceptPublishMessage;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
@@ -54,6 +57,7 @@ import net.solarnetwork.central.in.mqtt.MqttDataCollector;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
@@ -550,13 +554,36 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
 
+		final TestingInterceptHandler session = getTestingInterceptHandler();
+
 		replayAll();
 
 		// when
 		service.init();
 		service.didQueueNodeInstruction(input, instructionId);
 
+		// sleep for a bit to allow background thread to process
+		Thread.sleep(200);
+
+		// stop server to flush messages
+		stopMqttServer();
+
 		// then
+		List<InterceptPublishMessage> published = session.publishMessages;
+		assertThat(published, hasSize(1));
+		InterceptPublishMessage msg = session.publishMessages.get(0);
+		assertThat(msg.getTopicName(), equalTo("node/" + TEST_NODE_ID + "/instr"));
+		Map<String, Object> map = JsonUtils
+				.getStringMapFromTree(objectMapper.readTree(session.publishPayloads.get(0).array()));
+		assertThat("Message body", map.keySet(), containsInAnyOrder("instructions"));
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		List<Map<String, Object>> instructions = (List) map.get("instructions");
+		assertThat("Instruction count", instructions, hasSize(1));
+		assertThat("Instruction topic", instructions.get(0), hasEntry("topic", TEST_INSTRUCTION_TOPIC));
+		assertThat("Instruction state", instructions.get(0),
+				hasEntry("state", InstructionState.Queuing.toString()));
+		assertThat("Instruction node ID", instructions.get(0),
+				hasEntry("nodeId", TEST_NODE_ID.intValue()));
 	}
 
 	@Test

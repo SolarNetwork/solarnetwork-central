@@ -1,7 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS solardatum;
-
-CREATE SCHEMA IF NOT EXISTS solaragg;
-
 CREATE TABLE solardatum.da_datum (
   ts timestamp with time zone NOT NULL,
   node_id bigint NOT NULL,
@@ -13,6 +9,9 @@ CREATE TABLE solardatum.da_datum (
   jdata_t text[],
   CONSTRAINT da_datum_pkey PRIMARY KEY (node_id, ts, source_id)
 );
+
+-- add similar index with reverse time to make several "most recent" style queries faster
+CREATE UNIQUE INDEX IF NOT EXISTS da_datum_reverse_pkey ON solardatum.da_datum (node_id, ts DESC, source_id);
 
 CREATE OR REPLACE FUNCTION solardatum.jdata_from_datum(datum solardatum.da_datum)
 	RETURNS jsonb
