@@ -419,7 +419,7 @@ SELECT sub.ts, sub.source_id, sub.jdata FROM (
 		d.ts,
 		d.source_id,
 		CASE
-			WHEN lead(d.ts) over win < start_ts OR lag(d.ts) over win > (start_ts + span)
+			WHEN lead(d.ts) over win < start_ts OR lag(d.ts) over win >= (start_ts + span)
 				THEN TRUE
 			ELSE FALSE
 		END AS outside,
@@ -633,6 +633,10 @@ CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
 $$
 DECLARE
 	stale 					record;
+	stale_t_start			timestamp;
+	stale_t_end 			timestamp;
+	stale_ts_prevstart		timestamptz;
+	stale_ts_end 			timestamptz;
 	agg_span 				interval;
 	agg_json 				jsonb := NULL;
 	agg_jmeta 				jsonb := NULL;
@@ -670,6 +674,12 @@ BEGIN
 			RAISE NOTICE 'Node % has no time zone, will use UTC.', stale.node_id;
 			node_tz := 'UTC';
 		END IF;
+		
+		-- stash local time start/end so date calculations for day+ correctly handles DST boundaries
+		stale_t_start := stale.ts_start AT TIME ZONE node_tz;
+		stale_t_end := stale_t_start + agg_span;
+		stale_ts_prevstart := (stale_t_start - agg_span) AT TIME ZONE node_tz;
+		stale_ts_end := stale_t_end AT TIME ZONE node_tz;
 
 		CASE kind
 			WHEN 'h' THEN
@@ -683,7 +693,7 @@ BEGIN
 
 			WHEN 'd' THEN
 				SELECT jdata, jmeta
-				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale.ts_start + agg_span, 'h')
+				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale_ts_end, 'h')
 				INTO agg_json, agg_jmeta;
 				
 				SELECT jsonb_strip_nulls(jsonb_build_object(
@@ -695,13 +705,13 @@ BEGIN
 				WHERE node_id = stale.node_id
 					AND source_id = stale.source_id
 					AND ts_start >= stale.ts_start
-					AND ts_start < (stale.ts_start + agg_span)
+					AND ts_start < stale_ts_end
 				GROUP BY node_id, source_id
 				INTO agg_reading;
 
 			ELSE
 				SELECT jdata, jmeta
-				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale.ts_start + agg_span, 'd')
+				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale_ts_end, 'd')
 				INTO agg_json, agg_jmeta;
 				
 				SELECT jsonb_strip_nulls(jsonb_build_object(
@@ -713,7 +723,7 @@ BEGIN
 				WHERE node_id = stale.node_id
 					AND source_id = stale.source_id
 					AND ts_start >= stale.ts_start
-					AND ts_start < (stale.ts_start + agg_span)
+					AND ts_start < stale_ts_end
 				GROUP BY node_id, source_id
 				INTO agg_reading;
 		END CASE;
@@ -721,26 +731,27 @@ BEGIN
 		IF agg_json IS NULL AND (agg_reading IS NULL 
 				OR (agg_reading_ts_start IS NOT NULL AND agg_reading_ts_start = agg_reading_ts_end)
 				) THEN
-			-- delete agg, using date range in case time zone of node has changed
+			-- no data in range, so delete agg row
+			-- using date range in case time zone of node has changed
 			CASE kind
 				WHEN 'h' THEN
+					-- note NOT using stale_ts_prevstart here because not needed for hourly
 					DELETE FROM solaragg.agg_datum_hourly
 					WHERE node_id = stale.node_id
 						AND source_id = stale.source_id
-						AND ts_start > stale.ts_start - agg_span
-						AND ts_start < stale.ts_start + agg_span;
+						AND ts_start = stale.ts_start;
 				WHEN 'd' THEN
 					DELETE FROM solaragg.agg_datum_daily
 					WHERE node_id = stale.node_id
 						AND source_id = stale.source_id
-						AND ts_start > stale.ts_start - agg_span
-						AND ts_start < stale.ts_start + agg_span;
+						AND ts_start > stale_ts_prevstart
+						AND ts_start < stale_ts_end;
 				ELSE
 					DELETE FROM solaragg.agg_datum_monthly
 					WHERE node_id = stale.node_id
 						AND source_id = stale.source_id
-						AND ts_start > stale.ts_start - agg_span
-						AND ts_start < stale.ts_start + agg_span;
+						AND ts_start > stale_ts_prevstart
+						AND ts_start < stale_ts_end;
 			END CASE;
 		ELSE
 			CASE kind
@@ -751,7 +762,7 @@ BEGIN
 						jdata_as, jdata_af, jdata_ad)
 					VALUES (
 						stale.ts_start,
-						stale.ts_start at time zone node_tz,
+						stale_t_start,
 						stale.node_id,
 						stale.source_id,
 						agg_json->'i',
@@ -773,13 +784,7 @@ BEGIN
 						jdata_af = EXCLUDED.jdata_af,
 						jdata_ad = EXCLUDED.jdata_ad;
 
-					-- in case node tz changed, remove stale record(s)
-					DELETE FROM solaragg.agg_datum_hourly
-					WHERE node_id = stale.node_id
-						AND source_id = stale.source_id
-						AND ts_start > stale.ts_start - agg_span
-						AND ts_start < stale.ts_start + agg_span
-						AND ts_start <> stale.ts_start;
+					-- no delete from node tz change needed for hourly
 				WHEN 'd' THEN
 					INSERT INTO solaragg.agg_datum_daily (
 						ts_start, local_date, node_id, source_id,
@@ -787,7 +792,7 @@ BEGIN
 						jdata_as, jdata_af, jdata_ad)
 					VALUES (
 						stale.ts_start,
-						CAST(stale.ts_start at time zone node_tz AS DATE),
+						CAST(stale_t_start AS DATE),
 						stale.node_id,
 						stale.source_id,
 						agg_json->'i',
@@ -813,8 +818,8 @@ BEGIN
 					DELETE FROM solaragg.agg_datum_daily
 					WHERE node_id = stale.node_id
 						AND source_id = stale.source_id
-						AND ts_start > stale.ts_start - agg_span
-						AND ts_start < stale.ts_start + agg_span
+						AND ts_start > stale_ts_prevstart
+						AND ts_start < stale_ts_end
 						AND ts_start <> stale.ts_start;
 				ELSE
 					INSERT INTO solaragg.agg_datum_monthly (
@@ -823,7 +828,7 @@ BEGIN
 						jdata_as, jdata_af, jdata_ad)
 					VALUES (
 						stale.ts_start,
-						CAST(stale.ts_start at time zone node_tz AS DATE),
+						CAST(stale_t_start AS DATE),
 						stale.node_id,
 						stale.source_id,
 						agg_json->'i',
@@ -849,8 +854,8 @@ BEGIN
 					DELETE FROM solaragg.agg_datum_monthly
 					WHERE node_id = stale.node_id
 						AND source_id = stale.source_id
-						AND ts_start > stale.ts_start - agg_span
-						AND ts_start < stale.ts_start + agg_span
+						AND ts_start > stale_ts_prevstart
+						AND ts_start < stale_ts_end
 						AND ts_start <> stale.ts_start;
 			END CASE;
 		END IF;
@@ -862,32 +867,32 @@ BEGIN
 		CASE kind
 			WHEN 'h' THEN
 				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
-				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'd')
+				VALUES (date_trunc('day', stale_t_start) AT TIME ZONE node_tz, stale.node_id, stale.source_id, 'd')
 				ON CONFLICT DO NOTHING;
 
 			WHEN 'd' THEN
 				INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
-				VALUES (date_trunc('month', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'm')
+				VALUES (date_trunc('month', stale_t_start) AT TIME ZONE node_tz, stale.node_id, stale.source_id, 'm')
 				ON CONFLICT DO NOTHING;
 
 				-- handle update to raw audit data
 				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
-				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'r')
+				VALUES (date_trunc('day', stale_t_start) AT TIME ZONE node_tz, stale.node_id, stale.source_id, 'r')
 				ON CONFLICT DO NOTHING;
 
 				-- handle update to hourly audit data
 				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
-				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'h')
+				VALUES (date_trunc('day', stale_t_start) AT TIME ZONE node_tz, stale.node_id, stale.source_id, 'h')
 				ON CONFLICT DO NOTHING;
 
 				-- handle update to daily audit data
 				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
-				VALUES (date_trunc('day', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'd')
+				VALUES (date_trunc('day', stale_t_start) AT TIME ZONE node_tz, stale.node_id, stale.source_id, 'd')
 				ON CONFLICT DO NOTHING;
 			ELSE
 				-- handle update to monthly audit data
 				INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
-				VALUES (date_trunc('month', stale.ts_start at time zone node_tz) at time zone node_tz, stale.node_id, stale.source_id, 'm')
+				VALUES (date_trunc('month', stale_t_start) AT TIME ZONE node_tz, stale.node_id, stale.source_id, 'm')
 				ON CONFLICT DO NOTHING;
 		END CASE;
 	END IF;
