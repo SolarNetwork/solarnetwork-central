@@ -161,10 +161,12 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	 * Test able to find for a user with multiple results.
 	 */
 	@Test
-	public void findForUserMultipleResults() {
+	public void findForUserMultipleResults() throws InterruptedException {
 		storeNewUserNode();
 
 		// create 2nd node for user
+		Thread.sleep(100); // to give users different create dates
+
 		setupTestNode(TEST_ID_2);
 		UserNode newUserNode = new UserNode();
 		newUserNode.setCreated(new DateTime());
