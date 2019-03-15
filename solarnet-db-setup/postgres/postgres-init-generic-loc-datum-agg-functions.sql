@@ -122,7 +122,7 @@ SELECT sub.ts, sub.source_id, sub.jdata FROM (
 		d.ts,
 		d.source_id,
 		CASE
-			WHEN lead(d.ts) over win < start_ts OR lag(d.ts) over win > (start_ts + span)
+			WHEN lead(d.ts) over win < start_ts OR lag(d.ts) over win >= (start_ts + span)
 				THEN TRUE
 			ELSE FALSE
 		END AS outside,
