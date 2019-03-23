@@ -40,7 +40,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
@@ -59,7 +58,7 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for billing management.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @RestController("v1BillingController")
 @RequestMapping(value = { "/sec/billing", "/v1/sec/user/billing" })
@@ -88,11 +87,11 @@ public class BillingController extends WebServiceControllerSupport {
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/systemInfo")
 	public Response<BillingSystemInfo> billingSystemInfoForUser(Locale locale) {
-		SecurityUser actor = SecurityUtils.getCurrentUser();
+		final Long userId = SecurityUtils.getCurrentActorUserId();
 		BillingSystemInfo info = null;
 		BillingBiz biz = billingBiz.service();
 		if ( biz != null ) {
-			BillingSystem system = biz.billingSystemForUser(actor.getUserId());
+			BillingSystem system = biz.billingSystemForUser(userId);
 			info = (system != null ? system.getInfo(locale) : null);
 		}
 		return response(info);
@@ -118,8 +117,7 @@ public class BillingController extends WebServiceControllerSupport {
 		Invoice result = null;
 		if ( biz != null ) {
 			if ( userId == null ) {
-				SecurityUser actor = SecurityUtils.getCurrentUser();
-				userId = actor.getUserId();
+				userId = SecurityUtils.getCurrentActorUserId();
 			}
 			result = biz.getInvoice(userId, invoiceId, locale);
 		}
@@ -157,8 +155,7 @@ public class BillingController extends WebServiceControllerSupport {
 		BillingBiz biz = billingBiz.service();
 		if ( biz != null ) {
 			if ( userId == null ) {
-				SecurityUser actor = SecurityUtils.getCurrentUser();
-				userId = actor.getUserId();
+				userId = SecurityUtils.getCurrentActorUserId();
 			}
 			List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 			MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
@@ -188,8 +185,7 @@ public class BillingController extends WebServiceControllerSupport {
 		FilterResults<InvoiceMatch> results = null;
 		if ( biz != null ) {
 			if ( filter.getUserId() == null ) {
-				SecurityUser actor = SecurityUtils.getCurrentUser();
-				filter.setUserId(actor.getUserId());
+				filter.setUserId(SecurityUtils.getCurrentActorUserId());
 			}
 			results = biz.findFilteredInvoices(filter, filter.getSortDescriptors(), filter.getOffset(),
 					filter.getMax());
