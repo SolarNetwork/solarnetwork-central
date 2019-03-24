@@ -78,7 +78,7 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
  * REST implementation of {@link KillbillClient}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class KillbillRestClient implements KillbillClient {
 
@@ -353,8 +353,6 @@ public class KillbillRestClient implements KillbillClient {
 		return (results != null ? results : Collections.emptyList());
 	}
 
-	private static final BigDecimal ZERO = new BigDecimal(0);
-
 	@Override
 	public FilterResults<Invoice> findInvoices(Account account, InvoiceFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
@@ -369,7 +367,7 @@ public class KillbillRestClient implements KillbillClient {
 			if ( filter.getUnpaid() == false ) {
 				// KB returns paid/unpaid mixed; filter to just paid here (balance <= 0)
 				allInvoices = allInvoices.parallelStream()
-						.filter(invoice -> invoice.getBalance().compareTo(ZERO) < 1)
+						.filter(invoice -> invoice.getBalance().compareTo(BigDecimal.ZERO) < 1)
 						.collect(Collectors.toList());
 			}
 			List<Invoice> resultInvoices;
