@@ -179,6 +179,11 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 				"select * from solaragg.agg_datum_monthly order by node_id,ts_start,source_id");
 	}
 
+	protected List<Map<String, Object>> getDatumRanges() {
+		return jdbcTemplate
+				.queryForList("select * from solardatum.da_datum_range order by node_id,source_id");
+	}
+
 	protected void insertResetDatumAuxiliaryRecord(DateTime date, Long nodeId, String sourceId,
 			Map<String, Number> finalSamples, Map<String, Number> startSamples) {
 		jdbcTemplate.update(
