@@ -2,11 +2,11 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet MyBatis Datum DAO
 Bundle-SymbolicName: net.solarnetwork.central.datum.dao.mybatis
-Bundle-Version: 2.22.0
+Bundle-Version: 2.23.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: 
- net.solarnetwork.central.datum.dao.mybatis;version="2.16.0",
+ net.solarnetwork.central.datum.dao.mybatis;version="2.17.0",
  net.solarnetwork.central.datum.dao.mybatis.map;version="2.19.0"
 Import-Package: 
  javax.sql,
