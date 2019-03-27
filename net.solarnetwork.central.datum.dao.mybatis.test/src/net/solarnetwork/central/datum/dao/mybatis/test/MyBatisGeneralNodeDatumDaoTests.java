@@ -3074,6 +3074,15 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		// then
 		assertThat("Datum rows imported", datumRowCount(), equalTo(data.size()));
 
+		List<Map<String, Object>> ranges = getDatumRanges();
+		assertThat("Range created", ranges, hasSize(1));
+		assertThat("Range node", ranges.get(0), hasEntry("node_id", TEST_NODE_ID));
+		assertThat("Range source", ranges.get(0), hasEntry("source_id", TEST_SOURCE_ID));
+		assertThat("Range min", ranges.get(0),
+				hasEntry("ts_min", new Timestamp(data.get(0).getCreated().getMillis())));
+		assertThat("Range max", ranges.get(0),
+				hasEntry("ts_max", new Timestamp(data.get(data.size() - 1).getCreated().getMillis())));
+
 		// manually clean up transactionally circumvented data import data
 		TestTransaction.end();
 		jdbcTemplate.execute(new ConnectionCallback<Object>() {
