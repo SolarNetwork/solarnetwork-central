@@ -72,7 +72,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.16
+ * @version 1.17
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -268,6 +268,13 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String DELETE_FILTERED = "delete-GeneralNodeDatum-for-filter";
 
+	/**
+	 * The default value for the {@code updateDatumRangeDates} property.
+	 * 
+	 * @since 1.17
+	 */
+	public static final String UPDATE_DATUM_RANGE_DATES = "update-datum-range-dates";
+
 	private final BulkLoadingDaoSupport loadingSupport;
 
 	private String queryForReportableInterval;
@@ -288,6 +295,7 @@ public class MyBatisGeneralNodeDatumDao
 	private String queryForDatumAccumulationAbsolute;
 	private String queryForDatumRecordCounts;
 	private String deleteFiltered;
+	private String updateDatumRangeDates;
 
 	/**
 	 * Default constructor.
@@ -314,6 +322,7 @@ public class MyBatisGeneralNodeDatumDao
 		this.loadingSupport.setJdbcCall(DEFAULT_BULK_LOADING_JDBC_CALL);
 		this.queryForDatumRecordCounts = QUERY_FOR_DATUM_RECORD_COUNTS;
 		this.deleteFiltered = DELETE_FILTERED;
+		this.updateDatumRangeDates = UPDATE_DATUM_RANGE_DATES;
 	}
 
 	/**
@@ -1037,6 +1046,8 @@ public class MyBatisGeneralNodeDatumDao
 
 		private final Timestamp start;
 
+		private final Map<NodeSourcePK, NodeSourceRange> dateRanges = new HashMap<>(32);
+
 		private GeneralNodeDatumBulkLoadingContext(LoadingOptions options,
 				LoadingExceptionHandler<GeneralNodeDatum, GeneralNodeDatumPK> exceptionHandler)
 				throws SQLException {
@@ -1054,7 +1065,48 @@ public class MyBatisGeneralNodeDatumDao
 					d.getPosted() != null ? new Timestamp(d.getPosted().getMillis()) : start);
 			stmt.setString(5, d.getSampleJson());
 			stmt.executeUpdate();
+
+			// keep track of import min/max date ranges, so they can be updated at end
+			NodeSourcePK nsKey = new NodeSourcePK(d.getNodeId(), d.getSourceId());
+			dateRanges.compute(nsKey, (k, v) -> {
+				NodeSourceRange r = v;
+				if ( r == null ) {
+					r = new NodeSourceRange();
+					r.setNodeId(k.getNodeId());
+					r.setSourceId(k.getSourceId());
+				}
+				if ( r.getStartDate() == null || d.getCreated().isBefore(r.getStartDate()) ) {
+					r.setStartDate(d.getCreated());
+				}
+				if ( r.getEndDate() == null || d.getCreated().isAfter(r.getEndDate()) ) {
+					r.setEndDate(d.getCreated());
+				}
+				return r;
+			});
+
 			return true;
+		}
+
+		@Override
+		public void commit() {
+			commitDateRanges();
+			super.commit();
+		}
+
+		private void commitDateRanges() {
+			GeneralNodeDatumPK key = new GeneralNodeDatumPK();
+			for ( NodeSourceRange range : dateRanges.values() ) {
+				key.setNodeId(range.getNodeId());
+				key.setSourceId(range.getSourceId());
+
+				key.setCreated(range.getStartDate());
+				getSqlSession().update(updateDatumRangeDates, key);
+
+				if ( !range.getStartDate().isEqual(range.getEndDate()) ) {
+					key.setCreated(range.getEndDate());
+					getSqlSession().update(updateDatumRangeDates, key);
+				}
+			}
 		}
 
 	}
@@ -1443,6 +1495,17 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setQueryForDatumAccumulationAbsolute(String queryForDatumAccumulationAbsolute) {
 		this.queryForDatumAccumulationAbsolute = queryForDatumAccumulationAbsolute;
+	}
+
+	/**
+	 * Set the statement name for updating datum date ranges.
+	 * 
+	 * @param updateDatumRangeDates
+	 *        the statement name; defaults to {@link #UPDATE_DATUM_RANGE_DATE}
+	 * @since 1.17
+	 */
+	public void setUpdateDatumRangeDates(String updateDatumRangeDates) {
+		this.updateDatumRangeDates = updateDatumRangeDates;
 	}
 
 }
