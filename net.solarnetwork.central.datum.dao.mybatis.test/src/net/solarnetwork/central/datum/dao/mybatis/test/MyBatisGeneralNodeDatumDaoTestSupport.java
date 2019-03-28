@@ -195,13 +195,18 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 	}
 
 	protected List<GeneralNodeDatum> createSampleData(int count, DateTime start) {
+		return createSampleData(count, start, TEST_NODE_ID, TEST_SOURCE_ID);
+	}
+
+	protected List<GeneralNodeDatum> createSampleData(int count, DateTime start, Long nodeId,
+			String sourceId) {
 		List<GeneralNodeDatum> data = new ArrayList<>(4);
 		long wh = (long) (Math.random() * 1000000000.0);
 		for ( int i = 0; i < count; i++ ) {
 			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setNodeId(TEST_NODE_ID);
+			d.setNodeId(nodeId);
 			d.setCreated(start.plusMinutes(i));
-			d.setSourceId(TEST_SOURCE_ID);
+			d.setSourceId(sourceId);
 
 			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
 			int watts = (int) (Math.random() * 50000);
