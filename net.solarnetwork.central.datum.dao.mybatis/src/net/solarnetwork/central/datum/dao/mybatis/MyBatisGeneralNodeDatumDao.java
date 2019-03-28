@@ -1107,6 +1107,7 @@ public class MyBatisGeneralNodeDatumDao
 					getSqlSession().update(updateDatumRangeDates, key);
 				}
 			}
+			dateRanges.clear();
 		}
 
 	}
