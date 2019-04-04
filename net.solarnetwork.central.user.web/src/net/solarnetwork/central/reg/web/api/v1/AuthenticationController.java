@@ -24,10 +24,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import javax.servlet.http.HttpServletResponse;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -42,19 +39,10 @@ import net.solarnetwork.web.domain.Response;
  * Remote authentication for nodes.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Controller("v1authenticationController")
 public class AuthenticationController extends WebServiceControllerSupport {
-
-	@ExceptionHandler(AuthenticationException.class)
-	@ResponseBody
-	public Response<?> handleException(AuthenticationException e, HttpServletResponse response) {
-		log.debug("AuthenticationException in {} controller: {}", getClass().getSimpleName(),
-				e.getMessage());
-		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
-	}
 
 	/**
 	 * Check who the caller is.

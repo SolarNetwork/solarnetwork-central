@@ -32,24 +32,29 @@
 	<mvc:annotation-driven conversion-service="isoDateConversionService">
 		<mvc:async-support default-timeout="300000" task-executor="asyncTaskExecutor"/>
 		<mvc:message-converters register-defaults="true">
-			<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
-				<property name="prefixJson" value="false" />
-				<property name="supportedMediaTypes" value="application/json" />
-				<property name="objectMapper" ref="objectMapper"/>
-		    </bean>
-		    <bean class="net.solarnetwork.web.support.SimpleXmlHttpMessageConverter">
-		    	<property name="propertySerializerRegistrar" ref="xmlPropertySerializerRegistrar"/>
-			    <property name="classNamesAllowedForNesting">
-					<set>
-						<value>net.solarnetwork</value>
-					</set>
-				</property>
-			</bean>
-			<bean class="net.solarnetwork.web.support.SimpleCsvHttpMessageConverter">
-		    	<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
-			</bean>
+			<ref bean="mappingJackson2HttpMessageConverter"/>
+			<ref bean="simpleXmlHttpMessageConverter"/>
+			<ref bean="simpleCsvHttpMessageConverter"/>
 		</mvc:message-converters>
 	</mvc:annotation-driven>
+
+	<!-- Message converters defined at top-level to share between mvc:message-converters AND exceptionHandlerExceptionResolver -->
+	<bean id="mappingJackson2HttpMessageConverter" class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+		<property name="prefixJson" value="false" />
+		<property name="supportedMediaTypes" value="application/json" />
+		<property name="objectMapper" ref="objectMapper"/>
+    </bean>
+    <bean id="simpleXmlHttpMessageConverter" class="net.solarnetwork.web.support.SimpleXmlHttpMessageConverter">
+    	<property name="propertySerializerRegistrar" ref="xmlPropertySerializerRegistrar"/>
+	    <property name="classNamesAllowedForNesting">
+			<set>
+				<value>net.solarnetwork</value>
+			</set>
+		</property>
+	</bean>
+	<bean id="simpleCsvHttpMessageConverter" class="net.solarnetwork.web.support.SimpleCsvHttpMessageConverter">
+    	<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
+	</bean>
 
 	<bean id="isoDateConversionService" class="net.solarnetwork.central.support.JodaIsoFormattingConversionServiceFactoryBean"/>
 	
@@ -61,6 +66,24 @@
 			allow-credentials="false"
 			max-age="86400"/>
 	</mvc:cors>
+	
+	<!-- Explicit exception resolver so can refer to this in security-context.xml -->
+	<bean id="exceptionHandlerExceptionResolver"
+      class="org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver">
+      	<property name="messageConverters">
+      		<list>
+				<ref bean="mappingJackson2HttpMessageConverter"/>
+				<ref bean="simpleXmlHttpMessageConverter"/>
+				<ref bean="simpleCsvHttpMessageConverter"/>
+				<bean class="org.springframework.http.converter.ByteArrayHttpMessageConverter"/>
+				<bean class="org.springframework.http.converter.StringHttpMessageConverter">
+					<property name="writeAcceptCharset" value="false"/>
+				</bean>
+				<bean class="org.springframework.http.converter.xml.SourceHttpMessageConverter"/>
+				<bean class="org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter"/>
+      		</list>
+      	</property>
+     </bean>
 
 	<!-- Maps request paths to @RequestMapping annotations -->
 	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">

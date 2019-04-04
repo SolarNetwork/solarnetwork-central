@@ -28,16 +28,17 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * App-wide global exception handlers.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ControllerAdvice
-public class GlobalExceptionHandlers {
+public class GlobalExceptionHandlers extends WebServiceControllerSupport {
 
 	/**
 	 * Handle an {@link MaxUploadSizeExceededException}.

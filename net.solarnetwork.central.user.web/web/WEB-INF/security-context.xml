@@ -23,6 +23,7 @@
 
 	<!-- Stateless BASIC authentication realm for web services. -->
 	<http pattern="/api/v1/sec/**" create-session="stateless" entry-point-ref="authTokenEntryPoint" use-expressions="true">
+		<access-denied-handler ref="authTokenEntryPoint"/>
 		<intercept-url pattern='/**' method="OPTIONS" access="permitAll"/>
 	    <intercept-url pattern="/api/v1/sec/user/billing/**" access="hasRole('ROLE_BILLING')"/>
 	    <intercept-url pattern="/api/v1/sec/user/export/**" access="hasRole('ROLE_EXPORT')"/>
@@ -55,7 +56,9 @@
 		<beans:property name="dataSource" ref="dataSource"/>
 	</beans:bean>
 
-	<beans:bean id="authTokenEntryPoint" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint"/>
+	<beans:bean id="authTokenEntryPoint" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint">
+		<beans:property name="handlerExceptionResolver" ref="exceptionHandlerExceptionResolver"/>
+	</beans:bean>
 
 	<beans:bean id="authTokenFilter" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter">
 		<beans:property name="userDetailsService">
