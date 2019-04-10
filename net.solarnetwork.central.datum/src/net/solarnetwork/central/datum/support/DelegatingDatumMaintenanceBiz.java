@@ -22,15 +22,19 @@
 
 package net.solarnetwork.central.datum.support;
 
+import java.util.List;
 import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
 
 /**
  * Implementation of {@link DatumMaintenanceBiz} that delegates to another
  * {@link DatumMaintenanceBiz}, designed primarily for use with AOP.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.38
  */
 public class DelegatingDatumMaintenanceBiz implements DatumMaintenanceBiz {
@@ -51,6 +55,12 @@ public class DelegatingDatumMaintenanceBiz implements DatumMaintenanceBiz {
 	@Override
 	public void markDatumAggregatesStale(GeneralNodeDatumFilter criteria) {
 		delegate.markDatumAggregatesStale(criteria);
+	}
+
+	@Override
+	public FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		return delegate.findStaleAggregateDatum(criteria, sortDescriptors, offset, max);
 	}
 
 }

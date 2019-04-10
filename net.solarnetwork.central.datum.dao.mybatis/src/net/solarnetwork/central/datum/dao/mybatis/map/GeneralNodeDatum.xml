@@ -309,15 +309,6 @@
 	
 	<!-- Aggregated query support -->
 
-	<update id="update-GeneralNodeDatum-aggregates-stale" statementType="CALLABLE">
-		{call solaragg.mark_datum_stale_hour_slots(
-			  #{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
-			, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
-			, #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
-			, #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
-			)}
-	</update>
-
 	<resultMap id="ReportingGeneralNodeDatumMatchResult" type="ReportingGeneralNodeDatum">
 		<id property="nodeId" column="r_datum_node_id"/>
 		<id property="created" column="r_datum_ts_start"/>

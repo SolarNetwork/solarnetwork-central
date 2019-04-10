@@ -1,5 +1,5 @@
 /* ==================================================================
- * GeneralNodeDatumAuxiliaryPK.java - 1/02/2019 4:30:40 pm
+ * GeneralNodeDatumKindPK.java - 11/04/2019 9:12:16 am
  * 
  * Copyright 2019 SolarNetwork.net Dev Team
  * 
@@ -27,67 +27,48 @@ import java.util.Objects;
 import org.joda.time.DateTime;
 
 /**
- * Primary key for a general node datum auxiliary entity.
+ * A primary key based on a node, source, date, and "kind" flag.
  * 
  * @author matt
  * @version 1.0
- * @since 1.35
+ * @since 1.39
  */
-public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
-		implements Serializable, Cloneable, Comparable<GeneralNodeDatumAuxiliaryPK> {
+public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
+		implements Serializable, Cloneable, Comparable<GeneralNodeDatumKindPK> {
 
-	private static final long serialVersionUID = 2851055344175402929L;
+	private static final long serialVersionUID = -3510872010302073368L;
 
-	private DatumAuxiliaryType type;
+	private String kind;
 
 	/**
 	 * Default constructor.
 	 */
-	public GeneralNodeDatumAuxiliaryPK() {
+	public GeneralNodeDatumKindPK() {
 		super();
 	}
 
 	/**
 	 * Constructor.
 	 * 
-	 * <p>
-	 * The {@link DatumAuxiliaryType#Reset} type will be set.
-	 * </p>
-	 * 
 	 * @param nodeId
 	 *        the node ID
 	 * @param created
 	 *        the creation date
 	 * @param sourceId
 	 *        the source ID
+	 * @param kind
+	 *        the kind
 	 */
-	public GeneralNodeDatumAuxiliaryPK(Long nodeId, DateTime created, String sourceId) {
-		this(nodeId, created, sourceId, DatumAuxiliaryType.Reset);
-	}
-
-	/**
-	 * Constructor.
-	 * 
-	 * @param nodeId
-	 *        the node ID
-	 * @param created
-	 *        the creation date
-	 * @param sourceId
-	 *        the source ID
-	 * @param type
-	 *        the type
-	 */
-	public GeneralNodeDatumAuxiliaryPK(Long nodeId, DateTime created, String sourceId,
-			DatumAuxiliaryType type) {
+	public GeneralNodeDatumKindPK(Long nodeId, DateTime created, String sourceId, String kind) {
 		super(nodeId, sourceId, created);
-		this.type = type;
+		setKind(kind);
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Objects.hash(type);
+		result = prime * result + Objects.hash(kind);
 		return result;
 	}
 
@@ -99,53 +80,53 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 		if ( !super.equals(obj) ) {
 			return false;
 		}
-		if ( !(obj instanceof GeneralNodeDatumAuxiliaryPK) ) {
+		if ( !(obj instanceof GeneralNodeDatumKindPK) ) {
 			return false;
 		}
-		GeneralNodeDatumAuxiliaryPK other = (GeneralNodeDatumAuxiliaryPK) obj;
-		return type == other.type;
+		GeneralNodeDatumKindPK other = (GeneralNodeDatumKindPK) obj;
+		return kind == other.kind;
 	}
 
 	@Override
 	protected void populateIdValue(StringBuilder buf) {
 		super.populateIdValue(buf);
-		buf.append(";t=");
-		if ( type != null ) {
-			buf.append(type);
+		buf.append(";k=");
+		if ( kind != null ) {
+			buf.append(kind);
 		}
 	}
 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
-		if ( type != null ) {
+		if ( kind != null ) {
 			if ( buf.length() > 0 ) {
 				buf.append(", ");
 			}
-			buf.append("type=").append(type);
+			buf.append("kind=").append(kind);
 		}
 	}
 
 	@Override
-	public int compareTo(GeneralNodeDatumAuxiliaryPK o) {
+	public int compareTo(GeneralNodeDatumKindPK o) {
 		int result = super.compareTo(o);
 		if ( result != 0 ) {
 			return result;
 		}
-		if ( o.type == null ) {
+		if ( o.kind == null ) {
 			return 1;
-		} else if ( type == null ) {
+		} else if ( kind == null ) {
 			return -1;
 		}
-		return type.compareTo(o.type);
+		return kind.compareTo(o.kind);
 	}
 
-	public DatumAuxiliaryType getType() {
-		return type;
+	public String getKind() {
+		return kind;
 	}
 
-	public void setType(DatumAuxiliaryType type) {
-		this.type = type;
+	public void setKind(String kind) {
+		this.kind = kind;
 	}
 
 }

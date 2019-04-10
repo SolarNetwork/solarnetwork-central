@@ -43,6 +43,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 
@@ -50,7 +51,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.13
+ * @version 1.14
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -516,5 +517,22 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @since 1.13
 	 */
 	void markDatumAggregatesStale(GeneralNodeDatumFilter criteria);
+
+	/**
+	 * Find stale aggregate records matching a search criteria.
+	 * 
+	 * @param criteria
+	 *        the criteria
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never {@literal null}
+	 * @since 1.14
+	 */
+	FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
 
 }

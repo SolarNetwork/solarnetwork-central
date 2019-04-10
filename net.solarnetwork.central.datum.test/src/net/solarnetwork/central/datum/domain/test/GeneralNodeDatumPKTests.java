@@ -46,7 +46,7 @@ public class GeneralNodeDatumPKTests {
 	public void stringValue() {
 		GeneralNodeDatumPK pk = new GeneralNodeDatumPK(TEST_NODE_ID, TEST_DATE, TEST_SOURCE_ID);
 		assertThat("String value", pk.toString(), equalTo("GeneralNodeDatumPK{nodeId=" + TEST_NODE_ID
-				+ ", created=" + TEST_DATE + ", sourceId=" + TEST_SOURCE_ID + "}"));
+				+ ", sourceId=" + TEST_SOURCE_ID + ", created=" + TEST_DATE + "}"));
 	}
 
 	@Test

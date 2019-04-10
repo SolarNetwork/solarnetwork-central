@@ -22,13 +22,17 @@
 
 package net.solarnetwork.central.datum.biz;
 
+import java.util.List;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
 
 /**
  * API for datum maintenance tasks.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.38
  */
 public interface DatumMaintenanceBiz {
@@ -46,4 +50,20 @@ public interface DatumMaintenanceBiz {
 	 */
 	void markDatumAggregatesStale(GeneralNodeDatumFilter criteria);
 
+	/**
+	 * Find stale aggregate records matching a search criteria.
+	 * 
+	 * @param criteria
+	 *        the criteria
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never {@literal null}
+	 * @since 1.1
+	 */
+	FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
 }

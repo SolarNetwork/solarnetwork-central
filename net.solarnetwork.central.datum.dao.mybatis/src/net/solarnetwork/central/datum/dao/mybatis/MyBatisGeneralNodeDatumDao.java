@@ -61,6 +61,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.FilterResults;
@@ -73,7 +74,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.18
+ * @version 1.19
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -284,6 +285,14 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String UPDATE_AGGREGATES_STALE = "update-GeneralNodeDatum-aggregates-stale";
 
+	/**
+	 * The default query name for the
+	 * {@link #markDatumAggregatesStale(GeneralNodeDatumFilter)}.
+	 * 
+	 * @since 1.18
+	 */
+	public static final String QUERY_FOR_AGGREGATES_STALE = "find-StaleAggregateDatum-for-filter";
+
 	private final BulkLoadingDaoSupport loadingSupport;
 
 	private String queryForReportableInterval;
@@ -306,6 +315,7 @@ public class MyBatisGeneralNodeDatumDao
 	private String deleteFiltered;
 	private String updateDatumRangeDates;
 	private String updateDatumAggregatesStale;
+	private String queryForAggregatesStale;
 
 	/**
 	 * Default constructor.
@@ -334,6 +344,7 @@ public class MyBatisGeneralNodeDatumDao
 		this.deleteFiltered = DELETE_FILTERED;
 		this.updateDatumRangeDates = UPDATE_DATUM_RANGE_DATES;
 		this.updateDatumAggregatesStale = UPDATE_AGGREGATES_STALE;
+		this.queryForAggregatesStale = QUERY_FOR_AGGREGATES_STALE;
 	}
 
 	/**
@@ -800,7 +811,6 @@ public class MyBatisGeneralNodeDatumDao
 						: filter.isWithoutTotalResultsCount() ? null : Long.valueOf(rows.size())),
 				offset, rows.size());
 		return results;
-
 	}
 
 	/**
@@ -1291,6 +1301,46 @@ public class MyBatisGeneralNodeDatumDao
 		getSqlSession().update(updateDatumAggregatesStale, params);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.19
+	 */
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		Map<String, Object> sqlProps = sqlParametersForStaleAggregateDatum(criteria, sortDescriptors);
+
+		// execute count query first, if max NOT specified as -1
+		Long totalCount = null;
+		if ( (max == null || (max != null && max.intValue() != -1))
+				&& !criteria.isWithoutTotalResultsCount() ) {
+			totalCount = executeCountQuery(queryForAggregatesStale + "-count", sqlProps);
+		}
+
+		// execute actual query
+		List<StaleAggregateDatum> rows = selectList(queryForAggregatesStale, sqlProps, offset, max);
+
+		BasicFilterResults<StaleAggregateDatum> results = new BasicFilterResults<StaleAggregateDatum>(
+				rows,
+				(totalCount != null ? totalCount
+						: criteria.isWithoutTotalResultsCount() ? null : Long.valueOf(rows.size())),
+				offset, rows.size());
+		return results;
+	}
+
+	private Map<String, Object> sqlParametersForStaleAggregateDatum(GeneralNodeDatumFilter filter,
+			List<SortDescriptor> sortDescriptors) {
+		final Map<String, Object> sqlProps = new HashMap<String, Object>(3);
+		sqlProps.put(PARAM_FILTER, filter);
+
+		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
+			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
+		}
+		return sqlProps;
+	}
+
 	public String getQueryForReportableInterval() {
 		return queryForReportableInterval;
 	}
@@ -1542,6 +1592,18 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setUpdateDatumAggregatesStale(String updateDatumAggregatesStale) {
 		this.updateDatumAggregatesStale = updateDatumAggregatesStale;
+	}
+
+	/**
+	 * Set the statement name for querying a set of datum data's stale
+	 * aggregates.
+	 * 
+	 * @param queryForAggregatesStale
+	 *        the query name; defaults to {@link #QUERY_FOR_AGGREGATES_STALE}
+	 * @since 1.19
+	 */
+	public void setQueryForAggregatesStale(String queryForAggregatesStale) {
+		this.queryForAggregatesStale = queryForAggregatesStale;
 	}
 
 }

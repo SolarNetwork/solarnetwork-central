@@ -22,17 +22,21 @@
 
 package net.solarnetwork.central.daum.biz.dao;
 
+import java.util.List;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SortDescriptor;
 
 /**
  * DAO based implementation of {@link DatumMaintenanceBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.6
  */
 public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
@@ -55,6 +59,13 @@ public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 	public void markDatumAggregatesStale(GeneralNodeDatumFilter criteria) {
 		datumDao.markDatumAggregatesStale(criteria);
 
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		return datumDao.findStaleAggregateDatum(criteria, sortDescriptors, offset, max);
 	}
 
 }

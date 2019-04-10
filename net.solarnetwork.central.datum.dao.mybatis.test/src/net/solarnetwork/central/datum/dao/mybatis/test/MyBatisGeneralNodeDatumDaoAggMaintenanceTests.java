@@ -22,8 +22,11 @@
 
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.sql.Timestamp;
 import java.util.List;
@@ -34,7 +37,9 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.domain.FilterResults;
 
 /**
  * Test cases for aggregation maintenance functions.
@@ -383,6 +388,297 @@ public class MyBatisGeneralNodeDatumDaoAggMaintenanceTests
 			assertThat("Stale source ID " + i, row, hasEntry("source_id", TEST_SOURCE_ID));
 			assertThat("Stale date " + i, row,
 					hasEntry("ts_start", new Timestamp(start.plusHours(i).getMillis())));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFilteredNoData() {
+		// when
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(new DateTime().minusDays(1));
+		criteria.setEndDate(new DateTime());
+
+		FilterResults<StaleAggregateDatum> results = dao.findStaleAggregateDatum(criteria, null, null,
+				null);
+
+		// then
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
+		assertThat("Starting offset", results.getStartingOffset(), nullValue());
+	}
+
+	@Test
+	public void findFilteredNoMatchingDataByNode() {
+		// given
+		final DateTime start = new DateTime().minusDays(1).hourOfDay().roundFloorCopy();
+		final DateTime end = start.plusHours(5);
+
+		DateTime date = start.withZone(DateTimeZone.UTC);
+		long wh = 0;
+		while ( date.isBefore(end) ) {
+			GeneralNodeDatum d = getTestInstance(date, TEST_2ND_NODE, TEST_SOURCE_ID);
+			d.getSamples().getI().clear();
+			d.getSamples().getS().clear();
+			d.getSamples().putAccumulatingSampleValue("watt_hours", wh);
+			dao.store(d);
+			wh += 100L;
+			date = date.plusMinutes(30);
+		}
+
+		// when
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(start);
+		criteria.setEndDate(end);
+		FilterResults<StaleAggregateDatum> results = dao.findStaleAggregateDatum(criteria, null, null,
+				null);
+
+		// then
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
+		assertThat("Starting offset", results.getStartingOffset(), nullValue());
+	}
+
+	@Test
+	public void findFilteredNoMatchingDataBySource() {
+		// given
+		final DateTime start = new DateTime().minusDays(1).hourOfDay().roundFloorCopy();
+		final DateTime end = start.plusHours(5);
+
+		DateTime date = start.withZone(DateTimeZone.UTC);
+		long wh = 0;
+		while ( date.isBefore(end) ) {
+			GeneralNodeDatum d = getTestInstance(date, TEST_2ND_NODE, TEST_SOURCE_ID);
+			d.getSamples().getI().clear();
+			d.getSamples().getS().clear();
+			d.getSamples().putAccumulatingSampleValue("watt_hours", wh);
+			dao.store(d);
+			wh += 100L;
+			date = date.plusMinutes(30);
+		}
+
+		// when
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_2ND_NODE);
+		criteria.setSourceId("not.a.source.id");
+		criteria.setStartDate(start);
+		criteria.setEndDate(end);
+		FilterResults<StaleAggregateDatum> results = dao.findStaleAggregateDatum(criteria, null, null,
+				null);
+
+		// then
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
+		assertThat("Starting offset", results.getStartingOffset(), nullValue());
+	}
+
+	@Test
+	public void findFilteredNoMatchingDataByDate() {
+		// given
+		final DateTime start = new DateTime().minusDays(1).hourOfDay().roundFloorCopy();
+		final DateTime end = start.plusHours(5);
+
+		DateTime date = start.withZone(DateTimeZone.UTC);
+		long wh = 0;
+		while ( date.isBefore(end) ) {
+			GeneralNodeDatum d = getTestInstance(date, TEST_2ND_NODE, TEST_SOURCE_ID);
+			d.getSamples().getI().clear();
+			d.getSamples().getS().clear();
+			d.getSamples().putAccumulatingSampleValue("watt_hours", wh);
+			dao.store(d);
+			wh += 100L;
+			date = date.plusMinutes(30);
+		}
+
+		// when
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_2ND_NODE);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(start.minusDays(1));
+		criteria.setEndDate(start);
+		FilterResults<StaleAggregateDatum> results = dao.findStaleAggregateDatum(criteria, null, null,
+				null);
+
+		// then
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
+		assertThat("Starting offset", results.getStartingOffset(), nullValue());
+	}
+
+	@Test
+	public void findFiltered() {
+		// given
+		final DateTime start = new DateTime().minusDays(1).hourOfDay().roundFloorCopy();
+		final DateTime end = start.plusHours(5);
+
+		DateTime date = start.withZone(DateTimeZone.UTC);
+		long wh = 0;
+		while ( date.isBefore(end) ) {
+			GeneralNodeDatum d = getTestInstance(date, TEST_2ND_NODE, TEST_SOURCE_ID);
+			d.getSamples().getI().clear();
+			d.getSamples().getS().clear();
+			d.getSamples().putAccumulatingSampleValue("watt_hours", wh);
+			dao.store(d);
+			wh += 100L;
+			date = date.plusMinutes(30);
+		}
+
+		// when
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_2ND_NODE);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(start);
+		criteria.setEndDate(end);
+		FilterResults<StaleAggregateDatum> results = dao.findStaleAggregateDatum(criteria, null, null,
+				null);
+
+		// then
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(5));
+		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
+		assertThat("Starting offset", results.getStartingOffset(), nullValue());
+
+		int i = 0;
+		for ( StaleAggregateDatum stale : results ) {
+			assertThat("Stale node ID " + i, stale.getNodeId(), equalTo(TEST_2ND_NODE));
+			assertThat("Stale source ID " + i, stale.getSourceId(), equalTo(TEST_SOURCE_ID));
+			assertThat("Stale start date " + i, stale.getStartDate(), equalTo(start.plusHours(i)));
+			assertThat("Stale kind " + i, stale.getKind(), equalTo("h"));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFilteredPage1() {
+		// given
+		final DateTime start = new DateTime().minusDays(1).hourOfDay().roundFloorCopy();
+		final DateTime end = start.plusHours(5);
+
+		DateTime date = start.withZone(DateTimeZone.UTC);
+		long wh = 0;
+		while ( date.isBefore(end) ) {
+			GeneralNodeDatum d = getTestInstance(date, TEST_2ND_NODE, TEST_SOURCE_ID);
+			d.getSamples().getI().clear();
+			d.getSamples().getS().clear();
+			d.getSamples().putAccumulatingSampleValue("watt_hours", wh);
+			dao.store(d);
+			wh += 100L;
+			date = date.plusMinutes(30);
+		}
+
+		// when
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_2ND_NODE);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(start);
+		criteria.setEndDate(end);
+		FilterResults<StaleAggregateDatum> results = dao.findStaleAggregateDatum(criteria, null, 0, 2);
+
+		// then
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		int i = 0;
+		for ( StaleAggregateDatum stale : results ) {
+			assertThat("Stale node ID " + i, stale.getNodeId(), equalTo(TEST_2ND_NODE));
+			assertThat("Stale source ID " + i, stale.getSourceId(), equalTo(TEST_SOURCE_ID));
+			assertThat("Stale start date " + i, stale.getStartDate(), equalTo(start.plusHours(i)));
+			assertThat("Stale kind " + i, stale.getKind(), equalTo("h"));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFilteredPage2() {
+		// given
+		final DateTime start = new DateTime().minusDays(1).hourOfDay().roundFloorCopy();
+		final DateTime end = start.plusHours(5);
+
+		DateTime date = start.withZone(DateTimeZone.UTC);
+		long wh = 0;
+		while ( date.isBefore(end) ) {
+			GeneralNodeDatum d = getTestInstance(date, TEST_2ND_NODE, TEST_SOURCE_ID);
+			d.getSamples().getI().clear();
+			d.getSamples().getS().clear();
+			d.getSamples().putAccumulatingSampleValue("watt_hours", wh);
+			dao.store(d);
+			wh += 100L;
+			date = date.plusMinutes(30);
+		}
+
+		// when
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_2ND_NODE);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(start);
+		criteria.setEndDate(end);
+		FilterResults<StaleAggregateDatum> results = dao.findStaleAggregateDatum(criteria, null, 2, 2);
+
+		// then
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(2));
+
+		int i = 0;
+		for ( StaleAggregateDatum stale : results ) {
+			assertThat("Stale node ID " + i, stale.getNodeId(), equalTo(TEST_2ND_NODE));
+			assertThat("Stale source ID " + i, stale.getSourceId(), equalTo(TEST_SOURCE_ID));
+			assertThat("Stale start date " + i, stale.getStartDate(), equalTo(start.plusHours(i + 2)));
+			assertThat("Stale kind " + i, stale.getKind(), equalTo("h"));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFilteredSubset() {
+		// given
+		final DateTime start = new DateTime().minusDays(1).hourOfDay().roundFloorCopy();
+		final DateTime end = start.plusHours(5);
+
+		DateTime date = start.withZone(DateTimeZone.UTC);
+		long wh = 0;
+		while ( date.isBefore(end) ) {
+			GeneralNodeDatum d = getTestInstance(date, TEST_2ND_NODE, TEST_SOURCE_ID);
+			d.getSamples().getI().clear();
+			d.getSamples().getS().clear();
+			d.getSamples().putAccumulatingSampleValue("watt_hours", wh);
+			dao.store(d);
+			wh += 100L;
+			date = date.plusMinutes(30);
+		}
+
+		// when
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_2ND_NODE);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(start);
+		criteria.setEndDate(start.plusHours(2));
+		FilterResults<StaleAggregateDatum> results = dao.findStaleAggregateDatum(criteria, null, null,
+				null);
+
+		// then
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Total result count", results.getTotalResults(), equalTo(2L));
+		assertThat("Starting offset", results.getStartingOffset(), nullValue());
+
+		int i = 0;
+		for ( StaleAggregateDatum stale : results ) {
+			assertThat("Stale node ID " + i, stale.getNodeId(), equalTo(TEST_2ND_NODE));
+			assertThat("Stale source ID " + i, stale.getSourceId(), equalTo(TEST_SOURCE_ID));
+			assertThat("Stale start date " + i, stale.getStartDate(), equalTo(start.plusHours(i)));
+			assertThat("Stale kind " + i, stale.getKind(), equalTo("h"));
 			i++;
 		}
 	}

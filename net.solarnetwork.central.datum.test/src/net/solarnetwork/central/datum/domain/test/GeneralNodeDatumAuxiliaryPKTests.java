@@ -23,8 +23,11 @@
 package net.solarnetwork.central.datum.domain.test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
@@ -48,8 +51,17 @@ public class GeneralNodeDatumAuxiliaryPKTests {
 		GeneralNodeDatumAuxiliaryPK pk = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_DATE,
 				TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
 		assertThat("String value", pk.toString(),
-				equalTo("GeneralNodeDatumAuxiliaryPK{nodeId=" + TEST_NODE_ID + ", created=" + TEST_DATE
-						+ ", sourceId=" + TEST_SOURCE_ID + ", type=" + DatumAuxiliaryType.Reset + "}"));
+				equalTo("GeneralNodeDatumAuxiliaryPK{nodeId=" + TEST_NODE_ID + ", sourceId="
+						+ TEST_SOURCE_ID + ", created=" + TEST_DATE + ", type="
+						+ DatumAuxiliaryType.Reset + "}"));
+	}
+
+	@Test
+	public void idValue() {
+		GeneralNodeDatumAuxiliaryPK pk = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_DATE,
+				TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
+		assertThat("ID value", pk.getId(), equalTo(DigestUtils.sha1Hex("n=" + TEST_NODE_ID + ";s="
+				+ TEST_SOURCE_ID + ";c=" + TEST_DATE + ";t=" + DatumAuxiliaryType.Reset)));
 	}
 
 	@Test
@@ -70,4 +82,30 @@ public class GeneralNodeDatumAuxiliaryPKTests {
 		assertThat("Keys not equal", pk1, not(equalTo(pk2)));
 	}
 
+	@Test
+	public void compareTypesDescendingNull() {
+		GeneralNodeDatumAuxiliaryPK pk1 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_DATE,
+				TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
+		GeneralNodeDatumAuxiliaryPK pk2 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID,
+				new DateTime(TEST_DATE), TEST_SOURCE_ID, null);
+		assertThat("Comparison", pk1.compareTo(pk2), greaterThanOrEqualTo(1));
+	}
+
+	@Test
+	public void compareTypesAscendingNull() {
+		GeneralNodeDatumAuxiliaryPK pk1 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_DATE,
+				TEST_SOURCE_ID, null);
+		GeneralNodeDatumAuxiliaryPK pk2 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID,
+				new DateTime(TEST_DATE), TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
+		assertThat("Comparison", pk1.compareTo(pk2), lessThanOrEqualTo(-1));
+	}
+
+	@Test
+	public void compareKindsEqual() {
+		GeneralNodeDatumAuxiliaryPK pk1 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID, TEST_DATE,
+				TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
+		GeneralNodeDatumAuxiliaryPK pk2 = new GeneralNodeDatumAuxiliaryPK(TEST_NODE_ID,
+				new DateTime(TEST_DATE), TEST_SOURCE_ID, DatumAuxiliaryType.Reset);
+		assertThat("Comparison", pk1.compareTo(pk2), equalTo(0));
+	}
 }

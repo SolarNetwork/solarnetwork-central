@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatum">
+
+	<update id="update-GeneralNodeDatum-aggregates-stale" statementType="CALLABLE">
+		{call solaragg.mark_datum_stale_hour_slots(
+			  #{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
+			, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+			, #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			, #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			)}
+	</update>
+	
+	<resultMap id="StaleAggregateDatumResult" type="net.solarnetwork.central.datum.domain.StaleAggregateDatum">
+		<id property="nodeId" column="stale_node_id"/>
+		<id property="startDate" column="stale_ts_start"/>
+		<id property="sourceId" column="stale_source_id"/>
+		<id property="kind" column="stale_agg_kind"/>
+		<id property="created" column="stale_created"/>
+	</resultMap>
+
+	<sql id="fragment-StaleAggregateDatum-full-result">
+		stale.node_id AS stale_node_id,
+		stale.ts_start AS stale_ts_start,
+		stale.source_id AS stale_source_id,
+		stale.agg_kind AS stale_agg_kind,
+		stale.created AS stale_created
+	</sql>
+
+	<sql id="fragment-find-StaleAggregateDatum-for-filter-where">
+		<where>
+			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+				AND stale.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[])
+			</if>
+			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+				AND stale.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
+			<if test="filter.startDate != null">
+				AND stale.ts_start &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+			<if test="filter.endDate != null">
+				AND stale.ts_start &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			</if>
+			<if test="filter.type != null">
+				AND stale.agg_kind = #{filter.type}
+			</if>
+		</where>
+	</sql>
+	
+	<sql id="fragment-find-StaleAggregateDatum-for-filter-order">
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item.sortKey == &quot;created&quot;">stale.created</if>
+					<if test="item.sortKey == &quot;kindd&quot;">stale.agg_kind</if>
+					<if test="item.sortKey == &quot;node&quot;">stale.node_id</if>
+					<if test="item.sortKey == &quot;source&quot;">stale.source_id</if>
+					<if test="item.sortKey == &quot;startd&quot;">stale.ts_start</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				stale.agg_kind,
+				stale.node_id,
+				stale.source_id,
+				stale.ts_start
+			</otherwise>
+		</choose>
+	</sql>
+	
+	<select id="find-StaleAggregateDatum-for-filter-count" resultType="long">
+		SELECT count(*)
+		FROM solaragg.agg_stale_datum stale
+		<include refid="fragment-find-StaleAggregateDatum-for-filter-where"/>
+	</select>
+
+	<select id="find-StaleAggregateDatum-for-filter" resultMap="StaleAggregateDatumResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-StaleAggregateDatum-full-result"/>
+		FROM solaragg.agg_stale_datum stale
+		<include refid="fragment-find-StaleAggregateDatum-for-filter-where"/>
+		<include refid="fragment-find-StaleAggregateDatum-for-filter-order"/>
+	</select>
+	
+</mapper>
