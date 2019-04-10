@@ -50,4 +50,5 @@ $$
 	INSERT INTO solaragg.agg_stale_datum
 	SELECT dates.ts_start, dates.node_id, dates.source_id, 'h'
 	FROM solaragg.find_datum_hour_slots(nodes, sources, start_ts, end_ts) dates
+	ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING
 $$;
