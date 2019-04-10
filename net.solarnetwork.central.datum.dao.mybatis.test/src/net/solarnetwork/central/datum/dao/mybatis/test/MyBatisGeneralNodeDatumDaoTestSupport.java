@@ -268,4 +268,10 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 				JsonUtils.getJSONString(jMeta, null), JsonUtils.getJSONString(asData, null),
 				JsonUtils.getJSONString(afData, null), JsonUtils.getJSONString(adData, null));
 	}
+
+	protected void clearAggStaleRecords() {
+		jdbcTemplate.update("delete from solaragg.agg_stale_datum");
+		jdbcTemplate.update("delete from solaragg.agg_stale_loc_datum");
+		jdbcTemplate.update("delete from solaragg.aud_datum_daily_stale");
+	}
 }

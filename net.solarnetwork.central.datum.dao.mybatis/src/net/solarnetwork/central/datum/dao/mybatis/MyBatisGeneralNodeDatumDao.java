@@ -26,6 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -72,7 +73,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.17
+ * @version 1.18
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -275,6 +276,14 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String UPDATE_DATUM_RANGE_DATES = "update-datum-range-dates";
 
+	/**
+	 * The default query name for the
+	 * {@link #markDatumAggregatesStale(GeneralNodeDatumFilter)}.
+	 * 
+	 * @since 1.18
+	 */
+	public static final String UPDATE_AGGREGATES_STALE = "update-GeneralNodeDatum-aggregates-stale";
+
 	private final BulkLoadingDaoSupport loadingSupport;
 
 	private String queryForReportableInterval;
@@ -296,6 +305,7 @@ public class MyBatisGeneralNodeDatumDao
 	private String queryForDatumRecordCounts;
 	private String deleteFiltered;
 	private String updateDatumRangeDates;
+	private String updateDatumAggregatesStale;
 
 	/**
 	 * Default constructor.
@@ -323,6 +333,7 @@ public class MyBatisGeneralNodeDatumDao
 		this.queryForDatumRecordCounts = QUERY_FOR_DATUM_RECORD_COUNTS;
 		this.deleteFiltered = DELETE_FILTERED;
 		this.updateDatumRangeDates = UPDATE_DATUM_RANGE_DATES;
+		this.updateDatumAggregatesStale = UPDATE_AGGREGATES_STALE;
 	}
 
 	/**
@@ -1268,6 +1279,18 @@ public class MyBatisGeneralNodeDatumDao
 
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.18
+	 */
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void markDatumAggregatesStale(GeneralNodeDatumFilter criteria) {
+		Map<String, Object> params = Collections.singletonMap(PARAM_FILTER, criteria);
+		getSqlSession().update(updateDatumAggregatesStale, params);
+	}
+
 	public String getQueryForReportableInterval() {
 		return queryForReportableInterval;
 	}
@@ -1507,6 +1530,18 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setUpdateDatumRangeDates(String updateDatumRangeDates) {
 		this.updateDatumRangeDates = updateDatumRangeDates;
+	}
+
+	/**
+	 * Set the statement name for updating a set of datum data's aggregates as
+	 * stale.
+	 * 
+	 * @param updateDatumAggregatesStale
+	 *        the query name; defaults to {@link #UPDATE_AGGREGATES_STALE}
+	 * @since 1.18
+	 */
+	public void setUpdateDatumAggregatesStale(String updateDatumAggregatesStale) {
+		this.updateDatumAggregatesStale = updateDatumAggregatesStale;
 	}
 
 }

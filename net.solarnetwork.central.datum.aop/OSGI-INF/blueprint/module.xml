@@ -33,6 +33,10 @@
 		interface="net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz"
 		filter="(!(secured=true))"/>
 	
+	<reference id="datumMaintenanceBiz"
+		interface="net.solarnetwork.central.datum.biz.DatumMaintenanceBiz"
+		filter="(!(secured=true))"/>
+	
 	<reference id="datumMetadataBiz"
 		interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz"
 		filter="(!(secured=true))"/>
@@ -45,6 +49,13 @@
 
 	<service ref="aopDatumAuxiliaryBiz" 
 			interface="net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz" ranking="10">
+		<service-properties>
+			<entry key="secured" value="true"/>
+		</service-properties>
+	</service>
+
+	<service ref="aopDatumMaintenanceBiz" 
+			interface="net.solarnetwork.central.datum.biz.DatumMaintenanceBiz" ranking="10">
 		<service-properties>
 			<entry key="secured" value="true"/>
 		</service-properties>
@@ -76,6 +87,14 @@
 	
 	<bean id="aopDatumAuxiliaryBiz" class="net.solarnetwork.central.datum.support.DelegatingDatumAuxiliaryBiz">
 		<argument ref="datumAuxiliaryBiz"/>
+	</bean>
+	
+	<bean id="datumMaintenanceSecurityAspect" class="net.solarnetwork.central.datum.aop.DatumMaintenanceSecurityAspect">
+		<argument ref="userNodeDao"/>
+	</bean>
+	
+	<bean id="aopDatumMaintenanceBiz" class="net.solarnetwork.central.datum.support.DelegatingDatumMaintenanceBiz">
+		<argument ref="datumMaintenanceBiz"/>
 	</bean>
 	
 	<bean id="datumMetadataSecurityAspect" class="net.solarnetwork.central.datum.aop.DatumMetadataSecurityAspect">

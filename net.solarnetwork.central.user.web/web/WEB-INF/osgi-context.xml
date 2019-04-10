@@ -40,6 +40,9 @@
 	<osgi:reference id="datumAuxiliaryBiz" filter="(secured=true)"
 		interface="net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz"/>
 		
+	<osgi:reference id="datumMaintenanceBiz" filter="(secured=true)"
+		interface="net.solarnetwork.central.datum.biz.DatumMaintenanceBiz"/>
+		
 	<osgi:reference id="auditDatumBiz" filter="(secured=true)"
 		interface="net.solarnetwork.central.datum.biz.AuditDatumBiz"/>
 	
