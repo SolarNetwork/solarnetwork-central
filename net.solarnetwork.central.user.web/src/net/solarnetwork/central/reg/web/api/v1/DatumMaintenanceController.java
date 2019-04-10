@@ -51,10 +51,10 @@ public class DatumMaintenanceController extends WebServiceControllerSupport {
 
 	private final DatumMaintenanceBiz datumMaintenanceBiz;
 
-	private final String[] requestDateFormats = new String[] { DEFAULT_DATE_FORMAT,
-			DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_TIME_FORMAT_Z, ALT_DATE_TIME_FORMAT,
-			ALT_DATE_TIME_FORMAT_Z, DEFAULT_TIMESTAMP_FORMAT, DEFAULT_TIMESTAMP_FORMAT_Z,
-			ALT_TIMESTAMP_FORMAT, ALT_TIMESTAMP_FORMAT_Z };
+	private final String[] requestDateFormats = new String[] { DEFAULT_TIMESTAMP_FORMAT,
+			DEFAULT_TIMESTAMP_FORMAT_Z, ALT_TIMESTAMP_FORMAT, ALT_TIMESTAMP_FORMAT_Z,
+			DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_TIME_FORMAT_Z,
+			ALT_DATE_TIME_FORMAT, ALT_DATE_TIME_FORMAT_Z };
 
 	/**
 	 * Constructor.
