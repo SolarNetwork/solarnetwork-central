@@ -27,6 +27,7 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
 
@@ -34,7 +35,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * Security AOP support for {@link DatumMaintenanceBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.7
  */
 @Aspect
@@ -52,20 +53,33 @@ public class DatumMaintenanceSecurityAspect extends AuthorizationSupport {
 		super(userNodeDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMaintenance*.markDatumAggregatesStale(..)) && args(filter,..)")
-	public void markDatumAggregatesStale(GeneralNodeDatumFilter filter) {
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMaintenanceBiz.mark*(..)) && args(filter,..)")
+	public void markStale(GeneralNodeDatumFilter filter) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMaintenanceBiz.find*(..)) && args(filter,..)")
+	public void findStale(GeneralNodeDatumFilter filter) {
 	}
 
 	/**
-	 * Check access to modifying datum auxiliary data.
+	 * Check access to marking datum aggregates stale.
 	 * 
-	 * @param datum
-	 *        the datum verify
+	 * <p>
+	 * This verifies that the actor has write access to the node IDs in the
+	 * filter.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the filter to verify
 	 */
-	@Before("markDatumAggregatesStale(filter)")
-	public void markDatumAggregatesStaleCheck(GeneralNodeDatumFilter filter) {
+	@Before("markStale(filter) || findStale(filter)")
+	public void staleFilterCheck(GeneralNodeDatumFilter filter) {
 		if ( filter != null ) {
 			Long[] nodeIds = filter.getNodeIds();
+			if ( nodeIds == null || nodeIds.length < 1 ) {
+				log.warn("Access DENIED to unspecified nodes");
+				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+			}
 			if ( nodeIds != null ) {
 				for ( Long nodeId : filter.getNodeIds() ) {
 					requireNodeWriteAccess(nodeId);
@@ -73,4 +87,5 @@ public class DatumMaintenanceSecurityAspect extends AuthorizationSupport {
 			}
 		}
 	}
+
 }

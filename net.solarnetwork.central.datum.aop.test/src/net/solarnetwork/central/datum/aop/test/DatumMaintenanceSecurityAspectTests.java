@@ -37,10 +37,10 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 
 /**
- * Test cases for the {@link
+ * Test cases for the {@link DatumMaintenanceSecurityAspect} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DatumMaintenanceSecurityAspectTests extends AbstractAspectTest {
 
@@ -81,7 +81,7 @@ public class DatumMaintenanceSecurityAspectTests extends AbstractAspectTest {
 		replayAll();
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(TEST_NODE_ID);
-		aspect.markDatumAggregatesStaleCheck(filter);
+		aspect.staleFilterCheck(filter);
 	}
 
 	@Test(expected = AuthorizationException.class)
@@ -94,7 +94,7 @@ public class DatumMaintenanceSecurityAspectTests extends AbstractAspectTest {
 		replayAll();
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(TEST_NODE_ID);
-		aspect.markDatumAggregatesStaleCheck(filter);
+		aspect.staleFilterCheck(filter);
 	}
 
 	@Test(expected = AuthorizationException.class)
@@ -109,7 +109,7 @@ public class DatumMaintenanceSecurityAspectTests extends AbstractAspectTest {
 		replayAll();
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(TEST_NODE_ID);
-		aspect.markDatumAggregatesStaleCheck(filter);
+		aspect.staleFilterCheck(filter);
 	}
 
 	@Test(expected = AuthorizationException.class)
@@ -125,7 +125,7 @@ public class DatumMaintenanceSecurityAspectTests extends AbstractAspectTest {
 		replayAll();
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeIds(new Long[] { -1L, -2L });
-		aspect.markDatumAggregatesStaleCheck(filter);
+		aspect.staleFilterCheck(filter);
 	}
 
 	@Test
@@ -139,7 +139,7 @@ public class DatumMaintenanceSecurityAspectTests extends AbstractAspectTest {
 		replayAll();
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(TEST_NODE_ID);
-		aspect.markDatumAggregatesStaleCheck(filter);
+		aspect.staleFilterCheck(filter);
 	}
 
 }
