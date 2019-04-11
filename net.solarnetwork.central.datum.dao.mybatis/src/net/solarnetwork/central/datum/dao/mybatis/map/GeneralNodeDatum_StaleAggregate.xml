@@ -53,10 +53,10 @@
 			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
 				 <foreach collection="SortDescriptors" item="item" separator=",">
 					<if test="item.sortKey == &quot;created&quot;">stale.created</if>
-					<if test="item.sortKey == &quot;kindd&quot;">stale.agg_kind</if>
+					<if test="item.sortKey == &quot;kind&quot;">stale.agg_kind</if>
 					<if test="item.sortKey == &quot;node&quot;">stale.node_id</if>
 					<if test="item.sortKey == &quot;source&quot;">stale.source_id</if>
-					<if test="item.sortKey == &quot;startd&quot;">stale.ts_start</if>
+					<if test="item.sortKey == &quot;start&quot;">stale.ts_start</if>
 					<if test="item.descending">DESC</if>
 				</foreach>
 			</when>
