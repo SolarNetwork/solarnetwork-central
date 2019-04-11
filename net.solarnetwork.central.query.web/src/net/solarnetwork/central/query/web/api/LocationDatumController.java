@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.query.web.api;
 
-import static net.solarnetwork.central.query.web.api.ReportableIntervalController.filterSources;
+import static net.solarnetwork.central.datum.support.DatumUtils.filterSources;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TimeZone;
@@ -49,7 +49,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for location-based data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Controller("v1LocationDatumController")
 @RequestMapping({ "/api/v1/sec/location/datum", "/api/v1/pub/location/datum" })
