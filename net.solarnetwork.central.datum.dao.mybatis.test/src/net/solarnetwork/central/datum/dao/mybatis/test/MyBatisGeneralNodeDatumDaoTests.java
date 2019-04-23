@@ -3072,22 +3072,102 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		}
 
 		// then
-		assertThat("Datum rows imported", datumRowCount(), equalTo(data.size()));
+		try {
+			assertThat("Datum rows imported", datumRowCount(), equalTo(data.size()));
 
-		// manually clean up transactionally circumvented data import data
-		TestTransaction.end();
-		jdbcTemplate.execute(new ConnectionCallback<Object>() {
+			List<Map<String, Object>> ranges = getDatumRanges();
+			assertThat("Range created", ranges, hasSize(1));
+			assertThat("Range node", ranges.get(0), hasEntry("node_id", TEST_NODE_ID));
+			assertThat("Range source", ranges.get(0), hasEntry("source_id", TEST_SOURCE_ID));
+			assertThat("Range min", ranges.get(0),
+					hasEntry("ts_min", new Timestamp(data.get(0).getCreated().getMillis())));
+			assertThat("Range max", ranges.get(0), hasEntry("ts_max",
+					new Timestamp(data.get(data.size() - 1).getCreated().getMillis())));
+		} finally {
+			// manually clean up transactionally circumvented data import data
+			TestTransaction.end();
+			jdbcTemplate.execute(new ConnectionCallback<Object>() {
 
-			@Override
-			public Object doInConnection(Connection con) throws SQLException, DataAccessException {
-				con.setAutoCommit(true);
-				con.createStatement().executeUpdate("delete from solardatum.da_datum");
-				con.createStatement().executeUpdate("delete from solardatum.da_datum_range");
-				con.createStatement().executeUpdate("delete from solaragg.agg_stale_datum");
-				con.createStatement().executeUpdate("delete from solaragg.aud_datum_hourly");
-				return null;
+				@Override
+				public Object doInConnection(Connection con) throws SQLException, DataAccessException {
+					con.setAutoCommit(true);
+					con.createStatement().executeUpdate("delete from solardatum.da_datum");
+					con.createStatement().executeUpdate("delete from solardatum.da_datum_range");
+					con.createStatement().executeUpdate("delete from solaragg.agg_stale_datum");
+					con.createStatement().executeUpdate("delete from solaragg.aud_datum_hourly");
+					return null;
+				}
+			});
+		}
+	}
+
+	@Test
+	public void bulkImportMultipleSources() {
+		// given
+		SimpleBulkLoadingOptions options = new SimpleBulkLoadingOptions("Test load", null,
+				LoadingTransactionMode.SingleTransaction, null);
+
+		// when
+		List<GeneralNodeDatum> data1 = createSampleData(59,
+				new DateTime().hourOfDay().roundCeilingCopy().minusHours(1), TEST_NODE_ID,
+				TEST_SOURCE_ID);
+		List<GeneralNodeDatum> data2 = createSampleData(59,
+				new DateTime().hourOfDay().roundCeilingCopy().minusHours(1).minusDays(1), TEST_2ND_NODE,
+				TEST_2ND_SOURCE);
+		List<GeneralNodeDatum> data = new ArrayList<>(data1);
+		data.addAll(data2);
+		try (LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> ctx = dao.createBulkLoadingContext(
+				options, new LoadingExceptionHandler<GeneralNodeDatum, GeneralNodeDatumPK>() {
+
+					@Override
+					public void handleLoadingException(Throwable t,
+							LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> context) {
+						throw new RuntimeException(t);
+					}
+				})) {
+			for ( GeneralNodeDatum d : data ) {
+				ctx.load(d);
 			}
-		});
+			ctx.commit();
+		}
+
+		// then
+		try {
+			assertThat("Datum rows imported", datumRowCount(), equalTo(data.size()));
+
+			List<Map<String, Object>> ranges = getDatumRanges();
+			assertThat("Ranges created", ranges, hasSize(2));
+
+			assertThat("Range 0 node", ranges.get(0), hasEntry("node_id", TEST_2ND_NODE));
+			assertThat("Range 0 source", ranges.get(0), hasEntry("source_id", TEST_2ND_SOURCE));
+			assertThat("Range 0 min", ranges.get(0),
+					hasEntry("ts_min", new Timestamp(data2.get(0).getCreated().getMillis())));
+			assertThat("Range 0 max", ranges.get(0), hasEntry("ts_max",
+					new Timestamp(data2.get(data2.size() - 1).getCreated().getMillis())));
+
+			assertThat("Range 1 node", ranges.get(1), hasEntry("node_id", TEST_NODE_ID));
+			assertThat("Range 1 source", ranges.get(1), hasEntry("source_id", TEST_SOURCE_ID));
+			assertThat("Range 1 min", ranges.get(1),
+					hasEntry("ts_min", new Timestamp(data1.get(0).getCreated().getMillis())));
+			assertThat("Range 1 max", ranges.get(1), hasEntry("ts_max",
+					new Timestamp(data1.get(data1.size() - 1).getCreated().getMillis())));
+
+		} finally {
+			// manually clean up transactionally circumvented data import data
+			TestTransaction.end();
+			jdbcTemplate.execute(new ConnectionCallback<Object>() {
+
+				@Override
+				public Object doInConnection(Connection con) throws SQLException, DataAccessException {
+					con.setAutoCommit(true);
+					con.createStatement().executeUpdate("delete from solardatum.da_datum");
+					con.createStatement().executeUpdate("delete from solardatum.da_datum_range");
+					con.createStatement().executeUpdate("delete from solaragg.agg_stale_datum");
+					con.createStatement().executeUpdate("delete from solaragg.aud_datum_hourly");
+					return null;
+				}
+			});
+		}
 	}
 
 	@Test

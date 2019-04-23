@@ -43,6 +43,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 
@@ -50,7 +51,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.12
+ * @version 1.14
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -494,5 +495,44 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @since 1.8
 	 */
 	long deleteFiltered(GeneralNodeDatumFilter filter);
+
+	/**
+	 * Mark a set of datum aggregate data as "stale" so the aggregates are
+	 * re-processed.
+	 * 
+	 * <p>
+	 * The given criteria defines which data should be marked as stale. The
+	 * following criteria are required:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li>node ID(s)</li>
+	 * <li>source ID(s)</li>
+	 * <li>start date (inclusive)</li>
+	 * <li>end date (exclusive)</li>
+	 * </ul>
+	 * 
+	 * @param criteria
+	 *        the criteria of datum to mark stale
+	 * @since 1.13
+	 */
+	void markDatumAggregatesStale(GeneralNodeDatumFilter criteria);
+
+	/**
+	 * Find stale aggregate records matching a search criteria.
+	 * 
+	 * @param criteria
+	 *        the criteria
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never {@literal null}
+	 * @since 1.14
+	 */
+	FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
 
 }

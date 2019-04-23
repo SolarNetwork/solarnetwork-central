@@ -29,21 +29,32 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.core.Ordered;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.web.security.AuthenticationScheme;
 import net.solarnetwork.web.security.WebConstants;
 
 /**
  * Entry point for SolarNetworkWS authentication.
  * 
+ * <p>
+ * Since version 1.4 this class also implements {@link AccessDeniedHandler} so
+ * exceptions can be routed to the configured {@link HandlerExceptionResolver}
+ * if needed.
+ * </p>
+ * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
-public class UserAuthTokenAuthenticationEntryPoint implements AuthenticationEntryPoint, Ordered {
+public class UserAuthTokenAuthenticationEntryPoint
+		implements AuthenticationEntryPoint, Ordered, AccessDeniedHandler {
 
 	private int order = Integer.MAX_VALUE;
 	private Map<String, String> httpHeaders = defaultHttpHeaders();
+	private HandlerExceptionResolver handlerExceptionResolver;
 
 	private static Map<String, String> defaultHttpHeaders() {
 		Map<String, String> headers = new HashMap<String, String>(2);
@@ -75,7 +86,34 @@ public class UserAuthTokenAuthenticationEntryPoint implements AuthenticationEntr
 				response.addHeader(me.getKey(), me.getValue());
 			}
 		}
-		response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
+		if ( handlerExceptionResolver != null ) {
+			try {
+				handlerExceptionResolver.resolveException(request, response, null, authException);
+			} catch ( RuntimeException e ) {
+				throw e;
+			} catch ( Exception e ) {
+				throw new ServletException(e);
+			}
+		} else {
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
+		}
+	}
+
+	@Override
+	public void handle(HttpServletRequest request, HttpServletResponse response,
+			AccessDeniedException accessDeniedException) throws IOException, ServletException {
+		if ( handlerExceptionResolver != null ) {
+			try {
+				handlerExceptionResolver.resolveException(request, response, null,
+						accessDeniedException);
+			} catch ( RuntimeException e ) {
+				throw e;
+			} catch ( Exception e ) {
+				throw new ServletException(e);
+			}
+		} else {
+			response.sendError(HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage());
+		}
 	}
 
 	public void setOrder(int order) {
@@ -105,6 +143,23 @@ public class UserAuthTokenAuthenticationEntryPoint implements AuthenticationEntr
 	 */
 	public void setHttpHeaders(Map<String, String> httpHeaders) {
 		this.httpHeaders = httpHeaders;
+	}
+
+	/**
+	 * A {@link HandlerExceptionResolver} to resolve authentication exceptions
+	 * with.
+	 * 
+	 * <p>
+	 * This provides a way to render the exceptions as JSON, etc.
+	 * </p>
+	 * 
+	 * @param handlerExceptionResolver
+	 *        the resolver to delegate exceptions to
+	 * @since 1.4
+	 */
+	//@Autowired(required = false)
+	public void setHandlerExceptionResolver(HandlerExceptionResolver handlerExceptionResolver) {
+		this.handlerExceptionResolver = handlerExceptionResolver;
 	}
 
 }

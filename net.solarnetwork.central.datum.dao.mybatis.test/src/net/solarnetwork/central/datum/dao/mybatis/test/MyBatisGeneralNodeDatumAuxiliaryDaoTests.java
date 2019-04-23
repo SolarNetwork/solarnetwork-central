@@ -50,7 +50,6 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.GeneralDatumMetadata;
@@ -60,7 +59,7 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  * Test cases for the {@link MyBatisGeneralNodeDatumAuxiliaryDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends MyBatisGeneralNodeDatumDaoTestSupport {
 
@@ -104,7 +103,7 @@ public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends MyBatisGeneralNode
 	@Test
 	public void storeNew() {
 		GeneralNodeDatumAuxiliary datum = getTestAuxInstance();
-		GeneralNodeDatumPK id = auxDao.store(datum);
+		GeneralNodeDatumAuxiliaryPK id = auxDao.store(datum);
 		assertNotNull(id);
 		lastDatum = datum;
 	}
@@ -116,7 +115,7 @@ public class MyBatisGeneralNodeDatumAuxiliaryDaoTests extends MyBatisGeneralNode
 		meta.putInfoValue("foo", "bar");
 		datum.setMeta(meta);
 
-		GeneralNodeDatumPK id = auxDao.store(datum);
+		GeneralNodeDatumAuxiliaryPK id = auxDao.store(datum);
 		assertNotNull(id);
 		lastDatum = datum;
 	}

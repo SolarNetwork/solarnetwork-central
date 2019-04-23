@@ -222,6 +222,19 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	}
 
 	/**
+	 * Get the available stale datum records.
+	 * 
+	 * @param type
+	 *        the type of records to get
+	 * @return the results, never {@literal null}
+	 */
+	protected List<Map<String, Object>> getStaleDatumOrderedByNode(Aggregation type) {
+		return jdbcTemplate.queryForList(
+				"SELECT * FROM solaragg.agg_stale_datum WHERE agg_kind = ? ORDER BY node_id, ts_start, source_id",
+				type.getKey());
+	}
+
+	/**
 	 * Delete all stale datum rows.
 	 * 
 	 * @return count of deleted rows

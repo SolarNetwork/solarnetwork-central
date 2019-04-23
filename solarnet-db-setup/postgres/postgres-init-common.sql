@@ -1,5 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS solarcommon;
-
 /**
  * Reduce a 2d array into a set of 1d arrays.
  */

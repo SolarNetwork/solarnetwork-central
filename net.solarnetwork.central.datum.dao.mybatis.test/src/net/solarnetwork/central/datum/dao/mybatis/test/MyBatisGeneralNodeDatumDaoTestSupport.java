@@ -179,6 +179,11 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 				"select * from solaragg.agg_datum_monthly order by node_id,ts_start,source_id");
 	}
 
+	protected List<Map<String, Object>> getDatumRanges() {
+		return jdbcTemplate
+				.queryForList("select * from solardatum.da_datum_range order by node_id,source_id");
+	}
+
 	protected void insertResetDatumAuxiliaryRecord(DateTime date, Long nodeId, String sourceId,
 			Map<String, Number> finalSamples, Map<String, Number> startSamples) {
 		jdbcTemplate.update(
@@ -190,13 +195,18 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 	}
 
 	protected List<GeneralNodeDatum> createSampleData(int count, DateTime start) {
+		return createSampleData(count, start, TEST_NODE_ID, TEST_SOURCE_ID);
+	}
+
+	protected List<GeneralNodeDatum> createSampleData(int count, DateTime start, Long nodeId,
+			String sourceId) {
 		List<GeneralNodeDatum> data = new ArrayList<>(4);
 		long wh = (long) (Math.random() * 1000000000.0);
 		for ( int i = 0; i < count; i++ ) {
 			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setNodeId(TEST_NODE_ID);
+			d.setNodeId(nodeId);
 			d.setCreated(start.plusMinutes(i));
-			d.setSourceId(TEST_SOURCE_ID);
+			d.setSourceId(sourceId);
 
 			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
 			int watts = (int) (Math.random() * 50000);
@@ -258,4 +268,18 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 				JsonUtils.getJSONString(jMeta, null), JsonUtils.getJSONString(asData, null),
 				JsonUtils.getJSONString(afData, null), JsonUtils.getJSONString(adData, null));
 	}
+
+	protected void clearAggStaleRecords() {
+		jdbcTemplate.update("delete from solaragg.agg_stale_datum");
+		jdbcTemplate.update("delete from solaragg.agg_stale_loc_datum");
+		jdbcTemplate.update("delete from solaragg.aud_datum_daily_stale");
+	}
+
+	protected List<Map<String, Object>> findDatumForTimeSpan(Long nodeId, String sourceId, DateTime date,
+			String interval) {
+		return jdbcTemplate.queryForList(
+				"SELECT * FROM solaragg.find_datum_for_time_span(?,?::text[],?,?::interval)", nodeId,
+				"{" + sourceId + "}", new Timestamp(date.getMillis()), interval);
+	}
+
 }

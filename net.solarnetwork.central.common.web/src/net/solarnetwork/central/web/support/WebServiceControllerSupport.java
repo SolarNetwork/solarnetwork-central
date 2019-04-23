@@ -38,6 +38,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
@@ -63,7 +65,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.12
+ * @version 1.13
  */
 public abstract class WebServiceControllerSupport {
 
@@ -165,6 +167,40 @@ public abstract class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Response<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e) {
 		log.debug("SecurityException in {} controller: {}", getClass().getSimpleName(), e.getMessage());
+		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+	}
+
+	/**
+	 * Handle a {@link AuthenticationException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return an error response object
+	 * @since 1.13
+	 */
+	@ExceptionHandler(AuthenticationException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNAUTHORIZED)
+	public Response<?> handleAuthenticationException(AuthenticationException e) {
+		log.debug("AuthenticationException in {} controller: {}", getClass().getSimpleName(),
+				e.getMessage());
+		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+	}
+
+	/**
+	 * Handle a {@link AccessDeniedException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return an error response object
+	 * @since 1.13
+	 */
+	@ExceptionHandler(AccessDeniedException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.FORBIDDEN)
+	public Response<?> handleAuthenticationException(AccessDeniedException e) {
+		log.debug("AccessDeniedException in {} controller: {}", getClass().getSimpleName(),
+				e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
 

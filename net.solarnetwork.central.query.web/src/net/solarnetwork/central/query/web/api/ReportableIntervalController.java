@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.query.web.api;
 
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TimeZone;
@@ -40,6 +39,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
@@ -57,7 +57,7 @@ import net.solarnetwork.web.domain.Response;
  * </p>
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
@@ -201,7 +201,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 		Set<String> data = queryBiz.getAvailableSources(f);
 
 		// support filtering based on sourceId path pattern
-		data = filterSources(data, this.pathMatcher, cmd.getSourceId());
+		data = DatumUtils.filterSources(data, this.pathMatcher, cmd.getSourceId());
 
 		return new Response<Set<String>>(data);
 	}
@@ -253,7 +253,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 		Set<NodeSourcePK> data = queryBiz.findAvailableSources(f);
 
 		// support filtering based on sourceId path pattern
-		data = filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
+		data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
 
 		if ( !cmd.isWithNodeIds() ) {
 			Set<String> sourceIds = new LinkedHashSet<String>(data.size());
@@ -311,7 +311,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 				.getGeneralNodeDatumMetadataFilteredSources(cmd.getNodeIds(), cmd.getMetadataFilter());
 
 		// support filtering based on sourceId path pattern
-		data = filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
+		data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
 
 		if ( !cmd.isWithNodeIds() && cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
 			// at most 1 node ID, so simplify results to just source ID values
@@ -322,68 +322,6 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 			return new Response<Set<?>>(sourceIds);
 		}
 		return new Response<Set<?>>(data);
-	}
-
-	/**
-	 * Filter a set of node sources using a source ID path pattern.
-	 * 
-	 * <p>
-	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
-	 * path pattern, then {@code sources} will be returned without filtering.
-	 * </p>
-	 * 
-	 * @param sources
-	 *        the sources to filter
-	 * @param pathMatcher
-	 *        the path matcher to use
-	 * @param pattern
-	 *        the pattern to test
-	 * @return the filtered sources
-	 */
-	public static Set<NodeSourcePK> filterNodeSources(Set<NodeSourcePK> sources, PathMatcher pathMatcher,
-			String pattern) {
-		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
-				|| !pathMatcher.isPattern(pattern) ) {
-			return sources;
-		}
-		for ( Iterator<NodeSourcePK> itr = sources.iterator(); itr.hasNext(); ) {
-			NodeSourcePK pk = itr.next();
-			if ( !pathMatcher.match(pattern, pk.getSourceId()) ) {
-				itr.remove();
-			}
-		}
-		return sources;
-	}
-
-	/**
-	 * Filter a set of sources using a source ID path pattern.
-	 * 
-	 * <p>
-	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
-	 * path pattern, then {@code sources} will be returned without filtering.
-	 * </p>
-	 * 
-	 * @param sources
-	 *        the sources to filter
-	 * @param pathMatcher
-	 *        the path matcher to use
-	 * @param pattern
-	 *        the pattern to test
-	 * @return the filtered sources
-	 */
-	public static Set<String> filterSources(Set<String> sources, PathMatcher pathMatcher,
-			String pattern) {
-		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
-				|| !pathMatcher.isPattern(pattern) ) {
-			return sources;
-		}
-		for ( Iterator<String> itr = sources.iterator(); itr.hasNext(); ) {
-			String source = itr.next();
-			if ( !pathMatcher.match(pattern, source) ) {
-				itr.remove();
-			}
-		}
-		return sources;
 	}
 
 }

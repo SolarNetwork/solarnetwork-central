@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.query.web.api;
 
-import static net.solarnetwork.central.query.web.api.ReportableIntervalController.filterSources;
+import static net.solarnetwork.central.datum.support.DatumUtils.filterSources;
 import java.util.Set;
 import java.util.TimeZone;
 import org.joda.time.DateTime;
@@ -52,7 +52,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })

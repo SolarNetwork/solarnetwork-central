@@ -58,7 +58,7 @@ import net.solarnetwork.central.user.domain.User;
  * Killbill implementation of {@link BillingSystem}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class KillbillBillingSystem implements BillingSystem {
 
@@ -136,6 +136,9 @@ public class KillbillBillingSystem implements BillingSystem {
 	}
 
 	private Subscription getSubscription(String subscriptionId) {
+		if ( subscriptionId == null ) {
+			return null;
+		}
 		Subscription result = null;
 		Cache<String, Subscription> cache = subscriptionCache;
 		if ( cache != null ) {

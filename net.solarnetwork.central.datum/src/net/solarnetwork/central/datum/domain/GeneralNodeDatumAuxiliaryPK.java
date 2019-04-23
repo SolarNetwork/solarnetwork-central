@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serializable;
 import java.util.Objects;
 import org.joda.time.DateTime;
 
@@ -32,7 +33,8 @@ import org.joda.time.DateTime;
  * @version 1.0
  * @since 1.35
  */
-public class GeneralNodeDatumAuxiliaryPK extends GeneralNodeDatumPK {
+public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
+		implements Serializable, Cloneable, Comparable<GeneralNodeDatumAuxiliaryPK> {
 
 	private static final long serialVersionUID = 2851055344175402929L;
 
@@ -77,7 +79,7 @@ public class GeneralNodeDatumAuxiliaryPK extends GeneralNodeDatumPK {
 	 */
 	public GeneralNodeDatumAuxiliaryPK(Long nodeId, DateTime created, String sourceId,
 			DatumAuxiliaryType type) {
-		super(nodeId, created, sourceId);
+		super(nodeId, sourceId, created);
 		this.type = type;
 	}
 
@@ -125,18 +127,17 @@ public class GeneralNodeDatumAuxiliaryPK extends GeneralNodeDatumPK {
 	}
 
 	@Override
-	public int compareTo(GeneralNodeDatumPK o) {
+	public int compareTo(GeneralNodeDatumAuxiliaryPK o) {
 		int result = super.compareTo(o);
-		if ( result != 0 || !(o instanceof GeneralNodeDatumAuxiliaryPK) ) {
+		if ( result != 0 ) {
 			return result;
 		}
-		GeneralNodeDatumAuxiliaryPK pk = (GeneralNodeDatumAuxiliaryPK) o;
-		if ( pk.type == null ) {
+		if ( o.type == null ) {
 			return 1;
 		} else if ( type == null ) {
 			return -1;
 		}
-		return type.compareTo(pk.type);
+		return type.compareTo(o.type);
 	}
 
 	public DatumAuxiliaryType getType() {

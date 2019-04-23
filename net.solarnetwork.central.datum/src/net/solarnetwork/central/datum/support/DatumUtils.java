@@ -23,18 +23,22 @@
 package net.solarnetwork.central.datum.support;
 
 import java.math.BigDecimal;
-import net.solarnetwork.central.datum.domain.NodeDatum;
-import net.solarnetwork.central.support.JsonUtils;
-import net.solarnetwork.util.ClassUtils;
+import java.util.Iterator;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.PathMatcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.datum.domain.NodeDatum;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.util.ClassUtils;
 
 /**
  * Utilities for Datum domain classes.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class DatumUtils {
 
@@ -128,4 +132,67 @@ public final class DatumUtils {
 		return result;
 	}
 
+	/**
+	 * Filter a set of node sources using a source ID path pattern.
+	 * 
+	 * <p>
+	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
+	 * path pattern, then {@code sources} will be returned without filtering.
+	 * </p>
+	 * 
+	 * @param sources
+	 *        the sources to filter
+	 * @param pathMatcher
+	 *        the path matcher to use
+	 * @param pattern
+	 *        the pattern to test
+	 * @return the filtered sources
+	 * @since 1.3
+	 */
+	public static Set<NodeSourcePK> filterNodeSources(Set<NodeSourcePK> sources, PathMatcher pathMatcher,
+			String pattern) {
+		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
+				|| !pathMatcher.isPattern(pattern) ) {
+			return sources;
+		}
+		for ( Iterator<NodeSourcePK> itr = sources.iterator(); itr.hasNext(); ) {
+			NodeSourcePK pk = itr.next();
+			if ( !pathMatcher.match(pattern, pk.getSourceId()) ) {
+				itr.remove();
+			}
+		}
+		return sources;
+	}
+
+	/**
+	 * Filter a set of sources using a source ID path pattern.
+	 * 
+	 * <p>
+	 * If any arguments are {@literal null}, or {@code pathMatcher} is not a
+	 * path pattern, then {@code sources} will be returned without filtering.
+	 * </p>
+	 * 
+	 * @param sources
+	 *        the sources to filter
+	 * @param pathMatcher
+	 *        the path matcher to use
+	 * @param pattern
+	 *        the pattern to test
+	 * @return the filtered sources
+	 * @since 1.3
+	 */
+	public static Set<String> filterSources(Set<String> sources, PathMatcher pathMatcher,
+			String pattern) {
+		if ( sources == null || sources.isEmpty() || pathMatcher == null || pattern == null
+				|| !pathMatcher.isPattern(pattern) ) {
+			return sources;
+		}
+		for ( Iterator<String> itr = sources.iterator(); itr.hasNext(); ) {
+			String source = itr.next();
+			if ( !pathMatcher.match(pattern, source) ) {
+				itr.remove();
+			}
+		}
+		return sources;
+	}
 }

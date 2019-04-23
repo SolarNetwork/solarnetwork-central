@@ -19,6 +19,13 @@
 		{call solardatum.store_datum(?, ?, ?, ?, ?)}
 	</update>
 	
+	<update id="update-datum-range-dates" parameterType="GeneralNodeDatumPK" statementType="CALLABLE">
+		{call solardatum.update_datum_range_dates(
+			#{nodeId,jdbcType=BIGINT}
+			, #{sourceId,jdbcType=VARCHAR}
+			, #{created,jdbcType=TIMESTAMP})}
+	</update>
+	
 	<sql id="fragment-GeneralNodeDatum-full-result">
 		datum.node_id AS datum_node_id,
 		datum.ts AS datum_ts,
@@ -251,7 +258,7 @@
 	<update id="find-general-audit-interval" parameterMap="pmap-reportable-interval" statementType="CALLABLE">
 		{call solaragg.find_audit_datum_interval(?, ?, ?, ?, ?, ?)}
 	</update>
-
+	
 	<select id="find-general-audit-hourly-prop-count" resultType="long">
 		SELECT SUM(CAST(
 			<choose>
