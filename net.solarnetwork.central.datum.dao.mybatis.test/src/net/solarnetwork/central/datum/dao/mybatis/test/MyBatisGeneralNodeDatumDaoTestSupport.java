@@ -274,4 +274,12 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 		jdbcTemplate.update("delete from solaragg.agg_stale_loc_datum");
 		jdbcTemplate.update("delete from solaragg.aud_datum_daily_stale");
 	}
+
+	protected List<Map<String, Object>> findDatumForTimeSpan(Long nodeId, String sourceId, DateTime date,
+			String interval) {
+		return jdbcTemplate.queryForList(
+				"SELECT * FROM solaragg.find_datum_for_time_span(?,?::text[],?,?::interval)", nodeId,
+				"{" + sourceId + "}", new Timestamp(date.getMillis()), interval);
+	}
+
 }

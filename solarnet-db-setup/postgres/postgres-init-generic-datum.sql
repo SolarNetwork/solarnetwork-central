@@ -1283,7 +1283,7 @@ RETURNS TABLE(
 				ORDER BY ts DESC 
 				LIMIT 1
 			)
-			UNION
+			UNION ALL
 			(
 				-- find latest before reset
 				SELECT ts, node_id, source_id, jdata_as AS jdata_a, 1 AS rr
@@ -1368,7 +1368,7 @@ RETURNS TABLE(
 			SELECT *
 			FROM (
 				SELECT * FROM latest_before_start
-				UNION
+				UNION ALL
 				SELECT * FROM earliest_after_start
 			) d
 			ORDER BY d.ts
@@ -1448,7 +1448,7 @@ RETURNS TABLE(
 			SELECT d.ts, d.node_id, d.source_id, d.jdata_a
 			FROM  solardatum.find_latest_before(nodes, sources, ts_min) dates
 			INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
-			UNION
+			UNION ALL
 			SELECT DISTINCT ON (node_id, source_id) ts, node_id, source_id, jdata_as AS jdata_a
 			FROM solardatum.da_datum_aux
 			WHERE atype = 'Reset'::solardatum.da_datum_aux_type
@@ -1469,7 +1469,7 @@ RETURNS TABLE(
 				FROM solardatum.find_earliest_after(nodes, sources, ts_min) dates
 				INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
 			)
-			UNION
+			UNION ALL
 			(
 				SELECT DISTINCT ON (node_id, source_id) ts, node_id, source_id, jdata_as AS jdata_a
 				FROM solardatum.da_datum_aux
@@ -1492,7 +1492,7 @@ RETURNS TABLE(
 				FROM solardatum.find_latest_before(nodes, sources, ts_max) dates
 				INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
 			)
-			UNION
+			UNION ALL
 			(
 				SELECT DISTINCT ON (node_id, source_id) ts, node_id, source_id, jdata_af AS jdata_a
 				FROM solardatum.da_datum_aux
@@ -1517,7 +1517,7 @@ RETURNS TABLE(
 			) d
 			ORDER BY d.node_id, d.source_id, d.ts
 		) earliest
-		UNION 
+		UNION ALL
 		SELECT * FROM latest_before_end
 	)
 	-- begin search for reset records WITHIN [start, final] date ranges via table of found [start, final] dates
@@ -1544,7 +1544,7 @@ RETURNS TABLE(
 	-- combine [start, final] pairs with reset pairs
 	, combined AS (
 		SELECT * FROM d
-		UNION
+		UNION ALL
 		SELECT * FROM resets
 	)
 	-- calculate difference by node,source, of {start[, resetFinal1, resetStart1, ...], final}
@@ -1606,7 +1606,7 @@ RETURNS TABLE(
 				INNER JOIN solardatum.find_latest_before(tz.nodes, tz.sources, tz.sdate) dates ON dates.node_id = ANY(tz.nodes) AND dates.source_id = ANY(tz.sources)
 				INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
 			)
-			UNION
+			UNION ALL
 			(
 				SELECT DISTINCT ON (tz.time_zone, aux.node_id, aux.source_id)
 					tz.time_zone, aux.ts, aux.node_id, aux.source_id, aux.jdata_as AS jdata_a
@@ -1630,7 +1630,7 @@ RETURNS TABLE(
 				INNER JOIN solardatum.find_earliest_after(tz.nodes, tz.sources, tz.sdate) dates ON dates.node_id = ANY(tz.nodes) AND dates.source_id = ANY(tz.sources)
 				INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
 			)
-			UNION
+			UNION ALL
 			(
 				SELECT DISTINCT ON (tz.time_zone, aux.node_id, aux.source_id)
 					tz.time_zone, aux.ts, aux.node_id, aux.source_id, aux.jdata_as AS jdata_a
@@ -1654,7 +1654,7 @@ RETURNS TABLE(
 				INNER JOIN solardatum.find_latest_before(tz.nodes, tz.sources, tz.edate) dates ON dates.node_id = ANY(tz.nodes) AND dates.source_id = ANY(tz.sources)
 				INNER JOIN solardatum.da_datum d ON d.ts = dates.ts AND d.node_id = dates.node_id AND d.source_id = dates.source_id
 			)
-			UNION
+			UNION ALL
 			(
 				SELECT DISTINCT ON (tz.time_zone, aux.node_id, aux.source_id)
 					tz.time_zone, aux.ts, aux.node_id, aux.source_id, aux.jdata_af AS jdata_a
@@ -1674,7 +1674,7 @@ RETURNS TABLE(
 			SELECT DISTINCT ON (d.node_id, d.source_id) d.*
 			FROM (
 				SELECT * FROM latest_before_start
-				UNION
+				UNION ALL
 				SELECT * FROM earliest_after_start
 			) d
 			ORDER BY d.node_id, d.source_id, d.ts
@@ -1708,7 +1708,7 @@ RETURNS TABLE(
 	-- combine [start, final] pairs with reset pairs
 	, combined AS (
 		SELECT * FROM d
-		UNION
+		UNION ALL
 		SELECT * FROM resets
 	)
 	-- calculate difference by node,source, of {start[, resetFinal1, resetStart1, ...], final}
