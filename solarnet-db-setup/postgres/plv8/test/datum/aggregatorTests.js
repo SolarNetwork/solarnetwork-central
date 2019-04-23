@@ -248,3 +248,35 @@ test('datum:aggregator:processAggregateRecords:1d:multiSource', t => {
 	});
 
 });
+
+test('datum:aggregator:processAggregateRecords:1h:evenHours', t => {
+	const start = moment('2016-10-10 10:00:00+13');
+	const end = start.clone().add(1, 'hour');
+	const service = aggregator({
+		startTs : start.valueOf(),
+		endTs : end.valueOf(),
+	});
+
+	const data = parseDatumCSV('/find-datum-for-time-span-01.csv');
+
+	data.forEach(rec => {
+		service.addDatumRecord(rec);
+	});
+
+	var aggResults = service.finish();
+
+	var expected = [
+		{source_id: 'Foo',
+			jdata:{a:{bar:100}}
+		},
+	];
+
+	t.is(aggResults.length, expected.length, 'there is one aggregate result');
+
+	aggResults.forEach((aggResult, i) => {
+		t.is(aggResult.source_id, expected[i].source_id);
+		t.is(aggResult.ts_start.getTime(), start.valueOf(), 'start time');
+		t.deepEqual(aggResult.jdata, expected[i].jdata, 'jdata '+i);
+	});
+
+});
