@@ -30,11 +30,9 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import net.solarnetwork.central.security.AuthenticatedUser;
-import net.solarnetwork.central.user.pki.dogtag.DogtagPKIBiz;
-import net.solarnetwork.pki.bc.BCCertificateService;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,15 +43,22 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.springframework.web.client.RestOperations;
+import net.solarnetwork.central.security.AuthenticatedUser;
+import net.solarnetwork.central.test.SystemPropertyMatchTestRule;
+import net.solarnetwork.central.user.pki.dogtag.DogtagPKIBiz;
+import net.solarnetwork.pki.bc.BCCertificateService;
 
 /**
  * Test cases for the {@Link DogtagPKIBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ContextConfiguration
 public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
+
+	@ClassRule
+	public static SystemPropertyMatchTestRule DOGTAG_RULE = new SystemPropertyMatchTestRule("dogtag");
 
 	@Value("${dogtag.baseUrl}")
 	private String baseUrl;
