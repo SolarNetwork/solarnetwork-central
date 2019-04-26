@@ -32,7 +32,7 @@ import org.junit.runners.model.Statement;
  * property that matches a specific expression.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.9
  */
 public class SystemPropertyMatchTestRule implements TestRule {
@@ -75,7 +75,8 @@ public class SystemPropertyMatchTestRule implements TestRule {
 				if ( v != null && regex.matcher(v).matches() ) {
 					statement.evaluate();
 				} else {
-					throw new org.junit.AssumptionViolatedException("Could not connect. Skipping test!");
+					throw new org.junit.AssumptionViolatedException("System property [" + key
+							+ "] not found, or value does not match [" + regex + "] Skipping test!");
 				}
 			}
 		};
