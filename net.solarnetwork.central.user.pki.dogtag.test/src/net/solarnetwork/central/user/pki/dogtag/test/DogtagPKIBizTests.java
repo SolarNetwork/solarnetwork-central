@@ -70,7 +70,7 @@ public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
 	private DogtagPKIBiz biz;
 
 	@Before
-	public void setup() {
+	public void setup() throws Exception {
 		biz = new DogtagPKIBiz();
 		biz.setBaseUrl(baseUrl);
 
@@ -85,6 +85,9 @@ public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
 		AuthenticatedUser user = new AuthenticatedUser(userDetails, -1L, "Test User", false);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(user, "foobar", "ROLE_USER");
 		SecurityContextHolder.getContext().setAuthentication(auth);
+
+		// detect version
+		biz.performPingTest();
 	}
 
 	private X509Certificate createSelfSignedCertificate(String dn, KeyPair keypair)
