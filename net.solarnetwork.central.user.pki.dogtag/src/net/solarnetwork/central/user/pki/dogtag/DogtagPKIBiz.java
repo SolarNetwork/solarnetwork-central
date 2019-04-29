@@ -413,7 +413,7 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 					response = restOps.getForEntity(baseUrl + DOGTAG_10_AGENT_PROFILE_GET_PATH,
 							DOMSource.class, dogtagProfileId);
 				} catch ( HttpClientErrorException e2 ) {
-					log.warn("Unable to get Dogtag profile {}: {}", dogtagProfileId, e2);
+					log.warn("Unable to get Dogtag profile {}: {}", dogtagProfileId, e2.getMessage());
 				}
 			}
 		}
@@ -457,7 +457,8 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 				}
 			}
 		} catch ( HttpClientErrorException e ) {
-			log.info("Unable to detect Dogtag server version via {}: {}", DOGTAG_10_PKI_INFO, e);
+			log.info("Unable to detect Dogtag server version via {}: {}", DOGTAG_10_PKI_INFO,
+					e.getMessage());
 		}
 	}
 

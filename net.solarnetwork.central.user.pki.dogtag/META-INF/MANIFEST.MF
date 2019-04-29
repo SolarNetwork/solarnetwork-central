@@ -27,6 +27,7 @@ Import-Package:
  org.slf4j;version="[1.7,2.0)",
  org.springframework.beans;version="[4.2,5.0)",
  org.springframework.beans.factory;version="[4.2,5.0)",
+ org.springframework.core;version="[4.2,5.0)",
  org.springframework.core.io;version="[4.2,5.0)",
  org.springframework.http;version="[4.2,5.0)",
  org.springframework.http.client;version="[4.2,5.0)",
