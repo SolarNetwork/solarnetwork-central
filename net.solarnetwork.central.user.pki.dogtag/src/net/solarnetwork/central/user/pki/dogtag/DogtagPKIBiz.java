@@ -171,6 +171,9 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 	}
 
 	private boolean isVersionAtLeast(int major, int minor, int patch) {
+		if ( dogtagVersion[0] == 0 ) {
+			return false;
+		}
 		return (dogtagVersion[0] > major ? true
 				: dogtagVersion[1] > minor ? true : dogtagVersion[2] >= patch ? true : false);
 	}
