@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.pki.dogtag;
 
+import static net.solarnetwork.util.ArrayUtils.filterByEnabledDisabled;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -35,10 +36,10 @@ import java.util.Enumeration;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import org.apache.http.client.HttpClient;
+import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -61,13 +62,17 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
  * key/trust store.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class SSLContextFactory implements PingTest {
 
 	private Resource keystoreResource;
 	private String keystorePassword;
 	private int trustedCertificateExpireWarningDays = 30;
+	private String[] enabledProtocols = null;
+	private String[] disabledProtocols = null;
+	private String[] enabledCipherSuites = null;
+	private String[] disabledCipherSuites = null;
 
 	private CachedResult<PingTestResult> cachedResult;
 
@@ -99,9 +104,15 @@ public class SSLContextFactory implements PingTest {
 	 * @return RestOperations
 	 */
 	public RestOperations createRestOps() {
-		LayeredConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(createContext());
-		org.apache.http.config.Registry<ConnectionSocketFactory> r = RegistryBuilder
-				.<ConnectionSocketFactory> create().register("https", sslsf).build();
+		SSLContext ctx = createContext();
+		String[] protocols = filterByEnabledDisabled(ctx.getSupportedSSLParameters().getProtocols(),
+				enabledProtocols, disabledProtocols);
+		String[] ciphers = filterByEnabledDisabled(ctx.getSupportedSSLParameters().getCipherSuites(),
+				enabledCipherSuites, disabledCipherSuites);
+		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(createContext(), protocols,
+				ciphers, SSLConnectionSocketFactory.getDefaultHostnameVerifier());
+		Registry<ConnectionSocketFactory> r = RegistryBuilder.<ConnectionSocketFactory> create()
+				.register("https", sslsf).build();
 
 		HttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(r);
 		HttpClient httpClient = HttpClients.custom().setConnectionManager(connManager).build();
@@ -259,6 +270,108 @@ public class SSLContextFactory implements PingTest {
 
 	public void setTrustedCertificateExpireWarningDays(int trustedCertificateExpireWarningDays) {
 		this.trustedCertificateExpireWarningDays = trustedCertificateExpireWarningDays;
+	}
+
+	/**
+	 * Get the list of explicitly enabled SSL protocols.
+	 * 
+	 * @return the enabled SSL protocols
+	 * @since 1.5
+	 */
+	public String[] getEnabledProtocols() {
+		return enabledProtocols;
+	}
+
+	/**
+	 * Set the list of explicitly enabled SSL protocols.
+	 * 
+	 * <p>
+	 * This list is treated as regular expressions.
+	 * </p>
+	 * 
+	 * @param enabledProtocols
+	 *        a list of regular expressions for the SSL protocols to enable
+	 * @since 1.5
+	 */
+	public void setEnabledProtocols(String[] enabledProtocols) {
+		this.enabledProtocols = enabledProtocols;
+	}
+
+	/**
+	 * Get the list of disabled SSL protocols.
+	 * 
+	 * @return the disabled SSL protocols
+	 * @since 1.5
+	 */
+	public String[] getDisabledProtocols() {
+		return disabledProtocols;
+	}
+
+	/**
+	 * Set the list of disabled SSL protocols.
+	 * 
+	 * <p>
+	 * This list is treated as regular expressions, and applied <b>after</b> any
+	 * configured {@link #setEnabledProtocols(String[])} expressions.
+	 * </p>
+	 * 
+	 * @param disabledProtocols
+	 *        a list of regular expressions for the SSL protocols to disable
+	 * @since 1.5
+	 */
+	public void setDisabledProtocols(String[] disabledProtocols) {
+		this.disabledProtocols = disabledProtocols;
+	}
+
+	/**
+	 * Get the list of explicitly enabled SSL cipher suites.
+	 * 
+	 * @return the enabled SSL cipher suites
+	 * @since 1.5
+	 */
+	public String[] getEnabledCipherSuites() {
+		return enabledCipherSuites;
+	}
+
+	/**
+	 * Set the list of explicitly enabled SSL cipher suites.
+	 * 
+	 * <p>
+	 * This list is treated as regular expressions.
+	 * </p>
+	 * 
+	 * @param enabledCipherSuites
+	 *        a list of regular expressions for the SSL cipher suites to enable
+	 * @since 1.5
+	 */
+	public void setEnabledCipherSuites(String[] enabledCipherSuites) {
+		this.enabledCipherSuites = enabledCipherSuites;
+	}
+
+	/**
+	 * Get the list of disabled SSL cipher suites.
+	 * 
+	 * @return the disabled SSL cipher suites
+	 * @since 1.5
+	 */
+	public String[] getDisabledCipherSuites() {
+		return disabledCipherSuites;
+	}
+
+	/**
+	 * Set the list of disabled SSL cipher suites.
+	 * 
+	 * <p>
+	 * This list is treated as regular expressions, and applied <b>after</b> any
+	 * configured {@link #setEnabledCipherSuites(String[])} expressions.
+	 * </p>
+	 * 
+	 * @param disabledCipherSuites
+	 *        a list of regular expressions for the SSL cipher suites to disable
+	 * @since 1.5
+	 */
+	public void setDisabledCipherSuites(String[] disabledCipherSuites) {
+		this.disabledCipherSuites = disabledCipherSuites;
 	}
 
 }

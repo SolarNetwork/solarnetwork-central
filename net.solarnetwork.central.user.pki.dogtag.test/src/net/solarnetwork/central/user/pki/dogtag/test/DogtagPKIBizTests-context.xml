@@ -14,6 +14,7 @@
 	<bean id="restFactory" class="net.solarnetwork.central.user.pki.dogtag.SSLContextFactory">
 		<property name="keystoreResource" value="classpath:/dogtag-client.jks"/>
 		<property name="keystorePassword" value="${dogtag.keystore.pass}"/>
+		<property name="disabledCipherSuites" value="${dogtag.ciphers.disabled}"/>
 	</bean>
 	
 	<bean id="restOperations" factory-bean="restFactory" factory-method="createRestOps"/>
