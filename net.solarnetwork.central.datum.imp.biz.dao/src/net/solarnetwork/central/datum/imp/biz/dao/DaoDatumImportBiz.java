@@ -90,6 +90,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.util.ProgressListener;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * DAO based {@link DatumImportBiz}.
@@ -594,6 +595,10 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 				try {
 					for ( GeneralNodeDatum d : input ) {
 						if ( !allowedNodeIds.contains(d.getNodeId()) ) {
+							log.warn(
+									"Datum import job {} denied access to node {}; allowed nodes are: {}",
+									d.getNodeId(),
+									StringUtils.commaDelimitedStringFromCollection(allowedNodeIds));
 							throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
 						}
 						d.setPosted(info.getImportDate());
