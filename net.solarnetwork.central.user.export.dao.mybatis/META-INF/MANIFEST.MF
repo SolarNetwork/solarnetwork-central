@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarUser MyBatis Export Dao
 Bundle-SymbolicName: net.solarnetwork.central.user.export.dao.mybatis
-Bundle-Version: 1.1.0
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: 
@@ -11,7 +11,7 @@ Export-Package:
 Import-Package: 
  javax.sql,
  net.solarnetwork.central.dao;version="1.0",
- net.solarnetwork.central.dao.mybatis.map;version="1.1.0",
+ net.solarnetwork.central.dao.mybatis.map;version="1.4.0",
  net.solarnetwork.central.dao.mybatis.support;version="1.1.0",
  net.solarnetwork.central.dao.mybatis.type;version="1.2.0",
  net.solarnetwork.central.datum.export.dao.mybatis.map;version="1.0.0",
@@ -21,7 +21,7 @@ Import-Package:
  net.solarnetwork.central.support;version="1.12.0",
  net.solarnetwork.central.user.dao;version="1.10",
  net.solarnetwork.central.user.dao.mybatis;version="1.9.0",
- net.solarnetwork.central.user.dao.mybatis.map;version="1.9.1",
+ net.solarnetwork.central.user.dao.mybatis.map;version="1.12.0",
  net.solarnetwork.central.user.domain;version="1.14",
  net.solarnetwork.central.user.export.dao;version="1.1.0",
  net.solarnetwork.central.user.export.domain;version="1.0.0",

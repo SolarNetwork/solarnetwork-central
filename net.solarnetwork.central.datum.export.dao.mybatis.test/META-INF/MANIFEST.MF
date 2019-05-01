@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet MyBatis Datum Export DAO Test
 Bundle-SymbolicName: net.solarnetwork.central.datum.export.dao.mybatis.test
-Bundle-Version: 1.0.0
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.datum.export.biz.dao.test
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -10,13 +10,13 @@ Import-Package:
  net.solarnetwork.central;version="[1.0,2.0)",
  net.solarnetwork.central.dao;version="[1.6,2.0)",
  net.solarnetwork.central.dao.mybatis;version="1.0.0",
- net.solarnetwork.central.dao.mybatis.map;version="1.0.0",
+ net.solarnetwork.central.dao.mybatis.map;version="1.4.0",
  net.solarnetwork.central.dao.mybatis.support;version="1.1.0",
  net.solarnetwork.central.dao.mybatis.type;version="1.0.0",
- net.solarnetwork.central.datum.dao.mybatis.map;version="2.5.1",
+ net.solarnetwork.central.datum.dao.mybatis.map;version="2.22.0",
  net.solarnetwork.central.datum.export.dao;version="1.0.0",
  net.solarnetwork.central.datum.export.dao.mybatis;version="1.0.0",
- net.solarnetwork.central.datum.export.dao.mybatis.map;version="1.0.0",
+ net.solarnetwork.central.datum.export.dao.mybatis.map;version="1.1.0",
  net.solarnetwork.central.datum.export.domain;version="1.0.0",
  net.solarnetwork.central.domain;version="[1.16,2.0)",
  net.solarnetwork.central.security;version="1.9.0",

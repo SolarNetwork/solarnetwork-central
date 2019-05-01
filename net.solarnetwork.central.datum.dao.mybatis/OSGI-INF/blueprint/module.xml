@@ -20,6 +20,12 @@
 		http://www.springframework.org/schema/util
 		http://www.springframework.org/schema/util/spring-util-4.2.xsd">
 
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.dao.mybatis">
+		<beans:prop key="cache.node.flush">900000</beans:prop>
+	</osgix:cm-properties>
+
 	<!-- Service References -->
 	
 	<reference id="dataSource" interface="javax.sql.DataSource" filter="(db=central)"/>
@@ -95,6 +101,7 @@
 	
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSource"/>
+		<property name="configurationProperties" ref="cfg"/>
 		<property name="typeAliases">
 			<list>
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
