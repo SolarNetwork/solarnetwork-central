@@ -3,7 +3,7 @@
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.dao.mybatis.SolarNode">
 
-	<cache/>
+	<cache flushInterval="${cache.node.flush}"/>
 
 	<select id="get-next-node-id" resultType="long" useCache="false">
 		SELECT nextval('solarnet.node_seq') AS id 

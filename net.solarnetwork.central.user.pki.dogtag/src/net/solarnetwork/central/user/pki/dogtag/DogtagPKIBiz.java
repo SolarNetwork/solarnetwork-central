@@ -38,11 +38,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.PropertyAccessor;
 import org.springframework.beans.PropertyAccessorFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
 import org.w3c.dom.Node;
 import net.solarnetwork.central.domain.PingTest;
@@ -59,8 +63,15 @@ import net.solarnetwork.util.CachedResult;
 /**
  * Dogtag implementation of {@link NodePKIBiz}.
  * 
+ * <p>
+ * For proper support with different Dogtag versions, you must call
+ * {@link #setDogtagVersionValue(String)} to configure the expected server
+ * minimum version, or call {@link #performPingTest()} to attempt to
+ * automatically detect the version.
+ * </p>
+ * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 
@@ -76,9 +87,15 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 	public static final String DOGTAG_10_CERT_GET_PATH = "/ca/rest/certs/{id}";
 	public static final String DOGTAG_10_CERTREG_RENEW_PATH = "/ca/rest/certrequests";
 	public static final String DOGTAG_10_CERTREG_GET_PATH = "/ca/rest/certrequests/{id}";
+	public static final String DOGTAG_10_CERTREQ_GET_PROFILE = "/ca/rest/certrequests/profiles/{id}";
 	public static final String DOGTAG_10_AGENT_CERTREQ_GET_PATH = "/ca/rest/agent/certrequests/{id}";
 	public static final String DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH = "/ca/rest/agent/certrequests/{id}/approve";
 	public static final String DOGTAG_10_AGENT_PROFILE_GET_PATH = "/ca/rest/agent/profiles/{id}";
+
+	public static final String DOGTAG_10_PKI_INFO = "/pki/rest/info";
+	public static final String DOGTAG_10_PKI_INFO_VERSION_XPATH = "/Info/Version";
+
+	public static final String DOGTAG_10_AGENT_CERTREQ_REQUEST_STATUS_XPATH = "/certReviewResponse/requestStatus";
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -93,6 +110,8 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 	private Map<String, XPathExpression> renewalInfoMapping;
 	private Map<String, XPathExpression> certDetailMapping;
 	private int pingResultsCacheSeconds = 300;
+
+	private final int[] dogtagVersion = new int[] { 0, 0, 0 };
 
 	private final Map<String, XPathExpression> xpathCache = new HashMap<String, XPathExpression>();
 	private CachedResult<PingTestResult> cachedResult;
@@ -151,17 +170,38 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 		return certReqId.trim();
 	}
 
+	private boolean isVersionAtLeast(int major, int minor, int patch) {
+		if ( dogtagVersion[0] == 0 ) {
+			return false;
+		}
+		return (dogtagVersion[0] > major ? true
+				: dogtagVersion[1] > minor ? true : dogtagVersion[2] >= patch ? true : false);
+	}
+
 	@Override
 	public String submitRenewalRequest(X509Certificate certificate) throws SecurityException {
 		BigInteger serialNumber = certificate.getSerialNumber();
 
-		MultiValueMap<String, Object> params = new LinkedMultiValueMap<String, Object>(6);
-		params.add("profileId", dogtagRenewalProfileId);
-		params.add("renewal", "true");
-		params.add("serial_num", serialNumber.toString());
+		Object req = null;
+		if ( isVersionAtLeast(10, 6, 0) ) {
+			Map<String, Object> params = new LinkedHashMap<>(6);
+			params.put("ProfileID", dogtagRenewalProfileId);
+			params.put("Renewal", "true");
+			params.put("SerialNumber", serialNumber.toString());
+			HttpHeaders reqHeaders = new HttpHeaders();
+			reqHeaders.setContentType(MediaType.APPLICATION_JSON_UTF8);
+			req = new HttpEntity<Map<String, Object>>(params, reqHeaders);
+		} else {
+			// Dogtag 10.0
+			MultiValueMap<String, Object> params = new LinkedMultiValueMap<String, Object>(6);
+			params.add("profileId", dogtagRenewalProfileId);
+			params.add("renewal", "true");
+			params.add("serial_num", serialNumber.toString());
+			req = params;
+		}
 
 		ResponseEntity<DOMSource> result = restOps.postForEntity(baseUrl + DOGTAG_10_CERTREG_RENEW_PATH,
-				params, DOMSource.class);
+				req, DOMSource.class);
 		DOMSource xmlResult = result.getBody();
 		if ( log.isDebugEnabled() ) {
 			log.debug("Got XML response: {}", xmlSupport.getXmlAsString(xmlResult, true));
@@ -198,9 +238,18 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 					xmlSupport.getXmlAsString(result.getBody(), true));
 		}
 
-		// approve the CSR
-		restOps.postForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH, result.getBody(), null,
-				requestID);
+		// check if the request is already complete
+		String reqStatus = null;
+		if ( result.getBody() != null ) {
+			reqStatus = xmlSupport.extractStringFromXml(result.getBody().getNode(),
+					xpathForString(DOGTAG_10_AGENT_CERTREQ_REQUEST_STATUS_XPATH));
+		}
+
+		if ( reqStatus == null || "pending".equalsIgnoreCase(reqStatus) ) {
+			// approve the pending CSR
+			restOps.postForEntity(baseUrl + DOGTAG_10_AGENT_CERTREQ_APPROVE_PATH, result.getBody(), null,
+					requestID);
+		}
 
 		// get the CSR details, which will include our cert URL
 		result = restOps.getForEntity(baseUrl + DOGTAG_10_CERTREG_GET_PATH, DOMSource.class, requestID);
@@ -211,8 +260,13 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 			throw new CertificateException("URL not available for request " + requestID);
 		}
 
-		// for some reason the certURL returned is missing the "/certs" path element, so we have to insert that
-		String certURL = info.getCertURL().toExternalForm().replaceFirst("(/[^/]+)$", "/certs$1");
+		// in Dogtag 10.0 for some reason the certURL returned is missing the "/certs" path element, so we have to insert that
+		String certURL = null;
+		if ( !info.getCertURL().getPath().contains("/certs/") ) {
+			certURL = info.getCertURL().toExternalForm().replaceFirst("(/[^/]+)$", "/certs$1");
+		} else {
+			certURL = info.getCertURL().toExternalForm();
+		}
 		result = restOps.getForEntity(certURL, DOMSource.class);
 		final DogtagCertificateData certData = getCertData(result.getBody().getNode());
 
@@ -347,10 +401,28 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 		if ( dogtagProfileId == null ) {
 			return new PingTestResult(false, "Profile ID not configured.");
 		}
+		if ( dogtagVersion[0] == 0 ) {
+			// try to detect version of server
+			detectDogtagVersion();
+		}
 		PingTestResult result = null;
-		ResponseEntity<DOMSource> response = restOps.getForEntity(
-				baseUrl + DOGTAG_10_AGENT_PROFILE_GET_PATH, DOMSource.class, dogtagProfileId);
-		if ( response.getStatusCode() != HttpStatus.OK ) {
+		ResponseEntity<DOMSource> response = null;
+		try {
+			response = restOps.getForEntity(baseUrl + DOGTAG_10_CERTREQ_GET_PROFILE, DOMSource.class,
+					dogtagProfileId);
+		} catch ( HttpClientErrorException e ) {
+			if ( e.getStatusCode() == HttpStatus.NOT_FOUND ) {
+				try {
+					response = restOps.getForEntity(baseUrl + DOGTAG_10_AGENT_PROFILE_GET_PATH,
+							DOMSource.class, dogtagProfileId);
+				} catch ( HttpClientErrorException e2 ) {
+					log.warn("Unable to get Dogtag profile {}: {}", dogtagProfileId, e2.getMessage());
+				}
+			}
+		}
+		if ( response == null ) {
+			result = new PingTestResult(false, "HTTP response not available");
+		} else if ( response.getStatusCode() != HttpStatus.OK ) {
 			result = new PingTestResult(false, "HTTP status not 200: " + response.getStatusCode());
 		} else if ( !response.hasBody() ) {
 			result = new PingTestResult(false, "HTTP response has no content");
@@ -373,6 +445,24 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 				pingResultsCacheSeconds, TimeUnit.SECONDS);
 		cachedResult = cached;
 		return result;
+	}
+
+	private void detectDogtagVersion() {
+		try {
+			ResponseEntity<DOMSource> response = restOps.getForEntity(baseUrl + DOGTAG_10_PKI_INFO,
+					DOMSource.class);
+			if ( response.getStatusCode() == HttpStatus.OK ) {
+				String version = xmlSupport.extractStringFromXml(response.getBody().getNode(),
+						xpathForString(DOGTAG_10_PKI_INFO_VERSION_XPATH));
+				if ( version != null && !version.isEmpty() ) {
+					log.info("Detected Dogtag server version {}", version);
+					setDogtagVersionValue(version);
+				}
+			}
+		} catch ( HttpClientErrorException e ) {
+			log.info("Unable to detect Dogtag server version via {}: {}", DOGTAG_10_PKI_INFO,
+					e.getMessage());
+		}
 	}
 
 	public void setBaseUrl(String baseUrl) {
@@ -425,6 +515,34 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 
 	public void setDogtagRenewalProfileId(String dogtagRenewalProfileId) {
 		this.dogtagRenewalProfileId = dogtagRenewalProfileId;
+	}
+
+	/**
+	 * Set the Dogtag server version.
+	 * 
+	 * <p>
+	 * The version will be automatically detected when
+	 * {@link #performPingTest()} is invoked, if not configured manually here.
+	 * </p>
+	 * 
+	 * @param version
+	 *        the version string, which must be in the form
+	 *        <code>major.minor.patch</code> where <em>major</em>,
+	 *        <em>minor</em>, and <em>patch</em> are integers
+	 * @since 1.3
+	 */
+	public void setDogtagVersionValue(String version) {
+		if ( version == null || version.isEmpty() || !version.matches("\\d+\\.\\d+\\.\\d+") ) {
+			return;
+		}
+		String[] tokens = StringUtils.delimitedListToStringArray(version, ".");
+		try {
+			for ( int i = 0; i < 3 && i < tokens.length; i++ ) {
+				dogtagVersion[i] = Integer.parseInt(tokens[i]);
+			}
+		} catch ( NumberFormatException e ) {
+			// ignore
+		}
 	}
 
 }
