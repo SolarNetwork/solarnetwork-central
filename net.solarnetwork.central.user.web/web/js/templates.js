@@ -54,6 +54,9 @@ SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(
  * if found that element will be where the new DOM elements will be appended. If not 
  * found, the parent of `container` will be used.
  * 
+ * If `preserve` is `false`, then if `.list-container` is found its children will be
+ * removed else the siblings following `.template` will be removed.
+ * 
  * @param {jQuery} container the container that holds the template item
  * @param {Array} items  the array of parameter objects to populate into cloned templates
  * @param {boolean} preserve `true` to only append items, do not clear out any existing items
@@ -67,10 +70,14 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 		.not('.template .template');              // ignore nested templates 
 	var itemContainer = container.find('.list-container').first();
 	if ( itemContainer.length < 1 ) {
+		// .list-container not found; use parent as container, and clear siblings following template if !preserve
 		itemContainer = itemTemplate.parent();
-	} 
-	if ( !preserve ) {
-		itemTemplate.nextAll().remove();
+		if ( !preserve ) {
+			itemTemplate.nextAll().remove();
+		}
+	} else if ( !preserve ) {
+		// found .list-container and !preserve
+		itemContainer.empty();
 	}
 	items.forEach(function(item) {
 		var el;
