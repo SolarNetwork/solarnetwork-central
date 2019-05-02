@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 
@@ -134,6 +135,9 @@ public class TieredStaleDatumProcessor extends StaleDatumProcessor {
 							log.debug("Task {} processed {} {} for tier '{}'",
 									Thread.currentThread().getName(), processedCount, taskDescription,
 									tierProcessType);
+						} catch ( DeadlockLoserDataAccessException e ) {
+							log.warn("Deadlock processing {} for tier '{}' with call {}",
+									taskDescription, tierProcessType, getJdbcCall(), e);
 						} catch ( Exception e ) {
 							log.error("Error processing {} for tier '{}' with call {}", taskDescription,
 									tierProcessType, getJdbcCall(), e);
