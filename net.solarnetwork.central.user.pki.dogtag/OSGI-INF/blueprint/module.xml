@@ -19,6 +19,7 @@
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.pki.dogtag">
 		<beans:prop key="dogtag.keystore.path">classpath:/dogtag-client.jks</beans:prop>
 		<beans:prop key="dogtag.keystore.pass">changeit</beans:prop>
+		<beans:prop key="dogtag.ciphers.disabled">TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_DHE_RSA_WITH_AES_256_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,TLS_DHE_RSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_DHE_RSA_WITH_AES_128_CBC_SHA</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -43,6 +44,7 @@
 	<bean id="restFactory" class="net.solarnetwork.central.user.pki.dogtag.SSLContextFactory">
 		<property name="keystoreResource" value="${dogtag.keystore.path}"/>
 		<property name="keystorePassword" value="${dogtag.keystore.pass}"/>
+		<property name="disabledCipherSuites" value="${dogtag.ciphers.disabled}"/>
 	</bean>
 	
 	<bean id="restOperations" factory-ref="restFactory" factory-method="createRestOps" />
