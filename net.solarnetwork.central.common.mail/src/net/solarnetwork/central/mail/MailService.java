@@ -18,35 +18,26 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.mail;
 
 /**
- * FIXME
- * 
- * <p>TODO</p>
- * 
- * <p>The configurable properties of this class are:</p>
- * 
- * <dl class="class-properties">
- *   <dt></dt>
- *   <dd></dd>
- * </dl>
+ * API for a mail sending service.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 public interface MailService {
 
 	/**
 	 * Send a template-based mail message.
 	 * 
-	 * @param address where to send the mail to
-	 * @param messageDataSource the message data source
+	 * @param address
+	 *        where to send the mail to
+	 * @param messageDataSource
+	 *        the message data source
 	 */
 	void sendMail(MailAddress address, MessageTemplateDataSource messageDataSource);
-	
+
 }

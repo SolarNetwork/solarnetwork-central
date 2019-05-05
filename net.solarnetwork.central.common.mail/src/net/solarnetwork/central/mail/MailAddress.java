@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.mail;
@@ -28,7 +26,7 @@ package net.solarnetwork.central.mail;
  * API for mail address information.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 public interface MailAddress {
 
@@ -38,26 +36,26 @@ public interface MailAddress {
 	 * @return array of email addresses
 	 */
 	String[] getTo();
-	
+
 	/**
 	 * Get list of addresses to carbon-copy the mail to.
 	 * 
 	 * @return array of email addresses
 	 */
 	String[] getCc();
-	
+
 	/**
 	 * Get list of addresses to blind-carbon-copy the mail to.
 	 * 
 	 * @return array of email addresses
 	 */
 	String[] getBcc();
-	
+
 	/**
 	 * Get the address to send the mail from.
 	 * 
 	 * @return email address
 	 */
 	String getFrom();
-	
+
 }

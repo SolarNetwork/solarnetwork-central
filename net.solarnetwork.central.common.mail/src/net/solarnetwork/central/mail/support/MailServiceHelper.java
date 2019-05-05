@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.mail.support;
@@ -28,7 +26,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-
 import net.solarnetwork.central.mail.MailAddress;
 import net.solarnetwork.central.mail.MessageTemplateDataSource;
 
@@ -36,35 +33,41 @@ import net.solarnetwork.central.mail.MessageTemplateDataSource;
  * Factory helper class for creating mail objects.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 public class MailServiceHelper implements Serializable {
-	
+
 	private static final long serialVersionUID = 534833315331249860L;
 
 	/**
-	 * Create a new {@link MailAddress} from a display name and an
-	 * email address.
+	 * Create a new {@link MailAddress} from a display name and an email
+	 * address.
 	 * 
-	 * @param toName the display name
-	 * @param toAddress the email address
+	 * @param toName
+	 *        the display name
+	 * @param toAddress
+	 *        the email address
 	 * @return new MailAddress
 	 */
 	public MailAddress createAddress(String toName, String toAddress) {
 		return new BasicMailAddress(toName, toAddress);
 	}
-	
+
 	/**
 	 * Create a new {@link MessageTemplateDataSource} from necessary components.
 	 * 
-	 * @param subject the mail subject
-	 * @param resourcePath the resource path
-	 * @param locale the message locale
-	 * @param params the message template parameters
+	 * @param subject
+	 *        the mail subject
+	 * @param resourcePath
+	 *        the resource path
+	 * @param locale
+	 *        the message locale
+	 * @param params
+	 *        the message template parameters
 	 * @return new MessageTemplateDataSource
 	 */
-	public MessageTemplateDataSource createResourceDataSource(
-			String subject, String resourcePath, Locale locale, Object... params) {
+	public MessageTemplateDataSource createResourceDataSource(String subject, String resourcePath,
+			Locale locale, Object... params) {
 		Map<String, Object> model = new HashMap<String, Object>();
 		for ( Object o : params ) {
 			Class<?> clazz = o.getClass();
@@ -74,8 +77,7 @@ public class MailServiceHelper implements Serializable {
 			}
 			model.put(clazz.getSimpleName(), o);
 		}
-		return new ClasspathResourceMessageTemplateDataSource(locale, subject, 
-				resourcePath, model);
+		return new ClasspathResourceMessageTemplateDataSource(locale, subject, resourcePath, model);
 	}
-	
+
 }

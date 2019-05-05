@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.mail.support;
@@ -30,10 +28,10 @@ import net.solarnetwork.central.mail.MailAddress;
  * Basic implementation of {@link MailAddress}.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 public class BasicMailAddress implements MailAddress {
-	
+
 	private String[] to;
 	private String[] cc;
 	private String[] bcc;
@@ -42,13 +40,15 @@ public class BasicMailAddress implements MailAddress {
 	/**
 	 * Construct with a single "to" address.
 	 * 
-	 * @param toName the address display name 
-	 * @param toAddress the email address
+	 * @param toName
+	 *        the address display name
+	 * @param toAddress
+	 *        the email address
 	 */
 	public BasicMailAddress(String toName, String toAddress) {
 		this.to = new String[] { formatMailAddress(toName, toAddress) };
 	}
-	
+
 	@Override
 	public String[] getBcc() {
 		return bcc == null ? null : bcc.clone();
@@ -77,31 +77,35 @@ public class BasicMailAddress implements MailAddress {
 	}
 
 	/**
-	 * @param to the to to set
+	 * @param to
+	 *        the to to set
 	 */
 	public void setTo(String[] to) {
 		this.to = to;
 	}
 
 	/**
-	 * @param cc the cc to set
+	 * @param cc
+	 *        the cc to set
 	 */
 	public void setCc(String[] cc) {
 		this.cc = cc;
 	}
 
 	/**
-	 * @param bcc the bcc to set
+	 * @param bcc
+	 *        the bcc to set
 	 */
 	public void setBcc(String[] bcc) {
 		this.bcc = bcc;
 	}
 
 	/**
-	 * @param from the from to set
+	 * @param from
+	 *        the from to set
 	 */
 	public void setFrom(String from) {
 		this.from = from;
 	}
-	
+
 }
