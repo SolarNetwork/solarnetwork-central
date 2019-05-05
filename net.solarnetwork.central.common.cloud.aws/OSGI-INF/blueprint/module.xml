@@ -14,7 +14,7 @@
 	<!-- Published Services -->
 	
 	<osgix:managed-service-factory factory-pid="net.solarnetwork.central.cloud.aws.biz.AwsVirtualMachineBiz"
-			autowire-on-update="true" update-method="updatesApplied">
+			autowire-on-update="true" update-method="configurationChanged">
 		<osgix:interfaces>
 			<beans:value>net.solarnetwork.central.cloud.biz.VirtualMachineBiz</beans:value>
 		</osgix:interfaces>
