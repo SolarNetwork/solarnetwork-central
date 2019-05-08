@@ -185,7 +185,7 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 		for ( prop in el ) {
 			c[prop] = 1;
 		}
-		agg_state = {d:el, c:c};
+		agg_state = {d:(el !== null ? el : {}), c:c};
 	} else if ( el ) {
 		addTo = require('util/addTo').default;
 		d = agg_state.d;
