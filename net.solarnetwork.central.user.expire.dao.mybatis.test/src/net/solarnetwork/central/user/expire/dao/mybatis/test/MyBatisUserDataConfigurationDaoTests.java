@@ -370,10 +370,10 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 				result.monthCount = 1;
 			}
 			if ( month.isBefore(currMonth) ) {
-				if ( !month.isAfter(result.expire.monthOfYear().roundFloorCopy()) ) {
+				result.monthCount++;
+				if ( month.isBefore(result.expire.monthOfYear().roundFloorCopy()) ) {
 					result.expiredMonthCount++;
 				}
-				result.monthCount++;
 				month = currMonth;
 			}
 		}
