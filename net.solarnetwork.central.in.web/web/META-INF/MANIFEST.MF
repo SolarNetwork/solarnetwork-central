@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central In Web
 Bundle-SymbolicName: net.solarnetwork.central.in.web
-Bundle-Version: 1.21.1
+Bundle-Version: 1.22.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: WEB-INF/classes/
@@ -65,19 +65,19 @@ Import-Package:
  org.springframework.core;version="[4.2,5.0)",
  org.springframework.http;version="[4.2,5.0)",
  org.springframework.http.converter.json;version="[4.2,5.0)",
- org.springframework.security.authentication;version="[4.1,5.0)",
- org.springframework.security.config;version="[4.1,5.0)",
- org.springframework.security.core;version="[4.1,5.0)",
- org.springframework.security.core.authority;version="[4.1,5.0)",
- org.springframework.security.core.context;version="[4.1,5.0)",
- org.springframework.security.core.userdetails;version="[4.1,5.0)",
- org.springframework.security.provisioning;version="[4.1,5.0)",
- org.springframework.security.web;version="[4.1,5.0)",
- org.springframework.security.web.authentication;version="[4.1,5.0)",
- org.springframework.security.web.authentication.preauth;version="[4.1,5.0)",
- org.springframework.security.web.context;version="[4.1,5.0)",
- org.springframework.security.web.savedrequest;version="[4.1,5.0)",
- org.springframework.security.web.util.matcher;version="[4.1,5.0)",
+ org.springframework.security.authentication;version="[4.2,4.3)",
+ org.springframework.security.config;version="[4.2,4.3)",
+ org.springframework.security.core;version="[4.2,4.3)",
+ org.springframework.security.core.authority;version="[4.2,4.3)",
+ org.springframework.security.core.context;version="[4.2,4.3)",
+ org.springframework.security.core.userdetails;version="[4.2,4.3)",
+ org.springframework.security.provisioning;version="[4.2,4.3)",
+ org.springframework.security.web;version="[4.2,4.3)",
+ org.springframework.security.web.authentication;version="[4.2,4.3)",
+ org.springframework.security.web.authentication.preauth;version="[4.2,4.3)",
+ org.springframework.security.web.context;version="[4.2,4.3)",
+ org.springframework.security.web.savedrequest;version="[4.2,4.3)",
+ org.springframework.security.web.util.matcher;version="[4.2,4.3)",
  org.springframework.stereotype;version="[4.2,5.0)",
  org.springframework.ui;version="[4.2,5.0)",
  org.springframework.util;version="[4.2,5.0)",
