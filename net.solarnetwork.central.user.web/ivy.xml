@@ -28,7 +28,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.billing" rev="[1.0.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.expire" rev="[1.0.0,2.0.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.export" rev="[1.1.0,2.0.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.nim" rev="[1.0.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.nim" rev="[1.1.0,2.0.0)"/>
 		<dependency org="javax.servlet" name="com.springsource.javax.servlet" rev="2.5.0" />
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>
 		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
