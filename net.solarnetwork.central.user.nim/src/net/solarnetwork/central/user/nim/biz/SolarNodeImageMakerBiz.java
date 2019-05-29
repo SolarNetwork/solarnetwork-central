@@ -23,14 +23,15 @@
 package net.solarnetwork.central.user.nim.biz;
 
 import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.domain.Identifiable;
 
 /**
  * API for integration with a SolarNode Image Maker instance.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface SolarNodeImageMakerBiz {
+public interface SolarNodeImageMakerBiz extends Identifiable {
 
 	/**
 	 * Get a NIM authorization key for a SolarNetwork auth token.
