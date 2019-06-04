@@ -26,8 +26,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.WebAsyncTask;
@@ -35,26 +37,27 @@ import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.nim.biz.SolarNodeImageMakerBiz;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
-import net.solarnetwork.util.OptionalService;
+import net.solarnetwork.util.OptionalServiceCollection;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * REST API for the SolarNode Image Maker app.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestController
 @RequestMapping(value = { "/sec/nim", "/v1/sec/user/nim" })
 public class SolarNodeImageMakerController extends WebServiceControllerSupport {
 
-	private final OptionalService<SolarNodeImageMakerBiz> nimBiz;
+	private final OptionalServiceCollection<SolarNodeImageMakerBiz> nimBizs;
 	private int timeoutSeconds = (int) TimeUnit.MINUTES.toSeconds(5L);
 
 	@Autowired
-	public SolarNodeImageMakerController(OptionalService<SolarNodeImageMakerBiz> nimBiz) {
+	public SolarNodeImageMakerController(
+			@Qualifier("nimBizList") OptionalServiceCollection<SolarNodeImageMakerBiz> nimBizs) {
 		super();
-		this.nimBiz = nimBiz;
+		this.nimBizs = nimBizs;
 	}
 
 	/**
@@ -66,11 +69,17 @@ public class SolarNodeImageMakerController extends WebServiceControllerSupport {
 	 * app, and so handles the request asynchronously.
 	 * </p>
 	 * 
+	 * @param req
+	 *        the request
+	 * @param architecture
+	 *        an optional architecture keyword to pick a specific
+	 *        {@code SolarNodeImageMakerBiz} instance with
 	 * @return a {@code Callable} for the authorization key to use with NIM
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/authorize")
 	@ResponseBody
-	public WebAsyncTask<Response<String>> getAuthorizationKey(HttpServletRequest req) {
+	public WebAsyncTask<Response<String>> getAuthorizationKey(HttpServletRequest req,
+			@RequestParam(name = "arch", required = false) String architecture) {
 		String reqUrl = req.getRequestURL().toString();
 		SecurityToken token = SecurityUtils.getCurrentToken();
 
@@ -78,7 +87,7 @@ public class SolarNodeImageMakerController extends WebServiceControllerSupport {
 
 			@Override
 			public Response<String> call() throws Exception {
-				SolarNodeImageMakerBiz biz = nimBiz.service();
+				SolarNodeImageMakerBiz biz = nimBiz(architecture);
 				if ( biz == null ) {
 					return new Response<String>(false, null, "NIM service not available", null);
 				}
@@ -88,6 +97,34 @@ public class SolarNodeImageMakerController extends WebServiceControllerSupport {
 		};
 
 		return new WebAsyncTask<>(TimeUnit.SECONDS.toMillis(timeoutSeconds), task);
+	}
+
+	/**
+	 * Get the first available {@link SolarNodeImageMakerBiz} that matches a
+	 * given architecture.
+	 * 
+	 * <p>
+	 * This compares {@code architecture} against
+	 * {@link SolarNodeImageMakerBiz#getUid()} values. If {@code architecture}
+	 * is {@literal null} then a {@literal null} or empty UID will be matched.
+	 * </p>
+	 * 
+	 * @param architecture
+	 *        the architecture to find
+	 * @return the matching biz, or {@litearl null}
+	 */
+	private SolarNodeImageMakerBiz nimBiz(String architecture) {
+		Iterable<SolarNodeImageMakerBiz> list = nimBizs != null ? nimBizs.services() : null;
+		if ( list != null ) {
+			for ( SolarNodeImageMakerBiz biz : list ) {
+				if ( architecture != null && architecture.equalsIgnoreCase(biz.getUid()) ) {
+					return biz;
+				} else if ( architecture == null && (biz.getUid() == null || biz.getUid().isEmpty()) ) {
+					return biz;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**

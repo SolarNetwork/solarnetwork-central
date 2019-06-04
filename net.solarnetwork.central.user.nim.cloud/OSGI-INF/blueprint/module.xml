@@ -27,19 +27,16 @@
 		
 	<!-- Published Services -->
 	
-	<service ref="nimBiz">
-		<interfaces>
-			<value>net.solarnetwork.central.user.nim.biz.SolarNodeImageMakerBiz</value>
-			<value>net.solarnetwork.central.biz.MaintenanceSubscriber</value>
-		</interfaces>
-	</service>
-	
-	<!-- Supporting Services -->
-
-	<bean id="nimBiz" class="net.solarnetwork.central.user.nim.cloud.CloudSolarNodeImageMakerBiz">
-		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.nim.cloud.CloudSolarNodeImageMakerBiz" autowire-on-update="true"/>
-		<argument ref="userBiz"/>
-		<argument ref="appsVirtualMachineBiz"/>
-	</bean>
+	<osgix:managed-service-factory factory-pid="net.solarnetwork.central.user.nim.cloud.CloudSolarNodeImageMakerBiz"
+			autowire-on-update="true">
+		<osgix:interfaces>
+			<beans:value>net.solarnetwork.central.user.nim.biz.SolarNodeImageMakerBiz</beans:value>
+			<beans:value>net.solarnetwork.central.biz.MaintenanceSubscriber</beans:value>
+		</osgix:interfaces>
+		<bean class="net.solarnetwork.central.user.nim.cloud.CloudSolarNodeImageMakerBiz">
+			<argument ref="userBiz"/>
+			<argument ref="appsVirtualMachineBiz"/>	
+		</bean>
+	</osgix:managed-service-factory>
 
 </blueprint>

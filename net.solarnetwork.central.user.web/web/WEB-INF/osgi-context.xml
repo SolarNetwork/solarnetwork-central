@@ -79,7 +79,7 @@
 		<property name="serviceFilter" value="(secured=true)"/>
 	</bean>
 
-	<bean id="nimBiz" class="net.solarnetwork.util.DynamicServiceTracker">
+	<bean id="nimBizList" class="net.solarnetwork.util.DynamicServiceTracker">
 		<property name="bundleContext" ref="bundleContext"/>
 		<property name="serviceClassName" value="net.solarnetwork.central.user.nim.biz.SolarNodeImageMakerBiz"/>
 	</bean>
