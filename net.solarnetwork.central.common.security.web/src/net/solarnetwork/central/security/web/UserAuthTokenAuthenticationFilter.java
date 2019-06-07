@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.security.web;
 
+import static net.solarnetwork.central.security.SecurityPolicy.INVERTED_PATH_MATCH_PREFIX;
 import java.io.IOException;
+import java.util.Set;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -34,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -42,6 +45,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.Assert;
+import org.springframework.util.PathMatcher;
 import org.springframework.web.filter.GenericFilterBean;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
@@ -64,7 +68,7 @@ import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
  * </p>
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class UserAuthTokenAuthenticationFilter extends GenericFilterBean implements Filter {
 
@@ -83,8 +87,34 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 	private UserDetailsService userDetailsService;
 	private long maxDateSkew = 15 * 60 * 1000; // 15 minutes default
 	private int maxRequestBodySize = 65535;
+	private final PathMatcher pathMatcher;
+	private final String pathMatcherPrefixStrip;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
+
+	/**
+	 * Default constructor.
+	 */
+	public UserAuthTokenAuthenticationFilter() {
+		this(null, null);
+	}
+
+	/**
+	 * Construct with a {@link PathMatcher}.
+	 * 
+	 * @param pathMatcher
+	 *        the matcher to use, or {@literal null} if not supported
+	 * @param pathMatcherPrefixStrip
+	 *        a path prefix to strip from
+	 *        {@link HttpServletRequest#getPathInfo()} before comparing paths,
+	 *        or {@literal null} to not strip any prefix
+	 * @since 1.5
+	 */
+	public UserAuthTokenAuthenticationFilter(PathMatcher pathMatcher, String pathMatcherPrefixStrip) {
+		super();
+		this.pathMatcher = pathMatcher;
+		this.pathMatcherPrefixStrip = pathMatcherPrefixStrip;
+	}
 
 	@Override
 	public void afterPropertiesSet() {
@@ -125,7 +155,11 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		if ( user instanceof SecurityToken ) {
 			SecurityPolicy policy = ((SecurityToken) user).getPolicy();
 			if ( policy != null && !policy.isValidAt(System.currentTimeMillis()) ) {
-				fail(request, response, new BadCredentialsException("Expired token"));
+				fail(request, response, new CredentialsExpiredException("Expired token"));
+				return;
+			}
+			if ( !isValidApiPath(request, policy) ) {
+				fail(request, response, new BadCredentialsException("Access denied"));
 				return;
 			}
 		}
@@ -150,6 +184,48 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 				.setAuthentication(createSuccessfulAuthentication(request, user));
 
 		chain.doFilter(request, response);
+	}
+
+	private boolean isValidApiPath(final HttpServletRequest request, final SecurityPolicy policy) {
+		Set<String> apiPaths = (policy != null ? policy.getApiPaths() : null);
+		if ( apiPaths == null || apiPaths.isEmpty() ) {
+			return true;
+		} else if ( request == null ) {
+			return false;
+		}
+		String path = request.getPathInfo();
+		if ( path == null ) {
+			return false;
+		}
+		if ( pathMatcherPrefixStrip != null && !pathMatcherPrefixStrip.isEmpty()
+				&& path.startsWith(pathMatcherPrefixStrip) ) {
+			path = path.substring(pathMatcherPrefixStrip.length());
+		}
+		for ( String allowedPath : apiPaths ) {
+			if ( allowedPath == null || allowedPath.isEmpty() ) {
+				continue;
+			}
+			final boolean inverted;
+			if ( allowedPath.startsWith(INVERTED_PATH_MATCH_PREFIX) ) {
+				inverted = true;
+				allowedPath = allowedPath.substring(INVERTED_PATH_MATCH_PREFIX.length());
+			} else {
+				inverted = false;
+			}
+			boolean match;
+			if ( pathMatcher != null ) {
+				match = pathMatcher.match(allowedPath, path);
+			} else {
+				match = allowedPath.equals(path);
+			}
+			if ( inverted ) {
+				match = !match;
+			}
+			if ( match ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private Authentication createSuccessfulAuthentication(HttpServletRequest request, UserDetails user) {

@@ -36,6 +36,14 @@ import net.solarnetwork.central.domain.LocationPrecision;
 public interface SecurityPolicy {
 
 	/**
+	 * A prefix that can be applied to some path patterns to logically invert
+	 * the match.
+	 *
+	 * @since 1.3
+	 */
+	String INVERTED_PATH_MATCH_PREFIX = "!";
+
+	/**
 	 * Get a set of node IDs this policy applies to.
 	 * 
 	 * @return set of node IDs, or {@code null}
@@ -97,7 +105,12 @@ public interface SecurityPolicy {
 	 * Get a set of API paths this policy allows.
 	 * 
 	 * <p>
-	 * API paths are URL paths that support Ant-style wildcards.
+	 * API paths are URL paths that support Ant-style patterns. If a path starts
+	 * with {@literal !} then the match is inverted, so that any path <b>not</b>
+	 * matching the pattern is allowed. Note that if <i>any</i> paths are
+	 * defined here, then <i>only</i> paths that match <i>some</i> pattern are
+	 * allowed. Or put another way, paths are denied <i>unless<i> some pattern
+	 * matches.
 	 * </p>
 	 * 
 	 * @return set of allowed API paths, or {@literal null} or empty set if all
