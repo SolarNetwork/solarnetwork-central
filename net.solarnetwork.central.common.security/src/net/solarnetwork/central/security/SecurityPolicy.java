@@ -31,7 +31,7 @@ import net.solarnetwork.central.domain.LocationPrecision;
  * API for a security policy, that is rules defining access permissions.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface SecurityPolicy {
 
@@ -92,6 +92,19 @@ public interface SecurityPolicy {
 	 * @since 1.1
 	 */
 	Set<String> getUserMetadataPaths();
+
+	/**
+	 * Get a set of API paths this policy allows.
+	 * 
+	 * <p>
+	 * API paths are URL paths that support Ant-style wildcards.
+	 * </p>
+	 * 
+	 * @return set of allowed API paths, or {@literal null} or empty set if all
+	 *         paths are allowed
+	 * @since 1.3
+	 */
+	Set<String> getApiPaths();
 
 	/**
 	 * Get a date after which a token is no longer valid.

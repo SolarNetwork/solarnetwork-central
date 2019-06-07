@@ -49,7 +49,7 @@ import net.solarnetwork.util.ObjectMapperFactoryBean;
  * Test cases for the {@link SecurityPolicySerializer} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SecurityPolicySerializerTests {
 
@@ -136,6 +136,14 @@ public class SecurityPolicySerializerTests {
 				.withUserMetadataPaths(new LinkedHashSet<String>(Arrays.asList("1", "2", "3"))).build();
 		String json = objectMapper.writeValueAsString(policy);
 		Assert.assertEquals("JSON", "{\"userMetadataPaths\":[\"1\",\"2\",\"3\"]}", json);
+	}
+
+	@Test
+	public void serializeApiPathsPolicy() throws JsonProcessingException {
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(new LinkedHashSet<String>(Arrays.asList("1", "2", "3"))).build();
+		String json = objectMapper.writeValueAsString(policy);
+		Assert.assertEquals("JSON", "{\"apiPaths\":[\"1\",\"2\",\"3\"]}", json);
 	}
 
 	@Test
