@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,7 +43,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for node instruction web service API.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Controller("v1nodeInstructionController")
 @RequestMapping(value = "/v1/sec/instr")
@@ -157,6 +158,29 @@ public class NodeInstructionController extends WebServiceControllerSupport {
 	}
 
 	/**
+	 * Enqueue a new instruction.
+	 * 
+	 * <p>
+	 * This API call exists to help with API path-based security policy
+	 * restrictions, to allow a policy to restrict which topics can be enqueued.
+	 * </p>
+	 * 
+	 * @param topic
+	 *        the instruction topic
+	 * @param input
+	 *        the other instruction data
+	 * @return the node instruction
+	 * @since 1.3
+	 */
+	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "!nodeIds")
+	@ResponseBody
+	public Response<NodeInstruction> queueInstruction(@PathVariable("topic") String topic,
+			NodeInstruction input) {
+		input.setTopic(topic);
+		return queueInstruction(input);
+	}
+
+	/**
 	 * Enqueue one instruction for multiple nodes.
 	 * 
 	 * @param nodeIds
@@ -172,6 +196,29 @@ public class NodeInstructionController extends WebServiceControllerSupport {
 			NodeInstruction input) {
 		List<NodeInstruction> results = instructorBiz.queueInstructions(nodeIds, input);
 		return response(results);
+	}
+
+	/**
+	 * Enqueue one instruction for multiple nodes.
+	 * 
+	 * <p>
+	 * This API call exists to help with API path-based security policy
+	 * restrictions, to allow a policy to restrict which topics can be enqueued.
+	 * </p>
+	 * 
+	 * @param nodeIds
+	 *        a set of node IDs to enqueue the instruction on
+	 * @param input
+	 *        the instruction data to add to the queue
+	 * @return the node instructions
+	 * @since 1.3
+	 */
+	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "nodeIds")
+	@ResponseBody
+	public Response<List<NodeInstruction>> queueInstruction(@PathVariable("topic") String topic,
+			@RequestParam("nodeIds") Set<Long> nodeIds, NodeInstruction input) {
+		input.setTopic(topic);
+		return queueInstruction(nodeIds, input);
 	}
 
 	/**
