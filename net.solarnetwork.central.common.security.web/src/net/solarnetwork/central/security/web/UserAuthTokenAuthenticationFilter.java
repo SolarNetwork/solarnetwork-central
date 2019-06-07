@@ -1,7 +1,7 @@
 /* ==================================================================
- * PBKDF2AuthenticationFilter.java - Nov 26, 2012 11:01:46 AM
+ * UserAuthTokenAuthenticationFilter.java - Nov 26, 2012 11:01:46 AM
  * 
- * Copyright 2007-2012 SolarNetwork.net Dev Team
+ * Copyright 2012 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
