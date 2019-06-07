@@ -29,15 +29,21 @@
 			<thead>
 				<tr>
 					<th><fmt:message key='auth-tokens.label.token'/></th>
+					<th><fmt:message key='auth-tokens.label.policy'/></th>
 					<th><fmt:message key='auth-tokens.label.created'/></th>
 					<th><fmt:message key='auth-tokens.label.status'/></th>
 					<th></th>
 				</tr>
 			</thead>
 			<tbody>
-				<c:forEach items="${userAuthTokens}" var="token">
+				<c:forEach items="${userAuthTokens}" var="token" >
 				<tr>
 					<td class="monospace"><c:out value='${token.authToken}'/></td>
+					<td>
+						<c:set var="token" value="${token}" scope="request"/>
+						<jsp:include page="token-policy.jsp"/>
+						<c:remove var="token" scope="request"/>
+					</td>
 					<td>
 						<joda:dateTimeZone value="UTC">
 							<joda:format value="${token.created}"
@@ -104,67 +110,13 @@
 					<tr>
 						<td class="monospace"><c:out value='${token.authToken}'/></td>
 						<td>
-							<c:if test="${not empty token.policy}">
-								<dl>
-									<c:if test="${not empty token.policy.notAfter}">
-										<dt><fmt:message key='auth-tokens.label.notAfter'/></dt>
-										<dd>
-											<joda:dateTimeZone value="UTC">
-												<joda:format value="${token.policy.notAfter}" pattern="dd MMM yyyy"/> UTC
-											</joda:dateTimeZone>
-										</dd>
-									</c:if>
-									<c:if test="${not empty token.policy.refreshAllowed and token.policy.refreshAllowed}">
-										<dt><fmt:message key='auth-tokens.label.refreshAllowed'/></dt>
-										<dd>
-											<fmt:message key='auth-tokens-policy-refreshAllowed.true.label'/>
-										</dd>
-									</c:if>
-									<c:if test="${fn:length(token.policy.nodeIds) gt 0}">
-										<dt><fmt:message key='auth-tokens.label.nodes'/></dt>
-										<dd>
-											<c:forEach items="${token.policy.nodeIds}" var="nodeId" varStatus="nodeIdStatus">
-												${nodeId}<c:if test="${not nodeIdStatus.last}">, </c:if>
-											</c:forEach>
-										</dd>
-									</c:if>
-									<c:if test="${fn:length(token.policy.sourceIds) gt 0}">
-										<dt><fmt:message key='auth-tokens.label.sources'/></dt>
-										<dd>
-											<c:forEach items="${token.policy.sourceIds}" var="sourceId" varStatus="sourceIdStatus">
-												${sourceId}<c:if test="${not sourceIdStatus.last}">, </c:if>
-											</c:forEach>
-										</dd>
-									</c:if>
-									<c:if test="${not empty token.policy.minAggregation}">
-										<dt><fmt:message key='auth-tokens.label.minAggregation'/></dt>
-										<dd>
-											<fmt:message key='aggregation.${token.policy.minAggregation}.label'/>
-										</dd>
-									</c:if>
-									<c:if test="${fn:length(token.policy.nodeMetadataPaths) gt 0}">
-										<dt><fmt:message key='auth-tokens.label.nodeMetadataPaths'/></dt>
-										<dd>
-											<c:forEach items="${token.policy.nodeMetadataPaths}" var="nodeMetadataPath" varStatus="nodeMetadataPathStatus">
-												${nodeMetadataPath}<c:if test="${not nodeMetadataPathStatus.last}">, </c:if>
-											</c:forEach>
-										</dd>
-									</c:if>
-									<c:if test="${fn:length(token.policy.userMetadataPaths) gt 0}">
-										<dt><fmt:message key='auth-tokens.label.userMetadataPaths'/></dt>
-										<dd>
-											<c:forEach items="${token.policy.userMetadataPaths}" var="userMetadataPath" varStatus="nodeMetadataPathStatus">
-												${userMetadataPath}<c:if test="${not userMetadataPathStatus.last}">, </c:if>
-											</c:forEach>
-										</dd>
-									</c:if>
-								</dl>
-							</c:if>
+							<c:set var="token" value="${token}" scope="request"/>
+							<jsp:include page="token-policy.jsp"/>
+							<c:remove var="token" scope="request"/>
 						</td>
 						<td>
 							<joda:dateTimeZone value="UTC">
-								<joda:format value="${token.created}"
-									 pattern="dd MMM yyyy"/> UTC
+								<joda:format value="${token.created}" pattern="dd MMM yyyy"/> UTC
 							</joda:dateTimeZone>
 						</td>
 						<td>
@@ -214,6 +166,12 @@
 		 	</div>
 		 	<div class="modal-body">
 		 		<p class="before"><fmt:message key='auth-tokens.user.create.intro'/></p>
+		 		<div class="before">
+		 			<label for="create-user-auth-token-policy-apipaths"><fmt:message key='auth-tokens.policy.apiPaths.label'/></label>
+		 			<textarea id="create-user-auth-token-policy-apipaths" class="form-control" name="apiPaths" rows="2" 
+		 				placeholder="<fmt:message key='auth-tokens.policy.apiPaths.placeholder'/>"></textarea>
+		 			<div class="help-block"><fmt:message key='auth-tokens.policy.apiPaths.caption'/></div>
+				</div>
 		 		<div class="after">
 		 			<p><fmt:message key='auth-tokens.created.intro'/></p>
 			 		<table class="table">
@@ -292,6 +250,7 @@
 						<li><a data-toggle="pill" href="#create-data-auth-token-tab-agg"><fmt:message key='auth-tokens.data.create.group.agg'/></a></li>
 						<li><a data-toggle="pill" href="#create-data-auth-token-tab-node-meta"><fmt:message key='auth-tokens.data.create.group.node-meta'/></a></li>
 						<li><a data-toggle="pill" href="#create-data-auth-token-tab-user-meta"><fmt:message key='auth-tokens.data.create.group.user-meta'/></a></li>
+						<li><a data-toggle="pill" href="#create-data-auth-token-tab-apipaths"><fmt:message key='auth-tokens.data.create.group.apipaths'/></a></li>
 					</ul>
 					<div class="tab-content before">
 						<div id="create-data-auth-token-tab-ids" class="tab-pane fade in active">
@@ -350,6 +309,12 @@
 				 			<textarea id="create-data-auth-token-policy-usermeta" class="form-control" name="userMetadataPaths" rows="2" 
 				 				placeholder="<fmt:message key='auth-tokens.policy.userMetadataPaths.placeholder'/>"></textarea>
 				 			<div class="help-block"><fmt:message key='auth-tokens.policy.userMetadataPaths.caption'/></div>
+						</div>
+						<div id="create-data-auth-token-tab-apipaths" class="tab-pane fade">
+				 			<label for="create-data-auth-token-policy-apipaths"><fmt:message key='auth-tokens.policy.apiPaths.label'/></label>
+				 			<textarea id="create-data-auth-token-policy-apipaths" class="form-control" name="apiPaths" rows="2" 
+				 				placeholder="<fmt:message key='auth-tokens.policy.apiPaths.placeholder'/>"></textarea>
+				 			<div class="help-block"><fmt:message key='auth-tokens.policy.apiPaths.caption'/></div>
 						</div>
 					</div>
 			 		<div class="after">

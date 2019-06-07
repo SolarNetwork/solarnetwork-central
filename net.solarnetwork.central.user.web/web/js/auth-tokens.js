@@ -23,6 +23,29 @@ $(document).ready(function() {
 
 	$('#create-user-auth-token').ajaxForm({
 		dataType: 'json',
+		beforeSerialize: function(form, options) {
+			var containerApiPathText = form.find('textarea[name=apiPaths]').val(),
+				containerApiPaths = (containerApiPathText ? containerApiPathText.split(/\s*,\s*/) : []);
+			activePolicy.apiPaths = containerApiPaths;
+		},
+		beforeSubmit: function(array, form, options) {
+			var apiPathsIdx;
+
+			apiPathsIdx = array.findIndex(function(obj) {
+				return obj.name === 'apiPaths';
+			});
+			if ( apiPathsIdx >= 0 ) {
+				array.splice(apiPathsIdx, 1);
+			}
+
+			activePolicy.apiPaths.forEach(function(path) {
+				array.push({
+					name : 'apiPath',
+					value : path,
+					type : 'text'
+				});
+			});
+		},
 		success: function(json, status, xhr, form) {
 			handleAuthTokenCreated(json, status, xhr, form);
 		},
@@ -144,11 +167,14 @@ $(document).ready(function() {
 				containerNodeMetadataPaths = (containerNodeMetadataText ? containerNodeMetadataText.split(/\s*,\s*/) : []),
 				containerUserMetadataText = form.find('textarea[name=userMetadataPaths]').val(),
 				containerUserMetadataPaths = (containerUserMetadataText ? containerUserMetadataText.split(/\s*,\s*/) : []),
+				containerApiPathText = form.find('textarea[name=apiPaths]').val(),
+				containerApiPaths = (containerApiPathText ? containerApiPathText.split(/\s*,\s*/) : []),
 				containerNotAfter = form.find('input[name=notAfter]').val(),
 				containerRefreshAllowed = form.find('input[name=refreshAllowed]:checked').val();
 			activePolicy.sourceIds = containerSourceIds;
 			activePolicy.nodeMetadataPaths = containerNodeMetadataPaths;
 			activePolicy.userMetadataPaths = containerUserMetadataPaths;
+			activePolicy.apiPaths = containerApiPaths;
 			activePolicy.refreshAllowed = (containerRefreshAllowed === 'true');
 			if ( containerNotAfter ) {
 				activePolicy.notAfter = containerNotAfter;
@@ -159,7 +185,8 @@ $(document).ready(function() {
 					return obj.name === 'sourceIds';
 				}),
 				nodeMetadataPathsIdx,
-				userMetadataPathsIdx;
+				userMetadataPathsIdx,
+				apiPathsIdx;
 
 			if ( sourceIdsIdx >= 0 ) {
 				array.splice(sourceIdsIdx, 1);
@@ -175,6 +202,12 @@ $(document).ready(function() {
 			});
 			if ( userMetadataPathsIdx >= 0 ) {
 				array.splice(userMetadataPathsIdx, 1);
+			}
+			apiPathsIdx = array.findIndex(function(obj) {
+				return obj.name === 'apiPaths';
+			});
+			if ( apiPathsIdx >= 0 ) {
+				array.splice(apiPathsIdx, 1);
 			}
 
 			activePolicy.sourceIds.forEach(function(sourceId) {
@@ -201,6 +234,13 @@ $(document).ready(function() {
 			activePolicy.userMetadataPaths.forEach(function(path) {
 				array.push({
 					name : 'userMetadataPath',
+					value : path,
+					type : 'text'
+				});
+			});
+			activePolicy.apiPaths.forEach(function(path) {
+				array.push({
+					name : 'apiPath',
 					value : path,
 					type : 'text'
 				});
