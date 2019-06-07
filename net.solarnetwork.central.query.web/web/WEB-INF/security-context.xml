@@ -49,6 +49,13 @@
 	<beans:bean id="authTokenEntryPoint" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint"/>
 
 	<beans:bean id="authTokenFilter" class="net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter">
+		<beans:constructor-arg>
+			<beans:bean class="org.springframework.util.AntPathMatcher" >
+				<beans:property name="cachePatterns" value="true"/>
+				<beans:property name="caseSensitive" value="true"/>
+			</beans:bean>
+		</beans:constructor-arg>
+		<beans:constructor-arg value="/v1/sec"/>
 		<beans:property name="userDetailsService" ref="jdbcUserService"/>
 		<beans:property name="authenticationEntryPoint" ref="authTokenEntryPoint"/>
 	</beans:bean>
