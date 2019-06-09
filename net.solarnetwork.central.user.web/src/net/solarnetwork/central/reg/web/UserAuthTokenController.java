@@ -38,7 +38,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserBiz;
@@ -51,7 +50,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for user authorization ticket management.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @GlobalServiceController
 @RequestMapping("/sec/auth-tokens")
@@ -99,10 +98,11 @@ public class UserAuthTokenController extends ControllerSupport {
 
 	@RequestMapping(value = "/generateUser", method = RequestMethod.POST)
 	@ResponseBody
-	public Response<UserAuthToken> generateUserToken() {
+	public Response<UserAuthToken> generateUserToken(
+			@RequestParam(value = "apiPath", required = false) Set<String> apiPaths) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId(), UserAuthTokenType.User,
-				(SecurityPolicy) null);
+				new BasicSecurityPolicy.Builder().withApiPaths(apiPaths).build());
 		return new Response<UserAuthToken>(token);
 	}
 
@@ -131,6 +131,7 @@ public class UserAuthTokenController extends ControllerSupport {
 			@RequestParam(value = "minAggregation", required = false) Aggregation minAggregation,
 			@RequestParam(value = "nodeMetadataPath", required = false) Set<String> nodeMetadataPaths,
 			@RequestParam(value = "userMetadataPath", required = false) Set<String> userMetadataPaths,
+			@RequestParam(value = "apiPath", required = false) Set<String> apiPaths,
 			@RequestParam(value = "notAfter", required = false) LocalDate notAfter,
 			@RequestParam(value = "refreshAllowed", required = false) Boolean refreshAllowed) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
@@ -141,8 +142,8 @@ public class UserAuthTokenController extends ControllerSupport {
 				UserAuthTokenType.ReadNodeData,
 				new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).withSourceIds(sourceIds)
 						.withMinAggregation(minAggregation).withNodeMetadataPaths(nodeMetadataPaths)
-						.withUserMetadataPaths(userMetadataPaths).withNotAfter(notAfterDate)
-						.withRefreshAllowed(refreshAllowed).build());
+						.withUserMetadataPaths(userMetadataPaths).withApiPaths(apiPaths)
+						.withNotAfter(notAfterDate).withRefreshAllowed(refreshAllowed).build());
 		return new Response<UserAuthToken>(token);
 	}
 

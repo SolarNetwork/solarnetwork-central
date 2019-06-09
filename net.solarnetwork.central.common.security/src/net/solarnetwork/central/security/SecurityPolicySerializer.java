@@ -37,7 +37,7 @@ import net.solarnetwork.central.domain.LocationPrecision;
  * JSON serializer for {@link SecurityPolicy}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SecurityPolicySerializer extends StdSerializer<SecurityPolicy> {
 
@@ -110,6 +110,15 @@ public class SecurityPolicySerializer extends StdSerializer<SecurityPolicy> {
 		if ( userMetadataPaths != null && !userMetadataPaths.isEmpty() ) {
 			generator.writeArrayFieldStart("userMetadataPaths");
 			for ( String path : userMetadataPaths ) {
+				generator.writeString(path);
+			}
+			generator.writeEndArray();
+		}
+
+		Set<String> apiPaths = policy.getApiPaths();
+		if ( apiPaths != null && !apiPaths.isEmpty() ) {
+			generator.writeArrayFieldStart("apiPaths");
+			for ( String path : apiPaths ) {
 				generator.writeString(path);
 			}
 			generator.writeEndArray();

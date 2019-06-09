@@ -41,7 +41,7 @@ import net.solarnetwork.central.security.BasicSecurityPolicy;
  * Test cases for the {@link BasicSecurityPolicy} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class BasicSecurityPolicyTests {
 
@@ -160,6 +160,35 @@ public class BasicSecurityPolicyTests {
 		try {
 			policy.getUserMetadataPaths().add("no");
 			Assert.fail("User metadata path set should be immutable");
+		} catch ( UnsupportedOperationException e ) {
+			// expected
+		}
+	}
+
+	@Test
+	public void buildApiPathsPolicy() {
+		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withApiPaths(paths).build();
+		Assert.assertEquals("Api path set", paths, policy.getApiPaths());
+		try {
+			policy.getApiPaths().add("no");
+			Assert.fail("Api path set should be immutable");
+		} catch ( UnsupportedOperationException e ) {
+			// expected
+		}
+	}
+
+	@Test
+	public void buildMergedApiPathsPolicy() {
+		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
+		Set<String> additionalPaths = new HashSet<String>(Arrays.asList("three", "four", "five"));
+		Set<String> merged = new HashSet<String>(Arrays.asList("one", "two", "three", "four", "five"));
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withApiPaths(paths)
+				.withMergedApiPaths(additionalPaths).build();
+		Assert.assertEquals("Api path set", merged, policy.getApiPaths());
+		try {
+			policy.getApiPaths().add("no");
+			Assert.fail("Api path set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}

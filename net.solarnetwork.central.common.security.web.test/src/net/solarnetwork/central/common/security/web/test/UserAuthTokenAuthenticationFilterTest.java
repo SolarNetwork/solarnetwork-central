@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.security.web.test;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import static net.solarnetwork.central.common.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV1Value;
 import static net.solarnetwork.central.common.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV2Value;
 import static org.easymock.EasyMock.anyObject;
@@ -36,6 +38,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.FilterChain;
@@ -54,6 +57,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint;
@@ -64,7 +68,7 @@ import net.solarnetwork.web.security.AuthenticationScheme;
  * Unit tests for the {@link UserAuthTokenAuthenticationFilter} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class UserAuthTokenAuthenticationFilterTest {
 
@@ -108,7 +112,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 		List<GrantedAuthority> roles = new ArrayList<GrantedAuthority>();
 		roles.add(new SimpleGrantedAuthority("ROLE_TEST"));
 		userDetails = new User(TEST_AUTH_TOKEN, TEST_PASSWORD, roles);
-		filter = new UserAuthTokenAuthenticationFilter();
+		filter = new UserAuthTokenAuthenticationFilter(new AntPathMatcher(), "/mock");
 		filter.setUserDetailsService(userDetailsService);
 		filter.setAuthenticationEntryPoint(entryPoint);
 	}
@@ -582,4 +586,181 @@ public class UserAuthTokenAuthenticationFilterTest {
 		verify(filterChain, userDetailsService);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Expired token");
 	}
+
+	@Test
+	public void apiPathV2SimpleAllowed() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(singleton("/path/**")).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		request.setPathInfo("/mock/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		validateAuthentication();
+	}
+
+	@Test
+	public void apiPathV2SimpleDenied() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withApiPaths(singleton("/foo/**"))
+				.build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		request.setPathInfo("/mock/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Access denied");
+	}
+
+	@Test
+	public void apiPathV2InvertedAllowed() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(singleton("!/foo/**")).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		request.setPathInfo("/mock/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		validateAuthentication();
+	}
+
+	@Test
+	public void apiPathV2InvertedDenied() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(singleton("!/path/**")).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
+		request.setPathInfo("/mock/path/here");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Access denied");
+	}
+
+	@Test
+	public void apiPathV2MultiWithInvertedAllowed() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(new LinkedHashSet<>(asList("/path/do/thing", "!/path/do/**"))).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/do/thing");
+		request.setPathInfo("/mock/path/do/thing");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		validateAuthentication();
+	}
+
+	@Test
+	public void apiPathV2MultiWithInvertedReversedOrderAllowed() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(new LinkedHashSet<>(asList("!/path/do/**", "/path/do/thing"))).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/do/thing");
+		request.setPathInfo("/mock/path/do/thing");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		validateAuthentication();
+	}
+
+	@Test
+	public void apiPathV2MultiWithInvertedDenied() throws ServletException, IOException {
+		// given
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withApiPaths(new LinkedHashSet<>(asList("!/path/do/**", "/path/do/thing"))).build();
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/do/other");
+		request.setPathInfo("/mock/path/do/other");
+		final Date now = new Date();
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(tokenDetails);
+
+		// when
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// then
+		verify(filterChain, userDetailsService);
+		validateUnauthorizedResponse(AuthenticationScheme.V2, "Access denied");
+	}
+
 }
