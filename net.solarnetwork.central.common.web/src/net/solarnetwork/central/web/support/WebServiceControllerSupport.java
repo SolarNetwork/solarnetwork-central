@@ -35,11 +35,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.dao.QueryTimeoutException;
+import org.springframework.dao.TransientDataAccessException;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.transaction.CannotCreateTransactionException;
+import org.springframework.transaction.TransactionException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
@@ -65,7 +71,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.13
+ * @version 1.14
  */
 public abstract class WebServiceControllerSupport {
 
@@ -308,6 +314,92 @@ public abstract class WebServiceControllerSupport {
 	}
 
 	/**
+	 * Handle transient data access exceptions.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param locale
+	 *        the request locale
+	 * @return the repsonse
+	 * @since 1.14
+	 */
+	@ExceptionHandler(TransientDataAccessException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
+	public Response<?> handleTransientDataAccessException(TransientDataAccessException e,
+			Locale locale) {
+		log.warn("TransientDataAccessException in {} controller", getClass().getSimpleName(), e);
+		String msg;
+		String msgKey;
+		String code;
+		if ( e instanceof TransientDataAccessResourceException ) {
+			msg = "Temporary connection failure";
+			msgKey = "error.dao.transientDataAccessResource";
+			code = "DAO.00203";
+		} else if ( e instanceof QueryTimeoutException ) {
+			msg = "Query timeout";
+			msgKey = "error.dao.queryTimeout";
+			code = "DAO.00202";
+		} else if ( e instanceof PessimisticLockingFailureException ) {
+			msg = "Lock failure";
+			msgKey = "error.dao.pessimisticLockingFailure";
+			code = "DAO.00201";
+		} else {
+			msg = "Data integrity violation";
+			msgKey = "error.dao.transientDataAccess";
+			code = "DAO.00200";
+		}
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return new Response<Object>(Boolean.FALSE, code, msg, null);
+	}
+
+	/**
+	 * Handle a transaction exception.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param locale
+	 *        the request locale
+	 * @return the response
+	 * @since 1.14
+	 */
+	@ExceptionHandler(TransactionException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
+	public Response<?> handleTransactionException(TransactionException e, Locale locale) {
+		log.warn("TransactionException in {} controller", getClass().getSimpleName(), e);
+		String msg;
+		String msgKey;
+		String code;
+		if ( e instanceof CannotCreateTransactionException ) {
+			Throwable t = e.getRootCause();
+			// look for Tomcat JDBC pool exhaustion without direct dependency on class
+			if ( t != null && "org.apache.tomcat.jdbc.pool.PoolExhaustedException"
+					.equals(t.getClass().getName()) ) {
+				msg = "Connection pool exhausted";
+				msgKey = "error.dao.poolExhausted";
+				code = "DAO.00302";
+			} else {
+				msg = "Cannot create transaction";
+				msgKey = "error.dao.cannotCreateTransaction";
+				code = "DAO.00301";
+			}
+		} else {
+			msg = "Transaction error";
+			msgKey = "error.dao.transaction";
+			code = "DAO.00300";
+		}
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return new Response<Object>(Boolean.FALSE, code, msg, null);
+	}
+
+	/**
 	 * Handle a {@link RuntimeException} not handled by other exception
 	 * handlers.
 	 * 
@@ -483,10 +575,21 @@ public abstract class WebServiceControllerSupport {
 		response.addHeader(HttpHeaders.VARY, HttpHeaders.ACCEPT);
 	}
 
+	/**
+	 * Get the message source.
+	 * 
+	 * @return the message source
+	 */
 	public MessageSource getMessageSource() {
 		return messageSource;
 	}
 
+	/**
+	 * Set a message source to use for resolving exception messages.
+	 * 
+	 * @param messageSource
+	 *        the message source
+	 */
 	public void setMessageSource(MessageSource messageSource) {
 		this.messageSource = messageSource;
 	}
