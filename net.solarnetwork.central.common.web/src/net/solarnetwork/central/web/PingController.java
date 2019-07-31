@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -35,15 +36,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import net.solarnetwork.central.domain.PingTest;
-import net.solarnetwork.central.domain.PingTestResult;
-import net.solarnetwork.central.domain.PingTestResultDisplay;
-import net.solarnetwork.web.domain.Response;
 import org.springframework.http.MediaType;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import net.solarnetwork.central.domain.PingTestResult;
+import net.solarnetwork.domain.PingTestResultDisplay;
+import net.solarnetwork.web.domain.Response;
 
 /**
  * A web controller for running a set of {@link PingTest} tests and returning
@@ -52,10 +52,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("deprecation")
 @RequestMapping("/ping")
 public class PingController {
 
-	private List<PingTest> pingTests = null;
+	private List<net.solarnetwork.central.domain.PingTest> pingTests = null;
+	private List<net.solarnetwork.domain.PingTest> tests = null;
 
 	private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(1);
 	private final ExecutorService executorService = new ThreadPoolExecutor(1, 1, 0,
@@ -64,17 +66,24 @@ public class PingController {
 	private PingResults executeTests() {
 		final Date now = new Date();
 		Map<String, PingTestResultDisplay> results = null;
+		List<net.solarnetwork.domain.PingTest> allTests = new ArrayList<>();
 		if ( pingTests != null ) {
-			results = new LinkedHashMap<String, PingTestResultDisplay>(pingTests.size());
-			for ( final PingTest t : pingTests ) {
+			allTests.addAll(pingTests);
+		}
+		if ( tests != null ) {
+			allTests.addAll(tests);
+		}
+		if ( !allTests.isEmpty() ) {
+			results = new LinkedHashMap<String, PingTestResultDisplay>(allTests.size());
+			for ( final net.solarnetwork.domain.PingTest t : allTests ) {
 				final Date start = new Date();
-				PingTestResult pingTestResult = null;
-				Future<PingTestResult> f = null;
+				net.solarnetwork.domain.PingTest.Result pingTestResult = null;
+				Future<net.solarnetwork.domain.PingTest.Result> f = null;
 				try {
-					f = executorService.submit(new Callable<PingTestResult>() {
+					f = executorService.submit(new Callable<net.solarnetwork.domain.PingTest.Result>() {
 
 						@Override
-						public PingTestResult call() throws Exception {
+						public net.solarnetwork.domain.PingTest.Result call() throws Exception {
 							return t.performPingTest();
 						}
 					});
@@ -119,7 +128,7 @@ public class PingController {
 	public static class PingResults {
 
 		private final Date date;
-		private final Map<String, PingTestResultDisplay> results;
+		private final Map<String, net.solarnetwork.domain.PingTestResultDisplay> results;
 		private final boolean allGood;
 
 		/**
@@ -179,12 +188,20 @@ public class PingController {
 
 	}
 
-	public List<PingTest> getPingTests() {
+	public List<net.solarnetwork.central.domain.PingTest> getPingTests() {
 		return pingTests;
 	}
 
-	public void setPingTests(List<PingTest> pingTests) {
+	public void setPingTests(List<net.solarnetwork.central.domain.PingTest> pingTests) {
 		this.pingTests = pingTests;
+	}
+
+	public List<net.solarnetwork.domain.PingTest> getTests() {
+		return tests;
+	}
+
+	public void setTests(List<net.solarnetwork.domain.PingTest> tests) {
+		this.tests = tests;
 	}
 
 }

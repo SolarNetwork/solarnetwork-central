@@ -40,19 +40,19 @@ import org.quartz.TriggerKey;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
-import net.solarnetwork.central.domain.PingTest;
-import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.scheduler.EventHandlerSupport;
 import net.solarnetwork.central.scheduler.JobInfo;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.central.scheduler.SchedulerStatus;
 import net.solarnetwork.central.scheduler.SchedulerUtils;
+import net.solarnetwork.domain.PingTest;
+import net.solarnetwork.domain.PingTestResult;
 
 /**
  * Manage the lifecycle of the Quartz Scheduler.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class SchedulerManager extends EventHandlerSupport
 		implements ApplicationListener<ContextRefreshedEvent>, EventHandler, PingTest,
@@ -235,7 +235,7 @@ public class SchedulerManager extends EventHandlerSupport
 	}
 
 	@Override
-	public PingTestResult performPingTest() throws Exception {
+	public PingTest.Result performPingTest() throws Exception {
 		Scheduler s = scheduler;
 		if ( s.isInStandbyMode() ) {
 			return new PingTestResult(false, "Scheduler is in standby mode");

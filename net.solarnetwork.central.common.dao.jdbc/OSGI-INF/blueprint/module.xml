@@ -63,8 +63,6 @@
 		</service-properties>
 	</service>
 	
-	<service ref="pingTest" interface="net.solarnetwork.central.domain.PingTest"/>
-	
 	<!-- Supporting Services -->
 
 	<ctx:property-placeholder properties-ref="central.dao.cfg"/>
@@ -109,11 +107,6 @@
 	<!-- PlatformTransactionManager: local JDBC transaction manager. -->
 	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
 		<property name="dataSource" ref="dataSource"/>
-	</bean>
-	
-	<bean id="pingTest" class="net.solarnetwork.central.common.dao.jdbc.DataSourcePingTest">
-		<argument ref="dataSource"/>
-		<argument value="#{poolProperties.validationQuery}"/>
 	</bean>
 
 </blueprint>

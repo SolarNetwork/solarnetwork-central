@@ -38,8 +38,10 @@ import net.solarnetwork.central.domain.PingTestResult;
  * {@link java.sql.Timestamp} as the first column of the query result.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
+ * @deprecated use {@link net.solarnetwork.dao.jdbc.DataSourcePingTest} instead
  */
+@Deprecated
 public class DataSourcePingTest implements PingTest {
 
 	private final DataSource dataSource;

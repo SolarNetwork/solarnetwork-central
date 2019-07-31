@@ -22,22 +22,23 @@
 
 package net.solarnetwork.central.domain;
 
-import org.omg.CORBA.Any;
-
 /**
  * API for a service that be used to verify the status of some specific part of
  * the SolarNetwork system.
  * 
+ * @deprecated use {@link net.solarnetwork.domain.PingTest} instead
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface PingTest {
+@Deprecated
+public interface PingTest extends net.solarnetwork.domain.PingTest {
 
 	/**
 	 * Get some globally-unique ID for this test instance.
 	 * 
 	 * @return The globally-unique ID of this test instance.
 	 */
+	@Override
 	String getPingTestId();
 
 	/**
@@ -45,6 +46,7 @@ public interface PingTest {
 	 * 
 	 * @return The name of the test.
 	 */
+	@Override
 	String getPingTestName();
 
 	/**
@@ -53,15 +55,17 @@ public interface PingTest {
 	 * 
 	 * @return The maximum execution milliseconds.
 	 */
+	@Override
 	long getPingTestMaximumExecutionMilliseconds();
 
 	/**
 	 * Perform the test, and return the results of the test.
 	 * 
-	 * @throws Any
-	 *         exception.
+	 * @throws Exception
+	 *         if any error occurs
 	 * @return The test results.
 	 */
+	@Override
 	PingTestResult performPingTest() throws Exception;
 
 }
