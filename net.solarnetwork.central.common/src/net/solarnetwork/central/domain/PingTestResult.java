@@ -28,13 +28,9 @@ import java.util.Map;
  * A results object for a single {@link PingTest} result.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class PingTestResult {
-
-	private final boolean success;
-	private final String message;
-	private final Map<String, ?> properties;
+public class PingTestResult extends net.solarnetwork.domain.PingTestResult {
 
 	/**
 	 * Construct values.
@@ -47,10 +43,7 @@ public class PingTestResult {
 	 *        Optional properties.
 	 */
 	public PingTestResult(boolean success, String message, Map<String, ?> properties) {
-		super();
-		this.success = success;
-		this.message = message;
-		this.properties = properties;
+		super(success, message, properties);
 	}
 
 	/**
@@ -65,16 +58,19 @@ public class PingTestResult {
 		this(success, message, null);
 	}
 
+	@Override
 	public String getMessage() {
-		return message;
+		return super.getMessage();
 	}
 
+	@Override
 	public boolean isSuccess() {
-		return success;
+		return super.isSuccess();
 	}
 
+	@Override
 	public Map<String, ?> getProperties() {
-		return properties;
+		return super.getProperties();
 	}
 
 }

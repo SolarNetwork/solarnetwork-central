@@ -2,14 +2,14 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Common Central
 Bundle-SymbolicName: net.solarnetwork.central.common
-Bundle-Version: 1.46.0
+Bundle-Version: 1.47.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: 
  net.solarnetwork.central;version="1.4.0",
  net.solarnetwork.central.biz;version="1.2.0",
  net.solarnetwork.central.dao;version="1.18.0",
- net.solarnetwork.central.domain;version="1.29.0",
+ net.solarnetwork.central.domain;version="1.30.0",
  net.solarnetwork.central.scheduler;version="1.5.1",
  net.solarnetwork.central.support;version="1.20.0"
 Import-Package: 
@@ -29,7 +29,7 @@ Import-Package:
  javax.validation.bootstrap;version="[1.1.0,2.0.0)";resolution:=optional,
  javax.validation.executable;version="[1.1.0,2.0.0)";resolution:=optional,
  javax.validation.spi;version="[1.1.0,2.0.0)";resolution:=optional,
- net.solarnetwork.domain;version="1.7.0",
+ net.solarnetwork.domain;version="1.17.0",
  net.solarnetwork.util;version="1.27.0",
  org.ehcache.config;resolution:=optional,
  org.ehcache.config.builders;resolution:=optional,
