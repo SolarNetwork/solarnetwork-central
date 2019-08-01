@@ -17,96 +17,29 @@
 		http://www.springframework.org/schema/tx
 		http://www.springframework.org/schema/tx/spring-tx-4.2.xsd">
 
-	<!-- Configuration -->
-	
-	<osgix:cm-properties id="central.dao.cfg" persistent-id="net.solarnetwork.central.dao.jdbc">
-		<beans:prop key="jdbc.driver">org.postgresql.Driver</beans:prop>
-		<beans:prop key="jdbc.url">jdbc:postgresql://localhost:5432/solarnetwork</beans:prop>
-		<beans:prop key="jdbc.user">solarnet</beans:prop>
-		<beans:prop key="jdbc.pass">solarnet</beans:prop>
-		<beans:prop key="jdbc.pool.initialSize">1</beans:prop>
-		<beans:prop key="jdbc.pool.minIdle">1</beans:prop>
-		<beans:prop key="jdbc.pool.maxIdle">4</beans:prop>
-		<beans:prop key="jdbc.pool.maxActive">10</beans:prop>
-		<beans:prop key="jdbc.pool.maxAge">86400000</beans:prop>
-		<beans:prop key="jdbc.pool.maxWait">20000</beans:prop>
-		<beans:prop key="jdbc.pool.removeAbandonedTimeout">600</beans:prop>
-		<beans:prop key="jdbc.pool.abandonWhenPercentageFull">70</beans:prop>
-		<beans:prop key="jdbc.pool.timeBetweenEvictionRunsMillis">120000</beans:prop>
-		<beans:prop key="jdbc.pool.minEvictableIdleTimeMillis">300000</beans:prop>
-		<beans:prop key="jdbc.pool.validationQuery">SELECT CURRENT_TIMESTAMP</beans:prop>
-	</osgix:cm-properties>
-
 	<!-- Service References -->
 	
-	<reference id="dataSourceFactory"
-		interface="org.osgi.service.jdbc.DataSourceFactory"
-        filter="(osgi.jdbc.driver.class=${jdbc.driver})"/>
+	<reference id="dataSource" interface="javax.sql.DataSource" filter="(db=central)"/>
 	
 	<!-- Published Services -->
 	
-	<service ref="dataSource" interface="javax.sql.DataSource">
+	<service interface="org.springframework.jdbc.core.JdbcOperations">
 		<service-properties>
 			<entry key="db" value="central"/>
 		</service-properties>
+		<bean class="org.springframework.jdbc.core.JdbcTemplate">
+			<property name="dataSource" ref="dataSource"/>
+		</bean>
 	</service>
-	
-	<service ref="jdbcTemplate" interface="org.springframework.jdbc.core.JdbcOperations">
+
+	<service interface="org.springframework.transaction.PlatformTransactionManager">
 		<service-properties>
 			<entry key="db" value="central"/>
 		</service-properties>
+		<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+			<property name="dataSource" ref="dataSource"/>
+		</bean>
 	</service>
-
-	<service ref="txManager" interface="org.springframework.transaction.PlatformTransactionManager">
-		<service-properties>
-			<entry key="db" value="central"/>
-		</service-properties>
-	</service>
-	
-	<!-- Supporting Services -->
-
-	<ctx:property-placeholder properties-ref="central.dao.cfg"/>
-	
-	<bean id="poolProperties" class="org.apache.tomcat.jdbc.pool.PoolProperties">
-		<property name="jmxEnabled" value="true"/>
-		<property name="testWhileIdle" value="true"/>
-		<property name="testOnBorrow" value="true"/>
-		<property name="validationQuery" value="${jdbc.pool.validationQuery}"/>
-		<property name="testOnReturn" value="false"/>
-		<property name="validationInterval" value="30000"/>
-		<property name="timeBetweenEvictionRunsMillis" value="${jdbc.pool.timeBetweenEvictionRunsMillis}"/>
-		<property name="maxActive" value="${jdbc.pool.maxActive}"/>
-		<property name="initialSize" value="${jdbc.pool.initialSize}"/>
-		<property name="maxWait" value="${jdbc.pool.maxWait}"/>
-		<property name="removeAbandonedTimeout" value="${jdbc.pool.removeAbandonedTimeout}"/>
-		<property name="abandonWhenPercentageFull" value="${jdbc.pool.abandonWhenPercentageFull}"/>
-		<property name="minEvictableIdleTimeMillis" value="${jdbc.pool.minEvictableIdleTimeMillis}"/>
-		<property name="minIdle" value="${jdbc.pool.minIdle}"/>
-		<property name="maxIdle" value="${jdbc.pool.maxIdle}"/>
-		<property name="maxAge" value="${jdbc.pool.maxAge}"/>
-		<property name="logAbandoned" value="false"/>
-		<property name="jdbcInterceptors" value="ConnectionState;StatementFinalizer;ResetAbandonedTimer"/>
-	</bean>
-
-	<bean id="dataSource" class="net.solarnetwork.dao.jdbc.TomcatJdbcPoolDataSourceFactoryBean">
-		<property name="poolProperties" ref="poolProperties"/>
-		<property name="dataSourceFactory" ref="dataSourceFactory"/>
-		<property name="dataSourceProperties">
-			<props>
-				<prop key="url">${jdbc.url}</prop>
-				<prop key="user">${jdbc.user}</prop>
-				<prop key="password">${jdbc.pass}</prop>
-			</props>
-		</property>
-	</bean>
-	
-	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
-		<property name="dataSource" ref="dataSource"/>
-	</bean>
-	
-	<!-- PlatformTransactionManager: local JDBC transaction manager. -->
-	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-		<property name="dataSource" ref="dataSource"/>
-	</bean>
+		
 
 </blueprint>
