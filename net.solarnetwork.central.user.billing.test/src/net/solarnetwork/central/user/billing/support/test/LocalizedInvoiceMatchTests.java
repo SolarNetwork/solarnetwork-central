@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.support.test;
 
 import static org.easymock.EasyMock.expect;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
@@ -109,8 +110,10 @@ public class LocalizedInvoiceMatchTests {
 		assertThat("Balance", locMatch.getBalance(), equalTo(TEST_BALANCE));
 		assertThat("Currency code", locMatch.getCurrencyCode(), equalTo(TEST_CURRENCY_CODE));
 		assertThat("Time zone", locMatch.getTimeZoneId(), equalTo(TEST_TIME_ZONE));
-		assertThat("Localized amount", locMatch.getLocalizedAmount(), equalTo("2,34 NZD"));
-		assertThat("Localized balance", locMatch.getLocalizedBalance(), equalTo("1,23 NZD"));
+		assertThat("Localized amount", locMatch.getLocalizedAmount(),
+				anyOf(equalTo("2,34 NZD"), equalTo("2,34 NZ$")));
+		assertThat("Localized balance", locMatch.getLocalizedBalance(),
+				anyOf(equalTo("1,23 NZD"), equalTo("1,23 NZ$")));
 		assertThat("Localized date", locMatch.getLocalizedDate(), equalTo("Sonntag, 1. Januar 2017"));
 	}
 
