@@ -19,6 +19,7 @@
 		<dependency org="net.solarnetwork.central.test" name="net.solarnetwork.central.test" rev="[1.7.0,2.0.0)"/>
 		
 		<!-- Testing support -->
+		<dependency org="javax.xml.bind" name="jaxb-api" rev="2.2.12"/>
 		
 		<!-- SolarNetwork -->
 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.export.standard" rev="1.0.0"/>
