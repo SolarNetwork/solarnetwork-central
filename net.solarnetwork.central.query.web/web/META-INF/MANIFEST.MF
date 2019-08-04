@@ -34,7 +34,7 @@ Import-Package:
  net.solarnetwork.central.user.biz;version="1.0.0",
  net.solarnetwork.central.user.domain;version="1.13.0",
  net.solarnetwork.central.user.support;version="1.11.0",
- net.solarnetwork.central.web;version="1.3.0",
+ net.solarnetwork.central.web;version="1.4.0",
  net.solarnetwork.central.web.domain;version="1.0.0",
  net.solarnetwork.central.web.support;version="1.8.0",
  net.solarnetwork.domain;version="1.17.0",
