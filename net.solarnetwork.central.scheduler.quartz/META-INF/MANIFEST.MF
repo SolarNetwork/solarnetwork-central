@@ -2,17 +2,18 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Central Scheduler
 Bundle-SymbolicName: net.solarnetwork.central.scheduler.quartz
-Bundle-Version: 1.6.1
+Bundle-Version: 1.7.0
 Bundle-Vendor: SolarNetwork
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
  com.cronutils.descriptor;version="[7.0,8.0)",
  com.cronutils.model;version="[7.0,8.0)",
  com.cronutils.model.definition;version="[7.0,8.0)",
  com.cronutils.parser;version="[7.0,8.0)",
  javax.sql,
- net.solarnetwork.central.domain;version="1.18.0",
+ net.solarnetwork.central.domain;version="1.30.0",
  net.solarnetwork.central.scheduler;version="1.5.0",
+ net.solarnetwork.domain;version="1.17.0",
  org.apache.commons.logging;version="[1.1,2.0)",
  org.eclipse.gemini.blueprint.compendium.cm;version="[2.0,3.0)",
  org.joda.time;version="[2.4,3.0)",

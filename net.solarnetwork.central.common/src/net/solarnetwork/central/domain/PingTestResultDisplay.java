@@ -47,6 +47,7 @@ public class PingTestResultDisplay extends PingTestResult {
 	 * @param start
 	 *        The time the test started.
 	 */
+	@SuppressWarnings("deprecation")
 	public PingTestResultDisplay(PingTest test, PingTestResult result, Date start) {
 		super(result.isSuccess(), result.getMessage(), result.getProperties());
 		this.pingTestId = test.getPingTestId();

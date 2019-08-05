@@ -38,6 +38,12 @@
 		class="net.solarnetwork.util.PropertySerializerRegistrar">
 		<property name="classSerializers">
 			<map>
+				<entry key="java.util.Date">
+					<bean class="net.solarnetwork.util.JodaDatePropertySerializer">
+						<constructor-arg value="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"/>
+						<constructor-arg ref="UTC"/>
+					</bean>
+				</entry>
 				<entry key="org.joda.time.DateTime">
 					<bean class="net.solarnetwork.util.JodaDatePropertySerializer">
 						<constructor-arg value="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"/>
