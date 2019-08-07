@@ -2,18 +2,19 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Query AOP
 Bundle-SymbolicName: net.solarnetwork.central.query.aop
-Bundle-Version: 1.11.0
+Bundle-Version: 1.12.0
 Bundle-Vendor: SolarNetwork
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .,build/eclipse/
 Import-Package: 
  net.solarnetwork.central.dao;version="1.12.0",
- net.solarnetwork.central.datum.domain;version="1.6.1",
- net.solarnetwork.central.domain;version="1.12.0",
+ net.solarnetwork.central.datum.domain;version="1.31.0",
+ net.solarnetwork.central.domain;version="1.31.0",
  net.solarnetwork.central.query.biz;version="2.6.0",
  net.solarnetwork.central.query.domain;version="1.2.0",
  net.solarnetwork.central.query.support;version="1.10.0",
  net.solarnetwork.central.security;version="1.10.0",
+ net.solarnetwork.central.support;version="1.21.0",
  net.solarnetwork.central.user.biz;version="1.0.0",
  net.solarnetwork.central.user.dao;version="1.0.0",
  net.solarnetwork.central.user.domain;version="1.0.0",

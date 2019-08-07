@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
@@ -42,6 +43,7 @@ import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.support.FilterSupport;
 import net.solarnetwork.central.support.MutableSortDescriptor;
 import net.solarnetwork.util.StringUtils;
 
@@ -50,19 +52,20 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.13
+ * @version 1.14
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"combiningType", "combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "rollupTypes",
-		"rollupTypeKeys", "tags", "dataPath", "mostRecent", "startDate", "endDate", "localStartDate",
-		"localEndDate", "max", "offset", "sorts", "type", "location" })
-public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
+		"rollupTypeKeys", "tags", "metadataFilter", "dataPath", "mostRecent", "startDate", "endDate",
+		"localStartDate", "localEndDate", "max", "offset", "sorts", "type", "location",
+		"withoutTotalResultsCount" })
+public class DatumFilterCommand extends FilterSupport implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
 		GeneralNodeDatumAuxiliaryFilter, GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter,
 		Serializable {
 
-	private static final long serialVersionUID = -1991217374281570027L;
+	private static final long serialVersionUID = -2228844248261809839L;
 
 	private final SolarLocation location;
 	private DateTime startDate;
@@ -76,11 +79,6 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	private Integer max;
 	private String dataPath; // bean path expression to a data value, e.g. "i.watts"
 
-	private Long[] locationIds;
-	private Long[] nodeIds;
-	private String[] sourceIds;
-	private Long[] userIds;
-	private String[] tags;
 	private Aggregation aggregation;
 	private boolean withoutTotalResultsCount;
 
@@ -181,6 +179,9 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 
 	@Override
 	public String toString() {
+		final Long[] nodeIds = getNodeIds();
+		final Long[] locationIds = getLocationIds();
+		final String[] sourceIds = getSourceIds();
 		return "DatumFilterCommand{aggregation=" + aggregation + ",mostRecent=" + mostRecent
 				+ ",startDate=" + startDate + ",endDate=" + endDate + ",withoutTotalResultsCount="
 				+ withoutTotalResultsCount
@@ -194,7 +195,8 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	@JsonIgnore
 	@Override
 	public Map<String, ?> getFilter() {
-		Map<String, Object> filter = new LinkedHashMap<String, Object>();
+		@SuppressWarnings("unchecked")
+		Map<String, Object> filter = (Map<String, Object>) super.getFilter();
 		if ( location.getId() != null ) {
 			filter.put("locationId", location.getId());
 		}
@@ -212,12 +214,6 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		}
 		if ( location != null ) {
 			filter.putAll(location.getFilter());
-		}
-		if ( nodeIds != null ) {
-			filter.put("nodeIds", nodeIds);
-		}
-		if ( sourceIds != null ) {
-			filter.put("sourceIds", sourceIds);
 		}
 		if ( startDate != null ) {
 			filter.put("start", startDate);
@@ -243,21 +239,6 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	@JsonIgnore
 	public boolean isHasLocationCriteria() {
 		return (location != null && location.getFilter().size() > 0);
-	}
-
-	public void setLocationId(Long id) {
-		location.setId(id);
-	}
-
-	@Override
-	public Long getLocationId() {
-		if ( location.getId() != null ) {
-			return location.getId();
-		}
-		if ( locationIds != null && locationIds.length > 0 ) {
-			return locationIds[0];
-		}
-		return null;
 	}
 
 	@Override
@@ -342,112 +323,6 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		this.max = max;
 	}
 
-	/**
-	 * Set a single node ID.
-	 * 
-	 * <p>
-	 * This is a convenience method for requests that use a single node ID at a
-	 * time. The node ID is still stored on the {@code nodeIds} array, just as
-	 * the first value. Calling this method replaces any existing
-	 * {@code nodeIds} value with a new array containing just the ID passed into
-	 * this method.
-	 * </p>
-	 * 
-	 * @param nodeId
-	 *        the ID of the node
-	 */
-	@JsonSetter
-	public void setNodeId(Long nodeId) {
-		this.nodeIds = new Long[] { nodeId };
-	}
-
-	/**
-	 * Get the first node ID.
-	 * 
-	 * <p>
-	 * This returns the first available node ID from the {@code nodeIds} array,
-	 * or <em>null</em> if not available.
-	 * </p>
-	 * 
-	 * @return the first node ID
-	 */
-	@JsonIgnore
-	@Override
-	public Long getNodeId() {
-		return this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0];
-	}
-
-	/**
-	 * Set a single source ID.
-	 * 
-	 * <p>
-	 * This is a convenience method for requests that use a single source ID at
-	 * a time. The source ID is still stored on the {@code sourceIds} array,
-	 * just as the first value. Calling this method replaces any existing
-	 * {@code sourceIds} value with a new array containing just the ID passed
-	 * into this method.
-	 * </p>
-	 * 
-	 * @param nodeId
-	 *        the ID of the node
-	 */
-	@JsonSetter
-	public void setSourceId(String sourceId) {
-		if ( sourceId == null ) {
-			this.sourceIds = null;
-		} else {
-			this.sourceIds = new String[] { sourceId };
-		}
-	}
-
-	/**
-	 * Get the first source ID.
-	 * 
-	 * <p>
-	 * This returns the first available source ID from the {@code sourceIds}
-	 * array, or <em>null</em> if not available.
-	 * </p>
-	 * 
-	 * @return the first node ID
-	 */
-	@JsonIgnore
-	@Override
-	public String getSourceId() {
-		return this.sourceIds == null || this.sourceIds.length < 1 ? null : this.sourceIds[0];
-	}
-
-	@Override
-	public Long[] getNodeIds() {
-		return nodeIds;
-	}
-
-	public void setNodeIds(Long[] nodeIds) {
-		this.nodeIds = nodeIds;
-	}
-
-	@Override
-	public String[] getSourceIds() {
-		return sourceIds;
-	}
-
-	public void setSourceIds(String[] sourceIds) {
-		this.sourceIds = sourceIds;
-	}
-
-	@Override
-	public String getTag() {
-		return this.tags == null || this.tags.length < 1 ? null : this.tags[0];
-	}
-
-	@Override
-	public String[] getTags() {
-		return tags;
-	}
-
-	public void setTags(String[] tags) {
-		this.tags = tags;
-	}
-
 	@Override
 	public Aggregation getAggregation() {
 		return aggregation;
@@ -529,8 +404,28 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		return path.split("\\.");
 	}
 
+	@JsonSetter
+	@Override
+	public void setLocationId(Long id) {
+		location.setId(id);
+	}
+
+	@JsonIgnore
+	@Override
+	public Long getLocationId() {
+		if ( location.getId() != null ) {
+			return location.getId();
+		}
+		final Long[] locationIds = getLocationIds();
+		if ( locationIds != null && locationIds.length > 0 ) {
+			return locationIds[0];
+		}
+		return null;
+	}
+
 	@Override
 	public Long[] getLocationIds() {
+		final Long[] locationIds = super.getLocationIds();
 		if ( locationIds != null ) {
 			return locationIds;
 		}
@@ -538,54 +433,6 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 			return new Long[] { location.getId() };
 		}
 		return null;
-	}
-
-	public void setLocationIds(Long[] locationIds) {
-		this.locationIds = locationIds;
-	}
-
-	/**
-	 * Set a single user ID.
-	 * 
-	 * <p>
-	 * This is a convenience method for requests that use a single user ID at a
-	 * time. The user ID is still stored on the {@code userIds} array, just as
-	 * the first value. Calling this method replaces any existing
-	 * {@code userIds} value with a new array containing just the ID passed into
-	 * this method.
-	 * </p>
-	 * 
-	 * @param userId
-	 *        the ID of the user
-	 */
-	@JsonSetter
-	public void setUserId(Long userId) {
-		this.userIds = new Long[] { userId };
-	}
-
-	/**
-	 * Get the first user ID.
-	 * 
-	 * <p>
-	 * This returns the first available user ID from the {@code userIds} array,
-	 * or <em>null</em> if not available.
-	 * </p>
-	 * 
-	 * @return the first user ID
-	 */
-	@JsonIgnore
-	@Override
-	public Long getUserId() {
-		return this.userIds == null || this.userIds.length < 1 ? null : this.userIds[0];
-	}
-
-	@Override
-	public Long[] getUserIds() {
-		return userIds;
-	}
-
-	public void setUserIds(Long[] userIds) {
-		this.userIds = userIds;
 	}
 
 	@Override
@@ -855,28 +702,11 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((aggregation == null) ? 0 : aggregation.hashCode());
-		result = prime * result + ((dataPath == null) ? 0 : dataPath.hashCode());
-		result = prime * result + ((endDate == null) ? 0 : endDate.hashCode());
-		result = prime * result + ((localEndDate == null) ? 0 : localEndDate.hashCode());
-		result = prime * result + ((location == null) ? 0 : location.hashCode());
-		result = prime * result + Arrays.hashCode(locationIds);
-		result = prime * result + ((max == null) ? 0 : max.hashCode());
-		result = prime * result + (mostRecent ? 1231 : 1237);
-		result = prime * result + Arrays.hashCode(nodeIds);
-		result = prime * result + ((offset == null) ? 0 : offset.hashCode());
-		result = prime * result + ((sorts == null) ? 0 : sorts.hashCode());
-		result = prime * result + Arrays.hashCode(sourceIds);
-		result = prime * result + ((startDate == null) ? 0 : startDate.hashCode());
-		result = prime * result + ((localStartDate == null) ? 0 : localStartDate.hashCode());
-		result = prime * result + Arrays.hashCode(tags);
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
-		result = prime * result + Arrays.hashCode(userIds);
-		result = prime * result + ((combiningType == null) ? 0 : combiningType.hashCode());
-		result = prime * result + ((nodeIdMappings == null) ? 0 : nodeIdMappings.hashCode());
-		result = prime * result + ((sourceIdMappings == null) ? 0 : sourceIdMappings.hashCode());
+		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(datumRollupTypes);
+		result = prime * result + Objects.hash(aggregation, combiningType, dataPath, endDate,
+				localEndDate, localStartDate, location, max, mostRecent, nodeIdMappings, offset, sorts,
+				sourceIdMappings, startDate, type, withoutTotalResultsCount);
 		return result;
 	}
 
@@ -890,125 +720,25 @@ public class DatumFilterCommand implements LocationDatumFilter, NodeDatumFilter,
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
+		if ( !super.equals(obj) ) {
 			return false;
 		}
 		if ( !(obj instanceof DatumFilterCommand) ) {
 			return false;
 		}
 		DatumFilterCommand other = (DatumFilterCommand) obj;
-		if ( aggregation != other.aggregation ) {
-			return false;
-		}
-		if ( dataPath == null ) {
-			if ( other.dataPath != null ) {
-				return false;
-			}
-		} else if ( !dataPath.equals(other.dataPath) ) {
-			return false;
-		}
-		if ( endDate == null ) {
-			if ( other.endDate != null ) {
-				return false;
-			}
-		} else if ( !endDate.isEqual(other.endDate) ) {
-			return false;
-		}
-		if ( localEndDate == null ) {
-			if ( other.localEndDate != null ) {
-				return false;
-			}
-		} else if ( !localEndDate.isEqual(other.localEndDate) ) {
-			return false;
-		}
-		if ( location == null ) {
-			if ( other.location != null ) {
-				return false;
-			}
-		} else if ( !location.equals(other.location) ) {
-			return false;
-		}
-		if ( !Arrays.equals(locationIds, other.locationIds) ) {
-			return false;
-		}
-		if ( max == null ) {
-			if ( other.max != null ) {
-				return false;
-			}
-		} else if ( !max.equals(other.max) ) {
-			return false;
-		}
-		if ( mostRecent != other.mostRecent ) {
-			return false;
-		}
-		if ( !Arrays.equals(nodeIds, other.nodeIds) ) {
-			return false;
-		}
-		if ( offset == null ) {
-			if ( other.offset != null ) {
-				return false;
-			}
-		} else if ( !offset.equals(other.offset) ) {
-			return false;
-		}
-		if ( sorts == null ) {
-			if ( other.sorts != null ) {
-				return false;
-			}
-		} else if ( !sorts.equals(other.sorts) ) {
-			return false;
-		}
-		if ( !Arrays.equals(sourceIds, other.sourceIds) ) {
-			return false;
-		}
-		if ( startDate == null ) {
-			if ( other.startDate != null ) {
-				return false;
-			}
-		} else if ( !startDate.isEqual(other.startDate) ) {
-			return false;
-		}
-		if ( localStartDate == null ) {
-			if ( other.localStartDate != null ) {
-				return false;
-			}
-		} else if ( !localStartDate.isEqual(other.localStartDate) ) {
-			return false;
-		}
-		if ( !Arrays.equals(tags, other.tags) ) {
-			return false;
-		}
-		if ( type == null ) {
-			if ( other.type != null ) {
-				return false;
-			}
-		} else if ( !type.equals(other.type) ) {
-			return false;
-		}
-		if ( !Arrays.equals(userIds, other.userIds) ) {
-			return false;
-		}
-		if ( combiningType != other.combiningType ) {
-			return false;
-		}
-		if ( nodeIdMappings == null ) {
-			if ( other.nodeIdMappings != null ) {
-				return false;
-			}
-		} else if ( !nodeIdMappings.equals(other.nodeIdMappings) ) {
-			return false;
-		}
-		if ( sourceIdMappings == null ) {
-			if ( other.sourceIdMappings != null ) {
-				return false;
-			}
-		} else if ( !sourceIdMappings.equals(other.sourceIdMappings) ) {
-			return false;
-		}
-		if ( !Arrays.equals(datumRollupTypes, other.datumRollupTypes) ) {
-			return false;
-		}
-		return true;
+		return aggregation == other.aggregation && combiningType == other.combiningType
+				&& Objects.equals(dataPath, other.dataPath)
+				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)
+				&& Objects.equals(endDate, other.endDate)
+				&& Objects.equals(localEndDate, other.localEndDate)
+				&& Objects.equals(localStartDate, other.localStartDate)
+				&& Objects.equals(location, other.location) && Objects.equals(max, other.max)
+				&& mostRecent == other.mostRecent && Objects.equals(nodeIdMappings, other.nodeIdMappings)
+				&& Objects.equals(offset, other.offset) && Objects.equals(sorts, other.sorts)
+				&& Objects.equals(sourceIdMappings, other.sourceIdMappings)
+				&& Objects.equals(startDate, other.startDate) && Objects.equals(type, other.type)
+				&& withoutTotalResultsCount == other.withoutTotalResultsCount;
 	}
 
 }
