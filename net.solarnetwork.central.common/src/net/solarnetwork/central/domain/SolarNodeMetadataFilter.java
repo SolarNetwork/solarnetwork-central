@@ -26,39 +26,47 @@ package net.solarnetwork.central.domain;
  * Filter API for {@link SolarNodeMetadata}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.32
  */
-public interface SolarNodeMetadataFilter extends Filter {
+public interface SolarNodeMetadataFilter extends Filter, MetadataFilter {
 
 	/**
-	 * Get the first node ID. This returns the first available node ID from the
-	 * {@link #getNodeIds()} array, or <em>null</em> if not available.
+	 * Get the first node ID.
 	 * 
-	 * @return the node ID, or <em>null</em> if not available
+	 * <p>
+	 * This returns the first available node ID from the {@link #getNodeIds()}
+	 * array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the node ID, or {@literal null} if not available
 	 */
-	public Long getNodeId();
+	Long getNodeId();
 
 	/**
 	 * Get an array of node IDs.
 	 * 
-	 * @return array of node IDs (may be <em>null</em>)
+	 * @return array of node IDs (may be {@literal null})
 	 */
-	public Long[] getNodeIds();
+	Long[] getNodeIds();
 
 	/**
-	 * Get the first tag. This returns the first available tag from the
-	 * {@link #getTags()} array, or <em>null</em> if not available.
+	 * Get the first tag.
 	 * 
-	 * @return the first tag, or <em>null</em> if not available
+	 * <p>
+	 * This returns the first available tag from the {@link #getTags()} array,
+	 * or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the first tag, or {@literal null} if not available
 	 */
-	public String getTag();
+	String getTag();
 
 	/**
 	 * Get an array of tags.
 	 * 
-	 * @return array of tags (may be <em>null</em>)
+	 * @return array of tags (may be {@literal null})
 	 */
-	public String[] getTags();
+	String[] getTags();
 
 }

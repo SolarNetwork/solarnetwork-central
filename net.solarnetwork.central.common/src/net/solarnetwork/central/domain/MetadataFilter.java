@@ -1,7 +1,7 @@
 /* ==================================================================
- * SolarNodeFilter.java - 28/05/2018 2:45:37 PM
+ * MetadataFilter.java - 8/08/2019 10:21:48 am
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2019 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,31 +23,25 @@
 package net.solarnetwork.central.domain;
 
 /**
- * Filter API for {@link SolarNode}.
+ * API for a metadata search filter.
  * 
  * @author matt
- * @version 1.1
- * @since 1.40
+ * @version 1.0
+ * @since 1.48
  */
-public interface SolarNodeFilter extends Filter, MetadataFilter {
+public interface MetadataFilter extends Filter {
 
 	/**
-	 * Get the first node ID.
-	 * 
+	 * Get a metadata search filter, in LDAP search filter syntax.
+	 *
 	 * <p>
-	 * This returns the first available node ID from the {@link #getNodeIds()}
-	 * array, or {@literal null} if not available.
+	 * The metadata filter must be expressed in LDAP search filter style, using
+	 * JSON pointer style paths for keys, for example {@code (/m/foo=bar)},
+	 * {@code (t=foo)}, or {@code (&(&#47;**&#47;foo=bar)(t=special))}.
 	 * </p>
 	 * 
-	 * @return the node ID, or {@literal null} if not available
+	 * @return the metadata filter to use (may be {@literal null})
 	 */
-	Long getNodeId();
-
-	/**
-	 * Get an array of node IDs.
-	 * 
-	 * @return array of node IDs (may be {@literal null})
-	 */
-	Long[] getNodeIds();
+	String getMetadataFilter();
 
 }
