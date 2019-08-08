@@ -51,6 +51,16 @@
 
 	<resultMap id="SolarNodeMetadataMatchResult" type="SolarNodeMetadataMatch" extends="net.solarnetwork.central.datum.dao.mybatis.SolarNodeMetadata.SolarNodeMetadataFullResult"/>
 
+	<sql id="fragment-findall-SolarNodeMetadata-SolarNodeMetadataMatch-join">
+		<if test="filter.metadataFilter != null and filter.nodeIds != null and filter.nodeIds.length > 0">
+			INNER JOIN (
+				SELECT node_id FROM solarnet.find_nodes_for_meta(
+					#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler},
+					#{filter.metadataFilter})
+				) AS fnfm ON fnfm.node_id = nmeta.node_id
+		</if>
+	</sql>
+
 	<sql id="fragment-findall-SolarNodeMetadata-SolarNodeMetadataMatch-where">
 		<where>
 			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
@@ -59,12 +69,12 @@
 		</where>
 	</sql>
 
-
 	<select id="findall-SolarNodeMetadata-SolarNodeMetadataMatch" resultMap="SolarNodeMetadataMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-SolarNodeMetadata-full-result"/>
 		FROM
 			solarnet.sn_node_meta nmeta
+		<include refid="fragment-findall-SolarNodeMetadata-SolarNodeMetadataMatch-join"/>
 		<include refid="fragment-findall-SolarNodeMetadata-SolarNodeMetadataMatch-where"/>
 		ORDER BY
 		<choose>
@@ -86,6 +96,7 @@
 		SELECT count(nmeta.created)
 		FROM
 			solarnet.sn_node_meta nmeta
+		<include refid="fragment-findall-SolarNodeMetadata-SolarNodeMetadataMatch-join"/>
 		<include refid="fragment-findall-SolarNodeMetadata-SolarNodeMetadataMatch-where"/>
 	</select>
 

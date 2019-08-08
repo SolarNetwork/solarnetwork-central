@@ -22,11 +22,20 @@
 
 package net.solarnetwork.central.dao.mybatis.test;
 
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -35,14 +44,16 @@ import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.FilterSupport;
+import net.solarnetwork.central.support.SimpleSortDescriptor;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 
 /**
  * Test cases for the {@link MyBatisSolarNodeMetadataDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -133,4 +144,38 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 		assertEquals("Match ID", TEST_NODE_ID, match.getId());
 	}
 
+	@Test
+	public void findFilteredMetadataFilter() {
+		List<Long> nodeIds = new ArrayList<>();
+		for ( int i = 100; i < 103; i++ ) {
+			setupTestNode((long) i);
+
+			SolarNodeMetadata datum = new SolarNodeMetadata();
+			datum.setCreated(new DateTime());
+			datum.setNodeId((long) i);
+			nodeIds.add(datum.getNodeId());
+
+			GeneralDatumMetadata samples = new GeneralDatumMetadata();
+			datum.setMeta(samples);
+
+			Map<String, Object> msgs = new HashMap<String, Object>(2);
+			msgs.put("foo", i);
+			samples.setInfo(msgs);
+
+			dao.store(datum);
+
+		}
+
+		FilterSupport criteria = new FilterSupport();
+		criteria.setNodeIds(nodeIds.toArray(new Long[nodeIds.size()]));
+		criteria.setMetadataFilter("(&(/m/foo>100)(/m/foo<102))");
+
+		List<SortDescriptor> sorts = asList(new SimpleSortDescriptor("node", false));
+		FilterResults<SolarNodeMetadataFilterMatch> results = dao.findFiltered(criteria, sorts, null,
+				null);
+		assertThat("Result available", results, notNullValue());
+		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Result node IDs", stream(results.getResults().spliterator(), false)
+				.map(m -> m.getNodeId()).collect(toList()), hasItems(101L));
+	}
 }

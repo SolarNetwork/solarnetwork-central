@@ -26,7 +26,11 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.domain.MetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 
@@ -34,18 +38,20 @@ import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
  * Supporting base class for {@link Filter} implementations.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.32
  */
-public class FilterSupport implements Filter, Serializable, SolarNodeFilter, SolarNodeMetadataFilter {
+public class FilterSupport
+		implements Filter, Serializable, MetadataFilter, SolarNodeFilter, SolarNodeMetadataFilter {
 
-	private static final long serialVersionUID = 912502801129411927L;
+	private static final long serialVersionUID = -2540617835857624112L;
 
 	private Long[] locationIds;
 	private Long[] nodeIds;
 	private String[] sourceIds;
 	private Long[] userIds;
 	private String[] tags;
+	private String metadataFilter;
 
 	@Override
 	public Map<String, ?> getFilter() {
@@ -59,8 +65,14 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 		if ( sourceIds != null ) {
 			filter.put("sourceIds", sourceIds);
 		}
+		if ( userIds != null ) {
+			filter.put("userIds", userIds);
+		}
 		if ( tags != null ) {
 			filter.put("tags", tags);
+		}
+		if ( metadataFilter != null && !metadataFilter.trim().isEmpty() ) {
+			filter.put("metadataFilter", metadataFilter);
 		}
 		return filter;
 	}
@@ -68,37 +80,28 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	/**
 	 * Set a single node ID.
 	 * 
+	 * <p>
 	 * This is a convenience method for requests that use a single node ID at a
 	 * time. The node ID is still stored on the {@code nodeIds} array, just as
 	 * the first value. Calling this method replaces any existing
 	 * {@code nodeIds} value with a new array containing just the ID passed into
 	 * this method.
+	 * </p>
 	 * 
 	 * @param nodeId
 	 *        the ID of the node
 	 */
+	@JsonSetter
 	public void setNodeId(Long nodeId) {
 		this.nodeIds = new Long[] { nodeId };
 	}
 
-	/**
-	 * Get the first node ID.
-	 * 
-	 * This returns the first available node ID from the {@code nodeIds} array,
-	 * or {@code null} if not available.
-	 * 
-	 * @return the first node ID, or {@code null}
-	 */
+	@JsonIgnore
 	@Override
 	public Long getNodeId() {
 		return (this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0]);
 	}
 
-	/**
-	 * Get all node IDs to filter on.
-	 * 
-	 * @return The node IDs, or {@code null}.
-	 */
 	@Override
 	public Long[] getNodeIds() {
 		return nodeIds;
@@ -117,15 +120,18 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	/**
 	 * Set a single source ID.
 	 * 
+	 * <p>
 	 * This is a convenience method for requests that use a single source ID at
 	 * a time. The source ID is still stored on the {@code sourceIds} array,
 	 * just as the first value. Calling this method replaces any existing
 	 * {@code sourceIds} value with a new array containing just the ID passed
 	 * into this method.
+	 * </p>
 	 * 
 	 * @param sourceId
 	 *        the source ID
 	 */
+	@JsonSetter
 	public void setSourceId(String sourceId) {
 		this.sourceIds = (sourceId == null ? null : new String[] { sourceId });
 	}
@@ -133,12 +139,14 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	/**
 	 * Get the first source ID.
 	 * 
+	 * <p>
 	 * This returns the first available source ID from the {@code sourceIds}
-	 * array, or {@code null} if not available.
+	 * array, or {@literal null} if not available.
 	 * </p>
 	 * 
-	 * @return the first source ID, or {@code null}
+	 * @return the first source ID, or {@literal null}
 	 */
+	@JsonIgnore
 	public String getSourceId() {
 		return (this.sourceIds == null || this.sourceIds.length < 1 ? null : this.sourceIds[0]);
 	}
@@ -146,7 +154,7 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	/**
 	 * Get all source IDs to filter on.
 	 * 
-	 * @return The source IDs, or {@code null}.
+	 * @return The source IDs, or {@literal null}.
 	 */
 	public String[] getSourceIds() {
 		return sourceIds;
@@ -162,14 +170,7 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 		this.sourceIds = sourceIds;
 	}
 
-	/**
-	 * Get the first tag.
-	 * 
-	 * This returns the first available tag from the {@code tags} array, or
-	 * {@code null} if not available.
-	 * 
-	 * @return the first tag, or {@code null}
-	 */
+	@JsonIgnore
 	@Override
 	public String getTag() {
 		return (this.tags == null || this.tags.length < 1 ? null : this.tags[0]);
@@ -178,28 +179,32 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	/**
 	 * Set a single tag.
 	 * 
+	 * <p>
 	 * This is a convenience method for requests that use a single tag at a
 	 * time. The tag is still stored on the {@code tags} array, just as the
 	 * first value. Calling this method replaces any existing {@code tags} value
 	 * with a new array containing just the tag passed into this method.
+	 * </p>
 	 * 
 	 * @param tag
 	 *        the tag
 	 */
+	@JsonSetter
 	public void setTag(String tag) {
 		this.tags = (tag == null ? null : new String[] { tag });
 	}
 
-	/**
-	 * Get all tags to filter on.
-	 * 
-	 * @return The tags, or {@code null}.
-	 */
 	@Override
 	public String[] getTags() {
 		return tags;
 	}
 
+	/**
+	 * Set a list of tags to filter on.
+	 * 
+	 * @param tags
+	 *        the tags to filter on
+	 */
 	public void setTags(String[] tags) {
 		this.tags = tags;
 	}
@@ -207,15 +212,18 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	/**
 	 * Set a single location ID.
 	 * 
+	 * <p>
 	 * This is a convenience method for requests that use a single location ID
 	 * at a time. The location ID is still stored on the {@code locationIds}
 	 * array, just as the first value. Calling this method replaces any existing
 	 * {@code locationIds} value with a new array containing just the ID passed
 	 * into this method.
+	 * </p>
 	 * 
 	 * @param locationId
 	 *        the ID of the location
 	 */
+	@JsonSetter
 	public void setLocationId(Long locationId) {
 		this.locationIds = (locationId == null ? null : new Long[] { locationId });
 	}
@@ -224,10 +232,11 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	 * Get the first location ID.
 	 * 
 	 * This returns the first available location ID from the {@code locationIds}
-	 * array, or {@code null} if not available.
+	 * array, or {@literal null} if not available.
 	 * 
-	 * @return the first location ID, or {@code null}
+	 * @return the first location ID, or {@literal null}
 	 */
+	@JsonIgnore
 	public Long getLocationId() {
 		return (locationIds != null && locationIds.length > 0 ? locationIds[0] : null);
 	}
@@ -235,7 +244,7 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	/**
 	 * Get all location IDs to filter on.
 	 * 
-	 * @return The location IDs, or {@code null}.
+	 * @return The location IDs, or {@literal null}.
 	 */
 	public Long[] getLocationIds() {
 		return locationIds;
@@ -254,15 +263,18 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	/**
 	 * Set a single user ID.
 	 * 
+	 * <p>
 	 * This is a convenience method for requests that use a single user ID at a
 	 * time. The user ID is still stored on the {@code userIds} array, just as
 	 * the first value. Calling this method replaces any existing
 	 * {@code userIds} value with a new array containing just the ID passed into
 	 * this method.
+	 * </p>
 	 * 
 	 * @param userId
 	 *        the ID of the user
 	 */
+	@JsonSetter
 	public void setUserId(Long userId) {
 		this.userIds = (userId == null ? null : new Long[] { userId });
 	}
@@ -270,11 +282,14 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	/**
 	 * Get the first user ID.
 	 * 
+	 * <p>
 	 * This returns the first available user ID from the {@code userIds} array,
-	 * or {@code null} if not available.
+	 * or {@literal null} if not available.
+	 * </p>
 	 * 
-	 * @return the first user ID, or {@code null}
+	 * @return the first user ID, or {@literal null}
 	 */
+	@JsonIgnore
 	public Long getUserId() {
 		return (this.userIds == null || this.userIds.length < 1 ? null : this.userIds[0]);
 	}
@@ -282,7 +297,7 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	/**
 	 * Get all user IDs to filter on.
 	 * 
-	 * @return The user IDs, or {@code null}.
+	 * @return The user IDs, or {@literal null}.
 	 */
 	public Long[] getUserIds() {
 		return userIds;
@@ -296,6 +311,22 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 	 */
 	public void setUserIds(Long[] userIds) {
 		this.userIds = userIds;
+	}
+
+	@Override
+	public String getMetadataFilter() {
+		return metadataFilter;
+	}
+
+	/**
+	 * Set a metadata search filter, in LDAP search filter syntax.
+	 * 
+	 * @param metadataFilter
+	 *        the metadata filter to use, or {@literal null}
+	 * @since 1.3
+	 */
+	public void setMetadataFilter(String metadataFilter) {
+		this.metadataFilter = metadataFilter;
 	}
 
 	/**
@@ -312,6 +343,7 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 		result = prime * result + Arrays.hashCode(sourceIds);
 		result = prime * result + Arrays.hashCode(tags);
 		result = prime * result + Arrays.hashCode(userIds);
+		result = prime * result + Objects.hash(metadataFilter);
 		return result;
 	}
 
@@ -325,29 +357,14 @@ public class FilterSupport implements Filter, Serializable, SolarNodeFilter, Sol
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
-			return false;
-		}
 		if ( !(obj instanceof FilterSupport) ) {
 			return false;
 		}
 		FilterSupport other = (FilterSupport) obj;
-		if ( !Arrays.equals(locationIds, other.locationIds) ) {
-			return false;
-		}
-		if ( !Arrays.equals(nodeIds, other.nodeIds) ) {
-			return false;
-		}
-		if ( !Arrays.equals(sourceIds, other.sourceIds) ) {
-			return false;
-		}
-		if ( !Arrays.equals(tags, other.tags) ) {
-			return false;
-		}
-		if ( !Arrays.equals(userIds, other.userIds) ) {
-			return false;
-		}
-		return true;
+		return Arrays.equals(locationIds, other.locationIds) && Arrays.equals(nodeIds, other.nodeIds)
+				&& Arrays.equals(sourceIds, other.sourceIds) && Arrays.equals(tags, other.tags)
+				&& Arrays.equals(userIds, other.userIds)
+				&& Objects.equals(metadataFilter, other.metadataFilter);
 	}
 
 }

@@ -61,21 +61,19 @@ function walkObjectPathValues(obj, pathTokens, callback) {
 				val = obj[prop];
 
 				// check if prop after ** exists
-				if (prop === pathTokens[i + 1]) {
-					if (val !== undefined) {
-						if ((typeof val === 'undefined' ? 'undefined' : _typeof(val)) !== 'object' && i + 1 === end) {
-							// looking for **/X and found X
-							if (handleCallbackValue(val) === false) {
-								return false;
-							}
-						} else if ((typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object') {
-							// looking for **/X/Y and found X
-							if (walkObjectPathValues(val, i === 0 ? pathTokens : pathTokens.slice(i), function (nestedPath, nestedVal) {
-								var nestedPath = currPath.concat(nestedPath);
-								return callback(nestedPath, nestedVal);
-							}) === false) {
-								return false;
-							}
+				if (prop === pathTokens[i + 1] && val !== undefined && ((typeof val === 'undefined' ? 'undefined' : _typeof(val)) !== 'object' && i + 1 === end || (typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object' && i + 1 < end)) {
+					if ((typeof val === 'undefined' ? 'undefined' : _typeof(val)) !== 'object' && i + 1 === end) {
+						// looking for **/X and found X
+						if (handleCallbackValue(val) === false) {
+							return false;
+						}
+					} else {
+						// looking for **/X/Y and found X; start search with new path after **/X
+						if (walkObjectPathValues(val, pathTokens.slice(i + 2), function (nestedPath, nestedVal) {
+							var nestedPath = currPath.concat(nestedPath);
+							return callback(nestedPath, nestedVal);
+						}) === false) {
+							return false;
 						}
 					}
 				} else if ((typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object') {
@@ -192,7 +190,7 @@ function evaluateFilter(obj, filter) {
 						match = true;
 					}
 				} else if (node.op === '~=') {
-					if (value !== undefined && value.search(new RegExp(node.val)) !== -1) {
+					if (value !== undefined && value.toString().search(new RegExp(node.val)) !== -1) {
 						match = true;
 					}
 				} else if (node.op === '<') {

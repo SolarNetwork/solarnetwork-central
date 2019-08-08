@@ -35,10 +35,10 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.user.billing.killbill.KillbillClient;
 import net.solarnetwork.central.user.billing.killbill.KillbillPingTest;
 import net.solarnetwork.central.user.billing.killbill.domain.HealthCheckResult;
+import net.solarnetwork.domain.PingTest;
 
 /**
  * Test cases for the {@link KillbillPingTest} class.
@@ -75,7 +75,7 @@ public class KillbillPingTestTests {
 		replayAll();
 
 		// when
-		PingTestResult result = pingTest.performPingTest();
+		PingTest.Result result = pingTest.performPingTest();
 
 		// then
 		assertThat(result, notNullValue());
@@ -92,8 +92,8 @@ public class KillbillPingTestTests {
 		replayAll();
 
 		// when
-		PingTestResult result = pingTest.performPingTest();
-		PingTestResult cached = pingTest.performPingTest();
+		PingTest.Result result = pingTest.performPingTest();
+		PingTest.Result cached = pingTest.performPingTest();
 
 		// then
 		assertThat(result, notNullValue());
@@ -110,9 +110,9 @@ public class KillbillPingTestTests {
 		replayAll();
 
 		// when
-		PingTestResult result = pingTest.performPingTest();
+		PingTest.Result result = pingTest.performPingTest();
 		Thread.sleep(1100); // wait for cache to expire
-		PingTestResult cached = pingTest.performPingTest();
+		PingTest.Result cached = pingTest.performPingTest();
 
 		// then
 		assertThat(result, notNullValue());
@@ -129,7 +129,7 @@ public class KillbillPingTestTests {
 		replayAll();
 
 		// when
-		PingTestResult result = pingTest.performPingTest();
+		PingTest.Result result = pingTest.performPingTest();
 
 		// then
 		assertThat(result, notNullValue());
@@ -147,7 +147,7 @@ public class KillbillPingTestTests {
 		replayAll();
 
 		// when
-		PingTestResult result = pingTest.performPingTest();
+		PingTest.Result result = pingTest.performPingTest();
 
 		// then
 		assertThat(result, notNullValue());
@@ -165,7 +165,7 @@ public class KillbillPingTestTests {
 		replayAll();
 
 		// when
-		PingTestResult result = pingTest.performPingTest();
+		PingTest.Result result = pingTest.performPingTest();
 
 		// then
 		assertThat(result, notNullValue());

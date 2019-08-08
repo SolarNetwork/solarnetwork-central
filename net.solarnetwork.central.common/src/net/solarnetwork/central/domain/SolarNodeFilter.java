@@ -26,10 +26,10 @@ package net.solarnetwork.central.domain;
  * Filter API for {@link SolarNode}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.40
  */
-public interface SolarNodeFilter extends Filter {
+public interface SolarNodeFilter extends Filter, MetadataFilter {
 
 	/**
 	 * Get the first node ID.
@@ -41,13 +41,13 @@ public interface SolarNodeFilter extends Filter {
 	 * 
 	 * @return the node ID, or {@literal null} if not available
 	 */
-	public Long getNodeId();
+	Long getNodeId();
 
 	/**
 	 * Get an array of node IDs.
 	 * 
 	 * @return array of node IDs (may be {@literal null})
 	 */
-	public Long[] getNodeIds();
+	Long[] getNodeIds();
 
 }
