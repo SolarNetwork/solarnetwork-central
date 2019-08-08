@@ -66,7 +66,7 @@
 		</bean>
 	</service>
 
-	<service interface="net.solarnetwork.central.domain.PingTest">
+	<service interface="net.solarnetwork.domain.PingTest">
 		<bean class="net.solarnetwork.central.user.billing.killbill.KillbillPingTest">
 			<argument ref="killbillClient"/>
 		</bean>
