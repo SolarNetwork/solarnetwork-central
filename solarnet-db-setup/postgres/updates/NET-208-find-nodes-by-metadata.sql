@@ -6,7 +6,7 @@
  * @param nodes				array of node IDs
  * @param criteria			the search filter
  *
- * @returns All matching source IDs.
+ * @returns All matching node IDs.
  */
 CREATE OR REPLACE FUNCTION solarnet.find_nodes_for_meta(nodes bigint[], criteria text)
   RETURNS TABLE(node_id bigint)
