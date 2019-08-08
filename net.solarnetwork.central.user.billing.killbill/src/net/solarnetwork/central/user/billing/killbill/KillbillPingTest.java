@@ -24,16 +24,16 @@ package net.solarnetwork.central.user.billing.killbill;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import net.solarnetwork.central.domain.PingTest;
-import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.user.billing.killbill.domain.HealthCheckResult;
+import net.solarnetwork.domain.PingTest;
+import net.solarnetwork.domain.PingTestResult;
 import net.solarnetwork.util.CachedResult;
 
 /**
  * Health check for Kill Bill.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class KillbillPingTest implements PingTest {
 
@@ -69,7 +69,7 @@ public class KillbillPingTest implements PingTest {
 	}
 
 	@Override
-	public PingTestResult performPingTest() throws Exception {
+	public PingTest.Result performPingTest() throws Exception {
 		CachedResult<PingTestResult> cached = cachedResult;
 		if ( cached != null && cached.isValid() ) {
 			return cached.getResult();
