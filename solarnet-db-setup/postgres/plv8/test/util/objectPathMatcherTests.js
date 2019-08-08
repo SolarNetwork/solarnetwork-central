@@ -189,3 +189,29 @@ test('util:objectPathMatcher:arrayMatchOr', t => {
 	t.true(service.matches('(|(/foo=A)(/foo=two)(/foo=three))'));
 	t.false(service.matches('(|(/foo=A)(/foo=B)(/foo=C))'));
 });
+
+test('util:objectPathMatcher:regexMatch', t => {
+	const obj = {foo:'bar'};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(/foo~=ba.*)'));
+	t.false(service.matches('(/foo~=ba.*m)'));
+});
+
+test('util:objectPathMatcher:regexMatchArray', t => {
+	const obj = {foo:['bar','bam','pow']};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(/foo~=ba.*)'));
+	t.true(service.matches('(/foo~=^p.*w$)'));
+	t.false(service.matches('(/foo~=d.*)'));
+});
+
+
+test('util:objectPathMatcher:regexMatchObject', t => {
+	const obj = {foo:{bar:'bam'}};
+	const service = objectPathMatcher(obj);
+	t.is(service.obj, obj);
+	t.true(service.matches('(/foo~=.*)'));
+	t.false(service.matches('(/foo~=.*bar.*)'));
+});

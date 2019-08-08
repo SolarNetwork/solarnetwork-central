@@ -176,7 +176,7 @@ function evaluateFilter(obj, filter) {
 						match = true;
 					}
 				} else if ( node.op === '~=' ) {
-					if ( value !== undefined && value.search(new RegExp(node.val)) !== -1 ) {
+					if ( value !== undefined && value.toString().search(new RegExp(node.val)) !== -1 ) {
 						match = true;
 					}
 				} else if ( node.op === '<' ) {
