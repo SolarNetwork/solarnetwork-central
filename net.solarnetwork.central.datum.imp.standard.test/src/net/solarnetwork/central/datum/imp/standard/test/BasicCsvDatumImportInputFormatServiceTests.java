@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -261,4 +262,26 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		}
 	}
 
+	@Test
+	public void columZeroIgnored() throws IOException {
+		// given
+		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
+		BasicInputConfiguration config = new BasicInputConfiguration();
+		config.setServiceProps(Collections.singletonMap("instantaneousDataColumn", "0"));
+		BasicDatumImportResource resource = new BasicDatumImportResource(
+				new ClassPathResource("test-data-04.csv", getClass()), "text/csv;charset=utf-8");
+
+		// when
+		try (ImportContext ctx = service.createImportContext(config, resource, null)) {
+			int count = 0;
+			for ( GeneralNodeDatum d : ctx ) {
+				assertThat("Node ID", d.getNodeId(), equalTo(123L));
+				assertThat("Source ID not parsed from invalid column 0", d.getSourceId(),
+						equalTo("/DE/G1/B600/GEN/100"));
+				assertThat("Watts", d.getSamples(), nullValue());
+				count++;
+			}
+			assertThat("Row count", count, equalTo(1));
+		}
+	}
 }
