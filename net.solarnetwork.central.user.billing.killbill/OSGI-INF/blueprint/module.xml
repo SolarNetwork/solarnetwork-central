@@ -27,7 +27,7 @@
 	
 	<bean id="killbillClient" class="net.solarnetwork.central.user.billing.killbill.KillbillRestClient">
 		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.billing.killbill.KillbillRestClient" 
-			autowire-on-update="true"/>
+			autowire-on-update="true" update-method="configurationChanged"/>
 	</bean>
 		
 	<bean id="catalogMessageSourceCache" class="net.solarnetwork.central.support.JCacheFactoryBean">

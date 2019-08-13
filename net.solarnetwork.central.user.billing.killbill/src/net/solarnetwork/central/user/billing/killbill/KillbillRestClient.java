@@ -78,7 +78,7 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
  * REST implementation of {@link KillbillClient}.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class KillbillRestClient implements KillbillClient {
 
@@ -159,7 +159,7 @@ public class KillbillRestClient implements KillbillClient {
 		setupRestTemplateInterceptors();
 	}
 
-	private void setupRestTemplateInterceptors() {
+	private synchronized void setupRestTemplateInterceptors() {
 		RestTemplate restTemplate = (RestTemplate) client;
 		List<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();
 		if ( restTemplate.getInterceptors() != null ) {
@@ -169,6 +169,21 @@ public class KillbillRestClient implements KillbillClient {
 		}
 		interceptors.add(0, new KillbillAuthorizationInterceptor(username, password, apiKey, apiSecret));
 		restTemplate.setInterceptors(interceptors);
+	}
+
+	/**
+	 * Callback after properties have been changed.
+	 * 
+	 * <p>
+	 * This method should be invoked after changing any of the configuration
+	 * properties of this class.
+	 * </p>
+	 * 
+	 * @param properties
+	 *        the changed properties
+	 */
+	public void configurationChanged(Map<String, Object> properties) {
+		setupRestTemplateInterceptors();
 	}
 
 	private String kbUrl(String path) {
@@ -556,10 +571,7 @@ public class KillbillRestClient implements KillbillClient {
 	 *        the username to set
 	 */
 	public void setUsername(String username) {
-		if ( username != null && !username.equals(this.username) ) {
-			this.username = username;
-			setupRestTemplateInterceptors();
-		}
+		this.username = username;
 	}
 
 	/**
@@ -569,10 +581,7 @@ public class KillbillRestClient implements KillbillClient {
 	 *        the password to set
 	 */
 	public void setPassword(String password) {
-		if ( password != null && !password.equals(this.password) ) {
-			this.password = password;
-			setupRestTemplateInterceptors();
-		}
+		this.password = password;
 	}
 
 	/**
@@ -582,10 +591,7 @@ public class KillbillRestClient implements KillbillClient {
 	 *        the apiKey to set
 	 */
 	public void setApiKey(String apiKey) {
-		if ( apiKey != null && !apiKey.equals(this.apiKey) ) {
-			this.apiKey = apiKey;
-			setupRestTemplateInterceptors();
-		}
+		this.apiKey = apiKey;
 	}
 
 	/**
@@ -595,10 +601,7 @@ public class KillbillRestClient implements KillbillClient {
 	 *        the apiSecret to set
 	 */
 	public void setApiSecret(String apiSecret) {
-		if ( apiSecret != null && !apiSecret.equals(this.apiSecret) ) {
-			this.apiSecret = apiSecret;
-			setupRestTemplateInterceptors();
-		}
+		this.apiSecret = apiSecret;
 	}
 
 }
