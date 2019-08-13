@@ -127,6 +127,7 @@ public class KillbillRestClientTests {
 		client.setBaseUrl(TEST_BASE_URL);
 		client.setUsername(TEST_USERNAME);
 		client.setPassword(TEST_PASSWORD);
+		client.configurationChanged(null);
 
 		// snag the ObjectMapper out of RestTemplate so we have the same one for our tests
 		for ( HttpMessageConverter<?> converter : restTemplate.getMessageConverters() ) {
