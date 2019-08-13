@@ -48,7 +48,7 @@ import net.solarnetwork.util.StringUtils;
  * Base class to support parsing CSV data into objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @param <E>
  *        the element type
  * @param <T>
@@ -132,7 +132,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *         available
 	 */
 	protected String getColumnValue(List<String> row, Integer col) {
-		if ( row == null || col == null || col.intValue() > row.size() ) {
+		if ( row == null || col == null || col.intValue() > row.size() || col.intValue() < 1 ) {
 			return null;
 		}
 		return row.get(col - 1);
