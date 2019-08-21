@@ -13,6 +13,7 @@
 				'endDate', to_char(ts_end at time zone 'UTC', 'YYYY-MM-DD HH24:MI:SS.MS"Z"'),
 				'localEndDate', to_char(ts_end AT TIME ZONE time_zone, 'YYYY-MM-DD HH24:MI:SS.MS')), NULL) AS jdata
 		FROM <choose>
+				<when test="qualifier == 'within'">solardatum.calculate_datum_diff_within</when>
 				<when test="tolerance != null">solardatum.calculate_datum_diff</when>
 				<otherwise>solardatum.calculate_datum_diff_over</otherwise>
 			</choose>(
@@ -20,7 +21,7 @@
 				, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 				, #{start,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
 				, #{end,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
-			<if test="tolerance != null">
+			<if test="qualifier != 'within' and tolerance != null">
 				, #{tolerance,javaType=org.joda.time.Period}::interval
 			</if>
 			)
@@ -38,6 +39,7 @@
 				'endDate', to_char(ts_end at time zone 'UTC', 'YYYY-MM-DD HH24:MI:SS.MS"Z"'),
 				'localEndDate', to_char(ts_end AT TIME ZONE time_zone, 'YYYY-MM-DD HH24:MI:SS.MS')), NULL) AS jdata
 		FROM <choose>
+				<when test="qualifier == 'within'">solardatum.calculate_datum_diff_within_local</when>
 				<when test="tolerance != null">solardatum.calculate_datum_diff_local</when>
 				<otherwise>solardatum.calculate_datum_diff_over_local</otherwise>
 			</choose>(
@@ -45,7 +47,7 @@
 				, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 				, #{start,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
 				, #{end,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
-			<if test="tolerance != null">
+			<if test="qualifier != 'within' and tolerance != null">
 				, #{tolerance,javaType=org.joda.time.Period}::interval
 			</if>
 			)

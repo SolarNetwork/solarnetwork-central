@@ -51,7 +51,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.14
+ * @version 1.15
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -357,12 +357,10 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * 
 	 * <p>
 	 * This method calculates the change between datum with the nearest dates
-	 * less than or equal to given start and end dates. specific dates, as in
-	 * {@link #calculateAt(GeneralNodeDatumFilter, LocalDateTime, Period)}. A
-	 * single result for each node and source ID combination will be returned,
-	 * with the accumulation properties calculated as the difference between the
-	 * start and end values. In addition some status properties will be
-	 * included:
+	 * less than or equal to given start and end dates. A single result for each
+	 * node and source ID combination will be returned, with the accumulation
+	 * properties calculated as the difference between the start and end values.
+	 * In addition some status properties will be included:
 	 * </p>
 	 * 
 	 * <dl>
@@ -388,22 +386,20 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 *        when looking for before and after records to perform the
 	 *        calculation, or {@code null} for no limit
 	 * @return the calculated records, never {@literal null}
-	 * @since 1.5
+	 * @since 1.10
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
 			LocalDateTime from, LocalDateTime to, Period tolerance);
 
 	/**
-	 * Find the change of accumulation properties between two specific dates.
+	 * Find the change of accumulation properties within two specific dates.
 	 * 
 	 * <p>
 	 * This method calculates the change between datum with the nearest dates
-	 * less than or equal to given start and end dates. specific dates, as in
-	 * {@link #calculateAt(GeneralNodeDatumFilter, LocalDateTime, Period)}. A
-	 * single result for each node and source ID combination will be returned,
-	 * with the accumulation properties calculated as the difference between the
-	 * start and end values. In addition some status properties will be
-	 * included:
+	 * less than or equal to given start and end dates. A single result for each
+	 * node and source ID combination will be returned, with the accumulation
+	 * properties calculated as the difference between the start and end values.
+	 * In addition some status properties will be included:
 	 * </p>
 	 * 
 	 * <dl>
@@ -430,6 +426,85 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @since 1.10
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
+			DateTime from, DateTime to, Period tolerance);
+
+	/**
+	 * Find the change of accumulation properties within two specific node-local
+	 * dates.
+	 * 
+	 * <p>
+	 * This method calculates the change between datum with the nearest dates
+	 * within the given start and end dates. Data earlier or later than the
+	 * given date range will <b>not</b> be considered. A single result for each
+	 * node and source ID combination will be returned, with the accumulation
+	 * properties calculated as the difference between the start and end values.
+	 * In addition some status properties will be included:
+	 * </p>
+	 * 
+	 * <dl>
+	 * <dt>endDate</dt>
+	 * <dd>The associated date found for the last datum record.</dd>
+	 * <dt>timeZone</dt>
+	 * <dd>The time zone of the node associated with the datum.</dd>
+	 * <dt>localEndDate</dt>
+	 * <dd>The <code>endDate</code> translated into the node's local time
+	 * zone.</dd>
+	 * </dl>
+	 * 
+	 * @param filter
+	 *        the node and source ID search criteria
+	 * @param from
+	 *        the first date to calculate datum for; each node ID will use its
+	 *        associated time zone
+	 * @param to
+	 *        the second date to calculate datum for; each node ID will use its
+	 *        associated time zone
+	 * @param tolerance
+	 *        the maximum time span before and after {@code date} to consider
+	 *        when looking for before and after records to perform the
+	 *        calculation, or {@code null} for no limit
+	 * @return the calculated records, never {@literal null}
+	 * @since 1.15
+	 */
+	FilterResults<ReportingGeneralNodeDatumMatch> findAccumulationWithin(GeneralNodeDatumFilter filter,
+			LocalDateTime from, LocalDateTime to, Period tolerance);
+
+	/**
+	 * Find the change of accumulation properties within two specific dates.
+	 * 
+	 * <p>
+	 * This method calculates the change between datum with the nearest dates
+	 * less than or equal to given start and end dates. Data earlier or later
+	 * than the given date range will <b>not</b> be considered. A single result
+	 * for each node and source ID combination will be returned, with the
+	 * accumulation properties calculated as the difference between the start
+	 * and end values. In addition some status properties will be included:
+	 * </p>
+	 * 
+	 * <dl>
+	 * <dt>endDate</dt>
+	 * <dd>The associated date found for the last datum record.</dd>
+	 * <dt>timeZone</dt>
+	 * <dd>The time zone of the node associated with the datum.</dd>
+	 * <dt>localEndDate</dt>
+	 * <dd>The <code>endDate</code> translated into the node's local time
+	 * zone.</dd>
+	 * </dl>
+	 * 
+	 * @param filter
+	 *        the node and source ID search criteria
+	 * @param from
+	 *        the first date to calculate datum for
+	 * @param to
+	 *        the second date to calculate datum for
+	 * @param tolerance
+	 *        the maximum time span before and after {@code date} to consider
+	 *        when looking for before and after records to perform the
+	 *        calculation, or {@code null} for no limit
+	 * @return the calculated records, never {@literal null}
+	 * @since 1.15
+	 */
+	FilterResults<ReportingGeneralNodeDatumMatch> findAccumulationWithin(GeneralNodeDatumFilter filter,
 			DateTime from, DateTime to, Period tolerance);
 
 	/**
