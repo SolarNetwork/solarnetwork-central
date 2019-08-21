@@ -56,8 +56,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.domain.PingTest;
-import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttStats.Counts;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -67,6 +65,8 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.domain.Identifiable;
+import net.solarnetwork.domain.PingTest;
+import net.solarnetwork.domain.PingTestResult;
 import net.solarnetwork.support.SSLService;
 import net.solarnetwork.util.OptionalService;
 
@@ -223,6 +223,16 @@ public class MqttDataCollector
 	 * Immediately connect.
 	 */
 	public synchronized void init() {
+		configurationChanged(null);
+	}
+
+	/**
+	 * Callback after properties have been changed.
+	 * 
+	 * @param properties
+	 *        the changed properties
+	 */
+	public synchronized void configurationChanged(Map<String, Object> properties) {
 		if ( retryConnect ) {
 			if ( connectThread != null ) {
 				return;
@@ -672,7 +682,7 @@ public class MqttDataCollector
 	}
 
 	@Override
-	public PingTestResult performPingTest() throws Exception {
+	public PingTest.Result performPingTest() throws Exception {
 		IMqttAsyncClient client = clientRef.get();
 		boolean healthy = (client != null && client.isConnected());
 		String msg = (healthy ? "Connected to " + serverUri

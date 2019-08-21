@@ -66,10 +66,10 @@
 	<!-- Published Services -->
 	
 	<osgix:managed-service-factory factory-pid="net.solarnetwork.central.in.mqtt.MqttDataCollector"
-			autowire-on-update="true" update-method="init">
+			autowire-on-update="true" update-method="configurationChanged">
 		<osgix:interfaces>
 			<beans:value>net.solarnetwork.domain.Identifiable</beans:value>
-			<beans:value>net.solarnetwork.central.domain.PingTest</beans:value>
+			<beans:value>net.solarnetwork.domain.PingTest</beans:value>
 			<beans:value>net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook</beans:value>
 		</osgix:interfaces>
 		<bean class="net.solarnetwork.central.in.mqtt.MqttDataCollector" 
