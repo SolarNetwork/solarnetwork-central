@@ -23,8 +23,7 @@
 package net.solarnetwork.central.datum.domain.test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
 import java.util.Map;
 import org.joda.time.DateTime;
@@ -69,9 +68,12 @@ public class AuditDatumRecordCountsTests {
 		JsonNode tree = objectMapper().valueToTree(c);
 		Map<String, Object> data = JsonUtils.getStringMapFromTree(tree);
 
-		//then
-		assertThat("JSON serialization", data, allOf(hasEntry("ts", (Object) 1408665600000L),
-				hasEntry("nodeId", (Object) 100L), hasEntry("sourceId", (Object) "test.source")));
+		// then
+		assertThat("Timestamp", data.get("ts"), instanceOf(Number.class));
+		assertThat("Timestamp value", ((Number) data.get("ts")).longValue(), equalTo(1408665600000L));
+		assertThat("Node ID", data.get("nodeId"), instanceOf(Number.class));
+		assertThat("Node ID value", ((Number) data.get("nodeId")).longValue(), equalTo(100L));
+		assertThat("Source ID value", data.get("sourceId"), equalTo("test.source"));
 	}
 
 	@Test

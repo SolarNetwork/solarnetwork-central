@@ -32,7 +32,7 @@ package net.solarnetwork.central.datum.domain;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.28
  */
 public enum DatumReadingType {
@@ -61,7 +61,15 @@ public enum DatumReadingType {
 	 * 
 	 * @since 1.1
 	 */
-	Difference("delta");
+	Difference("delta"),
+
+	/**
+	 * Find the difference within two datum that occurs between two dates,
+	 * without considering any datum outside the given date range.
+	 * 
+	 * @since 1.2
+	 */
+	DifferenceWithin("change");
 
 	private final String key;
 

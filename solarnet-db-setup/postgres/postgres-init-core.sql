@@ -148,6 +148,42 @@ RETURNS TABLE(
 	GROUP BY time_zone
 $$;
 
+
+/**
+ * Calculate the minimum number of absolute rounded dates for a given set of nodes.
+ *
+ * The time zones of each node are used to group them into rows where all nodes have the
+ * same absolute dates.
+ * 
+ * @param nodes   the list of nodes to resolve absolute dates for
+ * @param sources a list of source IDs to include in the results (optional)
+ * @param field   the Postgres date_trunc compatible field to truncate the date on, e.g. 'hour', 'day', 'month', etc.
+ * @param ts      the date to truncate
+ */
+CREATE OR REPLACE FUNCTION solarnet.node_source_time_rounded(
+	nodes bigint[], sources text[], field text , ts timestamptz)
+RETURNS TABLE(
+  ts_start timestamp with time zone,
+  ts_end timestamp with time zone,
+  time_zone text,
+  node_ids bigint[],
+  source_ids character varying(64)[]
+) LANGUAGE sql STABLE AS $$
+	SELECT 
+		date_trunc(field, ts AT TIME ZONE nlt.time_zone) AT TIME ZONE nlt.time_zone AS ts_start
+		, (date_trunc(field, ts AT TIME ZONE nlt.time_zone) + ('1 '||field)::interval) AT TIME ZONE nlt.time_zone AS ts_end
+		, nlt.time_zone AS time_zone
+		, array_agg(DISTINCT nlt.node_id) AS nodes
+		, array_agg(DISTINCT s.source_id::character varying(64)) FILTER (WHERE s.source_id IS NOT NULL) AS sources
+	FROM solarnet.node_local_time nlt
+	LEFT JOIN (
+		SELECT unnest(sources) AS source_id
+	) s ON TRUE
+	WHERE nlt.node_id = ANY(nodes)
+	GROUP BY time_zone
+$$;
+
+
 /******************************************************************************
  * TABLE solarnet.sn_node_meta
  *

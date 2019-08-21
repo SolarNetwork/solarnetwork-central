@@ -101,10 +101,15 @@ public class SupportingProceduresTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Range 2 sources", nlt.get(1).get("source_ids"), equalTo(TEST_SOURCE_ID));
 	}
 
+	private List<Map<String, Object>> datumRows() {
+		return jdbcTemplate
+				.queryForList("select * from solardatum.da_datum order by node_id, source_id, ts");
+	}
+
 	private List<Map<String, Object>> diffSum(Long[] nodeIds, String[] sourceIds) {
 		return jdbcTemplate.queryForList(
 		// @formatter:off
-				"SELECT node_id, source_id, solarcommon.jsonb_diffsum_object(jdata_a)::text AS jdata_a "
+				"SELECT node_id, source_id, solarcommon.jsonb_diffsum_object(jdata_a ORDER BY ts)::text AS jdata_a "
 						+ "FROM solardatum.da_datum "
 						+ "WHERE node_id = ANY(?::bigint[]) "
 						+ "AND source_id = ANY(?::text[]) "
@@ -149,7 +154,7 @@ public class SupportingProceduresTests extends AbstractMyBatisDaoTestSupport {
 
 	private long populateDiffSumDatum(long start, int count, int firstReading, int step,
 			SamplePopulator populator) {
-		long date = System.currentTimeMillis();
+		long date = start;
 		for ( long i = 0; i < count; i++ ) {
 			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
 			s.putAccumulatingSampleValue("foo", ((i * step) + firstReading));
@@ -233,6 +238,8 @@ public class SupportingProceduresTests extends AbstractMyBatisDaoTestSupport {
 		long start = System.currentTimeMillis();
 		start = populateDiffSumDatum(start, 2, 1, 1); // 1-2, diff 1
 		populateDiffSumDatum(start, 2, 1000, 100); // 1000-1100, diff of 100
+
+		log.debug("Raw data: {}", StringUtils.delimitedStringFromCollection(datumRows(), ",\n"));
 
 		List<Map<String, Object>> data = diffSum(new Long[] { TEST_NODE_ID },
 				new String[] { TEST_SOURCE_ID });
