@@ -80,7 +80,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.9
+ * @version 2.10
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -301,6 +301,10 @@ public class DaoQueryBiz implements QueryBiz {
 					return generalNodeDatumDao.findAccumulation(filter, filter.getLocalStartDate(),
 							filter.getLocalEndDate(), null);
 
+				case DifferenceWithin:
+					return generalNodeDatumDao.findAccumulationWithin(filter, filter.getLocalStartDate(),
+							filter.getLocalEndDate(), null);
+
 				case CalculatedAtDifference:
 					return generalNodeDatumDao.calculateBetween(filter, filter.getLocalStartDate(),
 							filter.getLocalEndDate(), tolerance);
@@ -323,6 +327,10 @@ public class DaoQueryBiz implements QueryBiz {
 
 			case Difference:
 				return generalNodeDatumDao.findAccumulation(filter, filter.getStartDate(),
+						filter.getEndDate(), null);
+
+			case DifferenceWithin:
+				return generalNodeDatumDao.findAccumulationWithin(filter, filter.getStartDate(),
 						filter.getEndDate(), null);
 
 			case CalculatedAtDifference:

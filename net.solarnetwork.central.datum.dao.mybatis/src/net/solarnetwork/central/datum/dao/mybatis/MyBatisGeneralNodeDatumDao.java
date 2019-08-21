@@ -41,6 +41,7 @@ import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.joda.time.ReadableInterval;
+import org.joda.time.ReadablePartial;
 import org.springframework.jdbc.support.SQLExceptionSubclassTranslator;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,7 +75,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.19
+ * @version 1.20
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -116,11 +117,25 @@ public class MyBatisGeneralNodeDatumDao
 	public static final String PARAM_TOLERANCE = "tolerance";
 
 	/**
+	 * The query parameter for a generic qualifier to pass to queries.
+	 * 
+	 * @since 1.20
+	 */
+	public static final String PARAM_QUALIFIER = "qualifier";
+
+	/**
 	 * The query parameter for a {@link CombiningConfig} data structure.
 	 * 
 	 * @since 1.5
 	 */
 	public static final String PARAM_COMBINING = "combine";
+
+	/**
+	 * The qualifier for a "within" style query.
+	 * 
+	 * @since 1.20
+	 */
+	public static final String QUALIFIER_WITHIN = "within";
 
 	/**
 	 * The default query name used for
@@ -925,26 +940,6 @@ public class MyBatisGeneralNodeDatumDao
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @since 1.9
-	 */
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
-			LocalDateTime from, LocalDateTime to, Period tolerance) {
-		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
-		sqlProps.put(PARAM_FILTER, filter);
-		sqlProps.put(PARAM_START_DATE, from);
-		sqlProps.put(PARAM_END_DATE, to);
-		sqlProps.put(PARAM_TOLERANCE, tolerance);
-		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumAccumulation, sqlProps, null,
-				null);
-		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
-				rows.size());
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
 	 * @since 1.15
 	 */
 	@Override
@@ -1014,6 +1009,38 @@ public class MyBatisGeneralNodeDatumDao
 		return results;
 	}
 
+	private FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
+			Object from, Object to, Period tolerance, String qualifier) {
+		assert from != null;
+		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
+		sqlProps.put(PARAM_FILTER, filter);
+		sqlProps.put(PARAM_START_DATE, from);
+		sqlProps.put(PARAM_END_DATE, to);
+		if ( tolerance != null ) {
+			sqlProps.put(PARAM_TOLERANCE, tolerance);
+		}
+		if ( qualifier != null ) {
+			sqlProps.put(PARAM_QUALIFIER, qualifier);
+		}
+		String queryName = (from instanceof ReadablePartial ? queryForDatumAccumulation
+				: queryForDatumAccumulationAbsolute);
+		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryName, sqlProps, null, null);
+		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
+				rows.size());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.9
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
+			LocalDateTime from, LocalDateTime to, Period tolerance) {
+		return findAccumulation(filter, from, to, tolerance, null);
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -1023,15 +1050,31 @@ public class MyBatisGeneralNodeDatumDao
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public FilterResults<ReportingGeneralNodeDatumMatch> findAccumulation(GeneralNodeDatumFilter filter,
 			DateTime from, DateTime to, Period tolerance) {
-		Map<String, Object> sqlProps = new HashMap<String, Object>(4);
-		sqlProps.put(PARAM_FILTER, filter);
-		sqlProps.put(PARAM_START_DATE, from);
-		sqlProps.put(PARAM_END_DATE, to);
-		sqlProps.put(PARAM_TOLERANCE, tolerance);
-		List<ReportingGeneralNodeDatumMatch> rows = selectList(queryForDatumAccumulationAbsolute,
-				sqlProps, null, null);
-		return new BasicFilterResults<ReportingGeneralNodeDatumMatch>(rows, (long) rows.size(), 0,
-				rows.size());
+		return findAccumulation(filter, from, to, tolerance, null);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.20
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> findAccumulationWithin(
+			GeneralNodeDatumFilter filter, LocalDateTime from, LocalDateTime to, Period tolerance) {
+		return findAccumulation(filter, from, to, tolerance, QUALIFIER_WITHIN);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.20
+	 */
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<ReportingGeneralNodeDatumMatch> findAccumulationWithin(
+			GeneralNodeDatumFilter filter, DateTime from, DateTime to, Period tolerance) {
+		return findAccumulation(filter, from, to, tolerance, QUALIFIER_WITHIN);
 	}
 
 	/**
