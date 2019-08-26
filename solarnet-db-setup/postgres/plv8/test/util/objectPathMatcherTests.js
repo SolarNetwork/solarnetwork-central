@@ -36,7 +36,7 @@ test('util:objectPathMatcher:simpleNoMatchingProp', t => {
 	t.false(service.matches('(/bar=bam)'));
 });
 
-test('util:objectPathMatcher:simpleNoMatchingProp', t => {
+test('util:objectPathMatcher:nestedNoMatchingProp', t => {
 	const obj = {foo:{bim:{bam:'baz'}}};
 	const service = objectPathMatcher(obj);
 	t.is(service.obj, obj);
