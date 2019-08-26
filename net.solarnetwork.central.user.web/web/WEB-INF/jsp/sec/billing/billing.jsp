@@ -104,6 +104,13 @@
 			 		</div>
 		 		</div>
 			</div>
+			<div class="modal-body invoice-items-loading">
+				<div class="progress">
+					<div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%">
+						<em><fmt:message key='billing.invoice.details.loading'/></em>
+	    			</div>
+    			</div>
+			</div>
 			<table class="invoice-items hidden table table-striped">
 				<thead>
 					<tr>
