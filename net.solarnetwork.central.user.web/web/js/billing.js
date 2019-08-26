@@ -9,6 +9,7 @@ $(document).ready(function() {
 	
 	function resetInvoiceDetails(modal) {
 		$(modal).find('table.invoice-items').addClass('hidden').find('tbody').empty();
+		$(modal).find('.invoice-items-loading').removeClass('hidden');
 	}
 	
 	function replaceTemplateProperties(el, obj, prefix) {
@@ -110,11 +111,12 @@ $(document).ready(function() {
 			}
 		}
 		
+		modal.find('a.invoice-render').attr('href', SolarReg.solarUserURL('/sec/billing/invoices/' +invoice.id +'/render'));
+
 		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/' +invoice.id), function(json) {
 			console.log('Got invoice detail: %o', json);
 			populateInvoiceItemDetails(modal.find('table.invoice-items'), (json ? json.data : null));
-			modal.find('a.invoice-render')
-				.attr('href', SolarReg.solarUserURL('/sec/billing/invoices/' +invoice.id +'/render'));
+			modal.find('.invoice-items-loading').addClass('hidden');
 		});
 		
 		modal.modal('show');
@@ -144,11 +146,11 @@ $(document).ready(function() {
 	}
 	
 	function renderInvoiceTable(table, pagination, displayCount, json) {
-		var haveRows = json && json.data && json.data.results.length > 0;
+		var haveRows = json && json.data && json.data.results && json.data.results.length > 0;
 		var total = (json.data ? json.data.totalResults : returned);
 		var container, prop, cell;
+		var table = $(table);
 		if ( haveRows ) {
-			var table = $(table);
 			var templateRow = table.find('tr.template');
 			var tbody = table.find('tbody');
 			renderInvoiceTableRows(tbody, templateRow, json.data.results);
