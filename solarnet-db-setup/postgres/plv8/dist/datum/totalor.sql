@@ -3,13 +3,11 @@ INSERT INTO public.plv8_modules (module, autoload, source) VALUES ('datum/totalo
 $FUNCTION$'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-	value: true
+  value: true
 });
 exports.default = totalor;
 
-var _runningTotal = require('datum/runningTotal');
-
-var _runningTotal2 = _interopRequireDefault(_runningTotal);
+var _runningTotal = _interopRequireDefault(require("datum/runningTotal"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -23,65 +21,71 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * all the aggregate result objects.
  */
 function totalor() {
-	var self = {
-		version: '1'
-	};
+  var self = {
+    version: '1'
+  };
+  /** A mapping of source ID -> array of objects. */
 
-	/** A mapping of source ID -> array of objects. */
-	var resultsBySource = {};
+  var resultsBySource = {};
+  var resultsByOrder = [];
+  /**
+   * Add another datum record.
+   *
+   * @param {Object} record            The record to add.
+   * @param {String} record.source_id  The datum source ID.
+   * @param {Number} record.weight     The weight of the record.
+   * @param {Object} record.jdata      The datum JSON data object.
+   */
 
-	var resultsByOrder = [];
+  function addDatumRecord(record) {
+    if (!(record || record.source_id)) {
+      return;
+    }
 
-	/**
-  * Add another datum record.
-  *
-  * @param {Object} record            The record to add.
-  * @param {String} record.source_id  The datum source ID.
-  * @param {Number} record.weight     The weight of the record.
-  * @param {Object} record.jdata      The datum JSON data object.
-  */
-	function addDatumRecord(record) {
-		if (!(record || record.source_id)) {
-			return;
-		}
-		var sourceId = record.source_id;
-		var currResult = resultsBySource[sourceId];
+    var sourceId = record.source_id;
+    var currResult = resultsBySource[sourceId];
 
-		if (currResult === undefined) {
-			currResult = (0, _runningTotal2.default)(sourceId);
+    if (currResult === undefined) {
+      currResult = (0, _runningTotal.default)(sourceId); // keep track of results by source ID for fast lookup
 
-			// keep track of results by source ID for fast lookup
-			resultsBySource[sourceId] = currResult;
+      resultsBySource[sourceId] = currResult; // also keep track of order we obtain sources, so results ordered in same way
 
-			// also keep track of order we obtain sources, so results ordered in same way
-			resultsByOrder.push(currResult);
-		}
+      resultsByOrder.push(currResult);
+    }
 
-		currResult.addDatumRecord(record);
-	}
+    currResult.addDatumRecord(record);
+  }
+  /**
+   * Finish all aggregate processing and return an array of all aggregate records.
+   *
+   * @return {Array} An array of aggregate record objects for each source ID encountered by
+   *                 all previous calls to <code>addDatumRecord()</code>, or an empty array
+   *                 if there aren't any.
+   */
 
-	/**
-  * Finish all aggregate processing and return an array of all aggregate records.
-  *
-  * @return {Array} An array of aggregate record objects for each source ID encountered by
-  *                 all previous calls to <code>addDatumRecord()</code>, or an empty array
-  *                 if there aren't any.
-  */
-	function finish() {
-		var aggregateResults = [],
-		    i,
-		    aggResult;
-		for (i = 0; i < resultsByOrder.length; i += 1) {
-			aggResult = resultsByOrder[i].finish();
-			if (aggResult) {
-				aggregateResults.push(aggResult);
-			}
-		}
-		return aggregateResults;
-	}
 
-	return Object.defineProperties(self, {
-		addDatumRecord: { value: addDatumRecord },
-		finish: { value: finish }
-	});
+  function finish() {
+    var aggregateResults = [],
+        i,
+        aggResult;
+
+    for (i = 0; i < resultsByOrder.length; i += 1) {
+      aggResult = resultsByOrder[i].finish();
+
+      if (aggResult) {
+        aggregateResults.push(aggResult);
+      }
+    }
+
+    return aggregateResults;
+  }
+
+  return Object.defineProperties(self, {
+    addDatumRecord: {
+      value: addDatumRecord
+    },
+    finish: {
+      value: finish
+    }
+  });
 }$FUNCTION$);

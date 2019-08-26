@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = calculateAverageOverHours;
+
 /**
  * Calculate an average of two values projected over 1 hour.
  *
@@ -19,5 +20,6 @@ function calculateAverageOverHours(value, prevValue, ms) {
   if (!Number.isFinite(ms)) {
     return 0;
   }
+
   return (value + prevValue) / 2 * (ms / 3600000);
 }$FUNCTION$);

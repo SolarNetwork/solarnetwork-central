@@ -1,7 +1,6 @@
 DELETE FROM public.plv8_modules WHERE module = 'util/addTo';
 INSERT INTO public.plv8_modules (module, autoload, source) VALUES ('util/addTo', FALSE,
 $FUNCTION$'use strict';
-
 /**
  * Add a number value to an object at a specific key, limited to a percentage value.
  * Optionally increment a number "counter" value for the same key, if a counter
@@ -21,41 +20,51 @@ $FUNCTION$'use strict';
  */
 
 Object.defineProperty(exports, "__esModule", {
-	value: true
+  value: true
 });
 exports.default = addTo;
+
 function addTo(k, v, o, p, c, r) {
-	var newVal;
-	if (p === undefined) {
-		p = 1;
-	}
-	newVal = v * p;
-	if (o[k] === undefined) {
-		o[k] = newVal;
-	} else {
-		o[k] += newVal;
-	}
-	if (c) {
-		if (c[k] === undefined) {
-			c[k] = 1;
-		} else {
-			c[k] += 1;
-		}
-	}
-	if (r) {
-		if (r[k] === undefined) {
-			r[k] = { min: newVal, max: newVal };
-		} else {
-			if (r[k].min === undefined) {
-				r[k].min = newVal;
-			} else if (newVal < r[k].min) {
-				r[k].min = newVal;
-			}
-			if (r[k].max === undefined) {
-				r[k].max = newVal;
-			} else if (newVal > r[k].max) {
-				r[k].max = newVal;
-			}
-		}
-	}
+  var newVal;
+
+  if (p === undefined) {
+    p = 1;
+  }
+
+  newVal = v * p;
+
+  if (o[k] === undefined) {
+    o[k] = newVal;
+  } else {
+    o[k] += newVal;
+  }
+
+  if (c) {
+    if (c[k] === undefined) {
+      c[k] = 1;
+    } else {
+      c[k] += 1;
+    }
+  }
+
+  if (r) {
+    if (r[k] === undefined) {
+      r[k] = {
+        min: newVal,
+        max: newVal
+      };
+    } else {
+      if (r[k].min === undefined) {
+        r[k].min = newVal;
+      } else if (newVal < r[k].min) {
+        r[k].min = newVal;
+      }
+
+      if (r[k].max === undefined) {
+        r[k].max = newVal;
+      } else if (newVal > r[k].max) {
+        r[k].max = newVal;
+      }
+    }
+  }
 }$FUNCTION$);
