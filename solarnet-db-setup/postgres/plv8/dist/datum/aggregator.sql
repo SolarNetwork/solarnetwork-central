@@ -3,21 +3,15 @@ INSERT INTO public.plv8_modules (module, autoload, source) VALUES ('datum/aggreg
 $FUNCTION$'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-	value: true
+  value: true
 });
 exports.default = aggregator;
 
-var _aggAggregate = require('datum/aggAggregate');
+var _aggAggregate = _interopRequireDefault(require("datum/aggAggregate"));
 
-var _aggAggregate2 = _interopRequireDefault(_aggAggregate);
+var _datumAggregate = _interopRequireDefault(require("datum/datumAggregate"));
 
-var _datumAggregate = require('datum/datumAggregate');
-
-var _datumAggregate2 = _interopRequireDefault(_datumAggregate);
-
-var _mergeObjects = require('../util/mergeObjects');
-
-var _mergeObjects2 = _interopRequireDefault(_mergeObjects);
+var _mergeObjects = _interopRequireDefault(require("../util/mergeObjects"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -46,85 +40,96 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  *                                           values named for the associated property value.
  */
 function aggregator(configuration) {
-	var self = {
-		version: '2'
-	};
+  var self = {
+    version: '2'
+  };
+  /** The overall starting timestamp. */
 
-	/** The overall starting timestamp. */
-	var startTs = configuration && configuration.startTs > 0 ? configuration.startTs : new Date().getTime();
-	var startDate = new Date(startTs);
+  var startTs = configuration && configuration.startTs > 0 ? configuration.startTs : new Date().getTime();
+  var startDate = new Date(startTs);
+  /** The overall ending timestamp. */
 
-	/** The overall ending timestamp. */
-	var endTs = configuration && configuration.endTs > 0 ? configuration.endTs : new Date().getTime();
+  var endTs = configuration && configuration.endTs > 0 ? configuration.endTs : new Date().getTime();
+  /** A mapping of source ID -> array of objects. */
 
-	/** A mapping of source ID -> array of objects. */
-	var resultsBySource = {};
+  var resultsBySource = {};
+  var resultsByOrder = [];
+  /**
+   * Add another datum record.
+   *
+   * @param {Object} record            The record to add.
+   * @param {Date}   record[ts]        The datum timestamp.
+   * @param {Date}   record[ts_start]  The aggregate datum timestamp; only applicable when aggregating already aggregated data.
+   * @param {String} record[source_id] The datum source ID.
+   * @param {Object} record[jdata]     The datum JSON data object.
+   * @param {Object} record[jmeta]     The aggregate metadata object; only applicable when aggregating already aggregated data.
+   */
 
-	var resultsByOrder = [];
+  function addDatumRecord(record) {
+    if (!(record && record.source_id && (record.ts || record.ts_start))) {
+      return;
+    }
 
-	/**
-  * Add another datum record.
-  *
-  * @param {Object} record            The record to add.
-  * @param {Date}   record[ts]        The datum timestamp.
-  * @param {Date}   record[ts_start]  The aggregate datum timestamp; only applicable when aggregating already aggregated data.
-  * @param {String} record[source_id] The datum source ID.
-  * @param {Object} record[jdata]     The datum JSON data object.
-  * @param {Object} record[jmeta]     The aggregate metadata object; only applicable when aggregating already aggregated data.
-  */
-	function addDatumRecord(record) {
-		if (!(record && record.source_id && (record.ts || record.ts_start))) {
-			return;
-		}
-		var sourceId = record.source_id;
-		var recTs = record.ts_start ? record.ts_start.getTime() : record.ts.getTime();
-		var currResult = resultsBySource[sourceId];
-		var recToAdd = record;
+    var sourceId = record.source_id;
+    var recTs = record.ts_start ? record.ts_start.getTime() : record.ts.getTime();
+    var currResult = resultsBySource[sourceId];
+    var recToAdd = record;
 
-		if (currResult === undefined) {
-			currResult = record.ts_start ? (0, _aggAggregate2.default)(sourceId, startTs) : (0, _datumAggregate2.default)(sourceId, startTs, endTs, configuration);
+    if (currResult === undefined) {
+      currResult = record.ts_start ? (0, _aggAggregate.default)(sourceId, startTs) : (0, _datumAggregate.default)(sourceId, startTs, endTs, configuration); // keep track of results by source ID for fast lookup
 
-			// keep track of results by source ID for fast lookup
-			resultsBySource[sourceId] = currResult;
+      resultsBySource[sourceId] = currResult; // also keep track of order we obtain sources, so results ordered in same way
 
-			// also keep track of order we obtain sources, so results ordered in same way
-			resultsByOrder.push(currResult);
-		}
+      resultsByOrder.push(currResult);
+    } // when adding records within the time span, force the time slot to our start date so they all aggregate into one;
+    // otherwise set the time slot to the record date itself
 
-		// when adding records within the time span, force the time slot to our start date so they all aggregate into one;
-		// otherwise set the time slot to the record date itself
-		recToAdd = (0, _mergeObjects2.default)({
-			ts_start: recTs > startTs && recTs < endTs ? startDate : record.ts_start ? record.ts_start : record.ts }, record, undefined, true);
 
-		currResult.addDatumRecord(recToAdd);
-	}
+    recToAdd = (0, _mergeObjects.default)({
+      ts_start: recTs > startTs && recTs < endTs ? startDate : record.ts_start ? record.ts_start : record.ts
+    }, record, undefined, true);
+    currResult.addDatumRecord(recToAdd);
+  }
+  /**
+   * Finish all aggregate processing and return an array of all aggregate records.
+   *
+   * @return {Array} An array of aggregate record objects for each source ID encountered by
+   *                 all previous calls to <code>addDatumRecord()</code>, or an empty array
+   *                 if there aren't any.
+   */
 
-	/**
-  * Finish all aggregate processing and return an array of all aggregate records.
-  *
-  * @return {Array} An array of aggregate record objects for each source ID encountered by
-  *                 all previous calls to <code>addDatumRecord()</code>, or an empty array
-  *                 if there aren't any.
-  */
-	function finish() {
-		var aggregateResults = [],
-		    i,
-		    aggResult;
-		for (i = 0; i < resultsByOrder.length; i += 1) {
-			aggResult = resultsByOrder[i].finish();
-			if (aggResult) {
-				aggregateResults.push(aggResult);
-			}
-		}
-		return aggregateResults;
-	}
 
-	return Object.defineProperties(self, {
-		startTs: { value: startTs },
-		endTs: { value: endTs },
-		configuration: { value: configuration },
+  function finish() {
+    var aggregateResults = [],
+        i,
+        aggResult;
 
-		addDatumRecord: { value: addDatumRecord },
-		finish: { value: finish }
-	});
+    for (i = 0; i < resultsByOrder.length; i += 1) {
+      aggResult = resultsByOrder[i].finish();
+
+      if (aggResult) {
+        aggregateResults.push(aggResult);
+      }
+    }
+
+    return aggregateResults;
+  }
+
+  return Object.defineProperties(self, {
+    startTs: {
+      value: startTs
+    },
+    endTs: {
+      value: endTs
+    },
+    configuration: {
+      value: configuration
+    },
+    addDatumRecord: {
+      value: addDatumRecord
+    },
+    finish: {
+      value: finish
+    }
+  });
 }$FUNCTION$);

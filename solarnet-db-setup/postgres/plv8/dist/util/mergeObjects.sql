@@ -7,9 +7,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = mergeObjects;
 
-var _fixPrecision = require('../math/fixPrecision');
-
-var _fixPrecision2 = _interopRequireDefault(_fixPrecision);
+var _fixPrecision = _interopRequireDefault(require("../math/fixPrecision"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -30,12 +28,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 function mergeObjects(result, obj, precision, keepExisting) {
   var prop;
+
   if (obj) {
     for (prop in obj) {
       if (obj.hasOwnProperty(prop) && (!keepExisting || !result.hasOwnProperty(prop))) {
-        result[prop] = (0, _fixPrecision2.default)(obj[prop], precision);
+        result[prop] = (0, _fixPrecision.default)(obj[prop], precision);
       }
     }
   }
+
   return result;
 }$FUNCTION$);

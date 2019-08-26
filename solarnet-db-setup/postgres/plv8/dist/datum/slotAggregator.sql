@@ -3,13 +3,11 @@ INSERT INTO public.plv8_modules (module, autoload, source) VALUES ('datum/slotAg
 $FUNCTION$'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-	value: true
+  value: true
 });
 exports.default = slotAggregator;
 
-var _datumAggregate = require('datum/datumAggregate');
-
-var _datumAggregate2 = _interopRequireDefault(_datumAggregate);
+var _datumAggregate = _interopRequireDefault(require("datum/datumAggregate"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -38,93 +36,113 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  *                                           values named for the associated property value.
  */
 function slotAggregator(configuration) {
-	var self = {
-		version: '1'
-	};
+  var self = {
+    version: '1'
+  };
+  /** The overall starting timestamp. */
 
-	/** The overall starting timestamp. */
-	var startTs = configuration && configuration.startTs > 0 ? configuration.startTs : new Date().getTime();
+  var startTs = configuration && configuration.startTs > 0 ? configuration.startTs : new Date().getTime();
+  /** The overall ending timestamp. */
 
-	/** The overall ending timestamp. */
-	var endTs = configuration && configuration.endTs > 0 ? configuration.endTs : new Date().getTime();
+  var endTs = configuration && configuration.endTs > 0 ? configuration.endTs : new Date().getTime();
+  /** The number of seconds per time slot. */
 
-	/** The number of seconds per time slot. */
-	var slotSecs = configuration && configuration.slotSecs > 0 ? configuration.slotSecs : 600;
+  var slotSecs = configuration && configuration.slotSecs > 0 ? configuration.slotSecs : 600;
+  /** A mapping of source ID -> array of objects. */
 
-	/** A mapping of source ID -> array of objects. */
-	var resultsBySource = {};
+  var resultsBySource = {};
+  /**
+   * Add another datum record.
+   *
+   * @param {Object} record            The record to add.
+   * @param {Date}   record[ts]        The datum timestamp.
+   * @param {Date}   record[ts_start]  The datum time slot.
+   * @param {String} record[source_id] The datum source ID.
+   * @param {Object} record[jdata]     The datum JSON data object.
+   *
+   * @returns {Object} If <code>record</code> is associated with a new time slot, then
+   *                   an aggregate object will be returned for the data accumulated in
+   *                   the previous slot.
+   */
 
-	/**
-  * Add another datum record.
-  *
-  * @param {Object} record            The record to add.
-  * @param {Date}   record[ts]        The datum timestamp.
-  * @param {Date}   record[ts_start]  The datum time slot.
-  * @param {String} record[source_id] The datum source ID.
-  * @param {Object} record[jdata]     The datum JSON data object.
-  *
-  * @returns {Object} If <code>record</code> is associated with a new time slot, then
-  *                   an aggregate object will be returned for the data accumulated in
-  *                   the previous slot.
-  */
-	function addDatumRecord(record) {
-		if (!(record || record.source_id || record.ts_start)) {
-			return;
-		}
-		var sourceId = record.source_id;
-		var ts = record.ts_start.getTime();
-		var currResult = resultsBySource[sourceId];
-		var aggResult;
+  function addDatumRecord(record) {
+    if (!(record || record.source_id || record.ts_start)) {
+      return;
+    }
 
-		if (currResult === undefined) {
-			if (ts < startTs) {
-				// allow leading data outside of overall time span (for accumulating calculations)
-				ts = startTs;
-			}
-			currResult = (0, _datumAggregate2.default)(sourceId, ts, ts + slotSecs * 1000, configuration);
-			currResult.addDatumRecord(record);
-			resultsBySource[sourceId] = currResult;
-		} else if (ts !== currResult.ts) {
-			// record is in a new slot; finish up the current slot
-			aggResult = currResult.finish(record);
-			if (ts < endTs) {
-				currResult = currResult.startNext(ts, ts + slotSecs * 1000);
-				resultsBySource[sourceId] = currResult;
-			} else {
-				delete resultsBySource[sourceId];
-			}
-		} else {
-			currResult.addDatumRecord(record);
-		}
-		return aggResult;
-	}
+    var sourceId = record.source_id;
+    var ts = record.ts_start.getTime();
+    var currResult = resultsBySource[sourceId];
+    var aggResult;
 
-	/**
-  * Finish all aggregate processing and return an array of any remaining aggregate records.
-  *
-  * @return {Array} An array of aggregate record objects, or an empty array if there aren't any.
-  */
-	function finish() {
-		var remainingAggregateResults = [];
-		var result, prop, aggResult;
-		for (prop in resultsBySource) {
-			result = resultsBySource[prop];
-			aggResult = result.finish();
-			if (aggResult) {
-				remainingAggregateResults.push(aggResult);
-			}
-			delete resultsBySource[prop];
-		}
-		return remainingAggregateResults;
-	}
+    if (currResult === undefined) {
+      if (ts < startTs) {
+        // allow leading data outside of overall time span (for accumulating calculations)
+        ts = startTs;
+      }
 
-	return Object.defineProperties(self, {
-		startTs: { value: startTs },
-		endTs: { value: endTs },
-		slotSecs: { value: slotSecs },
-		configuration: { value: configuration },
+      currResult = (0, _datumAggregate.default)(sourceId, ts, ts + slotSecs * 1000, configuration);
+      currResult.addDatumRecord(record);
+      resultsBySource[sourceId] = currResult;
+    } else if (ts !== currResult.ts) {
+      // record is in a new slot; finish up the current slot
+      aggResult = currResult.finish(record);
 
-		addDatumRecord: { value: addDatumRecord },
-		finish: { value: finish }
-	});
+      if (ts < endTs) {
+        currResult = currResult.startNext(ts, ts + slotSecs * 1000);
+        resultsBySource[sourceId] = currResult;
+      } else {
+        delete resultsBySource[sourceId];
+      }
+    } else {
+      currResult.addDatumRecord(record);
+    }
+
+    return aggResult;
+  }
+  /**
+   * Finish all aggregate processing and return an array of any remaining aggregate records.
+   *
+   * @return {Array} An array of aggregate record objects, or an empty array if there aren't any.
+   */
+
+
+  function finish() {
+    var remainingAggregateResults = [];
+    var result, prop, aggResult;
+
+    for (prop in resultsBySource) {
+      result = resultsBySource[prop];
+      aggResult = result.finish();
+
+      if (aggResult) {
+        remainingAggregateResults.push(aggResult);
+      }
+
+      delete resultsBySource[prop];
+    }
+
+    return remainingAggregateResults;
+  }
+
+  return Object.defineProperties(self, {
+    startTs: {
+      value: startTs
+    },
+    endTs: {
+      value: endTs
+    },
+    slotSecs: {
+      value: slotSecs
+    },
+    configuration: {
+      value: configuration
+    },
+    addDatumRecord: {
+      value: addDatumRecord
+    },
+    finish: {
+      value: finish
+    }
+  });
 }$FUNCTION$);

@@ -1,13 +1,12 @@
 DELETE FROM public.plv8_modules WHERE module = 'datum/logLocationAggregateMessage';
 INSERT INTO public.plv8_modules (module, autoload, source) VALUES ('datum/logLocationAggregateMessage', FALSE,
-$FUNCTION$'use strict';
+$FUNCTION$"use strict";
 
 Object.defineProperty(exports, "__esModule", {
-	value: true
+  value: true
 });
 exports.default = logLocationAggregateMessage;
 var logInsertStmt;
-
 /**
  * Insert a log message into the <code>solaragg.agg_loc_messages</code> table.
  *
@@ -18,13 +17,16 @@ var logInsertStmt;
  *                          after this argument, and they will be joined into a single
  *                          message, joined by a single space character.
  */
+
 function logLocationAggregateMessage(locId, sourceId, ts, msg) {
-	if (ignoreLogMessages || msg === undefined) {
-		return;
-	}
-	if (!logInsertStmt) {
-		logInsertStmt = plv8.prepare('INSERT INTO solaragg.agg_loc_messages (loc_id, source_id, ts, msg) VALUES ($1, $2, $3, $4)', ['bigint', 'text', 'timestamp with time zone', 'text']);
-	}
-	var dbMsg = Array.prototype.slice.call(arguments, 3).join(' ');
-	logInsertStmt.execute([locId, sourceId, ts, dbMsg]);
+  if (ignoreLogMessages || msg === undefined) {
+    return;
+  }
+
+  if (!logInsertStmt) {
+    logInsertStmt = plv8.prepare('INSERT INTO solaragg.agg_loc_messages (loc_id, source_id, ts, msg) VALUES ($1, $2, $3, $4)', ['bigint', 'text', 'timestamp with time zone', 'text']);
+  }
+
+  var dbMsg = Array.prototype.slice.call(arguments, 3).join(' ');
+  logInsertStmt.execute([locId, sourceId, ts, dbMsg]);
 }$FUNCTION$);

@@ -1,15 +1,13 @@
 DELETE FROM public.plv8_modules WHERE module = 'math/calculateAverages';
 INSERT INTO public.plv8_modules (module, autoload, source) VALUES ('math/calculateAverages', FALSE,
-$FUNCTION$'use strict';
+$FUNCTION$"use strict";
 
 Object.defineProperty(exports, "__esModule", {
-	value: true
+  value: true
 });
 exports.default = calculateAverages;
 
-var _fixPrecision = require('math/fixPrecision');
-
-var _fixPrecision2 = _interopRequireDefault(_fixPrecision);
+var _fixPrecision = _interopRequireDefault(require("math/fixPrecision"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -27,22 +25,27 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  *                   whose values are the computed division results.
  */
 function calculateAverages(obj, counts, precision) {
-	var prop,
-	    count,
-	    result = {};
-	if (!obj) {
-		return result;
-	}
-	if (!counts) {
-		return obj;
-	}
-	for (prop in obj) {
-		if (obj.hasOwnProperty(prop)) {
-			count = counts[prop];
-			if (count > 0) {
-				result[prop] = (0, _fixPrecision2.default)(obj[prop] / count, precision);
-			}
-		}
-	}
-	return result;
+  var prop,
+      count,
+      result = {};
+
+  if (!obj) {
+    return result;
+  }
+
+  if (!counts) {
+    return obj;
+  }
+
+  for (prop in obj) {
+    if (obj.hasOwnProperty(prop)) {
+      count = counts[prop];
+
+      if (count > 0) {
+        result[prop] = (0, _fixPrecision.default)(obj[prop] / count, precision);
+      }
+    }
+  }
+
+  return result;
 }$FUNCTION$);

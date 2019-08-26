@@ -16,7 +16,7 @@ var argv = require('yargs')
 
 var glob = require('glob');
 var fs = require('fs');
-var babel = require('babel-core');
+var babel = require('@babel/core');
 
 function WARN()  { argv.verbose >= 0 && console.log.apply(console, arguments); }
 function INFO()  { argv.verbose >= 1 && console.log.apply(console, arguments); }
@@ -27,7 +27,7 @@ var outRoot = argv.outRoot;
 var moduleTableName = argv.table;
 
 var outputPathRegex = new RegExp('^'+sourceRoot.replace(/\.{1,2}\//g, '') +'/');
-var localRequireRegex = /require\(\'\.\//g;
+var localRequireRegex = /require\(\"\.\//g;
 
 function outputPath(path) {
 	var outName = path.replace(outputPathRegex, '');
@@ -44,7 +44,7 @@ function outputPath(path) {
 function processFile(path) {
 	DEBUG('Processing file: ' +path);
 	var code = babel.transformFileSync(path, {
-		presets: [ ['es2015', { 'modules': 'commonjs' }] ],
+		presets: [ ['@babel/env', { 'modules': 'commonjs', 'targets': { 'chrome': 28 } }] ],
 		plugins: [
 			['module-resolver', { root: [ sourceRoot ] } ]
 		]
@@ -56,7 +56,7 @@ function processFile(path) {
 	INFO(path, '=>', out.path);
 
 	// translate any require('./foo') into full package e.g. require('util/foo')
-	code = code.replace(localRequireRegex, 'require(\'' +out.pkg);
+	code = code.replace(localRequireRegex, 'require("' +out.pkg);
 
 	DEBUG(code);
 

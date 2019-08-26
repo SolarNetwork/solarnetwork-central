@@ -1,11 +1,12 @@
 DELETE FROM public.plv8_modules WHERE module = 'math/fixPrecision';
 INSERT INTO public.plv8_modules (module, autoload, source) VALUES ('math/fixPrecision', FALSE,
-$FUNCTION$'use strict';
+$FUNCTION$"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = fixPrecision;
+
 /**
  * Round a floating point number the precision of a floating point number. This method
  * works by multiplying, rounding, and then dividing by a provided amount. To save 3
@@ -20,8 +21,10 @@ function fixPrecision(val, amt) {
   if (typeof val !== 'number' || amt === null) {
     return val;
   }
+
   if (amt === undefined) {
     amt = 1000;
   }
+
   return Math.round(val * amt) / amt;
 }$FUNCTION$);
