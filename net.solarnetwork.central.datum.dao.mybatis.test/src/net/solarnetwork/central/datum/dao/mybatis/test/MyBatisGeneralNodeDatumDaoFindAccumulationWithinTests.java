@@ -27,6 +27,9 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertThat;
+import static org.springframework.util.StringUtils.commaDelimitedListToStringArray;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -45,6 +48,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
 /**
  * Test cases for the
@@ -54,7 +58,7 @@ import net.solarnetwork.central.domain.FilterResults;
  * methods.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisGeneralNodeDatumDaoFindAccumulationWithinTests
 		extends MyBatisGeneralNodeDatumDaoTestSupport {
@@ -721,6 +725,67 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationWithinTests
 
 		// then
 		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(0));
+	}
+
+	@Test
+	public void accumulationWithin24Hours() throws Exception {
+		// given
+		int count = 0;
+		DateTime start = null;
+		DateTime end = null;
+		DateTimeFormatter dtf = ISODateTimeFormat.dateTime().withZoneUTC();
+		try (BufferedReader in = new BufferedReader(new InputStreamReader(
+				getClass().getResourceAsStream("sample-raw-data-01.csv"), "UTF-8"))) {
+			String line = null;
+			while ( (line = in.readLine()) != null ) {
+				count++;
+				if ( count == 1 ) {
+					continue;
+				}
+				String[] data = commaDelimitedListToStringArray(line);
+				GeneralNodeDatum d = new GeneralNodeDatum();
+				d.setNodeId(TEST_NODE_ID);
+				d.setSourceId(TEST_SOURCE_ID);
+				d.setCreated(dtf.parseDateTime(data[0]));
+
+				GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
+				samples.putInstantaneousSampleValue("watts", Integer.valueOf(data[5]));
+				samples.putAccumulatingSampleValue("watt_hours", Long.valueOf(data[10]));
+				d.setSamples(samples);
+				dao.store(d);
+
+				if ( start == null ) {
+					start = d.getCreated();
+				}
+				end = d.getCreated();
+			}
+		}
+		log.debug("Loaded {} datum from {} to {}", count, start, end);
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulationWithin(filter,
+				start.minuteOfHour().roundFloorCopy(), end.minuteOfDay().roundCeilingCopy(), null);
+
+		// then
+		assertThat("Datum row returned", results.getReturnedResultCount(), equalTo(1));
+		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
+		ReportingGeneralNodeDatumMatch m = itr.next();
+
+		assertThat("First date start of data", m.getId().getCreated().withZone(DateTimeZone.UTC),
+				equalTo(start));
+		assertThat("Last date end of data", m.getSampleData().get("endDate"),
+				equalTo((Object) ISODateTimeFormat.dateTime().print(end).replace('T', ' ')));
+		assertThat("Node ID", m.getId().getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("Source ID", m.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("Watt hours start d1", m.getSampleData().get("watt_hours_start"),
+				equalTo(2251671300L));
+		assertThat("Watt hours end d2", m.getSampleData().get("watt_hours_end"), equalTo(2252589500L));
+		assertThat("Watt hours accumulation between d1 - d2", m.getSampleData().get("watt_hours"),
+				equalTo(918200));
+		assertThat("Time zone", m.getSampleData().get("timeZone"), equalTo((Object) TEST_TZ));
 	}
 
 }
