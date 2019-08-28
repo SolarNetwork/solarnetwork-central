@@ -1180,7 +1180,7 @@ RETURNS TABLE(
 	-- generate rows of nodes grouped by time zone, get absolute start dates for all nodes
 	-- but grouped into as few rows as possible to minimize subsequent query times
 	WITH tz AS (
-		SELECT ts_end AS edate, node_ids AS nodes, source_ids AS sources
+		SELECT ts_start AS sdate, node_ids AS nodes, source_ids AS sources
 		FROM solarnet.node_source_time_rounded(nodes, sources, 'day', ts_max)
 	)
 	-- first find max day quickly for each node+source
@@ -1188,7 +1188,7 @@ RETURNS TABLE(
 		SELECT max(a.ts_start) AS ts_start, a.node_id, a.source_id
 		FROM tz
 		INNER JOIN solaragg.agg_datum_daily a ON a.node_id = ANY(tz.nodes) AND a.source_id = ANY(tz.sources)
-		WHERE a.ts_start < tz.edate
+		WHERE a.ts_start < tz.sdate
 		GROUP BY node_id, source_id
 	)
 	, -- then group by day (start of day), so we can batch day+node+source queries together
@@ -1201,7 +1201,7 @@ RETURNS TABLE(
 	SELECT max(d.ts) AS ts, d.node_id, d.source_id
 	FROM max_date_groups mdg
 	INNER JOIN solardatum.da_datum d ON d.node_id = ANY(mdg.nodes) AND d.source_id = ANY(mdg.sources)
-	WHERE d.ts >= mdg.ts_start - interval '1 day'
+	WHERE d.ts >= mdg.ts_start
 		AND d.ts <= ts_max
 	GROUP BY d.node_id, d.source_id
 $$;
