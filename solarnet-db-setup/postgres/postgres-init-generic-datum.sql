@@ -895,6 +895,8 @@ $$;
 /**
  * Calculate the difference between the accumulating properties of datum between a time range.
  *
+ * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
+ *
  * This returns one row per node ID and source ID combination found. The returned `ts_start` and `ts_end` columns will
  * the timestamps of the found starting/ending datum records. The `jdata_a` column will be computed as the difference
  * between the starting/ending rows, using the `solarcommon.jsonb_diff_object()` aggregate function.
@@ -929,6 +931,7 @@ RETURNS TABLE(
 					AND d.source_id = ANY(sources)
 					AND d.ts <= ts_min
 					AND d.ts > ts_min - tolerance
+					AND d.jdata_a IS NOT NULL
 				ORDER BY d.node_id, d.source_id, d.ts DESC
 			)
 			UNION
@@ -957,6 +960,7 @@ RETURNS TABLE(
 					AND d.source_id = ANY(sources)
 					AND d.ts <= ts_max
 					AND d.ts > ts_max - tolerance
+					AND d.jdata_a IS NOT NULL
 				ORDER BY d.node_id, d.source_id, d.ts DESC
 			)
 			UNION
@@ -1024,6 +1028,8 @@ $$;
 /**
  * Calculate the difference between the accumulating properties of datum between a time range.
  *
+ * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
+ *
  * This returns one row per node ID and source ID combination found. The returned `ts_start` and `ts_end` columns will
  * the timestamps of the found starting/ending datum records. The `jdata_a` column will be computed as the difference
  * between the starting/ending rows, using the `solarcommon.jsonb_diff_object()` aggregate function.
@@ -1065,6 +1071,7 @@ RETURNS TABLE(
 					AND d.source_id = ANY(tz.sources)
 					AND d.ts <= tz.sdate
 					AND d.ts > tz.sdate - tolerance
+					AND d.jdata_a IS NOT NULL
 				ORDER BY d.node_id, d.source_id, d.ts DESC
 			)
 			UNION
@@ -1093,6 +1100,7 @@ RETURNS TABLE(
 					AND d.source_id = ANY(tz.sources)
 					AND d.ts <= tz.edate
 					AND d.ts > tz.edate - tolerance
+					AND d.jdata_a IS NOT NULL
 				ORDER BY d.node_id, d.source_id, d.ts DESC
 			)
 			UNION
@@ -1160,6 +1168,8 @@ $$;
 /**
  * Find the latest available data before a specific point in time.
  *
+ * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
+ *
  * This function returns at most one row per node+source combination. It also relies
  * on the `solaragg.agg_datum_daily` table to perform an initial narrowing of all possible
  * datum to a single day (for each node+source combination). This means that the query
@@ -1189,6 +1199,9 @@ RETURNS TABLE(
 		FROM tz
 		INNER JOIN solaragg.agg_datum_daily a ON a.node_id = ANY(tz.nodes) AND a.source_id = ANY(tz.sources)
 		WHERE a.ts_start < tz.sdate
+			-- including a.jdata_ad here results in index scan vs index only scan so performance is
+			-- worse; in Postgres 11 covering index could help here with functional (jdata_ad IS NOT NULL)::bool
+			AND a.jdata_ad IS NOT NULL
 		GROUP BY node_id, source_id
 	)
 	, -- then group by day (start of day), so we can batch day+node+source queries together
@@ -1203,12 +1216,15 @@ RETURNS TABLE(
 	INNER JOIN solardatum.da_datum d ON d.node_id = ANY(mdg.nodes) AND d.source_id = ANY(mdg.sources)
 	WHERE d.ts >= mdg.ts_start
 		AND d.ts <= ts_max
+		AND d.jdata_a IS NOT NULL
 	GROUP BY d.node_id, d.source_id
 $$;
 
 
 /**
  * Find the earliest available data after a specific point in time.
+ *
+ * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
  *
  * This function returns at most one row per node+source combination. It also relies
  * on the `solaragg.agg_datum_daily` table to perform an initial narrowing of all possible
@@ -1239,6 +1255,9 @@ RETURNS TABLE(
 		FROM tz
 		INNER JOIN solaragg.agg_datum_daily a ON a.node_id = ANY(tz.nodes) AND a.source_id = ANY(tz.sources)
 		WHERE a.ts_start >= tz.sdate
+			-- including a.jdata_ad here results in index scan vs index only scan so performance is
+			-- worse; in Postgres 11 covering index could help here with functional (jdata_ad IS NOT NULL)::bool
+			AND a.jdata_ad IS NOT NULL
 		GROUP BY node_id, source_id
 	)
 	, -- then group by day (start of day), so we can batch day+node+source queries together
@@ -1253,12 +1272,15 @@ RETURNS TABLE(
 	INNER JOIN solardatum.da_datum d ON d.node_id = ANY(mdg.nodes) AND d.source_id = ANY(mdg.sources)
 	WHERE d.ts >= ts_min
 		AND d.ts <= mdg.ts_start + interval '1 day'
+		AND d.jdata_a IS NOT NULL
 	GROUP BY d.node_id, d.source_id
 $$;
 
 
 /**
  * Calculate the difference between the accumulating properties of datum over a time range.
+ *
+ * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
  *
  * This returns at most one row. The returned `ts_start` and `ts_end` columns will
  * the timestamps of the found starting/ending datum records. The `jdata` column will be computed as the difference
@@ -1290,6 +1312,7 @@ RETURNS TABLE(
 					AND source_id = source
 					AND ts < ts_min
 					AND ts >= ts_min - tolerance
+					AND jdata_a IS NOT NULL
 				ORDER BY ts DESC 
 				LIMIT 1
 			)
@@ -1321,6 +1344,7 @@ RETURNS TABLE(
 					AND source_id = source
 					AND ts >= ts_min
 					AND ts < ts_max
+					AND jdata_a IS NOT NULL
 				ORDER BY ts 
 				LIMIT 1
 			)
@@ -1352,6 +1376,7 @@ RETURNS TABLE(
 					AND source_id = source
 					AND ts < ts_max
 					AND ts >= ts_min
+					AND jdata_a IS NOT NULL
 				ORDER BY ts DESC 
 				LIMIT 1
 			)
@@ -1424,6 +1449,8 @@ $$;
 
 /**
  * Calculate the difference between the accumulating properties of datum over a time range.
+ *
+ * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
  *
  * This returns one row per node ID and source ID combination found. The returned `ts_start` and `ts_end` columns will
  * the timestamps of the found starting/ending datum records. The `jdata_a` column will be computed as the difference
@@ -1573,6 +1600,8 @@ $$;
 
 /**
  * Calculate the difference between the accumulating properties of datum over a time range.
+ *
+ * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
  *
  * This returns one row per node ID and source ID combination found. The returned `ts_start` and `ts_end` columns will
  * the timestamps of the found starting/ending datum records. The `jdata_a` column will be computed as the difference
@@ -1737,6 +1766,8 @@ $$;
 /**
  * Calculate the difference between the accumulating properties of datum within a time range.
  *
+ * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
+ *
  * This returns one row per node ID and source ID combination found. The returned `ts_start` and 
  * `ts_end` columns will be the timestamps of the found starting/ending datum records. The `jdata_a`
  * column will be computed as the difference between the starting/ending rows, using the 
@@ -1774,6 +1805,7 @@ RETURNS TABLE(
 			AND d.source_id = ANY(sources)
 			AND d.ts >= ts_min
 			AND d.ts <= ts_max
+			AND d.jdata_a IS NOT NULL
 		GROUP BY d.node_id, d.source_id
 	)
 	, resets AS (
@@ -1810,6 +1842,8 @@ $$;
 
 /**
  * Calculate the difference between the accumulating properties of datum within a time range.
+ *
+ * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
  *
  * This returns one row per node ID and source ID combination found. The returned `ts_start` and 
  * `ts_end` columns will be the timestamps of the found starting/ending datum records. The `jdata_a`
@@ -1939,6 +1973,8 @@ $$;
 /**
  * Calculate the difference between the accumulating properties of datum within a time range.
  *
+ * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
+ *
  * This returns one row per node ID and source ID combination found. The returned `ts_start` and 
  * `ts_end` columns will be the timestamps of the found starting/ending datum records. The `jdata_a`
  * column will be computed as the difference between the starting/ending rows, using the 
@@ -1984,6 +2020,8 @@ $$;
 /**
  * Calculate the difference between the accumulating properties of datum within a time range.
  *
+ * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
+ *
  * This returns one row per node ID and source ID combination found. The returned `ts_start` and
  * `ts_end` columns will * the timestamps of the found starting/ending datum records. The `jdata_a`
  * column will be computed as the difference * between the starting/ending rows, using the
@@ -2027,6 +2065,7 @@ RETURNS TABLE(
 		INNER JOIN solardatum.da_datum d ON d.node_id = ANY(tz.nodes) AND d.source_id = ANY(tz.sources)
 		WHERE d.ts >= tz.sdate
 			AND d.ts <= tz.edate
+			AND d.jdata_a IS NOT NULL
 		GROUP BY d.node_id, d.source_id
 	)
 	, resets AS (

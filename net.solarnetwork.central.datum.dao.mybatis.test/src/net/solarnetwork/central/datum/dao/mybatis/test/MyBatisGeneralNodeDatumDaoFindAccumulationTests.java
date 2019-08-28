@@ -885,7 +885,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 	}
 
 	/*-============================================================================================
-	 * Accumulation over(no time constraint), local dates 
+	 * Accumulation over (no time constraint), local dates 
 	 *-==========================================================================================*/
 
 	@Test
@@ -894,6 +894,8 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
 		List<GeneralNodeDatumPK> ids = setupDefaultDatumAccumulationData(ts, ts2);
+
+		log.debug("Day data: {}", getDatumAggregateDaily());
 
 		// when
 		DatumFilterCommand filter = new DatumFilterCommand();
@@ -909,6 +911,78 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		ReportingGeneralNodeDatumMatch m = itr.next();
 		verifyAccumulationResult("(d3 - d1) = (8044 - 4002)", m, ids.get(2).getCreated(),
 				ids.get(0).getCreated(), 4002, 8044, 4042);
+	}
+
+	@Test
+	public void accumulationOverLocal_IgnoreNullStartAccumlation() {
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+
+		// add a NULL record that is actually closer in time to start date
+		GeneralNodeDatum null1 = new GeneralNodeDatum();
+		null1.setNodeId(TEST_NODE_ID);
+		null1.setCreated(ts.minusSeconds(30));
+		null1.setSourceId(TEST_SOURCE_ID);
+		null1.setSamples(new GeneralNodeDatumSamples());
+		null1.getSamples().putStatusSampleValue("alert", "foo");
+		dao.store(null1);
+
+		accumulationOverLocal();
+	}
+
+	@Test
+	public void accumulationOverLocal_IgnoreNullStartAccumlationFirst() {
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+
+		// add a NULL record that is actually the start of data
+		GeneralNodeDatum null1 = new GeneralNodeDatum();
+		null1.setNodeId(TEST_NODE_ID);
+		null1.setCreated(ts.minusSeconds(90));
+		null1.setSourceId(TEST_SOURCE_ID);
+		null1.setSamples(new GeneralNodeDatumSamples());
+		null1.getSamples().putStatusSampleValue("alert", "foo");
+		dao.store(null1);
+
+		accumulationOverLocal();
+	}
+
+	@Test
+	public void accumulationOverLocal_IgnoreNullEndAccumlation() {
+		DateTime ts = new DateTime(2018, 9, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+
+		// add a NULL record that is actually closer in time to end date
+		GeneralNodeDatum null1 = new GeneralNodeDatum();
+		null1.setNodeId(TEST_NODE_ID);
+		null1.setCreated(ts.minusSeconds(30));
+		null1.setSourceId(TEST_SOURCE_ID);
+		null1.setSamples(new GeneralNodeDatumSamples());
+		null1.getSamples().putStatusSampleValue("alert", "foo");
+		dao.store(null1);
+
+		accumulationOverLocal();
+	}
+
+	@Test
+	public void accumulationOverLocal_OnlyNullAccumulation() {
+		// given
+		DateTime ts = new DateTime(2018, 8, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime ts2 = new DateTime(2018, 9, 1, 0, 0, 0, ts.getZone());
+		setupDefaultDatumAccumulationData(ts, ts2);
+
+		jdbcTemplate.update("update solardatum.da_datum set jdata_a = NULL");
+		processAggregateStaleData();
+
+		log.debug("Raw data: {}", getDatum());
+		log.debug("Day data: {}", getDatumAggregateDaily());
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAccumulation(filter,
+				new LocalDateTime(2018, 8, 1, 0, 0), new LocalDateTime(2018, 9, 1, 0, 0), null);
+
+		// then
+		assertThat("Datum at rows returned", results.getReturnedResultCount(), equalTo(0));
 	}
 
 	@Test
@@ -1020,6 +1094,8 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 
 		// query depends on aggregate data
 		processAggregateStaleData();
+		log.debug("Raw data: {}", getDatum());
+		log.debug("Day data: {}", getDatumAggregateDaily());
 		assertThat("Aggregate days", sqlDatesFromLocalDates(getDatumAggregateDaily()),
 				contains(sqlDates("2018-08-01", "2018-08-15", "2018-09-01")));
 
