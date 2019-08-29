@@ -13,6 +13,24 @@ CREATE TABLE solardatum.da_datum (
 -- add similar index with reverse time to make several "most recent" style queries faster
 CREATE UNIQUE INDEX IF NOT EXISTS da_datum_reverse_pkey ON solardatum.da_datum (node_id, ts DESC, source_id);
 
+/**
+ * Index da_datum_x_acc_idx
+ *
+ * This index is designed to support the `solardatum.calculate_datum_diff_over(
+ * 	 node bigint, source text, ts_min timestamptz, ts_max timestamptz, tolerance interval)`
+ * function, which is called by the `solaragg.process_one_agg_stale_datum(kind character)`
+ * function during aggregate datum processing. The queries need to find the most/least recent
+ * data where `jdata_a` is not NULL, thus this index is defined as a partial index with
+ * `WHERE jdata_a IS NOT NULL`. The `jdata_a` column is included in the index ONLY so that
+ * an index-only scan can be performed, as the query only needs this column in the result.
+ * In Postgres 11 a covering index could be used instead.
+ *
+ * Note the name includes `_x` because scripts that cluster the table sort the indexes by
+ * name and use the one that sorts first; thus this addition sorts the index later.
+ */
+CREATE UNIQUE INDEX IF NOT EXISTS da_datum_x_acc_idx ON solardatum.da_datum (node_id, source_id, ts DESC, jdata_a)
+    WHERE jdata_a IS NOT NULL;
+
 CREATE OR REPLACE FUNCTION solardatum.jdata_from_datum(datum solardatum.da_datum)
 	RETURNS jsonb
 	LANGUAGE SQL IMMUTABLE AS
