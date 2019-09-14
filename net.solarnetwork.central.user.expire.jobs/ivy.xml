@@ -18,7 +18,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.expire" rev="[1.0,2.0)"/>
 		<dependency org="org.aopalliance" name="com.springsource.org.aopalliance" rev="1.0.0" />
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>
-		<dependency org="org.osgi" name="org.osgi.enterprise" rev="4.2.0"/>
+		<dependency org="org.osgi" name="org.osgi.enterprise" rev="5.0.0"/>
 		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
 		<dependency org="org.springframework" name="spring-context" rev="4.2.6.RELEASE"/>
 	</dependencies>
