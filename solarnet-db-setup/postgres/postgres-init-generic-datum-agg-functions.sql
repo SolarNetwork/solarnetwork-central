@@ -716,18 +716,20 @@ BEGIN
 
 		CASE kind
 			WHEN 'h' THEN
-				SELECT jdata, jmeta
-				FROM solaragg.calc_datum_time_slots(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, agg_span, 0, interval '1 hour')
-				INTO agg_json, agg_jmeta;
+				-- Dramatically faster execution via EXECUTE than embedded SQL here; better query plan
 				
-				SELECT jdata, ts_start, ts_end
-				FROM solardatum.calculate_datum_diff_over(stale.node_id, stale.source_id::text, stale.ts_start, stale.ts_start + agg_span)
-				INTO agg_reading, agg_reading_ts_start, agg_reading_ts_end;
+				EXECUTE 'SELECT jdata, jmeta FROM solaragg.calc_datum_time_slots($1, $2, $3, $4, $5, $6)'
+				INTO agg_json, agg_jmeta
+				USING stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, agg_span, 0, interval '1 hour';
+				
+				EXECUTE 'SELECT jdata, ts_start, ts_end FROM solardatum.calculate_datum_diff_over($1, $2, $3, $4)'
+				INTO agg_reading, agg_reading_ts_start, agg_reading_ts_end
+				USING stale.node_id, stale.source_id::text, stale.ts_start, stale.ts_start + agg_span;
 
 			WHEN 'd' THEN
-				SELECT jdata, jmeta
-				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale_ts_end, 'h')
-				INTO agg_json, agg_jmeta;
+				EXECUTE 'SELECT jdata, jmeta FROM solaragg.calc_agg_datum_agg($1, $2, $3, $4, $5)'
+				INTO agg_json, agg_jmeta
+				USING stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale_ts_end, 'h';
 				
 				SELECT jsonb_strip_nulls(jsonb_build_object(
 					 'as', solarcommon.first(jdata_as ORDER BY ts_start),
@@ -743,9 +745,9 @@ BEGIN
 				INTO agg_reading;
 
 			ELSE
-				SELECT jdata, jmeta
-				FROM solaragg.calc_agg_datum_agg(stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale_ts_end, 'd')
-				INTO agg_json, agg_jmeta;
+				EXECUTE 'SELECT jdata, jmeta FROM solaragg.calc_agg_datum_agg($1, $2, $3, $4, $5)'
+				INTO agg_json, agg_jmeta
+				USING stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale_ts_end, 'd';
 				
 				SELECT jsonb_strip_nulls(jsonb_build_object(
 					 'as', solarcommon.first(jdata_as ORDER BY ts_start),
@@ -933,6 +935,7 @@ BEGIN
 	RETURN proc_count;
 END;
 $$;
+
 
 CREATE OR REPLACE FUNCTION solaragg.process_agg_stale_datum(kind char, max integer)
   RETURNS INTEGER AS
