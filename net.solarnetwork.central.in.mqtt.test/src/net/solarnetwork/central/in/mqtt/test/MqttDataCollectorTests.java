@@ -61,6 +61,8 @@ import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.test.mqtt.MqttServerSupport;
+import net.solarnetwork.test.mqtt.TestingInterceptHandler;
 import net.solarnetwork.util.JodaDateTimeSerializer;
 import net.solarnetwork.util.JodaLocalDateSerializer;
 import net.solarnetwork.util.JodaLocalDateTimeSerializer;
@@ -459,7 +461,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		setupMqttServer(null, null, null, mqttPort);
 
 		// sleep for a bit to allow background thread to attempt second connect
-		initThread.join(3000);
+		Thread.sleep(3000);
 
 		stopMqttServer(); // to flush messages
 

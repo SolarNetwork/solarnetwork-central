@@ -19,7 +19,8 @@
 		<dependency org="net.solarnetwork.central.test" name="net.solarnetwork.central.test" rev="[1.7.0,2.0.0)"/>
 		
 		<!-- Testing support -->
-		<dependency org="io.moquette" name="moquette-broker" rev="0.11"/>
+		<dependency org="io.moquette" name="moquette-broker" rev="0.12.1"/>
+		<dependency org="net.solarnetwork.common.test" name="net.solarnetwork.common.test" rev="1.15.0"/>
 
 		<!-- SolarNetwork -->
     </dependencies>
