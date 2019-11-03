@@ -25,16 +25,12 @@ package net.solarnetwork.central.datum.dao.mybatis.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.domain.Identity;
 
 /**
@@ -44,14 +40,7 @@ import net.solarnetwork.domain.Identity;
  * @version 1.4
  */
 @ContextConfiguration
-public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
-
-	public static final Long TEST_USER_ID = Long.valueOf(-9999);
-	public static final String TEST_USERNAME = "unittest@localhost";
-	public static final Long TEST_PRICE_SOURCE_ID = Long.valueOf(-9998);
-	public static final String TEST_PRICE_SOURCE_NAME = "Test Source";
-	public static final Long TEST_PRICE_LOC_ID = Long.valueOf(-9997);
-	public static final String TEST_PRICE_LOC_NAME = "Test Price Location";
+public abstract class AbstractMyBatisDaoTestSupport extends BaseDatumJdbcTestSupport {
 
 	private SqlSessionFactory sqlSessionFactory;
 
@@ -77,171 +66,6 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 		setupTestNode();
 		setupTestUser();
 		setupTestPriceLocation();
-	}
-
-	/**
-	 * Insert a test user into the solaruser.user_user table.
-	 * 
-	 * <p>
-	 * This will use {@link #TEST_USER_ID} and {@link #TEST_USERNAME} values.
-	 * </p>
-	 */
-	protected void setupTestUser() {
-		setupTestUser(TEST_USER_ID, TEST_USERNAME);
-	}
-
-	/**
-	 * Insert a test user into the solaruser.user_user table.
-	 * 
-	 * @param id
-	 *        the user ID
-	 * @param username
-	 *        the user username
-	 */
-	protected void setupTestUser(Long id, String username) {
-		jdbcTemplate.update(
-				"insert into solaruser.user_user (id,email,password,disp_name,enabled) values (?,?,?,?,?)",
-				id, username, DigestUtils.sha256Hex("password"), "Unit Test", Boolean.TRUE);
-	}
-
-	/**
-	 * Insert a test UserNode into the solaruser.user_node table. The user and
-	 * node must already exist.
-	 * 
-	 * @param userId
-	 *        the user ID
-	 * @param nodeId
-	 *        the node ID
-	 * @param name
-	 *        the display name
-	 * @since 1.1
-	 */
-	protected void setupTestUserNode(Long userId, Long nodeId, String name) {
-		jdbcTemplate.update("insert into solaruser.user_node (user_id,node_id,disp_name) values (?,?,?)",
-				userId, nodeId, name);
-	}
-
-	/**
-	 * Insert a test price source into the solarnet.sn_price_source table.
-	 * 
-	 * @param id
-	 *        the source ID
-	 * @param name
-	 *        the source name
-	 */
-	protected void setupTestPriceSource(Long id, String name) {
-		jdbcTemplate.update("insert into solarnet.sn_price_source (id,sname) values (?,?)", id, name);
-	}
-
-	/**
-	 * Insert a test price location into the solarnet.sn_price_loc table.
-	 * 
-	 * @param id
-	 *        the ID
-	 * @param name
-	 *        the name
-	 * @param sourceId
-	 *        the price source ID
-	 */
-	protected void setupTestPriceLocation(Long id, Long locationId, String name, Long sourceId) {
-		jdbcTemplate.update(
-				"insert into solarnet.sn_price_loc (id,loc_id,loc_name,source_id,currency,unit) values (?,?,?,?,?,?)",
-				id, locationId, name, sourceId, "NZD", "kWh");
-	}
-
-	/**
-	 * Insert a test price source and name.
-	 * 
-	 * <p>
-	 * This will use the {@link #TEST_PRICE_SOURCE_ID},
-	 * {@link #TEST_PRICE_SOURCE_NAME}, {@link #TEST_PRICE_LOC_ID}, and
-	 * {@link #TEST_PRICE_LOC_NAME} values. The
-	 * {@link AbstractCentralTransactionalTest#TEST_LOC_ID} will be used, and is
-	 * assumed to exist in the database already.
-	 * </p>
-	 * 
-	 */
-	@Override
-	protected void setupTestPriceLocation() {
-		setupTestPriceSource(TEST_PRICE_SOURCE_ID, TEST_PRICE_SOURCE_NAME);
-		setupTestPriceLocation(TEST_PRICE_LOC_ID, TEST_LOC_ID, TEST_PRICE_LOC_NAME,
-				TEST_PRICE_SOURCE_ID);
-	}
-
-	/**
-	 * Insert a test node record into the database.
-	 * 
-	 * @param nodeId
-	 *        the node ID
-	 * @param locationId
-	 *        the node's location ID
-	 */
-	protected void setupTestNode(Long nodeId, Long locationId) {
-		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id) values (?,?)", nodeId,
-				locationId);
-	}
-
-	/**
-	 * Insert a test location record into the database.
-	 * 
-	 * @param id
-	 *        the location ID
-	 * @param timeZoneId
-	 *        the time zone to use
-	 */
-	protected void setupTestLocation(Long id, String timeZoneId) {
-		jdbcTemplate.update(
-				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
-				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, timeZoneId);
-	}
-
-	/**
-	 * Insert a test UserNode record into the database.
-	 * 
-	 * @param nodeId
-	 *        the node ID
-	 * @param userId
-	 *        the user ID
-	 */
-	protected void setupUserNodeEntity(Long nodeId, Long userId) {
-		jdbcTemplate.update("INSERT INTO solaruser.user_node (node_id, user_id) VALUES (?,?)", nodeId,
-				userId);
-	}
-
-	/**
-	 * Get the available stale datum records.
-	 * 
-	 * @param type
-	 *        the type of records to get
-	 * @return the results, never {@literal null}
-	 */
-	protected List<Map<String, Object>> getStaleDatum(Aggregation type) {
-		return jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.agg_stale_datum WHERE agg_kind = ? ORDER BY ts_start, node_id, source_id",
-				type.getKey());
-	}
-
-	/**
-	 * Get the available stale datum records.
-	 * 
-	 * @param type
-	 *        the type of records to get
-	 * @return the results, never {@literal null}
-	 */
-	protected List<Map<String, Object>> getStaleDatumOrderedByNode(Aggregation type) {
-		return jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.agg_stale_datum WHERE agg_kind = ? ORDER BY node_id, ts_start, source_id",
-				type.getKey());
-	}
-
-	/**
-	 * Delete all stale datum rows.
-	 * 
-	 * @return count of deleted rows
-	 */
-	protected int deleteStaleDatum() {
-		return jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
-
 	}
 
 }

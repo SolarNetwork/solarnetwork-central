@@ -22,14 +22,10 @@
 
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
-import static java.util.Collections.emptyList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +35,6 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.jdbc.core.CallableStatementCreator;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumDao;
 import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
@@ -125,22 +120,6 @@ public class SupportingProceduresTests extends AbstractMyBatisDaoTestSupport {
 		List<Map<String, Object>> data = diffSum(new Long[] { TEST_NODE_ID },
 				new String[] { TEST_SOURCE_ID });
 		assertThat("Empty result", data, hasSize(0));
-	}
-
-	private void insertDatum(long date, Long nodeId, String sourceId, GeneralNodeDatumSamples samples) {
-		jdbcTemplate.call(new CallableStatementCreator() {
-
-			@Override
-			public CallableStatement createCallableStatement(Connection con) throws SQLException {
-				CallableStatement stmt = con.prepareCall("{call solardatum.store_datum(?, ?, ?, ?, ?)}");
-				stmt.setTimestamp(1, new Timestamp(date));
-				stmt.setLong(2, nodeId);
-				stmt.setString(3, sourceId);
-				stmt.setTimestamp(4, new Timestamp(date));
-				stmt.setString(5, JsonUtils.getJSONString(samples, null));
-				return stmt;
-			}
-		}, emptyList());
 	}
 
 	private interface SamplePopulator {
