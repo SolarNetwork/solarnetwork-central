@@ -1,41 +1,3 @@
-CREATE SEQUENCE solaruser.user_expire_seq;
-
-CREATE TABLE solaruser.user_expire_data_conf (
-	id				BIGINT NOT NULL DEFAULT nextval('solaruser.user_expire_seq'),
-	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	user_id			BIGINT NOT NULL,
-	cname			CHARACTER VARYING(64) NOT NULL,
-	sident			CHARACTER VARYING(128) NOT NULL,
-	expire_days		integer NOT NULL,
-	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
-	sprops			jsonb,
-	filter			jsonb,
-	CONSTRAINT user_expire_data_conf_pkey PRIMARY KEY (id),
-	CONSTRAINT user_expire_data_conf_user_fk FOREIGN KEY (user_id)
-		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
-);
-
-/* Add index on user_id so we can show all entities for user. */
-CREATE INDEX user_expire_data_conf_user_idx ON solaruser.user_expire_data_conf (user_id);
-
-/**
- * Get a "preview" of calling the `solaruser.expire_datum_for_policy(bigint,jsonb,interval)` function
- * in the form of a record of counts for each type of datum record that would match an expiration
- * policy (and be deleted).
- *
- * The following fields are supported in the expiration policy:
- *
- * nodeIds - an array of node ID values to limit to; all nodes will be included otherwise
- * sourceIds - an array of source ID Ant path patterns to limit to; all sources will be included otherwise
- * aggregationKey - one of `h`, `d`, or `M` for hour, day, and month level records to be included;
- *                  only raw datum are included otherwise; any level automatically includes all levels
- *                  below it, e.g. `M` includes both `d` and `h`
- *
- * @param userid the ID of the user to query on
- * @pram jpolicy an expiration policy, with optional fields to limit the selected datum to
- * @param age only records older than this are included
- */
 CREATE OR REPLACE FUNCTION solaruser.preview_expire_datum_for_policy(userid bigint, jpolicy jsonb, age interval)
   RETURNS TABLE(query_date timestamptz, datum_count bigint, datum_hourly_count integer, datum_daily_count integer, datum_monthly_count integer)
   LANGUAGE plpgsql STABLE AS
@@ -132,21 +94,6 @@ BEGIN
 END;
 $$;
 
-/**
- * Delete expired datum records according to an expiration policy.
- *
- * The following fields are supported in the expiration policy:
- *
- * nodeIds - an array of node ID values to limit to; all nodes will be included otherwise
- * sourceIds - an array of source ID Ant path patterns to limit to; all sources will be included otherwise
- * aggregationKey - one of `h`, `d`, or `M` for hour, day, and month level records to be included;
- *                  only raw datum are included otherwise; any level automatically includes all levels
- *                  below it, e.g. `M` includes both `d` and `h`
- *
- * @param userid the ID of the user to query on
- * @pram jpolicy an expiration policy, with optional fields to limit the selected datum to
- * @param age only records older than this are included
- */
 CREATE OR REPLACE FUNCTION solaruser.expire_datum_for_policy(userid bigint, jpolicy jsonb, age interval)
   RETURNS bigint LANGUAGE plpgsql VOLATILE AS
 $$
@@ -321,82 +268,5 @@ BEGIN
 	END IF;
 	
 	RETURN total_count;
-END;
-$$;
-
-/**************************************************************************************************
- * TABLE solaruser.user_datum_delete_job
- *
- * Holds records for datum delete jobs, where `status` represents the execution status
- * of the job and `config` holds a complete delete configuration document.
- */
-CREATE TABLE solaruser.user_datum_delete_job (
-	id				uuid NOT NULL,
-	user_id			BIGINT NOT NULL,
-	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	progress		DOUBLE PRECISION NOT NULL DEFAULT 0,
-	started 		TIMESTAMP WITH TIME ZONE,
-	completed 		TIMESTAMP WITH TIME ZONE,
-	result_count	BIGINT,
-	state			CHARACTER(1) NOT NULL,
-	success 		BOOLEAN,
-	message			TEXT,
-	config			jsonb NOT NULL,
-	CONSTRAINT user_datum_delete_job_pkey PRIMARY KEY (user_id, id),
-	CONSTRAINT user_datum_delete_user_fk FOREIGN KEY (user_id)
-		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
-);
-
-/**************************************************************************************************
- * FUNCTION solaruser.claim_datum_delete_job()
- *
- * "Claim" a delete job from the `solaruser.user_datum_delete_job` table that has a status of 'q'
- * and change the status to 'p' and return it. The tasks will be claimed from oldest to newest
- * based on the created column.
- *
- * @return the claimed row, if one was able to be claimed
- */
-CREATE OR REPLACE FUNCTION solaruser.claim_datum_delete_job()
-  RETURNS solaruser.user_datum_delete_job LANGUAGE plpgsql VOLATILE AS
-$$
-DECLARE
-	rec solaruser.user_datum_delete_job;
-	curs CURSOR FOR SELECT * FROM solaruser.user_datum_delete_job
-			WHERE state = 'q'
-			ORDER BY created ASC, ID ASC
-			LIMIT 1
-			FOR UPDATE SKIP LOCKED;
-BEGIN
-	OPEN curs;
-	FETCH NEXT FROM curs INTO rec;
-	IF FOUND THEN
-		UPDATE solaruser.user_datum_delete_job SET state = 'p' WHERE CURRENT OF curs;
-	END IF;
-	CLOSE curs;
-	RETURN rec;
-END;
-$$;
-
-/**************************************************************************************************
- * FUNCTION solaruser.purge_completed_datum_delete_jobs(timestamp with time zone)
- *
- * Delete `solaruser.user_datum_delete_job` rows that have reached the 'c' state and whose
- * completed date is older than the given date.
- *
- * @param older_date The maximum date to delete jobs for.
- * @return The number of rows deleted.
- */
-CREATE OR REPLACE FUNCTION solaruser.purge_completed_datum_delete_jobs(older_date timestamp with time zone)
-  RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS
-$$
-DECLARE
-	num_rows BIGINT := 0;
-BEGIN
-	DELETE FROM solaruser.user_datum_delete_job
-	WHERE completed < older_date AND state = 'c';
-	GET DIAGNOSTICS num_rows = ROW_COUNT;
-	RETURN num_rows;
 END;
 $$;

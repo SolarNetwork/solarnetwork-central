@@ -366,12 +366,9 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 				result.expiredHourCount++;
 				result.expiredDayCount++;
 			}
-			if ( result.monthCount < 1 ) {
-				result.monthCount = 1;
-			}
-			if ( month.isBefore(currMonth) ) {
+			if ( result.monthCount < 1 || month.isBefore(currMonth) ) {
 				result.monthCount++;
-				if ( month.isBefore(result.expire.monthOfYear().roundFloorCopy()) ) {
+				if ( currMonth.isBefore(result.expire.monthOfYear().roundFloorCopy()) ) {
 					result.expiredMonthCount++;
 				}
 				month = currMonth;
