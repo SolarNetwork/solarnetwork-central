@@ -1,7 +1,7 @@
 /* ==================================================================
- * StaleAuditDataProcessor.java - 3/07/2018 9:46:25 AM
+ * StaleAggregateDatumProcessor.java - 4/11/2019 4:27:47 pm
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2019 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,30 +22,28 @@
 
 package net.solarnetwork.central.datum.agg;
 
-import org.osgi.service.event.EventAdmin;
-import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.Identity;
 
 /**
- * Job to process "stale" audit datum reporting data.
+ * API for handling stale aggregate datum.
  * 
  * @author matt
- * @version 1.1
- * @since 1.6
+ * @version 1.0
+ * @since 1.7
  */
-public class StaleAuditDataProcessor extends TieredStoredProcedureStaleDatumProcessor {
+public interface AggregateDatumProcessor {
 
 	/**
-	 * Construct with properties.
+	 * Process an aggregate datum.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
-	 * @param jdbcOps
-	 *        the JdbcOperations to use
+	 * @param aggregation
+	 *        the datum aggregation
+	 * @param datum
+	 *        the datum
+	 * @return {@literal true} if the processing was handled successfully
 	 */
-	public StaleAuditDataProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
-		super(eventAdmin, jdbcOps, "stale audit data");
-		setJdbcCall("{? = call solaragg.process_one_aud_datum_daily_stale(?)}");
-		setTierProcessMax(null);
-	}
+	boolean processStaleAggregateDatum(Aggregation aggregation, Identity<GeneralNodeDatumPK> datum);
 
 }

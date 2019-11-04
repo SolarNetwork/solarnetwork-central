@@ -22,19 +22,13 @@
 
 package net.solarnetwork.central.datum.agg;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Types;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DeadlockLoserDataAccessException;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 
 /**
@@ -61,10 +55,10 @@ import org.springframework.jdbc.core.JdbcOperations;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.6
  */
-public class TieredStaleDatumProcessor extends StaleDatumProcessor {
+public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 
 	private final String taskDescription;
 	private String tierProcessType = "h";
@@ -87,30 +81,15 @@ public class TieredStaleDatumProcessor extends StaleDatumProcessor {
 		this.taskDescription = taskDescription;
 	}
 
-	private int execute(final AtomicInteger remainingCount) {
-		return getJdbcOps().execute(new ConnectionCallback<Integer>() {
-
-			@Override
-			public Integer doInConnection(Connection con) throws SQLException, DataAccessException {
-				CallableStatement call = con.prepareCall(getJdbcCall());
-				call.registerOutParameter(1, Types.INTEGER);
-				call.setString(2, tierProcessType);
-				if ( tierProcessMax != null ) {
-					call.setInt(3, tierProcessMax);
-				}
-				con.setAutoCommit(true); // we want every execution of our loop to commit immediately
-				int resultCount = 0;
-				int processedCount = 0;
-				do {
-					call.execute();
-					resultCount = call.getInt(1);
-					processedCount += resultCount;
-					remainingCount.addAndGet(-resultCount);
-				} while ( resultCount > 0 && remainingCount.get() > 0 );
-				return processedCount;
-			}
-		});
-	}
+	/**
+	 * Execute the stale processing task.
+	 * 
+	 * @param remainingCount
+	 *        the maximum remaining number of rows to process
+	 * @param number
+	 *        of rows processed
+	 */
+	protected abstract int execute(final AtomicInteger remainingCount);
 
 	@Override
 	protected boolean handleJob(Event job) throws Exception {

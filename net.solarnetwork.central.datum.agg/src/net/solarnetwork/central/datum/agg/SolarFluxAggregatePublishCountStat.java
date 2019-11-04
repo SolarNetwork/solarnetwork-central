@@ -1,7 +1,7 @@
 /* ==================================================================
- * StaleAuditDataProcessor.java - 3/07/2018 9:46:25 AM
+ * SolarFluxAggregatePublishCountStat.java - 3/11/2019 12:26:12 pm
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2019 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,30 +22,39 @@
 
 package net.solarnetwork.central.datum.agg;
 
-import org.osgi.service.event.EventAdmin;
-import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.common.mqtt.support.MqttStats.MqttStat;
 
 /**
- * Job to process "stale" audit datum reporting data.
+ * SolarFlux aggregate publishing statistic types.
  * 
  * @author matt
- * @version 1.1
- * @since 1.6
+ * @version 1.0
+ * @since 1.7
  */
-public class StaleAuditDataProcessor extends TieredStoredProcedureStaleDatumProcessor {
+public enum SolarFluxAggregatePublishCountStat implements MqttStat {
 
-	/**
-	 * Construct with properties.
-	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
-	 * @param jdbcOps
-	 *        the JdbcOperations to use
-	 */
-	public StaleAuditDataProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
-		super(eventAdmin, jdbcOps, "stale audit data");
-		setJdbcCall("{? = call solaragg.process_one_aud_datum_daily_stale(?)}");
-		setTierProcessMax(null);
+	HourlyDatumPublished(0, "hourly datum published"),
+
+	DailyDatumPublished(1, "daily datum published"),
+
+	MonthlyDatumPublished(2, "monthly datum published");
+
+	private final int index;
+	private final String description;
+
+	private SolarFluxAggregatePublishCountStat(int index, String description) {
+		this.index = index;
+		this.description = description;
+	}
+
+	@Override
+	public int getIndex() {
+		return index;
+	}
+
+	@Override
+	public String getDescription() {
+		return description;
 	}
 
 }

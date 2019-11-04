@@ -39,7 +39,7 @@ import net.solarnetwork.central.test.AbstractCentralTest;
  * Test support for aggregate test cases.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ContextConfiguration("classpath:/net/solarnetwork/central/test/test-tx-context.xml")
 public abstract class AggTestSupport extends AbstractCentralTest {
@@ -71,6 +71,7 @@ public abstract class AggTestSupport extends AbstractCentralTest {
 		}
 		jdbcTemplate.update("DELETE FROM solardatum.da_datum");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
+		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_flux");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_hourly");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_daily");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_monthly");
