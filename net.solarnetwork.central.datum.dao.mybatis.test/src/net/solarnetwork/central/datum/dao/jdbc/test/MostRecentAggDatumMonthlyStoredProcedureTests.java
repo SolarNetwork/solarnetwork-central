@@ -60,14 +60,18 @@ public class MostRecentAggDatumMonthlyStoredProcedureTests extends BaseDatumJdbc
 
 	private Map<NodeSourcePK, Long> populateMostRecentTestDataSet(Iterable<NodeSourcePK> pks,
 			int rowCount) {
+		return populateMostRecentTestDataSet(pks, rowCount, ZoneId.of("UTC"));
+	}
+
+	private Map<NodeSourcePK, Long> populateMostRecentTestDataSet(Iterable<NodeSourcePK> pks,
+			int rowCount, ZoneId tz) {
 		int jitter = 0;
 		GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
 		s.putInstantaneousSampleValue("foo", 123);
 		s.putAccumulatingSampleValue("bar", 234L);
 		Map<NodeSourcePK, Long> result = new LinkedHashMap<>(8);
-		ZoneId utc = ZoneId.of("UTC");
 		for ( NodeSourcePK pk : pks ) {
-			final ZonedDateTime max = ZonedDateTime.now(utc);
+			final ZonedDateTime max = ZonedDateTime.now(tz);
 			result.put(pk, max.with(firstDayOfMonth()).truncatedTo(DAYS).toEpochSecond() * 1000L);
 			for ( int i = 0; i < rowCount; i++ ) {
 				long ts = max.minusMonths(i).toEpochSecond() * 1000L - jitter;
@@ -164,13 +168,12 @@ public class MostRecentAggDatumMonthlyStoredProcedureTests extends BaseDatumJdbc
 		// GIVEN
 		// set up time zone for node
 		final Long locId = -2L;
-		final ZoneId utc = ZoneId.of("UTC");
 		final ZoneId tz = ZoneId.of("America/Los_Angeles");
 		setupTestLocation(locId, tz.getId());
 		setupTestNode(TEST_NODE_ID, locId);
 
 		Map<NodeSourcePK, Long> mrData = populateMostRecentTestDataSet(
-				asList(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID)), 5);
+				asList(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID)), 5, tz);
 
 		// WHEN
 		List<Map<String, Object>> rows = queryForMostRecentDatumMonthly(new Long[] { TEST_NODE_ID },
@@ -181,10 +184,8 @@ public class MostRecentAggDatumMonthlyStoredProcedureTests extends BaseDatumJdbc
 		Map<String, Object> row = rows.get(0);
 		assertThat("Result node ID matches query", row, hasEntry("node_id", TEST_NODE_ID));
 		assertThat("Result source matches query", row, hasEntry("source_id", TEST_SOURCE_ID));
-		assertThat("Result date is most recent", row,
-				hasEntry("ts_start",
-						new Timestamp(Instant.ofEpochMilli(mrData.values().iterator().next()).atZone(utc)
-								.toLocalDateTime().atZone(tz).toInstant().toEpochMilli())));
+		assertThat("Result date is most recent", row, hasEntry("ts_start",
+				new Timestamp(Instant.ofEpochMilli(mrData.values().iterator().next()).toEpochMilli())));
 	}
 
 	@Test

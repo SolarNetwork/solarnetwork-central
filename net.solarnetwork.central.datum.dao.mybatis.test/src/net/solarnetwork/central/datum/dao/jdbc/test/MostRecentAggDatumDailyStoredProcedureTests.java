@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.dao.jdbc.test;
 
+import static java.time.temporal.ChronoUnit.DAYS;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
@@ -29,11 +30,10 @@ import static org.junit.Assert.assertThat;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
+import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.springframework.util.StringUtils;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
@@ -58,17 +58,21 @@ public class MostRecentAggDatumDailyStoredProcedureTests extends BaseDatumJdbcTe
 
 	private Map<NodeSourcePK, Long> populateMostRecentTestDataSet(Iterable<NodeSourcePK> pks,
 			int rowCount) {
+		return populateMostRecentTestDataSet(pks, rowCount, ZoneId.of("UTC"));
+	}
+
+	private Map<NodeSourcePK, Long> populateMostRecentTestDataSet(Iterable<NodeSourcePK> pks,
+			int rowCount, ZoneId tz) {
 		int jitter = 0;
 		GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
 		s.putInstantaneousSampleValue("foo", 123);
 		s.putAccumulatingSampleValue("bar", 234L);
 		Map<NodeSourcePK, Long> result = new LinkedHashMap<>(8);
 		for ( NodeSourcePK pk : pks ) {
-			final long max = System.currentTimeMillis() - jitter;
-			result.put(pk, Instant.ofEpochMilli(max).atZone(ZoneId.of("UTC"))
-					.truncatedTo(ChronoUnit.DAYS).toInstant().toEpochMilli());
+			final ZonedDateTime max = ZonedDateTime.now(tz);
+			result.put(pk, max.truncatedTo(DAYS).toEpochSecond() * 1000L);
 			for ( int i = 0; i < rowCount; i++ ) {
-				long ts = max - TimeUnit.DAYS.toMillis(i);
+				long ts = max.minusDays(i).toEpochSecond() * 1000L - jitter;
 				insertDatum(ts, pk.getNodeId(), pk.getSourceId(), s);
 			}
 			jitter += 200;
@@ -159,13 +163,12 @@ public class MostRecentAggDatumDailyStoredProcedureTests extends BaseDatumJdbcTe
 		// GIVEN
 		// set up time zone for node
 		final Long locId = -2L;
-		final ZoneId utc = ZoneId.of("UTC");
 		final ZoneId tz = ZoneId.of("America/Los_Angeles");
 		setupTestLocation(locId, tz.getId());
 		setupTestNode(TEST_NODE_ID, locId);
 
 		Map<NodeSourcePK, Long> mrData = populateMostRecentTestDataSet(
-				asList(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID)), 5);
+				asList(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID)), 5, tz);
 
 		// WHEN
 		List<Map<String, Object>> rows = queryForMostRecentDatumDaily(new Long[] { TEST_NODE_ID },
@@ -176,10 +179,8 @@ public class MostRecentAggDatumDailyStoredProcedureTests extends BaseDatumJdbcTe
 		Map<String, Object> row = rows.get(0);
 		assertThat("Result node ID matches query", row, hasEntry("node_id", TEST_NODE_ID));
 		assertThat("Result source matches query", row, hasEntry("source_id", TEST_SOURCE_ID));
-		assertThat("Result date is most recent", row,
-				hasEntry("ts_start",
-						new Timestamp(Instant.ofEpochMilli(mrData.values().iterator().next()).atZone(utc)
-								.toLocalDateTime().atZone(tz).toInstant().toEpochMilli())));
+		assertThat("Result date is most recent", row, hasEntry("ts_start",
+				new Timestamp(Instant.ofEpochMilli(mrData.values().iterator().next()).toEpochMilli())));
 	}
 
 	@Test
