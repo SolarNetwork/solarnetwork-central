@@ -19,7 +19,6 @@
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.in.mqtt">
 		<beans:prop key="mqtt.truststore.path">conf/tls/mqtt-trust.jks</beans:prop>
 		<beans:prop key="mqtt.truststore.pass">password</beans:prop>
-		<beans:prop key="executor.parallelism">2</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -59,8 +58,12 @@
 		</argument>
 	</bean>
 
-	<bean id="executorService" class="java.util.concurrent.Executors" factory-method="newWorkStealingPool">
-		<argument value="${executor.parallelism}"/>
+	<bean id="executorService" class="java.util.concurrent.Executors" factory-method="newCachedThreadPool" destroy-method="shutdown">
+		<argument>
+			<bean class="org.springframework.scheduling.concurrent.CustomizableThreadFactory">
+				<argument value="SolarIn-MQTT-"/>
+			</bean>
+		</argument>
 	</bean>
 	
 	<!-- Published Services -->
