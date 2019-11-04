@@ -71,4 +71,4 @@ CREATE TRIGGER curr_change
   ON solaragg.agg_datum_monthly
   FOR EACH ROW
   WHEN (date_trunc('month', CURRENT_TIMESTAMP - (NEW.ts_start - NEW.local_date))::date = NEW.local_date)
-  EXECUTE PROCEDURE solaragg.handle_curr_change('m');
+  EXECUTE PROCEDURE solaragg.handle_curr_change('M');

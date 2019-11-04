@@ -220,6 +220,19 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractCentralTransactio
 	}
 
 	/**
+	 * Get the available stale flux records, ordered by
+	 * 
+	 * @param type
+	 *        the type of records to get
+	 * @return the results, never {@literal null}
+	 */
+	protected List<Map<String, Object>> getStaleFlux(Aggregation type) {
+		return jdbcTemplate.queryForList(
+				"SELECT * FROM solaragg.agg_stale_flux WHERE agg_kind = ? ORDER BY node_id, source_id",
+				type.getKey());
+	}
+
+	/**
 	 * Delete all stale datum rows.
 	 * 
 	 * @return count of deleted rows
