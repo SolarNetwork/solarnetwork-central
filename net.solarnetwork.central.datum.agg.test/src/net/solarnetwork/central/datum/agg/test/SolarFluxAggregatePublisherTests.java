@@ -70,6 +70,7 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 
 	private static final String TEST_CLIENT_ID = "solarnet.test";
 	private static final Long TEST_NODE_ID = -1L;
+	private static final Long TEST_USER_ID = -9L;
 
 	private JodaDateTimeSerializer dateTimeSerializer;
 	private ObjectMapper objectMapper;
@@ -111,11 +112,11 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 		super.stopMqttServer();
 	}
 
-	private String datumAggTopic(Long nodeId, Aggregation agg, String sourceId) {
+	private String datumAggTopic(Long userId, Long nodeId, Aggregation agg, String sourceId) {
 		if ( sourceId.startsWith("/") ) {
 			sourceId = sourceId.substring(1);
 		}
-		return String.format("node/%d/datum/%s/%s", nodeId, agg.getKey(), sourceId);
+		return String.format("user/%d/node/%d/datum/%s/%s", userId, nodeId, agg.getKey(), sourceId);
 	}
 
 	private void assertPublishedDatumEqualTo(String msg, byte[] payload, ReportingGeneralNodeDatum datum)
@@ -146,7 +147,7 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 		final TestingInterceptHandler session = getTestingInterceptHandler();
 
 		// WHEN
-		boolean success = publisher.processStaleAggregateDatum(Hour, datum);
+		boolean success = publisher.processStaleAggregateDatum(TEST_USER_ID, Hour, datum);
 
 		stopMqttServer(); // to flush messages
 
@@ -156,7 +157,7 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 		assertThat("Only 1 message published", session.publishMessages, hasSize(1));
 		InterceptPublishMessage msg = session.getPublishMessageAtIndex(0);
 		assertThat(msg.getTopicName(),
-				equalTo(datumAggTopic(datum.getNodeId(), Hour, datum.getSourceId())));
+				equalTo(datumAggTopic(TEST_USER_ID, datum.getNodeId(), Hour, datum.getSourceId())));
 		assertPublishedDatumEqualTo("MQTT published datum", session.getPublishPayloadAtIndex(0), datum);
 	}
 
@@ -175,7 +176,7 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 		final TestingInterceptHandler session = getTestingInterceptHandler();
 
 		// WHEN
-		boolean success = publisher.processStaleAggregateDatum(Day, datum);
+		boolean success = publisher.processStaleAggregateDatum(TEST_USER_ID, Day, datum);
 
 		stopMqttServer(); // to flush messages
 
@@ -185,7 +186,7 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 		assertThat("Only 1 message published", session.publishMessages, hasSize(1));
 		InterceptPublishMessage msg = session.getPublishMessageAtIndex(0);
 		assertThat(msg.getTopicName(),
-				equalTo(datumAggTopic(datum.getNodeId(), Day, datum.getSourceId())));
+				equalTo(datumAggTopic(TEST_USER_ID, datum.getNodeId(), Day, datum.getSourceId())));
 		assertPublishedDatumEqualTo("MQTT published datum", session.getPublishPayloadAtIndex(0), datum);
 	}
 
@@ -204,7 +205,7 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 		final TestingInterceptHandler session = getTestingInterceptHandler();
 
 		// WHEN
-		boolean success = publisher.processStaleAggregateDatum(Month, datum);
+		boolean success = publisher.processStaleAggregateDatum(TEST_USER_ID, Month, datum);
 
 		stopMqttServer(); // to flush messages
 
@@ -214,7 +215,7 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 		assertThat("Only 1 message published", session.publishMessages, hasSize(1));
 		InterceptPublishMessage msg = session.getPublishMessageAtIndex(0);
 		assertThat(msg.getTopicName(),
-				equalTo(datumAggTopic(datum.getNodeId(), Month, datum.getSourceId())));
+				equalTo(datumAggTopic(TEST_USER_ID, datum.getNodeId(), Month, datum.getSourceId())));
 		assertPublishedDatumEqualTo("MQTT published datum", session.getPublishPayloadAtIndex(0), datum);
 	}
 }

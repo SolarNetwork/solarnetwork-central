@@ -1,5 +1,5 @@
 /* ==================================================================
- * StaleAggregateDatumProcessor.java - 4/11/2019 4:27:47 pm
+ * AggregateSupportDao.java - 5/11/2019 7:00:09 am
  * 
  * Copyright 2019 SolarNetwork.net Dev Team
  * 
@@ -22,31 +22,21 @@
 
 package net.solarnetwork.central.datum.agg;
 
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
-import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.domain.Identity;
-
 /**
- * API for handling stale aggregate datum.
+ * DAO API for looking up user info for aggregate processing.
  * 
  * @author matt
  * @version 1.0
- * @since 1.7
  */
-public interface AggregateDatumProcessor {
+public interface AggregateSupportDao {
 
 	/**
-	 * Process an aggregate datum.
+	 * Get the ID of the owner of a node.
 	 * 
-	 * @param userId
-	 *        the ID of the owner of the node that produced {@code datum}
-	 * @param aggregation
-	 *        the datum aggregation
-	 * @param datum
-	 *        the datum
-	 * @return {@literal true} if the processing was handled successfully
+	 * @param nodeId
+	 *        the ID of the node to find the owner of
+	 * @return the user ID, or {@literal null} if not available
 	 */
-	boolean processStaleAggregateDatum(Long userId, Aggregation aggregation,
-			Identity<GeneralNodeDatumPK> datum);
+	Long userIdForNodeId(Long nodeId);
 
 }

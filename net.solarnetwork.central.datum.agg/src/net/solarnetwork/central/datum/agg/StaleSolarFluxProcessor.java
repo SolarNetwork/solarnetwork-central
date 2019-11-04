@@ -26,19 +26,19 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.dao.AggregationFilterableDao;
+import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.settings.SettingsChangeObserver;
+import net.solarnetwork.util.OptionalService;
 
 /**
  * Tiered stale datum processor that processes all tiers of stale SolarFlux
@@ -66,14 +66,14 @@ import net.solarnetwork.settings.SettingsChangeObserver;
  * @version 1.0
  * @since 1.7
  */
-public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor
-		implements SettingsChangeObserver {
+public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 
 	/** The default value for the {@code jdbcCall} property. */
 	public static final String DEFAULT_SQL_STALE_QUERY = "SELECT * FROM solaragg.agg_stale_flux LIMIT 1 FOR UPDATE SKIP LOCKED";
 
 	private final AggregationFilterableDao<ReportingGeneralNodeDatumMatch, AggregateGeneralNodeDatumFilter> datumDao;
-	private final AggregateDatumProcessor publisher;
+	private final OptionalService<AggregateDatumProcessor> publisher;
+	private final AggregateSupportDao supportDao;
 
 	/**
 	 * Constructor.
@@ -85,13 +85,18 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor
 	 * @param datumDao
 	 *        the DAO to use for finding the most recent datum data to post to
 	 *        SolarFlux
+	 * @param publisher
+	 *        the processor to publish the stale solar flux data
+	 * @param supportDao
+	 *        the support DAO
 	 */
 	public StaleSolarFluxProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps,
-			AggregationFilterableDao<ReportingGeneralNodeDatumMatch, AggregateGeneralNodeDatumFilter> datumDao,
-			AggregateDatumProcessor publisher) {
+			GeneralNodeDatumDao datumDao, OptionalService<AggregateDatumProcessor> publisher,
+			AggregateSupportDao supportDao) {
 		super(eventAdmin, jdbcOps, "stale SolarFlux data");
 		this.datumDao = datumDao;
 		this.publisher = publisher;
+		this.supportDao = supportDao;
 		setJobGroup("Datum");
 		setMaximumWaitMs(1800000L);
 		setTierProcessType("*");
@@ -99,14 +104,11 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor
 	}
 
 	@Override
-	public void configurationChanged(Map<String, Object> properties) {
-		if ( publisher instanceof SettingsChangeObserver ) {
-			((SettingsChangeObserver) publisher).configurationChanged(properties);
-		}
-	}
-
-	@Override
 	protected final int execute(AtomicInteger remainingCount) {
+		final AggregateDatumProcessor aggProcessor = publisher();
+		if ( aggProcessor == null ) {
+			return 0;
+		}
 		return getJdbcOps().execute(new ConnectionCallback<Integer>() {
 
 			@Override
@@ -126,9 +128,10 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor
 
 							boolean handled = false;
 							try {
-								Aggregation agg = Aggregation.forKey(rs.getString(1));
+								final Aggregation agg = Aggregation.forKey(rs.getString(1));
 								filter.setAggregate(agg);
-								filter.setNodeId(rs.getLong(2));
+								final Long nodeId = rs.getLong(2);
+								filter.setNodeId(nodeId);
 								filter.setSourceId(rs.getString(3));
 								FilterResults<ReportingGeneralNodeDatumMatch> results = datumDao
 										.findAggregationFiltered(filter, null, null, null);
@@ -140,7 +143,10 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor
 									break;
 								}
 								if ( datum != null ) {
-									handled = publisher.processStaleAggregateDatum(agg, datum);
+									Long userId = userIdForNodeId(nodeId);
+									handled = aggProcessor.processStaleAggregateDatum(userId, agg,
+											datum);
+
 								}
 							} catch ( IllegalArgumentException e ) {
 								log.error("Unsupported stale type: {}", e.toString());
@@ -160,6 +166,37 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor
 				return processedCount;
 			}
 		});
+	}
+
+	private Long userIdForNodeId(Long nodeId) {
+		AggregateSupportDao dao = getSupportDao();
+		if ( dao != null ) {
+			return dao.userIdForNodeId(nodeId);
+		}
+		return null;
+	}
+
+	private AggregateDatumProcessor publisher() {
+		OptionalService<AggregateDatumProcessor> s = getPublisher();
+		return (s != null ? s.service() : null);
+	}
+
+	/**
+	 * Get the publisher.
+	 * 
+	 * @return the publisher
+	 */
+	public OptionalService<AggregateDatumProcessor> getPublisher() {
+		return publisher;
+	}
+
+	/**
+	 * Get the aggregate support DAO.
+	 * 
+	 * @return the support DAO
+	 */
+	public AggregateSupportDao getSupportDao() {
+		return supportDao;
 	}
 
 }

@@ -49,8 +49,21 @@ import net.solarnetwork.util.OptionalService;
 public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 		implements AggregateDatumProcessor {
 
-	/** The MQTT topic template for aggregate node data publication. */
-	public static final String NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE = "node/%d/datum/%s/%s";
+	/**
+	 * The MQTT topic template for aggregate node data publication.
+	 * 
+	 * <p>
+	 * Accepts the following parameters:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li><b>user ID</b> (long)</li>
+	 * <li><b>node ID</b> (long)</li>
+	 * <li><b>aggregation code</b> (string)</li>
+	 * <li><b>source ID (string)</li>
+	 * </ol>
+	 */
+	public static final String NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE = "user/%d/node/%d/datum/%s/%s";
 
 	/** The default value for the {@code persistencePath} property. */
 	public static final String DEFAULT_PERSISTENCE_PATH = "var/mqtt-flux-agg";
@@ -59,7 +72,7 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 	public static final String DEFAULT_MQTT_HOST = "mqtts://influx.solarnetwork.net:8884";
 
 	/** The default value for the {@code mqttUsername} property. */
-	public static final String DEFAULT_MQTT_USERNAME = "solarnode";
+	public static final String DEFAULT_MQTT_USERNAME = "solarnet";
 
 	private final ObjectMapper objectMapper;
 
@@ -105,25 +118,27 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 		this.objectMapper = objectMapper;
 		setPublishOnly(true);
 		setPersistencePath(DEFAULT_PERSISTENCE_PATH);
+		setUsername(DEFAULT_MQTT_USERNAME);
 	}
 
-	private String topicForDatum(Aggregation aggregation, Identity<GeneralNodeDatumPK> datum) {
+	private String topicForDatum(Long userId, Aggregation aggregation,
+			Identity<GeneralNodeDatumPK> datum) {
 		Long nodeId = datum.getId().getNodeId();
 		String sourceId = datum.getId().getSourceId();
-		if ( nodeId == null || sourceId == null || sourceId.isEmpty() ) {
+		if ( userId == null || nodeId == null || sourceId == null || sourceId.isEmpty() ) {
 			return null;
 		}
 		if ( sourceId.startsWith("/") ) {
 			sourceId = sourceId.substring(1);
 		}
-		return String.format(NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE, nodeId, aggregation.getKey(),
+		return String.format(NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE, userId, nodeId, aggregation.getKey(),
 				sourceId);
 	}
 
 	@Override
-	public boolean processStaleAggregateDatum(Aggregation aggregation,
+	public boolean processStaleAggregateDatum(Long userId, Aggregation aggregation,
 			Identity<GeneralNodeDatumPK> datum) {
-		String topic = topicForDatum(aggregation, datum);
+		String topic = topicForDatum(userId, aggregation, datum);
 		if ( topic == null ) {
 			return false;
 		}
@@ -168,7 +183,8 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 						client.getServerURI(), e.toString(), e);
 			}
 		} else {
-			log.warn("MQTT client not avaialable for publishing aggregate datum.");
+			log.info("MQTT client not avaialable for publishing SolarFlux {} datum to {}.", aggregation,
+					topic);
 		}
 		return false;
 	}

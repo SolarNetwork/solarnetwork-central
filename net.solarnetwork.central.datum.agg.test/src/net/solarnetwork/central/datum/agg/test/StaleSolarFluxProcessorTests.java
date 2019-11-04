@@ -45,15 +45,18 @@ import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
-import net.solarnetwork.central.dao.AggregationFilterableDao;
 import net.solarnetwork.central.datum.agg.AggregateDatumProcessor;
+import net.solarnetwork.central.datum.agg.AggregateSupportDao;
 import net.solarnetwork.central.datum.agg.StaleSolarFluxProcessor;
+import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.util.OptionalService;
+import net.solarnetwork.util.StaticOptionalService;
 
 /**
  * Test cases for the {@link StaleSolarFluxProcessor} class.
@@ -67,10 +70,13 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 
 	private static final String TEST_SOURCE_ID = "test.source";
 
+	private static final Long TEST_USER_ID = -9L;
+
 	private static final String SQL_INSERT_STALE_AGG_FLUX = "INSERT INTO solaragg.agg_stale_flux(agg_kind, node_id, source_id) VALUES (?, ?, ?)";
 
-	private AggregationFilterableDao<ReportingGeneralNodeDatumMatch, AggregateGeneralNodeDatumFilter> datumDao;
+	private GeneralNodeDatumDao datumDao;
 	private AggregateDatumProcessor processor;
+	private AggregateSupportDao supportDao;
 	private TestStaleSolarFluxDatumProcessor job;
 
 	private static final class TestStaleSolarFluxDatumProcessor extends StaleSolarFluxProcessor {
@@ -78,9 +84,9 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 		private final AtomicInteger taskThreadCount = new AtomicInteger(0);
 
 		private TestStaleSolarFluxDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps,
-				AggregationFilterableDao<ReportingGeneralNodeDatumMatch, AggregateGeneralNodeDatumFilter> datumDao,
-				AggregateDatumProcessor processor) {
-			super(eventAdmin, jdbcOps, datumDao, processor);
+				GeneralNodeDatumDao datumDao, OptionalService<AggregateDatumProcessor> processor,
+				AggregateSupportDao supportDao) {
+			super(eventAdmin, jdbcOps, datumDao, processor, supportDao);
 			setExecutorService(Executors.newCachedThreadPool(new ThreadFactory() {
 
 				@Override
@@ -105,16 +111,17 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	@Before
 	public void setup() {
 		super.setup();
 
-		datumDao = EasyMock.createMock(AggregationFilterableDao.class);
+		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
 		processor = EasyMock.createMock(AggregateDatumProcessor.class);
+		supportDao = EasyMock.createMock(AggregateSupportDao.class);
 
-		job = new TestStaleSolarFluxDatumProcessor(null, jdbcTemplate, datumDao, processor);
+		job = new TestStaleSolarFluxDatumProcessor(null, jdbcTemplate, datumDao,
+				new StaticOptionalService<>(processor), supportDao);
 		job.setJobGroup("Test");
 		job.setJobId(TEST_JOB_ID);
 		job.setMaximumRowCount(10);
@@ -124,12 +131,12 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 	}
 
 	private void replayAll() {
-		EasyMock.replay(datumDao, processor);
+		EasyMock.replay(datumDao, processor, supportDao);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(datumDao, processor);
+		EasyMock.verify(datumDao, processor, supportDao);
 	}
 
 	private void insertStaleAggFlux(Aggregation aggKind, long nodeId, String sourceId) {
@@ -160,7 +167,10 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 		expect(datumDao.findAggregationFiltered(capture(filterCaptor), isNull(), isNull(), isNull()))
 				.andReturn(filterResults);
 
-		expect(processor.processStaleAggregateDatum(Aggregation.Hour, mostRecentDatum)).andReturn(true);
+		expect(supportDao.userIdForNodeId(TEST_NODE_ID)).andReturn(TEST_USER_ID);
+
+		expect(processor.processStaleAggregateDatum(TEST_USER_ID, Aggregation.Hour, mostRecentDatum))
+				.andReturn(true);
 
 		// WHEN
 		replayAll();
