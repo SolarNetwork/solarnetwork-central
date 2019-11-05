@@ -154,7 +154,7 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 					log.trace("Publishing to MQTT topic {}\n{}", topic, Hex.encodeHexString(payload));
 				}
 
-				IMqttDeliveryToken token = client.publish(topic, payload, getPublishQos(), false);
+				IMqttDeliveryToken token = client.publish(topic, payload, getPublishQos(), true);
 				token.waitForCompletion(getMqttTimeout());
 
 				MqttStat pubStat = null;
