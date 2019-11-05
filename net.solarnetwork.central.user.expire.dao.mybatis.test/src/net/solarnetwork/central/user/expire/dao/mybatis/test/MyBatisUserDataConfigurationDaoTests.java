@@ -444,7 +444,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
-		assertAuditDatumDailyStaleMonths(start, range.monthCount - 1);
+		assertAuditDatumDailyStaleMonths(start, range.monthCount);
 		assertNoAggStaleDatum();
 	}
 
@@ -486,7 +486,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
-		assertAuditDatumDailyStaleMonths(start, range.monthCount - 1);
+		assertAuditDatumDailyStaleMonths(start, range.monthCount);
 		assertNoAggStaleDatum();
 	}
 
@@ -531,7 +531,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
-		assertAuditDatumDailyStaleMonths(start, range.monthCount - 1);
+		assertAuditDatumDailyStaleMonths(start, range.monthCount);
 		assertNoAggStaleDatum();
 	}
 
