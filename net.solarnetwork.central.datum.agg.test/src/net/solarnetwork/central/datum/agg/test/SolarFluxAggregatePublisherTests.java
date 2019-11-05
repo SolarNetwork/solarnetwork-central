@@ -53,7 +53,6 @@ import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
-import net.solarnetwork.util.JodaDateTimeSerializer;
 import net.solarnetwork.util.ObjectMapperFactoryBean;
 
 /**
@@ -72,18 +71,16 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 	private static final Long TEST_NODE_ID = -1L;
 	private static final Long TEST_USER_ID = -9L;
 
-	private JodaDateTimeSerializer dateTimeSerializer;
 	private ObjectMapper objectMapper;
 	private SolarFluxAggregatePublisher publisher;
 
 	private ObjectMapper createObjectMapper() {
-		dateTimeSerializer = new net.solarnetwork.util.JodaDateTimeSerializer();
 		net.solarnetwork.util.ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
 		factory.setJsonFactory(new CBORFactory());
-		factory.setSerializers(
-				asList(dateTimeSerializer, new net.solarnetwork.util.JodaLocalDateSerializer(),
-						new net.solarnetwork.util.JodaLocalDateTimeSerializer(),
-						new net.solarnetwork.util.JodaLocalTimeSerializer()));
+		factory.setSerializers(asList(new net.solarnetwork.util.JodaDateTimeEpochSerializer(),
+				new net.solarnetwork.util.JodaLocalDateSerializer(),
+				new net.solarnetwork.util.JodaLocalDateTimeSerializer(),
+				new net.solarnetwork.util.JodaLocalTimeSerializer()));
 		factory.setFeaturesToDisable(asList(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
 		try {
 			return factory.getObject();
@@ -126,8 +123,7 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 		expectedPropNames.addAll(datumProps.keySet());
 		Map<String, Object> map = JsonUtils.getStringMapFromTree(objectMapper.readTree(payload));
 		assertThat(msg + " property keys", map.keySet(), equalTo(expectedPropNames));
-		assertThat(msg + " created", map,
-				hasEntry("created", dateTimeSerializer.serializeWithFormatter(datum.getCreated())));
+		assertThat(msg + " created", map, hasEntry("created", datum.getCreated().getMillis()));
 		assertThat(msg + " nodeId", map, hasEntry("nodeId", datum.getNodeId().intValue()));
 		assertThat(msg + " sourceId", map, hasEntry("sourceId", datum.getSourceId()));
 	}

@@ -71,7 +71,7 @@
 		</property>
 		<property name="serializers">
 			<list>
-				<bean class="net.solarnetwork.util.JodaDateTimeSerializer"/>
+				<bean class="net.solarnetwork.util.JodaDateTimeEpochSerializer"/>
 				<bean class="net.solarnetwork.util.JodaLocalDateSerializer"/>
 				<bean class="net.solarnetwork.util.JodaLocalDateTimeSerializer"/>
 				<bean class="net.solarnetwork.util.JodaLocalTimeSerializer"/>
