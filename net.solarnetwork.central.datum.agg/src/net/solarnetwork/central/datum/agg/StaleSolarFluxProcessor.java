@@ -63,7 +63,7 @@ import net.solarnetwork.util.OptionalService;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.7
  */
 public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
@@ -106,7 +106,7 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 	@Override
 	protected final int execute(AtomicInteger remainingCount) {
 		final AggregateDatumProcessor aggProcessor = publisher();
-		if ( aggProcessor == null ) {
+		if ( aggProcessor == null || !aggProcessor.isConfigured() ) {
 			return 0;
 		}
 		return getJdbcOps().execute(new ConnectionCallback<Integer>() {

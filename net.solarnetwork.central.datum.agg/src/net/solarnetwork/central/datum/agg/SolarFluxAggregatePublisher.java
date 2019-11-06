@@ -136,6 +136,11 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 	}
 
 	@Override
+	public boolean isConfigured() {
+		return client() != null;
+	}
+
+	@Override
 	public boolean processStaleAggregateDatum(Long userId, Aggregation aggregation,
 			Identity<GeneralNodeDatumPK> datum) {
 		String topic = topicForDatum(userId, aggregation, datum);
