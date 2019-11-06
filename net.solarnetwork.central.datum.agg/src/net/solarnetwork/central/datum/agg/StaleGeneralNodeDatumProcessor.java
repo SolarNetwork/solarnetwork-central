@@ -36,9 +36,9 @@ import org.springframework.jdbc.core.JdbcOperations;
  * will be spawned and each process {@code maximumRowCount / taskCount} rows.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-public class StaleGeneralNodeDatumProcessor extends TieredStaleDatumProcessor {
+public class StaleGeneralNodeDatumProcessor extends TieredStoredProcedureStaleDatumProcessor {
 
 	/**
 	 * Construct with properties.

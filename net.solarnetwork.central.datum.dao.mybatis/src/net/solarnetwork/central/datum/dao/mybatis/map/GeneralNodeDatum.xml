@@ -487,19 +487,19 @@
 		<choose>
 			<when test="aggregation == 'Hour'">
 				{call solaragg.find_most_recent_hourly(
-					#{filter.nodeId,jdbcType=BIGINT}, 
+					#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}, 
 					#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 				)}
 			</when>
 			<when test="aggregation == 'Day'">
 				{call solaragg.find_most_recent_daily(
-					#{filter.nodeId,jdbcType=BIGINT}, 
+					#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}, 
 					#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 				)}
 			</when>
 			<otherwise>
 				{call solaragg.find_most_recent_monthly(
-					#{filter.nodeId,jdbcType=BIGINT}, 
+					#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}, 
 					#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 				)}
 			</otherwise>

@@ -20,8 +20,7 @@
 		
 		<!-- Testing support -->
 		<dependency org="javax.annotation" name="javax.annotation-api" rev="1.3.2" />
-		
-		<!-- SolarNetwork -->
-		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="1.45.0"/>
+		<dependency org="io.moquette" name="moquette-broker" rev="0.12.1"/>
+		<dependency org="net.solarnetwork.common.test" name="net.solarnetwork.common.test" rev="1.15.0"/>
     </dependencies>
 </ivy-module>

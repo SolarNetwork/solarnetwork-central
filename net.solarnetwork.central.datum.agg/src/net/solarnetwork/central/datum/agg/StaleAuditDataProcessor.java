@@ -29,10 +29,10 @@ import org.springframework.jdbc.core.JdbcOperations;
  * Job to process "stale" audit datum reporting data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.6
  */
-public class StaleAuditDataProcessor extends TieredStaleDatumProcessor {
+public class StaleAuditDataProcessor extends TieredStoredProcedureStaleDatumProcessor {
 
 	/**
 	 * Construct with properties.

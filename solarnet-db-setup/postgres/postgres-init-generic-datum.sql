@@ -368,6 +368,25 @@ CREATE TABLE solaragg.agg_datum_monthly (
  CONSTRAINT agg_datum_monthly_pkey PRIMARY KEY (node_id, ts_start, source_id)
 );
 
+/**
+ * TABLE solaragg.agg_stale_flux
+ *
+ * Holds records for stale aggregate SolarFlux publishing support. There is no time component to
+ * this table because SolarFlux cares only about the "most recent" value. Thus a record in this
+ * table means the "most recent" data for the associated node + source + agg_kind needs to be
+ * published to SolarFlux.
+ *
+ * This table serves as a queue for updates. Any number of workers are expected to read from this
+ * table and publish the updated data to SolarFlux.
+ */
+CREATE TABLE solaragg.agg_stale_flux (
+  agg_kind  char(1) NOT NULL,
+  node_id   bigint NOT NULL,
+  source_id character varying(64) NOT NULL,
+  created   timestamp NOT NULL DEFAULT now(),
+  CONSTRAINT agg_stale_flux_pkey PRIMARY KEY (agg_kind, node_id, source_id)
+);
+
 -- track total accumulated counts per day
 CREATE TABLE solaragg.aud_acc_datum_daily (
 	ts_start timestamp with time zone NOT NULL,

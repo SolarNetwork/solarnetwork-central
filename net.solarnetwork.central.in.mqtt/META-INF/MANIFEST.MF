@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarIn MQTT
 Bundle-SymbolicName: net.solarnetwork.central.in.mqtt
-Bundle-Version: 1.0.0
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.in.mqtt
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -24,6 +24,7 @@ Import-Package:
  net.solarnetwork.central.instructor.domain;version="1.4.0",
  net.solarnetwork.central.security;version="1.13.0",
  net.solarnetwork.central.support;version="1.16.0",
+ net.solarnetwork.common.mqtt.support;version="1.0.0",
  net.solarnetwork.domain;version="1.17.0",
  net.solarnetwork.support;version="1.7.0",
  net.solarnetwork.util;version="1.32.0",
@@ -41,4 +42,5 @@ Import-Package:
  org.springframework.context.support;version="[4.2,5.0)",
  org.springframework.core.task;version="[4.2,5.0)",
  org.springframework.scheduling;version="[4.2,5.0)",
+ org.springframework.scheduling.concurrent;version="[4.2,5.0)",
  org.springframework.util;version="[4.2,5.0)"

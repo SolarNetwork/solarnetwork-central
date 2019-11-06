@@ -39,10 +39,12 @@ import net.solarnetwork.central.test.AbstractCentralTest;
  * Test support for aggregate test cases.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ContextConfiguration("classpath:/net/solarnetwork/central/test/test-tx-context.xml")
 public abstract class AggTestSupport extends AbstractCentralTest {
+
+	public static final Long TEST_USER_ID = -9L;
 
 	@Resource
 	protected DataSource dataSource;
@@ -71,6 +73,7 @@ public abstract class AggTestSupport extends AbstractCentralTest {
 		}
 		jdbcTemplate.update("DELETE FROM solardatum.da_datum");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
+		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_flux");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_hourly");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_daily");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_monthly");
@@ -79,6 +82,8 @@ public abstract class AggTestSupport extends AbstractCentralTest {
 		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_daily");
 		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_monthly");
 		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_daily_stale");
+		jdbcTemplate.update("DELETE FROM solaruser.user_node WHERE node_id = ?", TEST_NODE_ID);
+		jdbcTemplate.update("DELETE FROM solaruser.user_user WHERE id = ?", TEST_USER_ID);
 		jdbcTemplate.update("DELETE FROM solarnet.sn_node WHERE node_id = ?", TEST_NODE_ID);
 		jdbcTemplate.update("DELETE FROM solarnet.sn_loc WHERE id = ?", TEST_LOC_ID);
 		jdbcTemplate.update("DELETE FROM solardatum.da_loc_datum");
@@ -97,6 +102,17 @@ public abstract class AggTestSupport extends AbstractCentralTest {
 		jdbcTemplate.update(
 				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
 				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, timeZoneId);
+	}
+
+	protected void setupTestUser(Long userId) {
+		jdbcTemplate.update(
+				"insert into solaruser.user_user (id, disp_name, email, password) values (?,?,?,?)",
+				userId, "Test User " + userId, "test" + userId + "@localhost", "password-" + userId);
+	}
+
+	protected void setupTestUserNode(Long userId, Long nodeId) {
+		jdbcTemplate.update("insert into solaruser.user_node (user_id, node_id) values (?,?)", userId,
+				nodeId);
 	}
 
 }

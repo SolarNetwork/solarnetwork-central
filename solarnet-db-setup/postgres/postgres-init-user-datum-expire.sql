@@ -115,7 +115,7 @@ BEGIN
 		WITH nlt AS (
 			SELECT
 				node_id,
-				(date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
+				date_trunc('month', (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age)) AT TIME ZONE time_zone AS older_than
 			FROM solarnet.node_local_time
 			WHERE node_id = ANY (node_ids)
 		)
@@ -289,7 +289,7 @@ BEGIN
 		WITH nlt AS (
 			SELECT
 				node_id,
-				(date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
+				date_trunc('month', (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age)) AT TIME ZONE time_zone AS older_than
 			FROM solarnet.node_local_time
 			WHERE node_id = ANY (node_ids)
 		)

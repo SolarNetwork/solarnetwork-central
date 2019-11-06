@@ -137,6 +137,25 @@ $$
 $$;
 
 /**
+ * FUNCTION solardatum.find_most_recent(bigint[], text[])
+ * 
+ * Find the highest available data for all source IDs for the given node IDs. This query relies on
+ * the `solardatum.da_datum_range` table.
+ *
+ * @param nodes the node IDs to find
+ * @param sources the source IDs to find, or NULL/empty array for all available sources
+ */
+CREATE OR REPLACE FUNCTION solardatum.find_most_recent(nodes bigint[], sources text[])
+RETURNS SETOF solardatum.da_datum_data LANGUAGE sql STABLE ROWS 100 AS
+$$
+	SELECT d.*
+	FROM  solardatum.da_datum_range mr
+	INNER JOIN solardatum.da_datum_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id AND d.ts = mr.ts_max
+	WHERE mr.node_id = ANY(nodes) AND (COALESCE(array_length(sources, 1), 0) < 1 OR mr.source_id = ANY(sources))
+	ORDER BY d.node_id, d.source_id
+$$;
+
+/**
  * FUNCTION solardatum.find_most_recent_direct(bigint[])
  * 
  * Find the highest available dates for all source IDs for the given node IDs. This query does **not** rely on
