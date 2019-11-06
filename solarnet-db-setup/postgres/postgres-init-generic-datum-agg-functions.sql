@@ -1595,3 +1595,20 @@ $$
 	FROM solaragg.find_datum_hour_slots(nodes, sources, start_ts, end_ts) dates
 	ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING
 $$;
+
+/**
+ * Trigger function to handle a changed (inserted, updated) aggregate datum row.
+ *
+ * The trigger must be passed the aggregate type as the first trigger argument. It then inserts
+ * a row into the `solaragg.agg_stale_flux` for clients to pull from. 
+ */
+CREATE OR REPLACE FUNCTION solaragg.handle_curr_change()
+  RETURNS trigger LANGUAGE 'plpgsql' AS
+$$
+BEGIN
+	INSERT INTO solaragg.agg_stale_flux (agg_kind, node_id, source_id)
+	VALUES (TG_ARGV[0], NEW.node_id, NEW.source_id)
+	ON CONFLICT (agg_kind, node_id, source_id) DO NOTHING;
+	RETURN NULL;
+END;
+$$;

@@ -2,3 +2,4 @@
 
 \i updates/NET-219-most-recent-aggregate.sql
 \i updates/NET-220-expire-months-bug.sql
+\i updates/NET-214-flux-agg.sql
