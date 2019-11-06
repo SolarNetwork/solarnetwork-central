@@ -189,4 +189,9 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 		return false;
 	}
 
+	@Override
+	public String getPingTestName() {
+		return "SolarFlux Aggregate Publisher";
+	}
+
 }

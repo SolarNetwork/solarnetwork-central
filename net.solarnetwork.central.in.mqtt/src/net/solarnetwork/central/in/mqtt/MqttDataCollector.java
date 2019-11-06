@@ -344,6 +344,11 @@ public class MqttDataCollector extends AsyncMqttServiceSupport implements NodeIn
 		return (child == null ? placeholder : child.asText());
 	}
 
+	@Override
+	public String getPingTestName() {
+		return "SolarIn MQTT";
+	}
+
 	/*---------------------
 	 * Accessors
 	 *------------------ */
