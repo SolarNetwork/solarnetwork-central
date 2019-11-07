@@ -150,7 +150,7 @@
 		</label>
 		<div class="col-sm-7">
 			<button type="button" name="__unnamed" class="form-control setting-form-element toggle btn btn-default" 
-				data-toggle="setting-toggle" aria-pressed="false" autocomplete="off"
+				data-toggle="setting-toggle" aria-pressed="false"
 				data-on-text="<fmt:message key='settings.toggle.enabled'/>"
 				data-off-text="<fmt:message key='settings.toggle.disabled'/>">
 				<fmt:message key='settings.toggle.disabled'/>
