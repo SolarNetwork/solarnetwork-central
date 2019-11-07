@@ -191,7 +191,7 @@ SolarReg.Settings.serviceFormItem = function formItem(service, setting, config) 
 		result.id = setting.key;
 		result.name = SolarReg.Templates.serviceInfoMessage(service, setting.key +'.key');
 		result.description = SolarReg.Templates.serviceInfoMessage(service, setting.key +'.desc');
-		if ( config && config[setting.key] ) {
+		if ( config && config[setting.key] !== undefined ) {
 			result.value = config[setting.key];
 		} else {
 			result.value = ''+setting.defaultValue || '';
