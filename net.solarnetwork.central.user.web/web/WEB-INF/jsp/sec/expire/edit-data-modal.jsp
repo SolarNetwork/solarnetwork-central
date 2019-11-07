@@ -54,6 +54,7 @@
 		 			<div class="col-sm-8">
 		 				<select class="form-control expire-data-aggregation-types" name="datumFilter.aggregationKey">
 		 				</select>
+		 				<div class="caption"><fmt:message key='expire.dataConfig.aggregation.caption'/></div>
 		 			</div>
 		 		</div>
 		 		<div class="form-group">
