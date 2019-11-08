@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Datum Aggregation
 Bundle-SymbolicName: net.solarnetwork.central.datum.agg
-Bundle-Version: 1.7.0
+Bundle-Version: 1.7.1
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 

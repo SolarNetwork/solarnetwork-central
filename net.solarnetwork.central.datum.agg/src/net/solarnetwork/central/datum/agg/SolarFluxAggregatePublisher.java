@@ -43,7 +43,7 @@ import net.solarnetwork.util.OptionalService;
  * Publish aggregate datum to SolarFlux.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.7
  */
 public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
@@ -137,7 +137,8 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 
 	@Override
 	public boolean isConfigured() {
-		return client() != null;
+		IMqttAsyncClient client = client();
+		return client != null && client.isConnected();
 	}
 
 	@Override
@@ -148,7 +149,7 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 			return false;
 		}
 		IMqttAsyncClient client = client();
-		if ( client != null ) {
+		if ( client != null && client.isConnected() ) {
 			try {
 				JsonNode jsonData = objectMapper.valueToTree(datum);
 				byte[] payload = objectMapper.writeValueAsBytes(jsonData);
@@ -188,7 +189,7 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 						client.getServerURI(), e.toString(), e);
 			}
 		} else {
-			log.info("MQTT client not avaialable for publishing SolarFlux {} datum to {}.", aggregation,
+			log.debug("MQTT client not avaialable for publishing SolarFlux {} datum to {}.", aggregation,
 					topic);
 		}
 		return false;
