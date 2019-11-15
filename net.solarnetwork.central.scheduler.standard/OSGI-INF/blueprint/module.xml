@@ -48,6 +48,7 @@
 	<bean id="taskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler" destroy-method="destroy">
 		<property name="poolSize" value="${scheduler.poolSize}"/>
 		<property name="threadNamePrefix" value="${scheduler.threadNamePrefix}"/>
+		<property name="removeOnCancelPolicy" value="true"/>
 	</bean>
 
 </blueprint>
