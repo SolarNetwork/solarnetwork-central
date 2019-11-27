@@ -18,6 +18,8 @@
 	
 	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 
+	<reference id="mqttConnectionFactory" interface="net.solarnetwork.common.mqtt.MqttConnectionFactory"/>
+
 	<!-- Supporting Services -->
 	
 	<bean id="cacheManager" class="net.solarnetwork.central.support.JCacheManagerFactoryBean">
@@ -118,10 +120,9 @@
 		</osgix:service-properties>
 		<bean class="net.solarnetwork.central.datum.agg.SolarFluxAggregatePublisher"
 				init-method="init" destroy-method="shutdown">
-			<argument ref="executorService"/>
-			<argument ref="sslService"/>
-			<argument value="true"/>
+			<argument ref="mqttConnectionFactory"/>
 			<argument ref="objectMapper"/>
+			<property name="mqttConfig.optionalSslService" ref="sslService"/>
 		</bean>
 	</osgix:managed-service-factory>
 	
