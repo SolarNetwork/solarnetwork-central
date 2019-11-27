@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Simple Task Scheduling Support
 Bundle-SymbolicName: net.solarnetwork.central.scheduler.standard
-Bundle-Version: 1.0.1
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.scheduler.standard
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
