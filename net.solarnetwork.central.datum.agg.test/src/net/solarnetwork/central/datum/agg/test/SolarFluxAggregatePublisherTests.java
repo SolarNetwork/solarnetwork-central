@@ -33,14 +33,19 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
@@ -49,24 +54,21 @@ import net.solarnetwork.central.datum.agg.SolarFluxAggregatePublisher;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.support.JsonUtils;
-import net.solarnetwork.central.test.CallingThreadExecutorService;
+import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
 import net.solarnetwork.util.ObjectMapperFactoryBean;
 
 /**
- * FIXME
- * 
- * <p>
- * TODO
- * </p>
+ * Unit tests for the {@link SolarFluxAggregatePublisher} class.
  * 
  * @author matt
  * @version 1.0
  */
 public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 
+	private static final int MQTT_TIMEOUT = 10;
 	private static final String TEST_CLIENT_ID = "solarnet.test";
 	private static final Long TEST_NODE_ID = -1L;
 	private static final Long TEST_USER_ID = -9L;
@@ -90,22 +92,27 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 	}
 
 	@Before
-	public void setup() {
+	public void setup() throws Exception {
 		setupMqttServer();
 
 		objectMapper = createObjectMapper();
 
-		publisher = new SolarFluxAggregatePublisher(new CallingThreadExecutorService(), null, false,
-				objectMapper);
-		publisher.setPersistencePath(System.getProperty("java.io.tmpdir"));
-		publisher.setClientId(TEST_CLIENT_ID);
-		publisher.setServerUri("mqtt://localhost:" + getMqttServerPort());
-		publisher.init();
+		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+		scheduler.initialize();
+
+		NettyMqttConnectionFactory factory = new NettyMqttConnectionFactory(
+				Executors.newCachedThreadPool(), scheduler);
+
+		publisher = new SolarFluxAggregatePublisher(factory, objectMapper);
+		publisher.getMqttConfig().setClientId(TEST_CLIENT_ID);
+		publisher.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
+		Future<?> f = publisher.startup();
+		f.get(MQTT_TIMEOUT, TimeUnit.SECONDS);
 	}
 
 	@Override
 	public void stopMqttServer() {
-		publisher.close();
+		publisher.shutdown();
 		super.stopMqttServer();
 	}
 
@@ -149,7 +156,8 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 
 		// THEN
 		assertThat("Datum published", success, equalTo(true));
-		assertThat("Stat published count", publisher.getStats().get(HourlyDatumPublished), equalTo(1L));
+		assertThat("Stat published count", publisher.getMqttStats().get(HourlyDatumPublished),
+				equalTo(1L));
 		assertThat("Only 1 message published", session.publishMessages, hasSize(1));
 		InterceptPublishMessage msg = session.getPublishMessageAtIndex(0);
 		assertThat(msg.getTopicName(),
@@ -178,7 +186,8 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 
 		// THEN
 		assertThat("Datum published", success, equalTo(true));
-		assertThat("Stat published count", publisher.getStats().get(DailyDatumPublished), equalTo(1L));
+		assertThat("Stat published count", publisher.getMqttStats().get(DailyDatumPublished),
+				equalTo(1L));
 		assertThat("Only 1 message published", session.publishMessages, hasSize(1));
 		InterceptPublishMessage msg = session.getPublishMessageAtIndex(0);
 		assertThat(msg.getTopicName(),
@@ -207,7 +216,8 @@ public class SolarFluxAggregatePublisherTests extends MqttServerSupport {
 
 		// THEN
 		assertThat("Datum published", success, equalTo(true));
-		assertThat("Stat published count", publisher.getStats().get(MonthlyDatumPublished), equalTo(1L));
+		assertThat("Stat published count", publisher.getMqttStats().get(MonthlyDatumPublished),
+				equalTo(1L));
 		assertThat("Only 1 message published", session.publishMessages, hasSize(1));
 		InterceptPublishMessage msg = session.getPublishMessageAtIndex(0);
 		assertThat(msg.getTopicName(),

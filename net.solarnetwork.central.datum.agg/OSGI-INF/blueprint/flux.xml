@@ -117,7 +117,7 @@
 			<beans:entry key="function" value="solarflux"/>
 		</osgix:service-properties>
 		<bean class="net.solarnetwork.central.datum.agg.SolarFluxAggregatePublisher"
-				init-method="init" destroy-method="close">
+				init-method="init" destroy-method="shutdown">
 			<argument ref="executorService"/>
 			<argument ref="sslService"/>
 			<argument value="true"/>

@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.datum.agg;
 
-import net.solarnetwork.common.mqtt.support.MqttStats.MqttStat;
+import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
 
 /**
  * SolarFlux aggregate publishing statistic types.
