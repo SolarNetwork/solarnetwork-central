@@ -148,7 +148,7 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	public void onMqttServerConnectionEstablisehd(MqttConnection connection, boolean reconnected) {
 		final String datumTopics = String.format(nodeDatumTopicTemplate, "+");
 		try {
-			connection.subscribe(datumTopics, getSubscribeQos(), this)
+			connection.subscribe(datumTopics, getSubscribeQos(), null)
 					.get(getMqttConfig().getConnectTimeoutSeconds(), TimeUnit.SECONDS);
 			log.info("Subscribed to MQTT topic {} @ {}", datumTopics, getMqttConfig().getServerUri());
 		} catch ( InterruptedException | ExecutionException | TimeoutException e ) {

@@ -53,6 +53,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.moquette.interception.messages.InterceptPublishMessage;
+import io.moquette.interception.messages.InterceptSubscribeMessage;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
@@ -147,6 +149,21 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 	private String datumTopic(Long nodeId) {
 		return String.format(MqttDataCollector.DEFAULT_NODE_DATUM_TOPIC_TEMPLATE, nodeId);
+	}
+
+	@Test
+	public void subscribes() throws Exception {
+		replayAll();
+
+		// give a little time for subscription to take
+		Thread.sleep(500);
+
+		TestingInterceptHandler session = getTestingInterceptHandler();
+		assertThat("Subscribed ", session.subscribeMessages, hasSize(1));
+
+		InterceptSubscribeMessage subMsg = session.subscribeMessages.get(0);
+		assertThat("Subscribe topic", subMsg.getTopicFilter(), equalTo("node/+/datum"));
+		assertThat("Subscribe QOS", subMsg.getRequestedQos(), equalTo(MqttQoS.AT_LEAST_ONCE));
 	}
 
 	@Test
