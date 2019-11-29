@@ -18,6 +18,8 @@
 	
 	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 
+	<reference id="mqttConnectionFactory" interface="net.solarnetwork.common.mqtt.MqttConnectionFactory"/>
+
 	<!-- Supporting Services -->
 	
 	<bean id="cacheManager" class="net.solarnetwork.central.support.JCacheManagerFactoryBean">
@@ -61,7 +63,7 @@
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="taskCount" value="${staleSolarFluxProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleSolarFluxProcessor.jobCron}"/>
-		<property name="jobId" value="StaleSolarFluxProcessorMonthly"/>
+		<property name="jobId" value="StaleSolarFluxProcessor"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleSolarFluxProcessor"/>
 	</bean>
 
@@ -117,11 +119,10 @@
 			<beans:entry key="function" value="solarflux"/>
 		</osgix:service-properties>
 		<bean class="net.solarnetwork.central.datum.agg.SolarFluxAggregatePublisher"
-				init-method="init" destroy-method="close">
-			<argument ref="executorService"/>
-			<argument ref="sslService"/>
-			<argument value="true"/>
+				init-method="init" destroy-method="shutdown">
+			<argument ref="mqttConnectionFactory"/>
 			<argument ref="objectMapper"/>
+			<property name="mqttConfig.optionalSslService" ref="sslService"/>
 		</bean>
 	</osgix:managed-service-factory>
 	

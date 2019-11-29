@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarIn MQTT
 Bundle-SymbolicName: net.solarnetwork.central.in.mqtt
-Bundle-Version: 1.1.0
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.in.mqtt
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -24,12 +24,10 @@ Import-Package:
  net.solarnetwork.central.instructor.domain;version="1.4.0",
  net.solarnetwork.central.security;version="1.13.0",
  net.solarnetwork.central.support;version="1.16.0",
- net.solarnetwork.common.mqtt.support;version="1.0.0",
+ net.solarnetwork.common.mqtt;version="1.0.0",
  net.solarnetwork.domain;version="1.17.0",
- net.solarnetwork.support;version="1.7.0",
+ net.solarnetwork.support;version="1.10.0",
  net.solarnetwork.util;version="1.32.0",
- org.eclipse.paho.client.mqttv3;version="[1.2,2.0)",
- org.eclipse.paho.client.mqttv3.persist;version="[1.2,2.0)",
  org.joda.time;version="[2.4,3.0)",
  org.joda.time.base;version="[2.4,3.0)",
  org.joda.time.format;version="[2.4,3.0)",

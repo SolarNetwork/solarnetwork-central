@@ -23,30 +23,34 @@
 package net.solarnetwork.central.datum.agg;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.commons.codec.binary.Hex;
-import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.common.mqtt.support.AsyncMqttServiceSupport;
-import net.solarnetwork.common.mqtt.support.MqttStats;
-import net.solarnetwork.common.mqtt.support.MqttStats.MqttStat;
+import net.solarnetwork.common.mqtt.BaseMqttConnectionService;
+import net.solarnetwork.common.mqtt.BasicMqttMessage;
+import net.solarnetwork.common.mqtt.MqttConnection;
+import net.solarnetwork.common.mqtt.MqttConnectionConfig;
+import net.solarnetwork.common.mqtt.MqttConnectionFactory;
+import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
 import net.solarnetwork.domain.Identity;
-import net.solarnetwork.support.SSLService;
-import net.solarnetwork.util.OptionalService;
 
 /**
  * Publish aggregate datum to SolarFlux.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  * @since 1.7
  */
-public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
+public class SolarFluxAggregatePublisher extends BaseMqttConnectionService
 		implements AggregateDatumProcessor {
 
 	/**
@@ -65,9 +69,6 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 	 */
 	public static final String NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE = "user/%d/node/%d/datum/%s/%s";
 
-	/** The default value for the {@code persistencePath} property. */
-	public static final String DEFAULT_PERSISTENCE_PATH = "var/mqtt-flux-agg";
-
 	/** The default value for the {@code mqttHost} property. */
 	public static final String DEFAULT_MQTT_HOST = "mqtts://influx.solarnetwork.net:8884";
 
@@ -79,46 +80,22 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 	/**
 	 * Constructor.
 	 * 
-	 * @param executorService
-	 *        task service
-	 * @param sslService
-	 *        SSL service
-	 * @param retryConnect
-	 *        {@literal true} to keep retrying to connect to MQTT server
+	 * @param connectionFactory
+	 *        the factory to use for {@link MqttConnection} instances
 	 * @param objectMapper
-	 *        the object mapper
+	 *        the mapper to use
 	 */
-	public SolarFluxAggregatePublisher(ExecutorService executorService,
-			OptionalService<SSLService> sslService, boolean retryConnect, ObjectMapper objectMapper) {
-		this(executorService, sslService, retryConnect, null, null, objectMapper);
-	}
-
-	/**
-	 * Constructor.
-	 * 
-	 * @param executorService
-	 *        task service
-	 * @param sslService
-	 *        SSL service
-	 * @param retryConnect
-	 *        {@literal true} to keep retrying to connect to MQTT server
-	 * @param serverUri
-	 *        MQTT URI to connect to
-	 * @param clientId
-	 *        the MQTT client ID
-	 * @param objectMapper
-	 *        the object mapper
-	 */
-	public SolarFluxAggregatePublisher(ExecutorService executorService,
-			OptionalService<SSLService> sslService, boolean retryConnect, String serverUri,
-			String clientId, ObjectMapper objectMapper) {
-		super(executorService, sslService, retryConnect,
-				new MqttStats(serverUri, 500, SolarFluxAggregatePublishCountStat.values()), serverUri,
-				clientId);
+	public SolarFluxAggregatePublisher(MqttConnectionFactory connectionFactory,
+			ObjectMapper objectMapper) {
+		super(connectionFactory, new MqttStats("SolarFluxAggregatePublisher", 500,
+				SolarFluxAggregatePublishCountStat.values()));
 		this.objectMapper = objectMapper;
-		setPublishOnly(true);
-		setPersistencePath(DEFAULT_PERSISTENCE_PATH);
-		setUsername(DEFAULT_MQTT_USERNAME);
+		getMqttConfig().setUsername(DEFAULT_MQTT_USERNAME);
+		try {
+			getMqttConfig().setServerUri(new URI(DEFAULT_MQTT_HOST));
+		} catch ( URISyntaxException e ) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private String topicForDatum(Long userId, Aggregation aggregation,
@@ -136,14 +113,21 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 	}
 
 	@Override
+	public boolean isConfigured() {
+		MqttConnection conn = connection();
+		return conn != null && conn.isEstablished();
+	}
+
+	@Override
 	public boolean processStaleAggregateDatum(Long userId, Aggregation aggregation,
 			Identity<GeneralNodeDatumPK> datum) {
 		String topic = topicForDatum(userId, aggregation, datum);
 		if ( topic == null ) {
 			return false;
 		}
-		IMqttAsyncClient client = client();
-		if ( client != null ) {
+		MqttConnection conn = connection();
+		MqttConnectionConfig mqttConfig = getMqttConfig();
+		if ( conn != null && conn.isEstablished() ) {
 			try {
 				JsonNode jsonData = objectMapper.valueToTree(datum);
 				byte[] payload = objectMapper.writeValueAsBytes(jsonData);
@@ -154,8 +138,8 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 					log.trace("Publishing to MQTT topic {}\n{}", topic, Hex.encodeHexString(payload));
 				}
 
-				IMqttDeliveryToken token = client.publish(topic, payload, getPublishQos(), true);
-				token.waitForCompletion(getMqttTimeout());
+				Future<?> f = conn.publish(new BasicMqttMessage(topic, true, getPublishQos(), payload));
+				f.get(mqttConfig.getConnectTimeoutSeconds(), TimeUnit.SECONDS);
 
 				MqttStat pubStat = null;
 				switch (aggregation) {
@@ -175,15 +159,19 @@ public class SolarFluxAggregatePublisher extends AsyncMqttServiceSupport
 						// ignore others
 				}
 				if ( pubStat != null ) {
-					getStats().incrementAndGet(pubStat);
+					getMqttStats().incrementAndGet(pubStat);
 				}
 				return true;
-			} catch ( MqttException | IOException e ) {
+			} catch ( IOException | InterruptedException | ExecutionException | TimeoutException e ) {
+				Throwable root = e;
+				while ( root.getCause() != null ) {
+					root = root.getCause();
+				}
 				log.error("Error publishing {} datum {} to SolarFlux @ {}: {}", aggregation, datum,
-						client.getServerURI(), e.toString(), e);
+						mqttConfig.getServerUri(), root.toString(), e);
 			}
 		} else {
-			log.info("MQTT client not avaialable for publishing SolarFlux {} datum to {}.", aggregation,
+			log.debug("MQTT client not avaialable for publishing SolarFlux {} datum to {}.", aggregation,
 					topic);
 		}
 		return false;

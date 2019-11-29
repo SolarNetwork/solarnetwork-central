@@ -30,10 +30,21 @@ import net.solarnetwork.domain.Identity;
  * API for handling stale aggregate datum.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.7
  */
 public interface AggregateDatumProcessor {
+
+	/**
+	 * Test if the processor is configured and ready for processing.
+	 * 
+	 * @return {@literal true} if configured and ready for processing, or
+	 *         {@literal false} if calls to
+	 *         {@link #processStaleAggregateDatum(Long, Aggregation, Identity)}
+	 *         will not be handled
+	 * @since 1.1
+	 */
+	boolean isConfigured();
 
 	/**
 	 * Process an aggregate datum.

@@ -23,6 +23,10 @@
 
 	<ctx:property-placeholder properties-ref="cfg"/>
 
+	<reference id="executor" interface="java.util.concurrent.Executor" filter="(function=central)"/>
+
+	<reference id="mqttConnectionFactory" interface="net.solarnetwork.common.mqtt.MqttConnectionFactory"/>
+
 	<bean id="objectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
 		<property name="jsonFactory">
 			<bean class="com.fasterxml.jackson.dataformat.cbor.CBORFactory"/>
@@ -58,14 +62,6 @@
 		</argument>
 	</bean>
 
-	<bean id="executorService" class="java.util.concurrent.Executors" factory-method="newCachedThreadPool" destroy-method="shutdown">
-		<argument>
-			<bean class="org.springframework.scheduling.concurrent.CustomizableThreadFactory">
-				<argument value="SolarIn-MQTT-"/>
-			</bean>
-		</argument>
-	</bean>
-	
 	<!-- Published Services -->
 	
 	<osgix:managed-service-factory factory-pid="net.solarnetwork.central.in.mqtt.MqttDataCollector"
@@ -76,13 +72,13 @@
 			<beans:value>net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook</beans:value>
 		</osgix:interfaces>
 		<bean class="net.solarnetwork.central.in.mqtt.MqttDataCollector" 
-				init-method="init" destroy-method="close">
-			<argument ref="executorService"/>
+				init-method="init" destroy-method="shutdown">
+			<argument ref="mqttConnectionFactory"/>
 			<argument ref="objectMapper"/>
+			<argument ref="executor"/>
 			<argument ref="dataCollectorBiz"/>
 			<argument ref="nodeInstructionDao"/>
-			<argument ref="sslService"/>
-			<argument value="true"/>
+			<property name="mqttConfig.optionalSslService" ref="sslService"/>
 		</bean>
 	</osgix:managed-service-factory>
 	

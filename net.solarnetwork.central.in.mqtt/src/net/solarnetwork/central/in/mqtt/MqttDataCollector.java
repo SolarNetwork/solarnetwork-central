@@ -26,14 +26,13 @@ import static java.util.Collections.singleton;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.IMqttToken;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,9 +46,14 @@ import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.JsonUtils;
-import net.solarnetwork.common.mqtt.support.AsyncMqttServiceSupport;
-import net.solarnetwork.common.mqtt.support.MqttStats;
-import net.solarnetwork.support.SSLService;
+import net.solarnetwork.common.mqtt.BaseMqttConnectionService;
+import net.solarnetwork.common.mqtt.BasicMqttMessage;
+import net.solarnetwork.common.mqtt.MqttConnection;
+import net.solarnetwork.common.mqtt.MqttConnectionFactory;
+import net.solarnetwork.common.mqtt.MqttConnectionObserver;
+import net.solarnetwork.common.mqtt.MqttMessage;
+import net.solarnetwork.common.mqtt.MqttMessageHandler;
+import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.util.OptionalService;
 
 /**
@@ -58,10 +62,8 @@ import net.solarnetwork.util.OptionalService;
  * @author matt
  * @version 1.1
  */
-public class MqttDataCollector extends AsyncMqttServiceSupport implements NodeInstructionQueueHook {
-
-	/** The default value for the {@code persistencePath} property. */
-	public static final String DEFAULT_PERSISTENCE_PATH = "var/mqtt-solarin";
+public class MqttDataCollector extends BaseMqttConnectionService
+		implements NodeInstructionQueueHook, MqttConnectionObserver, MqttMessageHandler {
 
 	/**
 	 * The default MQTT topic template for node instruction publication.
@@ -103,92 +105,68 @@ public class MqttDataCollector extends AsyncMqttServiceSupport implements NodeIn
 	 */
 	public static final String LOCATION_ID_FIELD = "locationId";
 
+	/** The default {@code publishOnly} property value. */
+	public static final boolean DEFAULT_PUBLISH_ONLY = false;
+
 	private final ObjectMapper objectMapper;
+	private final Executor executor;
 	private final DataCollectorBiz dataCollectorBiz;
 	private final OptionalService<NodeInstructionDao> nodeInstructionDaoRef;
 
 	private String nodeInstructionTopicTemplate = DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE;
 	private String nodeDatumTopicTemplate = DEFAULT_NODE_DATUM_TOPIC_TEMPLATE;
+	private boolean publishOnly = DEFAULT_PUBLISH_ONLY;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param executorService
-	 *        task service
+	 * @param connectionFactory
+	 *        the factory to use for {@link MqttConnection} instances
 	 * @param objectMapper
 	 *        object mapper for messages
+	 * @param executor
+	 *        an executor
 	 * @param dataCollectorBiz
 	 *        data collector
 	 * @param nodeInstructionDao
 	 *        node instruction
-	 * @param sslService
-	 *        SSL service
-	 * @param retryConnect
-	 *        {@literal true} to keep retrying to connect to MQTT server
 	 */
-	public MqttDataCollector(ExecutorService executorService, ObjectMapper objectMapper,
-			DataCollectorBiz dataCollectorBiz, OptionalService<NodeInstructionDao> nodeInstructionDao,
-			OptionalService<SSLService> sslService, boolean retryConnect) {
-		this(executorService, objectMapper, dataCollectorBiz, nodeInstructionDao, sslService, null, null,
-				retryConnect);
-	}
-
-	/**
-	 * Constructor.
-	 * 
-	 * @param executorService
-	 *        task service
-	 * @param objectMapper
-	 *        object mapper for messages
-	 * @param dataCollectorBiz
-	 *        data collector
-	 * @param nodeInstructionDao
-	 *        node instruction
-	 * @param sslService
-	 *        SSL service
-	 * @param serverUri
-	 *        MQTT URI to connect to
-	 * @param clientId
-	 *        the MQTT client ID
-	 * @param retryConnect
-	 *        {@literal true} to keep retrying to connect to MQTT server
-	 */
-	public MqttDataCollector(ExecutorService executorService, ObjectMapper objectMapper,
-			DataCollectorBiz dataCollectorBiz, OptionalService<NodeInstructionDao> nodeInstructionDao,
-			OptionalService<SSLService> sslService, String serverUri, String clientId,
-			boolean retryConnect) {
-		super(executorService, sslService, retryConnect,
-				new MqttStats(serverUri, 500, SolarInCountStat.values()), serverUri, clientId);
-		assert executorService != null && objectMapper != null && dataCollectorBiz != null;
+	public MqttDataCollector(MqttConnectionFactory connectionFactory, ObjectMapper objectMapper,
+			Executor executor, DataCollectorBiz dataCollectorBiz,
+			OptionalService<NodeInstructionDao> nodeInstructionDao) {
+		super(connectionFactory, new MqttStats("MqttDataCollector", 500, SolarInCountStat.values()));
+		assert objectMapper != null && executor != null && dataCollectorBiz != null;
 		this.objectMapper = objectMapper;
+		this.executor = executor;
 		this.dataCollectorBiz = dataCollectorBiz;
 		this.nodeInstructionDaoRef = nodeInstructionDao;
-		setPersistencePath(DEFAULT_PERSISTENCE_PATH);
 	}
 
 	@Override
-	protected void subscribeToTopics(IMqttAsyncClient client) throws MqttException {
-		final String datumTopics = String.format(nodeDatumTopicTemplate, "+");
-		IMqttToken token = client.subscribe(datumTopics, getSubscribeQos());
-		token.waitForCompletion(getMqttTimeout());
-		log.info("Subscribed to MQTT topic {} @ {}", datumTopics, client.getServerURI());
+	public void onMqttServerConnectionLost(MqttConnection connection, boolean willReconnect,
+			Throwable cause) {
+		// nothing
 	}
 
 	@Override
-	protected Throwable exceptionToForceConnectionReestablishment(Throwable cause) {
-		Throwable root = cause;
-		while ( root.getCause() != null ) {
-			if ( root instanceof RepeatableTaskException ) {
-				// if we encounter a RTE, forcibly shut down the client and re-establish
-				return root;
-			}
-			root = root.getCause();
+	public void onMqttServerConnectionEstablisehd(MqttConnection connection, boolean reconnected) {
+		if ( publishOnly ) {
+			return;
 		}
-		return null;
+		final String datumTopics = String.format(nodeDatumTopicTemplate, "+");
+		try {
+			connection.subscribe(datumTopics, getSubscribeQos(), null)
+					.get(getMqttConfig().getConnectTimeoutSeconds(), TimeUnit.SECONDS);
+			log.info("Subscribed to MQTT topic {} @ {}", datumTopics, getMqttConfig().getServerUri());
+		} catch ( InterruptedException | ExecutionException | TimeoutException e ) {
+			log.error("Failed to subscribe to MQTT topic {} @ {}: {}", datumTopics,
+					getMqttConfig().getServerUri(), e.toString());
+		}
 	}
 
 	@Override
-	protected void messageArrivedInternal(String topic, MqttMessage message) throws Exception {
+	public void onMqttMessage(MqttMessage message) {
+		final String topic = message.getTopic();
 		try {
 			Matcher m = NODE_TOPIC_REGEX.matcher(topic);
 			if ( !m.matches() ) {
@@ -232,7 +210,7 @@ public class MqttDataCollector extends AsyncMqttServiceSupport implements NodeIn
 		if ( instruction != null && instruction.getNodeId() != null && instructionId != null
 				&& InstructionState.Queuing == instruction.getState() ) {
 			try {
-				getExecutorService().execute(new PublishNodeInstructionTask(instruction, instructionId));
+				executor.execute(new PublishNodeInstructionTask(instruction, instructionId));
 			} catch ( JsonProcessingException e ) {
 				log.error("Error encoding node instruction {} for MQTT payload: {}", instruction.getId(),
 						e.getMessage());
@@ -262,27 +240,33 @@ public class MqttDataCollector extends AsyncMqttServiceSupport implements NodeIn
 		@Override
 		public void run() {
 			try {
-				IMqttAsyncClient client = client();
-				if ( client != null ) {
-					IMqttDeliveryToken token = client.publish(topic, payload, getPublishQos(), false);
-					token.waitForCompletion(getMqttTimeout());
-					getStats().incrementAndGet(SolarInCountStat.InstructionsPublished);
+				MqttConnection conn = connection();
+				if ( conn != null ) {
+					Future<?> f = conn
+							.publish(new BasicMqttMessage(topic, false, getPublishQos(), payload));
+					f.get(getMqttConfig().getConnectTimeoutSeconds(), TimeUnit.SECONDS);
+					getMqttStats().incrementAndGet(SolarInCountStat.InstructionsPublished);
 				} else {
-					throw new RuntimeException("MQTT client not available");
+					throw new RuntimeException("MQTT connection not available");
 				}
 			} catch ( Exception e ) {
 				// error delivering instruction so change state to Queued to fall back to batch processing
+				Throwable root = e;
+				while ( root.getCause() != null ) {
+					root = root.getCause();
+				}
+
 				NodeInstructionDao dao = (nodeInstructionDaoRef != null ? nodeInstructionDaoRef.service()
 						: null);
 				if ( dao != null ) {
 					log.info(
 							"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
-							instructionId, nodeId, e.toString());
+							instructionId, nodeId, root.toString());
 					dao.compareAndUpdateInstructionState(instructionId, nodeId, InstructionState.Queuing,
 							InstructionState.Queued, null);
 				} else {
 					log.error("Failed to publish MQTT instruction {} to node {}", instructionId, nodeId,
-							e);
+							root);
 				}
 			}
 		}
@@ -305,7 +289,7 @@ public class MqttDataCollector extends AsyncMqttServiceSupport implements NodeIn
 	}
 
 	private void handleInstructionStatus(final Long nodeId, final JsonNode node) {
-		getStats().incrementAndGet(SolarInCountStat.InstructionStatusReceived);
+		getMqttStats().incrementAndGet(SolarInCountStat.InstructionStatusReceived);
 		String instructionId = getStringFieldValue(node, "instructionId", null);
 		String status = getStringFieldValue(node, "status", null);
 		Map<String, Object> resultParams = JsonUtils.getStringMapFromTree(node.get("resultParameters"));
@@ -319,7 +303,7 @@ public class MqttDataCollector extends AsyncMqttServiceSupport implements NodeIn
 	}
 
 	private void handleGeneralNodeDatum(final Long nodeId, final JsonNode node) {
-		getStats().incrementAndGet(SolarInCountStat.NodeDatumReceived);
+		getMqttStats().incrementAndGet(SolarInCountStat.NodeDatumReceived);
 		try {
 			GeneralNodeDatum d = objectMapper.treeToValue(node, GeneralNodeDatum.class);
 			d.setNodeId(nodeId);
@@ -330,7 +314,7 @@ public class MqttDataCollector extends AsyncMqttServiceSupport implements NodeIn
 	}
 
 	private void handleGeneralLocationDatum(final JsonNode node) {
-		getStats().incrementAndGet(SolarInCountStat.LocationDatumReceived);
+		getMqttStats().incrementAndGet(SolarInCountStat.LocationDatumReceived);
 		try {
 			GeneralLocationDatum d = objectMapper.treeToValue(node, GeneralLocationDatum.class);
 			dataCollectorBiz.postGeneralLocationDatum(singleton(d));
@@ -383,6 +367,26 @@ public class MqttDataCollector extends AsyncMqttServiceSupport implements NodeIn
 	 */
 	public void setNodeDatumTopicTemplate(String nodeDatumTopicTemplate) {
 		this.nodeDatumTopicTemplate = nodeDatumTopicTemplate;
+	}
+
+	/**
+	 * Get the "publish only" flag.
+	 * 
+	 * @return {@literal true} if no MQTT subscriptions should be made
+	 */
+	public boolean isPublishOnly() {
+		return publishOnly;
+	}
+
+	/**
+	 * Set the "publish only" flag.
+	 * 
+	 * @param publishOnly
+	 *        {@literal true} to skip subscribing to any MQTT topics, so that
+	 *        only publishing of instructions is handled
+	 */
+	public void setPublishOnly(boolean publishOnly) {
+		this.publishOnly = publishOnly;
 	}
 
 }

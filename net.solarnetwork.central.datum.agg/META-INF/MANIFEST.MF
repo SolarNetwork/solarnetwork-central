@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Datum Aggregation
 Bundle-SymbolicName: net.solarnetwork.central.datum.agg
-Bundle-Version: 1.7.0
+Bundle-Version: 1.8.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
@@ -24,10 +24,10 @@ Import-Package:
  net.solarnetwork.central.domain;version="1.31.0",
  net.solarnetwork.central.scheduler;version="1.2.0",
  net.solarnetwork.central.support;version="1.21.0",
- net.solarnetwork.common.mqtt.support;version="1.0.0",
+ net.solarnetwork.common.mqtt;version="1.0.0",
  net.solarnetwork.domain;version="1.18.0",
  net.solarnetwork.settings;version="1.2.0",
- net.solarnetwork.support;version="1.9.0",
+ net.solarnetwork.support;version="1.10.0",
  net.solarnetwork.util;version="1.39.0",
  org.apache.commons.codec.binary;version="1.11.0",
  org.eclipse.gemini.blueprint.compendium.cm;version="[2.0,3.0)",

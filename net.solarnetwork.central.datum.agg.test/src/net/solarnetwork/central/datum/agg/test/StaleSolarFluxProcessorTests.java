@@ -169,6 +169,7 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 
 		expect(supportDao.userIdForNodeId(TEST_NODE_ID)).andReturn(TEST_USER_ID);
 
+		expect(processor.isConfigured()).andReturn(true);
 		expect(processor.processStaleAggregateDatum(TEST_USER_ID, Aggregation.Hour, mostRecentDatum))
 				.andReturn(true);
 

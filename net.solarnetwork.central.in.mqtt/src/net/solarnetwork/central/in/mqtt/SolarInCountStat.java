@@ -22,13 +22,13 @@
 
 package net.solarnetwork.central.in.mqtt;
 
-import net.solarnetwork.common.mqtt.support.MqttStats.MqttStat;
+import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
 
 /**
  * SolarIn MQTT statistic types.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.1
  */
 public enum SolarInCountStat implements MqttStat {
