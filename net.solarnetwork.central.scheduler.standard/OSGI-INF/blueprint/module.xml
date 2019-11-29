@@ -18,7 +18,9 @@
 	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.scheduler.standard">
 		<beans:prop key="scheduler.poolSize">1</beans:prop>
-		<beans:prop key="scheduler.threadNamePrefix">SolarNet-</beans:prop>
+		<beans:prop key="scheduler.threadNamePrefix">SolarNet-Sched-</beans:prop>
+		<beans:prop key="executor.corePoolSize">2</beans:prop>
+		<beans:prop key="executor.threadNamePrefix">SolarNet-</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -27,10 +29,20 @@
 	
 	<service ref="taskScheduler">
 		<interfaces>
-			<value>org.springframework.core.task.AsyncListenableTaskExecutor</value>
-			<value>org.springframework.core.task.TaskExecutor</value>
 			<value>org.springframework.scheduling.TaskScheduler</value>
 			<value>org.springframework.scheduling.SchedulingTaskExecutor</value>
+		</interfaces>
+		<service-properties>
+			<entry key="function" value="central"/>
+		</service-properties>
+	</service>
+
+	<service ref="taskExecutor">
+		<interfaces>
+			<value>org.springframework.core.task.AsyncListenableTaskExecutor</value>
+			<value>org.springframework.core.task.AsyncTaskExecutor</value>
+			<value>org.springframework.core.task.TaskExecutor</value>
+			<value>java.util.concurrent.Executor</value>
 		</interfaces>
 		<service-properties>
 			<entry key="function" value="central"/>
@@ -49,6 +61,11 @@
 		<property name="poolSize" value="${scheduler.poolSize}"/>
 		<property name="threadNamePrefix" value="${scheduler.threadNamePrefix}"/>
 		<property name="removeOnCancelPolicy" value="true"/>
+	</bean>
+
+	<bean id="taskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+		<property name="corePoolSize" value="${executor.corePoolSize}"/>
+		<property name="threadNamePrefix" value="${executor.threadNamePrefix}"/>
 	</bean>
 
 </blueprint>

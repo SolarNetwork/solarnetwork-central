@@ -31,25 +31,30 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.moquette.interception.messages.InterceptConnectMessage;
 import io.moquette.interception.messages.InterceptPublishMessage;
+import io.moquette.interception.messages.InterceptSubscribeMessage;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
@@ -59,6 +64,10 @@ import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
+import net.solarnetwork.common.mqtt.BasicMqttMessage;
+import net.solarnetwork.common.mqtt.MqttMessage;
+import net.solarnetwork.common.mqtt.MqttQos;
+import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
@@ -78,6 +87,7 @@ import net.solarnetwork.util.StaticOptionalService;
  */
 public class MqttDataCollectorTests extends MqttServerSupport {
 
+	private static final int MQTT_TIMEOUT = 10;
 	private static final String TEST_CLIENT_ID = "solarnet.test";
 	private static final Long TEST_NODE_ID = 123L;
 	private static final String TEST_SOURCE_ID = "test.source";
@@ -105,17 +115,25 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 	}
 
 	@Before
-	public void setup() {
+	public void setup() throws Exception {
 		setupMqttServer();
 
 		objectMapper = createObjectMapper(null);
 		dataCollectorBiz = EasyMock.createMock(DataCollectorBiz.class);
 		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
 
-		String serverUri = "mqtt://localhost:" + getMqttServerPort();
-		service = new MqttDataCollector(new CallingThreadExecutorService(), objectMapper,
-				dataCollectorBiz, new StaticOptionalService<NodeInstructionDao>(nodeInstructionDao),
-				null, serverUri, TEST_CLIENT_ID, false);
+		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+		scheduler.initialize();
+
+		NettyMqttConnectionFactory factory = new NettyMqttConnectionFactory(
+				Executors.newCachedThreadPool(), scheduler);
+
+		service = new MqttDataCollector(factory, objectMapper, new CallingThreadExecutorService(),
+				dataCollectorBiz, new StaticOptionalService<NodeInstructionDao>(nodeInstructionDao));
+		service.getMqttConfig().setClientId(TEST_CLIENT_ID);
+		service.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
+		Future<?> f = service.startup();
+		f.get(MQTT_TIMEOUT, TimeUnit.SECONDS);
 	}
 
 	@Override
@@ -131,6 +149,21 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 	private String datumTopic(Long nodeId) {
 		return String.format(MqttDataCollector.DEFAULT_NODE_DATUM_TOPIC_TEMPLATE, nodeId);
+	}
+
+	@Test
+	public void subscribes() throws Exception {
+		replayAll();
+
+		// give a little time for subscription to take
+		Thread.sleep(500);
+
+		TestingInterceptHandler session = getTestingInterceptHandler();
+		assertThat("Subscribed ", session.subscribeMessages, hasSize(1));
+
+		InterceptSubscribeMessage subMsg = session.subscribeMessages.get(0);
+		assertThat("Subscribe topic", subMsg.getTopicFilter(), equalTo("node/+/datum"));
+		assertThat("Subscribe QOS", subMsg.getRequestedQos(), equalTo(MqttQoS.AT_LEAST_ONCE));
 	}
 
 	@Test
@@ -152,8 +185,9 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		samples.putInstantaneousSampleValue("foo", 123);
 		String json = "{\"created\":" + datum.getCreated().getMillis() + ",\"sourceId\":\""
 				+ TEST_SOURCE_ID + "\",\"samples\":{\"i\":{\"foo\":123}}}";
-		MqttMessage msg = new MqttMessage(json.getBytes("UTF-8"));
-		service.messageArrived(topic, msg);
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
+				json.getBytes("UTF-8"));
+		service.onMqttMessage(msg);
 
 		// then
 		assertThat("Datum posted", postDatumCaptor.getValue(), notNullValue());
@@ -329,8 +363,9 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		String json = "{\"created\":" + datum.getCreated().getMillis() + ",\"sourceId\":\""
 				+ TEST_SOURCE_ID + "\",\"locationId\":" + TEST_LOC_ID
 				+ ",\"samples\":{\"i\":{\"foo\":123}}}";
-		MqttMessage msg = new MqttMessage(json.getBytes("UTF-8"));
-		service.messageArrived(topic, msg);
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
+				json.getBytes("UTF-8"));
+		service.onMqttMessage(msg);
 
 		// then
 		assertThat("Datum posted", postDatumCaptor.getValue(), notNullValue());
@@ -365,167 +400,11 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		String json = "{\"__type__\":\"InstructionStatus\",\"id\":" + nodeInstructionId
 				+ ",\"instructionId\":" + instructionId + ",\"topic\":\"" + TEST_INSTRUCTION_TOPIC
 				+ "\",\"status\":\"Completed\",\"resultParameters\":{\"foo\":\"bar\"}}";
-		MqttMessage msg = new MqttMessage(json.getBytes("UTF-8"));
-		service.messageArrived(topic, msg);
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
+				json.getBytes("UTF-8"));
+		service.onMqttMessage(msg);
 
 		// then
-	}
-
-	@Test
-	public void connectToServer() throws Exception {
-		// given
-		final String username = UUID.randomUUID().toString();
-		final String password = UUID.randomUUID().toString();
-		service.setUsername(username);
-		service.setPassword(password);
-
-		replayAll();
-
-		// when
-		service.init();
-
-		stopMqttServer(); // to flush messages
-
-		// then
-		TestingInterceptHandler session = getTestingInterceptHandler();
-		assertThat("Connected to broker", session.connectMessages, hasSize(1));
-
-		InterceptConnectMessage connMsg = session.connectMessages.get(0);
-		assertThat("Connect client ID", connMsg.getClientID(), equalTo(TEST_CLIENT_ID));
-		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
-		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
-		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));
-	}
-
-	@Test
-	public void connectToServerWithRetryEnabled() throws Exception {
-		// given
-		final String username = UUID.randomUUID().toString();
-		final String password = UUID.randomUUID().toString();
-		service.setUsername(username);
-		service.setPassword(password);
-		service.setRetryConnect(true);
-
-		replayAll();
-
-		// when
-		service.init();
-
-		// sleep for a bit to allow background thread to connect
-		Thread.sleep(1000);
-
-		stopMqttServer(); // to flush messages
-
-		// then
-		TestingInterceptHandler session = getTestingInterceptHandler();
-		assertThat("Connected to broker", session.connectMessages, hasSize(1));
-
-		InterceptConnectMessage connMsg = session.connectMessages.get(0);
-		assertThat("Connect client ID", connMsg.getClientID(), equalTo(TEST_CLIENT_ID));
-		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
-		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
-		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));
-	}
-
-	@Test
-	public void connectToServerWithRetryEnabledFirstConnectFails() throws Exception {
-		stopMqttServer(); // start shut down
-		final int mqttPort = getFreePort();
-
-		// given
-		final String username = UUID.randomUUID().toString();
-		final String password = UUID.randomUUID().toString();
-		service.setUsername(username);
-		service.setPassword(password);
-		service.setRetryConnect(true);
-		service.setServerUri("mqtt://localhost:" + mqttPort);
-
-		replayAll();
-
-		// when
-
-		// start in bg thread, because of CallingThreadExecutorService use
-		Thread initThread = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				service.init();
-			}
-		});
-		initThread.start();
-
-		// sleep for a bit to allow background thread to attempt first connect
-		Thread.sleep(200);
-
-		// bring up MQTT server now
-		setupMqttServer(null, null, null, mqttPort);
-
-		// sleep for a bit to allow background thread to attempt second connect
-		Thread.sleep(3000);
-
-		stopMqttServer(); // to flush messages
-
-		// then
-		TestingInterceptHandler session = getTestingInterceptHandler();
-		assertThat("Connected to broker", session.connectMessages, hasSize(1));
-
-		InterceptConnectMessage connMsg = session.connectMessages.get(0);
-		assertThat("Connect client ID", connMsg.getClientID(), equalTo(TEST_CLIENT_ID));
-		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
-		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
-		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));
-	}
-
-	@Test
-	public void reconnectToServerAfterConfigChangeWithRetryEnabled() throws Exception {
-		// given
-		final String username = UUID.randomUUID().toString();
-		final String password = UUID.randomUUID().toString();
-		service.setUsername(username);
-		service.setPassword(password);
-		service.setRetryConnect(true);
-
-		final TestingInterceptHandler session = getTestingInterceptHandler();
-
-		replayAll();
-
-		// when
-		service.init();
-
-		// sleep for a bit to allow background thread to connect
-		Thread.sleep(1000);
-
-		// stop server
-		stopMqttServer();
-
-		Thread.sleep(200);
-
-		// start server on new port, update configuration
-		setupMqttServer(Collections.singletonList(session), null, null, getFreePort());
-		service.setClientId("test.client.2");
-		service.setServerUri("mqtt://localhost:" + getMqttServerPort());
-		service.init();
-
-		// sleep for a bit to allow background thread to connect
-		Thread.sleep(1000);
-
-		// stop server to flush messages
-		stopMqttServer();
-
-		// then
-		assertThat("Connected to broker", session.connectMessages, hasSize(2));
-
-		InterceptConnectMessage connMsg = session.connectMessages.get(0);
-		assertThat("Connect client ID", connMsg.getClientID(), equalTo(TEST_CLIENT_ID));
-		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
-		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
-		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));
-
-		connMsg = session.connectMessages.get(1);
-		assertThat("Connect client ID", connMsg.getClientID(), equalTo("test.client.2"));
-		assertThat("Connect username", connMsg.getUsername(), equalTo(username));
-		assertThat("Connect password", connMsg.getPassword(), equalTo(password.getBytes()));
-		assertThat("Connect durable session", connMsg.isCleanSession(), equalTo(false));
 	}
 
 	@Test
@@ -561,7 +440,6 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		replayAll();
 
 		// when
-		service.init();
 		service.didQueueNodeInstruction(input, instructionId);
 
 		// sleep for a bit to allow background thread to process
@@ -603,7 +481,6 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		replayAll();
 
 		// when
-		service.init();
 		stopMqttServer();
 		service.didQueueNodeInstruction(input, instructionId);
 
