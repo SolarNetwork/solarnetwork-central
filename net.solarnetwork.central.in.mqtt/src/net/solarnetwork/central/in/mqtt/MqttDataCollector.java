@@ -105,6 +105,9 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	 */
 	public static final String LOCATION_ID_FIELD = "locationId";
 
+	/** The default {@code publishOnly} property value. */
+	public static final boolean DEFAULT_PUBLISH_ONLY = false;
+
 	private final ObjectMapper objectMapper;
 	private final Executor executor;
 	private final DataCollectorBiz dataCollectorBiz;
@@ -112,6 +115,7 @@ public class MqttDataCollector extends BaseMqttConnectionService
 
 	private String nodeInstructionTopicTemplate = DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE;
 	private String nodeDatumTopicTemplate = DEFAULT_NODE_DATUM_TOPIC_TEMPLATE;
+	private boolean publishOnly = DEFAULT_PUBLISH_ONLY;
 
 	/**
 	 * Constructor.
@@ -146,6 +150,9 @@ public class MqttDataCollector extends BaseMqttConnectionService
 
 	@Override
 	public void onMqttServerConnectionEstablisehd(MqttConnection connection, boolean reconnected) {
+		if ( publishOnly ) {
+			return;
+		}
 		final String datumTopics = String.format(nodeDatumTopicTemplate, "+");
 		try {
 			connection.subscribe(datumTopics, getSubscribeQos(), null)
@@ -360,6 +367,26 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	 */
 	public void setNodeDatumTopicTemplate(String nodeDatumTopicTemplate) {
 		this.nodeDatumTopicTemplate = nodeDatumTopicTemplate;
+	}
+
+	/**
+	 * Get the "publish only" flag.
+	 * 
+	 * @return {@literal true} if no MQTT subscriptions should be made
+	 */
+	public boolean isPublishOnly() {
+		return publishOnly;
+	}
+
+	/**
+	 * Set the "publish only" flag.
+	 * 
+	 * @param publishOnly
+	 *        {@literal true} to skip subscribing to any MQTT topics, so that
+	 *        only publishing of instructions is handled
+	 */
+	public void setPublishOnly(boolean publishOnly) {
+		this.publishOnly = publishOnly;
 	}
 
 }
