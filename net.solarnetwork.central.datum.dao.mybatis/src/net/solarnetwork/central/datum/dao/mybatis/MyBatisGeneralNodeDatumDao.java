@@ -45,6 +45,7 @@ import org.joda.time.ReadablePartial;
 import org.springframework.jdbc.support.SQLExceptionSubclassTranslator;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.common.dao.jdbc.BulkLoadingDaoSupport;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
@@ -75,7 +76,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.20
+ * @version 1.21
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -331,6 +332,7 @@ public class MyBatisGeneralNodeDatumDao
 	private String updateDatumRangeDates;
 	private String updateDatumAggregatesStale;
 	private String queryForAggregatesStale;
+	private ObjectMapper filterObjectMapper;
 
 	/**
 	 * Default constructor.
@@ -1087,8 +1089,21 @@ public class MyBatisGeneralNodeDatumDao
 	public DatumRecordCounts countDatumRecords(GeneralNodeDatumFilter filter) {
 		Map<String, Object> sqlProps = new HashMap<>(2);
 		sqlProps.put(PARAM_FILTER, filter);
-		sqlProps.put("filterJson", JsonUtils.getJSONString(filter, null));
+		sqlProps.put("filterJson", filterJson(filter));
 		return selectFirst(queryForDatumRecordCounts, sqlProps);
+	}
+
+	private String filterJson(Object filter) {
+		if ( filter != null ) {
+			ObjectMapper mapper = getFilterObjectMapper();
+			try {
+				return (mapper != null ? mapper.writeValueAsString(filter)
+						: JsonUtils.getJSONString(filter, null));
+			} catch ( Exception e ) {
+				log.warn("Error mapping filter {} to JSON: {}", filter, e.toString());
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1101,7 +1116,7 @@ public class MyBatisGeneralNodeDatumDao
 	public long deleteFiltered(GeneralNodeDatumFilter filter) {
 		Map<String, Object> sqlProps = new HashMap<>(2);
 		sqlProps.put(PARAM_FILTER, filter);
-		sqlProps.put("filterJson", JsonUtils.getJSONString(filter, null));
+		sqlProps.put("filterJson", filterJson(filter));
 		return selectLong(deleteFiltered, sqlProps);
 	}
 
@@ -1647,6 +1662,32 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setQueryForAggregatesStale(String queryForAggregatesStale) {
 		this.queryForAggregatesStale = queryForAggregatesStale;
+	}
+
+	/**
+	 * Get the filter object mapper.
+	 * 
+	 * @return the object mapper
+	 * @since 1.21
+	 */
+	public ObjectMapper getFilterObjectMapper() {
+		return filterObjectMapper;
+	}
+
+	/**
+	 * Set the filter object mapper.
+	 * 
+	 * <p>
+	 * If this is left unconfigured
+	 * {@link JsonUtils#getJSONString(Object, String)} will be used to serialize
+	 * filters to JSON.
+	 * </p>
+	 * 
+	 * @param filterObjectMapper
+	 *        the mapper to use
+	 */
+	public void setFilterObjectMapper(ObjectMapper filterObjectMapper) {
+		this.filterObjectMapper = filterObjectMapper;
 	}
 
 }

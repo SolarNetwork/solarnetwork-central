@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork User Web
 Bundle-SymbolicName: net.solarnetwork.central.user.web
-Bundle-Version: 1.44.2
+Bundle-Version: 1.44.3
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: WEB-INF/classes/
@@ -62,7 +62,7 @@ Import-Package:
  net.solarnetwork.central.user.support;version="1.13.0",
  net.solarnetwork.central.web;version="1.4.0",
  net.solarnetwork.central.web.domain;version="1.0",
- net.solarnetwork.central.web.support;version="1.12.0",
+ net.solarnetwork.central.web.support;version="1.13.0",
  net.solarnetwork.domain;version="1.17.0",
  net.solarnetwork.io;version="1.4.0",
  net.solarnetwork.settings;version="1.1.0",
