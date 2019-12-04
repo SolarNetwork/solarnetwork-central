@@ -65,21 +65,18 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for datum expire management.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.29
  */
 @RestController("v1DatumExpireController")
 @RequestMapping(value = { "/sec/expire", "/v1/sec/user/expire" })
 public class DatumExpireController extends WebServiceControllerSupport {
 
-	/** Another default value for the {@code requestDateFormat} property. */
-	public static final String ALT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
-
 	private final OptionalService<UserExpireBiz> expireBiz;
 	private final OptionalService<UserDatumDeleteBiz> datumDeleteBiz;
 
 	private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, ALT_DATE_TIME_FORMAT,
-			DEFAULT_DATE_FORMAT };
+			ALT_TIMESTAMP_FORMAT, DEFAULT_DATE_FORMAT };
 
 	/**
 	 * Constructor.

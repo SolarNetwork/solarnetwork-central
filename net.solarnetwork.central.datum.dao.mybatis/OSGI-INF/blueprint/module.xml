@@ -68,6 +68,19 @@
 	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
 		<property name="basenames" value="net.solarnetwork.central.datum.dao.mybatis.messages"/>
 	</bean>
+
+	<bean id="filterObjectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
+		<property name="serializers">
+			<list>
+				<bean class="net.solarnetwork.util.JodaDateTimeSerializer"/>
+				<bean class="net.solarnetwork.util.JodaLocalDateSerializer"/>
+				<bean class="net.solarnetwork.util.JodaLocalDateTimeSerializer">
+					<argument value="yyyy-MM-dd HH:mm:ss.SSS"/>
+				</bean>
+				<bean class="net.solarnetwork.util.JodaLocalTimeSerializer"/>
+			</list>
+		</property>
+	</bean>
 	
 	<bean id="generalLocationDatumDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralLocationDatumDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
@@ -82,6 +95,7 @@
 	<bean id="generalNodeDatumDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 		<property name="messageSource" ref="messageSource"/>
+		<property name="filterObjectMapper" ref="filterObjectMapper"/>
 	</bean>
 	
 	<bean id="loadingSupport" factory-ref="generalNodeDatumDao" factory-method="getLoadingSupport">
