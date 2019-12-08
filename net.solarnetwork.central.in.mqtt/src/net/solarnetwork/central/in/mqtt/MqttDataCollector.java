@@ -60,7 +60,7 @@ import net.solarnetwork.util.OptionalService;
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MqttDataCollector extends BaseMqttConnectionService
 		implements NodeInstructionQueueHook, MqttConnectionObserver, MqttMessageHandler {
@@ -307,7 +307,12 @@ public class MqttDataCollector extends BaseMqttConnectionService
 		try {
 			GeneralNodeDatum d = objectMapper.treeToValue(node, GeneralNodeDatum.class);
 			d.setNodeId(nodeId);
-			dataCollectorBiz.postGeneralNodeDatum(singleton(d));
+			if ( d.getSourceId() == null ) {
+				// ignore, source ID is required
+				log.warn("Ignoring datum for node {} with missing source ID: {}", nodeId, node);
+			} else {
+				dataCollectorBiz.postGeneralNodeDatum(singleton(d));
+			}
 		} catch ( IOException e ) {
 			log.debug("Unable to parse GeneralNodeDatum: {}", e.getMessage());
 		}
@@ -317,7 +322,16 @@ public class MqttDataCollector extends BaseMqttConnectionService
 		getMqttStats().incrementAndGet(SolarInCountStat.LocationDatumReceived);
 		try {
 			GeneralLocationDatum d = objectMapper.treeToValue(node, GeneralLocationDatum.class);
-			dataCollectorBiz.postGeneralLocationDatum(singleton(d));
+			if ( d.getLocationId() == null ) {
+				// ignore, both location ID is required
+				log.warn("Ignoring location datum with missing location ID: {}", node);
+			} else if ( d.getSourceId() == null ) {
+				// ignore, source ID is required
+				log.warn("Ignoring location {} datum with missing source ID: {}", d.getLocationId(),
+						node);
+			} else {
+				dataCollectorBiz.postGeneralLocationDatum(singleton(d));
+			}
 		} catch ( IOException e ) {
 			log.debug("Unable to parse GeneralLocationDatum: {}", e.getMessage());
 		}

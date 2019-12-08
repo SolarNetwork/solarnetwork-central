@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarIn MQTT
 Bundle-SymbolicName: net.solarnetwork.central.in.mqtt
-Bundle-Version: 1.2.0
+Bundle-Version: 1.2.1
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.in.mqtt
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
