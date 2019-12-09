@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.After;
@@ -55,6 +56,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.moquette.interception.messages.InterceptPublishMessage;
 import io.moquette.interception.messages.InterceptSubscribeMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
@@ -197,6 +199,80 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		GeneralNodeDatum postedDatum = postedDatumList.get(0);
 		assertThat("Posted datum ID", postedDatum.getId(), equalTo(datum.getId()));
 		assertThat("Posted datum samples", postedDatum.getSamples(), equalTo(datum.getSamples()));
+	}
+
+	@Test
+	public void processGeneralNodeDatumWithTransientException() throws Exception {
+		// given
+		Capture<Iterable<GeneralNodeDatum>> postDatumCaptor = new Capture<>(CaptureType.ALL);
+
+		// the first time triggers an exception
+		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
+		EasyMock.expectLastCall().andThrow(new RepeatableTaskException("Boo"));
+
+		// the second time succeeds
+		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
+
+		replayAll();
+
+		// when
+		String topic = datumTopic(TEST_NODE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum();
+		datum.setCreated(new DateTime());
+		datum.setNodeId(TEST_NODE_ID);
+		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
+		datum.setSamples(samples);
+		samples.putInstantaneousSampleValue("foo", 123);
+		String json = "{\"created\":" + datum.getCreated().getMillis() + ",\"sourceId\":\""
+				+ TEST_SOURCE_ID + "\",\"samples\":{\"i\":{\"foo\":123}}}";
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
+				json.getBytes("UTF-8"));
+		service.onMqttMessage(msg);
+
+		// then
+		List<Iterable<GeneralNodeDatum>> postedSets = postDatumCaptor.getValues();
+		assertThat("Posted datum invocations", postedSets, hasSize(2));
+
+		List<GeneralNodeDatum> postedDatumList = StreamSupport
+				.stream(postedSets.get(0).spliterator(), false).collect(Collectors.toList());
+		assertThat("Posted datum count", postedDatumList, hasSize(1));
+		GeneralNodeDatum postedDatum = postedDatumList.get(0);
+		assertThat("Posted datum ID", postedDatum.getId(), equalTo(datum.getId()));
+		assertThat("Posted datum samples", postedDatum.getSamples(), equalTo(datum.getSamples()));
+
+		postedDatumList = StreamSupport.stream(postedSets.get(1).spliterator(), false)
+				.collect(Collectors.toList());
+		assertThat("Posted datum count", postedDatumList, hasSize(1));
+		assertThat("Posted datum ID", postedDatum.getId(), equalTo(datum.getId()));
+		assertThat("Posted datum samples", postedDatum.getSamples(), equalTo(datum.getSamples()));
+	}
+
+	@Test(expected = RepeatableTaskException.class)
+	public void processGeneralNodeDatumWithTransientExceptionRetriesExhausted() throws Exception {
+		// given
+		Capture<Iterable<GeneralNodeDatum>> postDatumCaptor = new Capture<>(CaptureType.ALL);
+
+		// all 3 tries trigger an exception
+		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
+		EasyMock.expectLastCall().andThrow(new RepeatableTaskException("Boo")).times(3);
+
+		replayAll();
+
+		// when
+		String topic = datumTopic(TEST_NODE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum();
+		datum.setCreated(new DateTime());
+		datum.setNodeId(TEST_NODE_ID);
+		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
+		datum.setSamples(samples);
+		samples.putInstantaneousSampleValue("foo", 123);
+		String json = "{\"created\":" + datum.getCreated().getMillis() + ",\"sourceId\":\""
+				+ TEST_SOURCE_ID + "\",\"samples\":{\"i\":{\"foo\":123}}}";
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
+				json.getBytes("UTF-8"));
+		service.onMqttMessage(msg);
 	}
 
 	/*- the following test does not work; appears to be a bug in Moquette not re-sending in-flight messages without a PUBACK

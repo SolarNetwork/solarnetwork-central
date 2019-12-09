@@ -60,7 +60,7 @@ import net.solarnetwork.util.OptionalService;
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MqttDataCollector extends BaseMqttConnectionService
 		implements NodeInstructionQueueHook, MqttConnectionObserver, MqttMessageHandler {
@@ -108,6 +108,9 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	/** The default {@code publishOnly} property value. */
 	public static final boolean DEFAULT_PUBLISH_ONLY = false;
 
+	/** The default {@code transientErrorTries} property value. */
+	public static final int DEFAULT_TRANSIENT_ERROR_TRIES = 3;
+
 	private final ObjectMapper objectMapper;
 	private final Executor executor;
 	private final DataCollectorBiz dataCollectorBiz;
@@ -116,6 +119,7 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	private String nodeInstructionTopicTemplate = DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE;
 	private String nodeDatumTopicTemplate = DEFAULT_NODE_DATUM_TOPIC_TEMPLATE;
 	private boolean publishOnly = DEFAULT_PUBLISH_ONLY;
+	private int transientErrorTries = DEFAULT_TRANSIENT_ERROR_TRIES;
 
 	/**
 	 * Constructor.
@@ -182,7 +186,22 @@ public class MqttDataCollector extends BaseMqttConnectionService
 
 			JsonNode root = objectMapper.readTree(message.getPayload());
 			if ( root.isObject() ) {
-				handleNode(nodeId, root);
+				int remainingTries = transientErrorTries;
+				while ( remainingTries > 0 ) {
+					try {
+						handleNode(nodeId, root);
+						break;
+					} catch ( RepeatableTaskException e ) {
+						remainingTries--;
+						if ( remainingTries > 0 ) {
+							log.warn(
+									"Transient error handling MQTT message on topic {}; will try {} more times",
+									topic, remainingTries, e);
+						} else {
+							throw e;
+						}
+					}
+				}
 			}
 		} catch ( IOException e ) {
 			log.debug("Communication error handling message on MQTT topic {}", topic, e);
@@ -401,6 +420,37 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	 */
 	public void setPublishOnly(boolean publishOnly) {
 		this.publishOnly = publishOnly;
+	}
+
+	/**
+	 * Get the number of times to try storing datum in the face of transient
+	 * exceptions.
+	 * 
+	 * @return the number of attempts to try storing datum; defaults to
+	 *         {@link #DEFAULT_TRANSIENT_ERROR_TRIES}
+	 * @since 1.3
+	 */
+	public int getTransientErrorTries() {
+		return transientErrorTries;
+	}
+
+	/**
+	 * Set the number of times to try storing datum in the face of transient
+	 * exceptions.
+	 * 
+	 * <p>
+	 * If a transient exception is thrown while attempting to store a datum,
+	 * 
+	 * @param transientErrorTries
+	 *        the number of times to attempt storing datum; must be greater than
+	 *        {@literal 0}
+	 * @since 1.3
+	 */
+	public void setTransientErrorTries(int transientErrorTries) {
+		if ( transientErrorTries < 1 ) {
+			transientErrorTries = 1;
+		}
+		this.transientErrorTries = transientErrorTries;
 	}
 
 }
