@@ -30,10 +30,12 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessor;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.SolarLocationDao;
@@ -92,7 +94,7 @@ import net.solarnetwork.util.ClassUtils;
  * </p>
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -242,7 +244,11 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 				}
 				throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
 			}
-			generalNodeDatumDao.store(d);
+			try {
+				generalNodeDatumDao.store(d);
+			} catch ( TransientDataAccessException e ) {
+				throw new RepeatableTaskException("Transient error storing datum " + d.getId(), e);
+			}
 		}
 	}
 
