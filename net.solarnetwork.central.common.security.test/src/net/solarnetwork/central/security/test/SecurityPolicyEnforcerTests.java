@@ -161,6 +161,16 @@ public class SecurityPolicyEnforcerTests {
 		Assert.assertArrayEquals("Verify source IDs", new String[] { TEST_SOURCE_ID_ONELEVEL }, result);
 	}
 
+	@Test(expected = AuthorizationException.class)
+	public void verifySourceIdsWithPathMatcher_noPathRoot() {
+		String[] policySourceIds = new String[] { TEST_SOURCE_PAT_ONELEVEL, TEST_SOURCE_PAT_MULTILEVEL };
+		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
+				new AntPathMatcher());
+		enforcer.verifySourceIds(new String[] { "Main/1" });
+	}
+
 	@Test
 	public void verifySourceIdsWithPathMatcherRestricted() {
 		String[] policySourceIds = new String[] { TEST_SOURCE_PAT_ONELEVEL, TEST_SOURCE_PAT_MULTILEVEL };
