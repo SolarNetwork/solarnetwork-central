@@ -130,7 +130,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		NettyMqttConnectionFactory factory = new NettyMqttConnectionFactory(
 				Executors.newCachedThreadPool(), scheduler);
 
-		service = new MqttDataCollector(factory, objectMapper, new CallingThreadExecutorService(),
+		service = new MqttDataCollector(factory, objectMapper, null, new CallingThreadExecutorService(),
 				dataCollectorBiz, new StaticOptionalService<NodeInstructionDao>(nodeInstructionDao));
 		service.getMqttConfig().setClientId(TEST_CLIENT_ID);
 		service.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));

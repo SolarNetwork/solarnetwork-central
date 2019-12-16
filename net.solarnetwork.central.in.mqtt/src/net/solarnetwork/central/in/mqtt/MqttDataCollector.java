@@ -60,10 +60,13 @@ import net.solarnetwork.util.OptionalService;
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class MqttDataCollector extends BaseMqttConnectionService
 		implements NodeInstructionQueueHook, MqttConnectionObserver, MqttMessageHandler {
+
+	/** A datum tag that indicates v2 CBOR encoding. */
+	public static final String TAG_V2 = "_v2";
 
 	/**
 	 * The default MQTT topic template for node instruction publication.
@@ -112,6 +115,7 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	public static final int DEFAULT_TRANSIENT_ERROR_TRIES = 3;
 
 	private final ObjectMapper objectMapper;
+	private final ObjectMapper objectMapper2;
 	private final Executor executor;
 	private final DataCollectorBiz dataCollectorBiz;
 	private final OptionalService<NodeInstructionDao> nodeInstructionDaoRef;
@@ -127,7 +131,9 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	 * @param connectionFactory
 	 *        the factory to use for {@link MqttConnection} instances
 	 * @param objectMapper
-	 *        object mapper for messages
+	 *        object mapper for messages (legacy format)
+	 * @param objectMapper2
+	 *        object mapper for messages with {@Link #TAG_V2}
 	 * @param executor
 	 *        an executor
 	 * @param dataCollectorBiz
@@ -136,11 +142,12 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	 *        node instruction
 	 */
 	public MqttDataCollector(MqttConnectionFactory connectionFactory, ObjectMapper objectMapper,
-			Executor executor, DataCollectorBiz dataCollectorBiz,
+			ObjectMapper objectMapper2, Executor executor, DataCollectorBiz dataCollectorBiz,
 			OptionalService<NodeInstructionDao> nodeInstructionDao) {
 		super(connectionFactory, new MqttStats("MqttDataCollector", 500, SolarInCountStat.values()));
 		assert objectMapper != null && executor != null && dataCollectorBiz != null;
 		this.objectMapper = objectMapper;
+		this.objectMapper2 = objectMapper2 != null ? objectMapper2 : objectMapper;
 		this.executor = executor;
 		this.dataCollectorBiz = dataCollectorBiz;
 		this.nodeInstructionDaoRef = nodeInstructionDao;
@@ -168,6 +175,15 @@ public class MqttDataCollector extends BaseMqttConnectionService
 		}
 	}
 
+	private static class UseV2ObjectMapperException extends RuntimeException {
+
+		private static final long serialVersionUID = -6888029007548132227L;
+
+		private UseV2ObjectMapperException() {
+			super();
+		}
+	}
+
 	@Override
 	public void onMqttMessage(MqttMessage message) {
 		final String topic = message.getTopic();
@@ -184,24 +200,10 @@ public class MqttDataCollector extends BaseMqttConnectionService
 			// assume node security role
 			SecurityUtils.becomeNode(nodeId);
 
-			JsonNode root = objectMapper.readTree(message.getPayload());
-			if ( root.isObject() ) {
-				int remainingTries = transientErrorTries;
-				while ( remainingTries > 0 ) {
-					try {
-						handleNode(nodeId, root);
-						break;
-					} catch ( RepeatableTaskException e ) {
-						remainingTries--;
-						if ( remainingTries > 0 ) {
-							log.warn(
-									"Transient error handling MQTT message on topic {}; will try {} more times",
-									topic, remainingTries, e);
-						} else {
-							throw e;
-						}
-					}
-				}
+			try {
+				parseMqttMessage(objectMapper, message, topic, nodeId, true);
+			} catch ( UseV2ObjectMapperException e ) {
+				parseMqttMessage(objectMapper2, message, topic, nodeId, false);
 			}
 		} catch ( IOException e ) {
 			log.debug("Communication error handling message on MQTT topic {}", topic, e);
@@ -211,6 +213,29 @@ public class MqttDataCollector extends BaseMqttConnectionService
 			log.error("Error handling MQTT message on topic {}", topic, e);
 			throw new RepeatableTaskException(
 					"Error handling MQTT message on topic " + topic + ": " + e.getMessage(), e);
+		}
+	}
+
+	private void parseMqttMessage(ObjectMapper objectMapper, MqttMessage message, final String topic,
+			final Long nodeId, final boolean checkVersion) throws IOException {
+		JsonNode root = objectMapper.readTree(message.getPayload());
+		if ( root.isObject() ) {
+			int remainingTries = transientErrorTries;
+			while ( remainingTries > 0 ) {
+				try {
+					handleNode(nodeId, root, checkVersion);
+					break;
+				} catch ( RepeatableTaskException e ) {
+					remainingTries--;
+					if ( remainingTries > 0 ) {
+						log.warn(
+								"Transient error handling MQTT message on topic {}; will try {} more times",
+								topic, remainingTries, e);
+					} else {
+						throw e;
+					}
+				}
+			}
 		}
 	}
 
@@ -292,15 +317,15 @@ public class MqttDataCollector extends BaseMqttConnectionService
 
 	}
 
-	private void handleNode(final Long nodeId, final JsonNode node) {
+	private void handleNode(final Long nodeId, final JsonNode node, final boolean checkVersion) {
 		String nodeType = getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
 		if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) ) {
 			// if we have a location ID, this is actually a GeneralLocationDatum
 			final JsonNode locId = node.get(LOCATION_ID_FIELD);
 			if ( locId != null && locId.isNumber() ) {
-				handleGeneralLocationDatum(node);
+				handleGeneralLocationDatum(node, checkVersion);
 			} else {
-				handleGeneralNodeDatum(nodeId, node);
+				handleGeneralNodeDatum(nodeId, node, checkVersion);
 			}
 		} else if ( INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
 			handleInstructionStatus(nodeId, node);
@@ -321,8 +346,8 @@ public class MqttDataCollector extends BaseMqttConnectionService
 		}
 	}
 
-	private void handleGeneralNodeDatum(final Long nodeId, final JsonNode node) {
-		getMqttStats().incrementAndGet(SolarInCountStat.NodeDatumReceived);
+	private void handleGeneralNodeDatum(final Long nodeId, final JsonNode node,
+			final boolean checkVersion) {
 		try {
 			GeneralNodeDatum d = objectMapper.treeToValue(node, GeneralNodeDatum.class);
 			d.setNodeId(nodeId);
@@ -330,15 +355,21 @@ public class MqttDataCollector extends BaseMqttConnectionService
 				// ignore, source ID is required
 				log.warn("Ignoring datum for node {} with missing source ID: {}", nodeId, node);
 			} else {
+				if ( d.getSamples() != null && d.getSamples().hasTag(TAG_V2) ) {
+					if ( checkVersion ) {
+						throw new UseV2ObjectMapperException();
+					}
+					d.getSamples().removeTag(TAG_V2);
+				}
 				dataCollectorBiz.postGeneralNodeDatum(singleton(d));
 			}
+			getMqttStats().incrementAndGet(SolarInCountStat.NodeDatumReceived);
 		} catch ( IOException e ) {
 			log.debug("Unable to parse GeneralNodeDatum: {}", e.getMessage());
 		}
 	}
 
-	private void handleGeneralLocationDatum(final JsonNode node) {
-		getMqttStats().incrementAndGet(SolarInCountStat.LocationDatumReceived);
+	private void handleGeneralLocationDatum(final JsonNode node, final boolean checkVersion) {
 		try {
 			GeneralLocationDatum d = objectMapper.treeToValue(node, GeneralLocationDatum.class);
 			if ( d.getLocationId() == null ) {
@@ -349,8 +380,15 @@ public class MqttDataCollector extends BaseMqttConnectionService
 				log.warn("Ignoring location {} datum with missing source ID: {}", d.getLocationId(),
 						node);
 			} else {
+				if ( d.getSamples() != null && d.getSamples().hasTag(TAG_V2) ) {
+					if ( checkVersion ) {
+						throw new UseV2ObjectMapperException();
+					}
+					d.getSamples().removeTag(TAG_V2);
+				}
 				dataCollectorBiz.postGeneralLocationDatum(singleton(d));
 			}
+			getMqttStats().incrementAndGet(SolarInCountStat.LocationDatumReceived);
 		} catch ( IOException e ) {
 			log.debug("Unable to parse GeneralLocationDatum: {}", e.getMessage());
 		}
