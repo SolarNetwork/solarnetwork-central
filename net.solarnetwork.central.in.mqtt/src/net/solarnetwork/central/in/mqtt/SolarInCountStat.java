@@ -28,7 +28,7 @@ import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
  * SolarIn MQTT statistic types.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.1
  */
 public enum SolarInCountStat implements MqttStat {
@@ -39,7 +39,11 @@ public enum SolarInCountStat implements MqttStat {
 
 	InstructionStatusReceived(2, "instruction status received"),
 
-	InstructionsPublished(3, "instructions published");
+	InstructionsPublished(3, "instructions published"),
+
+	LegacyNodeDatumReceived(4, "Legacy node datum received"),
+
+	LegacyLocationDatumReceived(5, "Legacy location datum received");
 
 	private final int index;
 	private final String description;

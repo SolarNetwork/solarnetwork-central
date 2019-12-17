@@ -131,9 +131,9 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	 * @param connectionFactory
 	 *        the factory to use for {@link MqttConnection} instances
 	 * @param objectMapper
-	 *        object mapper for messages (legacy format)
+	 *        object mapper for messages
 	 * @param objectMapper2
-	 *        object mapper for messages with {@Link #TAG_V2}
+	 *        object mapper for messages (legacy format)
 	 * @param executor
 	 *        an executor
 	 * @param dataCollectorBiz
@@ -175,11 +175,11 @@ public class MqttDataCollector extends BaseMqttConnectionService
 		}
 	}
 
-	private static class UseV2ObjectMapperException extends RuntimeException {
+	private static class UseLegacyObjectMapperException extends RuntimeException {
 
 		private static final long serialVersionUID = -6888029007548132227L;
 
-		private UseV2ObjectMapperException() {
+		private UseLegacyObjectMapperException() {
 			super();
 		}
 	}
@@ -202,7 +202,7 @@ public class MqttDataCollector extends BaseMqttConnectionService
 
 			try {
 				parseMqttMessage(objectMapper, message, topic, nodeId, true);
-			} catch ( UseV2ObjectMapperException e ) {
+			} catch ( UseLegacyObjectMapperException e ) {
 				parseMqttMessage(objectMapper2, message, topic, nodeId, false);
 			}
 		} catch ( IOException e ) {
@@ -355,15 +355,16 @@ public class MqttDataCollector extends BaseMqttConnectionService
 				// ignore, source ID is required
 				log.warn("Ignoring datum for node {} with missing source ID: {}", nodeId, node);
 			} else {
-				if ( d.getSamples() != null && d.getSamples().hasTag(TAG_V2) ) {
+				if ( d.getSamples() != null && !d.getSamples().hasTag(TAG_V2) ) {
 					if ( checkVersion ) {
-						throw new UseV2ObjectMapperException();
+						throw new UseLegacyObjectMapperException();
 					}
 					d.getSamples().removeTag(TAG_V2);
 				}
 				dataCollectorBiz.postGeneralNodeDatum(singleton(d));
 			}
-			getMqttStats().incrementAndGet(SolarInCountStat.NodeDatumReceived);
+			getMqttStats().incrementAndGet(checkVersion ? SolarInCountStat.NodeDatumReceived
+					: SolarInCountStat.LegacyNodeDatumReceived);
 		} catch ( IOException e ) {
 			log.debug("Unable to parse GeneralNodeDatum: {}", e.getMessage());
 		}
@@ -380,15 +381,16 @@ public class MqttDataCollector extends BaseMqttConnectionService
 				log.warn("Ignoring location {} datum with missing source ID: {}", d.getLocationId(),
 						node);
 			} else {
-				if ( d.getSamples() != null && d.getSamples().hasTag(TAG_V2) ) {
+				if ( d.getSamples() != null && !d.getSamples().hasTag(TAG_V2) ) {
 					if ( checkVersion ) {
-						throw new UseV2ObjectMapperException();
+						throw new UseLegacyObjectMapperException();
 					}
 					d.getSamples().removeTag(TAG_V2);
 				}
 				dataCollectorBiz.postGeneralLocationDatum(singleton(d));
 			}
-			getMqttStats().incrementAndGet(SolarInCountStat.LocationDatumReceived);
+			getMqttStats().incrementAndGet(checkVersion ? SolarInCountStat.LocationDatumReceived
+					: SolarInCountStat.LegacyLocationDatumReceived);
 		} catch ( IOException e ) {
 			log.debug("Unable to parse GeneralLocationDatum: {}", e.getMessage());
 		}

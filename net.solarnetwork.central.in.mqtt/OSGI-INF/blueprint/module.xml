@@ -30,7 +30,7 @@
 	<bean id="objectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
 		<property name="jsonFactory">
 			<bean class="net.solarnetwork.central.in.mqtt.CBORFactoryBean">
-				<argument value="true"/>
+				<argument value="false"/>
 			</bean>
 		</property>
 		<property name="serializers">
@@ -51,7 +51,7 @@
 	<bean id="objectMapper2" class="net.solarnetwork.util.ObjectMapperFactoryBean">
 		<property name="jsonFactory">
 			<bean class="net.solarnetwork.central.in.mqtt.CBORFactoryBean">
-				<argument value="false"/>
+				<argument value="true"/>
 			</bean>
 		</property>
 		<property name="serializers">

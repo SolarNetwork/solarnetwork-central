@@ -96,8 +96,8 @@ public class MqttDataCollectorTests_CBOR {
 
 	@Before
 	public void setup() throws Exception {
-		objectMapper = createObjectMapper(new CBORFactoryBean(true).getObject());
-		objectMapper2 = createObjectMapper(new CBORFactoryBean(false).getObject());
+		objectMapper = createObjectMapper(new CBORFactoryBean(false).getObject());
+		objectMapper2 = createObjectMapper(new CBORFactoryBean(true).getObject());
 		dataCollectorBiz = EasyMock.createMock(DataCollectorBiz.class);
 		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
 
