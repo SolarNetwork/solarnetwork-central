@@ -49,7 +49,7 @@ import net.solarnetwork.central.user.domain.UserNode;
  * Helper class for authorization needs, e.g. aspect implementations.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public abstract class AuthorizationSupport {
 
@@ -205,9 +205,16 @@ public abstract class AuthorizationSupport {
 				return;
 			}
 			if ( UserAuthTokenType.ReadNodeData.toString().equals(token.getTokenType()) ) {
-				// data token, so token must include the requested node ID
-				if ( token.getPolicy() == null || token.getPolicy().getNodeIds() == null
-						|| !token.getPolicy().getNodeIds().contains(nodeId) ) {
+				if ( token.getPolicy() == null || token.getPolicy().getNodeIds() == null ) {
+					// data token does not restrict node IDs, so node must be owned by token user
+					if ( !token.getUserId().equals(userNode.getUser().getId()) ) {
+						log.warn("Access DENIED to node {} for token {}; wrong user", nodeId,
+								token.getToken());
+						throw new AuthorizationException(token.getToken(),
+								AuthorizationException.Reason.ACCESS_DENIED);
+					}
+				} else if ( !token.getPolicy().getNodeIds().contains(nodeId) ) {
+					// data token specifies nodes, so token must include the requested node ID
 					log.warn("Access DENIED to node {} for token {}; node not included", nodeId,
 							token.getToken());
 					throw new AuthorizationException(token.getToken(),

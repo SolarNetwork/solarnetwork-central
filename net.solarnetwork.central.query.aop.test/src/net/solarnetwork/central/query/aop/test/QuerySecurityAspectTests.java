@@ -294,6 +294,25 @@ public class QuerySecurityAspectTests {
 	}
 
 	@Test
+	public void datumFilterPrivateNodeAsReadNodeDataTokenWithoutNodeRestriction() {
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().build();
+		setAuthenticatedReadNodeDataToken(userId, policy);
+		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
+		userNode.setRequiresAuthorization(true);
+
+		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		EasyMock.replay(userNodeDao);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setType("Consumption");
+		criteria.setNodeId(nodeId);
+		GeneralNodeDatumFilter result = service.userNodeAccessCheck(criteria);
+		Assert.assertEquals(nodeId, result.getNodeId());
+	}
+
+	@Test
 	public void datumFilterPrivateNodeAsReadNodeDataTokenSomeOtherUser() {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
@@ -334,6 +353,30 @@ public class QuerySecurityAspectTests {
 		try {
 			service.userNodeAccessCheck(criteria);
 			Assert.fail("Should have thrown SecurityException for anonymous user");
+		} catch ( AuthorizationException e ) {
+			Assert.assertEquals(Reason.ACCESS_DENIED, e.getReason());
+		}
+	}
+
+	@Test
+	public void datumFilterPrivateNodeAsReadNodeDataTokenWithoutNodeRestrictionNonMatchingNode() {
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().build();
+		// note the actor is not the owner of the node, and the token is not granted access to the node ID
+		setAuthenticatedReadNodeDataToken(userId, policy);
+		UserNode userNode = new UserNode(new User(-200L, null), new SolarNode(nodeId, null));
+		userNode.setRequiresAuthorization(true);
+
+		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		EasyMock.replay(userNodeDao);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setType("Consumption");
+		criteria.setNodeId(nodeId);
+		try {
+			service.userNodeAccessCheck(criteria);
+			Assert.fail("Should have thrown SecurityException for node ID not owned by owner of token");
 		} catch ( AuthorizationException e ) {
 			Assert.assertEquals(Reason.ACCESS_DENIED, e.getReason());
 		}

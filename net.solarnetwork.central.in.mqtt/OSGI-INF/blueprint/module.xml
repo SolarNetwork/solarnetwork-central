@@ -29,7 +29,30 @@
 
 	<bean id="objectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
 		<property name="jsonFactory">
-			<bean class="com.fasterxml.jackson.dataformat.cbor.CBORFactory"/>
+			<bean class="net.solarnetwork.central.in.mqtt.CBORFactoryBean">
+				<argument value="false"/>
+			</bean>
+		</property>
+		<property name="serializers">
+			<list>
+				<bean class="net.solarnetwork.util.JodaDateTimeSerializer"/>
+				<bean class="net.solarnetwork.util.JodaLocalDateSerializer"/>
+				<bean class="net.solarnetwork.util.JodaLocalDateTimeSerializer"/>
+				<bean class="net.solarnetwork.util.JodaLocalTimeSerializer"/>
+			</list>
+		</property>
+		<property name="featuresToDisable">
+			<list>
+				<value>#{T(com.fasterxml.jackson.databind.DeserializationFeature).FAIL_ON_UNKNOWN_PROPERTIES}</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="objectMapper2" class="net.solarnetwork.util.ObjectMapperFactoryBean">
+		<property name="jsonFactory">
+			<bean class="net.solarnetwork.central.in.mqtt.CBORFactoryBean">
+				<argument value="true"/>
+			</bean>
 		</property>
 		<property name="serializers">
 			<list>
@@ -75,6 +98,7 @@
 				init-method="init" destroy-method="shutdown">
 			<argument ref="mqttConnectionFactory"/>
 			<argument ref="objectMapper"/>
+			<argument ref="objectMapper2"/>
 			<argument ref="executor"/>
 			<argument ref="dataCollectorBiz"/>
 			<argument ref="nodeInstructionDao"/>
