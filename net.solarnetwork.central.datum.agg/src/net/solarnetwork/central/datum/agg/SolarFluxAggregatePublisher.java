@@ -47,7 +47,7 @@ import net.solarnetwork.domain.Identity;
  * Publish aggregate datum to SolarFlux.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.7
  */
 public class SolarFluxAggregatePublisher extends BaseMqttConnectionService
@@ -162,7 +162,12 @@ public class SolarFluxAggregatePublisher extends BaseMqttConnectionService
 					getMqttStats().incrementAndGet(pubStat);
 				}
 				return true;
-			} catch ( IOException | InterruptedException | ExecutionException | TimeoutException e ) {
+			} catch ( TimeoutException e ) {
+				// don't generate error for timeout; just assume the problem is transient, e.g.
+				// network connection lost, and will be resolved eventually
+				log.warn("Timeout publishing {} datum {} to SolarFlux @ {}", aggregation, datum,
+						mqttConfig.getServerUri());
+			} catch ( IOException | InterruptedException | ExecutionException e ) {
 				Throwable root = e;
 				while ( root.getCause() != null ) {
 					root = root.getCause();

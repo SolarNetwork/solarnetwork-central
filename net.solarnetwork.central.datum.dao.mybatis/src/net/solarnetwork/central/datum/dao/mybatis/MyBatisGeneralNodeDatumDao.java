@@ -76,7 +76,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.21
+ * @version 1.22
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -547,13 +547,12 @@ public class MyBatisGeneralNodeDatumDao
 		}
 
 		// attempt count first, if NOT mostRecent query and max NOT specified as -1
-		// and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
+		// and NOT a *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
 		Long totalCount = null;
 		if ( !filter.isMostRecent() && !filter.isWithoutTotalResultsCount() && max != null
-				&& max.intValue() != -1 && (agg.getLevel() < 1 || agg.compareTo(Aggregation.Hour) >= 0)
-				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
-				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
-				&& agg != Aggregation.RunningTotal ) {
+				&& max.intValue() != -1 && agg != Aggregation.DayOfWeek
+				&& agg != Aggregation.SeasonalDayOfWeek && agg != Aggregation.HourOfDay
+				&& agg != Aggregation.SeasonalHourOfDay && agg != Aggregation.RunningTotal ) {
 			totalCount = executeCountQuery(query + "-count", sqlProps);
 		}
 
