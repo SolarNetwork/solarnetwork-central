@@ -34,54 +34,6 @@ CREATE TRIGGER maintain_fts
 
 /* =========================================================================
    =========================================================================
-   WEATHER / LOCATION
-   =========================================================================
-   ========================================================================= */
-
-CREATE SEQUENCE solarnet.weather_seq;
-
-CREATE TABLE solarnet.sn_weather_source (
-	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
-	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	sname			CHARACTER VARYING(128) NOT NULL,
-	fts_default		tsvector,
-	PRIMARY KEY(id)
-);
-
-CREATE TRIGGER maintain_fts
-  BEFORE INSERT OR UPDATE ON solarnet.sn_weather_source
-  FOR EACH ROW EXECUTE PROCEDURE
-  tsvector_update_trigger(fts_default, 'pg_catalog.english', sname);
-
-CREATE INDEX sn_weather_source_fts_default_idx ON solarnet.sn_weather_source USING gin(fts_default);
-
-/* --- sn_weather_loc */
-
-CREATE TABLE solarnet.sn_weather_loc (
-	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
-	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	loc_id			BIGINT NOT NULL,
-	source_id		BIGINT NOT NULL,
-	source_data		CHARACTER VARYING(128),
-	fts_default		tsvector,
-	PRIMARY KEY (id),
-	CONSTRAINT sn_weather_location_sn_loc_fk FOREIGN KEY (loc_id)
-		REFERENCES solarnet.sn_loc (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT sn_weather_location_sn_weather_source_fk FOREIGN KEY (source_id)
-		REFERENCES solarnet.sn_weather_source (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION
-);
-
-CREATE TRIGGER maintain_fts
-  BEFORE INSERT OR UPDATE ON solarnet.sn_weather_loc
-  FOR EACH ROW EXECUTE PROCEDURE
-  tsvector_update_trigger(fts_default, 'pg_catalog.english', source_data);
-
-CREATE INDEX sn_weather_loc_fts_default_idx ON solarnet.sn_weather_loc USING gin(fts_default);
-
-/* =========================================================================
-   =========================================================================
    NODE
    =========================================================================
    ========================================================================= */
@@ -95,9 +47,6 @@ CREATE TABLE solarnet.sn_node (
 	PRIMARY KEY (node_id),
 	CONSTRAINT sn_node_loc_fk FOREIGN KEY (loc_id)
 		REFERENCES solarnet.sn_loc (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT sn_node_weather_loc_fk FOREIGN KEY (wloc_id)
-		REFERENCES solarnet.sn_weather_loc (id)
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
@@ -366,53 +315,3 @@ $BODY$
   END AS season_monday
 $BODY$
   LANGUAGE 'sql' IMMUTABLE;
-
-
-/* =========================================================================
-   =========================================================================
-   PRICE
-   =========================================================================
-   ========================================================================= */
-
-CREATE SEQUENCE solarnet.price_seq;
-
-CREATE TABLE solarnet.sn_price_source (
-	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
-	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	sname			CHARACTER VARYING(128) NOT NULL,
-	fts_default		tsvector,
-	PRIMARY KEY(id)
-);
-
-CREATE TRIGGER maintain_fts
-  BEFORE INSERT OR UPDATE ON solarnet.sn_price_source
-  FOR EACH ROW EXECUTE PROCEDURE
-  tsvector_update_trigger(fts_default, 'pg_catalog.english', sname);
-
-CREATE INDEX sn_price_source_fts_default_idx ON solarnet.sn_price_source USING gin(fts_default);
-
-CREATE TABLE solarnet.sn_price_loc (
-	id				BIGINT NOT NULL DEFAULT nextval('solarnet.solarnet_seq'),
-	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	loc_id			BIGINT NOT NULL,
-	loc_name		CHARACTER VARYING(128) NOT NULL UNIQUE,
-	source_id		BIGINT NOT NULL,
-	source_data		CHARACTER VARYING(128),
-	currency		VARCHAR(10) NOT NULL,
-	unit			VARCHAR(20) NOT NULL,
-	fts_default		tsvector,
-	PRIMARY KEY (id),
-    CONSTRAINT sn_price_loc_loc_fk FOREIGN KEY (loc_id)
-  	    REFERENCES solarnet.sn_loc (id) MATCH SIMPLE
-	    ON UPDATE NO ACTION ON DELETE NO ACTION,
-	CONSTRAINT sn_price_loc_sn_price_source_fk FOREIGN KEY (source_id)
-		REFERENCES solarnet.sn_price_source (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION
-);
-
-CREATE TRIGGER maintain_fts
-  BEFORE INSERT OR UPDATE ON solarnet.sn_price_loc
-  FOR EACH ROW EXECUTE PROCEDURE
-  tsvector_update_trigger(fts_default, 'pg_catalog.english', loc_name, source_data, currency);
-
-CREATE INDEX sn_price_loc_fts_default_idx ON solarnet.sn_price_loc USING gin(fts_default);
