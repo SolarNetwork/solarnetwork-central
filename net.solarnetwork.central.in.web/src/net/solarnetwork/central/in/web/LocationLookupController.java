@@ -24,12 +24,6 @@ package net.solarnetwork.central.in.web;
 
 import java.util.List;
 import javax.validation.Valid;
-import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.domain.EntityMatch;
-import net.solarnetwork.central.domain.SourceLocationMatch;
-import net.solarnetwork.central.in.biz.DataCollectorBiz;
-import net.solarnetwork.central.support.SourceLocationFilter;
-import net.solarnetwork.web.domain.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,12 +39,17 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.in.biz.DataCollectorBiz;
+import net.solarnetwork.central.support.SourceLocationFilter;
+import net.solarnetwork.web.domain.Response;
 
 /**
  * Web access to PriceLocation data.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 @Controller
 public class LocationLookupController {
@@ -98,8 +97,8 @@ public class LocationLookupController {
 			if ( target instanceof SourceLocationFilter ) {
 				boolean sourceRequired = true;
 				SourceLocationFilter filter = (SourceLocationFilter) target;
-				if ( filter.getId() != null
-						|| (target instanceof GenericSourceLocationFilter && ((GenericSourceLocationFilter) target)
+				if ( filter.getId() != null || (target instanceof GenericSourceLocationFilter
+						&& ((GenericSourceLocationFilter) target)
 								.getType() == GenericSourceLocationFilter.LocationType.Basic) ) {
 					sourceRequired = false;
 				}
@@ -141,71 +140,9 @@ public class LocationLookupController {
 	@ExceptionHandler({ BindException.class, RuntimeException.class })
 	public ModelAndView handleRuntimeException(Exception e) {
 		log.error("BindException in {} controller", getClass().getSimpleName(), e);
-		ModelAndView mv = new ModelAndView(getViewName(), MODEL_KEY_RESULT, new Response<Object>(false,
-				null, e.getMessage(), null));
+		ModelAndView mv = new ModelAndView(getViewName(), MODEL_KEY_RESULT,
+				new Response<Object>(false, null, e.getMessage(), null));
 		return mv;
-	}
-
-	/**
-	 * Query for a WeatherLocation.
-	 * 
-	 * @param criteria
-	 *        the search criteria
-	 * @param model
-	 *        the model
-	 * @return the result view name
-	 */
-	@RequestMapping(method = RequestMethod.GET, value = { "/weatherLocationLookup.do",
-			"/u/weatherLocationLookup.do" })
-	public String findWeatherLocation(@Valid SourceLocationFilter criteria, Model model) {
-		List<SourceLocationMatch> matches = getDataCollectorBiz().findWeatherLocations(criteria);
-		if ( matches != null ) {
-			model.asMap().clear();
-			model.addAttribute(MODEL_KEY_RESULT, matches);
-		}
-		return getViewName();
-	}
-
-	/**
-	 * Query for a PriceLocation.
-	 * 
-	 * @param criteria
-	 *        the search criteria
-	 * @param model
-	 *        the model
-	 * @param criteriaModelKey
-	 *        the model key the criteria is stored on
-	 * @return the result model name
-	 */
-	@RequestMapping(method = RequestMethod.GET, value = { "/priceLocationLookup.do",
-			"/u/priceLocationLookup.do" })
-	public String findPriceLocation(@Valid SourceLocationFilter criteria, Model model) {
-		List<SourceLocationMatch> matches = getDataCollectorBiz().findPriceLocations(criteria);
-		if ( matches != null && matches.size() > 0 ) {
-			model.asMap().clear();
-			model.addAttribute(MODEL_KEY_RESULT, matches.get(0));
-		}
-		return getViewName();
-	}
-
-	/**
-	 * Query for a PriceLocation.
-	 * 
-	 * @param criteria
-	 *        the search criteria
-	 * @param model
-	 *        the model
-	 * @return the result view name
-	 */
-	@RequestMapping(method = RequestMethod.GET, value = { "/priceLocationSearch.*",
-			"/u/priceLocationSearch.*" })
-	public String searchForPriceLocation(@Valid SourceLocationFilter criteria, Model model) {
-		List<SourceLocationMatch> matches = getDataCollectorBiz().findPriceLocations(criteria);
-		if ( matches != null && matches.size() > 0 ) {
-			model.asMap().clear();
-			model.addAttribute(MODEL_KEY_RESULT, matches.get(0));
-		}
-		return getViewName();
 	}
 
 	/**
@@ -219,20 +156,8 @@ public class LocationLookupController {
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = { "/locationSearch.*", "/u/locationSearch.*" })
 	public String searchForLocations(@Valid GenericSourceLocationFilter criteria, Model model) {
-		List<? extends EntityMatch> matches;
-		switch (criteria.getType()) {
-			case Price:
-				matches = getDataCollectorBiz().findPriceLocations(criteria);
-				break;
-
-			case Weather:
-				matches = getDataCollectorBiz().findWeatherLocations(criteria);
-				break;
-
-			default:
-				matches = getDataCollectorBiz().findLocations(criteria.getLocation());
-				break;
-		}
+		List<? extends EntityMatch> matches = getDataCollectorBiz()
+				.findLocations(criteria.getLocation());
 		if ( matches != null && matches.size() > 0 ) {
 			model.asMap().clear();
 			model.addAttribute(MODEL_KEY_RESULT, matches);

@@ -41,24 +41,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.datum.domain.Datum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.datum.domain.HardwareControlDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.support.JsonUtils;
-import net.solarnetwork.domain.NodeControlPropertyType;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * JSON implementation of bulk upload service.
  * 
  * @author matt
- * @version 1.5
+ * @version 2.0
  */
 @Controller
 @RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" }, consumes = "application/json")
@@ -69,9 +66,6 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 
 	/** The InstructionStatus type. */
 	public static final String INSTRUCTION_STATUS_TYPE = "InstructionStatus";
-
-	/** The NodeControlInfo type. */
-	public static final String NODE_CONTROL_INFO_TYPE = "NodeControlInfo";
 
 	/** The {@link GeneralNodeDatum} or {@link GeneralLocationDatum} type. */
 	public static final String GENERAL_NODE_DATUM_TYPE = "datum";
@@ -147,7 +141,6 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			input = new GZIPInputStream(in);
 		}
 
-		List<Datum> parsedDatum = new ArrayList<Datum>();
 		List<GeneralNodeDatum> parsedGeneralNodeDatum = new ArrayList<GeneralNodeDatum>();
 		List<GeneralLocationDatum> parsedGeneralLocationDatum = new ArrayList<GeneralLocationDatum>();
 		List<Object> resultDatum = new ArrayList<Object>();
@@ -161,8 +154,6 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 						parsedGeneralNodeDatum.add((GeneralNodeDatum) o);
 					} else if ( o instanceof GeneralLocationDatum ) {
 						parsedGeneralLocationDatum.add((GeneralLocationDatum) o);
-					} else if ( o instanceof Datum ) {
-						parsedDatum.add((Datum) o);
 					} else if ( o instanceof Instruction ) {
 						resultDatum.add(o);
 					}
@@ -175,11 +166,6 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		}
 
 		try {
-			if ( parsedDatum.size() > 0 ) {
-				@SuppressWarnings("deprecation")
-				List<Datum> postedDatum = getDataCollectorBiz().postDatum(parsedDatum);
-				resultDatum.addAll(postedDatum);
-			}
 			if ( parsedGeneralNodeDatum.size() > 0 ) {
 				getDataCollectorBiz().postGeneralNodeDatum(parsedGeneralNodeDatum);
 				for ( GeneralNodeDatum d : parsedGeneralNodeDatum ) {
@@ -222,7 +208,8 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 
 	private Object handleNode(JsonNode node) {
 		String nodeType = getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
-		if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) ) {
+		if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) || nodeType == null
+				|| nodeType.isEmpty() ) {
 			// if we have a location ID, this is actually a GeneralLocationDatum
 			final JsonNode locId = node.get(LOCATION_ID_FIELD);
 			if ( locId != null && locId.isNumber() ) {
@@ -231,60 +218,14 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			return handleGeneralNodeDatum(node);
 		} else if ( INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
 			return handleInstructionStatus(node);
-		} else if ( NODE_CONTROL_INFO_TYPE.equalsIgnoreCase(nodeType) ) {
-			return handleNodeControlInfo(node);
 		} else {
-			return handleLegacyDatum(node);
+			return null;
 		}
 	}
 
 	private String getStringFieldValue(JsonNode node, String fieldName, String placeholder) {
 		JsonNode child = node.get(fieldName);
 		return (child == null ? placeholder : child.asText());
-	}
-
-	private HardwareControlDatum handleNodeControlInfo(JsonNode node) {
-		HardwareControlDatum datum = null;
-		String controlId = getStringFieldValue(node, "controlId", null);
-		String propertyName = getStringFieldValue(node, "propertyName", null);
-		String value = getStringFieldValue(node, "value", null);
-		String type = getStringFieldValue(node, "type", null);
-		if ( type != null && value != null ) {
-			datum = new HardwareControlDatum();
-
-			NodeControlPropertyType t = NodeControlPropertyType.valueOf(type);
-			switch (t) {
-				case Boolean:
-					if ( value.length() > 0 && (value.equals("1") || value.equalsIgnoreCase("yes")
-							|| value.equalsIgnoreCase("true")) ) {
-						datum.setIntegerValue(Integer.valueOf(1));
-					} else {
-						datum.setIntegerValue(Integer.valueOf(0));
-					}
-					break;
-
-				case Integer:
-					datum.setIntegerValue(Integer.valueOf(value));
-					break;
-
-				case Float:
-				case Percent:
-					datum.setFloatValue(Float.valueOf(value));
-					break;
-
-				default:
-					// other types not supported in legacy datum
-					break;
-
-			}
-			String sourceId = controlId;
-			if ( propertyName != null ) {
-				sourceId += ";" + propertyName;
-			}
-			datum.setSourceId(sourceId);
-		}
-
-		return datum;
 	}
 
 	private Instruction handleInstructionStatus(JsonNode node) {
@@ -304,35 +245,6 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			return result;
 		}
 		return result;
-	}
-
-	private Object handleLegacyDatum(JsonNode node) {
-		String className = getStringFieldValue(node, OBJECT_TYPE_FIELD, null);
-		if ( className == null ) {
-			return null;
-		}
-		className = "net.solarnetwork.central.datum.domain." + className;
-
-		Class<?> datumClass = null;
-		Object datum = null;
-		try {
-			datumClass = Class.forName(className, true, Datum.class.getClassLoader());
-			datum = objectMapper.treeToValue(node, datumClass);
-		} catch ( ClassNotFoundException e ) {
-			if ( log.isWarnEnabled() ) {
-				log.warn("Unable to load Datum class " + className + " specified in JSON");
-			}
-			return null;
-		} catch ( IOException e ) {
-			log.debug("Unable to parse JSON into {} class: {}", className, e.getMessage());
-			return null;
-		}
-
-		if ( log.isTraceEnabled() ) {
-			log.trace("Parsed datum " + datum + " from JSON");
-		}
-
-		return datum;
 	}
 
 	private GeneralNodeDatum handleGeneralNodeDatum(JsonNode node) {

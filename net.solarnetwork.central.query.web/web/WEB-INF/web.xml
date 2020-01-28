@@ -16,13 +16,11 @@
   along with this program; if not, write to the Free Software 
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
   02111-1307 USA
-
-  $Id: web.xml,v 1.58 2007/08/27 04:04:21 matt Exp $
 -->
 <web-app xmlns="http://java.sun.com/xml/ns/javaee"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
-	version="2.5">
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	version="3.0" metadata-complete="true">
 
 	<display-name>SolarNetwork Web Query Server</display-name>
     <description>SolarNetwork Web Query Server</description>
