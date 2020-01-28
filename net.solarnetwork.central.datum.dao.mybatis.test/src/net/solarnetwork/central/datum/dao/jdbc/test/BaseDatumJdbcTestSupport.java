@@ -49,7 +49,7 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  * Base class for datum JDBC test support.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public abstract class BaseDatumJdbcTestSupport extends AbstractCentralTransactionalTest {
 
@@ -135,25 +135,6 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractCentralTransactio
 	}
 
 	/**
-	 * Insert a test price source and name.
-	 * 
-	 * <p>
-	 * This will use the {@link #TEST_PRICE_SOURCE_ID},
-	 * {@link #TEST_PRICE_SOURCE_NAME}, {@link #TEST_PRICE_LOC_ID}, and
-	 * {@link #TEST_PRICE_LOC_NAME} values. The
-	 * {@link AbstractCentralTransactionalTest#TEST_LOC_ID} will be used, and is
-	 * assumed to exist in the database already.
-	 * </p>
-	 * 
-	 */
-	@Override
-	protected void setupTestPriceLocation() {
-		setupTestPriceSource(TEST_PRICE_SOURCE_ID, TEST_PRICE_SOURCE_NAME);
-		setupTestPriceLocation(TEST_PRICE_LOC_ID, TEST_LOC_ID, TEST_PRICE_LOC_NAME,
-				TEST_PRICE_SOURCE_ID);
-	}
-
-	/**
 	 * Insert a test node record into the database.
 	 * 
 	 * @param nodeId
@@ -161,6 +142,7 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractCentralTransactio
 	 * @param locationId
 	 *        the node's location ID
 	 */
+	@Override
 	protected void setupTestNode(Long nodeId, Long locationId) {
 		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id) values (?,?)", nodeId,
 				locationId);
@@ -174,6 +156,7 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractCentralTransactio
 	 * @param timeZoneId
 	 *        the time zone to use
 	 */
+	@Override
 	protected void setupTestLocation(Long id, String timeZoneId) {
 		jdbcTemplate.update(
 				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
