@@ -14,7 +14,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[2.0,3.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.6,2.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.instructor" rev="[1.8,2.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.7,2.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[2.0,3.0)"/>
  		<dependency org="org.aspectj" name="aspectjweaver" rev="1.7.1"/>
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>
 		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>

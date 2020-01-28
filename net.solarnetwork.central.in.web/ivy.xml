@@ -23,7 +23,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.0,3.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.in.biz" rev="[2.0,3.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.instructor" rev="[1.8,2.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[1.19.0,2.0.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[2.0,3.0)"/>
 		<dependency org="javax.servlet" name="com.springsource.javax.servlet" rev="2.5.0" />
 		<dependency org="javax.servlet" name="com.springsource.javax.servlet.jsp" rev="2.1.0" />
 		<dependency org="javax.validation" name="validation-api" rev="1.1.0.Final"/>
