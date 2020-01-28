@@ -114,7 +114,7 @@ import net.solarnetwork.util.JavaBeanXmlSerializer;
  * Unit tests for the {@link DaoRegistrationBiz}.
  * 
  * @author matt
- * @version 1.5
+ * @version 2.0
  */
 public class DaoRegistrationBizTest {
 
@@ -406,7 +406,10 @@ public class DaoRegistrationBizTest {
 
 		replayAll();
 
-		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
+		NetworkAssociationDetails details = new NetworkAssociationDetails();
+		details.setUsername(TEST_EMAIL);
+		details.setConfirmationKey(TEST_CONF_KEY);
+		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(details);
 
 		verifyAll();
 
@@ -461,7 +464,10 @@ public class DaoRegistrationBizTest {
 
 		replayAll();
 
-		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
+		NetworkAssociationDetails details = new NetworkAssociationDetails();
+		details.setUsername(TEST_EMAIL);
+		details.setConfirmationKey(TEST_CONF_KEY);
+		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(details);
 
 		verifyAll();
 
@@ -509,7 +515,10 @@ public class DaoRegistrationBizTest {
 
 		replayAll();
 
-		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
+		NetworkAssociationDetails details = new NetworkAssociationDetails();
+		details.setUsername(TEST_EMAIL);
+		details.setConfirmationKey(TEST_CONF_KEY);
+		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(details);
 
 		verifyAll();
 
@@ -558,7 +567,10 @@ public class DaoRegistrationBizTest {
 
 		replayAll();
 
-		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
+		NetworkAssociationDetails details = new NetworkAssociationDetails();
+		details.setUsername(TEST_EMAIL);
+		details.setConfirmationKey(TEST_CONF_KEY);
+		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(details);
 
 		verifyAll();
 
@@ -606,7 +618,10 @@ public class DaoRegistrationBizTest {
 
 		replayAll();
 
-		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
+		NetworkAssociationDetails details = new NetworkAssociationDetails();
+		details.setUsername(TEST_EMAIL);
+		details.setConfirmationKey(TEST_CONF_KEY);
+		NetworkCertificate cert = registrationBiz.confirmNodeAssociation(details);
 
 		verifyAll();
 
@@ -630,7 +645,10 @@ public class DaoRegistrationBizTest {
 
 		replayAll();
 		try {
-			registrationBiz.confirmNodeAssociation(TEST_EMAIL, BAD_CONF_KEY);
+			NetworkAssociationDetails details = new NetworkAssociationDetails();
+			details.setUsername(TEST_EMAIL);
+			details.setConfirmationKey(BAD_CONF_KEY);
+			registrationBiz.confirmNodeAssociation(details);
 			fail("Expected AuthorizationException for bad node ID");
 		} catch ( AuthorizationException e ) {
 			assertEquals(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED, e.getReason());
@@ -651,7 +669,10 @@ public class DaoRegistrationBizTest {
 				.andReturn(conf);
 		replayAll();
 		try {
-			registrationBiz.confirmNodeAssociation(TEST_EMAIL, TEST_CONF_KEY);
+			NetworkAssociationDetails details = new NetworkAssociationDetails();
+			details.setUsername(TEST_EMAIL);
+			details.setConfirmationKey(TEST_CONF_KEY);
+			registrationBiz.confirmNodeAssociation(details);
 			fail("Expected AuthorizationException for already confirmed");
 		} catch ( AuthorizationException e ) {
 			assertEquals(AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED, e.getReason());

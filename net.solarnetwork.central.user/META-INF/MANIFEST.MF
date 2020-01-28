@@ -6,10 +6,10 @@ Bundle-Version: 2.0.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: 
- net.solarnetwork.central.user.biz;version="1.17.0",
+ net.solarnetwork.central.user.biz;version="2.0.0",
  net.solarnetwork.central.user.dao;version="2.0.0",
  net.solarnetwork.central.user.domain;version="2.0.0",
- net.solarnetwork.central.user.support;version="1.13.1"
+ net.solarnetwork.central.user.support;version="2.0.0"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.4,3.0)",
  com.fasterxml.jackson.core;version="[2.4,3.0)",

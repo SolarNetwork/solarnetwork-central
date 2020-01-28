@@ -41,7 +41,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
  * AOP.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class DelegatingRegistrationBiz implements RegistrationBiz {
 
@@ -87,13 +87,6 @@ public class DelegatingRegistrationBiz implements RegistrationBiz {
 	@Override
 	public void cancelNodeAssociation(Long userNodeConfirmationId) throws AuthorizationException {
 		delegate.cancelNodeAssociation(userNodeConfirmationId);
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public NetworkCertificate confirmNodeAssociation(String username, String confirmationKey)
-			throws AuthorizationException {
-		return delegate.confirmNodeAssociation(username, confirmationKey);
 	}
 
 	@Override

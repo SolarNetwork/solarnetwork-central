@@ -132,7 +132,7 @@ import net.solarnetwork.util.JavaBeanXmlSerializer;
  * </dl>
  * 
  * @author matt
- * @version 1.9
+ * @version 2.0
  */
 public class DaoRegistrationBiz implements RegistrationBiz {
 
@@ -462,15 +462,6 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	private String calculateNodeAssociationConfirmationCode(DateTime date, Long nodeId) {
 		return DigestUtils.sha256Hex(String.valueOf(date.getMillis()) + String.valueOf(nodeId));
-	}
-
-	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public NetworkCertificate confirmNodeAssociation(final String username,
-			final String confirmationKey) {
-		assert username != null;
-		assert confirmationKey != null;
-		return confirmNodeAssociation(new NetworkAssociationDetails(username, confirmationKey, null));
 	}
 
 	@Override
