@@ -49,9 +49,8 @@ import net.solarnetwork.central.security.SecurityActor;
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 2.6
+ * @version 3.0
  */
-@SuppressWarnings("deprecation")
 public class DelegatingQueryBiz implements QueryBiz {
 
 	private final QueryBiz delegate;
@@ -70,11 +69,6 @@ public class DelegatingQueryBiz implements QueryBiz {
 	@Override
 	public ReportableInterval getReportableInterval(Long nodeId, String sourceId) {
 		return delegate.getReportableInterval(nodeId, sourceId);
-	}
-
-	@Override
-	public Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end) {
-		return delegate.getAvailableSources(nodeId, start, end);
 	}
 
 	@Override

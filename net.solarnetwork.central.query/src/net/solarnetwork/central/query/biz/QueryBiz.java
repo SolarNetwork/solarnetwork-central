@@ -54,7 +54,7 @@ import net.solarnetwork.central.security.SecurityActor;
  * API for querying business logic.
  * 
  * @author matt
- * @version 2.7
+ * @version 3.0
  */
 public interface QueryBiz {
 
@@ -81,23 +81,6 @@ public interface QueryBiz {
 	 *         available
 	 */
 	ReportableInterval getReportableInterval(Long nodeId, String sourceId);
-
-	/**
-	 * Get the available source IDs for a given node, optionally limited to a
-	 * date range.
-	 * 
-	 * @param nodeId
-	 *        the node ID to search for
-	 * @param start
-	 *        an optional start date (inclusive) to filter on
-	 * @param end
-	 *        an optional end date (inclusive) to filter on
-	 * @return the distinct source IDs available (never {@literal null})
-	 * @deprecated since 2.1; use
-	 *             {@link #getAvailableSources(GeneralNodeDatumFilter)}
-	 */
-	@Deprecated
-	Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end);
 
 	/**
 	 * Get the available source IDs for a given filter.

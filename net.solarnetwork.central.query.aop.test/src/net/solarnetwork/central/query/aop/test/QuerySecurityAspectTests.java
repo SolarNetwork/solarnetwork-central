@@ -68,7 +68,6 @@ import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.support.BasicFilterResults;
-import net.solarnetwork.central.support.PriceLocationFilter;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
@@ -78,7 +77,7 @@ import net.solarnetwork.central.user.domain.UserNode;
  * Unit tests for the {@link QuerySecurityAspect} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class QuerySecurityAspectTests {
 
@@ -512,16 +511,6 @@ public class QuerySecurityAspectTests {
 		loc.setTimeZoneId("Pacific/Auckland");
 		DatumFilterCommand criteria = new DatumFilterCommand(loc);
 		criteria.setType("Weather");
-		Filter result = service.userNodeAccessCheck(criteria);
-		Assert.assertSame(criteria, result);
-	}
-
-	@Test
-	public void priceFilterAsAnonymous() {
-		EasyMock.replay(userNodeDao);
-
-		PriceLocationFilter criteria = new PriceLocationFilter();
-		criteria.setCurrency("NZD");
 		Filter result = service.userNodeAccessCheck(criteria);
 		Assert.assertSame(criteria, result);
 	}
