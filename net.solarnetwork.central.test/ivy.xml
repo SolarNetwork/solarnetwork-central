@@ -4,11 +4,13 @@
 		<conf name="compile" visibility="public" description="Build dependencies"/>
 		<conf name="runtime" visibility="public" description="Runtime dependencies"/>
 		<conf name="sources"/>
+		<conf name="javadoc" visibility="public" description="Javadoc documentation"/>
 	</configurations>
 	<publications>
 		<artifact type="pom" ext="pom" conf="compile"/>
 		<artifact type="bundle" ext="jar" conf="runtime"/>
 		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
+		<artifact type="javadoc" ext="jar" conf="javadoc" m:classifier="javadoc"/>
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
 		<!-- Logging -->
