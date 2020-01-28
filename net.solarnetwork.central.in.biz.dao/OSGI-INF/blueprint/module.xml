@@ -37,10 +37,7 @@
 
 	<reference id="networkAssociationDao" interface="net.solarnetwork.central.dao.NetworkAssociationDao"/>
 	
-	<reference id="priceLocationDao" interface="net.solarnetwork.central.dao.PriceLocationDao"/>
 	<reference id="solarLocationDao" interface="net.solarnetwork.central.dao.SolarLocationDao"/>
-	<reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
-	<reference id="weatherLocationDao" interface="net.solarnetwork.central.dao.WeatherLocationDao"/>
 	
 	<reference id="generalLocationDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumDao"/>
 	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
@@ -71,10 +68,7 @@
 	<bean id="daoDataCollectorBiz" class="net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz">
 		<property name="generalLocationDatumDao" ref="generalLocationDatumDao"/>
 		<property name="generalNodeDatumDao" ref="generalNodeDatumDao"/>
-		<property name="priceLocationDao" ref="priceLocationDao"/>
 		<property name="solarLocationDao" ref="solarLocationDao"/>
-		<property name="solarNodeDao" ref="solarNodeDao"/>
-		<property name="weatherLocationDao" ref="weatherLocationDao"/>
 		<property name="datumMetadataBiz" ref="datumMetadataBiz"/>
 		<property name="solarNodeMetadataBiz" ref="solarNodeMetadataBiz"/>
 	</bean>
