@@ -3,14 +3,14 @@
 	<configurations defaultconf="compile,runtime">
 		<conf name="compile" visibility="public" description="Build dependencies"/>
 		<conf name="runtime" visibility="public" description="Runtime dependencies"/>
-		<conf name="sources"/>
 		<conf name="javadoc" visibility="public" description="Javadoc documentation"/>
+		<conf name="sources"/>
 	</configurations>
 	<publications>
 		<artifact type="pom" ext="pom" conf="compile"/>
 		<artifact type="bundle" ext="jar" conf="runtime"/>
-		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
 		<artifact type="javadoc" ext="jar" conf="javadoc" m:classifier="javadoc"/>
+		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
 		<!-- Logging -->
@@ -24,12 +24,12 @@
 		<!-- Testing -->
 		<dependency org="junit" name="junit" rev="4.12"/>
 		<dependency org="org.springframework" name="spring-test" rev="4.2.6.RELEASE"/>
-		
+
 		<!-- Testing support -->
 		<dependency org="org.postgresql" name="postgresql" rev="42.0.0" conf="runtime"/>
 		<dependency org="org.apache.tomcat" name="tomcat-jdbc" rev="7.0.64" conf="runtime"/>
 		<dependency org="org.springframework" name="spring-jdbc" rev="4.2.6.RELEASE"/>
-		
+
 		<!-- SolarNetwork -->
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.12,)"/>
     </dependencies>
