@@ -50,7 +50,7 @@ import net.solarnetwork.central.security.AuthenticatedNode;
  * Base test class for transactional unit tests.
  * 
  * @author matt
- * @version 1.8
+ * @version 2.0
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml",
 		"classpath:/net/solarnetwork/central/test/test-tx-context.xml" })
@@ -94,7 +94,7 @@ public abstract class AbstractCentralTransactionalTest
 	 *        the ID to assign to the node
 	 */
 	protected void setupTestNode(Long nodeId) {
-		setupTestNode(nodeId, TEST_LOC_ID, TEST_WEATHER_LOC_ID);
+		setupTestNode(nodeId, TEST_LOC_ID);
 	}
 
 	/**
@@ -104,12 +104,10 @@ public abstract class AbstractCentralTransactionalTest
 	 *        the ID to assign to the node
 	 * @param locId
 	 *        the location ID
-	 * @param weatherLocationId
-	 *        the weather location ID
 	 */
-	protected void setupTestNode(Long nodeId, Long locationId, Long weatherLocationId) {
-		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id, wloc_id) values (?,?,?)",
-				nodeId, locationId, weatherLocationId);
+	protected void setupTestNode(Long nodeId, Long locationId) {
+		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id) values (?,?)", nodeId,
+				locationId);
 		int count = jdbcTemplate.queryForObject(
 				"select count(*) from solarnet.sn_node where node_id = ?", Integer.class, nodeId);
 		log.debug("Test SolarNode [" + nodeId + "] created: " + count);
@@ -146,15 +144,14 @@ public abstract class AbstractCentralTransactionalTest
 	 * Insert a test location into the sn_loc table.
 	 */
 	protected void setupTestLocation() {
-		setupTestLocation(TEST_LOC_ID, TEST_WEATHER_LOC_ID);
+		setupTestLocation(TEST_LOC_ID);
 	}
 
 	/**
-	 * Insert a test location into the sn_loc table and weather location in the
-	 * sn_weather_loc table.
+	 * Insert a test location into the sn_loc table.
 	 */
-	protected void setupTestLocation(Long id, Long weatherLocId) {
-		setupTestLocation(id, weatherLocId, TEST_TZ);
+	protected void setupTestLocation(Long id) {
+		setupTestLocation(id, TEST_TZ);
 	}
 
 	/**
@@ -163,91 +160,13 @@ public abstract class AbstractCentralTransactionalTest
 	 * 
 	 * @param id
 	 *        the location ID to use
-	 * @param weatherLocId
-	 *        the weather location ID to use
 	 * @param timeZoneId
 	 *        the time zone ID to use
-	 * @since 1.7
 	 */
-	protected void setupTestLocation(Long id, Long weatherLocId, String timeZoneId) {
+	protected void setupTestLocation(Long id, String timeZoneId) {
 		jdbcTemplate.update(
 				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
 				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, timeZoneId);
-		jdbcTemplate.update("insert into solarnet.sn_weather_source (id,sname) values (?,?)",
-				TEST_WEATHER_SOURCE_ID, TEST_WEATHER_SOURCE_NAME);
-		jdbcTemplate.update("insert into solarnet.sn_weather_loc (id,loc_id,source_id) values (?,?,?)",
-				weatherLocId, id, TEST_WEATHER_SOURCE_ID);
-	}
-
-	/**
-	 * Insert a default test price source and location into the database.
-	 */
-	protected void setupTestPriceLocation() {
-		setupTestPriceLocation(TEST_LOC_ID, TEST_LOC_NAME, TEST_PRICE_SOURCE_ID, TEST_PRICE_SOURCE_NAME);
-	}
-
-	/**
-	 * Insert a test price source location into the sn_price_source and
-	 * sn_price_loc tables.
-	 * 
-	 * @param id
-	 *        the location ID
-	 * @param name
-	 *        the location name
-	 * @param sourceId
-	 *        the source ID
-	 * @param sourceName
-	 *        the source name
-	 */
-	protected void setupTestPriceLocation(Long id, String name, Long sourceId, String sourceName) {
-		jdbcTemplate.update("insert into solarnet.sn_price_source (id,sname) values (?,?)", sourceId,
-				sourceName);
-		jdbcTemplate.update(
-				"insert into solarnet.sn_price_loc (id,loc_name,source_id,currency,unit,loc_id) values (?,?,?,?,?,?)",
-				id, name, sourceId, TEST_CURRENCY, "MWh", id);
-	}
-
-	/**
-	 * Insert a test hardware into the sn_hardware table.
-	 */
-	protected void setupTestHardware() {
-		setupTestHardware(TEST_HARDWARE_ID, TEST_HARDWARE_MANUFACTURER, TEST_HARDWARE_MODEL);
-	}
-
-	/**
-	 * Insert a test hardware into the sn_hardware table.
-	 * 
-	 * @param id
-	 *        the primary key
-	 * @param manufacturer
-	 *        the manufacturer
-	 * @param model
-	 *        the model
-	 */
-	protected void setupTestHardware(Long id, String manufacturer, String model) {
-		jdbcTemplate.update("insert into solarnet.sn_hardware (id,manufact,model) values (?,?,?)", id,
-				manufacturer, model);
-	}
-
-	/**
-	 * Insert a test hardware control into the sn_hardware_control table.
-	 */
-	protected void setupTestHardwareControl() {
-		setupTestHardwareControl(TEST_HARDWARE_ID, TEST_HARDWARE_CONTROL_ID);
-	}
-
-	/**
-	 * Insert a test hardware control into the sn_hardware_control table.
-	 * 
-	 * @param hardwareId
-	 *        the hardware primary key
-	 * @param controlId
-	 *        the control primary key
-	 */
-	protected void setupTestHardwareControl(Long hardwareId, Long controlId) {
-		jdbcTemplate.update(
-				"insert into solarnet.sn_hardware_control (id,hw_id,ctl_name,unit) values (?,?,?,?)",
-				controlId, hardwareId, "Test Hardware Control", "W");
 	}
 
 	/**
