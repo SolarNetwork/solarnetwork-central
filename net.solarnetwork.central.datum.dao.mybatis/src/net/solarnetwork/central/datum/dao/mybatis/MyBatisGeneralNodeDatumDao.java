@@ -76,7 +76,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 1.22
+ * @version 2.0
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -614,16 +614,6 @@ public class MyBatisGeneralNodeDatumDao
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end) {
-		DatumFilterCommand filter = new DatumFilterCommand();
-		filter.setNodeId(nodeId);
-		filter.setStartDate(start);
-		filter.setEndDate(end);
-		return getAvailableSources(filter);
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
 		GeneralNodeDatumFilter f = filter;
 		if ( f.getStartDate() != null || f.getEndDate() != null ) {
@@ -695,17 +685,6 @@ public class MyBatisGeneralNodeDatumDao
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReadableInterval getAuditInterval(Long nodeId, String sourceId) {
 		return selectInterval(this.queryForAuditInterval, nodeId, sourceId);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @since 1.2
-	 */
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public long getAuditPropertyCountTotal(GeneralNodeDatumFilter filter) {
-		return getAuditCountTotal(filter);
 	}
 
 	/**
