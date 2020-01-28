@@ -28,8 +28,6 @@
 		<property name="typeAliases">
 			<list>
 				<value>net.solarnetwork.domain.NetworkAssociationDetails</value>
-				<value>net.solarnetwork.central.domain.PriceLocation</value>
-				<value>net.solarnetwork.central.domain.PriceSource</value>
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
 				<value>net.solarnetwork.central.user.domain.User</value>
@@ -44,8 +42,6 @@
 				<value>net.solarnetwork.central.user.domain.UserNodeCertificate</value>
 				<value>net.solarnetwork.central.user.domain.UserNodeConfirmation</value>
 				<value>net.solarnetwork.central.user.domain.UserNodeTransfer</value>
-				<value>net.solarnetwork.central.domain.WeatherLocation</value>
-				<value>net.solarnetwork.central.domain.WeatherSource</value>
 
 				
 				<value>net.solarnetwork.central.datum.domain.LocationSourcePK</value>
@@ -84,9 +80,6 @@
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
 				
-				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/PriceSource.xml</value>
-				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/PriceLocation.xml</value>
-
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserAlert.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserAlertSituation.xml</value>
@@ -96,9 +89,6 @@
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNode.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeConfirmation.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeTransfer.xml</value>
-
-				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherSource.xml</value>
-				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/WeatherLocation.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/Global.xml</value>
 
@@ -125,22 +115,6 @@
 	</bean>
 	
 	<bean id="userNodeDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-	
-	<bean id="priceLocationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisPriceLocationDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-	
-	<bean id="priceSourceDao" class="net.solarnetwork.central.dao.mybatis.MyBatisPriceSourceDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-	
-	<bean id="weatherLocationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisWeatherLocationDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-	
-	<bean id="weatherSourceDao" class="net.solarnetwork.central.dao.mybatis.MyBatisWeatherSourceDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 	</bean>
 	

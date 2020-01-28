@@ -26,24 +26,12 @@ package net.solarnetwork.central.test;
  * Base class for SolarNet unit tests.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public interface CentralTestConstants {
 
 	/** A test Node ID. */
 	Long TEST_NODE_ID = -1L;
-
-	/** A test Weather Source ID. */
-	Long TEST_WEATHER_SOURCE_ID = -1L;
-
-	/** A test Weather Source name. */
-	String TEST_WEATHER_SOURCE_NAME = "Test weather source";
-
-	/** A test Price Source ID. */
-	Long TEST_PRICE_SOURCE_ID = -1L;
-
-	/** A test Price Source name. */
-	String TEST_PRICE_SOURCE_NAME = "Test price source";
 
 	/** A test Location ID. */
 	Long TEST_LOC_ID = -1L;
@@ -59,21 +47,6 @@ public interface CentralTestConstants {
 
 	/** A test location postal code */
 	String TEST_LOC_POSTAL_CODE = "6011";
-
-	/** A test weather Location ID. */
-	Long TEST_WEATHER_LOC_ID = -1L;
-
-	/** A test hardware ID. */
-	Long TEST_HARDWARE_ID = -1L;
-
-	/** A test hardware manufacturer. */
-	String TEST_HARDWARE_MANUFACTURER = "Test Manufacturer";
-
-	/** A test hardware model. */
-	String TEST_HARDWARE_MODEL = "Test Model";
-
-	/** A test hardware control ID. */
-	Long TEST_HARDWARE_CONTROL_ID = -1L;
 
 	/** A test TimeZone ID. */
 	String TEST_TZ = "Pacific/Auckland";

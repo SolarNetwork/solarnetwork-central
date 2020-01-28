@@ -37,7 +37,7 @@ import net.solarnetwork.domain.Identity;
  * Base class for MyBatis tests.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @ContextConfiguration
 public abstract class AbstractMyBatisDaoTestSupport extends BaseDatumJdbcTestSupport {
@@ -65,7 +65,6 @@ public abstract class AbstractMyBatisDaoTestSupport extends BaseDatumJdbcTestSup
 	public void setupInTransaction() {
 		setupTestNode();
 		setupTestUser();
-		setupTestPriceLocation();
 	}
 
 }

@@ -25,10 +25,8 @@
 package net.solarnetwork.central.query.biz.dao;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -40,10 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import net.solarnetwork.central.dao.FilterableDao;
-import net.solarnetwork.central.dao.PriceLocationDao;
 import net.solarnetwork.central.dao.SolarLocationDao;
-import net.solarnetwork.central.dao.WeatherLocationDao;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
@@ -59,16 +54,11 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
-import net.solarnetwork.central.domain.PriceLocation;
 import net.solarnetwork.central.domain.SortDescriptor;
-import net.solarnetwork.central.domain.SourceLocation;
-import net.solarnetwork.central.domain.SourceLocationMatch;
-import net.solarnetwork.central.domain.WeatherLocation;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
@@ -80,7 +70,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.10
+ * @version 3.0
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -97,15 +87,11 @@ public class DaoQueryBiz implements QueryBiz {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	private final Map<Class<? extends Entity<?>>, FilterableDao<SourceLocationMatch, Long, SourceLocation>> filterLocationDaoMapping;
-
 	/**
 	 * Default constructor.
 	 */
 	public DaoQueryBiz() {
 		super();
-		filterLocationDaoMapping = new HashMap<Class<? extends Entity<?>>, FilterableDao<SourceLocationMatch, Long, SourceLocation>>(
-				4);
 	}
 
 	@Override
@@ -120,13 +106,6 @@ public class DaoQueryBiz implements QueryBiz {
 			tz = interval.getChronology().getZone();
 		}
 		return new ReportableInterval(interval, (tz == null ? null : tz.toTimeZone()));
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end) {
-		return generalNodeDatumDao.getAvailableSources(nodeId, start, end);
 	}
 
 	@Override
@@ -433,16 +412,6 @@ public class DaoQueryBiz implements QueryBiz {
 
 	public void setFilteredResultsLimit(int filteredResultsLimit) {
 		this.filteredResultsLimit = filteredResultsLimit;
-	}
-
-	@Autowired
-	public void setPriceLocationDao(PriceLocationDao priceLocationDao) {
-		filterLocationDaoMapping.put(PriceLocation.class, priceLocationDao);
-	}
-
-	@Autowired
-	public void setWeatherLocationDao(WeatherLocationDao weatherLocationDao) {
-		filterLocationDaoMapping.put(WeatherLocation.class, weatherLocationDao);
 	}
 
 	public GeneralNodeDatumDao getGeneralNodeDatumDao() {

@@ -25,24 +25,18 @@ package net.solarnetwork.central.datum.support;
 import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.PathMatcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.central.datum.domain.NodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.support.JsonUtils;
-import net.solarnetwork.util.ClassUtils;
 
 /**
  * Utilities for Datum domain classes.
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public final class DatumUtils {
-
-	private static final Logger LOG = LoggerFactory.getLogger(DatumUtils.class);
 
 	// can't construct me
 	private DatumUtils() {
@@ -85,51 +79,6 @@ public final class DatumUtils {
 	 */
 	public static <T> T getObjectFromJSON(final String json, Class<T> clazz) {
 		return JsonUtils.getObjectFromJSON(json, clazz);
-	}
-
-	/**
-	 * Get a {@link NodeDatum} {@link Class} for a given name.
-	 * 
-	 * <p>
-	 * If {@code name} contains a period, it will be treated as a
-	 * fully-qualified class name. Otherwise a FQCN will be constructed as
-	 * residing in the same package as {@link NodeDatum} named by capitalizing
-	 * {@code name} and appending {@code Datum} to the end. For example, a
-	 * {@code name} value of <em>power</em> would result in a class named
-	 * {@code PowerDatum} in the same package as {@link NodeDatum} (e.g.
-	 * {@code net.solarnetwork.central.datum.domain.PowerDatum}).
-	 * 
-	 * @param name
-	 *        the node datum class name
-	 * @return the class, or <em>null</em> if not available
-	 */
-	public static Class<? extends NodeDatum> nodeDatumClassForName(String name) {
-		if ( name == null ) {
-			return null;
-		}
-		StringBuilder buf = new StringBuilder();
-		if ( name.indexOf('.') < 0 ) {
-			buf.append(NodeDatum.class.getPackage().getName());
-			buf.append('.');
-
-			// fix case and append "Datum"
-			name = name.toLowerCase();
-			buf.append(name.substring(0, 1).toUpperCase());
-			if ( name.length() > 1 ) {
-				buf.append(name.substring(1));
-			}
-			buf.append("Datum");
-		} else {
-			// contains a period, so treat as FQCN
-			buf.append(name);
-		}
-		Class<? extends NodeDatum> result = null;
-		try {
-			result = ClassUtils.loadClass(name, NodeDatum.class);
-		} catch ( RuntimeException e ) {
-			LOG.debug("Exception loading NodeDatum class {}", name, e);
-		}
-		return result;
 	}
 
 	/**

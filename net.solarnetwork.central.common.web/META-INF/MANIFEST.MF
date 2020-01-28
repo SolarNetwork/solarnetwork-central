@@ -2,11 +2,11 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Common Web
 Bundle-SymbolicName: net.solarnetwork.central.common.web
-Bundle-Version: 1.20.1
+Bundle-Version: 2.0.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: 
- net.solarnetwork.central.web;version="1.4.0",
+ net.solarnetwork.central.web;version="2.0.0",
  net.solarnetwork.central.web.domain;version="1.0.0",
  net.solarnetwork.central.web.support;version="1.13.0"
 Import-Package: 
@@ -15,16 +15,16 @@ Import-Package:
  javax.servlet;version="3.0.0",
  javax.servlet.http;version="3.0.0",
  net.solarnetwork.central;version="1.2.0",
- net.solarnetwork.central.dao;version="1.0.0",
- net.solarnetwork.central.domain;version="1.30.0",
- net.solarnetwork.central.security;version="1.10.0",
- net.solarnetwork.central.user.biz;version="1.15.0",
- net.solarnetwork.central.user.domain;version="1.13.0",
- net.solarnetwork.domain;version="1.17.0",
- net.solarnetwork.util;version="1.0.0",
- net.solarnetwork.web.domain;version="1.0.0",
- net.solarnetwork.web.security;version="1.2.2",
- net.solarnetwork.web.support;version="1.7.0",
+ net.solarnetwork.central.dao;version="[2.0,3.0)",
+ net.solarnetwork.central.domain;version="[2.0,3.0)",
+ net.solarnetwork.central.security;version="[1.10,2.0)",
+ net.solarnetwork.central.user.biz;version="[1.15,2.0)",
+ net.solarnetwork.central.user.domain;version="[2.0,3.0)",
+ net.solarnetwork.domain;version="[1.17,2.0)",
+ net.solarnetwork.util;version="[1.0,2.0)",
+ net.solarnetwork.web.domain;version="[1.0,2.0)",
+ net.solarnetwork.web.security;version="[1.2.2,2.0)",
+ net.solarnetwork.web.support;version="[1.7,2.0)",
  org.apache.commons.codec.binary;version="[1.7,2.0)",
  org.apache.commons.codec.digest;version="[1.7,2.0)",
  org.apache.commons.logging;version="[1.1.0,2.0.0)",
