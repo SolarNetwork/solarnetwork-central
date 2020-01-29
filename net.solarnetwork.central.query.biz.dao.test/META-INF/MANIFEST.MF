@@ -14,7 +14,7 @@ Import-Package:
  net.solarnetwork.central.datum.dao.mybatis;version="[3.0,4.0)",
  net.solarnetwork.central.datum.dao.mybatis.map;version="[3.0,4.0)",
  net.solarnetwork.central.test;version="[2.0,3.0)",
- net.solarnetwork.central.user.dao.mybatis;version="[1.9,2.0)",
+ net.solarnetwork.central.user.dao.mybatis;version="[2.0,3.0)",
  net.solarnetwork.central.user.dao.mybatis.map;version="[1.10,2.0)",
  org.apache.commons.logging;version="[1.1,2.0)",
  org.apache.ibatis.session;version="[3.2,4.0)",

@@ -21,9 +21,9 @@
 		<!-- Testing support -->
 		<dependency org="javax.annotation" name="javax.annotation-api" rev="1.3.2" />
 		<dependency org="org.mybatis" name="mybatis" rev="3.2.8"/>
-		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.dao.mybatis" rev="latest.release"/>
-		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.dao.mybatis" rev="latest.release"/>
-		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.dao.mybatis" rev="latest.release"/>
+		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.dao.mybatis" rev="[2.0,3.0)"/>
+		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.dao.mybatis" rev="[2.0,3.0)"/>
+		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.dao.mybatis" rev="[2.0,3.0)"/>
 		
 		<!-- SolarNetwork -->
     </dependencies>

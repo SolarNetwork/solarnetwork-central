@@ -33,20 +33,12 @@ import net.solarnetwork.central.user.domain.UserMetadataMatch;
  * MyBatis implementation of {@link UserMetadataDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 1.8
  */
 public class MyBatisUserMetadataDao extends
 		BaseMyBatisFilterableDao<UserMetadataEntity, UserMetadataFilterMatch, UserMetadataFilter, Long>
 		implements UserMetadataDao {
-
-	/**
-	 * The query parameter for a general {@link Filter} object value.
-	 * 
-	 * @deprecated use {@link BaseMyBatisFilterableDao#FILTER_PROPERTY}
-	 */
-	@Deprecated
-	public static final String PARAM_FILTER = BaseMyBatisFilterableDao.FILTER_PROPERTY;
 
 	/**
 	 * Default constructor.
