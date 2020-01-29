@@ -27,8 +27,6 @@
 		<osgi:listener ref="instructorBiz" bind-method="onBind" unbind-method="onUnbind"/>
 	</osgi:reference>
 	
-	<osgi:list id="legacyPingTests" availability="optional" interface="net.solarnetwork.central.domain.PingTest"/>
-	
 	<osgi:list id="pingTests" availability="optional" interface="net.solarnetwork.domain.PingTest"/>
 	
 </beans>
