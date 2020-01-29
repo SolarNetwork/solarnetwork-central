@@ -28,7 +28,7 @@ import org.joda.time.DateTime;
  * Command for general reportable interval queries.
  * 
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 public class GeneralReportableIntervalCommand {
 
@@ -99,30 +99,6 @@ public class GeneralReportableIntervalCommand {
 
 	public void setSourceId(String sourceId) {
 		this.sourceId = sourceId;
-	}
-
-	/**
-	 * Set the start date.
-	 * 
-	 * @param start
-	 *        the start date
-	 * @deprecated use {@link #setStartDate(DateTime)}
-	 */
-	@Deprecated
-	public void setStart(DateTime start) {
-		setStartDate(start);
-	}
-
-	/**
-	 * Set the end date.
-	 * 
-	 * @param end
-	 *        the end date
-	 * @deprecated use {@link #setEndDate(DateTime)}
-	 */
-	@Deprecated
-	public void setEnd(DateTime end) {
-		setEndDate(end);
 	}
 
 	/**
