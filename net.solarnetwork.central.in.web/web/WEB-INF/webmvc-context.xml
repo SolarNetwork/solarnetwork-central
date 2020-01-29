@@ -80,7 +80,6 @@
 	</bean>
 
 	<bean id="pingController" class="net.solarnetwork.central.web.PingController">
-		<property name="pingTests" ref="legacyPingTests"/>
 		<property name="tests" ref="pingTests"/>
 	</bean>
 

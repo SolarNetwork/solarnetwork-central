@@ -73,7 +73,7 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  * Unit test for the {@link DaoQueryBiz} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 3.0
  */
 public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 
@@ -93,7 +93,6 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Before
 	public void setup() {
 		setupTestNode();
-		setupTestPriceLocation();
 	}
 
 	private GeneralNodeDatum getTestGeneralNodeDatumInstance() {
@@ -195,7 +194,10 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 		// immediately process reporting data, which the DAO relies on
 		processAggregateStaleData();
 
-		Set<String> result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, null, null);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+
+		Set<String> result = daoQueryBiz.getAvailableSources(filter);
 		assertNotNull(result);
 		assertEquals(2, result.size());
 		assertTrue(result.contains(TEST_SOURCE_ID));
@@ -246,19 +248,24 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 
 		Set<String> result;
 
-		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, d.getCreated(),
-				d.getCreated().plusDays(1));
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setStartDate(d.getCreated());
+		filter.setEndDate(d.getCreated().plusDays(1));
+		result = daoQueryBiz.getAvailableSources(filter);
 		assertNotNull(result);
 		assertEquals(1, result.size());
 		assertTrue("1st result inclusive start date", result.contains(TEST_SOURCE_ID));
 
-		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, d.getCreated().plusDays(1),
-				d.getCreated().plusDays(2));
+		filter.setStartDate(d.getCreated().plusDays(1));
+		filter.setEndDate(d.getCreated().plusDays(2));
+		result = daoQueryBiz.getAvailableSources(filter);
 		assertNotNull(result);
 		assertEquals("No results within date range", 0, result.size());
 
-		result = daoQueryBiz.getAvailableSources(TEST_NODE_ID, d.getCreated().plusDays(4),
-				d2.getCreated());
+		filter.setStartDate(d.getCreated().plusDays(4));
+		filter.setEndDate(d2.getCreated());
+		result = daoQueryBiz.getAvailableSources(filter);
 		assertNotNull(result);
 		assertEquals(1, result.size());
 		assertTrue("2nd result inclusive end date", result.contains(TEST_SOURCE_ID2));

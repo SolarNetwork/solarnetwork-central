@@ -47,15 +47,11 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralLocationDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.DatumMappingInfo;
-import net.solarnetwork.central.datum.domain.DayDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
-import net.solarnetwork.central.datum.domain.PriceDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
-import net.solarnetwork.central.datum.domain.WeatherDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
@@ -64,7 +60,7 @@ import net.solarnetwork.domain.GeneralLocationDatumSamples;
  * Test cases for the {@link MyBatisGeneralLocationDatumDao} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -947,44 +943,6 @@ public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestS
 		assertThat("Match 1", itr.next().getId(), equalTo(datum1.getId()));
 		assertThat("Match 2", itr.next().getId(), equalTo(datum2.getId()));
 		assertThat("No more matches", itr.hasNext(), equalTo(false));
-	}
-
-	@Test
-	public void mapDayDatum() {
-		DayDatum day = new DayDatum();
-		day.setLocationId(TEST_WEATHER_LOC_ID);
-
-		DatumMappingInfo info = dao.getMappingInfo(day);
-		assertNotNull(info);
-		assertEquals("Location ID", TEST_LOC_ID, info.getId());
-		assertEquals("Time zone", TEST_TZ, info.getTimeZoneId());
-		assertEquals("Source ID", TEST_WEATHER_SOURCE_NAME + " Day", info.getSourceId());
-	}
-
-	@Test
-	public void mapWeatherDatum() {
-		WeatherDatum weather = new WeatherDatum();
-		weather.setCreated(new DateTime());
-		weather.setLocationId(TEST_WEATHER_LOC_ID);
-
-		DatumMappingInfo info = dao.getMappingInfo(weather);
-		assertNotNull(info);
-		assertEquals("Location ID", TEST_LOC_ID, info.getId());
-		assertEquals("Time zone", TEST_TZ, info.getTimeZoneId());
-		assertEquals("Source ID", TEST_WEATHER_SOURCE_NAME, info.getSourceId());
-	}
-
-	@Test
-	public void mapPriceDatum() {
-		PriceDatum price = new PriceDatum();
-		price.setCreated(new DateTime());
-		price.setLocationId(TEST_PRICE_LOC_ID);
-
-		DatumMappingInfo info = dao.getMappingInfo(price);
-		assertNotNull(info);
-		assertEquals("Location ID", TEST_LOC_ID, info.getId());
-		assertEquals("Time zone", TEST_TZ, info.getTimeZoneId());
-		assertEquals("Source ID", TEST_PRICE_SOURCE_NAME, info.getSourceId());
 	}
 
 }

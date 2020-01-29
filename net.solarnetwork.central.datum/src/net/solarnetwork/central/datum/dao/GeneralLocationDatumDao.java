@@ -23,29 +23,26 @@
 package net.solarnetwork.central.datum.dao;
 
 import java.util.Set;
+import org.joda.time.DateTime;
+import org.joda.time.ReadableInterval;
 import net.solarnetwork.central.dao.AggregationFilterableDao;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
-import net.solarnetwork.central.datum.domain.DatumMappingInfo;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
-import net.solarnetwork.central.datum.domain.LocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
-import org.joda.time.DateTime;
-import org.joda.time.ReadableInterval;
 
 /**
  * DAO API for {@link GeneralLocationDatum}.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public interface GeneralLocationDatumDao
-		extends
-		GenericDao<GeneralLocationDatum, GeneralLocationDatumPK>,
+		extends GenericDao<GeneralLocationDatum, GeneralLocationDatumPK>,
 		FilterableDao<GeneralLocationDatumFilterMatch, GeneralLocationDatumPK, GeneralLocationDatumFilter>,
 		AggregationFilterableDao<ReportingGeneralLocationDatumMatch, AggregateGeneralLocationDatumFilter> {
 
@@ -76,17 +73,5 @@ public interface GeneralLocationDatumDao
 	 * @return the distinct source IDs available (never <em>null</em>)
 	 */
 	Set<String> getAvailableSources(Long locationId, DateTime start, DateTime end);
-
-	/**
-	 * Get mapping info for a given {@link LocationDatum} to help migrate the
-	 * datum into a {@link GeneralLocationDatum} object.
-	 * 
-	 * @param datum
-	 *        The datum being mapped.
-	 * @return The mapping info, or {@code null} if no mapping info is
-	 *         available.
-	 * @since 1.1
-	 */
-	DatumMappingInfo getMappingInfo(LocationDatum datum);
 
 }

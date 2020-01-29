@@ -87,7 +87,7 @@ import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
  * Test cases for the {@link MyBatisGeneralNodeDatumDao} class.
  * 
  * @author matt
- * @version 1.9
+ * @version 2.0
  */
 public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoTestSupport {
 
@@ -338,7 +338,11 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	@Test
 	public void getAvailableSourcesForNode() {
 		storeNew();
-		Set<String> sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
+
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(lastDatum.getNodeId());
+
+		Set<String> sources = dao.getAvailableSources(filter);
 		assertThat("Source returned", sources, contains(lastDatum.getSourceId()));
 
 		// add a 2nd source
@@ -347,7 +351,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		d3.setCreated(lastDatum.getCreated().plusDays(1));
 		dao.store(d3);
 
-		sources = dao.getAvailableSources(lastDatum.getNodeId(), null, null);
+		sources = dao.getAvailableSources(filter);
 		assertThat("Sources set", sources,
 				Matchers.containsInAnyOrder(lastDatum.getSourceId(), d3.getSourceId()));
 	}
@@ -1998,8 +2002,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		criteria.setSourceId(TEST_SOURCE_ID);
 		criteria.setStartDate(startDate);
 		criteria.setEndDate(startDate.plusHours(6));
+		criteria.setDataPath("Property");
 
-		long count = dao.getAuditPropertyCountTotal(criteria);
+		long count = dao.getAuditCountTotal(criteria);
 		assertEquals(0, count);
 	}
 
@@ -2013,8 +2018,9 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		criteria.setNodeId(TEST_NODE_ID);
 		criteria.setStartDate(startDate);
 		criteria.setEndDate(startDate.plusHours(2)); // exclusive
+		criteria.setDataPath("Property");
 
-		long count = dao.getAuditPropertyCountTotal(criteria);
+		long count = dao.getAuditCountTotal(criteria);
 		assertEquals("Two hours across both sources", 12, count);
 	}
 
@@ -2030,7 +2036,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		criteria.setStartDate(startDate);
 		criteria.setEndDate(startDate.plusHours(2)); // exclusive
 
-		long count = dao.getAuditPropertyCountTotal(criteria);
+		long count = dao.getAuditCountTotal(criteria);
 		assertEquals("Two hours across both sources", 52, count);
 	}
 

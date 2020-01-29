@@ -23,7 +23,6 @@
 package net.solarnetwork.central.user.biz;
 
 import java.util.List;
-import java.util.Set;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -41,7 +40,7 @@ import net.solarnetwork.web.security.AuthorizationV2Builder;
  * API for registered user tasks.
  * 
  * @author matt
- * @version 1.5
+ * @version 2.0
  */
 public interface UserBiz {
 
@@ -154,23 +153,6 @@ public interface UserBiz {
 	 * @return the certificate, or <em>null</em> if not available
 	 */
 	UserNodeCertificate getUserNodeCertificate(Long userId, Long nodeId);
-
-	/**
-	 * Generate a new, unique {@link UserAuthToken} entity and return it.
-	 * 
-	 * @param userId
-	 *        the user ID to generate the token for
-	 * @param type
-	 *        the type of token to create
-	 * @param nodeIds
-	 *        an optional set of node IDs to include with the token
-	 * @return the generated token
-	 * @deprecated use
-	 *             {@link #generateUserAuthToken(Long, UserAuthTokenType, SecurityPolicy)}
-	 *             with node IDs applied
-	 */
-	@Deprecated
-	UserAuthToken generateUserAuthToken(Long userId, UserAuthTokenType type, Set<Long> nodeIds);
 
 	/**
 	 * Generate a new, unique {@link UserAuthToken} entity and return it.

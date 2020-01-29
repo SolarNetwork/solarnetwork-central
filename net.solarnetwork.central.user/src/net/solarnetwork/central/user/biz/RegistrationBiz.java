@@ -40,7 +40,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
  * API for user registration tasks.
  * 
  * @author matt
- * @version 1.6
+ * @version 2.0
  */
 public interface RegistrationBiz {
 
@@ -173,35 +173,6 @@ public interface RegistrationBiz {
 	 *         {@link AuthorizationException.Reason#ACCESS_DENIED}
 	 */
 	void cancelNodeAssociation(Long userNodeConfirmationId) throws AuthorizationException;
-
-	/**
-	 * Confirm a node association previously created via
-	 * {@link #createNodeAssociation(User)}.
-	 * 
-	 * <p>
-	 * This method must be called after a call to
-	 * {@link #createNodeAssociation(Long, String)} to confirm the node
-	 * association.
-	 * </p>
-	 * 
-	 * @param username
-	 *        the username to associate the node with
-	 * @param confirmationKey
-	 *        the confirmation code from
-	 *        {@link NetworkAssociation#getConfirmationKey()}
-	 * @return new RegistrationReceipt object
-	 * @throws AuthorizationException
-	 *         if the details do not match those returned from a previous call
-	 *         to {@link #createNodeAssociation(User)} then the reason code will
-	 *         be set to
-	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED};
-	 *         if the node has already been confirmed then
-	 *         {@link AuthorizationException.Reason#REGISTRATION_ALREADY_CONFIRMED}
-	 * @deprecated see {@link #confirmNodeAssociation(NetworkAssociation)}
-	 */
-	@Deprecated
-	NetworkCertificate confirmNodeAssociation(String username, String confirmationKey)
-			throws AuthorizationException;
 
 	/**
 	 * Confirm a node association previously created via

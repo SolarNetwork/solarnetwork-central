@@ -51,7 +51,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * DAO API for {@link GeneralNodeDatum}.
  * 
  * @author matt
- * @version 1.15
+ * @version 2.0
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -72,23 +72,6 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @return interval, or {@literal null} if no data available
 	 */
 	ReadableInterval getReportableInterval(Long nodeId, String sourceId);
-
-	/**
-	 * Get the available sources for a given node, optionally limited to a date
-	 * range.
-	 * 
-	 * @param nodeId
-	 *        the node ID to search for
-	 * @param start
-	 *        an optional start date (inclusive) to filter on
-	 * @param end
-	 *        an optional end date (inclusive) to filter on
-	 * @return the distinct source IDs available (never {@literal null})
-	 * @deprecated since 1.2; use
-	 *             {@link #getAvailableSources(GeneralNodeDatumFilter)}
-	 */
-	@Deprecated
-	Set<String> getAvailableSources(Long nodeId, DateTime start, DateTime end);
 
 	/**
 	 * Get the available source IDs for a given filter.
@@ -146,25 +129,6 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @since 1.1
 	 */
 	ReadableInterval getAuditInterval(Long nodeId, String sourceId);
-
-	/**
-	 * Get the total audit count of datum property updates for a search
-	 * criteria.
-	 * 
-	 * <p>
-	 * The {@code nodeId}, {@code startDate}, and {@code endDate} values are
-	 * required at a minimum. The {@code sourceId} can also be provided.
-	 * </p>
-	 * 
-	 * @param filter
-	 *        the filter criteria
-	 * @return the total count
-	 * @since 1.1
-	 * @deprecated use {@link #getAuditCountTotal(GeneralNodeDatumFilter)} with
-	 *             a {@code dataPath} of {@literal Property}
-	 */
-	@Deprecated
-	long getAuditPropertyCountTotal(GeneralNodeDatumFilter filter);
 
 	/**
 	 * Get the total audit count of datum property updates for a search

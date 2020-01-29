@@ -71,7 +71,7 @@ public class SimpleSortDescriptor implements SortDescriptor, Serializable {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @sine 1.2
+	 * @since 1.2
 	 */
 	@Override
 	public int hashCode() {
@@ -85,7 +85,7 @@ public class SimpleSortDescriptor implements SortDescriptor, Serializable {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @sine 1.2
+	 * @since 1.2
 	 */
 	@Override
 	public boolean equals(Object obj) {

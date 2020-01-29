@@ -26,23 +26,22 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
 import java.util.TimeZone;
-import net.solarnetwork.util.SerializeIgnore;
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import net.solarnetwork.util.SerializeIgnore;
 
 /**
  * Domain object for node related info.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class SolarNode extends BaseEntity implements Cloneable, Serializable, NodeIdentity {
 
-	private static final long serialVersionUID = -1478837853706836739L;
+	private static final long serialVersionUID = 531103294940393083L;
 
 	private String name = null;
 	private Long locationId = null; // the location ID
-	private Long weatherLocationId = null; // the weather location ID
 
 	@SerializeIgnore
 	@JsonIgnore
@@ -84,8 +83,9 @@ public class SolarNode extends BaseEntity implements Cloneable, Serializable, No
 	 * @return the TimeZone
 	 */
 	public TimeZone getTimeZone() {
-		return (this.location != null && this.location.getTimeZoneId() != null ? TimeZone
-				.getTimeZone(this.location.getTimeZoneId()) : null);
+		return (this.location != null && this.location.getTimeZoneId() != null
+				? TimeZone.getTimeZone(this.location.getTimeZoneId())
+				: null);
 	}
 
 	public Long getLocationId() {
@@ -94,14 +94,6 @@ public class SolarNode extends BaseEntity implements Cloneable, Serializable, No
 
 	public void setLocationId(Long locationId) {
 		this.locationId = locationId;
-	}
-
-	public Long getWeatherLocationId() {
-		return weatherLocationId;
-	}
-
-	public void setWeatherLocationId(Long weatherLocationId) {
-		this.weatherLocationId = weatherLocationId;
 	}
 
 	@JsonIgnore

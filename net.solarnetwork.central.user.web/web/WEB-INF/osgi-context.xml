@@ -71,8 +71,6 @@
 		
 	<osgi:reference id="certificateService" interface="net.solarnetwork.support.CertificateService"/>
 	
-	<osgi:list id="legacyPingTests" availability="optional" interface="net.solarnetwork.central.domain.PingTest"/>
-
 	<osgi:list id="pingTests" availability="optional" interface="net.solarnetwork.domain.PingTest"/>
 
 	<bean id="billingBiz" class="net.solarnetwork.util.DynamicServiceTracker">

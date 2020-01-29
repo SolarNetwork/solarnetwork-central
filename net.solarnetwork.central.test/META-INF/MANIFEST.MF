@@ -2,10 +2,10 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Test
 Bundle-SymbolicName: net.solarnetwork.central.test
-Bundle-Version: 1.11.1
+Bundle-Version: 2.0.0
 Bundle-Vendor: SolarNetwork
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: net.solarnetwork.central.test;version="1.9.1"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: net.solarnetwork.central.test;version="2.0.0"
 Import-Package: 
  javax.sql,
  net.solarnetwork.central.security;version="1.5.0",
