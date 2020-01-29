@@ -5,10 +5,10 @@ DROP TABLE solarnet.sn_price_loc;
 DROP TABLE solarnet.sn_price_source;
 DROP TABLE solarnet.sn_weather_loc;
 DROP TABLE solarnet.sn_weather_source;
-DROP SEQUENCE solarnet.price_seq;
-DROP SEQUENCE solarnet.weather_seq;
+DROP SEQUENCE IF EXISTS solarnet.price_seq;
+DROP SEQUENCE IF EXISTS solarnet.weather_seq;
 
 DROP TABLE solaruser.user_node_hardware_control;
 DROP TABLE solarnet.sn_hardware_control;
 DROP TABLE solarnet.sn_hardware;
-DROP SEQUENCE solarnet.hardware_control_seq;
+DROP SEQUENCE IF EXISTS solarnet.hardware_control_seq;
