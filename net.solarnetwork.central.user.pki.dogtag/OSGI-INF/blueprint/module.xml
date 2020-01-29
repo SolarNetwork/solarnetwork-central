@@ -33,11 +33,11 @@
 	<service ref="dogtagPKIBiz" ranking="1">
 		<interfaces>
 			<value>net.solarnetwork.central.user.biz.NodePKIBiz</value>
-			<value>net.solarnetwork.central.domain.PingTest</value>
+			<value>net.solarnetwork.domain.PingTest</value>
 		</interfaces>
 	</service>
 	
-	<service ref="restFactory" interface="net.solarnetwork.central.domain.PingTest"/>
+	<service ref="restFactory" interface="net.solarnetwork.domain.PingTest"/>
 	
 	<!-- Supporting Services -->
 

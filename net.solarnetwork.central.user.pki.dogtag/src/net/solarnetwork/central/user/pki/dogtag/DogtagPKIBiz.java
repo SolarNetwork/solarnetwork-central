@@ -49,12 +49,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
 import org.w3c.dom.Node;
-import net.solarnetwork.central.domain.PingTest;
-import net.solarnetwork.central.domain.PingTestResult;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
+import net.solarnetwork.domain.PingTest;
+import net.solarnetwork.domain.PingTestResult;
 import net.solarnetwork.support.CertificateException;
 import net.solarnetwork.support.CertificateService;
 import net.solarnetwork.support.XmlSupport;
@@ -71,7 +71,7 @@ import net.solarnetwork.util.CachedResult;
  * </p>
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 

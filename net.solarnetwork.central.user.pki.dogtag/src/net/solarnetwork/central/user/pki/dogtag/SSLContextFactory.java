@@ -51,8 +51,8 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
-import net.solarnetwork.central.domain.PingTest;
-import net.solarnetwork.central.domain.PingTestResult;
+import net.solarnetwork.domain.PingTest;
+import net.solarnetwork.domain.PingTestResult;
 import net.solarnetwork.support.CertificateException;
 import net.solarnetwork.util.CachedResult;
 import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
@@ -74,7 +74,7 @@ public class SSLContextFactory implements PingTest {
 	private String[] enabledCipherSuites = null;
 	private String[] disabledCipherSuites = null;
 
-	private CachedResult<PingTestResult> cachedResult;
+	private CachedResult<PingTest.Result> cachedResult;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -174,7 +174,7 @@ public class SSLContextFactory implements PingTest {
 	}
 
 	@Override
-	public PingTestResult performPingTest() throws Exception {
+	public PingTest.Result performPingTest() throws Exception {
 		if ( cachedResult != null && cachedResult.isValid() ) {
 			return cachedResult.getResult();
 		}
@@ -241,7 +241,7 @@ public class SSLContextFactory implements PingTest {
 			result = new PingTestResult(validated, message.toString());
 		}
 		// cache the results: for success cache for longer so we don't spend a lot of time parsing the certificates
-		CachedResult<PingTestResult> cached = new CachedResult<PingTestResult>(result,
+		CachedResult<PingTest.Result> cached = new CachedResult<PingTest.Result>(result,
 				(result.isSuccess() ? 1L : 30L),
 				(result.isSuccess() ? TimeUnit.DAYS : TimeUnit.MINUTES));
 		cachedResult = cached;
