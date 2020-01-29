@@ -63,7 +63,7 @@ import net.solarnetwork.web.security.AuthorizationV2Builder;
  * DAO-based implementation of {@link UserBiz}.
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
@@ -185,14 +185,6 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		assert userId != null;
 		assert nodeId != null;
 		return userNodeCertificateDao.get(new UserNodePK(userId, nodeId));
-	}
-
-	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public UserAuthToken generateUserAuthToken(final Long userId, final UserAuthTokenType type,
-			final Set<Long> nodeIds) {
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).build();
-		return generateUserAuthToken(userId, type, policy);
 	}
 
 	@Override
