@@ -1,0 +1,34 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SolarIn/OCPP 1.6 JSON Central System
+Bundle-SymbolicName: net.solarnetwork.central.in.ocpp.json
+Bundle-Version: 1.0.0
+Bundle-Vendor: SolarNetwork
+Automatic-Module-Name: net.solarnetwork.central.in.ocpp.json
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ClassPath: WEB-INF/classes/
+Web-ContextPath: /ocpp/j
+Import-Package: 
+ com.fasterxml.jackson.annotation;version="[2.10,3.0)",
+ com.fasterxml.jackson.module.jaxb;version="[2.10,3.0)",
+ com.sun.xml.bind.v2,
+ javax.xml.bind,
+ javax.xml.bind.annotation,
+ net.solarnetwork.ocpp.dao;version="[1.0,2.0)",
+ net.solarnetwork.ocpp.domain;version="[1.0,2.0)",
+ net.solarnetwork.ocpp.service;version="[1.0,2.0)",
+ net.solarnetwork.ocpp.web.json;version="[1.0,2.0)",
+ net.solarnetwork.settings;version="[1.2,2.0)",
+ ocpp.domain;version="[1.0,2.0)",
+ ocpp.json;version="[1.0,2.0)",
+ ocpp.v16;version="[1.0,2.0)",
+ ocpp.v16.cp.json;version="[1.0,2.0)",
+ ocpp.v16.cs.json;version="[1.0,2.0)",
+ org.osgi.framework;version="[1.7,2.0)",
+ org.springframework.core.task;version="[4.3,5.0)",
+ org.springframework.http.server;version="[4.3,5.0)",
+ org.springframework.scheduling;version="[4.3,5.0)",
+ org.springframework.web.socket;version="[4.3,5.0)",
+ org.springframework.web.socket.handler;version="[4.3,5.0)",
+ org.springframework.web.socket.server;version="[4.3,5.0)",
+ org.springframework.web.socket.server.support;version="[4.3,5.0)"
