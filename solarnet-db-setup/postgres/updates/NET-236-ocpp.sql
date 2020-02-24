@@ -9,9 +9,13 @@ CREATE SEQUENCE solarev.ocpp_system_user_seq;
 CREATE TABLE solarev.ocpp_system_user (
 	id					BIGINT NOT NULL DEFAULT nextval('solarev.ocpp_system_user_seq'),
 	created				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	user_id				BIGINT NOT NULL,
 	username			VARCHAR(64),
 	password			VARCHAR(128),
 	allowed_cp			VARCHAR(255)[],
 	CONSTRAINT ocpp_system_user_pk PRIMARY KEY (id),
-	CONSTRAINT ocpp_system_user_unq UNIQUE (username)
+	CONSTRAINT ocpp_system_user_unq UNIQUE (username),
+	CONSTRAINT ocpp_system_user_user_fk FOREIGN KEY (user_id)
+		REFERENCES solaruser.user_user (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
