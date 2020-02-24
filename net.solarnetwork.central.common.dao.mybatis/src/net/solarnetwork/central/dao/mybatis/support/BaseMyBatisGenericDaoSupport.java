@@ -69,6 +69,9 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	/** The query property for any custom sort descriptors that are provided. */
 	public static final String SORT_DESCRIPTORS_PROPERTY = "SortDescriptors";
 
+	/** The query property for a filter (search criteria) object. */
+	public static final String FILTER_PROPERTY = "filter";
+
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
