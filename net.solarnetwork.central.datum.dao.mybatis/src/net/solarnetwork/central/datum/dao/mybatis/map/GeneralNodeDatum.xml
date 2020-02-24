@@ -457,7 +457,7 @@
 					</otherwise>
 				</choose>
 				<choose>
-					<when test="combine.type == 'Average'">
+					<when test="combine.type.toString() == 'Average'">
 						solarcommon.jdata_from_components(
 							solarcommon.jsonb_avg_object(datum.jdata_i),
 							solarcommon.jsonb_avg_object(datum.jdata_a),
