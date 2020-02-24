@@ -9,9 +9,13 @@
 	
 	<service ref="passwordEncoder" ranking="1">
 		<interfaces>
+			<value>net.solarnetwork.support.PasswordEncoder</value>
 			<value>net.solarnetwork.central.security.PasswordEncoder</value>
 			<value>org.springframework.security.crypto.password.PasswordEncoder</value>
 		</interfaces>
+		<service-properties>
+			<entry key="function" value="central"/>
+		</service-properties>
 	</service>
 	
 	<!-- Supporting Services -->
