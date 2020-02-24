@@ -243,7 +243,7 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
 		if ( instruction != null && instruction.getNodeId() != null
 				&& InstructionState.Queued == instruction.getState() ) {
-			// we will change this state to Queing so batch processing does not pick up
+			// we will change this state to Queuing so batch processing does not pick up
 			instruction.setState(InstructionState.Queuing);
 		}
 		return instruction;
