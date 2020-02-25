@@ -16,6 +16,7 @@
 			<list>
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralAuthorization.xml</value>
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralChargePoint.xml</value>
+				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralChargePointConnector.xml</value>
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralSystemUser.xml</value>
 			</list>
 		</property>

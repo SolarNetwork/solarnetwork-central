@@ -62,3 +62,19 @@ CREATE TABLE solarev.ocpp_charge_point (
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+CREATE TABLE solarev.ocpp_charge_point_conn (
+	cp_id				BIGINT NOT NULL,
+	conn_id				INTEGER NOT NULL,
+	created				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	status				SMALLINT NOT NULL DEFAULT 0,
+	error_code			SMALLINT NOT NULL DEFAULT 0,
+	ts					TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	info				VARCHAR(50),
+	vendor_id			VARCHAR(255),
+	vendor_error		VARCHAR(50),
+	CONSTRAINT ocpp_charge_point_conn_pk PRIMARY KEY (cp_id, conn_id),
+	CONSTRAINT ocpp_charge_point_conn_charge_point_fk FOREIGN KEY (cp_id)
+		REFERENCES solarev.ocpp_charge_point (id)
+		ON DELETE CASCADE
+);

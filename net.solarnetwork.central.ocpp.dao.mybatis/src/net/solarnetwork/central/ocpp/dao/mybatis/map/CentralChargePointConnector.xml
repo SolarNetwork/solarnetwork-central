@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.ocpp.domain.CentralChargePointConnector">
+
+	<update id="update-CentralChargePointConnector" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargePointConnector">
+		INSERT INTO solarev.ocpp_charge_point_conn (
+			cp_id
+			, conn_id
+			<if test="created != null">,created</if>
+			, status
+			, error_code
+			, ts
+			, info
+			, vendor_id
+			, vendor_error
+		) VALUES (
+			#{id.chargePointId}
+			, #{id.connectorId}
+			<if test="created != null">,#{created}</if>
+			, #{info.status,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
+			, #{info.errorCode,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
+			, #{info.timestamp}
+			, #{info.info}
+			, #{info.vendorId}
+			, #{info.vendorErrorCode}
+		)
+		ON CONFLICT (cp_id, conn_id) DO UPDATE
+		SET status = EXCLUDED.status
+			, error_code = EXCLUDED.error_code
+			, ts = EXCLUDED.ts
+			, info = EXCLUDED.info
+			, vendor_id = EXCLUDED.vendor_id
+			, vendor_error = EXCLUDED.vendor_error
+	</update>
+	
+	<update id="update-CentralChargePointConnector-status" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargePointConnector">
+		UPDATE
+			solarev.ocpp_charge_point_conn
+		SET
+			status = #{info.status,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
+		WHERE
+			cp_id = #{id.chargePointId}
+			<if test="id.connectorId &gt; 0">AND conn_id = #{id.connectorId}</if>
+	</update>
+
+	<sql id="fragment-CentralChargePointConnector-full-result">
+		cc.cp_id AS ocpp_charge_point_conn_cp_id
+		, cc.conn_id AS ocpp_charge_point_conn_conn_id
+		, cc.created AS ocpp_charge_point_conn_created
+		, cc.status AS ocpp_charge_point_conn_status
+		, cc.error_code AS ocpp_charge_point_conn_error_code
+		, cc.ts AS ocpp_charge_point_conn_ts
+		, cc.info AS ocpp_charge_point_conn_info
+		, cc.vendor_id AS ocpp_charge_point_conn_vendor_id
+		, cc.vendor_error AS ocpp_charge_point_conn_vendor_error
+	</sql>
+	
+	<resultMap id="CentralChargePointConnector-FullResult" type="net.solarnetwork.central.ocpp.domain.CentralChargePointConnector">
+		<constructor>
+			<idArg column="ocpp_charge_point_conn_cp_id" javaType="_long"/>
+			<idArg column="ocpp_charge_point_conn_conn_id" javaType="_int"/>
+			<arg column="ocpp_charge_point_conn_created" javaType="java.time.Instant"/>
+		</constructor>
+		<association property="info">
+			<constructor>
+				<idArg column="ocpp_charge_point_conn_conn_id" javaType="_int"/>
+				<arg column="ocpp_charge_point_conn_status" javaType="net.solarnetwork.ocpp.domain.ChargePointStatus" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+				<arg column="ocpp_charge_point_conn_error_code" javaType="net.solarnetwork.ocpp.domain.ChargePointErrorCode" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+				<arg column="ocpp_charge_point_conn_info" javaType="string"/>
+				<arg column="ocpp_charge_point_conn_ts" javaType="java.time.Instant"/>
+				<arg column="ocpp_charge_point_conn_vendor_id" javaType="string"/>
+				<arg column="ocpp_charge_point_conn_vendor_error" javaType="string"/>
+			</constructor>
+		</association>
+	</resultMap>
+
+	<select id="get-CentralChargePointConnector-for-id" parameterType="net.solarnetwork.ocpp.domain.ChargePointConnectorKey"
+			resultMap="CentralChargePointConnector-FullResult">
+		SELECT
+			<include refid="fragment-CentralChargePointConnector-full-result"/>
+		FROM
+			solarev.ocpp_charge_point_conn cc
+		WHERE
+			cc.cp_id = #{chargePointId}
+			AND cc.conn_id = #{connectorId}
+	</select>
+	
+	<sql id="fragment-findall-CentralChargePointConnector-where">
+		<if test="filter != null">
+			<where>
+				<if test="filter.id != null">
+					AND cc.cp_id = #{filter.id.chargePointId}
+				</if>
+				<if test="filter.id != null and filter.id.connectorId &gt; 0">
+					AND cc.conn_id = #{filter.id.connectorId}
+				</if>
+			</where>
+		</if>
+	</sql>
+
+	<sql id="fragment-findall-CentralChargePointConnector-order">
+		ORDER BY ocpp_charge_point_conn_cp_id, ocpp_charge_point_conn_conn_id
+	</sql>
+
+	<select id="findall-CentralChargePointConnector" resultMap="CentralChargePointConnector-FullResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-CentralChargePointConnector-full-result"/>
+		FROM
+			solarev.ocpp_charge_point_conn cc
+		<include refid="fragment-findall-CentralChargePointConnector-where"/>
+		<include refid="fragment-findall-CentralChargePointConnector-order"/>
+	</select>
+
+</mapper>
