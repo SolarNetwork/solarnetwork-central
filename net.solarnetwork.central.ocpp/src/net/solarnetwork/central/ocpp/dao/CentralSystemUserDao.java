@@ -27,6 +27,12 @@ import net.solarnetwork.ocpp.dao.SystemUserDao;
 /**
  * Extension of {@link SystemUserDao} to support SolarNet.
  * 
+ * <p>
+ * This API implies
+ * {@link net.solarnetwork.central.ocpp.domain.CentralSystemUser} entities are
+ * used.
+ * </p>
+ * 
  * @author matt
  * @version 1.0
  */

@@ -81,8 +81,7 @@ public class CentralSystemUser extends SystemUser {
 	 */
 	public CentralSystemUser(SystemUser other) {
 		super(other);
-		this.userId = (other instanceof CentralSystemUser ? ((CentralSystemUser) other).getUserId()
-				: null);
+		this.userId = (other instanceof CentralSystemUser ? ((CentralSystemUser) other).userId : null);
 	}
 
 	@Override
