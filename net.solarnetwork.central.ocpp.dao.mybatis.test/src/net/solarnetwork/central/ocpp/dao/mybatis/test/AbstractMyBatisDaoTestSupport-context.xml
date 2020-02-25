@@ -13,8 +13,8 @@
 			</list>
 		</property>
 		<property name="mapperLocations">
-			<!-- Note: the order of these elements is significant because of inter-resource includes -->
 			<list>
+				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralAuthorization.xml</value>
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralSystemUser.xml</value>
 			</list>
 		</property>
