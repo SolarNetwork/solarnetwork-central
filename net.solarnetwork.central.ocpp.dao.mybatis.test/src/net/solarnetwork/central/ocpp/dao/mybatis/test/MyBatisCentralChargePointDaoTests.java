@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisAuthorizationDaoTests.java - 25/02/2020 10:02:23 am
+ * MyBatisChargePointDaoTests.java - 25/02/2020 10:02:23 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -34,59 +34,60 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.dao.DuplicateKeyException;
-import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralAuthorizationDao;
-import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
+import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
+import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.dao.GenericDao;
-import net.solarnetwork.ocpp.domain.Authorization;
+import net.solarnetwork.ocpp.domain.ChargePoint;
+import net.solarnetwork.ocpp.domain.ChargePointInfo;
+import net.solarnetwork.ocpp.domain.RegistrationStatus;
 
 /**
- * Test cases for the {@link MyBatisCentralAuthorizationDao} class.
+ * Test cases for the {@link MyBatisCentralChargePointDao} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestSupport {
+public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSupport {
 
-	private MyBatisCentralAuthorizationDao dao;
+	private MyBatisCentralChargePointDao dao;
 
 	private Long userId;
-	private Authorization last;
+	private ChargePoint last;
 
 	@Before
 	public void setUp() throws Exception {
-		dao = new MyBatisCentralAuthorizationDao();
+		dao = new MyBatisCentralChargePointDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
 		last = null;
 		userId = UUID.randomUUID().getMostSignificantBits();
 		setupTestUser(userId);
 	}
 
-	private CentralAuthorization createTestAuthorization() {
-		CentralAuthorization entity = new CentralAuthorization(null, userId,
-				Instant.ofEpochMilli(System.currentTimeMillis()));
-		entity.setToken("foobar");
+	private CentralChargePoint createTestChargePoint() {
+		CentralChargePoint entity = new CentralChargePoint(null, userId,
+				Instant.ofEpochMilli(System.currentTimeMillis()),
+				new ChargePointInfo("foobar", "foo", "bar"));
 		entity.setEnabled(true);
-		entity.setExpiryDate(entity.getCreated().plusSeconds(600));
-		entity.setParentId(UUID.randomUUID().toString().substring(0, 20));
+		entity.setRegistrationStatus(RegistrationStatus.Accepted);
+		entity.setConnectorCount(1);
 		return entity;
 	}
 
 	@Test
 	public void insert() {
-		CentralAuthorization entity = createTestAuthorization();
+		CentralChargePoint entity = createTestChargePoint();
 		Long pk = dao.save(entity);
 		assertThat("PK generated", pk, notNullValue());
-		last = new CentralAuthorization(pk, entity.getUserId(), entity.getCreated());
-		last.setToken(entity.getToken());
+		last = new CentralChargePoint(pk, entity.getUserId(), entity.getCreated(), entity.getInfo());
 		last.setEnabled(entity.isEnabled());
-		last.setExpiryDate(entity.getExpiryDate());
-		last.setParentId(entity.getParentId());
+		last.setRegistrationStatus(entity.getRegistrationStatus());
+		last.setConnectorCount(entity.getConnectorCount());
 	}
 
 	@Test(expected = DuplicateKeyException.class)
 	public void insert_duplicate() {
 		insert();
-		Authorization entity = createTestAuthorization();
+		ChargePoint entity = createTestChargePoint();
 		dao.save(entity);
 		fail("Should not be able to create duplicate.");
 	}
@@ -94,76 +95,79 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 	@Test
 	public void getByPK() {
 		insert();
-		Authorization entity = dao.get(last.getId());
+		ChargePoint entity = dao.get(last.getId());
 
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
-		assertThat("Username", entity.getToken(), equalTo(last.getToken()));
-		assertThat("Password", entity.isEnabled(), equalTo(last.isEnabled()));
-		assertThat("Username", entity.getExpiryDate(), equalTo(last.getExpiryDate()));
-		assertThat("Username", entity.getParentId(), equalTo(last.getParentId()));
+		assertThat("Enabled", entity.isEnabled(), equalTo(last.isEnabled()));
+		assertThat("Status", entity.getRegistrationStatus(), equalTo(last.getRegistrationStatus()));
+		assertThat("Connector count", entity.getConnectorCount(), equalTo(last.getConnectorCount()));
+		assertThat("Info", entity.getInfo().isSameAs(last.getInfo()), equalTo(true));
 	}
 
 	@Test
 	public void update() {
 		insert();
-		Authorization obj = dao.get(last.getId());
-		obj.setToken("new-username");
+		ChargePoint obj = dao.get(last.getId());
 		obj.setEnabled(false);
-		obj.setExpiryDate(obj.getExpiryDate().plusSeconds(60));
-		obj.setParentId(null);
+		obj.setRegistrationStatus(RegistrationStatus.Rejected);
+		obj.getInfo().setId("new id");
+		obj.getInfo().setIccid("icky");
 		Long pk = dao.save(obj);
 		assertThat("PK unchanged", pk, equalTo(obj.getId()));
 
-		Authorization entity = dao.get(pk);
+		ChargePoint entity = dao.get(pk);
 		assertThat("Entity updated", entity.isSameAs(obj), equalTo(true));
 	}
 
 	@Test
 	public void findAll() {
-		Authorization obj1 = createTestAuthorization();
+		ChargePoint obj1 = createTestChargePoint();
 		obj1 = dao.get(dao.save(obj1));
-		Authorization obj2 = new CentralAuthorization(userId, obj1.getCreated().minusSeconds(60), "b");
+		ChargePoint obj2 = new CentralChargePoint(userId, obj1.getCreated().minusSeconds(60), "b", "foo",
+				"bar");
 		obj2 = dao.get(dao.save(obj2));
-		Authorization obj3 = new CentralAuthorization(userId, obj1.getCreated().plusSeconds(60), "c");
+		ChargePoint obj3 = new CentralChargePoint(userId, obj1.getCreated().plusSeconds(60), "c", "foo",
+				"bar");
 		obj3 = dao.get(dao.save(obj3));
 
-		Collection<Authorization> results = dao.getAll(null);
+		Collection<ChargePoint> results = dao.getAll(null);
 		assertThat("Results found in order", results, contains(obj2, obj1, obj3));
 	}
 
 	@Test
 	public void findAll_sortByCreatedDesc() {
-		Authorization obj1 = createTestAuthorization();
+		ChargePoint obj1 = createTestChargePoint();
 		obj1 = dao.get(dao.save(obj1));
-		Authorization obj2 = new CentralAuthorization(userId, obj1.getCreated().minusSeconds(60), "b");
+		ChargePoint obj2 = new CentralChargePoint(userId, obj1.getCreated().minusSeconds(60), "b", "foo",
+				"bar");
 		obj2 = dao.get(dao.save(obj2));
-		Authorization obj3 = new CentralAuthorization(userId, obj1.getCreated().plusSeconds(60), "c");
+		ChargePoint obj3 = new CentralChargePoint(userId, obj1.getCreated().plusSeconds(60), "c", "foo",
+				"bar");
 		obj3 = dao.get(dao.save(obj3));
 
-		Collection<Authorization> results = dao.getAll(GenericDao.SORT_BY_CREATED_DESCENDING);
+		Collection<ChargePoint> results = dao.getAll(GenericDao.SORT_BY_CREATED_DESCENDING);
 		assertThat("Results found in order", results, contains(obj3, obj1, obj2));
 	}
 
 	@Test
 	public void findByToken_none() {
-		Authorization entity = dao.getForToken(userId, "foo");
+		ChargePoint entity = dao.getForIdentifier(userId, "foo");
 		assertThat("No users", entity, nullValue());
 	}
 
 	@Test
 	public void findByToken_noMatch() {
 		insert();
-		Authorization entity = dao.getForToken(userId, "not a match");
+		ChargePoint entity = dao.getForIdentifier(userId, "not a match");
 		assertThat("No match", entity, nullValue());
 	}
 
 	@Test
 	public void findByToken() {
 		findAll();
-		Authorization entity = dao.getForToken(userId, "b");
+		ChargePoint entity = dao.getForIdentifier(userId, "b");
 		assertThat("Match", entity, notNullValue());
-		assertThat("Username matches", entity.getToken(), equalTo("b"));
+		assertThat("Username matches", entity.getInfo().getId(), equalTo("b"));
 	}
-
 }

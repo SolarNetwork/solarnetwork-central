@@ -95,7 +95,7 @@
 				</foreach>
 			</when>
 			<otherwise>
-				ocpp_authorization_created, ocpp_authorization_id
+				ocpp_authorization_user_id, ocpp_authorization_created, ocpp_authorization_id
 			</otherwise>
 		</choose>
 	</sql>

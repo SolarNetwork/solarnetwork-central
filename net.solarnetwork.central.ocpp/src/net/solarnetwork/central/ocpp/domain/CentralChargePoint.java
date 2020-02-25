@@ -1,5 +1,5 @@
 /* ==================================================================
- * CentralAuthorization.java - 25/02/2020 2:10:08 pm
+ * CentralChargePoint.java - 25/02/2020 6:56:59 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -24,15 +24,16 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
-import net.solarnetwork.ocpp.domain.Authorization;
+import net.solarnetwork.ocpp.domain.ChargePoint;
+import net.solarnetwork.ocpp.domain.ChargePointInfo;
 
 /**
- * An authorization entity.
+ * A Charge Point entity.
  * 
  * @author matt
  * @version 1.0
  */
-public class CentralAuthorization extends Authorization {
+public class CentralChargePoint extends ChargePoint {
 
 	private final Long userId;
 
@@ -42,7 +43,7 @@ public class CentralAuthorization extends Authorization {
 	 * @param userId
 	 *        the owner user ID
 	 */
-	public CentralAuthorization(Long userId) {
+	public CentralChargePoint(Long userId) {
 		super();
 		this.userId = userId;
 	}
@@ -51,11 +52,10 @@ public class CentralAuthorization extends Authorization {
 	 * Constructor.
 	 * 
 	 * @param id
-	 *        the ID
 	 * @param userId
 	 *        the owner user ID
 	 */
-	public CentralAuthorization(Long id, Long userId) {
+	public CentralChargePoint(Long id, Long userId) {
 		super(id);
 		this.userId = userId;
 	}
@@ -68,10 +68,26 @@ public class CentralAuthorization extends Authorization {
 	 * @param userId
 	 *        the owner user ID
 	 * @param created
-	 *        the creation date
+	 *        the created date
 	 */
-	public CentralAuthorization(Long id, Long userId, Instant created) {
+	public CentralChargePoint(Long id, Long userId, Instant created) {
 		super(id, created);
+		this.userId = userId;
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 * @param userId
+	 *        the owner user ID
+	 * @param created
+	 *        the created date
+	 * @param info
+	 *        the info
+	 */
+	public CentralChargePoint(Long id, Long userId, Instant created, ChargePointInfo info) {
+		super(id, created, info);
 		this.userId = userId;
 	}
 
@@ -80,36 +96,37 @@ public class CentralAuthorization extends Authorization {
 	 * 
 	 * @param created
 	 *        the created date
-	 * @param token
-	 *        the token
+	 * @param identifier
+	 *        the identifier * @param chargePointVendor the vendor
+	 * @param chargePointModel
+	 *        the model
 	 */
-	public CentralAuthorization(Long userId, Instant created, String token) {
-		super(created, token);
+	public CentralChargePoint(Long userId, Instant created, String identifier, String chargePointVendor,
+			String chargePointModel) {
+		super(created, identifier, chargePointVendor, chargePointModel);
 		this.userId = userId;
 	}
 
 	/**
 	 * Copy constructor.
 	 * 
-	 * Copy constructor.
-	 * 
 	 * @param other
-	 *        the authorization to copy
+	 *        the object to copy
 	 */
-	public CentralAuthorization(Authorization other) {
+	public CentralChargePoint(ChargePoint other) {
 		super(other);
-		this.userId = (other instanceof CentralAuthorization ? ((CentralAuthorization) other).userId
+		this.userId = (other instanceof CentralChargePoint ? ((CentralChargePoint) other).getUserId()
 				: null);
 	}
 
 	@Override
-	public boolean isSameAs(Authorization other) {
-		if ( !(other instanceof CentralAuthorization) ) {
+	public boolean isSameAs(ChargePoint other) {
+		if ( !(other instanceof CentralChargePoint) ) {
 			return false;
 		}
 		boolean result = super.isSameAs(other);
 		if ( result ) {
-			result = Objects.equals(this.userId, ((CentralAuthorization) other).userId);
+			result = Objects.equals(this.userId, ((CentralChargePoint) other).userId);
 		}
 		return result;
 	}
@@ -117,25 +134,24 @@ public class CentralAuthorization extends Authorization {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("Authorization{id=");
-		builder.append(getId());
-		builder.append(", ");
-		builder.append(", userId=").append(userId).append(", ");
-		if ( getToken() != null ) {
-			builder.append("token=");
-			builder.append(getToken());
+		builder.append("ChargePoint{");
+		if ( getId() != null ) {
+			builder.append("id=");
+			builder.append(getId());
 			builder.append(", ");
 		}
-		if ( getExpiryDate() != null ) {
-			builder.append("expiryDate=");
-			builder.append(getExpiryDate());
+		builder.append("userId=").append(userId).append(", ");
+		if ( getRegistrationStatus() != null ) {
+			builder.append("registrationStatus=");
+			builder.append(getRegistrationStatus());
 			builder.append(", ");
 		}
-		if ( getParentId() != null ) {
-			builder.append("parentId=");
-			builder.append(getParentId());
-			builder.append(", ");
-		}
+		builder.append("enabled=");
+		builder.append(isEnabled());
+		builder.append(", connectorCount=");
+		builder.append(getConnectorCount());
+		builder.append(", info=");
+		builder.append(getInfo());
 		builder.append("}");
 		return builder.toString();
 	}

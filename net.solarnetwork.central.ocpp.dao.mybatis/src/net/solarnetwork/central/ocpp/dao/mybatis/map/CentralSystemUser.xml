@@ -96,7 +96,7 @@
 				</foreach>
 			</when>
 			<otherwise>
-				ocpp_system_user_created, ocpp_system_user_id
+				ocpp_system_user_user_id, ocpp_system_user_created, ocpp_system_user_id
 			</otherwise>
 		</choose>
 	</sql>
