@@ -10,6 +10,7 @@
 		<property name="typeHandlers">
 			<list>
 				<bean class="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
 			</list>
 		</property>
 		<property name="mapperLocations">
@@ -17,6 +18,7 @@
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralAuthorization.xml</value>
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralChargePoint.xml</value>
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralChargePointConnector.xml</value>
+				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralChargeSession.xml</value>
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralSystemUser.xml</value>
 			</list>
 		</property>

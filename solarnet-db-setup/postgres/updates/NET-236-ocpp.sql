@@ -78,3 +78,39 @@ CREATE TABLE solarev.ocpp_charge_point_conn (
 		REFERENCES solarev.ocpp_charge_point (id)
 		ON DELETE CASCADE
 );
+
+CREATE SEQUENCE solarev.ocpp_charge_tx_seq
+MINVALUE 1 MAXVALUE 2147483647 INCREMENT BY 1 CYCLE;
+
+CREATE TABLE solarev.ocpp_charge_sess (
+	id					uuid NOT NULL,
+	created				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	auth_id				VARCHAR(20) NOT NULL,
+	cp_id				BIGINT NOT NULL,
+	conn_id				INTEGER NOT NULL,
+	tx_id				INTEGER NOT NULL DEFAULT nextval('solarev.ocpp_charge_tx_seq'),
+	ended				TIMESTAMP WITH TIME ZONE,
+	end_reason			SMALLINT NOT NULL DEFAULT 0,
+	end_auth_id			VARCHAR(20),
+	posted				TIMESTAMP WITH TIME ZONE,
+	CONSTRAINT ocpp_charge_sess_pk PRIMARY KEY (id),
+	CONSTRAINT ocpp_charge_sess_charge_point_fk FOREIGN KEY (cp_id)
+		REFERENCES solarev.ocpp_charge_point (id)
+		ON DELETE CASCADE
+);
+
+CREATE TABLE solarev.ocpp_charge_sess_reading (
+	sess_id				uuid NOT NULL,
+	ts					TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	location			SMALLINT NOT NULL DEFAULT 0,
+	unit 				SMALLINT NOT NULL DEFAULT 0,
+	context 			SMALLINT NOT NULL DEFAULT 0,
+	measurand			SMALLINT NOT NULL DEFAULT 0,
+	phase				SMALLINT,
+	reading 			VARCHAR(64) NOT NULL,
+	CONSTRAINT ocpp_charge_sess_reading_charge_sess_fk FOREIGN KEY (sess_id)
+		REFERENCES solarev.ocpp_charge_sess (id)
+		ON DELETE CASCADE
+);
+
+CREATE INDEX ocpp_charge_sess_reading_sess_id_idx ON solarev.ocpp_charge_sess_reading (sess_id);

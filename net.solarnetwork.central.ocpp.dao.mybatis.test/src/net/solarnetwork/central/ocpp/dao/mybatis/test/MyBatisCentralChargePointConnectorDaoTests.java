@@ -63,10 +63,10 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 	@Before
 	public void setUp() throws Exception {
 		chargePointDao = new MyBatisCentralChargePointDao();
-		chargePointDao.setSqlSessionFactory(getSqlSessionFactory());
+		chargePointDao.setSqlSessionTemplate(getSqlSessionTemplate());
 
 		dao = new MyBatisCentralChargePointConnectorDao();
-		dao.setSqlSessionFactory(getSqlSessionFactory());
+		dao.setSqlSessionTemplate(getSqlSessionTemplate());
 		last = null;
 		userId = UUID.randomUUID().getMostSignificantBits();
 		setupTestUser(userId);
@@ -203,8 +203,8 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		insert();
 
 		// when
-		int result = dao.updateChargePointStatus(last.getId().getChargePointId(),
-				last.getId().getConnectorId(), ChargePointStatus.Charging);
+		int result = lastUpdateCount(dao.updateChargePointStatus(last.getId().getChargePointId(),
+				last.getId().getConnectorId(), ChargePointStatus.Charging));
 
 		// then
 		assertThat("One row updated", result, equalTo(1));
@@ -235,8 +235,8 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		insert();
 
 		// when
-		int result = dao.updateChargePointStatus(cpc.getId().getChargePointId(), 0,
-				ChargePointStatus.Charging);
+		int result = lastUpdateCount(dao.updateChargePointStatus(cpc.getId().getChargePointId(), 0,
+				ChargePointStatus.Charging));
 
 		// then
 		assertThat("Two row updated", result, equalTo(2));

@@ -57,7 +57,7 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 	@Before
 	public void setUp() throws Exception {
 		dao = new MyBatisCentralChargePointDao();
-		dao.setSqlSessionFactory(getSqlSessionFactory());
+		dao.setSqlSessionTemplate(getSqlSessionTemplate());
 		last = null;
 		userId = UUID.randomUUID().getMostSignificantBits();
 		setupTestUser(userId);
@@ -89,6 +89,7 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		insert();
 		ChargePoint entity = createTestChargePoint();
 		dao.save(entity);
+		getSqlSessionTemplate().flushStatements();
 		fail("Should not be able to create duplicate.");
 	}
 

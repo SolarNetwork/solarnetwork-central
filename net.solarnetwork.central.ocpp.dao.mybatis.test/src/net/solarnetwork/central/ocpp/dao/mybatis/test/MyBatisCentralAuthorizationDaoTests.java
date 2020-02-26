@@ -55,7 +55,7 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 	@Before
 	public void setUp() throws Exception {
 		dao = new MyBatisCentralAuthorizationDao();
-		dao.setSqlSessionFactory(getSqlSessionFactory());
+		dao.setSqlSessionTemplate(getSqlSessionTemplate());
 		last = null;
 		userId = UUID.randomUUID().getMostSignificantBits();
 		setupTestUser(userId);
@@ -88,6 +88,7 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 		insert();
 		Authorization entity = createTestAuthorization();
 		dao.save(entity);
+		getSqlSessionTemplate().flushStatements();
 		fail("Should not be able to create duplicate.");
 	}
 

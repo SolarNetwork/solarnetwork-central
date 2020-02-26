@@ -22,7 +22,11 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
+import java.util.List;
+import org.apache.ibatis.executor.BatchResult;
+import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
@@ -37,9 +41,17 @@ import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
 
 	private SqlSessionFactory sqlSessionFactory;
+	private SqlSessionTemplate sqlSessionTemplate;
 
 	public SqlSessionFactory getSqlSessionFactory() {
 		return sqlSessionFactory;
+	}
+
+	public SqlSessionTemplate getSqlSessionTemplate() {
+		if ( sqlSessionTemplate == null ) {
+			sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
+		}
+		return sqlSessionTemplate;
 	}
 
 	@Autowired
@@ -56,6 +68,30 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	protected void setupTestUserNode(Long userId, Long nodeId) {
 		jdbcTemplate.update("insert into solaruser.user_node (user_id, node_id) values (?,?)", userId,
 				nodeId);
+	}
+
+	/**
+	 * Get the last update statement's update count result.
+	 * 
+	 * <p>
+	 * This method can be used to automatically flush the MyBatis batch
+	 * statements and return the last statement's update count.
+	 * </p>
+	 * 
+	 * @param result
+	 *        the result as returned by a {@code getSqlSession().update()} style
+	 *        statement
+	 * @return the update count, flushing batch statements as necessary
+	 */
+	protected int lastUpdateCount(int result) {
+		if ( result < 0 ) {
+			List<BatchResult> batchResults = getSqlSessionTemplate().flushStatements();
+			if ( batchResults != null && !batchResults.isEmpty() ) {
+				int[] counts = batchResults.get(batchResults.size() - 1).getUpdateCounts();
+				result = counts[counts.length - 1];
+			}
+		}
+		return result;
 	}
 
 }

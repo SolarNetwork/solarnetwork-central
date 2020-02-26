@@ -60,7 +60,7 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 	@Before
 	public void setUp() throws Exception {
 		dao = new MyBatisCentralSystemUserDao();
-		dao.setSqlSessionFactory(getSqlSessionFactory());
+		dao.setSqlSessionTemplate(getSqlSessionTemplate());
 		last = null;
 		userId = UUID.randomUUID().getMostSignificantBits();
 		setupTestUser(userId);
@@ -86,11 +86,12 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 	}
 
 	@Test(expected = DuplicateKeyException.class)
-	public void insert_duplicateUsername() {
+	public void insert_duplicate() {
 		insert();
 		SystemUser entity = createTestSystemUser();
 		dao.save(entity);
-		fail("Should not be able to create duplicate username.");
+		getSqlSessionTemplate().flushStatements();
+		fail("Should not be able to create duplicate.");
 	}
 
 	@Test
