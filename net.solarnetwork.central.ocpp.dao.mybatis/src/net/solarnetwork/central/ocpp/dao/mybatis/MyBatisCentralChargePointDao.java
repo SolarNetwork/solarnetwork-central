@@ -27,6 +27,7 @@ import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.ocpp.domain.ChargePoint;
+import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 
 /**
@@ -38,6 +39,30 @@ import net.solarnetwork.ocpp.domain.ChargePointInfo;
 public class MyBatisCentralChargePointDao extends BaseMyBatisGenericDaoSupport<ChargePoint, Long>
 		implements CentralChargePointDao {
 
+	/** Query name enumeration. */
+	public enum QueryName {
+
+		/**
+		 * Get a charge point based on a given {@link ChargePointIdentity}.
+		 */
+		GetForIdentity("get-CentralChargePoint-for-identity");
+
+		private final String queryName;
+
+		private QueryName(String queryName) {
+			this.queryName = queryName;
+		}
+
+		/**
+		 * Get the query name.
+		 * 
+		 * @return the query name
+		 */
+		public String getQueryName() {
+			return queryName;
+		}
+	}
+
 	/**
 	 * Constructor.
 	 */
@@ -46,9 +71,8 @@ public class MyBatisCentralChargePointDao extends BaseMyBatisGenericDaoSupport<C
 	}
 
 	@Override
-	public ChargePoint getForIdentifier(String identifier) {
-		throw new UnsupportedOperationException(
-				"Must call getForIdentifier(userId,identifier) instead.");
+	public ChargePoint getForIdentity(ChargePointIdentity identity) {
+		return selectFirst(QueryName.GetForIdentity.getQueryName(), identity);
 	}
 
 	@Override
