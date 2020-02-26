@@ -121,6 +121,7 @@ CREATE TABLE solaruser.user_node (
 	private 		BOOLEAN NOT NULL DEFAULT FALSE,
 	archived		BOOLEAN NOT NULL DEFAULT FALSE,
 	CONSTRAINT user_node_pkey PRIMARY KEY (node_id),
+	CONSTRAINT user_node_unq UNIQUE (user_id, node_id),
 	CONSTRAINT user_node_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
@@ -128,9 +129,6 @@ CREATE TABLE solaruser.user_node (
 		REFERENCES solarnet.sn_node (node_id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION
 );
-
-/* Add index on user_node to assist finding all nodes for a given user. */
-CREATE INDEX user_node_user_idx ON solaruser.user_node (user_id);
 
 /* === USER AUTH TOKEN ===================================================== */
 

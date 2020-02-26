@@ -52,6 +52,7 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 	private MyBatisCentralChargePointDao dao;
 
 	private Long userId;
+	private Long nodeId;
 	private ChargePoint last;
 
 	@Before
@@ -59,12 +60,17 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		dao = new MyBatisCentralChargePointDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
 		last = null;
-		userId = UUID.randomUUID().getMostSignificantBits();
+		UUID uuid = UUID.randomUUID();
+		userId = uuid.getMostSignificantBits();
+		nodeId = uuid.getLeastSignificantBits();
 		setupTestUser(userId);
+		setupTestLocation();
+		setupTestNode(nodeId);
+		setupTestUserNode(userId, nodeId);
 	}
 
 	private CentralChargePoint createTestChargePoint() {
-		CentralChargePoint entity = new CentralChargePoint(null, userId,
+		CentralChargePoint entity = new CentralChargePoint(null, userId, nodeId,
 				Instant.ofEpochMilli(System.currentTimeMillis()),
 				new ChargePointInfo("foobar", "foo", "bar"));
 		entity.setEnabled(true);
@@ -78,7 +84,8 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		CentralChargePoint entity = createTestChargePoint();
 		Long pk = dao.save(entity);
 		assertThat("PK generated", pk, notNullValue());
-		last = new CentralChargePoint(pk, entity.getUserId(), entity.getCreated(), entity.getInfo());
+		last = new CentralChargePoint(pk, entity.getUserId(), entity.getNodeId(), entity.getCreated(),
+				entity.getInfo());
 		last.setEnabled(entity.isEnabled());
 		last.setRegistrationStatus(entity.getRegistrationStatus());
 		last.setConnectorCount(entity.getConnectorCount());
@@ -125,11 +132,11 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 	public void findAll() {
 		ChargePoint obj1 = createTestChargePoint();
 		obj1 = dao.get(dao.save(obj1));
-		ChargePoint obj2 = new CentralChargePoint(userId, obj1.getCreated().minusSeconds(60), "b", "foo",
-				"bar");
+		ChargePoint obj2 = new CentralChargePoint(userId, nodeId, obj1.getCreated().minusSeconds(60),
+				"b", "foo", "bar");
 		obj2 = dao.get(dao.save(obj2));
-		ChargePoint obj3 = new CentralChargePoint(userId, obj1.getCreated().plusSeconds(60), "c", "foo",
-				"bar");
+		ChargePoint obj3 = new CentralChargePoint(userId, nodeId, obj1.getCreated().plusSeconds(60), "c",
+				"foo", "bar");
 		obj3 = dao.get(dao.save(obj3));
 
 		Collection<ChargePoint> results = dao.getAll(null);
@@ -140,11 +147,11 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 	public void findAll_sortByCreatedDesc() {
 		ChargePoint obj1 = createTestChargePoint();
 		obj1 = dao.get(dao.save(obj1));
-		ChargePoint obj2 = new CentralChargePoint(userId, obj1.getCreated().minusSeconds(60), "b", "foo",
-				"bar");
+		ChargePoint obj2 = new CentralChargePoint(userId, nodeId, obj1.getCreated().minusSeconds(60),
+				"b", "foo", "bar");
 		obj2 = dao.get(dao.save(obj2));
-		ChargePoint obj3 = new CentralChargePoint(userId, obj1.getCreated().plusSeconds(60), "c", "foo",
-				"bar");
+		ChargePoint obj3 = new CentralChargePoint(userId, nodeId, obj1.getCreated().plusSeconds(60), "c",
+				"foo", "bar");
 		obj3 = dao.get(dao.save(obj3));
 
 		Collection<ChargePoint> results = dao.getAll(GenericDao.SORT_BY_CREATED_DESCENDING);

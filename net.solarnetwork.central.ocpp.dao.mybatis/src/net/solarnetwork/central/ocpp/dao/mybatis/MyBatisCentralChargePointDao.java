@@ -54,7 +54,7 @@ public class MyBatisCentralChargePointDao extends BaseMyBatisGenericDaoSupport<C
 	@Override
 	public ChargePoint getForIdentifier(Long userId, String identifier) {
 		return selectFirst(getQueryForAll(), singletonMap(FILTER_PROPERTY,
-				new CentralChargePoint(null, userId, null, new ChargePointInfo(identifier))));
+				new CentralChargePoint(null, userId, null, null, new ChargePointInfo(identifier))));
 	}
 
 }

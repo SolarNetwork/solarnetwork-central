@@ -36,16 +36,20 @@ import net.solarnetwork.ocpp.domain.ChargePointInfo;
 public class CentralChargePoint extends ChargePoint {
 
 	private final Long userId;
+	private final Long nodeId;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param userId
 	 *        the owner user ID
+	 * @param nodeId
+	 *        the owner node ID
 	 */
-	public CentralChargePoint(Long userId) {
+	public CentralChargePoint(Long userId, Long nodeId) {
 		super();
 		this.userId = userId;
+		this.nodeId = nodeId;
 	}
 
 	/**
@@ -54,10 +58,13 @@ public class CentralChargePoint extends ChargePoint {
 	 * @param id
 	 * @param userId
 	 *        the owner user ID
+	 * @param nodeId
+	 *        the owner node ID
 	 */
-	public CentralChargePoint(Long id, Long userId) {
+	public CentralChargePoint(Long id, Long userId, Long nodeId) {
 		super(id);
 		this.userId = userId;
+		this.nodeId = nodeId;
 	}
 
 	/**
@@ -67,12 +74,15 @@ public class CentralChargePoint extends ChargePoint {
 	 *        the ID
 	 * @param userId
 	 *        the owner user ID
+	 * @param nodeId
+	 *        the owner node ID
 	 * @param created
 	 *        the created date
 	 */
-	public CentralChargePoint(Long id, Long userId, Instant created) {
+	public CentralChargePoint(Long id, Long userId, Long nodeId, Instant created) {
 		super(id, created);
 		this.userId = userId;
+		this.nodeId = nodeId;
 	}
 
 	/**
@@ -81,19 +91,26 @@ public class CentralChargePoint extends ChargePoint {
 	 * @param id
 	 * @param userId
 	 *        the owner user ID
+	 * @param nodeId
+	 *        the owner node ID
 	 * @param created
 	 *        the created date
 	 * @param info
 	 *        the info
 	 */
-	public CentralChargePoint(Long id, Long userId, Instant created, ChargePointInfo info) {
+	public CentralChargePoint(Long id, Long userId, Long nodeId, Instant created, ChargePointInfo info) {
 		super(id, created, info);
 		this.userId = userId;
+		this.nodeId = nodeId;
 	}
 
 	/**
 	 * Constructor.
 	 * 
+	 * @param userId
+	 *        the owner user ID
+	 * @param nodeId
+	 *        the owner node ID
 	 * @param created
 	 *        the created date
 	 * @param identifier
@@ -101,10 +118,11 @@ public class CentralChargePoint extends ChargePoint {
 	 * @param chargePointModel
 	 *        the model
 	 */
-	public CentralChargePoint(Long userId, Instant created, String identifier, String chargePointVendor,
-			String chargePointModel) {
+	public CentralChargePoint(Long userId, Long nodeId, Instant created, String identifier,
+			String chargePointVendor, String chargePointModel) {
 		super(created, identifier, chargePointVendor, chargePointModel);
 		this.userId = userId;
+		this.nodeId = nodeId;
 	}
 
 	/**
@@ -115,8 +133,14 @@ public class CentralChargePoint extends ChargePoint {
 	 */
 	public CentralChargePoint(ChargePoint other) {
 		super(other);
-		this.userId = (other instanceof CentralChargePoint ? ((CentralChargePoint) other).getUserId()
-				: null);
+		if ( other instanceof CentralChargePoint ) {
+			CentralChargePoint ccp = (CentralChargePoint) other;
+			this.userId = ccp.userId;
+			this.nodeId = ccp.nodeId;
+		} else {
+			this.userId = null;
+			this.nodeId = null;
+		}
 	}
 
 	@Override
@@ -126,7 +150,8 @@ public class CentralChargePoint extends ChargePoint {
 		}
 		boolean result = super.isSameAs(other);
 		if ( result ) {
-			result = Objects.equals(this.userId, ((CentralChargePoint) other).userId);
+			CentralChargePoint ccp = (CentralChargePoint) other;
+			result = Objects.equals(this.userId, ccp.userId) && Objects.equals(this.nodeId, ccp.nodeId);
 		}
 		return result;
 	}
@@ -141,6 +166,7 @@ public class CentralChargePoint extends ChargePoint {
 			builder.append(", ");
 		}
 		builder.append("userId=").append(userId).append(", ");
+		builder.append("nodeId=").append(nodeId).append(", ");
 		if ( getRegistrationStatus() != null ) {
 			builder.append("registrationStatus=");
 			builder.append(getRegistrationStatus());
@@ -163,6 +189,15 @@ public class CentralChargePoint extends ChargePoint {
 	 */
 	public Long getUserId() {
 		return userId;
+	}
+
+	/**
+	 * The associated node ID.
+	 * 
+	 * @return the node ID
+	 */
+	public Long getNodeId() {
+		return nodeId;
 	}
 
 }

@@ -1,3 +1,7 @@
+/* Add unique index on user_node to support foreign key from ocpp_charge_point. */
+ALTER TABLE solaruser.user_node ADD CONSTRAINT user_node_unq UNIQUE (user_id, node_id);
+DROP INDEX IF EXISTS solaruser.user_node_user_idx;
+
 CREATE SCHEMA IF NOT EXISTS solarev;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA solarev REVOKE ALL ON TABLES FROM PUBLIC;
@@ -43,6 +47,7 @@ CREATE TABLE solarev.ocpp_charge_point (
 	id					BIGINT NOT NULL DEFAULT nextval('solarev.ocpp_charge_point_seq'),
 	created				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id				BIGINT NOT NULL,
+	node_id				BIGINT NOT NULL,
 	enabled				BOOLEAN NOT NULL DEFAULT true,
 	reg_status			SMALLINT NOT NULL DEFAULT 0,
 	ident				VARCHAR(48) NOT NULL,
@@ -58,9 +63,9 @@ CREATE TABLE solarev.ocpp_charge_point (
 	conn_count			SMALLINT NOT NULL DEFAULT 0,
 	CONSTRAINT ocpp_charge_point_pk PRIMARY KEY (id),
 	CONSTRAINT ocpp_charge_point_unq UNIQUE (user_id, ident),
-	CONSTRAINT ocpp_charge_point_user_fk FOREIGN KEY (user_id)
-		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
+	CONSTRAINT ocpp_charge_point_user_node_fk FOREIGN KEY (user_id, node_id)
+		REFERENCES solaruser.user_node (user_id, node_id) MATCH SIMPLE
+		ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE solarev.ocpp_charge_point_conn (

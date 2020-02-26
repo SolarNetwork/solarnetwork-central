@@ -63,6 +63,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 	private MyBatisCentralChargeSessionDao dao;
 
 	private Long userId;
+	private Long nodeId;
 	private CentralChargeSession last;
 
 	@Before
@@ -73,8 +74,13 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		dao = new MyBatisCentralChargeSessionDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
 		last = null;
-		userId = UUID.randomUUID().getMostSignificantBits();
+		UUID uuid = UUID.randomUUID();
+		userId = uuid.getMostSignificantBits();
+		nodeId = uuid.getLeastSignificantBits();
 		setupTestUser(userId);
+		setupTestLocation();
+		setupTestNode(nodeId);
+		setupTestUserNode(userId, nodeId);
 	}
 
 	private CentralChargePoint createAndSaveTestChargePoint(String vendor, String model) {
@@ -86,7 +92,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		ChargePointInfo info = new ChargePointInfo(UUID.randomUUID().toString());
 		info.setChargePointVendor(vendor);
 		info.setChargePointModel(model);
-		CentralChargePoint cp = new CentralChargePoint(null, userId,
+		CentralChargePoint cp = new CentralChargePoint(null, userId, nodeId,
 				Instant.ofEpochMilli(System.currentTimeMillis()), info);
 		cp.setEnabled(true);
 		cp.setRegistrationStatus(RegistrationStatus.Accepted);

@@ -10,6 +10,7 @@
 			id
 			<if test="created != null">,created</if>
 			, user_id
+			, node_id
 			, enabled
 			<if test="registrationStatus != null">, reg_status</if>
 			, conn_count
@@ -27,6 +28,7 @@
 			#{id}
 			<if test="created != null">,#{created}</if>
 			, #{userId}
+			, #{nodeId}
 			, #{enabled}
 			<if test="registrationStatus != null">, #{registrationStatus,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}</if>
 			, #{connectorCount}
@@ -47,7 +49,8 @@
 		UPDATE 
 			solarev.ocpp_charge_point
 		SET
-			enabled = #{enabled}
+			node_id = #{nodeId}
+			, enabled = #{enabled}
 			, reg_status = #{registrationStatus,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
 			, conn_count = #{connectorCount}
 			, ident = #{info.id}
@@ -68,6 +71,7 @@
 		cp.id AS ocpp_charge_point_id
 		, cp.created AS ocpp_charge_point_created
 		, cp.user_id AS ocpp_charge_point_user_id
+		, cp.node_id AS ocpp_charge_point_node_id
 		, cp.enabled AS ocpp_charge_point_enabled
 		, cp.reg_status AS ocpp_charge_point_reg_status
 		, cp.conn_count AS ocpp_charge_point_conn_count
@@ -87,6 +91,7 @@
 		<constructor>
 			<idArg  column="ocpp_charge_point_id" javaType="Long"/>
 			<arg column="ocpp_charge_point_user_id" javaType="Long"/>
+			<arg column="ocpp_charge_point_node_id" javaType="Long"/>
 			<arg column="ocpp_charge_point_created" javaType="java.time.Instant"/>
 		</constructor>
 		<result property="enabled" column="ocpp_charge_point_enabled"/>
@@ -123,6 +128,9 @@
 				<if test="filter.userId != null">
 					AND cp.user_id = #{filter.userId}
 				</if>
+				<if test="filter.nodeId != null">
+					AND cp.node_id = #{filter.nodeId}
+				</if>
 				<if test="filter.info != null and filter.info.id != null">
 					AND cp.ident = #{filter.info.id}
 				</if>
@@ -138,13 +146,14 @@
 				 	<choose>
 				 		<when test="&quot;created&quot;.equalsIgnoreCase(item.sortKey)">ocpp_charge_point_created</when>
 				 		<when test="&quot;identifier&quot;.equalsIgnoreCase(item.sortKey)">ocpp_charge_point_ident</when>
+				 		<when test="&quot;node&quot;.equalsIgnoreCase(item.sortKey)">ocpp_charge_point_node_id</when>
 				 		<otherwise>ocpp_charge_point_id</otherwise>
 				 	</choose>
 					<if test="item.descending">DESC</if>
 				</foreach>
 			</when>
 			<otherwise>
-				ocpp_charge_point_user_id, ocpp_charge_point_created, ocpp_charge_point_id
+				ocpp_charge_point_user_id, ocpp_charge_point_node_id, ocpp_charge_point_created, ocpp_charge_point_id
 			</otherwise>
 		</choose>
 	</sql>
