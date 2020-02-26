@@ -39,6 +39,36 @@
 		</service-properties>
 	</service>
 
+	<service ref="chargePointDao">
+		<interfaces>
+			<value>net.solarnetwork.central.ocpp.dao.CentralChargePointDao</value>
+			<value>net.solarnetwork.ocpp.dao.ChargePointDao</value>
+		</interfaces>
+		<service-properties>
+			<entry key="function" value="central"/>
+		</service-properties>
+	</service>
+
+	<service ref="chargePointConnectorDao">
+		<interfaces>
+			<value>net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao</value>
+			<value>net.solarnetwork.ocpp.dao.ChargePointConnectorDao</value>
+		</interfaces>
+		<service-properties>
+			<entry key="function" value="central"/>
+		</service-properties>
+	</service>
+
+	<service ref="chargeSessionDao">
+		<interfaces>
+			<value>net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao</value>
+			<value>net.solarnetwork.ocpp.dao.ChargeSessionDao</value>
+		</interfaces>
+		<service-properties>
+			<entry key="function" value="central"/>
+		</service-properties>
+	</service>
+
 	<service ref="systemUserDao">
 		<interfaces>
 			<value>net.solarnetwork.central.ocpp.dao.CentralSystemUserDao</value>
@@ -59,6 +89,18 @@
 	<!-- Supporting Services -->
 	
 	<bean id="authorizationDao" class="net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralAuthorizationDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+		
+	<bean id="chargePointDao" class="net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+		
+	<bean id="chargePointConnectorDao" class="net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointConnectorDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+		
+	<bean id="chargeSessionDao" class="net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargeSessionDao">
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 		
