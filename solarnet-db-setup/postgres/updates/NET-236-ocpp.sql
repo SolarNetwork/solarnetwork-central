@@ -12,7 +12,7 @@ CREATE TABLE solarev.ocpp_system_user (
 	user_id				BIGINT NOT NULL,
 	username			VARCHAR(64),
 	password			VARCHAR(128),
-	allowed_cp			VARCHAR(255)[],
+	allowed_cp			VARCHAR(48)[],
 	CONSTRAINT ocpp_system_user_pk PRIMARY KEY (id),
 	CONSTRAINT ocpp_system_user_unq UNIQUE (username),
 	CONSTRAINT ocpp_system_user_user_fk FOREIGN KEY (user_id)
