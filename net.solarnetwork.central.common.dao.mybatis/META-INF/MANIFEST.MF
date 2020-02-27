@@ -20,6 +20,7 @@ Import-Package:
  net.solarnetwork.domain;version="[1.19,2.0)",
  org.aopalliance.aop;version="1.0.0",
  org.apache.ibatis.annotations;version="[3.2,4.0)",
+ org.apache.ibatis.executor;version="[3.2,4.0)",
  org.apache.ibatis.mapping;version="[3.2,4.0)",
  org.apache.ibatis.session;version="[3.2,4.0)",
  org.apache.ibatis.transaction;version="[3.2,4.0)",

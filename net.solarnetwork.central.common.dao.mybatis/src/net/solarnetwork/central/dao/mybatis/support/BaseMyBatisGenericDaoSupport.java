@@ -26,6 +26,7 @@ import static java.util.Collections.singletonMap;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.apache.ibatis.executor.BatchResult;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link SqlSessionDaoSupport}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.1
  */
 public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> extends BaseMyBatisDao
@@ -178,11 +179,33 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 */
 	protected K saveWithAssignedPrimaryKey(T entity) {
 		// try update, then insert if that fails
-		if ( getSqlSession().update(getUpdate(), entity) == 0 ) {
+		int count = getLastUpdateCount(getSqlSession().update(getUpdate(), entity));
+		if ( count == 0 ) {
 			preprocessInsert(entity);
 			getSqlSession().insert(getInsert(), entity);
 		}
 		return entity.getId();
+	}
+
+	/**
+	 * Get the last updated count, supporting batch operations.
+	 * 
+	 * @param count
+	 *        the last returned count from calling {@code SqlSession#update()}
+	 * @return the count, extracted from batch updates if necessary
+	 */
+	protected int getLastUpdateCount(int count) {
+		if ( count < 0 ) {
+			List<BatchResult> updates = getSqlSession().flushStatements();
+			if ( updates != null && !updates.isEmpty() ) {
+				BatchResult br = updates.get(updates.size() - 1);
+				int[] counts = br.getUpdateCounts();
+				if ( counts != null && counts.length > 0 ) {
+					count = counts[counts.length - 1];
+				}
+			}
+		}
+		return count;
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
