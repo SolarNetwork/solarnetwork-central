@@ -59,6 +59,15 @@
 		</service-properties>
 	</service>
 
+	<service ref="chargePointSettingsDao">
+		<interfaces>
+			<value>net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao</value>
+		</interfaces>
+		<service-properties>
+			<entry key="function" value="central"/>
+		</service-properties>
+	</service>
+
 	<service ref="chargeSessionDao">
 		<interfaces>
 			<value>net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao</value>
@@ -73,6 +82,15 @@
 		<interfaces>
 			<value>net.solarnetwork.central.ocpp.dao.CentralSystemUserDao</value>
 			<value>net.solarnetwork.ocpp.dao.SystemUserDao</value>
+		</interfaces>
+		<service-properties>
+			<entry key="function" value="central"/>
+		</service-properties>
+	</service>
+
+	<service ref="userSettingsDao">
+		<interfaces>
+			<value>net.solarnetwork.central.ocpp.dao.UserSettingsDao</value>
 		</interfaces>
 		<service-properties>
 			<entry key="function" value="central"/>
