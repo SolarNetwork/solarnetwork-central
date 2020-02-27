@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao;
 
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.dao.GenericDao;
 
 /**
@@ -32,5 +33,16 @@ import net.solarnetwork.dao.GenericDao;
  * @version 1.0
  */
 public interface ChargePointSettingsDao extends GenericDao<ChargePointSettings, Long> {
+
+	/**
+	 * Get settings resolved using {@link UserSettings} defaults if a charge
+	 * point setting does not exist.
+	 * 
+	 * @param id
+	 *        the charge point ID to resolve settings for
+	 * @return the settings, or {@literal null} if no charge point or user
+	 *         settings exist
+	 */
+	ChargePointSettings resolveSettings(Long id);
 
 }

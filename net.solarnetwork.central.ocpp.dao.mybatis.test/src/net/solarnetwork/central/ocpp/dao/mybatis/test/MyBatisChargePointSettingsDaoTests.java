@@ -24,6 +24,8 @@ package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.util.Arrays;
@@ -35,8 +37,10 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisChargePointSettingsDao;
+import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisUserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.ocpp.domain.ChargePoint;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 import net.solarnetwork.ocpp.domain.RegistrationStatus;
@@ -50,6 +54,7 @@ import net.solarnetwork.ocpp.domain.RegistrationStatus;
 public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private MyBatisCentralChargePointDao chargePointDao;
+	private MyBatisUserSettingsDao userSettingsDao;
 	private MyBatisChargePointSettingsDao dao;
 
 	private Long userId;
@@ -60,6 +65,8 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 	public void setUp() throws Exception {
 		chargePointDao = new MyBatisCentralChargePointDao();
 		chargePointDao.setSqlSessionTemplate(getSqlSessionTemplate());
+		userSettingsDao = new MyBatisUserSettingsDao();
+		userSettingsDao.setSqlSessionTemplate(getSqlSessionTemplate());
 
 		dao = new MyBatisChargePointSettingsDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
@@ -164,5 +171,64 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 			}
 		});
 		assertThat("Results found in order", results, contains(expected.toArray()));
+	}
+
+	@Test
+	public void resolveSettings_none() {
+		ChargePointSettings entity = dao.resolveSettings(1L);
+		assertThat("No settings resolved", entity, nullValue());
+	}
+
+	@Test
+	public void resolveSettings_onlyUser() {
+		ChargePoint cp1 = createAndSaveTestChargePoint("foo", "bar");
+		UserSettings us = new UserSettings(userId, Instant.now());
+		userSettingsDao.save(us);
+		ChargePointSettings entity = dao.resolveSettings(cp1.getId());
+		assertThat("Settings resolved", entity, notNullValue());
+		assertThat("Resolved values taken from user settings", entity.getSourceIdTemplate(),
+				equalTo(us.getSourceIdTemplate()));
+	}
+
+	@Test
+	public void resolveSettings_onlyChargePoint() {
+		insert();
+		ChargePointSettings entity = dao.resolveSettings(last.getId());
+		assertThat("Settings resolved", entity, notNullValue());
+		assertThat("Resolved values taken from charge point settings", entity.isSameAs(last),
+				equalTo(true));
+	}
+
+	@Test
+	public void resolveSettings_userAndChargePoint_defaulted() {
+		insert();
+		UserSettings us = new UserSettings(userId, Instant.now());
+		us.setSourceIdTemplate("/bim/bam");
+		userSettingsDao.save(us);
+		ChargePointSettings entity = dao.resolveSettings(last.getId());
+		assertThat("Settings resolved", entity, notNullValue());
+
+		ChargePointSettings expected = new ChargePointSettings();
+		expected.setPublishToSolarIn(last.isPublishToSolarIn());
+		expected.setPublishToSolarFlux(last.isPublishToSolarFlux());
+		expected.setSourceIdTemplate(us.getSourceIdTemplate());
+		assertThat("Resolved values taken from charge point settings with user default",
+				entity.isSameAs(expected), equalTo(true));
+	}
+
+	@Test
+	public void resolveSettings_userAndChargePoint_overridden() {
+		insert();
+		last.setSourceIdTemplate("/foo/bar");
+		dao.save(last);
+
+		UserSettings us = new UserSettings(userId, Instant.now());
+		us.setSourceIdTemplate("/bim/bam");
+		userSettingsDao.save(us);
+
+		ChargePointSettings entity = dao.resolveSettings(last.getId());
+		assertThat("Settings resolved", entity, notNullValue());
+		assertThat("Resolved values taken from charge point settings", entity.isSameAs(last),
+				equalTo(true));
 	}
 }

@@ -35,6 +35,28 @@ import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 public class MyBatisChargePointSettingsDao extends
 		BaseMyBatisGenericDaoSupport<ChargePointSettings, Long> implements ChargePointSettingsDao {
 
+	/** Query name enumeration. */
+	public enum QueryName {
+
+		/** Resolve settings using user settings for defaults. */
+		ResolveSettings("resolve-ChargePointSettings-for-id");
+
+		private final String queryName;
+
+		private QueryName(String queryName) {
+			this.queryName = queryName;
+		}
+
+		/**
+		 * Get the query name.
+		 * 
+		 * @return the query name
+		 */
+		public String getQueryName() {
+			return queryName;
+		}
+	}
+
 	/**
 	 * Constructor.
 	 */
@@ -45,6 +67,11 @@ public class MyBatisChargePointSettingsDao extends
 	@Override
 	protected boolean isAssignedPrimaryKeys() {
 		return true;
+	}
+
+	@Override
+	public ChargePointSettings resolveSettings(Long id) {
+		return selectFirst(QueryName.ResolveSettings.getQueryName(), id);
 	}
 
 }

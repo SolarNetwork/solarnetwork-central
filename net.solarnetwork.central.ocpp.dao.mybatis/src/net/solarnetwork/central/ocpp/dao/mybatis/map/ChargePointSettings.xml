@@ -58,5 +58,19 @@
 		ORDER BY
 			cp_id
 	</select>
+	
+	<select id="resolve-ChargePointSettings-for-id" parameterType="long" resultMap="ChargePointSettings-FullResult">
+		SELECT 
+			cp.id AS ocpp_charge_point_settings_cp_id
+			, COALESCE(cps.created, us.created) AS ocpp_charge_point_settings_created
+			, COALESCE(cps.pub_in, TRUE) AS ocpp_charge_point_settings_pub_in
+			, COALESCE(cps.pub_flux, TRUE) AS ocpp_charge_point_settings_pub_flux
+			, COALESCE(cps.source_id_tmpl, us.source_id_tmpl) AS ocpp_charge_point_settings_source_id_tmpl
+		FROM solarev.ocpp_charge_point cp
+		LEFT OUTER JOIN solarev.ocpp_user_settings us ON us.user_id = cp.user_id
+		LEFT OUTER JOIN solarev.ocpp_charge_point_settings cps ON cps.cp_id = cp.id
+		WHERE
+			cp.id = #{id}
+	</select>
 
 </mapper>

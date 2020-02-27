@@ -40,7 +40,7 @@ import net.solarnetwork.domain.Differentiable;
 public class UserSettings extends BasicLongEntity implements Differentiable<UserSettings> {
 
 	/** The default {@code sourceIdTemplate} value. */
-	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/{nodeId}/{chargePointId}/{connectorId}/{location}";
+	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/{chargePointId}/{connectorId}/{location}";
 
 	private String sourceIdTemplate = DEFAULT_SOURCE_ID_TEMPLATE;
 
