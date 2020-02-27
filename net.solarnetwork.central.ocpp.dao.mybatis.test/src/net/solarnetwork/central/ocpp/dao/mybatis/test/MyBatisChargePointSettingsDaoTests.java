@@ -180,6 +180,13 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 	}
 
 	@Test
+	public void resolveSettings_chargePointButNoSettings() {
+		ChargePoint cp1 = createAndSaveTestChargePoint("foo", "bar");
+		ChargePointSettings entity = dao.resolveSettings(cp1.getId());
+		assertThat("No settings resolved", entity, nullValue());
+	}
+
+	@Test
 	public void resolveSettings_onlyUser() {
 		ChargePoint cp1 = createAndSaveTestChargePoint("foo", "bar");
 		UserSettings us = new UserSettings(userId, Instant.now());

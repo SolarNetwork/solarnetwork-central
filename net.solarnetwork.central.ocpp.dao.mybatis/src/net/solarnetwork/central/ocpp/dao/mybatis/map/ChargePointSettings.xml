@@ -70,7 +70,7 @@
 		LEFT OUTER JOIN solarev.ocpp_user_settings us ON us.user_id = cp.user_id
 		LEFT OUTER JOIN solarev.ocpp_charge_point_settings cps ON cps.cp_id = cp.id
 		WHERE
-			cp.id = #{id}
+			cp.id = #{id} AND (us.created IS NOT NULL OR cps.created IS NOT NULL)
 	</select>
 
 </mapper>
