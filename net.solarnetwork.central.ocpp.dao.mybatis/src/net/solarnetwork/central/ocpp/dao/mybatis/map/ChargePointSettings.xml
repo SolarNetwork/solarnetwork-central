@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.ocpp.domain.ChargePointSettings">
+
+	<update id="update-ChargePointSettings" parameterType="net.solarnetwork.central.ocpp.domain.ChargePointSettings">
+		INSERT INTO solarev.ocpp_charge_point_settings (
+			cp_id
+			<if test="created != null">,created</if>
+			, source_id_tmpl
+			, pub_in
+			, pub_flux
+		) VALUES (
+			#{id}
+			<if test="created != null">,#{created}</if>
+			, #{sourceIdTemplate}
+			, #{publishToSolarIn}
+			, #{publishToSolarFlux}
+		)
+		ON CONFLICT (cp_id) DO UPDATE
+		SET
+			source_id_tmpl = EXCLUDED.source_id_tmpl
+			, pub_in = EXCLUDED.pub_in
+			, pub_flux = EXCLUDED.pub_flux
+	</update>
+
+	<sql id="fragment-ChargePointSettings-full-result">
+		cps.cp_id AS ocpp_charge_point_settings_cp_id
+		, cps.created AS ocpp_charge_point_settings_created
+		, cps.pub_in AS ocpp_charge_point_settings_pub_in
+		, cps.pub_flux AS ocpp_charge_point_settings_pub_flux
+		, cps.source_id_tmpl AS ocpp_charge_point_settings_source_id_tmpl
+	</sql>
+	
+	<resultMap id="ChargePointSettings-FullResult" type="net.solarnetwork.central.ocpp.domain.ChargePointSettings">
+		<constructor>
+			<idArg  column="ocpp_charge_point_settings_cp_id" javaType="Long"/>
+			<arg column="ocpp_charge_point_settings_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="publishToSolarIn" column="ocpp_charge_point_settings_pub_in"/>
+		<result property="publishToSolarFlux" column="ocpp_charge_point_settings_pub_flux"/>
+		<result property="sourceIdTemplate" column="ocpp_charge_point_settings_source_id_tmpl"/>
+	</resultMap>
+
+	<select id="get-ChargePointSettings-for-id" parameterType="long" resultMap="ChargePointSettings-FullResult">
+		SELECT
+			<include refid="fragment-ChargePointSettings-full-result"/>
+		FROM
+			solarev.ocpp_charge_point_settings cps
+		WHERE
+			cps.cp_id = #{id}
+	</select>
+	
+	<select id="findall-ChargePointSettings" resultMap="ChargePointSettings-FullResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-ChargePointSettings-full-result"/>
+		FROM
+			solarev.ocpp_charge_point_settings cps
+		ORDER BY
+			cp_id
+	</select>
+
+</mapper>

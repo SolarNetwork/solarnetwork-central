@@ -96,6 +96,10 @@
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 		
+	<bean id="chargePointSettingsDao" class="net.solarnetwork.central.ocpp.dao.mybatis.MyBatisChargePointSettingsDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+		
 	<bean id="chargePointConnectorDao" class="net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointConnectorDao">
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
@@ -108,6 +112,10 @@
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 
+	<bean id="userSettingsDao" class="net.solarnetwork.central.ocpp.dao.mybatis.MyBatisUserSettingsDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+		
 	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
 		<argument ref="sqlSessionFactory"/>
 		<argument value="#{T(org.apache.ibatis.session.ExecutorType).BATCH}"/>
@@ -129,6 +137,8 @@
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralChargePointConnector.xml</value>
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralChargeSession.xml</value>
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralSystemUser.xml</value>
+				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/ChargePointSettings.xml</value>
+				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/UserSettings.xml</value>
 			</list>
 		</property>
 	</bean>

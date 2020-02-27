@@ -20,6 +20,8 @@
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralChargePointConnector.xml</value>
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralChargeSession.xml</value>
 				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/CentralSystemUser.xml</value>
+				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/ChargePointSettings.xml</value>
+				<value>classpath:/net/solarnetwork/central/ocpp/dao/mybatis/map/UserSettings.xml</value>
 			</list>
 		</property>
 	</bean>

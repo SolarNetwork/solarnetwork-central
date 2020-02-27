@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.ocpp.domain.UserSettings">
+
+	<update id="update-UserSettings" parameterType="net.solarnetwork.central.ocpp.domain.UserSettings">
+		INSERT INTO solarev.ocpp_user_settings (
+			user_id
+			<if test="created != null">,created</if>
+			, source_id_tmpl
+		) VALUES (
+			#{id}
+			<if test="created != null">,#{created}</if>
+			, #{sourceIdTemplate}
+		)
+		ON CONFLICT (user_id) DO UPDATE
+		SET source_id_tmpl = EXCLUDED.source_id_tmpl
+	</update>
+
+	<sql id="fragment-UserSettings-full-result">
+		us.user_id AS ocpp_user_settings_cp_id
+		, us.created AS ocpp_user_settings_created
+		, us.source_id_tmpl AS ocpp_user_settings_source_id_tmpl
+	</sql>
+	
+	<resultMap id="UserSettings-FullResult" type="net.solarnetwork.central.ocpp.domain.UserSettings">
+		<constructor>
+			<idArg  column="ocpp_user_settings_cp_id" javaType="Long"/>
+			<arg column="ocpp_user_settings_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="sourceIdTemplate" column="ocpp_user_settings_source_id_tmpl"/>
+	</resultMap>
+
+	<select id="get-UserSettings-for-id" parameterType="long" resultMap="UserSettings-FullResult">
+		SELECT
+			<include refid="fragment-UserSettings-full-result"/>
+		FROM
+			solarev.ocpp_user_settings us
+		WHERE
+			us.user_id = #{id}
+	</select>
+	
+	<select id="findall-UserSettings" resultMap="UserSettings-FullResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-UserSettings-full-result"/>
+		FROM
+			solarev.ocpp_user_settings us
+		ORDER BY
+			user_id
+	</select>
+
+</mapper>
