@@ -1,7 +1,3 @@
-/* Add unique index on user_node to support foreign key from ocpp_charge_point. */
-ALTER TABLE solaruser.user_node ADD CONSTRAINT user_node_unq UNIQUE (user_id, node_id);
-DROP INDEX IF EXISTS solaruser.user_node_user_idx;
-
 CREATE SCHEMA IF NOT EXISTS solarev;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA solarev REVOKE ALL ON TABLES FROM PUBLIC;

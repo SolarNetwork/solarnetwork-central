@@ -460,9 +460,9 @@ CREATE TABLE solaruser.user_node_cert (
 	request_id		VARCHAR(32) NOT NULL,
 	keystore		bytea,
 	CONSTRAINT user_node_cert_pkey PRIMARY KEY (user_id, node_id),
-	CONSTRAINT user_cert_user_fk FOREIGN KEY (user_id)
-		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
+	CONSTRAINT user_node_cert_user_node_fk FOREIGN KEY (user_id, node_id)
+		REFERENCES solaruser.user_node (user_id, node_id) MATCH SIMPLE
+		ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE OR REPLACE FUNCTION solaruser.store_user_node_cert(
@@ -579,22 +579,16 @@ $$;
  * the new owner when the user_id value is changed. Expected record is solaruser.uesr_node.
  */
 CREATE OR REPLACE FUNCTION solaruser.node_ownership_transfer()
-  RETURNS "trigger" AS
-$BODY$
+	RETURNS "trigger"  LANGUAGE 'plpgsql' VOLATILE AS $$
 BEGIN
-	UPDATE solaruser.user_node_cert
-	SET user_id = NEW.user_id
-	WHERE user_id = OLD.user_id
-		AND node_id = NEW.node_id;
-
 	UPDATE solaruser.user_node_conf
 	SET user_id = NEW.user_id
 	WHERE user_id = OLD.user_id
 		AND node_id = NEW.node_id;
 
 	RETURN NEW;
-END;$BODY$
-  LANGUAGE 'plpgsql' VOLATILE;
+END;
+$$;
 
 CREATE TRIGGER node_ownership_transfer
   BEFORE UPDATE
