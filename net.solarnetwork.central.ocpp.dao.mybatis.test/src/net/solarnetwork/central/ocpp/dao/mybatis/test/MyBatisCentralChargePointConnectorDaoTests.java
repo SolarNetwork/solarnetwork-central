@@ -301,4 +301,26 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		assertThat("Info status updated", entity.getInfo(), equalTo(info));
 	}
 
+	@Test
+	public void insert_defaultStatus() {
+		// given
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+
+		// when
+		ChargePointConnector conn = new ChargePointConnector(new ChargePointConnectorKey(cp.getId(), 1),
+				Instant.now());
+		conn.setInfo(StatusNotification.builder().withConnectorId(1).withTimestamp(conn.getCreated())
+				.build());
+		ChargePointConnectorKey pk = dao.save(conn);
+		getSqlSessionTemplate().flushStatements();
+
+		// then
+		assertThat("PK returned", pk, equalTo(new ChargePointConnectorKey(cp.getId(), 1)));
+
+		ChargePointConnector entity = dao.get(pk);
+		CentralChargePointConnector expected = new CentralChargePointConnector(conn);
+		expected.setInfo(expected.getInfo().toBuilder().withStatus(ChargePointStatus.Unknown).build());
+		assertThat("Status defaulted to Unknown", entity.isSameAs(expected), equalTo(true));
+	}
+
 }
