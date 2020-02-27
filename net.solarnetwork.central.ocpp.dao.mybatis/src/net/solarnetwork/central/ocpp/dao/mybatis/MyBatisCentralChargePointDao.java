@@ -42,9 +42,7 @@ public class MyBatisCentralChargePointDao extends BaseMyBatisGenericDaoSupport<C
 	/** Query name enumeration. */
 	public enum QueryName {
 
-		/**
-		 * Get a charge point based on a given {@link ChargePointIdentity}.
-		 */
+		/** Get a charge point based on a given {@link ChargePointIdentity}. */
 		GetForIdentity("get-CentralChargePoint-for-identity");
 
 		private final String queryName;

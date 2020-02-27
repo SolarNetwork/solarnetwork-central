@@ -170,12 +170,11 @@
 	<select id="get-CentralChargePoint-for-identity" parameterType="net.solarnetwork.ocpp.domain.ChargePointIdentity" resultMap="CentralChargePoint-FullResult">
 		SELECT
 			<include refid="fragment-CentralChargePoint-full-result"/>
-		FROM
-			solarev.ocpp_system_user su
-			INNER JOIN solarev.ocpp_charge_point cp ON cp.user_id = su.user_id
+		FROM solarev.ocpp_charge_point cp
+		INNER JOIN solarev.ocpp_system_user su ON su.user_id = cp.user_id
 		WHERE
-			su.username = #{username}
-			AND cp.ident = #{identifier}
+			cp.ident = #{identifier}
+			AND su.username = #{username}
 	</select>
-
+	
 </mapper>
