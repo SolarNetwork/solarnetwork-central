@@ -56,6 +56,7 @@ public class CentralChargePoint extends ChargePoint {
 	 * Constructor.
 	 * 
 	 * @param id
+	 *        the ID
 	 * @param userId
 	 *        the owner user ID
 	 * @param nodeId
@@ -89,6 +90,7 @@ public class CentralChargePoint extends ChargePoint {
 	 * Constructor.
 	 * 
 	 * @param id
+	 *        the ID
 	 * @param userId
 	 *        the owner user ID
 	 * @param nodeId
@@ -114,7 +116,9 @@ public class CentralChargePoint extends ChargePoint {
 	 * @param created
 	 *        the created date
 	 * @param identifier
-	 *        the identifier * @param chargePointVendor the vendor
+	 *        the identifier
+	 * @param chargePointVendor
+	 *        the vendor
 	 * @param chargePointModel
 	 *        the model
 	 */

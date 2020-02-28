@@ -68,7 +68,7 @@ import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.central.ocpp.session.OcppSessionDatumManager;
 import net.solarnetwork.domain.Identity;
-import net.solarnetwork.node.domain.ACEnergyDatum;
+import net.solarnetwork.domain.datum.ACEnergyDatum;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
 import net.solarnetwork.ocpp.dao.ChargeSessionDao;
 import net.solarnetwork.ocpp.dao.PurgePostedChargeSessionsTask;

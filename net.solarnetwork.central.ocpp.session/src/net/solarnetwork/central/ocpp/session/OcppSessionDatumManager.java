@@ -23,7 +23,7 @@
 package net.solarnetwork.central.ocpp.session;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.node.domain.Datum.REVERSE_ACCUMULATING_SUFFIX_KEY;
+import static net.solarnetwork.domain.datum.Datum.REVERSE_ACCUMULATING_SUFFIX_KEY;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -56,8 +56,8 @@ import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
-import net.solarnetwork.node.domain.ACEnergyDatum;
-import net.solarnetwork.node.domain.AtmosphericDatum;
+import net.solarnetwork.domain.datum.ACEnergyDatum;
+import net.solarnetwork.domain.datum.AtmosphericDatum;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
 import net.solarnetwork.ocpp.dao.ChargeSessionDao;
 import net.solarnetwork.ocpp.dao.PurgePostedChargeSessionsTask;

@@ -65,8 +65,14 @@ public class CentralSystemUser extends SystemUser {
 	}
 
 	/**
+	 * Constructor.
+	 * 
 	 * @param id
+	 *        the ID
+	 * @param userId
+	 *        the owner user ID
 	 * @param created
+	 *        the creation date
 	 */
 	public CentralSystemUser(Long id, Long userId, Instant created) {
 		super(id, created);

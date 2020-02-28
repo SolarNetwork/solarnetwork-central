@@ -78,6 +78,8 @@ public class CentralAuthorization extends Authorization {
 	/**
 	 * Constructor.
 	 * 
+	 * @param userId
+	 *        the owner user ID
 	 * @param created
 	 *        the created date
 	 * @param token
