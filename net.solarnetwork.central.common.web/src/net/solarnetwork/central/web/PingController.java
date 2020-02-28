@@ -28,19 +28,19 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.PingTest;
 import net.solarnetwork.domain.PingTestResult;
 import net.solarnetwork.domain.PingTestResultDisplay;
@@ -51,16 +51,15 @@ import net.solarnetwork.web.domain.Response;
  * the results.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @RequestMapping("/ping")
 public class PingController {
 
-	private List<PingTest> tests = null;
+	private static final ExecutorService EXECUTOR = Executors
+			.newCachedThreadPool(new CustomizableThreadFactory("Ping-"));
 
-	private final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(1);
-	private final ExecutorService executorService = new ThreadPoolExecutor(1, 1, 0,
-			TimeUnit.MILLISECONDS, queue);
+	private List<PingTest> tests = null;
 
 	private PingResults executeTests() {
 		final Date now = new Date();
@@ -76,7 +75,7 @@ public class PingController {
 				PingTest.Result pingTestResult = null;
 				Future<PingTest.Result> f = null;
 				try {
-					f = executorService.submit(new Callable<PingTest.Result>() {
+					f = EXECUTOR.submit(new Callable<PingTest.Result>() {
 
 						@Override
 						public PingTest.Result call() throws Exception {
@@ -121,6 +120,7 @@ public class PingController {
 	/**
 	 * An overall test results class.
 	 */
+	@JsonPropertyOrder({"allGood", "date", "results"})
 	public static class PingResults {
 
 		private final Date date;
@@ -133,7 +133,7 @@ public class PingController {
 		 * @param date
 		 *        The date the tests were executed at.
 		 * @param results
-		 *        The test results (or <em>null</em> if none available).
+		 *        The test results (or {@literal null} if none available).
 		 */
 		public PingResults(Date date, Map<String, PingTestResultDisplay> results) {
 			super();
