@@ -57,7 +57,6 @@ import net.solarnetwork.domain.GeneralDatumSamplesType;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.node.domain.ACEnergyDatum;
 import net.solarnetwork.node.domain.AtmosphericDatum;
-import net.solarnetwork.node.domain.Datum;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
 import net.solarnetwork.ocpp.dao.ChargeSessionDao;
 import net.solarnetwork.ocpp.dao.PurgePostedChargeSessionsTask;
@@ -83,7 +82,7 @@ import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
 
 /**
- * A {@link ChargeSessionManager} that generates {@link Datum} from charge
+ * A {@link ChargeSessionManager} that generates datum from charge
  * session transaction data.
  * 
  * @author matt
@@ -291,12 +290,17 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		chargeSessionDao.addReadings(singleton(reading));
 
 		ChargePointSettings cps = settingsForChargePoint(cp.getId());
-		GeneralNodeDatum d = datum(cp, cps, sess, reading);
-		if ( d != null ) {
-			datumDao.store(d);
-		}
+		publishDatum(datum(cp, cps, sess, reading));
 
 		return sess;
+	}
+
+	private void publishDatum(Datum d) {
+		if ( d.settings.isPublishToSolarIn() ) {
+			if ( d != null ) {
+				datumDao.store(d);
+			}
+		}
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -366,9 +370,23 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 				null);
 	}
 
-	private GeneralNodeDatum datum(CentralChargePoint chargePoint,
-			ChargePointSettings chargePointSettings, ChargeSession sess, SampledValue reading) {
-		GeneralNodeDatum d = new GeneralNodeDatum();
+	/** Class to associate settings with datum. */
+	private static class Datum extends GeneralNodeDatum {
+
+		private static final long serialVersionUID = 7826346170884900517L;
+
+		private final ChargePointSettings settings;
+
+		private Datum(ChargePointSettings settings) {
+			super();
+			this.settings = settings;
+		}
+
+	}
+
+	private Datum datum(CentralChargePoint chargePoint, ChargePointSettings chargePointSettings,
+			ChargeSession sess, SampledValue reading) {
+		Datum d = new Datum(chargePointSettings);
 		d.setNodeId(chargePoint.getNodeId());
 		d.setSamples(new GeneralNodeDatumSamples());
 		populateProperty(d, reading.getMeasurand(), reading.getUnit(), reading.getValue());
@@ -425,11 +443,11 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		if ( !newReadings.isEmpty() ) {
 			chargeSessionDao.addReadings(newReadings);
 			// group readings by timestamp into Datum
-			GeneralNodeDatum d = null;
+			Datum d = null;
 			for ( SampledValue reading : newReadings ) {
 				if ( d == null || d.getCreated().getMillis() != reading.getTimestamp().toEpochMilli() ) {
 					if ( d != null ) {
-						datumDao.store(d);
+						publishDatum(d);
 						d = null;
 					}
 
@@ -457,11 +475,18 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 				}
 			}
 			if ( d != null ) {
-				datumDao.store(d);
+				publishDatum(d);
 			}
 		}
 	}
 
+	/**
+	 * Resolve settings for a charge point.
+	 * 
+	 * @param id
+	 *        the charge point ID
+	 * @return the settings, never {@literal null}
+	 */
 	private ChargePointSettings settingsForChargePoint(Long id) {
 		ChargePointSettings cps = chargePointSettingsDao.resolveSettings(id);
 		if ( cps == null ) {
@@ -472,14 +497,31 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		return cps;
 	}
 
-	private String sourceId(ChargePointSettings chargePointSettings, String chargePointId,
-			int connectorId, Location location, Phase phase) {
+	/**
+	 * Resolve a datum source ID from configurable properties.
+	 * 
+	 * @param chargePointSettings
+	 *        the settings
+	 * @param identifier
+	 *        the charge point identifier
+	 * @param connectorId
+	 *        the connector ID
+	 * @param location
+	 *        the location
+	 * @param phase
+	 *        the phase
+	 * @return the source ID, never {@literal null}
+	 */
+	private String sourceId(ChargePointSettings chargePointSettings, String identifier, int connectorId,
+			Location location, Phase phase) {
 		Map<String, Object> params = new HashMap<>(4);
-		params.put("chargePointId", chargePointId);
+		params.put("chargePointId", identifier);
 		params.put("connectorId", connectorId);
 		params.put("location", location);
 		params.put("phase", phase);
-		return StringUtils.expandTemplateString(chargePointSettings.getSourceIdTemplate(), params);
+		return StringUtils.expandTemplateString(chargePointSettings.getSourceIdTemplate() != null
+				? chargePointSettings.getSourceIdTemplate()
+				: sourceIdTemplate, params);
 	}
 
 	private void populateProperty(GeneralNodeDatum datum, Measurand measurand, UnitOfMeasure unit,

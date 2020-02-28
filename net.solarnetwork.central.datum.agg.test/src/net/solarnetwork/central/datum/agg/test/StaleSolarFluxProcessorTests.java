@@ -45,9 +45,8 @@ import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
-import net.solarnetwork.central.datum.agg.AggregateDatumProcessor;
-import net.solarnetwork.central.datum.agg.AggregateSupportDao;
 import net.solarnetwork.central.datum.agg.StaleSolarFluxProcessor;
+import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
@@ -70,13 +69,10 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 
 	private static final String TEST_SOURCE_ID = "test.source";
 
-	private static final Long TEST_USER_ID = -9L;
-
 	private static final String SQL_INSERT_STALE_AGG_FLUX = "INSERT INTO solaragg.agg_stale_flux(agg_kind, node_id, source_id) VALUES (?, ?, ?)";
 
 	private GeneralNodeDatumDao datumDao;
-	private AggregateDatumProcessor processor;
-	private AggregateSupportDao supportDao;
+	private DatumProcessor processor;
 	private TestStaleSolarFluxDatumProcessor job;
 
 	private static final class TestStaleSolarFluxDatumProcessor extends StaleSolarFluxProcessor {
@@ -84,9 +80,8 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 		private final AtomicInteger taskThreadCount = new AtomicInteger(0);
 
 		private TestStaleSolarFluxDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps,
-				GeneralNodeDatumDao datumDao, OptionalService<AggregateDatumProcessor> processor,
-				AggregateSupportDao supportDao) {
-			super(eventAdmin, jdbcOps, datumDao, processor, supportDao);
+				GeneralNodeDatumDao datumDao, OptionalService<DatumProcessor> processor) {
+			super(eventAdmin, jdbcOps, datumDao, processor);
 			setExecutorService(Executors.newCachedThreadPool(new ThreadFactory() {
 
 				@Override
@@ -117,11 +112,10 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 		super.setup();
 
 		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
-		processor = EasyMock.createMock(AggregateDatumProcessor.class);
-		supportDao = EasyMock.createMock(AggregateSupportDao.class);
+		processor = EasyMock.createMock(DatumProcessor.class);
 
 		job = new TestStaleSolarFluxDatumProcessor(null, jdbcTemplate, datumDao,
-				new StaticOptionalService<>(processor), supportDao);
+				new StaticOptionalService<>(processor));
 		job.setJobGroup("Test");
 		job.setJobId(TEST_JOB_ID);
 		job.setMaximumRowCount(10);
@@ -131,12 +125,12 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 	}
 
 	private void replayAll() {
-		EasyMock.replay(datumDao, processor, supportDao);
+		EasyMock.replay(datumDao, processor);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(datumDao, processor, supportDao);
+		EasyMock.verify(datumDao, processor);
 	}
 
 	private void insertStaleAggFlux(Aggregation aggKind, long nodeId, String sourceId) {
@@ -167,11 +161,8 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 		expect(datumDao.findAggregationFiltered(capture(filterCaptor), isNull(), isNull(), isNull()))
 				.andReturn(filterResults);
 
-		expect(supportDao.userIdForNodeId(TEST_NODE_ID)).andReturn(TEST_USER_ID);
-
 		expect(processor.isConfigured()).andReturn(true);
-		expect(processor.processStaleAggregateDatum(TEST_USER_ID, Aggregation.Hour, mostRecentDatum))
-				.andReturn(true);
+		expect(processor.processDatum(mostRecentDatum, Aggregation.Hour)).andReturn(true);
 
 		// WHEN
 		replayAll();

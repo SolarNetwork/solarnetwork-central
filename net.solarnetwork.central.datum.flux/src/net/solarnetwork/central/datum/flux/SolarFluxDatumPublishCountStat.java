@@ -1,7 +1,7 @@
 /* ==================================================================
- * SolarFluxAggregatePublishCountStat.java - 3/11/2019 12:26:12 pm
+ * SolarFluxDatumPublishCountStat.java - 28/02/2020 3:24:04 pm
  * 
- * Copyright 2019 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,29 +20,30 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.agg;
+package net.solarnetwork.central.datum.flux;
 
 import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
 
 /**
- * SolarFlux aggregate publishing statistic types.
+ * MQTT status for datum publishing.
  * 
  * @author matt
  * @version 1.0
- * @since 1.7
  */
-public enum SolarFluxAggregatePublishCountStat implements MqttStat {
+public enum SolarFluxDatumPublishCountStat implements MqttStat {
 
-	HourlyDatumPublished(0, "hourly datum published"),
+	RawDatumPublished(0, "datum published"),
 
-	DailyDatumPublished(1, "daily datum published"),
+	HourlyDatumPublished(1, "hourly datum published"),
 
-	MonthlyDatumPublished(2, "monthly datum published");
+	DailyDatumPublished(2, "daily datum published"),
+
+	MonthlyDatumPublished(3, "monthly datum published");
 
 	private final int index;
 	private final String description;
 
-	private SolarFluxAggregatePublishCountStat(int index, String description) {
+	private SolarFluxDatumPublishCountStat(int index, String description) {
 		this.index = index;
 		this.description = description;
 	}

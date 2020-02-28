@@ -1,10 +1,11 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: SolarNet Datum Aggregate Test
-Bundle-SymbolicName: net.solarnetwork.central.datum.agg.test
-Bundle-Version: 1.6.0
+Bundle-Name: SolarNet SolarFlux Integration Tests
+Bundle-SymbolicName: net.solarnetwork.central.datum.flux.test
+Bundle-Version: 1.0.0
 Bundle-Vendor: SolarNetwork
-Fragment-Host: net.solarnetwork.central.datum.agg;bundle-version="[1.9,2.0)"
+Fragment-Host: net.solarnetwork.central.datum.flux;bundle-version="[1.0,2.0)"
+Automatic-Module-Name: net.solarnetwork.central.datum.flux.test
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
  io.moquette;version="[0.12,1.0)",
@@ -29,6 +30,7 @@ Import-Package:
  org.springframework.asm;version="[4.2,5.0)",
  org.springframework.context;version="[4.2,5.0)",
  org.springframework.expression;version="[4.2,5.0)",
+ org.springframework.scheduling.concurrent;version="[4.2,5.0)",
  org.springframework.test.annotation;version="[4.2,5.0)",
  org.springframework.test.context;version="[4.2,5.0)",
  org.springframework.test.context.junit4;version="[4.2,5.0)",

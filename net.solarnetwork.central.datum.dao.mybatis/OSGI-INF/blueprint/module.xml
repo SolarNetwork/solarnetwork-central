@@ -24,10 +24,18 @@
 	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.dao.mybatis">
 		<beans:prop key="cache.node.flush">900000</beans:prop>
+		<beans:prop key="cache.conf.uri">classpath:/net/solarnetwork/central/datum/dao/jdbc/ehcache.xml</beans:prop>
+		<beans:prop key="userNodeCache.ttl">60</beans:prop>
+		<beans:prop key="userNodeCache.heapMaxEntries">10000</beans:prop>
+		<beans:prop key="userNodeCache.diskMaxSizeMB">100</beans:prop>
 	</osgix:cm-properties>
+	
+	<ctx:property-placeholder properties-ref="cfg"/>
 
 	<!-- Service References -->
 	
+	<reference id="jdbcOps" interface="org.springframework.jdbc.core.JdbcOperations" filter="(db=central)"/>
+
 	<reference id="dataSource" interface="javax.sql.DataSource" filter="(db=central)"/>
 	
 	<reference id="txManager" interface="org.springframework.transaction.PlatformTransactionManager"
@@ -48,11 +56,38 @@
 		</service-properties>
 	</service>
 	
+	<service interface="net.solarnetwork.central.datum.dao.DatumSupportDao">
+		<bean class="net.solarnetwork.central.datum.dao.jdbc.JdbcDatumSupportDao">
+			<argument ref="jdbcOps"/>
+			<property name="userNodeCache" ref="userNodeCache"/>
+		</bean>
+	</service>
+	
 	<!-- Supporting Services -->
 
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="txManager"/>
 	
+	<bean id="cacheManager" class="net.solarnetwork.central.support.JCacheManagerFactoryBean">
+		<property name="cacheManagerUri" value="${cache.conf.uri}"/>
+	</bean>
+
+	<bean id="userNodeCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
+		<argument ref="cacheManager"/>
+		<argument value="java.lang.Long"/>
+		<argument value="java.lang.Long"/>
+		<property name="name" value="user-for-node"/>
+		<property name="expiryPolicy" value="Created"/>
+		<property name="expiryDuration">
+			<bean class="javax.cache.expiry.Duration">
+				<argument value="#{T(java.util.concurrent.TimeUnit).SECONDS}"/>
+				<argument value="${userNodeCache.ttl}"/>
+			</bean>
+		</property>
+		<property name="heapMaxEntries" value="${userNodeCache.heapMaxEntries}"/>
+		<property name="diskMaxSizeMB" value="${userNodeCache.diskMaxSizeMB}"/>
+	</bean>
+
 	<util:map id="skyConditionMap" value-type="net.solarnetwork.central.datum.domain.SkyCondition">
 		<beans:entry key="^(clear|sunny|fine)" value="Clear"/>
 		<beans:entry key="^(?:mostly\s+)?cloudy" value="Overcast"/>

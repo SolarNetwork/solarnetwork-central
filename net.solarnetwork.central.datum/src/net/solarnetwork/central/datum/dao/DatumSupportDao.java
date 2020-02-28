@@ -1,7 +1,7 @@
 /* ==================================================================
- * AggregateSupportDao.java - 5/11/2019 7:00:09 am
+ * DatumSupportDao.java - 28/02/2020 2:54:12 pm
  * 
- * Copyright 2019 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,15 +20,16 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.agg;
+package net.solarnetwork.central.datum.dao;
 
 /**
- * DAO API for looking up user info for aggregate processing.
+ * DAO API for looking up user info for datum processing.
  * 
  * @author matt
  * @version 1.0
+ * @since 2.1
  */
-public interface AggregateSupportDao {
+public interface DatumSupportDao {
 
 	/**
 	 * Get the ID of the owner of a node.

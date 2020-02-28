@@ -1,7 +1,7 @@
 /* ==================================================================
- * JdbcAggreagteSupportDaoTests.java - 5/11/2019 7:18:25 am
+ * JdbcDatumSupportDaoTests.java - 28/02/2020 3:12:46 pm
  * 
- * Copyright 2019 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,30 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.agg.test;
+package net.solarnetwork.central.datum.dao.jdbc.test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
-import net.solarnetwork.central.datum.agg.JdbcAggregateSupportDao;
+import net.solarnetwork.central.datum.dao.jdbc.JdbcDatumSupportDao;
 
 /**
- * Test cases for the {@link JdbcAggregateSupportDao} class.
+ * FIXME
+ * 
+ * <p>
+ * TODO
+ * </p>
  * 
  * @author matt
  * @version 1.0
  */
-public class JdbcAggreagteSupportDaoTests extends AggTestSupport {
+public class JdbcDatumSupportDaoTests extends BaseDatumJdbcTestSupport {
 
-	private JdbcAggregateSupportDao dao;
+	private JdbcDatumSupportDao dao;
 
-	@Override
 	@Before
 	public void setup() {
-		super.setup();
-		dao = new JdbcAggregateSupportDao(jdbcTemplate);
+		dao = new JdbcDatumSupportDao(jdbcTemplate);
 	}
 
 	@Test
@@ -62,8 +64,8 @@ public class JdbcAggreagteSupportDaoTests extends AggTestSupport {
 		// GIVEN
 		setupTestLocation(TEST_LOC_ID, "Pacific/Auckland");
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		setupTestUser(TEST_USER_ID);
-		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID);
+		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "Test Node");
 
 		// WHEN
 		Long userId = dao.userIdForNodeId(TEST_NODE_ID);

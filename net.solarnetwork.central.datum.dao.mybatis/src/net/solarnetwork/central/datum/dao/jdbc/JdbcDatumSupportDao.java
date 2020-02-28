@@ -1,7 +1,7 @@
 /* ==================================================================
- * JdbcAggregateSupportDao.java - 5/11/2019 7:02:40 am
+ * JdbcDatumSupportDao.java - 28/02/2020 2:57:32 pm
  * 
- * Copyright 2019 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,20 +20,20 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.agg;
+package net.solarnetwork.central.datum.dao.jdbc;
 
 import java.util.List;
 import javax.cache.Cache;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.datum.dao.DatumSupportDao;
 
 /**
- * JDBC implementation of {@link AggregateSupportDao}.
+ * JDBC implementation of {@link DatumSupportDao}.
  * 
  * @author matt
  * @version 1.0
- * @since 1.7
  */
-public class JdbcAggregateSupportDao implements AggregateSupportDao {
+public class JdbcDatumSupportDao implements DatumSupportDao {
 
 	/** The default value for the {@code sqlUserIdForNodeId} property. */
 	public static final String DEFAULT_SQL_USER_ID_FOR_NODE_ID = "SELECT user_id FROM solaruser.user_node WHERE node_id = ?";
@@ -48,7 +48,7 @@ public class JdbcAggregateSupportDao implements AggregateSupportDao {
 	 * @param jdbcOps
 	 *        the JDBC operations to use
 	 */
-	public JdbcAggregateSupportDao(JdbcOperations jdbcOps) {
+	public JdbcDatumSupportDao(JdbcOperations jdbcOps) {
 		super();
 		this.jdbcOps = jdbcOps;
 		setSqlUserIdForNodeId(DEFAULT_SQL_USER_ID_FOR_NODE_ID);
@@ -81,7 +81,9 @@ public class JdbcAggregateSupportDao implements AggregateSupportDao {
 	}
 
 	/**
-	 * @return the jdbcOps
+	 * Get the JDBC operations.
+	 * 
+	 * @return the ops
 	 */
 	public JdbcOperations getJdbcOps() {
 		return jdbcOps;
