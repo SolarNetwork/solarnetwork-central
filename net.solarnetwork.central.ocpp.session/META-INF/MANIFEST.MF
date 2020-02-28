@@ -8,6 +8,7 @@ Automatic-Module-Name: net.solarnetwork.central.ocpp.session
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
  net.solarnetwork.central.dao;version="[2.0,3.0)",
+ net.solarnetwork.central.datum.biz;version="[1.8,2.0)",
  net.solarnetwork.central.datum.dao;version="[3.0,4.0)",
  net.solarnetwork.central.datum.domain;version="[2.0,3.0)",
  net.solarnetwork.central.domain;version="[2.0,3.0)",

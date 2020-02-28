@@ -27,6 +27,12 @@
 	
 	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager" filter="(db=central)"/>
 
+	<bean id="fluxPublisher" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.datum.biz.DatumProcessor"/>
+		<property name="serviceFilter" value="(function=solarflux)"/>
+	</bean>
+
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 	
@@ -49,6 +55,7 @@
 		<argument ref="chargeSessionDao"/>
 		<argument ref="generalNodeDatumDao"/>
 		<argument ref="chargePointSettingsDao"/>
+		<argument ref="fluxPublisher"/>
 		<property name="taskScheduler" ref="taskScheduler"/>
 	</bean>
 
