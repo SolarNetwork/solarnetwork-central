@@ -71,7 +71,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.14
+ * @version 1.15
  */
 public abstract class WebServiceControllerSupport {
 
@@ -241,6 +241,23 @@ public abstract class WebServiceControllerSupport {
 	public Response<?> handleIllegalArgumentException(IllegalArgumentException e) {
 		log.error("IllegalArgumentException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
+	}
+
+	/**
+	 * Handle an {@link UnsupportedOperationException} as a {@literal 404} error
+	 * status.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return an error response object
+	 * @since 1.15
+	 */
+	@ExceptionHandler(UnsupportedOperationException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.NOT_FOUND)
+	public Response<?> handleUnsupportedOperationException(UnsupportedOperationException e) {
+		log.debug("UnsupportedOperationException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, "404", e.getMessage(), null);
 	}
 
 	/**
