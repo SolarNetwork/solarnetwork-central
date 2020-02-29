@@ -1,0 +1,76 @@
+/* ==================================================================
+ * UserOcppBiz.java - 29/02/2020 4:24:46 pm
+ * 
+ * Copyright 2020 SolarNetwork.net Dev Team
+ * 
+ * This program is free software; you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as 
+ * published by the Free Software Foundation; either version 2 of 
+ * the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ * 02111-1307 USA
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.user.ocpp.biz;
+
+import java.util.Collection;
+import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
+
+/**
+ * Service API for SolarUser OCPP support.
+ * 
+ * @author matt
+ * @version 1.0
+ */
+public interface UserOcppBiz {
+
+	/**
+	 * List the available OCPP system users for a given user.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get OCPP system users for
+	 * @return all available system users; never {@literal null}
+	 */
+	Collection<CentralSystemUser> systemUsersForUser(Long userId);
+
+	/**
+	 * Create a new OCPP system user, or update an existing user.
+	 * 
+	 * @param systemUser
+	 *        the details to save
+	 * @return the persisted system user, with any default values populated and
+	 *         ID assigned if creating a new entity
+	 */
+	CentralSystemUser saveSystemUser(CentralSystemUser systemUser);
+
+	/**
+	 * List the available charge points for a given user.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get charge points for
+	 * @return all available charge points; never {@literal null}
+	 */
+	Collection<CentralChargePoint> chargePointsForUser(Long userId);
+
+	/**
+	 * Create a new charge point registration, or update an existing
+	 * registration.
+	 * 
+	 * @param chargePoint
+	 *        the details to save
+	 * @return the persisted charge point, with any default values populated and
+	 *         ID assigned if creating a new entity
+	 */
+	CentralChargePoint saveChargePoint(CentralChargePoint chargePoint);
+
+}

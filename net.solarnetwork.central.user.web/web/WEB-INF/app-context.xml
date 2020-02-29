@@ -78,6 +78,16 @@
 				<bean class="net.solarnetwork.util.JodaLocalTimeDeserializer"/>
 			</list>
 		</property>
+		<property name="featuresToDisable">
+			<list>
+				<value>#{T(com.fasterxml.jackson.databind.SerializationFeature).WRITE_DATES_AS_TIMESTAMPS}</value>
+			</list>
+		</property>
+		<property name="modules">
+			<list>
+				<bean class="com.fasterxml.jackson.datatype.jsr310.JavaTimeModule"/>
+			</list>
+		</property>
 	</bean>
 	
 	<bean id="asyncTaskExecutor" class="org.springframework.scheduling.concurrent.ConcurrentTaskExecutor">

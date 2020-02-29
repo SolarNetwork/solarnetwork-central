@@ -413,7 +413,7 @@
          </p>]]>
       </description>
       <name>definition</name>
-      <tag-class>org.apache.tiles.jsp.taglib.definition.DefinitionTag</tag-class>
+      <tag-class>org.apache.tiles.jsp.taglib.DefinitionTag</tag-class>
       <body-content>scriptless</body-content>
       <attribute>
          <description>
@@ -939,76 +939,5 @@
          <type>boolean</type>
       </attribute>
    </tag>
-   <tag>
-      <description>
-      <![CDATA[
-      <p><strong>THIS TAG HAS BEEN DEPRECATED! Please use TilesInitializer or a
-      servlet-based way, like TilesServlet, for initialization!</strong></p>
-      <p><strong>Initialize the TilesContainer.</strong></p>
-      <p>
-      In order to use the Tiles system, a TilesContainer must be instantiated.
-      This initialization is generally done by the TilesListener (or perhaps the
-      TilesServlet or TilesFilter).
-      </p>
-      <p>
-      If the intialization needs to be dynamic, you can initialize the container using
-      this tag.  Realize however, that this tag MUST be executed prior to invoking
-      any other definitions.  Additionally, the initilization may only be done once,
-      and any subsequent invocations will be ignored.
-      </p>
-      ]]>
-      </description>
-      <name>initContainer</name>
-      <tag-class>org.apache.tiles.jsp.taglib.definition.InitContainerTag</tag-class>
-      <body-content>scriptless</body-content>
-      <attribute>
-         <description> <![CDATA[ <p>Container Factory implementation used to instantiate the container.</p> ]]> </description>
-         <name>containerFactory</name>
-         <required>false</required>
-         <rtexprvalue>true</rtexprvalue>
-      </attribute>
-      <attribute>
-         <description> <![CDATA[ <p>The key under which the container will be stored.</p>
-         <p>If not defined, the container will be the default container</p> ]]> </description>
-         <name>containerKey</name>
-         <required>false</required>
-         <rtexprvalue>true</rtexprvalue>
-      </attribute>
-   </tag>
-
-    <tag>
-        <description>
-            <![CDATA[
-            <p><strong>Destroy the TilesContainer.</strong></p>
-            ]]>
-        </description>
-        <name>destroyContainer</name>
-        <tag-class>org.apache.tiles.jsp.taglib.definition.DestroyContainerTag</tag-class>
-        <body-content>empty</body-content>
-        <attribute>
-            <description> <![CDATA[ <p>The key of the container to destroy.</p>
-            <p>If not defined, the destroyed container will be the default container</p> ]]> </description>
-            <name>containerKey</name>
-            <required>false</required>
-            <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
-    <tag>
-        <description>
-            <![CDATA[
-            <p><strong>Sets the current Tiles container to use in Tiles tags.</strong></p>
-            ]]>
-        </description>
-        <name>setCurrentContainer</name>
-        <tag-class>org.apache.tiles.jsp.taglib.definition.SetCurrentContainerTag</tag-class>
-        <body-content>empty</body-content>
-        <attribute>
-            <description> <![CDATA[ <p>The key of the container that will be set as "current".</p>
-            <p>If not defined, the current container will be the default container</p> ]]> </description>
-            <name>containerKey</name>
-            <required>false</required>
-            <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
 </taglib>
 
