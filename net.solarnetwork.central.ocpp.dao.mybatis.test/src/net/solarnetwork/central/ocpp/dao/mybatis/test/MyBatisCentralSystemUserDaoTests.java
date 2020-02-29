@@ -176,6 +176,23 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 	}
 
 	@Test
+	public void findAllForOwner() {
+		SystemUser obj1 = createTestSystemUser();
+		obj1 = dao.get(dao.save(obj1));
+		SystemUser obj2 = new CentralSystemUser(userId, obj1.getCreated().minusSeconds(60), "b", "bb");
+		obj2 = dao.get(dao.save(obj2));
+
+		Long userId2 = this.userId - 1;
+		setupTestUser(userId2);
+
+		SystemUser obj3 = new CentralSystemUser(userId2, obj1.getCreated().plusSeconds(60), "c", "cc");
+		obj3 = dao.get(dao.save(obj3));
+
+		Collection<CentralSystemUser> results = dao.findAllForOwner(userId);
+		assertThat("Results found in order", results, contains(obj2, obj1));
+	}
+
+	@Test
 	public void findAll_sortByCreatedDesc() {
 		SystemUser obj1 = createTestSystemUser();
 		obj1 = dao.get(dao.save(obj1));

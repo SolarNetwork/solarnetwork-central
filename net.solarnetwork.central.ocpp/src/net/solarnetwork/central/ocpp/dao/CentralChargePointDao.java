@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import java.util.Collection;
+import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
 import net.solarnetwork.ocpp.domain.ChargePoint;
 
@@ -49,5 +51,14 @@ public interface CentralChargePointDao extends ChargePointDao {
 	 * @return the matching charge point, or {@literal null} if not found
 	 */
 	ChargePoint getForIdentifier(Long userId, String identifier);
+
+	/**
+	 * Get all available charge points for a given owner.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @return the available charge points; never {@literal null}
+	 */
+	Collection<CentralChargePoint> findAllForOwner(Long userId);
 
 }

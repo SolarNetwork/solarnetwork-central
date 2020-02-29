@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import java.util.Collection;
+import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.ocpp.dao.SystemUserDao;
 
 /**
@@ -37,5 +39,14 @@ import net.solarnetwork.ocpp.dao.SystemUserDao;
  * @version 1.0
  */
 public interface CentralSystemUserDao extends SystemUserDao {
+
+	/**
+	 * Find all available system users for a given owner.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @return the available system users; never {@literal null}
+	 */
+	Collection<CentralSystemUser> findAllForOwner(Long userId);
 
 }

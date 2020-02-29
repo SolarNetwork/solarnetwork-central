@@ -159,6 +159,28 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 	}
 
 	@Test
+	public void findAllForOwner() {
+		ChargePoint obj1 = createTestChargePoint();
+		obj1 = dao.get(dao.save(obj1));
+		ChargePoint obj2 = new CentralChargePoint(userId, nodeId, obj1.getCreated().minusSeconds(60),
+				"b", "foo", "bar");
+		obj2 = dao.get(dao.save(obj2));
+
+		final Long userId2 = userId - 1;
+		final Long nodeId2 = nodeId - 1;
+		setupTestUser(userId2);
+		setupTestNode(nodeId2);
+		setupTestUserNode(userId2, nodeId2);
+
+		ChargePoint obj3 = new CentralChargePoint(userId2, nodeId2, obj1.getCreated().plusSeconds(60),
+				"c", "foo", "bar");
+		obj3 = dao.get(dao.save(obj3));
+
+		Collection<CentralChargePoint> results = dao.findAllForOwner(userId);
+		assertThat("Results found in order", results, contains(obj2, obj1));
+	}
+
+	@Test
 	public void findAll_sortByCreatedDesc() {
 		ChargePoint obj1 = createTestChargePoint();
 		obj1 = dao.get(dao.save(obj1));
@@ -223,8 +245,7 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		findAll();
 		SystemUser systemUser = systemUserDao
 				.get(systemUserDao.save(createTestSystemUser("user", userId)));
-		ChargePoint entity = dao
-				.getForIdentity(new ChargePointIdentity("b", systemUser.getUsername()));
+		ChargePoint entity = dao.getForIdentity(new ChargePointIdentity("b", systemUser.getUsername()));
 		assertThat("Match", entity, notNullValue());
 		assertThat("Username matches", entity.getInfo().getId(), equalTo("b"));
 	}

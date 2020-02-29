@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -37,7 +38,8 @@ import net.solarnetwork.domain.Differentiable;
  * @author matt
  * @version 1.0
  */
-public class UserSettings extends BasicLongEntity implements Differentiable<UserSettings> {
+public class UserSettings extends BasicLongEntity
+		implements Differentiable<UserSettings>, UserRelatedEntity<Long> {
 
 	/** The default {@code sourceIdTemplate} value. */
 	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/{chargePointId}/{connectorId}/{location}";
@@ -98,6 +100,7 @@ public class UserSettings extends BasicLongEntity implements Differentiable<User
 	 * 
 	 * @return the user ID
 	 */
+	@Override
 	public Long getUserId() {
 		return getId();
 	}

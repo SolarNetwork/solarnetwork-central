@@ -24,6 +24,9 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.ocpp.domain.SystemUser;
 
 /**
@@ -32,7 +35,9 @@ import net.solarnetwork.ocpp.domain.SystemUser;
  * @author matt
  * @version 1.0
  */
-public class CentralSystemUser extends SystemUser {
+@JsonIgnoreProperties({ "allowedChargePointsArray", "allowedChargePointsValue", "password" })
+@JsonPropertyOrder({ "id", "created", "userId", "username", "allowedChargePoints" })
+public class CentralSystemUser extends SystemUser implements UserRelatedEntity<Long> {
 
 	private final Long userId;
 
@@ -129,6 +134,7 @@ public class CentralSystemUser extends SystemUser {
 	 * 
 	 * @return the owner user ID
 	 */
+	@Override
 	public Long getUserId() {
 		return userId;
 	}

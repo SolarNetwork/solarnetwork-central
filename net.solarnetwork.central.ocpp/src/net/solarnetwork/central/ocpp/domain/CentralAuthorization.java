@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.ocpp.domain.Authorization;
 
 /**
@@ -32,7 +33,7 @@ import net.solarnetwork.ocpp.domain.Authorization;
  * @author matt
  * @version 1.0
  */
-public class CentralAuthorization extends Authorization {
+public class CentralAuthorization extends Authorization implements UserRelatedEntity<Long> {
 
 	private final Long userId;
 
@@ -147,6 +148,7 @@ public class CentralAuthorization extends Authorization {
 	 * 
 	 * @return the owner user ID
 	 */
+	@Override
 	public Long getUserId() {
 		return userId;
 	}

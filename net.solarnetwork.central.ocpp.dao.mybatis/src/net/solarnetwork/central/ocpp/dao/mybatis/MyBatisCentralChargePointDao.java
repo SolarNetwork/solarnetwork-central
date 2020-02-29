@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
+import java.util.Collection;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
@@ -77,6 +78,12 @@ public class MyBatisCentralChargePointDao extends BaseMyBatisGenericDaoSupport<C
 	public ChargePoint getForIdentifier(Long userId, String identifier) {
 		return selectFirst(getQueryForAll(), singletonMap(FILTER_PROPERTY,
 				new CentralChargePoint(null, userId, null, null, new ChargePointInfo(identifier))));
+	}
+
+	@Override
+	public Collection<CentralChargePoint> findAllForOwner(Long userId) {
+		return selectList(getQueryForAll(),
+				singletonMap(FILTER_PROPERTY, new CentralChargePoint(userId, null)), null, null);
 	}
 
 }

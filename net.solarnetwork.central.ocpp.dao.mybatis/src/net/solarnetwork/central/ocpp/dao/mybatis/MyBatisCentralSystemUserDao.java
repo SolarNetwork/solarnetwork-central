@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
+import java.util.Collection;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
@@ -49,6 +50,12 @@ public class MyBatisCentralSystemUserDao extends BaseMyBatisGenericDaoSupport<Sy
 	public SystemUser getForUsername(String username) {
 		return selectFirst(getQueryForAll(),
 				singletonMap(FILTER_PROPERTY, new CentralSystemUser(null, null, username, null)));
+	}
+
+	@Override
+	public Collection<CentralSystemUser> findAllForOwner(Long userId) {
+		return selectList(getQueryForAll(), singletonMap(FILTER_PROPERTY, new CentralSystemUser(userId)),
+				null, null);
 	}
 
 }

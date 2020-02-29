@@ -24,6 +24,9 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import net.solarnetwork.central.user.dao.UserNodeRelatedEntity;
 import net.solarnetwork.ocpp.domain.ChargePoint;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 
@@ -33,7 +36,10 @@ import net.solarnetwork.ocpp.domain.ChargePointInfo;
  * @author matt
  * @version 1.0
  */
-public class CentralChargePoint extends ChargePoint {
+@JsonIgnoreProperties({ "userNodeId" })
+@JsonPropertyOrder({ "id", "created", "userId", "nodeId", "enabled", "registrationStatus",
+		"connectorCount", "info" })
+public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEntity<Long> {
 
 	private final Long userId;
 	private final Long nodeId;
@@ -191,6 +197,7 @@ public class CentralChargePoint extends ChargePoint {
 	 * 
 	 * @return the owner user ID
 	 */
+	@Override
 	public Long getUserId() {
 		return userId;
 	}
@@ -200,6 +207,7 @@ public class CentralChargePoint extends ChargePoint {
 	 * 
 	 * @return the node ID
 	 */
+	@Override
 	public Long getNodeId() {
 		return nodeId;
 	}
