@@ -33,8 +33,10 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.user.ocpp.biz.dao.DaoUserOcppBiz;
@@ -47,6 +49,7 @@ import net.solarnetwork.central.user.ocpp.biz.dao.DaoUserOcppBiz;
  */
 public class DaoUserOcppBizTests {
 
+	private CentralAuthorizationDao authorizationDao;
 	private CentralChargePointDao chargePointDao;
 	private CentralSystemUserDao systemUserDao;
 
@@ -54,18 +57,34 @@ public class DaoUserOcppBizTests {
 
 	@Before
 	public void setup() {
+		authorizationDao = EasyMock.createMock(CentralAuthorizationDao.class);
 		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
 		systemUserDao = EasyMock.createMock(CentralSystemUserDao.class);
-		biz = new DaoUserOcppBiz(systemUserDao, chargePointDao);
+		biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, authorizationDao);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(chargePointDao, systemUserDao);
+		EasyMock.verify(authorizationDao, chargePointDao, systemUserDao);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(chargePointDao, systemUserDao);
+		EasyMock.replay(authorizationDao, chargePointDao, systemUserDao);
+	}
+
+	@Test
+	public void availableAuthorizations() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		List<CentralAuthorization> list = Collections.emptyList();
+		expect(authorizationDao.findAllForOwner(userId)).andReturn(list);
+
+		// WHEN
+		replayAll();
+		Collection<CentralAuthorization> results = biz.authorizationsForUser(userId);
+
+		// THEN
+		assertThat("DAO results returned", results, sameInstance(list));
 	}
 
 	@Test

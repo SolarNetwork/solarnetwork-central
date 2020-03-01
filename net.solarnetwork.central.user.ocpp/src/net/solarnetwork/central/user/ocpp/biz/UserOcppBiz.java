@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.ocpp.biz;
 
 import java.util.Collection;
+import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 
@@ -52,6 +53,25 @@ public interface UserOcppBiz {
 	 *         ID assigned if creating a new entity
 	 */
 	CentralSystemUser saveSystemUser(CentralSystemUser systemUser);
+
+	/**
+	 * Get the available OCPP authorizations for a given user.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get OCPP authorizations for
+	 * @return all available authorizations; never {@literal null}
+	 */
+	Collection<CentralAuthorization> authorizationsForUser(Long userId);
+
+	/**
+	 * Create a new OCPP authorization, or update an existing authorization.
+	 * 
+	 * @param authorization
+	 *        the details to save
+	 * @return the persisted authorization, with any default values populated
+	 *         and ID assigned if creating a new entity
+	 */
+	CentralAuthorization saveAuthorization(CentralAuthorization authorization);
 
 	/**
 	 * List the available charge points for a given user.

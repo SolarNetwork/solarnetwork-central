@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.ocpp.support;
 
 import java.util.Collection;
+import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
@@ -56,6 +57,16 @@ public class DelegatingUserOcppBiz implements UserOcppBiz {
 	@Override
 	public CentralSystemUser saveSystemUser(CentralSystemUser systemUser) {
 		return delegate.saveSystemUser(systemUser);
+	}
+
+	@Override
+	public Collection<CentralAuthorization> authorizationsForUser(Long userId) {
+		return delegate.authorizationsForUser(userId);
+	}
+
+	@Override
+	public CentralAuthorization saveAuthorization(CentralAuthorization authorization) {
+		return delegate.saveAuthorization(authorization);
 	}
 
 	@Override

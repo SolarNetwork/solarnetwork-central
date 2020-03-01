@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.ocpp.domain.Authorization;
 
@@ -33,6 +34,8 @@ import net.solarnetwork.ocpp.domain.Authorization;
  * @author matt
  * @version 1.0
  */
+@JsonPropertyOrder({ "id", "created", "userId", "token", "enabled", "expired", "expiryDate",
+		"parentId" })
 public class CentralAuthorization extends Authorization implements UserRelatedEntity<Long> {
 
 	private final Long userId;

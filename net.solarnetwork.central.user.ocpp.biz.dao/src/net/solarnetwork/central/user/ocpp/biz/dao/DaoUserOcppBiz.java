@@ -25,8 +25,10 @@ package net.solarnetwork.central.user.ocpp.biz.dao;
 import java.util.Collection;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
@@ -41,6 +43,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 
 	private final CentralSystemUserDao systemUserDao;
 	private final CentralChargePointDao chargePointDao;
+	private final CentralAuthorizationDao authorizationDao;
 
 	/**
 	 * Constructor.
@@ -49,8 +52,11 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 *        the system user DAO
 	 * @param chargePointDao
 	 *        the charge point DAO
+	 * @param authorizationDao
+	 *        the authorization DAO
 	 */
-	public DaoUserOcppBiz(CentralSystemUserDao systemUserDao, CentralChargePointDao chargePointDao) {
+	public DaoUserOcppBiz(CentralSystemUserDao systemUserDao, CentralChargePointDao chargePointDao,
+			CentralAuthorizationDao authorizationDao) {
 		super();
 		if ( systemUserDao == null ) {
 			throw new IllegalArgumentException("The systemUserDao parameter must not be null.");
@@ -60,6 +66,10 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 			throw new IllegalArgumentException("The chargePointDao parameter must not be null.");
 		}
 		this.chargePointDao = chargePointDao;
+		if ( authorizationDao == null ) {
+			throw new IllegalArgumentException("The authorizationDao parameter must not be null.");
+		}
+		this.authorizationDao = authorizationDao;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -72,6 +82,18 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public CentralSystemUser saveSystemUser(CentralSystemUser systemUser) {
 		return (CentralSystemUser) systemUserDao.get(systemUserDao.save(systemUser));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Collection<CentralAuthorization> authorizationsForUser(Long userId) {
+		return authorizationDao.findAllForOwner(userId);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CentralAuthorization saveAuthorization(CentralAuthorization authorization) {
+		return (CentralAuthorization) authorizationDao.get(authorizationDao.save(authorization));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import java.util.Collection;
+import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.ocpp.dao.AuthorizationDao;
 import net.solarnetwork.ocpp.domain.Authorization;
 
@@ -49,5 +51,14 @@ public interface CentralAuthorizationDao extends AuthorizationDao {
 	 * @return the matching entity, or {@literal null} if not found
 	 */
 	Authorization getForToken(Long userId, String token);
+
+	/**
+	 * Find all available authorizations for a given owner.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @return the available authorizations; never {@literal null}
+	 */
+	Collection<CentralAuthorization> findAllForOwner(Long userId);
 
 }

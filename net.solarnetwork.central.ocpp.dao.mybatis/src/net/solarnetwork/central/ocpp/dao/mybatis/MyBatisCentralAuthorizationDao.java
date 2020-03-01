@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
+import java.util.Collection;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
@@ -53,6 +54,12 @@ public class MyBatisCentralAuthorizationDao extends BaseMyBatisGenericDaoSupport
 	public Authorization getForToken(Long userId, String token) {
 		return selectFirst(getQueryForAll(),
 				singletonMap(FILTER_PROPERTY, new CentralAuthorization(userId, null, token)));
+	}
+
+	@Override
+	public Collection<CentralAuthorization> findAllForOwner(Long userId) {
+		return selectList(getQueryForAll(),
+				singletonMap(FILTER_PROPERTY, new CentralAuthorization(userId)), null, null);
 	}
 
 }

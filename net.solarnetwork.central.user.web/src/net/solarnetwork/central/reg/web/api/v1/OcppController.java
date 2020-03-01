@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -79,18 +80,6 @@ public class OcppController extends WebServiceControllerSupport {
 	}
 
 	/**
-	 * Get all available OCPP system users for the current user.
-	 * 
-	 * @return the system users
-	 */
-	@RequestMapping(method = RequestMethod.GET, value = "/credentials")
-	public Response<Collection<CentralSystemUser>> availableSystemUsers() {
-		final Long userId = SecurityUtils.getCurrentActorUserId();
-		Collection<CentralSystemUser> list = userOcppBiz().systemUsersForUser(userId);
-		return Response.response(list);
-	}
-
-	/**
 	 * Get all available charge points for the current user.
 	 * 
 	 * @return the charge points
@@ -99,6 +88,30 @@ public class OcppController extends WebServiceControllerSupport {
 	public Response<Collection<CentralChargePoint>> availableChargePoints() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralChargePoint> list = userOcppBiz().chargePointsForUser(userId);
+		return Response.response(list);
+	}
+
+	/**
+	 * Get all available charge points for the current user.
+	 * 
+	 * @return the charge points
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/authorizations")
+	public Response<Collection<CentralAuthorization>> availableAuthorizations() {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		Collection<CentralAuthorization> list = userOcppBiz().authorizationsForUser(userId);
+		return Response.response(list);
+	}
+
+	/**
+	 * Get all available OCPP system users for the current user.
+	 * 
+	 * @return the system users
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/credentials")
+	public Response<Collection<CentralSystemUser>> availableSystemUsers() {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		Collection<CentralSystemUser> list = userOcppBiz().systemUsersForUser(userId);
 		return Response.response(list);
 	}
 

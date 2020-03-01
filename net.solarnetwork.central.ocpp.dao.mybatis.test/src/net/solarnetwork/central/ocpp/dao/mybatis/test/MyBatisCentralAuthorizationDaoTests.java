@@ -134,6 +134,22 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 	}
 
 	@Test
+	public void findAllForOwner() {
+		Authorization obj1 = createTestAuthorization();
+		obj1 = dao.get(dao.save(obj1));
+		Authorization obj2 = new CentralAuthorization(userId, obj1.getCreated().minusSeconds(60), "b");
+		obj2 = dao.get(dao.save(obj2));
+
+		Long userId2 = userId - 1;
+		setupTestUser(userId2);
+		Authorization obj3 = new CentralAuthorization(userId2, obj1.getCreated().plusSeconds(60), "c");
+		obj3 = dao.get(dao.save(obj3));
+
+		Collection<CentralAuthorization> results = dao.findAllForOwner(userId);
+		assertThat("Results found in order", results, contains(obj2, obj1));
+	}
+
+	@Test
 	public void findAll_sortByCreatedDesc() {
 		Authorization obj1 = createTestAuthorization();
 		obj1 = dao.get(dao.save(obj1));
