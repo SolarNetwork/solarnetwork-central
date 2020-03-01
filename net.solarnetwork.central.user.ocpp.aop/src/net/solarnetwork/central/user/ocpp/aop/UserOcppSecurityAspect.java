@@ -75,7 +75,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	}
 
 	@Before("saveUserRelatedEntity(entity)")
-	public void userReadAccessCheck(UserRelatedEntity<?> entity) {
+	public void userWriteAccessCheck(UserRelatedEntity<?> entity) {
 		if ( entity == null || entity.getUserId() == null ) {
 			throw new IllegalArgumentException("The entity's userId parameter must not be null.");
 		}
