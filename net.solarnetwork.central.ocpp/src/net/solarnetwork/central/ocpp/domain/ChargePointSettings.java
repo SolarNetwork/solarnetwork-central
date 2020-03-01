@@ -24,6 +24,8 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -58,7 +60,10 @@ public class ChargePointSettings extends BasicLongEntity implements Differentiab
 	 * @param created
 	 *        the creation date
 	 */
-	public ChargePointSettings(Long chargePointId, Instant created) {
+	@JsonCreator
+	public ChargePointSettings(
+			@JsonProperty(value = "chargePointId", required = true) Long chargePointId,
+			@JsonProperty("created") Instant created) {
 		super(chargePointId, created);
 	}
 

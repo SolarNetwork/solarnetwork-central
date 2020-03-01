@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.web.domain.Response.response;
 import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -88,7 +90,7 @@ public class OcppController extends WebServiceControllerSupport {
 	public Response<Collection<CentralChargePoint>> availableChargePoints() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralChargePoint> list = userOcppBiz().chargePointsForUser(userId);
-		return Response.response(list);
+		return response(list);
 	}
 
 	/**
@@ -100,7 +102,20 @@ public class OcppController extends WebServiceControllerSupport {
 	public Response<Collection<CentralAuthorization>> availableAuthorizations() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralAuthorization> list = userOcppBiz().authorizationsForUser(userId);
-		return Response.response(list);
+		return response(list);
+	}
+
+	/**
+	 * Save an authorization.
+	 * 
+	 * @param authorization
+	 *        the authorization to save
+	 * @return the saved authorization
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "/authorizations")
+	public Response<CentralAuthorization> saveAuthorization(
+			@RequestBody CentralAuthorization authorization) {
+		return response(userOcppBiz().saveAuthorization(authorization));
 	}
 
 	/**
@@ -112,7 +127,7 @@ public class OcppController extends WebServiceControllerSupport {
 	public Response<Collection<CentralSystemUser>> availableSystemUsers() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralSystemUser> list = userOcppBiz().systemUsersForUser(userId);
-		return Response.response(list);
+		return response(list);
 	}
 
 }

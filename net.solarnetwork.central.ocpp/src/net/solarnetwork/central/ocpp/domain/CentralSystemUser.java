@@ -24,7 +24,9 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.ocpp.domain.SystemUser;
@@ -55,6 +57,19 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 	/**
 	 * Constructor.
 	 * 
+	 * @param id
+	 *        the ID
+	 * @param userId
+	 *        the owner user ID
+	 */
+	public CentralSystemUser(Long id, Long userId) {
+		super(id, null);
+		this.userId = userId;
+	}
+
+	/**
+	 * Constructor.
+	 * 
 	 * @param userId
 	 *        the owner user ID
 	 * @param created
@@ -79,7 +94,10 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 	 * @param created
 	 *        the creation date
 	 */
-	public CentralSystemUser(Long id, Long userId, Instant created) {
+	@JsonCreator
+	public CentralSystemUser(@JsonProperty("id") Long id,
+			@JsonProperty(value = "userId", required = true) Long userId,
+			@JsonProperty("created") Instant created) {
 		super(id, created);
 		this.userId = userId;
 	}

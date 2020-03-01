@@ -24,7 +24,9 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.user.dao.UserNodeRelatedEntity;
 import net.solarnetwork.ocpp.domain.ChargePoint;
@@ -86,7 +88,11 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 	 * @param created
 	 *        the created date
 	 */
-	public CentralChargePoint(Long id, Long userId, Long nodeId, Instant created) {
+	@JsonCreator
+	public CentralChargePoint(@JsonProperty("id") Long id,
+			@JsonProperty(value = "userId", required = true) Long userId,
+			@JsonProperty(value = "nodeId", required = true) Long nodeId,
+			@JsonProperty("created") Instant created) {
 		super(id, created);
 		this.userId = userId;
 		this.nodeId = nodeId;

@@ -24,6 +24,8 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.ocpp.domain.Authorization;
@@ -74,7 +76,10 @@ public class CentralAuthorization extends Authorization implements UserRelatedEn
 	 * @param created
 	 *        the creation date
 	 */
-	public CentralAuthorization(Long id, Long userId, Instant created) {
+	@JsonCreator
+	public CentralAuthorization(@JsonProperty("id") Long id,
+			@JsonProperty(value = "userId", required = true) Long userId,
+			@JsonProperty("created") Instant created) {
 		super(id, created);
 		this.userId = userId;
 	}
