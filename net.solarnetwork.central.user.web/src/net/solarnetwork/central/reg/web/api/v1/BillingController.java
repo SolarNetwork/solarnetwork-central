@@ -75,7 +75,18 @@ public class BillingController extends WebServiceControllerSupport {
 	@Autowired
 	public BillingController(@Qualifier("billingBiz") OptionalService<BillingBiz> billingBiz) {
 		super();
+		if ( billingBiz == null ) {
+			throw new IllegalArgumentException("The billingBiz parameter must not be null.");
+		}
 		this.billingBiz = billingBiz;
+	}
+
+	private BillingBiz billingBiz() {
+		BillingBiz biz = billingBiz.service();
+		if ( biz == null ) {
+			throw new UnsupportedOperationException("Billing service not available.");
+		}
+		return biz;
 	}
 
 	/**
@@ -88,12 +99,9 @@ public class BillingController extends WebServiceControllerSupport {
 	@RequestMapping(method = RequestMethod.GET, value = "/systemInfo")
 	public Response<BillingSystemInfo> billingSystemInfoForUser(Locale locale) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		BillingSystemInfo info = null;
-		BillingBiz biz = billingBiz.service();
-		if ( biz != null ) {
-			BillingSystem system = biz.billingSystemForUser(userId);
-			info = (system != null ? system.getInfo(locale) : null);
-		}
+		BillingBiz biz = billingBiz();
+		BillingSystem system = biz.billingSystemForUser(userId);
+		BillingSystemInfo info = (system != null ? system.getInfo(locale) : null);
 		return response(info);
 	}
 
@@ -113,14 +121,11 @@ public class BillingController extends WebServiceControllerSupport {
 	@RequestMapping(value = "/invoices/{invoiceId}", method = RequestMethod.GET)
 	public Response<Invoice> getInvoice(@PathVariable("invoiceId") String invoiceId,
 			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
-		BillingBiz biz = billingBiz.service();
-		Invoice result = null;
-		if ( biz != null ) {
-			if ( userId == null ) {
-				userId = SecurityUtils.getCurrentActorUserId();
-			}
-			result = biz.getInvoice(userId, invoiceId, locale);
+		BillingBiz biz = billingBiz();
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
 		}
+		Invoice result = biz.getInvoice(userId, invoiceId, locale);
 
 		// localize the response
 		if ( result != null && !(result instanceof LocalizedInvoiceInfo) ) {
@@ -152,20 +157,18 @@ public class BillingController extends WebServiceControllerSupport {
 	public ResponseEntity<Resource> renderInvoice(@PathVariable("invoiceId") String invoiceId,
 			@RequestHeader(value = HttpHeaders.ACCEPT, defaultValue = "text/html") String accept,
 			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
-		BillingBiz biz = billingBiz.service();
-		if ( biz != null ) {
-			if ( userId == null ) {
-				userId = SecurityUtils.getCurrentActorUserId();
-			}
-			List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
-			MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
-					: acceptTypes.get(0).removeQualityValue();
-			Resource result = biz.renderInvoice(userId, invoiceId, outputType, locale);
-			if ( result != null ) {
-				HttpHeaders headers = new HttpHeaders();
-				headers.setContentType(outputType);
-				return new ResponseEntity<Resource>(result, headers, HttpStatus.OK);
-			}
+		BillingBiz biz = billingBiz();
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
+		}
+		List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
+				: acceptTypes.get(0).removeQualityValue();
+		Resource result = biz.renderInvoice(userId, invoiceId, outputType, locale);
+		if ( result != null ) {
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(outputType);
+			return new ResponseEntity<Resource>(result, headers, HttpStatus.OK);
 		}
 		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
@@ -181,15 +184,12 @@ public class BillingController extends WebServiceControllerSupport {
 	@RequestMapping(value = "/invoices/list", method = RequestMethod.GET)
 	public Response<FilterResults<InvoiceMatch>> findFilteredInvoices(InvoiceFilterCommand filter,
 			Locale locale) {
-		BillingBiz biz = billingBiz.service();
-		FilterResults<InvoiceMatch> results = null;
-		if ( biz != null ) {
-			if ( filter.getUserId() == null ) {
-				filter.setUserId(SecurityUtils.getCurrentActorUserId());
-			}
-			results = biz.findFilteredInvoices(filter, filter.getSortDescriptors(), filter.getOffset(),
-					filter.getMax());
+		BillingBiz biz = billingBiz();
+		if ( filter.getUserId() == null ) {
+			filter.setUserId(SecurityUtils.getCurrentActorUserId());
 		}
+		FilterResults<InvoiceMatch> results = biz.findFilteredInvoices(filter,
+				filter.getSortDescriptors(), filter.getOffset(), filter.getMax());
 
 		// localize the response
 		if ( results.getReturnedResultCount() != null && results.getReturnedResultCount() > 0 ) {
