@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.support;
 
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
@@ -30,6 +31,7 @@ import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -54,6 +56,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
@@ -161,6 +164,22 @@ public abstract class WebServiceControllerSupport {
 	}
 
 	/**
+	 * Handle an {@link BeanInstantiationException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return an error response object
+	 */
+	@ExceptionHandler(BeanInstantiationException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Response<?> handleBeanInstantiationException(BeanInstantiationException e) {
+		log.debug("BeanInstantiationException in {} controller: {}", getClass().getSimpleName(),
+				e.getMessage(), e);
+		return new Response<Object>(Boolean.FALSE, "422", "Malformed request data.", null);
+	}
+
+	/**
 	 * Handle a {@link net.solarnetwork.central.security.SecurityException}.
 	 * 
 	 * @param e
@@ -223,7 +242,7 @@ public abstract class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleTypeMismatchException(TypeMismatchException e,
 			HttpServletResponse response) {
-		log.error("TypeMismatchException in {} controller", getClass().getSimpleName(), e);
+		log.debug("TypeMismatchException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
 	}
 
@@ -239,7 +258,7 @@ public abstract class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleIllegalArgumentException(IllegalArgumentException e) {
-		log.error("IllegalArgumentException in {} controller", getClass().getSimpleName(), e);
+		log.debug("IllegalArgumentException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
 	}
 
@@ -261,7 +280,8 @@ public abstract class WebServiceControllerSupport {
 	}
 
 	/**
-	 * Handle a {@link JsonParseException}, presuming from malformed JSON input.
+	 * Handle a {@link JsonProcessingException}, presuming from malformed JSON
+	 * input.
 	 * 
 	 * @param e
 	 *        the exception
@@ -271,9 +291,28 @@ public abstract class WebServiceControllerSupport {
 	@ExceptionHandler(JsonParseException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleJsonParseException(JsonParseException e) {
-		log.error("JsonParseException in {} controller", getClass().getSimpleName(), e);
-		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getMessage(), null);
+	public Response<?> handleJsonParseException(JsonProcessingException e) {
+		log.debug("JsonProcessingException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getOriginalMessage(),
+				null);
+	}
+
+	/**
+	 * Handle a {@link HttpMessageNotReadableException}, from malformed JSON
+	 * input.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return an error response object
+	 * @since 1.6
+	 */
+	@ExceptionHandler(DateTimeParseException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Response<?> handleDateTimeParseException(DateTimeParseException e) {
+		log.debug("DateTimeParseException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Malformed date string: " + e.getMessage(),
+				null);
 	}
 
 	/**
@@ -290,11 +329,13 @@ public abstract class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
 		Throwable t = e.getMostSpecificCause();
-		if ( t instanceof JsonParseException ) {
-			return handleJsonParseException((JsonParseException) t);
+		if ( t instanceof JsonProcessingException ) {
+			return handleJsonParseException((JsonProcessingException) t);
+		} else if ( t instanceof DateTimeParseException ) {
+			return handleDateTimeParseException((DateTimeParseException) t);
 		}
-		log.error("HttpMessageNotReadableException in {} controller", getClass().getSimpleName(), e);
-		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getMessage(), null);
+		log.warn("HttpMessageNotReadableException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Malformed request: " + e.getMessage(), null);
 	}
 
 	/**
@@ -307,7 +348,7 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	@ResponseBody
-	@ResponseStatus
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleDataIntegrityViolationException(DataIntegrityViolationException e,
 			Locale locale) {
 		log.warn("DataIntegrityViolationException in {} controller", getClass().getSimpleName(), e);
