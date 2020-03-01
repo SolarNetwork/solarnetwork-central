@@ -226,7 +226,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 * Process a new unsaved entity for persisting.
 	 * 
 	 * <p>
-	 * This implementation will set the value of the {@code created} bean
+	 * This implementation will set the value of a writable {@code created} bean
 	 * property of the datum instance to the current time if
 	 * {@link T#getCreated()} is null. Extending classes may want to extend or
 	 * modify this behavior.
@@ -238,7 +238,9 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	protected void preprocessInsert(T entity) {
 		if ( entity.getCreated() == null ) {
 			BeanWrapper wrapper = PropertyAccessorFactory.forBeanPropertyAccess(entity);
-			wrapper.setPropertyValue("created", Instant.now());
+			if ( wrapper.isWritableProperty("created") ) {
+				wrapper.setPropertyValue("created", Instant.now());
+			}
 		}
 	}
 
