@@ -26,6 +26,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.dao.UserNodeRelatedEntity;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
@@ -69,6 +70,16 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	public void saveUserRelatedEntity(UserRelatedEntity<?> entity) {
 	}
 
+	/**
+	 * Match methods like {@code save*(entity)}.
+	 * 
+	 * @param entity
+	 *        the entity
+	 */
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.save*(..)) && args(entity,..)")
+	public void saveUserNodeRelatedEntity(UserNodeRelatedEntity<?> entity) {
+	}
+
 	@Before("readForUser(userId)")
 	public void userReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
@@ -80,6 +91,14 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 			throw new IllegalArgumentException("The entity's userId parameter must not be null.");
 		}
 		requireUserWriteAccess(entity.getUserId());
+	}
+
+	@Before("saveUserNodeRelatedEntity(entity)")
+	public void userNodeWriteAccessCheck(UserNodeRelatedEntity<?> entity) {
+		if ( entity == null || entity.getNodeId() == null ) {
+			throw new IllegalArgumentException("The entity's nodeId parameter must not be null.");
+		}
+		requireNodeWriteAccess(entity.getNodeId());
 	}
 
 }

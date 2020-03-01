@@ -26,6 +26,8 @@ import static net.solarnetwork.web.domain.Response.response;
 import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -36,6 +38,7 @@ import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.dao.Entity;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.web.domain.Response;
 
@@ -82,6 +85,24 @@ public class OcppController extends WebServiceControllerSupport {
 	}
 
 	/**
+	 * Create a response entity out of a save operation on an entity.
+	 * 
+	 * @param <T>
+	 *        the entity type
+	 * @param id
+	 *        the entity ID that was provided on the request to be saved
+	 * @param out
+	 *        the entity that was saved and should be returned in the response
+	 * @return a response entity, with {@link HttpStatus#CREATED} if the
+	 *         {@code in} has a {@literal null} primary key or
+	 *         {@link HttpStatus#OK} otherwise
+	 */
+	private <T extends Entity<?>> ResponseEntity<Response<T>> responseForSave(Object id, T out) {
+		HttpStatus status = id == null ? HttpStatus.CREATED : HttpStatus.OK;
+		return new ResponseEntity<Response<T>>(response(out), status);
+	}
+
+	/**
 	 * Get all available charge points for the current user.
 	 * 
 	 * @return the charge points
@@ -91,6 +112,19 @@ public class OcppController extends WebServiceControllerSupport {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralChargePoint> list = userOcppBiz().chargePointsForUser(userId);
 		return response(list);
+	}
+
+	/**
+	 * Save a charge point.
+	 * 
+	 * @param chargePoint
+	 *        the charge point to save
+	 * @return the saved charge point
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "/chargers")
+	public ResponseEntity<Response<CentralChargePoint>> saveChargePoint(
+			@RequestBody CentralChargePoint chargePoint) {
+		return responseForSave(chargePoint.getId(), userOcppBiz().saveChargePoint(chargePoint));
 	}
 
 	/**
@@ -113,9 +147,9 @@ public class OcppController extends WebServiceControllerSupport {
 	 * @return the saved authorization
 	 */
 	@RequestMapping(method = RequestMethod.POST, value = "/authorizations")
-	public Response<CentralAuthorization> saveAuthorization(
+	public ResponseEntity<Response<CentralAuthorization>> saveAuthorization(
 			@RequestBody CentralAuthorization authorization) {
-		return response(userOcppBiz().saveAuthorization(authorization));
+		return responseForSave(authorization.getId(), userOcppBiz().saveAuthorization(authorization));
 	}
 
 	/**
@@ -128,6 +162,19 @@ public class OcppController extends WebServiceControllerSupport {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralSystemUser> list = userOcppBiz().systemUsersForUser(userId);
 		return response(list);
+	}
+
+	/**
+	 * Save a system user.
+	 * 
+	 * @param systemUser
+	 *        the system user to save
+	 * @return the saved system user
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "/credentials")
+	public ResponseEntity<Response<CentralSystemUser>> saveSystemUser(
+			@RequestBody CentralSystemUser systemUser) {
+		return responseForSave(systemUser.getId(), userOcppBiz().saveSystemUser(systemUser));
 	}
 
 }
