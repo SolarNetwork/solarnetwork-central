@@ -24,6 +24,8 @@ package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -33,6 +35,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
@@ -78,7 +81,8 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		setupTestUserNode(userId, nodeId);
 	}
 
-	private CentralChargePoint createTestChargePoint(String vendor, String model) {
+	private CentralChargePoint createTestChargePoint(String vendor, String model, Long userId,
+			Long nodeId) {
 		ChargePointInfo info = new ChargePointInfo(UUID.randomUUID().toString());
 		info.setChargePointVendor(vendor);
 		info.setChargePointModel(model);
@@ -90,17 +94,15 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		return cp;
 	}
 
-	private CentralChargePoint createAndSaveTestChargePoint(String vendor, String model) {
-		CentralChargePoint cp = createTestChargePoint(vendor, model);
+	private CentralChargePoint createAndSaveTestChargePoint(String vendor, String model, Long userId,
+			Long nodeId) {
+		CentralChargePoint cp = createTestChargePoint(vendor, model, userId, nodeId);
 		return (CentralChargePoint) chargePointDao.get(chargePointDao.save(cp));
 	}
 
-	@Test
-	public void insert() {
-		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
-
+	private CentralChargePointConnector createTestConnector(long chargePointId, int connectorId) {
 		CentralChargePointConnector cpc = new CentralChargePointConnector(
-				new ChargePointConnectorKey(cp.getId(), 1),
+				new ChargePointConnectorKey(chargePointId, connectorId),
 				Instant.ofEpochMilli(System.currentTimeMillis()));
 		// @formatter:off
 		cpc.setInfo(StatusNotification.builder()
@@ -109,6 +111,26 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 				.withErrorCode(ChargePointErrorCode.NoError)
 				.withTimestamp(Instant.ofEpochMilli(System.currentTimeMillis())).build());
 		// @formatter:on
+		return cpc;
+	}
+
+	@Test
+	public void insert() {
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
+
+		CentralChargePointConnector cpc = createTestConnector(cp.getId(), 1);
+		ChargePointConnectorKey pk = dao.save(cpc);
+		assertThat("PK preserved", pk, equalTo(cpc.getId()));
+		last = cpc;
+	}
+
+	@Test
+	public void insert_withoutInfo() {
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
+
+		CentralChargePointConnector cpc = createTestConnector(cp.getId(), 1);
+		cpc.setInfo(null);
+
 		ChargePointConnectorKey pk = dao.save(cpc);
 		assertThat("PK preserved", pk, equalTo(cpc.getId()));
 		last = cpc;
@@ -117,11 +139,25 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 	@Test
 	public void getByPK() {
 		insert();
-		ChargePointConnector entity = dao.get(last.getId());
+		CentralChargePointConnector entity = (CentralChargePointConnector) dao.get(last.getId());
 
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
+		assertThat("User ID", entity.getUserId(), equalTo(userId));
 		assertThat("Connector info", entity.getInfo(), equalTo(last.getInfo()));
+	}
+
+	@Test
+	public void getByPK_withoutInfo() {
+		insert_withoutInfo();
+		CentralChargePointConnector entity = (CentralChargePointConnector) dao.get(last.getId());
+
+		assertThat("ID", entity.getId(), equalTo(last.getId()));
+		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
+		assertThat("User ID", entity.getUserId(), equalTo(userId));
+		assertThat("Connector info created with defaults", entity.getInfo(), notNullValue());
+		assertThat("Info status", entity.getInfo().getStatus(), equalTo(ChargePointStatus.Unknown));
+		assertThat("Info status", entity.getInfo().getTimestamp(), notNullValue());
 	}
 
 	@Test
@@ -165,6 +201,34 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		expectedKeys.sort(null);
 
 		Collection<ChargePointConnector> results = dao.getAll(null);
+		assertThat("Result keys",
+				results.stream().map(ChargePointConnector::getId).collect(Collectors.toList()),
+				equalTo(expectedKeys));
+	}
+
+	@Test
+	public void findAllForOwner() {
+		ChargePoint cp1 = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
+		ChargePointConnector obj1 = createTestConnector(cp1.getId(), 1);
+		obj1 = dao.get(dao.save(obj1));
+		ChargePointConnector obj2 = createTestConnector(cp1.getId(), 2);
+		obj2 = dao.get(dao.save(obj2));
+
+		Long userId2 = userId - 1;
+		Long nodeId2 = nodeId - 1;
+		setupTestUser(userId2);
+		setupTestNode(nodeId2);
+		setupTestUserNode(userId2, nodeId2);
+		ChargePoint cp2 = createAndSaveTestChargePoint("foo", "bar", userId2, nodeId2);
+		ChargePointConnector obj3 = createTestConnector(cp2.getId(), 1);
+		obj3 = dao.get(dao.save(obj3));
+
+		List<ChargePointConnectorKey> expectedKeys = new ArrayList<>();
+		expectedKeys.add(obj1.getId());
+		expectedKeys.add(obj2.getId());
+		expectedKeys.sort(null);
+
+		Collection<CentralChargePointConnector> results = dao.findAllForOwner(userId);
 		assertThat("Result keys",
 				results.stream().map(ChargePointConnector::getId).collect(Collectors.toList()),
 				equalTo(expectedKeys));
@@ -257,7 +321,7 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 	@Test
 	public void saveStatusInfo_insert() {
 		// given
-		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
 
 		// @formatter:off
 		StatusNotification info = StatusNotification.builder()
@@ -304,7 +368,7 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 	@Test
 	public void insert_defaultStatus() {
 		// given
-		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
 
 		// when
 		ChargePointConnector conn = new ChargePointConnector(new ChargePointConnectorKey(cp.getId(), 1),
@@ -321,6 +385,33 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		CentralChargePointConnector expected = new CentralChargePointConnector(conn);
 		expected.setInfo(expected.getInfo().toBuilder().withStatus(ChargePointStatus.Unknown).build());
 		assertThat("Status defaulted to Unknown", entity.isSameAs(expected), equalTo(true));
+	}
+
+	@Test
+	public void findByUserAndId() {
+		insert();
+		CentralChargePointConnector entity = dao.get(userId, last.getId());
+		assertThat("Match", entity, equalTo(last));
+		assertThat("User ID", entity.getUserId(), equalTo(userId));
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void findByUserAndId_noMatch() {
+		insert();
+		dao.get(userId, new ChargePointConnectorKey(last.getId().getChargePointId() - 1, 1));
+	}
+
+	@Test
+	public void deleteByUserAndId() {
+		insert();
+		dao.delete(userId, last.getId());
+		assertThat("No longer found", dao.get(last.getId()), nullValue());
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void deleteByUserAndId_noMatch() {
+		insert();
+		dao.delete(userId, new ChargePointConnectorKey(last.getId().getChargePointId() - 1, 1));
 	}
 
 }

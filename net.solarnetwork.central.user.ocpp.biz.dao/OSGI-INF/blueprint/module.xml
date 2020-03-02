@@ -16,6 +16,8 @@
 
 	<reference id="chargePointDao" interface="net.solarnetwork.central.ocpp.dao.CentralChargePointDao"/>
 
+	<reference id="chargePointConnectorDao" interface="net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao"/>
+
 	<reference id="systemUserDao" interface="net.solarnetwork.central.ocpp.dao.CentralSystemUserDao"/>
 		
 	<reference id="txManager" interface="org.springframework.transaction.PlatformTransactionManager" filter="(db=central)"/>
@@ -29,6 +31,7 @@
 		<bean class="net.solarnetwork.central.user.ocpp.biz.dao.DaoUserOcppBiz">
 			<argument ref="systemUserDao"/>
 			<argument ref="chargePointDao"/>
+			<argument ref="chargePointConnectorDao"/>
 			<argument ref="authorizationDao"/>
 			<argument ref="passwordEncoder"/>
 		</bean>

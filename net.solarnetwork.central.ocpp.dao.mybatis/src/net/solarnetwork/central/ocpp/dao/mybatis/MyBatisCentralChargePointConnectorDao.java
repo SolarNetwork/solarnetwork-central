@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
 import java.util.Collection;
+import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
@@ -42,10 +43,30 @@ public class MyBatisCentralChargePointConnectorDao
 		extends BaseMyBatisGenericDaoSupport<ChargePointConnector, ChargePointConnectorKey>
 		implements CentralChargePointConnectorDao {
 
-	/**
-	 * The SQL query name to update just the status of charge point connectors.
-	 */
-	public static final String UPDATE_STATUS = "update-CentralChargePointConnector-status";
+	/** Query name enumeration. */
+	public enum QueryName {
+
+		/** Delete a connector for a given user ID and ID. */
+		DeleteForUserAndId("delete-CentralChargePointConnector-for-user-and-id"),
+
+		/** Update just the status of charge point connectors. */
+		UpdateStatus("update-CentralChargePointConnector-status");
+
+		private final String queryName;
+
+		private QueryName(String queryName) {
+			this.queryName = queryName;
+		}
+
+		/**
+		 * Get the query name.
+		 * 
+		 * @return the query name
+		 */
+		public String getQueryName() {
+			return queryName;
+		}
+	}
 
 	/**
 	 * Constructor.
@@ -68,15 +89,41 @@ public class MyBatisCentralChargePointConnectorDao
 				new ChargePointConnectorKey(chargePointId, connectorId));
 		filter.setInfo(
 				StatusNotification.builder().withConnectorId(connectorId).withStatus(status).build());
-		return getSqlSession().update(UPDATE_STATUS, filter);
+		return getSqlSession().update(QueryName.UpdateStatus.getQueryName(), filter);
 	}
 
 	@Override
 	public Collection<ChargePointConnector> findByChargePointId(long chargePointId) {
 		return selectList(getQueryForAll(),
 				singletonMap(FILTER_PROPERTY,
-						new ChargePointConnector(new ChargePointConnectorKey(chargePointId, 0))),
+						new CentralChargePointConnector(new ChargePointConnectorKey(chargePointId, 0))),
 				null, null);
+	}
+
+	@Override
+	public Collection<CentralChargePointConnector> findAllForOwner(Long userId) {
+		return selectList(getQueryForAll(),
+				singletonMap(FILTER_PROPERTY, new CentralChargePointConnector(userId)), null, null);
+	}
+
+	@Override
+	public CentralChargePointConnector get(Long userId, ChargePointConnectorKey id) {
+		CentralChargePointConnector result = selectFirst(getQueryForAll(),
+				singletonMap(FILTER_PROPERTY, new CentralChargePointConnector(id, userId)));
+		if ( result == null ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
+		return result;
+	}
+
+	@Override
+	public void delete(Long userId, ChargePointConnectorKey id) {
+		int count = getLastUpdateCount(
+				getSqlSession().delete(QueryName.DeleteForUserAndId.getQueryName(),
+						new CentralChargePointConnector(id, userId)));
+		if ( count < 1 ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
 	}
 
 }

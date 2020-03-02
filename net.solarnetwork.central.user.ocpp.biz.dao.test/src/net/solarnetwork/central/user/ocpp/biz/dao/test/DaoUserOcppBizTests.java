@@ -39,12 +39,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.user.ocpp.biz.dao.DaoUserOcppBiz;
+import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.support.PasswordEncoder;
 
 /**
@@ -57,6 +60,7 @@ public class DaoUserOcppBizTests {
 
 	private CentralAuthorizationDao authorizationDao;
 	private CentralChargePointDao chargePointDao;
+	private CentralChargePointConnectorDao connectorDao;
 	private CentralSystemUserDao systemUserDao;
 	private PasswordEncoder passwordEncoder;
 
@@ -66,18 +70,20 @@ public class DaoUserOcppBizTests {
 	public void setup() {
 		authorizationDao = EasyMock.createMock(CentralAuthorizationDao.class);
 		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
+		connectorDao = EasyMock.createMock(CentralChargePointConnectorDao.class);
 		passwordEncoder = EasyMock.createMock(PasswordEncoder.class);
 		systemUserDao = EasyMock.createMock(CentralSystemUserDao.class);
-		biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, authorizationDao, passwordEncoder);
+		biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, connectorDao, authorizationDao,
+				passwordEncoder);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(authorizationDao, chargePointDao, passwordEncoder, systemUserDao);
+		EasyMock.verify(authorizationDao, chargePointDao, connectorDao, passwordEncoder, systemUserDao);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(authorizationDao, chargePointDao, passwordEncoder, systemUserDao);
+		EasyMock.replay(authorizationDao, chargePointDao, connectorDao, passwordEncoder, systemUserDao);
 	}
 
 	@Test
@@ -252,5 +258,52 @@ public class DaoUserOcppBizTests {
 
 		// THEN
 		assertThat("DAO results returned", results, sameInstance(list));
+	}
+
+	@Test
+	public void availableChargePointConnectors() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		List<CentralChargePointConnector> list = Collections.emptyList();
+		expect(connectorDao.findAllForOwner(userId)).andReturn(list);
+
+		// WHEN
+		replayAll();
+		Collection<CentralChargePointConnector> results = biz.chargePointConnectorsForUser(userId);
+
+		// THEN
+		assertThat("DAO results returned", results, sameInstance(list));
+	}
+
+	@Test
+	public void chargePointConnectorsForUser_id() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		ChargePointConnectorKey id = new ChargePointConnectorKey(
+				UUID.randomUUID().getLeastSignificantBits(), 1);
+		CentralChargePointConnector entity = new CentralChargePointConnector(id, userId);
+		expect(connectorDao.get(userId, id)).andReturn(entity);
+
+		// WHEN
+		replayAll();
+		CentralChargePointConnector result = biz.chargePointConnectorForUser(userId, id);
+
+		// THEN
+		assertThat("DAO user returned", result, sameInstance(entity));
+	}
+
+	@Test
+	public void deleteChargePointConnector() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		ChargePointConnectorKey id = new ChargePointConnectorKey(
+				UUID.randomUUID().getLeastSignificantBits(), 1);
+		connectorDao.delete(userId, id);
+
+		// WHEN
+		replayAll();
+		biz.deleteUserChargePointConnector(userId, id);
+
+		// THEN
 	}
 }

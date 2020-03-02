@@ -25,8 +25,10 @@ package net.solarnetwork.central.user.ocpp.support;
 import java.util.Collection;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
+import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 
 /**
  * Delegating implementation of {@link UserOcppBiz}, mostly to help with AOP.
@@ -112,6 +114,27 @@ public class DelegatingUserOcppBiz implements UserOcppBiz {
 	@Override
 	public void deleteUserChargePoint(Long userId, Long id) {
 		delegate.deleteUserChargePoint(userId, id);
+	}
+
+	@Override
+	public CentralChargePointConnector chargePointConnectorForUser(Long userId,
+			ChargePointConnectorKey id) {
+		return delegate.chargePointConnectorForUser(userId, id);
+	}
+
+	@Override
+	public void deleteUserChargePointConnector(Long userId, ChargePointConnectorKey id) {
+		delegate.deleteUserChargePointConnector(userId, id);
+	}
+
+	@Override
+	public Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId) {
+		return delegate.chargePointConnectorsForUser(userId);
+	}
+
+	@Override
+	public CentralChargePointConnector saveChargePointConnector(CentralChargePointConnector connector) {
+		return delegate.saveChargePointConnector(connector);
 	}
 
 }

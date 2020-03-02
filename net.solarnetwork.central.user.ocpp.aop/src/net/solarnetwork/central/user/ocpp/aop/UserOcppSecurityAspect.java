@@ -112,7 +112,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	}
 
 	@Before("deleteUserRelatedEntityById(userId)")
-	public void userNodeWriteAccessCheck(Long userId) {
+	public void userIdWriteAccessCheck(Long userId) {
 		if ( userId == null ) {
 			throw new IllegalArgumentException("The userId parameter must not be null.");
 		}

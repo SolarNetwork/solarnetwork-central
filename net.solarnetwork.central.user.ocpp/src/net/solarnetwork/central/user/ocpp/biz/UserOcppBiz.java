@@ -25,7 +25,9 @@ package net.solarnetwork.central.user.ocpp.biz;
 import java.util.Collection;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
+import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 
 /**
  * Service API for SolarUser OCPP support.
@@ -180,5 +182,49 @@ public interface UserOcppBiz {
 	 *         if not available
 	 */
 	void deleteUserChargePoint(Long userId, Long id);
+
+	/**
+	 * Get an OCPP connector for a given ID.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get OCPP connector for
+	 * @param id
+	 *        the connector ID to find
+	 * @return the connector
+	 * @throws RuntimeException
+	 *         if not available
+	 */
+	CentralChargePointConnector chargePointConnectorForUser(Long userId, ChargePointConnectorKey id);
+
+	/**
+	 * Delete an OCPP connector for a given ID.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to delete the OCPP connector for
+	 * @param id
+	 *        the connector ID to delete
+	 * @throws RuntimeException
+	 *         if not available
+	 */
+	void deleteUserChargePointConnector(Long userId, ChargePointConnectorKey id);
+
+	/**
+	 * Get the available OCPP connectors for a given user.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get OCPP connectors for
+	 * @return all available connectors; never {@literal null}
+	 */
+	Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId);
+
+	/**
+	 * Create a new OCPP connector, or update an existing connector.
+	 * 
+	 * @param connector
+	 *        the details to save
+	 * @return the persisted connector, with any default values populated and ID
+	 *         assigned if creating a new entity
+	 */
+	CentralChargePointConnector saveChargePointConnector(CentralChargePointConnector connector);
 
 }

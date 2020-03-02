@@ -36,11 +36,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.web.domain.Response;
 
@@ -205,6 +207,71 @@ public class UserOcppController extends WebServiceControllerSupport {
 	public Response<Void> deleteChargePoint(@PathVariable("id") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserChargePoint(userId, id);
+		return response(null);
+	}
+
+	/**
+	 * Get all available connectors for the current user.
+	 * 
+	 * @return the connectors
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/connectors")
+	public Response<Collection<CentralChargePointConnector>> availableConnectors() {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		Collection<CentralChargePointConnector> list = userOcppBiz()
+				.chargePointConnectorsForUser(userId);
+		return response(list);
+	}
+
+	/**
+	 * Save a connector.
+	 * 
+	 * @param connector
+	 *        the connector to save
+	 * @return the saved connector
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "/connectors")
+	public ResponseEntity<Response<CentralChargePointConnector>> saveConnector(
+			@RequestBody CentralChargePointConnector connector) {
+		ChargePointConnectorKey id = connector.getId();
+		if ( id == null ) {
+			throw new IllegalArgumentException("The connector ID must be specified.");
+		}
+		if ( id.getConnectorId() < 0 ) {
+			throw new IllegalArgumentException("The connector ID must not be negative.");
+		}
+		return responseForSave(connector.getId(), userOcppBiz().saveChargePointConnector(connector));
+	}
+
+	/**
+	 * View a specific credential.
+	 * 
+	 * @param id
+	 *        the ID of the connector to view
+	 * @return the system user
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/connectors/{chargePointId}/{connectorId}")
+	public Response<CentralChargePointConnector> viewConnector(
+			@PathVariable("chargePointId") long chargePointId,
+			@PathVariable("connectorId") int connectorId) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return response(userOcppBiz().chargePointConnectorForUser(userId,
+				new ChargePointConnectorKey(chargePointId, connectorId)));
+	}
+
+	/**
+	 * Delete a specific credential.
+	 * 
+	 * @param id
+	 *        the ID of the system user to delete
+	 * @return the result
+	 */
+	@RequestMapping(method = RequestMethod.DELETE, value = "/connectors/{chargePointId}/{connectorId}")
+	public Response<Void> deleteConnector(@PathVariable("chargePointId") long chargePointId,
+			@PathVariable("connectorId") int connectorId) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userOcppBiz().deleteUserChargePointConnector(userId,
+				new ChargePointConnectorKey(chargePointId, connectorId));
 		return response(null);
 	}
 

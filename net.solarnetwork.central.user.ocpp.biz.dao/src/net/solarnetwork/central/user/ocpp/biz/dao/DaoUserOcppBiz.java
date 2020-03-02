@@ -29,12 +29,15 @@ import java.util.Collection;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
+import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.support.PasswordEncoder;
 
 /**
@@ -47,6 +50,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 
 	private final CentralSystemUserDao systemUserDao;
 	private final CentralChargePointDao chargePointDao;
+	private final CentralChargePointConnectorDao connectorDao;
 	private final CentralAuthorizationDao authorizationDao;
 	private final PasswordEncoder passwordEncoder;
 
@@ -57,6 +61,8 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 *        the system user DAO
 	 * @param chargePointDao
 	 *        the charge point DAO
+	 * @param connectorDao
+	 *        the connector DAO
 	 * @param authorizationDao
 	 *        the authorization DAO
 	 * @param passwordEncoder
@@ -65,7 +71,8 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 *         if any parmeter is {@literal null}
 	 */
 	public DaoUserOcppBiz(CentralSystemUserDao systemUserDao, CentralChargePointDao chargePointDao,
-			CentralAuthorizationDao authorizationDao, PasswordEncoder passwordEncoder) {
+			CentralChargePointConnectorDao connectorDao, CentralAuthorizationDao authorizationDao,
+			PasswordEncoder passwordEncoder) {
 		super();
 		if ( systemUserDao == null ) {
 			throw new IllegalArgumentException("The systemUserDao parameter must not be null.");
@@ -75,6 +82,10 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 			throw new IllegalArgumentException("The chargePointDao parameter must not be null.");
 		}
 		this.chargePointDao = chargePointDao;
+		if ( connectorDao == null ) {
+			throw new IllegalArgumentException("The connectorDao parameter must not be null.");
+		}
+		this.connectorDao = connectorDao;
 		if ( authorizationDao == null ) {
 			throw new IllegalArgumentException("The authorizationDao parameter must not be null.");
 		}
@@ -192,6 +203,31 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public void deleteUserChargePoint(Long userId, Long id) {
 		chargePointDao.delete(userId, id);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public CentralChargePointConnector chargePointConnectorForUser(Long userId,
+			ChargePointConnectorKey id) {
+		return connectorDao.get(userId, id);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteUserChargePointConnector(Long userId, ChargePointConnectorKey id) {
+		connectorDao.delete(userId, id);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Collection<CentralChargePointConnector> chargePointConnectorsForUser(Long userId) {
+		return connectorDao.findAllForOwner(userId);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CentralChargePointConnector saveChargePointConnector(CentralChargePointConnector entity) {
+		return (CentralChargePointConnector) connectorDao.get(connectorDao.save(entity));
 	}
 
 }

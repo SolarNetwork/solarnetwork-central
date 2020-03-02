@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
-import net.solarnetwork.ocpp.dao.AuthorizationDao;
+import java.util.Collection;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.ocpp.dao.ChargePointConnectorDao;
+import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 
 /**
- * Extension to {@link AuthorizationDao} to support SolarNet.
+ * Extension to {@link ChargePointConnectorDao} to support SolarNet.
  * 
  * <p>
  * This API implies
@@ -38,5 +40,39 @@ import net.solarnetwork.ocpp.dao.ChargePointConnectorDao;
  * @version 1.0
  */
 public interface CentralChargePointConnectorDao extends ChargePointConnectorDao {
+
+	/**
+	 * Find all available connectors for a given owner.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @return the available connectors; never {@literal null}
+	 */
+	Collection<CentralChargePointConnector> findAllForOwner(Long userId);
+
+	/**
+	 * Get an connector by its unique ID.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @param id
+	 *        the ID to look for
+	 * @return the matching entity; never {@literal null}
+	 * @throws RuntimeException
+	 *         if the entity cannot be found
+	 */
+	CentralChargePointConnector get(Long userId, ChargePointConnectorKey id);
+
+	/**
+	 * Delete an connector by its unique ID.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @param id
+	 *        the ID to look for
+	 * @throws RuntimeException
+	 *         if the entity cannot be found
+	 */
+	void delete(Long userId, ChargePointConnectorKey id);
 
 }
