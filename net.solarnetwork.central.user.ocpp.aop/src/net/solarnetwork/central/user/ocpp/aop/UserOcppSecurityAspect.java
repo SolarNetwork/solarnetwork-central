@@ -80,6 +80,16 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	public void saveUserNodeRelatedEntity(UserNodeRelatedEntity<?> entity) {
 	}
 
+	/**
+	 * Match methods like {@code deleteUser*(entity)}.
+	 * 
+	 * @param entity
+	 *        the entity
+	 */
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.deleteUser*(..)) && args(userId,..)")
+	public void deleteUserRelatedEntityById(Long userId) {
+	}
+
 	@Before("readForUser(userId)")
 	public void userReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
@@ -99,6 +109,14 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 			throw new IllegalArgumentException("The entity's nodeId parameter must not be null.");
 		}
 		requireNodeWriteAccess(entity.getNodeId());
+	}
+
+	@Before("deleteUserRelatedEntityById(userId)")
+	public void userNodeWriteAccessCheck(Long userId) {
+		if ( userId == null ) {
+			throw new IllegalArgumentException("The userId parameter must not be null.");
+		}
+		requireUserWriteAccess(userId);
 	}
 
 }

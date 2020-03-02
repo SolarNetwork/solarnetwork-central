@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
 import java.util.Collection;
+import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
@@ -37,6 +38,28 @@ import net.solarnetwork.ocpp.domain.Authorization;
  */
 public class MyBatisCentralAuthorizationDao extends BaseMyBatisGenericDaoSupport<Authorization, Long>
 		implements CentralAuthorizationDao {
+
+	/** Query name enumeration. */
+	public enum QueryName {
+
+		/** Delete a system user for a given user ID and ID. */
+		DeleteForUserAndId("delete-CentralAuthorization-for-user-and-id");
+
+		private final String queryName;
+
+		private QueryName(String queryName) {
+			this.queryName = queryName;
+		}
+
+		/**
+		 * Get the query name.
+		 * 
+		 * @return the query name
+		 */
+		public String getQueryName() {
+			return queryName;
+		}
+	}
 
 	/**
 	 * Constructor.
@@ -60,6 +83,25 @@ public class MyBatisCentralAuthorizationDao extends BaseMyBatisGenericDaoSupport
 	public Collection<CentralAuthorization> findAllForOwner(Long userId) {
 		return selectList(getQueryForAll(),
 				singletonMap(FILTER_PROPERTY, new CentralAuthorization(userId)), null, null);
+	}
+
+	@Override
+	public CentralAuthorization get(Long userId, Long id) {
+		CentralAuthorization result = selectFirst(getQueryForAll(),
+				singletonMap(FILTER_PROPERTY, new CentralAuthorization(id, userId)));
+		if ( result == null ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
+		return result;
+	}
+
+	@Override
+	public void delete(Long userId, Long id) {
+		int count = getLastUpdateCount(getSqlSession().delete(
+				QueryName.DeleteForUserAndId.getQueryName(), new CentralAuthorization(id, userId)));
+		if ( count < 1 ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
 	}
 
 }

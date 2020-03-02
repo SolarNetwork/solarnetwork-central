@@ -155,6 +155,33 @@ public class UserOcppController extends WebServiceControllerSupport {
 	}
 
 	/**
+	 * View an authorization.
+	 * 
+	 * @param id
+	 *        the ID of the authorization to view
+	 * @return the authorization
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/authorizations/{id}")
+	public Response<CentralAuthorization> viewAuthorization(@PathVariable("id") Long id) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return response(userOcppBiz().authorizationForUser(userId, id));
+	}
+
+	/**
+	 * Delete an authorization.
+	 * 
+	 * @param id
+	 *        the ID of the authorization to delete
+	 * @return the result
+	 */
+	@RequestMapping(method = RequestMethod.DELETE, value = "/authorizations/{id}")
+	public Response<Void> deleteAuthorization(@PathVariable("id") Long id) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userOcppBiz().deleteUserAuthorization(userId, id);
+		return response(null);
+	}
+
+	/**
 	 * Get all available OCPP system users for the current user.
 	 * 
 	 * @return the system users
@@ -210,7 +237,7 @@ public class UserOcppController extends WebServiceControllerSupport {
 	 * 
 	 * @param id
 	 *        the ID of the system user to delete
-	 * @return the deleted system user
+	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/credentials/{id}")
 	public Response<Void> deleteSystemUser(@PathVariable("id") Long id) {

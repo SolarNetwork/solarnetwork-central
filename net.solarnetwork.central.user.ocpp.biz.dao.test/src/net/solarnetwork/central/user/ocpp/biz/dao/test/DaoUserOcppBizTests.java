@@ -96,6 +96,36 @@ public class DaoUserOcppBizTests {
 	}
 
 	@Test
+	public void authorizationForUser_id() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		CentralAuthorization systemUser = new CentralAuthorization(userId, Instant.now(), "foo");
+		Long id = UUID.randomUUID().getLeastSignificantBits();
+		expect(authorizationDao.get(userId, id)).andReturn(systemUser);
+
+		// WHEN
+		replayAll();
+		CentralAuthorization result = biz.authorizationForUser(userId, id);
+
+		// THEN
+		assertThat("DAO user returned", result, sameInstance(systemUser));
+	}
+
+	@Test
+	public void deleteAuthorization() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		Long id = UUID.randomUUID().getLeastSignificantBits();
+		authorizationDao.delete(userId, id);
+
+		// WHEN
+		replayAll();
+		biz.deleteUserAuthorization(userId, id);
+
+		// THEN
+	}
+
+	@Test
 	public void availableSystemUsers() {
 		// GIVEN
 		Long userId = UUID.randomUUID().getMostSignificantBits();

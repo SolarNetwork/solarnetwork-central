@@ -71,6 +71,9 @@
 	<sql id="fragment-findall-CentralAuthorization-where">
 		<if test="filter != null">
 			<where>
+				<if test="filter.id != null">
+					AND ca.id = #{filter.id}
+				</if>
 				<if test="filter.userId != null">
 					AND ca.user_id = #{filter.userId}
 				</if>
@@ -108,5 +111,10 @@
 		<include refid="fragment-findall-CentralAuthorization-where"/>
 		<include refid="fragment-findall-CentralAuthorization-order"/>
 	</select>
+
+	<delete id="delete-CentralAuthorization-for-user-and-id" parameterType="net.solarnetwork.central.ocpp.domain.CentralAuthorization">
+		DELETE FROM solarev.ocpp_authorization
+		WHERE user_id = #{userId} AND id = #{id}
+	</delete>
 
 </mapper>

@@ -152,6 +152,18 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return authorizationDao.findAllForOwner(userId);
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public CentralAuthorization authorizationForUser(Long userId, Long id) {
+		return authorizationDao.get(userId, id);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteUserAuthorization(Long userId, Long id) {
+		authorizationDao.delete(userId, id);
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public CentralAuthorization saveAuthorization(CentralAuthorization authorization) {

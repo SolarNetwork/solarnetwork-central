@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
@@ -180,7 +181,34 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 		findAll();
 		Authorization entity = dao.getForToken(userId, "b");
 		assertThat("Match", entity, notNullValue());
-		assertThat("Username matches", entity.getToken(), equalTo("b"));
+		assertThat("Token  matches", entity.getToken(), equalTo("b"));
+	}
+
+	@Test
+	public void findByUserAndId() {
+		insert();
+		Authorization entity = dao.get(userId, last.getId());
+		assertThat("Match", entity, notNullValue());
+		assertThat("Token matches", entity.getToken(), equalTo("foobar"));
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void findByUserAndId_noMatch() {
+		insert();
+		dao.get(userId, last.getId() - 1);
+	}
+
+	@Test
+	public void deleteByUserAndId() {
+		insert();
+		dao.delete(userId, last.getId());
+		assertThat("No longer found", dao.get(last.getId()), nullValue());
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void deleteByUserAndId_noMatch() {
+		insert();
+		dao.delete(userId, last.getId() - 1);
 	}
 
 }

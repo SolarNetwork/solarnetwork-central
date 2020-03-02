@@ -61,4 +61,29 @@ public interface CentralAuthorizationDao extends AuthorizationDao {
 	 */
 	Collection<CentralAuthorization> findAllForOwner(Long userId);
 
+	/**
+	 * Get an authorization by its unique ID.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @param id
+	 *        the ID to look for
+	 * @return the matching entity; never {@literal null}
+	 * @throws RuntimeException
+	 *         if the entity cannot be found
+	 */
+	CentralAuthorization get(Long userId, Long id);
+
+	/**
+	 * Delete a system user by its unique ID.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @param id
+	 *        the ID to look for
+	 * @throws RuntimeException
+	 *         if the entity cannot be found
+	 */
+	void delete(Long userId, Long id);
+
 }

@@ -42,7 +42,9 @@ public interface UserOcppBiz {
 	 *        the SolarUser user ID to get OCPP system user for
 	 * @param username
 	 *        the username to find
-	 * @return the system user, or {@literal null} if not available
+	 * @return the system user
+	 * @throws RuntimeException
+	 *         if not available
 	 */
 	CentralSystemUser systemUserForUser(Long userId, String username);
 
@@ -53,7 +55,9 @@ public interface UserOcppBiz {
 	 *        the SolarUser user ID to get OCPP system user for
 	 * @param id
 	 *        the system user ID to find
-	 * @return the system user, or {@literal null} if not available
+	 * @return the system user
+	 * @throws RuntimeException
+	 *         if not available
 	 */
 	CentralSystemUser systemUserForUser(Long userId, Long id);
 
@@ -64,6 +68,8 @@ public interface UserOcppBiz {
 	 *        the SolarUser user ID to delete the OCPP system user for
 	 * @param id
 	 *        the system user ID to delete
+	 * @throws RuntimeException
+	 *         if not available
 	 */
 	void deleteUserSystemUser(Long userId, Long id);
 
@@ -85,6 +91,31 @@ public interface UserOcppBiz {
 	 *         ID assigned if creating a new entity
 	 */
 	CentralSystemUser saveSystemUser(CentralSystemUser systemUser);
+
+	/**
+	 * Get an OCPP system user for a given ID.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get OCPP authorization for
+	 * @param id
+	 *        the authorization ID to find
+	 * @return the authorization
+	 * @throws RuntimeException
+	 *         if not available
+	 */
+	CentralAuthorization authorizationForUser(Long userId, Long id);
+
+	/**
+	 * Delete an OCPP authorization for a given ID.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to delete the OCPP authorization for
+	 * @param id
+	 *        the authorization ID to delete
+	 * @throws RuntimeException
+	 *         if not available
+	 */
+	void deleteUserAuthorization(Long userId, Long id);
 
 	/**
 	 * Get the available OCPP authorizations for a given user.

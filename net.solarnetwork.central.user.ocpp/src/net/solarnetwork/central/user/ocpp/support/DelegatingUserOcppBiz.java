@@ -80,6 +80,16 @@ public class DelegatingUserOcppBiz implements UserOcppBiz {
 	}
 
 	@Override
+	public CentralAuthorization authorizationForUser(Long userId, Long id) {
+		return delegate.authorizationForUser(userId, id);
+	}
+
+	@Override
+	public void deleteUserAuthorization(Long userId, Long id) {
+		delegate.deleteUserAuthorization(userId, id);
+	}
+
+	@Override
 	public CentralAuthorization saveAuthorization(CentralAuthorization authorization) {
 		return delegate.saveAuthorization(authorization);
 	}
