@@ -22,13 +22,18 @@
 
 package net.solarnetwork.central.user.ocpp.biz.dao.test;
 
+import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -40,6 +45,7 @@ import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.user.ocpp.biz.dao.DaoUserOcppBiz;
+import net.solarnetwork.support.PasswordEncoder;
 
 /**
  * Test cases for the {@link DaoUserOcppBiz} class.
@@ -52,6 +58,7 @@ public class DaoUserOcppBizTests {
 	private CentralAuthorizationDao authorizationDao;
 	private CentralChargePointDao chargePointDao;
 	private CentralSystemUserDao systemUserDao;
+	private PasswordEncoder passwordEncoder;
 
 	private DaoUserOcppBiz biz;
 
@@ -59,17 +66,18 @@ public class DaoUserOcppBizTests {
 	public void setup() {
 		authorizationDao = EasyMock.createMock(CentralAuthorizationDao.class);
 		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
+		passwordEncoder = EasyMock.createMock(PasswordEncoder.class);
 		systemUserDao = EasyMock.createMock(CentralSystemUserDao.class);
-		biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, authorizationDao);
+		biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, authorizationDao, passwordEncoder);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(authorizationDao, chargePointDao, systemUserDao);
+		EasyMock.verify(authorizationDao, chargePointDao, passwordEncoder, systemUserDao);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(authorizationDao, chargePointDao, systemUserDao);
+		EasyMock.replay(authorizationDao, chargePointDao, passwordEncoder, systemUserDao);
 	}
 
 	@Test
@@ -100,6 +108,60 @@ public class DaoUserOcppBizTests {
 
 		// THEN
 		assertThat("DAO results returned", results, sameInstance(list));
+	}
+
+	@Test
+	public void saveSystemUser_createWithProvidedPassword() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		String rawPassword = "bar";
+		CentralSystemUser systemUser = new CentralSystemUser(userId, Instant.now(), "foo", rawPassword);
+
+		String encPassword = "encrypted";
+		expect(passwordEncoder.encode(rawPassword)).andReturn(encPassword);
+
+		Long id = UUID.randomUUID().getLeastSignificantBits();
+		expect(systemUserDao.save(systemUser)).andReturn(id);
+
+		CentralSystemUser savedSystemUser = new CentralSystemUser(systemUser);
+		savedSystemUser.setPassword(null);
+		expect(systemUserDao.get(id)).andReturn(savedSystemUser);
+
+		// WHEN
+		replayAll();
+
+		CentralSystemUser result = biz.saveSystemUser(systemUser);
+
+		// THEN
+		assertThat("DAO instance returned", result, sameInstance(savedSystemUser));
+		assertThat("Password not returned", result.getPassword(), nullValue());
+	}
+
+	@Test
+	public void saveSystemUser_createWithGeneratedPassword() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		CentralSystemUser systemUser = new CentralSystemUser(userId, Instant.now(), "foo", null);
+
+		Capture<String> genPasswordCaptor = new Capture<>();
+		String encPassword = "encrypted";
+		expect(passwordEncoder.encode(capture(genPasswordCaptor))).andReturn(encPassword);
+
+		Long id = UUID.randomUUID().getLeastSignificantBits();
+		expect(systemUserDao.save(systemUser)).andReturn(id);
+
+		CentralSystemUser savedSystemUser = new CentralSystemUser(systemUser);
+		savedSystemUser.setPassword(null);
+		expect(systemUserDao.get(id)).andReturn(savedSystemUser);
+
+		// WHEN
+		replayAll();
+
+		CentralSystemUser result = biz.saveSystemUser(systemUser);
+
+		// THEN
+		assertThat("DAO instance returned", result, sameInstance(savedSystemUser));
+		assertThat("Password not returned", result.getPassword(), equalTo(genPasswordCaptor.getValue()));
 	}
 
 	@Test

@@ -39,6 +39,28 @@ import net.solarnetwork.ocpp.domain.SystemUser;
 public class MyBatisCentralSystemUserDao extends BaseMyBatisGenericDaoSupport<SystemUser, Long>
 		implements CentralSystemUserDao {
 
+	/** Query name enumeration. */
+	public enum QueryName {
+
+		/** Get a system user for a given username. */
+		GetForUsername("get-CentralSystemUser-for-username");
+
+		private final String queryName;
+
+		private QueryName(String queryName) {
+			this.queryName = queryName;
+		}
+
+		/**
+		 * Get the query name.
+		 * 
+		 * @return the query name
+		 */
+		public String getQueryName() {
+			return queryName;
+		}
+	}
+
 	/**
 	 * Constructor.
 	 */
@@ -48,8 +70,7 @@ public class MyBatisCentralSystemUserDao extends BaseMyBatisGenericDaoSupport<Sy
 
 	@Override
 	public SystemUser getForUsername(String username) {
-		return selectFirst(getQueryForAll(),
-				singletonMap(FILTER_PROPERTY, new CentralSystemUser(null, null, username, null)));
+		return selectFirst(QueryName.GetForUsername.getQueryName(), username);
 	}
 
 	@Override

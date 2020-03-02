@@ -37,7 +37,7 @@ import net.solarnetwork.ocpp.domain.SystemUser;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties({ "allowedChargePointsArray", "allowedChargePointsValue", "password" })
+@JsonIgnoreProperties({ "allowedChargePointsArray", "allowedChargePointsValue" })
 @JsonPropertyOrder({ "id", "created", "userId", "username", "allowedChargePoints" })
 public class CentralSystemUser extends SystemUser implements UserRelatedEntity<Long> {
 

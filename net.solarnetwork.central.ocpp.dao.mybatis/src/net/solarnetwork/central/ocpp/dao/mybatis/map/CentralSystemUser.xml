@@ -34,16 +34,20 @@
 			id = #{id}
 	</update>
 
-	<sql id="fragment-CentralSystemUser-full-result">
+	<sql id="fragment-CentralSystemUser-view-result">
 		su.id AS ocpp_system_user_id
 		, su.created AS ocpp_system_user_created
 		, su.user_id AS ocpp_system_user_user_id
 		, su.username AS ocpp_system_user_username
-		, su.password AS ocpp_system_user_password
 		, su.allowed_cp AS ocpp_system_user_allowed_cp
 	</sql>
 	
-	<resultMap id="CentralSystemUser-FullResult" type="net.solarnetwork.central.ocpp.domain.CentralSystemUser">
+	<sql id="fragment-CentralSystemUser-full-result">
+		<include refid="fragment-CentralSystemUser-view-result"/>
+		, su.password AS ocpp_system_user_password
+	</sql>
+	
+	<resultMap id="CentralSystemUser-ViewResult" type="net.solarnetwork.central.ocpp.domain.CentralSystemUser">
 		<constructor>
 			<idArg  column="ocpp_system_user_id" javaType="Long"/>
 			<arg column="ocpp_system_user_user_id" javaType="Long"/>
@@ -55,13 +59,26 @@
 			jdbcType="ARRAY" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
 	</resultMap>
 
-	<select id="get-CentralSystemUser-for-id" parameterType="long" resultMap="CentralSystemUser-FullResult">
+	<resultMap id="CentralSystemUser-FullResult" extends="CentralSystemUser-ViewResult" type="net.solarnetwork.central.ocpp.domain.CentralSystemUser">
+		<result property="password" column="ocpp_system_user_password"/>
+	</resultMap>
+
+	<select id="get-CentralSystemUser-for-id" parameterType="long" resultMap="CentralSystemUser-ViewResult">
+		SELECT
+			<include refid="fragment-CentralSystemUser-view-result"/>
+		FROM
+			solarev.ocpp_system_user su
+		WHERE
+			su.id = #{id}
+	</select>
+
+	<select id="get-CentralSystemUser-for-username" parameterType="string" resultMap="CentralSystemUser-FullResult">
 		SELECT
 			<include refid="fragment-CentralSystemUser-full-result"/>
 		FROM
 			solarev.ocpp_system_user su
 		WHERE
-			su.id = #{id}
+			su.username = #{username}
 	</select>
 	
 	<sql id="fragment-findall-CentralSystemUser-where">
@@ -101,9 +118,9 @@
 		</choose>
 	</sql>
 
-	<select id="findall-CentralSystemUser" resultMap="CentralSystemUser-FullResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
+	<select id="findall-CentralSystemUser" resultMap="CentralSystemUser-ViewResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
 		SELECT
-			<include refid="fragment-CentralSystemUser-full-result"/>
+			<include refid="fragment-CentralSystemUser-view-result"/>
 		FROM
 			solarev.ocpp_system_user su
 		<include refid="fragment-findall-CentralSystemUser-where"/>

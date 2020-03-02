@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.user.ocpp.biz.dao;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Collection;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,7 @@ import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
+import net.solarnetwork.support.PasswordEncoder;
 
 /**
  * DAO-based implementation of {@link UserOcppBiz}.
@@ -44,6 +48,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	private final CentralSystemUserDao systemUserDao;
 	private final CentralChargePointDao chargePointDao;
 	private final CentralAuthorizationDao authorizationDao;
+	private final PasswordEncoder passwordEncoder;
 
 	/**
 	 * Constructor.
@@ -54,9 +59,13 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 *        the charge point DAO
 	 * @param authorizationDao
 	 *        the authorization DAO
+	 * @param passwordEncoder
+	 *        the system user password encoder to use
+	 * @throws IllegalArgumentException
+	 *         if any parmeter is {@literal null}
 	 */
 	public DaoUserOcppBiz(CentralSystemUserDao systemUserDao, CentralChargePointDao chargePointDao,
-			CentralAuthorizationDao authorizationDao) {
+			CentralAuthorizationDao authorizationDao, PasswordEncoder passwordEncoder) {
 		super();
 		if ( systemUserDao == null ) {
 			throw new IllegalArgumentException("The systemUserDao parameter must not be null.");
@@ -70,6 +79,10 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 			throw new IllegalArgumentException("The authorizationDao parameter must not be null.");
 		}
 		this.authorizationDao = authorizationDao;
+		if ( passwordEncoder == null ) {
+			throw new IllegalArgumentException("The passwordEncoder parameter must not be null.");
+		}
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -78,10 +91,41 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return systemUserDao.findAllForOwner(userId);
 	}
 
+	private static String generateRandomToken(int byteCount) {
+		SecureRandom rng;
+		try {
+			rng = SecureRandom.getInstance("SHA1PRNG");
+		} catch ( NoSuchAlgorithmException e ) {
+			throw new RuntimeException("Unable to generate password.", e);
+		}
+		return generateRandomToken(rng, byteCount);
+	}
+
+	private static String generateRandomToken(SecureRandom rng, int byteCount) {
+		byte[] randomBytes = new byte[byteCount];
+		rng.nextBytes(randomBytes);
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public CentralSystemUser saveSystemUser(CentralSystemUser systemUser) {
-		return (CentralSystemUser) systemUserDao.get(systemUserDao.save(systemUser));
+		String generatedPassword = null;
+		if ( systemUser.getPassword() == null && systemUser.getId() == null ) {
+			// generate new password
+			generatedPassword = generateRandomToken(16);
+			systemUser.setPassword(passwordEncoder.encode(generatedPassword));
+
+		} else if ( systemUser.getPassword() != null ) {
+			// encrypt password
+			systemUser.setPassword(passwordEncoder.encode(systemUser.getPassword()));
+		}
+		CentralSystemUser result = (CentralSystemUser) systemUserDao.get(systemUserDao.save(systemUser));
+		if ( generatedPassword != null ) {
+			// return password to caller
+			result.setPassword(generatedPassword);
+		}
+		return result;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

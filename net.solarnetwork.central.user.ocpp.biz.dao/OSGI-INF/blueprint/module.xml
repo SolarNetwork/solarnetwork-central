@@ -10,6 +10,8 @@
 
 	<!-- Service References -->
 
+	<reference id="passwordEncoder" interface="net.solarnetwork.support.PasswordEncoder" filter="(function=central)"/>
+
 	<reference id="authorizationDao" interface="net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao"/>
 
 	<reference id="chargePointDao" interface="net.solarnetwork.central.ocpp.dao.CentralChargePointDao"/>
@@ -28,6 +30,7 @@
 			<argument ref="systemUserDao"/>
 			<argument ref="chargePointDao"/>
 			<argument ref="authorizationDao"/>
+			<argument ref="passwordEncoder"/>
 		</bean>
 	</service>
 

@@ -118,7 +118,7 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
 		assertThat("Username", entity.getUsername(), equalTo(last.getUsername()));
-		assertThat("Password", entity.getPassword(), equalTo(last.getPassword()));
+		assertThat("Password is NOT returned", entity.getPassword(), nullValue());
 	}
 
 	@Test
@@ -140,7 +140,7 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		Long pk = dao.save(obj);
 		assertThat("PK unchanged", pk, equalTo(obj.getId()));
 
-		SystemUser entity = dao.get(pk);
+		SystemUser entity = dao.getForUsername(obj.getUsername());
 		assertThat("Entity updated", entity.isSameAs(obj), equalTo(true));
 	}
 
@@ -156,7 +156,7 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		Long pk = dao.save(obj);
 		assertThat("PK unchanged", pk, equalTo(obj.getId()));
 
-		SystemUser entity = dao.get(pk);
+		SystemUser entity = dao.getForUsername(obj.getUsername());
 		assertThat("Entity updated", entity.isSameAs(obj), equalTo(true));
 		assertThat("Allowed charge points", entity.getAllowedChargePoints(),
 				contains("one", "three", "four", "five"));
@@ -173,6 +173,8 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 
 		Collection<SystemUser> results = dao.getAll(null);
 		assertThat("Results found in order", results, contains(obj2, obj1, obj3));
+		assertThat("No password returned",
+				results.stream().map(SystemUser::getPassword).allMatch(s -> s == null), equalTo(true));
 	}
 
 	@Test
@@ -190,6 +192,8 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 
 		Collection<CentralSystemUser> results = dao.findAllForOwner(userId);
 		assertThat("Results found in order", results, contains(obj2, obj1));
+		assertThat("No password returned",
+				results.stream().map(SystemUser::getPassword).allMatch(s -> s == null), equalTo(true));
 	}
 
 	@Test
@@ -243,6 +247,7 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		SystemUser entity = dao.getForUsername("b");
 		assertThat("Match", entity, notNullValue());
 		assertThat("Username matches", entity.getUsername(), equalTo("b"));
+		assertThat("Password IS returned", entity.getPassword(), equalTo("bb"));
 	}
 
 	@Test
@@ -251,6 +256,7 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		SystemUser entity = dao.getForUsername("foobar");
 		assertThat("Match", entity, notNullValue());
 		assertThat("Username matches", entity.getUsername(), equalTo("foobar"));
+		assertThat("Password IS returned", entity.getPassword(), equalTo("secret"));
 		assertThat("Allowed charge points", entity.getAllowedChargePoints(), contains("one", "two"));
 	}
 
