@@ -1,5 +1,5 @@
 /* ==================================================================
- * OcppController.java - 1/03/2020 7:36:49 am
+ * UserOcppController.java - 1/03/2020 7:36:49 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -28,9 +28,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
@@ -50,7 +52,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @RestController("v1OcppController")
 @RequestMapping(value = { "/sec/ocpp", "/v1/sec/user/ocpp" })
-public class OcppController extends WebServiceControllerSupport {
+public class UserOcppController extends WebServiceControllerSupport {
 
 	private final OptionalService<UserOcppBiz> userOcppBiz;
 
@@ -61,7 +63,7 @@ public class OcppController extends WebServiceControllerSupport {
 	 *        the user OCPP service
 	 */
 	@Autowired
-	public OcppController(@Qualifier("userOcppBiz") OptionalService<UserOcppBiz> userOcppBiz) {
+	public UserOcppController(@Qualifier("userOcppBiz") OptionalService<UserOcppBiz> userOcppBiz) {
 		super();
 		if ( userOcppBiz == null ) {
 			throw new IllegalArgumentException("The userOcppBiz parameter must not be null.");
@@ -157,11 +159,24 @@ public class OcppController extends WebServiceControllerSupport {
 	 * 
 	 * @return the system users
 	 */
-	@RequestMapping(method = RequestMethod.GET, value = "/credentials")
+	@RequestMapping(method = RequestMethod.GET, value = "/credentials", params = "!username")
 	public Response<Collection<CentralSystemUser>> availableSystemUsers() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralSystemUser> list = userOcppBiz().systemUsersForUser(userId);
 		return response(list);
+	}
+
+	/**
+	 * View a system user by its username.
+	 * 
+	 * @param username
+	 *        the username of the system user to view
+	 * @return the system user
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/credentials", params = "username")
+	public Response<CentralSystemUser> viewSystemUser(@RequestParam("username") String username) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return response(userOcppBiz().systemUserForUser(userId, username));
 	}
 
 	/**
@@ -175,6 +190,33 @@ public class OcppController extends WebServiceControllerSupport {
 	public ResponseEntity<Response<CentralSystemUser>> saveSystemUser(
 			@RequestBody CentralSystemUser systemUser) {
 		return responseForSave(systemUser.getId(), userOcppBiz().saveSystemUser(systemUser));
+	}
+
+	/**
+	 * View a system user.
+	 * 
+	 * @param id
+	 *        the ID of the system user to view
+	 * @return the system user
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/credentials/{id}")
+	public Response<CentralSystemUser> viewSystemUser(@PathVariable("id") Long id) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return response(userOcppBiz().systemUserForUser(userId, id));
+	}
+
+	/**
+	 * Delete a system user.
+	 * 
+	 * @param id
+	 *        the ID of the system user to delete
+	 * @return the deleted system user
+	 */
+	@RequestMapping(method = RequestMethod.DELETE, value = "/credentials/{id}")
+	public Response<Void> deleteSystemUser(@PathVariable("id") Long id) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userOcppBiz().deleteUserSystemUser(userId, id);
+		return response(null);
 	}
 
 }

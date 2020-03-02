@@ -84,6 +84,9 @@
 	<sql id="fragment-findall-CentralSystemUser-where">
 		<if test="filter != null">
 			<where>
+				<if test="filter.id != null">
+					AND su.id = #{filter.id}
+				</if>
 				<if test="filter.userId != null">
 					AND su.user_id = #{filter.userId}
 				</if>
@@ -126,5 +129,10 @@
 		<include refid="fragment-findall-CentralSystemUser-where"/>
 		<include refid="fragment-findall-CentralSystemUser-order"/>
 	</select>
+	
+	<delete id="delete-CentralSystemUser-for-user-and-id" parameterType="net.solarnetwork.central.ocpp.domain.CentralSystemUser">
+		DELETE FROM solarev.ocpp_system_user
+		WHERE user_id = #{userId} AND id = #{id}
+	</delete>
 
 </mapper>

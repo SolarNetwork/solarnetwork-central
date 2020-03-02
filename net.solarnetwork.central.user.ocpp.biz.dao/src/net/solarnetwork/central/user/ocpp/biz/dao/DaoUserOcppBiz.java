@@ -130,6 +130,24 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
+	public CentralSystemUser systemUserForUser(Long userId, String username) {
+		return systemUserDao.getForUsername(userId, username);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public CentralSystemUser systemUserForUser(Long userId, Long id) {
+		return systemUserDao.get(userId, id);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteUserSystemUser(Long userId, Long id) {
+		systemUserDao.delete(userId, id);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
 	public Collection<CentralAuthorization> authorizationsForUser(Long userId) {
 		return authorizationDao.findAllForOwner(userId);
 	}

@@ -60,6 +60,21 @@ public class DelegatingUserOcppBiz implements UserOcppBiz {
 	}
 
 	@Override
+	public CentralSystemUser systemUserForUser(Long userId, String username) {
+		return delegate.systemUserForUser(userId, username);
+	}
+
+	@Override
+	public CentralSystemUser systemUserForUser(Long userId, Long id) {
+		return delegate.systemUserForUser(userId, id);
+	}
+
+	@Override
+	public void deleteUserSystemUser(Long userId, Long id) {
+		delegate.deleteUserSystemUser(userId, id);
+	}
+
+	@Override
 	public Collection<CentralAuthorization> authorizationsForUser(Long userId) {
 		return delegate.authorizationsForUser(userId);
 	}

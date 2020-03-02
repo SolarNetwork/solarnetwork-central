@@ -36,6 +36,38 @@ import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 public interface UserOcppBiz {
 
 	/**
+	 * Get an OCPP system user for a given username.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get OCPP system user for
+	 * @param username
+	 *        the username to find
+	 * @return the system user, or {@literal null} if not available
+	 */
+	CentralSystemUser systemUserForUser(Long userId, String username);
+
+	/**
+	 * Get an OCPP system user for a given ID.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get OCPP system user for
+	 * @param id
+	 *        the system user ID to find
+	 * @return the system user, or {@literal null} if not available
+	 */
+	CentralSystemUser systemUserForUser(Long userId, Long id);
+
+	/**
+	 * Delete an OCPP system user for a given ID.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to delete the OCPP system user for
+	 * @param id
+	 *        the system user ID to delete
+	 */
+	void deleteUserSystemUser(Long userId, Long id);
+
+	/**
 	 * List the available OCPP system users for a given user.
 	 * 
 	 * @param userId

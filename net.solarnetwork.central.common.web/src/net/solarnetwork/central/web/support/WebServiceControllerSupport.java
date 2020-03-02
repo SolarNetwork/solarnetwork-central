@@ -36,6 +36,7 @@ import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.dao.QueryTimeoutException;
@@ -169,6 +170,7 @@ public abstract class WebServiceControllerSupport {
 	 * @param e
 	 *        the exception
 	 * @return an error response object
+	 * @since 1.15
 	 */
 	@ExceptionHandler(BeanInstantiationException.class)
 	@ResponseBody
@@ -304,7 +306,7 @@ public abstract class WebServiceControllerSupport {
 	 * @param e
 	 *        the exception
 	 * @return an error response object
-	 * @since 1.6
+	 * @since 1.15
 	 */
 	@ExceptionHandler(DateTimeParseException.class)
 	@ResponseBody
@@ -364,6 +366,33 @@ public abstract class WebServiceControllerSupport {
 			msgKey = "error.dao.dataIntegrityViolation";
 			code = "DAO.00100";
 		}
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return new Response<Object>(Boolean.FALSE, code, msg, null);
+	}
+
+	/**
+	 * Handle a {@link DataRetrievalFailureException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return an error response object
+	 * @since 1.15
+	 */
+	@ExceptionHandler(DataRetrievalFailureException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.NOT_FOUND)
+	public Response<?> handleDataRetrievalFailureException(DataRetrievalFailureException e,
+			Locale locale) {
+		log.debug("DataRetrievalFailureException in {} controller", getClass().getSimpleName(), e);
+		String msg;
+		String msgKey;
+		String code;
+		msg = "Key not found";
+		msgKey = "error.dao.keyNotFound";
+		code = "DAO.00102";
 		if ( messageSource != null ) {
 			msg = messageSource.getMessage(msgKey,
 					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);

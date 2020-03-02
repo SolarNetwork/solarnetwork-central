@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
 import java.util.Collection;
+import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
@@ -41,6 +42,9 @@ public class MyBatisCentralSystemUserDao extends BaseMyBatisGenericDaoSupport<Sy
 
 	/** Query name enumeration. */
 	public enum QueryName {
+
+		/** Delete a system user for a given user ID and ID. */
+		DeleteForUserAndId("delete-CentralSystemUser-for-user-and-id"),
 
 		/** Get a system user for a given username. */
 		GetForUsername("get-CentralSystemUser-for-username");
@@ -77,6 +81,35 @@ public class MyBatisCentralSystemUserDao extends BaseMyBatisGenericDaoSupport<Sy
 	public Collection<CentralSystemUser> findAllForOwner(Long userId) {
 		return selectList(getQueryForAll(), singletonMap(FILTER_PROPERTY, new CentralSystemUser(userId)),
 				null, null);
+	}
+
+	@Override
+	public CentralSystemUser get(Long userId, Long id) {
+		CentralSystemUser result = selectFirst(getQueryForAll(),
+				singletonMap(FILTER_PROPERTY, new CentralSystemUser(id, userId)));
+		if ( result == null ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
+		return result;
+	}
+
+	@Override
+	public CentralSystemUser getForUsername(Long userId, String username) {
+		CentralSystemUser result = selectFirst(getQueryForAll(),
+				singletonMap(FILTER_PROPERTY, new CentralSystemUser(userId, null, username, null)));
+		if ( result == null ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
+		return result;
+	}
+
+	@Override
+	public void delete(Long userId, Long id) {
+		int count = getLastUpdateCount(getSqlSession()
+				.delete(QueryName.DeleteForUserAndId.getQueryName(), new CentralSystemUser(id, userId)));
+		if ( count < 1 ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
 	}
 
 }

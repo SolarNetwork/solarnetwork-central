@@ -38,6 +38,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralSystemUserDao;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
@@ -258,6 +259,49 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		assertThat("Username matches", entity.getUsername(), equalTo("foobar"));
 		assertThat("Password IS returned", entity.getPassword(), equalTo("secret"));
 		assertThat("Allowed charge points", entity.getAllowedChargePoints(), contains("one", "two"));
+	}
+
+	@Test
+	public void findByUserAndUsername() {
+		findAll();
+		SystemUser entity = dao.getForUsername(userId, "b");
+		assertThat("Match", entity, notNullValue());
+		assertThat("Username matches", entity.getUsername(), equalTo("b"));
+		assertThat("Password IS NOT returned", entity.getPassword(), nullValue());
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void findByUserAndUsername_noMatch() {
+		insert();
+		dao.getForUsername(userId, "not a match");
+	}
+
+	@Test
+	public void findByUserAndId() {
+		insert();
+		SystemUser entity = dao.get(userId, last.getId());
+		assertThat("Match", entity, notNullValue());
+		assertThat("Username matches", entity.getUsername(), equalTo("foobar"));
+		assertThat("Password IS NOT returned", entity.getPassword(), nullValue());
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void findByUserAndId_noMatch() {
+		insert();
+		dao.get(userId, last.getId() - 1);
+	}
+
+	@Test
+	public void deleteByUserAndId() {
+		insert();
+		dao.delete(userId, last.getId());
+		assertThat("No longer found", dao.get(last.getId()), nullValue());
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void deleteByUserAndId_noMatch() {
+		insert();
+		dao.delete(userId, last.getId() - 1);
 	}
 
 }

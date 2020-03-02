@@ -49,4 +49,42 @@ public interface CentralSystemUserDao extends SystemUserDao {
 	 */
 	Collection<CentralSystemUser> findAllForOwner(Long userId);
 
+	/**
+	 * Get a system user by its unique ID.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @param id
+	 *        the ID to look for
+	 * @return the matching system user; never {@literal null}
+	 * @throws RuntimeException
+	 *         if the entity cannot be found
+	 */
+	CentralSystemUser get(Long userId, Long id);
+
+	/**
+	 * Delete a system user by its unique ID.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @param id
+	 *        the ID to look for
+	 * @throws RuntimeException
+	 *         if the entity cannot be found
+	 */
+	void delete(Long userId, Long id);
+
+	/**
+	 * Get a system user by its unique username.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @param username
+	 *        the username to look for
+	 * @return the matching system user; never {@literal null}
+	 * @throws RuntimeException
+	 *         if the entity cannot be found
+	 */
+	CentralSystemUser getForUsername(Long userId, String username);
+
 }
