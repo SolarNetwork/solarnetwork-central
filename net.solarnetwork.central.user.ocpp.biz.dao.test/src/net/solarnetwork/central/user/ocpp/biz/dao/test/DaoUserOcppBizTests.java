@@ -156,12 +156,57 @@ public class DaoUserOcppBizTests {
 
 		// WHEN
 		replayAll();
-
 		CentralSystemUser result = biz.saveSystemUser(systemUser);
 
 		// THEN
 		assertThat("DAO instance returned", result, sameInstance(savedSystemUser));
 		assertThat("Password not returned", result.getPassword(), equalTo(genPasswordCaptor.getValue()));
+	}
+
+	@Test
+	public void systemUserForUser_id() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		CentralSystemUser systemUser = new CentralSystemUser(userId, Instant.now(), "foo", null);
+		Long id = UUID.randomUUID().getLeastSignificantBits();
+		expect(systemUserDao.get(userId, id)).andReturn(systemUser);
+
+		// WHEN
+		replayAll();
+		CentralSystemUser result = biz.systemUserForUser(userId, id);
+
+		// THEN
+		assertThat("DAO user returned", result, sameInstance(systemUser));
+	}
+
+	@Test
+	public void systemUserForUser_username() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		String username = UUID.randomUUID().toString();
+		CentralSystemUser systemUser = new CentralSystemUser(userId, Instant.now(), username, null);
+		expect(systemUserDao.getForUsername(userId, username)).andReturn(systemUser);
+
+		// WHEN
+		replayAll();
+		CentralSystemUser result = biz.systemUserForUser(userId, username);
+
+		// THEN
+		assertThat("DAO user returned", result, sameInstance(systemUser));
+	}
+
+	@Test
+	public void deleteSystemUser() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		Long id = UUID.randomUUID().getLeastSignificantBits();
+		systemUserDao.delete(userId, id);
+
+		// WHEN
+		replayAll();
+		biz.deleteUserSystemUser(userId, id);
+
+		// THEN
 	}
 
 	@Test
