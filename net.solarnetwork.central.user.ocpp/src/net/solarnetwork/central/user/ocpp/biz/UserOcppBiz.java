@@ -93,7 +93,7 @@ public interface UserOcppBiz {
 	CentralSystemUser saveSystemUser(CentralSystemUser systemUser);
 
 	/**
-	 * Get an OCPP system user for a given ID.
+	 * Get an OCPP authorization for a given ID.
 	 * 
 	 * @param userId
 	 *        the SolarUser user ID to get OCPP authorization for
@@ -155,5 +155,30 @@ public interface UserOcppBiz {
 	 *         ID assigned if creating a new entity
 	 */
 	CentralChargePoint saveChargePoint(CentralChargePoint chargePoint);
+
+	/**
+	 * Get an OCPP charge point for a given ID.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get OCPP charge point for
+	 * @param id
+	 *        the charge point ID to find
+	 * @return the charge point
+	 * @throws RuntimeException
+	 *         if not available
+	 */
+	CentralChargePoint chargePointForUser(Long userId, Long id);
+
+	/**
+	 * Delete an OCPP charge point for a given ID.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to delete the OCPP charge point for
+	 * @param id
+	 *        the charge point ID to delete
+	 * @throws RuntimeException
+	 *         if not available
+	 */
+	void deleteUserChargePoint(Long userId, Long id);
 
 }

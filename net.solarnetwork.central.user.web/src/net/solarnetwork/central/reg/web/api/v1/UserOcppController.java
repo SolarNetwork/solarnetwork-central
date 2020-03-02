@@ -109,31 +109,6 @@ public class UserOcppController extends WebServiceControllerSupport {
 	 * 
 	 * @return the charge points
 	 */
-	@RequestMapping(method = RequestMethod.GET, value = "/chargers")
-	public Response<Collection<CentralChargePoint>> availableChargePoints() {
-		final Long userId = SecurityUtils.getCurrentActorUserId();
-		Collection<CentralChargePoint> list = userOcppBiz().chargePointsForUser(userId);
-		return response(list);
-	}
-
-	/**
-	 * Save a charge point.
-	 * 
-	 * @param chargePoint
-	 *        the charge point to save
-	 * @return the saved charge point
-	 */
-	@RequestMapping(method = RequestMethod.POST, value = "/chargers")
-	public ResponseEntity<Response<CentralChargePoint>> saveChargePoint(
-			@RequestBody CentralChargePoint chargePoint) {
-		return responseForSave(chargePoint.getId(), userOcppBiz().saveChargePoint(chargePoint));
-	}
-
-	/**
-	 * Get all available charge points for the current user.
-	 * 
-	 * @return the charge points
-	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/authorizations")
 	public Response<Collection<CentralAuthorization>> availableAuthorizations() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
@@ -182,6 +157,58 @@ public class UserOcppController extends WebServiceControllerSupport {
 	}
 
 	/**
+	 * Get all available charge points for the current user.
+	 * 
+	 * @return the charge points
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/chargers")
+	public Response<Collection<CentralChargePoint>> availableChargePoints() {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		Collection<CentralChargePoint> list = userOcppBiz().chargePointsForUser(userId);
+		return response(list);
+	}
+
+	/**
+	 * Save a charge point.
+	 * 
+	 * @param chargePoint
+	 *        the charge point to save
+	 * @return the saved charge point
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "/chargers")
+	public ResponseEntity<Response<CentralChargePoint>> saveChargePoint(
+			@RequestBody CentralChargePoint chargePoint) {
+		return responseForSave(chargePoint.getId(), userOcppBiz().saveChargePoint(chargePoint));
+	}
+
+	/**
+	 * View a specific credential.
+	 * 
+	 * @param id
+	 *        the ID of the system user to view
+	 * @return the system user
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/chargers/{id}")
+	public Response<CentralChargePoint> viewChargePoint(@PathVariable("id") Long id) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return response(userOcppBiz().chargePointForUser(userId, id));
+	}
+
+	/**
+	 * Delete a specific credential.
+	 * 
+	 * @param id
+	 *        the ID of the system user to delete
+	 * @return the result
+	 */
+	@RequestMapping(method = RequestMethod.DELETE, value = "/chargers/{id}")
+	public Response<Void> deleteChargePoint(@PathVariable("id") Long id) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userOcppBiz().deleteUserChargePoint(userId, id);
+		return response(null);
+	}
+
+	/**
 	 * Get all available OCPP system users for the current user.
 	 * 
 	 * @return the system users
@@ -220,7 +247,7 @@ public class UserOcppController extends WebServiceControllerSupport {
 	}
 
 	/**
-	 * View a system user.
+	 * View a specific credential.
 	 * 
 	 * @param id
 	 *        the ID of the system user to view
@@ -233,7 +260,7 @@ public class UserOcppController extends WebServiceControllerSupport {
 	}
 
 	/**
-	 * Delete a system user.
+	 * Delete a specific credential.
 	 * 
 	 * @param id
 	 *        the ID of the system user to delete

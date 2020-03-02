@@ -125,6 +125,9 @@
 	<sql id="fragment-findall-CentralChargePoint-where">
 		<if test="filter != null">
 			<where>
+				<if test="filter.id != null">
+					AND cp.id = #{filter.id}
+				</if>
 				<if test="filter.userId != null">
 					AND cp.user_id = #{filter.userId}
 				</if>
@@ -175,6 +178,11 @@
 		WHERE
 			cp.ident = #{identifier}
 			AND su.username = #{username}
-	</select>
-	
+	</select>	
+
+	<delete id="delete-CentralChargePoint-for-user-and-id" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargePoint">
+		DELETE FROM solarev.ocpp_charge_point
+		WHERE user_id = #{userId} AND id = #{id}
+	</delete>
+
 </mapper>

@@ -42,7 +42,7 @@ public class MyBatisCentralAuthorizationDao extends BaseMyBatisGenericDaoSupport
 	/** Query name enumeration. */
 	public enum QueryName {
 
-		/** Delete a system user for a given user ID and ID. */
+		/** Delete an authorization for a given user ID and ID. */
 		DeleteForUserAndId("delete-CentralAuthorization-for-user-and-id");
 
 		private final String queryName;

@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
 import java.util.Collection;
+import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
@@ -44,7 +45,10 @@ public class MyBatisCentralChargePointDao extends BaseMyBatisGenericDaoSupport<C
 	public enum QueryName {
 
 		/** Get a charge point based on a given {@link ChargePointIdentity}. */
-		GetForIdentity("get-CentralChargePoint-for-identity");
+		GetForIdentity("get-CentralChargePoint-for-identity"),
+
+		/** Delete a charge point for a given user ID and ID. */
+		DeleteForUserAndId("delete-CentralChargePoint-for-user-and-id");
 
 		private final String queryName;
 
@@ -84,6 +88,25 @@ public class MyBatisCentralChargePointDao extends BaseMyBatisGenericDaoSupport<C
 	public Collection<CentralChargePoint> findAllForOwner(Long userId) {
 		return selectList(getQueryForAll(),
 				singletonMap(FILTER_PROPERTY, new CentralChargePoint(userId, null)), null, null);
+	}
+
+	@Override
+	public CentralChargePoint get(Long userId, Long id) {
+		CentralChargePoint result = selectFirst(getQueryForAll(),
+				singletonMap(FILTER_PROPERTY, new CentralChargePoint(id, userId, null)));
+		if ( result == null ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
+		return result;
+	}
+
+	@Override
+	public void delete(Long userId, Long id) {
+		int count = getLastUpdateCount(getSqlSession().delete(
+				QueryName.DeleteForUserAndId.getQueryName(), new CentralChargePoint(id, userId, null)));
+		if ( count < 1 ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
 	}
 
 }

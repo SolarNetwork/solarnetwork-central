@@ -182,4 +182,16 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return (CentralChargePoint) chargePointDao.get(chargePointDao.save(chargePoint));
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public CentralChargePoint chargePointForUser(Long userId, Long id) {
+		return chargePointDao.get(userId, id);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteUserChargePoint(Long userId, Long id) {
+		chargePointDao.delete(userId, id);
+	}
+
 }

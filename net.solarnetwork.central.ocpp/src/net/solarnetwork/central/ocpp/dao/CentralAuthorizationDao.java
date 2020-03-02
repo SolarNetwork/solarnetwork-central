@@ -75,7 +75,7 @@ public interface CentralAuthorizationDao extends AuthorizationDao {
 	CentralAuthorization get(Long userId, Long id);
 
 	/**
-	 * Delete a system user by its unique ID.
+	 * Delete an authorization by its unique ID.
 	 * 
 	 * @param userId
 	 *        the owner ID

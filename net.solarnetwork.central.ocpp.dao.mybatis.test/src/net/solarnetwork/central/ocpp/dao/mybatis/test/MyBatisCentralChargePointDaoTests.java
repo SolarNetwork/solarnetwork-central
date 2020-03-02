@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralSystemUserDao;
@@ -247,7 +248,34 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 				.get(systemUserDao.save(createTestSystemUser("user", userId)));
 		ChargePoint entity = dao.getForIdentity(new ChargePointIdentity("b", systemUser.getUsername()));
 		assertThat("Match", entity, notNullValue());
-		assertThat("Username matches", entity.getInfo().getId(), equalTo("b"));
+		assertThat("Identifier matches", entity.getInfo().getId(), equalTo("b"));
+	}
+
+	@Test
+	public void findByUserAndId() {
+		insert();
+		ChargePoint entity = dao.get(userId, last.getId());
+		assertThat("Match", entity, notNullValue());
+		assertThat("Identifier matches", entity.getInfo().getId(), equalTo("foobar"));
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void findByUserAndId_noMatch() {
+		insert();
+		dao.get(userId, last.getId() - 1);
+	}
+
+	@Test
+	public void deleteByUserAndId() {
+		insert();
+		dao.delete(userId, last.getId());
+		assertThat("No longer found", dao.get(last.getId()), nullValue());
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void deleteByUserAndId_noMatch() {
+		insert();
+		dao.delete(userId, last.getId() - 1);
 	}
 
 }

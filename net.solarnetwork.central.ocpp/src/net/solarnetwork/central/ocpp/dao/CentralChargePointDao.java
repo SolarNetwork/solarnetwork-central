@@ -61,4 +61,29 @@ public interface CentralChargePointDao extends ChargePointDao {
 	 */
 	Collection<CentralChargePoint> findAllForOwner(Long userId);
 
+	/**
+	 * Get a charge point by its unique ID.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @param id
+	 *        the ID to look for
+	 * @return the matching entity; never {@literal null}
+	 * @throws RuntimeException
+	 *         if the entity cannot be found
+	 */
+	CentralChargePoint get(Long userId, Long id);
+
+	/**
+	 * Delete a charge point by its unique ID.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @param id
+	 *        the ID to look for
+	 * @throws RuntimeException
+	 *         if the entity cannot be found
+	 */
+	void delete(Long userId, Long id);
+
 }

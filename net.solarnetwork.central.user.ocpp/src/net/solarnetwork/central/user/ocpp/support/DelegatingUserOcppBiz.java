@@ -104,4 +104,14 @@ public class DelegatingUserOcppBiz implements UserOcppBiz {
 		return delegate.saveChargePoint(chargePoint);
 	}
 
+	@Override
+	public CentralChargePoint chargePointForUser(Long userId, Long id) {
+		return delegate.chargePointForUser(userId, id);
+	}
+
+	@Override
+	public void deleteUserChargePoint(Long userId, Long id) {
+		delegate.deleteUserChargePoint(userId, id);
+	}
+
 }
