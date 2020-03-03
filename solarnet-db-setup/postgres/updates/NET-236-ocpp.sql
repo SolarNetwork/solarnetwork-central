@@ -119,7 +119,9 @@ CREATE INDEX ocpp_charge_sess_reading_sess_id_idx ON solarev.ocpp_charge_sess_re
 CREATE TABLE solarev.ocpp_user_settings (
 	user_id				BIGINT NOT NULL,
 	created				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	source_id_tmpl		VARCHAR(255) NOT NULL,
+	pub_in				BOOLEAN NOT NULL DEFAULT TRUE,
+	pub_flux			BOOLEAN NOT NULL DEFAULT TRUE,
+	source_id_tmpl		VARCHAR(255),
 	CONSTRAINT ocpp_user_settings_pk PRIMARY KEY (user_id),
 	CONSTRAINT ocpp_user_settings_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
@@ -129,8 +131,8 @@ CREATE TABLE solarev.ocpp_user_settings (
 CREATE TABLE solarev.ocpp_charge_point_settings (
 	cp_id				BIGINT NOT NULL,
 	created				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	pub_in				BOOLEAN DEFAULT TRUE,
-	pub_flux			BOOLEAN DEFAULT TRUE,
+	pub_in				BOOLEAN NOT NULL DEFAULT TRUE,
+	pub_flux			BOOLEAN NOT NULL DEFAULT TRUE,
 	source_id_tmpl		VARCHAR(255),
 	CONSTRAINT ocpp_charge_point_settings_pk PRIMARY KEY (cp_id),
 	CONSTRAINT ocpp_charge_point_settings_charge_point_fk FOREIGN KEY (cp_id)

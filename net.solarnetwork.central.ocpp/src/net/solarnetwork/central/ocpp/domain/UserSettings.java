@@ -43,14 +43,16 @@ import net.solarnetwork.domain.Differentiable;
  * @version 1.0
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "userId", "created", "sourceIdTemplate" })
+@JsonPropertyOrder({ "userId", "created", "publishToSolarIn", "publishToSolarFlux", "sourceIdTemplate" })
 public class UserSettings extends BasicLongEntity
 		implements Differentiable<UserSettings>, UserRelatedEntity<Long> {
 
 	/** The default {@code sourceIdTemplate} value. */
 	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/{chargePointId}/{connectorId}/{location}";
 
-	private String sourceIdTemplate = DEFAULT_SOURCE_ID_TEMPLATE;
+	private boolean publishToSolarIn = true;
+	private boolean publishToSolarFlux = true;
+	private String sourceIdTemplate;
 
 	/**
 	 * Default constructor.
@@ -121,6 +123,48 @@ public class UserSettings extends BasicLongEntity
 	@Override
 	public Long getUserId() {
 		return getId();
+	}
+
+	/**
+	 * Get the "publish to SolarIn" toggle.
+	 * 
+	 * @return {@literal true} if data from this charge point should be
+	 *         published to SolarIn; defaults to {@literal true}
+	 */
+	public boolean isPublishToSolarIn() {
+		return publishToSolarIn;
+	}
+
+	/**
+	 * Set the "publish to SolarIn" toggle.
+	 * 
+	 * @param publishToSolarIn
+	 *        {@literal true} if data from this charge point should be published
+	 *        to SolarIn
+	 */
+	public void setPublishToSolarIn(boolean publishToSolarIn) {
+		this.publishToSolarIn = publishToSolarIn;
+	}
+
+	/**
+	 * Get the "publish to SolarFlux" toggle.
+	 * 
+	 * @return {@literal true} if data from this charge point should be
+	 *         published to SolarFlux; defaults to {@literal true}
+	 */
+	public boolean isPublishToSolarFlux() {
+		return publishToSolarFlux;
+	}
+
+	/**
+	 * Set the "publish to SolarFlux" toggle.
+	 * 
+	 * @param publishToSolarFlux
+	 *        {@literal true} if data from this charge point should be published
+	 *        to SolarFlux
+	 */
+	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+		this.publishToSolarFlux = publishToSolarFlux;
 	}
 
 	/**

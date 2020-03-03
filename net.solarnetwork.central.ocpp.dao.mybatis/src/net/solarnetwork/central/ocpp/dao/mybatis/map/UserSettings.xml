@@ -7,18 +7,27 @@
 			user_id
 			<if test="created != null">,created</if>
 			, source_id_tmpl
+			, pub_in
+			, pub_flux
 		) VALUES (
 			#{id}
 			<if test="created != null">,#{created}</if>
 			, #{sourceIdTemplate}
+			, #{publishToSolarIn}
+			, #{publishToSolarFlux}
 		)
 		ON CONFLICT (user_id) DO UPDATE
-		SET source_id_tmpl = EXCLUDED.source_id_tmpl
+		SET
+			source_id_tmpl = EXCLUDED.source_id_tmpl
+			, pub_in = EXCLUDED.pub_in
+			, pub_flux = EXCLUDED.pub_flux
 	</update>
 
 	<sql id="fragment-UserSettings-full-result">
 		us.user_id AS ocpp_user_settings_cp_id
 		, us.created AS ocpp_user_settings_created
+		, us.pub_in AS ocpp_user_settings_pub_in
+		, us.pub_flux AS ocpp_user_settings_pub_flux
 		, us.source_id_tmpl AS ocpp_user_settings_source_id_tmpl
 	</sql>
 	
@@ -27,6 +36,8 @@
 			<idArg  column="ocpp_user_settings_cp_id" javaType="Long"/>
 			<arg column="ocpp_user_settings_created" javaType="java.time.Instant"/>
 		</constructor>
+		<result property="publishToSolarIn" column="ocpp_user_settings_pub_in"/>
+		<result property="publishToSolarFlux" column="ocpp_user_settings_pub_flux"/>
 		<result property="sourceIdTemplate" column="ocpp_user_settings_source_id_tmpl"/>
 	</resultMap>
 
