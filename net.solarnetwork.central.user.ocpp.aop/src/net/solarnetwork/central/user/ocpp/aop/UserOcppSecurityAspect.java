@@ -83,8 +83,8 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Match methods like {@code deleteUser*(entity)}.
 	 * 
-	 * @param entity
-	 *        the entity
+	 * @param userId
+	 *        the user ID
 	 */
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.deleteUser*(..)) && args(userId,..)")
 	public void deleteUserRelatedEntityById(Long userId) {
