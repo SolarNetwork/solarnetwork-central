@@ -372,6 +372,8 @@ public abstract class AuthorizationSupport {
 	 * Enforce a security policy on a domain object and
 	 * {@code SecurityPolicyMetadataType#Node} metadata type.
 	 * 
+	 * @param <T>
+	 *        the domain object type
 	 * @param domainObject
 	 *        The domain object to enforce the active policy on.
 	 * @return The domain object to use.
@@ -389,6 +391,8 @@ public abstract class AuthorizationSupport {
 	 * 
 	 * The {@link FilterResults} API is supported, as is {@link List}.
 	 * 
+	 * @param <T>
+	 *        the domain object type
 	 * @param domainObject
 	 *        The domain object to enforce the active policy on.
 	 * @param metadataType

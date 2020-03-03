@@ -39,7 +39,7 @@ public interface UserAuthTokenDao extends GenericDao<UserAuthToken, String> {
 	/**
 	 * Find a list of all UserNodeAuthToken objects for a particular user.
 	 * 
-	 * @param user
+	 * @param userId
 	 *        the user ID to get all tokens for
 	 * @return list of {@link UserAuthToken} objects, or an empty list if none
 	 *         found

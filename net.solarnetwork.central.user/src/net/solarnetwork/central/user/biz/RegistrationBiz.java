@@ -67,11 +67,11 @@ public interface RegistrationBiz {
 	 * @param user
 	 *        the new user to register
 	 * @return a confirmation string suitable to pass to
-	 *         {@link #confirmRegisteredUser(String, String, BizContext)}
+	 *         {@link #confirmRegisteredUser(RegistrationReceipt)}
 	 * @throws AuthorizationException
 	 *         if the desired login is taken already, this exception will be
 	 *         thrown with the reason code
-	 *         {@link AuthorizationException.Reason#DUPLICATE_LOGIN}
+	 *         {@link AuthorizationException.Reason#DUPLICATE_EMAIL}
 	 */
 	RegistrationReceipt registerUser(User user) throws AuthorizationException;
 
@@ -89,7 +89,7 @@ public interface RegistrationBiz {
 	 *        the confirmation code
 	 * @return the receipt instance
 	 */
-	public RegistrationReceipt createReceipt(String username, String confirmationCode);
+	RegistrationReceipt createReceipt(String username, String confirmationCode);
 
 	/**
 	 * Confirm a registered user.
@@ -149,7 +149,7 @@ public interface RegistrationBiz {
 
 	/**
 	 * Get a {@link NetworkAssociationDetails} previously created via
-	 * {@link #createNodeAssociation(Long)}
+	 * {@link #createNodeAssociation(NewNodeRequest)}
 	 * 
 	 * @param userNodeConfirmationId
 	 *        the UserNodeConfirmation ID to create the details for
@@ -163,7 +163,7 @@ public interface RegistrationBiz {
 
 	/**
 	 * Cancel a {@link NetworkAssociationDetails} previously created via
-	 * {@link #createNodeAssociation(Long)}
+	 * {@link #createNodeAssociation(NewNodeRequest)}
 	 * 
 	 * @param userNodeConfirmationId
 	 *        the UserNodeConfirmation ID to create the details for
@@ -176,12 +176,13 @@ public interface RegistrationBiz {
 
 	/**
 	 * Confirm a node association previously created via
-	 * {@link #createNodeAssociation(User)}. This method must be called after a
-	 * call to {@link #createNodeAssociation(Long, String)} to confirm the node
-	 * association. The {@code username} and {@code confirmationKey} are
-	 * required. If a {@code keystorePassword} is provided a private key will be
-	 * generated and a certificate will be automatically requested for the node,
-	 * which will be encrypted with the provided password.
+	 * {@link #createNodeAssociation(NewNodeRequest)}. This method must be
+	 * called after a call to {@link #createNodeAssociation(NewNodeRequest)} to
+	 * confirm the node association. The {@code username} and
+	 * {@code confirmationKey} are required. If a {@code keystorePassword} is
+	 * provided a private key will be generated and a certificate will be
+	 * automatically requested for the node, which will be encrypted with the
+	 * provided password.
 	 * 
 	 * 
 	 * @param association
@@ -189,8 +190,8 @@ public interface RegistrationBiz {
 	 * @return new RegistrationReceipt object
 	 * @throws AuthorizationException
 	 *         if the details do not match those returned from a previous call
-	 *         to {@link #createNodeAssociation(User)} then the reason code will
-	 *         be set to
+	 *         to {@link #createNodeAssociation(NewNodeRequest)} then the reason
+	 *         code will be set to
 	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED};
 	 *         if the node has already been confirmed then
 	 *         {@link AuthorizationException.Reason#REGISTRATION_ALREADY_CONFIRMED}
@@ -228,9 +229,13 @@ public interface RegistrationBiz {
 	 * @param pkcs12InputStream
 	 *        the PKCS12 keystore data containing the node's existing
 	 *        private/public key public/private key
+	 * @param keystorePassword
+	 *        the keystore password
 	 * @return the renewed network certificate
 	 * @throws AuthorizationException
 	 *         if the details do not match the active {@code SecurityActor}
+	 * @throws IOException
+	 *         if any keystore parsing error occurs
 	 * @since 1.5
 	 * @see #renewNodeCertificate(UserNode, String)
 	 */
