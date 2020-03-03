@@ -236,6 +236,8 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param response
+	 *        the response
 	 * @return an error response object
 	 * @since 1.4
 	 */
@@ -345,6 +347,8 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param locale
+	 *        the locale
 	 * @return an error response object
 	 * @since 1.8
 	 */
@@ -378,6 +382,8 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param locale
+	 *        the locale
 	 * @return an error response object
 	 * @since 1.15
 	 */
@@ -515,6 +521,8 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param locale
+	 *        the locale
 	 * @return an error response object
 	 */
 	@ExceptionHandler(BindException.class)
@@ -547,8 +555,8 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
+	 * @param locale
+	 *        the locale
 	 * @return an error response object
 	 */
 	@ExceptionHandler(ValidationException.class)
@@ -566,8 +574,6 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 * @since 1.10
 	 */
