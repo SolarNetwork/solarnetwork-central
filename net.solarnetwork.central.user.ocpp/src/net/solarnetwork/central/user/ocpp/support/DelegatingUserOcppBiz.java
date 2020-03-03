@@ -27,6 +27,8 @@ import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
+import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 
@@ -135,6 +137,41 @@ public class DelegatingUserOcppBiz implements UserOcppBiz {
 	@Override
 	public CentralChargePointConnector saveChargePointConnector(CentralChargePointConnector connector) {
 		return delegate.saveChargePointConnector(connector);
+	}
+
+	@Override
+	public ChargePointSettings chargePointSettingsForUser(Long userId, Long chargePointId) {
+		return delegate.chargePointSettingsForUser(userId, chargePointId);
+	}
+
+	@Override
+	public void deleteUserChargePointSettings(Long userId, Long chargePointId) {
+		delegate.deleteUserChargePointSettings(userId, chargePointId);
+	}
+
+	@Override
+	public Collection<ChargePointSettings> chargePointSettingsForUser(Long userId) {
+		return delegate.chargePointSettingsForUser(userId);
+	}
+
+	@Override
+	public ChargePointSettings saveChargePointSettings(ChargePointSettings settings) {
+		return delegate.saveChargePointSettings(settings);
+	}
+
+	@Override
+	public UserSettings settingsForUser(Long userId) {
+		return delegate.settingsForUser(userId);
+	}
+
+	@Override
+	public void deleteUserSettings(Long userId) {
+		delegate.deleteUserSettings(userId);
+	}
+
+	@Override
+	public UserSettings saveSettings(UserSettings settings) {
+		return delegate.saveSettings(settings);
 	}
 
 }

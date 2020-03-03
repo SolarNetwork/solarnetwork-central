@@ -32,10 +32,14 @@ import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
+import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
+import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.support.PasswordEncoder;
@@ -52,6 +56,8 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	private final CentralChargePointDao chargePointDao;
 	private final CentralChargePointConnectorDao connectorDao;
 	private final CentralAuthorizationDao authorizationDao;
+	private final UserSettingsDao userSettingsDao;
+	private final ChargePointSettingsDao chargePointSettingsDao;
 	private final PasswordEncoder passwordEncoder;
 
 	/**
@@ -65,6 +71,10 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 *        the connector DAO
 	 * @param authorizationDao
 	 *        the authorization DAO
+	 * @param userSettingsDao
+	 *        the user settings DAo
+	 * @param chargePointSettingsDao
+	 *        the charge point settings DAO
 	 * @param passwordEncoder
 	 *        the system user password encoder to use
 	 * @throws IllegalArgumentException
@@ -72,6 +82,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 */
 	public DaoUserOcppBiz(CentralSystemUserDao systemUserDao, CentralChargePointDao chargePointDao,
 			CentralChargePointConnectorDao connectorDao, CentralAuthorizationDao authorizationDao,
+			UserSettingsDao userSettingsDao, ChargePointSettingsDao chargePointSettingsDao,
 			PasswordEncoder passwordEncoder) {
 		super();
 		if ( systemUserDao == null ) {
@@ -90,6 +101,14 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 			throw new IllegalArgumentException("The authorizationDao parameter must not be null.");
 		}
 		this.authorizationDao = authorizationDao;
+		if ( userSettingsDao == null ) {
+			throw new IllegalArgumentException("The userSettingsDao parameter must not be null.");
+		}
+		this.userSettingsDao = userSettingsDao;
+		if ( chargePointSettingsDao == null ) {
+			throw new IllegalArgumentException("The chargePointSettingsDao parameter must not be null.");
+		}
+		this.chargePointSettingsDao = chargePointSettingsDao;
 		if ( passwordEncoder == null ) {
 			throw new IllegalArgumentException("The passwordEncoder parameter must not be null.");
 		}
@@ -228,6 +247,48 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public CentralChargePointConnector saveChargePointConnector(CentralChargePointConnector entity) {
 		return (CentralChargePointConnector) connectorDao.get(connectorDao.save(entity));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public ChargePointSettings chargePointSettingsForUser(Long userId, Long chargePointId) {
+		return chargePointSettingsDao.get(userId, chargePointId);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteUserChargePointSettings(Long userId, Long chargePointId) {
+		chargePointSettingsDao.delete(userId, chargePointId);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Collection<ChargePointSettings> chargePointSettingsForUser(Long userId) {
+		return chargePointSettingsDao.findAllForOwner(userId);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public ChargePointSettings saveChargePointSettings(ChargePointSettings settings) {
+		return chargePointSettingsDao.get(chargePointSettingsDao.save(settings));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public UserSettings settingsForUser(Long userId) {
+		return userSettingsDao.get(userId);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteUserSettings(Long userId) {
+		userSettingsDao.delete(userId);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public UserSettings saveSettings(UserSettings settings) {
+		return userSettingsDao.get(userSettingsDao.save(settings));
 	}
 
 }

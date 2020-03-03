@@ -189,9 +189,9 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointDao.getForIdentity(chargePointId)).andReturn(cp);
 
 		// get ChargePointSettings
-		ChargePointSettings cps = new ChargePointSettings(cp.getId(), Instant.now());
+		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
 		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
-		expect(chargePointSettingsDao.resolveSettings(cp.getId())).andReturn(cps);
+		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// verify concurrent tx
 		int connectorId = 1;
@@ -370,9 +370,9 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointDao.getForIdentity(chargePointId)).andReturn(cp);
 
 		// get ChargePointSettings
-		ChargePointSettings cps = new ChargePointSettings(cp.getId(), Instant.now());
+		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
 		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
-		expect(chargePointSettingsDao.resolveSettings(cp.getId())).andReturn(cps);
+		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
 				connectorId, transactionId);
@@ -488,9 +488,9 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointDao.get(cp.getId())).andReturn(cp);
 
 		// get ChargePointSettings
-		ChargePointSettings cps = new ChargePointSettings(cp.getId(), Instant.now());
+		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
 		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
-		expect(chargePointSettingsDao.resolveSettings(cp.getId())).andReturn(cps);
+		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
 		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
@@ -632,10 +632,10 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointDao.get(cp.getId())).andReturn(cp);
 
 		// get ChargePointSettings
-		ChargePointSettings cps = new ChargePointSettings(cp.getId(), Instant.now());
+		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
 		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
 		cps.setPublishToSolarFlux(false);
-		expect(chargePointSettingsDao.resolveSettings(cp.getId())).andReturn(cps);
+		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
 		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
@@ -707,10 +707,10 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointDao.get(cp.getId())).andReturn(cp);
 
 		// get ChargePointSettings
-		ChargePointSettings cps = new ChargePointSettings(cp.getId(), Instant.now());
+		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
 		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
 		cps.setPublishToSolarIn(false);
-		expect(chargePointSettingsDao.resolveSettings(cp.getId())).andReturn(cps);
+		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
 		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
@@ -776,11 +776,11 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointDao.get(cp.getId())).andReturn(cp);
 
 		// get ChargePointSettings
-		ChargePointSettings cps = new ChargePointSettings(cp.getId(), Instant.now());
+		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
 		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
 		cps.setPublishToSolarIn(false);
 		cps.setPublishToSolarFlux(false);
-		expect(chargePointSettingsDao.resolveSettings(cp.getId())).andReturn(cps);
+		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
 		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),

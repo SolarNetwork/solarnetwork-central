@@ -22,8 +22,12 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis;
 
+import static java.util.Collections.singletonMap;
+import java.util.Collection;
+import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
+import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 
 /**
@@ -37,6 +41,9 @@ public class MyBatisChargePointSettingsDao extends
 
 	/** Query name enumeration. */
 	public enum QueryName {
+
+		/** Delete a settings for a given user ID and ID. */
+		DeleteForUserAndId("delete-ChargePointSettings-for-user-and-id"),
 
 		/** Resolve settings using user settings for defaults. */
 		ResolveSettings("resolve-ChargePointSettings-for-id");
@@ -70,8 +77,34 @@ public class MyBatisChargePointSettingsDao extends
 	}
 
 	@Override
-	public ChargePointSettings resolveSettings(Long id) {
-		return selectFirst(QueryName.ResolveSettings.getQueryName(), id);
+	public Collection<ChargePointSettings> findAllForOwner(Long userId) {
+		return selectList(getQueryForAll(),
+				singletonMap(FILTER_PROPERTY, new ChargePointSettings(userId)), null, null);
+	}
+
+	@Override
+	public ChargePointSettings get(Long userId, Long id) {
+		ChargePointSettings result = selectFirst(getQueryForAll(),
+				singletonMap(FILTER_PROPERTY, new ChargePointSettings(id, userId)));
+		if ( result == null ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
+		return result;
+	}
+
+	@Override
+	public void delete(Long userId, Long id) {
+		int count = getLastUpdateCount(getSqlSession().delete(
+				QueryName.DeleteForUserAndId.getQueryName(), new CentralAuthorization(id, userId)));
+		if ( count < 1 ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
+	}
+
+	@Override
+	public ChargePointSettings resolveSettings(Long userId, Long id) {
+		return selectFirst(QueryName.ResolveSettings.getQueryName(),
+				new ChargePointSettings(id, userId));
 	}
 
 }

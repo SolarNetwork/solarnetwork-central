@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.util.Arrays;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisUserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 
@@ -133,4 +135,18 @@ public class MyBatisUserSettingsDaoTests extends AbstractMyBatisDaoTestSupport {
 		});
 		assertThat("Results found in order", results, contains(expected.toArray()));
 	}
+
+	@Test
+	public void deleteByUserId() {
+		insert();
+		dao.delete(userId);
+		assertThat("No longer found", dao.get(last.getId()), nullValue());
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void deleteByUserId_noMatch() {
+		insert();
+		dao.delete(userId - 1);
+	}
+
 }

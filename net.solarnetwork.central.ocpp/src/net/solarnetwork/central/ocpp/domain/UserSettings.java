@@ -24,6 +24,10 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.Differentiable;
@@ -38,6 +42,8 @@ import net.solarnetwork.domain.Differentiable;
  * @author matt
  * @version 1.0
  */
+@JsonIgnoreProperties({ "id" })
+@JsonPropertyOrder({ "userId", "created", "sourceIdTemplate" })
 public class UserSettings extends BasicLongEntity
 		implements Differentiable<UserSettings>, UserRelatedEntity<Long> {
 
@@ -58,10 +64,22 @@ public class UserSettings extends BasicLongEntity
 	 * 
 	 * @param userId
 	 *        the user ID
+	 */
+	public UserSettings(Long userId) {
+		super(userId, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param userId
+	 *        the user ID
 	 * @param created
 	 *        the creation date
 	 */
-	public UserSettings(Long userId, Instant created) {
+	@JsonCreator
+	public UserSettings(@JsonProperty(value = "userId", required = true) Long userId,
+			@JsonProperty("created") Instant created) {
 		super(userId, created);
 	}
 

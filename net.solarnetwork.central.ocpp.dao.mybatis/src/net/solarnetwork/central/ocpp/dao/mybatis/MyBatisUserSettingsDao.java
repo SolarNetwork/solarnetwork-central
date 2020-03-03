@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis;
 
+import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
@@ -45,6 +46,14 @@ public class MyBatisUserSettingsDao extends BaseMyBatisGenericDaoSupport<UserSet
 	@Override
 	protected boolean isAssignedPrimaryKeys() {
 		return true;
+	}
+
+	@Override
+	public void delete(Long userId) {
+		int count = handleDelete(userId);
+		if ( count < 1 ) {
+			throw new DataRetrievalFailureException("Entity not found.");
+		}
 	}
 
 }

@@ -38,6 +38,8 @@ import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
+import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -184,10 +186,10 @@ public class UserOcppController extends WebServiceControllerSupport {
 	}
 
 	/**
-	 * View a specific credential.
+	 * View a specific charge point.
 	 * 
 	 * @param id
-	 *        the ID of the system user to view
+	 *        the ID of the charge point to view
 	 * @return the system user
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/chargers/{id}")
@@ -197,16 +199,69 @@ public class UserOcppController extends WebServiceControllerSupport {
 	}
 
 	/**
-	 * Delete a specific credential.
+	 * Delete a specific charge point.
 	 * 
 	 * @param id
-	 *        the ID of the system user to delete
+	 *        the ID of the charge point to delete
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/chargers/{id}")
 	public Response<Void> deleteChargePoint(@PathVariable("id") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserChargePoint(userId, id);
+		return response(null);
+	}
+
+	/**
+	 * Get all available charge point settings for the current user.
+	 * 
+	 * @return the charge point settings
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/chargers/settings")
+	public Response<Collection<ChargePointSettings>> availableChargePointSettings() {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		Collection<ChargePointSettings> list = userOcppBiz().chargePointSettingsForUser(userId);
+		return response(list);
+	}
+
+	/**
+	 * Save a charge point settings.
+	 * 
+	 * @param chargePointSettings
+	 *        the charge point settings to save
+	 * @return the saved charge point settings
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "/chargers/settings")
+	public ResponseEntity<Response<ChargePointSettings>> saveChargePointSettings(
+			@RequestBody ChargePointSettings chargePointSettings) {
+		return responseForSave(chargePointSettings.getId(),
+				userOcppBiz().saveChargePointSettings(chargePointSettings));
+	}
+
+	/**
+	 * View a specific charge point settings.
+	 * 
+	 * @param id
+	 *        the ID of the charge point settings to view
+	 * @return the settings
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/chargers/{id}/settings")
+	public Response<ChargePointSettings> viewChargePointSettings(@PathVariable("id") Long id) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return response(userOcppBiz().chargePointSettingsForUser(userId, id));
+	}
+
+	/**
+	 * Delete a specific charge point settings.
+	 * 
+	 * @param id
+	 *        the ID of the charge point settings to delete
+	 * @return the result
+	 */
+	@RequestMapping(method = RequestMethod.DELETE, value = "/chargers/{id}/settings")
+	public Response<Void> deleteChargePointSettings(@PathVariable("id") Long id) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userOcppBiz().deleteUserChargePointSettings(userId, id);
 		return response(null);
 	}
 
@@ -337,6 +392,41 @@ public class UserOcppController extends WebServiceControllerSupport {
 	public Response<Void> deleteSystemUser(@PathVariable("id") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserSystemUser(userId, id);
+		return response(null);
+	}
+
+	/**
+	 * Save user settings.
+	 * 
+	 * @param chargePointSettings
+	 *        the charge point settings to save
+	 * @return the saved charge point settings
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "/settings")
+	public ResponseEntity<Response<UserSettings>> saveSettings(@RequestBody UserSettings userSettings) {
+		return responseForSave(userSettings.getId(), userOcppBiz().saveSettings(userSettings));
+	}
+
+	/**
+	 * View the user settings.
+	 * 
+	 * @return the user settings
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/settings")
+	public Response<UserSettings> viewSettings() {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return response(userOcppBiz().settingsForUser(userId));
+	}
+
+	/**
+	 * Delete the user settings.
+	 * 
+	 * @return the result
+	 */
+	@RequestMapping(method = RequestMethod.DELETE, value = "/settings")
+	public Response<Void> deleteSettings() {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userOcppBiz().deleteUserSettings(userId);
 		return response(null);
 	}
 

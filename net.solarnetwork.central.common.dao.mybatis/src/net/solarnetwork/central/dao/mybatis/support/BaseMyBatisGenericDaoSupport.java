@@ -211,15 +211,31 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void delete(T entity) {
-		if ( entity.getId() == null ) {
-			return;
+		handleDelete(entity.getId());
+	}
+
+	/**
+	 * Delete an entity based on its primary key.
+	 * 
+	 * <p>
+	 * This method is called from {@link #delete(Entity)}.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the primary key of the entity to delete
+	 * @return the number of deleted rows
+	 */
+	protected int handleDelete(K id) {
+		if ( id == null ) {
+			return 0;
 		}
-		int result = getSqlSession().delete(this.delete, entity.getId());
+		int result = getLastUpdateCount(getSqlSession().delete(this.delete, id));
 		if ( result < 1 ) {
-			log.warn("Delete [{}] did not affect any rows.", entity);
+			log.debug("Delete [{}] did not affect any rows.", id);
 		} else if ( log.isInfoEnabled() ) {
-			log.debug("Deleted [{}]", entity);
+			log.debug("Deleted [{}]", id);
 		}
+		return result;
 	}
 
 	/**

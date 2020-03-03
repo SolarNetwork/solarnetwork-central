@@ -299,7 +299,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		// @formatter:on
 		chargeSessionDao.addReadings(singleton(reading));
 
-		ChargePointSettings cps = settingsForChargePoint(cp.getId());
+		ChargePointSettings cps = settingsForChargePoint(cp.getUserId(), cp.getId());
 		publishDatum(datum(cp, cps, sess, reading));
 
 		return sess;
@@ -481,7 +481,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 					ChargePointSettings cps = settings.get(cp.getId());
 					if ( cps == null ) {
-						cps = settingsForChargePoint(cp.getId());
+						cps = settingsForChargePoint(cp.getUserId(), cp.getId());
 						settings.put(cp.getId(), cps);
 					}
 
@@ -503,11 +503,11 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *        the charge point ID
 	 * @return the settings, never {@literal null}
 	 */
-	private ChargePointSettings settingsForChargePoint(Long id) {
-		ChargePointSettings cps = chargePointSettingsDao.resolveSettings(id);
+	private ChargePointSettings settingsForChargePoint(Long userId, Long id) {
+		ChargePointSettings cps = chargePointSettingsDao.resolveSettings(userId, id);
 		if ( cps == null ) {
 			// use default fallback
-			cps = new ChargePointSettings(id, Instant.now());
+			cps = new ChargePointSettings(id, userId, Instant.now());
 			cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
 		}
 		return cps;

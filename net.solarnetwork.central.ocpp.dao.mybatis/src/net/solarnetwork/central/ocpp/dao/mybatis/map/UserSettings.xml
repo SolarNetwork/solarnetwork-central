@@ -48,4 +48,9 @@
 			user_id
 	</select>
 
+	<delete id="delete-UserSettings" parameterType="Long">
+		DELETE FROM solarev.ocpp_user_settings
+		WHERE user_id = #{id}
+	</delete>
+
 </mapper>

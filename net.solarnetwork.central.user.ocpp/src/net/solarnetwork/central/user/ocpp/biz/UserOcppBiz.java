@@ -27,6 +27,8 @@ import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
+import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 
 /**
@@ -226,5 +228,78 @@ public interface UserOcppBiz {
 	 *         assigned if creating a new entity
 	 */
 	CentralChargePointConnector saveChargePointConnector(CentralChargePointConnector connector);
+
+	/**
+	 * Get a charge point settings for a given ID.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get OCPP connector for
+	 * @param chargePointId
+	 *        the charge point ID to find settings for
+	 * @return the settings
+	 * @throws RuntimeException
+	 *         if not available
+	 */
+	ChargePointSettings chargePointSettingsForUser(Long userId, Long chargePointId);
+
+	/**
+	 * Delete a charge point settings entity for a given ID.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to delete the charge point settings for
+	 * @param chargePointId
+	 *        the charge point ID to delete the settings for
+	 * @throws RuntimeException
+	 *         if not available
+	 */
+	void deleteUserChargePointSettings(Long userId, Long chargePointId);
+
+	/**
+	 * Get the available charge point settings entities for a given user.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get settings entities for
+	 * @return all available settings entities; never {@literal null}
+	 */
+	Collection<ChargePointSettings> chargePointSettingsForUser(Long userId);
+
+	/**
+	 * Create a new charge point settings entity, or update an existing entity.
+	 * 
+	 * @param settings
+	 *        the settings to save
+	 * @return the persisted settings, with any default values populated and ID
+	 *         assigned if creating a new entity
+	 */
+	ChargePointSettings saveChargePointSettings(ChargePointSettings settings);
+
+	/**
+	 * Get the available settings entities for a given user.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get settings entity for
+	 * @return the settings entity, or {@literal null} if not available
+	 */
+	UserSettings settingsForUser(Long userId);
+
+	/**
+	 * Delete a settings entity for a given user.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to delete the settings for
+	 * @throws RuntimeException
+	 *         if not available
+	 */
+	void deleteUserSettings(Long userId);
+
+	/**
+	 * Create a new settings entity, or update an existing entity.
+	 * 
+	 * @param settings
+	 *        the settings to save
+	 * @return the persisted settings, with any default values populated and ID
+	 *         assigned if creating a new entity
+	 */
+	UserSettings saveSettings(UserSettings settings);
 
 }

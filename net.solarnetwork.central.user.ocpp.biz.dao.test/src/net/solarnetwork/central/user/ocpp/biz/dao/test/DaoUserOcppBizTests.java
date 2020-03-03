@@ -42,10 +42,14 @@ import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
+import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
+import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.central.user.ocpp.biz.dao.DaoUserOcppBiz;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.support.PasswordEncoder;
@@ -62,6 +66,8 @@ public class DaoUserOcppBizTests {
 	private CentralChargePointDao chargePointDao;
 	private CentralChargePointConnectorDao connectorDao;
 	private CentralSystemUserDao systemUserDao;
+	private UserSettingsDao userSettingsDao;
+	private ChargePointSettingsDao chargePointSettingsDao;
 	private PasswordEncoder passwordEncoder;
 
 	private DaoUserOcppBiz biz;
@@ -72,18 +78,22 @@ public class DaoUserOcppBizTests {
 		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
 		connectorDao = EasyMock.createMock(CentralChargePointConnectorDao.class);
 		passwordEncoder = EasyMock.createMock(PasswordEncoder.class);
+		userSettingsDao = EasyMock.createMock(UserSettingsDao.class);
+		chargePointSettingsDao = EasyMock.createMock(ChargePointSettingsDao.class);
 		systemUserDao = EasyMock.createMock(CentralSystemUserDao.class);
 		biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, connectorDao, authorizationDao,
-				passwordEncoder);
+				userSettingsDao, chargePointSettingsDao, passwordEncoder);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(authorizationDao, chargePointDao, connectorDao, passwordEncoder, systemUserDao);
+		EasyMock.verify(authorizationDao, chargePointDao, chargePointSettingsDao, connectorDao,
+				passwordEncoder, systemUserDao, userSettingsDao);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(authorizationDao, chargePointDao, connectorDao, passwordEncoder, systemUserDao);
+		EasyMock.replay(authorizationDao, chargePointDao, chargePointSettingsDao, connectorDao,
+				passwordEncoder, systemUserDao, userSettingsDao);
 	}
 
 	@Test
@@ -303,6 +313,79 @@ public class DaoUserOcppBizTests {
 		// WHEN
 		replayAll();
 		biz.deleteUserChargePointConnector(userId, id);
+
+		// THEN
+	}
+
+	@Test
+	public void availableChargePointSettings() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		List<ChargePointSettings> list = Collections.emptyList();
+		expect(chargePointSettingsDao.findAllForOwner(userId)).andReturn(list);
+
+		// WHEN
+		replayAll();
+		Collection<ChargePointSettings> results = biz.chargePointSettingsForUser(userId);
+
+		// THEN
+		assertThat("DAO results returned", results, sameInstance(list));
+	}
+
+	@Test
+	public void chargePointSettingsForUser_id() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		Long id = UUID.randomUUID().getLeastSignificantBits();
+		ChargePointSettings entity = new ChargePointSettings(id, userId);
+		expect(chargePointSettingsDao.get(userId, id)).andReturn(entity);
+
+		// WHEN
+		replayAll();
+		ChargePointSettings result = biz.chargePointSettingsForUser(userId, id);
+
+		// THEN
+		assertThat("DAO user returned", result, sameInstance(entity));
+	}
+
+	@Test
+	public void deleteChargePointSettings() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		Long id = UUID.randomUUID().getLeastSignificantBits();
+		chargePointSettingsDao.delete(userId, id);
+
+		// WHEN
+		replayAll();
+		biz.deleteUserChargePointSettings(userId, id);
+
+		// THEN
+	}
+
+	@Test
+	public void userSettingsForUser() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		UserSettings entity = new UserSettings(userId);
+		expect(userSettingsDao.get(userId)).andReturn(entity);
+
+		// WHEN
+		replayAll();
+		UserSettings result = biz.settingsForUser(userId);
+
+		// THEN
+		assertThat("DAO user returned", result, sameInstance(entity));
+	}
+
+	@Test
+	public void deleteUserSettings() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		userSettingsDao.delete(userId);
+
+		// WHEN
+		replayAll();
+		biz.deleteUserSettings(userId);
 
 		// THEN
 	}

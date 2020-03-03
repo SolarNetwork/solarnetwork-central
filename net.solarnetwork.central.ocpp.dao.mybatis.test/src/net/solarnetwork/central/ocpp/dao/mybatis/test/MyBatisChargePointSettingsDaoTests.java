@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisUserSettingsDao;
@@ -81,11 +82,17 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 	}
 
 	private CentralChargePoint createAndSaveTestChargePoint(String vendor, String model) {
-		CentralChargePoint cp = createTestChargePoint(vendor, model);
+		return createAndSaveTestChargePoint(vendor, model, userId, nodeId);
+	}
+
+	private CentralChargePoint createAndSaveTestChargePoint(String vendor, String model, Long userId,
+			Long nodeId) {
+		CentralChargePoint cp = createTestChargePoint(vendor, model, userId, nodeId);
 		return (CentralChargePoint) chargePointDao.get(chargePointDao.save(cp));
 	}
 
-	private CentralChargePoint createTestChargePoint(String vendor, String model) {
+	private CentralChargePoint createTestChargePoint(String vendor, String model, Long userId,
+			Long nodeId) {
 		ChargePointInfo info = new ChargePointInfo(UUID.randomUUID().toString());
 		info.setChargePointVendor(vendor);
 		info.setChargePointModel(model);
@@ -98,7 +105,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 	}
 
 	private ChargePointSettings createTestChargePointSettings(Long chargePointId) {
-		ChargePointSettings s = new ChargePointSettings(chargePointId,
+		ChargePointSettings s = new ChargePointSettings(chargePointId, userId,
 				Instant.ofEpochMilli(System.currentTimeMillis()));
 		s.setPublishToSolarIn(false);
 		s.setPublishToSolarFlux(true);
@@ -157,7 +164,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 
 		ChargePointSettings obj1 = createTestChargePointSettings(cp1.getId());
 		obj1 = dao.get(dao.save(obj1));
-		ChargePointSettings obj2 = new ChargePointSettings(cp2.getId(),
+		ChargePointSettings obj2 = new ChargePointSettings(cp2.getId(), userId,
 				obj1.getCreated().minusSeconds(60));
 		obj2 = dao.get(dao.save(obj2));
 
@@ -174,15 +181,51 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 	}
 
 	@Test
+	public void findAllForOwner() {
+		ChargePoint cp1 = createAndSaveTestChargePoint("foo", "bar");
+		ChargePoint cp2 = createAndSaveTestChargePoint("bim", "bam");
+		UUID uuid = UUID.randomUUID();
+		Long nodeId2 = uuid.getLeastSignificantBits();
+		setupTestNode(nodeId2);
+		setupTestUserNode(userId, nodeId2);
+
+		ChargePointSettings obj1 = createTestChargePointSettings(cp1.getId());
+		obj1 = dao.get(dao.save(obj1));
+		ChargePointSettings obj2 = new ChargePointSettings(cp2.getId(), userId,
+				obj1.getCreated().minusSeconds(60));
+		obj2 = dao.get(dao.save(obj2));
+
+		Long userId2 = userId - 1;
+		Long nodeId3 = nodeId - 1;
+		setupTestUser(userId2);
+		setupTestNode(nodeId3);
+		setupTestUserNode(userId2, nodeId3);
+		ChargePoint cp3 = createAndSaveTestChargePoint("foo", "bar", userId2, nodeId3);
+		ChargePointSettings obj3 = createTestChargePointSettings(cp3.getId());
+		obj3 = dao.get(dao.save(obj3));
+
+		Collection<ChargePointSettings> results = dao.findAllForOwner(userId);
+		List<ChargePointSettings> expected = Arrays.asList(obj1, obj2);
+		expected.sort(new Comparator<ChargePointSettings>() {
+
+			@Override
+			public int compare(ChargePointSettings o1, ChargePointSettings o2) {
+				return o1.compareTo(o2.getId());
+			}
+		});
+		assertThat("Results found in order", results, contains(expected.toArray()));
+	}
+
+	@Test
 	public void resolveSettings_none() {
-		ChargePointSettings entity = dao.resolveSettings(1L);
+		ChargePointSettings entity = dao.resolveSettings(userId, 1L);
 		assertThat("No settings resolved", entity, nullValue());
 	}
 
 	@Test
 	public void resolveSettings_chargePointButNoSettings() {
 		ChargePoint cp1 = createAndSaveTestChargePoint("foo", "bar");
-		ChargePointSettings entity = dao.resolveSettings(cp1.getId());
+		ChargePointSettings entity = dao.resolveSettings(userId, cp1.getId());
 		assertThat("No settings resolved", entity, nullValue());
 	}
 
@@ -191,7 +234,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 		ChargePoint cp1 = createAndSaveTestChargePoint("foo", "bar");
 		UserSettings us = new UserSettings(userId, Instant.now());
 		userSettingsDao.save(us);
-		ChargePointSettings entity = dao.resolveSettings(cp1.getId());
+		ChargePointSettings entity = dao.resolveSettings(userId, cp1.getId());
 		assertThat("Settings resolved", entity, notNullValue());
 		assertThat("Resolved values taken from user settings", entity.getSourceIdTemplate(),
 				equalTo(us.getSourceIdTemplate()));
@@ -200,7 +243,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 	@Test
 	public void resolveSettings_onlyChargePoint() {
 		insert();
-		ChargePointSettings entity = dao.resolveSettings(last.getId());
+		ChargePointSettings entity = dao.resolveSettings(userId, last.getId());
 		assertThat("Settings resolved", entity, notNullValue());
 		assertThat("Resolved values taken from charge point settings", entity.isSameAs(last),
 				equalTo(true));
@@ -212,7 +255,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 		UserSettings us = new UserSettings(userId, Instant.now());
 		us.setSourceIdTemplate("/bim/bam");
 		userSettingsDao.save(us);
-		ChargePointSettings entity = dao.resolveSettings(last.getId());
+		ChargePointSettings entity = dao.resolveSettings(userId, last.getId());
 		assertThat("Settings resolved", entity, notNullValue());
 
 		ChargePointSettings expected = new ChargePointSettings();
@@ -233,9 +276,37 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 		us.setSourceIdTemplate("/bim/bam");
 		userSettingsDao.save(us);
 
-		ChargePointSettings entity = dao.resolveSettings(last.getId());
+		ChargePointSettings entity = dao.resolveSettings(userId, last.getId());
 		assertThat("Settings resolved", entity, notNullValue());
 		assertThat("Resolved values taken from charge point settings", entity.isSameAs(last),
 				equalTo(true));
 	}
+
+	@Test
+	public void findByUserAndId() {
+		insert();
+		ChargePointSettings entity = dao.get(userId, last.getId());
+		assertThat("Match", entity, equalTo(last));
+		assertThat("User ID", entity.getUserId(), equalTo(userId));
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void findByUserAndId_noMatch() {
+		insert();
+		dao.get(userId, last.getId() - 1);
+	}
+
+	@Test
+	public void deleteByUserAndId() {
+		insert();
+		dao.delete(userId, last.getId());
+		assertThat("No longer found", dao.get(last.getId()), nullValue());
+	}
+
+	@Test(expected = DataRetrievalFailureException.class)
+	public void deleteByUserAndId_noMatch() {
+		insert();
+		dao.delete(userId, last.getId() - 1);
+	}
+
 }

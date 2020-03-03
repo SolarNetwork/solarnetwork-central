@@ -33,4 +33,14 @@ import net.solarnetwork.dao.GenericDao;
  */
 public interface UserSettingsDao extends GenericDao<UserSettings, Long> {
 
+	/**
+	 * Delete a settings by its unique ID.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 * @throws RuntimeException
+	 *         if the entity cannot be found
+	 */
+	void delete(Long userId);
+
 }

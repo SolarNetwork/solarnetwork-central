@@ -25,7 +25,10 @@ package net.solarnetwork.central.ocpp.domain;
 import java.time.Instant;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -39,8 +42,13 @@ import net.solarnetwork.domain.Differentiable;
  * @author matt
  * @version 1.0
  */
-public class ChargePointSettings extends BasicLongEntity implements Differentiable<ChargePointSettings> {
+@JsonIgnoreProperties({ "id" })
+@JsonPropertyOrder({ "chargePointId", "userId", "created", "publishToSolarIn", "publishToSolarFlux",
+		"sourceIdTemplate" })
+public class ChargePointSettings extends BasicLongEntity
+		implements Differentiable<ChargePointSettings>, UserRelatedEntity<Long> {
 
+	private final Long userId;
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = true;
 	private String sourceIdTemplate;
@@ -50,6 +58,17 @@ public class ChargePointSettings extends BasicLongEntity implements Differentiab
 	 */
 	public ChargePointSettings() {
 		super();
+		this.userId = null;
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 */
+	public ChargePointSettings(Long userId) {
+		this(null, userId, null);
 	}
 
 	/**
@@ -57,14 +76,30 @@ public class ChargePointSettings extends BasicLongEntity implements Differentiab
 	 * 
 	 * @param chargePointId
 	 *        the charge point ID
+	 * @param userId
+	 *        the user ID
+	 */
+	public ChargePointSettings(Long chargePointId, Long userId) {
+		this(chargePointId, userId, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param chargePointId
+	 *        the charge point ID
+	 * @param userId
+	 *        the user ID
 	 * @param created
 	 *        the creation date
 	 */
 	@JsonCreator
 	public ChargePointSettings(
 			@JsonProperty(value = "chargePointId", required = true) Long chargePointId,
+			@JsonProperty(value = "userId", required = true) Long userId,
 			@JsonProperty("created") Instant created) {
 		super(chargePointId, created);
+		this.userId = userId;
 	}
 
 	/**
@@ -108,6 +143,11 @@ public class ChargePointSettings extends BasicLongEntity implements Differentiab
 	 */
 	public Long getChargePointId() {
 		return getId();
+	}
+
+	@Override
+	public Long getUserId() {
+		return userId;
 	}
 
 	/**
