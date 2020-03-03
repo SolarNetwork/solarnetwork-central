@@ -45,7 +45,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
 public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNodeMetadata, Long>
 		implements SolarNodeMetadataDao {
 
-	/** The query parameter for a general {@link Filter} object value. */
+	/** The query parameter for a general {@code Filter} object value. */
 	public static final String PARAM_FILTER = "filter";
 
 	/**

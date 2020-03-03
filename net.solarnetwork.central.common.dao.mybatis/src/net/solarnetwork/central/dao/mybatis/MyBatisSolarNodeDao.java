@@ -41,7 +41,7 @@ public class MyBatisSolarNodeDao
 		extends BaseMyBatisFilterableDao<SolarNode, SolarNodeFilterMatch, SolarNodeFilter, Long>
 		implements SolarNodeDao {
 
-	/** The query name used for {@link #getUnusedNodeId(String)}. */
+	/** The query name used for {@link #getUnusedNodeId()}. */
 	public static final String QUERY_FOR_NEXT_NODE_ID = "get-next-node-id";
 
 	/**

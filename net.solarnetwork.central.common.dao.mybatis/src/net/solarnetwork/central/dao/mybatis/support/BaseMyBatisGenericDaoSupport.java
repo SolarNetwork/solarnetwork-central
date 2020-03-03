@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.apache.ibatis.executor.BatchResult;
+import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,13 +59,15 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	/** The query name used for {@link GenericDao#getAll(List)}. */
 	public static final String QUERY_FOR_ALL = "findall-%s";
 
-	/** The query name used for inserts in {@link GenericDao#save(Object)}. */
+	/** The query name used for inserts in {@link GenericDao#save(Entity)}. */
 	public static final String INSERT_OBJECT = "insert-%s";
 
-	/** The query name used for updates in {@link GenericDao#save(Object)}. */
+	/** The query name used for updates in {@link GenericDao#save(Entity)}. */
 	public static final String UPDATE_OBJECT = "update-%s";
 
-	/** The query name used for updates in {@link GenericDao#delete(Object)}. */
+	/**
+	 * The query name used for updates in {@link GenericDao#delete(Entity)}.
+	 */
 	public static final String DELETE_OBJECT = "delete-%s";
 
 	/** The query property for any custom sort descriptors that are provided. */
@@ -265,8 +268,8 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 * 
 	 * <p>
 	 * This implementation merely calls
-	 * {@link SqlMapClientTemplate#update(String, Object)} using the
-	 * {@link #getUpdate()} SqlMap.
+	 * {@link SqlSession#update(String, Object)} using the {@link #getUpdate()}
+	 * SqlMap.
 	 * </p>
 	 * 
 	 * @param entity
@@ -282,9 +285,8 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	 * Process the insert of a persisted entity.
 	 * 
 	 * <p>
-	 * This implementation calls
-	 * {@link SqlMapClientTemplate#insert(String, Object)} using the
-	 * {@link #getInsert()} SqlMap.
+	 * This implementation calls {@link SqlSession#insert(String, Object)} using
+	 * the {@link #getInsert()} SqlMap.
 	 * </p>
 	 * 
 	 * @param entity
