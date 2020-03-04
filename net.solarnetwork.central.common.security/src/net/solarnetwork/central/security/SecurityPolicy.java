@@ -109,7 +109,7 @@ public interface SecurityPolicy {
 	 * with {@literal !} then the match is inverted, so that any path <b>not</b>
 	 * matching the pattern is allowed. Note that if <i>any</i> paths are
 	 * defined here, then <i>only</i> paths that match <i>some</i> pattern are
-	 * allowed. Or put another way, paths are denied <i>unless<i> some pattern
+	 * allowed. Or put another way, paths are denied <i>unless</i> some pattern
 	 * matches.
 	 * </p>
 	 * 

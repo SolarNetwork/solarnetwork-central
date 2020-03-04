@@ -42,6 +42,8 @@ public class AuthenticatedToken extends User implements SecurityToken {
 	/**
 	 * Construct with values.
 	 * 
+	 * @param user
+	 *        the user details
 	 * @param tokenType
 	 *        the token type
 	 * @param userId
