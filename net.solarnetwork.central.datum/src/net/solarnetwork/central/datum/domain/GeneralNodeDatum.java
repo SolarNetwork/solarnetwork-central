@@ -220,6 +220,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	 * </p>
 	 * 
 	 * @param json
+	 *        the JSON to set
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter

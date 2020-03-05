@@ -69,6 +69,8 @@ public final class DatumUtils {
 	 * represent the data. All exceptions while deserializing the object are
 	 * caught and ignored.
 	 * 
+	 * @param <T>
+	 *        the return object type
 	 * @param json
 	 *        the JSON string to convert
 	 * @param clazz

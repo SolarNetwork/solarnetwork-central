@@ -85,6 +85,11 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	 * </ol>
 	 * 
 	 * {@literal null} values will be sorted before non-{@literal null} values.
+	 * 
+	 * @param o
+	 *        the object to compare to
+	 * @return a negative integer, zero, or a positive integer as this object is
+	 *         less than, equal to, or greater than the specified object.
 	 */
 	public int compareTo(BasicNodeSourceDatePK o) {
 		int comparison = super.compareTo(o);

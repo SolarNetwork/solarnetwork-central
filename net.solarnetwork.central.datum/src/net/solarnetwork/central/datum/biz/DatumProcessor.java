@@ -40,8 +40,9 @@ public interface DatumProcessor {
 	 * Test if the processor is configured and ready for processing.
 	 * 
 	 * @return {@literal true} if configured and ready for processing, or
-	 *         {@literal false} if calls to {@link #processDatum(Iterable))}
-	 *         will not be handled
+	 *         {@literal false} if calls to
+	 *         {@link #processDatumCollection(Iterable, Aggregation)} will not
+	 *         be handled
 	 */
 	boolean isConfigured();
 
@@ -75,7 +76,7 @@ public interface DatumProcessor {
 	 * 
 	 * <p>
 	 * This passes {@link Aggregation#None} to
-	 * {@link #processDatum(GeneralNodeDatum, Aggregation)}.
+	 * {@link #processDatumCollection(Iterable, Aggregation)}.
 	 * </p>
 	 * 
 	 * @param datum

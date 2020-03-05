@@ -35,7 +35,7 @@ import net.solarnetwork.util.SerializeIgnore;
  * 
  * @author matt
  * @version 1.0
- * @sicne 1.30
+ * @since 1.30
  */
 @JsonPropertyOrder({ "created", "locationId", "sourceId", "localDate", "localTime" })
 public class ReportingGeneralLocationDatumComponents extends GeneralLocationDatumComponents
