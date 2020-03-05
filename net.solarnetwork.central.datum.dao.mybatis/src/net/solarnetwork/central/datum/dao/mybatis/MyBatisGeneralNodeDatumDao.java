@@ -107,7 +107,7 @@ public class MyBatisGeneralNodeDatumDao
 	/** The query parameter for an {@code Aggregation} string value. */
 	public static final String PARAM_AGGREGATION = "aggregation";
 
-	/** The query parameter for a general {@link Filter} object value. */
+	/** The query parameter for a general filter object value. */
 	public static final String PARAM_FILTER = "filter";
 
 	/**
@@ -146,7 +146,7 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * The default query name used for
-	 * {@link #getAvailableSources(Long, DateTime, DateTime)}.
+	 * {@link #getAvailableSources(GeneralNodeDatumFilter)}.
 	 */
 	public static final String QUERY_FOR_DISTINCT_SOURCES = "find-general-distinct-sources";
 
@@ -248,7 +248,7 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * The default query name for
-	 * {@link #findAccumulation(GeneralNodeDatumFilter, LocalDateTime, LocalDateTime)}.
+	 * {@link #findAccumulation(GeneralNodeDatumFilter, LocalDateTime, LocalDateTime, Period)}.
 	 * 
 	 * @since 1.9
 	 */
@@ -256,7 +256,7 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * The default query name for
-	 * {@link #findAccumulation(GeneralNodeDatumFilter, DateTime, DateTime)}.
+	 * {@link #findAccumulation(GeneralNodeDatumFilter, DateTime, DateTime, Period)}.
 	 * 
 	 * @since 1.13
 	 */
@@ -1411,7 +1411,7 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * Set the statement name for the
-	 * {@link #getAuditPropertyCountTotal(GeneralNodeDatumFilter)} method.
+	 * {@link #getAuditCountTotal(GeneralNodeDatumFilter)} method.
 	 * 
 	 * @param statementName
 	 *        the statement name
@@ -1422,7 +1422,8 @@ public class MyBatisGeneralNodeDatumDao
 	}
 
 	/**
-	 * Set the statement name for the {@link #getAuditInterval(Long)} method.
+	 * Set the statement name for the {@link #getAuditInterval(Long, String)}
+	 * method.
 	 * 
 	 * @param statementName
 	 *        the statement name
@@ -1505,7 +1506,7 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * Set the statement name for the
-	 * {@link #findAccumulation(GeneralNodeDatumFilter, LocalDateTime, LocalDateTime)}
+	 * {@link #findAccumulation(GeneralNodeDatumFilter, LocalDateTime, LocalDateTime, Period)}
 	 * method.
 	 * 
 	 * @param queryForDatumAccumulation
@@ -1595,7 +1596,7 @@ public class MyBatisGeneralNodeDatumDao
 
 	/**
 	 * Set the statement name for the
-	 * {@link #findAccumulation(GeneralNodeDatumFilter, DateTime, DateTime)}
+	 * {@link #findAccumulation(GeneralNodeDatumFilter, DateTime, DateTime, Period)}
 	 * method.
 	 * 
 	 * @param queryForDatumAccumulationAbsolute
@@ -1611,7 +1612,7 @@ public class MyBatisGeneralNodeDatumDao
 	 * Set the statement name for updating datum date ranges.
 	 * 
 	 * @param updateDatumRangeDates
-	 *        the statement name; defaults to {@link #UPDATE_DATUM_RANGE_DATE}
+	 *        the statement name; defaults to {@link #UPDATE_DATUM_RANGE_DATES}
 	 * @since 1.17
 	 */
 	public void setUpdateDatumRangeDates(String updateDatumRangeDates) {
