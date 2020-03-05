@@ -70,6 +70,8 @@ public class AuthTokenController extends WebServiceControllerSupport {
 	/**
 	 * Refresh a valid security token.
 	 * 
+	 * @param signDate
+	 *        the sign date
 	 * @return a map with a {@literal key} property that is a hex-encoded
 	 *         refreshed signing key
 	 */

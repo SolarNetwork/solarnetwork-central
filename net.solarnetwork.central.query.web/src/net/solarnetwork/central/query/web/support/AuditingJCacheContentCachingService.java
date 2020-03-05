@@ -45,7 +45,7 @@ import net.solarnetwork.util.OptionalService;
 public class AuditingJCacheContentCachingService extends JCacheContentCachingService {
 
 	/**
-	 * A cached content metadata key for a map returned fom
+	 * A cached content metadata key for a map returned from
 	 * {@link QueryAuditor#currentAuditResults()}.
 	 */
 	public static final String QUERY_AUDITOR_NODE_DATUM_RESULTS_KEY = "NODE_DATUM_AUDIT_RESULTS";
@@ -55,8 +55,8 @@ public class AuditingJCacheContentCachingService extends JCacheContentCachingSer
 	/**
 	 * Constructor.
 	 * 
-	 * @param delegate
-	 *        the delegate
+	 * @param cache
+	 *        the cache
 	 * @param queryAuditor
 	 *        the query auditor service to use
 	 */

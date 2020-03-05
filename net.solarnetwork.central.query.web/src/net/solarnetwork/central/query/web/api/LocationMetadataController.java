@@ -23,14 +23,6 @@
 package net.solarnetwork.central.query.web.api;
 
 import static net.solarnetwork.web.domain.Response.response;
-import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.SolarLocation;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
-import net.solarnetwork.domain.GeneralDatumMetadata;
-import net.solarnetwork.web.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -41,6 +33,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.domain.GeneralDatumMetadata;
+import net.solarnetwork.web.domain.Response;
 
 /**
  * Controller for location metadata actions.
@@ -76,7 +76,7 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 	 * 
 	 * @param query
 	 *        a general search query
-	 * @param criteria
+	 * @param command
 	 *        specific criteria, such as source ID, sort order, max results,
 	 *        etc.
 	 * @return the results
