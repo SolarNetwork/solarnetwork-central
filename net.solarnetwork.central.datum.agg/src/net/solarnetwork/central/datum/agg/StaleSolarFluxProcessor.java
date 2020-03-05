@@ -87,8 +87,6 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 	 *        SolarFlux
 	 * @param publisher
 	 *        the processor to publish the stale solar flux data
-	 * @param supportDao
-	 *        the support DAO
 	 */
 	public StaleSolarFluxProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps,
 			GeneralNodeDatumDao datumDao, OptionalService<DatumProcessor> publisher) {
