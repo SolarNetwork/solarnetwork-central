@@ -1299,7 +1299,7 @@ public class MyBatisGeneralNodeDatumDao
 		return new BasicBulkExportResult(handler.getCount());
 	}
 
-	private static class ExportResultHandler implements ResultHandler {
+	private static class ExportResultHandler implements ResultHandler<GeneralNodeDatumFilterMatch> {
 
 		private final ExportCallback<GeneralNodeDatumFilterMatch> callback;
 		private long count = 0;
@@ -1310,8 +1310,8 @@ public class MyBatisGeneralNodeDatumDao
 		}
 
 		@Override
-		public void handleResult(ResultContext context) {
-			GeneralNodeDatumFilterMatch match = (GeneralNodeDatumFilterMatch) context.getResultObject();
+		public void handleResult(ResultContext<? extends GeneralNodeDatumFilterMatch> context) {
+			GeneralNodeDatumFilterMatch match = context.getResultObject();
 			count++;
 			ExportCallbackAction action = callback.handle(match);
 			if ( action == ExportCallbackAction.STOP ) {
