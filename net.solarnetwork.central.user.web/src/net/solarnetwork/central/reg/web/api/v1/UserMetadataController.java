@@ -105,8 +105,8 @@ public class UserMetadataController extends WebServiceControllerSupport {
 	/**
 	 * Get metadata for a specific user ID.
 	 * 
-	 * @param criteria
-	 *        any sort or limit criteria
+	 * @param userId
+	 *        any user ID
 	 * @return the result
 	 */
 	@ResponseBody

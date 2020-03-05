@@ -208,10 +208,8 @@ public class NodesController extends WebServiceControllerSupport {
 	/**
 	 * Get a certificate as a PEM encoded value file attachment.
 	 * 
-	 * @param certId
-	 *        the ID of the certificate to get
-	 * @param download
-	 *        if TRUE, then download the certificate as a PEM file
+	 * @param nodeId
+	 *        the ID of the node to get the certificate for
 	 * @return the response data
 	 * @since 1.2
 	 */
@@ -242,8 +240,8 @@ public class NodesController extends WebServiceControllerSupport {
 	/**
 	 * Get a certificate as a {@link UserNodeCertificate} object.
 	 * 
-	 * @param certId
-	 *        the ID of the certificate to get
+	 * @param nodeId
+	 *        the ID of the node to get the certificate for
 	 * @param password
 	 *        the password to decrypt the certificate store with
 	 * @return the response data

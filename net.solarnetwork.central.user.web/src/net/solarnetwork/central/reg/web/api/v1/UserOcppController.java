@@ -301,7 +301,9 @@ public class UserOcppController extends WebServiceControllerSupport {
 	/**
 	 * View a specific credential.
 	 * 
-	 * @param id
+	 * @param chargePointId
+	 *        the charge point ID
+	 * @param connectorId
 	 *        the ID of the connector to view
 	 * @return the system user
 	 */
@@ -317,8 +319,10 @@ public class UserOcppController extends WebServiceControllerSupport {
 	/**
 	 * Delete a specific credential.
 	 * 
-	 * @param id
-	 *        the ID of the system user to delete
+	 * @param chargePointId
+	 *        the ID of the charge point
+	 * @param connectorId
+	 *        the connector ID to delete
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/connectors/{chargePointId}/{connectorId}")
@@ -398,9 +402,9 @@ public class UserOcppController extends WebServiceControllerSupport {
 	/**
 	 * Save user settings.
 	 * 
-	 * @param chargePointSettings
-	 *        the charge point settings to save
-	 * @return the saved charge point settings
+	 * @param userSettings
+	 *        the settings to save
+	 * @return the saved settings
 	 */
 	@RequestMapping(method = RequestMethod.POST, value = "/settings")
 	public ResponseEntity<Response<UserSettings>> saveSettings(@RequestBody UserSettings userSettings) {

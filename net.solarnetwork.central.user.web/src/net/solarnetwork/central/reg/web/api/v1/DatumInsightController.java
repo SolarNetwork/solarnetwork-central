@@ -64,6 +64,8 @@ public class DatumInsightController {
 	 * 
 	 * @param auditDatumBiz
 	 *        the audit datum biz to use
+	 * @param userBiz
+	 *        the user biz to ues
 	 */
 	@Autowired
 	public DatumInsightController(AuditDatumBiz auditDatumBiz, UserBiz userBiz) {

@@ -115,7 +115,7 @@ public class BillingController extends WebServiceControllerSupport {
 	 *        current actor's ID is used
 	 * @param locale
 	 *        the request locale
-	 * @return
+	 * @return the invoice
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/{invoiceId}", method = RequestMethod.GET)
@@ -178,6 +178,8 @@ public class BillingController extends WebServiceControllerSupport {
 	 * 
 	 * @param filter
 	 *        the search criteria
+	 * @param locale
+	 *        the locale
 	 * @return the search results
 	 */
 	@ResponseBody

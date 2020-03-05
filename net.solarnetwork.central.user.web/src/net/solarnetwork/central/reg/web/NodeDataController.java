@@ -83,8 +83,8 @@ public class NodeDataController extends WebServiceControllerSupport {
 	 * Get the set of source IDs available for the available GeneralNodeData for
 	 * a single node, optionally constrained within a date range.
 	 * 
-	 * @param cmd
-	 *        the input command
+	 * @param nodeId
+	 *        the node ID
 	 * @return the available sources
 	 */
 	@ResponseBody
