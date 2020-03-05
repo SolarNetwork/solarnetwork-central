@@ -11,7 +11,7 @@ Web-ContextPath: /ocpp/j
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.10,3.0)",
  com.fasterxml.jackson.module.jaxb;version="[2.10,3.0)",
- com.sun.xml.bind.v2,
+ com.sun.xml.bind.v2;resolution:=optional,
  javax.servlet;version="3.0.0",
  javax.servlet.http;version="3.0.0",
  javax.xml.bind,
