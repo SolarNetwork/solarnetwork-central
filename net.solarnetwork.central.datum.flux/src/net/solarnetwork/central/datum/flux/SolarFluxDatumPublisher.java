@@ -64,7 +64,7 @@ public class SolarFluxDatumPublisher extends BaseMqttConnectionService implement
 	 * <li><b>user ID</b> (long)</li>
 	 * <li><b>node ID</b> (long)</li>
 	 * <li><b>aggregation code</b> (string)</li>
-	 * <li><b>source ID (string)</li>
+	 * <li><b>source ID</b> (string)</li>
 	 * </ol>
 	 */
 	public static final String NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE = "user/%d/node/%d/datum/%s/%s";
