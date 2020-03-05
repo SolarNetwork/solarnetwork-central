@@ -25,13 +25,13 @@ package net.solarnetwork.central.user.dao.mybatis;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.joda.time.DateTime;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertType;
-import org.joda.time.DateTime;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link UserAlertDao}.
@@ -43,7 +43,7 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 
 	/**
 	 * The query name used for
-	 * {@link #findAlertsToProcess(UserAlertType, Long, Integer)}.
+	 * {@link #findAlertsToProcess(UserAlertType, Long, DateTime, Integer)}.
 	 */
 	public static final String QUERY_FOR_PROCESSING = "find-UserAlert-for-processing";
 
@@ -59,10 +59,14 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	/** The query name used for {@link #updateValidTo(Long, DateTime)}. */
 	public static final String UPDATE_VALID_TO = "update-UserAlert-valid-to";
 
-	/** The query name used for {@link #findActiveAlertSituationsForNode(Long)}. */
+	/**
+	 * The query name used for {@link #findActiveAlertSituationsForNode(Long)}.
+	 */
 	public static final String QUERY_ACTIVE_SITUATIONS_FOR_NODE = "find-UserAlert-active-for-node";
 
-	/** The query name used for {@link #findActiveAlertSituationsForUser(Long)}. */
+	/**
+	 * The query name used for {@link #findActiveAlertSituationsForUser(Long)}.
+	 */
 	public static final String QUERY_ACTIVE_SITUATIONS_FOR_USER = "find-UserAlert-active-for-user";
 
 	/** The query name used for {@link #alertSituationCountForUser(Long)}. */

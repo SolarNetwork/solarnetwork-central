@@ -106,7 +106,8 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	public static final String QUERY_NODE_IDS_FOR_TOKEN = "find-node-ids-for-token-id";
 
 	/**
-	 * The query name used for {@link #findSourceIdsForToken(String)}.
+	 * The query name used for
+	 * {@link #findSourceIdsForToken(String, DatumFilter)}.
 	 * 
 	 * @since 1.3
 	 */
