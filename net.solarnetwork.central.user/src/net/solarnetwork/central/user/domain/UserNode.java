@@ -149,7 +149,7 @@ public class UserNode extends BaseEntity implements UserRelatedEntity<Long> {
 	/**
 	 * Exposed as a top-level property so that it can be marshalled to clients.
 	 * 
-	 * @return
+	 * @return the location, or {@literal null}
 	 */
 	public SolarLocation getNodeLocation() {
 		return (node != null ? node.getLocation() : null);

@@ -217,7 +217,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	 * 
 	 * <p>
 	 * Example URL:
-	 * <code>/api/v1/sec/range/sources?nodeIds=1,2&withNodeIds=true</code>
+	 * <code>/api/v1/sec/range/sources?nodeIds=1,2&amp;withNodeIds=true</code>
 	 * </p>
 	 *
 	 * <p>
@@ -240,6 +240,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	 * </p>
 	 * 
 	 * @param cmd
+	 *        the criteria
 	 * @return the found source IDs
 	 */
 	@ResponseBody
@@ -277,7 +278,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	 * 
 	 * <p>
 	 * Example URL:
-	 * <code>/api/v1/sec/range/sources?nodeIds=1,2&metadataFilter=(/m/foo=bar)</code>
+	 * <code>/api/v1/sec/range/sources?nodeIds=1,2&amp;metadataFilter=(/m/foo=bar)</code>
 	 * </p>
 	 *
 	 * <p>
@@ -301,7 +302,8 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	 * </p>
 	 * 
 	 * @param cmd
-	 * @return
+	 *        the criteria
+	 * @return the sources
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",

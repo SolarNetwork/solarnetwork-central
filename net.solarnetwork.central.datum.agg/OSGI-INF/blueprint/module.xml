@@ -37,17 +37,9 @@
 		<beans:prop key="staleGeneralLocationDatumProcessor.daily.jobCron">20 0/5 * * * ?</beans:prop>
 		<beans:prop key="staleGeneralLocationDatumProcessor.monthly.jobCron">35 0/20 * * * ?</beans:prop>
 		
-		<beans:prop key="mqtt.truststore.path">conf/tls/mqtt-trust.jks</beans:prop>
-		<beans:prop key="mqtt.truststore.pass">password</beans:prop>
-		
 		<beans:prop key="staleSolarFluxProcessor.maximumRowCount">1000</beans:prop>
 		<beans:prop key="staleSolarFluxProcessor.taskCount">4</beans:prop>
 		<beans:prop key="staleSolarFluxProcessor.jobCron">45 0/1 * * * ?</beans:prop>
-		
-		<beans:prop key="cache.conf.uri">classpath:/net/solarnetwork/central/datum/agg/ehcache.xml</beans:prop>
-		<beans:prop key="userNodeCache.ttl">60</beans:prop>
-		<beans:prop key="userNodeCache.heapMaxEntries">10000</beans:prop>
-		<beans:prop key="userNodeCache.diskMaxSizeMB">100</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>

@@ -96,6 +96,8 @@ public class NodeMetadataController extends WebServiceControllerSupport {
 	/**
 	 * Find all metadata for a specific node ID.
 	 * 
+	 * @param nodeId
+	 *        the node ID to find
 	 * @return the results
 	 */
 	@ResponseBody

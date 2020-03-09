@@ -12,7 +12,7 @@
 
 	<reference id="solarNodeMetadataDao" interface="net.solarnetwork.central.dao.SolarNodeMetadataDao"/>
 	
-	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager"/>
+	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager" filter="(db=central)"/>
 	
 	<!-- Published Services -->
 	

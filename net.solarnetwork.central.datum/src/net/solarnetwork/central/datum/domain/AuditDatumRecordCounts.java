@@ -85,6 +85,10 @@ public class AuditDatumRecordCounts implements Entity<GeneralNodeDatumPK>, Clone
 	/**
 	 * Construct with values.
 	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
 	 * @param datumCount
 	 *        the datum count
 	 * @param datumHourlyCount

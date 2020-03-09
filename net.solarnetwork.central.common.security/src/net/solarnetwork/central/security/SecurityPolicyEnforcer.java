@@ -125,6 +125,8 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 * This will return a proxy object that implements all interfaces on the
 	 * provided enforder's {@code delegate} property.
 	 * 
+	 * @param <T>
+	 *        the return object type
 	 * @param enforcer
 	 *        The policy enforcer.
 	 * @return A new wrapped object.

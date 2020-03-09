@@ -49,7 +49,7 @@ public class MyBatisGeneralNodeDatumMetadataDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatumMetadata, NodeSourcePK>
 		implements GeneralNodeDatumMetadataDao {
 
-	/** The query parameter for a general {@link Filter} object value. */
+	/** The query parameter for a general filter object value. */
 	public static final String PARAM_FILTER = "filter";
 
 	/**

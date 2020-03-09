@@ -137,6 +137,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 * </p>
 	 * 
 	 * @param json
+	 *        the JSON to set
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
@@ -213,6 +214,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 * </p>
 	 * 
 	 * @param json
+	 *        the JSON to set
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter

@@ -59,6 +59,8 @@ public interface ContentCachingService {
 	 *        the active HTTP response to send the cached data to
 	 * @return the cached content if the response was successfully handled,
 	 *         {@literal null} otherwise (for example a cache miss)
+	 * @throws IOException
+	 *         if any IO error occurs
 	 */
 	CachedContent sendCachedResponse(String key, HttpServletRequest request,
 			HttpServletResponse response) throws IOException;
@@ -77,6 +79,8 @@ public interface ContentCachingService {
 	 *        the resolved HTTP response headers
 	 * @param content
 	 *        the resolved HTTP response content, or {@literal null} if none
+	 * @throws IOException
+	 *         if any IO error occurs
 	 */
 	void cacheResponse(String key, HttpServletRequest request, int statusCode, HttpHeaders headers,
 			InputStream content) throws IOException;

@@ -50,8 +50,6 @@ public class GlobalExceptionHandlers extends WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 */
 	@ExceptionHandler(MaxUploadSizeExceededException.class)

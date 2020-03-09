@@ -152,7 +152,7 @@ public class DatumController extends WebServiceControllerSupport {
 	 *        the reading type
 	 * @param tolerance
 	 *        the query tolerance
-	 * @return
+	 * @return the results
 	 * @since 2.3
 	 */
 	@ResponseBody

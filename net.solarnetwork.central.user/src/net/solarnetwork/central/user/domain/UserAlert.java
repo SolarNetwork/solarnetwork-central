@@ -92,6 +92,7 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 	 * </p>
 	 * 
 	 * @param json
+	 *        the JSON to set
 	 */
 	@JsonProperty
 	// @JsonProperty needed because of @JsonIgnore on getter
@@ -155,10 +156,10 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 	 * 
 	 * <p>
 	 * This will replace any value set previously via
-	 * {@link #setSampleJson(String)} as well.
+	 * {@link #setOptionsJson(String)} as well.
 	 * </p>
 	 * 
-	 * @param samples
+	 * @param options
 	 *        the samples instance to set
 	 */
 	@JsonProperty

@@ -178,7 +178,7 @@ public class MyNodesController extends ControllerSupport {
 	 *        a security phrase to associate with the invitation
 	 * @param timeZoneName
 	 *        the time zone to associate the node with
-	 * @param country
+	 * @param countryCode
 	 *        the country to associate the node with
 	 * @return model and view
 	 */

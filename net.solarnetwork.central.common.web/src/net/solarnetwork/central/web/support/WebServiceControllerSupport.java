@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.support;
 
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
@@ -30,10 +31,12 @@ import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.dao.QueryTimeoutException;
@@ -54,6 +57,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
@@ -71,7 +75,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.14
+ * @version 1.15
  */
 public abstract class WebServiceControllerSupport {
 
@@ -161,6 +165,23 @@ public abstract class WebServiceControllerSupport {
 	}
 
 	/**
+	 * Handle an {@link BeanInstantiationException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return an error response object
+	 * @since 1.15
+	 */
+	@ExceptionHandler(BeanInstantiationException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Response<?> handleBeanInstantiationException(BeanInstantiationException e) {
+		log.debug("BeanInstantiationException in {} controller: {}", getClass().getSimpleName(),
+				e.getMessage(), e);
+		return new Response<Object>(Boolean.FALSE, "422", "Malformed request data.", null);
+	}
+
+	/**
 	 * Handle a {@link net.solarnetwork.central.security.SecurityException}.
 	 * 
 	 * @param e
@@ -215,6 +236,8 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param response
+	 *        the response
 	 * @return an error response object
 	 * @since 1.4
 	 */
@@ -223,7 +246,7 @@ public abstract class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleTypeMismatchException(TypeMismatchException e,
 			HttpServletResponse response) {
-		log.error("TypeMismatchException in {} controller", getClass().getSimpleName(), e);
+		log.debug("TypeMismatchException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
 	}
 
@@ -239,12 +262,30 @@ public abstract class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleIllegalArgumentException(IllegalArgumentException e) {
-		log.error("IllegalArgumentException in {} controller", getClass().getSimpleName(), e);
+		log.debug("IllegalArgumentException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
 	}
 
 	/**
-	 * Handle a {@link JsonParseException}, presuming from malformed JSON input.
+	 * Handle an {@link UnsupportedOperationException} as a {@literal 404} error
+	 * status.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return an error response object
+	 * @since 1.15
+	 */
+	@ExceptionHandler(UnsupportedOperationException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.NOT_FOUND)
+	public Response<?> handleUnsupportedOperationException(UnsupportedOperationException e) {
+		log.debug("UnsupportedOperationException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, "404", e.getMessage(), null);
+	}
+
+	/**
+	 * Handle a {@link JsonProcessingException}, presuming from malformed JSON
+	 * input.
 	 * 
 	 * @param e
 	 *        the exception
@@ -254,9 +295,28 @@ public abstract class WebServiceControllerSupport {
 	@ExceptionHandler(JsonParseException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleJsonParseException(JsonParseException e) {
-		log.error("JsonParseException in {} controller", getClass().getSimpleName(), e);
-		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getMessage(), null);
+	public Response<?> handleJsonParseException(JsonProcessingException e) {
+		log.debug("JsonProcessingException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getOriginalMessage(),
+				null);
+	}
+
+	/**
+	 * Handle a {@link HttpMessageNotReadableException}, from malformed JSON
+	 * input.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return an error response object
+	 * @since 1.15
+	 */
+	@ExceptionHandler(DateTimeParseException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Response<?> handleDateTimeParseException(DateTimeParseException e) {
+		log.debug("DateTimeParseException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Malformed date string: " + e.getMessage(),
+				null);
 	}
 
 	/**
@@ -273,11 +333,13 @@ public abstract class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
 		Throwable t = e.getMostSpecificCause();
-		if ( t instanceof JsonParseException ) {
-			return handleJsonParseException((JsonParseException) t);
+		if ( t instanceof JsonProcessingException ) {
+			return handleJsonParseException((JsonProcessingException) t);
+		} else if ( t instanceof DateTimeParseException ) {
+			return handleDateTimeParseException((DateTimeParseException) t);
 		}
-		log.error("HttpMessageNotReadableException in {} controller", getClass().getSimpleName(), e);
-		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getMessage(), null);
+		log.warn("HttpMessageNotReadableException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Malformed request: " + e.getMessage(), null);
 	}
 
 	/**
@@ -285,12 +347,14 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param locale
+	 *        the locale
 	 * @return an error response object
 	 * @since 1.8
 	 */
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	@ResponseBody
-	@ResponseStatus
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleDataIntegrityViolationException(DataIntegrityViolationException e,
 			Locale locale) {
 		log.warn("DataIntegrityViolationException in {} controller", getClass().getSimpleName(), e);
@@ -306,6 +370,35 @@ public abstract class WebServiceControllerSupport {
 			msgKey = "error.dao.dataIntegrityViolation";
 			code = "DAO.00100";
 		}
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return new Response<Object>(Boolean.FALSE, code, msg, null);
+	}
+
+	/**
+	 * Handle a {@link DataRetrievalFailureException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param locale
+	 *        the locale
+	 * @return an error response object
+	 * @since 1.15
+	 */
+	@ExceptionHandler(DataRetrievalFailureException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.NOT_FOUND)
+	public Response<?> handleDataRetrievalFailureException(DataRetrievalFailureException e,
+			Locale locale) {
+		log.debug("DataRetrievalFailureException in {} controller", getClass().getSimpleName(), e);
+		String msg;
+		String msgKey;
+		String code;
+		msg = "Key not found";
+		msgKey = "error.dao.keyNotFound";
+		code = "DAO.00102";
 		if ( messageSource != null ) {
 			msg = messageSource.getMessage(msgKey,
 					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
@@ -428,6 +521,8 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param locale
+	 *        the locale
 	 * @return an error response object
 	 */
 	@ExceptionHandler(BindException.class)
@@ -460,8 +555,8 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
+	 * @param locale
+	 *        the locale
 	 * @return an error response object
 	 */
 	@ExceptionHandler(ValidationException.class)
@@ -479,8 +574,6 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 * @since 1.10
 	 */

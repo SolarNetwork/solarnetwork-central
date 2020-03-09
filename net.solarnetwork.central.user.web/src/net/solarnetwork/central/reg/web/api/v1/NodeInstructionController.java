@@ -206,6 +206,8 @@ public class NodeInstructionController extends WebServiceControllerSupport {
 	 * restrictions, to allow a policy to restrict which topics can be enqueued.
 	 * </p>
 	 * 
+	 * @param topic
+	 *        the instruction topic
 	 * @param nodeIds
 	 *        a set of node IDs to enqueue the instruction on
 	 * @param input
@@ -228,10 +230,11 @@ public class NodeInstructionController extends WebServiceControllerSupport {
 	 *        the ID of the instruction to update
 	 * @param state
 	 *        the desired state
+	 * @return the response
 	 */
 	@RequestMapping(value = "/updateState", method = RequestMethod.POST, params = "!ids")
 	@ResponseBody
-	public Response<NodeInstruction> updateInstructionState(@RequestParam("id") Long instructionId,
+	public Response<Void> updateInstructionState(@RequestParam("id") Long instructionId,
 			@RequestParam("state") InstructionState state) {
 		instructorBiz.updateInstructionState(instructionId, state);
 		return response(null);
@@ -244,12 +247,12 @@ public class NodeInstructionController extends WebServiceControllerSupport {
 	 *        the IDs of the instructions to update
 	 * @param state
 	 *        the desired state
+	 * @return the response
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/updateState", method = RequestMethod.POST, params = "ids")
 	@ResponseBody
-	public Response<NodeInstruction> updateInstructionState(
-			@RequestParam("ids") Set<Long> instructionIds,
+	public Response<Void> updateInstructionState(@RequestParam("ids") Set<Long> instructionIds,
 			@RequestParam("state") InstructionState state) {
 		instructorBiz.updateInstructionsState(instructionIds, state);
 		return response(null);

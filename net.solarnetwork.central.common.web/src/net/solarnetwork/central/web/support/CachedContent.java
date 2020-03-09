@@ -62,6 +62,8 @@ public interface CachedContent extends Serializable {
 	 * Get the content.
 	 * 
 	 * @return access to the content, or {@literal null} if none
+	 * @throws IOException
+	 *         if any IO error occurs
 	 */
 	InputStream getContent() throws IOException;
 

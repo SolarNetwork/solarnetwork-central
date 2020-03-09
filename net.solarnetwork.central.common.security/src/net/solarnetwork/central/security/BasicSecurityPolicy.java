@@ -359,7 +359,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 	 * @param locationPrecisions
 	 *        The location precisions to restrict to, or {@literal null} for no
 	 *        restriction.
-	 * @param minALocationPrecision
+	 * @param minLocationPrecision
 	 *        If specified, a minimum location precision that is allowed.
 	 * @param nodeMetadataPaths
 	 *        The {@code SolarNodeMetadata} paths to restrict to, or
@@ -391,19 +391,19 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 	 * @param minAggregation
 	 *        If specified, a minimum aggregation level that is allowed.
 	 * @param locationPrecisions
-	 *        The location precisions to restrict to, or {@lieral null} for no
+	 *        The location precisions to restrict to, or {@literal null} for no
 	 *        restriction.
-	 * @param minALocationPrecision
+	 * @param minLocationPrecision
 	 *        If specified, a minimum location precision that is allowed.
 	 * @param nodeMetadataPaths
 	 *        The {@code SolarNodeMetadata} paths to restrict to, or
 	 *        {@literal null} for no restriction.
 	 * @param userMetadataPaths
 	 *        The {@code UserNodeMetadata} paths to restrict to, or
-	 *        {@lieral null} for no restriction.
+	 *        {@literal null} for no restriction.
 	 * @param notAfter
-	 *        A date after which the token is no longer valid, or {@lieral null}
-	 *        for no expiration.
+	 *        A date after which the token is no longer valid, or
+	 *        {@literal null} for no expiration.
 	 * @param refreshAllowed
 	 *        {@literal true} if the token can be refreshed
 	 */
@@ -430,9 +430,9 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 	 * @param minAggregation
 	 *        If specified, a minimum aggregation level that is allowed.
 	 * @param locationPrecisions
-	 *        The location precisions to restrict to, or {@lieral null} for no
+	 *        The location precisions to restrict to, or {@literal null} for no
 	 *        restriction.
-	 * @param minALocationPrecision
+	 * @param minLocationPrecision
 	 *        If specified, a minimum location precision that is allowed.
 	 * @param nodeMetadataPaths
 	 *        The {@code SolarNodeMetadata} paths to restrict to, or
@@ -444,8 +444,8 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 	 *        The API paths to restrict to, or {@literal null} for no
 	 *        restriction.
 	 * @param notAfter
-	 *        A date after which the token is no longer valid, or {@lieral null}
-	 *        for no expiration.
+	 *        A date after which the token is no longer valid, or
+	 *        {@literal null} for no expiration.
 	 * @param refreshAllowed
 	 *        {@literal true} if the token can be refreshed
 	 * @since 1.3

@@ -18,25 +18,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.reg.web;
-
-import net.solarnetwork.central.user.domain.User;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
+import net.solarnetwork.central.user.domain.User;
 
 /**
  * Validator for user registration.
  * 
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 @Component
 @Qualifier("Registration")
@@ -45,8 +42,10 @@ public class UserValidator implements Validator {
 	/**
 	 * Validate a new registration.
 	 * 
-	 * @param reg the registration to validate
-	 * @param context the message context
+	 * @param reg
+	 *        the registration to validate
+	 * @param errors
+	 *        the errors
 	 */
 	public void validateStart(User reg, Errors errors) {
 		if ( !StringUtils.hasText(reg.getEmail()) ) {
@@ -77,8 +76,8 @@ public class UserValidator implements Validator {
 			// for flow state validation
 			return;
 		}
-		User reg = (User)target;
+		User reg = (User) target;
 		validateStart(reg, errors);
 	}
-	
+
 }

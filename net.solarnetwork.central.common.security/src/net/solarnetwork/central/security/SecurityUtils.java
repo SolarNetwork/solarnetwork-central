@@ -55,8 +55,10 @@ public class SecurityUtils {
 	 * 
 	 * @param authenticationManager
 	 *        the {@link AuthenticationManager}
-	 * @param user
-	 *        the user to authenticate
+	 * @param username
+	 *        the username to authenticate
+	 * @param password
+	 *        the password to authenticate
 	 */
 	public static void authenticate(AuthenticationManager authenticationManager, Object username,
 			Object password) {
@@ -115,6 +117,7 @@ public class SecurityUtils {
 	 * {@code roles} argument.
 	 * 
 	 * @param roles
+	 *        the roles, one of which is required
 	 * @since 1.2
 	 */
 	public static void requireAnyRole(final Set<String> roles) {
@@ -137,6 +140,7 @@ public class SecurityUtils {
 	 * {@code roles} argument.
 	 * 
 	 * @param roles
+	 *        the required roles
 	 * @since 1.2
 	 */
 	public static void requireAllRoles(final Set<String> roles) {

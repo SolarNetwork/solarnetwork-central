@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.apache.ibatis.session.SqlSession;
 import org.joda.time.DateTime;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.slf4j.Logger;
@@ -145,19 +146,19 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	/** Error code to report that a named query was not found. */
 	public static final int ERROR_CODE_INVALID_QUERY = 1101;
 
-	/** The query name used for {@link #get(Long)}. */
+	/** The query name used for {@link #get(Serializable)}. */
 	public static final String QUERY_FOR_ID = "get-%s-for-id";
 
 	/** The query name used for {@link #getAll(List)}. */
 	public static final String QUERY_FOR_ALL = "findall-%s";
 
-	/** The query name used for inserts in {@link #store(Object)}. */
+	/** The query name used for inserts in {@link #store(Entity)}. */
 	public static final String INSERT_OBJECT = "insert-%s";
 
-	/** The query name used for updates in {@link #store(Object)}. */
+	/** The query name used for updates in {@link #store(Entity)}. */
 	public static final String UPDATE_OBJECT = "update-%s";
 
-	/** The query name used for updates in {@link #delete(Object)}. */
+	/** The query name used for updates in {@link #delete(Entity)}. */
 	public static final String DELETE_OBJECT = "delete-%s";
 
 	/** The query property for any custom sort descriptors that are provided. */
@@ -333,8 +334,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * 
 	 * <p>
 	 * This implementation merely calls
-	 * {@link SqlMapClientTemplate#update(String, Object)} using the
-	 * {@link #getUpdate()} SqlMap.
+	 * {@link SqlSession#update(String, Object)} using the {@link #getUpdate()}
+	 * SqlMap.
 	 * </p>
 	 * 
 	 * @param datum
@@ -350,9 +351,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * Process the insert of a persisted entity.
 	 * 
 	 * <p>
-	 * This implementation calls
-	 * {@link SqlMapClientTemplate#insert(String, Object)} using the
-	 * {@link #getInsert()} SqlMap.
+	 * This implementation calls {@link SqlSession#insert(String, Object)} using
+	 * the {@link #getInsert()} SqlMap.
 	 * </p>
 	 * 
 	 * @param datum
@@ -389,7 +389,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * {@code relationDelete} query names configured on this class to persist a
 	 * set of related objects to a single parent entity. The related objects are
 	 * <em>not</em> assumed to have surrogate primary keys.
-	 * <p>
+	 * </p>
 	 * 
 	 * <p>
 	 * This method will pass the following query properties:
@@ -493,7 +493,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * {@code relationDelete} query names configured on this class to persist a
 	 * related object to a single parent entity. The related object is
 	 * <em>not</em> assumed to have surrogate primary keys.
-	 * <p>
+	 * </p>
 	 * 
 	 * <p>
 	 * This method will pass the following query properties:
@@ -560,7 +560,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * {@code childInsert}, {@code childUpdate}, and {@code childDelete} query
 	 * names configured on this class to persist a related object to a single
 	 * parent entity.
-	 * <p>
+	 * </p>
 	 * 
 	 * <p>
 	 * This method will pass the following query objects:
@@ -589,6 +589,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the child object to persist (may be <em>null</em>)
 	 * @param relationClass
 	 *        the Class of the related object
+	 * @return the child entity's primary key
 	 */
 	protected <E extends net.solarnetwork.domain.Identity<Long>> Long handleChildRelation(T parent,
 			E child, Class<? extends E> relationClass) {
@@ -623,18 +624,20 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	}
 
 	/**
-	 * Execute a task with a {@link SqlTemplateCallback}, providing standardized
-	 * error message handling. This method will catch {@link SqlMapException}
-	 * exceptions and attempt to map those to message codes. If the exception
-	 * can be mapped, a new {@link ValidationException} will be thrown instead.
+	 * Execute a task with a {@link SqlSessionCallback}, providing standardized
+	 * error message handling. This method will catch runtime exceptions and
+	 * attempt to map those to message codes. If the exception can be mapped, a
+	 * new {@link ValidationException} will be thrown instead.
 	 * 
+	 * @param <R>
+	 *        the result object type
 	 * @param callback
 	 *        the callback
 	 * @param errorObject
 	 *        the root validation error object
 	 * @return the result of
 	 *         {@link SqlSessionCallback#doWithSqlSession(org.apache.ibatis.session.SqlSession)}
-	 * @see #mapSqlMapException(SqlMapException, Object)
+	 * @see #mapSqlMapException(RuntimeException, Object)
 	 */
 	protected <R> R execute(final SqlSessionCallback<R> callback, final Object errorObject) {
 		try {

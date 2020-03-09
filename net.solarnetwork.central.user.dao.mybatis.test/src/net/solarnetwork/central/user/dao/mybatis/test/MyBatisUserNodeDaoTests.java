@@ -26,6 +26,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -36,6 +37,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
@@ -155,6 +157,40 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		assertEquals(userNode.getDescription(), updated.getDescription());
 		assertEquals(userNode.getName(), updated.getName());
 		assertEquals(TEST_NODE_ID, updated.getNode().getId());
+	}
+
+	@Test
+	public void updateUserNodeWithCertificateAssociations() {
+		// given
+		storeNewUserNode();
+		UserNodeCertificate unCert = storeNewCert(UserNodeCertificateStatus.v);
+
+		// set up other user to update UserNode to
+		User user2 = createNewUser("user2@localhost");
+
+		// when
+		// transfer UserNode to other user
+		UserNode un = userNodeDao.get(this.node.getId());
+		un.setUser(user2);
+		Long updatedNodeId = userNodeDao.store(un);
+
+		userNodeDao.getSqlSession().clearCache();
+
+		UserNode updatedUserNode = userNodeDao.get(this.node.getId());
+
+		// then
+
+		assertThat("Node ID unchanged", updatedNodeId, equalTo(this.node.getId()));
+		assertThat("UserNode moved user", updatedUserNode.getUserId(), equalTo(user2.getId()));
+
+		UserNodeCertificate oldUnCert = userNodeCertificateDao.get(unCert.getId());
+		UserNodeCertificate newUnCert = userNodeCertificateDao
+				.get(new UserNodePK(user2.getId(), this.node.getId()));
+		assertThat("UserNodeCertificate gone from old user", oldUnCert, nullValue());
+		assertThat("UserNodeCertificate moved to new user", newUnCert, notNullValue());
+		assertThat("UserNodeCertificate moved to new user",
+				newUnCert.getCreated().withZone(DateTimeZone.getDefault()),
+				equalTo(unCert.getCreated().withZone(DateTimeZone.getDefault())));
 	}
 
 	/**

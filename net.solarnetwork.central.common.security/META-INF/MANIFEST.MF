@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Security
 Bundle-SymbolicName: net.solarnetwork.central.common.security
-Bundle-Version: 1.16.0
+Bundle-Version: 1.16.1
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: 

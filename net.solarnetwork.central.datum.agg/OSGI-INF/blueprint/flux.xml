@@ -18,81 +18,25 @@
 	
 	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
 
-	<reference id="mqttConnectionFactory" interface="net.solarnetwork.common.mqtt.MqttConnectionFactory"/>
+	<bean id="datumPublisher" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.datum.biz.DatumProcessor"/>
+		<property name="serviceFilter" value="(function=solarflux)"/>
+	</bean>
 
 	<!-- Supporting Services -->
-	
-	<bean id="cacheManager" class="net.solarnetwork.central.support.JCacheManagerFactoryBean">
-		<property name="cacheManagerUri" value="${cache.conf.uri}"/>
-	</bean>
-
-	<bean id="userNodeCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
-		<argument ref="cacheManager"/>
-		<argument value="java.lang.Long"/>
-		<argument value="java.lang.Long"/>
-		<property name="name" value="user-for-node"/>
-		<property name="expiryPolicy" value="Created"/>
-		<property name="expiryDuration">
-			<bean class="javax.cache.expiry.Duration">
-				<argument value="#{T(java.util.concurrent.TimeUnit).SECONDS}"/>
-				<argument value="${userNodeCache.ttl}"/>
-			</bean>
-		</property>
-		<property name="heapMaxEntries" value="${userNodeCache.heapMaxEntries}"/>
-		<property name="diskMaxSizeMB" value="${userNodeCache.diskMaxSizeMB}"/>
-	</bean>
 	
 	<bean id="staleSolarFluxProcessor" class="net.solarnetwork.central.datum.agg.StaleSolarFluxProcessor">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<argument ref="generalNodeDatumDao"/>
-		<argument>
-			<bean class="net.solarnetwork.util.DynamicServiceTracker">
-				<property name="bundleContext" ref="bundleContext"/>
-				<property name="serviceClassName" value="net.solarnetwork.central.datum.agg.AggregateDatumProcessor"/>
-				<property name="serviceFilter" value="(function=solarflux)"/>
-			</bean>
-		</argument>
-		<argument>
-			<bean class="net.solarnetwork.central.datum.agg.JdbcAggregateSupportDao">
-				<argument ref="jdbcOps"/>
-				<property name="userNodeCache" ref="userNodeCache"/>
-			</bean>
-		</argument>
+		<argument ref="datumPublisher"/>
 		<property name="executorService" ref="executorService"/>
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="taskCount" value="${staleSolarFluxProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleSolarFluxProcessor.jobCron}"/>
 		<property name="jobId" value="StaleSolarFluxProcessor"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleSolarFluxProcessor"/>
-	</bean>
-
-	<bean id="objectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
-		<property name="jsonFactory">
-			<bean class="com.fasterxml.jackson.dataformat.cbor.CBORFactory"/>
-		</property>
-		<property name="serializers">
-			<list>
-				<bean class="net.solarnetwork.util.JodaDateTimeEpochSerializer"/>
-				<bean class="net.solarnetwork.util.JodaLocalDateSerializer"/>
-				<bean class="net.solarnetwork.util.JodaLocalDateTimeSerializer"/>
-				<bean class="net.solarnetwork.util.JodaLocalTimeSerializer"/>
-			</list>
-		</property>
-		<property name="featuresToDisable">
-			<list>
-				<value>#{T(com.fasterxml.jackson.databind.DeserializationFeature).FAIL_ON_UNKNOWN_PROPERTIES}</value>
-			</list>
-		</property>
-	</bean>
-
-	<bean id="sslService" class="net.solarnetwork.util.StaticOptionalService">
-		<argument>
-			<bean  class="net.solarnetwork.support.ConfigurableSSLService">
-				<property name="trustStorePath" value="${mqtt.truststore.path}"/>
-				<property name="trustStorePassword" value="${mqtt.truststore.pass}"/>
-			</bean>
-		</argument>
 	</bean>
 
 	<!-- Published Services -->
@@ -107,23 +51,5 @@
 			</entry>
 		</service-properties>
 	</service>
-	
-	<osgix:managed-service-factory factory-pid="net.solarnetwork.central.datum.agg.SolarFluxAggregatePublisher"
-			autowire-on-update="true" update-method="configurationChanged">
-		<osgix:interfaces>
-			<beans:value>net.solarnetwork.domain.Identifiable</beans:value>
-			<beans:value>net.solarnetwork.domain.PingTest</beans:value>
-			<beans:value>net.solarnetwork.central.datum.agg.AggregateDatumProcessor</beans:value>
-		</osgix:interfaces>
-		<osgix:service-properties>
-			<beans:entry key="function" value="solarflux"/>
-		</osgix:service-properties>
-		<bean class="net.solarnetwork.central.datum.agg.SolarFluxAggregatePublisher"
-				init-method="init" destroy-method="shutdown">
-			<argument ref="mqttConnectionFactory"/>
-			<argument ref="objectMapper"/>
-			<property name="mqttConfig.optionalSslService" ref="sslService"/>
-		</bean>
-	</osgix:managed-service-factory>
 	
 </blueprint>

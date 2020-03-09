@@ -24,13 +24,13 @@ package net.solarnetwork.central.dao.mybatis;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link SolarLocationDao}.
@@ -38,12 +38,9 @@ import org.springframework.transaction.annotation.Transactional;
  * @author matt
  * @version 1.0
  */
-public class MyBatisSolarLocationDao extends
-		BaseMyBatisFilterableDao<SolarLocation, LocationMatch, Location, Long> implements
-		SolarLocationDao {
-
-	/** The query name used for {@link #getSolarLocationForName(String)}. */
-	public static final String QUERY_FOR_NAME = "find-SolarLocation-for-name";
+public class MyBatisSolarLocationDao
+		extends BaseMyBatisFilterableDao<SolarLocation, LocationMatch, Location, Long>
+		implements SolarLocationDao {
 
 	/**
 	 * The query name used for
