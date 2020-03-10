@@ -5,7 +5,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<title>SolarUser Ping Test</title>
+	<title>SolarJobs Ping Test</title>
 	<style type="text/css">
 		body {
 			font-family: helvetica,sans-serif;
