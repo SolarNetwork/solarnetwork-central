@@ -56,10 +56,12 @@ public interface DatumImportBiz {
 	 * 
 	 * <p>
 	 * The import process is not expected to start after calling this method.
-	 * Rather it should enter the {@link DatumImportState#Queued} state. To
-	 * initiate the import process, the {@link #performImport(Long, String)}
+	 * Rather it should enter the {@link DatumImportState#Staged} state. To
+	 * initiate the import process, the
+	 * {@link #updateDatumImportJobStateForUser(Long, String, DatumImportState, Set)}
 	 * must be called, passing in the same user ID and the returned
-	 * {@link DatumImportStatus#getJobId()}.
+	 * {@link DatumImportStatus#getJobId()} and the
+	 * {@link DatumImportState#Queued} state.
 	 * </p>
 	 * 
 	 * @param request
@@ -164,7 +166,6 @@ public interface DatumImportBiz {
 	 *        the user ID that owns the job
 	 * @param jobIds
 	 *        the set of job IDs to delete
-	 * @return the job status, or {@literal null} if not available
 	 * @return the job statuses specified by {@code jobIds} that were <b>not</b>
 	 *         removed, i.e. because of their current execution state, never
 	 *         {@literal null}
