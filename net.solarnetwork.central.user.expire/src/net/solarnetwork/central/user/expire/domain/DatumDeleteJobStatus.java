@@ -172,7 +172,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 *        a specific result to use
 	 * @return the event, never {@literal null}
 	 * @see #createJobStatusChagnedEvent(DatumDeleteJobStatus,
-	 *      DatumImportResult)
+	 *      DatumDeleteJobInfo)
 	 */
 	default Event asJobStatusChagnedEvent(DatumDeleteJobInfo result) {
 		return createJobStatusChagnedEvent(this, result);
@@ -212,6 +212,8 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 * 
 	 * @param status
 	 *        the status instance to create the event for
+	 * @param result
+	 *        the delete result
 	 * @return the event, never {@literal null}
 	 */
 	static Event createJobStatusChagnedEvent(DatumDeleteJobStatus status, DatumDeleteJobInfo result) {
