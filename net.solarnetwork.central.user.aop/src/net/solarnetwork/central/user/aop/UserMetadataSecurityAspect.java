@@ -90,8 +90,13 @@ public class UserMetadataSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Check access to reading user metadata.
 	 * 
+	 * @param pjp
+	 *        the join point
 	 * @param filter
 	 *        the filter to verify
+	 * @return the method result
+	 * @throws Throwable
+	 *         if anything goes wrong
 	 */
 	@Around("findMetadata(filter)")
 	public Object readMetadataCheck(ProceedingJoinPoint pjp, UserMetadataFilter filter)
