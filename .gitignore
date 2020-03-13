@@ -1,4 +1,5 @@
 .DS_Store
+junit*.properties
 /solarnetwork-osgi-lib
 /solarnetwork-osgi-target
 build/
