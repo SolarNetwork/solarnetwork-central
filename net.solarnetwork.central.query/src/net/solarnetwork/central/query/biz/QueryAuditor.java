@@ -39,6 +39,8 @@ public interface QueryAuditor {
 	/**
 	 * Audit the results of a general node datum query.
 	 * 
+	 * @param <T>
+	 *        the match type
 	 * @param filter
 	 *        the criteria used for the query
 	 * @param results
