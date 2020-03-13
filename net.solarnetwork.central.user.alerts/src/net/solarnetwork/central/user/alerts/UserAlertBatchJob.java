@@ -24,13 +24,13 @@ package net.solarnetwork.central.user.alerts;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.joda.time.DateTime;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.central.user.domain.UserAlertType;
-import org.joda.time.DateTime;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 
 /**
  * Job to look for {@link UserAlertType#NodeStaleData} needing of creating /
@@ -69,8 +69,8 @@ public class UserAlertBatchJob extends JobSupport {
 	 * 
 	 * @param eventAdmin
 	 *        the EventAdmin
-	 * @param userAlertDao
-	 *        the UserAlertDao to use
+	 * @param processor
+	 *        the batch processor to use
 	 */
 	public UserAlertBatchJob(EventAdmin eventAdmin, UserAlertBatchProcessor processor) {
 		super(eventAdmin);
