@@ -58,6 +58,8 @@ public class DaoBillingBiz implements BillingBiz {
 	 * 
 	 * @param userDao
 	 *        the UserDao to use
+	 * @param billingSystems
+	 *        the billing systems
 	 */
 	public DaoBillingBiz(UserDao userDao, OptionalServiceCollection<BillingSystem> billingSystems) {
 		super();
