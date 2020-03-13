@@ -165,6 +165,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 *        The filter.
 	 * @return The set of String source IDs.
 	 * @throws Throwable
+	 *         if anything goes wrong
 	 */
 	@Around("nodesReportableSources(filter)")
 	public Object reportableSourcesFilterAccessCheck(ProceedingJoinPoint pjp,
@@ -193,6 +194,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 *        The filter.
 	 * @return The set of String source IDs.
 	 * @throws Throwable
+	 *         if anything goes wrong
 	 * @since 1.6
 	 */
 	@Around("nodesAvailableSources(filter)")
@@ -222,6 +224,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 *        The node ID.
 	 * @return The set of String source IDs.
 	 * @throws Throwable
+	 *         if anything goes wrong
 	 */
 	@Around("nodeReportableSources(nodeId)")
 	public Object reportableSourcesAccessCheck(ProceedingJoinPoint pjp, Long nodeId) throws Throwable {
@@ -377,6 +380,8 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	/**
 	 * Enforce security policies on a {@link Filter}.
 	 * 
+	 * @param <T>
+	 *        the filter type
 	 * @param filter
 	 *        The filter to verify.
 	 * @return A possibly modified filter based on security policies.
