@@ -102,7 +102,7 @@ public abstract class AbstractCentralTransactionalTest
 	 * 
 	 * @param nodeId
 	 *        the ID to assign to the node
-	 * @param locId
+	 * @param locationId
 	 *        the location ID
 	 */
 	protected void setupTestNode(Long nodeId, Long locationId) {
@@ -149,6 +149,9 @@ public abstract class AbstractCentralTransactionalTest
 
 	/**
 	 * Insert a test location into the sn_loc table.
+	 * 
+	 * @param id
+	 *        the location ID
 	 */
 	protected void setupTestLocation(Long id) {
 		setupTestLocation(id, TEST_TZ);
