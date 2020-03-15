@@ -69,6 +69,8 @@ public class SchedulerManager extends EventHandlerSupport
 	 * 
 	 * @param scheduler
 	 *        the Scheduler
+	 * @param eventAdmin
+	 *        the event admin
 	 */
 	public SchedulerManager(Scheduler scheduler, EventAdmin eventAdmin) {
 		this.scheduler = scheduler;

@@ -136,6 +136,7 @@ public class NotificationJob implements Job {
 	 * </p>
 	 * 
 	 * @param event
+	 *        the event
 	 */
 	public synchronized void finish(Event event) {
 		complete = true;
