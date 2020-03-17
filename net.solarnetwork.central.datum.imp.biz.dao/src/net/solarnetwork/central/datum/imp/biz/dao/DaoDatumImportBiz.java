@@ -431,12 +431,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 						"Interrupted waiting {}ms for data import file [{}] to save to resource storage [{}], moving on",
 						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid());
 			} catch ( ExecutionException | RuntimeException e ) {
-				log.error("Error saving data import file [{}] to resource storage [{}]: {}",
-						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid(), e.getCause(), e);
 				Throwable t = e;
 				while ( t.getCause() != null ) {
 					t = t.getCause();
 				}
+				log.error("Error fetching data import file [{}] from resource storage [{}]: {}",
+						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid(), t.getMessage(), t);
 				throw new RuntimeException(
 						"Failed to save import data to resource storage: " + t.getMessage());
 			}

@@ -24,6 +24,7 @@
 		<beans:prop key="completedTaskMinimumCacheTime">14400000</beans:prop>
 		<beans:prop key="workPath"></beans:prop>
 		<beans:prop key="resourceStorageWaitMs">60000</beans:prop>
+		<beans:prop key="resourceStorageUid">Datum-Import</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -74,7 +75,12 @@
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>
 				<property name="serviceClassName" value="net.solarnetwork.io.ResourceStorageService"/>
-				<property name="serviceFilter" value="(funciton=datum-import)"/>
+				<property name="serviceFilter" value="(function=central)"/>
+				<property name="propertyFilters">
+					<map>
+						<entry key="uid" value="${resourceStorageUid}"/>
+					</map>
+				</property>
 			</bean>
 		</property>
 	</bean>
