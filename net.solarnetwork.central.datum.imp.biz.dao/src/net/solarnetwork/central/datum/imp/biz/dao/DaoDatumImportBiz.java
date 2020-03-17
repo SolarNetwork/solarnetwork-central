@@ -893,9 +893,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	 * 
 	 * <p>
 	 * If configured, then all import preview requests via
-	 * {@link #previewStagedImportForUser(Long, String)} will be executed via
-	 * this service. If not configured, import preview requests will be
-	 * performed on the calling thread.
+	 * {@link #previewStagedImportRequest(DatumImportPreviewRequest)} will be
+	 * executed via this service. If not configured, import preview requests
+	 * will be performed on the calling thread.
 	 * </p>
 	 * 
 	 * @param previewExecutor
