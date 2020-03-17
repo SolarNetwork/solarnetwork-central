@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: AWS SolarNetwork Cloud Support
 Bundle-SymbolicName: net.solarnetwork.central.common.cloud.aws
-Bundle-Version: 1.0.3
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
@@ -10,9 +10,12 @@ Import-Package:
  com.amazonaws.client.builder;version="[1.11,1.12)",
  com.amazonaws.services.ec2;version="[1.11.207,2.0)",
  com.amazonaws.services.ec2.model;version="[1.11.207,2.0)",
- net.solarnetwork.central.cloud.biz;version="1.0.0",
- net.solarnetwork.central.cloud.domain;version="1.0.0",
- net.solarnetwork.central.domain;version="1.23",
- net.solarnetwork.domain;version="1.10",
- org.joda.time;version="2.9.0",
+ net.solarnetwork.central.cloud.biz;version="[1.0,2.0)",
+ net.solarnetwork.central.cloud.domain;version="[1.0,2.0)",
+ net.solarnetwork.central.domain;version="[1.23,3.0)",
+ net.solarnetwork.common.s3;version="[1.0,2.0)",
+ net.solarnetwork.common.s3.sdk;version="[1.0,2.0)",
+ net.solarnetwork.domain;version="[1.10,2.0)",
+ net.solarnetwork.io;version="[1.5,2.0)",
+ org.joda.time;version="[2.9,3.0)",
  org.slf4j;version="[1.7,2.0)"
