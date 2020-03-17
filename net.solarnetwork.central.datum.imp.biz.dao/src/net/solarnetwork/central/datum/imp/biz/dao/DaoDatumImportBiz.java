@@ -26,8 +26,10 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -50,6 +52,8 @@ import java.util.concurrent.TimeoutException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
@@ -89,6 +93,8 @@ import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.io.ResourceStorageService;
+import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.util.ProgressListener;
 import net.solarnetwork.util.StringUtils;
 
@@ -96,7 +102,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImportJobBiz {
 
@@ -106,6 +112,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	/** The default value for the {@code progressLogCount} property. */
 	public static final int DEFAULT_PROGRESS_LOG_COUNT = 25000;
 
+	/** The default value for the {@code resourceStorageWaitMs} property. */
+	public static final long DEFAULT_RESOURCE_STORAGE_WAIT_MS = TimeUnit.MINUTES.toMillis(1);
+
 	private final ScheduledExecutorService scheduler;
 	private final ExecutorService executor;
 	private final UserNodeDao userNodeDao;
@@ -113,6 +122,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	private final GeneralNodeDatumDao datumDao;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
 	private ExecutorService previewExecutor;
+	private OptionalService<ResourceStorageService> resourceStorageService;
+	private long resourceStorageWaitMs = DEFAULT_RESOURCE_STORAGE_WAIT_MS;
 	private int maxPreviewCount = DEFAULT_MAX_PREVIEW_COUNT;
 	private int progressLogCount = DEFAULT_PROGRESS_LOG_COUNT;
 
@@ -188,7 +199,36 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		info.setImportState(
 				info.getConfig().isStage() ? DatumImportState.Staged : DatumImportState.Queued);
 
-		saveToWorkDirectory(resource, id);
+		File f = saveToWorkDirectory(resource, id);
+		ResourceStorageService rss = resourceStorageService();
+		if ( rss != null ) {
+			CompletableFuture<Boolean> saveFuture = saveToResourceStorage(f, id, rss);
+			if ( this.resourceStorageWaitMs > 0 ) {
+				try {
+					Boolean result = saveFuture.get(this.resourceStorageWaitMs, TimeUnit.MILLISECONDS);
+					if ( result != null && !result.booleanValue() ) {
+						throw new RuntimeException("Failed to save resource.");
+					}
+				} catch ( TimeoutException e ) {
+					log.warn(
+							"Timeout waiting {}ms for data import file [{}] to save to resource storage [{}], moving on",
+							this.resourceStorageWaitMs, f.getName(), rss.getUid());
+				} catch ( InterruptedException e ) {
+					log.warn(
+							"Interrupted waiting {}ms for data import file [{}] to save to resource storage [{}], moving on",
+							this.resourceStorageWaitMs, f.getName(), rss.getUid());
+				} catch ( ExecutionException | RuntimeException e ) {
+					log.error("Error saving data import file [{}] to resource storage [{}]: {}",
+							this.resourceStorageWaitMs, f.getName(), rss.getUid(), e.getCause(), e);
+					Throwable t = e;
+					while ( t.getCause() != null ) {
+						t = t.getCause();
+					}
+					throw new RuntimeException(
+							"Failed to save import data to resource storage: " + t.getMessage());
+				}
+			}
+		}
 
 		jobInfoDao.store(info);
 
@@ -198,6 +238,19 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		task.setDelegate(future);
 
 		return new BasicDatumImportReceipt(jobId.toString(), info.getImportState());
+	}
+
+	private CompletableFuture<Boolean> saveToResourceStorage(File f, UserUuidPK id,
+			ResourceStorageService rss) {
+		return rss.saveResource(f.getName(), new FileSystemResource(f), true, (r, amount) -> {
+			log.debug("Saved %.1f% of datum import [%s] to resource storage [{}]", (amount * 100.0),
+					f.getName(), rss.getUid());
+		});
+	}
+
+	private ResourceStorageService resourceStorageService() {
+		OptionalService<ResourceStorageService> rss = this.resourceStorageService;
+		return (rss != null ? rss.service() : null);
 	}
 
 	@Override
@@ -335,7 +388,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			ProgressListener<DatumImportService> progressListener) throws IOException {
 		File dataFile = getImportDataFile(info.getId());
 		if ( !dataFile.canRead() ) {
-			throw new FileNotFoundException("Data file for job " + info.getId().getId() + " not found");
+			boolean fetched = fetchImportResource(dataFile);
+			if ( !fetched || !dataFile.canRead() ) {
+				throw new FileNotFoundException(
+						"Data file for job " + info.getId().getId() + " not found");
+			}
 		}
 		Configuration config = info.getConfiguration();
 		if ( config == null || config.getInputConfiguration() == null ) {
@@ -351,6 +408,65 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new FileSystemResource(dataFile), inputService.getInputContentType());
 		return inputService.createImportContext(inputConfig, resource, progressListener);
+	}
+
+	private boolean fetchImportResource(File dataFile) throws IOException {
+		ResourceStorageService rss = resourceStorageService();
+		if ( rss != null ) {
+			try {
+				CompletableFuture<Iterable<Resource>> resourcesFuture = rss
+						.listResources(dataFile.getName());
+				Iterable<Resource> resources = resourcesFuture.get(resourceStorageWaitMs,
+						TimeUnit.MILLISECONDS);
+				for ( Resource r : resources ) {
+					FileCopyUtils.copy(r.getInputStream(), new FileOutputStream(dataFile));
+					return true;
+				}
+			} catch ( TimeoutException e ) {
+				log.warn(
+						"Timeout waiting {}ms to fetch data import file [{}] from resource storage [{}]",
+						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid());
+			} catch ( InterruptedException e ) {
+				log.warn(
+						"Interrupted waiting {}ms for data import file [{}] to save to resource storage [{}], moving on",
+						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid());
+			} catch ( ExecutionException | RuntimeException e ) {
+				log.error("Error saving data import file [{}] to resource storage [{}]: {}",
+						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid(), e.getCause(), e);
+				Throwable t = e;
+				while ( t.getCause() != null ) {
+					t = t.getCause();
+				}
+				throw new RuntimeException(
+						"Failed to save import data to resource storage: " + t.getMessage());
+			}
+		}
+		return false;
+	}
+
+	private void cleanupAfterImportDone(File dataFile) {
+		dataFile.delete();
+		ResourceStorageService rss = resourceStorageService();
+		if ( rss != null ) {
+			try {
+				CompletableFuture<Set<String>> f = rss
+						.deleteResources(Arrays.asList(dataFile.getName()));
+				Set<String> deletedPaths = f.get(resourceStorageWaitMs, TimeUnit.MILLISECONDS);
+				log.info("Deleted completed data import resources from storage [{}]: {}", rss.getUid(),
+						deletedPaths);
+			} catch ( TimeoutException e ) {
+				log.warn(
+						"Timeout waiting {}ms to delete data import file [{}] from resource storage [{}]",
+						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid());
+			} catch ( InterruptedException e ) {
+				log.warn(
+						"Interrupted waiting {}ms to delete data import file [{}] from resource storage [{}]",
+						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid());
+			} catch ( ExecutionException | RuntimeException e ) {
+				log.error("Error saving data import file [{}] to resource storage [{}]: {}",
+						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid(), e.getCause(), e);
+			}
+		}
 	}
 
 	private class DatumImportPreview implements Callable<FilterResults<GeneralNodeDatumComponents>>,
@@ -620,7 +736,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			} catch ( Exception e ) {
 				throw new RuntimeException(e);
 			} finally {
-				getImportDataFile(info.getId()).delete();
+				cleanupAfterImportDone(getImportDataFile(info.getId()));
 			}
 		}
 
@@ -810,6 +926,40 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	 */
 	public void setProgressLogCount(int progressLogCount) {
 		this.progressLogCount = progressLogCount;
+	}
+
+	/**
+	 * Set an optional {@link ResourceStorageService} to store import data files
+	 * on.
+	 * 
+	 * <p>
+	 * This can be used as shared storage between different applications that
+	 * accept the import data file versus later process it. Files will still be
+	 * copied to the configured work directory. If this service is available,
+	 * the data file will also be copied to this service so it can be shared by
+	 * other applications.
+	 * </p>
+	 * 
+	 * @param resourceStorageService
+	 *        the storage service to use
+	 * @since 1.1
+	 */
+	public void setResourceStorageService(
+			OptionalService<ResourceStorageService> resourceStorageService) {
+		this.resourceStorageService = resourceStorageService;
+	}
+
+	/**
+	 * Get the amount of time to wait for saving import data to resource storage
+	 * before abandoning waiting for the result.
+	 * 
+	 * @param resourceStorageWaitMs
+	 *        the time to wait, in milliseconds; defaults to
+	 *        {@link #DEFAULT_RESOURCE_STORAGE_WAIT_MS}
+	 * @since 1.1
+	 */
+	public void setResourceStorageWaitMs(long resourceStorageWaitMs) {
+		this.resourceStorageWaitMs = resourceStorageWaitMs;
 	}
 
 }

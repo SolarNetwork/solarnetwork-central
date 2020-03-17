@@ -23,6 +23,7 @@
 		<beans:prop key="progressLogCount">25000</beans:prop>
 		<beans:prop key="completedTaskMinimumCacheTime">14400000</beans:prop>
 		<beans:prop key="workPath"></beans:prop>
+		<beans:prop key="resourceStorageWaitMs">60000</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -56,6 +57,7 @@
 		<property name="progressLogCount" value="${progressLogCount}"/>
 		<property name="completedTaskMinimumCacheTime" value="${completedTaskMinimumCacheTime}"/>
 		<property name="workPath" value="${workPath}"/>
+		<property name="resourceStorageWaitMs" value="${resourceStorageWaitMs}"/>
 		<property name="inputServices">
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>
@@ -66,6 +68,13 @@
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>
 				<property name="serviceClassName" value="org.osgi.service.event.EventAdmin"/>
+			</bean>
+		</property>
+		<property name="resourceStorageService">
+			<bean class="net.solarnetwork.util.DynamicServiceTracker">
+				<property name="bundleContext" ref="bundleContext"/>
+				<property name="serviceClassName" value="net.solarnetwork.io.ResourceStorageService"/>
+				<property name="serviceFilter" value="(funciton=datum-import)"/>
 			</bean>
 		</property>
 	</bean>

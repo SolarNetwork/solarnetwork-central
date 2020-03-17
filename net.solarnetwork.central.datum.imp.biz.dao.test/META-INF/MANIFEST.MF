@@ -2,15 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Datum Import DAO Biz Tests
 Bundle-SymbolicName: net.solarnetwork.central.datum.imp.biz.dao.test
-Bundle-Version: 1.0.0
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork
-Fragment-Host: net.solarnetwork.central.datum.imp.biz.dao;bundle-version="1.0.0"
+Fragment-Host: net.solarnetwork.central.datum.imp.biz.dao;bundle-version="[1.2,2.0)"
 Automatic-Module-Name: net.solarnetwork.central.datum.imp.biz.dao.test
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
- net.solarnetwork.central.dao;version="1.16.0",
- net.solarnetwork.central.support;version="1.15.1",
- net.solarnetwork.central.test;version="1.6.0",
+ net.solarnetwork.central.test;version="1.8.0",
  net.solarnetwork.settings;version="1.1.0",
  net.solarnetwork.test;version="1.4.0",
  org.apache.commons.logging;version="[1.1,2.0)",
