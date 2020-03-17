@@ -31,10 +31,9 @@
 		<osgix:service-properties>
 			<beans:entry key="function" value="central"/>
 		</osgix:service-properties>
-		<bean class="net.solarnetwork.common.s3.S3ResourceStorageService">
+		<bean class="net.solarnetwork.common.s3.S3ResourceStorageService" init-method="startup">
 			<argument ref="executor"/>
 		</bean>
 	</osgix:managed-service-factory>
-	
 	
 </blueprint>

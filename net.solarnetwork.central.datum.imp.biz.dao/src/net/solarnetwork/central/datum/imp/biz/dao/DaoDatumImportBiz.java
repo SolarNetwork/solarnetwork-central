@@ -201,7 +201,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 		File f = saveToWorkDirectory(resource, id);
 		ResourceStorageService rss = resourceStorageService();
-		if ( rss != null ) {
+		if ( rss != null && rss.isConfigured() ) {
 			CompletableFuture<Boolean> saveFuture = saveToResourceStorage(f, id, rss);
 			if ( this.resourceStorageWaitMs > 0 ) {
 				try {
@@ -412,7 +412,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 	private boolean fetchImportResource(File dataFile) throws IOException {
 		ResourceStorageService rss = resourceStorageService();
-		if ( rss != null ) {
+		if ( rss != null && rss.isConfigured() ) {
 			try {
 				CompletableFuture<Iterable<Resource>> resourcesFuture = rss
 						.listResources(dataFile.getName());
@@ -447,13 +447,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	private void cleanupAfterImportDone(File dataFile) {
 		dataFile.delete();
 		ResourceStorageService rss = resourceStorageService();
-		if ( rss != null ) {
+		if ( rss != null && rss.isConfigured() ) {
 			try {
 				CompletableFuture<Set<String>> f = rss
 						.deleteResources(Arrays.asList(dataFile.getName()));
-				Set<String> deletedPaths = f.get(resourceStorageWaitMs, TimeUnit.MILLISECONDS);
-				log.info("Deleted completed data import resources from storage [{}]: {}", rss.getUid(),
-						deletedPaths);
+				f.get(resourceStorageWaitMs, TimeUnit.MILLISECONDS);
+				log.info("Deleted completed data import resource from storage [{}]: {}", rss.getUid());
 			} catch ( TimeoutException e ) {
 				log.warn(
 						"Timeout waiting {}ms to delete data import file [{}] from resource storage [{}]",
@@ -463,8 +462,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 						"Interrupted waiting {}ms to delete data import file [{}] from resource storage [{}]",
 						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid());
 			} catch ( ExecutionException | RuntimeException e ) {
-				log.error("Error saving data import file [{}] to resource storage [{}]: {}",
-						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid(), e.getCause(), e);
+				Throwable t = e;
+				while ( t.getCause() != null ) {
+					t = t.getCause();
+				}
+				log.error("Error deleting data import file [{}] from resource storage [{}]: {}",
+						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid(), t.getMessage(), t);
 			}
 		}
 	}
