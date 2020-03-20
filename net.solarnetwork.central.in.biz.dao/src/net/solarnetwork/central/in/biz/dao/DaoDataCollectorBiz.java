@@ -72,7 +72,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * </p>
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -146,7 +146,12 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 				throw new IllegalArgumentException(
 						"A locationId value is required for GeneralLocationDatum");
 			}
-			generalLocationDatumDao.store(d);
+			try {
+				generalLocationDatumDao.store(d);
+			} catch ( TransientDataAccessException e ) {
+				throw new RepeatableTaskException("Transient error storing location datum " + d.getId(),
+						e);
+			}
 		}
 	}
 
