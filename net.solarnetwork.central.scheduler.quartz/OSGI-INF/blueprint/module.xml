@@ -27,6 +27,7 @@
 		<beans:prop key="scheduler.jobStore.tablePrefix">quartz.</beans:prop>
 		<beans:prop key="scheduler.threadPool.threadCount">5</beans:prop>
 		<beans:prop key="scheduler.blockedJobMaxSeconds">600</beans:prop>
+		<beans:prop key="scheduler.pingTestMaximumExecutionMilliseconds">2000</beans:prop>
 		<beans:prop key="cron.timeZone">Pacific/Auckland</beans:prop>
 	</osgix:cm-properties>
 
@@ -80,6 +81,7 @@
 		<argument ref="scheduler"/>
 		<argument ref="eventAdmin"/>
 		<property name="blockedJobMaxSeconds" value="${scheduler.blockedJobMaxSeconds}"/>
+		<property name="pingTestMaximumExecutionMilliseconds" value="${scheduler.pingTestMaximumExecutionMilliseconds}"/>
 	</bean>
 
 	<bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
