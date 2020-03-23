@@ -81,10 +81,13 @@ public class MyBatisGeneralLocationDatumDao
 	/** The query parameter for an ending date value. */
 	public static final String PARAM_END_DATE = "end";
 
-	/** The query parameter for a general {@link Filter} object value. */
+	/** The query parameter for a general filter object value. */
 	public static final String PARAM_FILTER = "filter";
 
-	/** The default query name used for {@link #getReportableInterval(Long)}. */
+	/**
+	 * The default query name used for
+	 * {@link #getReportableInterval(Long, String)}.
+	 */
 	public static final String QUERY_FOR_REPORTABLE_INTERVAL = "find-general-loc-reportable-interval";
 
 	/**

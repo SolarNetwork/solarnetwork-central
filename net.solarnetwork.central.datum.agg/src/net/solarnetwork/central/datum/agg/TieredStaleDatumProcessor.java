@@ -86,8 +86,7 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 	 * 
 	 * @param remainingCount
 	 *        the maximum remaining number of rows to process
-	 * @param number
-	 *        of rows processed
+	 * @return number of rows processed
 	 */
 	protected abstract int execute(final AtomicInteger remainingCount);
 

@@ -37,11 +37,13 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.springframework.util.FileCopyUtils.copy;
 import static org.springframework.util.FileCopyUtils.copyToByteArray;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,6 +57,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
@@ -65,7 +68,9 @@ import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import net.solarnetwork.central.dao.BulkLoadingDao;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
@@ -97,16 +102,18 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.io.ResourceStorageService;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.test.Assertion;
 import net.solarnetwork.util.ProgressListener;
+import net.solarnetwork.util.StaticOptionalService;
 import net.solarnetwork.util.StaticOptionalServiceCollection;
 
 /**
  * Test cases for the {@link DaoDatumImportBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoDatumImportBizTests {
 
@@ -120,6 +127,7 @@ public class DaoDatumImportBizTests {
 	private UserNodeDao userNodeDao;
 	private DatumImportJobInfoDao jobInfoDao;
 	private GeneralNodeDatumDao datumDao;
+	private ResourceStorageService resourceStorageService;
 
 	@SuppressWarnings("unchecked")
 	private final BulkLoadingDao.LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> loadingContext = EasyMock
@@ -149,6 +157,7 @@ public class DaoDatumImportBizTests {
 		jobInfoDao = EasyMock.createMock(DatumImportJobInfoDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
 		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
+		resourceStorageService = EasyMock.createMock(ResourceStorageService.class);
 
 		biz = new TestDaoDatumImportBiz(scheduledExecutorService, executorSercvice, userNodeDao,
 				jobInfoDao, datumDao);
@@ -156,12 +165,14 @@ public class DaoDatumImportBizTests {
 	}
 
 	private void replayAll() {
-		EasyMock.replay(executorSercvice, userNodeDao, jobInfoDao, datumDao, loadingContext);
+		EasyMock.replay(executorSercvice, userNodeDao, jobInfoDao, datumDao, loadingContext,
+				resourceStorageService);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(executorSercvice, userNodeDao, jobInfoDao, datumDao, loadingContext);
+		EasyMock.verify(executorSercvice, userNodeDao, jobInfoDao, datumDao, loadingContext,
+				resourceStorageService);
 	}
 
 	@Test
@@ -207,6 +218,91 @@ public class DaoDatumImportBizTests {
 
 		// then
 		assertThat("Receipt returned", receipt, notNullValue());
+
+		DatumImportJobInfo info = jobInfoCaptor.getValue();
+		assertThat("Info user ID", info.getUserId(), equalTo(TEST_USER_ID));
+		assertThat("Configuration copied", info.getConfiguration(),
+				allOf(notNullValue(), not(sameInstance(configuration))));
+		assertThat("Configuration name", info.getConfiguration().getName(),
+				equalTo(configuration.getName()));
+		assertThat("Input configuration copied", info.getConfiguration().getInputConfiguration(),
+				allOf(notNullValue(), not(sameInstance(inputConfiguration))));
+		assertThat("Input configuration name", info.getConfiguration().getInputConfiguration().getName(),
+				equalTo(inputConfiguration.getName()));
+		assertThat("Input configuration zone",
+				info.getConfiguration().getInputConfiguration().getTimeZoneId(),
+				equalTo(inputConfiguration.getTimeZoneId()));
+		assertThat("Input configuration service ID",
+				info.getConfiguration().getInputConfiguration().getServiceIdentifier(),
+				equalTo(inputConfiguration.getServiceIdentifier()));
+		assertThat("Input configuration service props",
+				info.getConfiguration().getInputConfiguration().getServiceProperties(),
+				equalTo(inputConfiguration.getServiceProperties()));
+
+		File dataFile = biz.getImportDataFile(info.getId());
+		assertThat("Data copied to file in work dir",
+				Arrays.equals(copyToByteArray(dataFile),
+						copyToByteArray(getClass().getResourceAsStream("test-data-01.csv"))),
+				equalTo(true));
+		dataFile.delete();
+	}
+
+	@Test
+	public void submitDatumImportRequest_withResourceStorage() throws IOException {
+		// given
+		biz.setResourceStorageService(
+				new StaticOptionalService<ResourceStorageService>(resourceStorageService));
+		BasicInputConfiguration inputConfiguration = new BasicInputConfiguration();
+		inputConfiguration.setName("Test CSV Input");
+		inputConfiguration.setTimeZoneId("UTC");
+		inputConfiguration.setServiceIdentifier("foo");
+		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
+		configuration.setInputConfiguration(inputConfiguration);
+		BasicDatumImportRequest request = new BasicDatumImportRequest(configuration, TEST_USER_ID);
+		BasicDatumImportResource resource = new BasicDatumImportResource(
+				new ClassPathResource("test-data-01.csv", getClass()), "text/csv");
+
+		CompletableFuture<Boolean> savedFuture = CompletableFuture.completedFuture(true);
+		Capture<String> resourceNameCaptor = new Capture<>();
+		Capture<Resource> resourceCaptor = new Capture<>();
+		expect(resourceStorageService.saveResource(capture(resourceNameCaptor), capture(resourceCaptor),
+				eq(true), anyObject())).andReturn(savedFuture);
+
+		Capture<DatumImportJobInfo> jobInfoCaptor = new Capture<>();
+		expect(jobInfoDao.store(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
+
+			@Override
+			public UserUuidPK answer() throws Throwable {
+				return jobInfoCaptor.getValue().getId();
+			}
+		});
+		expect(jobInfoDao.get(assertWith(new Assertion<UserUuidPK>() {
+
+			@Override
+			public void check(UserUuidPK argument) throws Throwable {
+				assertThat(argument, equalTo(jobInfoCaptor.getValue().getId()));
+			}
+		}))).andAnswer(new IAnswer<DatumImportJobInfo>() {
+
+			@Override
+			public DatumImportJobInfo answer() throws Throwable {
+				return jobInfoCaptor.getValue();
+			}
+
+		});
+
+		// when
+		replayAll();
+		DatumImportReceipt receipt = biz.submitDatumImportRequest(request, resource);
+
+		// then
+		assertThat("Receipt returned", receipt, notNullValue());
+
+		assertThat("Resource saved to storage with user ID prefix", resourceNameCaptor.getValue(),
+				startsWith(TEST_USER_ID + "-"));
+		assertThat("Resource saved to storage has same file name",
+				resourceCaptor.getValue().getFilename(), equalTo(resourceNameCaptor.getValue()));
 
 		DatumImportJobInfo info = jobInfoCaptor.getValue();
 		assertThat("Info user ID", info.getUserId(), equalTo(TEST_USER_ID));
@@ -470,6 +566,117 @@ public class DaoDatumImportBizTests {
 		assertThat("Import succeeded", result.isSuccess(), equalTo(true));
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+	}
+
+	@Test
+	public void performImport_fetchResource() throws Exception {
+		// given
+		biz.setResourceStorageService(
+				new StaticOptionalService<ResourceStorageService>(resourceStorageService));
+		List<GeneralNodeDatum> data = sampleData(5,
+				new DateTime().hourOfDay().roundFloorCopy().minusHours(1));
+		biz.setInputServices(
+				new StaticOptionalServiceCollection<>(singleton(new TestInputService(data))));
+		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
+		File dataFile = biz.getImportDataFile(pk);
+		InputStream dataFileStream = getClass().getResourceAsStream("test-data-01.csv");
+
+		DatumImportJobInfo info = createTestJobInfo(pk);
+		expect(jobInfoDao.get(pk)).andReturn(info);
+
+		Capture<Callable<DatumImportResult>> taskCaptor = new Capture<>();
+		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
+		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
+
+		Resource r = new AbstractResource() {
+
+			@Override
+			public InputStream getInputStream() throws IOException {
+				return dataFileStream;
+			}
+
+			@Override
+			public String getDescription() {
+				return "Remote resource";
+			}
+		};
+		CompletableFuture<Iterable<Resource>> storageListingFuture = CompletableFuture
+				.completedFuture(Collections.singleton(r));
+		expect(resourceStorageService.listResources(dataFile.getName())).andReturn(storageListingFuture);
+
+		expect(resourceStorageService.getUid()).andReturn("Magic Storage").anyTimes();
+
+		// allow updating the status as job progresses
+		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+
+		// make test node owned by job's user
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(singleton(TEST_NODE_ID))
+				.anyTimes();
+
+		Capture<BulkLoadingDao.LoadingOptions> loadingOptionsCaptor = new Capture<>();
+		expect(datumDao.createBulkLoadingContext(capture(loadingOptionsCaptor), anyObject()))
+				.andReturn(loadingContext);
+
+		Capture<GeneralNodeDatum> loadedDataCaptor = new Capture<GeneralNodeDatum>(CaptureType.ALL);
+		loadingContext.load(capture(loadedDataCaptor));
+		expectLastCall().times(data.size());
+
+		expect(loadingContext.getLoadedCount()).andAnswer(new IAnswer<Long>() {
+
+			private long count = 0;
+
+			@Override
+			public Long answer() throws Throwable {
+				return ++count;
+			}
+		}).times(data.size());
+
+		loadingContext.commit();
+
+		Long committedCount = 5L;
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+
+		loadingContext.close();
+
+		Set<String> deletedResourcePaths = Collections.singleton("Yeah, baby!");
+		Capture<Iterable<String>> deleteResourcePathsCaptor = new Capture<>();
+		expect(resourceStorageService.deleteResources(capture(deleteResourcePathsCaptor)))
+				.andReturn(CompletableFuture.completedFuture(deletedResourcePaths));
+
+		// when
+		replayAll();
+		DatumImportStatus status = biz.performImport(pk);
+
+		// pretend to perform work via executor service
+		DatumImportResult result = taskCaptor.getValue().call();
+
+		// then
+		assertThat("Status returned", status, notNullValue());
+		for ( int i = 0; i < data.size(); i++ ) {
+			assertThat("Loaded data PK " + i, loadedDataCaptor.getValues().get(i).getId(),
+					equalTo(data.get(i).getId()));
+			assertThat("Loaded data samples " + i, loadedDataCaptor.getValues().get(i).getSamples(),
+					equalTo(data.get(i).getSamples()));
+			assertThat("Loaded data posted data set to import date", data.get(i).getPosted(),
+					equalTo(info.getImportDate()));
+		}
+
+		BulkLoadingDao.LoadingOptions loadingOpts = loadingOptionsCaptor.getValue();
+		assertThat("Loading tx mode", loadingOpts.getTransactionMode(),
+				equalTo(LoadingTransactionMode.SingleTransaction));
+		assertThat("Loading batch size", loadingOpts.getBatchSize(), nullValue());
+
+		assertThat("Import result available", result, notNullValue());
+		assertThat("Import completion date set", result.getCompletionDate(), notNullValue());
+		assertThat("Import succeeded", result.isSuccess(), equalTo(true));
+		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
+		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+
+		List<String> deleteResourcePaths = StreamSupport
+				.stream(deleteResourcePathsCaptor.getValue().spliterator(), false)
+				.collect(Collectors.toList());
+		assertThat("Requested resources to delete", deleteResourcePaths,
+				Matchers.contains(dataFile.getName()));
 	}
 
 	@Test

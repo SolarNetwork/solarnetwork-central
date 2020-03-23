@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.ocpp.domain.CentralAuthorization">
+
+	<insert id="insert-CentralAuthorization" parameterType="net.solarnetwork.central.ocpp.domain.CentralAuthorization">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarev.ocpp_authorization_seq') AS id 
+		</selectKey>
+		INSERT INTO solarev.ocpp_authorization (
+			id
+			<if test="created != null">,created</if>
+			, user_id
+			, token
+			, enabled
+			, expires
+			, parent_id
+		) VALUES (
+			#{id}
+			<if test="created != null">,#{created}</if>
+			, #{userId}
+			, #{token}
+			, #{enabled}
+			, #{expiryDate}
+			, #{parentId}
+		)
+	</insert>
+
+	<update id="update-CentralAuthorization" parameterType="net.solarnetwork.central.ocpp.domain.CentralAuthorization">
+		UPDATE 
+			solarev.ocpp_authorization
+		SET
+			token = #{token}
+			, enabled = #{enabled}
+			, expires = #{expiryDate}
+			, parent_id = #{parentId}
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-CentralAuthorization-full-result">
+		ca.id AS ocpp_authorization_id
+		, ca.created AS ocpp_authorization_created
+		, ca.user_id AS ocpp_authorization_user_id
+		, ca.token AS ocpp_authorization_token
+		, ca.enabled AS ocpp_authorization_enabled
+		, ca.expires AS ocpp_authorization_expires
+		, ca.parent_id AS ocpp_authorization_parent_id
+	</sql>
+	
+	<resultMap id="CentralAuthorization-FullResult" type="net.solarnetwork.central.ocpp.domain.CentralAuthorization">
+		<constructor>
+			<idArg  column="ocpp_authorization_id" javaType="Long"/>
+			<arg column="ocpp_authorization_user_id" javaType="Long"/>
+			<arg column="ocpp_authorization_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="token" column="ocpp_authorization_token"/>
+		<result property="enabled" column="ocpp_authorization_enabled"/>
+		<result property="expiryDate" column="ocpp_authorization_expires"/>
+		<result property="parentId" column="ocpp_authorization_parent_id"/>
+	</resultMap>
+
+	<select id="get-CentralAuthorization-for-id" parameterType="long" resultMap="CentralAuthorization-FullResult">
+		SELECT
+			<include refid="fragment-CentralAuthorization-full-result"/>
+		FROM
+			solarev.ocpp_authorization ca
+		WHERE
+			ca.id = #{id}
+	</select>
+	
+	<sql id="fragment-findall-CentralAuthorization-where">
+		<if test="filter != null">
+			<where>
+				<if test="filter.id != null">
+					AND ca.id = #{filter.id}
+				</if>
+				<if test="filter.userId != null">
+					AND ca.user_id = #{filter.userId}
+				</if>
+				<if test="filter.token != null">
+					AND ca.token = #{filter.token}
+				</if>
+			</where>
+		</if>
+	</sql>
+
+	<sql id="fragment-findall-CentralAuthorization-order">
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+				 	<choose>
+				 		<when test="&quot;created&quot;.equalsIgnoreCase(item.sortKey)">ocpp_authorization_created</when>
+				 		<when test="&quot;token&quot;.equalsIgnoreCase(item.sortKey)">ocpp_authorization_token</when>
+				 		<otherwise>ocpp_authorization_id</otherwise>
+				 	</choose>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				ocpp_authorization_user_id, ocpp_authorization_created, ocpp_authorization_id
+			</otherwise>
+		</choose>
+	</sql>
+
+	<select id="findall-CentralAuthorization" resultMap="CentralAuthorization-FullResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-CentralAuthorization-full-result"/>
+		FROM
+			solarev.ocpp_authorization ca
+		<include refid="fragment-findall-CentralAuthorization-where"/>
+		<include refid="fragment-findall-CentralAuthorization-order"/>
+	</select>
+
+	<delete id="delete-CentralAuthorization-for-user-and-id" parameterType="net.solarnetwork.central.ocpp.domain.CentralAuthorization">
+		DELETE FROM solarev.ocpp_authorization
+		WHERE user_id = #{userId} AND id = #{id}
+	</delete>
+
+</mapper>

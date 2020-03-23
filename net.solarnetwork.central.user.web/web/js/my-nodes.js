@@ -237,7 +237,7 @@ $(document).ready(function() {
 			if ( text.length > 0 ) {
 				text += ' (';
 			}
-			text += loc.latitude.toFixed(3) + ', ' + loc.longitude.toFixed(3);
+			text += Number(loc.latitude).toFixed(3) + ', ' + Number(loc.longitude).toFixed(3);
 			if ( loc.elevation ) {
 				text += ' @ ' +loc.elevation + 'm';
 			}

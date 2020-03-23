@@ -203,6 +203,8 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 * 
 	 * @param status
 	 *        the status instance to create the event for
+	 * @param result
+	 *        the import result
 	 * @return the event, never {@literal null}
 	 */
 	static Event createJobStatusChagnedEvent(DatumImportStatus status, DatumImportResult result) {

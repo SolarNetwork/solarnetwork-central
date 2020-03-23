@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Set;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 
@@ -69,8 +70,9 @@ public interface UserDatumDeleteBiz {
 	 * <p>
 	 * The delete process is not expected to start after calling this method.
 	 * Rather it should enter the {@link DatumDeleteJobState#Queued} state. To
-	 * initiate the import process, the {@link #deleteFiltered(Long, String)}
-	 * must be called, passing in the same user ID and the returned
+	 * initiate the import process, the
+	 * {@link UserDatumDeleteJobBiz#performDatumDelete(UserUuidPK)} must be
+	 * called, passing in the same user ID and the returned
 	 * {@link DatumDeleteJobInfo#getJobId()}.
 	 * </p>
 	 * 

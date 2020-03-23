@@ -134,7 +134,7 @@ public class UserNodeTransfer
 	}
 
 	/**
-	 * Convenience setter for {@link UserNodePK#setUserId(String)}.
+	 * Convenience setter for {@link UserNodePK#setUserId(Long)}.
 	 * 
 	 * @param userId
 	 *        the userId to set

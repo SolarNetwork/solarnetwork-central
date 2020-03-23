@@ -67,7 +67,7 @@ public interface NodeOwnershipBiz {
 	 * owner is provided and an email will be sent a message with a special link
 	 * for confirming or rejecting the transfer request. The node will not be
 	 * transferred until the request is confirmed, via the
-	 * {@link #confirmNodeOwnershipTransfer()}.
+	 * {@link #confirmNodeOwnershipTransfer(Long, Long, boolean)}.
 	 * 
 	 * @param userId
 	 *        The ID of the user making the request.
@@ -119,7 +119,7 @@ public interface NodeOwnershipBiz {
 	 * @param accept
 	 *        If <em>true</em> then accept the transfer request, otherwise
 	 *        reject (canceling the request).
-	 * @returns The original transfer entity.
+	 * @return The original transfer entity.
 	 * @throws AuthorizationException
 	 *         If the active user is not authorized to confirm (or reject) the
 	 *         ownership transfer.

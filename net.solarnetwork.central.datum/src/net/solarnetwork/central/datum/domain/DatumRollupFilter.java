@@ -35,7 +35,8 @@ public interface DatumRollupFilter {
 	 * Get the rollup type.
 	 * 
 	 * <p>
-	 * This should always return the first value from {@link #getRollupTypes()}.
+	 * This should always return the first value from
+	 * {@link #getDatumRollupTypes()}.
 	 * </p>
 	 * 
 	 * @return the rollup, or {@literal null} for no rollup

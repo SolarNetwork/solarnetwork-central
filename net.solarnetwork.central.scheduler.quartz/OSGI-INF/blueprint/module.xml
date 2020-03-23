@@ -20,11 +20,14 @@
 	<!-- Configuration -->
 	
 	<osgix:cm-properties id="scheduler.cfg" persistent-id="net.solarnetwork.central.scheduler">
+		<beans:prop key="scheduler.instanceId">AUTO</beans:prop>
 		<beans:prop key="scheduler.startupDelay">60</beans:prop>
 		<beans:prop key="scheduler.jobStore.driverDelegateClass">org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</beans:prop>
+		<beans:prop key="scheduler.jobStore.isClustered">false</beans:prop>
 		<beans:prop key="scheduler.jobStore.tablePrefix">quartz.</beans:prop>
 		<beans:prop key="scheduler.threadPool.threadCount">5</beans:prop>
 		<beans:prop key="scheduler.blockedJobMaxSeconds">600</beans:prop>
+		<beans:prop key="scheduler.pingTestMaximumExecutionMilliseconds">2000</beans:prop>
 		<beans:prop key="cron.timeZone">Pacific/Auckland</beans:prop>
 	</osgix:cm-properties>
 
@@ -78,10 +81,10 @@
 		<argument ref="scheduler"/>
 		<argument ref="eventAdmin"/>
 		<property name="blockedJobMaxSeconds" value="${scheduler.blockedJobMaxSeconds}"/>
+		<property name="pingTestMaximumExecutionMilliseconds" value="${scheduler.pingTestMaximumExecutionMilliseconds}"/>
 	</bean>
 
 	<bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
-		<!--property name="applicationContextSchedulerContextKey" value="applicationContext"/-->
 		<property name="schedulerContextAsMap">
 			<map>
 				<entry key="EventAdmin" value-ref="eventAdmin"/>
@@ -94,6 +97,8 @@
 		<property name="transactionManager" ref="txManager"/>
 		<property name="quartzProperties">
 			<props>
+				<prop key="org.quartz.scheduler.instanceId">${scheduler.instanceId}</prop>
+				<prop key="org.quartz.jobStore.isClustered">${scheduler.jobStore.isClustered}</prop>
 				<prop key="org.quartz.jobStore.tablePrefix">${scheduler.jobStore.tablePrefix}</prop>
 				<prop key="org.quartz.threadPool.threadCount">${scheduler.threadPool.threadCount}</prop>
 				<prop key="org.quartz.jobStore.driverDelegateClass">${scheduler.jobStore.driverDelegateClass}</prop>

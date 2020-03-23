@@ -16,15 +16,32 @@
 
 	<!-- Service References -->
 
-	<reference id="jdbcOps" interface="org.springframework.jdbc.core.JdbcOperations" filter="(db=central)"/>
-	
+	<bean id="dataSource" class="net.solarnetwork.util.FallbackOptionalService">
+		<argument>
+			<list>
+				<!--  Prefer a (mode=readwrite) DataSource if it's available... -->
+				<bean class="net.solarnetwork.util.DynamicServiceTracker">
+					<property name="bundleContext" ref="bundleContext"/>
+					<property name="serviceClassName" value="javax.sql.DataSource"/>
+					<property name="serviceFilter" value="(&amp;(db=central)(mode=readwrite))"/>
+				</bean>
+				<!--  ...falling back to default DataSource if not. -->
+				<bean class="net.solarnetwork.util.DynamicServiceTracker">
+					<property name="bundleContext" ref="bundleContext"/>
+					<property name="serviceClassName" value="javax.sql.DataSource"/>
+					<property name="serviceFilter" value="(db=central)"/>
+				</bean>
+			</list>
+		</argument>
+	</bean>
+
 	<!-- Published Services -->
 
 	<service interface="net.solarnetwork.central.query.biz.QueryAuditor" ref="jdbcQueryAuditor"/>
 
 	<bean id="jdbcQueryAuditor" class="net.solarnetwork.central.query.audit.dao.JdbcQueryAuditor" 
 			init-method="enableWriting" destroy-method="disableWriting">
-		<argument ref="jdbcOps"/>
+		<argument ref="dataSource"/>
 		<osgix:managed-properties persistent-id="net.solarnetwork.central.query.audit.dao.JdbcQueryAuditor"
 			autowire-on-update="true"/>
 	</bean>

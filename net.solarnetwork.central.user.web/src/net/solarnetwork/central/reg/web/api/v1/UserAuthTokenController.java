@@ -81,7 +81,7 @@ public class UserAuthTokenController extends WebServiceControllerSupport {
 	 * 
 	 * @param principal
 	 *        The active user.
-	 * @return
+	 * @return the tokens
 	 */
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
 	public Response<List<UserAuthToken>> listAll(Principal principal) {

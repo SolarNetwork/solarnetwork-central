@@ -211,6 +211,8 @@ public abstract class AbstractNodeController {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param locale
+	 *        the locale
 	 * @return an error response object
 	 */
 	@ExceptionHandler(BindException.class)
@@ -227,6 +229,8 @@ public abstract class AbstractNodeController {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param locale
+	 *        the locale
 	 * @return an error response object
 	 */
 	@ExceptionHandler(ValidationException.class)

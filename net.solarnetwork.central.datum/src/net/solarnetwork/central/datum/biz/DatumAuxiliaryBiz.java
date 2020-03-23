@@ -44,6 +44,7 @@ public interface DatumAuxiliaryBiz {
 	 * 
 	 * @param id
 	 *        the primary key of the data to get
+	 * @return the datum, or {@literal null} if not found
 	 */
 	GeneralNodeDatumAuxiliary getGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id);
 
@@ -72,6 +73,7 @@ public interface DatumAuxiliaryBiz {
 	 * @param to
 	 *        the auxiliary data to store, including the primary key to store
 	 *        the data at
+	 * @return {@literal true} if a datum was moved
 	 * @since 1.1
 	 */
 	boolean moveGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK from,

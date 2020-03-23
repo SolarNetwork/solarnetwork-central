@@ -77,7 +77,7 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	public static final String UPDATE_INTERNAL_DATA = "update-internal-data";
 
 	/**
-	 * The query parameter for a general {@link Filter} object value.
+	 * The query parameter for a general filter object value.
 	 * 
 	 * @since 1.2
 	 */

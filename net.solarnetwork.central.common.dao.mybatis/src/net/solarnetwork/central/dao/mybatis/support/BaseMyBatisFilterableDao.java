@@ -57,6 +57,8 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 	 *        the domain class
 	 * @param pkClass
 	 *        the primary key class
+	 * @param filterResultClass
+	 *        the filter result class
 	 */
 	public BaseMyBatisFilterableDao(Class<? extends T> domainClass, Class<? extends PK> pkClass,
 			Class<? extends M> filterResultClass) {
@@ -69,6 +71,8 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 	 * 
 	 * @param filterDomain
 	 *        the domain
+	 * @param filter
+	 *        the filter
 	 * @return query name
 	 */
 	protected String getFilteredQuery(String filterDomain, F filter) {

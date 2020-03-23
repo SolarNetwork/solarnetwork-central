@@ -25,16 +25,18 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
-import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeCertificateDao;
-import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserNodeCertificate;
-import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
-import net.solarnetwork.central.user.domain.UserNodePK;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
+import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeCertificateDao;
+import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
+import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.user.domain.UserNodeCertificate;
+import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
+import net.solarnetwork.central.user.domain.UserNodePK;
 
 /**
  * Test cases for the {@link MyBatisUserNodeCertificateDao} class.
@@ -54,6 +56,7 @@ public class MyBatisUserNodeCertificateDaoTests extends AbstractMyBatisUserDaoTe
 	private static final byte[] TEST_CERT = "test cert".getBytes();
 	private static final String TEST_REQ_KEY = "test req key";
 
+	private MyBatisUserNodeDao userNodeDao;
 	private MyBatisUserNodeCertificateDao userNodeCertificateDao;
 
 	private MyBatisSolarNodeDao solarNodeDao;
@@ -64,6 +67,8 @@ public class MyBatisUserNodeCertificateDaoTests extends AbstractMyBatisUserDaoTe
 
 	@Before
 	public void setUp() throws Exception {
+		userNodeDao = new MyBatisUserNodeDao();
+		userNodeDao.setSqlSessionFactory(getSqlSessionFactory());
 		userNodeCertificateDao = new MyBatisUserNodeCertificateDao();
 		userNodeCertificateDao.setSqlSessionFactory(getSqlSessionFactory());
 		solarNodeDao = new MyBatisSolarNodeDao();
@@ -75,6 +80,9 @@ public class MyBatisUserNodeCertificateDaoTests extends AbstractMyBatisUserDaoTe
 		deleteFromTables(DELETE_TABLES);
 		this.user = createNewUser(TEST_EMAIL);
 		assertNotNull(this.user);
+		UserNode un = new UserNode(this.user, this.node);
+		userNodeDao.store(un);
+
 		userNodeCert = null;
 	}
 

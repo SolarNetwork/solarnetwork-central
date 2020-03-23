@@ -42,19 +42,20 @@ public class AuthenticatedUser extends User implements SecurityUser {
 	private final boolean authenticatedWithToken;
 
 	/**
-	 * Construct from existing {@link User} and
-	 * {@link net.solarnetwork.central.user.domain.User} objects.
+	 * Construct from existing {@link User} and details.
 	 * 
 	 * @param user
 	 *        the user
-	 * @param domainUser
-	 *        the domain User
+	 * @param userId
+	 *        the user ID
+	 * @param name
+	 *        the name
 	 * @param authenticatedWithToken
 	 *        the authenticated with token flag
 	 */
 	public AuthenticatedUser(User user, Long userId, String name, boolean authenticatedWithToken) {
-		super(user.getUsername(), user.getPassword(), user.isEnabled(), user.isAccountNonExpired(), user
-				.isCredentialsNonExpired(), user.isAccountNonLocked(), user.getAuthorities());
+		super(user.getUsername(), user.getPassword(), user.isEnabled(), user.isAccountNonExpired(),
+				user.isCredentialsNonExpired(), user.isAccountNonLocked(), user.getAuthorities());
 		this.userId = userId;
 		this.name = name;
 		this.authenticatedWithToken = authenticatedWithToken;

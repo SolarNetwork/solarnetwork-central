@@ -11,6 +11,8 @@
 		http://www.springframework.org/schema/beans
 		http://www.springframework.org/schema/beans/spring-beans-4.2.xsd">
 	
+	<reference id="executor" interface="java.util.concurrent.Executor" filter="(function=central)"/>
+
 	<!-- Published Services -->
 	
 	<osgix:managed-service-factory factory-pid="net.solarnetwork.central.cloud.aws.biz.AwsVirtualMachineBiz"
@@ -19,6 +21,19 @@
 			<beans:value>net.solarnetwork.central.cloud.biz.VirtualMachineBiz</beans:value>
 		</osgix:interfaces>
 		<bean class="net.solarnetwork.central.cloud.aws.biz.AwsVirtualMachineBiz" init-method="init"/>
+	</osgix:managed-service-factory>
+	
+	<osgix:managed-service-factory factory-pid="net.solarnetwork.common.s3.S3ResourceStorageService" 
+			autowire-on-update="true" update-method="configurationChanged">
+		<osgix:interfaces>
+			<beans:value>net.solarnetwork.io.ResourceStorageService</beans:value>
+		</osgix:interfaces>
+		<osgix:service-properties>
+			<beans:entry key="function" value="central"/>
+		</osgix:service-properties>
+		<bean class="net.solarnetwork.common.s3.S3ResourceStorageService" init-method="startup">
+			<argument ref="executor"/>
+		</bean>
 	</osgix:managed-service-factory>
 	
 </blueprint>

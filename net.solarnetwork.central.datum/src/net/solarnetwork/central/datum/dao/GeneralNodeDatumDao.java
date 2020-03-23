@@ -153,6 +153,12 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * 
 	 * @param filter
 	 *        the search criteria
+	 * @param sortDescriptors
+	 *        the sort descriptors
+	 * @param offset
+	 *        the offset
+	 * @param max
+	 *        the max result count
 	 * @return the matching records
 	 * @since 1.4
 	 */
@@ -165,6 +171,12 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * 
 	 * @param filter
 	 *        the search criteria
+	 * @param sortDescriptors
+	 *        the sort descriptors
+	 * @param offset
+	 *        the offset
+	 * @param max
+	 *        the max result count
 	 * @return the matching records
 	 * @since 1.4
 	 */

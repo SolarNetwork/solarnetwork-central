@@ -93,6 +93,9 @@ public class SolarNodeMetadataSecurityAspect extends AuthorizationSupport {
 	 *        the join point
 	 * @param filter
 	 *        the filter to verify
+	 * @return anything
+	 * @throws Throwable
+	 *         for anything amiss
 	 */
 	@Around("findMetadata(filter)")
 	public Object readMetadataCheck(ProceedingJoinPoint pjp, SolarNodeMetadataFilter filter)

@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.query.audit.jdbc.test;
 
-import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -37,24 +36,20 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.easymock.Capture;
-import org.easymock.CaptureType;
+import javax.sql.DataSource;
 import org.easymock.EasyMock;
-import org.easymock.IAnswer;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.jdbc.core.ConnectionCallback;
-import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.query.audit.dao.JdbcQueryAuditor;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.test.AbstractCentralTest;
-import net.solarnetwork.test.Assertion;
+import net.solarnetwork.util.StaticOptionalService;
 
 /**
  * Test cases for the {@link JdbcQueryAuditor} class.
@@ -70,7 +65,7 @@ public class JdbcQueryAuditorTests extends AbstractCentralTest {
 	private static final String TEST_SOURCE_1 = "test.source.1";
 
 	private ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> datumCountMap;
-	private JdbcOperations jdbcOperations;
+	private DataSource dataSource;
 	private Connection jdbcConnection;
 	private CallableStatement jdbcStatement;
 
@@ -80,11 +75,11 @@ public class JdbcQueryAuditorTests extends AbstractCentralTest {
 
 	@Before
 	public void setup() {
-		jdbcOperations = EasyMock.createMock(JdbcOperations.class);
+		dataSource = EasyMock.createMock(DataSource.class);
 		jdbcConnection = EasyMock.createMock(Connection.class);
 		jdbcStatement = EasyMock.createMock(CallableStatement.class);
 		datumCountMap = new ConcurrentHashMap<>(8);
-		auditor = new JdbcQueryAuditor(jdbcOperations, datumCountMap);
+		auditor = new JdbcQueryAuditor(new StaticOptionalService<>(dataSource), datumCountMap);
 		auditor.setFlushDelay(FLUSH_DELAY);
 		auditor.setUpdateDelay(UPDATE_DELAY);
 		auditor.setConnectionRecoveryDelay(RECONNECT_DELAY);
@@ -96,12 +91,12 @@ public class JdbcQueryAuditorTests extends AbstractCentralTest {
 	}
 
 	private void replayAll() {
-		EasyMock.replay(jdbcOperations, jdbcConnection, jdbcStatement);
+		EasyMock.replay(dataSource, jdbcConnection, jdbcStatement);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(jdbcOperations, jdbcConnection, jdbcStatement);
+		EasyMock.verify(dataSource, jdbcConnection, jdbcStatement);
 		DateTimeUtils.setCurrentMillisSystem();
 	}
 
@@ -129,28 +124,15 @@ public class JdbcQueryAuditorTests extends AbstractCentralTest {
 	@Test
 	public void datumFilterResultsOneNodeAndSourceNoResults() throws Exception {
 		// given
-		final Capture<Boolean> jdbcExecuteCapture = new Capture<Boolean>(CaptureType.ALL);
-		expect(jdbcOperations.execute(assertWith(new Assertion<ConnectionCallback<Boolean>>() {
-
-			@Override
-			public void check(ConnectionCallback<Boolean> argument) throws Throwable {
-				Boolean res = argument.doInConnection(jdbcConnection);
-				jdbcExecuteCapture.getValues().add(res);
-			}
-
-		}))).andAnswer(new IAnswer<Boolean>() {
-
-			@Override
-			public Boolean answer() throws Throwable {
-				return jdbcExecuteCapture.getValue();
-			}
-		});
+		expect(dataSource.getConnection()).andReturn(jdbcConnection);
 
 		jdbcConnection.setAutoCommit(true);
 		expectLastCall().anyTimes();
 
 		expect(jdbcConnection.prepareCall(JdbcQueryAuditor.DEFAULT_NODE_SOURCE_INCREMENT_SQL))
 				.andReturn(jdbcStatement);
+
+		jdbcConnection.close();
 
 		// when
 		replayAll();
@@ -183,22 +165,7 @@ public class JdbcQueryAuditorTests extends AbstractCentralTest {
 	@Test
 	public void datumFilterResultsOneNodeAndSourceSomeResults() throws Exception {
 		// given
-		final Capture<Boolean> jdbcExecuteCapture = new Capture<Boolean>(CaptureType.ALL);
-		expect(jdbcOperations.execute(assertWith(new Assertion<ConnectionCallback<Boolean>>() {
-
-			@Override
-			public void check(ConnectionCallback<Boolean> argument) throws Throwable {
-				Boolean res = argument.doInConnection(jdbcConnection);
-				jdbcExecuteCapture.getValues().add(res);
-			}
-
-		}))).andAnswer(new IAnswer<Boolean>() {
-
-			@Override
-			public Boolean answer() throws Throwable {
-				return jdbcExecuteCapture.getValue();
-			}
-		});
+		expect(dataSource.getConnection()).andReturn(jdbcConnection);
 
 		jdbcConnection.setAutoCommit(true);
 		expectLastCall().anyTimes();
@@ -211,6 +178,8 @@ public class JdbcQueryAuditorTests extends AbstractCentralTest {
 		jdbcStatement.setString(3, TEST_SOURCE_1);
 		jdbcStatement.setInt(4, 3);
 		expect(jdbcStatement.execute()).andReturn(false);
+
+		jdbcConnection.close();
 
 		// when
 		replayAll();

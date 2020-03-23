@@ -105,7 +105,7 @@ public interface UserBiz {
 	 *        the ID of the user to update the node for
 	 * @param nodeIds
 	 *        the IDs of the nodes to update
-	 * @param boolean
+	 * @param archived
 	 *        {@code true} to archive the nodes, {@code false} to un-archive
 	 * @throws AuthorizationException
 	 *         if the user is not authorized to access a given node
@@ -127,8 +127,8 @@ public interface UserBiz {
 	/**
 	 * Get a list of pending node confirmations belonging to a specific user.
 	 * 
-	 * @param user
-	 *        the user to get the nodes for
+	 * @param userId
+	 *        the user ID to get the nodes for
 	 * @return list of UserNodeConfirmation objects, or an empty list if none
 	 *         found
 	 */

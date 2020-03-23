@@ -25,12 +25,12 @@ package net.solarnetwork.central.user.dao.mybatis;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link UserNodeConfirmationDao}.
@@ -41,10 +41,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class MyBatisUserNodeConfirmationDao extends BaseMyBatisGenericDao<UserNodeConfirmation, Long>
 		implements UserNodeConfirmationDao {
 
-	/** The query name used for {@link #getConfirmationForKey(String, String)}. */
+	/**
+	 * The query name used for {@link #getConfirmationForKey(Long, String)}.
+	 */
 	public static final String QUERY_FOR_KEY = "get-UserNodeConfirmation-for-key";
 
-	/** The query name used for {@link #findUserNodesForUser(User)}. */
+	/**
+	 * The query name used for {@link #findPendingConfirmationsForUser(User)}.
+	 */
 	public static final String QUERY_FOR_USER = "find-UserNodeConfirmation-for-User";
 
 	/**

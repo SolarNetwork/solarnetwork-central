@@ -24,12 +24,12 @@ package net.solarnetwork.central.user.domain;
 
 import java.math.BigDecimal;
 import java.util.Map;
-import net.solarnetwork.central.domain.BaseEntity;
-import net.solarnetwork.central.support.JsonUtils;
-import net.solarnetwork.util.SerializeIgnore;
 import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import net.solarnetwork.central.domain.BaseEntity;
+import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.util.SerializeIgnore;
 
 /**
  * A triggered alert condition.
@@ -100,6 +100,7 @@ public class UserAlertSituation extends BaseEntity {
 	 * </p>
 	 * 
 	 * @param json
+	 *        the JSON to set
 	 * @since 1.1
 	 */
 	@JsonProperty
@@ -132,7 +133,7 @@ public class UserAlertSituation extends BaseEntity {
 	 * {@link #setInfoJson(String)} as well.
 	 * </p>
 	 * 
-	 * @param samples
+	 * @param info
 	 *        the info to set
 	 * @since 1.1
 	 */

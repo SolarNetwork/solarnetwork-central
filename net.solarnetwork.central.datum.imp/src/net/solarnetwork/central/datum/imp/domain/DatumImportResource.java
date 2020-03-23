@@ -44,12 +44,15 @@ public interface DatumImportResource {
 	 * Get an {@link InputStream} to the resource.
 	 * 
 	 * @return an InputStream to the data for the resource
+	 * @throws IOException
+	 *         if the stream cannot be resolved
 	 */
 	InputStream getInputStream() throws IOException;
 
 	/**
 	 * Determine the content length for this resource.
 	 * 
+	 * @return the conent length, in bytes
 	 * @throws IOException
 	 *         if the length cannot be resolved
 	 */
@@ -61,7 +64,7 @@ public interface DatumImportResource {
 	 * 
 	 * @return the modification date
 	 * @throws IOException
-	 *         if the date be resolved
+	 *         if the date cannot be resolved
 	 */
 	long lastModified() throws IOException;
 

@@ -57,6 +57,8 @@ public interface UserDao
 	 * Roles represent granted user authorizations.
 	 * </p>
 	 * 
+	 * @param user
+	 *        the user to get the roles for
 	 * @return the user roles
 	 */
 	Set<String> getUserRoles(User user);

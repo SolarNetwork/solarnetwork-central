@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.user.aop;
 
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -30,9 +33,6 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.central.user.support.AuthorizationSupport;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 
 /**
  * Security enforcing AOP aspect for {@link NodeOwnershipBiz}.
@@ -49,7 +49,9 @@ public class NodeOwnershipSecurityAspect extends AuthorizationSupport {
 	 * Constructor.
 	 * 
 	 * @param userNodeDao
-	 *        The {@link UserNodeDao} to use.
+	 *        the {@link UserNodeDao} to use
+	 * @param userDao
+	 *        the {@link UserDao} to use
 	 */
 	public NodeOwnershipSecurityAspect(UserNodeDao userNodeDao, UserDao userDao) {
 		super(userNodeDao);

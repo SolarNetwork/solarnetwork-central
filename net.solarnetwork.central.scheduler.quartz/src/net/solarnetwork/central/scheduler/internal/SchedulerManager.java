@@ -52,23 +52,31 @@ import net.solarnetwork.domain.PingTestResult;
  * Manage the lifecycle of the Quartz Scheduler.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class SchedulerManager extends EventHandlerSupport
 		implements ApplicationListener<ContextRefreshedEvent>, EventHandler, PingTest,
 		net.solarnetwork.central.scheduler.SchedulerManager {
+
+	/**
+	 * The default {@code pingTestMaximumExecutionMilliseconds} property value.
+	 */
+	public static final long DEFUALT_PING_TEST_MAX_EXECUTION = 2000;
 
 	private static final String TEST_TOPIC = "net/solarnetwork/central/scheduler/TEST";
 
 	private final Scheduler scheduler;
 	private final EventAdmin eventAdmin;
 	private long blockedJobMaxSeconds = 300;
+	private long pingTestMaximumExecutionMilliseconds = DEFUALT_PING_TEST_MAX_EXECUTION;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param scheduler
 	 *        the Scheduler
+	 * @param eventAdmin
+	 *        the event admin
 	 */
 	public SchedulerManager(Scheduler scheduler, EventAdmin eventAdmin) {
 		this.scheduler = scheduler;
@@ -231,7 +239,7 @@ public class SchedulerManager extends EventHandlerSupport
 
 	@Override
 	public long getPingTestMaximumExecutionMilliseconds() {
-		return 2000;
+		return pingTestMaximumExecutionMilliseconds;
 	}
 
 	@Override
@@ -294,6 +302,18 @@ public class SchedulerManager extends EventHandlerSupport
 	 */
 	public void setBlockedJobMaxSeconds(long blockedJobMaxSeconds) {
 		this.blockedJobMaxSeconds = blockedJobMaxSeconds;
+	}
+
+	/**
+	 * Set the maximum ping test execution time.
+	 * 
+	 * @param pingTestMaximumExecutionMilliseconds
+	 *        the maximum execution time, in milliseconds; defaults to
+	 *        {@link #DEFUALT_PING_TEST_MAX_EXECUTION}
+	 * @since 1.7
+	 */
+	public void setPingTestMaximumExecutionMilliseconds(long pingTestMaximumExecutionMilliseconds) {
+		this.pingTestMaximumExecutionMilliseconds = pingTestMaximumExecutionMilliseconds;
 	}
 
 }

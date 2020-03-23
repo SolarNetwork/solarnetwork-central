@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Query Web
 Bundle-SymbolicName: net.solarnetwork.central.query.web
-Bundle-Version: 3.0.0
+Bundle-Version: 3.1.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: WEB-INF/classes/
@@ -12,8 +12,15 @@ Import-Package:
  com.fasterxml.jackson.databind;version="[2.4,3.0)",
  javax.cache;version="[1.0,2.0)",
  javax.cache.expiry;version="[1.0,2.0)",
+ javax.el;version="[1.0,4.0)",
  javax.servlet;version="3.0.0",
  javax.servlet.http;version="3.0.0",
+ javax.servlet.jsp;version="2.1.0",
+ javax.servlet.jsp.jstl.core;version="[1.1.2,2.0.0)",
+ javax.servlet.jsp.jstl.fmt;version="[1.1.2,2.0.0)",
+ javax.servlet.jsp.jstl.tlv;version="[1.1.2,2.0.0)",
+ javax.servlet.jsp.tagext;version="2.1.0",
+ javax.servlet.resources;version="2.0.0",
  javax.sql,
  net.solarnetwork.central;version="1.2.0",
  net.solarnetwork.central.biz;version="[1.1,2.0)",
@@ -44,7 +51,19 @@ Import-Package:
  net.solarnetwork.web.support;version="[1.10,2.0)",
  org.aopalliance.aop;version="[1.0,2.0)",
  org.apache.commons.codec.binary;version="[1.7,2.0)",
+ org.apache.el;version="8.5";resolution:=optional,
+ org.apache.el.lang;version="8.5";resolution:=optional,
+ org.apache.el.parser;version="8.5";resolution:=optional,
+ org.apache.el.util;version="8.5";resolution:=optional,
  org.apache.taglibs.response;version="1.0.1",
+ org.apache.taglibs.standard.functions;version="[1.1.2,2.0.0)",
+ org.apache.taglibs.standard.resources;version="[1.1.2,2.0.0)",
+ org.apache.taglibs.standard.tag.common.core;version="[1.1.2,2.0.0)",
+ org.apache.taglibs.standard.tag.common.fmt;version="[1.1.2,2.0.0)",
+ org.apache.taglibs.standard.tag.rt.core;version="[1.1.2,2.0.0)",
+ org.apache.taglibs.standard.tag.rt.fmt;version="[1.1.2,2.0.0)",
+ org.apache.taglibs.standard.tei;version="[1.1.2,2.0.0)",
+ org.apache.taglibs.standard.tlv;version="[1.1.2,2.0.0)",
  org.eclipse.gemini.blueprint.compendium.cm;version="[2.0,3.0)",
  org.joda.time;version="[2.4,3.0)",
  org.joda.time.base;version="[2.4,3.0)",

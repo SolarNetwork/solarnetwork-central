@@ -40,7 +40,7 @@ public class CBORFactoryBean implements FactoryBean<CBORFactory> {
 	 * Constructor.
 	 * 
 	 * @param backwardsCompatibility
-	 *        {@literal true} if CBOR v <2.10 compatibility mode should be
+	 *        {@literal true} if CBOR &lt; v2.10 compatibility mode should be
 	 *        enabled
 	 */
 	public CBORFactoryBean(boolean backwardsCompatibility) {

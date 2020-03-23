@@ -74,7 +74,7 @@ public class AuthorizationException extends SecurityException {
 	/**
 	 * Construct authorization exception.
 	 * 
-	 * @param email
+	 * @param username
 	 *        the attempted login
 	 * @param reason
 	 *        the reason for the exception

@@ -53,31 +53,14 @@
 
 	<bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter" />
 
-	<bean id="beanNameViewResolver" class="org.springframework.web.servlet.view.BeanNameViewResolver">
-		<property name="order" value="1"/>
-	</bean>
-	
 	<bean id="pingController" class="net.solarnetwork.central.web.PingController">
 		<property name="tests" ref="pingTests"/>
 	</bean>
 	
-	<!-- Views -->
-	
-	<bean id="xml" class="net.solarnetwork.web.support.SimpleXmlView">
-		<property name="contentType" value="text/xml;charset=UTF-8"/>
-		<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
-		<property name="classNamesAllowedForNesting">
-			<set>
-				<value>net.solarnetwork</value>
-			</set>
-		</property>
+	<bean id="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+		<property name="prefix" value="/WEB-INF/jsp/"/>
+		<property name="suffix" value=".jsp"/>
 	</bean>
-	
-	<bean id="json" name="ping" class="net.solarnetwork.web.support.JSONView">
-		<property name="contentType" value="application/json;charset=UTF-8"/>
-		<property name="indentAmount" value="${JSONView.indentAmount}"/>
-		<property name="propertySerializerRegistrar" ref="propertySerializerRegistrar"/>
-		<property name="includeParentheses" value="false"/>
-	</bean>
-	
+
 </beans>

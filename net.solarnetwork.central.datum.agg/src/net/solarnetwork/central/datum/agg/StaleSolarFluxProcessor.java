@@ -32,6 +32,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.dao.AggregationFilterableDao;
+import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -63,7 +64,7 @@ import net.solarnetwork.util.OptionalService;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.7
  */
 public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
@@ -72,8 +73,7 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 	public static final String DEFAULT_SQL_STALE_QUERY = "SELECT * FROM solaragg.agg_stale_flux LIMIT 1 FOR UPDATE SKIP LOCKED";
 
 	private final AggregationFilterableDao<ReportingGeneralNodeDatumMatch, AggregateGeneralNodeDatumFilter> datumDao;
-	private final OptionalService<AggregateDatumProcessor> publisher;
-	private final AggregateSupportDao supportDao;
+	private final OptionalService<DatumProcessor> publisher;
 
 	/**
 	 * Constructor.
@@ -87,16 +87,12 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 	 *        SolarFlux
 	 * @param publisher
 	 *        the processor to publish the stale solar flux data
-	 * @param supportDao
-	 *        the support DAO
 	 */
 	public StaleSolarFluxProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps,
-			GeneralNodeDatumDao datumDao, OptionalService<AggregateDatumProcessor> publisher,
-			AggregateSupportDao supportDao) {
+			GeneralNodeDatumDao datumDao, OptionalService<DatumProcessor> publisher) {
 		super(eventAdmin, jdbcOps, "stale SolarFlux data");
 		this.datumDao = datumDao;
 		this.publisher = publisher;
-		this.supportDao = supportDao;
 		setJobGroup("Datum");
 		setMaximumWaitMs(1800000L);
 		setTierProcessType("*");
@@ -105,7 +101,7 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 
 	@Override
 	protected final int execute(AtomicInteger remainingCount) {
-		final AggregateDatumProcessor aggProcessor = publisher();
+		final DatumProcessor aggProcessor = publisher();
 		if ( aggProcessor == null || !aggProcessor.isConfigured() ) {
 			return 0;
 		}
@@ -143,10 +139,7 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 									break;
 								}
 								if ( datum != null ) {
-									Long userId = userIdForNodeId(nodeId);
-									handled = aggProcessor.processStaleAggregateDatum(userId, agg,
-											datum);
-
+									handled = aggProcessor.processDatum(datum, agg);
 								}
 							} catch ( IllegalArgumentException e ) {
 								log.error("Unsupported stale type: {}", e.toString());
@@ -168,16 +161,8 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 		});
 	}
 
-	private Long userIdForNodeId(Long nodeId) {
-		AggregateSupportDao dao = getSupportDao();
-		if ( dao != null ) {
-			return dao.userIdForNodeId(nodeId);
-		}
-		return null;
-	}
-
-	private AggregateDatumProcessor publisher() {
-		OptionalService<AggregateDatumProcessor> s = getPublisher();
+	private DatumProcessor publisher() {
+		OptionalService<DatumProcessor> s = getPublisher();
 		return (s != null ? s.service() : null);
 	}
 
@@ -186,17 +171,8 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 	 * 
 	 * @return the publisher
 	 */
-	public OptionalService<AggregateDatumProcessor> getPublisher() {
+	public OptionalService<DatumProcessor> getPublisher() {
 		return publisher;
-	}
-
-	/**
-	 * Get the aggregate support DAO.
-	 * 
-	 * @return the support DAO
-	 */
-	public AggregateSupportDao getSupportDao() {
-		return supportDao;
 	}
 
 }

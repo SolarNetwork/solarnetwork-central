@@ -38,4 +38,16 @@
 			max-age="86400"/>
 	</mvc:cors>
 
+	<bean id="pingController" class="net.solarnetwork.central.web.PingController">
+		<property name="tests" ref="pingTests"/>
+	</bean>
+
+	<bean id="jspViewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="order" value="3"/>
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+		<property name="prefix" value="/WEB-INF/jsp/"/>
+		<property name="suffix" value=".jsp"/>
+	</bean>
+
 </beans>

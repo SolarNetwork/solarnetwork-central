@@ -64,7 +64,7 @@ public class Ec2VirtualMachine extends BaseObjectEntity<String> implements Virtu
 	 * 
 	 * @param instance
 	 *        the instance to get the display name for
-	 * @return the name, never {@literal} null
+	 * @return the name, never {@literal null}
 	 */
 	public static final String displayNameForInstance(Instance instance) {
 		List<Tag> tags = instance.getTags();
@@ -81,7 +81,7 @@ public class Ec2VirtualMachine extends BaseObjectEntity<String> implements Virtu
 	 * 
 	 * @param state
 	 *        the state
-	 * @return
+	 * @return the state enum value, never {@literal null}
 	 */
 	public static final VirtualMachineState virtualMachineStateForInstanceState(InstanceState state) {
 		if ( state == null ) {

@@ -36,24 +36,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.sql.DataSource;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.ConnectionCallback;
-import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryAuditor;
+import net.solarnetwork.util.OptionalService;
 
 /**
  * {@link QueryAuditor} implementation that uses JDBC statements to update audit
  * data.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class JdbcQueryAuditor implements QueryAuditor {
 
@@ -83,7 +82,7 @@ public class JdbcQueryAuditor implements QueryAuditor {
 			.withInitial(() -> new HashMap<>());
 
 	private final AtomicLong updateCount;
-	private final JdbcOperations jdbcOps;
+	private final OptionalService<DataSource> dataSource;
 	private final ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -98,27 +97,35 @@ public class JdbcQueryAuditor implements QueryAuditor {
 	/**
 	 * Constructor.
 	 * 
-	 * @param jdbcOperations
-	 *        the JDBC accessor to use
+	 * @param dataSource
+	 *        the JDBC data source to use
 	 */
-	public JdbcQueryAuditor(JdbcOperations jdbcOperations) {
-		this(jdbcOperations, new ConcurrentHashMap<>(64));
+	public JdbcQueryAuditor(OptionalService<DataSource> dataSource) {
+		this(dataSource, new ConcurrentHashMap<>(64));
 	}
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param jdbcOperations
-	 *        the JDBC accessor to use
+	 * @param dataSource
+	 *        the JDBC data source to use
 	 * @param nodeSourceCounters
 	 *        the map to use for tracking counts for node datum
+	 * @throws IllegalArgumentException
+	 *         if any parameter is {@literal null}
 	 */
-	public JdbcQueryAuditor(JdbcOperations jdbcOperations,
+	public JdbcQueryAuditor(OptionalService<DataSource> dataSource,
 			ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters) {
 		super();
-		this.updateCount = new AtomicLong(0);
-		this.jdbcOps = jdbcOperations;
+		if ( dataSource == null ) {
+			throw new IllegalArgumentException("The dataSource parameter must not be null.");
+		}
+		this.dataSource = dataSource;
+		if ( nodeSourceCounters == null ) {
+			throw new IllegalArgumentException("The nodeSourceCounters parameter must not be null.");
+		}
 		this.nodeSourceCounters = nodeSourceCounters;
+		this.updateCount = new AtomicLong(0);
 		setConnectionRecoveryDelay(DEFAULT_CONNECTION_RECOVERY_DELAY);
 		setFlushDelay(DEFAULT_FLUSH_DELAY);
 		setUpdateDelay(DEFAULT_UPDATE_DELAY);
@@ -279,32 +286,8 @@ public class JdbcQueryAuditor implements QueryAuditor {
 					this.notifyAll();
 				}
 				try {
-					keepGoing.compareAndSet(true, jdbcOps.execute(new ConnectionCallback<Boolean>() {
-
-						@Override
-						public Boolean doInConnection(Connection con)
-								throws SQLException, DataAccessException {
-							con.setAutoCommit(true); // we want every execution of our loop to commit immediately
-							PreparedStatement stmt = isCallableStatement(nodeSourceIncrementSql)
-									? con.prepareCall(nodeSourceIncrementSql)
-									: con.prepareStatement(nodeSourceIncrementSql);
-							do {
-								try {
-									if ( Thread.interrupted() ) {
-										throw new InterruptedException();
-									}
-									flushNodeSourceData(stmt);
-									Thread.sleep(flushDelay);
-								} catch ( InterruptedException e ) {
-									log.info("Writer thread interrupted: exiting now.");
-									return false;
-								}
-							} while ( keepGoingWithConnection.get() );
-							return true;
-						}
-
-					}));
-				} catch ( DataAccessException e ) {
+					keepGoing.compareAndSet(true, execute());
+				} catch ( SQLException e ) {
 					log.warn("JDBC exception with query auditing", e);
 					// sleep, then try again
 					try {
@@ -316,6 +299,32 @@ public class JdbcQueryAuditor implements QueryAuditor {
 				} catch ( RuntimeException e ) {
 					log.warn("Exception with query auditing", e);
 				}
+			}
+		}
+
+		private Boolean execute() throws SQLException {
+			DataSource ds = dataSource.service();
+			if ( ds == null ) {
+				throw new RuntimeException("DataSource service not available.");
+			}
+			try (Connection conn = ds.getConnection()) {
+				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
+				PreparedStatement stmt = isCallableStatement(nodeSourceIncrementSql)
+						? conn.prepareCall(nodeSourceIncrementSql)
+						: conn.prepareStatement(nodeSourceIncrementSql);
+				do {
+					try {
+						if ( Thread.interrupted() ) {
+							throw new InterruptedException();
+						}
+						flushNodeSourceData(stmt);
+						Thread.sleep(flushDelay);
+					} catch ( InterruptedException e ) {
+						log.info("Writer thread interrupted: exiting now.");
+						return false;
+					}
+				} while ( keepGoingWithConnection.get() );
+				return true;
 			}
 		}
 

@@ -40,6 +40,8 @@ public interface UserExpireBiz {
 	/**
 	 * Get a localized list of all available aggregation type information.
 	 * 
+	 * @param locale
+	 *        the desired locale
 	 * @return the aggregation type info
 	 */
 	Iterable<LocalizedServiceInfo> availableAggregationTypes(Locale locale);
@@ -47,6 +49,8 @@ public interface UserExpireBiz {
 	/**
 	 * Get a specific configuration kind for a given user.
 	 * 
+	 * @param <T>
+	 *        the configuration type
 	 * @param userId
 	 *        the user ID to get configurations for
 	 * @param configurationClass
@@ -78,8 +82,12 @@ public interface UserExpireBiz {
 	/**
 	 * Get a list of all available data export configurations for a given user.
 	 * 
+	 * @param <T>
+	 *        the configuration type
 	 * @param userId
 	 *        the user ID to get configurations for
+	 * @param configurationClass
+	 *        the desired configuration type
 	 * @return the available configurations, never {@literal null}
 	 */
 	<T extends UserIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
@@ -87,12 +95,6 @@ public interface UserExpireBiz {
 
 	/**
 	 * Count all expired data for a given configuration.
-	 * 
-	 * <p>
-	 * These results show the number of records that <i>would</i> be deleted by
-	 * calling
-	 * {@link #deleteExpiredDataForConfiguration(UserDataConfiguration)}.
-	 * </p>
 	 * 
 	 * @param config
 	 *        the configuration to delete expired data for

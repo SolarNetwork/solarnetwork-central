@@ -52,9 +52,8 @@ import net.solarnetwork.central.domain.Entity;
  * {@link PlatformTransactionManager}, and {@code jdbcCall} to use, which can be
  * a simple prepared statement or a callable statement. Then create a subclass
  * of {@link BulkLoadingDaoSupport.BulkLoadingContext} and implement the
- * {@link BulkLoadingDaoSupport.BulkLoadingContext.doLoad(T, PreparedStatement,
- * long)} method to set the prepared statement parameters and execute the update
- * for each entity to be loaded.
+ * {@code doLoad(T, PreparedStatement, long)} method to set the prepared
+ * statement parameters and execute the update for each entity to be loaded.
  * </p>
  * 
  * @author matt
@@ -98,8 +97,9 @@ public class BulkLoadingDaoSupport {
 	 * 
 	 * <p>
 	 * This class implements the majority of a bulk loading context. Extending
-	 * classes must override {@link #doLoad(Entity, long)} to perform the actual
-	 * loading of an entity.
+	 * classes must override
+	 * {@link BulkLoadingContext#doLoad(Entity, PreparedStatement, long)} to
+	 * perform the actual loading of an entity.
 	 * </p>
 	 * 
 	 * @param <T>

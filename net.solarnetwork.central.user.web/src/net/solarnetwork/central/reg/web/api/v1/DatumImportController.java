@@ -104,8 +104,6 @@ public class DatumImportController extends WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 */
 	@ExceptionHandler(DatumImportValidationException.class)
@@ -121,8 +119,6 @@ public class DatumImportController extends WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 */
 	@ExceptionHandler(DatumImportException.class)

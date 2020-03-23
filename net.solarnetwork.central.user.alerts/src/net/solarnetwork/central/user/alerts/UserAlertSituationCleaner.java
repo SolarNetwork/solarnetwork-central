@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.user.alerts;
 
-import net.solarnetwork.central.scheduler.JobSupport;
-import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 import org.joda.time.DateTime;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import net.solarnetwork.central.scheduler.JobSupport;
+import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 
 /**
  * Job to periodically clean out old, resolved user alert situations.
@@ -47,10 +47,11 @@ public class UserAlertSituationCleaner extends JobSupport {
 	 * 
 	 * @param eventAdmin
 	 *        The {@link EventAdmin} to use.
-	 * @param dao
+	 * @param userAlertSituationDao
 	 *        The {@link UserAlertSituationDao} to use.
 	 */
-	public UserAlertSituationCleaner(EventAdmin eventAdmin, UserAlertSituationDao userAlertSituationDao) {
+	public UserAlertSituationCleaner(EventAdmin eventAdmin,
+			UserAlertSituationDao userAlertSituationDao) {
 		super(eventAdmin);
 		this.dao = userAlertSituationDao;
 	}
