@@ -26,6 +26,7 @@ import static java.util.Collections.singleton;
 import static net.solarnetwork.domain.datum.Datum.REVERSE_ACCUMULATING_SUFFIX_KEY;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,13 +89,67 @@ import net.solarnetwork.util.StringUtils;
  * transaction data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OcppSessionDatumManager extends BasicIdentifiable
 		implements ChargeSessionManager, SettingsChangeObserver {
 
-	/** A datum property name for a charging session ID. */
-	public static final String SESSION_ID_PROPERTY = "sessionId";
+	/**
+	 * Datum property name enumeration.
+	 */
+	public enum DatumProperty {
+
+		/** An authorization token, e.g. RFID ID. */
+		AuthorizationToken("token", GeneralDatumSamplesType.Status),
+
+		/** The reservation ID. */
+		ReservationId("reservationId", GeneralDatumSamplesType.Status),
+
+		/** A charging session ID. */
+		SessionId("sessionId", GeneralDatumSamplesType.Status),
+
+		/** The session duration, in seconds. */
+		SessionDuration("duration", GeneralDatumSamplesType.Status),
+
+		/**
+		 * The session end authorization token, if different from the starting
+		 * token.
+		 */
+		SessionEndAuthorizationToken("endToken", GeneralDatumSamplesType.Status),
+
+		/** The session end date. */
+		SessionEndDate("endDate", GeneralDatumSamplesType.Status),
+
+		/** The session end reason. */
+		SessionEndReason("endReason", GeneralDatumSamplesType.Status);
+
+		private final String propertyName;
+		private final GeneralDatumSamplesType classification;
+
+		private DatumProperty(String propertyName, GeneralDatumSamplesType classification) {
+			this.propertyName = propertyName;
+			this.classification = classification;
+		}
+
+		/**
+		 * Get the property name.
+		 * 
+		 * @return the property name
+		 */
+		public String getPropertyName() {
+			return propertyName;
+		}
+
+		/**
+		 * Get the property classification.
+		 * 
+		 * @return the classification
+		 */
+		public GeneralDatumSamplesType getClassification() {
+			return classification;
+		}
+
+	}
 
 	/** The default {@code sourceIdTemplate} value. */
 	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/cp/{chargePointId}/{connectorId}/{location}";
@@ -410,7 +465,29 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			d.setCreated(new DateTime(reading.getTimestamp().toEpochMilli()));
 			d.setSourceId(sourceId(chargePointSettings, chargePoint.getInfo().getId(),
 					sess.getConnectorId(), reading.getLocation(), reading.getPhase()));
-			d.getSamples().putStatusSampleValue(SESSION_ID_PROPERTY, sess.getId().toString());
+			d.getSamples().putSampleValue(DatumProperty.AuthorizationToken.getClassification(),
+					DatumProperty.AuthorizationToken.getPropertyName(), sess.getAuthId());
+			// TODO - implement support for reservation ID
+			//d.getSamples().putSampleValue(DatumProperty.ReservationId.getClassification(),
+			//		DatumProperty.ReservationId.getPropertyName(), sess.getReservationId());
+			d.getSamples().putSampleValue(DatumProperty.SessionId.getClassification(),
+					DatumProperty.SessionId.getPropertyName(), sess.getId().toString());
+			d.getSamples().putSampleValue(DatumProperty.SessionEndDate.getClassification(),
+					DatumProperty.SessionEndDate.getPropertyName(), sess.getEnded());
+			d.getSamples().putSampleValue(DatumProperty.SessionEndAuthorizationToken.getClassification(),
+					DatumProperty.SessionEndAuthorizationToken.getPropertyName(), sess.getEndAuthId());
+			if ( sess.getEndReason() != null ) {
+				d.getSamples().putSampleValue(DatumProperty.SessionEndReason.getClassification(),
+						DatumProperty.SessionEndReason.getPropertyName(),
+						sess.getEndReason().toString());
+			}
+			if ( sess.getCreated() != null
+					&& (sess.getEnded() != null || reading.getTimestamp() != null) ) {
+				Duration dur = Duration.between(sess.getCreated(),
+						sess.getEnded() != null ? sess.getEnded() : reading.getTimestamp());
+				d.getSamples().putSampleValue(DatumProperty.SessionDuration.getClassification(),
+						DatumProperty.SessionDuration.getPropertyName(), dur.getSeconds());
+			}
 			return d;
 		}
 		return null;
