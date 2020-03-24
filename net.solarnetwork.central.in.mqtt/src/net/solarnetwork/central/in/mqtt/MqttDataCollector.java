@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.springframework.transaction.TransactionException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -225,7 +226,7 @@ public class MqttDataCollector extends BaseMqttConnectionService
 				try {
 					handleNode(nodeId, root, checkVersion);
 					break;
-				} catch ( RepeatableTaskException e ) {
+				} catch ( RepeatableTaskException | TransactionException e ) {
 					remainingTries--;
 					if ( remainingTries > 0 ) {
 						log.warn(
