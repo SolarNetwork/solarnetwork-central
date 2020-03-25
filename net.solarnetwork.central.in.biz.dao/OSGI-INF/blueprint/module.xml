@@ -98,7 +98,7 @@
 		<argument ref="transactionTemplate"/>
 		<argument>
 			<bean class="net.solarnetwork.central.in.biz.dao.CollectorStats">
-				<argument value="AsyncDaoDatumCollector"/>
+				<argument value="AsyncDaoDatum"/>
 				<argument value="${asyncCollector.statFrequency}"/>
 			</bean>
 		</argument>
