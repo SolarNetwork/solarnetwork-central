@@ -24,18 +24,24 @@ package net.solarnetwork.central.in.biz.dao;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.cache.Cache;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
+import net.solarnetwork.central.datum.domain.BasePK;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
@@ -43,6 +49,7 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterM
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
@@ -72,7 +79,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * </p>
  * 
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -82,9 +89,11 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private GeneralLocationDatumDao generalLocationDatumDao = null;
 	private DatumMetadataBiz datumMetadataBiz = null;
 	private int filteredResultsLimit = 250;
+	private TransactionTemplate transactionTemplate;
+	private Cache<BasePK, Entity<? extends BasePK>> datumCache;
 
 	/** A class-level logger. */
-	private final org.slf4j.Logger log = LoggerFactory.getLogger(getClass());
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private Integer limitFilterMaximum(Integer requestedMaximum) {
 		if ( requestedMaximum == null || requestedMaximum.intValue() > filteredResultsLimit
@@ -101,7 +110,6 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		return requestedOffset;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void postGeneralNodeDatum(Iterable<GeneralNodeDatum> datums) {
 		if ( datums == null ) {
@@ -112,25 +120,41 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		if ( authNode == null ) {
 			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
 		}
-		for ( GeneralNodeDatum d : datums ) {
-			if ( d.getNodeId() == null ) {
-				d.setNodeId(authNode.getNodeId());
-			} else if ( !d.getNodeId().equals(authNode.getNodeId()) ) {
-				if ( log.isWarnEnabled() ) {
-					log.warn("Illegal datum post by node " + authNode.getNodeId() + " as node "
-							+ d.getNodeId());
+		final Cache<BasePK, Entity<? extends BasePK>> buffer = getDatumCache();
+		TransactionCallbackWithoutResult action = new TransactionCallbackWithoutResult() {
+
+			@Override
+			protected void doInTransactionWithoutResult(TransactionStatus status) {
+				for ( GeneralNodeDatum d : datums ) {
+					if ( d.getNodeId() == null ) {
+						d.setNodeId(authNode.getNodeId());
+					} else if ( !d.getNodeId().equals(authNode.getNodeId()) ) {
+						if ( log.isWarnEnabled() ) {
+							log.warn("Illegal datum post by node " + authNode.getNodeId() + " as node "
+									+ d.getNodeId());
+						}
+						throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
+					}
+					if ( buffer != null ) {
+						buffer.put(d.getId(), d);
+					} else {
+						try {
+							generalNodeDatumDao.store(d);
+						} catch ( TransientDataAccessException e ) {
+							throw new RepeatableTaskException(
+									"Transient error storing datum " + d.getId(), e);
+						}
+					}
 				}
-				throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
 			}
-			try {
-				generalNodeDatumDao.store(d);
-			} catch ( TransientDataAccessException e ) {
-				throw new RepeatableTaskException("Transient error storing datum " + d.getId(), e);
-			}
+		};
+		if ( buffer == null && transactionTemplate != null ) {
+			transactionTemplate.execute(action);
+		} else {
+			action.doInTransaction(null);
 		}
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void postGeneralLocationDatum(Iterable<GeneralLocationDatum> datums) {
 		if ( datums == null ) {
@@ -141,17 +165,33 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		if ( authNode == null ) {
 			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
 		}
-		for ( GeneralLocationDatum d : datums ) {
-			if ( d.getLocationId() == null ) {
-				throw new IllegalArgumentException(
-						"A locationId value is required for GeneralLocationDatum");
+		final Cache<BasePK, Entity<? extends BasePK>> buffer = getDatumCache();
+		TransactionCallbackWithoutResult action = new TransactionCallbackWithoutResult() {
+
+			@Override
+			protected void doInTransactionWithoutResult(TransactionStatus status) {
+				for ( GeneralLocationDatum d : datums ) {
+					if ( d.getLocationId() == null ) {
+						throw new IllegalArgumentException(
+								"A locationId value is required for GeneralLocationDatum");
+					}
+					if ( buffer != null ) {
+						buffer.put(d.getId(), d);
+					} else {
+						try {
+							generalLocationDatumDao.store(d);
+						} catch ( TransientDataAccessException e ) {
+							throw new RepeatableTaskException(
+									"Transient error storing location datum " + d.getId(), e);
+						}
+					}
+				}
 			}
-			try {
-				generalLocationDatumDao.store(d);
-			} catch ( TransientDataAccessException e ) {
-				throw new RepeatableTaskException("Transient error storing location datum " + d.getId(),
-						e);
-			}
+		};
+		if ( buffer == null && transactionTemplate != null ) {
+			transactionTemplate.execute(action);
+		} else {
+			action.doInTransaction(null);
 		}
 	}
 
@@ -353,6 +393,55 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	 */
 	public void setSolarNodeMetadataBiz(SolarNodeMetadataBiz solarNodeMetadataBiz) {
 		this.solarNodeMetadataBiz = solarNodeMetadataBiz;
+	}
+
+	/**
+	 * Get the datum cache.
+	 * 
+	 * @return the cache
+	 * @since 3.2
+	 */
+	public Cache<BasePK, Entity<? extends BasePK>> getDatumCache() {
+		return datumCache;
+	}
+
+	/**
+	 * Set the datum cache.
+	 * 
+	 * <p>
+	 * If this cache is configured, then datum are stored here <b>instead</b> of
+	 * directly storing via one of the configured DAO instances. Some other
+	 * process must persist the entities from the cache, e.g.
+	 * {@link AsyncDaoDatumCollector}.
+	 * </p>
+	 * 
+	 * @param datumCache
+	 *        the cache
+	 * @since 3.2
+	 */
+	public void setDatumCache(Cache<BasePK, Entity<? extends BasePK>> datumCache) {
+		this.datumCache = datumCache;
+	}
+
+	/**
+	 * Set the transaction template.
+	 * 
+	 * @param transactionTemplate
+	 *        the template
+	 * @since 3.2
+	 */
+	public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
+		this.transactionTemplate = transactionTemplate;
+	}
+
+	/**
+	 * Get the transaction template.
+	 * 
+	 * @return the template
+	 * @since 3.2
+	 */
+	public TransactionTemplate getTransactionTemplate() {
+		return transactionTemplate;
 	}
 
 }
