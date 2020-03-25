@@ -24,6 +24,9 @@ package net.solarnetwork.central.in.biz.dao;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +34,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 import javax.cache.Cache.Entry;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
@@ -52,6 +57,8 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.domain.PingTest;
+import net.solarnetwork.domain.PingTestResult;
 
 /**
  * Data collector that processes datum and location datum asynchronously.
@@ -60,7 +67,7 @@ import net.solarnetwork.central.domain.Entity;
  * @version 1.0
  */
 public class AsyncDaoDatumCollector
-		implements CacheEntryCreatedListener<BasePK, Entity<? extends BasePK>> {
+		implements CacheEntryCreatedListener<BasePK, Entity<? extends BasePK>>, PingTest {
 
 	/** The {@code concurrency} property default value. */
 	public final int DEFAULT_CONCURRENCY = 2;
@@ -70,6 +77,9 @@ public class AsyncDaoDatumCollector
 
 	/** The {@code shtudownWaitSecs} default value. */
 	public final int DEFAULT_SHUTDOWN_WAIT_SECS = 15;
+
+	/** The {@code datumCacheRemovalAlertThreshold} default value. */
+	public final int DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD = 500;
 
 	private final Cache<BasePK, Entity<? extends BasePK>> datumCache;
 	private final GeneralNodeDatumDao generalNodeDatumDao;
@@ -83,6 +93,7 @@ public class AsyncDaoDatumCollector
 	private int concurrency;
 	private int queueSize;
 	private int shutdownWaitSecs;
+	private float datumCacheRemovalAlertThreshold;
 
 	private volatile boolean writeEnabled = false;
 	private BlockingQueue<BasePK> queue;
@@ -220,6 +231,38 @@ public class AsyncDaoDatumCollector
 		datumThreads = null;
 	}
 
+	@Override
+	public String getPingTestId() {
+		return getClass().getName();
+	}
+
+	@Override
+	public String getPingTestName() {
+		return "Async DAO Datum Collector";
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 1000;
+	}
+
+	@Override
+	public Result performPingTest() throws Exception {
+		// verify buffer removals not lagging behind additions
+		long addCount = stats.get(CollectorStats.BasicCount.BufferAdds);
+		long removeCount = stats.get(CollectorStats.BasicCount.BufferRemovals);
+		long lagDiff = addCount - removeCount;
+		Map<String, Long> statMap = new LinkedHashMap<>(CollectorStats.BasicCount.values().length);
+		for ( CollectorStats.BasicCount s : CollectorStats.BasicCount.values() ) {
+			statMap.put(s.toString(), stats.get(s));
+		}
+		if ( lagDiff > datumCacheRemovalAlertThreshold ) {
+			return new PingTestResult(false, String.format("Buffer removal lag %d > %d", lagDiff,
+					datumCacheRemovalAlertThreshold), statMap);
+		}
+		return new PingTestResult(true, String.format("Processed %d datum.", addCount), statMap);
+	}
+
 	private static final AtomicInteger COUNTER = new AtomicInteger(0);
 
 	private final class DatumWriterThread extends Thread {
@@ -260,17 +303,24 @@ public class AsyncDaoDatumCollector
 							}
 						});
 						datumCache.remove(key);
-						stats.incrementAndGet(CollectorStats.BasicCounts.BufferRemovals);
+						long c = stats.incrementAndGet(CollectorStats.BasicCount.BufferRemovals);
 						if ( entity instanceof GeneralNodeDatum ) {
-							stats.incrementAndGet(CollectorStats.BasicCounts.DatumStored);
+							stats.incrementAndGet(CollectorStats.BasicCount.DatumStored);
 						} else if ( entity instanceof GeneralLocationDatum ) {
-							stats.incrementAndGet(CollectorStats.BasicCounts.LocationDatumStored);
+							stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumStored);
+						}
+						if ( log.isTraceEnabled() && (stats.getLogFrequency() > 0
+								&& ((c % stats.getLogFrequency()) == 0)) ) {
+							Set<BasePK> allKeys = StreamSupport.stream(datumCache.spliterator(), false)
+									.filter(e -> e != null).map(e -> e.getKey())
+									.collect(Collectors.toSet());
+							log.trace("Datum cache keys: {}", allKeys);
 						}
 					} catch ( Throwable t ) {
 						if ( entity instanceof GeneralNodeDatum ) {
-							stats.incrementAndGet(CollectorStats.BasicCounts.DatumFail);
+							stats.incrementAndGet(CollectorStats.BasicCount.DatumFail);
 						} else if ( entity instanceof GeneralLocationDatum ) {
-							stats.incrementAndGet(CollectorStats.BasicCounts.LocationDatumFail);
+							stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumFail);
 						}
 						Throwable root = t;
 						while ( root.getCause() != null ) {
@@ -324,11 +374,11 @@ public class AsyncDaoDatumCollector
 			for ( CacheEntryEvent<? extends BasePK, ? extends Entity<? extends BasePK>> event : itr ) {
 				BasePK key = event.getKey();
 				log.trace("Datum cached: {}", key);
-				stats.incrementAndGet(CollectorStats.BasicCounts.BufferAdds);
+				stats.incrementAndGet(CollectorStats.BasicCount.BufferAdds);
 				if ( key instanceof GeneralNodeDatumPK ) {
-					stats.incrementAndGet(CollectorStats.BasicCounts.DatumReceived);
+					stats.incrementAndGet(CollectorStats.BasicCount.DatumReceived);
 				} else {
-					stats.incrementAndGet(CollectorStats.BasicCounts.LocationDatumReceived);
+					stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumReceived);
 				}
 				queue.offer(key);
 			}
@@ -425,6 +475,34 @@ public class AsyncDaoDatumCollector
 			shutdownWaitSecs = 0;
 		}
 		this.shutdownWaitSecs = shutdownWaitSecs;
+	}
+
+	/**
+	 * Get the datum cache removal alert threshold.
+	 * 
+	 * @return the threshold
+	 */
+	public float getDatumCacheRemovalAlertThreshold() {
+		return datumCacheRemovalAlertThreshold;
+	}
+
+	/**
+	 * Set the datum cache removal alert threshold.
+	 * 
+	 * <p>
+	 * This threshold represents the <i>difference</i> between the
+	 * {@link CollectorStats.BasicCount#BufferAdds} and
+	 * {@link CollectorStats.BasicCount#BufferRemovals} statistics. If the
+	 * {@code BufferRemovals} count lags behind {@code BufferAdds} it means
+	 * datum are not getting persisted fast enough. Passing this threshold will
+	 * trigger a failure {@link PingTest} result in {@link #performPingTest()}.
+	 * </p>
+	 * 
+	 * @param datumCacheRemovalAlertThreshold
+	 *        the threshold to set
+	 */
+	public void setDatumCacheRemovalAlertThreshold(float datumCacheRemovalAlertThreshold) {
+		this.datumCacheRemovalAlertThreshold = datumCacheRemovalAlertThreshold;
 	}
 
 }

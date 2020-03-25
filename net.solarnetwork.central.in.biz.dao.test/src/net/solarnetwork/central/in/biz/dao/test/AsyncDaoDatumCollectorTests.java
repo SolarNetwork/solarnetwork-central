@@ -24,7 +24,10 @@ package net.solarnetwork.central.in.biz.dao.test;
 
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.verify;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -49,11 +52,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.BasePK;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector;
 import net.solarnetwork.central.in.biz.dao.CollectorStats;
 import net.solarnetwork.central.support.JCacheFactoryBean;
+import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
 /**
@@ -148,6 +153,16 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 		return d;
 	}
 
+	private GeneralLocationDatum createLocationDatum() {
+		GeneralLocationDatum d = new GeneralLocationDatum();
+		d.setLocationId(UUID.randomUUID().getMostSignificantBits());
+		d.setSourceId(UUID.randomUUID().toString());
+		d.setCreated(new DateTime());
+		d.setSamples(new GeneralLocationDatumSamples());
+		d.getSamples().putInstantaneousSampleValue("bim", 1);
+		return d;
+	}
+
 	@Test
 	public void addNodeDatumToCache() throws Exception {
 		// GIVEN
@@ -205,6 +220,56 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 		collector.shutdownAndWait();
 
 		verify(txStatuses);
+	}
+
+	@Test
+	public void addLocationDatumToCache() throws Exception {
+		// GIVEN
+		GeneralLocationDatum d = createLocationDatum();
+
+		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
+		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus);
+		expect(locationDatumDao.store(d)).andReturn(d.getId());
+		txManager.commit(txStatus);
+
+		// WHEN
+		replayAll(txStatus);
+		datumCache.put(d.getId(), d);
+
+		// THEN
+		Thread.sleep(1000); // give time for cache to call listener
+		collector.shutdownAndWait();
+
+		verify(txStatus);
+	}
+
+	@Test
+	public void addNodeAndLocationDatumToCache_sameKeyValue() throws Exception {
+		// GIVEN
+		GeneralNodeDatum d1 = createDatum();
+		d1.setNodeId(123L);
+		GeneralLocationDatum d2 = createLocationDatum();
+
+		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
+		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus).times(2);
+		expect(datumDao.store(d1)).andReturn(d1.getId());
+		expect(locationDatumDao.store(d2)).andReturn(d2.getId());
+		txManager.commit(txStatus);
+		expectLastCall().times(2);
+
+		// WHEN
+		replayAll(txStatus);
+		datumCache.put(d1.getId(), d1);
+		datumCache.put(d2.getId(), d2);
+
+		// THEN
+		Thread.sleep(1000); // give time for cache to call listener
+		collector.shutdownAndWait();
+
+		verify(txStatus);
+
+		assertThat("Added stat", stats.get(CollectorStats.BasicCount.BufferAdds), equalTo(2L));
+		assertThat("Removed stat", stats.get(CollectorStats.BasicCount.BufferRemovals), equalTo(2L));
 	}
 
 }

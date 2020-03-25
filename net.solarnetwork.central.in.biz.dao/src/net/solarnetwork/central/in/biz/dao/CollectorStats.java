@@ -46,7 +46,7 @@ public class CollectorStats {
 	}
 
 	/** Basic counted fields. */
-	public enum BasicCounts implements CollectorStat {
+	public enum BasicCount implements CollectorStat {
 
 		BufferAdds(0, "buffer adds"),
 
@@ -67,7 +67,7 @@ public class CollectorStats {
 		private final int index;
 		private final String description;
 
-		private BasicCounts(int index, String description) {
+		private BasicCount(int index, String description) {
 			this.index = index;
 			this.description = description;
 		}
@@ -113,7 +113,7 @@ public class CollectorStats {
 	 * 
 	 * @param countStats
 	 *        the number of statistics to track (on top of the
-	 *        {@link BasicCounts}
+	 *        {@link BasicCount}
 	 */
 	public CollectorStats(CollectorStat[] countStats) {
 		this("", 0, countStats);
@@ -126,7 +126,7 @@ public class CollectorStats {
 	 *        a frequency at which to log INFO level statistic messages
 	 * @param countStats
 	 *        the number of statistics to track (on top of the
-	 *        {@link BasicCounts}
+	 *        {@link BasicCount}
 	 */
 	public CollectorStats(int logFrequency, CollectorStat[] countStats) {
 		this("", logFrequency, countStats);
@@ -153,7 +153,7 @@ public class CollectorStats {
 	 *        a frequency at which to log INFO level statistic messages
 	 * @param countStats
 	 *        the number of statistics to track (on top of the
-	 *        {@link BasicCounts}
+	 *        {@link BasicCount}
 	 */
 	public CollectorStats(String uid, int logFrequency, CollectorStat[] countStats) {
 		super();
@@ -161,7 +161,7 @@ public class CollectorStats {
 		this.logFrequency = logFrequency;
 		this.countStats = countStats;
 		this.counts = new AtomicLongArray(
-				BasicCounts.values().length + (countStats != null ? countStats.length : 0));
+				BasicCount.values().length + (countStats != null ? countStats.length : 0));
 	}
 
 	/**
@@ -195,8 +195,8 @@ public class CollectorStats {
 
 	private int countStatIndex(CollectorStat stat) {
 		int idx = stat.getIndex();
-		if ( !(stat instanceof BasicCounts) ) {
-			idx += BasicCounts.values().length;
+		if ( !(stat instanceof BasicCount) ) {
+			idx += BasicCount.values().length;
 		}
 		return idx;
 	}
@@ -230,7 +230,7 @@ public class CollectorStats {
 	@Override
 	public String toString() {
 		StringBuilder buf = new StringBuilder("CollectorStats{\n");
-		for ( CollectorStat c : BasicCounts.values() ) {
+		for ( CollectorStat c : BasicCount.values() ) {
 			buf.append(String.format("%30s: %d\n", c.getDescription(), get(c)));
 		}
 		if ( countStats != null ) {

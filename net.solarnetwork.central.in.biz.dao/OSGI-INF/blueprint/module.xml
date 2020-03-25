@@ -37,6 +37,7 @@
 		<beans:prop key="asyncCollector.shutdownWaitSecs">30</beans:prop>
 		<beans:prop key="asyncCollector.queueSize">200</beans:prop>
 		<beans:prop key="asyncCollector.statFrequency">200</beans:prop>
+		<beans:prop key="asyncCollector.datumCacheRemovalAlertThreshold">500</beans:prop>
 	</osgix:cm-properties>
 
 	<!-- Service References -->
@@ -63,6 +64,8 @@
 	<service ref="daoDataCollectorBiz" 
 		interface="net.solarnetwork.central.in.biz.DataCollectorBiz"
 		ranking="1"/>
+		
+	<service ref="asyncCollector" interface="net.solarnetwork.domain.PingTest"/>
 	
 	<!-- Supporting Services -->
 	
@@ -105,6 +108,7 @@
 		<property name="concurrency" value="${asyncCollector.threads}"/>
 		<property name="shutdownWaitSecs" value="${asyncCollector.shutdownWaitSecs}"/>
 		<property name="queueSize" value="${asyncCollector.queueSize}"/>
+		<property name="datumCacheRemovalAlertThreshold" value="${asyncCollector.datumCacheRemovalAlertThreshold}"/>
 	</bean>
 
 	<bean id="daoDataCollectorBiz" class="net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz">
