@@ -25,9 +25,9 @@ package net.solarnetwork.central.web;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,7 +51,7 @@ import net.solarnetwork.web.domain.Response;
  * the results.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @RequestMapping("/ping")
 public class PingController {
@@ -69,7 +69,7 @@ public class PingController {
 			allTests.addAll(tests);
 		}
 		if ( !allTests.isEmpty() ) {
-			results = new LinkedHashMap<String, PingTestResultDisplay>(allTests.size());
+			results = new TreeMap<String, PingTestResultDisplay>();
 			for ( final PingTest t : allTests ) {
 				final Date start = new Date();
 				PingTest.Result pingTestResult = null;
@@ -120,7 +120,7 @@ public class PingController {
 	/**
 	 * An overall test results class.
 	 */
-	@JsonPropertyOrder({"allGood", "date", "results"})
+	@JsonPropertyOrder({ "allGood", "date", "results" })
 	public static class PingResults {
 
 		private final Date date;

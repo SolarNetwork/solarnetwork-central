@@ -260,7 +260,8 @@ public class AsyncDaoDatumCollector
 			return new PingTestResult(false, String.format("Buffer removal lag %d > %d", lagDiff,
 					datumCacheRemovalAlertThreshold), statMap);
 		}
-		return new PingTestResult(true, String.format("Processed %d datum.", addCount), statMap);
+		return new PingTestResult(true, String.format("Processed %d datum; lag %d.", addCount, lagDiff),
+				statMap);
 	}
 
 	private static final AtomicInteger COUNTER = new AtomicInteger(0);
