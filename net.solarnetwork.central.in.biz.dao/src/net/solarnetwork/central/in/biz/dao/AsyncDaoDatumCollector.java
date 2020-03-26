@@ -93,7 +93,7 @@ public class AsyncDaoDatumCollector
 	private int concurrency;
 	private int queueSize;
 	private int shutdownWaitSecs;
-	private float datumCacheRemovalAlertThreshold;
+	private int datumCacheRemovalAlertThreshold;
 
 	private volatile boolean writeEnabled = false;
 	private BlockingQueue<BasePK> queue;
@@ -208,7 +208,10 @@ public class AsyncDaoDatumCollector
 				t.interrupt();
 			}
 		}
-		datumCache.deregisterCacheEntryListener(listenerConfiguration);
+		if ( !datumCache.isClosed() ) {
+			datumCache.deregisterCacheEntryListener(listenerConfiguration);
+			datumCache.close();
+		}
 	}
 
 	/**
@@ -483,7 +486,7 @@ public class AsyncDaoDatumCollector
 	 * 
 	 * @return the threshold
 	 */
-	public float getDatumCacheRemovalAlertThreshold() {
+	public int getDatumCacheRemovalAlertThreshold() {
 		return datumCacheRemovalAlertThreshold;
 	}
 
@@ -502,7 +505,7 @@ public class AsyncDaoDatumCollector
 	 * @param datumCacheRemovalAlertThreshold
 	 *        the threshold to set
 	 */
-	public void setDatumCacheRemovalAlertThreshold(float datumCacheRemovalAlertThreshold) {
+	public void setDatumCacheRemovalAlertThreshold(int datumCacheRemovalAlertThreshold) {
 		this.datumCacheRemovalAlertThreshold = datumCacheRemovalAlertThreshold;
 	}
 

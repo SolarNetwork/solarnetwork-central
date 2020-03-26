@@ -91,6 +91,7 @@
 		<property name="statisticsEnabled" value="true"/>
 		<property name="heapMaxEntries" value="${datumBuffer.heapMaxEntries}"/>
 		<property name="diskMaxSizeMB" value="${datumBuffer.diskMaxSizeMB}"/>
+		<property name="diskPersistent" value="true"/>
 	</bean>
 	
 	<bean id="asyncCollector" class="net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector"

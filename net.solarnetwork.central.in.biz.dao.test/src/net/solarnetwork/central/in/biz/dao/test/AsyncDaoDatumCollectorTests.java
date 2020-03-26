@@ -26,16 +26,20 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.verify;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
@@ -270,6 +274,47 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 
 		assertThat("Added stat", stats.get(CollectorStats.BasicCount.BufferAdds), equalTo(2L));
 		assertThat("Removed stat", stats.get(CollectorStats.BasicCount.BufferRemovals), equalTo(2L));
+	}
+
+	@Test
+	public void shutdownAndRestoreCache() throws Exception {
+		// GIVEN
+		JCacheFactoryBean<String, Boolean> factory = new JCacheFactoryBean<>(cacheManager, String.class,
+				Boolean.class);
+		factory.setName("test-datum-buffer-persistence");
+		factory.setHeapMaxEntries(3);
+		factory.setDiskMaxSizeMB(1);
+		factory.setExpiryPolicy(JCacheFactoryBean.ExpiryPolicy.Eternal);
+		factory.setDiskPersistent(true);
+		Cache<String, Boolean> testCache = factory.getObject();
+
+		// WHEN
+		replayAll();
+		for ( int i = 0; i < 10; i++ ) {
+			testCache.put(String.valueOf(i), Boolean.TRUE);
+		}
+		for ( int i = 0; i < 10; i += 2 ) {
+			testCache.remove(String.valueOf(i));
+		}
+		testCache.close();
+		//cacheManager.close();
+		//cacheManager = createCacheManager();
+
+		JCacheFactoryBean<String, Boolean> factory2 = new JCacheFactoryBean<>(cacheManager, String.class,
+				Boolean.class);
+		factory2.setName("test-datum-buffer-persistence");
+		factory2.setHeapMaxEntries(3);
+		factory2.setDiskMaxSizeMB(1);
+		factory2.setExpiryPolicy(JCacheFactoryBean.ExpiryPolicy.Eternal);
+		factory2.setDiskPersistent(true);
+		Cache<String, Boolean> testCache2 = factory2.getObject();
+
+		Set<String> loadedKeys = StreamSupport.stream(testCache2.spliterator(), false)
+				.map(e -> e.getKey()).collect(Collectors.toSet());
+
+		// THEN
+		assertThat("Set re-lodaed persisted keys", loadedKeys,
+				containsInAnyOrder("1", "3", "5", "7", "9"));
 	}
 
 }
