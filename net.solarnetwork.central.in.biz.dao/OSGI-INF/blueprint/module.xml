@@ -31,6 +31,13 @@
 		<beans:prop key="SimpleNetworkIdentityBiz.solarUserBaseURL">http://localhost/solaruser</beans:prop>
 		<beans:prop key="SimpleNetworkIdentityBiz.solarQueryBaseURL">http://localhost/solarquery</beans:prop>
 		<beans:prop key="SimpleNetworkIdentityBiz.solarInMqttBaseURL">mqtts://localhost:8883</beans:prop>
+		<beans:prop key="datumBuffer.heapMaxEntries">200</beans:prop>
+		<beans:prop key="datumBuffer.diskMaxSizeMB">2000</beans:prop>
+		<beans:prop key="asyncCollector.threads">2</beans:prop>
+		<beans:prop key="asyncCollector.shutdownWaitSecs">30</beans:prop>
+		<beans:prop key="asyncCollector.queueSize">200</beans:prop>
+		<beans:prop key="asyncCollector.statFrequency">200</beans:prop>
+		<beans:prop key="asyncCollector.datumCacheRemovalAlertThreshold">500</beans:prop>
 	</osgix:cm-properties>
 
 	<!-- Service References -->
@@ -57,6 +64,8 @@
 	<service ref="daoDataCollectorBiz" 
 		interface="net.solarnetwork.central.in.biz.DataCollectorBiz"
 		ranking="1"/>
+		
+	<service ref="asyncCollector" interface="net.solarnetwork.domain.PingTest"/>
 	
 	<!-- Supporting Services -->
 	
@@ -65,12 +74,52 @@
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 	
+	<bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
+		<argument ref="transactionManager"/>
+	</bean>
+	
+	<bean id="cacheManager" class="net.solarnetwork.central.support.JCacheManagerFactoryBean">
+		<property name="cacheManagerUri" value="classpath:/net/solarnetwork/central/in/biz/dao/ehcache.xml"/>
+	</bean>
+
+	<bean id="datumCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
+		<argument ref="cacheManager"/>
+		<argument value="net.solarnetwork.central.datum.domain.BasePK"/>
+		<argument value="net.solarnetwork.central.domain.Entity"/>
+		<property name="name" value="datum-buffer"/>
+		<property name="expiryPolicy" value="Eternal"/>
+		<property name="statisticsEnabled" value="true"/>
+		<property name="heapMaxEntries" value="${datumBuffer.heapMaxEntries}"/>
+		<property name="diskMaxSizeMB" value="${datumBuffer.diskMaxSizeMB}"/>
+		<property name="diskPersistent" value="true"/>
+	</bean>
+	
+	<bean id="asyncCollector" class="net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector"
+			init-method="startup" destroy-method="shutdown">
+		<argument ref="datumCache"/>
+		<argument ref="generalNodeDatumDao"/>
+		<argument ref="generalLocationDatumDao"/>
+		<argument ref="transactionTemplate"/>
+		<argument>
+			<bean class="net.solarnetwork.central.in.biz.dao.CollectorStats">
+				<argument value="AsyncDaoDatum"/>
+				<argument value="${asyncCollector.statFrequency}"/>
+			</bean>
+		</argument>
+		<property name="concurrency" value="${asyncCollector.threads}"/>
+		<property name="shutdownWaitSecs" value="${asyncCollector.shutdownWaitSecs}"/>
+		<property name="queueSize" value="${asyncCollector.queueSize}"/>
+		<property name="datumCacheRemovalAlertThreshold" value="${asyncCollector.datumCacheRemovalAlertThreshold}"/>
+	</bean>
+
 	<bean id="daoDataCollectorBiz" class="net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz">
 		<property name="generalLocationDatumDao" ref="generalLocationDatumDao"/>
 		<property name="generalNodeDatumDao" ref="generalNodeDatumDao"/>
 		<property name="solarLocationDao" ref="solarLocationDao"/>
 		<property name="datumMetadataBiz" ref="datumMetadataBiz"/>
 		<property name="solarNodeMetadataBiz" ref="solarNodeMetadataBiz"/>
+		<property name="transactionTemplate" ref="transactionTemplate"/>
+		<property name="datumCache" ref="datumCache"/>
 	</bean>
 
 	<bean id="networkIdentityBiz" class="net.solarnetwork.central.in.biz.dao.SimpleNetworkIdentityBiz">

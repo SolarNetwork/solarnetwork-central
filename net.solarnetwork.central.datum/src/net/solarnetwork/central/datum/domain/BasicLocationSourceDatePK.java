@@ -1,7 +1,7 @@
 /* ==================================================================
- * BasicNodeSourceDatePK.java - 11/04/2019 9:47:22 am
+ * BasicLocationSourceDatePK.java - 25/03/2020 10:21:33 am
  * 
- * Copyright 2019 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -27,38 +27,38 @@ import java.util.Objects;
 import org.joda.time.DateTime;
 
 /**
- * Basic primary key composed of a node ID and source ID and date.
+ * Basic primary key composed of a location ID and source ID and date.
  * 
  * @author matt
- * @version 1.1
- * @since 1.39
+ * @version 1.0
+ * @since 2.2
  */
-public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializable, Cloneable {
+public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements Serializable, Cloneable {
 
-	private static final long serialVersionUID = -772542534219722588L;
+	private static final long serialVersionUID = 8552882329808995996L;
 
 	private DateTime created;
 
 	/**
 	 * Default constructor.
 	 */
-	public BasicNodeSourceDatePK() {
+	public BasicLocationSourceDatePK() {
 		super();
 	}
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param nodeId
-	 *        the node ID
+	 * @param locationId
+	 *        the location ID
 	 * @param sourceId
 	 *        the source ID
 	 * @param created
 	 *        the creation date
 	 */
-	public BasicNodeSourceDatePK(Long nodeId, String sourceId, DateTime created) {
+	public BasicLocationSourceDatePK(Long locationId, String sourceId, DateTime created) {
 		super();
-		setNodeId(nodeId);
+		setLocationId(locationId);
 		setSourceId(sourceId);
 		setCreated(created);
 	}
@@ -79,10 +79,10 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 		if ( !super.equals(obj) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicNodeSourceDatePK) ) {
+		if ( !(obj instanceof BasicLocationSourceDatePK) ) {
 			return false;
 		}
-		BasicNodeSourceDatePK other = (BasicNodeSourceDatePK) obj;
+		BasicLocationSourceDatePK other = (BasicLocationSourceDatePK) obj;
 		return Objects.equals(created, other.created);
 	}
 
@@ -96,14 +96,14 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	}
 
 	/**
-	 * Compare two {@code GeneralNodeDautumPK} objects.
+	 * Compare two {@code GeneralLocationDautumPK} objects.
 	 * 
 	 * <p>
 	 * Keys are ordered based on:
 	 * </p>
 	 * 
 	 * <ol>
-	 * <li>nodeId</li>
+	 * <li>locationId</li>
 	 * <li>sourceId</li>
 	 * <li>created</li>
 	 * </ol>
@@ -115,7 +115,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	 * @return a negative integer, zero, or a positive integer as this object is
 	 *         less than, equal to, or greater than the specified object.
 	 */
-	public int compareTo(BasicNodeSourceDatePK o) {
+	public int compareTo(BasicLocationSourceDatePK o) {
 		int comparison = super.compareTo(o);
 		if ( comparison != 0 ) {
 			return comparison;

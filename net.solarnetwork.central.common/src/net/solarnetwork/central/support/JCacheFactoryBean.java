@@ -49,17 +49,17 @@ import org.springframework.beans.factory.InitializingBean;
  * Factory bean for {@link Cache} instances.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, InitializingBean {
 
 	/** Cache expiry policy type. */
 	public static enum ExpiryPolicy {
-	Accessed,
-	Created,
-	Updated,
-	Touched,
-	Eternal,
+		Accessed,
+		Created,
+		Updated,
+		Touched,
+		Eternal,
 	}
 
 	private final CacheManager cacheManager;
@@ -79,6 +79,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	private Integer heapMaxEntries = null;
 	private Integer diskMaxSizeMB = null;
+	private boolean diskPersistent = false;
 
 	private Cache<K, V> cache;
 
@@ -106,7 +107,8 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 				poolsBuilder = poolsBuilder.heap(heapMaxEntries.longValue(), EntryUnit.ENTRIES);
 			}
 			if ( diskMaxSizeMB != null ) {
-				poolsBuilder = poolsBuilder.disk(diskMaxSizeMB.longValue(), MemoryUnit.MB);
+				poolsBuilder = poolsBuilder.disk(diskMaxSizeMB.longValue(), MemoryUnit.MB,
+						diskPersistent);
 			}
 			cacheConfigBuilder = cacheConfigBuilder.withResourcePools(poolsBuilder);
 			if ( expiryPolicy != null ) {
@@ -316,6 +318,30 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 */
 	public void setDiskMaxSizeMB(Integer diskMaxSizeMB) {
 		this.diskMaxSizeMB = diskMaxSizeMB;
+	}
+
+	/**
+	 * Get the disk persistence setting.
+	 * 
+	 * @return {@literal true} if disk storage should be persistent across
+	 *         restarts; defaults to {@literal false}
+	 * @since 1.2
+	 */
+	public boolean isDiskPersistent() {
+		return diskPersistent;
+	}
+
+	/**
+	 * Set the disk persistence setting.
+	 * 
+	 * @param diskPersistent
+	 *        {@literal true} if disk storage should be persistent across
+	 *        restarts; defaults to {@literal false}, {@literal false} to clear
+	 *        the disk storage on restart
+	 * @since 1.2
+	 */
+	public void setDiskPersistent(boolean diskPersistent) {
+		this.diskPersistent = diskPersistent;
 	}
 
 }

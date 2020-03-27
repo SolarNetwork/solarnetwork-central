@@ -36,10 +36,12 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -93,7 +95,7 @@ import net.solarnetwork.util.StaticOptionalService;
  * Test cases for the {@link OcppSessionDatumManager} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OcppSessionDatumManagerTests {
 
@@ -173,7 +175,7 @@ public class OcppSessionDatumManagerTests {
 
 	@Test
 	public void startSession_ok() {
-		// given
+		// GIVEN
 
 		// verify authorization
 		String identifier = UUID.randomUUID().toString();
@@ -235,7 +237,7 @@ public class OcppSessionDatumManagerTests {
 		expect(fluxPublisher.isConfigured()).andReturn(true);
 		expect(fluxPublisher.processDatum(capture(fluxPublishCaptor))).andReturn(true);
 
-		// when
+		// WHEN
 		replayAll();
 
 		// @formatter:off
@@ -250,7 +252,7 @@ public class OcppSessionDatumManagerTests {
 
 		ChargeSession sess = manager.startChargingSession(info);
 
-		// then
+		// THEN
 		assertThat("Session created", sess, notNullValue());
 
 		assertThat("Stored session ID not null", sessionCaptor.getValue(), notNullValue());
@@ -299,8 +301,28 @@ public class OcppSessionDatumManagerTests {
 				datum.getSamples().getAccumulatingSampleLong(ACEnergyDatum.WATT_HOUR_READING_KEY),
 				equalTo(info.getMeterStart()));
 		assertThat("Datum prop session ID",
-				datum.getSamples().getStatusSampleString(OcppSessionDatumManager.SESSION_ID_PROPERTY),
+				datum.getSamples().getStatusSampleString(
+						OcppSessionDatumManager.DatumProperty.SessionId.getPropertyName()),
 				equalTo(sess.getId().toString()));
+		assertThat("Datum prop auth token",
+				datum.getSamples().getStatusSampleString(
+						OcppSessionDatumManager.DatumProperty.AuthorizationToken.getPropertyName()),
+				equalTo(sess.getAuthId().toString()));
+		assertThat("Datum prop duration",
+				datum.getSamples().getStatusSampleInteger(
+						OcppSessionDatumManager.DatumProperty.SessionDuration.getPropertyName()),
+				equalTo(0));
+		assertThat("Datum prop end date",
+				datum.getSamples().getStatusSampleString(
+						OcppSessionDatumManager.DatumProperty.SessionEndDate.getPropertyName()),
+				nullValue());
+		assertThat("Datum prop end reason",
+				datum.getSamples().getStatusSampleString(
+						OcppSessionDatumManager.DatumProperty.SessionEndReason.getPropertyName()),
+				nullValue());
+		assertThat("Datum prop end auth token", datum.getSamples().getStatusSampleString(
+				OcppSessionDatumManager.DatumProperty.SessionEndAuthorizationToken.getPropertyName()),
+				nullValue());
 
 		Identity<GeneralNodeDatumPK> fluxDatum = datumCaptor.getValue();
 		assertThat("Same datum published to SolarFLux as SolarIn", fluxDatum, sameInstance(datum));
@@ -356,7 +378,7 @@ public class OcppSessionDatumManagerTests {
 
 	@Test
 	public void endSession_ok() {
-		// given
+		// GIVEN
 		String idTag = "tester";
 		String identifier = UUID.randomUUID().toString();
 		ChargePointIdentity chargePointId = new ChargePointIdentity(identifier, "foo");
@@ -414,7 +436,7 @@ public class OcppSessionDatumManagerTests {
 		expect(fluxPublisher.isConfigured()).andReturn(true);
 		expect(fluxPublisher.processDatum(capture(fluxPublishCaptor))).andReturn(true);
 
-		// when
+		// WHEN
 		replayAll();
 
 		// @formatter:off
@@ -429,7 +451,7 @@ public class OcppSessionDatumManagerTests {
 		// @formatter:on
 		manager.endChargingSession(info);
 
-		// then
+		// THEN
 
 		// @formatter:off
 		SampledValue endReading = SampledValue.builder()
@@ -466,8 +488,28 @@ public class OcppSessionDatumManagerTests {
 				datum.getSamples().getAccumulatingSampleLong(ACEnergyDatum.WATT_HOUR_READING_KEY),
 				equalTo(info.getMeterEnd()));
 		assertThat("Datum prop session ID",
-				datum.getSamples().getStatusSampleString(OcppSessionDatumManager.SESSION_ID_PROPERTY),
+				datum.getSamples().getStatusSampleString(
+						OcppSessionDatumManager.DatumProperty.SessionId.getPropertyName()),
 				equalTo(sess.getId().toString()));
+		assertThat("Datum prop auth token",
+				datum.getSamples().getStatusSampleString(
+						OcppSessionDatumManager.DatumProperty.AuthorizationToken.getPropertyName()),
+				equalTo(sess.getAuthId().toString()));
+		assertThat("Datum prop duration",
+				datum.getSamples().getStatusSampleLong(
+						OcppSessionDatumManager.DatumProperty.SessionDuration.getPropertyName()),
+				equalTo(Duration.between(sess.getCreated(), info.getTimestampEnd()).getSeconds()));
+		assertThat("Datum prop end date",
+				datum.getSamples().getStatusSampleString(
+						OcppSessionDatumManager.DatumProperty.SessionEndDate.getPropertyName()),
+				equalTo(info.getTimestampEnd().toString()));
+		assertThat("Datum prop end reason",
+				datum.getSamples().getStatusSampleString(
+						OcppSessionDatumManager.DatumProperty.SessionEndReason.getPropertyName()),
+				equalTo(ChargeSessionEndReason.Local.toString()));
+		assertThat("Datum prop end auth token", datum.getSamples().getStatusSampleString(
+				OcppSessionDatumManager.DatumProperty.SessionEndAuthorizationToken.getPropertyName()),
+				equalTo(idTag));
 
 		Identity<GeneralNodeDatumPK> fluxDatum = datumCaptor.getValue();
 		assertThat("Same datum published to SolarFLux as SolarIn", fluxDatum, sameInstance(datum));
