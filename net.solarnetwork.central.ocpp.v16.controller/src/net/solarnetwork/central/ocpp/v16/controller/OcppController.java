@@ -40,9 +40,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.ocpp.dao.ChargePointConnectorDao;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.Authorization;
@@ -83,12 +87,13 @@ import ocpp.v16.cp.KeyValue;
  * @version 1.0
  */
 public class OcppController extends BasicIdentifiable
-		implements ChargePointManager, AuthorizationService {
+		implements ChargePointManager, AuthorizationService, NodeInstructionQueueHook {
 
 	/** The default {@code initialRegistrationStatus} value. */
 	public static final RegistrationStatus DEFAULT_INITIAL_REGISTRATION_STATUS = RegistrationStatus.Pending;
 
 	private final Executor executor;
+	private final UserNodeDao userNodeDao;
 	private final ChargePointRouter chargePointRouter;
 	private final CentralAuthorizationDao authorizationDao;
 	private final CentralChargePointDao chargePointDao;
@@ -105,6 +110,8 @@ public class OcppController extends BasicIdentifiable
 	 *        a task runner
 	 * @param chargePointRouter
 	 *        the broker router to push messages to Charge Points with with
+	 * @param userNodeDao
+	 *        the user node DAO to use
 	 * @param authorizationDao
 	 *        the {@link Authorization} DAO to use
 	 * @param chargePointDao
@@ -115,8 +122,8 @@ public class OcppController extends BasicIdentifiable
 	 *         if any parameter is {@literal null}
 	 */
 	public OcppController(Executor executor, ChargePointRouter chargePointRouter,
-			CentralAuthorizationDao authorizationDao, CentralChargePointDao chargePointDao,
-			ChargePointConnectorDao chargePointConnectorDao) {
+			UserNodeDao userNodeDao, CentralAuthorizationDao authorizationDao,
+			CentralChargePointDao chargePointDao, ChargePointConnectorDao chargePointConnectorDao) {
 		super();
 		if ( executor == null ) {
 			throw new IllegalArgumentException("The executor parameter must not be null.");
@@ -126,6 +133,10 @@ public class OcppController extends BasicIdentifiable
 			throw new IllegalArgumentException("The chargePointRouter parameter must not be null.");
 		}
 		this.chargePointRouter = chargePointRouter;
+		if ( userNodeDao == null ) {
+			throw new IllegalArgumentException("The userNodeDao parameter must not be null.");
+		}
+		this.userNodeDao = userNodeDao;
 		if ( authorizationDao == null ) {
 			throw new IllegalArgumentException("The authorizationDao parameter must not be null.");
 		}
@@ -332,6 +343,26 @@ public class OcppController extends BasicIdentifiable
 			result.withStatus(AuthorizationStatus.Invalid);
 		}
 		return result.build();
+	}
+
+	@Override
+	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
+		final String topic = instruction.getTopic();
+		final Long nodeId = instruction.getNodeId();
+		if ( !"TODO".equals(topic) || nodeId == null ) {
+			return instruction;
+		}
+		UserNode userNode = userNodeDao.get(nodeId);
+		if ( userNode == null ) {
+			return instruction;
+		}
+		// TODO
+		return instruction;
+	}
+
+	@Override
+	public void didQueueNodeInstruction(NodeInstruction instruction, Long instructionId) {
+		// nothing
 	}
 
 	private <T> T tryWithTransaction(TransactionCallback<T> tx) {

@@ -33,6 +33,8 @@
 
 	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager" filter="(db=central)"/>
 
+	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
+
 	<reference id="authorizationDao" interface="net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao" filter="(function=central)"/>
 	
 	<reference id="chargePointDao" interface="net.solarnetwork.central.ocpp.dao.CentralChargePointDao" filter="(function=central)"/>
@@ -174,6 +176,7 @@
 	<bean id="controller" class="net.solarnetwork.central.ocpp.v16.controller.OcppController">
 		<argument ref="executor"/>
 		<argument ref="chargePointRouter"/>
+		<argument ref="userNodeDao"/>
 		<argument ref="authorizationDao"/>
 		<argument ref="chargePointDao"/>
 		<argument ref="chargePointConnectorDao"/>
