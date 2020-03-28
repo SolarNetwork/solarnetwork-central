@@ -187,12 +187,14 @@ public class BufferingDelegatingCacheTests {
 
 				@Override
 				public void run() {
-					if ( Math.random() < 0.5 ) {
-						keys.add(k);
-						cache.put(k, k);
-					} else {
-						keys.remove(k);
-						cache.remove(k);
+					synchronized ( cache ) {
+						if ( Math.random() < 0.5 ) {
+							keys.add(k);
+							cache.put(k, k);
+						} else {
+							keys.remove(k);
+							cache.remove(k);
+						}
 					}
 				}
 			});
@@ -391,6 +393,46 @@ public class BufferingDelegatingCacheTests {
 				.map(e -> e.getKey()).collect(Collectors.toSet());
 		assertThat("All internal keys processed", internalKeys, hasSize(0));
 		assertThat("All delegate keys processed", delegateKeys, hasSize(0));
+	}
+
+	@Test
+	public void saveToPersistentCacheAtShutdown() throws Exception {
+		// GIVEN
+		JCacheFactoryBean<Integer, Integer> factory1 = new JCacheFactoryBean<>(cacheManager,
+				Integer.class, Integer.class);
+		factory1.setName("Test Buffering Delegate Persistence");
+		factory1.setHeapMaxEntries(3);
+		factory1.setDiskMaxSizeMB(1);
+		factory1.setExpiryPolicy(JCacheFactoryBean.ExpiryPolicy.Eternal);
+		factory1.setDiskPersistent(true);
+		Cache<Integer, Integer> cache1 = factory1.getObject();
+		cache = new BufferingDelegatingCache<>(cache1, 100, map);
+
+		// WHEN
+		SortedSet<Integer> keys = new ConcurrentSkipListSet<>();
+		for ( int i = 0; i < 10; i++ ) {
+			Integer k = i;
+			keys.add(k);
+			cache.put(k, k);
+		}
+		cache.close();
+
+		// re-open delegate cache
+		JCacheFactoryBean<Integer, Integer> factory2 = new JCacheFactoryBean<>(cacheManager,
+				Integer.class, Integer.class);
+		factory2.setName("Test Buffering Delegate Persistence");
+		factory2.setHeapMaxEntries(3);
+		factory2.setDiskMaxSizeMB(1);
+		factory2.setExpiryPolicy(JCacheFactoryBean.ExpiryPolicy.Eternal);
+		factory2.setDiskPersistent(true);
+		Cache<Integer, Integer> cache2 = factory2.getObject();
+
+		// THEN
+
+		Set<Integer> persistedKeys = StreamSupport.stream(cache2.spliterator(), false)
+				.map(e -> e.getKey()).collect(Collectors.toSet());
+		assertThat("All temp keys persisted to cache", persistedKeys, equalTo(keys));
+		cache2.close();
 	}
 
 }

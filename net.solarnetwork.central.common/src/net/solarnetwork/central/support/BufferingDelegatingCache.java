@@ -98,10 +98,12 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public synchronized void close() {
-		for ( Map.Entry<K, V> e : internalStore.entrySet() ) {
-			delegate.put(e.getKey(), e.getValue());
+		if ( !delegate.isClosed() ) {
+			for ( Map.Entry<K, V> e : internalStore.entrySet() ) {
+				delegate.put(e.getKey(), e.getValue());
+			}
+			delegate.close();
 		}
-		delegate.close();
 	}
 
 	@Override
