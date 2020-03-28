@@ -51,6 +51,7 @@ public class ValidationException extends RuntimeException {
 	 * Constructor with Errors.
 	 * 
 	 * @param errors
+	 *        the validation errors
 	 */
 	public ValidationException(Errors errors) {
 		this(errors, null);

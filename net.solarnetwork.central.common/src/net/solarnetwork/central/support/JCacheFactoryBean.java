@@ -85,6 +85,13 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 
 	/**
 	 * Constructor.
+	 * 
+	 * @param cacheManager
+	 *        the cache manager
+	 * @param keyType
+	 *        the key type
+	 * @param valueType
+	 *        the value type
 	 */
 	public JCacheFactoryBean(CacheManager cacheManager, Class<K> keyType, Class<V> valueType) {
 		super();
@@ -93,6 +100,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 		this.valueType = valueType;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		CachingProvider provider = cacheManager.getCachingProvider();
@@ -269,23 +277,25 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	}
 
 	/**
-	 * Set the read-through loader.
+	 * Set the read-through loader factory.
 	 * 
 	 * @param readThroughLoaderFactory
 	 *        the loader to set
 	 */
-	public void setReadThroughLoaderFactory(Factory<? extends CacheLoader<K, V>> readThroughLoader) {
-		this.readThroughLoaderFactory = readThroughLoader;
+	public void setReadThroughLoaderFactory(
+			Factory<? extends CacheLoader<K, V>> readThroughLoaderFactory) {
+		this.readThroughLoaderFactory = readThroughLoaderFactory;
 	}
 
 	/**
-	 * Set the write-through writer.
+	 * Set the write-through writer factory.
 	 * 
 	 * @param writeThroughWriterFactory
 	 *        the writer to set
 	 */
-	public void setWriteThroughWriterFactory(Factory<? extends CacheWriter<K, V>> writeThroughWriter) {
-		this.writeThroughWriterFactory = writeThroughWriter;
+	public void setWriteThroughWriterFactory(
+			Factory<? extends CacheWriter<K, V>> writeThroughWriterFactory) {
+		this.writeThroughWriterFactory = writeThroughWriterFactory;
 	}
 
 	/**
@@ -312,7 +322,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	 * is available on the classpath.
 	 * </p>
 	 * 
-	 * @param heapMaxEntries
+	 * @param diskMaxSizeMB
 	 *        the max disk size to store
 	 * @since 1.1
 	 */

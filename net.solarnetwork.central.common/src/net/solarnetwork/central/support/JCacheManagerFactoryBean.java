@@ -57,6 +57,9 @@ public class JCacheManagerFactoryBean
 	/**
 	 * Specify the URI for the desired CacheManager. Default is {@code null}
 	 * (i.e. JCache's default).
+	 * 
+	 * @param cacheManagerUri
+	 *        the URI
 	 */
 	public void setCacheManagerUri(URI cacheManagerUri) {
 		this.cacheManagerUri = cacheManagerUri;
@@ -66,6 +69,8 @@ public class JCacheManagerFactoryBean
 	 * Specify properties for the to-be-created CacheManager. Default is
 	 * {@code null} (i.e. no special properties to apply).
 	 * 
+	 * @param cacheManagerProperties
+	 *        the properties
 	 * @see javax.cache.spi.CachingProvider#getCacheManager(URI, ClassLoader,
 	 *      Properties)
 	 */

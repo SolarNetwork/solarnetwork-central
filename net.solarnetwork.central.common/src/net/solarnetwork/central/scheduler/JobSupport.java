@@ -53,7 +53,7 @@ import org.osgi.service.event.EventAdmin;
  * 
  * <dt>jobCron</dt>
  * <dd>The job cron expression to use for scheduling this job. Defaults to
- * <code>0 0/1 * * * ?</code> (once per minute)</dd>.
+ * <code>0 0/1 * * * ?</code> (once per minute).</dd>
  * </dl>
  * 
  * @author matt
@@ -73,6 +73,7 @@ public abstract class JobSupport extends EventHandlerSupport {
 	 * Constructor.
 	 * 
 	 * @param eventAdmin
+	 *        the event admin
 	 */
 	public JobSupport(EventAdmin eventAdmin) {
 		super();

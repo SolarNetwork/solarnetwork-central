@@ -291,6 +291,7 @@ public class AsyncDaoDatumCollector
 					}
 					final Entity<? extends BasePK> entity = datumCache.get(key);
 					if ( entity == null ) {
+						scratch.remove(key, scratchValue);
 						continue;
 					}
 					try {
@@ -339,9 +340,10 @@ public class AsyncDaoDatumCollector
 						scratch.remove(key, scratchValue);
 					}
 
-					// try to re-fill buffer from cache
-					if ( queueLock.tryLock() ) {
-						try {
+					// try to re-fill queue from cache
+					queueLock.lock();
+					try {
+						if ( queue.size() < queueSize ) {
 							for ( Iterator<Entry<BasePK, Entity<? extends BasePK>>> itr = datumCache
 									.iterator(); itr.hasNext(); ) {
 								Entry<BasePK, Entity<? extends BasePK>> e = itr.next();
@@ -349,9 +351,9 @@ public class AsyncDaoDatumCollector
 									break;
 								}
 							}
-						} finally {
-							queueLock.unlock();
 						}
+					} finally {
+						queueLock.unlock();
 					}
 				}
 			} catch ( InterruptedException e ) {

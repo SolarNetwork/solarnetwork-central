@@ -66,8 +66,14 @@ public class FilterableBulkExportOptions extends BasicBulkExportOptions {
 	}
 
 	/**
+	 * Constructor.
+	 * 
 	 * @param name
-	 * @param parameters
+	 *        the name
+	 * @param filter
+	 *        the filter
+	 * @param sorts
+	 *        the sorting options
 	 */
 	public FilterableBulkExportOptions(String name, Filter filter, List<SortDescriptor> sorts) {
 		super(name, filterableParameters(filter, sorts));

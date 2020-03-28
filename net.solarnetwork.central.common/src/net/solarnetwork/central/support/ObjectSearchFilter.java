@@ -1,7 +1,7 @@
 /* ==================================================================
  * ObjectSearchFilter.java - Aug 8, 2010 8:15:59 PM
  * 
- * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * Copyright 2010 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -18,15 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Revision$
- * ==================================================================
  */
 
 package net.solarnetwork.central.support;
 
 import java.util.Arrays;
 import java.util.Map;
-
 import net.solarnetwork.central.dao.ObjectCriteria.JoinType;
 import net.solarnetwork.central.dao.ObjectCriteria.MatchType;
 import net.solarnetwork.central.domain.Filter;
@@ -34,28 +31,37 @@ import net.solarnetwork.central.domain.Filter;
 /**
  * Generic object search filter.
  * 
+ * @param <T>
+ *        the object to filter on
  * @author matt
- * @version $Revision$
- * @param <T> the object to filter on
+ * @version 1.0
  */
 public class ObjectSearchFilter<T extends Filter> implements Cloneable {
 
 	private T filter;
 	private MatchType mode;
 	private JoinType joinType;
-	
+
 	/**
 	 * Construct with a filter using {@link MatchType#EQUAL} and
 	 * {@link JoinType#AND}.
+	 * 
+	 * @param filter
+	 *        the filter
 	 */
 	public ObjectSearchFilter(T filter) {
 		this(filter, MatchType.EQUAL, JoinType.AND);
 	}
-	
+
 	/**
+	 * Constructor.
+	 * 
 	 * @param filter
+	 *        the filter
 	 * @param mode
+	 *        the mode
 	 * @param joinType
+	 *        the join type
 	 */
 	public ObjectSearchFilter(T filter, MatchType mode, JoinType joinType) {
 		super();
@@ -67,10 +73,11 @@ public class ObjectSearchFilter<T extends Filter> implements Cloneable {
 	/**
 	 * Appends this search filter as a string to a StringBuilder.
 	 * 
-	 * @param buf the buffer to append to
+	 * @param buf
+	 *        the buffer to append to
 	 */
 	public void appendLdapSearchFilter(StringBuilder buf) {
-		if (filter == null) {
+		if ( filter == null ) {
 			return;
 		}
 		Map<String, ?> filterMap = filter.getFilter();
@@ -120,24 +127,24 @@ public class ObjectSearchFilter<T extends Filter> implements Cloneable {
 
 			}
 
-			if (mode == MatchType.SUBSTRING) {
-				if (value == null) {
+			if ( mode == MatchType.SUBSTRING ) {
+				if ( value == null ) {
 					buf.append("*");
 				} else {
 					buf.append("*");
 					buf.append(value);
 					buf.append("*");
 				}
-			} else if (mode == MatchType.SUBSTRING_AT_START) {
-				if (value != null) {
+			} else if ( mode == MatchType.SUBSTRING_AT_START ) {
+				if ( value != null ) {
 					buf.append(value);
 				}
 				buf.append("*");
-			} else if (mode != MatchType.PRESENT) {
-				if (value == null) {
+			} else if ( mode != MatchType.PRESENT ) {
+				if ( value == null ) {
 					buf.append("*");
 				} else if ( value.getClass().isArray() ) {
-					buf.append(Arrays.toString((Object[])value));
+					buf.append(Arrays.toString((Object[]) value));
 				} else {
 					buf.append(value);
 				}
@@ -169,11 +176,13 @@ public class ObjectSearchFilter<T extends Filter> implements Cloneable {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	/**
 	 * Return an LDAP search filter string.
 	 * 
-	 * <p>This simply calls {@link #asLdapSearchFilterString()}.</p>
+	 * <p>
+	 * This simply calls {@link #asLdapSearchFilterString()}.
+	 * </p>
 	 * 
 	 * @return String
 	 */
