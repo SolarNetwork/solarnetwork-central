@@ -30,7 +30,7 @@ import java.util.Set;
  * 
  * @author matt
  * @version 1.0
- * @sicne 1.39
+ * @since 1.39
  */
 public interface SourceMappingFilter extends Filter {
 

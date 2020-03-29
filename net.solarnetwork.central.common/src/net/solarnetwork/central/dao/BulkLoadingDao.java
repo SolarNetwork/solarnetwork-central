@@ -166,7 +166,7 @@ public interface BulkLoadingDao<T extends Entity<PK>, PK extends Serializable> {
 		 * 
 		 * <p>
 		 * How this value increments depends on the
-		 * {@Link LoadingTransactionMode} defined in the options that were used
+		 * {@link LoadingTransactionMode} defined in the options that were used
 		 * to create this context:
 		 * </p>
 		 * 

@@ -112,8 +112,8 @@ public interface ClaimableJob<C, R, S extends ClaimableJobState, PK> extends Ent
 	 * Get a message about the result.
 	 * 
 	 * <p>
-	 * If {@link #isSuccess()} returns {@literal false}, this method will return
-	 * a message about the error.
+	 * If {@link #getJobSuccess()} returns {@literal false}, this method will
+	 * return a message about the error.
 	 * </p>
 	 * 
 	 * @return a message
@@ -124,9 +124,9 @@ public interface ClaimableJob<C, R, S extends ClaimableJobState, PK> extends Ent
 	 * Get the number of datum successfully loaded.
 	 * 
 	 * <p>
-	 * Note that even if {@link #isSuccess()} is {@literal false} this method
-	 * can return a value greater than {@literal 0}, if partial results are
-	 * supported by the transaction mode of the import process.
+	 * Note that even if {@link #getJobSuccess()} is {@literal false} this
+	 * method can return a value greater than {@literal 0}, if partial results
+	 * are supported by the transaction mode of the import process.
 	 * </p>
 	 * 
 	 * @return the number of successfully loaded datum

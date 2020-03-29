@@ -1,7 +1,7 @@
 /* ==================================================================
  * SimpleNodeGroupInformation.java - Apr 30, 2011 1:18:09 PM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2007 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.support;
@@ -34,7 +32,7 @@ import net.solarnetwork.central.domain.SolarNodeGroupCapability;
  * Simple implementation of {@link NodeGroupInformation}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public class SimpleNodeGroupInformation extends BaseIdentity implements NodeGroupInformation {
 
@@ -50,21 +48,25 @@ public class SimpleNodeGroupInformation extends BaseIdentity implements NodeGrou
 	public SimpleNodeGroupInformation() {
 		super();
 	}
-	
+
 	/**
 	 * Construct with values.
 	 * 
-	 * @param group the group to copy values from.
-	 * @param location the location
+	 * @param name
+	 *        the name
+	 * @param capability
+	 *        the capability
+	 * @param location
+	 *        the location
 	 */
-	public SimpleNodeGroupInformation(String name, SolarNodeGroupCapability capability, 
+	public SimpleNodeGroupInformation(String name, SolarNodeGroupCapability capability,
 			Location location) {
 		setId(capability.getGroupId());
 		this.name = name;
 		this.capability = capability;
 		this.location = location;
 	}
-	
+
 	@Override
 	public Location getLocation() {
 		return location;
@@ -74,28 +76,31 @@ public class SimpleNodeGroupInformation extends BaseIdentity implements NodeGrou
 	public String getName() {
 		return name;
 	}
-	
+
 	/**
 	 * Increment the generation capacity.
-	 * @param amount the amount to add
+	 * 
+	 * @param amount
+	 *        the amount to add
 	 */
 	public void addGenerationCapacityWatts(Long amount) {
-		capability.setGenerationCapacityWatts(
-				capability.getGenerationCapacityWatts() + amount);
+		capability.setGenerationCapacityWatts(capability.getGenerationCapacityWatts() + amount);
 	}
-	
+
 	/**
 	 * Increment the storage capacity.
-	 * @param amount the amount to add
+	 * 
+	 * @param amount
+	 *        the amount to add
 	 */
 	public void addStorageCapacityWattHours(Long amount) {
-		capability.setStorageCapacityWattHours(
-				capability.getStorageCapacityWattHours() + amount);
+		capability.setStorageCapacityWattHours(capability.getStorageCapacityWattHours() + amount);
 	}
-	
+
 	/**
 	 * @return the generationCapacityWatts
 	 */
+	@Override
 	public Long getGenerationCapacityWatts() {
 		return capability.getGenerationCapacityWatts();
 	}
@@ -103,6 +108,7 @@ public class SimpleNodeGroupInformation extends BaseIdentity implements NodeGrou
 	/**
 	 * @return the storageCapacityWattHours
 	 */
+	@Override
 	public Long getStorageCapacityWattHours() {
 		return capability.getStorageCapacityWattHours();
 	}

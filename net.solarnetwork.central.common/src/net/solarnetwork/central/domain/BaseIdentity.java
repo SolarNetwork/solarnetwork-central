@@ -83,8 +83,8 @@ public abstract class BaseIdentity
 	}
 
 	/**
-	 * Compare based on the primary key, with <em>null<em> values ordered before
-	 * non-null values.
+	 * Compare based on the primary key, with {@literal null} values ordered
+	 * before non-null values.
 	 */
 	@Override
 	public int compareTo(Long o) {
