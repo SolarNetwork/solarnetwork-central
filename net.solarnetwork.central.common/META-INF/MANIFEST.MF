@@ -22,6 +22,7 @@ Import-Package:
  com.fasterxml.jackson.databind.type;version="[2.4,3.0)",
  javax.cache;version="[1.0,2.0)";resolution:=optional,
  javax.cache.configuration;version="[1.0,2.0)";resolution:=optional,
+ javax.cache.event;version="[1.0,2.0)";resolution:=optional,
  javax.cache.expiry;version="[1.0,2.0)";resolution:=optional,
  javax.cache.integration;version="[1.0,2.0)";resolution:=optional,
  javax.cache.processor;version="[1.0,2.0)";resolution:=optional,

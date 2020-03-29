@@ -31,6 +31,7 @@
 		<beans:prop key="SimpleNetworkIdentityBiz.solarUserBaseURL">http://localhost/solaruser</beans:prop>
 		<beans:prop key="SimpleNetworkIdentityBiz.solarQueryBaseURL">http://localhost/solarquery</beans:prop>
 		<beans:prop key="SimpleNetworkIdentityBiz.solarInMqttBaseURL">mqtts://localhost:8883</beans:prop>
+		<beans:prop key="datumBuffer.tempMaxEntries">200</beans:prop>
 		<beans:prop key="datumBuffer.heapMaxEntries">200</beans:prop>
 		<beans:prop key="datumBuffer.diskMaxSizeMB">2000</beans:prop>
 		<beans:prop key="asyncCollector.threads">2</beans:prop>
@@ -94,9 +95,14 @@
 		<property name="diskPersistent" value="true"/>
 	</bean>
 	
+	<bean id="bufferingDatumCache" class="net.solarnetwork.central.support.BufferingDelegatingCache">
+		<argument ref="datumCache"/>
+		<argument value="${datumBuffer.tempMaxEntries}"/>
+	</bean>
+	
 	<bean id="asyncCollector" class="net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector"
 			init-method="startup" destroy-method="shutdown">
-		<argument ref="datumCache"/>
+		<argument ref="bufferingDatumCache"/>
 		<argument ref="generalNodeDatumDao"/>
 		<argument ref="generalLocationDatumDao"/>
 		<argument ref="transactionTemplate"/>
@@ -119,7 +125,7 @@
 		<property name="datumMetadataBiz" ref="datumMetadataBiz"/>
 		<property name="solarNodeMetadataBiz" ref="solarNodeMetadataBiz"/>
 		<property name="transactionTemplate" ref="transactionTemplate"/>
-		<property name="datumCache" ref="datumCache"/>
+		<property name="datumCache" ref="bufferingDatumCache"/>
 	</bean>
 
 	<bean id="networkIdentityBiz" class="net.solarnetwork.central.in.biz.dao.SimpleNetworkIdentityBiz">

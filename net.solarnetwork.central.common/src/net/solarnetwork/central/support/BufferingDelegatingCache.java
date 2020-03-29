@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.support;
 
+import static java.util.Collections.singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,6 +38,10 @@ import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
 import javax.cache.configuration.Configuration;
+import javax.cache.event.CacheEntryCreatedListener;
+import javax.cache.event.CacheEntryEvent;
+import javax.cache.event.CacheEntryListener;
+import javax.cache.event.EventType;
 import javax.cache.integration.CompletionListener;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
@@ -58,6 +63,8 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	private final int internalCapacity;
 	private final ConcurrentMap<K, V> internalStore;
 	private final AtomicInteger size;
+
+	private CacheEntryCreatedListener<? super K, ? super V> createdListener;
 
 	/**
 	 * Constructor.
@@ -90,10 +97,20 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		this.size = new AtomicInteger(0);
 	}
 
+	/**
+	 * Get the number of elements currently stored internally.
+	 * 
+	 * @return the internal element count
+	 */
+	public int getInternalSize() {
+		return size.get();
+	}
+
 	@Override
 	public synchronized void clear() {
 		internalStore.clear();
 		delegate.clear();
+		size.set(0);
 	}
 
 	@Override
@@ -102,6 +119,8 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 			for ( Map.Entry<K, V> e : internalStore.entrySet() ) {
 				delegate.put(e.getKey(), e.getValue());
 			}
+			internalStore.clear();
+			size.set(0);
 			delegate.close();
 		}
 	}
@@ -150,11 +169,19 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 				if ( v != null ) {
 					// replaced existing value
 					size.decrementAndGet();
+				} else {
+					publishCreatedEvent(key, value);
 				}
 				return v;
 			}
 		} while ( currSize < internalCapacity );
 		return delegate.getAndPut(key, value);
+	}
+
+	private void publishCreatedEvent(K key, V value) {
+		if ( createdListener != null ) {
+			createdListener.onCreated(singleton(new CacheEntryCreatedEvent(key, value)));
+		}
 	}
 
 	@Override
@@ -217,6 +244,110 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		return new UnionIterator<Entry<K, V>>(combined);
 	}
 
+	@Override
+	public void loadAll(Set<? extends K> keys, boolean arg1, CompletionListener arg2) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void put(K key, V value) {
+		int currSize;
+		do {
+			currSize = size.get();
+			if ( currSize < internalCapacity && size.compareAndSet(currSize, currSize + 1) ) {
+				if ( internalStore.put(key, value) != null ) {
+					// only replaced existing value
+					size.decrementAndGet();
+				} else {
+					publishCreatedEvent(key, value);
+				}
+				return;
+			}
+		} while ( currSize < internalCapacity );
+		delegate.put(key, value);
+	}
+
+	@Override
+	public void putAll(Map<? extends K, ? extends V> map) {
+		if ( map == null || map.isEmpty() ) {
+			return;
+		}
+		for ( Map.Entry<? extends K, ? extends V> me : map.entrySet() ) {
+			put(me.getKey(), me.getValue());
+		}
+	}
+
+	@Override
+	public boolean putIfAbsent(K key, V value) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void registerCacheEntryListener(CacheEntryListenerConfiguration<K, V> config) {
+		CacheEntryListener<? super K, ? super V> listener = config.getCacheEntryListenerFactory()
+				.create();
+		if ( listener instanceof CacheEntryCreatedListener<?, ?> ) {
+			this.createdListener = (CacheEntryCreatedListener<? super K, ? super V>) listener;
+		}
+		delegate.registerCacheEntryListener(config);
+	}
+
+	@Override
+	public boolean remove(K key) {
+		if ( internalStore.remove(key) != null ) {
+			size.decrementAndGet();
+			return true;
+		}
+		return delegate.remove(key);
+	}
+
+	@Override
+	public boolean remove(K key, V expected) {
+		if ( internalStore.remove(key, expected) ) {
+			size.decrementAndGet();
+			return true;
+		}
+		return delegate.remove(key, expected);
+	}
+
+	@Override
+	public synchronized void removeAll() {
+		internalStore.clear();
+		size.set(0);
+		delegate.removeAll();
+	}
+
+	@Override
+	public void removeAll(Set<? extends K> keys) {
+		for ( K k : keys ) {
+			if ( internalStore.remove(k) != null ) {
+				size.decrementAndGet();
+			}
+		}
+		delegate.removeAll(keys);
+	}
+
+	@Override
+	public boolean replace(K key, V value) {
+		if ( internalStore.replace(key, value) != null ) {
+			return true;
+		}
+		return delegate.replace(key, value);
+	}
+
+	@Override
+	public boolean replace(K key, V oldValue, V newValue) {
+		if ( internalStore.replace(key, oldValue, newValue) ) {
+			return true;
+		}
+		return delegate.replace(key, oldValue, newValue);
+	}
+
+	@Override
+	public <T> T unwrap(Class<T> arg0) {
+		throw new UnsupportedOperationException();
+	}
+
 	private class EntryIteratorAdaptor implements Iterator<Entry<K, V>> {
 
 		private final Iterator<Map.Entry<K, V>> itr;
@@ -266,96 +397,44 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		}
 	}
 
-	@Override
-	public void loadAll(Set<? extends K> keys, boolean arg1, CompletionListener arg2) {
-		throw new UnsupportedOperationException();
-	}
+	private class CacheEntryCreatedEvent extends CacheEntryEvent<K, V> {
 
-	@Override
-	public void put(K key, V value) {
-		int currSize;
-		do {
-			currSize = size.get();
-			if ( currSize < internalCapacity && size.compareAndSet(currSize, currSize + 1) ) {
-				if ( internalStore.put(key, value) != null ) {
-					// only replaced existing value
-					size.decrementAndGet();
-				}
-				return;
-			}
-		} while ( currSize < internalCapacity );
-		delegate.put(key, value);
-	}
+		private static final long serialVersionUID = 6369201595734400543L;
 
-	@Override
-	public void putAll(Map<? extends K, ? extends V> map) {
-		if ( map == null || map.isEmpty() ) {
-			return;
+		private final K key;
+		private final V value;
+
+		private CacheEntryCreatedEvent(K key, V value) {
+			super(BufferingDelegatingCache.this, EventType.CREATED);
+			this.key = key;
+			this.value = value;
 		}
-		for ( Map.Entry<? extends K, ? extends V> me : map.entrySet() ) {
-			put(me.getKey(), me.getValue());
+
+		@Override
+		public K getKey() {
+			return key;
 		}
-	}
 
-	@Override
-	public boolean putIfAbsent(K key, V value) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void registerCacheEntryListener(CacheEntryListenerConfiguration<K, V> config) {
-		delegate.registerCacheEntryListener(config);
-	}
-
-	@Override
-	public boolean remove(K key) {
-		if ( internalStore.remove(key) != null ) {
-			return true;
+		@Override
+		public V getValue() {
+			return value;
 		}
-		return delegate.remove(key);
-	}
 
-	@Override
-	public boolean remove(K key, V expected) {
-		if ( internalStore.remove(key, expected) ) {
-			return true;
+		@Override
+		public <T> T unwrap(Class<T> arg0) {
+			throw new UnsupportedOperationException();
 		}
-		return delegate.remove(key, expected);
-	}
 
-	@Override
-	public void removeAll() {
-		internalStore.clear();
-		delegate.removeAll();
-	}
-
-	@Override
-	public void removeAll(Set<? extends K> keys) {
-		for ( K k : keys ) {
-			internalStore.remove(k);
+		@Override
+		public V getOldValue() {
+			return null;
 		}
-		delegate.removeAll(keys);
-	}
 
-	@Override
-	public boolean replace(K key, V value) {
-		if ( internalStore.replace(key, value) != null ) {
-			return true;
+		@Override
+		public boolean isOldValueAvailable() {
+			return false;
 		}
-		return delegate.replace(key, value);
-	}
 
-	@Override
-	public boolean replace(K key, V oldValue, V newValue) {
-		if ( internalStore.replace(key, oldValue, newValue) ) {
-			return true;
-		}
-		return delegate.replace(key, oldValue, newValue);
-	}
-
-	@Override
-	public <T> T unwrap(Class<T> arg0) {
-		throw new UnsupportedOperationException();
 	}
 
 }

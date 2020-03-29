@@ -341,19 +341,20 @@ public class AsyncDaoDatumCollector
 					}
 
 					// try to re-fill queue from cache
-					queueLock.lock();
-					try {
-						if ( queue.size() < queueSize ) {
-							for ( Iterator<Entry<BasePK, Entity<? extends BasePK>>> itr = datumCache
-									.iterator(); itr.hasNext(); ) {
-								Entry<BasePK, Entity<? extends BasePK>> e = itr.next();
-								if ( e != null && !queue.offer(e.getKey()) ) {
-									break;
+					if ( queueLock.tryLock(2, TimeUnit.SECONDS) ) {
+						try {
+							if ( queue.size() < Math.max(1.0, queueSize * 0.1) ) {
+								for ( Iterator<Entry<BasePK, Entity<? extends BasePK>>> itr = datumCache
+										.iterator(); itr.hasNext(); ) {
+									Entry<BasePK, Entity<? extends BasePK>> e = itr.next();
+									if ( e != null && !queue.offer(e.getKey()) ) {
+										break;
+									}
 								}
 							}
+						} finally {
+							queueLock.unlock();
 						}
-					} finally {
-						queueLock.unlock();
 					}
 				}
 			} catch ( InterruptedException e ) {
