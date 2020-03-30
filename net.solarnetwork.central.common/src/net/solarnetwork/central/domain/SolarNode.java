@@ -61,8 +61,6 @@ public class SolarNode extends BaseEntity implements Cloneable, Serializable, No
 	 *        the ID
 	 * @param locationId
 	 *        the location ID
-	 * @param timeZoneId
-	 *        the time zone ID
 	 */
 	public SolarNode(Long id, Long locationId) {
 		super();

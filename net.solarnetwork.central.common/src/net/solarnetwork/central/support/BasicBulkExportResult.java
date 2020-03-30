@@ -37,6 +37,9 @@ public class BasicBulkExportResult implements ExportResult {
 
 	/**
 	 * Constructor.
+	 * 
+	 * @param numProcessed
+	 *        the number of processed items
 	 */
 	public BasicBulkExportResult(long numProcessed) {
 		super();

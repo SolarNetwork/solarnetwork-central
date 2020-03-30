@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Common Central
 Bundle-SymbolicName: net.solarnetwork.central.common
-Bundle-Version: 2.1.0
+Bundle-Version: 2.2.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: 
@@ -11,7 +11,7 @@ Export-Package:
  net.solarnetwork.central.dao;version="2.0.0",
  net.solarnetwork.central.domain;version="2.0.0",
  net.solarnetwork.central.scheduler;version="1.5.1",
- net.solarnetwork.central.support;version="2.1.0"
+ net.solarnetwork.central.support;version="2.2.0"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.4,3.0)",
  com.fasterxml.jackson.core;version="[2.4,3.0)",
@@ -22,8 +22,10 @@ Import-Package:
  com.fasterxml.jackson.databind.type;version="[2.4,3.0)",
  javax.cache;version="[1.0,2.0)";resolution:=optional,
  javax.cache.configuration;version="[1.0,2.0)";resolution:=optional,
+ javax.cache.event;version="[1.0,2.0)";resolution:=optional,
  javax.cache.expiry;version="[1.0,2.0)";resolution:=optional,
  javax.cache.integration;version="[1.0,2.0)";resolution:=optional,
+ javax.cache.processor;version="[1.0,2.0)";resolution:=optional,
  javax.cache.spi;version="[1.0,2.0)";resolution:=optional,
  javax.validation;version="[1.1.0,2.0.0)";resolution:=optional,
  javax.validation.bootstrap;version="[1.1.0,2.0.0)";resolution:=optional,

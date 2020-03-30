@@ -1,7 +1,7 @@
 /* ==================================================================
  * SimpleNodeInformation.java - May 1, 2011 3:05:47 PM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2007 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.support;
@@ -33,7 +31,7 @@ import net.solarnetwork.central.domain.SolarNodeCapability;
  * Simple implementation of {@link NodeInformation}.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public class SimpleNodeInformation extends BaseIdentity implements NodeInformation {
 
@@ -41,19 +39,21 @@ public class SimpleNodeInformation extends BaseIdentity implements NodeInformati
 
 	private Location location;
 	private SolarNodeCapability capability;
-	
+
 	/**
 	 * Default constructor.
 	 */
 	public SimpleNodeInformation() {
 		super();
 	}
-	
+
 	/**
 	 * Construct with values.
 	 * 
-	 * @param group the group to copy values from.
-	 * @param location the location
+	 * @param capability
+	 *        the capability
+	 * @param location
+	 *        the location
 	 */
 	public SimpleNodeInformation(SolarNodeCapability capability, Location location) {
 		setId(capability.getNodeId());
@@ -64,6 +64,7 @@ public class SimpleNodeInformation extends BaseIdentity implements NodeInformati
 	/**
 	 * @return the location
 	 */
+	@Override
 	public Location getLocation() {
 		return location;
 	}
@@ -71,6 +72,7 @@ public class SimpleNodeInformation extends BaseIdentity implements NodeInformati
 	/**
 	 * @return the generationCapacityWatts
 	 */
+	@Override
 	public Long getGenerationCapacityWatts() {
 		return capability.getGenerationCapacityWatts();
 	}
@@ -78,6 +80,7 @@ public class SimpleNodeInformation extends BaseIdentity implements NodeInformati
 	/**
 	 * @return the storageCapacityWattHours
 	 */
+	@Override
 	public Long getStorageCapacityWattHours() {
 		return capability.getStorageCapacityWattHours();
 	}

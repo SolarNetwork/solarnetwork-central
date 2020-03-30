@@ -1,7 +1,7 @@
 /* ==================================================================
  * ObjectSearchFilters.java - Aug 8, 2010 8:15:35 PM
  * 
- * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * Copyright 2007 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -18,24 +18,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Revision$
- * ==================================================================
  */
 
 package net.solarnetwork.central.support;
 
 import java.util.LinkedList;
 import java.util.List;
-
 import net.solarnetwork.central.dao.ObjectCriteria;
 import net.solarnetwork.central.domain.Filter;
 
 /**
  * Collection of object search filters.
  * 
+ * @param <T>
+ *        the object to filter on
  * @author matt
- * @version $Revision$
- * @param <T> the object to filter on
+ * @version 1.0
  */
 public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectCriteria<T> {
 
@@ -48,38 +46,47 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	/**
 	 * Construct a new ObjectSearchFilters object with a join type.
 	 * 
-	 * @param joinType the logical join type
+	 * @param joinType
+	 *        the logical join type
 	 */
 	public ObjectSearchFilters(JoinType joinType) {
 		this.joinType = joinType;
 	}
 
 	/**
-	 * Construct a search filters object out of a single filter, using 
+	 * Construct a search filters object out of a single filter, using
 	 * {@link JoinType#AND} and {@link MatchType#EQUAL}.
 	 * 
-	 * @param filter the object to filter on
+	 * @param filter
+	 *        the object to filter on
 	 */
 	public ObjectSearchFilters(T filter) {
 		this(JoinType.AND, filter);
 	}
 
 	/**
-	 * Construct a search filters object out of a single filter, using {@link MatchType#EQUAL}.
+	 * Construct a search filters object out of a single filter, using
+	 * {@link MatchType#EQUAL}.
 	 * 
-	 * @param joinType the logical join type, used for nested join and the given filter
-	 * @param filter the object to filter on
+	 * @param joinType
+	 *        the logical join type, used for nested join and the given filter
+	 * @param filter
+	 *        the object to filter on
 	 */
 	public ObjectSearchFilters(JoinType joinType, T filter) {
 		this(joinType, filter, joinType);
 	}
 
 	/**
-	 * Construct a search filters object out of a single filter, using {@link MatchType#EQUAL}.
+	 * Construct a search filters object out of a single filter, using
+	 * {@link MatchType#EQUAL}.
 	 * 
-	 * @param joinType the logical join type
-	 * @param filter the object to filter on
-	 * @param filterJoinType the filter object join type
+	 * @param joinType
+	 *        the logical join type
+	 * @param filter
+	 *        the object to filter on
+	 * @param filterJoinType
+	 *        the filter object join type
 	 */
 	public ObjectSearchFilters(JoinType joinType, T filter, JoinType filterJoinType) {
 		this.joinType = joinType;
@@ -89,11 +96,14 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	/**
 	 * Add a new nested ObjectSearchFilters object to this one.
 	 *
-	 * <p>This allows for creating complex logical filters. See the
-	 * class description for an example of this.</p>
+	 * <p>
+	 * This allows for creating complex logical filters. See the class
+	 * description for an example of this.
+	 * </p>
 	 * 
 	 * @return the new nested ObjectSearchFilters object
-	 * @param nestedJoinType the logical join type
+	 * @param nestedJoinType
+	 *        the logical join type
 	 */
 	public ObjectSearchFilters<T> addNestedFilters(JoinType nestedJoinType) {
 		ObjectSearchFilters<T> sf = new ObjectSearchFilters<T>(nestedJoinType);
@@ -104,7 +114,8 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	/**
 	 * Add a new ObjectSearchFilter to this object.
 	 * 
-	 * @param filter the filter
+	 * @param filter
+	 *        the filter
 	 */
 	public void addObjectSearchFilter(ObjectSearchFilter<T> filter) {
 		filters.add(filter);
@@ -113,36 +124,39 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	/**
 	 * Add a new ObjectSearchFilter to this object.
 	 * 
-	 * @param attributeName the attribute name
-	 * @param attributeValue the attribute value
-	 * @param mode the search filter mode
+	 * @param filter
+	 *        the filter to add
+	 * @param mode
+	 *        the search filter mode
+	 * @param joinType
+	 *        the join type
 	 */
-	public void addObjectSearchFilter(T filter,
-			MatchType mode, JoinType joinType) {
+	public void addObjectSearchFilter(T filter, MatchType mode, JoinType joinType) {
 		ObjectSearchFilter<T> osf = new ObjectSearchFilter<T>(filter, mode, joinType);
 		filters.add(osf);
 	}
 
 	/**
-	 * Generate a complete search filter string of this object
-	 * into a StringBuffer.
+	 * Generate a complete search filter string of this object into a
+	 * StringBuffer.
 	 * 
-	 * @param buf buffer to append to
+	 * @param buf
+	 *        buffer to append to
 	 */
 	public void appendLdapSearchFilter(StringBuilder buf) {
 		buf.append("(");
-		if (filters == null && nestedFilters == null) {
+		if ( filters == null && nestedFilters == null ) {
 			buf.append("objectClass=*");
-		} else if (filters != null) {
+		} else if ( filters != null ) {
 			buf.append(joinType);
 		}
-		if (filters != null) {
+		if ( filters != null ) {
 			// for each search filter, append value
 			for ( ObjectSearchFilter<T> filter : filters ) {
 				filter.appendLdapSearchFilter(buf);
 			}
 		}
-		if (nestedFilters != null) {
+		if ( nestedFilters != null ) {
 			// for each nested search filter, append value
 			for ( ObjectSearchFilters<T> oneNestedFilter : nestedFilters ) {
 				oneNestedFilter.appendLdapSearchFilter(buf);
@@ -166,25 +180,27 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	@SuppressWarnings("unchecked")
 	public Object clone() {
 		try {
-			ObjectSearchFilters<T> clone = (ObjectSearchFilters<T>)super.clone();
+			ObjectSearchFilters<T> clone = (ObjectSearchFilters<T>) super.clone();
 			clone.filters = new LinkedList<ObjectSearchFilter<T>>();
 			for ( ObjectSearchFilter<T> aFilter : filters ) {
-				clone.filters.add((ObjectSearchFilter<T>)aFilter.clone());
+				clone.filters.add((ObjectSearchFilter<T>) aFilter.clone());
 			}
 			clone.nestedFilters = new LinkedList<ObjectSearchFilters<T>>();
 			for ( ObjectSearchFilters<T> aFilter : nestedFilters ) {
-				clone.nestedFilters.add((ObjectSearchFilters<T>)aFilter.clone());
+				clone.nestedFilters.add((ObjectSearchFilters<T>) aFilter.clone());
 			}
 			return clone;
 		} catch ( CloneNotSupportedException e ) {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	/**
 	 * Return an LDAP search filter string.
 	 * 
-	 * <p>This simply calls {@link #asLdapSearchFilterString()}.</p>
+	 * <p>
+	 * This simply calls {@link #asLdapSearchFilterString()}.
+	 * </p>
 	 * 
 	 * @return String
 	 */
@@ -192,7 +208,7 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	public String toString() {
 		return asLdapSearchFilterString();
 	}
-	
+
 	private ObjectSearchFilter<T> getSimpleSearchFilter() {
 		if ( filters == null || filters.size() < 1 ) {
 			return null;
@@ -230,28 +246,37 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	public JoinType getJoinType() {
 		return joinType;
 	}
+
 	public List<ObjectSearchFilters<T>> getNestedFilters() {
 		return nestedFilters;
 	}
+
 	public void setFilters(List<ObjectSearchFilter<T>> newFilters) {
 		filters = newFilters;
 	}
+
 	public void setJoinType(JoinType newJoinType) {
 		joinType = newJoinType;
 	}
-	public void setNestedFilters(
-			List<ObjectSearchFilters<T>> newNestedLdapSearchFilters) {
+
+	public void setNestedFilters(List<ObjectSearchFilters<T>> newNestedLdapSearchFilters) {
 		nestedFilters = newNestedLdapSearchFilters;
 	}
+
+	@Override
 	public Integer getResultOffset() {
 		return resultOffset;
 	}
+
 	public void setResultOffset(Integer resultOffset) {
 		this.resultOffset = resultOffset;
 	}
+
+	@Override
 	public Integer getResultMax() {
 		return resultMax;
 	}
+
 	public void setResultMax(Integer resultMax) {
 		this.resultMax = resultMax;
 	}

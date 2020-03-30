@@ -85,8 +85,10 @@ public abstract class BaseStringIdentity
 	}
 
 	/**
-	 * Compare based on the primary key, with <em>null<em> values ordered before
-	 * non-null values.
+	 * Compare based on the primary key, with {@literal null} values ordered
+	 * before non-null values.
+	 * 
+	 * {@inheritDoc}
 	 */
 	@Override
 	public int compareTo(String o) {

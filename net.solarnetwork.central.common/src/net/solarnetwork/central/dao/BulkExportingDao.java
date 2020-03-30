@@ -29,8 +29,6 @@ import java.util.Map;
  * 
  * @param <T>
  *        the domain object type
- * @param <PK>
- *        the primary key type
  * @author matt
  * @version 1.0
  * @since 1.45
@@ -70,8 +68,6 @@ public interface BulkExportingDao<T> {
 	 * 
 	 * @param <T>
 	 *        the domain object type
-	 * @param <PK>
-	 *        the primary key type
 	 */
 	interface ExportCallback<T> {
 
