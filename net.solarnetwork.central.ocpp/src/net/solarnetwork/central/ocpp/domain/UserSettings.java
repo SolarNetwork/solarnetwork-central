@@ -48,7 +48,7 @@ public class UserSettings extends BasicLongEntity
 		implements Differentiable<UserSettings>, UserRelatedEntity<Long> {
 
 	/** The default {@code sourceIdTemplate} value. */
-	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/{chargePointId}/{connectorId}/{location}";
+	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/{chargerIdentity}/{connectorId}/{location}";
 
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = true;
