@@ -20,7 +20,7 @@ Import-Package:
  net.solarnetwork.ocpp.dao;version="[1.0,2.0)",
  net.solarnetwork.ocpp.domain;version="[1.1,2.0)",
  net.solarnetwork.ocpp.service;version="[1.0,2.0)",
- net.solarnetwork.ocpp.web.json;version="[1.0,2.0)",
+ net.solarnetwork.ocpp.web.json;version="[1.0.1,2.0)",
  net.solarnetwork.settings;version="[1.2,2.0)",
  net.solarnetwork.support;version="[1.11,2.0)",
  net.solarnetwork.util;version="[1.42,2.0)",
