@@ -34,6 +34,8 @@
 	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager" filter="(db=central)"/>
 
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
+	
+	<reference id="instructionDao" interface="net.solarnetwork.central.instructor.dao.NodeInstructionDao"/>
 
 	<reference id="authorizationDao" interface="net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao" filter="(function=central)"/>
 	
@@ -43,13 +45,15 @@
 	<reference id="chargingProfileDao" interface="net.solarnetwork.ocpp.dao.ChargingProfileDao" filter="(function=central)"/>
 	-->
 	
-	<reference id="chargePointConnectorDao" interface="net.solarnetwork.ocpp.dao.ChargePointConnectorDao" filter="(function=central)"/>
+	<reference id="chargePointConnectorDao" interface="net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao" filter="(function=central)"/>
 	
 	<reference id="systemUserDao" interface="net.solarnetwork.ocpp.dao.SystemUserDao" filter="(function=central)"/>
 	
 	<reference id="chargePointRouter" interface="net.solarnetwork.ocpp.service.ChargePointRouter" filter="(function=central)"/>
 
 	<reference id="chargeSessionManager" interface="net.solarnetwork.ocpp.service.cs.ChargeSessionManager" filter="(function=central)" availability="optional" />
+	
+	<reference id="chargePointActionPayloadDecoder" interface="ocpp.json.ActionPayloadDecoder" filter="(&amp;(function=central)(role=cp)(version=1.6))"/>
 	
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="transactionManager"/>
@@ -164,6 +168,7 @@
 		<interfaces>
 			<value>net.solarnetwork.ocpp.service.AuthorizationService</value>
 			<value>net.solarnetwork.ocpp.service.cs.ChargePointManager</value>
+			<value>net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook</value>
 		</interfaces>
 		<service-properties>
 			<entry key="function" value="central"/>
@@ -177,10 +182,12 @@
 		<argument ref="executor"/>
 		<argument ref="chargePointRouter"/>
 		<argument ref="userNodeDao"/>
+		<argument ref="instructionDao"/>
 		<argument ref="authorizationDao"/>
 		<argument ref="chargePointDao"/>
 		<argument ref="chargePointConnectorDao"/>
 		<property name="transactionTemplate" ref="transactionTemplate"/>
+		<property name="chargePointActionPayloadDecoder" ref="chargePointActionPayloadDecoder"/>
 	</bean>
 	
 	<bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">

@@ -152,7 +152,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	}
 
 	/** The default {@code sourceIdTemplate} value. */
-	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/cp/{chargePointId}/{connectorId}/{location}";
+	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/cp/{chargerIdentity}/{connectorId}/{location}";
 
 	/** The default {@code maxTemperatureScale} value. */
 	public static final int DEFAULT_MAX_TEMPERATURE_SCALE = 1;
@@ -608,7 +608,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	private String sourceId(ChargePointSettings chargePointSettings, String identifier, int connectorId,
 			Location location, Phase phase) {
 		Map<String, Object> params = new HashMap<>(4);
-		params.put("chargePointId", identifier);
+		params.put("chargerIdentity", identifier);
+		params.put("chargePointId", chargePointSettings.getId());
 		params.put("connectorId", connectorId);
 		params.put("location", location);
 		params.put("phase", phase);
@@ -781,7 +782,9 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * </p>
 	 * 
 	 * <ol>
-	 * <li><code>{chargePointId}</code> - the Charge Point ID (string)</li>
+	 * <li><code>{chargePointId}</code> - the Charge Point ID (number)</li>
+	 * <li><code>{chargerIdentity}</code> - the Charge Point info identifier
+	 * (string)</li>
 	 * <li><code>{connectorId}</code> - the connector ID (integer)</li>
 	 * <li><code>{location}</code> - the location (string)</li>
 	 * <li><code>{phase}</code> - the phase (string)</li>
