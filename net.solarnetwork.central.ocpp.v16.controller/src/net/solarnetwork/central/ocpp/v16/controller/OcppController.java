@@ -73,6 +73,8 @@ import net.solarnetwork.ocpp.service.AuthorizationService;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
 import net.solarnetwork.ocpp.service.cs.ChargePointManager;
+import net.solarnetwork.security.AuthorizationException;
+import net.solarnetwork.security.AuthorizationException.Reason;
 import net.solarnetwork.support.BasicIdentifiable;
 import net.solarnetwork.util.JsonUtils;
 import ocpp.domain.Action;
@@ -227,6 +229,22 @@ public class OcppController extends BasicIdentifiable
 	public boolean isChargePointRegistrationAccepted(long chargePointId) {
 		ChargePoint cp = chargePointDao.get(chargePointId);
 		return cp != null && cp.isEnabled() && cp.getRegistrationStatus() == RegistrationStatus.Accepted;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void updateChargePointStatus(ChargePointIdentity identity, StatusNotification info) {
+		final ChargePoint chargePoint = chargePointDao.getForIdentity(identity);
+		if ( chargePoint == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, identity);
+		}
+		log.info("Received Charge Point {} status: {}", identity, info);
+		if ( info.getConnectorId() == 0 ) {
+			chargePointConnectorDao.updateChargePointStatus(chargePoint.getId(), info.getConnectorId(),
+					info.getStatus());
+		} else {
+			chargePointConnectorDao.saveStatusInfo(chargePoint.getId(), info);
+		}
 	}
 
 	private ActionMessageResultHandler<GetConfigurationRequest, GetConfigurationResponse> processConfiguration(

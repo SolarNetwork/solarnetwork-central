@@ -33,7 +33,6 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
@@ -58,7 +57,11 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.ocpp.domain.ActionMessage;
+import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
+import net.solarnetwork.ocpp.domain.ChargePointErrorCode;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
+import net.solarnetwork.ocpp.domain.ChargePointStatus;
+import net.solarnetwork.ocpp.domain.StatusNotification;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
@@ -118,11 +121,65 @@ public class OcppControllerTests {
 	}
 
 	@Test
+	public void updateStatus() {
+		// GIVEN
+		Long nodeId = randomUUID().getMostSignificantBits();
+		Long userId = randomUUID().getMostSignificantBits();
+		ChargePointIdentity identity = new ChargePointIdentity(randomUUID().toString(), userId);
+
+		CentralChargePoint cp = new CentralChargePoint(randomUUID().getMostSignificantBits(), userId,
+				nodeId);
+		expect(chargePointDao.getForIdentity(identity)).andReturn(cp);
+
+		// @formatter:off
+		StatusNotification info = StatusNotification.builder()
+				.withConnectorId(1)
+				.withStatus(ChargePointStatus.Charging)
+				.withErrorCode(ChargePointErrorCode.NoError)
+				.withTimestamp(Instant.now())
+				.withInfo("Hello.")
+				.withVendorId("SolarNetwork")
+				.build();
+		// @formatter:on
+		expect(chargePointConnectorDao.saveStatusInfo(cp.getId().longValue(), info))
+				.andReturn(new ChargePointConnectorKey(cp.getId().longValue(), 1));
+
+		// WHEN
+		replayAll();
+		controller.updateChargePointStatus(identity, info);
+	}
+
+	@Test
+	public void updateStatus_chargePoint() {
+		// GIVEN
+		Long nodeId = randomUUID().getMostSignificantBits();
+		Long userId = randomUUID().getMostSignificantBits();
+		ChargePointIdentity identity = new ChargePointIdentity(randomUUID().toString(), userId);
+
+		CentralChargePoint cp = new CentralChargePoint(randomUUID().getMostSignificantBits(), userId,
+				nodeId);
+		expect(chargePointDao.getForIdentity(identity)).andReturn(cp);
+
+		// @formatter:off
+		StatusNotification info = StatusNotification.builder()
+				.withConnectorId(0)
+				.withStatus(ChargePointStatus.Charging)
+				.build();
+		// @formatter:on
+		expect(chargePointConnectorDao.updateChargePointStatus(cp.getId().longValue(), 0,
+				info.getStatus())).andReturn(1);
+
+		// WHEN
+		replayAll();
+		controller.updateChargePointStatus(identity, info);
+	}
+
+	@Test
 	public void handleInstruction_toggleConnectorAvailability() {
 		// GIVEN
 		Long nodeId = randomUUID().getMostSignificantBits();
 		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, new DateTime(), nodeId);
-		String chargerIdentity = UUID.randomUUID().toString();
+		String chargerIdentity = randomUUID().toString();
 		instruction.addParameter(OcppController.OCPP_V16_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
 		instruction.addParameter(OCPP_V16_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
 		instruction.addParameter("connectorId", "1");

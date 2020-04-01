@@ -148,8 +148,7 @@
 			<entry key="role" value="cs"/>
 		</service-properties>
 		<bean class="net.solarnetwork.ocpp.v16.cs.StatusNotificationProcessor">
-			<argument ref="chargePointDao"/>
-			<argument ref="chargePointConnectorDao"/>
+			<argument ref="controller"/>
 		</bean>
 	</service>
 
