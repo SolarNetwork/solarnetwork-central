@@ -43,9 +43,11 @@ import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
+import net.solarnetwork.central.ocpp.domain.CentralChargeSession;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.v16.controller.ConnectorStatusDatumPublisher;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
@@ -66,6 +68,7 @@ public class ConnectorStatusDatumPublisherTests {
 
 	private ChargePointSettingsDao chargePointSettingsDao;
 	private CentralChargePointConnectorDao chargePointConnectorDao;
+	private CentralChargeSessionDao chargeSessionDao;
 	private GeneralNodeDatumDao datumDao;
 	private DatumProcessor fluxPublisher;
 	private ConnectorStatusDatumPublisher publisher;
@@ -74,19 +77,22 @@ public class ConnectorStatusDatumPublisherTests {
 	public void setup() {
 		chargePointSettingsDao = EasyMock.createMock(ChargePointSettingsDao.class);
 		chargePointConnectorDao = EasyMock.createMock(CentralChargePointConnectorDao.class);
+		chargeSessionDao = EasyMock.createMock(CentralChargeSessionDao.class);
 		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
 		fluxPublisher = EasyMock.createMock(DatumProcessor.class);
 		publisher = new ConnectorStatusDatumPublisher(chargePointSettingsDao, chargePointConnectorDao,
-				datumDao, new StaticOptionalService<>(fluxPublisher));
+				chargeSessionDao, datumDao, new StaticOptionalService<>(fluxPublisher));
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(chargePointSettingsDao, chargePointConnectorDao, datumDao, fluxPublisher);
+		EasyMock.verify(chargePointSettingsDao, chargePointConnectorDao, chargeSessionDao, datumDao,
+				fluxPublisher);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(chargePointSettingsDao, chargePointConnectorDao, datumDao, fluxPublisher);
+		EasyMock.replay(chargePointSettingsDao, chargePointConnectorDao, chargeSessionDao, datumDao,
+				fluxPublisher);
 	}
 
 	@Test
@@ -118,6 +124,9 @@ public class ConnectorStatusDatumPublisherTests {
 		cps.setSourceIdTemplate("/foo/{chargerIdentifier}/{connectorId}/{something}/{else}");
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
+		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(),
+				info.getConnectorId())).andReturn(null);
+
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
 		String sourceId = "/foo/" + cp.getInfo().getId() + "/1/status";
 		expect(datumDao.store(capture(datumCaptor))).andReturn(new GeneralNodeDatumPK(cp.getNodeId(),
@@ -147,6 +156,75 @@ public class ConnectorStatusDatumPublisherTests {
 				equalTo(info.getVendorId()));
 		assertThat("Published vendor error code", s.getStatusSampleString("vendorErrorCode"),
 				equalTo(info.getVendorErrorCode()));
+
+		assertThat("Published same datum to SolarFlux", fluxDatumCaptor.getValue(), sameInstance(d));
+	}
+
+	@Test
+	public void publishDatum_withChargeSession() {
+		// GIVEN
+		CentralChargePoint cp = new CentralChargePoint(randomUUID().getMostSignificantBits(),
+				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
+				Instant.now(),
+				new ChargePointInfo(randomUUID().toString(), "SolarNetwork", "SolarNode"));
+
+		// @formatter:off
+		StatusNotification info = StatusNotification.builder()
+				.withConnectorId(1)
+				.withStatus(ChargePointStatus.Charging)
+				.withErrorCode(ChargePointErrorCode.GroundFailure)
+				.withTimestamp(Instant.now())
+				.withInfo("Hello.")
+				.withVendorId("ACME")
+				.withVendorErrorCode("Sweet as.")
+				.build();
+		// @formatter:on
+
+		CentralChargePointConnector cpc = new CentralChargePointConnector(cp.getId(), 1, cp.getUserId(),
+				Instant.now());
+		cpc.setInfo(info);
+		expect(chargePointConnectorDao.get(cp.getUserId(), cpc.getId())).andReturn(cpc);
+
+		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
+		cps.setSourceIdTemplate("/foo/{chargerIdentifier}/{connectorId}/{something}/{else}");
+		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
+
+		CentralChargeSession session = new CentralChargeSession(randomUUID(),
+				info.getTimestamp().minusSeconds(60), "foo", cp.getId(), info.getConnectorId(), 1);
+		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(),
+				info.getConnectorId())).andReturn(session);
+
+		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
+		String sourceId = "/foo/" + cp.getInfo().getId() + "/1/status";
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new GeneralNodeDatumPK(cp.getNodeId(),
+				new DateTime(info.getTimestamp().toEpochMilli()), sourceId));
+
+		expect(fluxPublisher.isConfigured()).andReturn(true);
+		Capture<Identity<GeneralNodeDatumPK>> fluxDatumCaptor = new Capture<>();
+		expect(fluxPublisher.processDatum(capture(fluxDatumCaptor))).andReturn(true);
+
+		// WHEN
+		replayAll();
+		publisher.processStatusNotification(cp, info);
+
+		// THEN
+		GeneralNodeDatum d = datumCaptor.getValue();
+		assertThat("Published datum node ID", d.getNodeId(), equalTo(cp.getNodeId()));
+		assertThat("Published datum source ID", d.getSourceId(), equalTo(sourceId));
+		assertThat("Published datum ts", d.getCreated(),
+				equalTo(new DateTime(info.getTimestamp().toEpochMilli())));
+		GeneralNodeDatumSamples s = d.getSamples();
+		assertThat("Published status", s.getStatusSampleString("status"),
+				equalTo(ChargePointStatus.Charging.toString()));
+		assertThat("Published error code", s.getStatusSampleString("errorCode"),
+				equalTo(ChargePointErrorCode.GroundFailure.toString()));
+		assertThat("Published info", s.getStatusSampleString("info"), equalTo(info.getInfo()));
+		assertThat("Published vendor ID", s.getStatusSampleString("vendorId"),
+				equalTo(info.getVendorId()));
+		assertThat("Published vendor error code", s.getStatusSampleString("vendorErrorCode"),
+				equalTo(info.getVendorErrorCode()));
+		assertThat("Published session ID", s.getStatusSampleString("sessionId"),
+				equalTo(session.getId().toString()));
 
 		assertThat("Published same datum to SolarFlux", fluxDatumCaptor.getValue(), sameInstance(d));
 	}
@@ -194,6 +272,11 @@ public class ConnectorStatusDatumPublisherTests {
 		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
 		cps.setSourceIdTemplate("/foo/{chargerIdentifier}/{connectorId}/{something}/{else}");
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
+
+		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(),
+				info1.getConnectorId())).andReturn(null);
+		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(),
+				info2.getConnectorId())).andReturn(null);
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
 		String sourceId1 = "/foo/" + cp.getInfo().getId() + "/1/status";

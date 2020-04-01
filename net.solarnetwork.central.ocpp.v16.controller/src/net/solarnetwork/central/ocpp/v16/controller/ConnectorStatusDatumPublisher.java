@@ -32,6 +32,7 @@ import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
@@ -41,6 +42,7 @@ import net.solarnetwork.domain.GeneralDatumSamplesType;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointErrorCode;
+import net.solarnetwork.ocpp.domain.ChargeSession;
 import net.solarnetwork.ocpp.domain.StatusNotification;
 import net.solarnetwork.util.OptionalService;
 
@@ -56,6 +58,7 @@ public class ConnectorStatusDatumPublisher {
 
 	private final ChargePointSettingsDao chargePointSettingsDao;
 	private final CentralChargePointConnectorDao chargePointConnectorDao;
+	private final CentralChargeSessionDao chargeSessionDao;
 	private final GeneralNodeDatumDao datumDao;
 	private final OptionalService<DatumProcessor> fluxPublisher;
 	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
@@ -68,17 +71,21 @@ public class ConnectorStatusDatumPublisher {
 	 *        the settings DAO to use
 	 * @param chargePointConnectorDao
 	 *        the connector DAO to use
+	 * @param chargeSessionDao
+	 *        charge session DAO to use
 	 * @param datumDao
 	 *        the datum DAO to use
 	 * @param fluxPublisher
 	 *        the optional SolarFlux publisher to use
 	 */
 	public ConnectorStatusDatumPublisher(ChargePointSettingsDao chargePointSettingsDao,
-			CentralChargePointConnectorDao chargePointConnectorDao, GeneralNodeDatumDao datumDao,
+			CentralChargePointConnectorDao chargePointConnectorDao,
+			CentralChargeSessionDao chargeSessionDao, GeneralNodeDatumDao datumDao,
 			OptionalService<DatumProcessor> fluxPublisher) {
 		super();
 		this.chargePointSettingsDao = chargePointSettingsDao;
 		this.chargePointConnectorDao = chargePointConnectorDao;
+		this.chargeSessionDao = chargeSessionDao;
 		this.datumDao = datumDao;
 		this.fluxPublisher = fluxPublisher;
 	}
@@ -101,7 +108,10 @@ public class ConnectorStatusDatumPublisher {
 		VendorId("vendorId", GeneralDatumSamplesType.Status),
 
 		/** A vendor-specific error code. */
-		VendorErrorCode("vendorErrorCode", GeneralDatumSamplesType.Status);
+		VendorErrorCode("vendorErrorCode", GeneralDatumSamplesType.Status),
+
+		/** A charging session ID. */
+		SessionId("sessionId", GeneralDatumSamplesType.Status);
 
 		private final String propertyName;
 		private final GeneralDatumSamplesType classification;
@@ -166,6 +176,7 @@ public class ConnectorStatusDatumPublisher {
 		if ( info == null ) {
 			return;
 		}
+
 		GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
 		if ( info.getStatus() != null ) {
 			s.putSampleValue(DatumProperty.Status.getClassification(),
@@ -182,6 +193,13 @@ public class ConnectorStatusDatumPublisher {
 				DatumProperty.VendorId.getPropertyName(), info.getVendorId());
 		s.putSampleValue(DatumProperty.VendorErrorCode.getClassification(),
 				DatumProperty.VendorErrorCode.getPropertyName(), info.getVendorErrorCode());
+
+		ChargeSession cs = chargeSessionDao.getIncompleteChargeSessionForConnector(chargePoint.getId(),
+				info.getConnectorId());
+		if ( cs != null && !cs.getCreated().isAfter(info.getTimestamp()) ) {
+			s.putSampleValue(DatumProperty.SessionId.getClassification(),
+					DatumProperty.SessionId.getPropertyName(), cs.getId().toString());
+		}
 
 		GeneralNodeDatum d = new GeneralNodeDatum();
 		d.setNodeId(chargePoint.getNodeId());
