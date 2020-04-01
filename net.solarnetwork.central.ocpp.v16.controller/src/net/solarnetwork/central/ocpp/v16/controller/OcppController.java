@@ -32,9 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -68,7 +66,6 @@ import net.solarnetwork.ocpp.domain.ChargePointConnector;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
-import net.solarnetwork.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.ocpp.domain.RegistrationStatus;
 import net.solarnetwork.ocpp.domain.StatusNotification;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
@@ -85,10 +82,6 @@ import ocpp.json.ActionPayloadDecoder;
 import ocpp.v16.ActionErrorCode;
 import ocpp.v16.ChargePointAction;
 import ocpp.v16.ConfigurationKey;
-import ocpp.v16.cp.AvailabilityStatus;
-import ocpp.v16.cp.AvailabilityType;
-import ocpp.v16.cp.ChangeAvailabilityRequest;
-import ocpp.v16.cp.ChangeAvailabilityResponse;
 import ocpp.v16.cp.GetConfigurationRequest;
 import ocpp.v16.cp.GetConfigurationResponse;
 import ocpp.v16.cp.KeyValue;
@@ -194,16 +187,6 @@ public class OcppController extends BasicIdentifiable
 		this.objectMapper = ocpp.json.support.BaseActionPayloadDecoder.defaultObjectMapper();
 	}
 
-	@Override
-	public Set<ChargePointIdentity> availableChargePointsIds() {
-		return chargePointRouter.availableChargePointsIds();
-	}
-
-	@Override
-	public boolean isChargePointAvailable(ChargePointIdentity chargePointId) {
-		return chargePointRouter.availableChargePointsIds().contains(chargePointId);
-	}
-
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public ChargePoint registerChargePoint(ChargePointIdentity identity, ChargePointInfo info) {
@@ -306,56 +289,6 @@ public class OcppController extends BasicIdentifiable
 			} else if ( err != null ) {
 				log.warn("Error requesting configuration from charge point {}: {}",
 						chargePoint.getInfo().getId(), err.getMessage());
-			}
-			return true;
-		};
-	}
-
-	@Override
-	public CompletableFuture<Boolean> adjustConnectorEnabledState(ChargePointIdentity identity,
-			int connectorId, boolean enabled) {
-		ChangeAvailabilityRequest req = new ChangeAvailabilityRequest();
-		req.setConnectorId(connectorId);
-		req.setType(enabled ? AvailabilityType.OPERATIVE : AvailabilityType.INOPERATIVE);
-		CompletableFuture<Boolean> result = new CompletableFuture<>();
-		sendToChargePoint(identity, ChargePointAction.ChangeAvailability, req,
-				changeAvailability(identity, req, result));
-		return result;
-	}
-
-	private ActionMessageResultHandler<ChangeAvailabilityRequest, ChangeAvailabilityResponse> changeAvailability(
-			ChargePointIdentity identity, ChangeAvailabilityRequest req,
-			CompletableFuture<Boolean> future) {
-		return (msg, res, err) -> {
-			if ( res != null ) {
-				AvailabilityStatus status = res.getStatus();
-				if ( status == AvailabilityStatus.ACCEPTED ) {
-					log.info("Charge Point {} connector {} availability set to {}", identity,
-							req.getConnectorId(), req.getType());
-					ChargePoint cp = chargePointDao.getForIdentity(identity);
-					if ( cp == null ) {
-						log.warn("Charge Point {} not available.", identity);
-						future.complete(false);
-					} else {
-						Long id = cp.getId();
-						try {
-							chargePointConnectorDao.updateChargePointStatus(id, req.getConnectorId(),
-									req.getType() == AvailabilityType.OPERATIVE
-											? ChargePointStatus.Available
-											: ChargePointStatus.Unavailable);
-						} catch ( RuntimeException e ) {
-							log.error("Error saving Charge Point {} connector {} status {}: {}", id,
-									req.getConnectorId(), e.toString());
-						}
-						future.complete(true);
-					}
-				} else {
-					log.warn("Charge Point {} connector {} availability rejected change to {}", identity,
-							req.getConnectorId(), req.getType());
-					future.complete(false);
-				}
-			} else {
-				future.completeExceptionally(err);
 			}
 			return true;
 		};
