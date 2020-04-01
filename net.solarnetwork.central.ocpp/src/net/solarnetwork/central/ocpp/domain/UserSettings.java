@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -48,7 +49,35 @@ public class UserSettings extends BasicLongEntity
 		implements Differentiable<UserSettings>, UserRelatedEntity<Long> {
 
 	/** The default {@code sourceIdTemplate} value. */
-	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/{chargerIdentity}/{connectorId}/{location}";
+	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/cp/{chargerIdentifier}/{connectorId}/{location}";
+
+	/**
+	 * A regular expression for finding sequences of more than one {@literal /}
+	 * character or one or more {@literal /} character at the end of the string.
+	 * 
+	 * <p>
+	 * This is designed to be used to normalize source IDs resolved using the
+	 * configured {@code sourceIdTemplate} where a placeholder might be missing
+	 * at runtime, resulting in an empty path segment. It can be used like this:
+	 * </p>
+	 * 
+	 * <blockquote> <code>
+	 * SOURCE_ID_SLASH_PAT.matcher(<i>str</i>).replaceAll("/")
+	 * </code> </blockquote>
+	 */
+	public static final Pattern SOURCE_ID_EMPTY_SEGMENT_PAT = Pattern.compile("((?<=/)/+|/+$)");
+
+	/**
+	 * Replace matches found with {@link #SOURCE_ID_EMPTY_SEGMENT_PAT} with a
+	 * single {@literal /}.
+	 * 
+	 * @param sourceId
+	 *        the source ID to remove empty path segments from
+	 * @return the resulting source ID
+	 */
+	public static String removeEmptySourceIdSegments(String sourceId) {
+		return SOURCE_ID_EMPTY_SEGMENT_PAT.matcher(sourceId).replaceAll("/");
+	}
 
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = true;
