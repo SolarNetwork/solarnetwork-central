@@ -384,7 +384,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	public Collection<ChargeSession> getActiveChargingSessions(ChargePointIdentity identifier) {
 		if ( identifier != null ) {
 			ChargePoint cp = chargePoint(identifier, null);
-			return chargeSessionDao.getIncompleteChargeSessionForChargePoint(cp.getId());
+			return chargeSessionDao.getIncompleteChargeSessionsForChargePoint(cp.getId());
 		}
 		return chargeSessionDao.getIncompleteChargeSessions();
 	}
