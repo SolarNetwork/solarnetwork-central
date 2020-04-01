@@ -97,7 +97,7 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 	}
 
 	@Override
-	public Collection<ChargeSession> getIncompleteChargeSessionForChargePoint(long chargePointId) {
+	public Collection<ChargeSession> getIncompleteChargeSessionsForChargePoint(long chargePointId) {
 		return selectList(QueryName.FindByIncomplete.getQueryName(),
 				singletonMap(FILTER_PROPERTY, CentralChargeSession.forChargePoint(chargePointId)), null,
 				null);
