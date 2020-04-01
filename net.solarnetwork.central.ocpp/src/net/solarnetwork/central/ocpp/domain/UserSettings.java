@@ -62,7 +62,7 @@ public class UserSettings extends BasicLongEntity
 	 * </p>
 	 * 
 	 * <blockquote> <code>
-	 * SOURCE_ID_SLASH_PAT.matcher(<i>str</i>).replaceAll("/")
+	 * SOURCE_ID_SLASH_PAT.matcher(<i>str</i>).replaceAll("")
 	 * </code> </blockquote>
 	 */
 	public static final Pattern SOURCE_ID_EMPTY_SEGMENT_PAT = Pattern.compile("((?<=/)/+|/+$)");
@@ -76,7 +76,7 @@ public class UserSettings extends BasicLongEntity
 	 * @return the resulting source ID
 	 */
 	public static String removeEmptySourceIdSegments(String sourceId) {
-		return SOURCE_ID_EMPTY_SEGMENT_PAT.matcher(sourceId).replaceAll("/");
+		return SOURCE_ID_EMPTY_SEGMENT_PAT.matcher(sourceId).replaceAll("");
 	}
 
 	private boolean publishToSolarIn = true;

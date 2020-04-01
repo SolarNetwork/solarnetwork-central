@@ -128,6 +128,7 @@ public class OcppController extends BasicIdentifiable
 	private TransactionTemplate transactionTemplate;
 	private ActionPayloadDecoder chargePointActionPayloadDecoder;
 	private ObjectMapper objectMapper;
+	private ConnectorStatusDatumPublisher datumPublisher;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -234,7 +235,8 @@ public class OcppController extends BasicIdentifiable
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void updateChargePointStatus(ChargePointIdentity identity, StatusNotification info) {
-		final ChargePoint chargePoint = chargePointDao.getForIdentity(identity);
+		final CentralChargePoint chargePoint = (CentralChargePoint) chargePointDao
+				.getForIdentity(identity);
 		if ( chargePoint == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, identity);
 		}
@@ -244,6 +246,10 @@ public class OcppController extends BasicIdentifiable
 					info.getStatus());
 		} else {
 			chargePointConnectorDao.saveStatusInfo(chargePoint.getId(), info);
+		}
+		ConnectorStatusDatumPublisher publisher = getDatumPublisher();
+		if ( publisher != null ) {
+			publisher.processStatusNotification(chargePoint, info);
 		}
 	}
 
@@ -570,6 +576,25 @@ public class OcppController extends BasicIdentifiable
 	 */
 	public void setObjectMapper(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
+	}
+
+	/**
+	 * Get the configured datum publisher for status notification updates.
+	 * 
+	 * @return the datum publisher
+	 */
+	public ConnectorStatusDatumPublisher getDatumPublisher() {
+		return datumPublisher;
+	}
+
+	/**
+	 * Set a datum publisher for status notification updates.
+	 * 
+	 * @param datumPublisher
+	 *        the datum publisher
+	 */
+	public void setDatumPublisher(ConnectorStatusDatumPublisher datumPublisher) {
+		this.datumPublisher = datumPublisher;
 	}
 
 }
