@@ -27,6 +27,7 @@ Import-Package:
  net.solarnetwork.ocpp.domain;version="[1.1,2.0)",
  net.solarnetwork.ocpp.service;version="[1.1,2.0)",
  net.solarnetwork.ocpp.service.cs;version="[1.1,2.0)",
+ net.solarnetwork.ocpp.v16.cp;version="[1.0,2.0)",
  net.solarnetwork.ocpp.v16.cs;version="[1.1,2.0)",
  net.solarnetwork.pki.bc;version="[1.2,2.0)",
  net.solarnetwork.security;version="[1.0,2.0)",

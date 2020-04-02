@@ -29,6 +29,7 @@ import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
@@ -36,13 +37,13 @@ import java.util.Map;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionState;
@@ -62,9 +63,11 @@ import net.solarnetwork.ocpp.domain.ChargePointErrorCode;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.ocpp.domain.StatusNotification;
+import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
+import net.solarnetwork.util.StaticOptionalService;
 import ocpp.v16.ChargePointAction;
 import ocpp.v16.cp.AvailabilityStatus;
 import ocpp.v16.cp.AvailabilityType;
@@ -86,6 +89,7 @@ public class OcppControllerTests {
 	private CentralAuthorizationDao authorizationDao;
 	private CentralChargePointDao chargePointDao;
 	private CentralChargePointConnectorDao chargePointConnectorDao;
+	private ActionMessageProcessor<JsonNode, Void> instructionHandler;
 
 	private ChargePointBroker chargePointBroker;
 
@@ -93,6 +97,7 @@ public class OcppControllerTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() {
 		chargePointRouter = EasyMock.createMock(ChargePointRouter.class);
@@ -101,6 +106,7 @@ public class OcppControllerTests {
 		authorizationDao = EasyMock.createMock(CentralAuthorizationDao.class);
 		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
 		chargePointConnectorDao = EasyMock.createMock(CentralChargePointConnectorDao.class);
+		instructionHandler = EasyMock.createMock(ActionMessageProcessor.class);
 
 		chargePointBroker = EasyMock.createMock(ChargePointBroker.class);
 
@@ -112,12 +118,12 @@ public class OcppControllerTests {
 	@After
 	public void teardown() {
 		EasyMock.verify(chargePointRouter, userNodeDao, instructionDao, authorizationDao, chargePointDao,
-				chargePointConnectorDao, chargePointBroker);
+				chargePointConnectorDao, chargePointBroker, instructionHandler);
 	}
 
 	private void replayAll() {
 		EasyMock.replay(chargePointRouter, userNodeDao, instructionDao, authorizationDao, chargePointDao,
-				chargePointConnectorDao, chargePointBroker);
+				chargePointConnectorDao, chargePointBroker, instructionHandler);
 	}
 
 	@Test
@@ -234,7 +240,55 @@ public class OcppControllerTests {
 		log.debug("Instruction result parameters: {}", instr.getResultParameters());
 		assertThat("Instruction executing", instr.getState(), equalTo(InstructionState.Executing));
 		assertThat("Result parameters has accepted result", resultParamsCaptor.getValue(),
-				Matchers.hasEntry("status", AvailabilityStatus.ACCEPTED.value()));
+				hasEntry("status", AvailabilityStatus.ACCEPTED.value()));
+	}
+
+	@Test
+	public void handleInstruction_toggleConnectorAvailability_withInstructionHandler() throws Exception {
+		// GIVEN
+		controller.setInstructionHandler(new StaticOptionalService<>(instructionHandler));
+		Long nodeId = randomUUID().getMostSignificantBits();
+		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, new DateTime(), nodeId);
+		String chargerIdentity = randomUUID().toString();
+		instruction.addParameter(OcppController.OCPP_V16_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
+		instruction.addParameter(OCPP_V16_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
+		instruction.addParameter("connectorId", "1");
+		instruction.addParameter("type", AvailabilityType.INOPERATIVE.value());
+		Long instructionId = randomUUID().getMostSignificantBits();
+
+		UserNode userNode = new UserNode(
+				new User(randomUUID().getMostSignificantBits(), "test@localhost"),
+				new SolarNode(nodeId, randomUUID().getMostSignificantBits()));
+		expect(userNodeDao.get(nodeId)).andReturn(userNode);
+
+		CentralChargePoint cp = new CentralChargePoint(userNode.getUserId(), nodeId, Instant.now(),
+				chargerIdentity, "SolarNetwork", "SolarNode");
+		expect(chargePointDao.getForIdentifier(userNode.getUserId(), chargerIdentity)).andReturn(cp);
+
+		Capture<ActionMessage<JsonNode>> messageCaptor = new Capture<>();
+		Capture<ActionMessageResultHandler<JsonNode, Void>> handlerCaptor = new Capture<>();
+		instructionHandler.processActionMessage(capture(messageCaptor), capture(handlerCaptor));
+
+		// WHEN
+		replayAll();
+		NodeInstruction instr = controller.willQueueNodeInstruction(instruction);
+		instr.setId(instructionId);
+		controller.didQueueNodeInstruction(instr, instructionId);
+		handlerCaptor.getValue().handleActionMessageResult(messageCaptor.getValue(), null, null);
+
+		// THEN
+		log.debug("Instruction result parameters: {}", instr.getResultParameters());
+		assertThat("Instruction received", instr.getState(), equalTo(InstructionState.Received));
+		ActionMessage<JsonNode> message = messageCaptor.getValue();
+		assertThat("Message action", message.getAction(), equalTo(ChargePointAction.ChangeAvailability));
+		assertThat("Message ID is instruction ID", message.getMessageId(),
+				equalTo(instructionId.toString()));
+		assertThat("Message client ID", message.getClientId(), equalTo(cp.chargePointIdentity()));
+		JsonNode json = message.getMessage();
+		ChangeAvailabilityRequest req = controller.getObjectMapper().treeToValue(json,
+				ChangeAvailabilityRequest.class);
+		assertThat("Message payload connector ID", req.getConnectorId(), equalTo(1));
+		assertThat("Message payload type", req.getType(), equalTo(AvailabilityType.INOPERATIVE));
 	}
 
 }

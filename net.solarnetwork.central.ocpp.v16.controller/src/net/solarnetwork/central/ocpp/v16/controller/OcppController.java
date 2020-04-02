@@ -43,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -68,15 +69,18 @@ import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 import net.solarnetwork.ocpp.domain.RegistrationStatus;
 import net.solarnetwork.ocpp.domain.StatusNotification;
+import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.service.AuthorizationService;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
 import net.solarnetwork.ocpp.service.cs.ChargePointManager;
+import net.solarnetwork.ocpp.v16.cp.ChargePointActionMessage;
 import net.solarnetwork.security.AuthorizationException;
 import net.solarnetwork.security.AuthorizationException.Reason;
 import net.solarnetwork.support.BasicIdentifiable;
 import net.solarnetwork.util.JsonUtils;
+import net.solarnetwork.util.OptionalService;
 import ocpp.domain.Action;
 import ocpp.domain.ErrorCodeException;
 import ocpp.domain.SchemaValidationException;
@@ -92,7 +96,7 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OcppController extends BasicIdentifiable
 		implements ChargePointManager, AuthorizationService, NodeInstructionQueueHook {
@@ -129,6 +133,7 @@ public class OcppController extends BasicIdentifiable
 	private ActionPayloadDecoder chargePointActionPayloadDecoder;
 	private ObjectMapper objectMapper;
 	private ConnectorStatusDatumPublisher datumPublisher;
+	private OptionalService<ActionMessageProcessor<JsonNode, Void>> instructionHandler;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -371,11 +376,13 @@ public class OcppController extends BasicIdentifiable
 					Collections.singletonMap("error", "OCPP action parameter missing."));
 			return instruction;
 		}
+		ObjectNode jsonPayload;
 		Object payload;
 		try {
+			jsonPayload = objectMapper.valueToTree(params);
 			if ( chargePointActionPayloadDecoder != null ) {
-				ObjectNode json = objectMapper.valueToTree(params);
-				payload = chargePointActionPayloadDecoder.decodeActionPayload(action, false, json);
+				payload = chargePointActionPayloadDecoder.decodeActionPayload(action, false,
+						jsonPayload);
 			} else {
 				payload = params;
 			}
@@ -389,7 +396,10 @@ public class OcppController extends BasicIdentifiable
 					singletonMap("error", "Error decoding OCPP action message: " + root.getMessage()));
 			return instruction;
 		}
-		return new OcppNodeInstruction(instruction, cp.chargePointIdentity(), action, payload);
+		return new OcppNodeInstruction(instruction,
+				(getInstructionHandler() == null ? InstructionState.Executing
+						: InstructionState.Received),
+				cp.chargePointIdentity(), action, jsonPayload, payload);
 	}
 
 	@Override
@@ -398,6 +408,28 @@ public class OcppController extends BasicIdentifiable
 			return;
 		}
 		OcppNodeInstruction instr = (OcppNodeInstruction) instruction;
+
+		ActionMessageProcessor<JsonNode, Void> handler = (instructionHandler != null
+				? instructionHandler.service()
+				: null);
+		if ( handler != null ) {
+			ChargePointActionMessage cpMsg = new ChargePointActionMessage(instr.chargePointIdentity,
+					instr.getId().toString(), instr.action, instr.jsonPayload);
+			handler.processActionMessage(cpMsg, (msg, res, err) -> {
+				if ( err != null ) {
+					Throwable root = err;
+					while ( root.getCause() != null ) {
+						root = root.getCause();
+					}
+					instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
+							instr.getState(), InstructionState.Declined,
+							singletonMap("error", "Error handling OCPP action: " + root.getMessage()));
+				}
+				return true;
+			});
+			return;
+		}
+
 		sendToChargePoint(instr.chargePointIdentity, instr.action, instr.payload, (msg, res, err) -> {
 			if ( err != null ) {
 				Throwable root = err;
@@ -405,7 +437,7 @@ public class OcppController extends BasicIdentifiable
 					root = root.getCause();
 				}
 				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
-						InstructionState.Executing, InstructionState.Declined,
+						instr.getState(), InstructionState.Declined,
 						singletonMap("error", "Error handling OCPP action: " + root.getMessage()));
 			} else {
 				Map<String, Object> resultParameters = null;
@@ -413,7 +445,7 @@ public class OcppController extends BasicIdentifiable
 					resultParameters = JsonUtils.getStringMapFromTree(objectMapper.valueToTree(res));
 				}
 				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
-						InstructionState.Executing, InstructionState.Completed, resultParameters);
+						instr.getState(), InstructionState.Completed, resultParameters);
 			}
 			return true;
 		});
@@ -424,15 +456,18 @@ public class OcppController extends BasicIdentifiable
 		private static final long serialVersionUID = -100774686071322459L;
 
 		private final ChargePointIdentity chargePointIdentity;
-		private final Action action;
+		private final ChargePointAction action;
+		private final ObjectNode jsonPayload;
 		private final Object payload;
 
-		private OcppNodeInstruction(NodeInstruction instruction, ChargePointIdentity chargePointIdentity,
-				Action action, Object payload) {
+		private OcppNodeInstruction(NodeInstruction instruction, InstructionState state,
+				ChargePointIdentity chargePointIdentity, ChargePointAction action,
+				ObjectNode jsonPayload, Object payload) {
 			super(instruction);
-			setState(InstructionState.Executing);
+			setState(state);
 			this.chargePointIdentity = chargePointIdentity;
 			this.action = action;
+			this.jsonPayload = jsonPayload;
 			this.payload = payload;
 		}
 	}
@@ -582,6 +617,7 @@ public class OcppController extends BasicIdentifiable
 	 * Get the configured datum publisher for status notification updates.
 	 * 
 	 * @return the datum publisher
+	 * @since 1.1
 	 */
 	public ConnectorStatusDatumPublisher getDatumPublisher() {
 		return datumPublisher;
@@ -592,9 +628,35 @@ public class OcppController extends BasicIdentifiable
 	 * 
 	 * @param datumPublisher
 	 *        the datum publisher
+	 * @since 1.1
 	 */
 	public void setDatumPublisher(ConnectorStatusDatumPublisher datumPublisher) {
 		this.datumPublisher = datumPublisher;
+	}
+
+	/**
+	 * Get an action processor to handle instructions with.
+	 * 
+	 * @return the action processor
+	 */
+	public OptionalService<ActionMessageProcessor<JsonNode, Void>> getInstructionHandler() {
+		return instructionHandler;
+	}
+
+	/**
+	 * Set an action processor to handle instructions with.
+	 * 
+	 * <p>
+	 * If this is configured, then instruction handling will be delegated to
+	 * this service.
+	 * </p>
+	 * 
+	 * @param instructionHandler
+	 *        the handler
+	 */
+	public void setInstructionHandler(
+			OptionalService<ActionMessageProcessor<JsonNode, Void>> instructionHandler) {
+		this.instructionHandler = instructionHandler;
 	}
 
 }
