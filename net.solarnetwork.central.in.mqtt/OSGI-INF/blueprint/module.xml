@@ -102,6 +102,13 @@
 			<argument ref="executor"/>
 			<argument ref="dataCollectorBiz"/>
 			<argument ref="nodeInstructionDao"/>
+			<argument>
+				<bean class="net.solarnetwork.util.DynamicServiceTracker">
+					<property name="bundleContext" ref="bundleContext"/>
+					<property name="serviceClassName" value="net.solarnetwork.common.mqtt.MqttConnectionObserver"/>
+					<property name="serviceFilter" value="(&amp;(function=central)(role=solarin))"/>
+				</bean>
+			</argument>
 			<property name="mqttConfig.optionalSslService" ref="sslService"/>
 		</bean>
 	</osgix:managed-service-factory>

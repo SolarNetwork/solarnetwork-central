@@ -56,12 +56,13 @@ import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.util.OptionalService;
+import net.solarnetwork.util.OptionalServiceCollection;
 
 /**
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class MqttDataCollector extends BaseMqttConnectionService
 		implements NodeInstructionQueueHook, MqttConnectionObserver, MqttMessageHandler {
@@ -120,6 +121,7 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	private final Executor executor;
 	private final DataCollectorBiz dataCollectorBiz;
 	private final OptionalService<NodeInstructionDao> nodeInstructionDaoRef;
+	private final OptionalServiceCollection<MqttConnectionObserver> connectionObservers;
 
 	private String nodeInstructionTopicTemplate = DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE;
 	private String nodeDatumTopicTemplate = DEFAULT_NODE_DATUM_TOPIC_TEMPLATE;
@@ -141,10 +143,13 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	 *        data collector
 	 * @param nodeInstructionDao
 	 *        node instruction
+	 * @param connectionObservers
+	 *        optional connection observers
 	 */
 	public MqttDataCollector(MqttConnectionFactory connectionFactory, ObjectMapper objectMapper,
 			ObjectMapper objectMapper2, Executor executor, DataCollectorBiz dataCollectorBiz,
-			OptionalService<NodeInstructionDao> nodeInstructionDao) {
+			OptionalService<NodeInstructionDao> nodeInstructionDao,
+			OptionalServiceCollection<MqttConnectionObserver> connectionObservers) {
 		super(connectionFactory, new MqttStats("MqttDataCollector", 500, SolarInCountStat.values()));
 		assert objectMapper != null && executor != null && dataCollectorBiz != null;
 		this.objectMapper = objectMapper;
@@ -152,27 +157,62 @@ public class MqttDataCollector extends BaseMqttConnectionService
 		this.executor = executor;
 		this.dataCollectorBiz = dataCollectorBiz;
 		this.nodeInstructionDaoRef = nodeInstructionDao;
+		this.connectionObservers = connectionObservers;
 	}
+
+	// TODO: need way to dynamically add observers after connection already established;
+	//       keep track of connections we've seen and if a new one is added then call
+	//       onMqttServerConnectionEstablished() methods on it; similarly do the same
+	//       when observer is de-registered
 
 	@Override
 	public void onMqttServerConnectionLost(MqttConnection connection, boolean willReconnect,
 			Throwable cause) {
-		// nothing
+		if ( connectionObservers != null ) {
+			for ( MqttConnectionObserver o : connectionObservers.services() ) {
+				try {
+					o.onMqttServerConnectionLost(connection, willReconnect, cause);
+				} catch ( Throwable t ) {
+					// naughty!
+					Throwable root = t;
+					while ( root.getCause() != null ) {
+						root = root.getCause();
+					}
+					log.error("Unhandled error in MQTT connection {} lost observer {}: {}",
+							getMqttConfig().getServerUri(), o, root.getMessage(), root);
+				}
+			}
+		}
 	}
 
 	@Override
-	public void onMqttServerConnectionEstablisehd(MqttConnection connection, boolean reconnected) {
-		if ( publishOnly ) {
-			return;
+	public void onMqttServerConnectionEstablished(MqttConnection connection, boolean reconnected) {
+		if ( !publishOnly ) {
+			final String datumTopics = String.format(nodeDatumTopicTemplate, "+");
+			try {
+				connection.subscribe(datumTopics, getSubscribeQos(), null)
+						.get(getMqttConfig().getConnectTimeoutSeconds(), TimeUnit.SECONDS);
+				log.info("Subscribed to MQTT topic {} @ {}", datumTopics,
+						getMqttConfig().getServerUri());
+			} catch ( InterruptedException | ExecutionException | TimeoutException e ) {
+				log.error("Failed to subscribe to MQTT topic {} @ {}: {}", datumTopics,
+						getMqttConfig().getServerUri(), e.toString());
+			}
 		}
-		final String datumTopics = String.format(nodeDatumTopicTemplate, "+");
-		try {
-			connection.subscribe(datumTopics, getSubscribeQos(), null)
-					.get(getMqttConfig().getConnectTimeoutSeconds(), TimeUnit.SECONDS);
-			log.info("Subscribed to MQTT topic {} @ {}", datumTopics, getMqttConfig().getServerUri());
-		} catch ( InterruptedException | ExecutionException | TimeoutException e ) {
-			log.error("Failed to subscribe to MQTT topic {} @ {}: {}", datumTopics,
-					getMqttConfig().getServerUri(), e.toString());
+		if ( connectionObservers != null ) {
+			for ( MqttConnectionObserver o : connectionObservers.services() ) {
+				try {
+					o.onMqttServerConnectionEstablished(connection, reconnected);
+				} catch ( Throwable t ) {
+					// naughty!
+					Throwable root = t;
+					while ( root.getCause() != null ) {
+						root = root.getCause();
+					}
+					log.error("Unhandled error in MQTT connection {} established observer {}: {}",
+							getMqttConfig().getServerUri(), o, root.getMessage(), root);
+				}
+			}
 		}
 	}
 
@@ -183,6 +223,7 @@ public class MqttDataCollector extends BaseMqttConnectionService
 		private UseLegacyObjectMapperException() {
 			super();
 		}
+
 	}
 
 	@Override

@@ -131,7 +131,8 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 				Executors.newCachedThreadPool(), scheduler);
 
 		service = new MqttDataCollector(factory, objectMapper, null, new CallingThreadExecutorService(),
-				dataCollectorBiz, new StaticOptionalService<NodeInstructionDao>(nodeInstructionDao));
+				dataCollectorBiz, new StaticOptionalService<NodeInstructionDao>(nodeInstructionDao),
+				null);
 		service.getMqttConfig().setClientId(TEST_CLIENT_ID);
 		service.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
 		Future<?> f = service.startup();
