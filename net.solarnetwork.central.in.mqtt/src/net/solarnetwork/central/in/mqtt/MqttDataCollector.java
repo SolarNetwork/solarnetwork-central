@@ -432,7 +432,7 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	 * 
 	 * <p>
 	 * This topic template will be used to subscribe to node datum topics, using
-	 * either a {@literal +} wildcard parameter.
+	 * a {@literal +} wildcard parameter.
 	 * </p>
 	 * 
 	 * @param nodeDatumTopicTemplate
