@@ -41,12 +41,14 @@
 	
 	<reference id="chargePointDao" interface="net.solarnetwork.central.ocpp.dao.CentralChargePointDao" filter="(function=central)"/>
 	
-	<!--
-	<reference id="chargingProfileDao" interface="net.solarnetwork.ocpp.dao.ChargingProfileDao" filter="(function=central)"/>
-	-->
-	
 	<reference id="chargePointConnectorDao" interface="net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao" filter="(function=central)"/>
 	
+	<reference id="chargePointSettingsDao" interface="net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao" filter="(function=central)"/>
+
+	<reference id="chargeSessionDao" interface="net.solarnetwork.ocpp.dao.ChargeSessionDao" filter="(function=central)"/>
+
+	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
+
 	<reference id="systemUserDao" interface="net.solarnetwork.ocpp.dao.SystemUserDao" filter="(function=central)"/>
 	
 	<reference id="chargePointRouter" interface="net.solarnetwork.ocpp.service.ChargePointRouter" filter="(function=central)"/>
@@ -55,6 +57,12 @@
 	
 	<reference id="chargePointActionPayloadDecoder" interface="ocpp.json.ActionPayloadDecoder" filter="(&amp;(function=central)(role=cp)(version=1.6))"/>
 	
+	<bean id="fluxPublisher" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.datum.biz.DatumProcessor"/>
+		<property name="serviceFilter" value="(function=solarflux)"/>
+	</bean>
+
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 	
@@ -187,6 +195,15 @@
 		<argument ref="chargePointConnectorDao"/>
 		<property name="transactionTemplate" ref="transactionTemplate"/>
 		<property name="chargePointActionPayloadDecoder" ref="chargePointActionPayloadDecoder"/>
+		<property name="datumPublisher">
+			<bean class="net.solarnetwork.central.ocpp.v16.controller.ConnectorStatusDatumPublisher">
+				<argument ref="chargePointSettingsDao"/>
+				<argument ref="chargePointConnectorDao"/>
+				<argument ref="chargeSessionDao"/>
+				<argument ref="generalNodeDatumDao"/>
+				<argument ref="fluxPublisher"/>
+			</bean>
+		</property>
 	</bean>
 	
 	<bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
