@@ -166,6 +166,7 @@ public class Instruction extends BaseEntity {
 	 *         {@link #getParameters()} is {@literal null}
 	 * @since 1.4
 	 */
+	@JsonIgnore
 	public Map<String, String> getParams() {
 		List<InstructionParameter> l = getParameters();
 		if ( l == null ) {
