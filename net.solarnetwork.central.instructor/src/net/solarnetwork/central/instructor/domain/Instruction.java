@@ -193,6 +193,7 @@ public class Instruction extends BaseEntity {
 	 *        the parameters to set
 	 * @since 1.4
 	 */
+	@JsonSetter("params")
 	public void setParams(Map<String, String> params) {
 		List<InstructionParameter> l = null;
 		if ( params != null ) {
