@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet OCPP DAO - MyBatis - Tests
 Bundle-SymbolicName: net.solarnetwork.central.ocpp.dao.mybatis.test
-Bundle-Version: 1.0.0
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.ocpp.dao.mybatis.test
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -15,7 +15,7 @@ Import-Package:
  net.solarnetwork.central.dao.mybatis.type;version="[1.0,2.0)",
  net.solarnetwork.central.domain;version="[2.0,3.0)",
  net.solarnetwork.central.ocpp.dao;version="[1.0,2.0)",
- net.solarnetwork.central.ocpp.dao.mybatis;version="[1.0,2.0)",
+ net.solarnetwork.central.ocpp.dao.mybatis;version="[1.1,2.0)",
  net.solarnetwork.central.ocpp.dao.mybatis.map;version="[1.0,2.0)",
  net.solarnetwork.central.ocpp.domain;version="[1.0,2.0)",
  net.solarnetwork.central.support;version="[2.0,3.0)",
@@ -23,7 +23,7 @@ Import-Package:
  net.solarnetwork.central.test;version="[2.0,3.0)",
  net.solarnetwork.dao;version="[1.0,2.0)",
  net.solarnetwork.domain;version="[1.19,2.0)",
- net.solarnetwork.ocpp.dao;version="[1.0,2.0)",
+ net.solarnetwork.ocpp.dao;version="[1.1,2.0)",
  net.solarnetwork.ocpp.domain;version="[1.0,2.0)",
  net.solarnetwork.support;version="[1.11,2.0)",
  org.apache.commons.logging;version="[1.1,2.0)",

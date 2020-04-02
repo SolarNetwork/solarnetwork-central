@@ -210,7 +210,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		dao.save(two);
 
 		Collection<ChargeSession> sess = dao
-				.getIncompleteChargeSessionForChargePoint(s.getChargePointId());
+				.getIncompleteChargeSessionsForChargePoint(s.getChargePointId());
 		assertThat("Incomplete session found", sess, contains(s));
 	}
 
@@ -227,7 +227,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		dao.save(two);
 
 		Collection<ChargeSession> sess = dao
-				.getIncompleteChargeSessionForChargePoint(s.getChargePointId());
+				.getIncompleteChargeSessionsForChargePoint(s.getChargePointId());
 		assertThat("Incomplete session found", sess, contains(s));
 	}
 
@@ -242,7 +242,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		dao.save(two);
 
 		Collection<ChargeSession> sess = dao
-				.getIncompleteChargeSessionForChargePoint(s.getChargePointId());
+				.getIncompleteChargeSessionsForChargePoint(s.getChargePointId());
 		assertThat("Incomplete session found", sess, contains(s, two));
 	}
 

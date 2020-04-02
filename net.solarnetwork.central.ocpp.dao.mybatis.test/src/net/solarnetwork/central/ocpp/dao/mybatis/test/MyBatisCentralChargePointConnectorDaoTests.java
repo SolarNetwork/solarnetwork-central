@@ -235,6 +235,37 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 	}
 
 	@Test
+	public void findForOwnerAndChargePoint() {
+		ChargePoint cp1 = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
+		ChargePointConnector obj1 = createTestConnector(cp1.getId(), 1);
+		obj1 = dao.get(dao.save(obj1));
+		ChargePointConnector obj2 = createTestConnector(cp1.getId(), 2);
+		obj2 = dao.get(dao.save(obj2));
+
+		Long userId2 = userId - 1;
+		Long nodeId2 = nodeId - 1;
+		setupTestUser(userId2);
+		setupTestNode(nodeId2);
+		setupTestUserNode(userId2, nodeId2);
+		ChargePoint cp2 = createAndSaveTestChargePoint("foo", "bar", userId2, nodeId2);
+		ChargePointConnector obj3 = createTestConnector(cp2.getId(), 1);
+		obj3 = dao.get(dao.save(obj3));
+
+		List<ChargePointConnectorKey> expectedKeys = new ArrayList<>();
+		expectedKeys.add(obj1.getId());
+		expectedKeys.add(obj2.getId());
+		expectedKeys.sort(null);
+
+		// add another for a different charge point
+		insert();
+
+		Collection<CentralChargePointConnector> results = dao.findByChargePointId(userId, cp1.getId());
+		assertThat("Result keys",
+				results.stream().map(ChargePointConnector::getId).collect(Collectors.toList()),
+				equalTo(expectedKeys));
+	}
+
+	@Test
 	public void findForChargePoint() {
 		insert();
 

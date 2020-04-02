@@ -26,11 +26,38 @@
 		</websocket:handshake-interceptors>
 	</websocket:handlers>
 	
+	<bean id="objectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
+		<property name="featuresToDisable">
+			<list>
+				<value>#{T(com.fasterxml.jackson.databind.SerializationFeature).WRITE_DATES_AS_TIMESTAMPS}</value>
+			</list>
+		</property>
+		<property name="modules">
+			<list>
+				<bean class="com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="centralServiceActionPayloadDecoder_v16" class="ocpp.v16.cs.json.CentralServiceActionPayloadDecoder">
+		<constructor-arg ref="objectMapper"/>
+	</bean>
+
+	<bean id="chargePointActionPayloadDecoder_v16" class="ocpp.v16.cp.json.ChargePointActionPayloadDecoder">
+		<constructor-arg ref="objectMapper"/>
+	</bean>
+
 	<bean id="ocppWebSocketHandler_v16" class="net.solarnetwork.ocpp.web.json.OcppWebSocketHandler" 
 			init-method="startup" destroy-method="shutdown">
 		<constructor-arg>
 			<osgi:reference interface="org.springframework.core.task.AsyncTaskExecutor" filter="(function=central)"/>
 		</constructor-arg>
+		<constructor-arg ref="objectMapper"/>
+		<constructor-arg>
+			<bean class="net.solarnetwork.ocpp.service.SimpleActionMessageQueue"/>
+		</constructor-arg>
+		<constructor-arg ref="centralServiceActionPayloadDecoder_v16"/>
+		<constructor-arg ref="chargePointActionPayloadDecoder_v16"/>
 		<property name="taskScheduler">
 			<osgi:reference interface="org.springframework.scheduling.TaskScheduler" filter="(function=central)"/>
 		</property>
@@ -46,6 +73,22 @@
 		<osgi:service-properties>
 			<entry key="function" value="central"/>
 			<entry key="protocol" value="json"/>
+		</osgi:service-properties>
+	</osgi:service>
+	
+	<osgi:service interface="ocpp.json.ActionPayloadDecoder" ref="centralServiceActionPayloadDecoder_v16">
+		<osgi:service-properties>
+			<entry key="function" value="central"/>
+			<entry key="role" value="cs"/>
+			<entry key="version" value="1.6"/>
+		</osgi:service-properties>
+	</osgi:service>
+	
+	<osgi:service interface="ocpp.json.ActionPayloadDecoder" ref="chargePointActionPayloadDecoder_v16">
+		<osgi:service-properties>
+			<entry key="function" value="central"/>
+			<entry key="role" value="cp"/>
+			<entry key="version" value="1.6"/>
 		</osgi:service-properties>
 	</osgi:service>
 	

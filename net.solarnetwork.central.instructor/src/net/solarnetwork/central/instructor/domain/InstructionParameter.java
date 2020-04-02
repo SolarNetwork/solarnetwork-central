@@ -28,7 +28,7 @@ import java.io.Serializable;
  * Helper class for instruction parameters.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class InstructionParameter implements Serializable {
 
@@ -106,6 +106,17 @@ public class InstructionParameter implements Serializable {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("InstructionParameter{");
+		builder.append(name);
+		builder.append("=");
+		builder.append(value);
+		builder.append("}");
+		return builder.toString();
 	}
 
 }

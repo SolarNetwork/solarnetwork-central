@@ -64,6 +64,17 @@ public interface CentralChargePointConnectorDao extends ChargePointConnectorDao 
 	CentralChargePointConnector get(Long userId, ChargePointConnectorKey id);
 
 	/**
+	 * Find all available connectors for a given Charge Point ID.
+	 * 
+	 * @param userId
+	 *        the onwer ID
+	 * @param chargePointId
+	 *        the ID of the Charge Point to find connectors for
+	 * @return the connectors, ordered by connector ID in ascending order
+	 */
+	Collection<CentralChargePointConnector> findByChargePointId(Long userId, long chargePointId);
+
+	/**
 	 * Delete an connector by its unique ID.
 	 * 
 	 * @param userId

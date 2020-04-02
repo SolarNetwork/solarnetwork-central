@@ -25,7 +25,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.0,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.export" rev="[1.1,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.imp" rev="[1.0,)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.instructor" rev="[1.8,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.instructor" rev="[1.9,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[3.0,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[2.1,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.billing" rev="[1.0,)"/>

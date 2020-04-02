@@ -107,6 +107,12 @@ public class MyBatisCentralChargePointConnectorDao
 	}
 
 	@Override
+	public Collection<CentralChargePointConnector> findByChargePointId(Long userId, long chargePointId) {
+		return selectList(getQueryForAll(), singletonMap(FILTER_PROPERTY,
+				new CentralChargePointConnector(chargePointId, 0, userId, null)), null, null);
+	}
+
+	@Override
 	public CentralChargePointConnector get(Long userId, ChargePointConnectorKey id) {
 		CentralChargePointConnector result = selectFirst(getQueryForAll(),
 				singletonMap(FILTER_PROPERTY, new CentralChargePointConnector(id, userId)));

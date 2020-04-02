@@ -38,7 +38,7 @@ import net.solarnetwork.central.support.JsonUtils;
  * Domain object for an individual instruction.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class Instruction extends BaseEntity {
 
@@ -159,6 +159,52 @@ public class Instruction extends BaseEntity {
 		this.parameters = parameters;
 	}
 
+	/**
+	 * Get the instruction parameters as a single-valued map.
+	 * 
+	 * @return the parameters as a map, or {@literal null} if
+	 *         {@link #getParameters()} is {@literal null}
+	 * @since 1.4
+	 */
+	public Map<String, String> getParams() {
+		List<InstructionParameter> l = getParameters();
+		if ( l == null ) {
+			return null;
+		}
+		Map<String, String> params = new LinkedHashMap<>(l.size());
+		for ( InstructionParameter p : l ) {
+			if ( p.getName() != null && p.getValue() != null ) {
+				params.put(p.getName(), p.getValue());
+			}
+		}
+		return params;
+	}
+
+	/**
+	 * Set the instruction parameters as a single-valued map.
+	 * 
+	 * <p>
+	 * This completely replaces any existing parameters set via
+	 * {@link #setParameters(List)}.
+	 * </p>
+	 * 
+	 * @param params
+	 *        the parameters to set
+	 * @since 1.4
+	 */
+	public void setParams(Map<String, String> params) {
+		List<InstructionParameter> l = null;
+		if ( params != null ) {
+			l = new ArrayList<>(params.size());
+			for ( Map.Entry<String, String> e : params.entrySet() ) {
+				if ( e.getKey() != null && e.getValue() != null ) {
+					l.add(new InstructionParameter(e.getKey(), e.getValue()));
+				}
+			}
+		}
+		setParameters(l);
+	}
+
 	@JsonIgnore
 	@SuppressWarnings("unchecked")
 	public Map<String, Object> getResultParameters() {
@@ -216,6 +262,21 @@ public class Instruction extends BaseEntity {
 	public void setResultParametersJson(String json) {
 		resultParametersJson = json;
 		resultParameters = null;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Instruction{id=");
+		builder.append(getId());
+		builder.append(", topic=");
+		builder.append(topic);
+		builder.append(", state=");
+		builder.append(state);
+		builder.append(", parameters=");
+		builder.append(parameters);
+		builder.append("}");
+		return builder.toString();
 	}
 
 }

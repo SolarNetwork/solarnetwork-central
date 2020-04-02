@@ -22,14 +22,17 @@
 
 package net.solarnetwork.central.ocpp.v16.controller;
 
+import static java.util.Collections.singletonMap;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -40,10 +43,19 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
+import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
+import net.solarnetwork.central.instructor.domain.InstructionParameter;
+import net.solarnetwork.central.instructor.domain.InstructionState;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
-import net.solarnetwork.ocpp.dao.ChargePointConnectorDao;
+import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.Authorization;
 import net.solarnetwork.ocpp.domain.AuthorizationInfo;
@@ -54,7 +66,6 @@ import net.solarnetwork.ocpp.domain.ChargePointConnector;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
-import net.solarnetwork.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.ocpp.domain.RegistrationStatus;
 import net.solarnetwork.ocpp.domain.StatusNotification;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
@@ -62,16 +73,17 @@ import net.solarnetwork.ocpp.service.AuthorizationService;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
 import net.solarnetwork.ocpp.service.cs.ChargePointManager;
+import net.solarnetwork.security.AuthorizationException;
+import net.solarnetwork.security.AuthorizationException.Reason;
 import net.solarnetwork.support.BasicIdentifiable;
+import net.solarnetwork.util.JsonUtils;
 import ocpp.domain.Action;
 import ocpp.domain.ErrorCodeException;
+import ocpp.domain.SchemaValidationException;
+import ocpp.json.ActionPayloadDecoder;
 import ocpp.v16.ActionErrorCode;
 import ocpp.v16.ChargePointAction;
 import ocpp.v16.ConfigurationKey;
-import ocpp.v16.cp.AvailabilityStatus;
-import ocpp.v16.cp.AvailabilityType;
-import ocpp.v16.cp.ChangeAvailabilityRequest;
-import ocpp.v16.cp.ChangeAvailabilityResponse;
 import ocpp.v16.cp.GetConfigurationRequest;
 import ocpp.v16.cp.GetConfigurationResponse;
 import ocpp.v16.cp.KeyValue;
@@ -83,18 +95,40 @@ import ocpp.v16.cp.KeyValue;
  * @version 1.0
  */
 public class OcppController extends BasicIdentifiable
-		implements ChargePointManager, AuthorizationService {
+		implements ChargePointManager, AuthorizationService, NodeInstructionQueueHook {
 
 	/** The default {@code initialRegistrationStatus} value. */
 	public static final RegistrationStatus DEFAULT_INITIAL_REGISTRATION_STATUS = RegistrationStatus.Pending;
 
+	/** A node instruction topic for OCPP v1.6 actions. */
+	public static final String OCPP_V16_TOPIC = "OCPP_v16";
+
+	/** A node instruction parameter name for an OCPP v1.6 action name. */
+	public static final String OCPP_V16_ACTION_PARAM = "action";
+
+	/**
+	 * A node instruction parameter name for an OCPP v1.6 ChargePoint
+	 * identifier.
+	 */
+	public static final String OCPP_V16_CHARGER_IDENTIFIER_PARAM = "chargerIdentifier";
+
+	/**
+	 * A node instruction parameter name for an OCPP v1.6 ChargePoint entity ID.
+	 */
+	public static final String OCPP_V16_CHARGE_POINT_ID_PARAM = "chargePointId";
+
 	private final Executor executor;
+	private final UserNodeDao userNodeDao;
+	private final NodeInstructionDao instructionDao;
 	private final ChargePointRouter chargePointRouter;
 	private final CentralAuthorizationDao authorizationDao;
 	private final CentralChargePointDao chargePointDao;
-	private final ChargePointConnectorDao chargePointConnectorDao;
+	private final CentralChargePointConnectorDao chargePointConnectorDao;
 	private RegistrationStatus initialRegistrationStatus;
 	private TransactionTemplate transactionTemplate;
+	private ActionPayloadDecoder chargePointActionPayloadDecoder;
+	private ObjectMapper objectMapper;
+	private ConnectorStatusDatumPublisher datumPublisher;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -105,6 +139,10 @@ public class OcppController extends BasicIdentifiable
 	 *        a task runner
 	 * @param chargePointRouter
 	 *        the broker router to push messages to Charge Points with with
+	 * @param userNodeDao
+	 *        the user node DAO to use
+	 * @param instructionDao
+	 *        the instruction DAO to use
 	 * @param authorizationDao
 	 *        the {@link Authorization} DAO to use
 	 * @param chargePointDao
@@ -115,8 +153,9 @@ public class OcppController extends BasicIdentifiable
 	 *         if any parameter is {@literal null}
 	 */
 	public OcppController(Executor executor, ChargePointRouter chargePointRouter,
+			UserNodeDao userNodeDao, NodeInstructionDao instructionDao,
 			CentralAuthorizationDao authorizationDao, CentralChargePointDao chargePointDao,
-			ChargePointConnectorDao chargePointConnectorDao) {
+			CentralChargePointConnectorDao chargePointConnectorDao) {
 		super();
 		if ( executor == null ) {
 			throw new IllegalArgumentException("The executor parameter must not be null.");
@@ -126,6 +165,14 @@ public class OcppController extends BasicIdentifiable
 			throw new IllegalArgumentException("The chargePointRouter parameter must not be null.");
 		}
 		this.chargePointRouter = chargePointRouter;
+		if ( userNodeDao == null ) {
+			throw new IllegalArgumentException("The userNodeDao parameter must not be null.");
+		}
+		this.userNodeDao = userNodeDao;
+		if ( instructionDao == null ) {
+			throw new IllegalArgumentException("The instructionDao parameter must not be null.");
+		}
+		this.instructionDao = instructionDao;
 		if ( authorizationDao == null ) {
 			throw new IllegalArgumentException("The authorizationDao parameter must not be null.");
 		}
@@ -140,16 +187,7 @@ public class OcppController extends BasicIdentifiable
 		}
 		this.chargePointConnectorDao = chargePointConnectorDao;
 		this.initialRegistrationStatus = DEFAULT_INITIAL_REGISTRATION_STATUS;
-	}
-
-	@Override
-	public Set<ChargePointIdentity> availableChargePointsIds() {
-		return chargePointRouter.availableChargePointsIds();
-	}
-
-	@Override
-	public boolean isChargePointAvailable(ChargePointIdentity chargePointId) {
-		return chargePointRouter.availableChargePointsIds().contains(chargePointId);
+		this.objectMapper = ocpp.json.support.BaseActionPayloadDecoder.defaultObjectMapper();
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -192,6 +230,27 @@ public class OcppController extends BasicIdentifiable
 	public boolean isChargePointRegistrationAccepted(long chargePointId) {
 		ChargePoint cp = chargePointDao.get(chargePointId);
 		return cp != null && cp.isEnabled() && cp.getRegistrationStatus() == RegistrationStatus.Accepted;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void updateChargePointStatus(ChargePointIdentity identity, StatusNotification info) {
+		final CentralChargePoint chargePoint = (CentralChargePoint) chargePointDao
+				.getForIdentity(identity);
+		if ( chargePoint == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, identity);
+		}
+		log.info("Received Charge Point {} status: {}", identity, info);
+		if ( info.getConnectorId() == 0 ) {
+			chargePointConnectorDao.updateChargePointStatus(chargePoint.getId(), info.getConnectorId(),
+					info.getStatus());
+		} else {
+			chargePointConnectorDao.saveStatusInfo(chargePoint.getId(), info);
+		}
+		ConnectorStatusDatumPublisher publisher = getDatumPublisher();
+		if ( publisher != null ) {
+			publisher.processStatusNotification(chargePoint, info);
+		}
 	}
 
 	private ActionMessageResultHandler<GetConfigurationRequest, GetConfigurationResponse> processConfiguration(
@@ -260,56 +319,6 @@ public class OcppController extends BasicIdentifiable
 	}
 
 	@Override
-	public CompletableFuture<Boolean> adjustConnectorEnabledState(ChargePointIdentity identity,
-			int connectorId, boolean enabled) {
-		ChangeAvailabilityRequest req = new ChangeAvailabilityRequest();
-		req.setConnectorId(connectorId);
-		req.setType(enabled ? AvailabilityType.OPERATIVE : AvailabilityType.INOPERATIVE);
-		CompletableFuture<Boolean> result = new CompletableFuture<>();
-		sendToChargePoint(identity, ChargePointAction.ChangeAvailability, req,
-				changeAvailability(identity, req, result));
-		return result;
-	}
-
-	private ActionMessageResultHandler<ChangeAvailabilityRequest, ChangeAvailabilityResponse> changeAvailability(
-			ChargePointIdentity identity, ChangeAvailabilityRequest req,
-			CompletableFuture<Boolean> future) {
-		return (msg, res, err) -> {
-			if ( res != null ) {
-				AvailabilityStatus status = res.getStatus();
-				if ( status == AvailabilityStatus.ACCEPTED ) {
-					log.info("Charge Point {} connector {} availability set to {}", identity,
-							req.getConnectorId(), req.getType());
-					ChargePoint cp = chargePointDao.getForIdentity(identity);
-					if ( cp == null ) {
-						log.warn("Charge Point {} not available.", identity);
-						future.complete(false);
-					} else {
-						Long id = cp.getId();
-						try {
-							chargePointConnectorDao.updateChargePointStatus(id, req.getConnectorId(),
-									req.getType() == AvailabilityType.OPERATIVE
-											? ChargePointStatus.Available
-											: ChargePointStatus.Unavailable);
-						} catch ( RuntimeException e ) {
-							log.error("Error saving Charge Point {} connector {} status {}: {}", id,
-									req.getConnectorId(), e.toString());
-						}
-						future.complete(true);
-					}
-				} else {
-					log.warn("Charge Point {} connector {} availability rejected change to {}", identity,
-							req.getConnectorId(), req.getType());
-					future.complete(false);
-				}
-			} else {
-				future.completeExceptionally(err);
-			}
-			return true;
-		};
-	}
-
-	@Override
 	public AuthorizationInfo authorize(final ChargePointIdentity identity, final String idTag) {
 		Authorization auth = null;
 		if ( identity != null && idTag != null ) {
@@ -332,6 +341,129 @@ public class OcppController extends BasicIdentifiable
 			result.withStatus(AuthorizationStatus.Invalid);
 		}
 		return result.build();
+	}
+
+	@Override
+	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
+		final String topic = instruction.getTopic();
+		final Long nodeId = instruction.getNodeId();
+		if ( !OCPP_V16_TOPIC.equals(topic) || nodeId == null ) {
+			return instruction;
+		}
+		UserNode userNode = userNodeDao.get(nodeId);
+		if ( userNode == null ) {
+			return instruction;
+		}
+		Map<String, String> params = instructionParameterMap(instruction);
+		CentralChargePoint cp = chargePointForParameters(userNode, params);
+		if ( cp == null ) {
+			instruction.setState(InstructionState.Declined);
+			instruction.setResultParameters(
+					Collections.singletonMap("error", "ChargePoint not specified or not available."));
+			return instruction;
+		}
+		ChargePointAction action;
+		try {
+			action = ChargePointAction.valueOf(params.remove(OCPP_V16_ACTION_PARAM));
+		} catch ( IllegalArgumentException | NullPointerException e ) {
+			instruction.setState(InstructionState.Declined);
+			instruction.setResultParameters(
+					Collections.singletonMap("error", "OCPP action parameter missing."));
+			return instruction;
+		}
+		Object payload;
+		try {
+			if ( chargePointActionPayloadDecoder != null ) {
+				ObjectNode json = objectMapper.valueToTree(params);
+				payload = chargePointActionPayloadDecoder.decodeActionPayload(action, false, json);
+			} else {
+				payload = params;
+			}
+		} catch ( IOException | SchemaValidationException e ) {
+			Throwable root = e;
+			while ( root.getCause() != null ) {
+				root = root.getCause();
+			}
+			instruction.setState(InstructionState.Declined);
+			instruction.setResultParameters(
+					singletonMap("error", "Error decoding OCPP action message: " + root.getMessage()));
+			return instruction;
+		}
+		return new OcppNodeInstruction(instruction, cp.chargePointIdentity(), action, payload);
+	}
+
+	@Override
+	public void didQueueNodeInstruction(NodeInstruction instruction, Long instructionId) {
+		if ( !(instruction instanceof OcppNodeInstruction) ) {
+			return;
+		}
+		OcppNodeInstruction instr = (OcppNodeInstruction) instruction;
+		sendToChargePoint(instr.chargePointIdentity, instr.action, instr.payload, (msg, res, err) -> {
+			if ( err != null ) {
+				Throwable root = err;
+				while ( root.getCause() != null ) {
+					root = root.getCause();
+				}
+				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
+						InstructionState.Executing, InstructionState.Declined,
+						singletonMap("error", "Error handling OCPP action: " + root.getMessage()));
+			} else {
+				Map<String, Object> resultParameters = null;
+				if ( res != null ) {
+					resultParameters = JsonUtils.getStringMapFromTree(objectMapper.valueToTree(res));
+				}
+				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
+						InstructionState.Executing, InstructionState.Completed, resultParameters);
+			}
+			return true;
+		});
+	}
+
+	private static final class OcppNodeInstruction extends NodeInstruction {
+
+		private static final long serialVersionUID = -100774686071322459L;
+
+		private final ChargePointIdentity chargePointIdentity;
+		private final Action action;
+		private final Object payload;
+
+		private OcppNodeInstruction(NodeInstruction instruction, ChargePointIdentity chargePointIdentity,
+				Action action, Object payload) {
+			super(instruction);
+			setState(InstructionState.Executing);
+			this.chargePointIdentity = chargePointIdentity;
+			this.action = action;
+			this.payload = payload;
+		}
+	}
+
+	private Map<String, String> instructionParameterMap(NodeInstruction instruction) {
+		List<InstructionParameter> paramList = instruction.getParameters();
+		if ( paramList == null || paramList.isEmpty() ) {
+			return Collections.emptyMap();
+		}
+		Map<String, String> params = new LinkedHashMap<>(paramList.size());
+		for ( InstructionParameter p : paramList ) {
+			params.put(p.getName(), p.getValue());
+		}
+		return params;
+	}
+
+	private CentralChargePoint chargePointForParameters(UserNode userNode,
+			Map<String, String> parameters) {
+		CentralChargePoint result = null;
+		try {
+			Long id = Long.valueOf(parameters.remove(OCPP_V16_CHARGE_POINT_ID_PARAM));
+			result = chargePointDao.get(userNode.getUserId(), id);
+		} catch ( NumberFormatException e ) {
+			// try via identifier
+			String ident = parameters.remove(OCPP_V16_CHARGER_IDENTIFIER_PARAM);
+			if ( ident != null ) {
+				result = (CentralChargePoint) chargePointDao.getForIdentifier(userNode.getUserId(),
+						ident);
+			}
+		}
+		return result;
 	}
 
 	private <T> T tryWithTransaction(TransactionCallback<T> tx) {
@@ -405,6 +537,64 @@ public class OcppController extends BasicIdentifiable
 	 */
 	public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
 		this.transactionTemplate = transactionTemplate;
+	}
+
+	/**
+	 * Get the ChargePoint action payload decoder.
+	 * 
+	 * @return the decoder
+	 */
+	public ActionPayloadDecoder getChargePointActionPayloadDecoder() {
+		return chargePointActionPayloadDecoder;
+	}
+
+	/**
+	 * Set the ChargePoint action payload decoder.
+	 * 
+	 * @param chargePointActionPayloadDecoder
+	 *        the decoder
+	 */
+	public void setChargePointActionPayloadDecoder(
+			ActionPayloadDecoder chargePointActionPayloadDecoder) {
+		this.chargePointActionPayloadDecoder = chargePointActionPayloadDecoder;
+	}
+
+	/**
+	 * Get the {@link ObjectMapper}.
+	 * 
+	 * @return the mapper
+	 */
+	public ObjectMapper getObjectMapper() {
+		return objectMapper;
+	}
+
+	/**
+	 * Set the {@link ObjectMapper} to use.
+	 * 
+	 * @param objectMapper
+	 *        the mapper
+	 */
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
+	}
+
+	/**
+	 * Get the configured datum publisher for status notification updates.
+	 * 
+	 * @return the datum publisher
+	 */
+	public ConnectorStatusDatumPublisher getDatumPublisher() {
+		return datumPublisher;
+	}
+
+	/**
+	 * Set a datum publisher for status notification updates.
+	 * 
+	 * @param datumPublisher
+	 *        the datum publisher
+	 */
+	public void setDatumPublisher(ConnectorStatusDatumPublisher datumPublisher) {
+		this.datumPublisher = datumPublisher;
 	}
 
 }
