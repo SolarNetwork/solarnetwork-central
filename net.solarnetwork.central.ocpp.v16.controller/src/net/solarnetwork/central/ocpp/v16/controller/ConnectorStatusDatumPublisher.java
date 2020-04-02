@@ -32,7 +32,6 @@ import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
-import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
@@ -40,6 +39,7 @@ import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.ocpp.dao.ChargeSessionDao;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointErrorCode;
 import net.solarnetwork.ocpp.domain.ChargeSession;
@@ -58,7 +58,7 @@ public class ConnectorStatusDatumPublisher {
 
 	private final ChargePointSettingsDao chargePointSettingsDao;
 	private final CentralChargePointConnectorDao chargePointConnectorDao;
-	private final CentralChargeSessionDao chargeSessionDao;
+	private final ChargeSessionDao chargeSessionDao;
 	private final GeneralNodeDatumDao datumDao;
 	private final OptionalService<DatumProcessor> fluxPublisher;
 	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
@@ -79,9 +79,8 @@ public class ConnectorStatusDatumPublisher {
 	 *        the optional SolarFlux publisher to use
 	 */
 	public ConnectorStatusDatumPublisher(ChargePointSettingsDao chargePointSettingsDao,
-			CentralChargePointConnectorDao chargePointConnectorDao,
-			CentralChargeSessionDao chargeSessionDao, GeneralNodeDatumDao datumDao,
-			OptionalService<DatumProcessor> fluxPublisher) {
+			CentralChargePointConnectorDao chargePointConnectorDao, ChargeSessionDao chargeSessionDao,
+			GeneralNodeDatumDao datumDao, OptionalService<DatumProcessor> fluxPublisher) {
 		super();
 		this.chargePointSettingsDao = chargePointSettingsDao;
 		this.chargePointConnectorDao = chargePointConnectorDao;
