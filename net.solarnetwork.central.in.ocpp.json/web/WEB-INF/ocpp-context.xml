@@ -46,8 +46,12 @@
 	<bean id="chargePointActionPayloadDecoder_v16" class="ocpp.v16.cp.json.ChargePointActionPayloadDecoder">
 		<constructor-arg ref="objectMapper"/>
 	</bean>
+	
+	<osgi:reference id="chargePointDao" interface="net.solarnetwork.central.ocpp.dao.CentralChargePointDao" filter="(function=central)"/>
 
-	<bean id="ocppWebSocketHandler_v16" class="net.solarnetwork.ocpp.web.json.OcppWebSocketHandler" 
+	<osgi:reference id="instructionDao" interface="net.solarnetwork.central.instructor.dao.NodeInstructionDao"/>
+
+	<bean id="ocppWebSocketHandler_v16" class="net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandler" 
 			init-method="startup" destroy-method="shutdown">
 		<constructor-arg value="ocpp.v16.ChargePointAction"/>
 		<constructor-arg value="ocpp.v16.CentralSystemAction"/>
@@ -66,6 +70,8 @@
 		<property name="taskScheduler">
 			<osgi:reference interface="org.springframework.scheduling.TaskScheduler" filter="(function=central)"/>
 		</property>
+		<property name="chargePointDao" ref="chargePointDao"/>
+		<property name="instructionDao" ref="instructionDao"/>
 	</bean>
 	
 	<osgi:list id="csActions" interface="net.solarnetwork.ocpp.service.ActionMessageProcessor" 

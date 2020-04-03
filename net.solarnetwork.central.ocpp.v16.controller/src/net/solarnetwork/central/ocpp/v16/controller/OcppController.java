@@ -27,9 +27,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -48,7 +47,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
-import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
@@ -473,15 +471,8 @@ public class OcppController extends BasicIdentifiable
 	}
 
 	private Map<String, String> instructionParameterMap(NodeInstruction instruction) {
-		List<InstructionParameter> paramList = instruction.getParameters();
-		if ( paramList == null || paramList.isEmpty() ) {
-			return Collections.emptyMap();
-		}
-		Map<String, String> params = new LinkedHashMap<>(paramList.size());
-		for ( InstructionParameter p : paramList ) {
-			params.put(p.getName(), p.getValue());
-		}
-		return params;
+		Map<String, String> params = instruction.getParams();
+		return (params != null ? params : new HashMap<>(0));
 	}
 
 	private CentralChargePoint chargePointForParameters(UserNode userNode,

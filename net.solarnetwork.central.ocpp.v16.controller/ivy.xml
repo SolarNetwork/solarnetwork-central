@@ -21,7 +21,7 @@
  		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common.pki.bc" rev="[1.3,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[2.2,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.1,3.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.instructor" rev="[1.8,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.instructor" rev="[1.9,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.ocpp" rev="[1.1,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[2.1,)"/>
 	</dependencies>
