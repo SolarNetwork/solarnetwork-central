@@ -55,11 +55,7 @@ import net.solarnetwork.util.JsonUtils;
 import ocpp.domain.Action;
 
 /**
- * FIXME
- * 
- * <p>
- * TODO
- * </p>
+ * Handle OCPP instruction messages by publishing/subscribing them to/from MQTT.
  * 
  * @author matt
  * @version 1.0

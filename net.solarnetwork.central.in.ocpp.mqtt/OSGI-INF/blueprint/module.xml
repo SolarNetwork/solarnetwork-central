@@ -17,9 +17,18 @@
 		http://www.springframework.org/schema/tx
 		http://www.springframework.org/schema/tx/spring-tx-4.2.xsd">
 
-	<reference id="objectMapperService" interface="net.solarnetwork.util.ObjectMapperService"
-		filter="(&amp;(function=central)(role=ocpp))"/>
+	<!-- Configuration -->
 	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.in.ocpp.mqtt">
+		<beans:prop key="mqtt.topic.v16">instr/OCPP_v16</beans:prop>
+		<beans:prop key="mqtt.timeout">30</beans:prop>
+		<beans:prop key="mqtt.publishOnly">true</beans:prop>
+	</osgix:cm-properties>
+
+	<ctx:property-placeholder properties-ref="cfg"/>
+
+	<!-- Service references -->
+
 	<reference id="instructionDao" interface="net.solarnetwork.central.instructor.dao.NodeInstructionDao"/>
 
 	<reference id="chargePointDao" interface="net.solarnetwork.central.ocpp.dao.CentralChargePointDao" filter="(function=central)"/>
@@ -37,15 +46,31 @@
 		</service-properties>
 	</service>
 
-	<bean id="objectMapper" class="com.fasterxml.jackson.databind.ObjectMapper" 
-		factory-ref="objectMapperService" factory-method="getObjectMapper"/>
-	
+	<bean id="objectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
+		<property name="jsonFactory">
+			<bean class="com.fasterxml.jackson.dataformat.cbor.CBORFactory"/>
+		</property>
+		<property name="featuresToDisable">
+			<list>
+				<value>#{T(com.fasterxml.jackson.databind.SerializationFeature).WRITE_DATES_AS_TIMESTAMPS}</value>
+			</list>
+		</property>
+		<property name="modules">
+			<list>
+				<bean class="com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule"/>
+			</list>
+		</property>
+	</bean>
+
 	<bean id="instructionHandler_v16" class="net.solarnetwork.central.in.ocpp.mqtt.MqttInstructionHandler">
 		<argument value="ocpp.v16.ChargePointAction"/>
 		<argument ref="instructionDao"/>
 		<argument ref="chargePointDao"/>
 		<argument ref="objectMapper"/>
 		<argument ref="chargePointRouter"/>
+		<property name="mqttTopic" value="${mqtt.topic.v16}"/>
+		<property name="mqttTimeout" value="${mqtt.timeout}"/>
+		<property name="publishOnly" value="${mqtt.publishOnly}"/>
 	</bean>
 	
 </blueprint>

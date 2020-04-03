@@ -10,6 +10,8 @@ Import-Package:
  com.fasterxml.jackson.core;version="[2.10,3.0)",
  com.fasterxml.jackson.databind;version="[2.10,3.0)",
  com.fasterxml.jackson.databind.node;version="[2.10,3.0)",
+ com.fasterxml.jackson.dataformat.cbor;version="[2.10,3.0)",
+ com.fasterxml.jackson.module.jaxb;version="[2.10,3.0)",
  net.solarnetwork.central.dao;version="[2.0,3.0)",
  net.solarnetwork.central.instructor.dao;version="[1.2,2.0)",
  net.solarnetwork.central.instructor.domain;version="[1.4,2.0)",
