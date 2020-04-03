@@ -172,8 +172,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 			if ( json.isObject() ) {
 				Long instructionId = json.path("messageId").asLong();
 				ChargePointIdentity identity = objectMapper.readValue(
-						objectMapper.treeAsTokens(json.path("chargerIdentity")),
-						ChargePointIdentity.class);
+						objectMapper.treeAsTokens(json.path("clientId")), ChargePointIdentity.class);
 				CentralChargePoint cp = (CentralChargePoint) chargePointDao.getForIdentity(identity);
 				if ( cp == null ) {
 					return;
@@ -186,8 +185,6 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 					for ( T a : actionClass.getEnumConstants() ) {
 						if ( a.name().equals(actionName) ) {
 							action = a;
-							//Object msg = actionPayloadDecoder.decodeActionPayload(action, false,
-							//		payload);
 							break;
 						}
 					}
@@ -220,7 +217,10 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 								}
 								instructionDao.compareAndUpdateInstructionState(instructionId,
 										cp.getNodeId(), InstructionState.Executing,
-										InstructionState.Completed, resultParameters);
+										InstructionState.Completed,
+										resultParameters != null && !resultParameters.isEmpty()
+												? resultParameters
+												: null);
 							}
 							return true;
 						});
