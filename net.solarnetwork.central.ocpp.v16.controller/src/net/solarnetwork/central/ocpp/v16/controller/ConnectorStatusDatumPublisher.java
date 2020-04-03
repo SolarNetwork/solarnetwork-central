@@ -249,7 +249,8 @@ public class ConnectorStatusDatumPublisher {
 	/**
 	 * Get the source ID template.
 	 * 
-	 * @return the template; defaults to {@link #DEFAULT_SOURCE_ID_TEMPLATE}
+	 * @return the template; defaults to
+	 *         {@link UserSettings#DEFAULT_SOURCE_ID_TEMPLATE}
 	 */
 	public String getSourceIdTemplate() {
 		return sourceIdTemplate;
