@@ -29,6 +29,7 @@ import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.bind.WebDataBinder;
@@ -57,15 +58,19 @@ import net.solarnetwork.web.domain.Response;
  * </p>
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
 public class ReportableIntervalController extends WebServiceControllerSupport {
 
+	/** The {@code transientExceptionRetryCount} property default value. */
+	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
+
 	private final QueryBiz queryBiz;
 	private final DatumMetadataBiz datumMetadataBiz;
 	private final PathMatcher pathMatcher;
+	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
 
 	/**
 	 * Constructor.
@@ -156,8 +161,22 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	@ResponseBody
 	@RequestMapping(value = "/interval", method = RequestMethod.GET, params = "!types")
 	public Response<ReportableInterval> getReportableInterval(GeneralReportableIntervalCommand cmd) {
-		ReportableInterval data = queryBiz.getReportableInterval(cmd.getNodeId(), cmd.getSourceId());
-		return new Response<ReportableInterval>(data);
+		int retries = transientExceptionRetryCount;
+		while ( true ) {
+			try {
+				ReportableInterval data = queryBiz.getReportableInterval(cmd.getNodeId(),
+						cmd.getSourceId());
+				return new Response<ReportableInterval>(data);
+			} catch ( TransientDataAccessException e ) {
+				if ( retries > 0 ) {
+					log.warn("Transient {} exception, will retry up to {} more times.",
+							e.getClass().getSimpleName(), retries, e);
+				} else {
+					throw e;
+				}
+			}
+			retries--;
+		}
 	}
 
 	/**
@@ -194,16 +213,29 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
 			"!metadataFilter", "!withNodeIds" })
 	public Response<Set<String>> getAvailableSources(GeneralReportableIntervalCommand cmd) {
-		DatumFilterCommand f = new DatumFilterCommand();
-		f.setNodeIds(cmd.getNodeIds());
-		f.setStartDate(cmd.getStartDate());
-		f.setEndDate(cmd.getEndDate());
-		Set<String> data = queryBiz.getAvailableSources(f);
+		int retries = transientExceptionRetryCount;
+		while ( true ) {
+			try {
+				DatumFilterCommand f = new DatumFilterCommand();
+				f.setNodeIds(cmd.getNodeIds());
+				f.setStartDate(cmd.getStartDate());
+				f.setEndDate(cmd.getEndDate());
+				Set<String> data = queryBiz.getAvailableSources(f);
 
-		// support filtering based on sourceId path pattern
-		data = DatumUtils.filterSources(data, this.pathMatcher, cmd.getSourceId());
+				// support filtering based on sourceId path pattern
+				data = DatumUtils.filterSources(data, this.pathMatcher, cmd.getSourceId());
 
-		return new Response<Set<String>>(data);
+				return new Response<Set<String>>(data);
+			} catch ( TransientDataAccessException e ) {
+				if ( retries > 0 ) {
+					log.warn("Transient {} exception, will retry up to {} more times.",
+							e.getClass().getSimpleName(), retries, e);
+				} else {
+					throw e;
+				}
+			}
+			retries--;
+		}
 	}
 
 	/**
@@ -247,24 +279,37 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
 			"!metadataFilter", "withNodeIds" })
 	public Response<Set<?>> findAvailableSources(GeneralReportableIntervalCommand cmd) {
-		DatumFilterCommand f = new DatumFilterCommand();
-		f.setNodeIds(cmd.getNodeIds());
-		f.setStartDate(cmd.getStartDate());
-		f.setEndDate(cmd.getEndDate());
-		Set<NodeSourcePK> data = queryBiz.findAvailableSources(f);
+		int retries = transientExceptionRetryCount;
+		while ( true ) {
+			try {
+				DatumFilterCommand f = new DatumFilterCommand();
+				f.setNodeIds(cmd.getNodeIds());
+				f.setStartDate(cmd.getStartDate());
+				f.setEndDate(cmd.getEndDate());
+				Set<NodeSourcePK> data = queryBiz.findAvailableSources(f);
 
-		// support filtering based on sourceId path pattern
-		data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
+				// support filtering based on sourceId path pattern
+				data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
 
-		if ( !cmd.isWithNodeIds() ) {
-			Set<String> sourceIds = new LinkedHashSet<String>(data.size());
-			for ( NodeSourcePK pk : data ) {
-				sourceIds.add(pk.getSourceId());
+				if ( !cmd.isWithNodeIds() ) {
+					Set<String> sourceIds = new LinkedHashSet<String>(data.size());
+					for ( NodeSourcePK pk : data ) {
+						sourceIds.add(pk.getSourceId());
+					}
+					return new Response<Set<?>>(sourceIds);
+				}
+
+				return new Response<Set<?>>(data);
+			} catch ( TransientDataAccessException e ) {
+				if ( retries > 0 ) {
+					log.warn("Transient {} exception, will retry up to {} more times.",
+							e.getClass().getSimpleName(), retries, e);
+				} else {
+					throw e;
+				}
 			}
-			return new Response<Set<?>>(sourceIds);
+			retries--;
 		}
-
-		return new Response<Set<?>>(data);
 	}
 
 	/**
@@ -309,21 +354,56 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
 			"metadataFilter" })
 	public Response<Set<?>> getMetadataFilteredAvailableSources(GeneralReportableIntervalCommand cmd) {
-		Set<NodeSourcePK> data = datumMetadataBiz
-				.getGeneralNodeDatumMetadataFilteredSources(cmd.getNodeIds(), cmd.getMetadataFilter());
+		int retries = transientExceptionRetryCount;
+		while ( true ) {
+			try {
+				Set<NodeSourcePK> data = datumMetadataBiz.getGeneralNodeDatumMetadataFilteredSources(
+						cmd.getNodeIds(), cmd.getMetadataFilter());
 
-		// support filtering based on sourceId path pattern
-		data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
+				// support filtering based on sourceId path pattern
+				data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
 
-		if ( !cmd.isWithNodeIds() && cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
-			// at most 1 node ID, so simplify results to just source ID values
-			Set<String> sourceIds = new LinkedHashSet<String>(data.size());
-			for ( NodeSourcePK pk : data ) {
-				sourceIds.add(pk.getSourceId());
+				if ( !cmd.isWithNodeIds() && cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
+					// at most 1 node ID, so simplify results to just source ID values
+					Set<String> sourceIds = new LinkedHashSet<String>(data.size());
+					for ( NodeSourcePK pk : data ) {
+						sourceIds.add(pk.getSourceId());
+					}
+					return new Response<Set<?>>(sourceIds);
+				}
+				return new Response<Set<?>>(data);
+			} catch ( TransientDataAccessException e ) {
+				if ( retries > 0 ) {
+					log.warn("Transient {} exception, will retry up to {} more times.",
+							e.getClass().getSimpleName(), retries, e);
+				} else {
+					throw e;
+				}
 			}
-			return new Response<Set<?>>(sourceIds);
+			retries--;
 		}
-		return new Response<Set<?>>(data);
+	}
+
+	/**
+	 * Get the number of retry attempts for transient DAO exceptions.
+	 * 
+	 * @return the retry count; defaults to
+	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT}.
+	 * @since 2.5
+	 */
+	public int getTransientExceptionRetryCount() {
+		return transientExceptionRetryCount;
+	}
+
+	/**
+	 * Set the number of retry attempts for transient DAO exceptions.
+	 * 
+	 * @param transientExceptionRetryCount
+	 *        the retry count, or {@literal 0} for no retries
+	 * @since 2.5
+	 */
+	public void setTransientExceptionRetryCount(int transientExceptionRetryCount) {
+		this.transientExceptionRetryCount = transientExceptionRetryCount;
 	}
 
 }
