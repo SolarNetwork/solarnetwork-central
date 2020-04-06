@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Datum Import DAO Biz
 Bundle-SymbolicName: net.solarnetwork.central.datum.imp.biz.dao
-Bundle-Version: 1.2.0
+Bundle-Version: 1.2.1
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.datum.imp.biz.dao
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
