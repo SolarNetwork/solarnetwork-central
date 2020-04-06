@@ -19,6 +19,7 @@
 		<prop key="queryCache.heapMaxEntries">1000</prop>
 		<prop key="queryCache.diskMaxSizeMB">100</prop>
 		<prop key="queryCache.compressMinimumLength">512</prop>
+		<prop key="query.transientException.retries">1</prop>
 	</osgix:cm-properties>
 	
 	<!-- Service References -->

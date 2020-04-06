@@ -109,7 +109,7 @@ public class MqttDataCollectorTests_CBOR {
 
 		service = new MqttDataCollector(factory, objectMapper, objectMapper2,
 				new CallingThreadExecutorService(), dataCollectorBiz,
-				new StaticOptionalService<NodeInstructionDao>(nodeInstructionDao));
+				new StaticOptionalService<NodeInstructionDao>(nodeInstructionDao), null);
 		service.getMqttConfig().setClientId(TEST_CLIENT_ID);
 	}
 

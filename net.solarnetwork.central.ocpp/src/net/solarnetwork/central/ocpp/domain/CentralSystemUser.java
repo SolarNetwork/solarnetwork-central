@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
+import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.SystemUser;
 
 /**
@@ -111,6 +112,19 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 	public CentralSystemUser(SystemUser other) {
 		super(other);
 		this.userId = (other instanceof CentralSystemUser ? ((CentralSystemUser) other).userId : null);
+	}
+
+	/**
+	 * Create a charge point identity based on this system user.
+	 * 
+	 * <p>
+	 * This implementation uses the {@link #getUserId()} value for the returned
+	 * {@link ChargePointIdentity#getUserIdentifier()}.
+	 * </p>
+	 */
+	@Override
+	public ChargePointIdentity chargePointIdentity(String identity) {
+		return new ChargePointIdentity(identity, userId);
 	}
 
 	@Override

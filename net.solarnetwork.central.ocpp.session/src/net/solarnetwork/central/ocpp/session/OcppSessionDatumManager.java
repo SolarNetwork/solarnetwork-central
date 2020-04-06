@@ -151,9 +151,6 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	}
 
-	/** The default {@code sourceIdTemplate} value. */
-	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/cp/{chargePointId}/{connectorId}/{location}";
-
 	/** The default {@code maxTemperatureScale} value. */
 	public static final int DEFAULT_MAX_TEMPERATURE_SCALE = 1;
 
@@ -165,7 +162,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	private final GeneralNodeDatumDao datumDao;
 	private final ChargePointSettingsDao chargePointSettingsDao;
 	private final OptionalService<DatumProcessor> fluxPublisher;
-	private String sourceIdTemplate = DEFAULT_SOURCE_ID_TEMPLATE;
+	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
 	private int maxTemperatureScale = DEFAULT_MAX_TEMPERATURE_SCALE;
 	private TaskScheduler taskScheduler;
 
@@ -387,7 +384,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	public Collection<ChargeSession> getActiveChargingSessions(ChargePointIdentity identifier) {
 		if ( identifier != null ) {
 			ChargePoint cp = chargePoint(identifier, null);
-			return chargeSessionDao.getIncompleteChargeSessionForChargePoint(cp.getId());
+			return chargeSessionDao.getIncompleteChargeSessionsForChargePoint(cp.getId());
 		}
 		return chargeSessionDao.getIncompleteChargeSessions();
 	}
@@ -585,7 +582,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		if ( cps == null ) {
 			// use default fallback
 			cps = new ChargePointSettings(id, userId, Instant.now());
-			cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
+			cps.setSourceIdTemplate(sourceIdTemplate);
 		}
 		return cps;
 	}
@@ -608,13 +605,15 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	private String sourceId(ChargePointSettings chargePointSettings, String identifier, int connectorId,
 			Location location, Phase phase) {
 		Map<String, Object> params = new HashMap<>(4);
-		params.put("chargePointId", identifier);
+		params.put("chargerIdentifier", identifier);
+		params.put("chargePointId", chargePointSettings.getId());
 		params.put("connectorId", connectorId);
 		params.put("location", location);
 		params.put("phase", phase);
-		return StringUtils.expandTemplateString(chargePointSettings.getSourceIdTemplate() != null
-				? chargePointSettings.getSourceIdTemplate()
-				: sourceIdTemplate, params);
+		return UserSettings.removeEmptySourceIdSegments(
+				StringUtils.expandTemplateString(chargePointSettings.getSourceIdTemplate() != null
+						? chargePointSettings.getSourceIdTemplate()
+						: sourceIdTemplate, params));
 	}
 
 	private void populateProperty(GeneralNodeDatum datum, Measurand measurand, UnitOfMeasure unit,
@@ -767,7 +766,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	/**
 	 * Get the source ID template.
 	 * 
-	 * @return the template; defaults to {@link #DEFAULT_SOURCE_ID_TEMPLATE}
+	 * @return the template; defaults to
+	 *         {@link UserSettings#DEFAULT_SOURCE_ID_TEMPLATE}
 	 */
 	public String getSourceIdTemplate() {
 		return sourceIdTemplate;
@@ -781,7 +781,9 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * </p>
 	 * 
 	 * <ol>
-	 * <li><code>{chargePointId}</code> - the Charge Point ID (string)</li>
+	 * <li><code>{chargePointId}</code> - the Charge Point ID (number)</li>
+	 * <li><code>{chargerIdentifier}</code> - the Charge Point info identifier
+	 * (string)</li>
 	 * <li><code>{connectorId}</code> - the connector ID (integer)</li>
 	 * <li><code>{location}</code> - the location (string)</li>
 	 * <li><code>{phase}</code> - the phase (string)</li>

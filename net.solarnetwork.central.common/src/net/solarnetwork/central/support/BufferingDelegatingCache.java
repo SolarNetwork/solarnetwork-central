@@ -53,6 +53,27 @@ import net.solarnetwork.util.UnionIterator;
  * maximum number of keys, then delegates operations to another {@link Cache}
  * for overflow.
  * 
+ * <p>
+ * This cache has been designed to help minimize the cost required to
+ * serialize/deserialize objects as they are placed into an off-heap cache
+ * implementation. Keys and values are <b>not</b> serialized while maintained
+ * internally to this cache. It can be useful if a cache is mostly being used
+ * for temporary persistence where keys are added and removed regularly, and the
+ * expected size of elements mostly stays below a certain threshold but
+ * sometimes pushes beyond and the cache must accommodate. In that situation,
+ * this cache would be configured with an {@code internalCapacity} of the
+ * expected threshold, so that most of the time cached elements are managed
+ * internally and occasionally excess elements would be pushed into the delegate
+ * cache instance.
+ * </p>
+ * 
+ * <p>
+ * <b>Note</b> that not all {@link Cache} methods are supported, and will throw
+ * an {@link UnsupportedOperationException} if invoked. Additionally only a
+ * <b>single</b> {@link CacheEntryCreatedListener} is supported, when calling
+ * {@link #registerCacheEntryListener(CacheEntryListenerConfiguration)}.
+ * </p>
+ * 
  * @author matt
  * @version 1.0
  * @since 2.2
@@ -69,10 +90,16 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	/**
 	 * Constructor.
 	 * 
+	 * <p>
+	 * A {@link ConcurrentHashMap} will be created for the internal store.
+	 * </p>
+	 * 
 	 * @param delegate
-	 *        the delegate cache
+	 *        the cache to delegate elements to once more than
+	 *        {@code internalCapacity} elemements are managed by the cache
 	 * @param internalCapacity
 	 *        the maximum number of elements to keep in the internal store
+	 * @see #BufferingDelegatingCache(Cache, int, ConcurrentMap)
 	 */
 	public BufferingDelegatingCache(Cache<K, V> delegate, int internalCapacity) {
 		this(delegate, internalCapacity, new ConcurrentHashMap<>(internalCapacity));
@@ -82,7 +109,8 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	 * Constructor.
 	 * 
 	 * @param delegate
-	 *        the delegate cache
+	 *        the cache to delegate elements to once more than
+	 *        {@code internalCapacity} elemements are managed by the cache
 	 * @param internalCapacity
 	 *        the maximum number of elements to keep in the internal store
 	 * @param internalStore
@@ -95,6 +123,16 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		this.internalCapacity = internalCapacity;
 		this.internalStore = internalStore;
 		this.size = new AtomicInteger(0);
+	}
+
+	/**
+	 * Get the configured internal capacity.
+	 * 
+	 * @return the number of elements that can be stored internally, before
+	 *         passing them to the delegate {@link Cache}
+	 */
+	public int getInternalCapacity() {
+		return internalCapacity;
 	}
 
 	/**
@@ -236,6 +274,17 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		return delegate.isClosed();
 	}
 
+	/**
+	 * Get an iterator over all cache elements.
+	 * 
+	 * <p>
+	 * The iterator returned by this method will return the cache elements
+	 * stored internally first, followed by any elements stored in the delegate
+	 * {@link Cache}.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Iterator<Entry<K, V>> iterator() {
 		List<Iterator<Entry<K, V>>> combined = new ArrayList<>(2);
@@ -249,6 +298,17 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * Add an element to the cache.
+	 * 
+	 * <p>
+	 * If less than {@link #getInternalCapacity()} elements are in the cache
+	 * when this is invoked, the element will be added to the internal store.
+	 * Otherwise it will be put into the delegate {@link Cache}.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void put(K key, V value) {
 		int currSize;
@@ -277,11 +337,29 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		}
 	}
 
+	/**
+	 * Add an element to the cache only if its key does not already exist in the
+	 * cache.
+	 * 
+	 * @throws UnsupportedOperationException
+	 *         always
+	 */
 	@Override
 	public boolean putIfAbsent(K key, V value) {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * Register a cache entry listener configuration.
+	 * 
+	 * <p>
+	 * <b>Note</b> this method only supports registering a <b>single</b>
+	 * {@link CacheEntryCreatedListener} instance. The configuration will be
+	 * shared between this instance and the delegate {@link Cache}.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void registerCacheEntryListener(CacheEntryListenerConfiguration<K, V> config) {
 		CacheEntryListener<? super K, ? super V> listener = config.getCacheEntryListenerFactory()
@@ -343,6 +421,12 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		return delegate.replace(key, oldValue, newValue);
 	}
 
+	/**
+	 * Unwrap an object.
+	 * 
+	 * @throws UnsupportedOperationException
+	 *         always
+	 */
 	@Override
 	public <T> T unwrap(Class<T> arg0) {
 		throw new UnsupportedOperationException();

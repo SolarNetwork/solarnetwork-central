@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarIn/OCPP 1.6 JSON Central System
 Bundle-SymbolicName: net.solarnetwork.central.in.ocpp.json
-Bundle-Version: 1.0.0
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.in.ocpp.json
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -10,18 +10,30 @@ Bundle-ClassPath: WEB-INF/classes/
 Web-ContextPath: /ocpp/j
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.10,3.0)",
+ com.fasterxml.jackson.core;version="[2.10,3.0)",
+ com.fasterxml.jackson.databind;version="[2.10,3.0)",
+ com.fasterxml.jackson.databind.node;version="2.10.1",
  com.fasterxml.jackson.module.jaxb;version="[2.10,3.0)",
  com.sun.xml.bind.v2;resolution:=optional,
  javax.servlet;version="3.0.0",
  javax.servlet.http;version="3.0.0",
  javax.xml.bind,
  javax.xml.bind.annotation,
+ net.solarnetwork.central.dao;version="[2.0,3.0)",
+ net.solarnetwork.central.domain;version="[2.0,3.0)",
+ net.solarnetwork.central.instructor.dao;version="[1.2,2.0)",
+ net.solarnetwork.central.instructor.domain;version="[1.5,2.0)",
+ net.solarnetwork.central.instructor.support;version="[1.5,2.0)",
+ net.solarnetwork.central.ocpp.dao;version="[1.1,2.0)",
+ net.solarnetwork.central.ocpp.domain;version="[1.0,2.0)",
+ net.solarnetwork.domain;version="[1.19,2.0)",
  net.solarnetwork.ocpp.dao;version="[1.0,2.0)",
- net.solarnetwork.ocpp.domain;version="[1.0,2.0)",
+ net.solarnetwork.ocpp.domain;version="[1.1,2.0)",
  net.solarnetwork.ocpp.service;version="[1.0,2.0)",
- net.solarnetwork.ocpp.web.json;version="[1.0,2.0)",
+ net.solarnetwork.ocpp.web.json;version="[1.1,2.0)",
  net.solarnetwork.settings;version="[1.2,2.0)",
  net.solarnetwork.support;version="[1.11,2.0)",
+ net.solarnetwork.util;version="[1.42,2.0)",
  net.solarnetwork.web.gemini;version="[2.0,3.0)",
  ocpp.domain;version="[1.0,2.0)",
  ocpp.json;version="[1.0,2.0)",
@@ -29,6 +41,7 @@ Import-Package:
  ocpp.v16.cp.json;version="[1.0,2.0)",
  ocpp.v16.cs.json;version="[1.0,2.0)",
  org.osgi.framework;version="[1.7,2.0)",
+ org.slf4j;version="[1.7,2.0)",
  org.springframework.core.task;version="[4.3,5.0)",
  org.springframework.http.server;version="[4.3,5.0)",
  org.springframework.scheduling;version="[4.3,5.0)",

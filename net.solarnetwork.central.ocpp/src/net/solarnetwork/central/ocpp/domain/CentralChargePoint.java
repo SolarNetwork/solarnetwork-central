@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.user.dao.UserNodeRelatedEntity;
 import net.solarnetwork.ocpp.domain.ChargePoint;
+import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 
 /**
@@ -157,6 +158,19 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 			this.userId = null;
 			this.nodeId = null;
 		}
+	}
+
+	/**
+	 * Create a charge point identity based on this system user.
+	 * 
+	 * <p>
+	 * This implementation uses the {@link #getUserId()} value for the returned
+	 * {@link ChargePointIdentity#getUserIdentifier()}.
+	 * </p>
+	 */
+	@Override
+	public ChargePointIdentity chargePointIdentity() {
+		return new ChargePointIdentity(getInfo().getId(), userId);
 	}
 
 	@Override

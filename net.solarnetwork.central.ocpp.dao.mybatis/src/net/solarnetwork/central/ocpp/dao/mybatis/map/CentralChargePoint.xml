@@ -174,10 +174,9 @@
 		SELECT
 			<include refid="fragment-CentralChargePoint-full-result"/>
 		FROM solarev.ocpp_charge_point cp
-		INNER JOIN solarev.ocpp_system_user su ON su.user_id = cp.user_id
 		WHERE
 			cp.ident = #{identifier}
-			AND su.username = #{username}
+			AND cp.user_id = #{userIdentifier}
 	</select>	
 
 	<delete id="delete-CentralChargePoint-for-user-and-id" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargePoint">

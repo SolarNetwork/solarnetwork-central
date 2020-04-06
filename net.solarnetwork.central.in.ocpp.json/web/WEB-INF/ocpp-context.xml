@@ -26,14 +26,52 @@
 		</websocket:handshake-interceptors>
 	</websocket:handlers>
 	
-	<bean id="ocppWebSocketHandler_v16" class="net.solarnetwork.ocpp.web.json.OcppWebSocketHandler" 
+	<bean id="objectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
+		<property name="featuresToDisable">
+			<list>
+				<value>#{T(com.fasterxml.jackson.databind.SerializationFeature).WRITE_DATES_AS_TIMESTAMPS}</value>
+			</list>
+		</property>
+		<property name="modules">
+			<list>
+				<bean class="com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="centralServiceActionPayloadDecoder_v16" class="ocpp.v16.cs.json.CentralServiceActionPayloadDecoder">
+		<constructor-arg ref="objectMapper"/>
+	</bean>
+
+	<bean id="chargePointActionPayloadDecoder_v16" class="ocpp.v16.cp.json.ChargePointActionPayloadDecoder">
+		<constructor-arg ref="objectMapper"/>
+	</bean>
+	
+	<osgi:reference id="chargePointDao" interface="net.solarnetwork.central.ocpp.dao.CentralChargePointDao" filter="(function=central)"/>
+
+	<osgi:reference id="instructionDao" interface="net.solarnetwork.central.instructor.dao.NodeInstructionDao"/>
+
+	<bean id="ocppWebSocketHandler_v16" class="net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandler" 
 			init-method="startup" destroy-method="shutdown">
+		<constructor-arg value="ocpp.v16.ChargePointAction"/>
+		<constructor-arg value="ocpp.v16.CentralSystemAction"/>
+		<constructor-arg>
+			<bean class="ocpp.v16.ErrorCodeResolver"/>
+		</constructor-arg>
 		<constructor-arg>
 			<osgi:reference interface="org.springframework.core.task.AsyncTaskExecutor" filter="(function=central)"/>
 		</constructor-arg>
+		<constructor-arg ref="objectMapper"/>
+		<constructor-arg>
+			<bean class="net.solarnetwork.ocpp.service.SimpleActionMessageQueue"/>
+		</constructor-arg>
+		<constructor-arg ref="centralServiceActionPayloadDecoder_v16"/>
+		<constructor-arg ref="chargePointActionPayloadDecoder_v16"/>
 		<property name="taskScheduler">
 			<osgi:reference interface="org.springframework.scheduling.TaskScheduler" filter="(function=central)"/>
 		</property>
+		<property name="chargePointDao" ref="chargePointDao"/>
+		<property name="instructionDao" ref="instructionDao"/>
 	</bean>
 	
 	<osgi:list id="csActions" interface="net.solarnetwork.ocpp.service.ActionMessageProcessor" 
@@ -41,11 +79,37 @@
 		<osgi:reference-listener  bind-method="addActionMessageProcessor" unbind-method="removeActionMessageProcessor"
 				ref="ocppWebSocketHandler_v16"/>
 	</osgi:list>
+
+	<osgi:service interface="net.solarnetwork.util.ObjectMapperService">
+		<osgi:service-properties>
+			<entry key="function" value="central"/>
+			<entry key="role" value="ocpp"/>
+		</osgi:service-properties>
+		<bean class="net.solarnetwork.util.SimpleObjectMapperService">
+			<property name="objectMapper" ref="objectMapper"/>
+		</bean>
+	</osgi:service>
 	
 	<osgi:service interface="net.solarnetwork.ocpp.service.ChargePointBroker" ref="ocppWebSocketHandler_v16">
 		<osgi:service-properties>
 			<entry key="function" value="central"/>
 			<entry key="protocol" value="json"/>
+		</osgi:service-properties>
+	</osgi:service>
+	
+	<osgi:service interface="ocpp.json.ActionPayloadDecoder" ref="centralServiceActionPayloadDecoder_v16">
+		<osgi:service-properties>
+			<entry key="function" value="central"/>
+			<entry key="role" value="cs"/>
+			<entry key="version" value="1.6"/>
+		</osgi:service-properties>
+	</osgi:service>
+	
+	<osgi:service interface="ocpp.json.ActionPayloadDecoder" ref="chargePointActionPayloadDecoder_v16">
+		<osgi:service-properties>
+			<entry key="function" value="central"/>
+			<entry key="role" value="cp"/>
+			<entry key="version" value="1.6"/>
 		</osgi:service-properties>
 	</osgi:service>
 	

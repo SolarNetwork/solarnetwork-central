@@ -36,15 +36,12 @@ import org.junit.Test;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
-import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralSystemUserDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
-import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.ocpp.domain.ChargePoint;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 import net.solarnetwork.ocpp.domain.RegistrationStatus;
-import net.solarnetwork.ocpp.domain.SystemUser;
 
 /**
  * Test cases for the {@link MyBatisCentralChargePointDao} class.
@@ -54,7 +51,6 @@ import net.solarnetwork.ocpp.domain.SystemUser;
  */
 public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSupport {
 
-	private MyBatisCentralSystemUserDao systemUserDao;
 	private MyBatisCentralChargePointDao dao;
 
 	private Long userId;
@@ -63,8 +59,6 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 
 	@Before
 	public void setUp() throws Exception {
-		systemUserDao = new MyBatisCentralSystemUserDao();
-		systemUserDao.setSqlSessionTemplate(getSqlSessionTemplate());
 		dao = new MyBatisCentralChargePointDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
 		last = null;
@@ -85,14 +79,6 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		entity.setRegistrationStatus(RegistrationStatus.Accepted);
 		entity.setConnectorCount(1);
 		return entity;
-	}
-
-	private CentralSystemUser createTestSystemUser(String username, Long userId) {
-		CentralSystemUser user = new CentralSystemUser(null, userId,
-				Instant.ofEpochMilli(System.currentTimeMillis()));
-		user.setUsername(username);
-		user.setPassword("secret");
-		return user;
 	}
 
 	@Test
@@ -219,7 +205,7 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 
 	@Test
 	public void getByIdentity_none() {
-		ChargePoint entity = dao.getForIdentity(new ChargePointIdentity("foo", "bar"));
+		ChargePoint entity = dao.getForIdentity(new ChargePointIdentity("foo", -1L));
 		assertThat("No users", entity, nullValue());
 	}
 
@@ -233,20 +219,14 @@ public class MyBatisCentralChargePointDaoTests extends AbstractMyBatisDaoTestSup
 		setupTestNode(nodeId2);
 		setupTestUserNode(userId2, nodeId2);
 
-		SystemUser systemUser = systemUserDao
-				.get(systemUserDao.save(createTestSystemUser("user", userId2)));
-
-		ChargePoint entity = dao
-				.getForIdentity(new ChargePointIdentity("foobar", systemUser.getUsername()));
+		ChargePoint entity = dao.getForIdentity(new ChargePointIdentity("foobar", userId2));
 		assertThat("No match", entity, nullValue());
 	}
 
 	@Test
 	public void getByIdentity() {
 		findAll();
-		SystemUser systemUser = systemUserDao
-				.get(systemUserDao.save(createTestSystemUser("user", userId)));
-		ChargePoint entity = dao.getForIdentity(new ChargePointIdentity("b", systemUser.getUsername()));
+		ChargePoint entity = dao.getForIdentity(new ChargePointIdentity("b", userId));
 		assertThat("Match", entity, notNullValue());
 		assertThat("Identifier matches", entity.getInfo().getId(), equalTo("b"));
 	}

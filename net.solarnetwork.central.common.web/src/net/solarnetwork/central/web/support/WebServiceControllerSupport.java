@@ -35,8 +35,10 @@ import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DataRetrievalFailureException;
+import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.dao.QueryTimeoutException;
@@ -425,7 +427,11 @@ public abstract class WebServiceControllerSupport {
 		String msg;
 		String msgKey;
 		String code;
-		if ( e instanceof TransientDataAccessResourceException ) {
+		if ( e instanceof DeadlockLoserDataAccessException ) {
+			msg = "Deadlock loser";
+			msgKey = "error.dao.deadlockLoser";
+			code = "DAO.00204";
+		} else if ( e instanceof TransientDataAccessResourceException ) {
 			msg = "Temporary connection failure";
 			msgKey = "error.dao.transientDataAccessResource";
 			code = "DAO.00203";
@@ -437,6 +443,10 @@ public abstract class WebServiceControllerSupport {
 			msg = "Lock failure";
 			msgKey = "error.dao.pessimisticLockingFailure";
 			code = "DAO.00201";
+		} else if ( e instanceof ConcurrencyFailureException ) {
+			msg = "Concurrency failure";
+			msgKey = "error.dao.concurrencyFailure";
+			code = "DAO.00205";
 		} else {
 			msg = "Data integrity violation";
 			msgKey = "error.dao.transientDataAccess";

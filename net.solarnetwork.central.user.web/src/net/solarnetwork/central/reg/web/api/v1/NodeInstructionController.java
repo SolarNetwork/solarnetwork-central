@@ -26,8 +26,10 @@ import static net.solarnetwork.web.domain.Response.response;
 import java.util.List;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -43,7 +45,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for node instruction web service API.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Controller("v1nodeInstructionController")
 @RequestMapping(value = "/v1/sec/instr")
@@ -150,9 +152,25 @@ public class NodeInstructionController extends WebServiceControllerSupport {
 	 *        the instruction data to add to the queue
 	 * @return the node instruction
 	 */
-	@RequestMapping(value = "/add", method = RequestMethod.POST, params = "!nodeIds")
+	@RequestMapping(value = "/add", method = RequestMethod.POST, params = "!nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
 	public Response<NodeInstruction> queueInstruction(NodeInstruction input) {
+		validateInstruction(input);
+		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(), input);
+		return response(instr);
+	}
+
+	/**
+	 * Enqueue a new instruction.
+	 * 
+	 * @param input
+	 *        the instruction data to add to the queue
+	 * @return the node instruction
+	 */
+	@RequestMapping(value = "/add", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public Response<NodeInstruction> queueInstructionBody(@RequestBody NodeInstruction input) {
+		validateInstruction(input);
 		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(), input);
 		return response(instr);
 	}
@@ -172,11 +190,35 @@ public class NodeInstructionController extends WebServiceControllerSupport {
 	 * @return the node instruction
 	 * @since 1.3
 	 */
-	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "!nodeIds")
+	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "!nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
 	public Response<NodeInstruction> queueInstruction(@PathVariable("topic") String topic,
 			NodeInstruction input) {
 		input.setTopic(topic);
+		return queueInstruction(input);
+	}
+
+	/**
+	 * Enqueue a new instruction.
+	 * 
+	 * <p>
+	 * This API call exists to help with API path-based security policy
+	 * restrictions, to allow a policy to restrict which topics can be enqueued.
+	 * </p>
+	 * 
+	 * @param topic
+	 *        the instruction topic
+	 * @param input
+	 *        the other instruction data
+	 * @return the node instruction
+	 * @since 1.4
+	 */
+	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public Response<NodeInstruction> queueInstructionBody(@PathVariable("topic") String topic,
+			@RequestBody NodeInstruction input) {
+		input.setTopic(topic);
+		validateInstruction(input);
 		return queueInstruction(input);
 	}
 
@@ -190,10 +232,11 @@ public class NodeInstructionController extends WebServiceControllerSupport {
 	 * @return the node instructions
 	 * @since 1.2
 	 */
-	@RequestMapping(value = "/add", method = RequestMethod.POST, params = "nodeIds")
+	@RequestMapping(value = "/add", method = RequestMethod.POST, params = "nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
 	public Response<List<NodeInstruction>> queueInstruction(@RequestParam("nodeIds") Set<Long> nodeIds,
 			NodeInstruction input) {
+		validateInstruction(input, nodeIds);
 		List<NodeInstruction> results = instructorBiz.queueInstructions(nodeIds, input);
 		return response(results);
 	}
@@ -215,12 +258,25 @@ public class NodeInstructionController extends WebServiceControllerSupport {
 	 * @return the node instructions
 	 * @since 1.3
 	 */
-	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "nodeIds")
+	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
 	public Response<List<NodeInstruction>> queueInstruction(@PathVariable("topic") String topic,
 			@RequestParam("nodeIds") Set<Long> nodeIds, NodeInstruction input) {
 		input.setTopic(topic);
 		return queueInstruction(nodeIds, input);
+	}
+
+	private void validateInstruction(NodeInstruction instr) {
+		validateInstruction(instr, null);
+	}
+
+	private void validateInstruction(NodeInstruction instr, Set<Long> nodeIds) {
+		if ( (nodeIds == null && instr.getNodeId() == null) || (nodeIds != null && nodeIds.isEmpty()) ) {
+			throw new IllegalArgumentException("The nodeId parameter is required.");
+		}
+		if ( instr.getTopic() == null || instr.getTopic().isEmpty() ) {
+			throw new IllegalArgumentException("The topic parameter is required.");
+		}
 	}
 
 	/**
