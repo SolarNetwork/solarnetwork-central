@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.IllegalInstantException;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -312,10 +313,29 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		DateTime date;
 		try {
 			date = dateFormatter.parseDateTime(getColumnsValue(row, props.getDateColumns(), " "));
+		} catch ( IllegalInstantException e ) {
+			List<Integer> dateCols = props.getDateColumns();
+			StringBuilder buf = new StringBuilder(
+					"Date that cannot exist because of a daylight saving time transition found on column");
+			if ( dateCols.size() > 1 ) {
+				buf.append("s");
+			}
+			buf.append(" ");
+			buf.append(StringUtils.commaDelimitedStringFromCollection(dateCols));
+			buf.append(".");
+			throw new DatumImportValidationException(buf.toString(), e, (long) reader.getLineNumber(),
+					reader.getUntokenizedRow());
 		} catch ( IllegalArgumentException e ) {
-			throw new DatumImportValidationException("Error parsing date from columns "
-					+ StringUtils.commaDelimitedStringFromCollection(props.getDateColumns()) + ".", e,
-					(long) reader.getLineNumber(), reader.getUntokenizedRow());
+			List<Integer> dateCols = props.getDateColumns();
+			StringBuilder buf = new StringBuilder("Error parsing date from column");
+			if ( dateCols.size() > 1 ) {
+				buf.append("s");
+			}
+			buf.append(" ");
+			buf.append(StringUtils.commaDelimitedStringFromCollection(dateCols));
+			buf.append(".");
+			throw new DatumImportValidationException(buf.toString(), e, (long) reader.getLineNumber(),
+					reader.getUntokenizedRow());
 		}
 
 		GeneralNodeDatum d = new GeneralNodeDatum();
