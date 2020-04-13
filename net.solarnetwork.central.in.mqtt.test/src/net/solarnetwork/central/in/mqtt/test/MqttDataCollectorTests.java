@@ -159,7 +159,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		replayAll();
 
 		// give a little time for subscription to take
-		Thread.sleep(500);
+		Thread.sleep(1000);
 
 		TestingInterceptHandler session = getTestingInterceptHandler();
 		assertThat("Subscribed ", session.subscribeMessages, hasSize(1));
