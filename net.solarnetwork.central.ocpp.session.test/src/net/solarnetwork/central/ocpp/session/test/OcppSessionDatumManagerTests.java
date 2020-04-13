@@ -296,7 +296,7 @@ public class OcppSessionDatumManagerTests {
 		assertThat("Datum date", datum.getCreated().getMillis(),
 				equalTo(sess.getCreated().toEpochMilli()));
 		assertThat("Datum source ID", datum.getSourceId(),
-				equalTo(String.format("/ocpp/%s/%d/%s", identifier, connectorId, Location.Outlet)));
+				equalTo(String.format("/ocpp/cp/%s/%d/%s", identifier, connectorId, Location.Outlet)));
 		assertThat("Energy prop",
 				datum.getSamples().getAccumulatingSampleLong(ACEnergyDatum.WATT_HOUR_READING_KEY),
 				equalTo(info.getMeterStart()));
@@ -483,7 +483,7 @@ public class OcppSessionDatumManagerTests {
 		assertThat("Datum date", datum.getCreated().getMillis(),
 				equalTo(info.getTimestampEnd().toEpochMilli()));
 		assertThat("Datum source ID", datum.getSourceId(),
-				equalTo(String.format("/ocpp/%s/%d/%s", identifier, connectorId, Location.Outlet)));
+				equalTo(String.format("/ocpp/cp/%s/%d/%s", identifier, connectorId, Location.Outlet)));
 		assertThat("Energy prop",
 				datum.getSamples().getAccumulatingSampleLong(ACEnergyDatum.WATT_HOUR_READING_KEY),
 				equalTo(info.getMeterEnd()));
@@ -624,7 +624,7 @@ public class OcppSessionDatumManagerTests {
 		for ( int i = 0; i < persistedDatum.size(); i++ ) {
 			GeneralNodeDatum d = persistedDatum.get(i);
 			assertThat("Datum source ID " + i, d.getSourceId(),
-					equalTo("/ocpp/" + identifier + "/" + connectorId + "/Outlet"));
+					equalTo("/ocpp/cp/" + identifier + "/" + connectorId + "/Outlet"));
 			assertThat("Datum session ID " + i, d.getSamples().getStatusSampleString("sessionId"),
 					equalTo(sess.getId().toString()));
 		}
@@ -721,7 +721,7 @@ public class OcppSessionDatumManagerTests {
 
 		GeneralNodeDatum persistedDatum = datumCaptor.getValue();
 		assertThat("Datum source ID ", persistedDatum.getSourceId(),
-				equalTo("/ocpp/" + identifier + "/" + connectorId + "/Outlet"));
+				equalTo("/ocpp/cp/" + identifier + "/" + connectorId + "/Outlet"));
 		assertThat("Datum session ID ", persistedDatum.getSamples().getStatusSampleString("sessionId"),
 				equalTo(sess.getId().toString()));
 		assertThat("Datum 1 @ transaction start", persistedDatum.getCreated().getMillis(),
@@ -794,7 +794,7 @@ public class OcppSessionDatumManagerTests {
 		assertThat("Published datum is GeneralNodeDatum", fluxDatum, instanceOf(GeneralNodeDatum.class));
 		GeneralNodeDatum publishedDatum = (GeneralNodeDatum) fluxDatum;
 		assertThat("Datum source ID ", publishedDatum.getSourceId(),
-				equalTo("/ocpp/" + identifier + "/" + connectorId + "/Outlet"));
+				equalTo("/ocpp/cp/" + identifier + "/" + connectorId + "/Outlet"));
 		assertThat("Datum session ID ", publishedDatum.getSamples().getStatusSampleString("sessionId"),
 				equalTo(sess.getId().toString()));
 		assertThat("Datum 1 @ transaction start", publishedDatum.getCreated().getMillis(),
