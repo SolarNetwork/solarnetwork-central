@@ -263,6 +263,8 @@ public class DaoDatumImportBizTests {
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new ClassPathResource("test-data-01.csv", getClass()), "text/csv");
 
+		expect(resourceStorageService.isConfigured()).andReturn(true);
+
 		CompletableFuture<Boolean> savedFuture = CompletableFuture.completedFuture(true);
 		Capture<String> resourceNameCaptor = new Capture<>();
 		Capture<Resource> resourceCaptor = new Capture<>();
@@ -587,6 +589,8 @@ public class DaoDatumImportBizTests {
 		Capture<Callable<DatumImportResult>> taskCaptor = new Capture<>();
 		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
 		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
+
+		expect(resourceStorageService.isConfigured()).andReturn(true).atLeastOnce();
 
 		Resource r = new AbstractResource() {
 
