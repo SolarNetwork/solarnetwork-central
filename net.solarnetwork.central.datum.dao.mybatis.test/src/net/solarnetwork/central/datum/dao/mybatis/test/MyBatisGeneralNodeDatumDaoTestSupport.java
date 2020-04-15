@@ -127,6 +127,17 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 				GeneralNodeDatumReadingAggregate.class)).collect(toList());
 	}
 
+	protected List<Map<String, Object>> datumRowsMonthly() {
+		// @formatter:off
+		return jdbcTemplate.queryForList("SELECT ts_start, node_id, source_id"
+				+ " , solarcommon.jdata_from_components(jdata_i, jdata_a, jdata_s, jdata_t)::text AS jdata"
+				+ ", jdata_as::text AS jdata_as" 
+				+ ", jdata_af::text AS jdata_af"
+				+ ", jdata_ad::text AS jdata_ad"
+				+ " FROM solaragg.agg_datum_monthly ORDER BY ts_start, node_id, source_id");
+		// @formatter:on
+	}
+
 	protected List<GeneralNodeDatum> createSampleData(int count, DateTime start) {
 		return createSampleData(count, start, TEST_NODE_ID, TEST_SOURCE_ID);
 	}
