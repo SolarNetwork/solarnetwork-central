@@ -5,6 +5,7 @@ $FUNCTION$'use strict';
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.deserialize = deserialize;
 exports.default = aggAggregate;
 
 var _fixPrecision = _interopRequireDefault(require("../math/fixPrecision"));
@@ -15,6 +16,15 @@ var _mergeObjects = _interopRequireDefault(require("../util/mergeObjects"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+/**
+ * Deserialize a serialized state object.
+ * 
+ * @param {Object} state a serialized state previously returned from a call to the `serialize()` function
+ * @returns {Object} a new `aggAggregate` object
+ */
+function deserialize(state) {
+  return aggAggregate(state.sourceId, state.ts, state);
+}
 /**
  * An aggregate record object that helps keep track of the raw data needed to
  * calculate a single aggregate result from many input aggregate records.
@@ -27,25 +37,44 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  *
  * @param {String} sourceId    The source ID.
  * @param {Number} ts          The timestamp associated with this aggregate result (e.g. time slot).
+ * @param {Object} [state]     Optional state, only for deserializing.
  */
-function aggAggregate(sourceId, ts) {
+
+
+function aggAggregate(sourceId, ts, state) {
   var self = {
     version: '1'
   };
-  var aobj = {}; // output accumulating
+  var aobj = state ? state.aobj : {}; // output accumulating
 
-  var sobj = {}; // output static
+  var sobj = state ? state.sobj : {}; // output static
 
-  var tarr = []; // output tags
+  var tarr = state ? state.tarr : []; // output tags
 
-  var imeta = {}; // ouutput instantaneous metadata, e.g. {temp:{count:84,min:4,max:22}}
+  var imeta = state ? state.imeta : {}; // ouutput instantaneous metadata, e.g. {temp:{count:84,min:4,max:22}}
 
   /** Object with count arrays per instantaneous property, e.g. {temp:[60, 24]}  */
 
-  var iobjCounts = {};
+  var iobjCounts = state ? state.iobjCounts : {};
   /** Object with value arrays per instantaneous property, e.g. {temp:[9, 12]} */
 
-  var iobjValues = {};
+  var iobjValues = state ? state.iobjValues : {};
+  /**
+   * Serialize the state of this object.
+   */
+
+  function serialize() {
+    return {
+      sourceId: sourceId,
+      ts: ts,
+      aobj: aobj,
+      sobj: sobj,
+      tarr: tarr,
+      imeta: imeta,
+      iobjCounts: iobjCounts,
+      iobjValues: iobjValues
+    };
+  }
 
   function addInstantaneousValues(inst, meta) {
     var prop, val, count, propMeta, min, max, propStats;
@@ -274,6 +303,9 @@ function aggAggregate(sourceId, ts) {
     },
     finish: {
       value: finish
+    },
+    serialize: {
+      value: serialize
     }
   });
 }$FUNCTION$);

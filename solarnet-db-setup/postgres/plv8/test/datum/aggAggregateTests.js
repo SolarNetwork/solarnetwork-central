@@ -2,7 +2,7 @@ import test from 'ava';
 import moment from 'moment';
 
 import parseDatumCSV from './_parseDatumCSV.js'
-import aggAggregate from '../../src/datum/aggAggregate.js'
+import { default as aggAggregate, deserialize } from '../../src/datum/aggAggregate.js'
 
 test('datum:aggAggregate:create', t => {
 	const service = aggAggregate('Foo', 123);
@@ -67,6 +67,32 @@ test('datum:aggAggregate:1dAggToMonth', t => {
 		service.addDatumRecord(rec);
 	});
 	const aggResult = service.finish();
+
+	t.is(aggResult.source_id, sourceId);
+	t.is(aggResult.ts_start.getTime(), start.valueOf());
+
+	t.deepEqual(aggResult.jdata.i, {watts:678.88, watts_min:144, watts_max:4599});
+	t.deepEqual(aggResult.jmeta.i, {watts:{count:4753, min:144, max:4599}});
+	t.deepEqual(aggResult.jdata.a, {wattHours:48292.963});
+});
+
+test('datum:aggAggregate:1dAggToMonth:serialized', t => {
+	const start = moment('2014-03-01 00:00:00+13');
+	const sourceId = 'Foo';
+	var service = aggAggregate(sourceId, start.valueOf());
+	var state = service.serialize();
+
+	t.is(service.sourceId, sourceId);
+	t.is(service.ts, start.valueOf());
+
+	const data = parseDatumCSV('/agg-datum-d-01.csv');
+
+	data.forEach(rec => {
+		let s = deserialize(state);
+		s.addDatumRecord(rec);
+		// performance hack: don't bother calling `state = s.serialize();`
+	});
+	const aggResult = deserialize(state).finish();
 
 	t.is(aggResult.source_id, sourceId);
 	t.is(aggResult.ts_start.getTime(), start.valueOf());
