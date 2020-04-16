@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatum">
+
+	<!-- 
+		Expects a #{date_field} to be set, e.g. 'year', along with #{filter} with nodeIds, 
+		sourceIds, startDate, and endDate parameters.
+	 -->
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum">
+		SELECT 
+			d.node_id
+			, d.source_id
+			, date_trunc('${date_field}', d.ts_start::timestamp) AT TIME ZONE r.time_zone AS ts_start
+			, (date_trunc('${date_field}', d.ts_start::timestamp) AT TIME ZONE r.time_zone)::date AS local_date
+			, solaragg.datum_agg_agg(jsonb_build_object(
+			'jdata', solarcommon.jdata_from_components(d.jdata_i, d.jdata_a, d.jdata_s, d.jdata_t),
+			'jmeta', d.jmeta) ORDER BY d.ts_start) AS jobj
+		FROM solarnet.node_source_time_rounded(
+			#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
+			, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}::text[]
+			, '${date_field}'
+			<choose>
+				<when test="filter.localStartDate != null">
+					, #{filter.localStartDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
+					, #{filter.localEndDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
+				</when>
+				<otherwise>
+					, #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp
+					, #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp
+				</otherwise>
+			</choose>
+		) r
+		INNER JOIN solaragg.agg_datum_monthly d ON 
+			d.node_id = ANY(r.node_ids)
+			AND d.source_id = ANY(r.source_ids)
+			AND d.ts_start &gt;= r.ts_start
+			AND d.ts_start &lt; r.ts_end
+		GROUP BY d.node_id, d.source_id, date_trunc('${date_field}', d.ts_start::timestamp) AT TIME ZONE r.time_zone
+	</sql>
+	
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-cte">
+		<choose>
+			<when test="combine != null">, </when>
+			<otherwise>WITH </otherwise>
+		</choose>
+		intermediate AS (
+			<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum"/>
+		)
+		, datum AS (
+			SELECT node_id, source_id, ts_start, local_date
+				<choose>
+					<when test="combine != null">
+						, jobj #> '{jdata,i}' AS jdata_i
+						, jobj #> '{jdata,a}' AS jdata_a
+						, jobj #> '{jdata,s}' AS jdata_s
+						, solarcommon.json_array_to_text_array(jobj #> '{jdata,t}') AS jdata_t
+					</when>
+					<otherwise>
+						, jobj -> 'jdata' AS jdata
+					</otherwise>
+				</choose>
+			FROM intermediate
+		)
+	</sql>
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Year-count" resultType="long">
+		<bind name="date_field" value="'year'" />
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-cte"/>
+		SELECT count(datum.ts_start)
+		FROM datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
+	</select>
+	
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Year" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<bind name="date_field" value="'year'" />
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-cte"/>
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
+		FROM datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
+</mapper>

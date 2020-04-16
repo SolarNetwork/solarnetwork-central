@@ -419,7 +419,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 				Iterable<Resource> resources = resourcesFuture.get(resourceStorageWaitMs,
 						TimeUnit.MILLISECONDS);
 				for ( Resource r : resources ) {
-					FileCopyUtils.copy(r.getInputStream(), new FileOutputStream(dataFile));
+					try (FileOutputStream out = new FileOutputStream(dataFile)) {
+						FileCopyUtils.copy(r.getInputStream(), out);
+					}
 					return true;
 				}
 			} catch ( TimeoutException e ) {

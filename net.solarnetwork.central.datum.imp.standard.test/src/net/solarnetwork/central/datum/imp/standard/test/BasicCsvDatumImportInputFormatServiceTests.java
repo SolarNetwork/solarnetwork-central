@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -284,4 +285,37 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 			assertThat("Row count", count, equalTo(1));
 		}
 	}
+
+	@Test(expected = DatumImportValidationException.class)
+	public void badDstDate() throws IOException {
+		// given
+		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
+		BasicInputConfiguration config = new BasicInputConfiguration();
+		String datePattern = "yyyy-MM-dd HH:mm:ss";
+		config.setServiceProps(Collections.singletonMap("dateFormat", datePattern));
+		config.setTimeZoneId("America/New_York");
+		BasicDatumImportResource resource = new BasicDatumImportResource(
+				new ClassPathResource("test-data-05.csv", getClass()), "text/csv;charset=utf-8");
+
+		// when
+		List<Double> progress = new ArrayList<>(8);
+		try (ImportContext ctx = service.createImportContext(config, resource,
+				new ProgressListener<DatumImportService>() {
+
+					@Override
+					public void progressChanged(DatumImportService context, double amountComplete) {
+						assertThat("Context is service", context, sameInstance(service));
+						progress.add(amountComplete);
+					}
+				})) {
+			for ( @SuppressWarnings("unused")
+			GeneralNodeDatum d : ctx ) {
+				// nothing
+			}
+		}
+
+		// then
+		Assert.fail("Should have thrown DatumImportValidationException.");
+	}
+
 }
