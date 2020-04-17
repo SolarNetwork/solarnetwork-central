@@ -36,6 +36,7 @@ import java.util.Set;
 import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeFieldType;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
@@ -76,7 +77,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -130,6 +131,13 @@ public class MyBatisGeneralNodeDatumDao
 	 * @since 1.5
 	 */
 	public static final String PARAM_COMBINING = "combine";
+
+	/**
+	 * The query parameter for a list of {@link NodeSourceRange} objects.
+	 * 
+	 * @since 2.1
+	 */
+	public static final String PARAM_RANGES = "ranges";
 
 	/**
 	 * The qualifier for a "within" style query.
@@ -514,8 +522,11 @@ public class MyBatisGeneralNodeDatumDao
 	public FilterResults<ReportingGeneralNodeDatumMatch> findAggregationFiltered(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
-		final String query = getQueryForFilter(filter);
-		final Map<String, Object> sqlProps = new HashMap<String, Object>(1);
+		final Map<String, Object> sqlProps = new HashMap<String, Object>(4);
+		final List<NodeSourceRange> ranges = partialAggregationRanges(filter);
+		if ( ranges != null ) {
+			sqlProps.put(PARAM_RANGES, ranges);
+		}
 		sqlProps.put(PARAM_FILTER, filter);
 		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
 			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
@@ -545,6 +556,8 @@ public class MyBatisGeneralNodeDatumDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
+
+		final String query = getQueryForFilter(filter);
 
 		// attempt count first, if NOT mostRecent query and max NOT specified as -1
 		// and NOT a *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
@@ -580,6 +593,89 @@ public class MyBatisGeneralNodeDatumDao
 				offset, rows.size());
 
 		return results;
+	}
+
+	private static DateTimeFieldType dateTimeFieldType(Aggregation agg) {
+		final DateTimeFieldType field;
+		switch (agg) {
+			case Year:
+				field = DateTimeFieldType.year();
+				break;
+
+			case Month:
+				field = DateTimeFieldType.monthOfYear();
+				break;
+
+			case Day:
+				field = DateTimeFieldType.dayOfMonth();
+				break;
+
+			default:
+				field = null;
+				break;
+		}
+		return field;
+	}
+
+	public static List<NodeSourceRange> partialAggregationRanges(
+			AggregateGeneralNodeDatumFilter filter) {
+		final Aggregation main = filter.getAggregation();
+		final Aggregation partial = filter.getPartialAggregation();
+		if ( main == null || partial == null || partial.compareLevel(main) >= 0 ) {
+			return null;
+		}
+		final DateTimeFieldType mainField = dateTimeFieldType(main);
+		final DateTimeFieldType partialField = dateTimeFieldType(partial);
+		if ( mainField == null || partialField == null ) {
+			return null;
+		}
+		List<NodeSourceRange> result = new ArrayList<>(3);
+		if ( filter.getLocalStartDate() != null ) {
+			LocalDateTime start = filter.getLocalStartDate();
+			LocalDateTime end = (filter.getLocalEndDate() != null ? filter.getLocalEndDate()
+					: new LocalDateTime().property(partialField).roundFloorCopy());
+			LocalDateTime curr = start.property(mainField).roundFloorCopy();
+			if ( curr.isBefore(start) ) {
+				curr = curr.property(mainField).addToCopy(1);
+				if ( curr.isAfter(end) ) {
+					curr = end.property(partialField).roundFloorCopy();
+				}
+				result.add(NodeSourceRange.range(start.property(partialField).roundFloorCopy(), curr,
+						partial));
+			}
+			LocalDateTime next = end.property(mainField).roundFloorCopy();
+			if ( curr.isBefore(next) ) {
+				result.add(NodeSourceRange.range(curr, next, main));
+				curr = next;
+				next = end.property(partialField).roundFloorCopy();
+				if ( curr.isBefore(next) ) {
+					result.add(NodeSourceRange.range(curr, next, partial));
+				}
+			}
+		} else if ( filter.getStartDate() != null ) {
+			DateTime start = filter.getStartDate();
+			DateTime end = (filter.getEndDate() != null ? filter.getEndDate()
+					: new DateTime().property(partialField).roundFloorCopy());
+			DateTime curr = start.property(mainField).roundFloorCopy();
+			if ( curr.isBefore(start) ) {
+				curr = curr.property(mainField).addToCopy(1);
+				if ( curr.isAfter(end) ) {
+					curr = end.property(partialField).roundFloorCopy();
+				}
+				result.add(NodeSourceRange.range(start.property(partialField).roundFloorCopy(), curr,
+						partial));
+			}
+			DateTime next = end.property(mainField).roundFloorCopy();
+			if ( curr.isBefore(next) ) {
+				result.add(NodeSourceRange.range(curr, next, main));
+				curr = next;
+				next = end.property(partialField).roundFloorCopy();
+				if ( curr.isBefore(next) ) {
+					result.add(NodeSourceRange.range(curr, next, partial));
+				}
+			}
+		}
+		return (result.isEmpty() ? null : result);
 	}
 
 	private Long executeCountQuery(final String countQueryName, final Map<String, ?> sqlProps) {
