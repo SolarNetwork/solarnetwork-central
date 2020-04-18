@@ -317,6 +317,13 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String QUERY_FOR_AGGREGATES_STALE = "find-StaleAggregateDatum-for-filter";
 
+	/**
+	 * The query name suffix added to "partial" aggregation style queries.
+	 * 
+	 * @since 2.1
+	 */
+	public static final String QUERY_PARTIAL_AGGREGATION_SUFFIX = "-partial";
+
 	private final BulkLoadingDaoSupport loadingSupport;
 
 	private String queryForReportableInterval;
@@ -557,13 +564,14 @@ public class MyBatisGeneralNodeDatumDao
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
 
-		final String query = getQueryForFilter(filter);
+		final String query = getQueryForFilter(filter)
+				+ (ranges != null ? QUERY_PARTIAL_AGGREGATION_SUFFIX : "");
 
 		// attempt count first, if NOT mostRecent query and max NOT specified as -1
 		// and NOT a *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
 		Long totalCount = null;
-		if ( !filter.isMostRecent() && !filter.isWithoutTotalResultsCount() && max != null
-				&& max.intValue() != -1 && agg != Aggregation.DayOfWeek
+		if ( !filter.isMostRecent() && !filter.isWithoutTotalResultsCount()
+				&& (max == null || max.intValue() != -1) && agg != Aggregation.DayOfWeek
 				&& agg != Aggregation.SeasonalDayOfWeek && agg != Aggregation.HourOfDay
 				&& agg != Aggregation.SeasonalHourOfDay && agg != Aggregation.RunningTotal ) {
 			totalCount = executeCountQuery(query + "-count", sqlProps);

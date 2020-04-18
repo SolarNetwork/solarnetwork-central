@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatum">
+
+	<!-- 
+	   Input props:
+			date_field            - the date field to query, e.g. 'day'
+			date_field_agg        - the date field to aggregate on , e.g. 'month'
+			
+		Input params:
+			filter.nodeIds        - array of node IDs
+			filter.sourceIds      - array of source IDs
+			range.startDate       - the start date (inclusive)
+			range.endDate         - the end date (exclusive)
+			range.localStartDate  - the local start date (inclusive)
+			range.localEndDate    - the local end date (exclusive)
+			filter.startDate      - the start date (inclusive)
+			filter.endDate        - the end date (exclusive)
+			filter.localStartDate - the local start date (inclusive)
+			filter.localEndDate   - the local end date (exclusive)			
+			
+		Outputs:
+			ts_start             - timestamptz
+			local_date           - date (or timestamptz if date_field_agg == 'hour')
+			node_id              - bigint
+			source_id            - text
+			jdata                - jsonb
+	 -->
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-agg">
+		SELECT 
+			date_trunc('${date_field_agg}', d.ts_start::timestamp) AT TIME ZONE r.time_zone AS ts_start
+			, (date_trunc('${date_field_agg}', d.ts_start::timestamp) AT TIME ZONE r.time_zone)<if test="'${date_field_agg}' != 'hour'">::date</if> AS local_date
+			, d.node_id
+			, d.source_id
+			, solaragg.datum_agg_agg(jsonb_build_object(
+				'jdata', solarcommon.jdata_from_components(d.jdata_i, d.jdata_a, d.jdata_s, d.jdata_t),
+				'jmeta', d.jmeta) ORDER BY d.ts_start) -> 'jdata' AS jdata
+		FROM solarnet.node_source_time_rounded(
+			#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
+			, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}::text[]
+			, '${date_field}'
+			<choose>
+				<when test="range != null">
+					<choose>
+						<when test="range.localStartDate != null">
+							, #{range.localStartDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
+							, #{range.localEndDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
+						</when>
+						<otherwise>
+							, #{range.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp
+							, #{range.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp
+						</otherwise>
+					</choose>
+				</when>
+				<otherwise>
+					<choose>
+						<when test="filter.localStartDate != null">
+							, #{filter.localStartDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
+							, #{filter.localEndDate,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp
+						</when>
+						<otherwise>
+							, #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp
+							, #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}::timestamp
+						</otherwise>
+					</choose>
+				</otherwise>
+			</choose>
+		) r
+		INNER JOIN <choose>
+				<when test="'${date_field}' == 'hour'">
+					solaragg.agg_datum_hourly
+				</when>
+				<when test="'${date_field}' == 'day'">
+					solaragg.agg_datum_daily
+				</when>
+				<otherwise>
+					solaragg.agg_datum_monthly
+				</otherwise>
+			</choose> d ON 
+			d.node_id = ANY(r.node_ids)
+			AND d.source_id = ANY(r.source_ids)
+			AND d.ts_start &gt;= r.ts_start
+			AND d.ts_start &lt; r.ts_end
+		GROUP BY d.node_id, d.source_id, date_trunc('${date_field_agg}', d.ts_start::timestamp) AT TIME ZONE r.time_zone
+	</sql>
+	
+	<sql id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial-ranges">
+		<foreach collection="ranges" item="range" separator=") UNION ALL (" open="(" close=")">
+			<choose>
+				<when test="range.aggregation.toString() == 'Hour'">
+					<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-agg">
+						<property name="date_field" value="hour"/>
+						<property name="date_field_agg" value="month"/>
+					</include>
+				</when>
+				<when test="range.aggregation.toString() == 'Day'">
+					<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-agg">
+						<property name="date_field" value="day"/>
+						<property name="date_field_agg" value="month"/>
+					</include>
+				</when>
+				<otherwise>
+					SELECT
+						ts_start
+						, local_date
+						, node_id
+						, source_id
+						, jdata
+					FROM solaragg.agg_datum_monthly_data datum
+					<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+				</otherwise>
+			</choose>
+		</foreach>
+	</sql>
+	
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial-count" resultType="long">
+		SELECT count(datum.ts_start)
+		FROM (		
+			<include refid="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial-ranges"/>
+		) datum
+	</select>
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
+		FROM (		
+			<include refid="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial-ranges"/>
+		) datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+
+</mapper>
