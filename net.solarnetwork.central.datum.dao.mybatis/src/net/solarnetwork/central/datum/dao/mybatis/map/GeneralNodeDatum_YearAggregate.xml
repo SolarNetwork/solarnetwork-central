@@ -2,52 +2,29 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.datum.dao.mybatis.GeneralNodeDatum">
 
-	<sql id="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-cte">
-		<choose>
-			<when test="combine != null">, </when>
-			<otherwise>WITH </otherwise>
-		</choose>
-		intermediate AS (
-			<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-agg"/>
-		)
-		, datum AS (
-			SELECT node_id, source_id, ts_start, local_date
-				<choose>
-					<when test="combine != null">
-						, jdata -> 'i' AS jdata_i
-						, jdata -> 'a' AS jdata_a
-						, jdata -> 's' AS jdata_s
-						, solarcommon.json_array_to_text_array(jdata -> 't') AS jdata_t
-					</when>
-					<otherwise>
-						, jdata
-					</otherwise>
-				</choose>
-			FROM intermediate
-		)
-	</sql>
-
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Year-count" resultType="long">
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
-		<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-cte">
-			<property name="date_field" value="year" />
-			<property name="date_field_agg" value="year" />
-		</include>
 		SELECT count(datum.ts_start)
-		FROM datum
+		FROM (
+			<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-agg">
+				<property name="date_field" value="year" />
+				<property name="date_field_agg" value="year" />
+			</include>
+		) datum
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 	</select>
 	
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Year" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
-		<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-cte">
-			<property name="date_field" value="year" />
-			<property name="date_field_agg" value="year" />
-		</include>
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
-		FROM datum
+		FROM (
+			<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-agg">
+				<property name="date_field" value="year" />
+				<property name="date_field_agg" value="year" />
+			</include>
+		) datum
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>

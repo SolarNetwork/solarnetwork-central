@@ -26,16 +26,8 @@
 			source_id            - text
 			jdata                - jsonb
 	 -->
-	<sql id="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-agg">
-		SELECT 
-			date_trunc('${date_field_agg}', d.ts_start::timestamp) AT TIME ZONE r.time_zone AS ts_start
-			, (date_trunc('${date_field_agg}', d.ts_start::timestamp) AT TIME ZONE r.time_zone)<if test="'${date_field_agg}' != 'hour'">::date</if> AS local_date
-			, d.node_id
-			, d.source_id
-			, solaragg.datum_agg_agg(jsonb_build_object(
-				'jdata', solarcommon.jdata_from_components(d.jdata_i, d.jdata_a, d.jdata_s, d.jdata_t),
-				'jmeta', d.jmeta) ORDER BY d.ts_start) -> 'jdata' AS jdata
-		FROM solarnet.node_source_time_rounded(
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-from">
+		FROM solardatum.node_source_time_rounded(
 			#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
 			, #{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}::text[]
 			, '${date_field}'
@@ -76,13 +68,110 @@
 				<otherwise>
 					solaragg.agg_datum_monthly
 				</otherwise>
-			</choose> d ON 
-			d.node_id = ANY(r.node_ids)
-			AND d.source_id = ANY(r.source_ids)
-			AND d.ts_start &gt;= r.ts_start
-			AND d.ts_start &lt; r.ts_end
-		GROUP BY d.node_id, d.source_id, date_trunc('${date_field_agg}', d.ts_start::timestamp) AT TIME ZONE r.time_zone
+			</choose> datum ON 
+			datum.node_id = ANY(r.node_ids)
+			AND datum.source_id = ANY(r.source_ids)
+			AND datum.ts_start &gt;= r.ts_start
+			AND datum.ts_start &lt; r.ts_end
 	</sql>
+
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-agg">
+		SELECT 
+			date_trunc('${date_field_agg}', datum.ts_start::timestamp) AT TIME ZONE r.time_zone AS ts_start
+			, (date_trunc('${date_field_agg}', datum.ts_start::timestamp) AT TIME ZONE r.time_zone)<if test="'${date_field_agg}' != 'hour'">::date</if> AS local_date
+			, datum.node_id
+			, datum.source_id
+			<choose>
+				<when test="combine != null">
+					, solaragg.datum_agg_agg(jsonb_build_object(
+						'jdata', solaragg.jdata_from_datum(datum),
+						'jmeta', datum.jmeta) ORDER BY datum.ts_start) #> '{jdata,i}' AS jdata_i
+					, solaragg.datum_agg_agg(jsonb_build_object(
+						'jdata', solaragg.jdata_from_datum(datum),
+						'jmeta', datum.jmeta) ORDER BY datum.ts_start) #> '{jdata,a}' AS jdata_a
+					, solaragg.datum_agg_agg(jsonb_build_object(
+						'jdata', solaragg.jdata_from_datum(datum),
+						'jmeta', datum.jmeta) ORDER BY datum.ts_start) #> '{jdata,s}' AS jdata_s
+					, solarcommon.json_array_to_text_array(
+						solaragg.datum_agg_agg(jsonb_build_object(
+							'jdata', solaragg.jdata_from_datum(datum),
+							'jmeta', datum.jmeta) ORDER BY datum.ts_start) #> '{jdata,t}') AS jdata_t
+				</when>
+				<otherwise>
+					, solaragg.datum_agg_agg(jsonb_build_object(
+						'jdata', solaragg.jdata_from_datum(datum),
+						'jmeta', datum.jmeta) ORDER BY datum.ts_start) -> 'jdata' AS jdata
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-from"/>
+		GROUP BY datum.node_id, datum.source_id, date_trunc('${date_field_agg}', datum.ts_start::timestamp) AT TIME ZONE r.time_zone
+	</sql>
+	
+	<sql id="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum">
+		SELECT 
+			datum.ts_start
+			, datum.local_date
+			, datum.node_id
+			, datum.source_id
+			<choose>
+				<when test="combine != null">
+					, datum.jdata_i
+					, datum.jdata_a
+					, datum.jdata_s
+					, datum.jdata_t
+				</when>
+				<otherwise>
+					, solaragg.jdata_from_datum(datum) AS jdata
+				</otherwise>
+			</choose>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-from"/>
+	</sql>
+	
+	<!-- Partial days -->
+	
+	<sql id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day-partial-ranges">
+		<foreach collection="ranges" item="range" separator=") UNION ALL (" open="(" close=")">
+			<choose>
+				<when test="range.aggregation.toString() == 'Hour'">
+					<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum-agg">
+						<property name="date_field" value="hour"/>
+						<property name="date_field_agg" value="day"/>
+					</include>
+				</when>
+				<otherwise>
+					<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum">
+						<property name="date_field" value="day"/>
+						<property name="date_field_agg" value="day"/>
+					</include>
+				</otherwise>
+			</choose>
+		</foreach>
+	</sql>
+	
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day-partial-count" resultType="long">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
+		SELECT count(datum.ts_start)
+		FROM (		
+			<include refid="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day-partial-ranges"/>
+		) datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
+	</select>
+
+	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day-partial" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
+		SELECT
+			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
+		FROM (		
+			<include refid="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Day-partial-ranges"/>
+		) datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
+	</select>
+	
+	
+	<!-- Partial months -->
 	
 	<sql id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial-ranges">
 		<foreach collection="ranges" item="range" separator=") UNION ALL (" open="(" close=")">
@@ -100,14 +189,10 @@
 					</include>
 				</when>
 				<otherwise>
-					SELECT
-						ts_start
-						, local_date
-						, node_id
-						, source_id
-						, jdata
-					FROM solaragg.agg_datum_monthly_data datum
-					<include refid="fragment-findall-ReportingGeneralNodeDatum-where"/>
+					<include refid="fragment-findall-ReportingGeneralNodeDatum-time-rounded-datum">
+						<property name="date_field" value="month"/>
+						<property name="date_field_agg" value="month"/>
+					</include>
 				</otherwise>
 			</choose>
 		</foreach>
@@ -118,6 +203,8 @@
 		FROM (		
 			<include refid="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial-ranges"/>
 		) datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 	</select>
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
@@ -126,6 +213,8 @@
 		FROM (		
 			<include refid="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial-ranges"/>
 		) datum
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-join"/>
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-group"/>
 		<include refid="fragment-findall-ReportingGeneralNodeDatum-order"/>
 	</select>
 

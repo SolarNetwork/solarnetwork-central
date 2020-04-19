@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisGeneralNodeDatumDaoMonthPartialAggregationTests.java - 19/04/2020 7:39:24 am
+ * MyBatisGeneralNodeDatumDaoPartialMonthAggregationTests.java - 19/04/2020 7:39:24 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -43,7 +43,7 @@ import net.solarnetwork.central.domain.FilterResults;
  * @author matt
  * @version 1.0
  */
-public class MyBatisGeneralNodeDatumDaoMonthPartialAggregationTests
+public class MyBatisGeneralNodeDatumDaoPartialMonthAggregationTests
 		extends MyBatisGeneralNodeDatumDaoTestSupport {
 
 	@Test

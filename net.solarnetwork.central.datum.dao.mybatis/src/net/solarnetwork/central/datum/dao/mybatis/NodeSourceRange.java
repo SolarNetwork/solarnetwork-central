@@ -88,6 +88,58 @@ public class NodeSourceRange {
 		return r;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("NodeSourceRange{");
+		if ( nodeId != null ) {
+			builder.append("nodeId=");
+			builder.append(nodeId);
+			builder.append(", ");
+		}
+		if ( sourceId != null ) {
+			builder.append("sourceId=");
+			builder.append(sourceId);
+			builder.append(", ");
+		}
+		if ( startDate != null ) {
+			builder.append("startDate=");
+			builder.append(startDate);
+			builder.append(", ");
+		}
+		if ( endDate != null ) {
+			builder.append("endDate=");
+			builder.append(endDate);
+			builder.append(", ");
+		}
+		if ( localStartDate != null ) {
+			builder.append("localStartDate=");
+			builder.append(localStartDate);
+			builder.append(", ");
+		}
+		if ( localEndDate != null ) {
+			builder.append("localEndDate=");
+			builder.append(localEndDate);
+			builder.append(", ");
+		}
+		if ( timeZoneId != null ) {
+			builder.append("timeZoneId=");
+			builder.append(timeZoneId);
+			builder.append(", ");
+		}
+		if ( timeZoneOffset != null ) {
+			builder.append("timeZoneOffset=");
+			builder.append(timeZoneOffset);
+			builder.append(", ");
+		}
+		if ( aggregation != null ) {
+			builder.append("aggregation=");
+			builder.append(aggregation);
+		}
+		builder.append("}");
+		return builder.toString();
+	}
+
 	/**
 	 * Get an interval out of the start/end date range.
 	 * 

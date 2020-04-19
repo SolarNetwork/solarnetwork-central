@@ -618,6 +618,10 @@ public class MyBatisGeneralNodeDatumDao
 				field = DateTimeFieldType.dayOfMonth();
 				break;
 
+			case Hour:
+				field = DateTimeFieldType.hourOfDay();
+				break;
+
 			default:
 				field = null;
 				break;
