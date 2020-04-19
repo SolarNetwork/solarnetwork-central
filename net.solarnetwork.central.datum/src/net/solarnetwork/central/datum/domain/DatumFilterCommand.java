@@ -52,13 +52,13 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 1.14
+ * @version 1.15
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
-		"combiningType", "combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "rollupTypes",
-		"rollupTypeKeys", "tags", "metadataFilter", "dataPath", "mostRecent", "startDate", "endDate",
-		"localStartDate", "localEndDate", "max", "offset", "sorts", "type", "location",
-		"withoutTotalResultsCount" })
+		"partialAggregation", "partialAggregationKey", "combiningType", "combiningTypeKey",
+		"nodeIdMappings", "sourceIdMappings", "rollupTypes", "rollupTypeKeys", "tags", "metadataFilter",
+		"dataPath", "mostRecent", "startDate", "endDate", "localStartDate", "localEndDate", "max",
+		"offset", "sorts", "type", "location", "withoutTotalResultsCount" })
 public class DatumFilterCommand extends FilterSupport implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
@@ -80,6 +80,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	private String dataPath; // bean path expression to a data value, e.g. "i.watts"
 
 	private Aggregation aggregation;
+	private Aggregation partialAggregation;
 	private boolean withoutTotalResultsCount;
 
 	private CombiningType combiningType;
@@ -374,6 +375,61 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 			agg = Aggregation.None;
 		}
 		setAggregation(agg);
+	}
+
+	/**
+	 * Get the partial aggregation.
+	 * 
+	 * @return the partial aggregation
+	 * @since 1.15
+	 */
+	@Override
+	public Aggregation getPartialAggregation() {
+		return partialAggregation;
+	}
+
+	/**
+	 * Set the partial aggregation.
+	 * 
+	 * @param partialAggregation
+	 *        the aggregation to set
+	 * @since 1.15
+	 */
+	public void setPartialAggregation(Aggregation partialAggregation) {
+		this.partialAggregation = partialAggregation;
+	}
+
+	/**
+	 * Get the aggregation key.
+	 * 
+	 * @return the aggregation key, never {@literal null}
+	 * @since 1.15
+	 */
+	public String getPartialAggregationKey() {
+		Aggregation agg = getPartialAggregation();
+		return (agg != null ? agg : Aggregation.None).getKey();
+	}
+
+	/**
+	 * Set the aggregation as a key value.
+	 * 
+	 * <p>
+	 * If {@literal key} is not a supported {@link Aggregation} key value, then
+	 * {@link Aggregation#None} will be used.
+	 * </p>
+	 * 
+	 * @param key
+	 *        the key to set
+	 * @since 1.15
+	 */
+	public void setPartialAggregationKey(String key) {
+		Aggregation agg = null;
+		try {
+			agg = Aggregation.forKey(key);
+		} catch ( IllegalArgumentException e ) {
+			agg = Aggregation.None;
+		}
+		setPartialAggregation(agg);
 	}
 
 	@Override

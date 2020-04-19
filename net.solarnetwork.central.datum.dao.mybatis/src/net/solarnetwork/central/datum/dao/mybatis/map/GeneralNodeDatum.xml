@@ -546,18 +546,30 @@
 
 	<sql id="fragment-findall-ReportingGeneralNodeDatum-where">
 		<where>
-			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
-				AND datum.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
-			</if>
 			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
 				AND datum.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[])
 			</if>
-			<if test="filter.startDate != null">
-				AND datum.ts_start &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			<if test="filter.sourceIds != null and filter.sourceIds.length > 0">
+				AND datum.source_id = ANY(#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
-			<if test="filter.endDate != null">
-				AND datum.ts_start &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
-			</if>
+			<choose>
+				<when test="range != null">
+					<if test="range.startDate != null">
+						AND datum.ts_start &gt;= #{range.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+					</if>
+					<if test="range.endDate != null">
+						AND datum.ts_start &lt; #{range.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+					</if>
+				</when>
+				<otherwise>
+					<if test="filter.startDate != null">
+						AND datum.ts_start &gt;= #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+					</if>
+					<if test="filter.endDate != null">
+						AND datum.ts_start &lt; #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+					</if>
+				</otherwise>
+			</choose>
 		</where>
 	</sql>
 

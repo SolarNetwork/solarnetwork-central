@@ -127,14 +127,36 @@ public abstract class MyBatisGeneralNodeDatumDaoTestSupport extends AbstractMyBa
 				GeneralNodeDatumReadingAggregate.class)).collect(toList());
 	}
 
+	protected List<Map<String, Object>> datumRowsHourly() {
+		// @formatter:off
+		return jdbcTemplate.queryForList("SELECT d.ts_start, d.node_id, d.source_id"
+				+ " , solaragg.jdata_from_datum(d)::text AS jdata"
+				+ ", d.jdata_as::text AS jdata_as" 
+				+ ", d.jdata_af::text AS jdata_af"
+				+ ", d.jdata_ad::text AS jdata_ad"
+				+ " FROM solaragg.agg_datum_hourly d ORDER BY ts_start, node_id, source_id");
+		// @formatter:on
+	}
+
+	protected List<Map<String, Object>> datumRowsDaily() {
+		// @formatter:off
+		return jdbcTemplate.queryForList("SELECT d.ts_start, d.node_id, d.source_id"
+				+ " , solaragg.jdata_from_datum(d)::text AS jdata"
+				+ ", d.jdata_as::text AS jdata_as" 
+				+ ", d.jdata_af::text AS jdata_af"
+				+ ", d.jdata_ad::text AS jdata_ad"
+				+ " FROM solaragg.agg_datum_daily d ORDER BY ts_start, node_id, source_id");
+		// @formatter:on
+	}
+
 	protected List<Map<String, Object>> datumRowsMonthly() {
 		// @formatter:off
-		return jdbcTemplate.queryForList("SELECT ts_start, node_id, source_id"
-				+ " , solarcommon.jdata_from_components(jdata_i, jdata_a, jdata_s, jdata_t)::text AS jdata"
-				+ ", jdata_as::text AS jdata_as" 
-				+ ", jdata_af::text AS jdata_af"
-				+ ", jdata_ad::text AS jdata_ad"
-				+ " FROM solaragg.agg_datum_monthly ORDER BY ts_start, node_id, source_id");
+		return jdbcTemplate.queryForList("SELECT d.ts_start, d.node_id, d.source_id"
+				+ " , solaragg.jdata_from_datum(d)::text AS jdata"
+				+ ", d.jdata_as::text AS jdata_as" 
+				+ ", d.jdata_af::text AS jdata_af"
+				+ ", d.jdata_ad::text AS jdata_ad"
+				+ " FROM solaragg.agg_datum_monthly d ORDER BY ts_start, node_id, source_id");
 		// @formatter:on
 	}
 
