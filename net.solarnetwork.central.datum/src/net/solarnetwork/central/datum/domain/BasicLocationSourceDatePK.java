@@ -30,7 +30,7 @@ import org.joda.time.DateTime;
  * Basic primary key composed of a location ID and source ID and date.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.2
  */
 public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements Serializable, Cloneable {
@@ -83,7 +83,14 @@ public class BasicLocationSourceDatePK extends BasicLocationSourcePK implements 
 			return false;
 		}
 		BasicLocationSourceDatePK other = (BasicLocationSourceDatePK) obj;
-		return Objects.equals(created, other.created);
+		if ( created == null ) {
+			if ( other.created != null ) {
+				return false;
+			}
+		} else if ( !created.isEqual(other.created) ) {
+			return false;
+		}
+		return true;
 	}
 
 	@Override

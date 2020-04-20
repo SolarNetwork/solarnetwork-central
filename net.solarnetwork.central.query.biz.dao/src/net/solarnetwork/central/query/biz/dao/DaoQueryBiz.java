@@ -58,6 +58,7 @@ import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
@@ -70,7 +71,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -234,7 +235,7 @@ public class DaoQueryBiz implements QueryBiz {
 					diffDays, maxDaysForMinuteAggregation, filter);
 			forced = Aggregation.Hour;
 		}
-		return (forced != null ? forced : agg);
+		return forced;
 	}
 
 	private AggregateGeneralNodeDatumFilter enforceGeneralAggregateLevel(
@@ -359,13 +360,9 @@ public class DaoQueryBiz implements QueryBiz {
 		Aggregation forced = enforceAggregation(filter.getAggregation(), filter.getStartDate(),
 				filter.getEndDate(), filter);
 		if ( forced != null ) {
-			DatumFilterCommand cmd = new DatumFilterCommand();
+			DatumFilterCommand cmd = new DatumFilterCommand(filter, new SolarLocation());
 			cmd.setAggregate(forced);
-			cmd.setEndDate(filter.getEndDate());
 			cmd.setLocationIds(filter.getLocationIds());
-			cmd.setSourceIds(filter.getSourceIds());
-			cmd.setStartDate(filter.getStartDate());
-			cmd.setDataPath(filter.getDataPath());
 			return cmd;
 		}
 		return filter;

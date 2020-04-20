@@ -30,7 +30,7 @@ import org.joda.time.DateTime;
  * Basic primary key composed of a node ID and source ID and date.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.39
  */
 public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializable, Cloneable {
@@ -83,7 +83,14 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 			return false;
 		}
 		BasicNodeSourceDatePK other = (BasicNodeSourceDatePK) obj;
-		return Objects.equals(created, other.created);
+		if ( created == null ) {
+			if ( other.created != null ) {
+				return false;
+			}
+		} else if ( !created.isEqual(other.created) ) {
+			return false;
+		}
+		return true;
 	}
 
 	@Override

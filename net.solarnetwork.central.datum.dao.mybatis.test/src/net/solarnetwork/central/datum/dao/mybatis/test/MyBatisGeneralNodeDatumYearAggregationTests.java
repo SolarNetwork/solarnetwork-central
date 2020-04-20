@@ -238,7 +238,7 @@ public class MyBatisGeneralNodeDatumYearAggregationTests extends MyBatisGeneralN
 	}
 
 	@Test
-	public void findFilteredAggregateYearly_multipleYears_loalTimeZones() {
+	public void findFilteredAggregateYearly_multipleYears_localTimeZones() {
 		setupTestLocation(TEST_2ND_LOC, TEST_2ND_TZ);
 		setupTestNode(TEST_2ND_NODE, TEST_2ND_LOC);
 		final LocalDateTime startDate = new LocalDateTime(2017, 1, 1, 0, 0, 0);
