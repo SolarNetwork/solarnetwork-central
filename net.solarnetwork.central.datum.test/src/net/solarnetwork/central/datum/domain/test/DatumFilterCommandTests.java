@@ -77,7 +77,29 @@ public class DatumFilterCommandTests {
 		String json = objectMapper.writeValueAsString(cmd);
 		assertThat(json, notNullValue());
 		assertThat(json, equalTo(
-				"{\"nodeIds\":[1],\"sourceIds\":[\"test\"],\"aggregation\":\"Day\",\"aggregationKey\":\"d\",\"mostRecent\":false,\"startDate\":1490097600000,\"endDate\":1490702400000,\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+				"{\"nodeIds\":[1],\"sourceIds\":[\"test\"],\"aggregation\":\"Day\",\"aggregationKey\":\"d\""
+						+ ",\"partialAggregationKey\":\"0\""
+						+ ",\"mostRecent\":false,\"startDate\":1490097600000,\"endDate\":1490702400000"
+						+ ",\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+	}
+
+	@Test
+	public void serializeJsonWithPartialAggregation() throws IOException {
+		DatumFilterCommand cmd = new DatumFilterCommand();
+		cmd.setAggregate(Aggregation.Day);
+		cmd.setPartialAggregation(Aggregation.Hour);
+		cmd.setNodeId(1L);
+		cmd.setSourceId("test");
+		cmd.setStartDate(new DateTime(2017, 3, 21, 12, 0, 0, DateTimeZone.UTC));
+		cmd.setEndDate(new DateTime(2017, 3, 28, 12, 0, 0, DateTimeZone.UTC));
+
+		String json = objectMapper.writeValueAsString(cmd);
+		assertThat(json, notNullValue());
+		assertThat(json, equalTo(
+				"{\"nodeIds\":[1],\"sourceIds\":[\"test\"],\"aggregation\":\"Day\",\"aggregationKey\":\"d\""
+						+ ",\"partialAggregation\":\"Hour\",\"partialAggregationKey\":\"h\""
+						+ ",\"mostRecent\":false,\"startDate\":1490097600000,\"endDate\":1490702400000"
+						+ ",\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
 	}
 
 	@Test
@@ -92,7 +114,10 @@ public class DatumFilterCommandTests {
 		String json = objectMapper.writeValueAsString(cmd);
 		assertThat(json, notNullValue());
 		assertThat(json, equalTo(
-				"{\"nodeIds\":[1],\"sourceIds\":[\"test\"],\"aggregation\":\"Day\",\"aggregationKey\":\"d\",\"mostRecent\":false,\"localStartDate\":[2017,3,21,12,0,0,0],\"localEndDate\":[2017,3,28,12,0,0,0],\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+				"{\"nodeIds\":[1],\"sourceIds\":[\"test\"],\"aggregation\":\"Day\",\"aggregationKey\":\"d\""
+						+ ",\"partialAggregationKey\":\"0\""
+						+ ",\"mostRecent\":false,\"localStartDate\":[2017,3,21,12,0,0,0],\"localEndDate\":[2017,3,28,12,0,0,0]"
+						+ ",\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
 	}
 
 	@Test
@@ -104,11 +129,14 @@ public class DatumFilterCommandTests {
 
 		String json = objectMapper.writeValueAsString(cmd);
 		assertThat(json, notNullValue());
-		assertThat(json,
-				equalTo("{\"aggregationKey\":\"0\",\"combiningType\":\"Sum\",\"combiningTypeKey\":\"s\""
-						+ ",\"nodeIdMappings\":{\"100\":[1,2,3]}"
-						+ ",\"sourceIdMappings\":{\"CON\":[\"A\",\"B\",\"C\"],\"GEN\":[\"E\",\"F\",\"G\"]}"
-						+ ",\"mostRecent\":false,\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+		// @formatter:off
+		assertThat(json, equalTo("{\"aggregationKey\":\"0\""
+				+ ",\"partialAggregationKey\":\"0\""
+				+ ",\"combiningType\":\"Sum\",\"combiningTypeKey\":\"s\""
+				+ ",\"nodeIdMappings\":{\"100\":[1,2,3]}"
+				+ ",\"sourceIdMappings\":{\"CON\":[\"A\",\"B\",\"C\"],\"GEN\":[\"E\",\"F\",\"G\"]}"
+				+ ",\"mostRecent\":false,\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+		// @formatter:on
 	}
 
 	@Test
@@ -118,9 +146,13 @@ public class DatumFilterCommandTests {
 
 		String json = objectMapper.writeValueAsString(cmd);
 		assertThat(json, notNullValue());
-		assertThat(json, equalTo("{\"aggregationKey\":\"0\",\"rollupTypes\":[\"Time\",\"Node\"]"
+		// @formatter:off
+		assertThat(json, equalTo("{\"aggregationKey\":\"0\""
+				+ ",\"partialAggregationKey\":\"0\""
+				+ ",\"rollupTypes\":[\"Time\",\"Node\"]"
 				+ ",\"rollupTypeKeys\":[\"t\",\"n\"]"
 				+ ",\"mostRecent\":false,\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+		// @formatter:on
 	}
 
 	@Test
