@@ -39,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
@@ -124,8 +125,6 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( other == null ) {
 			return;
 		}
-		setAggregate(other.getAggregation());
-		setPartialAggregation(other.getPartialAggregation());
 	}
 
 	/**
@@ -176,6 +175,10 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		setWithoutTotalResultsCount(other.isWithoutTotalResultsCount());
 		if ( other instanceof DatumRollupFilter ) {
 			setDatumRollupTypes(((DatumRollupFilter) other).getDatumRollupTypes());
+		}
+		if ( other instanceof AggregationFilter ) {
+			setAggregate(((AggregationFilter) other).getAggregation());
+			setPartialAggregation(((AggregationFilter) other).getPartialAggregation());
 		}
 	}
 
