@@ -125,6 +125,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 			return;
 		}
 		setAggregate(other.getAggregation());
+		setPartialAggregation(other.getPartialAggregation());
 	}
 
 	/**
