@@ -4,6 +4,7 @@
 <head>
 	<meta charset="utf-8" />
 	<title>SolarUser Ping Test</title>
+	<link rel="icon" type="image/png" href="<c:url value='/img/favicon.png'/>" />
 	<style type="text/css">
 		body {
 			font-family: helvetica,sans-serif;
