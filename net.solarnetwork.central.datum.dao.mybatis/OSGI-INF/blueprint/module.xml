@@ -28,6 +28,7 @@
 		<beans:prop key="userNodeCache.ttl">60</beans:prop>
 		<beans:prop key="userNodeCache.heapMaxEntries">10000</beans:prop>
 		<beans:prop key="userNodeCache.diskMaxSizeMB">100</beans:prop>
+		<beans:prop key="datum.maxMinuteAggregationHours">168</beans:prop>
 	</osgix:cm-properties>
 	
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -131,6 +132,7 @@
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 		<property name="messageSource" ref="messageSource"/>
 		<property name="filterObjectMapper" ref="filterObjectMapper"/>
+		<property name="maxMinuteAggregationHours" value="${datum.maxMinuteAggregationHours}"/>
 	</bean>
 	
 	<bean id="loadingSupport" factory-ref="generalNodeDatumDao" factory-method="getLoadingSupport">

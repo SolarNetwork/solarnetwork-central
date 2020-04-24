@@ -1897,6 +1897,60 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	}
 
 	@Test
+	public void findFilteredAggregateFifteenMinute_truncatedTimeRange() {
+		dao.setMaxMinuteAggregationHours(1);
+
+		// populate 24 5 minute, 10 Wh segments, for a total of 120 Wh in 60 minutes
+		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
+		for ( int i = 0; i < 24; i++ ) {
+			GeneralNodeDatum datum1 = new GeneralNodeDatum();
+			datum1.setCreated(startDate.plusMinutes(i * 5));
+			datum1.setNodeId(TEST_NODE_ID);
+			datum1.setSourceId(TEST_SOURCE_ID);
+			datum1.setSampleJson("{\"a\":{\"watt_hours\":" + (i * 10) + "}}");
+			dao.store(datum1);
+			lastDatum = datum1;
+		}
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(2));
+		criteria.setAggregate(Aggregation.FifteenMinute);
+
+		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
+				null, null, null);
+
+		assertThat("Results provided", results, notNullValue());
+		// this query fills in empty slots, so we have :00, :15, :30, :45
+		assertThat("Minute query results truncated to only 1 hour", results.getTotalResults(),
+				equalTo(4L));
+		assertThat("Minute query results truncated to only 1 hour", results.getReturnedResultCount(),
+				equalTo(4));
+
+		int i = 0;
+		for ( ReportingGeneralNodeDatumMatch match : results ) {
+			assertThat("Wh for minute slot " + i, match.getSampleData().get("watt_hours"), equalTo(30));
+			i++;
+		}
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void findFilteredAggregateMinute() {
+		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
+
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(startDate);
+		criteria.setEndDate(startDate.plusHours(2));
+		criteria.setAggregate(Aggregation.Minute);
+
+		dao.findAggregationFiltered(criteria, null, null, null);
+	}
+
+	@Test
 	public void findFilteredAggregateFifteenMinuteCombined() {
 		setupTestNode(TEST_2ND_NODE);
 

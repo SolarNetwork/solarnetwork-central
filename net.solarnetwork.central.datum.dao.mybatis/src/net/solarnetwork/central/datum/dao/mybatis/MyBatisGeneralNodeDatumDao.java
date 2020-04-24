@@ -38,6 +38,7 @@ import org.apache.ibatis.session.ResultHandler;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
 import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
@@ -77,7 +78,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -324,6 +325,13 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public static final String QUERY_PARTIAL_AGGREGATION_SUFFIX = "-partial";
 
+	/**
+	 * The {@code maxMinuteAggregationHours} property default value.
+	 * 
+	 * @since 2.2
+	 */
+	public static final int DEFAULT_MAX_MINUTE_AGG_HOURS = 168;
+
 	private final BulkLoadingDaoSupport loadingSupport;
 
 	private String queryForReportableInterval;
@@ -348,6 +356,7 @@ public class MyBatisGeneralNodeDatumDao
 	private String updateDatumAggregatesStale;
 	private String queryForAggregatesStale;
 	private ObjectMapper filterObjectMapper;
+	private int maxMinuteAggregationHours;
 
 	/**
 	 * Default constructor.
@@ -377,6 +386,7 @@ public class MyBatisGeneralNodeDatumDao
 		this.updateDatumRangeDates = UPDATE_DATUM_RANGE_DATES;
 		this.updateDatumAggregatesStale = UPDATE_AGGREGATES_STALE;
 		this.queryForAggregatesStale = QUERY_FOR_AGGREGATES_STALE;
+		this.maxMinuteAggregationHours = DEFAULT_MAX_MINUTE_AGG_HOURS;
 	}
 
 	/**
@@ -542,18 +552,9 @@ public class MyBatisGeneralNodeDatumDao
 		//postProcessAggregationFilterProperties(filter, sqlProps);
 
 		final Aggregation agg = filter.getAggregation();
-		if ( agg != null && agg.getLevel() > 0 && agg.compareLevel(Aggregation.Hour) < 1 ) {
+		if ( agg != null && agg.getLevel() > 0 && agg.compareLevel(Aggregation.Hour) < 0 ) {
 			// make sure start/end date provided for minute level aggregation queries as query expects it
-			DateTime forced = null;
-			if ( filter.getStartDate() == null || filter.getEndDate() == null ) {
-				forced = new DateTime();
-				int minutes = agg.getLevel() / 60;
-				forced = forced.withMinuteOfHour((forced.getMinuteOfHour() / minutes) * minutes)
-						.minuteOfHour().roundFloorCopy();
-			}
-			sqlProps.put(PARAM_START_DATE,
-					filter.getStartDate() != null ? filter.getStartDate() : forced);
-			sqlProps.put(PARAM_END_DATE, filter.getEndDate() != null ? filter.getEndDate() : forced);
+			setupMinuteAggregationTimeRange(filter, agg, sqlProps);
 		} else if ( agg != null && agg == Aggregation.RunningTotal && filter.getSourceId() == null ) {
 			// source ID is required for RunningTotal currently
 			throw new IllegalArgumentException("sourceId is required for RunningTotal aggregation");
@@ -1360,18 +1361,9 @@ public class MyBatisGeneralNodeDatumDao
 		if ( agg != null ) {
 			setupAggregationParam(filter, sqlProps);
 
-			if ( agg.getLevel() > 0 && agg.compareLevel(Aggregation.Hour) < 1 ) {
+			if ( agg.getLevel() > 0 && agg.compareLevel(Aggregation.Hour) < 0 ) {
 				// make sure start/end date provided for minute level aggregation queries as query expects it
-				DateTime forced = null;
-				if ( filter.getStartDate() == null || filter.getEndDate() == null ) {
-					forced = new DateTime();
-					int minutes = agg.getLevel() / 60;
-					forced = forced.withMinuteOfHour((forced.getMinuteOfHour() / minutes) * minutes)
-							.minuteOfHour().roundFloorCopy();
-				}
-				sqlProps.put(PARAM_START_DATE,
-						filter.getStartDate() != null ? filter.getStartDate() : forced);
-				sqlProps.put(PARAM_END_DATE, filter.getEndDate() != null ? filter.getEndDate() : forced);
+				setupMinuteAggregationTimeRange(filter, agg, sqlProps);
 			} else if ( agg == Aggregation.RunningTotal && filter.getSourceId() == null ) {
 				// source ID is required for RunningTotal currently
 				throw new IllegalArgumentException("sourceId is required for RunningTotal aggregation");
@@ -1405,6 +1397,58 @@ public class MyBatisGeneralNodeDatumDao
 		ExportResultHandler handler = new ExportResultHandler(callback);
 		getSqlSession().select(query, sqlProps, handler);
 		return new BasicBulkExportResult(handler.getCount());
+	}
+
+	/**
+	 * Configure the start/end dates required by minute aggregation queries.
+	 * 
+	 * <p>
+	 * This method will enforce the configured
+	 * {@link #getMaxMinuteAggregationHours()} setting, truncating the requested
+	 * time range to that many hours if needed.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the filter that provides the requested start/end dates
+	 * @param agg
+	 *        the aggregate level
+	 * @param sqlProps
+	 *        the query parameters to populate with {@link #PARAM_START_DATE}
+	 *        and {@link #PARAM_END_DATE} properties
+	 * @throws IllegalArgumentException
+	 *         if {@code agg} is less than {@link Aggregation#FiveMinute}
+	 * @since 2.2
+	 */
+	private void setupMinuteAggregationTimeRange(GeneralNodeDatumFilter filter, Aggregation agg,
+			Map<String, Object> sqlProps) {
+		if ( agg.compareLevel(Aggregation.FiveMinute) < 0 ) {
+			throw new IllegalArgumentException(
+					"Must be FiveMinute aggregation or more. For finer granularity results, request without any aggregation.");
+		}
+
+		DateTime start = filter.getStartDate();
+		DateTime end = filter.getEndDate();
+		if ( start == null ) {
+			start = new DateTime().minuteOfHour().roundFloorCopy();
+		}
+		if ( end == null ) {
+			int minutes = agg.getLevel() / 60;
+			end = new DateTime();
+			end = end.withMinuteOfHour((end.getMinuteOfHour() / minutes) * minutes).minuteOfHour()
+					.roundFloorCopy();
+		}
+
+		// restrict Minute level aggregation to maximum length
+		final int maxHours = getMaxMinuteAggregationHours();
+		if ( maxHours > 0 ) {
+			long hours = new Duration(start, end).getStandardHours();
+			if ( hours > maxHours ) {
+				end = start.plusHours(maxHours);
+			}
+		}
+
+		sqlProps.put(PARAM_START_DATE, start);
+		sqlProps.put(PARAM_END_DATE, end);
 	}
 
 	private static class ExportResultHandler implements ResultHandler<GeneralNodeDatumFilterMatch> {
@@ -1775,6 +1819,31 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setFilterObjectMapper(ObjectMapper filterObjectMapper) {
 		this.filterObjectMapper = filterObjectMapper;
+	}
+
+	/**
+	 * Get the maximum number of hours to allow in minute-level aggregation
+	 * queries.
+	 * 
+	 * @return the maximum hours; defaults to
+	 *         {@link #DEFAULT_MAX_MINUTE_AGG_HOURS}
+	 * @since 2.2
+	 */
+	public int getMaxMinuteAggregationHours() {
+		return maxMinuteAggregationHours;
+	}
+
+	/**
+	 * Set the maximum number of hours to allow in minute-level aggregation
+	 * queries.
+	 * 
+	 * @param maxMinuteAggregationHours
+	 *        the maximum hours to set; anything less than {@literal 1} means
+	 *        there is no maximum
+	 * @since 2.2
+	 */
+	public void setMaxMinuteAggregationHours(int maxMinuteAggregationHours) {
+		this.maxMinuteAggregationHours = maxMinuteAggregationHours;
 	}
 
 }
