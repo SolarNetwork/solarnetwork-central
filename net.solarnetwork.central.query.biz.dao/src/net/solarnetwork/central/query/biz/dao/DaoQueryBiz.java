@@ -30,9 +30,11 @@ import java.util.List;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.joda.time.ReadableInstant;
 import org.joda.time.ReadableInterval;
+import org.joda.time.ReadablePartial;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,8 +56,9 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.LocalDateRangeFilter;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -71,7 +74,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -184,24 +187,43 @@ public class DaoQueryBiz implements QueryBiz {
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
 	}
 
-	private Aggregation enforceAggregation(final Aggregation agg, ReadableInstant s, ReadableInstant e,
-			Filter filter) {
+	private Aggregation enforceAggregation(final AggregationFilter filter) {
+		final Aggregation agg = filter.getAggregation();
 		Aggregation forced = null;
 		if ( agg == Aggregation.RunningTotal ) {
 			// running total
 			return null;
 		}
-		if ( s == null && e != null ) {
-			// treat start date as SolarNetwork epoch (may want to make epoch configurable)
-			s = new DateTime(2008, 1, 1, 0, 0, 0, DateTimeZone.UTC);
-		} else if ( s != null && e == null ) {
-			// treat end date as now for purposes of this calculating query range
-			e = new DateTime();
+		Object startDate = null;
+		Object endDate = null;
+		long diffDays = 0;
+		if ( filter instanceof LocalDateRangeFilter
+				&& ((LocalDateRangeFilter) filter).getLocalStartDate() != null ) {
+			ReadablePartial s = ((LocalDateRangeFilter) filter).getLocalStartDate();
+			ReadablePartial e = ((LocalDateRangeFilter) filter).getLocalEndDate();
+			if ( e == null ) {
+				e = new LocalDateTime();
+			}
+			startDate = s;
+			endDate = e;
+			diffDays = new Period(s, e).getDays();
+		} else {
+			ReadableInstant s = filter.getStartDate();
+			ReadableInstant e = filter.getEndDate();
+			if ( s == null && e != null ) {
+				// treat start date as SolarNetwork epoch (may want to make epoch configurable)
+				s = new DateTime(2008, 1, 1, 0, 0, 0, DateTimeZone.UTC);
+			} else if ( s != null && e == null ) {
+				// treat end date as now for purposes of this calculating query range
+				e = new DateTime();
+			}
+			startDate = s;
+			endDate = e;
+			diffDays = (s != null && e != null
+					? (e.getMillis() - s.getMillis()) / (1000L * 60L * 60L * 24L)
+					: 0);
 		}
-		long diffDays = (s != null && e != null
-				? (e.getMillis() - s.getMillis()) / (1000L * 60L * 60L * 24L)
-				: 0);
-		if ( s == null && e == null && (agg == null || agg.compareTo(Aggregation.Day) < 0)
+		if ( startDate == null && endDate == null && (agg == null || agg.compareTo(Aggregation.Day) < 0)
 				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
 				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek ) {
 			log.info("Restricting aggregate to Day level for filter with missing start or end date: {}",
@@ -243,8 +265,7 @@ public class DaoQueryBiz implements QueryBiz {
 		if ( filter.isMostRecent() ) {
 			return filter;
 		}
-		Aggregation forced = enforceAggregation(filter.getAggregation(), filter.getStartDate(),
-				filter.getEndDate(), filter);
+		Aggregation forced = enforceAggregation(filter);
 		if ( forced != null ) {
 			DatumFilterCommand cmd = new DatumFilterCommand(filter);
 			cmd.setAggregate(forced);
@@ -357,8 +378,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	private AggregateGeneralLocationDatumFilter enforceGeneralAggregateLevel(
 			AggregateGeneralLocationDatumFilter filter) {
-		Aggregation forced = enforceAggregation(filter.getAggregation(), filter.getStartDate(),
-				filter.getEndDate(), filter);
+		Aggregation forced = enforceAggregation(filter);
 		if ( forced != null ) {
 			DatumFilterCommand cmd = new DatumFilterCommand(filter, new SolarLocation());
 			cmd.setAggregate(forced);
