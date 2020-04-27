@@ -25,19 +25,27 @@ package net.solarnetwork.central.datum.support;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.ReadingDatum;
 import net.solarnetwork.central.datum.domain.ReportingDatum;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.PropertySerializer;
 import net.solarnetwork.util.StringUtils;
 
 /**
- * Serialize a {@link GeneralNodeDatum} to a {@code Map}. The
- * {@link ReportingDatum} API is also supported (those properties will be added
- * to the output if a {@link GeneralNodeDatum} subclass implements that
- * interface).
+ * Serialize a {@link GeneralNodeDatum} to a {@code Map}.
+ * 
+ * <p>
+ * The {@link ReportingDatum} API is also supported (those properties will be
+ * added to the output if a {@link GeneralNodeDatum} subclass implements that
+ * interface). Similarly the {@link ReadingDatum} API is supported and all start
+ * and final properties will be added to the resulting map, adding the
+ * {@link ReadingDatum#START_PROPERTY_SUFFIX} and
+ * {@link ReadingDatum#FINAL_PROPERTY_SUFFIX} property name suffix as
+ * appropriate.
+ * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class GeneralNodeDatumMapPropertySerializer implements PropertySerializer {
 
@@ -50,6 +58,30 @@ public class GeneralNodeDatumMapPropertySerializer implements PropertySerializer
 			ReportingDatum rd = (ReportingDatum) datum;
 			props.put("localDate", rd.getLocalDate());
 			props.put("localTime", rd.getLocalTime());
+		}
+		if ( datum instanceof ReadingDatum ) {
+			ReadingDatum rd = (ReadingDatum) datum;
+			Map<String, ?> dataStart = rd.getSampleDataStart();
+			if ( dataStart != null ) {
+				for ( Map.Entry<String, ?> me : dataStart.entrySet() ) {
+					String key = me.getKey();
+					if ( key == null ) {
+						continue;
+					}
+					props.put(key + ReadingDatum.START_PROPERTY_SUFFIX, me.getValue());
+				}
+			}
+
+			Map<String, ?> dataFinal = rd.getSampleDataFinal();
+			if ( dataFinal != null ) {
+				for ( Map.Entry<String, ?> me : dataFinal.entrySet() ) {
+					String key = me.getKey();
+					if ( key == null ) {
+						continue;
+					}
+					props.put(key + ReadingDatum.FINAL_PROPERTY_SUFFIX, me.getValue());
+				}
+			}
 		}
 		props.put("nodeId", datum.getNodeId());
 		props.put("sourceId", datum.getSourceId());
