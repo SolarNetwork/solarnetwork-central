@@ -26,14 +26,37 @@ package net.solarnetwork.central.datum.domain;
  * An action to perform when combining data elements.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.25
  */
 public enum CombiningType {
 
+	/** Add values. */
 	Sum("s"),
 
-	Average("a");
+	/** Average of values. */
+	Average("a"),
+
+	/**
+	 * Subtract values.
+	 * 
+	 * @since 1.1
+	 */
+	Difference("d"),
+
+	/**
+	 * Multiply values.
+	 * 
+	 * @since 1.1
+	 */
+	Multiply("m"),
+
+	/**
+	 * Divide values.
+	 * 
+	 * @since 1.1
+	 */
+	Divide("v");
 
 	private final String key;
 
