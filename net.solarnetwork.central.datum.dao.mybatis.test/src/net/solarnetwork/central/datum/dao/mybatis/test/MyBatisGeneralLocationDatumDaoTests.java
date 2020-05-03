@@ -33,7 +33,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +42,6 @@ import org.joda.time.DateTimeFieldType;
 import org.joda.time.DateTimeZone;
 import org.joda.time.ReadableInterval;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralLocationDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -54,54 +52,14 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.GeneralLocationDatumSamples;
 
 /**
  * Test cases for the {@link MyBatisGeneralLocationDatumDao} class.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
-public class MyBatisGeneralLocationDatumDaoTests extends AbstractMyBatisDaoTestSupport {
-
-	private static final String TEST_SOURCE_ID = "test.source";
-	private static final String TEST_2ND_SOURCE = "2nd source";
-
-	private MyBatisGeneralLocationDatumDao dao;
-
-	private GeneralLocationDatum lastDatum;
-
-	@Before
-	public void setup() {
-		dao = new MyBatisGeneralLocationDatumDao();
-		dao.setSqlSessionFactory(getSqlSessionFactory());
-	}
-
-	private GeneralLocationDatum getTestInstance() {
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(new DateTime());
-		datum.setLocationId(TEST_LOC_ID);
-		datum.setPosted(new DateTime());
-		datum.setSourceId(TEST_SOURCE_ID);
-
-		GeneralLocationDatumSamples samples = new GeneralLocationDatumSamples();
-		datum.setSamples(samples);
-
-		// some sample data
-		Map<String, Number> instants = new HashMap<String, Number>(2);
-		instants.put("watts", 231);
-		samples.setInstantaneous(instants);
-
-		Map<String, Number> accum = new HashMap<String, Number>(2);
-		accum.put("watt_hours", 4123);
-		samples.setAccumulating(accum);
-
-		Map<String, Object> msgs = new HashMap<String, Object>(2);
-		msgs.put("foo", "bar");
-		samples.setStatus(msgs);
-
-		return datum;
-	}
+public class MyBatisGeneralLocationDatumDaoTests extends MyBatisGeneralLocationDatumDaoTestSupport {
 
 	@Test
 	public void storeNew() {
