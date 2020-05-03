@@ -74,6 +74,7 @@
 				<entry key="net.solarnetwork.central.datum.domain.GeneralNodeDatum" value-ref="generalNodeDatumSerializer"/>
 				<entry key="net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch" value-ref="generalNodeDatumSerializer"/>
 				<entry key="net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum" value-ref="generalNodeDatumSerializer"/>
+				<entry key="net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumReading" value-ref="generalNodeDatumSerializer"/>
 			</map>
 		</property>
 	</bean>

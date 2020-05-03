@@ -199,6 +199,7 @@
 	</sql>
 	
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial-count" resultType="long">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT count(datum.ts_start)
 		FROM (		
 			<include refid="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial-ranges"/>
@@ -208,6 +209,7 @@
 	</select>
 
 	<select id="findall-GeneralNodeDatum-ReportingGeneralNodeDatum-Month-partial" resultMap="ReportingGeneralNodeDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-findall-ReportingGeneralNodeDatum-combine-cte"/>
 		SELECT
 			<include refid="fragment-GeneralNodeDatum-aggregation-result"/>
 		FROM (		

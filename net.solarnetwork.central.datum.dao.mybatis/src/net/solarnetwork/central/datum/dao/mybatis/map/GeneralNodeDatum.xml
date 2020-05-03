@@ -464,6 +464,22 @@
 							NULL,
 							NULL) AS r_datum_jdata
 					</when>
+					<when test="combine.type.toString() == 'Difference'">
+						<!--  sub: agg order matters, so must include ORDER BY in aggregate -->
+						solarcommon.jdata_from_components(
+							solarcommon.jsonb_sub_object(datum.jdata_i
+								<foreach collection="combine.configs" open="ORDER BY" separator="," item="config">
+									${config.name}_mappings.rank
+								</foreach>
+							),
+							solarcommon.jsonb_sub_object(datum.jdata_a
+								<foreach collection="combine.configs" open="ORDER BY" separator="," item="config">
+									${config.name}_mappings.rank
+								</foreach>
+							),
+							NULL,
+							NULL) AS r_datum_jdata
+					</when>
 					<otherwise>
 						<!--  sum -->
 						solarcommon.jdata_from_components(
@@ -510,18 +526,21 @@
 		<if test="combine != null">
 			<foreach collection="combine.configs" open="WITH" separator="," item="config">
 				${config.name}_mappings AS (
-					SELECT m.ids, v.vid
-					FROM solarcommon.reduce_dim(
-						<choose>
-							<when test="config.name == 'node'">
-								#{config.idSets,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
-							</when>
-							<otherwise>
-								#{config.idSets,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
-							</otherwise>
-						</choose>
-						) WITH ORDINALITY AS m(ids,n)
-					JOIN unnest(
+					SELECT id, vid, ROW_NUMBER() OVER (ORDER BY 1) AS rank FROM (
+						SELECT unnest(ids) AS id, v.vid, s.n FROM (
+							SELECT ids, n
+							FROM solarcommon.reduce_dim( 
+								<choose>
+									<when test="config.name == 'node'">
+										#{config.idSets,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
+									</when>
+									<otherwise>
+										#{config.idSets,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+									</otherwise>
+								</choose>
+							) WITH ORDINALITY AS m(ids,n) 
+						) s
+						JOIN unnest(
 						<choose>
 							<when test="config.name == 'node'">
 								#{config.virtualIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[]
@@ -530,7 +549,8 @@
 								#{config.virtualIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 							</otherwise>
 						</choose>
-					) WITH ORDINALITY AS v(vid,n) ON v.n = m.n
+						) WITH ORDINALITY AS v(vid,n) ON v.n = s.n
+					) os
 				)
 			</foreach>
 		</if>
@@ -539,7 +559,7 @@
 	<sql id="fragment-findall-ReportingGeneralNodeDatum-combine-join">
 		<if test="combine != null">
 			<foreach collection="combine.configs" item="config">
-				INNER JOIN ${config.name}_mappings ON datum.${config.name}_id = ANY (${config.name}_mappings.ids)
+				INNER JOIN ${config.name}_mappings ON datum.${config.name}_id = ${config.name}_mappings.id
 			</foreach>
 		</if>
 	</sql>

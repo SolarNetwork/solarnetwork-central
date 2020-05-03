@@ -44,11 +44,11 @@ import net.solarnetwork.util.SerializeIgnore;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.36
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId", "localDate", "localTime" })
-public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum {
+public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum implements ReadingDatum {
 
 	private static final long serialVersionUID = -3743593391188435695L;
 
@@ -90,7 +90,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 				if ( key == null ) {
 					continue;
 				}
-				data.put(key + "_start", me.getValue());
+				data.put(key + START_PROPERTY_SUFFIX, me.getValue());
 			}
 		}
 
@@ -101,7 +101,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 				if ( key == null ) {
 					continue;
 				}
-				data.put(key + "_end", me.getValue());
+				data.put(key + FINAL_PROPERTY_SUFFIX, me.getValue());
 			}
 		}
 
@@ -178,6 +178,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 * 
 	 * @return the sample data, or {@literal null} if none available
 	 */
+	@Override
 	@SerializeIgnore
 	@JsonIgnore
 	public Map<String, ?> getSampleDataFinal() {
@@ -255,6 +256,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 	 * 
 	 * @return the sample data, or {@literal null} if none available
 	 */
+	@Override
 	@JsonIgnore
 	@SerializeIgnore
 	public Map<String, ?> getSampleDataStart() {

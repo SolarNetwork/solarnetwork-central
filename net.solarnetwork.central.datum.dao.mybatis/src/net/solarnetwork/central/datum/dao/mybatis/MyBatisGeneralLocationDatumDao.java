@@ -23,14 +23,17 @@
 package net.solarnetwork.central.datum.dao.mybatis;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeFieldType;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.joda.time.LocalDateTime;
 import org.joda.time.ReadableInterval;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +56,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralLocationDatumDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisGeneralLocationDatumDao
 		extends BaseMyBatisGenericDao<GeneralLocationDatum, GeneralLocationDatumPK> implements
@@ -85,6 +88,12 @@ public class MyBatisGeneralLocationDatumDao
 	public static final String PARAM_FILTER = "filter";
 
 	/**
+	 * The query parameter for a list of {@link LocationSourceRange} objects.
+	 * 
+	 * @since 2.1
+	 */
+	public static final String PARAM_RANGES = "ranges";
+	/**
 	 * The default query name used for
 	 * {@link #getReportableInterval(Long, String)}.
 	 */
@@ -103,6 +112,13 @@ public class MyBatisGeneralLocationDatumDao
 	 * <em>true</em>.
 	 */
 	public static final String QUERY_FOR_MOST_RECENT = "find-general-loc-most-recent";
+
+	/**
+	 * The query name suffix added to "partial" aggregation style queries.
+	 * 
+	 * @since 2.1
+	 */
+	public static final String QUERY_PARTIAL_AGGREGATION_SUFFIX = "-partial";
 
 	private String queryForReportableInterval;
 	private String queryForDistinctSources;
@@ -181,13 +197,19 @@ public class MyBatisGeneralLocationDatumDao
 	public FilterResults<ReportingGeneralLocationDatumMatch> findAggregationFiltered(
 			AggregateGeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
-		final String query = getQueryForFilter(filter);
 		final Map<String, Object> sqlProps = new HashMap<String, Object>(1);
+		final List<LocationSourceRange> ranges = partialAggregationRanges(filter);
+		if ( ranges != null ) {
+			sqlProps.put(PARAM_RANGES, ranges);
+		}
 		sqlProps.put(PARAM_FILTER, filter);
 		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
 			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
 		}
 		//postProcessAggregationFilterProperties(filter, sqlProps);
+
+		final String query = getQueryForFilter(filter)
+				+ (ranges != null ? QUERY_PARTIAL_AGGREGATION_SUFFIX : "");
 
 		// attempt count first, if max NOT specified as -1
 		// and NOT a *Minute, *DayOfWeek, or *HourOfDay*, or *RunningTotal* aggregate level
@@ -217,6 +239,93 @@ public class MyBatisGeneralLocationDatumDao
 				offset, rows.size());
 
 		return results;
+	}
+
+	private static DateTimeFieldType dateTimeFieldType(Aggregation agg) {
+		final DateTimeFieldType field;
+		switch (agg) {
+			case Year:
+				field = DateTimeFieldType.year();
+				break;
+
+			case Month:
+				field = DateTimeFieldType.monthOfYear();
+				break;
+
+			case Day:
+				field = DateTimeFieldType.dayOfMonth();
+				break;
+
+			case Hour:
+				field = DateTimeFieldType.hourOfDay();
+				break;
+
+			default:
+				field = null;
+				break;
+		}
+		return field;
+	}
+
+	public static List<LocationSourceRange> partialAggregationRanges(
+			AggregateGeneralLocationDatumFilter filter) {
+		final Aggregation main = filter.getAggregation();
+		final Aggregation partial = filter.getPartialAggregation();
+		if ( main == null || partial == null || partial.compareLevel(main) >= 0 ) {
+			return null;
+		}
+		final DateTimeFieldType mainField = dateTimeFieldType(main);
+		final DateTimeFieldType partialField = dateTimeFieldType(partial);
+		if ( mainField == null || partialField == null ) {
+			return null;
+		}
+		List<LocationSourceRange> result = new ArrayList<>(3);
+		if ( filter.getLocalStartDate() != null ) {
+			LocalDateTime start = filter.getLocalStartDate();
+			LocalDateTime end = (filter.getLocalEndDate() != null ? filter.getLocalEndDate()
+					: new LocalDateTime().property(partialField).roundFloorCopy());
+			LocalDateTime curr = start.property(mainField).roundFloorCopy();
+			if ( curr.isBefore(start) ) {
+				curr = curr.property(mainField).addToCopy(1);
+				if ( curr.isAfter(end) ) {
+					curr = end.property(partialField).roundFloorCopy();
+				}
+				result.add(LocationSourceRange.range(start.property(partialField).roundFloorCopy(), curr,
+						partial));
+			}
+			LocalDateTime next = end.property(mainField).roundFloorCopy();
+			if ( curr.isBefore(next) ) {
+				result.add(LocationSourceRange.range(curr, next, main));
+				curr = next;
+				next = end.property(partialField).roundFloorCopy();
+				if ( curr.isBefore(next) ) {
+					result.add(LocationSourceRange.range(curr, next, partial));
+				}
+			}
+		} else if ( filter.getStartDate() != null ) {
+			DateTime start = filter.getStartDate();
+			DateTime end = (filter.getEndDate() != null ? filter.getEndDate()
+					: new DateTime().property(partialField).roundFloorCopy());
+			DateTime curr = start.property(mainField).roundFloorCopy();
+			if ( curr.isBefore(start) ) {
+				curr = curr.property(mainField).addToCopy(1);
+				if ( curr.isAfter(end) ) {
+					curr = end.property(partialField).roundFloorCopy();
+				}
+				result.add(LocationSourceRange.range(start.property(partialField).roundFloorCopy(), curr,
+						partial));
+			}
+			DateTime next = end.property(mainField).roundFloorCopy();
+			if ( curr.isBefore(next) ) {
+				result.add(LocationSourceRange.range(curr, next, main));
+				curr = next;
+				next = end.property(partialField).roundFloorCopy();
+				if ( curr.isBefore(next) ) {
+					result.add(LocationSourceRange.range(curr, next, partial));
+				}
+			}
+		}
+		return (result.isEmpty() ? null : result);
 	}
 
 	private Long executeCountQuery(final String countQueryName, final Map<String, ?> sqlProps) {
