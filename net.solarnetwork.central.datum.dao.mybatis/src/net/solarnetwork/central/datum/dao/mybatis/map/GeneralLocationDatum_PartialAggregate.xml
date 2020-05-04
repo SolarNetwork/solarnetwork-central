@@ -182,4 +182,48 @@
 		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
 	</select>
 
+
+	<!-- Partial years -->
+	
+	<sql id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Year-partial-ranges">
+		<foreach collection="ranges" item="range" separator=") UNION ALL (" open="(" close=")">
+			<choose>
+				<when test="range.aggregation.toString() == 'Day'">
+					<include refid="fragment-findall-ReportingGeneralLocationDatum-time-rounded-datum-agg">
+						<property name="date_field" value="day"/>
+						<property name="date_field_agg" value="year"/>
+					</include>
+				</when>
+				<when test="range.aggregation.toString() == 'Month'">
+					<include refid="fragment-findall-ReportingGeneralLocationDatum-time-rounded-datum-agg">
+						<property name="date_field" value="month"/>
+						<property name="date_field_agg" value="year"/>
+					</include>
+				</when>
+				<otherwise>
+					<include refid="fragment-findall-ReportingGeneralLocationDatum-time-rounded-datum-agg">
+						<property name="date_field" value="year"/>
+						<property name="date_field_agg" value="year"/>
+					</include>
+				</otherwise>
+			</choose>
+		</foreach>
+	</sql>
+	
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Year-partial-count" resultType="long">
+		SELECT count(datum.ts_start)
+		FROM (		
+			<include refid="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Year-partial-ranges"/>
+		) datum
+	</select>
+
+	<select id="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Year-partial" resultMap="ReportingGeneralLocationDatumMatchResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-GeneralLocationDatum-aggregation-result"/>
+		FROM (		
+			<include refid="findall-GeneralLocationDatum-ReportingGeneralLocationDatum-Year-partial-ranges"/>
+		) datum
+		<include refid="fragment-findall-ReportingGeneralLocationDatum-order"/>
+	</select>
+
 </mapper>

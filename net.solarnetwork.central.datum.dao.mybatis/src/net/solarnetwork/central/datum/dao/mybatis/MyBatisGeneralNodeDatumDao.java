@@ -657,9 +657,11 @@ public class MyBatisGeneralNodeDatumDao
 						partial));
 			}
 			LocalDateTime next = end.property(mainField).roundFloorCopy();
-			if ( curr.isBefore(next) ) {
-				result.add(NodeSourceRange.range(curr, next, main));
-				curr = next;
+			if ( curr.isBefore(end) ) {
+				if ( curr.isBefore(next) ) {
+					result.add(NodeSourceRange.range(curr, next, main));
+					curr = next;
+				}
 				next = end.property(partialField).roundFloorCopy();
 				if ( curr.isBefore(next) ) {
 					result.add(NodeSourceRange.range(curr, next, partial));
@@ -679,9 +681,11 @@ public class MyBatisGeneralNodeDatumDao
 						partial));
 			}
 			DateTime next = end.property(mainField).roundFloorCopy();
-			if ( curr.isBefore(next) ) {
-				result.add(NodeSourceRange.range(curr, next, main));
-				curr = next;
+			if ( curr.isBefore(end) ) {
+				if ( curr.isBefore(next) ) {
+					result.add(NodeSourceRange.range(curr, next, main));
+					curr = next;
+				}
 				next = end.property(partialField).roundFloorCopy();
 				if ( curr.isBefore(next) ) {
 					result.add(NodeSourceRange.range(curr, next, partial));

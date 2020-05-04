@@ -294,9 +294,11 @@ public class MyBatisGeneralLocationDatumDao
 						partial));
 			}
 			LocalDateTime next = end.property(mainField).roundFloorCopy();
-			if ( curr.isBefore(next) ) {
-				result.add(LocationSourceRange.range(curr, next, main));
-				curr = next;
+			if ( curr.isBefore(end) ) {
+				if ( curr.isBefore(next) ) {
+					result.add(LocationSourceRange.range(curr, next, main));
+					curr = next;
+				}
 				next = end.property(partialField).roundFloorCopy();
 				if ( curr.isBefore(next) ) {
 					result.add(LocationSourceRange.range(curr, next, partial));
@@ -316,9 +318,11 @@ public class MyBatisGeneralLocationDatumDao
 						partial));
 			}
 			DateTime next = end.property(mainField).roundFloorCopy();
-			if ( curr.isBefore(next) ) {
-				result.add(LocationSourceRange.range(curr, next, main));
-				curr = next;
+			if ( curr.isBefore(end) ) {
+				if ( curr.isBefore(next) ) {
+					result.add(LocationSourceRange.range(curr, next, main));
+					curr = next;
+				}
 				next = end.property(partialField).roundFloorCopy();
 				if ( curr.isBefore(next) ) {
 					result.add(LocationSourceRange.range(curr, next, partial));
