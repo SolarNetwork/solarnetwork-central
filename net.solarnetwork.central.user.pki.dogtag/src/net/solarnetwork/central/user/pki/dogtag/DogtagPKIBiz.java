@@ -71,9 +71,10 @@ import net.solarnetwork.util.CachedResult;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
-public class DogtagPKIBiz implements NodePKIBiz, PingTest {
+public class DogtagPKIBiz
+		implements NodePKIBiz, PingTest, net.solarnetwork.settings.SettingsChangeObserver {
 
 	public static final String DOGTAG_10_PROFILE_SUBMIT_PATH = "/ca/ee/ca/profileSubmit";
 
@@ -81,8 +82,12 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 
 	public static final String DOGTAG_10_PROFILE_SUBMIT_RESPONSE_REQUEST_ID_XPATH = "/*/RequestId/text()";
 
+	// Dogtag 10.0
 	public static final String DOGTAG_10_PROFILE_ID_XPATH = "/ProfileData/id";
 	public static final String DOGTAG_10_PROFILE_ENABLED_XPATH = "/ProfileData/isEnabled";
+
+	// Dogtag 10.6
+	public static final String DOGTAG_10_CERTREQ_PROFILE_ID_XPATH = "/CertEnrollmentRequest/ProfileID";
 
 	public static final String DOGTAG_10_CERT_GET_PATH = "/ca/rest/certs/{id}";
 	public static final String DOGTAG_10_CERTREG_RENEW_PATH = "/ca/rest/certrequests";
@@ -115,6 +120,27 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 
 	private final Map<String, XPathExpression> xpathCache = new HashMap<String, XPathExpression>();
 	private CachedResult<PingTestResult> cachedResult;
+
+	/**
+	 * Call to setup the Dogtag client.
+	 * 
+	 * <p>
+	 * This will attempt to detect the Dogtag version, unless one has already
+	 * been configured via {@link #setDogtagVersionValue(String)}.
+	 * </p>
+	 * 
+	 * @since 2.1
+	 */
+	public void setup() {
+		configurationChanged(null);
+	}
+
+	@Override
+	public void configurationChanged(Map<String, Object> properties) {
+		if ( dogtagVersion[0] == 0 ) {
+			detectDogtagVersion();
+		}
+	}
 
 	@Override
 	public X509Certificate generateCertificate(String dn, PublicKey publicKey, PrivateKey privateKey)
@@ -401,18 +427,22 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 		if ( dogtagProfileId == null ) {
 			return new PingTestResult(false, "Profile ID not configured.");
 		}
+
 		if ( dogtagVersion[0] == 0 ) {
 			// try to detect version of server
 			detectDogtagVersion();
 		}
+
 		PingTestResult result = null;
 		ResponseEntity<DOMSource> response = null;
+		boolean certReqMethod = true;
 		try {
 			response = restOps.getForEntity(baseUrl + DOGTAG_10_CERTREQ_GET_PROFILE, DOMSource.class,
 					dogtagProfileId);
 		} catch ( HttpClientErrorException e ) {
 			if ( e.getStatusCode() == HttpStatus.NOT_FOUND ) {
 				try {
+					certReqMethod = false;
 					response = restOps.getForEntity(baseUrl + DOGTAG_10_AGENT_PROFILE_GET_PATH,
 							DOMSource.class, dogtagProfileId);
 				} catch ( HttpClientErrorException e2 ) {
@@ -428,14 +458,22 @@ public class DogtagPKIBiz implements NodePKIBiz, PingTest {
 			result = new PingTestResult(false, "HTTP response has no content");
 		} else {
 			Node doc = response.getBody().getNode();
-			String resultId = xmlSupport.extractStringFromXml(doc,
-					xpathForString(DOGTAG_10_PROFILE_ID_XPATH));
-			String enabled = xmlSupport.extractStringFromXml(doc,
-					xpathForString(DOGTAG_10_PROFILE_ENABLED_XPATH));
+			boolean enabled = false;
+			String resultId = null;
+			if ( certReqMethod ) {
+				resultId = xmlSupport.extractStringFromXml(doc,
+						xpathForString(DOGTAG_10_CERTREQ_PROFILE_ID_XPATH));
+				enabled = true;
+			} else {
+				resultId = xmlSupport.extractStringFromXml(doc,
+						xpathForString(DOGTAG_10_PROFILE_ID_XPATH));
+				enabled = "true".equalsIgnoreCase(xmlSupport.extractStringFromXml(doc,
+						xpathForString(DOGTAG_10_PROFILE_ENABLED_XPATH)));
+			}
 			if ( !dogtagProfileId.equals(resultId) ) {
 				result = new PingTestResult(false, "Profile ID mismatch. Expected [" + dogtagProfileId
 						+ "] but found [" + resultId + "].");
-			} else if ( !"true".equalsIgnoreCase(enabled) ) {
+			} else if ( !enabled ) {
 				result = new PingTestResult(false, "Profile " + dogtagProfileId + " is disabled.");
 			} else {
 				result = new PingTestResult(true, "Profile " + dogtagProfileId + " available.");
