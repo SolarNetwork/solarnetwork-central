@@ -36,6 +36,7 @@ import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DeadlockLoserDataAccessException;
@@ -77,7 +78,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.15
+ * @version 1.16
  */
 public abstract class WebServiceControllerSupport {
 
@@ -452,6 +453,35 @@ public abstract class WebServiceControllerSupport {
 			msgKey = "error.dao.transientDataAccess";
 			code = "DAO.00200";
 		}
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return new Response<Object>(Boolean.FALSE, code, msg, null);
+	}
+
+	/**
+	 * Handle data access resource failure exceptions.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param locale
+	 *        the request locale
+	 * @return the repsonse
+	 * @since 1.16
+	 */
+	@ExceptionHandler(DataAccessResourceFailureException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
+	public Response<?> handleDataAccessResourceFailureException(DataAccessResourceFailureException e,
+			Locale locale) {
+		log.warn("DataAccessResourceFailureException in {} controller", getClass().getSimpleName(), e);
+		String msg;
+		String msgKey;
+		String code;
+		msg = "Temporary connection failure";
+		msgKey = "error.dao.transientDataAccessResource";
+		code = "DAO.00206";
 		if ( messageSource != null ) {
 			msg = messageSource.getMessage(msgKey,
 					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);

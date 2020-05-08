@@ -30,6 +30,7 @@ import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
@@ -53,7 +54,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 2.6
+ * @version 2.7
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
@@ -141,7 +142,7 @@ public class DatumController extends WebServiceControllerSupport {
 							cmd.getOffset(), cmd.getMax());
 				}
 				return new Response<FilterResults<?>>(results);
-			} catch ( TransientDataAccessException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
 					log.warn("Transient {} exception, will retry up to {} more times.",
 							e.getClass().getSimpleName(), retries, e);
@@ -191,7 +192,7 @@ public class DatumController extends WebServiceControllerSupport {
 					results = queryBiz.findFilteredReading(cmd, readingType, tolerance);
 				}
 				return new Response<FilterResults<?>>(results);
-			} catch ( TransientDataAccessException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
 					log.warn("Transient {} exception, will retry up to {} more times.",
 							e.getClass().getSimpleName(), retries, e);

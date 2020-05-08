@@ -29,6 +29,7 @@ import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
@@ -58,7 +59,7 @@ import net.solarnetwork.web.domain.Response;
  * </p>
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
@@ -167,7 +168,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 				ReportableInterval data = queryBiz.getReportableInterval(cmd.getNodeId(),
 						cmd.getSourceId());
 				return new Response<ReportableInterval>(data);
-			} catch ( TransientDataAccessException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
 					log.warn("Transient {} exception, will retry up to {} more times.",
 							e.getClass().getSimpleName(), retries, e);
@@ -226,7 +227,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 				data = DatumUtils.filterSources(data, this.pathMatcher, cmd.getSourceId());
 
 				return new Response<Set<String>>(data);
-			} catch ( TransientDataAccessException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
 					log.warn("Transient {} exception, will retry up to {} more times.",
 							e.getClass().getSimpleName(), retries, e);
@@ -300,7 +301,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 				}
 
 				return new Response<Set<?>>(data);
-			} catch ( TransientDataAccessException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
 					log.warn("Transient {} exception, will retry up to {} more times.",
 							e.getClass().getSimpleName(), retries, e);
@@ -372,7 +373,7 @@ public class ReportableIntervalController extends WebServiceControllerSupport {
 					return new Response<Set<?>>(sourceIds);
 				}
 				return new Response<Set<?>>(data);
-			} catch ( TransientDataAccessException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
 					log.warn("Transient {} exception, will retry up to {} more times.",
 							e.getClass().getSimpleName(), retries, e);
