@@ -25,6 +25,7 @@ package net.solarnetwork.central.query.web.api;
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.NoSuchElementException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -45,7 +46,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for read-only node metadata access.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Controller("v1NodeMetadataController")
 @RequestMapping({ "/api/v1/pub/nodes/meta", "/api/v1/sec/nodes/meta" })
@@ -100,7 +101,7 @@ public class NodeMetadataController extends WebServiceControllerSupport {
 						.findSolarNodeMetadata(criteria, criteria.getSortDescriptors(),
 								criteria.getOffset(), criteria.getMax());
 				return response(results);
-			} catch ( TransientDataAccessException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
 					log.warn("Transient {} exception, will retry up to {} more times.",
 							e.getClass().getSimpleName(), retries, e);
@@ -138,7 +139,7 @@ public class NodeMetadataController extends WebServiceControllerSupport {
 					}
 				}
 				return response(result);
-			} catch ( TransientDataAccessException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
 					log.warn("Transient {} exception, will retry up to {} more times.",
 							e.getClass().getSimpleName(), retries, e);

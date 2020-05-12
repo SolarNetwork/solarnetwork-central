@@ -49,8 +49,10 @@
 	
 	<bean id="restOperations" factory-ref="restFactory" factory-method="createRestOps" />
 
-	<bean id="dogtagPKIBiz" class="net.solarnetwork.central.user.pki.dogtag.DogtagPKIBiz">
-		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.pki.dogtag.DogtagPKIBiz" autowire-on-update="true"/>
+	<bean id="dogtagPKIBiz" class="net.solarnetwork.central.user.pki.dogtag.DogtagPKIBiz"
+			init-method="setup">
+		<osgix:managed-properties persistent-id="net.solarnetwork.central.user.pki.dogtag.DogtagPKIBiz" 
+			autowire-on-update="true" update-method="configurationChanged"/>
 		<property name="baseUrl" value="https://ca.solarnetworkdev.net:8443"/>
 		<property name="certificateService" ref="certificateService"/>
 		<property name="restOps" ref="restOperations"/>

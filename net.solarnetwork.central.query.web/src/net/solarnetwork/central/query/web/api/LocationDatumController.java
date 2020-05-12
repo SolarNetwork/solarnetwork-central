@@ -29,6 +29,7 @@ import java.util.TimeZone;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
@@ -50,7 +51,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for location-based data.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Controller("v1LocationDatumController")
 @RequestMapping({ "/api/v1/sec/location/datum", "/api/v1/pub/location/datum" })
@@ -147,7 +148,7 @@ public class LocationDatumController extends WebServiceControllerSupport {
 				data = filterSources(data, this.pathMatcher, cmd.getSourceId());
 
 				return new Response<Set<String>>(data);
-			} catch ( TransientDataAccessException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
 					log.warn("Transient {} exception, will retry up to {} more times.",
 							e.getClass().getSimpleName(), retries, e);
@@ -203,7 +204,7 @@ public class LocationDatumController extends WebServiceControllerSupport {
 				ReportableInterval data = queryBiz.getLocationReportableInterval(cmd.getLocationId(),
 						cmd.getSourceId());
 				return new Response<ReportableInterval>(data);
-			} catch ( TransientDataAccessException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
 					log.warn("Transient {} exception, will retry up to {} more times.",
 							e.getClass().getSimpleName(), retries, e);
@@ -254,7 +255,7 @@ public class LocationDatumController extends WebServiceControllerSupport {
 							cmd.getOffset(), cmd.getMax());
 				}
 				return new Response<FilterResults<?>>(results);
-			} catch ( TransientDataAccessException e ) {
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
 					log.warn("Transient {} exception, will retry up to {} more times.",
 							e.getClass().getSimpleName(), retries, e);
