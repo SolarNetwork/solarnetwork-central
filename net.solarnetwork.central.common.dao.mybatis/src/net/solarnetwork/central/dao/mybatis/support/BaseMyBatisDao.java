@@ -25,18 +25,33 @@ package net.solarnetwork.central.dao.mybatis.support;
 import java.util.List;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 
 /**
  * Base DAO support for MyBatis implementations
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 
 	/** A RowBounds instance that returns at most the first row. */
 	public static final RowBounds FIRST_ROW = new RowBounds(0, 1);
+
+	@Override
+	public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+		if ( getSqlSession() == null ) {
+			// create own SqlSession with own exception translator implementation
+			setSqlSessionTemplate(new SqlSessionTemplate(sqlSessionFactory,
+					sqlSessionFactory.getConfiguration().getDefaultExecutorType(),
+					new MyBatisExceptionTranslator(
+							sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(),
+							true)));
+		}
+		super.setSqlSessionFactory(sqlSessionFactory);
+	}
 
 	/**
 	 * Select the first available result from a query. This is similar to
