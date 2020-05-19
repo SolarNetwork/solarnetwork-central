@@ -1078,11 +1078,12 @@ BEGIN
 					sum(aud.prop_count) AS prop_count,
 					sum(aud.datum_q_count) AS datum_q_count
 				FROM solaragg.aud_datum_daily aud
+				INNER JOIN solarnet.node_local_time node ON node.node_id = aud.node_id
 				CROSS JOIN datum d
 				WHERE aud.node_id = stale.node_id
 					AND aud.source_id = stale.source_id
 					AND aud.ts_start >= stale.ts_start
-					AND aud.ts_start < stale.ts_start + interval '1 month'
+					AND aud.ts_start < (stale.ts_start AT TIME ZONE node.time_zone + interval '1 month') AT TIME ZONE node.time_zone
 				GROUP BY aud.node_id, aud.source_id
 				ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 				SET datum_count = EXCLUDED.datum_count,
@@ -1098,12 +1099,14 @@ BEGIN
 			WHEN 'm' THEN
 				-- in case node tz changed, remove record(s) from other zone
 				-- monthly records clean 1 month on either side
-				DELETE FROM solaragg.aud_datum_monthly
-				WHERE node_id = stale.node_id
-					AND source_id = stale.source_id
-					AND ts_start > stale.ts_start - interval '1 month'
-					AND ts_start < stale.ts_start + interval '1 month'
-					AND ts_start <> stale.ts_start;
+				DELETE FROM solaragg.aud_datum_monthly a
+				USING solarnet.node_local_time node
+				WHERE node.node_id = stale.node_id
+					AND a.node_id = stale.node_id
+					AND a.source_id = stale.source_id
+					AND a.ts_start > (stale.ts_start AT TIME ZONE node.time_zone - interval '1 month') AT TIME ZONE node.time_zone
+					AND a.ts_start < (stale.ts_start AT TIME ZONE node.time_zone + interval '1 month') AT TIME ZONE node.time_zone
+					AND a.ts_start <> stale.ts_start;
 
 				-- recalculate full accumulated audit counts for today
 				PERFORM solaragg.populate_audit_acc_datum_daily(stale.node_id, stale.source_id);
