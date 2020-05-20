@@ -577,7 +577,8 @@ BEGIN
 
 			ELSE
 				SELECT jdata, jmeta
-				FROM solaragg.calc_agg_loc_datum_agg(stale.loc_id, ARRAY[stale.source_id::text], stale.ts_start, stale.ts_start + agg_span, 'd')
+				FROM solaragg.calc_agg_loc_datum_agg(stale.loc_id, ARRAY[stale.source_id::text], stale.ts_start
+					, (stale.ts_start AT TIME ZONE loc_tz + agg_span) AT TIME ZONE loc_tz, 'd')
 				INTO agg_json, agg_jmeta;
 		END CASE;
 
@@ -607,7 +608,7 @@ BEGIN
 						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
 					VALUES (
 						stale.ts_start,
-						stale.ts_start at time zone loc_tz,
+						stale.ts_start AT TIME ZONE loc_tz,
 						stale.loc_id,
 						stale.source_id,
 						agg_json->'i',
@@ -629,7 +630,7 @@ BEGIN
 						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
 					VALUES (
 						stale.ts_start,
-						CAST(stale.ts_start at time zone loc_tz AS DATE),
+						CAST(stale.ts_start AT TIME ZONE loc_tz AS DATE),
 						stale.loc_id,
 						stale.source_id,
 						agg_json->'i',
@@ -650,7 +651,7 @@ BEGIN
 						jdata_i, jdata_a, jdata_s, jdata_t, jmeta)
 					VALUES (
 						stale.ts_start,
-						CAST(stale.ts_start at time zone loc_tz AS DATE),
+						CAST(stale.ts_start AT TIME ZONE loc_tz AS DATE),
 						stale.loc_id,
 						stale.source_id,
 						agg_json->'i',
@@ -674,11 +675,11 @@ BEGIN
 		CASE kind
 			WHEN 'h' THEN
 				INSERT INTO solaragg.agg_stale_loc_datum (ts_start, loc_id, source_id, agg_kind)
-				VALUES (date_trunc('day', stale.ts_start at time zone loc_tz) at time zone loc_tz, stale.loc_id, stale.source_id, 'd')
+				VALUES (date_trunc('day', stale.ts_start AT TIME ZONE loc_tz) AT TIME ZONE loc_tz, stale.loc_id, stale.source_id, 'd')
 				ON CONFLICT (agg_kind, loc_id, ts_start, source_id) DO NOTHING;
 			WHEN 'd' THEN
 				INSERT INTO solaragg.agg_stale_loc_datum (ts_start, loc_id, source_id, agg_kind)
-				VALUES (date_trunc('month', stale.ts_start at time zone loc_tz) at time zone loc_tz, stale.loc_id, stale.source_id, 'm')
+				VALUES (date_trunc('month', stale.ts_start AT TIME ZONE loc_tz) AT TIME ZONE loc_tz, stale.loc_id, stale.source_id, 'm')
 				ON CONFLICT (agg_kind, loc_id, ts_start, source_id) DO NOTHING;
 			ELSE
 				-- nothing
@@ -758,7 +759,7 @@ $BODY$
 		AND d.ts_start >= date_trunc('day', end_ts AT TIME ZONE loctz.tz) AT TIME ZONE loctz.tz
 		AND d.source_id = ANY(sources)
 	UNION ALL
-	SELECT ts_start, ts_start at time zone loctz.tz AS local_date, loctz.loc_id, source_id, jdata, 1::integer as weight
+	SELECT ts_start, ts_start AT TIME ZONE loctz.tz AS local_date, loctz.loc_id, source_id, jdata, 1::integer as weight
 	FROM solaragg.calc_loc_datum_time_slots(
 		loc,
 		sources,

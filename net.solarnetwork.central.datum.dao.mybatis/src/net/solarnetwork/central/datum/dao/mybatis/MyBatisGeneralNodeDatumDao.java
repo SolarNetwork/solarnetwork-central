@@ -78,7 +78,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -328,9 +328,13 @@ public class MyBatisGeneralNodeDatumDao
 	/**
 	 * The {@code maxMinuteAggregationHours} property default value.
 	 * 
+	 * <p>
+	 * This represents a 5 week time span to that full months can be queried.
+	 * </p>
+	 * 
 	 * @since 2.2
 	 */
-	public static final int DEFAULT_MAX_MINUTE_AGG_HOURS = 168;
+	public static final int DEFAULT_MAX_MINUTE_AGG_HOURS = (24 * 7 * 5);
 
 	private final BulkLoadingDaoSupport loadingSupport;
 
@@ -1407,6 +1411,7 @@ public class MyBatisGeneralNodeDatumDao
 	 * Configure the start/end dates required by minute aggregation queries.
 	 * 
 	 * <p>
+	 * 
 	 * This method will enforce the configured
 	 * {@link #getMaxMinuteAggregationHours()} setting, truncating the requested
 	 * time range to that many hours if needed.
@@ -1447,7 +1452,8 @@ public class MyBatisGeneralNodeDatumDao
 		if ( maxHours > 0 ) {
 			long hours = new Duration(start, end).getStandardHours();
 			if ( hours > maxHours ) {
-				end = start.plusHours(maxHours);
+				throw new IllegalArgumentException(
+						"Minute level aggregation time span must be at most " + maxHours + " hours.");
 			}
 		}
 

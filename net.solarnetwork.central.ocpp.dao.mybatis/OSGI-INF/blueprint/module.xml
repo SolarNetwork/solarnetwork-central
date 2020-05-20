@@ -137,6 +137,12 @@
 	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
 		<argument ref="sqlSessionFactory"/>
 		<argument value="#{T(org.apache.ibatis.session.ExecutorType).BATCH}"/>
+		<argument>
+			<bean class="net.solarnetwork.central.dao.mybatis.support.MyBatisExceptionTranslator">
+				<argument ref="dataSource"/>
+				<argument value="true"/>
+			</bean>
+		</argument>
 	</bean>
 
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">

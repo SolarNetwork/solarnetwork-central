@@ -2056,7 +2056,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		}
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void findFilteredAggregateFifteenMinute_truncatedTimeRange() {
 		dao.setMaxMinuteAggregationHours(1);
 
@@ -2079,21 +2079,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		criteria.setEndDate(startDate.plusHours(2));
 		criteria.setAggregate(Aggregation.FifteenMinute);
 
-		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
-				null, null, null);
-
-		assertThat("Results provided", results, notNullValue());
-		// this query fills in empty slots, so we have :00, :15, :30, :45
-		assertThat("Minute query results truncated to only 1 hour", results.getTotalResults(),
-				equalTo(4L));
-		assertThat("Minute query results truncated to only 1 hour", results.getReturnedResultCount(),
-				equalTo(4));
-
-		int i = 0;
-		for ( ReportingGeneralNodeDatumMatch match : results ) {
-			assertThat("Wh for minute slot " + i, match.getSampleData().get("watt_hours"), equalTo(30));
-			i++;
-		}
+		dao.findAggregationFiltered(criteria, null, null, null);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
