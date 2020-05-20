@@ -56,7 +56,8 @@
 				</beans:array>
 			</beans:entry>
 		</osgix:service-properties>
-		<bean id="datumMetricsDailyUsageUpdaterJob" class="net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterJob">
+		<bean id="datumMetricsDailyUsageUpdaterJob" class="net.solarnetwork.central.user.billing.killbill.jobs.DatumMetricsDailyUsageUpdaterJob"
+				init-method="setup">
 			<argument ref="eventAdmin"/>
 			<argument>
 				<bean class="net.solarnetwork.central.user.billing.killbill.jobs.DailyUsageUpdaterService">

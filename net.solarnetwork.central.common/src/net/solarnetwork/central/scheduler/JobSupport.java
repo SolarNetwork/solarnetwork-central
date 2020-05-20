@@ -57,7 +57,7 @@ import org.osgi.service.event.EventAdmin;
  * </dl>
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public abstract class JobSupport extends EventHandlerSupport {
 
@@ -78,6 +78,16 @@ public abstract class JobSupport extends EventHandlerSupport {
 	public JobSupport(EventAdmin eventAdmin) {
 		super();
 		this.eventAdmin = eventAdmin;
+	}
+
+	/**
+	 * Call once properties are configured to set up the job.
+	 * 
+	 * @since 1.6
+	 */
+	public void setup() {
+		// in case scheduler already posted Ready event, register right now
+		postJobRequestEvent();
 	}
 
 	@Override
@@ -172,6 +182,10 @@ public abstract class JobSupport extends EventHandlerSupport {
 	 *         if any error occurs
 	 */
 	protected void schedulerReady(Event event) throws Exception {
+		postJobRequestEvent();
+	}
+
+	private void postJobRequestEvent() {
 		Map<String, Object> props = new HashMap<String, Object>(5);
 		props.put(SchedulerConstants.JOB_ID, jobId);
 		props.put(SchedulerConstants.JOB_CRON_EXPRESSION, jobCron);

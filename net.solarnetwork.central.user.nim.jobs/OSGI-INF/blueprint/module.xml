@@ -47,7 +47,8 @@
 
 	<!-- Supporting Services -->
 
-	<bean id="nimMaintenanceJob" class="net.solarnetwork.central.user.nim.jobs.SolarNodeImageMakerMaintenanceJob">
+	<bean id="nimMaintenanceJob" class="net.solarnetwork.central.user.nim.jobs.SolarNodeImageMakerMaintenanceJob"
+				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="nimBizList"/>
 		<property name="jobCron" value="${NodeImageMakerMaintenance.jobCron}"/>

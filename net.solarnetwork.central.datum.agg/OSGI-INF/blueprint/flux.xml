@@ -26,7 +26,8 @@
 
 	<!-- Supporting Services -->
 	
-	<bean id="staleSolarFluxProcessor" class="net.solarnetwork.central.datum.agg.StaleSolarFluxProcessor">
+	<bean id="staleSolarFluxProcessor" class="net.solarnetwork.central.datum.agg.StaleSolarFluxProcessor"
+				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<argument ref="generalNodeDatumDao"/>

@@ -27,7 +27,7 @@ import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.scheduler.JobSupport;
 
 /**
- * Job to execute the {@link DatumMetricsDailyUsageUpdaterService}.
+ * Job to execute the {@link DailyUsageUpdaterService}.
  * 
  * @author matt
  * @version 1.1

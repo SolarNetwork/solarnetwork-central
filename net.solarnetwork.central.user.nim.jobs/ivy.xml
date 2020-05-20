@@ -13,8 +13,8 @@
 		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.36,2.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.nim" rev="[1.0,2.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[2.4,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.nim" rev="[1.0,)"/>
 		<dependency org="joda-time" name="joda-time" rev="2.9"/>
 		<dependency org="org.osgi" name="org.osgi.enterprise" rev="5.0.0"/>
     		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>

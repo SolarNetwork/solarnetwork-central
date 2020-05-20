@@ -2,22 +2,22 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Datum Aggregation
 Bundle-SymbolicName: net.solarnetwork.central.datum.agg
-Bundle-Version: 1.9.0
+Bundle-Version: 1.9.1
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
  javax.sql,
- net.solarnetwork.central.dao;version="1.18.0",
+ net.solarnetwork.central.dao;version="[1.18,3.0)",
  net.solarnetwork.central.datum.biz;version="[1.8,2.0)",
  net.solarnetwork.central.datum.dao;version="[3.1,4.0)",
- net.solarnetwork.central.datum.domain;version="1.32.0",
- net.solarnetwork.central.domain;version="1.31.0",
- net.solarnetwork.central.scheduler;version="1.2.0",
- net.solarnetwork.central.support;version="1.21.0",
- net.solarnetwork.domain;version="1.18.0",
- net.solarnetwork.settings;version="1.2.0",
- net.solarnetwork.support;version="1.10.0",
- net.solarnetwork.util;version="1.39.0",
+ net.solarnetwork.central.datum.domain;version="[1.32,3.0)",
+ net.solarnetwork.central.domain;version="[1.31,3.0)",
+ net.solarnetwork.central.scheduler;version="[1.6,2.0)",
+ net.solarnetwork.central.support;version="[1.21,3.0)",
+ net.solarnetwork.domain;version="[1.18,2.0)",
+ net.solarnetwork.settings;version="[1.2,2.0)",
+ net.solarnetwork.support;version="[1.10,2.0)",
+ net.solarnetwork.util;version="[1.39,2.0)",
  org.eclipse.gemini.blueprint.compendium.cm;version="[2.0,3.0)",
  org.osgi.framework;version="[1.7,2.0)",
  org.osgi.service.event;version="[1.2,2.0)",

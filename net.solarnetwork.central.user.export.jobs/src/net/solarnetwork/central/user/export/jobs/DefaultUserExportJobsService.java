@@ -51,8 +51,6 @@ public class DefaultUserExportJobsService implements UserExportJobsService {
 	 * 
 	 * @param configurationDao
 	 *        the configuration DAO
-	 * @param taskDao
-	 *        the task DAO
 	 * @param taskBiz
 	 *        the task service
 	 */
