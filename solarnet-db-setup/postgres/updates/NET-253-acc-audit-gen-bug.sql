@@ -36,12 +36,20 @@ $$;
  * generated.
  *
  * @param ts the date to look for; defaults to the current date
+ * @return the number of rows inserted
  */
 CREATE OR REPLACE FUNCTION solaragg.populate_audit_datum_daily_missing(ts date DEFAULT CURRENT_DATE)
-	RETURNS void LANGUAGE sql VOLATILE AS
+	RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS
 $$
+DECLARE
+	ins_count bigint := 0;
+BEGIN
 	INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
 	SELECT ts_start, node_id, source_id, 'r' AS aud_kind
 	FROM solaragg.find_audit_datum_daily_missing(ts)
-	ON CONFLICT DO NOTHING
+	ON CONFLICT DO NOTHING;
+
+	GET DIAGNOSTICS ins_count = ROW_COUNT;
+	RETURN ins_count;
+END;
 $$;
