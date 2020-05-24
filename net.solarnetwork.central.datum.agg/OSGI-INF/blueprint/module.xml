@@ -40,6 +40,9 @@
 		<beans:prop key="staleSolarFluxProcessor.maximumRowCount">1000</beans:prop>
 		<beans:prop key="staleSolarFluxProcessor.taskCount">4</beans:prop>
 		<beans:prop key="staleSolarFluxProcessor.jobCron">45 0/1 * * * ?</beans:prop>
+
+		<beans:prop key="auditDatumDailyMissingPopulator.jobCron">45 15 2/8 * * ?</beans:prop>
+		<beans:prop key="auditDatumDailyMissingPopulator.jdbcCall">{? = call solaragg.populate_audit_datum_daily_missing()}</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -191,6 +194,17 @@
 		<property name="tierProcessType" value="m"/>
 	</bean>
 	
+	<bean id="auditDatumDailyMissingPopulator" class="net.solarnetwork.central.datum.agg.JdbcCallJob"
+				init-method="setup">
+		<argument ref="eventAdmin"/>
+		<argument ref="jdbcOps"/>
+		<property name="executorService" ref="executorService"/>
+		<property name="jobCron" value="${auditDatumDailyMissingPopulator.jobCron}"/>
+		<property name="jobId" value="AuditDatumDailyMissingPopulator"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/AuditDatumDailyMissingPopulator"/>
+		<property name="jdbcCall" value="${auditDatumDailyMissingPopulator.jdbcCall}"/>
+	</bean>
+	
 	<!-- Published Services -->
 
 	<service ref="staleGeneralNodeDatumProcessorHourly" interface="org.osgi.service.event.EventHandler">
@@ -298,6 +312,17 @@
 				<array value-type="java.lang.String">
 					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
 					<value>#{staleAuditNodeDatumProcessorMonthly.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+	
+	<service ref="auditDatumDailyMissingPopulator" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{auditDatumDailyMissingPopulator.jobTopic}</value>
 				</array>
 			</entry>
 		</service-properties>
