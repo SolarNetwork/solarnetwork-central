@@ -48,7 +48,8 @@
 		</service-properties>
 	</service>
 
-	<bean id="datumImportProcessorJob" class="net.solarnetwork.central.datum.imp.jobs.DatumImportProcessorJob">
+	<bean id="datumImportProcessorJob" class="net.solarnetwork.central.datum.imp.jobs.DatumImportProcessorJob"
+				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="importJobBiz"/>
 		<property name="jobCron" value="${DatumImportProcessor.jobCron}"/>
@@ -70,7 +71,8 @@
 		</service-properties>
 	</service>
 
-	<bean id="datumImportJobInfoCleanerJob" class="net.solarnetwork.central.datum.imp.jobs.DatumImportJobInfoCleanerJob">
+	<bean id="datumImportJobInfoCleanerJob" class="net.solarnetwork.central.datum.imp.jobs.DatumImportJobInfoCleanerJob"
+				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="importJobBiz"/>
 		<property name="jobCron" value="${DatumImportJobInfoCleaner.jobCron}"/>

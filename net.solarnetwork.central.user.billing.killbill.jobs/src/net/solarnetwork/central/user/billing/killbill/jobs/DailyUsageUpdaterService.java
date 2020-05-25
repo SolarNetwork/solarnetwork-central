@@ -685,7 +685,7 @@ public class DailyUsageUpdaterService implements ExecutableService {
 	 * Set the Killbill usage unit name to use when posting usage records.
 	 * 
 	 * @param usageUnitName
-	 *        the usage unit name; defaults to {@link #DEFAULT_USAGE_UNIT_NAME}
+	 *        the usage unit name
 	 */
 	public void setUsageUnitName(String usageUnitName) {
 		this.usageUnitName = usageUnitName;

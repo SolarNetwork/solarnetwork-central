@@ -861,12 +861,13 @@
 			solaragg.calc_running_datum_total(
 				<choose>
 					<when test="filter.nodeIds.length > 1">
-						<include refid="fragment-findall-ReportingGeneralNodeDatum-agg-nodes-where"/>
+						#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
 					</when>
 					<otherwise>
-						<include refid="fragment-findall-ReportingGeneralNodeDatum-agg-where"/>
+						#{filter.nodeId,jdbcType=BIGINT}
 					</otherwise>
 				</choose>
+				,#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 				<if test="filter != null and filter.endDate != null">
 					,#{filter.endDate,jdbcType=TIMESTAMP}::timestamptz
 				</if>

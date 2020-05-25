@@ -50,9 +50,9 @@ public class DatumDeleteJobInfoCleanerJob extends JobSupport {
 	 * @param datumDeleteBiz
 	 *        the service to use
 	 */
-	public DatumDeleteJobInfoCleanerJob(EventAdmin eventAdmin, UserDatumDeleteJobBiz importJobBiz) {
+	public DatumDeleteJobInfoCleanerJob(EventAdmin eventAdmin, UserDatumDeleteJobBiz datumDeleteBiz) {
 		super(eventAdmin);
-		this.datumDeleteBiz = importJobBiz;
+		this.datumDeleteBiz = datumDeleteBiz;
 		setJobGroup("UserExpire");
 		setMinimumAgeMinutes(DEFAULT_MINIMUM_AGE_MINUTES);
 	}

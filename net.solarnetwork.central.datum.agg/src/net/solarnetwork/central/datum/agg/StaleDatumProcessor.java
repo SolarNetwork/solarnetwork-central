@@ -26,7 +26,6 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
-import net.solarnetwork.central.scheduler.JobSupport;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
@@ -43,28 +42,12 @@ import org.springframework.jdbc.core.JdbcOperations;
  * procedure returns zero, the job stops immediately.
  * </p>
  * 
- * <p>
- * The configurable properties of this class are:
- * </p>
- * 
- * <dl class="class-properties">
- * <dt>maximumRowCount</dt>
- * <dd>The maximum number of rows to process, as returned by the stored
- * procedure. Defaults to <b>5</b>.</dd>
- * 
- * <dt>jdbcCall</dt>
- * <dd>The stored procedure to call. It must return a single integer result.</dd>
- * 
- * </dl>
- * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class StaleDatumProcessor extends JobSupport {
+public class StaleDatumProcessor extends JdbcCallJob {
 
-	private final JdbcOperations jdbcOps;
 	private int maximumRowCount = 5;
-	private String jdbcCall;
 
 	/**
 	 * Construct with properties.
@@ -75,10 +58,7 @@ public class StaleDatumProcessor extends JobSupport {
 	 *        the JdbcOperations to use
 	 */
 	public StaleDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
-		super(eventAdmin);
-		this.jdbcOps = jdbcOps;
-		setJobGroup("Datum");
-		setMaximumWaitMs(1800000L);
+		super(eventAdmin, jdbcOps);
 	}
 
 	@Override
@@ -86,19 +66,19 @@ public class StaleDatumProcessor extends JobSupport {
 		int i = 0;
 		int resultCount = 0;
 		do {
-			resultCount = jdbcOps.execute(new CallableStatementCreator() {
+			resultCount = getJdbcOps().execute(new CallableStatementCreator() {
 
 				@Override
 				public CallableStatement createCallableStatement(Connection con) throws SQLException {
-					CallableStatement call = con.prepareCall(jdbcCall);
+					CallableStatement call = con.prepareCall(getJdbcCall());
 					call.registerOutParameter(1, Types.INTEGER);
 					return call;
 				}
 			}, new CallableStatementCallback<Integer>() {
 
 				@Override
-				public Integer doInCallableStatement(CallableStatement cs) throws SQLException,
-						DataAccessException {
+				public Integer doInCallableStatement(CallableStatement cs)
+						throws SQLException, DataAccessException {
 					cs.execute();
 					return cs.getInt(1);
 				}
@@ -108,24 +88,25 @@ public class StaleDatumProcessor extends JobSupport {
 		return true;
 	}
 
-	public JdbcOperations getJdbcOps() {
-		return jdbcOps;
-	}
-
+	/**
+	 * Get the maximum number of rows to process, as returned by the stored
+	 * procedure.
+	 * 
+	 * @return the maximum row count; defaults to {@literal 5}
+	 */
 	public int getMaximumRowCount() {
 		return maximumRowCount;
 	}
 
-	public String getJdbcCall() {
-		return jdbcCall;
-	}
-
+	/**
+	 * Set the maximum number of rows to process, as returned by the stored
+	 * procedure.
+	 * 
+	 * @param maximumRowCount
+	 *        the maximum row count
+	 */
 	public void setMaximumRowCount(int maximumRowCount) {
 		this.maximumRowCount = maximumRowCount;
-	}
-
-	public void setJdbcCall(String jdbcCall) {
-		this.jdbcCall = jdbcCall;
 	}
 
 }

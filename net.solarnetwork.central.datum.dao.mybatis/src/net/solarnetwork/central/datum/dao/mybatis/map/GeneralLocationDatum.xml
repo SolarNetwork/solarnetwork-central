@@ -347,12 +347,13 @@
 			solaragg.calc_running_loc_datum_total(
 				<choose>
 					<when test="filter.locationIds.length > 1">
-						<include refid="fragment-findall-ReportingGeneralLocationDatum-agg-locations-where"/>
+						#{filter.locationIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}::bigint[])
 					</when>
 					<otherwise>
-						<include refid="fragment-findall-ReportingGeneralLocationDatum-agg-where"/>
+						#{filter.locationId}
 					</otherwise>
 				</choose>
+				,#{filter.sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 			) AS datum
 	</select>
 

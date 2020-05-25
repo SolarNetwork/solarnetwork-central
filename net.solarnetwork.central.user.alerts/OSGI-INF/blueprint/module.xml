@@ -44,7 +44,8 @@
 
 	<!-- Jobs -->
 
-	<bean id="emailNodeStaleDataAlertProcessorJob" class="net.solarnetwork.central.user.alerts.UserAlertBatchJob">
+	<bean id="emailNodeStaleDataAlertProcessorJob" class="net.solarnetwork.central.user.alerts.UserAlertBatchJob"
+				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="emailNodeStaleDataAlertProcessor"/>
 		<property name="jobCron" value="${emailNodeStaleDataAlertProcessor.jobCron}"/>
@@ -64,7 +65,8 @@
 		</service-properties>
 	</service>
 
-	<bean id="resolvedSituationCleaner" class="net.solarnetwork.central.user.alerts.UserAlertSituationCleaner">
+	<bean id="resolvedSituationCleaner" class="net.solarnetwork.central.user.alerts.UserAlertSituationCleaner"
+				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="userAlertSituationDao"/>
 		<property name="jobCron" value="${resolvedSituationCleaner.jobCron}"/>

@@ -49,7 +49,8 @@
 		</service-properties>
 	</service>
 
-	<bean id="expireDatumJob" class="net.solarnetwork.central.user.expire.jobs.ExpireDatumJob">
+	<bean id="expireDatumJob" class="net.solarnetwork.central.user.expire.jobs.ExpireDatumJob"
+			init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="configurationDao"/>
 		<property name="jobCron" value="${ExpireDatum.jobCron}"/>
@@ -70,7 +71,8 @@
 		</service-properties>
 	</service>
 
-	<bean id="datumDeleteProcessorJob" class="net.solarnetwork.central.user.expire.jobs.DatumDeleteProcessorJob">
+	<bean id="datumDeleteProcessorJob" class="net.solarnetwork.central.user.expire.jobs.DatumDeleteProcessorJob"
+			init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="datumDeleteJobBiz"/>
 		<argument ref="jobInfoDao"/>
@@ -93,7 +95,8 @@
 		</service-properties>
 	</service>
 
-	<bean id="datumDeleteJobInfoCleanerJob" class="net.solarnetwork.central.user.expire.jobs.DatumDeleteJobInfoCleanerJob">
+	<bean id="datumDeleteJobInfoCleanerJob" class="net.solarnetwork.central.user.expire.jobs.DatumDeleteJobInfoCleanerJob"
+			init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="datumDeleteJobBiz"/>
 		<property name="jobCron" value="${DatumDeleteJobInfoCleaner.jobCron}"/>
