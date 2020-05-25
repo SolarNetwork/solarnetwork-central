@@ -24,7 +24,7 @@ $$
 		WHERE 
 			ts_start >= ts::timestamptz - interval '24 hours'
 			AND ts_start < ts::timestamptz + interval '24 hours'
-			AND ts_start AT TIME ZONE nlt.time_zone = ts
+			AND ts_start = (((ts AT TIME ZONE nlt.time_zone)::date)::timestamp) AT TIME ZONE nlt.time_zone
 	)
 	SELECT m.node_id, m.source_id, ts::timestamp AT TIME ZONE nlt.time_zone, nlt.time_zone
 	FROM missing m
