@@ -618,6 +618,32 @@ public class MyBatisGeneralLocationDatumDaoTests extends MyBatisGeneralLocationD
 	}
 
 	@Test
+	public void findFilteredAggregateRunningTotalIgnoreDateParameters() {
+		findFilteredAggregateDaily();
+
+		// first, verify that the the day is also at 10 Wh
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setLocationId(TEST_LOC_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setAggregate(Aggregation.RunningTotal);
+		criteria.setStartDate(lastDatum.getCreated().withTime(0, 0, 0, 0));
+		criteria.setEndDate(lastDatum.getCreated().plusDays(1));
+
+		FilterResults<ReportingGeneralLocationDatumMatch> results;
+		Map<String, ?> data;
+
+		results = dao.findAggregationFiltered(criteria, null, null, null);
+
+		assertNotNull(results);
+		assertEquals("Daily query results", 1L, (long) results.getTotalResults());
+		assertEquals("Daily query results", 1, (int) results.getReturnedResultCount());
+		data = results.getResults().iterator().next().getSampleData();
+		assertNotNull("Aggregate sample data", data);
+		assertNotNull("Aggregate Wh", data.get("watt_hours"));
+		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
+	}
+
+	@Test
 	public void findFilteredAggregateFiveMinute() {
 		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
 		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
