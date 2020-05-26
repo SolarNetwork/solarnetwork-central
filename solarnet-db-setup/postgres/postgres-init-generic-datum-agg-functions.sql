@@ -1,3 +1,55 @@
+-- see CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) below
+CREATE OR REPLACE FUNCTION solaragg.datum_agg_agg_sfunc(agg_state jsonb, el jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var helper = require('datum/aggAggregate'),
+		aggregator;
+	if ( !agg_state && el ) {
+		aggregator = helper.default('', 0);
+		aggregator.addDatumRecord(el);
+		agg_state = aggregator.serialize();
+	} else if ( agg_state && el ) {
+		aggregator = helper.deserialize(agg_state);
+		aggregator.addDatumRecord(el); // mutates agg_state
+	}
+	return agg_state;
+$$;
+
+
+-- see CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) below
+CREATE OR REPLACE FUNCTION solaragg.datum_agg_agg_finalfunc(agg_state jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var helper = require('datum/aggAggregate');
+	return (agg_state ? helper.deserialize(agg_state).finish() : {});
+$$;
+
+
+/**
+ * Aggregate aggregated datum records into a higher aggregation level.
+ *
+ * This aggregate accepts aggregate datum objects, such as those from the `agg_datum_monthly` 
+ * table, and combines them into an aggregat datum object, such as for a year. The input
+ * object must include`jdata` and `jmeta` properties. For example:
+ *
+ * ```
+ * SELECT d.node_id, d.source_id, solaragg.datum_agg_agg(jsonb_build_object(
+ *		'jdata', solarnet.jdata_from_components(d.jdata_i, d.jdata_a, d.jdata_s, d.jdata_t),
+ *		'jmeta', d.jmeta) ORDER BY d.ts_start) AS jobj
+ * FROM solaragg.agg_datum_monthly d
+ * WHERE ...
+ * GROUP BY d.node_id, d.source_id 
+`* ````
+ *
+ * The resulting object contains the same `jdata` and `jmeta` properties with the results.
+ */
+CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) (
+    sfunc = solaragg.datum_agg_agg_sfunc,
+    stype = jsonb,
+    finalfunc = solaragg.datum_agg_agg_finalfunc
+);
+
+
 /**
  * Return a valid minute-level time slot seconds value for an arbitrary input value.
  * This function is meant to validate and correct inappropriate input for minute level
@@ -1616,58 +1668,6 @@ BEGIN
 	RETURN NULL;
 END;
 $$;
-
-
--- see CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) below
-CREATE OR REPLACE FUNCTION solaragg.datum_agg_agg_sfunc(agg_state jsonb, el jsonb)
-RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
-	'use strict';
-	var helper = require('datum/aggAggregate'),
-		aggregator;
-	if ( !agg_state && el ) {
-		aggregator = helper.default('', 0);
-		aggregator.addDatumRecord(el);
-		agg_state = aggregator.serialize();
-	} else if ( agg_state && el ) {
-		aggregator = helper.deserialize(agg_state);
-		aggregator.addDatumRecord(el); // mutates agg_state
-	}
-	return agg_state;
-$$;
-
-
--- see CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) below
-CREATE OR REPLACE FUNCTION solaragg.datum_agg_agg_finalfunc(agg_state jsonb)
-RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
-	'use strict';
-	var helper = require('datum/aggAggregate');
-	return (agg_state ? helper.deserialize(agg_state).finish() : {});
-$$;
-
-
-/**
- * Aggregate aggregated datum records into a higher aggregation level.
- *
- * This aggregate accepts aggregate datum objects, such as those from the `agg_datum_monthly` 
- * table, and combines them into an aggregat datum object, such as for a year. The input
- * object must include`jdata` and `jmeta` properties. For example:
- *
- * ```
- * SELECT d.node_id, d.source_id, solaragg.datum_agg_agg(jsonb_build_object(
- *		'jdata', solarnet.jdata_from_components(d.jdata_i, d.jdata_a, d.jdata_s, d.jdata_t),
- *		'jmeta', d.jmeta) ORDER BY d.ts_start) AS jobj
- * FROM solaragg.agg_datum_monthly d
- * WHERE ...
- * GROUP BY d.node_id, d.source_id 
-`* ````
- *
- * The resulting object contains the same `jdata` and `jmeta` properties with the results.
- */
-CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) (
-    sfunc = solaragg.datum_agg_agg_sfunc,
-    stype = jsonb,
-    finalfunc = solaragg.datum_agg_agg_finalfunc
-);
 
 
 /**
