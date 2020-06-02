@@ -1,5 +1,5 @@
 /* ==================================================================
- * DaoDatumAppEventService.java - 29/05/2020 5:48:01 pm
+ * MyBatisDatumAppEventDao.java - 2/06/2020 3:54:22 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,45 +20,27 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.biz.event.dao;
+package net.solarnetwork.central.datum.event.dao.mybatis;
 
-import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.datum.dao.DatumAppEventDao;
 import net.solarnetwork.central.datum.dao.DatumAppEventEntity;
-import net.solarnetwork.central.datum.domain.DatumAppEvent;
+import net.solarnetwork.central.datum.dao.DatumAppEventKey;
 
 /**
- * DAO based implementation of datum event services.
+ * MyBatis implementation of {@link MyBatisDatumAppEventDao}.
  * 
  * @author matt
  * @version 1.0
  */
-public class DaoDatumAppEventService implements DatumAppEventAcceptor {
-
-	private final DatumAppEventDao eventDao;
+public class MyBatisDatumAppEventDao extends
+		BaseMyBatisGenericDaoSupport<DatumAppEventEntity, DatumAppEventKey> implements DatumAppEventDao {
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param eventDao
-	 *        the DAO
-	 * @throws IllegalArgumentException
-	 *         if {@code eventDao} is {@literal null}
 	 */
-	public DaoDatumAppEventService(DatumAppEventDao eventDao) {
-		super();
-		if ( eventDao == null ) {
-			throw new IllegalArgumentException("The eventDao parameter must not be null.");
-		}
-		this.eventDao = eventDao;
-	}
-
-	@Override
-	public void offerDatumEvent(DatumAppEvent event) {
-		if ( event == null ) {
-			return;
-		}
-		eventDao.save(new DatumAppEventEntity(event));
+	public MyBatisDatumAppEventDao() {
+		super(DatumAppEventEntity.class, DatumAppEventKey.class);
 	}
 
 }

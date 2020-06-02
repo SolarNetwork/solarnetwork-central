@@ -22,11 +22,15 @@
 
 package net.solarnetwork.central.datum.dao;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.datum.domain.DatumAppEvent;
+import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.util.SerializeIgnore;
 
 /**
  * Entity for datum events.
@@ -56,6 +60,32 @@ public class DatumAppEventEntity extends BasicEntity<DatumAppEventKey>
 			eventProperties = Collections.emptyMap();
 		}
 		this.eventProperties = eventProperties;
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param topic
+	 *        the topic
+	 * @param created
+	 *        the creation date
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param eventPropertiesJson
+	 *        the event properties as a JSON object, or {@literal null}
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@literal null}
+	 */
+	public DatumAppEventEntity(String topic, Instant created, Long nodeId, String sourceId,
+			String eventPropertiesJson) {
+		super(new DatumAppEventKey(topic, created, nodeId, sourceId), created);
+		Map<String, Object> props = JsonUtils.getStringMap(eventPropertiesJson);
+		if ( props == null ) {
+			props = Collections.emptyMap();
+		}
+		this.eventProperties = props;
 	}
 
 	/**
@@ -93,6 +123,17 @@ public class DatumAppEventEntity extends BasicEntity<DatumAppEventKey>
 	@Override
 	public Map<String, ?> getEventProperties() {
 		return eventProperties;
+	}
+
+	/**
+	 * Get the event properties as a JSON object string.
+	 * 
+	 * @return a JSON encoded string, or {@literal null}
+	 */
+	@SerializeIgnore
+	@JsonIgnore
+	public String getEventJson() {
+		return JsonUtils.getJSONString(eventProperties, null);
 	}
 
 }
