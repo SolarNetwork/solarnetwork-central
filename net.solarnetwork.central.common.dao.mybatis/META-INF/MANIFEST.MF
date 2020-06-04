@@ -2,13 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Core MyBatis
 Bundle-SymbolicName: net.solarnetwork.central.common.dao.mybatis
-Bundle-Version: 2.2.0
+Bundle-Version: 2.2.1
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: 
  net.solarnetwork.central.dao.mybatis;version="2.0.0",
  net.solarnetwork.central.dao.mybatis.map;version="2.0.0",
- net.solarnetwork.central.dao.mybatis.support;version="1.4.0",
+ net.solarnetwork.central.dao.mybatis.support;version="1.4.1",
  net.solarnetwork.central.dao.mybatis.type;version="1.4.0"
 Import-Package: 
  javax.sql,
@@ -17,7 +17,7 @@ Import-Package:
  net.solarnetwork.central.domain;version="[2.0,3.0)",
  net.solarnetwork.central.support;version="[2.0,3.0)",
  net.solarnetwork.dao;version="[1.0,2.0)",
- net.solarnetwork.domain;version="[1.19,2.0)",
+ net.solarnetwork.domain;version="[1.21,2.0)",
  org.aopalliance.aop;version="1.0.0",
  org.apache.ibatis.annotations;version="[3.2,4.0)",
  org.apache.ibatis.executor;version="[3.2,4.0)",
