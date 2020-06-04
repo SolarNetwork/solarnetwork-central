@@ -53,6 +53,12 @@
 
 	<reference id="jdbcOps" interface="org.springframework.jdbc.core.JdbcOperations" filter="(db=central)"/>
 	
+	<bean id="datumAppEventAcceptors" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.datum.biz.DatumAppEventAcceptor"/>
+		<property name="serviceFilter" value="(topic=datum/agg/update)"/>
+	</bean>
+
 	<!-- Supporting Services -->
 	
 	<!-- A common thread pool for these jobs -->
@@ -69,6 +75,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
+		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.hourly.jobCron}"/>
@@ -82,6 +89,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
+		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.daily.jobCron}"/>
@@ -95,6 +103,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
+		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
 		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.monthly.jobCron}"/>
