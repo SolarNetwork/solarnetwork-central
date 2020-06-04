@@ -2411,8 +2411,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	@Test
 	public void findAuditDatumRecordCountsHourAggregationNoRollup() {
 		// given
-		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
-				.minusMonths(2);
+		DateTime start = new DateTime(2020, 2, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		List<DateTime> hours = new ArrayList<DateTime>();
 		List<DateTime> days = new ArrayList<DateTime>();
 		List<DateTime> months = new ArrayList<DateTime>();
@@ -2443,8 +2442,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	@Test
 	public void findAuditDatumRecordCountsHourAggregationTimeAndNodeRollup() {
 		// given
-		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
-				.minusMonths(2);
+		DateTime start = new DateTime(2020, 2, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		List<DateTime> hours = new ArrayList<DateTime>();
 		List<DateTime> days = new ArrayList<DateTime>();
 		List<DateTime> months = new ArrayList<DateTime>();
@@ -2482,8 +2480,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	@Test
 	public void findAuditDatumRecordCountsHourAggregationTimeRollup() {
 		// given
-		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
-				.minusMonths(2);
+		DateTime start = new DateTime(2020, 2, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		List<DateTime> hours = new ArrayList<DateTime>();
 		List<DateTime> days = new ArrayList<DateTime>();
 		List<DateTime> months = new ArrayList<DateTime>();
@@ -2528,8 +2525,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	@Test
 	public void findAuditDatumRecordCountsHourAggregationAllRollup() {
 		// given
-		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
-				.minusMonths(2);
+		DateTime start = new DateTime(2020, 2, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		List<DateTime> hours = new ArrayList<DateTime>();
 		List<DateTime> days = new ArrayList<DateTime>();
 		List<DateTime> months = new ArrayList<DateTime>();
@@ -2574,8 +2570,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	@Test
 	public void findAuditDatumRecordCountsDefaultAggregationNoRollup() {
 		// given
-		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
-				.minusMonths(2);
+		DateTime start = new DateTime(2020, 2, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		List<DateTime> hours = new ArrayList<DateTime>();
 		List<DateTime> days = new ArrayList<DateTime>();
 		List<DateTime> months = new ArrayList<DateTime>();
@@ -2605,8 +2600,7 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	@Test
 	public void findAuditDatumRecordCountsDayAggregationNoRollup() {
 		// given
-		DateTime start = new DateTime(DateTimeZone.forID(TEST_TZ)).monthOfYear().roundFloorCopy()
-				.minusMonths(2);
+		DateTime start = new DateTime(2020, 2, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		List<DateTime> hours = new ArrayList<DateTime>();
 		List<DateTime> days = new ArrayList<DateTime>();
 		List<DateTime> months = new ArrayList<DateTime>();

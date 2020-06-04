@@ -28,9 +28,9 @@ import org.springframework.jdbc.core.JdbcOperations;
 /**
  * Job to process "stale" general node datum reporting aggregate data.
  * 
- * This job executes a JDBC procedure, which is expected to return an Integer
- * result representing the number of rows processed by the call. If the
- * procedure returns zero, the job stops immediately.
+ * This job executes a JDBC procedure, which is expected to return a result set
+ * of 0 or 1 rows for the processed stale record. If the procedure returns no
+ * result rows, the job stops immediately.
  * 
  * If {@code taskCount} is higher than {@code 1} then {@code taskCount} threads
  * will be spawned and each process {@code maximumRowCount / taskCount} rows.
@@ -50,7 +50,7 @@ public class StaleGeneralNodeDatumProcessor extends TieredStoredProcedureStaleDa
 	 */
 	public StaleGeneralNodeDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
 		super(eventAdmin, jdbcOps, "stale general data");
-		setJdbcCall("{? = call solaragg.process_agg_stale_datum(?, ?)}");
+		setJdbcCall("{call solaragg.process_one_agg_stale_datum(?)}");
 	}
 
 	/**

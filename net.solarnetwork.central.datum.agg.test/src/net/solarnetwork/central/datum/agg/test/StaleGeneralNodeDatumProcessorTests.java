@@ -29,7 +29,10 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
+import java.sql.CallableStatement;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -49,6 +52,8 @@ import org.junit.Test;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.CallableStatementCallback;
+import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.transaction.TransactionStatus;
@@ -180,6 +185,9 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 		populateTestData();
 		List<Map<String, Object>> staleRows = jdbcTemplate
 				.queryForList("SELECT * FROM solaragg.agg_stale_datum");
+		for ( Map<String, Object> row : staleRows ) {
+			log.debug("Stale row: {}", row);
+		}
 		Assert.assertEquals("Stale hour rows (5 nodes * 2 stale hours)", 10, staleRows.size());
 		boolean result = job.executeJob();
 		Assert.assertTrue("Completed", result);
@@ -330,8 +338,39 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 				new Timestamp(start.dayOfMonth().roundFloorCopy().getMillis()), TEST_NODE_ID,
 				TEST_SOURCE_ID, "d");
 
-		int count = jdbcTemplate.queryForObject("SELECT solaragg.process_agg_stale_datum('d', -1)",
-				Integer.class);
+		int count = jdbcTemplate.execute(new CallableStatementCreator() {
+
+			@Override
+			public CallableStatement createCallableStatement(Connection con) throws SQLException {
+				CallableStatement stmt = con
+						.prepareCall("{call solaragg.process_one_agg_stale_datum(?)}");
+				return stmt;
+			}
+		}, new CallableStatementCallback<Integer>() {
+
+			private int processKind(String kind, CallableStatement cs) throws SQLException {
+				int processed = 0;
+				cs.setString(1, kind);
+				while ( cs.execute() ) {
+					try (ResultSet rs = cs.getResultSet()) {
+						if ( rs.next() ) {
+							processed++;
+						} else {
+							break;
+						}
+					}
+				}
+				return processed;
+			}
+
+			@Override
+			public Integer doInCallableStatement(CallableStatement cs)
+					throws SQLException, DataAccessException {
+				int processed = processKind("d", cs);
+				log.debug("Processed " + processed + " stale daily datum");
+				return processed;
+			}
+		});
 		assertThat("Processed stale row count", count, equalTo(1));
 
 		List<Map<String, Object>> rows = listAggDatumDailyRows();
