@@ -105,6 +105,35 @@ $$
 	FOR UPDATE SKIP LOCKED
 $$;
 
+CREATE OR REPLACE FUNCTION solaruser.add_user_node_event_task_result(
+	task_id uuid
+	, is_success BOOLEAN
+	, task_status char DEFAULT 'c'
+	, msg TEXT DEFAULT NULL
+	, completed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+  RETURNS SETOF solaruser.user_node_event_task_result LANGUAGE SQL VOLATILE AS
+$$
+	INSERT INTO solaruser.user_node_event_task_result (id, hook_id, node_id, source_id, jdata
+			, status, success, message, completed)
+	SELECT id
+		, hook_id
+		, node_id
+		, source_id
+		, jdata
+		, task_status
+		, is_success
+		, msg
+		, completed_at
+	FROM solaruser.user_node_event_task
+	WHERE id = task_id
+	ON CONFLICT (id) DO UPDATE SET
+		status = EXCLUDED.status
+		, success = EXCLUDED.success
+		, message = EXCLUDED.message
+		, completed = EXCLUDED.completed
+	RETURNING *
+$$;
+
 --
 --
 --
