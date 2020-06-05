@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.domain.UserNodeEventTask">
+
+	<insert id="create-tasks-from-event" parameterType="net.solarnetwork.central.datum.domain.DatumAppEvent" statementType="CALLABLE">
+		{call solaruser.add_user_node_event_tasks(
+			#{nodeId,jdbcType=BIGINT},
+			#{sourceId,jdbcType=VARCHAR},
+			#{topic,jdbcType=VARCHAR},
+			#{eventProperties,jdbcType=VARCHAR,typeHandler=net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler}::jsonb
+			)}
+	</insert>
+
+</mapper>

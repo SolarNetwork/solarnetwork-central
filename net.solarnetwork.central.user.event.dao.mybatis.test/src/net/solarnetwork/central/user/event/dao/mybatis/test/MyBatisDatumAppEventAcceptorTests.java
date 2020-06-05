@@ -1,0 +1,142 @@
+/* ==================================================================
+ * MyBatisDatumAppEventAcceptorTests.java - 5/06/2020 11:37:24 am
+ * 
+ * Copyright 2020 SolarNetwork.net Dev Team
+ * 
+ * This program is free software; you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as 
+ * published by the Free Software Foundation; either version 2 of 
+ * the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ * 02111-1307 USA
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.user.event.dao.mybatis.test;
+
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
+import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
+import net.solarnetwork.central.datum.domain.BasicDatumAppEvent;
+import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeEventHookConfigurationDao;
+import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.user.domain.UserNodeEventHookConfiguration;
+import net.solarnetwork.central.user.event.dao.mybatis.MyBatisDatumAppEventAcceptor;
+import net.solarnetwork.util.JsonUtils;
+
+/**
+ * Test cases for the {@link MyBatisDatumAppEventAcceptor} class.
+ * 
+ * @author matt
+ * @version 1.0
+ */
+public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventDaoTestSupport {
+
+	private static final String TEST_SOURCE_ID = "test.source";
+
+	private static final String TEST_SERVICE_ID = "test.service";
+
+	private static final String TASK_TABLE = "solaruser.user_node_event_task";
+
+	private MyBatisUserNodeEventHookConfigurationDao hookConfDao;
+	private MyBatisDatumAppEventAcceptor dao;
+
+	@Before
+	public void setup() {
+		hookConfDao = new MyBatisUserNodeEventHookConfigurationDao();
+		hookConfDao.setSqlSessionFactory(getSqlSessionFactory());
+		dao = new MyBatisDatumAppEventAcceptor();
+		dao.setSqlSessionFactory(getSqlSessionFactory());
+	}
+
+	private List<Map<String, Object>> rows(String table) {
+		return jdbcTemplate.queryForList("select * from " + table);
+	}
+
+	@Test
+	public void accept_noConfiguration() {
+		// GIVEN
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
+		info.setAggregation(Aggregation.Hour);
+		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		BasicDatumAppEvent event = new BasicDatumAppEvent(
+				AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC, info.toEventProperties(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+
+		// WHEN
+		dao.offerDatumEvent(event);
+
+		// THEN
+		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
+		assertThat("No tasks created because no configuration exists", taskRows, hasSize(0));
+	}
+
+	private UserNodeEventHookConfiguration createHookConf(Long userId, Long[] nodeIds,
+			String[] sourceIds) {
+		final UserNodeEventHookConfiguration hookConf = new UserNodeEventHookConfiguration(userId,
+				Instant.now());
+		hookConf.setName("Test");
+		hookConf.setNodeIds(nodeIds);
+		hookConf.setSourceIds(sourceIds);
+		hookConf.setTopic(AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC);
+		hookConf.setServiceIdentifier(TEST_SERVICE_ID);
+		return hookConfDao.get(hookConfDao.save(hookConf));
+	}
+
+	private void assertTaskMap(Map<String, Object> taskRow, Long hookId, Long nodeId, String sourceId,
+			AggregateUpdatedEventInfo info) {
+		assertThat("Task hook ID matches", taskRow, hasEntry("hook_id", hookId));
+		assertThat("Task node ID matches", taskRow, hasEntry("node_id", TEST_NODE_ID));
+		assertThat("Task source ID matches", taskRow, hasEntry("source_id", TEST_SOURCE_ID));
+		assertThat("Task created available", taskRow, hasEntry(equalTo("created"), notNullValue()));
+		assertThat("Task data", taskRow, hasKey("jdata"));
+
+		AggregateUpdatedEventInfo taskInfo = JsonUtils.getObjectFromJSON(taskRow.get("jdata").toString(),
+				AggregateUpdatedEventInfo.class);
+		assertThat("Task info same as event properties", taskInfo, equalTo(info));
+	}
+
+	@Test
+	public void accept_oneConfiguration_exactNodeSource() {
+		// GIVEN
+		final User user = createNewUser("foo@localhost");
+		setupTestNode();
+		setupUserNode(user.getId(), TEST_NODE_ID);
+		final UserNodeEventHookConfiguration hookConf = createHookConf(user.getId(),
+				new Long[] { TEST_NODE_ID }, new String[] { TEST_SOURCE_ID });
+
+		// WHEN		
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
+		info.setAggregation(Aggregation.Hour);
+		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		BasicDatumAppEvent event = new BasicDatumAppEvent(
+				AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC, info.toEventProperties(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.offerDatumEvent(event);
+
+		// THEN
+		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
+		assertThat("One task created for matching node/source", taskRows, hasSize(1));
+		assertTaskMap(taskRows.get(0), hookConf.getId().getId(), TEST_NODE_ID, TEST_SOURCE_ID, info);
+	}
+
+}

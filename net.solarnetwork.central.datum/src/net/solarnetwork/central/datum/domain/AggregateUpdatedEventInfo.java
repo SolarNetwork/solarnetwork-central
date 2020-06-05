@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.domain;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.Aggregation;
@@ -84,6 +85,23 @@ public class AggregateUpdatedEventInfo {
 		m.put("timestamp", getTimestamp());
 		m.put("aggregationKey", getAggregationKey());
 		return m;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(aggregation, timeStart);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !(obj instanceof AggregateUpdatedEventInfo) ) {
+			return false;
+		}
+		AggregateUpdatedEventInfo other = (AggregateUpdatedEventInfo) obj;
+		return aggregation == other.aggregation && Objects.equals(timeStart, other.timeStart);
 	}
 
 	/**
