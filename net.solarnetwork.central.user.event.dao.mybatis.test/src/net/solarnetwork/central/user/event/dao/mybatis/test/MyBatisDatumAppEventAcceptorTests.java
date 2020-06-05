@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.event.dao.mybatis.test;
 
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toMap;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
@@ -69,7 +71,16 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 	}
 
 	private List<Map<String, Object>> rows(String table) {
-		return jdbcTemplate.queryForList("select * from " + table);
+		return rows(table, "id");
+	}
+
+	private List<Map<String, Object>> rows(String table, String sort) {
+		StringBuilder buf = new StringBuilder("select * from ");
+		buf.append(table);
+		if ( sort != null ) {
+			buf.append(" order by ").append(sort);
+		}
+		return jdbcTemplate.queryForList(buf.toString());
 	}
 
 	@Test
@@ -123,6 +134,7 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		setupUserNode(user.getId(), TEST_NODE_ID);
 		final UserNodeEventHookConfiguration hookConf = createHookConf(user.getId(),
 				new Long[] { TEST_NODE_ID }, new String[] { TEST_SOURCE_ID });
+		createHookConf(user.getId(), new Long[] { -99L }, new String[] { "foo" }); // create another that should not be returned
 
 		// WHEN		
 		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
@@ -137,6 +149,113 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
 		assertThat("One task created for matching node/source", taskRows, hasSize(1));
 		assertTaskMap(taskRows.get(0), hookConf.getId().getId(), TEST_NODE_ID, TEST_SOURCE_ID, info);
+	}
+
+	@Test
+	public void accept_oneConfiguration_exactNodeAnySource() {
+		// GIVEN
+		final User user = createNewUser("foo@localhost");
+		setupTestNode();
+		setupUserNode(user.getId(), TEST_NODE_ID);
+		final UserNodeEventHookConfiguration hookConf = createHookConf(user.getId(),
+				new Long[] { TEST_NODE_ID }, null);
+		createHookConf(user.getId(), new Long[] { -99L }, new String[] { "foo" }); // create another that should not be returned
+
+		// WHEN		
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
+		info.setAggregation(Aggregation.Hour);
+		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		BasicDatumAppEvent event = new BasicDatumAppEvent(
+				AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC, info.toEventProperties(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.offerDatumEvent(event);
+
+		// THEN
+		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
+		assertThat("One task created for matching node/source", taskRows, hasSize(1));
+		assertTaskMap(taskRows.get(0), hookConf.getId().getId(), TEST_NODE_ID, TEST_SOURCE_ID, info);
+	}
+
+	@Test
+	public void accept_oneConfiguration_anyNodeAnySource() {
+		// GIVEN
+		final User user = createNewUser("foo@localhost");
+		setupTestNode();
+		setupUserNode(user.getId(), TEST_NODE_ID);
+		final UserNodeEventHookConfiguration hookConf = createHookConf(user.getId(), null, null);
+		createHookConf(user.getId(), new Long[] { -99L }, new String[] { "foo" }); // create another that should not be returned
+
+		// WHEN		
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
+		info.setAggregation(Aggregation.Hour);
+		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		BasicDatumAppEvent event = new BasicDatumAppEvent(
+				AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC, info.toEventProperties(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.offerDatumEvent(event);
+
+		// THEN
+		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
+		assertThat("One task created for matching node/source", taskRows, hasSize(1));
+		assertTaskMap(taskRows.get(0), hookConf.getId().getId(), TEST_NODE_ID, TEST_SOURCE_ID, info);
+	}
+
+	@Test
+	public void accept_oneConfiguration_exactNodeSourcePattern() {
+		// GIVEN
+		final User user = createNewUser("foo@localhost");
+		setupTestNode();
+		setupUserNode(user.getId(), TEST_NODE_ID);
+		final UserNodeEventHookConfiguration hookConf = createHookConf(user.getId(),
+				new Long[] { TEST_NODE_ID }, new String[] { "t*" });
+		createHookConf(user.getId(), new Long[] { TEST_NODE_ID }, new String[] { "foo" }); // create another that should not be returned
+
+		// WHEN		
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
+		info.setAggregation(Aggregation.Hour);
+		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		BasicDatumAppEvent event = new BasicDatumAppEvent(
+				AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC, info.toEventProperties(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.offerDatumEvent(event);
+
+		// THEN
+		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
+		assertThat("One task created for matching node/source", taskRows, hasSize(1));
+		assertTaskMap(taskRows.get(0), hookConf.getId().getId(), TEST_NODE_ID, TEST_SOURCE_ID, info);
+	}
+
+	@Test
+	public void accept_multiConfiguration_exactNodeSourcePattern() {
+		// GIVEN
+		final User user = createNewUser("foo@localhost");
+		setupTestNode();
+		setupUserNode(user.getId(), TEST_NODE_ID);
+		final UserNodeEventHookConfiguration hookConf = createHookConf(user.getId(),
+				new Long[] { TEST_NODE_ID }, new String[] { "t*" });
+		final UserNodeEventHookConfiguration hookConf2 = createHookConf(user.getId(),
+				new Long[] { TEST_NODE_ID }, new String[] { TEST_SOURCE_ID });
+		createHookConf(user.getId(), new Long[] { TEST_NODE_ID }, new String[] { "foo" }); // create another that should not be returned
+
+		// WHEN		
+		AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
+		info.setAggregation(Aggregation.Hour);
+		info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		BasicDatumAppEvent event = new BasicDatumAppEvent(
+				AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC, info.toEventProperties(),
+				TEST_NODE_ID, TEST_SOURCE_ID);
+		dao.offerDatumEvent(event);
+
+		// THEN
+		List<Long> hookIds = asList(hookConf.getId().getId(), hookConf2.getId().getId());
+
+		Map<Long, Map<String, Object>> taskRows = rows(TASK_TABLE).stream()
+				.collect(toMap(r -> (Long) r.get("hook_id"), r -> r));
+		assertThat("Two tasks created for matching node/source", taskRows.keySet(), hasSize(2));
+		for ( int i = 0; i < hookIds.size(); i++ ) {
+			Long hookId = hookIds.get(i);
+			assertTaskMap(taskRows.get(hookId), hookId, TEST_NODE_ID, TEST_SOURCE_ID, info);
+		}
 	}
 
 }
