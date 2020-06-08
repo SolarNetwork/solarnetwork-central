@@ -25,7 +25,8 @@ package net.solarnetwork.central.datum.biz;
 import net.solarnetwork.central.datum.domain.DatumAppEvent;
 
 /**
- * API for a service that can accept datum events.
+ * API for a service that can accept datum events in a durable, persistent
+ * manner.
  * 
  * @author matt
  * @version 1.0
