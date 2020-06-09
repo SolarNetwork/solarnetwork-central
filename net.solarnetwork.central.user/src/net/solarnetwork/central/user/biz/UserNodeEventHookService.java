@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.user.biz;
 
-import net.solarnetwork.central.datum.domain.DatumAppEvent;
+import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.user.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.user.domain.UserNodeEventTask;
 import net.solarnetwork.domain.Identity;
@@ -30,8 +30,8 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
 import net.solarnetwork.support.LocalizedServiceInfoProvider;
 
 /**
- * API for a service that can handle {@link DatumAppEvent} objects by acting on
- * them in some way so the event can then be discarded.
+ * API for a service that can handle {@link UserNodeEventTask} objects by acting
+ * on them in some way so the event can then be discarded.
  * 
  * @author matt
  * @version 1.0
@@ -50,10 +50,11 @@ public interface UserNodeEventHookService
 	 * @return {@literal true} if the event was processed successfully and can
 	 *         be discarded; {@literal false} if the event was not processed
 	 *         successfully and should be tried again in the future
-	 * @throws RuntimeException
+	 * @throws RepeatableTaskException
 	 *         if any processing error occurs and the event should be
 	 *         reprocessed in the future
 	 */
-	boolean processUserNodeEventHook(UserNodeEventHookConfiguration config, UserNodeEventTask event);
+	boolean processUserNodeEventHook(UserNodeEventHookConfiguration config, UserNodeEventTask event)
+			throws RepeatableTaskException;
 
 }
