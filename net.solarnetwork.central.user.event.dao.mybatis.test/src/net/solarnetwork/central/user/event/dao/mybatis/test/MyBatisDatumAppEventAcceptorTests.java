@@ -71,6 +71,7 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 	private MyBatisUserNodeEventHookConfigurationDao hookConfDao;
 	private MyBatisDatumAppEventAcceptor dao;
 
+	private User user;
 	private UserNodeEventHookConfiguration lastHook;
 	private AggregateUpdatedEventInfo lastEventInfo;
 
@@ -82,6 +83,11 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		dao.setSqlSessionFactory(getSqlSessionFactory());
 		lastHook = null;
 		lastEventInfo = null;
+
+		user = createNewUser(UUID.randomUUID().toString() + "@localhost");
+		setupTestNode();
+		setupUserNode(user.getId(), TEST_NODE_ID);
+
 	}
 
 	private List<Map<String, Object>> rows(String table) {
@@ -144,9 +150,6 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 	@Test
 	public void accept_oneConfiguration_exactNodeSource() {
 		// GIVEN
-		final User user = createNewUser("foo@localhost");
-		setupTestNode();
-		setupUserNode(user.getId(), TEST_NODE_ID);
 		createHookConf(user.getId(), new Long[] { -99L }, new String[] { "foo" }); // create another that should not be returned
 		final UserNodeEventHookConfiguration hookConf = createHookConf(user.getId(),
 				new Long[] { TEST_NODE_ID }, new String[] { TEST_SOURCE_ID });
@@ -169,9 +172,6 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 	@Test
 	public void accept_oneConfiguration_exactNodeAnySource() {
 		// GIVEN
-		final User user = createNewUser("foo@localhost");
-		setupTestNode();
-		setupUserNode(user.getId(), TEST_NODE_ID);
 		final UserNodeEventHookConfiguration hookConf = createHookConf(user.getId(),
 				new Long[] { TEST_NODE_ID }, null);
 		createHookConf(user.getId(), new Long[] { -99L }, new String[] { "foo" }); // create another that should not be returned
@@ -193,9 +193,6 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 	@Test
 	public void accept_oneConfiguration_anyNodeAnySource() {
 		// GIVEN
-		final User user = createNewUser("foo@localhost");
-		setupTestNode();
-		setupUserNode(user.getId(), TEST_NODE_ID);
 		final UserNodeEventHookConfiguration hookConf = createHookConf(user.getId(), null, null);
 		createHookConf(user.getId(), new Long[] { -99L }, new String[] { "foo" }); // create another that should not be returned
 
@@ -216,9 +213,6 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 	@Test
 	public void accept_oneConfiguration_exactNodeSourcePattern() {
 		// GIVEN
-		final User user = createNewUser("foo@localhost");
-		setupTestNode();
-		setupUserNode(user.getId(), TEST_NODE_ID);
 		final UserNodeEventHookConfiguration hookConf = createHookConf(user.getId(),
 				new Long[] { TEST_NODE_ID }, new String[] { "t*" });
 		createHookConf(user.getId(), new Long[] { TEST_NODE_ID }, new String[] { "foo" }); // create another that should not be returned
@@ -240,9 +234,6 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 	@Test
 	public void accept_multiConfiguration_exactNodeSourcePattern() {
 		// GIVEN
-		final User user = createNewUser("foo@localhost");
-		setupTestNode();
-		setupUserNode(user.getId(), TEST_NODE_ID);
 		final UserNodeEventHookConfiguration hookConf = createHookConf(user.getId(),
 				new Long[] { TEST_NODE_ID }, new String[] { "t*" });
 		final UserNodeEventHookConfiguration hookConf2 = createHookConf(user.getId(),
@@ -351,4 +342,152 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		assertThat("Task result completed date persisted", row.get("completed"),
 				equalTo(new Timestamp(claimedTask.getCompleted().toEpochMilli())));
 	}
+
+	@Test
+	public void purge_noTasks() {
+		// GIVEN
+
+		// WHEN
+		long count = dao.purgeCompletedTasks(Instant.now());
+
+		// THEN
+		assertThat("Nothing purged because nothing exists", count, equalTo(0L));
+	}
+
+	@Test
+	public void purge_nothingOlder() throws Exception {
+		// GIVEN
+		complete_task();
+
+		// WHEN
+		long count = dao.purgeCompletedTasks(Instant.now().minus(1, ChronoUnit.DAYS));
+
+		// THEN
+		assertThat("Nothing purged because nothing older", count, equalTo(0L));
+	}
+
+	@Test
+	public void purge_task() {
+		// GIVEN
+		accept_oneConfiguration_exactNodeSource();
+
+		// WHEN
+		long count = dao.purgeCompletedTasks(Instant.now().plus(1, ChronoUnit.DAYS));
+
+		// THEN
+		assertThat("One task purged because both older", count, equalTo(1L));
+	}
+
+	@Test
+	public void purge_tasks() throws Exception {
+		// GIVEN
+		createHookConf(user.getId(), new Long[] { TEST_NODE_ID }, new String[] { TEST_SOURCE_ID });
+
+		// create 3 tasks @ 3 dates
+		Instant ts = null;
+		for ( int i = 0; i < 3; i++ ) {
+			ts = Instant.now();
+			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
+			info.setAggregation(Aggregation.Hour);
+			info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+			lastEventInfo = info;
+			BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC, ts,
+					info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
+			dao.offerDatumEvent(event);
+			Thread.sleep(300);
+		}
+
+		// WHEN
+		long count = dao.purgeCompletedTasks(ts.truncatedTo(ChronoUnit.MILLIS));
+
+		// THEN
+		assertThat("Deleted 2 tasks older than last task", count, equalTo(2L));
+		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
+		assertThat("One task remains", taskRows, hasSize(1));
+		Timestamp timestamp = (Timestamp) taskRows.get(0).get("created");
+		assertThat("Remaining row is task with most recent timestamp", timestamp.getTime(),
+				equalTo(ts.toEpochMilli()));
+	}
+
+	@Test
+	public void purge_taskButNotResult() throws Exception {
+		// GIVEN
+		createHookConf(user.getId(), new Long[] { TEST_NODE_ID }, new String[] { TEST_SOURCE_ID });
+
+		// create 3 tasks @ 3 dates
+		Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS);
+		for ( int i = 0; i < 3; i++ ) {
+			ts = ts.plusSeconds(60);
+			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
+			info.setAggregation(Aggregation.Hour);
+			info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+			lastEventInfo = info;
+			BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC, ts,
+					info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
+			dao.offerDatumEvent(event);
+			if ( i > 1 ) {
+				UserNodeEvent claimed = dao.claimQueuedTask(AGGREGATE_UPDATED_TOPIC);
+				UserNodeEventTask claimedTask = claimed.getTask();
+				Thread.sleep(400L);
+				claimedTask.setCompleted(ts);
+				claimedTask.setSuccess(true);
+				claimedTask.setStatus(UserNodeEventTaskState.Completed);
+				claimedTask.setMessage("Good one.");
+				dao.taskCompleted(claimedTask);
+			}
+		}
+
+		// WHEN
+		long count = dao.purgeCompletedTasks(ts);
+
+		// THEN
+		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
+		List<Map<String, Object>> taskResultRows = rows(TASK_RESULT_TABLE);
+		assertThat("Deleted 1 tasks older than last task", count, equalTo(1L));
+		assertThat("One task remains because _created_ older than delete date", taskRows, hasSize(1));
+		assertThat("One task result remains because _completed_ not older than delete date",
+				taskResultRows, hasSize(1));
+	}
+
+	@Test
+	public void purge_tasksAndResults() throws Exception {
+		// GIVEN
+		createHookConf(user.getId(), new Long[] { TEST_NODE_ID }, new String[] { TEST_SOURCE_ID });
+
+		// create 4 tasks @ 4 dates
+		Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS);
+		for ( int i = 0; i < 4; i++ ) {
+			ts = ts.plusSeconds(60);
+			AggregateUpdatedEventInfo info = new AggregateUpdatedEventInfo();
+			info.setAggregation(Aggregation.Hour);
+			info.setTimeStart(Instant.now().truncatedTo(ChronoUnit.HOURS));
+			lastEventInfo = info;
+			BasicDatumAppEvent event = new BasicDatumAppEvent(AGGREGATE_UPDATED_TOPIC, ts,
+					info.toEventProperties(), TEST_NODE_ID, TEST_SOURCE_ID);
+			dao.offerDatumEvent(event);
+
+			// last 2 tasks will be turned into results
+			if ( i > 1 ) {
+				UserNodeEvent claimed = dao.claimQueuedTask(AGGREGATE_UPDATED_TOPIC);
+				UserNodeEventTask claimedTask = claimed.getTask();
+				Thread.sleep(400L);
+				claimedTask.setCompleted(ts.plusSeconds(30));
+				claimedTask.setSuccess(true);
+				claimedTask.setStatus(UserNodeEventTaskState.Completed);
+				claimedTask.setMessage("Good one.");
+				dao.taskCompleted(claimedTask);
+			}
+		}
+
+		// WHEN
+		long count = dao.purgeCompletedTasks(ts.plusSeconds(31));
+
+		// THEN
+		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
+		List<Map<String, Object>> taskResultRows = rows(TASK_RESULT_TABLE);
+		assertThat("No tasks remain", taskRows, hasSize(0));
+		assertThat("No task results remain", taskResultRows, hasSize(0));
+		assertThat("Deleted 2 tasks + 2 task results older than delete date", count, equalTo(4L));
+	}
+
 }

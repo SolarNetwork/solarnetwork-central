@@ -35,6 +35,10 @@ CREATE TABLE IF NOT EXISTS solaruser.user_node_event_task (
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+-- index for foreign key trigger
+CREATE INDEX IF NOT EXISTS user_node_event_task_hook_idx ON solaruser.user_node_event_task
+	(hook_id);
+
 CREATE TABLE IF NOT EXISTS solaruser.user_node_event_task_result (
 	id				uuid NOT NULL,
 	hook_id			BIGINT NOT NULL,
@@ -52,6 +56,7 @@ CREATE TABLE IF NOT EXISTS solaruser.user_node_event_task_result (
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+-- index for foreign key trigger
 CREATE INDEX IF NOT EXISTS user_node_event_task_result_hook_idx ON solaruser.user_node_event_task_result
 	(hook_id);
 
@@ -78,21 +83,24 @@ $$
 $$;
 
 CREATE OR REPLACE FUNCTION solaruser.add_user_node_event_tasks(
-	node BIGINT, source CHARACTER VARYING(64), etopic TEXT, edata jsonb)
+	node BIGINT
+	, source CHARACTER VARYING(64)
+	, etopic TEXT
+	, edata jsonb
+	, ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
   RETURNS void LANGUAGE SQL VOLATILE AS
 $$
-	INSERT INTO solaruser.user_node_event_task (id, hook_id, node_id, source_id, jdata)
+	INSERT INTO solaruser.user_node_event_task (id, hook_id, node_id, source_id, created, jdata)
 	SELECT uuid_generate_v4() AS id
 		, hook_id
 		, node
 		, source
+		, ts
 		, edata AS jdata
 	FROM solaruser.find_user_node_event_tasks(node, source, etopic) AS hook_id
 $$;
 
 /**
- * FUNCTION solaruser.claim_user_node_event_task
- *
  * "Claim" a user node event, so it may be processed by some external job. This function must be
  * called within a transaction. The returned row will be locked, so that the external job can
  * delete it once complete.
@@ -106,8 +114,6 @@ $$
 $$;
 
 /**
- * FUNCTION solaruser.add_user_node_event_task_result
- *
  * Move a record from the `solaruser.user_node_event_task` table to the 
  * `solaruser.user_node_event_task_result` table and add result columns.
  *
@@ -130,9 +136,9 @@ $$
 		WHERE id = task_id
 		RETURNING *
 	)
-	INSERT INTO solaruser.user_node_event_task_result (id, hook_id, node_id, source_id, jdata
+	INSERT INTO solaruser.user_node_event_task_result (id, hook_id, node_id, source_id, created, jdata
 			, status, success, message, completed)
-	SELECT id, hook_id, node_id, source_id, jdata
+	SELECT id, hook_id, node_id, source_id, created, jdata
 		, task_status, is_success, msg, completed_at
 	FROM task
 	ON CONFLICT (id) DO UPDATE SET
@@ -141,6 +147,35 @@ $$
 		, message = EXCLUDED.message
 		, completed = EXCLUDED.completed
 	RETURNING *
+$$;
+
+/**
+ * Delete task and task results older than a given date.
+ *
+ * @param older_than	the date tasks must be older than to delete
+ */
+CREATE OR REPLACE FUNCTION solaruser.purge_user_node_event_tasks(
+	older_than TIMESTAMP WITH TIME ZONE)
+  RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS
+$$
+DECLARE
+	del_count BIGINT := 0;
+	tot_count BIGINT := 0;
+BEGIN
+	DELETE FROM solaruser.user_node_event_task
+	WHERE created < older_than;
+	GET DIAGNOSTICS del_count = ROW_COUNT;
+
+	tot_count := del_count;
+	
+	DELETE FROM solaruser.user_node_event_task_result
+	WHERE completed < older_than;
+	GET DIAGNOSTICS del_count = ROW_COUNT;
+	
+	tot_count := tot_count + del_count;
+	
+	RETURN tot_count;
+END;
 $$;
 
 --

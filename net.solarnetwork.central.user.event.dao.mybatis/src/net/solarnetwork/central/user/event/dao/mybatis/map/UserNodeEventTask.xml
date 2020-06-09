@@ -6,10 +6,11 @@
 			parameterType="net.solarnetwork.central.datum.domain.DatumAppEvent" 
 			statementType="CALLABLE">
 		{call solaruser.add_user_node_event_tasks(
-			#{nodeId,jdbcType=BIGINT},
-			#{sourceId,jdbcType=VARCHAR},
-			#{topic,jdbcType=VARCHAR},
-			#{eventProperties,jdbcType=VARCHAR,typeHandler=net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler}::jsonb
+			#{nodeId,jdbcType=BIGINT}
+			, #{sourceId,jdbcType=VARCHAR}
+			, #{topic,jdbcType=VARCHAR}
+			, #{eventProperties,jdbcType=VARCHAR,typeHandler=net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler}::jsonb
+			<if test="created != null">, #{created}</if>
 			)}
 	</insert>
 	
@@ -65,5 +66,9 @@
 			#{completed}
 			)}
 	</update>
+
+	<delete id="purge-user-node-event-tasks" statementType="CALLABLE">
+		{#{result, mode=OUT, jdbcType=BIGINT} = call solaruser.purge_user_node_event_tasks(#{date, javaType=java.time.Instant})}
+	</delete>
 
 </mapper>

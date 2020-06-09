@@ -23,6 +23,8 @@
 package net.solarnetwork.central.user.event.dao.mybatis;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisDao;
@@ -73,8 +75,11 @@ public class MyBatisDatumAppEventAcceptor extends BaseMyBatisDao
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public long purgeCompletedTasks(Instant olderThanDate) {
-		// TODO Auto-generated method stub
-		return 0;
+		Map<String, Object> params = new HashMap<String, Object>(2);
+		params.put("date", olderThanDate);
+		getSqlSession().update("purge-user-node-event-tasks", params);
+		Object result = params.get("result");
+		return (result instanceof Long ? ((Long) result).longValue() : 0);
 	}
 
 }
