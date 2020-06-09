@@ -36,7 +36,7 @@ import org.springframework.beans.factory.InitializingBean;
  * in OSGi.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.34
  */
 public class JCacheManagerFactoryBean
@@ -93,6 +93,9 @@ public class JCacheManagerFactoryBean
 
 	@Override
 	public CacheManager getObject() {
+		if ( cacheManager == null ) {
+			afterPropertiesSet();
+		}
 		return this.cacheManager;
 	}
 
