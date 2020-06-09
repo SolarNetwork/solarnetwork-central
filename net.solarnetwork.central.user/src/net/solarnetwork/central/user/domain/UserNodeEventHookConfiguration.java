@@ -30,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.IdentifiableConfiguration;
-import net.solarnetwork.util.JsonUtils;
 
 /**
  * User and node specific event configuration entity.
@@ -207,23 +206,4 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 		this.serviceProps = serviceProps;
 	}
 
-	/**
-	 * Get the service properties as a JSON object.
-	 * 
-	 * @return the service properties as a JSON object, or {@literal null}
-	 */
-	@JsonIgnore
-	public String getServicePropsJson() {
-		return JsonUtils.getJSONString(serviceProps, null);
-	}
-
-	/**
-	 * Set the service properties as a JSON object.
-	 * 
-	 * @param json
-	 *        the service properties as a JSON object
-	 */
-	public void setServicePropsJson(String json) {
-		this.serviceProps = JsonUtils.getStringMap(json);
-	}
 }

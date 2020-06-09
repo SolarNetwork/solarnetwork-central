@@ -28,7 +28,11 @@
 	
 	<!-- Published Services -->
 	
-	<service ref="datumAppEventAcceptor" interface="net.solarnetwork.central.datum.biz.DatumAppEventAcceptor">
+	<service ref="datumAppEventAcceptor">
+		<interfaces>
+			<value>net.solarnetwork.central.datum.biz.DatumAppEventAcceptor</value>
+			<value>net.solarnetwork.central.user.dao.UserNodeEventTaskDao</value>
+		</interfaces>
 		<service-properties>
 			<entry key="topic" value="datum/agg/update"/>
 		</service-properties>
@@ -50,9 +54,15 @@
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSource"/>
 		<property name="configurationProperties" ref="cfg"/>
+		<property name="typeHandlers">
+			<list>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+			</list>
+		</property>
 		<property name="mapperLocations">
 			<!-- Note: the order of these elements is significant because of inter-resource includes -->
 			<list>
+				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeEventHookConfiguration.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/event/dao/mybatis/map/UserNodeEventTask.xml</value>
 			</list>
 		</property>

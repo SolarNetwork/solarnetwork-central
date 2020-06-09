@@ -44,7 +44,7 @@ import net.solarnetwork.central.user.domain.UserNode;
  * @version 1.0
  */
 @ContextConfiguration
-public class AbstractMyBatisUserEventDaoTestSupport extends AbstractCentralTransactionalTest {
+public abstract class AbstractMyBatisUserEventDaoTestSupport extends AbstractCentralTransactionalTest {
 
 	private SqlSessionFactory sqlSessionFactory;
 

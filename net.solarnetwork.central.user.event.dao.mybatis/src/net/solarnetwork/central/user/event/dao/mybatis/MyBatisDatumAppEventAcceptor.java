@@ -22,11 +22,16 @@
 
 package net.solarnetwork.central.user.event.dao.mybatis;
 
+import java.time.Instant;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisDao;
 import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
 import net.solarnetwork.central.datum.domain.DatumAppEvent;
+import net.solarnetwork.central.user.dao.UserNodeEventTaskDao;
+import net.solarnetwork.central.user.domain.UserNodeEvent;
+import net.solarnetwork.central.user.domain.UserNodeEventTask;
+import net.solarnetwork.central.user.domain.UserNodeEventTaskState;
 
 /**
  * MyBatis implementation of {@link DatumAppEventAcceptor} that creates user
@@ -35,12 +40,41 @@ import net.solarnetwork.central.datum.domain.DatumAppEvent;
  * @author matt
  * @version 1.0
  */
-public class MyBatisDatumAppEventAcceptor extends BaseMyBatisDao implements DatumAppEventAcceptor {
+public class MyBatisDatumAppEventAcceptor extends BaseMyBatisDao
+		implements UserNodeEventTaskDao, DatumAppEventAcceptor {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void offerDatumEvent(DatumAppEvent event) {
-		getSqlSession().insert("create-tasks-from-event", event);
+		getSqlSession().insert("create-user-node-event-tasks-from-event", event);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public UserNodeEvent claimQueuedTask(String topic) {
+		return selectFirst("claim-queued-user-node-event-task", topic);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void taskCompleted(UserNodeEventTask task) {
+		if ( task.getCompleted() == null ) {
+			task.setCompleted(Instant.now());
+		}
+		if ( task.getStatus() == null ) {
+			task.setStatus(UserNodeEventTaskState.Completed);
+		}
+		if ( task.getSuccess() == null ) {
+			task.setSuccess(true);
+		}
+		getSqlSession().update("complete-user-node-event-task", task);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public long purgeCompletedTasks(Instant olderThanDate) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

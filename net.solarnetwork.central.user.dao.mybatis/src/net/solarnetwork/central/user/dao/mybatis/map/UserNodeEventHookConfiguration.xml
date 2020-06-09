@@ -24,7 +24,7 @@
 			, #{topic}
 			, #{name}
 			, #{serviceIdentifier}
-			, #{servicePropsJson}::jsonb
+			, #{serviceProps,jdbcType=VARCHAR,typeHandler=net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler}::jsonb
 			<if test="nodeIds != null">, #{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}</if>
 			<if test="sourceIds != null">, #{sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}</if>
 			)
@@ -36,7 +36,7 @@
 			topic = #{topic}
 			, cname = #{name}
 			, sident = #{serviceIdentifier}
-			, sprops = #{servicePropsJson}::jsonb
+			, sprops = #{serviceProps,jdbcType=VARCHAR,typeHandler=net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler}::jsonb
 			, node_ids = #{nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler}
 			, source_ids = #{sourceIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 		WHERE
@@ -65,7 +65,7 @@
 		<result property="topic" column="node_event_hook_topic"/>
 		<result property="name" column="node_event_hook_cname"/>
 		<result property="serviceIdentifier" column="node_event_hook_sident"/>
-		<result property="servicePropsJson" column="node_event_hook_sprops"/>
+		<result property="serviceProps" column="node_event_hook_sprops" jdbcType="VARCHAR" typeHandler="net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler"/>
 		<result property="nodeIds" column="node_event_hook_node_ids" typeHandler="net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler"/>
 		<result property="sourceIds" column="node_event_hook_source_ids" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
 	</resultMap>

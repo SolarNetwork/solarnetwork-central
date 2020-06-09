@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.domain;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 import net.solarnetwork.central.user.dao.UserNodeRelatedEntity;
 import net.solarnetwork.dao.BasicUuidEntity;
@@ -40,6 +41,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	private Long nodeId;
 	private Long hookId;
 	private String sourceId;
+	private Map<String, Object> taskProperties;
 	private UserNodeEventTaskState status;
 	private Boolean success;
 	private String message;
@@ -134,6 +136,25 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 */
 	public void setHookId(Long hookId) {
 		this.hookId = hookId;
+	}
+
+	/**
+	 * Get the task properties.
+	 * 
+	 * @return the taskProperties
+	 */
+	public Map<String, Object> getTaskProperties() {
+		return taskProperties;
+	}
+
+	/**
+	 * Set the task properties.
+	 * 
+	 * @param taskProperties
+	 *        the taskProperties to set
+	 */
+	public void setTaskProperties(Map<String, Object> taskProperties) {
+		this.taskProperties = taskProperties;
 	}
 
 	/**
