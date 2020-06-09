@@ -54,6 +54,15 @@ public class UserNodeEvent extends BasicUuidEntity implements UserNodeRelatedEnt
 		return (task != null ? task.getNodeId() : null);
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("UserNodeEvent{");
+		builder.append(getId());
+		builder.append("}");
+		return builder.toString();
+	}
+
 	/**
 	 * Get the configuration.
 	 * 
