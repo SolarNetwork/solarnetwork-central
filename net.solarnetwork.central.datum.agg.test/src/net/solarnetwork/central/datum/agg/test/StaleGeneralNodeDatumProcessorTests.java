@@ -81,7 +81,7 @@ import net.solarnetwork.util.StaticOptionalServiceCollection;
  * Test cases for the {@link StaleGeneralNodeDatumProcessor} class.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 
@@ -131,7 +131,7 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 		job = new TestStaleGeneralNodeDatumProcessor(null, jdbcTemplate);
 		job.setJobGroup("Test");
 		job.setJobId(TEST_JOB_ID);
-		job.setMaximumRowCount(10);
+		job.setMaximumIterations(10);
 		job.setAggregateProcessType("h");
 		job.setMaximumWaitMs(15 * 1000L);
 
@@ -212,7 +212,7 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 
 	@Test
 	public void runParallelTasks() throws Exception {
-		job.setTaskCount(4);
+		job.setParallelism(4);
 		populateTestData();
 		List<Map<String, Object>> staleRows = staleRows();
 		Assert.assertEquals("Stale hour rows (5 nodes * 2 stale hours)", 10, staleRows.size());
@@ -226,7 +226,7 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 
 	@Test
 	public void runParallelTasksWithLockedRow() throws Exception {
-		job.setTaskCount(4);
+		job.setParallelism(4);
 		populateTestData();
 
 		List<Map<String, Object>> staleRows = staleRows();

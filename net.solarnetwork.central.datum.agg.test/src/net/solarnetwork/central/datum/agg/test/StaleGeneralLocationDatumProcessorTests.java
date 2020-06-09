@@ -65,7 +65,7 @@ import net.solarnetwork.util.JsonUtils;
  * Test cases for the {@link StaleGeneralLocationDatumProcessor} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 
@@ -115,7 +115,7 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 		job = new TestStaleGeneralLocationDatumProcessor(null, jdbcTemplate);
 		job.setJobGroup("Test");
 		job.setJobId(TEST_JOB_ID);
-		job.setMaximumRowCount(10);
+		job.setMaximumIterations(10);
 		job.setAggregateProcessType("h");
 		job.setMaximumWaitMs(15 * 1000L);
 
@@ -191,7 +191,7 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 
 	@Test
 	public void runParallelTasks() throws Exception {
-		job.setTaskCount(4);
+		job.setParallelism(4);
 		populateTestData();
 		List<Map<String, Object>> staleRows = jdbcTemplate
 				.queryForList("SELECT * FROM solaragg.agg_stale_loc_datum");
@@ -206,7 +206,7 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 
 	@Test
 	public void runParallelTasksWithLockedRow() throws Exception {
-		job.setTaskCount(4);
+		job.setParallelism(4);
 		populateTestData();
 
 		List<Map<String, Object>> staleRows = jdbcTemplate
