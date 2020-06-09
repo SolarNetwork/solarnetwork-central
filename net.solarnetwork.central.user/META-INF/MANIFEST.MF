@@ -16,6 +16,7 @@ Import-Package:
  com.fasterxml.jackson.databind;version="[2.4,3.0)",
  com.fasterxml.jackson.databind.ser.std;version="[2.4,3.0)",
  javax.cache;version="[1.0,2.0)",
+ net.solarnetwork.central;version="[1.4,2.0)",
  net.solarnetwork.central.biz;version="[1.1,2.0)",
  net.solarnetwork.central.dao;version="[2.0,3.0)",
  net.solarnetwork.central.datum.domain;version="[2.0,3.0)",
