@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xmlns:osgi="http://www.eclipse.org/gemini/blueprint/schema/blueprint"
+	xmlns:osgix="http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xsi:schemaLocation="
+		http://www.osgi.org/xmlns/blueprint/v1.0.0
+		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint/gemini-blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.event.dao.jobs">
+		<beans:prop key="UserNodeEventTaskProcessor.jobCron">16 * * * * ?</beans:prop>
+		<beans:prop key="UserNodeEventTaskProcessor.maximumWaitMs">5400000</beans:prop>
+		<beans:prop key="UserNodeEventTaskProcessor.maximumClaimCount">1000</beans:prop>
+		<beans:prop key="UserNodeEventTaskProcessor.taskCount">10</beans:prop>
+		<beans:prop key="UserNodeEventTaskCleaner.jobCron">0 47 * * * ?</beans:prop>
+		<beans:prop key="UserNodeEventTaskCleaner.minimumAgeMinutes">720</beans:prop>
+	</osgix:cm-properties>
+
+	<ctx:property-placeholder properties-ref="cfg"/>
+	
+	<!-- Service references -->
+
+	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
+
+	<reference id="taskDao" interface="net.solarnetwork.central.user.dao.UserNodeEventTaskDao"/>
+
+	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager" filter="(db=central)"/>
+
+	<bean id="userNodeEventHookServices" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.user.biz.UserNodeEventHookService"/>
+	</bean>
+	<!-- Support -->
+
+	<bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
+		<argument ref="transactionManager"/>
+	</bean>
+
+	<!-- A common thread pool for these jobs -->
+	<bean id="executorService" class="java.util.concurrent.Executors" factory-method="newCachedThreadPool" destroy-method="shutdown">
+		<argument>
+			<bean class="org.springframework.scheduling.concurrent.CustomizableThreadFactory">
+				<argument value="SolarNet-User-Event-"/>
+			</bean>
+		</argument>
+	</bean>
+	
+	<!-- Published Services -->
+
+	<service ref="taskProcessorJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{taskProcessorJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<bean id="taskProcessorJob" class="net.solarnetwork.central.user.event.dao.jobs.UserNodeEventTaskProcessorJob"
+				init-method="setup">
+		<argument ref="eventAdmin"/>
+		<argument ref="transactionTemplate"/>
+		<argument ref="taskDao"/>
+		<argument ref="userNodeEventHookServices"/>
+		<property name="executorService" ref="executorService"/>
+		<property name="jobCron" value="${UserNodeEventTaskProcessor.jobCron}"/>
+		<property name="maximumWaitMs" value="${UserNodeEventTaskProcessor.maximumWaitMs}"/>
+		<property name="maximumIterations" value="${UserNodeEventTaskProcessor.maximumClaimCount}"/>
+		<property name="parallelism" value="${UserNodeEventTaskProcessor.taskCount}"/>
+		<property name="jobId" value="UserNodeEventTaskProcessor"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/event/dao/UserNodeEventTaskProcessor"/>
+	</bean>
+
+	<service ref="taskCleanerJob" interface="org.osgi.service.event.EventHandler">
+		<service-properties>
+			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
+				<array value-type="java.lang.String">
+					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
+					<value>#{taskCleanerJob.jobTopic}</value>
+				</array>
+			</entry>
+		</service-properties>
+	</service>
+
+	<bean id="taskCleanerJob" class="net.solarnetwork.central.user.event.dao.jobs.UserNodeEventTaskCleanerJob"
+				init-method="setup">
+		<argument ref="eventAdmin"/>
+		<argument ref="taskDao"/>
+		<property name="executorService" ref="executorService"/>
+		<property name="jobCron" value="${UserNodeEventTaskCleaner.jobCron}"/>
+		<property name="minimumAgeMinutes" value="${UserNodeEventTaskCleaner.minimumAgeMinutes}"/>
+		<property name="jobId" value="UserNodeEventTaskCleaner"/>
+		<property name="jobTopic" value="net/solarnetwork/central/user/event/dao/UserNodeEventTaskCleaner"/>
+	</bean>
+
+</blueprint>
