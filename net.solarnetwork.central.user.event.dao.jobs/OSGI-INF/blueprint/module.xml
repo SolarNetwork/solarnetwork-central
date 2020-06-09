@@ -21,11 +21,14 @@
 	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.event.dao.jobs">
 		<beans:prop key="UserNodeEventTaskProcessor.jobCron">16 * * * * ?</beans:prop>
-		<beans:prop key="UserNodeEventTaskProcessor.maximumWaitMs">5400000</beans:prop>
+		<beans:prop key="UserNodeEventTaskProcessor.maximumWaitMs">240000</beans:prop>
 		<beans:prop key="UserNodeEventTaskProcessor.maximumClaimCount">1000</beans:prop>
 		<beans:prop key="UserNodeEventTaskProcessor.taskCount">10</beans:prop>
 		<beans:prop key="UserNodeEventTaskCleaner.jobCron">0 47 * * * ?</beans:prop>
 		<beans:prop key="UserNodeEventTaskCleaner.minimumAgeMinutes">720</beans:prop>
+		<beans:prop key="cache.conf.uri">classpath:/net/solarnetwork/central/user/event/dao/jobs/ehcache.xml</beans:prop>
+		<beans:prop key="hookServiceCache.ttl">60</beans:prop>
+		<beans:prop key="hookServiceCache.heapMaxEntries">100</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -42,6 +45,7 @@
 		<property name="bundleContext" ref="bundleContext"/>
 		<property name="serviceClassName" value="net.solarnetwork.central.user.biz.UserNodeEventHookService"/>
 	</bean>
+	
 	<!-- Support -->
 
 	<bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
@@ -57,6 +61,25 @@
 		</argument>
 	</bean>
 	
+	<bean id="cacheManager" class="net.solarnetwork.central.support.JCacheManagerFactoryBean">
+		<property name="cacheManagerUri" value="${cache.conf.uri}"/>
+	</bean>
+
+	<bean id="hookServiceCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
+		<argument ref="cacheManager"/>
+		<argument value="java.lang.String"/>
+		<argument value="net.solarnetwork.central.user.biz.UserNodeEventHookService"/>
+		<property name="name" value="service-id-for-service"/>
+		<property name="expiryPolicy" value="Created"/>
+		<property name="expiryDuration">
+			<bean class="javax.cache.expiry.Duration">
+				<argument value="#{T(java.util.concurrent.TimeUnit).SECONDS}"/>
+				<argument value="${hookServiceCache.ttl}"/>
+			</bean>
+		</property>
+		<property name="heapMaxEntries" value="${hookServiceCache.heapMaxEntries}"/>
+	</bean>
+
 	<!-- Published Services -->
 
 	<service ref="taskProcessorJob" interface="org.osgi.service.event.EventHandler">
@@ -83,6 +106,7 @@
 		<property name="parallelism" value="${UserNodeEventTaskProcessor.taskCount}"/>
 		<property name="jobId" value="UserNodeEventTaskProcessor"/>
 		<property name="jobTopic" value="net/solarnetwork/central/user/event/dao/UserNodeEventTaskProcessor"/>
+		<property name="serviceCache" ref="hookServiceCache"/>
 	</bean>
 
 	<service ref="taskCleanerJob" interface="org.osgi.service.event.EventHandler">
