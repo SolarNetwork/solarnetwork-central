@@ -63,6 +63,9 @@ public abstract class JobSupport extends EventHandlerSupport {
 	/** The {@code parallelism} property default value. */
 	public static final int DEFAULT_PARALLELISM = 1;
 
+	/** The {@code jitter} property default value. */
+	public static final long DEFAULT_JITTER = 500L;
+
 	private final EventAdmin eventAdmin;
 	private long maximumWaitMs = DEFAULT_MAX_WAIT;
 	private String jobId;
@@ -72,6 +75,7 @@ public abstract class JobSupport extends EventHandlerSupport {
 	private ExecutorService executorService = Executors.newCachedThreadPool();
 	private int maximumIterations = DEFAULT_MAX_ITERATIONS;
 	private int parallelism = 1;
+	private long jitter = DEFAULT_JITTER;
 
 	/**
 	 * Constructor.
@@ -262,11 +266,24 @@ public abstract class JobSupport extends EventHandlerSupport {
 		if ( tCount > 1 ) {
 			final ExecutorService executorService = getExecutorService();
 			final CountDownLatch latch = new CountDownLatch(tCount);
+			final long tJitter = getJitter();
 			for ( int i = 0; i < tCount; i++ ) {
 				executorService.submit(new Runnable() {
 
 					@Override
 					public void run() {
+						if ( tJitter > 0 ) {
+							long delay = (long) Math.ceil(Math.random() * tJitter);
+							if ( delay > 0 ) {
+								log.debug("Delaying thread {} start of processing {} by jitter of {}ms",
+										Thread.currentThread().getName(), taskName, delay);
+								try {
+									Thread.sleep(delay);
+								} catch ( InterruptedException e ) {
+									// ignore
+								}
+							}
+						}
 						log.debug("Thread {} processing at most {} {} iterations",
 								Thread.currentThread().getName(), tIterations, taskName);
 						try {
@@ -286,7 +303,9 @@ public abstract class JobSupport extends EventHandlerSupport {
 				log.warn("Timeout processing {} iterations; {}/{} tasks completed", taskName,
 						(tCount - latch.getCount()), tCount);
 			}
-		} else {
+		} else
+
+		{
 			executeJobTask(job, remainingCount);
 			allDone = true;
 		}
@@ -494,6 +513,39 @@ public abstract class JobSupport extends EventHandlerSupport {
 			parallelism = 1;
 		}
 		this.parallelism = parallelism;
+	}
+
+	/**
+	 * Get a maximum amount of time, in milliseconds, to randomly add to the
+	 * start of parallel tasks so they don't all try to start so closely
+	 * together.
+	 * 
+	 * @return the jitter, in milliseconds; defaults to {@link #DEFAULT_JITTER}
+	 */
+	public long getJitter() {
+		return jitter;
+	}
+
+	/**
+	 * Set et a maximum amount of time, in milliseconds, to randomly add to the
+	 * start of parallel tasks so they don't all try to start so closely
+	 * together.
+	 * 
+	 * <p>
+	 * This time is added to tasks started by the
+	 * {@link #executeParallelJob(Event, String)} method, and only when
+	 * {@link #getParallelism()} is greater than {@literal 1}. Set to
+	 * {@literal 0} to disable adding any random jitter to the start of tasks.
+	 * </p>
+	 * 
+	 * @param jitter
+	 *        the jitter to set, in milliseconds
+	 */
+	public void setJitter(long jitter) {
+		if ( jitter < 0 ) {
+			jitter = 0;
+		}
+		this.jitter = jitter;
 	}
 
 }
