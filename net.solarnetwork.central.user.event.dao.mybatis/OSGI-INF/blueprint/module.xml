@@ -31,12 +31,14 @@
 	<service ref="datumAppEventAcceptor">
 		<interfaces>
 			<value>net.solarnetwork.central.datum.biz.DatumAppEventAcceptor</value>
-			<value>net.solarnetwork.central.user.dao.UserNodeEventTaskDao</value>
+			<value>net.solarnetwork.central.user.event.dao.UserNodeEventTaskDao</value>
 		</interfaces>
 		<service-properties>
 			<entry key="topic" value="datum/agg/update"/>
 		</service-properties>
 	</service>
+
+	<service ref="nodeEventHookConfDao" interface="net.solarnetwork.central.user.event.dao.UserNodeEventHookConfigurationDao"/>
 
 	<!-- Supporting Services -->
 	
@@ -44,7 +46,11 @@
 	<tx:annotation-driven transaction-manager="txManager"/>
 
 	<bean id="datumAppEventAcceptor" class="net.solarnetwork.central.user.event.dao.mybatis.MyBatisDatumAppEventAcceptor">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+	
+	<bean id="nodeEventHookConfDao" class="net.solarnetwork.central.user.event.dao.mybatis.MyBatisUserNodeEventHookConfigurationDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 	
 	<!--bean id="userNodeHardwareControlDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeHardwareControlDao">
@@ -62,7 +68,7 @@
 		<property name="mapperLocations">
 			<!-- Note: the order of these elements is significant because of inter-resource includes -->
 			<list>
-				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeEventHookConfiguration.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/event/dao/mybatis/map/UserNodeEventHookConfiguration.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/event/dao/mybatis/map/UserNodeEventTask.xml</value>
 			</list>
 		</property>

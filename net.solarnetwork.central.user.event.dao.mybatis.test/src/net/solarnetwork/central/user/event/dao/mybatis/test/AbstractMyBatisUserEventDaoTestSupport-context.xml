@@ -60,9 +60,9 @@
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeCertificate.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNode.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeConfirmation.xml</value>
-				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeEventHookConfiguration.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeTransfer.xml</value>
 
+				<value>classpath:/net/solarnetwork/central/user/event/dao/mybatis/map/UserNodeEventHookConfiguration.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/event/dao/mybatis/map/UserNodeEventTask.xml</value>
 			</list>
 		</property>

@@ -7,7 +7,7 @@
 
 	<!-- Published Services -->
 
-	<service interface="net.solarnetwork.central.user.biz.UserNodeEventHookService">
+	<service interface="net.solarnetwork.central.user.event.biz.UserNodeEventHookService">
 		<bean class="net.solarnetwork.central.user.event.noop.NoopUserNodeEventHookService"/>
 	</service>
 

@@ -19,6 +19,7 @@
 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.11,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.6,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[2.2,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.event" rev="[1.0,)"/>
 		<dependency org="org.aopalliance" name="com.springsource.org.aopalliance" rev="1.0.0" />
 		<dependency org="org.mybatis" name="mybatis" rev="3.5.4" />
 		<dependency org="org.mybatis" name="mybatis-spring" rev="1.3.3" />

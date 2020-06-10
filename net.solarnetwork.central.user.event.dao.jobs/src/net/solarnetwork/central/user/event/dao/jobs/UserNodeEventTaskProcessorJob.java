@@ -40,12 +40,12 @@ import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.scheduler.JobSupport;
-import net.solarnetwork.central.user.biz.UserNodeEventHookService;
-import net.solarnetwork.central.user.dao.UserNodeEventTaskDao;
-import net.solarnetwork.central.user.domain.UserNodeEvent;
-import net.solarnetwork.central.user.domain.UserNodeEventHookConfiguration;
-import net.solarnetwork.central.user.domain.UserNodeEventTask;
-import net.solarnetwork.central.user.domain.UserNodeEventTaskState;
+import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
+import net.solarnetwork.central.user.event.dao.UserNodeEventTaskDao;
+import net.solarnetwork.central.user.event.domain.UserNodeEvent;
+import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
+import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
+import net.solarnetwork.central.user.event.domain.UserNodeEventTaskState;
 import net.solarnetwork.util.OptionalServiceCollection;
 
 /**

@@ -43,13 +43,13 @@ import org.junit.Test;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.datum.domain.BasicDatumAppEvent;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeEventHookConfigurationDao;
 import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserNodeEvent;
-import net.solarnetwork.central.user.domain.UserNodeEventHookConfiguration;
-import net.solarnetwork.central.user.domain.UserNodeEventTask;
-import net.solarnetwork.central.user.domain.UserNodeEventTaskState;
 import net.solarnetwork.central.user.event.dao.mybatis.MyBatisDatumAppEventAcceptor;
+import net.solarnetwork.central.user.event.dao.mybatis.MyBatisUserNodeEventHookConfigurationDao;
+import net.solarnetwork.central.user.event.domain.UserNodeEvent;
+import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
+import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
+import net.solarnetwork.central.user.event.domain.UserNodeEventTaskState;
 import net.solarnetwork.util.JsonUtils;
 
 /**
@@ -311,7 +311,7 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		UserNodeEvent claimed = dao.claimQueuedTask(AGGREGATE_UPDATED_TOPIC);
 		UserNodeEventTask claimedTask = claimed.getTask();
 		Thread.sleep(400L);
-		claimedTask.setCompleted(Instant.now());
+		claimedTask.setCompleted(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		claimedTask.setSuccess(true);
 		claimedTask.setStatus(UserNodeEventTaskState.Completed);
 		claimedTask.setMessage("Good one.");

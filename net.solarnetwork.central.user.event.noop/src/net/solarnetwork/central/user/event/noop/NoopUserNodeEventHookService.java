@@ -25,9 +25,9 @@ package net.solarnetwork.central.user.event.noop;
 import java.util.Collections;
 import java.util.List;
 import net.solarnetwork.central.RepeatableTaskException;
-import net.solarnetwork.central.user.biz.UserNodeEventHookService;
-import net.solarnetwork.central.user.domain.UserNodeEventHookConfiguration;
-import net.solarnetwork.central.user.domain.UserNodeEventTask;
+import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
+import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
+import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 

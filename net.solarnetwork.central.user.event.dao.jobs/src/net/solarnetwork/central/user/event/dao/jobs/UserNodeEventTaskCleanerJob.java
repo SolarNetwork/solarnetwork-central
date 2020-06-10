@@ -27,7 +27,7 @@ import java.time.temporal.ChronoUnit;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.scheduler.JobSupport;
-import net.solarnetwork.central.user.dao.UserNodeEventTaskDao;
+import net.solarnetwork.central.user.event.dao.UserNodeEventTaskDao;
 
 /**
  * Job to periodically delete completed/abandoned user node event tasks.

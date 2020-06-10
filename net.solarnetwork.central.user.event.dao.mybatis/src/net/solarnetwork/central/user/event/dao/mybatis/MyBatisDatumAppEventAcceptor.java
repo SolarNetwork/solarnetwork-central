@@ -30,10 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisDao;
 import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
 import net.solarnetwork.central.datum.domain.DatumAppEvent;
-import net.solarnetwork.central.user.dao.UserNodeEventTaskDao;
-import net.solarnetwork.central.user.domain.UserNodeEvent;
-import net.solarnetwork.central.user.domain.UserNodeEventTask;
-import net.solarnetwork.central.user.domain.UserNodeEventTaskState;
+import net.solarnetwork.central.user.event.dao.UserNodeEventTaskDao;
+import net.solarnetwork.central.user.event.domain.UserNodeEvent;
+import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
+import net.solarnetwork.central.user.event.domain.UserNodeEventTaskState;
 
 /**
  * MyBatis implementation of {@link DatumAppEventAcceptor} that creates user

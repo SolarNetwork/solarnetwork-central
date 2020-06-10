@@ -37,13 +37,13 @@
 
 	<reference id="eventAdmin" interface="org.osgi.service.event.EventAdmin"/>
 
-	<reference id="taskDao" interface="net.solarnetwork.central.user.dao.UserNodeEventTaskDao"/>
+	<reference id="taskDao" interface="net.solarnetwork.central.user.event.dao.UserNodeEventTaskDao"/>
 
 	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager" filter="(db=central)"/>
 
 	<bean id="userNodeEventHookServices" class="net.solarnetwork.util.DynamicServiceTracker">
 		<property name="bundleContext" ref="bundleContext"/>
-		<property name="serviceClassName" value="net.solarnetwork.central.user.biz.UserNodeEventHookService"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.user.event.biz.UserNodeEventHookService"/>
 	</bean>
 	
 	<!-- Support -->
@@ -68,7 +68,7 @@
 	<bean id="hookServiceCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
 		<argument ref="cacheManager"/>
 		<argument value="java.lang.String"/>
-		<argument value="net.solarnetwork.central.user.biz.UserNodeEventHookService"/>
+		<argument value="net.solarnetwork.central.user.event.biz.UserNodeEventHookService"/>
 		<property name="name" value="service-id-for-service"/>
 		<property name="expiryPolicy" value="Created"/>
 		<property name="expiryDuration">
