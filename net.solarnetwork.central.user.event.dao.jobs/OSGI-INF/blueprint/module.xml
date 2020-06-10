@@ -25,7 +25,7 @@
 		<beans:prop key="UserNodeEventTaskProcessor.maximumClaimCount">1000</beans:prop>
 		<beans:prop key="UserNodeEventTaskProcessor.taskCount">4</beans:prop>
 		<beans:prop key="UserNodeEventTaskCleaner.jobCron">0 47 * * * ?</beans:prop>
-		<beans:prop key="UserNodeEventTaskCleaner.minimumAgeMinutes">1200</beans:prop>
+		<beans:prop key="UserNodeEventTaskCleaner.minimumAgeMinutes">60</beans:prop>
 		<beans:prop key="cache.conf.uri">classpath:/net/solarnetwork/central/user/event/dao/jobs/ehcache.xml</beans:prop>
 		<beans:prop key="hookServiceCache.ttl">60</beans:prop>
 		<beans:prop key="hookServiceCache.heapMaxEntries">20</beans:prop>
