@@ -31,7 +31,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
- * {@link DatumAppEvent} properties object for {@
+ * {@link DatumAppEvent} properties object for {@link DatumAppEvent} aggregate
+ * updates.
  * 
  * @author matt
  * 
