@@ -20,15 +20,15 @@
 	<!-- Configuration -->
 	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.event.dao.jobs">
-		<beans:prop key="UserNodeEventTaskProcessor.jobCron">16 * * * * ?</beans:prop>
+		<beans:prop key="UserNodeEventTaskProcessor.jobCron">0/10 * * * * ?</beans:prop>
 		<beans:prop key="UserNodeEventTaskProcessor.maximumWaitMs">240000</beans:prop>
 		<beans:prop key="UserNodeEventTaskProcessor.maximumClaimCount">1000</beans:prop>
-		<beans:prop key="UserNodeEventTaskProcessor.taskCount">10</beans:prop>
+		<beans:prop key="UserNodeEventTaskProcessor.taskCount">4</beans:prop>
 		<beans:prop key="UserNodeEventTaskCleaner.jobCron">0 47 * * * ?</beans:prop>
-		<beans:prop key="UserNodeEventTaskCleaner.minimumAgeMinutes">720</beans:prop>
+		<beans:prop key="UserNodeEventTaskCleaner.minimumAgeMinutes">1200</beans:prop>
 		<beans:prop key="cache.conf.uri">classpath:/net/solarnetwork/central/user/event/dao/jobs/ehcache.xml</beans:prop>
 		<beans:prop key="hookServiceCache.ttl">60</beans:prop>
-		<beans:prop key="hookServiceCache.heapMaxEntries">100</beans:prop>
+		<beans:prop key="hookServiceCache.heapMaxEntries">20</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
