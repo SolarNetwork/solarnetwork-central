@@ -115,8 +115,9 @@ public class TieredStoredProcedureStaleDatumProcessor extends TieredStaleDatumPr
 	 * Process a procedure result set row.
 	 * 
 	 * <p>
-	 * The {@link ResetSet} will be positioned on a valid result row when
-	 * invoked. This implementation will log the column values at {@literal DEBUG} level.
+	 * The {@link ResultSet} will be positioned on a valid result row when
+	 * invoked. This implementation will log the column values at
+	 * {@literal DEBUG} level.
 	 * </p>
 	 * 
 	 * @param rs
