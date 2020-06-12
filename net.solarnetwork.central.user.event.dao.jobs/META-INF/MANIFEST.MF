@@ -35,7 +35,7 @@ Import-Package:
  org.springframework.context;version="[4.3,5.0)",
  org.springframework.context.support;version="[4.3,5.0)",
  org.springframework.core;version="[4.3,5.0)",
- org.springframework.dao;version="4.3.25.RELEASE",
+ org.springframework.dao;version="[4.3,5.0)",
  org.springframework.scheduling.concurrent;version="[4.3,5.0)",
  org.springframework.transaction;version="[4.3,5.0)",
  org.springframework.transaction.support;version="[4.3,5.0)",
