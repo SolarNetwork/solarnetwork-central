@@ -696,8 +696,8 @@ $$;
 
 
 CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_loc_datum(kind char)
-  RETURNS integer LANGUAGE plpgsql VOLATILE AS
-$BODY$
+  RETURNS SETOF solaragg.agg_stale_loc_datum LANGUAGE plpgsql VOLATILE AS
+$$
 DECLARE
 	stale record;
 	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_loc_datum
@@ -710,7 +710,6 @@ DECLARE
 	agg_json jsonb := NULL;
 	agg_jmeta jsonb := NULL;
 	loc_tz text := 'UTC';
-	proc_count integer := 0;
 BEGIN
 	CASE kind
 		WHEN 'h' THEN
@@ -840,7 +839,6 @@ BEGIN
 			END CASE;
 		END IF;
 		DELETE FROM solaragg.agg_stale_loc_datum WHERE CURRENT OF curs;
-		proc_count := 1;
 
 		-- now make sure we recalculate the next aggregate level by submitting a stale record for the next level
 		CASE kind
@@ -855,15 +853,15 @@ BEGIN
 			ELSE
 				-- nothing
 		END CASE;
+		RETURN NEXT stale;
 	END IF;
 	CLOSE curs;
-	RETURN proc_count;
 END;
-$BODY$;
+$$;
 
 CREATE OR REPLACE FUNCTION solaragg.process_agg_stale_loc_datum(kind char, max integer)
-  RETURNS INTEGER AS
-$BODY$
+  RETURNS INTEGER LANGUAGE plpgsql VOLATILE AS
+$$
 DECLARE
 	one_result INTEGER := 1;
 	total_result INTEGER := 0;
@@ -872,12 +870,17 @@ BEGIN
 		IF one_result < 1 OR (max > -1 AND total_result >= max) THEN
 			EXIT;
 		END IF;
-		SELECT solaragg.process_one_agg_stale_loc_datum(kind) INTO one_result;
-		total_result := total_result + one_result;
+		PERFORM solaragg.process_one_agg_stale_loc_datum(kind);
+		IF FOUND THEN
+			one_result := 1;
+			total_result := total_result + 1;
+		ELSE
+			one_result := 0;
+		END IF;
 	END LOOP;
 	RETURN total_result;
-END;$BODY$
-  LANGUAGE plpgsql VOLATILE;
+END;
+$$;
 
 
 /**
