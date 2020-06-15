@@ -29,9 +29,9 @@ import org.springframework.jdbc.core.JdbcOperations;
  * Job to process "stale" general location datum reporting aggregate data.
  * 
  * <p>
- * This job executes a JDBC procedure, which is expected to return an Integer
- * result representing the number of rows processed by the call. If the
- * procedure returns zero, the job stops immediately.
+ * This job executes a JDBC procedure, which is expected to return a result set
+ * of 0 or 1 rows for the processed stale record. If the procedure returns no
+ * result rows, the job stops immediately.
  * </p>
  * 
  * @author matt
@@ -49,7 +49,7 @@ public class StaleGeneralLocationDatumProcessor extends StaleGeneralNodeDatumPro
 	 */
 	public StaleGeneralLocationDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
 		super(eventAdmin, jdbcOps);
-		setJdbcCall("{? = call solaragg.process_agg_stale_loc_datum(?, ?)}");
+		setJdbcCall("{call solaragg.process_one_agg_stale_loc_datum(?)}");
 	}
 
 }

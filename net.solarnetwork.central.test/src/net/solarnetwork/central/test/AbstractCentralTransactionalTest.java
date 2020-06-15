@@ -24,8 +24,8 @@ package net.solarnetwork.central.test;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
@@ -172,6 +172,25 @@ public abstract class AbstractCentralTransactionalTest
 				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, timeZoneId);
 	}
 
+	private int processKind(String kind, CallableStatement cs) throws SQLException {
+		int processed = 0;
+		while ( true ) {
+			cs.setString(1, kind);
+			if ( cs.execute() ) {
+				try (ResultSet rs = cs.getResultSet()) {
+					if ( rs.next() ) {
+						processed++;
+					} else {
+						break;
+					}
+				}
+			} else {
+				break;
+			}
+		}
+		return processed;
+	}
+
 	/**
 	 * Call the {@code solaragg.process_agg_stale_datum} and
 	 * {@code solaragg.process_agg_stale_loc_datum} procedures to populate
@@ -188,7 +207,7 @@ public abstract class AbstractCentralTransactionalTest
 			@Override
 			public CallableStatement createCallableStatement(Connection con) throws SQLException {
 				CallableStatement stmt = con
-						.prepareCall("{? = call solaragg.process_agg_stale_datum(?, ?)}");
+						.prepareCall("{call solaragg.process_one_agg_stale_datum(?)}");
 				return stmt;
 			}
 		}, new CallableStatementCallback<Object>() {
@@ -196,21 +215,13 @@ public abstract class AbstractCentralTransactionalTest
 			@Override
 			public Object doInCallableStatement(CallableStatement cs)
 					throws SQLException, DataAccessException {
-				cs.registerOutParameter(1, Types.INTEGER);
-				cs.setString(2, "h");
-				cs.setInt(3, -1);
-				cs.execute();
-				int processed = cs.getInt(1);
+				int processed = processKind("h", cs);
 				log.debug("Processed " + processed + " stale hourly datum");
 
-				cs.setString(2, "d");
-				cs.execute();
-				processed = cs.getInt(1);
+				processed = processKind("d", cs);
 				log.debug("Processed " + processed + " stale daily datum");
 
-				cs.setString(2, "m");
-				cs.execute();
-				processed = cs.getInt(1);
+				processed = processKind("m", cs);
 				log.debug("Processed " + processed + " stale monthly datum");
 				return null;
 			}
@@ -224,7 +235,7 @@ public abstract class AbstractCentralTransactionalTest
 			@Override
 			public CallableStatement createCallableStatement(Connection con) throws SQLException {
 				CallableStatement stmt = con
-						.prepareCall("{? = call solaragg.process_agg_stale_loc_datum(?, ?)}");
+						.prepareCall("{call solaragg.process_one_agg_stale_loc_datum(?)}");
 				return stmt;
 			}
 		}, new CallableStatementCallback<Object>() {
@@ -232,21 +243,13 @@ public abstract class AbstractCentralTransactionalTest
 			@Override
 			public Object doInCallableStatement(CallableStatement cs)
 					throws SQLException, DataAccessException {
-				cs.registerOutParameter(1, Types.INTEGER);
-				cs.setString(2, "h");
-				cs.setInt(3, -1);
-				cs.execute();
-				int processed = cs.getInt(1);
+				int processed = processKind("h", cs);
 				log.debug("Processed " + processed + " stale hourly location datum");
 
-				cs.setString(2, "d");
-				cs.execute();
-				processed = cs.getInt(1);
+				processed = processKind("d", cs);
 				log.debug("Processed " + processed + " stale daily location datum");
 
-				cs.setString(2, "m");
-				cs.execute();
-				processed = cs.getInt(1);
+				processed = processKind("m", cs);
 				log.debug("Processed " + processed + " stale monthly location datum");
 				return null;
 			}

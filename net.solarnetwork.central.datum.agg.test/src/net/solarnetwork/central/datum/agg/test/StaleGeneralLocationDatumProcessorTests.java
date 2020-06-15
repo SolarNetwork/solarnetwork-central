@@ -28,7 +28,10 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
+import java.sql.CallableStatement;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -48,6 +51,8 @@ import org.junit.Test;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.CallableStatementCallback;
+import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.transaction.TransactionStatus;
@@ -60,7 +65,7 @@ import net.solarnetwork.util.JsonUtils;
  * Test cases for the {@link StaleGeneralLocationDatumProcessor} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 
@@ -110,7 +115,7 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 		job = new TestStaleGeneralLocationDatumProcessor(null, jdbcTemplate);
 		job.setJobGroup("Test");
 		job.setJobId(TEST_JOB_ID);
-		job.setMaximumRowCount(10);
+		job.setMaximumIterations(10);
 		job.setAggregateProcessType("h");
 		job.setMaximumWaitMs(15 * 1000L);
 
@@ -186,7 +191,7 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 
 	@Test
 	public void runParallelTasks() throws Exception {
-		job.setTaskCount(4);
+		job.setParallelism(4);
 		populateTestData();
 		List<Map<String, Object>> staleRows = jdbcTemplate
 				.queryForList("SELECT * FROM solaragg.agg_stale_loc_datum");
@@ -201,7 +206,7 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 
 	@Test
 	public void runParallelTasksWithLockedRow() throws Exception {
-		job.setTaskCount(4);
+		job.setParallelism(4);
 		populateTestData();
 
 		List<Map<String, Object>> staleRows = jdbcTemplate
@@ -327,8 +332,43 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 				new Timestamp(start.dayOfMonth().roundFloorCopy().getMillis()), TEST_LOC_ID,
 				TEST_SOURCE_ID, "d");
 
-		int count = jdbcTemplate.queryForObject("SELECT solaragg.process_agg_stale_loc_datum('d', -1)",
-				Integer.class);
+		int count = jdbcTemplate.execute(new CallableStatementCreator() {
+
+			@Override
+			public CallableStatement createCallableStatement(Connection con) throws SQLException {
+				CallableStatement stmt = con
+						.prepareCall("{call solaragg.process_one_agg_stale_loc_datum(?)}");
+				return stmt;
+			}
+		}, new CallableStatementCallback<Integer>() {
+
+			private int processKind(String kind, CallableStatement cs) throws SQLException {
+				int processed = 0;
+				while ( true ) {
+					cs.setString(1, kind);
+					if ( cs.execute() ) {
+						try (ResultSet rs = cs.getResultSet()) {
+							if ( rs.next() ) {
+								processed++;
+							} else {
+								break;
+							}
+						}
+					} else {
+						break;
+					}
+				}
+				return processed;
+			}
+
+			@Override
+			public Integer doInCallableStatement(CallableStatement cs)
+					throws SQLException, DataAccessException {
+				int processed = processKind("d", cs);
+				log.debug("Processed " + processed + " stale daily datum");
+				return processed;
+			}
+		});
 		assertThat("Processed stale row count", count, equalTo(1));
 
 		List<Map<String, Object>> rows = listAggDatumDailyRows();

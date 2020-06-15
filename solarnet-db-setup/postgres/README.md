@@ -58,6 +58,8 @@ $ psql -U postgres -d solarnetwork \
 	-c 'CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;'
 $ psql -U postgres -d solarnetwork \
 	-c 'CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;'
+$ psql -U postgres -d solarnetwork \
+	-c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;'
 ```
 
 ## Setup plv8

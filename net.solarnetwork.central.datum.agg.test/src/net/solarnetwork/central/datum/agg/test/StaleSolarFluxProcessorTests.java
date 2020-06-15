@@ -61,7 +61,7 @@ import net.solarnetwork.util.StaticOptionalService;
  * Test cases for the {@link StaleSolarFluxProcessor} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class StaleSolarFluxProcessorTests extends AggTestSupport {
 
@@ -118,7 +118,7 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 				new StaticOptionalService<>(processor));
 		job.setJobGroup("Test");
 		job.setJobId(TEST_JOB_ID);
-		job.setMaximumRowCount(10);
+		job.setMaximumIterations(10);
 		job.setMaximumWaitMs(15 * 1000L);
 
 		cleanupDatabase();

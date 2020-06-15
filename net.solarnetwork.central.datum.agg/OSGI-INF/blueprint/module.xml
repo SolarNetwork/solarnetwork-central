@@ -53,6 +53,12 @@
 
 	<reference id="jdbcOps" interface="org.springframework.jdbc.core.JdbcOperations" filter="(db=central)"/>
 	
+	<bean id="datumAppEventAcceptors" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.datum.biz.DatumAppEventAcceptor"/>
+		<property name="serviceFilter" value="(topic=datum/agg/update)"/>
+	</bean>
+
 	<!-- Supporting Services -->
 	
 	<!-- A common thread pool for these jobs -->
@@ -69,8 +75,9 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
-		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
-		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
+		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.hourly.jobCron}"/>
 		<property name="jobId" value="StaleGeneralNodeDatumProcessorHourly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
@@ -82,8 +89,9 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
-		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
-		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
+		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.daily.jobCron}"/>
 		<property name="jobId" value="StaleGeneralNodeDatumProcessorDaily"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
@@ -95,8 +103,9 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
-		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
-		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
+		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.monthly.jobCron}"/>
 		<property name="jobId" value="StaleGeneralNodeDatumProcessorMonthly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
@@ -108,8 +117,8 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
-		<property name="maximumRowCount" value="${staleLocationDatumProcessor.maximumRowCount}"/>
-		<property name="taskCount" value="${staleLocationDatumProcessor.taskCount}"/>
+		<property name="maximumIterations" value="${staleLocationDatumProcessor.maximumRowCount}"/>
+		<property name="parallelism" value="${staleLocationDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.hourly.jobCron}"/>
 		<property name="jobId" value="StaleGeneralLocationDatumProcessorHourly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
@@ -121,8 +130,8 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
-		<property name="maximumRowCount" value="${staleLocationDatumProcessor.maximumRowCount}"/>
-		<property name="taskCount" value="${staleLocationDatumProcessor.taskCount}"/>
+		<property name="maximumIterations" value="${staleLocationDatumProcessor.maximumRowCount}"/>
+		<property name="parallelism" value="${staleLocationDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.daily.jobCron}"/>
 		<property name="jobId" value="StaleGeneralLocationDatumProcessorDaily"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
@@ -134,8 +143,8 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
-		<property name="maximumRowCount" value="${staleLocationDatumProcessor.maximumRowCount}"/>
-		<property name="taskCount" value="${staleLocationDatumProcessor.taskCount}"/>
+		<property name="maximumIterations" value="${staleLocationDatumProcessor.maximumRowCount}"/>
+		<property name="parallelism" value="${staleLocationDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.monthly.jobCron}"/>
 		<property name="jobId" value="StaleGeneralLocationDatumProcessorMonthly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
@@ -147,8 +156,8 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
-		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
-		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.raw.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorRaw"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
@@ -160,8 +169,8 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
-		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
-		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.hourly.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorHourly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
@@ -173,8 +182,8 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
-		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
-		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.daily.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorDaily"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
@@ -186,8 +195,8 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
-		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
-		<property name="taskCount" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.monthly.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorMonthly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>

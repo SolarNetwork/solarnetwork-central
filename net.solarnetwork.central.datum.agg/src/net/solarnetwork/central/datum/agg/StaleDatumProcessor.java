@@ -43,11 +43,9 @@ import org.springframework.jdbc.core.JdbcOperations;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class StaleDatumProcessor extends JdbcCallJob {
-
-	private int maximumRowCount = 5;
 
 	/**
 	 * Construct with properties.
@@ -59,10 +57,12 @@ public class StaleDatumProcessor extends JdbcCallJob {
 	 */
 	public StaleDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
 		super(eventAdmin, jdbcOps);
+		setMaximumIterations(5);
 	}
 
 	@Override
 	protected boolean handleJob(Event job) throws Exception {
+		final int maximumRowCount = getMaximumIterations();
 		int i = 0;
 		int resultCount = 0;
 		do {
@@ -93,9 +93,12 @@ public class StaleDatumProcessor extends JdbcCallJob {
 	 * procedure.
 	 * 
 	 * @return the maximum row count; defaults to {@literal 5}
+	 * @deprecated since 1.3
+	 * @see #getMaximumIterations()
 	 */
+	@Deprecated
 	public int getMaximumRowCount() {
-		return maximumRowCount;
+		return getMaximumIterations();
 	}
 
 	/**
@@ -104,9 +107,12 @@ public class StaleDatumProcessor extends JdbcCallJob {
 	 * 
 	 * @param maximumRowCount
 	 *        the maximum row count
+	 * @deprecated since 1.3
+	 * @see #setMaximumIterations(int)
 	 */
+	@Deprecated
 	public void setMaximumRowCount(int maximumRowCount) {
-		this.maximumRowCount = maximumRowCount;
+		setMaximumIterations(maximumRowCount);
 	}
 
 }
