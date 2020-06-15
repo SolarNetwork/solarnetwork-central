@@ -881,7 +881,7 @@ $$;
 
 
 CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
-  RETURNS integer LANGUAGE plpgsql VOLATILE AS
+  RETURNS SETOF solaragg.agg_stale_datum LANGUAGE plpgsql VOLATILE AS
 $$
 DECLARE
 	stale 					record;
@@ -896,7 +896,6 @@ DECLARE
 	agg_reading_ts_start 	timestamptz := NULL;
 	agg_reading_ts_end 		timestamptz := NULL;
 	node_tz 				text := 'UTC';
-	proc_count 				integer := 0;
 	curs CURSOR FOR SELECT * FROM solaragg.agg_stale_datum WHERE agg_kind = kind
 		-- Too slow to order; not strictly fair but process much faster
 		-- ORDER BY ts_start ASC, created ASC, node_id ASC, source_id ASC
@@ -1114,7 +1113,6 @@ BEGIN
 			END CASE;
 		END IF;
 		DELETE FROM solaragg.agg_stale_datum WHERE CURRENT OF curs;
-		proc_count := 1;
 
 		-- now make sure we recalculate the next aggregate level by submitting a stale record for the next level
 		-- and also update daily audit stats
@@ -1149,16 +1147,16 @@ BEGIN
 				VALUES (date_trunc('month', stale_t_start) AT TIME ZONE node_tz, stale.node_id, stale.source_id, 'm')
 				ON CONFLICT DO NOTHING;
 		END CASE;
+		RETURN NEXT stale;
 	END IF;
 	CLOSE curs;
-	RETURN proc_count;
 END;
 $$;
 
 
 CREATE OR REPLACE FUNCTION solaragg.process_agg_stale_datum(kind char, max integer)
-  RETURNS INTEGER AS
-$BODY$
+  RETURNS INTEGER LANGUAGE plpgsql VOLATILE AS
+$$
 DECLARE
 	one_result INTEGER := 1;
 	total_result INTEGER := 0;
@@ -1167,12 +1165,17 @@ BEGIN
 		IF one_result < 1 OR (max > -1 AND total_result >= max) THEN
 			EXIT;
 		END IF;
-		SELECT solaragg.process_one_agg_stale_datum(kind) INTO one_result;
-		total_result := total_result + one_result;
+		PERFORM solaragg.process_one_agg_stale_datum(kind);
+		IF FOUND THEN
+			one_result := 1;
+			total_result := total_result + 1;
+		ELSE
+			one_result := 0;
+		END IF;
 	END LOOP;
 	RETURN total_result;
-END;$BODY$
-  LANGUAGE plpgsql VOLATILE;
+END;
+$$;
 
 /**
  * Process a single row from the `solaragg.aud_datum_daily_stale` table by performing
