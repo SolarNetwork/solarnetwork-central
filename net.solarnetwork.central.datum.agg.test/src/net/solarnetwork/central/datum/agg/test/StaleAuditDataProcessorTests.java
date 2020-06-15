@@ -61,7 +61,7 @@ import net.solarnetwork.util.JsonUtils;
  * Test cases for the {@link StaleAuditDataProcessor} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class StaleAuditDataProcessorTests extends AggTestSupport {
 
@@ -110,7 +110,7 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 		job = new TestStaleAuditDataProcessor(null, jdbcTemplate);
 		job.setJobGroup("Test");
 		job.setJobId(TEST_JOB_ID);
-		job.setMaximumRowCount(10);
+		job.setMaximumIterations(10);
 		job.setTierProcessType("r");
 		job.setMaximumWaitMs(15 * 1000L);
 
@@ -677,8 +677,8 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 				"SELECT count(*) FROM solaragg.aud_datum_daily_stale", Integer.class), equalTo(20));
 
 		job.setTierProcessType("r");
-		job.setTaskCount(4);
-		job.setMaximumRowCount(20);
+		job.setParallelism(4);
+		job.setMaximumIterations(20);
 		assertThat("Job completed", job.executeJob(), equalTo(true));
 
 		List<Map<String, Object>> rows = listAuditDatumDailyStaleRows();
@@ -784,8 +784,8 @@ public class StaleAuditDataProcessorTests extends AggTestSupport {
 
 		try {
 			job.setTierProcessType("r");
-			job.setTaskCount(4);
-			job.setMaximumRowCount(20);
+			job.setParallelism(4);
+			job.setMaximumIterations(20);
 			assertThat("Job completed", job.executeJob(), equalTo(true));
 		} finally {
 			synchronized ( lockThreadSignal ) {

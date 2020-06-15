@@ -24,9 +24,14 @@ package net.solarnetwork.central.datum.agg;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -37,7 +42,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * rows.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.7
  */
 public class TieredStoredProcedureStaleDatumProcessor extends TieredStaleDatumProcessor {
@@ -57,6 +62,9 @@ public class TieredStoredProcedureStaleDatumProcessor extends TieredStaleDatumPr
 		super(eventAdmin, jdbcOps, taskDescription);
 	}
 
+	private static final Pattern CALL_RETURN_COUNT = Pattern.compile("\\?\\s=\\s*call\\s+",
+			Pattern.CASE_INSENSITIVE);
+
 	@Override
 	protected final int execute(final AtomicInteger remainingCount) {
 		final String tierProcessType = getTierProcessType();
@@ -65,24 +73,68 @@ public class TieredStoredProcedureStaleDatumProcessor extends TieredStaleDatumPr
 
 			@Override
 			public Integer doInConnection(Connection con) throws SQLException, DataAccessException {
-				CallableStatement call = con.prepareCall(getJdbcCall());
-				call.registerOutParameter(1, Types.INTEGER);
-				call.setString(2, tierProcessType);
-				if ( tierProcessMax != null ) {
-					call.setInt(3, tierProcessMax);
+				final String sql = getJdbcCall();
+				final int paramCount = (int) sql.chars().filter(ch -> ch == '?').count();
+				CallableStatement call = con.prepareCall(sql);
+				int idx = 0;
+				if ( CALL_RETURN_COUNT.matcher(sql).find() && idx < paramCount ) {
+					call.registerOutParameter(++idx, Types.INTEGER);
+				}
+				if ( idx < paramCount ) {
+					call.setString(++idx, tierProcessType);
+				}
+				if ( tierProcessMax != null && idx < paramCount ) {
+					call.setInt(++idx, tierProcessMax);
 				}
 				con.setAutoCommit(true); // we want every execution of our loop to commit immediately
 				int resultCount = 0;
 				int processedCount = 0;
 				do {
-					call.execute();
-					resultCount = call.getInt(1);
+					if ( call.execute() ) {
+						try (ResultSet rs = call.getResultSet()) {
+							if ( rs.next() ) {
+								processResultRow(rs);
+								resultCount = 1;
+							} else {
+								resultCount = 0;
+							}
+						}
+					} else {
+						resultCount = call.getInt(1);
+					}
 					processedCount += resultCount;
 					remainingCount.addAndGet(-resultCount);
 				} while ( resultCount > 0 && remainingCount.get() > 0 );
 				return processedCount;
 			}
+
 		});
 	}
 
+	/**
+	 * Process a procedure result set row.
+	 * 
+	 * <p>
+	 * The {@link ResultSet} will be positioned on a valid result row when
+	 * invoked. This implementation will log the column values at
+	 * {@literal DEBUG} level.
+	 * </p>
+	 * 
+	 * @param rs
+	 *        the result set
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 */
+	protected void processResultRow(ResultSet rs) throws SQLException {
+		// extending classes can override
+		if ( log.isDebugEnabled() ) {
+			ResultSetMetaData meta = rs.getMetaData();
+			final int colCount = meta.getColumnCount();
+			Map<String, Object> row = new LinkedHashMap<>(colCount);
+			for ( int i = 1; i <= colCount; i++ ) {
+				row.put(meta.getColumnName(i), rs.getObject(i));
+			}
+			log.debug("Processed stale row: {}", row);
+		}
+	}
 }

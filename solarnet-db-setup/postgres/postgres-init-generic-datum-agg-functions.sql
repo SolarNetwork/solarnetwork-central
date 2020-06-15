@@ -1,3 +1,55 @@
+-- see CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) below
+CREATE OR REPLACE FUNCTION solaragg.datum_agg_agg_sfunc(agg_state jsonb, el jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var helper = require('datum/aggAggregate'),
+		aggregator;
+	if ( !agg_state && el ) {
+		aggregator = helper.default('', 0);
+		aggregator.addDatumRecord(el);
+		agg_state = aggregator.serialize();
+	} else if ( agg_state && el ) {
+		aggregator = helper.deserialize(agg_state);
+		aggregator.addDatumRecord(el); // mutates agg_state
+	}
+	return agg_state;
+$$;
+
+
+-- see CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) below
+CREATE OR REPLACE FUNCTION solaragg.datum_agg_agg_finalfunc(agg_state jsonb)
+RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
+	'use strict';
+	var helper = require('datum/aggAggregate');
+	return (agg_state ? helper.deserialize(agg_state).finish() : {});
+$$;
+
+
+/**
+ * Aggregate aggregated datum records into a higher aggregation level.
+ *
+ * This aggregate accepts aggregate datum objects, such as those from the `agg_datum_monthly` 
+ * table, and combines them into an aggregat datum object, such as for a year. The input
+ * object must include`jdata` and `jmeta` properties. For example:
+ *
+ * ```
+ * SELECT d.node_id, d.source_id, solaragg.datum_agg_agg(jsonb_build_object(
+ *		'jdata', solarnet.jdata_from_components(d.jdata_i, d.jdata_a, d.jdata_s, d.jdata_t),
+ *		'jmeta', d.jmeta) ORDER BY d.ts_start) AS jobj
+ * FROM solaragg.agg_datum_monthly d
+ * WHERE ...
+ * GROUP BY d.node_id, d.source_id 
+`* ````
+ *
+ * The resulting object contains the same `jdata` and `jmeta` properties with the results.
+ */
+CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) (
+    sfunc = solaragg.datum_agg_agg_sfunc,
+    stype = jsonb,
+    finalfunc = solaragg.datum_agg_agg_finalfunc
+);
+
+
 /**
  * Return a valid minute-level time slot seconds value for an arbitrary input value.
  * This function is meant to validate and correct inappropriate input for minute level
@@ -659,6 +711,173 @@ GROUP BY
 	EXTRACT(isodow FROM d.local_date),
 	d.source_id
 $BODY$;
+
+
+/**
+ * Calculate hour-of-day aggregate values for a node and set of source IDs.
+ *
+ * @param node		node ID
+ * @param source	array of source IDs
+ * @param start_ts	the start timestamp (defaults to SN epoch)
+ * @param end_ts	the end timestamp (defaults to CURRENT_TIMESTAMP)
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_hod(
+		node bigint,
+		source text[],
+		start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
+		end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
+	RETURNS TABLE (
+		node_id bigint,
+		source_id text,
+		ts_start timestamp with time zone,
+		local_date timestamp without time zone,
+		jdata jsonb
+	) LANGUAGE sql STABLE AS
+$$
+SELECT
+	node AS node_id
+	, d.source_id
+	, (CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AT TIME ZONE 'UTC' AS ts_start
+	, (CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.local_date), '00') || ':00' AS TIMESTAMP)) AS local_date
+	, solaragg.datum_agg_agg(jsonb_build_object(
+		'jdata', solaragg.jdata_from_datum(d), 'jmeta', d.jmeta) ORDER BY d.ts_start)->'jdata' AS jdata
+FROM solaragg.agg_datum_hourly d
+WHERE
+	d.node_id = node
+	AND d.source_id = ANY(source)
+	AND d.ts_start >= start_ts
+	AND d.ts_start < end_ts
+GROUP BY
+	EXTRACT(hour FROM d.local_date),
+	d.source_id
+$$;
+
+
+/**
+ * Calculate seasonal hour-of-day aggregate values for a node and set of source IDs.
+ *
+ * @param node		node ID
+ * @param source	array of source IDs
+ * @param start_ts	the start timestamp (defaults to SN epoch)
+ * @param end_ts	the end timestamp (defaults to CURRENT_TIMESTAMP)
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_seasonal_hod(
+		node bigint,
+		source text[],
+		start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
+		end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
+	RETURNS TABLE (
+		node_id bigint,
+		source_id text,
+		ts_start timestamp with time zone,
+		local_date timestamp without time zone,
+		jdata jsonb
+	) LANGUAGE sql STABLE AS
+$$
+SELECT
+	node AS node_id
+	, d.source_id
+	, (solarnet.get_season_monday_start(CAST(d.local_date AS DATE))
+		+ CAST(EXTRACT(hour FROM d.local_date) || ' hour' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start
+	, solarnet.get_season_monday_start(CAST(d.local_date AS DATE))
+		+ CAST(EXTRACT(hour FROM d.local_date) || ' hour' AS INTERVAL) AS local_date
+	, solaragg.datum_agg_agg(jsonb_build_object(
+		'jdata', solaragg.jdata_from_datum(d), 'jmeta', d.jmeta) ORDER BY d.ts_start)->'jdata' AS jdata
+FROM solaragg.agg_datum_hourly d
+WHERE
+	d.node_id = node
+	AND d.source_id = ANY(source)
+	AND d.ts_start >= start_ts
+	AND d.ts_start < end_ts
+GROUP BY
+	solarnet.get_season_monday_start(CAST(d.local_date AS date)),
+	EXTRACT(hour FROM d.local_date),
+	d.source_id
+$$;
+
+
+/**
+ * Calculate day-of-week aggregate values for a node and set of source IDs.
+ *
+ * @param node				node ID
+ * @param source			array of source IDs
+ * @param path				the JSON path to the value to extract, e.g. ['i','watts']
+ * @param start_ts			the start timestamp (defaults to SN epoch)
+ * @param end_ts			the end timestamp (defaults to CURRENT_TIMESTAMP)
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_dow(
+		node bigint,
+		source text[],
+		start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
+		end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
+	RETURNS TABLE (
+		node_id bigint,
+		source_id text,
+		ts_start timestamp with time zone,
+		local_date timestamp without time zone,
+		jdata jsonb
+	) LANGUAGE sql STABLE AS
+$$
+SELECT
+	node AS node_id
+	, d.source_id
+	, (DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start
+	, (DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AS local_date
+	, solaragg.datum_agg_agg(jsonb_build_object(
+		'jdata', solaragg.jdata_from_datum(d), 'jmeta', d.jmeta) ORDER BY d.ts_start)->'jdata' AS jdata
+FROM solaragg.agg_datum_daily d
+WHERE
+	d.node_id = node
+	AND d.source_id = ANY(source)
+	AND d.ts_start >= start_ts
+	AND d.ts_start < end_ts
+GROUP BY
+	EXTRACT(isodow FROM d.local_date),
+	d.source_id
+$$;
+
+
+/**
+ * Calculate seasonal day-of-week aggregate values for a node and set of source IDs.
+ *
+ * @param node				node ID
+ * @param source			array of source IDs
+ * @param start_ts			the start timestamp (defaults to SN epoch)
+ * @param end_ts			the end timestamp (defaults to CURRENT_TIMESTAMP)
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_agg_datum_seasonal_dow(
+		node bigint,
+		source text[],
+		start_ts timestamp with time zone DEFAULT '2008-01-01 00:00+0'::timestamptz,
+		end_ts timestamp with time zone DEFAULT CURRENT_TIMESTAMP)
+	RETURNS TABLE (
+		node_id bigint,
+		source_id text,
+		ts_start timestamp with time zone,
+		local_date timestamp without time zone,
+		jdata jsonb
+	) LANGUAGE sql STABLE AS
+$$
+SELECT
+	node AS node_id
+	, d.source_id
+	, (solarnet.get_season_monday_start(d.local_date)
+		+ CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS ts_start
+	, (solarnet.get_season_monday_start(d.local_date)
+		+ CAST((EXTRACT(isodow FROM d.local_date) - 1) || ' day' AS INTERVAL)) AS local_date
+	, solaragg.datum_agg_agg(jsonb_build_object(
+		'jdata', solaragg.jdata_from_datum(d), 'jmeta', d.jmeta) ORDER BY d.ts_start)->'jdata' AS jdata
+FROM solaragg.agg_datum_daily d
+WHERE
+	d.node_id = node
+	AND d.source_id = ANY(source)
+	AND d.ts_start >= start_ts
+	AND d.ts_start < end_ts
+GROUP BY
+	solarnet.get_season_monday_start(CAST(d.local_date AS date)),
+	EXTRACT(isodow FROM d.local_date),
+	d.source_id
+$$;
 
 
 CREATE OR REPLACE FUNCTION solaragg.process_one_agg_stale_datum(kind char)
@@ -1616,58 +1835,6 @@ BEGIN
 	RETURN NULL;
 END;
 $$;
-
-
--- see CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) below
-CREATE OR REPLACE FUNCTION solaragg.datum_agg_agg_sfunc(agg_state jsonb, el jsonb)
-RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
-	'use strict';
-	var helper = require('datum/aggAggregate'),
-		aggregator;
-	if ( !agg_state && el ) {
-		aggregator = helper.default('', 0);
-		aggregator.addDatumRecord(el);
-		agg_state = aggregator.serialize();
-	} else if ( agg_state && el ) {
-		aggregator = helper.deserialize(agg_state);
-		aggregator.addDatumRecord(el); // mutates agg_state
-	}
-	return agg_state;
-$$;
-
-
--- see CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) below
-CREATE OR REPLACE FUNCTION solaragg.datum_agg_agg_finalfunc(agg_state jsonb)
-RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
-	'use strict';
-	var helper = require('datum/aggAggregate');
-	return (agg_state ? helper.deserialize(agg_state).finish() : {});
-$$;
-
-
-/**
- * Aggregate aggregated datum records into a higher aggregation level.
- *
- * This aggregate accepts aggregate datum objects, such as those from the `agg_datum_monthly` 
- * table, and combines them into an aggregat datum object, such as for a year. The input
- * object must include`jdata` and `jmeta` properties. For example:
- *
- * ```
- * SELECT d.node_id, d.source_id, solaragg.datum_agg_agg(jsonb_build_object(
- *		'jdata', solarnet.jdata_from_components(d.jdata_i, d.jdata_a, d.jdata_s, d.jdata_t),
- *		'jmeta', d.jmeta) ORDER BY d.ts_start) AS jobj
- * FROM solaragg.agg_datum_monthly d
- * WHERE ...
- * GROUP BY d.node_id, d.source_id 
-`* ````
- *
- * The resulting object contains the same `jdata` and `jmeta` properties with the results.
- */
-CREATE AGGREGATE solaragg.datum_agg_agg(jsonb) (
-    sfunc = solaragg.datum_agg_agg_sfunc,
-    stype = jsonb,
-    finalfunc = solaragg.datum_agg_agg_finalfunc
-);
 
 
 /**

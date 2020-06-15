@@ -33,8 +33,8 @@
 		<argument ref="generalNodeDatumDao"/>
 		<argument ref="datumPublisher"/>
 		<property name="executorService" ref="executorService"/>
-		<property name="maximumRowCount" value="${staleNodeDatumProcessor.maximumRowCount}"/>
-		<property name="taskCount" value="${staleSolarFluxProcessor.taskCount}"/>
+		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
+		<property name="parallelism" value="${staleSolarFluxProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleSolarFluxProcessor.jobCron}"/>
 		<property name="jobId" value="StaleSolarFluxProcessor"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleSolarFluxProcessor"/>

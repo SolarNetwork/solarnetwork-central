@@ -10,4 +10,16 @@
 		SELECT '2018-08-01 14:40'::timestamp AS local_date
 	</select>
 
+	<select id="test-set-json-map" parameterType="net.solarnetwork.central.dao.mybatis.type.test.JsonMapBean" resultType="String">
+		SELECT #{map,typeHandler=net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler}::json::text AS json
+	</select>
+	
+	<resultMap type="net.solarnetwork.central.dao.mybatis.type.test.JsonMapBean" id="json-map-bean">
+		<result property="map" column="jdata" typeHandler="net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler"/>
+	</resultMap>
+
+	<select id="test-get-json-map" resultMap="json-map-bean">
+		SELECT '{"foo":"bar"}'::json::text AS jdata
+	</select>
+
 </mapper>

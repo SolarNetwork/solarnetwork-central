@@ -22,9 +22,6 @@
 
 package net.solarnetwork.central.datum.agg;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
@@ -50,12 +47,12 @@ import org.springframework.jdbc.core.JdbcOperations;
  * </p>
  * 
  * <p>
- * The {@link #getMaximumRowCount()} value will limit the overall number or
- * stale tier rows processed in one invocation of {@link #handleJob(Event)}.
+ * The {@link #getParallelism()} value will limit the overall number or stale
+ * tier rows processed in one invocation of {@link #handleJob(Event)}.
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.6
  */
 public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
@@ -63,7 +60,6 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 	private final String taskDescription;
 	private String tierProcessType = "h";
 	private Integer tierProcessMax = 1;
-	private int taskCount = 1;
 
 	/**
 	 * Constructor.
@@ -79,6 +75,8 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 			String taskDescription) {
 		super(eventAdmin, jdbcOps);
 		this.taskDescription = taskDescription;
+		setMaximumIterations(1);
+		setParallelism(1);
 	}
 
 	/**
@@ -91,56 +89,25 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 	protected abstract int execute(final AtomicInteger remainingCount);
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
-		final int tCount = taskCount;
-		log.debug("Processing at most {} {} for tier '{}' using {} tasks with call {}",
-				getMaximumRowCount(), taskDescription, tierProcessType, tCount, getJdbcCall());
-		final AtomicInteger remainingCount = new AtomicInteger(getMaximumRowCount());
-		boolean allDone = false;
-		if ( tCount > 1 ) {
-			final ExecutorService executorService = getExecutorService();
-			final CountDownLatch latch = new CountDownLatch(tCount);
-			for ( int i = 0; i < tCount; i++ ) {
-				executorService.submit(new Runnable() {
-
-					@Override
-					public void run() {
-						log.debug("Task {} processing at most {} {} for tier '{}'",
-								Thread.currentThread().getName(), getMaximumRowCount(), taskDescription,
-								tierProcessType);
-						try {
-							int processedCount = execute(remainingCount);
-							log.debug("Task {} processed {} {} for tier '{}'",
-									Thread.currentThread().getName(), processedCount, taskDescription,
-									tierProcessType);
-						} catch ( DeadlockLoserDataAccessException e ) {
-							log.warn("Deadlock processing {} for tier '{}' with call {}",
-									taskDescription, tierProcessType, getJdbcCall(), e);
-						} catch ( Exception e ) {
-							log.error("Error processing {} for tier '{}' with call {}", taskDescription,
-									tierProcessType, getJdbcCall(), e);
-						} finally {
-							latch.countDown();
-						}
-					}
-				});
-			}
-			allDone = latch.await(getMaximumWaitMs(), TimeUnit.MILLISECONDS);
-			if ( !allDone ) {
-				log.warn("Timeout processing {} for tier '{}'; {}/{} tasks completed", taskDescription,
-						tierProcessType, (tCount - latch.getCount()), tCount);
-			}
-		} else {
-			execute(remainingCount);
-			allDone = true;
+	protected int executeJobTask(Event job, AtomicInteger remainingIterataions) throws Exception {
+		try {
+			return execute(remainingIterataions);
+		} catch ( DeadlockLoserDataAccessException e ) {
+			log.warn("Deadlock processing {} for tier '{}' with call {}", taskDescription,
+					tierProcessType, getJdbcCall(), e);
 		}
-		return allDone;
+		return 0;
+	}
+
+	@Override
+	protected boolean handleJob(Event job) throws Exception {
+		return executeParallelJob(job, String.format("%s tier '%s'", taskDescription, tierProcessType));
 	}
 
 	/**
 	 * Get the tier process type.
 	 * 
-	 * @return the type
+	 * @return the type; defaults to {@literal "h"}
 	 */
 	public String getTierProcessType() {
 		return tierProcessType;
@@ -190,9 +157,12 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 	 * Get the maximum number of parallel tasks to allow.
 	 * 
 	 * @return the numJobs the maximum task count
+	 * @deprecated since 1.2
+	 * @see #getParallelism()
 	 */
+	@Deprecated
 	public int getTaskCount() {
-		return taskCount;
+		return getParallelism();
 	}
 
 	/**
@@ -202,11 +172,11 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 	 * 
 	 * @param taskCount
 	 *        the maximum number of tasks to allow
+	 * @deprecated since 1.2
+	 * @see #setParallelism(int)
 	 */
+	@Deprecated
 	public void setTaskCount(int taskCount) {
-		if ( taskCount < 1 ) {
-			taskCount = 1;
-		}
-		this.taskCount = taskCount;
+		setParallelism(taskCount);
 	}
 }

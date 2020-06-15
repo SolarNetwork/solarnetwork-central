@@ -44,7 +44,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link SqlSessionDaoSupport}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.1
  */
 public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> extends BaseMyBatisDao
@@ -161,7 +161,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 		if ( isAssignedPrimaryKeys() ) {
 			return saveWithAssignedPrimaryKey(entity);
 		}
-		if ( entity.getId() != null ) {
+		if ( entity.hasId() ) {
 			return handleUpdate(entity);
 		}
 		preprocessInsert(entity);

@@ -22,16 +22,27 @@
 
 package net.solarnetwork.central.datum.agg.test;
 
+import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.util.JsonUtils.getJSONString;
+import static net.solarnetwork.util.JsonUtils.getObjectFromJSON;
 import static net.solarnetwork.util.JsonUtils.getStringMap;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import java.sql.CallableStatement;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +52,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Assert;
@@ -49,19 +62,26 @@ import org.junit.Test;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.CallableStatementCallback;
+import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor;
+import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
+import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
+import net.solarnetwork.central.datum.domain.DatumAppEvent;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.util.JsonUtils;
+import net.solarnetwork.util.StaticOptionalServiceCollection;
 
 /**
  * Test cases for the {@link StaleGeneralNodeDatumProcessor} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.4
  */
 public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 
@@ -111,7 +131,7 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 		job = new TestStaleGeneralNodeDatumProcessor(null, jdbcTemplate);
 		job.setJobGroup("Test");
 		job.setJobId(TEST_JOB_ID);
-		job.setMaximumRowCount(10);
+		job.setMaximumIterations(10);
 		job.setAggregateProcessType("h");
 		job.setMaximumWaitMs(15 * 1000L);
 
@@ -165,38 +185,40 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 		}
 	}
 
-	private void verifyResults() {
+	private void verifyStaleHourlyRowsAllProcessed() {
+		verifyStaleHourlyRowsAllProcessed(10);
+	}
+
+	private void verifyStaleHourlyRowsAllProcessed(int expectedHourAggregates) {
 		List<Map<String, Object>> staleRows = jdbcTemplate
 				.queryForList("SELECT * FROM solaragg.agg_stale_datum WHERE agg_kind = 'h'");
-		Assert.assertTrue("No stale rows", staleRows.isEmpty());
+		assertThat("No stale rows", staleRows, hasSize(0));
 
 		List<Map<String, Object>> hourRows = jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.agg_datum_hourly ORDER BY ts_start, node_id, source_id");
-		Assert.assertEquals("Agg hour rows", 10, hourRows.size());
+		assertThat("Agg hour rows", hourRows, hasSize(expectedHourAggregates));
 	}
 
 	@Test
 	public void runSingleTask() throws Exception {
 		populateTestData();
-		List<Map<String, Object>> staleRows = jdbcTemplate
-				.queryForList("SELECT * FROM solaragg.agg_stale_datum");
+		List<Map<String, Object>> staleRows = staleRows();
 		Assert.assertEquals("Stale hour rows (5 nodes * 2 stale hours)", 10, staleRows.size());
 		boolean result = job.executeJob();
 		Assert.assertTrue("Completed", result);
-		verifyResults();
+		verifyStaleHourlyRowsAllProcessed();
 		Assert.assertEquals("Thread count", 0, job.taskThreadCount.get());
 	}
 
 	@Test
 	public void runParallelTasks() throws Exception {
-		job.setTaskCount(4);
+		job.setParallelism(4);
 		populateTestData();
-		List<Map<String, Object>> staleRows = jdbcTemplate
-				.queryForList("SELECT * FROM solaragg.agg_stale_datum");
+		List<Map<String, Object>> staleRows = staleRows();
 		Assert.assertEquals("Stale hour rows (5 nodes * 2 stale hours)", 10, staleRows.size());
 		boolean result = job.executeJob();
 		Assert.assertTrue("Completed", result);
-		verifyResults();
+		verifyStaleHourlyRowsAllProcessed();
 	}
 
 	private static final String SQL_LOCK_STALE_ROW = "SELECT * FROM solaragg.agg_stale_datum "
@@ -204,11 +226,10 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 
 	@Test
 	public void runParallelTasksWithLockedRow() throws Exception {
-		job.setTaskCount(4);
+		job.setParallelism(4);
 		populateTestData();
 
-		List<Map<String, Object>> staleRows = jdbcTemplate
-				.queryForList("SELECT * FROM solaragg.agg_stale_datum");
+		List<Map<String, Object>> staleRows = staleRows();
 		Assert.assertEquals("Stale hour rows (5 nodes * 2 stale hours)", 10, staleRows.size());
 
 		// pick a single stale row to lock in a different thread; this row should be skipped
@@ -330,8 +351,39 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 				new Timestamp(start.dayOfMonth().roundFloorCopy().getMillis()), TEST_NODE_ID,
 				TEST_SOURCE_ID, "d");
 
-		int count = jdbcTemplate.queryForObject("SELECT solaragg.process_agg_stale_datum('d', -1)",
-				Integer.class);
+		int count = jdbcTemplate.execute(new CallableStatementCreator() {
+
+			@Override
+			public CallableStatement createCallableStatement(Connection con) throws SQLException {
+				CallableStatement stmt = con
+						.prepareCall("{call solaragg.process_one_agg_stale_datum(?)}");
+				return stmt;
+			}
+		}, new CallableStatementCallback<Integer>() {
+
+			private int processKind(String kind, CallableStatement cs) throws SQLException {
+				int processed = 0;
+				cs.setString(1, kind);
+				while ( cs.execute() ) {
+					try (ResultSet rs = cs.getResultSet()) {
+						if ( rs.next() ) {
+							processed++;
+						} else {
+							break;
+						}
+					}
+				}
+				return processed;
+			}
+
+			@Override
+			public Integer doInCallableStatement(CallableStatement cs)
+					throws SQLException, DataAccessException {
+				int processed = processKind("d", cs);
+				log.debug("Processed " + processed + " stale daily datum");
+				return processed;
+			}
+		});
 		assertThat("Processed stale row count", count, equalTo(1));
 
 		List<Map<String, Object>> rows = listAggDatumDailyRows();
@@ -652,5 +704,57 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 				TEST_SOURCE_ID, "h");
 		validateStaleRow("2", staleRows.get(1), ts1.hourOfDay().roundFloorCopy(), TEST_NODE_ID,
 				testSourceId2, "h");
+	}
+
+	private List<Map<String, Object>> staleRows() {
+		List<Map<String, Object>> staleRows = jdbcTemplate
+				.queryForList("SELECT * FROM solaragg.agg_stale_datum");
+		if ( log.isDebugEnabled() ) {
+			for ( Map<String, Object> row : staleRows ) {
+				log.debug("Stale row: {}", row);
+			}
+		}
+		return staleRows;
+	}
+
+	@Test
+	public void processDatumAppEvents() throws Exception {
+		// GIVEN
+		DatumAppEventAcceptor acceptor = EasyMock.createMock(DatumAppEventAcceptor.class);
+		job.setDatumAppEventAcceptors(new StaticOptionalServiceCollection<>(singleton(acceptor)));
+		final long start = populateTestData(5, 10 * 60 * 1000L, TEST_NODE_ID, TEST_SOURCE_ID);
+		List<Map<String, Object>> staleRows = staleRows();
+		assertThat("Stale hour row created", staleRows.size(), equalTo(1));
+
+		Capture<DatumAppEvent> eventCaptor = new Capture<>();
+		acceptor.offerDatumEvent(capture(eventCaptor));
+
+		// WHEN
+		replay(acceptor);
+		boolean result = job.executeJob();
+		job.getExecutorService().shutdown();
+		job.getExecutorService().awaitTermination(10, TimeUnit.SECONDS);
+
+		// THEN
+		assertThat("Completed", result, equalTo(true));
+		verifyStaleHourlyRowsAllProcessed(1);
+
+		DatumAppEvent event = eventCaptor.getValue();
+		assertThat("DatumAppEvent published", event, notNullValue());
+		assertThat("DatumAppEvent node ID matches", event.getNodeId(), equalTo(TEST_NODE_ID));
+		assertThat("DatumAppEvent source ID matches", event.getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("DatumAppEvent properties available", event.getEventProperties(), notNullValue());
+		assertThat("DatumAppEvent prop agg key", event.getEventProperties(),
+				hasEntry("aggregationKey", Aggregation.Hour.getKey()));
+		assertThat("DatumAppEvent prop agg timestamp", event.getEventProperties(),
+				hasEntry("timestamp", start));
+
+		AggregateUpdatedEventInfo info = getObjectFromJSON(
+				getJSONString(event.getEventProperties(), null), AggregateUpdatedEventInfo.class);
+		assertThat("AggregateUpdatedEventInfo info available", info, notNullValue());
+		assertThat("Info aggregation", info.getAggregation(), equalTo(Aggregation.Hour));
+		assertThat("Info aggregation", info.getTimeStart(), equalTo(Instant.ofEpochMilli(start)));
+
+		verify(acceptor);
 	}
 }

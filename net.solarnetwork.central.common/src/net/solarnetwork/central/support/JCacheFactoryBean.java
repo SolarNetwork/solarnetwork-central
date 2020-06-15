@@ -40,7 +40,6 @@ import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
-import org.ehcache.expiry.Expirations;
 import org.ehcache.jsr107.Eh107Configuration;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -124,21 +123,22 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 					case Accessed:
 					case Updated:
 					case Touched:
-						cacheConfigBuilder = cacheConfigBuilder
-								.withExpiry(Expirations.timeToIdleExpiration(org.ehcache.expiry.Duration
-										.of(expiryDuration.getDurationAmount(),
-												expiryDuration.getTimeUnit())));
+						cacheConfigBuilder = cacheConfigBuilder.withExpiry(org.ehcache.expiry.Expirations
+								.timeToIdleExpiration(org.ehcache.expiry.Duration.of(
+										expiryDuration.getDurationAmount(),
+										expiryDuration.getTimeUnit())));
 						break;
 
 					case Created:
-						cacheConfigBuilder = cacheConfigBuilder
-								.withExpiry(Expirations.timeToLiveExpiration(org.ehcache.expiry.Duration
-										.of(expiryDuration.getDurationAmount(),
-												expiryDuration.getTimeUnit())));
+						cacheConfigBuilder = cacheConfigBuilder.withExpiry(org.ehcache.expiry.Expirations
+								.timeToLiveExpiration(org.ehcache.expiry.Duration.of(
+										expiryDuration.getDurationAmount(),
+										expiryDuration.getTimeUnit())));
 						break;
 
 					case Eternal:
-						cacheConfigBuilder = cacheConfigBuilder.withExpiry(Expirations.noExpiration());
+						cacheConfigBuilder = cacheConfigBuilder
+								.withExpiry(org.ehcache.expiry.Expirations.noExpiration());
 						break;
 				}
 			}
