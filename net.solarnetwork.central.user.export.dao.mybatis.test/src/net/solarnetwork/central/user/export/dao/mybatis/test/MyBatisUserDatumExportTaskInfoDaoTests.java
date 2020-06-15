@@ -23,11 +23,14 @@
 package net.solarnetwork.central.user.export.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.util.List;
+import java.util.Map;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
@@ -48,7 +51,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
  * Test cases for the {@link MyBatisUserDatumExportTaskInfoDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -191,4 +194,31 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		long result = dao.purgeCompletedTasks(new DateTime().hourOfDay().roundCeilingCopy());
 		assertThat("Delete count", result, equalTo(2L));
 	}
+
+	@Test
+	public void delete() {
+		// GIVEN
+		storeNew();
+
+		// WHEN
+		dao.delete(this.info);
+
+		List<Map<String, Object>> rows = jdbcTemplate
+				.queryForList("select * from solaruser.user_export_task");
+		assertThat("Task row deleted", rows, hasSize(0));
+	}
+
+	@Test
+	public void deleteConfCascadeToTask() {
+		// GIVEN
+		storeNew();
+
+		// WHEN
+		confDao.delete(this.userDatumExportConfig);
+
+		List<Map<String, Object>> rows = jdbcTemplate
+				.queryForList("select * from solaruser.user_export_task");
+		assertThat("Task row deleted with conf", rows, hasSize(0));
+	}
+
 }
