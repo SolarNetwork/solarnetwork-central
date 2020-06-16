@@ -22,9 +22,14 @@
 
 package net.solarnetwork.central.user.event.dest.sqs;
 
+import static net.solarnetwork.central.user.event.dest.sqs.SqsStats.BasicCount.NodeEventsPublishFailed;
+import static net.solarnetwork.central.user.event.dest.sqs.SqsStats.BasicCount.NodeEventsPublished;
+import static net.solarnetwork.central.user.event.dest.sqs.SqsStats.BasicCount.NodeEventsReceived;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.cache.Cache;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -51,13 +56,32 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 public class SqsUserNodeEventHookService extends
 		BaseSettingsSpecifierLocalizedServiceInfoProvider<String> implements UserNodeEventHookService {
 
+	private final SqsStats sqsStats;
 	private Cache<String, SqsDestination> destinationCache;
+
+	private final ConcurrentMap<String, SqsDestination> cacheLock = new ConcurrentHashMap<>(30, 0.9f, 4);
 
 	/**
 	 * Constructor.
 	 */
 	public SqsUserNodeEventHookService() {
+		this(new SqsStats("SqsUserNodeEventHook", 200));
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param stats
+	 *        the status object to use
+	 * @throws IllegalArgumentException
+	 *         if {@code stats} is {@literal null}
+	 */
+	public SqsUserNodeEventHookService(SqsStats stats) {
 		super("net.solarnetwork.central.user.event.dest.sqs.SqsUserNodeEventHookService");
+		if ( stats == null ) {
+			throw new IllegalArgumentException("The stats argument must not be null.");
+		}
+		this.sqsStats = stats;
 	}
 
 	@Override
@@ -81,39 +105,59 @@ public class SqsUserNodeEventHookService extends
 		log.debug("Got user node event task {} for user {} hook {} with props {}", event.getId(),
 				event.getUserId(), event.getHookId(), event.getTaskProperties());
 
-		SqsDestinationProperties props = SqsDestinationProperties
-				.ofServiceProperties(config.getServiceProperties());
-		if ( !props.isValid() ) {
-			throw new IllegalArgumentException("Service configuration is not valid.");
+		sqsStats.incrementAndGet(NodeEventsReceived);
+		try {
+			SqsDestinationProperties props = SqsDestinationProperties
+					.ofServiceProperties(config.getServiceProperties());
+			if ( !props.isValid() ) {
+				throw new IllegalArgumentException("Service configuration is not valid.");
+			}
+
+			SqsDestination dest = getDestination(props);
+			Map<String, Object> msg = event.asMessageData();
+			dest.sendJsonMessage(msg);
+
+			sqsStats.incrementAndGet(NodeEventsPublished);
+
+			return true;
+		} catch ( RuntimeException e ) {
+			sqsStats.incrementAndGet(NodeEventsPublishFailed);
+			throw e;
 		}
-
-		SqsDestination dest = getDestination(props);
-		Map<String, Object> msg = event.asMessageData();
-		dest.sendJsonMessage(msg);
-
-		return true;
 	}
 
 	private SqsDestination getDestination(SqsDestinationProperties props) {
 		final String key = keyForDestination(props);
 		final Cache<String, SqsDestination> cache = getDestinationCache();
-		SqsDestination dest = null;
-		if ( cache != null ) {
-			dest = cache.get(key);
-		}
-		if ( dest == null ) {
-			AmazonSQS client = createClient(props);
-			String queueUrl = null;
-			try {
-				GetQueueUrlResult urlRes = client.getQueueUrl(props.getQueueName());
-				queueUrl = urlRes.getQueueUrl();
-			} catch ( QueueDoesNotExistException e ) {
-				throw new IllegalArgumentException(
-						String.format("Queue [%s] does not exist (using region %s).",
-								props.getQueueName(), props.getRegion()));
+
+		// we want to serialize access to the SqsDestination objects, but Cache does not provide
+		// computeIfAbsent so we go through a ConcurrentMap instead 
+		SqsDestination dest = cacheLock.computeIfAbsent(key, k -> {
+			SqsDestination d = null;
+			if ( cache != null ) {
+				d = cache.get(key);
 			}
-			dest = new SqsDestination(client, queueUrl);
-		}
+			if ( d == null ) {
+				log.debug("Creating SQS destination for {}@{}/{}", props.getAccessKey(),
+						props.getRegion(), props.getQueueName());
+				AmazonSQS client = createClient(props);
+				String queueUrl = null;
+				try {
+					GetQueueUrlResult urlRes = client.getQueueUrl(props.getQueueName());
+					queueUrl = urlRes.getQueueUrl();
+				} catch ( QueueDoesNotExistException e ) {
+					throw new IllegalArgumentException(
+							String.format("Queue [%s] does not exist (using region %s).",
+									props.getQueueName(), props.getRegion()));
+				}
+				d = new SqsDestination(client, queueUrl);
+			}
+			if ( cache != null ) {
+				cache.putIfAbsent(key, d);
+			}
+			return d;
+		});
+		cacheLock.remove(key, dest);
 		return dest;
 	}
 

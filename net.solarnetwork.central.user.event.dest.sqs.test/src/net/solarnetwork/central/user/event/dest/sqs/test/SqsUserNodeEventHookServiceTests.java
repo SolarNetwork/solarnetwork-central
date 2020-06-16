@@ -30,6 +30,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,11 +44,15 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.model.DeleteMessageBatchRequest;
+import com.amazonaws.services.sqs.model.DeleteMessageBatchRequestEntry;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
+import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.QueueDoesNotExistException;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import net.solarnetwork.central.user.event.dest.sqs.SqsDestinationProperties;
+import net.solarnetwork.central.user.event.dest.sqs.SqsStats;
 import net.solarnetwork.central.user.event.dest.sqs.SqsUserNodeEventHookService;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
@@ -83,12 +88,14 @@ public class SqsUserNodeEventHookServiceTests {
 			m.put(me.getKey().toString(), me.getValue());
 		}
 		TEST_PROPS = m;
+
+		drainQueue();
 	}
 
 	@Test
 	public void settingSpecifiers() {
 		// given
-		SqsUserNodeEventHookService service = new SqsUserNodeEventHookService();
+		SqsUserNodeEventHookService service = new SqsUserNodeEventHookService(new SqsStats("Test", 1));
 
 		//when
 		List<SettingSpecifier> specs = service.getSettingSpecifiers();
@@ -102,7 +109,7 @@ public class SqsUserNodeEventHookServiceTests {
 				containsInAnyOrder("accessKey", "secretKey", "region", "queueName"));
 	}
 
-	private AmazonSQS createSqsClient() {
+	private static AmazonSQS createSqsClient() {
 		SqsDestinationProperties props = SqsDestinationProperties.ofServiceProperties(TEST_PROPS);
 		AmazonSQSClientBuilder builder = AmazonSQSClientBuilder.standard().withRegion(props.getRegion());
 		String accessKey = props.getAccessKey();
@@ -115,7 +122,41 @@ public class SqsUserNodeEventHookServiceTests {
 		return builder.build();
 	}
 
-	private String getQueueMessage() {
+	private static void drainQueue() {
+		SqsDestinationProperties props = SqsDestinationProperties.ofServiceProperties(TEST_PROPS);
+		AmazonSQS client = createSqsClient();
+		String queueUrl = null;
+		try {
+			GetQueueUrlResult urlRes = client.getQueueUrl(props.getQueueName());
+			queueUrl = urlRes.getQueueUrl();
+		} catch ( QueueDoesNotExistException e ) {
+			throw new IllegalArgumentException(
+					String.format("Queue [%s] does not exist (using region %s).", props.getQueueName(),
+							props.getRegion()));
+		}
+
+		ReceiveMessageRequest req = new ReceiveMessageRequest(queueUrl);
+		req.setWaitTimeSeconds(0);
+		while ( true ) {
+			ReceiveMessageResult res = client.receiveMessage(req);
+			if ( res == null ) {
+				break;
+			}
+			List<Message> msgs = res.getMessages();
+			if ( msgs == null || msgs.isEmpty() ) {
+				break;
+			}
+			List<DeleteMessageBatchRequestEntry> delEntries = new ArrayList<>(8);
+			for ( Message msg : msgs ) {
+				delEntries.add(new DeleteMessageBatchRequestEntry(UUID.randomUUID().toString(),
+						msg.getReceiptHandle()));
+			}
+			DeleteMessageBatchRequest delReq = new DeleteMessageBatchRequest(queueUrl, delEntries);
+			client.deleteMessageBatch(delReq);
+		}
+	}
+
+	private static String getQueueMessage() {
 		SqsDestinationProperties props = SqsDestinationProperties.ofServiceProperties(TEST_PROPS);
 		AmazonSQS client = createSqsClient();
 		String queueUrl = null;
@@ -141,7 +182,7 @@ public class SqsUserNodeEventHookServiceTests {
 	@Test
 	public void publishEvent() {
 		// GIVEN
-		SqsUserNodeEventHookService service = new SqsUserNodeEventHookService();
+		SqsUserNodeEventHookService service = new SqsUserNodeEventHookService(new SqsStats("Test", 1));
 
 		UserNodeEventHookConfiguration config = new UserNodeEventHookConfiguration(1L, 2L, now());
 		config.setServiceProps(TEST_PROPS);
