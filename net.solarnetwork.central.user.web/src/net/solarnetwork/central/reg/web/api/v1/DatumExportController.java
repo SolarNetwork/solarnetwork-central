@@ -22,9 +22,10 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.domain.IdentifiableConfiguration.maskConfiguration;
+import static net.solarnetwork.domain.IdentifiableConfiguration.maskConfigurations;
 import static net.solarnetwork.support.LocalizedServiceInfoProvider.localizedServiceSettings;
 import static net.solarnetwork.web.domain.Response.response;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -34,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
@@ -60,7 +60,6 @@ import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.reg.web.domain.DatumExportFullConfigurations;
 import net.solarnetwork.central.reg.web.domain.DatumExportProperties;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
@@ -68,14 +67,9 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
-import net.solarnetwork.domain.IdentifiableConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.SettingSpecifierProvider;
-import net.solarnetwork.settings.support.SettingUtils;
-import net.solarnetwork.util.ClassUtils;
 import net.solarnetwork.util.OptionalService;
-import net.solarnetwork.util.StringUtils;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -160,60 +154,6 @@ public class DatumExportController extends WebServiceControllerSupport {
 		return response(result);
 	}
 
-	private List<SettingSpecifier> settingsForService(String id,
-			Iterable<? extends SettingSpecifierProvider> providers) {
-		if ( providers == null ) {
-			return null;
-		}
-		for ( SettingSpecifierProvider provider : providers ) {
-			if ( id.equals(provider.getSettingUID()) ) {
-				return provider.getSettingSpecifiers();
-			}
-		}
-		return null;
-	}
-
-	private <T extends UserIdentifiableConfiguration> List<T> maskConfigurations(List<T> configurations,
-			Function<Void, Iterable<? extends SettingSpecifierProvider>> settingProviderFunction) {
-		if ( configurations == null || configurations.isEmpty() ) {
-			return Collections.emptyList();
-		}
-		List<T> result = new ArrayList<>(configurations.size());
-		for ( T config : configurations ) {
-			T maskedConfig = maskConfiguration(config, settingProviderFunction);
-			if ( maskedConfig != null ) {
-				result.add(maskedConfig);
-			}
-		}
-		return result;
-	}
-
-	@SuppressWarnings("unchecked")
-	private <T extends IdentifiableConfiguration> T maskConfiguration(T config,
-			Function<Void, Iterable<? extends SettingSpecifierProvider>> settingProviderFunction) {
-		String id = config.getServiceIdentifier();
-		if ( id == null ) {
-			return null;
-		}
-		List<SettingSpecifier> settings = serviceSettings.get(id);
-		if ( settings == null ) {
-			settings = settingsForService(id, settingProviderFunction.apply(null));
-			if ( settings != null ) {
-				serviceSettings.put(id, settings);
-			}
-		}
-		if ( settings != null ) {
-			Map<String, ?> serviceProps = config.getServiceProperties();
-			Map<String, Object> maskedServiceProps = StringUtils.sha256MaskedMap(
-					(Map<String, Object>) serviceProps, SettingUtils.secureKeys(settings));
-			if ( maskedServiceProps != null ) {
-				ClassUtils.setBeanProperties(config,
-						Collections.singletonMap("serviceProps", maskedServiceProps), true);
-			}
-		}
-		return config;
-	}
-
 	@ResponseBody
 	@RequestMapping(value = "/configs", method = RequestMethod.GET)
 	public Response<DatumExportFullConfigurations> fullConfiguration() {
@@ -228,11 +168,13 @@ public class DatumExportController extends WebServiceControllerSupport {
 					.collect(Collectors.toList());
 			dataConfigs = biz.configurationsForUser(userId, UserDataConfiguration.class);
 			destConfigs = maskConfigurations(
-					biz.configurationsForUser(userId, UserDestinationConfiguration.class), (Void) -> {
+					biz.configurationsForUser(userId, UserDestinationConfiguration.class),
+					serviceSettings, (Void) -> {
 						return biz.availableDestinationServices();
 					});
 			outputConfigs = maskConfigurations(
-					biz.configurationsForUser(userId, UserOutputConfiguration.class), (Void) -> {
+					biz.configurationsForUser(userId, UserOutputConfiguration.class), serviceSettings,
+					(Void) -> {
 						return biz.availableOutputFormatServices();
 					});
 		}
@@ -382,7 +324,7 @@ public class DatumExportController extends WebServiceControllerSupport {
 			Long id = biz.saveConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
-				return response(maskConfiguration(config, (Void) -> {
+				return response(maskConfiguration(config, serviceSettings, (Void) -> {
 					return biz.availableOutputFormatServices();
 				}));
 			}
@@ -420,7 +362,7 @@ public class DatumExportController extends WebServiceControllerSupport {
 			Long id = biz.saveConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
-				return response(maskConfiguration(config, (Void) -> {
+				return response(maskConfiguration(config, serviceSettings, (Void) -> {
 					return biz.availableDestinationServices();
 				}));
 			}
@@ -465,31 +407,11 @@ public class DatumExportController extends WebServiceControllerSupport {
 			}
 			UserAdhocDatumExportTaskInfo info = biz.saveAdhocDatumExportTaskForConfiguration(config);
 			if ( info != null ) {
-				info.setConfig(maskConfiguration(info.getConfig(), biz));
+				info.setConfig(maskExportConfiguration(info.getConfig(), biz));
 				return response(info);
 			}
 		}
 		return new Response<UserAdhocDatumExportTaskInfo>(false, null, null, null);
-	}
-
-	private Configuration maskConfiguration(Configuration config, UserExportBiz biz) {
-		if ( config == null || biz == null ) {
-			return config;
-		}
-		BasicConfiguration respConfig = (config instanceof BasicConfiguration
-				? (BasicConfiguration) config
-				: new BasicConfiguration(config));
-
-		// mask destination config settings, such as S3 password
-		BasicDestinationConfiguration respDestConfig = (respConfig
-				.getDestinationConfiguration() instanceof BasicDestinationConfiguration
-						? (BasicDestinationConfiguration) respConfig.getDestinationConfiguration()
-						: new BasicDestinationConfiguration(respConfig.getDestinationConfiguration()));
-		respDestConfig = maskConfiguration(respDestConfig, (Void) -> {
-			return biz.availableDestinationServices();
-		});
-		respConfig.setDestinationConfiguration(respDestConfig);
-		return respConfig;
 	}
 
 	/**
@@ -537,11 +459,31 @@ public class DatumExportController extends WebServiceControllerSupport {
 			List<UserAdhocDatumExportTaskInfo> tasks = biz.adhocExportTasksForUser(userId, states,
 					success);
 			for ( UserAdhocDatumExportTaskInfo task : tasks ) {
-				task.setConfig(maskConfiguration(task.getConfig(), biz));
+				task.setConfig(maskExportConfiguration(task.getConfig(), biz));
 			}
 			return response(tasks);
 		}
 		return new Response<List<UserAdhocDatumExportTaskInfo>>(false, null, null, null);
+	}
+
+	private Configuration maskExportConfiguration(Configuration config, UserExportBiz biz) {
+		if ( config == null || biz == null ) {
+			return config;
+		}
+		BasicConfiguration respConfig = (config instanceof BasicConfiguration
+				? (BasicConfiguration) config
+				: new BasicConfiguration(config));
+
+		// mask destination config settings, such as S3 password
+		BasicDestinationConfiguration respDestConfig = (respConfig
+				.getDestinationConfiguration() instanceof BasicDestinationConfiguration
+						? (BasicDestinationConfiguration) respConfig.getDestinationConfiguration()
+						: new BasicDestinationConfiguration(respConfig.getDestinationConfiguration()));
+		respDestConfig = maskConfiguration(respDestConfig, serviceSettings, (Void) -> {
+			return biz.availableDestinationServices();
+		});
+		respConfig.setDestinationConfiguration(respDestConfig);
+		return respConfig;
 	}
 
 }
