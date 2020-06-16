@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.domain.IdentifiableConfiguration.maskConfiguration;
+import static net.solarnetwork.domain.IdentifiableConfiguration.maskConfigurations;
 import static net.solarnetwork.support.LocalizedServiceInfoProvider.localizedServiceSettings;
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.List;
@@ -30,11 +32,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.central.user.event.biz.UserEventHookBiz;
+import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -86,7 +93,7 @@ public class NodeEventController extends WebServiceControllerSupport {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/node/services", method = RequestMethod.GET)
+	@RequestMapping(value = "/node/hook/services", method = RequestMethod.GET)
 	public Response<List<LocalizedServiceInfo>> availableNodeEventHookServices(Locale locale) {
 		final UserEventHookBiz biz = eventHookBiz.service();
 		List<LocalizedServiceInfo> result = null;
@@ -94,6 +101,58 @@ public class NodeEventController extends WebServiceControllerSupport {
 			result = localizedServiceSettings(biz.availableNodeEventHookServices(), locale);
 		}
 		return response(result);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/node/hooks", method = RequestMethod.GET)
+	public Response<List<UserNodeEventHookConfiguration>> nodeHookConfigurations() {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		final UserEventHookBiz biz = eventHookBiz.service();
+		List<UserNodeEventHookConfiguration> configs = null;
+		if ( biz != null ) {
+			configs = maskConfigurations(
+					biz.configurationsForUser(userId, UserNodeEventHookConfiguration.class),
+					serviceSettings, (Void) -> {
+						return biz.availableNodeEventHookServices();
+					});
+		}
+		return response(configs);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/node/hooks", method = RequestMethod.POST)
+	public Response<UserNodeEventHookConfiguration> saveNodeHookConfiguration(
+			@RequestBody UserNodeEventHookConfiguration config) {
+		final UserEventHookBiz biz = eventHookBiz.service();
+		if ( biz != null ) {
+			if ( config.getUserId() == null ) {
+				config.getId().setUserId(SecurityUtils.getCurrentActorUserId());
+			}
+			UserLongPK id = biz.saveConfiguration(config);
+			if ( id != null ) {
+				config = biz.configurationForUser(id.getUserId(), UserNodeEventHookConfiguration.class,
+						id.getId());
+				return response(maskConfiguration(config, serviceSettings, (Void) -> {
+					return biz.availableNodeEventHookServices();
+				}));
+			}
+		}
+		return new Response<>(false, null, null, null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/node/hooks/{id}", method = RequestMethod.DELETE)
+	public Response<Void> deleteDestinationConfiguration(@PathVariable("id") Long id) {
+		final UserEventHookBiz biz = eventHookBiz.service();
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			UserNodeEventHookConfiguration config = biz.configurationForUser(userId,
+					UserNodeEventHookConfiguration.class, id);
+			if ( config != null ) {
+				biz.deleteConfiguration(config);
+			}
+		}
+		return response(null);
 	}
 
 }
