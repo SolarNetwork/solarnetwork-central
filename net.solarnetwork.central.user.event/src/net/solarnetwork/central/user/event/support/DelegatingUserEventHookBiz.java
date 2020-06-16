@@ -23,9 +23,13 @@
 package net.solarnetwork.central.user.event.support;
 
 import java.util.List;
+import java.util.Locale;
+import net.solarnetwork.central.datum.biz.DatumAppEventProducer;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.central.user.domain.UserRelatedIdentifiableConfiguration;
 import net.solarnetwork.central.user.event.biz.UserEventHookBiz;
+import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
+import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
  * Delegating implementation of {@link UserEventHookBiz}, mostly to help with
@@ -52,6 +56,21 @@ public class DelegatingUserEventHookBiz implements UserEventHookBiz {
 			throw new IllegalArgumentException("The delegate argument must not be null.");
 		}
 		this.delegate = delegate;
+	}
+
+	@Override
+	public Iterable<DatumAppEventProducer> availableDatumEventProducers() {
+		return delegate.availableDatumEventProducers();
+	}
+
+	@Override
+	public Iterable<UserNodeEventHookService> availableNodeEventHookServices() {
+		return delegate.availableNodeEventHookServices();
+	}
+
+	@Override
+	public Iterable<LocalizedServiceInfo> availableDatumEventTopics(Locale locale) {
+		return delegate.availableDatumEventTopics(locale);
 	}
 
 	@Override

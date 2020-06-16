@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.support.LocalizedServiceInfoProvider.localizedServiceSettings;
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,8 +49,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
-import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.BasicDestinationConfiguration;
 import net.solarnetwork.central.datum.export.domain.Configuration;
@@ -83,7 +82,7 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for datum export management.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.26
  */
 @RestController("v1DatumExportController")
@@ -112,11 +111,7 @@ public class DatumExportController extends WebServiceControllerSupport {
 		final UserExportBiz biz = exportBiz.service();
 		List<LocalizedServiceInfo> result = null;
 		if ( biz != null ) {
-			Iterable<DatumExportOutputFormatService> services = biz.availableOutputFormatServices();
-			result = new ArrayList<>();
-			for ( DatumExportOutputFormatService s : services ) {
-				result.add(s.getLocalizedServiceInfo(locale));
-			}
+			result = localizedServiceSettings(biz.availableOutputFormatServices(), locale);
 		}
 		return response(result);
 	}
@@ -127,11 +122,7 @@ public class DatumExportController extends WebServiceControllerSupport {
 		final UserExportBiz biz = exportBiz.service();
 		List<LocalizedServiceInfo> result = null;
 		if ( biz != null ) {
-			Iterable<DatumExportDestinationService> services = biz.availableDestinationServices();
-			result = new ArrayList<>();
-			for ( DatumExportDestinationService s : services ) {
-				result.add(s.getLocalizedServiceInfo(locale));
-			}
+			result = localizedServiceSettings(biz.availableDestinationServices(), locale);
 		}
 		return response(result);
 	}
