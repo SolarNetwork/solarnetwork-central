@@ -126,7 +126,7 @@ public class NodeEventController extends WebServiceControllerSupport {
 		final UserEventHookBiz biz = eventHookBiz.service();
 		if ( biz != null ) {
 			if ( config.getUserId() == null ) {
-				config.getId().setUserId(SecurityUtils.getCurrentActorUserId());
+				config.setUserId(SecurityUtils.getCurrentActorUserId());
 			}
 			UserLongPK id = biz.saveConfiguration(config);
 			if ( id != null ) {
@@ -141,8 +141,26 @@ public class NodeEventController extends WebServiceControllerSupport {
 	}
 
 	@ResponseBody
+	@RequestMapping(value = "/node/hooks/{id}", method = RequestMethod.GET)
+	public Response<UserNodeEventHookConfiguration> viewNodeHookConfiguration(
+			@PathVariable("id") Long id) {
+		final UserEventHookBiz biz = eventHookBiz.service();
+		UserNodeEventHookConfiguration result = null;
+		if ( biz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			result = biz.configurationForUser(userId, UserNodeEventHookConfiguration.class, id);
+			if ( result != null ) {
+				result = maskConfiguration(result, serviceSettings, (Void) -> {
+					return biz.availableNodeEventHookServices();
+				});
+			}
+		}
+		return response(result);
+	}
+
+	@ResponseBody
 	@RequestMapping(value = "/node/hooks/{id}", method = RequestMethod.DELETE)
-	public Response<Void> deleteDestinationConfiguration(@PathVariable("id") Long id) {
+	public Response<Void> deleteNodeHookConfiguration(@PathVariable("id") Long id) {
 		final UserEventHookBiz biz = eventHookBiz.service();
 		if ( biz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
