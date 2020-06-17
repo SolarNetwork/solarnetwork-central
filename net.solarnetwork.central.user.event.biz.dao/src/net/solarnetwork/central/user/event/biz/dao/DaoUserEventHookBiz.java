@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import org.springframework.context.MessageSource;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumAppEventProducer;
@@ -140,7 +141,13 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 			throw new IllegalArgumentException("The id argument must not be null.");
 		}
 		if ( UserNodeEventHookConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return (T) nodeEventHookConfigurationDao.get(new UserLongPK(userId, id));
+			T result = (T) nodeEventHookConfigurationDao.get(new UserLongPK(userId, id));
+			if ( result == null ) {
+				throw new DataRetrievalFailureException(
+						String.format("%s entity not found with ID %d for user %d",
+								configurationClass.getName(), id, userId));
+			}
+			return result;
 		}
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
 	}
