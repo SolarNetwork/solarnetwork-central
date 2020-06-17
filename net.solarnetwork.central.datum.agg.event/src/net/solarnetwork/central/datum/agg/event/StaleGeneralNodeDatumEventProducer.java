@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.agg;
+package net.solarnetwork.central.datum.agg.event;
 
 import java.util.Collections;
 import java.util.List;

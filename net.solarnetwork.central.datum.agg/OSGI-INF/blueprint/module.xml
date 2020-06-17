@@ -337,14 +337,4 @@
 		</service-properties>
 	</service>
 	
-	<service interface="net.solarnetwork.central.datum.biz.DatumAppEventProducer">
-		<bean class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumEventProducer">
-			<property name="messageSource">
-				<bean class="org.springframework.context.support.ResourceBundleMessageSource">
-					<property name="basename" value="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumEventProducer"/>
-				</bean>
-			</property>
-		</bean>
-	</service>
-	
 </blueprint>
