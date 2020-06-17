@@ -25,6 +25,16 @@
 
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 
+	<bean id="nodeEventHookServices" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.user.event.biz.UserNodeEventHookService"/>
+	</bean>
+
+	<bean id="datumEventProducers" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.datum.biz.DatumAppEventProducer"/>
+	</bean>
+
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 	
@@ -34,6 +44,13 @@
 	
 	<bean id="userEventHookBiz" class="net.solarnetwork.central.user.event.biz.dao.DaoUserEventHookBiz">
 		<argument ref="nodeEventHookConfDao"/>
+		<property name="nodeEventHookServices" ref="nodeEventHookServices"/>
+		<property name="datumEventProducers" ref="datumEventProducers"/>
+		<property name="messageSource">
+			<bean class="org.springframework.context.support.ResourceBundleMessageSource">
+				<property name="basename" value="net.solarnetwork.central.user.event.biz.UserEventHook"/>
+			</bean>
+		</property>
 	</bean>
 	
 </blueprint>

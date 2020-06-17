@@ -43,6 +43,13 @@
 			id = #{id.id}
 			AND user_id = #{id.userId}
 	</update>
+	
+	<delete id="delete-UserNodeEventHookConfiguration" parameterType="net.solarnetwork.central.user.domain.UserLongPK">
+		DELETE FROM solaruser.user_node_event_hook
+		WHERE
+			id = #{id}
+			AND user_id = #{userId}
+	</delete>
 
 	<sql id="fragment-UserNodeEventHookConfiguration-full-result">
 		uneh.id AS node_event_hook_id

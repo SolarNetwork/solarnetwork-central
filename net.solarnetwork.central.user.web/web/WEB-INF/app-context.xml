@@ -85,7 +85,7 @@
 		</property>
 		<property name="modules">
 			<list>
-				<bean class="com.fasterxml.jackson.datatype.jsr310.JavaTimeModule"/>
+				<bean class="net.solarnetwork.util.JsonUtils" factory-method="javaTimeModule"/>
 			</list>
 		</property>
 	</bean>

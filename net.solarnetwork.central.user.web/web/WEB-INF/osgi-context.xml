@@ -90,6 +90,12 @@
 		<property name="serviceFilter" value="(secured=true)"/>
 	</bean>
 
+	<bean id="eventHookBiz" class="net.solarnetwork.util.DynamicServiceTracker">
+		<property name="bundleContext" ref="bundleContext"/>
+		<property name="serviceClassName" value="net.solarnetwork.central.user.event.biz.UserEventHookBiz"/>
+		<property name="serviceFilter" value="(secured=true)"/>
+	</bean>
+
 	<bean id="exportBiz" class="net.solarnetwork.util.DynamicServiceTracker">
 		<property name="bundleContext" ref="bundleContext"/>
 		<property name="serviceClassName" value="net.solarnetwork.central.user.export.biz.UserExportBiz"/>

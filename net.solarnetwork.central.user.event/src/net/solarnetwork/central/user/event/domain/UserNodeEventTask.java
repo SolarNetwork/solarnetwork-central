@@ -23,7 +23,9 @@
 package net.solarnetwork.central.user.event.domain;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import net.solarnetwork.central.user.dao.UserNodeRelatedEntity;
 import net.solarnetwork.dao.BasicUuidEntity;
@@ -32,7 +34,7 @@ import net.solarnetwork.dao.BasicUuidEntity;
  * Entity for a user node event task.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelatedEntity<UUID> {
 
@@ -63,6 +65,31 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	 */
 	public UserNodeEventTask(UUID id, Instant created) {
 		super(id, created);
+	}
+
+	/**
+	 * Get this event data as a map, suitable for posting as a message body.
+	 * 
+	 * @return the message data, never {@literal null}
+	 * @since 1.1
+	 */
+	public Map<String, Object> asMessageData() {
+		Map<String, Object> msg = new LinkedHashMap<>(8);
+		msg.put("userId", userId);
+		msg.put("hookId", hookId);
+		msg.put("nodeId", nodeId);
+		msg.put("sourceId", sourceId);
+
+		if ( taskProperties != null ) {
+			// add task properties, but don't allow overriding the hard-coded props already there
+			for ( Entry<String, Object> me : taskProperties.entrySet() ) {
+				String key = me.getKey();
+				if ( !msg.containsKey(key) ) {
+					msg.put(key, me.getValue());
+				}
+			}
+		}
+		return msg;
 	}
 
 	@Override

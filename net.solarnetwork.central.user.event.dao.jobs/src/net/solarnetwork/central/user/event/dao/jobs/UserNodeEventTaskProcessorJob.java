@@ -217,7 +217,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 		} catch ( TimeoutException | InterruptedException | IOException e ) {
 			retry = true;
 			throw new RepeatableTaskException(
-					format("Transient exception handling user node event task {}: {}", event.getId(),
+					format("Transient exception handling user node event task %s: %s", event.getId(),
 							e.toString()),
 					e);
 		} catch ( Throwable t ) {

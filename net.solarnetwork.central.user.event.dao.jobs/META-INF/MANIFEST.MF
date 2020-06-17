@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: User Event DAO Jobs
 Bundle-SymbolicName: net.solarnetwork.central.user.event.dao.jobs
-Bundle-Version: 1.0.0
+Bundle-Version: 1.0.1
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.user.event.dao.jobs
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

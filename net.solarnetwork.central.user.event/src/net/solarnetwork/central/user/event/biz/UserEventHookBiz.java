@@ -23,16 +23,45 @@
 package net.solarnetwork.central.user.event.biz;
 
 import java.util.List;
+import java.util.Locale;
+import net.solarnetwork.central.datum.biz.DatumAppEventProducer;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.central.user.domain.UserRelatedIdentifiableConfiguration;
+import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
  * API for user node event hook tasks.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserEventHookBiz {
+
+	/**
+	 * Get all available datum event producers.
+	 * 
+	 * @return the producers, never {@literal null}
+	 * @since 1.1
+	 */
+	Iterable<DatumAppEventProducer> availableDatumEventProducers();
+
+	/**
+	 * Get all available node event hook services.
+	 * 
+	 * @return the services, never {@literal null}
+	 * @since 1.1
+	 */
+	Iterable<UserNodeEventHookService> availableNodeEventHookServices();
+
+	/**
+	 * Get all available datum event topics.
+	 * 
+	 * @param locale
+	 *        the desired locale
+	 * @return the topics as service info, never {@literal null}
+	 * @since 1.1
+	 */
+	Iterable<LocalizedServiceInfo> availableDatumEventTopics(Locale locale);
 
 	/**
 	 * Get a specific configuration kind for a given user.
