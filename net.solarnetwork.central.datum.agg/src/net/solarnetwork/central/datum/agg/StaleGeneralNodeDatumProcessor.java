@@ -143,12 +143,27 @@ public class StaleGeneralNodeDatumProcessor extends TieredStoredProcedureStaleDa
 			return null;
 		}
 		String aggKind = rs.getString(AGGREGATION_KEY_COLUMN_NAME);
-		Aggregation agg;
-		try {
-			agg = Aggregation.forKey(aggKind);
-		} catch ( IllegalArgumentException e ) {
+		if ( aggKind == null || aggKind.isEmpty() ) {
 			return null;
 		}
+		Aggregation agg;
+		switch (aggKind.charAt(0)) {
+			case 'h':
+				agg = Aggregation.Hour;
+				break;
+
+			case 'd':
+				agg = Aggregation.Day;
+				break;
+
+			case 'm':
+				agg = Aggregation.Month;
+				break;
+
+			default:
+				return null;
+		}
+
 		Timestamp ts = rs.getTimestamp(AGGREGATION_TIME_START_COLUMN_NAME);
 		if ( ts == null ) {
 			return null;
