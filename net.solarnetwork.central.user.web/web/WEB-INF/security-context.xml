@@ -26,6 +26,7 @@
 		<access-denied-handler ref="authTokenEntryPoint"/>
 		<intercept-url pattern='/**' method="OPTIONS" access="permitAll"/>
 	    <intercept-url pattern="/api/v1/sec/user/billing/**" access="hasRole('ROLE_BILLING')"/>
+	    <intercept-url pattern="/api/v1/sec/user/event/**" access="hasRole('ROLE_EVENT')"/>
 	    <intercept-url pattern="/api/v1/sec/user/export/**" access="hasRole('ROLE_EXPORT')"/>
 	    <intercept-url pattern="/api/v1/sec/user/import/**" access="hasRole('ROLE_IMPORT')"/>
 		<intercept-url pattern='/**' access="hasRole('ROLE_USER')"/>
@@ -37,6 +38,7 @@
 	<http auto-config="true" use-expressions="false">
 		<intercept-url pattern="/*.do*" access="ROLE_ANONYMOUS,ROLE_USER"/>
 	    <intercept-url pattern="/u/sec/billing/**" access="ROLE_BILLING"/>
+	    <intercept-url pattern="/u/sec/event/**" access="ROLE_EVENT"/>
 	    <intercept-url pattern="/u/sec/export/**" access="ROLE_EXPORT"/>
 	    <intercept-url pattern="/u/sec/import/**" access="ROLE_IMPORT"/>
 	    <intercept-url pattern="/u/sec/**" access="ROLE_USER"/>
