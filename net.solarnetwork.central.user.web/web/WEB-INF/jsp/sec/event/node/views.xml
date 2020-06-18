@@ -5,7 +5,7 @@
 <tiles-definitions>
 	
 	<definition name="eventNodeLayout" extends="default">
-		<put-attribute name="navloc" type="string" value="event-node"/>
+		<put-attribute name="navloc" type="string" value="node-event"/>
 		<put-attribute name="head" value="/WEB-INF/jsp/sec/event/node/head.jsp" />
 	</definition>
 	

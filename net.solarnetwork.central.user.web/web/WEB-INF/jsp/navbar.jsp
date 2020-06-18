@@ -39,7 +39,9 @@
 					<li class="dropdown ${navloc == 'data' 
 							or navloc == 'data-insight' 
 							or navloc == 'expire'
-							or navloc == 'export' ? 'active' : ''}">
+							or navloc == 'export' 
+							or navloc == 'node-event'
+							? 'active' : ''}">
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
 							<fmt:message key='nav.label.data'/>
 							${' '}<b class="caret"></b>
