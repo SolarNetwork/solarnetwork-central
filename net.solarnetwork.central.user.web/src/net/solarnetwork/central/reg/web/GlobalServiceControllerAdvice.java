@@ -26,6 +26,7 @@ import javax.annotation.Resource;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
+import net.solarnetwork.central.user.event.biz.UserEventHookBiz;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.util.OptionalService;
@@ -34,28 +35,35 @@ import net.solarnetwork.util.OptionalService;
  * Add global services to all MVC controllers.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.26
  */
 @ControllerAdvice(annotations = { GlobalServiceController.class })
 public class GlobalServiceControllerAdvice {
 
 	/**
-	 * The model attribute name for the {@code UserExpireBiz}.
+	 * The model attribute name for the {@link UserExpireBiz}.
 	 * 
 	 * @since 1.1
 	 */
 	public static final String EXPIRE_BIZ_ATTRIBUTE = "expireBiz";
 
-	/** The model attribute name for the {@code UserExportBiz}. */
+	/** The model attribute name for the {@link UserExportBiz}. */
 	public static final String EXPORT_BIZ_ATTRIBUTE = "exportBiz";
 
 	/**
-	 * The model attribute name for the {@code DatumImportBiz}.
+	 * The model attribute name for the {@link DatumImportBiz}.
 	 * 
 	 * @since 1.2
 	 */
 	public static final String IMPORT_BIZ_ATTRIBUTE = "importBiz";
+
+	/**
+	 * The model attribute name for the {@link UserEventHookBiz}.
+	 * 
+	 * @since 1.3
+	 */
+	public static final String EVENT_HOOK_BIZ_ATTRIBUTE = "eventHookBiz";
 
 	@Resource(name = "expireBiz")
 	private OptionalService<UserExpireBiz> expireBiz;
@@ -65,6 +73,9 @@ public class GlobalServiceControllerAdvice {
 
 	@Resource(name = "importBiz")
 	private OptionalService<DatumImportBiz> importBiz;
+
+	@Resource(name = "eventHookBiz")
+	private OptionalService<UserEventHookBiz> eventHookBiz;
 
 	@ModelAttribute(value = EXPORT_BIZ_ATTRIBUTE)
 	public UserExportBiz exportBiz() {
@@ -93,6 +104,18 @@ public class GlobalServiceControllerAdvice {
 	@ModelAttribute(value = IMPORT_BIZ_ATTRIBUTE)
 	public DatumImportBiz importBiz() {
 		final DatumImportBiz biz = (importBiz != null ? importBiz.service() : null);
+		return biz;
+	}
+
+	/**
+	 * The event hook service.
+	 * 
+	 * @return the service
+	 * @since 1.3
+	 */
+	@ModelAttribute(value = EVENT_HOOK_BIZ_ATTRIBUTE)
+	public UserEventHookBiz eventHookBiz() {
+		final UserEventHookBiz biz = (eventHookBiz != null ? eventHookBiz.service() : null);
 		return biz;
 	}
 

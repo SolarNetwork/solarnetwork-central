@@ -8,7 +8,13 @@
 	<!-- Published Services -->
 
 	<service interface="net.solarnetwork.central.user.event.biz.UserNodeEventHookService">
-		<bean class="net.solarnetwork.central.user.event.noop.NoopUserNodeEventHookService"/>
+		<bean class="net.solarnetwork.central.user.event.noop.NoopUserNodeEventHookService">
+			<property name="messageSource">
+				<bean class="org.springframework.context.support.ResourceBundleMessageSource">
+					<property name="basename" value="net.solarnetwork.central.user.event.noop.NoopUserNodeEventHookService"/>
+				</bean>
+			</property>
+		</bean>
 	</service>
 
 </blueprint>

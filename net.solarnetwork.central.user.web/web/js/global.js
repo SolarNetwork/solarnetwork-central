@@ -139,6 +139,19 @@ SolarReg.storeServiceConfiguration = function storeServiceConfiguration(config, 
 	configurations.push(config);
 };
 
+/**
+ * Update counter elements with a `listCount` class with the count of items in an array.
+ * 
+ * @param {jQuery} container the element to search for `.listCount` elements in
+ * @param {Array} configurations the array whose lenght to use
+ */
+SolarReg.populateListCount = function populateListCount(container, configurations) {
+	if ( !container ) {
+		return;
+	}
+	container.closest('section').find('.listCount').text(
+		Array.isArray(configurations) ? configurations.length : 0);
+}
 
 $(document).ready(function() {
 	$('body').on('hidden', '.modal.dynamic', function () {

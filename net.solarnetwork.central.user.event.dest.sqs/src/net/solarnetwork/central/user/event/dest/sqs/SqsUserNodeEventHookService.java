@@ -114,7 +114,7 @@ public class SqsUserNodeEventHookService extends
 			}
 
 			SqsDestination dest = getDestination(props);
-			Map<String, Object> msg = event.asMessageData();
+			Map<String, Object> msg = event.asMessageData(config.getTopic());
 			dest.sendJsonMessage(msg);
 
 			sqsStats.incrementAndGet(NodeEventsPublished);

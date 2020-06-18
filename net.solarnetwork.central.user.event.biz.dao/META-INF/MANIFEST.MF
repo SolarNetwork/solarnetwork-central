@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central DAO User Event Biz
 Bundle-SymbolicName: net.solarnetwork.central.user.event.biz.dao
-Bundle-Version: 1.1.0
+Bundle-Version: 1.1.1
 Automatic-Module-Name: net.solarnetwork.central.user.event.biz.dao
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
@@ -19,6 +19,7 @@ Import-Package:
  net.solarnetwork.dao;version="[1.0,2.0)",
  net.solarnetwork.domain;version="[1.21,2.0)",
  net.solarnetwork.settings;version="[1.2,2.0)",
+ net.solarnetwork.settings.support;version="[1.2,2.0)",
  net.solarnetwork.util;version="[1.43,2.0)",
  org.aopalliance.aop;version="[1.0,2.0)",
  org.slf4j;version="[1.7,2.0)",

@@ -39,7 +39,9 @@
 					<li class="dropdown ${navloc == 'data' 
 							or navloc == 'data-insight' 
 							or navloc == 'expire'
-							or navloc == 'export' ? 'active' : ''}">
+							or navloc == 'export' 
+							or navloc == 'node-event'
+							? 'active' : ''}">
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
 							<fmt:message key='nav.label.data'/>
 							${' '}<b class="caret"></b>
@@ -64,6 +66,13 @@
 							<c:if test="${not empty exportBiz}">
 								<li ${navloc == 'export' ? 'class="active"' : ''}>
 									<a href="<c:url value='/u/sec/export'/>"><fmt:message key="link.export"/></a>
+								</li>
+							</c:if>
+							</sec:authorize>
+							<sec:authorize access="hasRole('ROLE_EVENT')">
+							<c:if test="${not empty eventHookBiz}">
+								<li ${navloc == 'node-event' ? 'class="active"' : ''}>
+									<a href="<c:url value='/u/sec/event/node'/>"><fmt:message key="link.node-event"/></a>
 								</li>
 							</c:if>
 							</sec:authorize>
