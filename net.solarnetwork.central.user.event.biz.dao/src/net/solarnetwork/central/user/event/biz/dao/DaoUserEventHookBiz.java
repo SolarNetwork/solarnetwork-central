@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataRetrievalFailureException;
@@ -41,7 +42,11 @@ import net.solarnetwork.central.user.event.dao.UserNodeEventHookConfigurationDao
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.SettingSpecifierProvider;
+import net.solarnetwork.settings.support.SettingUtils;
 import net.solarnetwork.util.OptionalServiceCollection;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * DAO implementation of {@link UserEventHookBiz}.
@@ -152,11 +157,69 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
 	}
 
+	private Iterable<? extends SettingSpecifierProvider> providersForServiceProperties(
+			Class<? extends UserRelatedIdentifiableConfiguration> configurationClass) {
+		if ( UserNodeEventHookConfiguration.class.isAssignableFrom(configurationClass) ) {
+			return availableNodeEventHookServices();
+		}
+		return Collections.emptyList();
+	}
+
+	private List<SettingSpecifier> settingsForService(String identifier,
+			Iterable<? extends SettingSpecifierProvider> providers) {
+		if ( identifier != null && providers != null ) {
+			for ( SettingSpecifierProvider provider : providers ) {
+				if ( identifier.equals(provider.getSettingUID()) ) {
+					return provider.getSettingSpecifiers();
+				}
+			}
+		}
+		return Collections.emptyList();
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T extends UserRelatedIdentifiableConfiguration> T mergeServiceProperties(T entity) {
+		if ( entity == null || entity.getId() == null || entity.getId().getId() == null ) {
+			return entity;
+		}
+		Map<String, ?> serviceProps = entity.getServiceProperties();
+		if ( serviceProps == null || serviceProps.isEmpty() ) {
+			return entity;
+		}
+		UserRelatedIdentifiableConfiguration existing = configurationForUser(entity.getUserId(),
+				entity.getClass(), entity.getId().getId());
+		if ( existing == null ) {
+			return entity;
+		}
+		Map<String, ?> existingServiceProps = existing.getServiceProperties();
+		if ( existingServiceProps == null || existingServiceProps.isEmpty() ) {
+			return entity;
+		}
+		Iterable<? extends SettingSpecifierProvider> providers = providersForServiceProperties(
+				entity.getClass());
+		List<SettingSpecifier> settings = settingsForService(entity.getServiceIdentifier(), providers);
+		Set<String> secureEntrySettings = SettingUtils.secureKeys(settings);
+		for ( String secureKey : secureEntrySettings ) {
+			Object val = serviceProps.get(secureKey);
+			String secureVal = (val != null ? val.toString() : "");
+			if ( secureVal.isEmpty()
+					|| StringUtils.DIGEST_PREFIX_PATTERN.matcher(secureVal).matches() ) {
+				// secure value is provided that is empty or is already a digest value; do not change existing value
+				Object existingVal = existingServiceProps.get(secureKey);
+				if ( existingVal != null ) {
+					((Map<String, Object>) serviceProps).put(secureKey, existingVal);
+				}
+			}
+		}
+		return entity;
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public UserLongPK saveConfiguration(UserRelatedIdentifiableConfiguration configuration) {
 		if ( configuration instanceof UserNodeEventHookConfiguration ) {
-			return nodeEventHookConfigurationDao.save((UserNodeEventHookConfiguration) configuration);
+			return nodeEventHookConfigurationDao
+					.save((UserNodeEventHookConfiguration) mergeServiceProperties(configuration));
 		}
 		throw new IllegalArgumentException("Unsupported configuration type: " + configuration);
 	}

@@ -29,6 +29,7 @@ import static java.util.stream.Collectors.toList;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -36,8 +37,10 @@ import static org.junit.Assert.assertThat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 import org.easymock.EasyMock;
@@ -48,10 +51,13 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import net.solarnetwork.central.datum.biz.DatumAppEventProducer;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
 import net.solarnetwork.central.user.event.biz.dao.DaoUserEventHookBiz;
 import net.solarnetwork.central.user.event.dao.UserNodeEventHookConfigurationDao;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.util.StaticOptionalServiceCollection;
 
 /**
@@ -268,6 +274,51 @@ public class DaoUserEventHookBizTests {
 
 		// THEN
 		assertThat("PK result matches", result, sameInstance(pk));
+	}
+
+	@Test
+	public void updateConfiguration_withSecureServiceProperty_unchanged() {
+		// GIVEN
+		final String serviceId = "test.service";
+		final Long userId = 1L;
+		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(2L, userId, now());
+		Map<String, Object> confProps = new LinkedHashMap<>(2);
+		confProps.put("name", "foo");
+		confProps.put("password", "");
+		conf.setServiceProps(confProps);
+		conf.setServiceIdentifier(serviceId);
+
+		UserNodeEventHookConfiguration existing = new UserNodeEventHookConfiguration(conf.getId(),
+				conf.getCreated());
+		Map<String, Object> existingProps = new LinkedHashMap<>(2);
+		existingProps.put("name", "bar");
+		existingProps.put("password", "existing.secret");
+		existing.setServiceProps(existingProps);
+
+		// query for the hook service settings to look for secure fields
+		UserNodeEventHookService hookService = EasyMock.createMock(UserNodeEventHookService.class);
+		biz.setNodeEventHookServices(new StaticOptionalServiceCollection<>(singleton(hookService)));
+		expect(hookService.getSettingUID()).andReturn(serviceId);
+		expect(hookService.getSettingSpecifiers()).andReturn(
+				asList((SettingSpecifier) new BasicTextFieldSettingSpecifier("name", "", false),
+						(SettingSpecifier) new BasicTextFieldSettingSpecifier("password", "", true)));
+
+		// get the existing entity, to pull out current secure field values
+		expect(nodeEventHookConfigurationDao.get(conf.getId())).andReturn(existing);
+
+		// the conf service properties map should have been populated with the existing password value
+		expect(nodeEventHookConfigurationDao.save(conf)).andReturn(conf.getId());
+
+		// WHEN
+		replayAll(hookService);
+		UserLongPK result = biz.saveConfiguration(conf);
+
+		// THEN
+		assertThat("PK result matches", result, sameInstance(conf.getId()));
+		assertThat("Non-secure setting value preserved in update entity", confProps,
+				hasEntry("name", "foo"));
+		assertThat("Secure setting value extracted from existing entity", confProps,
+				hasEntry("password", "existing.secret"));
 	}
 
 	@Test
