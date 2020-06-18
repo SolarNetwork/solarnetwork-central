@@ -67,6 +67,13 @@
 								</li>
 							</c:if>
 							</sec:authorize>
+							<sec:authorize access="hasRole('ROLE_EVENT')">
+							<c:if test="${not empty eventHookBiz}">
+								<li ${navloc == 'node-event' ? 'class="active"' : ''}>
+									<a href="<c:url value='/u/sec/event/node'/>"><fmt:message key="link.node-event"/></a>
+								</li>
+							</c:if>
+							</sec:authorize>
 						</ul>
 					</li>
 					<sec:authorize access="hasRole('ROLE_BILLING')">

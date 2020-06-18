@@ -28,4 +28,5 @@
 	/js/import.js
 	/js/export.js
 	/js/expire.js
+	/js/node-event.js
 </pack:script>

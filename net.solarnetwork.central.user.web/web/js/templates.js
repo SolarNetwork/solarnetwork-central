@@ -26,7 +26,12 @@ SolarReg.Templates.populateServiceSelectOptions = function populateServiceSelect
 	$(selector).empty().each(function() {
 		var select = this;
 		services.forEach(function(service) {
-			select.add(new Option(service.localizedName || service.name, service.id));
+			var opt = new Option(service.localizedName || service.name, service.id);
+			if ( service.localizedDescription ) {
+				// set title, but strip out HTML tags
+				opt.title = $('<div>'+service.localizedDescription+'</div>').text();
+			}
+			select.add(opt);
 		});
 	});
 	return services;

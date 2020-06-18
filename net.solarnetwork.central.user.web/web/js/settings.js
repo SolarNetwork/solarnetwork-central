@@ -9,19 +9,27 @@ SolarReg.Settings.modalAlertBeforeSelector = '.modal-body:not(.hidden):first > *
  * 
  * @param {HTMLFormElement} form the form to reset
  * @param {jQuery} container a container element of existing list items to delete from, if the form closed after a delete action
+ * @param {Function} [callback] an optional callback that will be invoked with the `id` form element value and a boolean 
+ *                              `deleted flag set to `true` if the form item has been deleted
  */
-SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, container) {
+SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, container, callback) {
 	var id = (form.elements && form.elements['id'] ? form.elements['id'].value : undefined);
-	var f = $(form);
+	var f = $(form),
+		deleted = f.hasClass('deleted');
 	// look if we deleted an item, which will only be true if form in "danger" mode
-	if ( id && container && f.hasClass('deleted') ) {
-		var existing = SolarReg.Templates.findExistingTemplateItem(container, id);
-		if ( existing.length > 0 ) {
-			existing.remove();
-			if ( container.children().length < 1 ) {
-				// empty container; hide it
-				SolarReg.Templates.findConfigurationContainer(container).addClass('hidden');
+	if ( id ) {
+		if ( container && deleted ) {
+			var existing = SolarReg.Templates.findExistingTemplateItem(container, id);
+			if ( existing.length > 0 ) {
+				existing.remove();
+				if ( container.children().length < 1 ) {
+					// empty container; hide it
+					SolarReg.Templates.findConfigurationContainer(container).addClass('hidden');
+				}
 			}
+		}
+		if ( callback ) {
+			callback(id, deleted);
 		}
 	}
 
