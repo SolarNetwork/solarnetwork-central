@@ -70,11 +70,16 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 	/**
 	 * Get this event data as a map, suitable for posting as a message body.
 	 * 
+	 * @param topic
+	 *        the topic to include, or {@literal null} to omit
 	 * @return the message data, never {@literal null}
 	 * @since 1.1
 	 */
-	public Map<String, Object> asMessageData() {
+	public Map<String, Object> asMessageData(String topic) {
 		Map<String, Object> msg = new LinkedHashMap<>(8);
+		if ( topic != null ) {
+			msg.put("topic", topic);
+		}
 		msg.put("userId", userId);
 		msg.put("hookId", hookId);
 		msg.put("nodeId", nodeId);

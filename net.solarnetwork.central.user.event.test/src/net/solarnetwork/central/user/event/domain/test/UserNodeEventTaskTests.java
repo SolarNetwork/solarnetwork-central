@@ -51,10 +51,12 @@ public class UserNodeEventTaskTests {
 		UserNodeEventTask task = new UserNodeEventTask();
 
 		// WHEN
-		Map<String, Object> msg = task.asMessageData();
+		final String topic = "test.topic";
+		Map<String, Object> msg = task.asMessageData(topic);
 
 		// THEN
-		assertThat("Message created", msg.keySet(), hasSize(4));
+		assertThat("Message created", msg.keySet(), hasSize(5));
+		assertThat("Topic", msg, hasEntry("topic", topic));
 		assertThat("User ID", msg, hasEntry("userId", null));
 		assertThat("Hook ID", msg, hasEntry("hookId", null));
 		assertThat("Node ID", msg, hasEntry("nodeId", null));
@@ -68,13 +70,15 @@ public class UserNodeEventTaskTests {
 		task.setUserId(-1L);
 		task.setHookId(-2L);
 		task.setNodeId(-3L);
-		task.setSourceId("test.sourceI");
+		task.setSourceId("test.source");
 
 		// WHEN
-		Map<String, Object> msg = task.asMessageData();
+		final String topic = "test.topic";
+		Map<String, Object> msg = task.asMessageData(topic);
 
 		// THEN
-		assertThat("Message created", msg.keySet(), hasSize(4));
+		assertThat("Message created", msg.keySet(), hasSize(5));
+		assertThat("Topic", msg, hasEntry("topic", topic));
 		assertThat("User ID", msg, hasEntry("userId", task.getUserId()));
 		assertThat("Hook ID", msg, hasEntry("hookId", task.getHookId()));
 		assertThat("Node ID", msg, hasEntry("nodeId", task.getNodeId()));
@@ -96,10 +100,12 @@ public class UserNodeEventTaskTests {
 		task.setTaskProperties(taskProps);
 
 		// WHEN
-		Map<String, Object> msg = task.asMessageData();
+		final String topic = "test.topic";
+		Map<String, Object> msg = task.asMessageData(topic);
 
 		// THEN
-		assertThat("Message created", msg.keySet(), hasSize(6));
+		assertThat("Message created", msg.keySet(), hasSize(7));
+		assertThat("Topic", msg, hasEntry("topic", topic));
 		assertThat("User ID", msg, hasEntry("userId", task.getUserId()));
 		assertThat("Hook ID", msg, hasEntry("hookId", task.getHookId()));
 		assertThat("Node ID", msg, hasEntry("nodeId", task.getNodeId()));
@@ -124,11 +130,12 @@ public class UserNodeEventTaskTests {
 		task.setTaskProperties(taskProps);
 
 		// WHEN
-		Map<String, Object> msg = task.asMessageData();
+		final String topic = "test.topic";
+		Map<String, Object> msg = task.asMessageData(topic);
 		String json = JsonUtils.getJSONString(msg, null);
 
 		// THEN
 		assertThat("JSON created", json, equalTo(
-				"{\"userId\":-1,\"hookId\":-2,\"nodeId\":-3,\"sourceId\":\"test.source\",\"ts\":\"2020-06-01 02:03:04.567Z\"}"));
+				"{\"topic\":\"test.topic\",\"userId\":-1,\"hookId\":-2,\"nodeId\":-3,\"sourceId\":\"test.source\",\"ts\":\"2020-06-01 02:03:04.567Z\"}"));
 	}
 }
