@@ -162,7 +162,7 @@ SolarReg.Settings.serviceConfigurationItemServiceProperties = function serviceCo
         serviceProps = config.serviceProperties,
         result = {};
 
-    if ( !Array.isArray(service.settingSpecifiers) ) {
+    if ( !(service && Array.isArray(service.settingSpecifiers)) ) {
         return null;
     }
     service.settingSpecifiers.forEach(function(setting) {
