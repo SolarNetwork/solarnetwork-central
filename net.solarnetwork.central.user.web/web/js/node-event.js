@@ -7,10 +7,6 @@ $(document).ready(function() {
 
 	var settingTemplates = $('#node-event-setting-templates');
 
-	function populateConfigListCount(container, configs) {
-		container.closest('section').find('.listCount').text(configs.length);
-	}
-		
 	function populateHookConfigs(configs, preserve) {
 		configs = Array.isArray(configs) ? configs : [];
 		var container = $('#node-event-hook-list-container');
@@ -28,7 +24,7 @@ $(document).ready(function() {
 			return model;
 		});
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
-		populateConfigListCount(container, hookConfigs);
+		SolarReg.populateListCount(container, hookConfigs);
 		return configs;
 	}
 	
@@ -88,7 +84,7 @@ $(document).ready(function() {
 				if ( idx >= 0 ) {
 					hookConfigs.splice(idx, 1);
 				}
-				populateConfigListCount($('#node-event-hook-list-container'), hookConfigs);
+				SolarReg.populateListCount($('#node-event-hook-list-container'), hookConfigs);
 			}
 		});
 	});
