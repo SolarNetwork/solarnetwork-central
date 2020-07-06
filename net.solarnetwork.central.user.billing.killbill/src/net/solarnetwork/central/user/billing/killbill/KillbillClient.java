@@ -135,7 +135,8 @@ public interface KillbillClient {
 	 * @param account
 	 *        the account to update
 	 * @param requestedDate
-	 *        the request date, or {@code null} for the current date
+	 *        the request date for the bundle to be created as of, or
+	 *        {@code null} for the current date
 	 * @param info
 	 *        the bundle info to create
 	 * @return the subscription ID
@@ -150,7 +151,8 @@ public interface KillbillClient {
 	 * @param bundleId
 	 *        the bundle ID to add the subscription to
 	 * @param requestedDate
-	 *        the request date, or {@code null} for the current date
+	 *        the request date for the subscription to start, or {@code null}
+	 *        for the current date
 	 * @param subscription
 	 *        the subscription to add
 	 * @return the subscription ID
