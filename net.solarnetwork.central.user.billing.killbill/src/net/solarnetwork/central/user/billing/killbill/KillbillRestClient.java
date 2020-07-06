@@ -309,7 +309,8 @@ public class KillbillRestClient implements KillbillClient {
 			data = new BundleSubscription(b, s);
 		}
 		if ( requestedDate != null ) {
-			builder.queryParam(ENTITLEMENT_DATE_PARAM, ISO_DATE_FORMATTER.print(requestedDate));
+			String dateStr = ISO_DATE_FORMATTER.print(requestedDate);
+			builder.queryParam(ENTITLEMENT_DATE_PARAM, dateStr);
 		}
 		URI uri = builder.build().toUri();
 		URI loc = client.postForLocation(uri, data);
@@ -321,7 +322,8 @@ public class KillbillRestClient implements KillbillClient {
 			Subscription subscription) {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/subscriptions"));
 		if ( requestedDate != null ) {
-			builder.queryParam(ENTITLEMENT_DATE_PARAM, ISO_DATE_FORMATTER.print(requestedDate));
+			String dateStr = ISO_DATE_FORMATTER.print(requestedDate);
+			builder.queryParam(ENTITLEMENT_DATE_PARAM, dateStr);
 		}
 		Bundle bundle = new Bundle();
 		bundle.setBundleId(bundleId);
@@ -331,7 +333,7 @@ public class KillbillRestClient implements KillbillClient {
 			s.setProductCategory(null);
 		}
 		URI uri = builder.build().toUri();
-		URI loc = client.postForLocation(uri, new BundleSubscription(bundle, subscription));
+		URI loc = client.postForLocation(uri, new BundleSubscription(bundle, s));
 		return idFromLocation(loc);
 	}
 
