@@ -26,7 +26,7 @@ package net.solarnetwork.central.user.billing.killbill.domain;
  * Killbill account info.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class Account {
 
@@ -40,7 +40,6 @@ public class Account {
 	private String locale;
 	private String paymentMethodId;
 	private Integer billCycleDayLocal;
-	private Boolean isNotifiedForInvoices;
 
 	/**
 	 * Default constructor.
@@ -232,9 +231,11 @@ public class Account {
 	 * Get the invoice notification flag.
 	 * 
 	 * @return the notifiedForInvoices
+	 * @deprecated since 1.1, no longer used
 	 */
+	@Deprecated
 	public Boolean getIsNotifiedForInvoices() {
-		return isNotifiedForInvoices;
+		return null;
 	}
 
 	/**
@@ -242,9 +243,11 @@ public class Account {
 	 * 
 	 * @param notifiedForInvoices
 	 *        the notifiedForInvoices to set
+	 * @deprecated since 1.1, no longer used
 	 */
+	@Deprecated
 	public void setIsNotifiedForInvoices(Boolean notifiedForInvoices) {
-		this.isNotifiedForInvoices = notifiedForInvoices;
+		// ignored
 	}
 
 }

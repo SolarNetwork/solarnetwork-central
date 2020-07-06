@@ -34,11 +34,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * A subscription.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "subscriptionId", "productCategory", "productName", "planName", "billCycleDayLocal",
 		"phaseType", "customFields" })
-public class Subscription {
+public class Subscription implements Cloneable {
 
 	public static final String BASE_PRODUCT_CATEGORY = "BASE";
 
@@ -81,6 +81,22 @@ public class Subscription {
 	public Subscription(String subscriptionId) {
 		super();
 		this.subscriptionId = subscriptionId;
+	}
+
+	/**
+	 * Clone the subscription.
+	 * 
+	 * {@inheritDoc}
+	 * 
+	 * @since 1.1
+	 */
+	@Override
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch ( CloneNotSupportedException e ) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**

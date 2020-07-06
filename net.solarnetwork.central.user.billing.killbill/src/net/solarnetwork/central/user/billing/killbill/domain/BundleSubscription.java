@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.killbill.domain;
 import java.util.ArrayList;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
@@ -32,9 +33,9 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
  * A bundle and subscription combo, for setting up a new bundle.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-@JsonPropertyOrder({ "accountId", "bundleId", "externalKey" })
+@JsonPropertyOrder({ "accountId", "bundleId", "bundleExternalKey" })
 public class BundleSubscription {
 
 	private final Bundle bundle;
@@ -59,11 +60,15 @@ public class BundleSubscription {
 			for ( Subscription sub : bundle.getSubscriptions() ) {
 				Bundle b = (Bundle) bundle.clone();
 				b.setAccountId(accountId);
+				Subscription s = (Subscription) sub.clone();
+				if ( s.getPlanName() != null ) {
+					s.setProductCategory(null);
+				}
 				if ( !result.isEmpty() ) {
 					// only the first can have an external key because applied at bundle level
 					b.setExternalKey(null);
 				}
-				result.add(new BundleSubscription(b, sub));
+				result.add(new BundleSubscription(b, s));
 			}
 		}
 		return result;
@@ -143,6 +148,7 @@ public class BundleSubscription {
 	 * 
 	 * @return the bundle external key
 	 */
+	@JsonProperty("bundleExternalKey")
 	public String getExternalKey() {
 		return bundle.getExternalKey();
 	}

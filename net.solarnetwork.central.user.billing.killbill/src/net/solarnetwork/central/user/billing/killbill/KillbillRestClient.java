@@ -78,8 +78,12 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
 /**
  * REST implementation of {@link KillbillClient}.
  * 
+ * <p>
+ * Requires Killbill 0.22.
+ * </p>
+ * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class KillbillRestClient implements KillbillClient {
 
@@ -89,6 +93,8 @@ public class KillbillRestClient implements KillbillClient {
 	public static final String HEADER_PAGINATION_OFFSET = "X-Killbill-Pagination-CurrentOffset";
 	public static final String HEADER_PAGINATION_TOTAL_COUNT = "X-Killbill-Pagination-TotalNbRecords";
 	public static final String HEADER_PAGINATION_MAX_COUNT = "X-Killbill-Pagination-MaxNbRecords";
+
+	private static final String ENTITLEMENT_DATE_PARAM = "entitlementDate";
 
 	private static final ParameterizedTypeReference<List<Bundle>> BUNDLE_LIST_TYPE = new ParameterizedTypeReference<List<Bundle>>() {
 	};
@@ -290,16 +296,20 @@ public class KillbillRestClient implements KillbillClient {
 		Object data;
 		if ( info.getSubscriptions().size() > 1 ) {
 			builder = UriComponentsBuilder
-					.fromHttpUrl(kbUrl("/1.0/kb/subscriptions/createEntitlementWithAddOns"));
+					.fromHttpUrl(kbUrl("/1.0/kb/subscriptions/createSubscriptionWithAddOns"));
 			data = BundleSubscription.entitlementsForBundle(info, account.getAccountId());
 		} else {
 			builder = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/subscriptions"));
 			Bundle b = (Bundle) info.clone();
 			b.setAccountId(account.getAccountId());
-			data = new BundleSubscription(b, b.getSubscriptions().get(0));
+			Subscription s = (Subscription) b.getSubscriptions().get(0).clone();
+			if ( s.getPlanName() != null ) {
+				s.setProductCategory(null);
+			}
+			data = new BundleSubscription(b, s);
 		}
 		if ( requestedDate != null ) {
-			builder.queryParam("requestedDate", ISO_DATE_FORMATTER.print(requestedDate));
+			builder.queryParam(ENTITLEMENT_DATE_PARAM, ISO_DATE_FORMATTER.print(requestedDate));
 		}
 		URI uri = builder.build().toUri();
 		URI loc = client.postForLocation(uri, data);
@@ -311,11 +321,15 @@ public class KillbillRestClient implements KillbillClient {
 			Subscription subscription) {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/subscriptions"));
 		if ( requestedDate != null ) {
-			builder.queryParam("requestedDate", ISO_DATE_FORMATTER.print(requestedDate));
+			builder.queryParam(ENTITLEMENT_DATE_PARAM, ISO_DATE_FORMATTER.print(requestedDate));
 		}
 		Bundle bundle = new Bundle();
 		bundle.setBundleId(bundleId);
 		bundle.setAccountId(account.getAccountId());
+		Subscription s = (Subscription) subscription.clone();
+		if ( s.getPlanName() != null ) {
+			s.setProductCategory(null);
+		}
 		URI uri = builder.build().toUri();
 		URI loc = client.postForLocation(uri, new BundleSubscription(bundle, subscription));
 		return idFromLocation(loc);
@@ -525,10 +539,10 @@ public class KillbillRestClient implements KillbillClient {
 	@Override
 	public void addTagsToAccount(Account account, Set<String> tagIds) {
 		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
-		String tagList = tagIds.stream().collect(Collectors.joining(","));
+		List<String> tagIdList = tagIds.stream().collect(Collectors.toList());
 		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts/{accountId}/tags"))
-				.queryParam("tagList", tagList).buildAndExpand(uriVariables).toUri();
-		client.postForObject(uri, null, Void.class);
+				.buildAndExpand(uriVariables).toUri();
+		client.postForObject(uri, tagIdList, Void.class);
 
 	}
 
@@ -537,7 +551,7 @@ public class KillbillRestClient implements KillbillClient {
 		Map<String, Object> uriVariables = Collections.singletonMap("accountId", account.getAccountId());
 		String tagList = tagIds.stream().collect(Collectors.joining(","));
 		URI uri = UriComponentsBuilder.fromHttpUrl(kbUrl("/1.0/kb/accounts/{accountId}/tags"))
-				.queryParam("tagList", tagList).buildAndExpand(uriVariables).toUri();
+				.queryParam("tagDef", tagList).buildAndExpand(uriVariables).toUri();
 		client.delete(uri);
 	}
 
