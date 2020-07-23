@@ -21,5 +21,17 @@
 	<select id="test-get-json-map" resultMap="json-map-bean">
 		SELECT '{"foo":"bar"}'::json::text AS jdata
 	</select>
+	
+	<resultMap type="net.solarnetwork.central.dao.mybatis.type.test.BeanWithArrays" id="bean-with-arrays">
+		<result property="bigDecimals" column="big_decimals" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+	</resultMap>
+	
+	<select id="test-get-numeric-array" resultMap="bean-with-arrays">
+		SELECT ARRAY[1.234::NUMERIC, 2.345::NUMERIC, 3.456::NUMERIC] AS big_decimals
+	</select>
+
+	<select id="test-set-numeric-array" parameterType="net.solarnetwork.central.dao.mybatis.type.test.BeanWithArrays" resultMap="bean-with-arrays">
+		SELECT #{bigDecimals,typeHandler=net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler}::numeric[] AS big_decimals
+	</select>
 
 </mapper>
