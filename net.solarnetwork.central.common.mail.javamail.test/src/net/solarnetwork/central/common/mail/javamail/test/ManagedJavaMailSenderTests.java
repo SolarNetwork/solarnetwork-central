@@ -22,20 +22,11 @@
 
 package net.solarnetwork.central.common.mail.javamail.test;
 
-import java.io.BufferedInputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.springframework.mail.SimpleMailMessage;
 import net.solarnetwork.central.common.mail.javamail.ManagedJavaMailSender;
 import net.solarnetwork.central.test.SystemPropertyMatchTestRule;
-import net.solarnetwork.util.ClassUtils;
 
 /**
  * Test cases for the {@link ManagedJavaMailSender} class.
@@ -43,36 +34,10 @@ import net.solarnetwork.util.ClassUtils;
  * @author matt
  * @version 1.0
  */
-public class ManagedJavaMailSenderTests {
+public class ManagedJavaMailSenderTests extends AbstractJavaMailTestSupport {
 
 	@ClassRule
-	public static SystemPropertyMatchTestRule DOGTAG_RULE = new SystemPropertyMatchTestRule("smtp");
-
-	private ManagedJavaMailSender sender;
-	private Properties testProps;
-
-	@Before
-	public void setup() throws Exception {
-		Properties props = new Properties();
-		try (Reader in = new InputStreamReader(
-				new BufferedInputStream(
-						getClass().getClassLoader().getResourceAsStream("test-mail.properties")),
-				"UTF-8")) {
-			props.load(in);
-		}
-		sender = new ManagedJavaMailSender();
-		Map<String, Object> p = new LinkedHashMap<>();
-		for ( Entry<Object, Object> me : props.entrySet() ) {
-			p.put(me.getKey().toString(), me.getValue());
-		}
-		ClassUtils.setBeanProperties(sender, p);
-
-		testProps = new Properties();
-		try (Reader in = new InputStreamReader(new BufferedInputStream(
-				getClass().getClassLoader().getResourceAsStream("test.properties")), "UTF-8")) {
-			testProps.load(in);
-		}
-	}
+	public static SystemPropertyMatchTestRule SMTP_RULE = new SystemPropertyMatchTestRule("smtp");
 
 	@Test
 	public void sendSimpleMail() {

@@ -2,12 +2,15 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Mail Mock
 Bundle-SymbolicName: net.solarnetwork.central.common.mail.mock
-Bundle-Version: 1.3.0
+Bundle-Version: 1.4.0
 Bundle-Vendor: SolarNetwork
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: 
- net.solarnetwork.central.mail.mock;version="1.1.0"
+ net.solarnetwork.central.mail.mock;version="1.2.0"
 Import-Package: 
+ javax.mail;version="[1.4,2.0)",
+ javax.mail.internet;version="[1.4,2.0)",
  org.slf4j;version="[1.7,2.0)",
  org.springframework.core;version="[4.2,5.0)",
- org.springframework.mail;version="[4.2,5.0)"
+ org.springframework.mail;version="[4.2,5.0)",
+ org.springframework.mail.javamail;version="[4.2,5.0)"

@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.mail.support;
 
+import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
-import net.solarnetwork.central.mail.MessageTemplateDataSource;
+import org.apache.commons.lang3.text.WordUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
+import net.solarnetwork.central.mail.MessageTemplateDataSource;
+import net.solarnetwork.util.StringMerger;
 
 /**
  * {@link MessageTemplateDataSource} based on a locale-specific classpath
@@ -50,12 +53,12 @@ import org.springframework.util.StringUtils;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class ClasspathResourceMessageTemplateDataSource implements MessageTemplateDataSource {
+public class ClasspathResourceMessageTemplateDataSource extends SimpleMessageDataSource
+		implements MessageTemplateDataSource {
 
 	private final Locale locale;
-	private final String subject;
 	private final String resource;
 	private final Map<String, ?> model;
 	private ClassLoader classLoader;
@@ -75,8 +78,8 @@ public class ClasspathResourceMessageTemplateDataSource implements MessageTempla
 	 */
 	public ClasspathResourceMessageTemplateDataSource(Locale locale, String subject, String resource,
 			Map<String, ?> model) {
+		super(subject, null);
 		this.locale = locale;
-		this.subject = subject;
 		this.resource = resource;
 		this.model = model;
 	}
@@ -118,8 +121,30 @@ public class ClasspathResourceMessageTemplateDataSource implements MessageTempla
 	}
 
 	@Override
-	public String getSubject() {
-		return subject;
+	public String getBody() {
+		try {
+			String msgText = StringMerger.mergeResource(getMessageTemplate(), getModel());
+			int wrapColumn = (getWordWrapCharacterIndex() != null
+					? getWordWrapCharacterIndex().intValue()
+					: 0);
+			if ( wrapColumn > 0 ) {
+				// WordUtils doesn't preserve paragraphs, so first split text into paragraph strings and wrap each of those
+				StringBuilder buf = new StringBuilder();
+				String[] paragraphs = msgText.split("\n{2,}");
+				for ( String para : paragraphs ) {
+					if ( buf.length() > 0 ) {
+						buf.append("\n\n");
+					}
+					// we also replace all single \n within the paragraph with spaces, in case the message was already hard-wrapped
+					buf.append(WordUtils.wrap(para.replace("\n", " "), wrapColumn));
+				}
+				msgText = buf.toString();
+			}
+			return msgText;
+		} catch ( IOException e ) {
+			throw new RuntimeException(
+					"Unable to merge resource [" + getMessageTemplate().getFilename() + ']', e);
+		}
 	}
 
 	/**

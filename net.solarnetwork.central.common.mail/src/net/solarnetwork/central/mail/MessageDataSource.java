@@ -1,7 +1,7 @@
 /* ==================================================================
- * MailService.java - Jan 13, 2010 6:11:31 PM
+ * MessageDataSource.java - 27/07/2020 8:42:46 AM
  * 
- * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,22 +22,36 @@
 
 package net.solarnetwork.central.mail;
 
+import org.springframework.core.io.Resource;
+
 /**
- * API for a mail sending service.
+ * API for mail message content.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.5
  */
-public interface MailService {
+public interface MessageDataSource {
 
 	/**
-	 * Send a template-based mail message.
+	 * Get the message subject.
 	 * 
-	 * @param address
-	 *        where to send the mail to
-	 * @param messageDataSource
-	 *        the message data source
+	 * @return the message subject
 	 */
-	void sendMail(MailAddress address, MessageDataSource messageDataSource);
+	String getSubject();
+
+	/**
+	 * Get the message body.
+	 * 
+	 * @return the message body, or {@literal null} if none
+	 */
+	String getBody();
+
+	/**
+	 * Get a collection of message attachments.
+	 * 
+	 * @return the attachments, or {@literal null} if none
+	 */
+	Iterable<Resource> getAttachments();
 
 }

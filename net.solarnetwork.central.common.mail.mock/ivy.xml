@@ -13,6 +13,7 @@
 		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.mail" rev="[1.5,)"/>
     	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
 		<dependency org="org.springframework" name="spring-context-support" rev="4.2.6.RELEASE"/>
     </dependencies>
