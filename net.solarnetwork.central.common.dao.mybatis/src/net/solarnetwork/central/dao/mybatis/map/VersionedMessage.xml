@@ -9,6 +9,21 @@
 	</resultMap>
 	
 	<select id="find-messages" parameterType="map" resultMap="KeyValuePairResult">
+		(
+		SELECT 
+			'version' AS msg_key, to_char(vers at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS msg_val
+		FROM
+			solarcommon.messages
+		WHERE
+			bundle = ANY(#{bundles,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			AND locale = #{locale,javaType=String}
+			AND vers &lt;= #{version,jdbcType=TIMESTAMP}
+		ORDER BY
+			vers DESC
+		LIMIT 1
+		)
+		UNION
+		(
 		SELECT DISTINCT ON (bundle, locale, msg_key)
 			msg_key, msg_val
 		FROM
@@ -19,6 +34,7 @@
 			AND vers &lt;= #{version,jdbcType=TIMESTAMP}
 		ORDER BY
 			bundle, locale, msg_key, vers DESC
+		)
 	</select>
 
 </mapper>

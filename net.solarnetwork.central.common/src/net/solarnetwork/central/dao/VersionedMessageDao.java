@@ -36,6 +36,13 @@ import java.util.Properties;
 public interface VersionedMessageDao {
 
 	/**
+	 * Special property key returned from
+	 * {@link VersionedMessageDao#findMessages(Instant, String[], String)} that
+	 * contains an ISO 8601 timestamp of the resolved messages version.
+	 */
+	String VERSION_KEY = "version";
+
+	/**
 	 * Messages for a set of bundle names and locale, at a specific version.
 	 */
 	class VersionedMessages implements Serializable {
@@ -123,10 +130,16 @@ public interface VersionedMessageDao {
 	/**
 	 * Get all available messages for a specific version.
 	 * 
+	 * <p>
+	 * Note that if any messages are resolved, the
+	 * {@link VersionedMessageDao#VERSION_KEY} value will be populated with the
+	 * overall version of the returned messages.
+	 * </p>
+	 * 
 	 * @param version
 	 * @param bundleNames
 	 * @param locale
-	 * @return
+	 * @return the resolved messages
 	 */
 	Properties findMessages(Instant version, String[] bundleNames, String locale);
 

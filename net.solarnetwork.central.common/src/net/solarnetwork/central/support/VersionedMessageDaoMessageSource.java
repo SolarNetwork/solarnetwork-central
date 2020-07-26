@@ -80,6 +80,36 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 
 	@Override
 	protected MessageFormat resolveCode(String code, Locale locale) {
+		Properties props = propertiesForLocale(locale);
+		if ( props == null ) {
+			return null;
+		}
+
+		String msg = props.getProperty(code);
+		if ( msg == null ) {
+			return null;
+		}
+		return new MessageFormat(msg, locale);
+	}
+
+	private String cacheKey(String locale) {
+		StringBuilder buf = new StringBuilder();
+		for ( String bundleName : bundleNames ) {
+			buf.append(bundleName).append('.');
+		}
+		buf.append(locale).append('.').append(version.toEpochMilli());
+		return buf.toString();
+	}
+
+	/**
+	 * Get a {@link Properties} object of all available messages for a given
+	 * locale.
+	 * 
+	 * @param locale
+	 *        the locale of the messages to get
+	 * @return the properties or {@literal null} if none available
+	 */
+	public Properties propertiesForLocale(Locale locale) {
 		final String origLocaleCode = locale.toString();
 
 		// try full version first
@@ -101,24 +131,7 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 			}
 		}
 
-		if ( props == null ) {
-			return null;
-		}
-
-		String msg = props.getProperty(code);
-		if ( msg == null ) {
-			return null;
-		}
-		return new MessageFormat(msg, locale);
-	}
-
-	private String cacheKey(String locale) {
-		StringBuilder buf = new StringBuilder();
-		for ( String bundleName : bundleNames ) {
-			buf.append(bundleName).append('.');
-		}
-		buf.append(locale).append('.').append(version.toEpochMilli());
-		return buf.toString();
+		return props;
 	}
 
 	private Properties getPropsForLocale(String locale) {

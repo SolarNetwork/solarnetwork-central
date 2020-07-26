@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dao.mybatis.test;
 
 import static java.time.Instant.now;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -30,8 +31,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -49,6 +50,9 @@ import net.solarnetwork.central.dao.mybatis.MyBatisVersionedMessageDao;
  */
 public class MyBatisVersionedMessageDaoTests extends AbstractMyBatisDaoTestSupport {
 
+	;
+
+	private final ZoneId UTC = ZoneId.of("UTC");
 	private MyBatisVersionedMessageDao dao;
 
 	@Before
@@ -116,14 +120,17 @@ public class MyBatisVersionedMessageDaoTests extends AbstractMyBatisDaoTestSuppo
 		Map<String, String> data = new LinkedHashMap<>(4);
 		data.put("hello", "world");
 		data.put("foo", "bar");
-		Instant now = Instant.now();
+		Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 		insertMessages(now, "foo", "en", data);
 
 		// WHEN
 		Properties result = dao.findMessages(now(), new String[] { "foo" }, "en");
 
 		// THEN
-		assertThat("Result matches", result, equalTo(data));
+		Map<String, String> expected = new LinkedHashMap<>(data.size() + 1);
+		expected.put("version", ISO_LOCAL_DATE_TIME.format(now.atZone(UTC)) + "Z");
+		expected.putAll(data);
+		assertThat("Result matches", result, equalTo(expected));
 	}
 
 	@Test
@@ -145,7 +152,10 @@ public class MyBatisVersionedMessageDaoTests extends AbstractMyBatisDaoTestSuppo
 		Properties result = dao.findMessages(now(), new String[] { "foo" }, "en");
 
 		// THEN
-		assertThat("Result matches", result, equalTo(v2Data));
+		Map<String, String> expected = new LinkedHashMap<>(v2Data.size() + 1);
+		expected.put("version", ISO_LOCAL_DATE_TIME.format(v2.atZone(UTC)) + "Z");
+		expected.putAll(v2Data);
+		assertThat("Result matches", result, equalTo(expected));
 	}
 
 	@Test
@@ -168,7 +178,10 @@ public class MyBatisVersionedMessageDaoTests extends AbstractMyBatisDaoTestSuppo
 		Properties result = dao.findMessages(now(), new String[] { "foo" }, "en");
 
 		// THEN
-		assertThat("Result matches", result, equalTo(v2Data));
+		Map<String, String> expected = new LinkedHashMap<>(v2Data.size() + 1);
+		expected.put("version", ISO_LOCAL_DATE_TIME.format(v2.atZone(UTC)) + "Z");
+		expected.putAll(v2Data);
+		assertThat("Result matches", result, equalTo(expected));
 	}
 
 	@Test
@@ -189,9 +202,11 @@ public class MyBatisVersionedMessageDaoTests extends AbstractMyBatisDaoTestSuppo
 		Properties result = dao.findMessages(now(), new String[] { "foo" }, "en");
 
 		// THEN
-		Map<String, String> expectedData = new HashMap<>(v1Data);
-		expectedData.putAll(v2Data);
-		assertThat("Result matches", result, equalTo(expectedData));
+		Map<String, String> expected = new LinkedHashMap<>(v2Data.size() + 1);
+		expected.put("version", ISO_LOCAL_DATE_TIME.format(v2.atZone(UTC)) + "Z");
+		expected.putAll(v1Data);
+		expected.putAll(v2Data);
+		assertThat("Result matches", result, equalTo(expected));
 	}
 
 }
