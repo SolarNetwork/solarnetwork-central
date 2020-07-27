@@ -24,12 +24,15 @@ package net.solarnetwork.central.mail.mock;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.mail.BodyPart;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
@@ -40,6 +43,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMailMessage;
 import org.springframework.mail.javamail.MimeMessagePreparator;
+import org.springframework.util.FileCopyUtils;
 
 /**
  * Mock implementation of Spring's {@link MailSender}.
@@ -97,14 +101,35 @@ public class MockMailSender implements MailSender, JavaMailSender {
 		}
 	}
 
+	private void extractContent(Object content, StringBuilder buf)
+			throws MessagingException, IOException {
+		if ( content instanceof String ) {
+			buf.append(content.toString());
+		} else if ( content instanceof InputStream ) {
+			buf.append(
+					FileCopyUtils.copyToString(new InputStreamReader((InputStream) content, "UTF-8")));
+		} else if ( content instanceof MimeMultipart ) {
+			MimeMultipart multi = (MimeMultipart) content;
+			for ( int i = 0; i < multi.getCount(); i++ ) {
+				BodyPart part = multi.getBodyPart(i);
+				extractContent(part, buf);
+			}
+		} else if ( content instanceof BodyPart ) {
+			BodyPart part = (BodyPart) content;
+			extractContent(part.getContent(), buf);
+		}
+	}
+
 	@Override
 	public void send(MimeMessage mimeMessage) throws MailException {
 		if ( mimeMessage == null ) {
 			return;
 		}
 		try {
-			log.info("MOCK: sending mail from {} to {} with text:\n{}\n", mimeMessage.getFrom(),
-					mimeMessage.getAllRecipients(), mimeMessage.getContent());
+			StringBuilder buf = new StringBuilder();
+			extractContent(mimeMessage.getContent(), buf);
+			log.info("MOCK: sending MIME mail from {} to {} with content:\n{}\n", mimeMessage.getFrom(),
+					mimeMessage.getAllRecipients(), buf.toString());
 		} catch ( IOException | MessagingException e ) {
 			// ignore
 		}
