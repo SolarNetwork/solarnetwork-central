@@ -34,7 +34,7 @@ import java.util.List;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface LocalizedInvoiceInfo {
 
@@ -66,6 +66,15 @@ public interface LocalizedInvoiceInfo {
 	String getLocalizedBalance();
 
 	/**
+	 * Get the total non-tax amount (sum of all non-tax item amounts), as a
+	 * formatted and localized string.
+	 * 
+	 * @return the formatted total non-tax amount
+	 * @since 1.2
+	 */
+	String getLocalizedNonTaxAmount();
+
+	/**
 	 * Get the total tax amount (sum of all tax item amounts), as a formatted
 	 * and localized string.
 	 * 
@@ -80,6 +89,14 @@ public interface LocalizedInvoiceInfo {
 	 * @return the localized items
 	 */
 	List<LocalizedInvoiceItemInfo> getLocalizedInvoiceItems();
+
+	/**
+	 * Get the non-tax localized invoice items.
+	 * 
+	 * @return the non-tax localized items
+	 * @since 1.2
+	 */
+	List<LocalizedInvoiceItemInfo> getLocalizedNonTaxInvoiceItems();
 
 	/**
 	 * Get a set of localized tax invoice items that are grouped by their
