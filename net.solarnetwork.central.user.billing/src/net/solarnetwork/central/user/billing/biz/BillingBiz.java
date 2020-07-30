@@ -57,6 +57,8 @@ public interface BillingBiz {
 	 *        the user ID to get the invoice for
 	 * @param invoiceId
 	 *        the invoice ID to get
+	 * @param locale
+	 *        the desired output locale
 	 * @return the invoice, or {@literal null} if not available
 	 */
 	Invoice getInvoice(Long userId, String invoiceId, Locale locale);

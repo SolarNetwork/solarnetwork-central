@@ -112,7 +112,6 @@ public interface LocalizedInvoiceInfo {
 	 * </p>
 	 * 
 	 * @return tax invoice items grouped by description
-	 * @see #getTaxInvoiceItems()
 	 * @since 1.1
 	 */
 	List<LocalizedInvoiceItemInfo> getLocalizedTaxInvoiceItemsGroupedByDescription();

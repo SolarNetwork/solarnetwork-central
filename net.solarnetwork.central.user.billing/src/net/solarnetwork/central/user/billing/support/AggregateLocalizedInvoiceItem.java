@@ -44,10 +44,9 @@ import net.solarnetwork.javax.money.MoneyUtils;
  * 
  * <p>
  * Unless otherwise documented, the methods of this class delegate to the
- * <b>first</b> invoice item added via
- * {@link #addItem(LocalizedInvoiceItemInfo)}. Documented methods like
- * {@link #getAmount()} return an aggregate value derived from all invoice items
- * added.
+ * <b>first</b> invoice item added via {@link #addItem(InvoiceItem)}. Documented
+ * methods like {@link #getAmount()} return an aggregate value derived from all
+ * invoice items added.
  * </p>
  * 
  * @author matt
@@ -100,8 +99,6 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 	 * 
 	 * @param locale
 	 *        the locale to use for all supplied items
-	 * @param delegate
-	 *        the delegate to handle localized messages
 	 * @return the supplier
 	 */
 	public static Supplier<AggregateLocalizedInvoiceItem> itemOfLocale(Locale locale) {
@@ -132,7 +129,7 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 	 * 
 	 * <p>
 	 * This will return the sum of the amount of all invoice items configured
-	 * via {@link #addItem(ExtendedInvoiceItemFormatter)}.
+	 * via {@link #addItem(InvoiceItem)}.
 	 * </p>
 	 * 
 	 * @return the aggregate amount

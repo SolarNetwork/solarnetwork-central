@@ -83,6 +83,8 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	 *        the item to localize
 	 * @param locale
 	 *        the locale to localize to
+	 * @param localizedDescription
+	 *        the localized description
 	 */
 	public LocalizedInvoiceItem(InvoiceItem item, Locale locale, String localizedDescription) {
 		super();
