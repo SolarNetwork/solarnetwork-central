@@ -137,8 +137,11 @@ public interface VersionedMessageDao {
 	 * </p>
 	 * 
 	 * @param version
+	 *        the maximum version to get messages for
 	 * @param bundleNames
+	 *        the message bundle names to get
 	 * @param locale
+	 *        the desired locale
 	 * @return the resolved messages
 	 */
 	Properties findMessages(Instant version, String[] bundleNames, String locale);
