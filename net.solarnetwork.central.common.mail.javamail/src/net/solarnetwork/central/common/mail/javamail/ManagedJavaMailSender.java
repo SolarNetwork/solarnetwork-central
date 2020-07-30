@@ -25,6 +25,7 @@ package net.solarnetwork.central.common.mail.javamail;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Consumer;
 import javax.activation.FileTypeMap;
 import javax.mail.internet.MimeMessage;
 import org.springframework.mail.MailException;
@@ -138,24 +139,60 @@ public class ManagedJavaMailSender implements JavaMailSender {
 		return delegate.createMimeMessage(contentStream);
 	}
 
+	private void doWithSender(Consumer<JavaMailSender> handler) {
+		ClassLoader oldCCL = Thread.currentThread().getContextClassLoader();
+		Thread.currentThread().setContextClassLoader(javax.mail.Message.class.getClassLoader());
+		try {
+			handler.accept(delegate);
+		} finally {
+			if ( oldCCL != null ) {
+				Thread.currentThread().setContextClassLoader(oldCCL);
+			}
+		}
+	}
+
 	@Override
 	public void send(MimeMessage mimeMessage) throws MailException {
-		delegate.send(mimeMessage);
+		doWithSender(new Consumer<JavaMailSender>() {
+
+			@Override
+			public void accept(JavaMailSender sender) {
+				sender.send(mimeMessage);
+			}
+		});
 	}
 
 	@Override
 	public void send(MimeMessage... mimeMessages) throws MailException {
-		delegate.send(mimeMessages);
+		doWithSender(new Consumer<JavaMailSender>() {
+
+			@Override
+			public void accept(JavaMailSender sender) {
+				sender.send(mimeMessages);
+			}
+		});
 	}
 
 	@Override
 	public void send(MimeMessagePreparator mimeMessagePreparator) throws MailException {
-		delegate.send(mimeMessagePreparator);
+		doWithSender(new Consumer<JavaMailSender>() {
+
+			@Override
+			public void accept(JavaMailSender sender) {
+				sender.send(mimeMessagePreparator);
+			}
+		});
 	}
 
 	@Override
 	public void send(MimeMessagePreparator... mimeMessagePreparators) throws MailException {
-		delegate.send(mimeMessagePreparators);
+		doWithSender(new Consumer<JavaMailSender>() {
+
+			@Override
+			public void accept(JavaMailSender sender) {
+				sender.send(mimeMessagePreparators);
+			}
+		});
 	}
 
 }

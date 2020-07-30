@@ -19,7 +19,6 @@
 		<dependency org="net.solarnetwork.central.test" name="net.solarnetwork.central.test" rev="[2.0,)"/>
 		
 		<!-- Testing support -->
-		
-		<!-- SolarNetwork -->
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.mail" rev="[1.5,)"/>
     </dependencies>
 </ivy-module>

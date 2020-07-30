@@ -18,8 +18,7 @@
 		<dependency org="net.solarnetwork.central.test" name="net.solarnetwork.central.test" rev="[2.0,)"/>
 		
 		<!-- Testing support -->
-		
-		<!-- SolarNetwork -->
-		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.mail.mock" rev="latest.release"/>
+		<dependency org="com.sun.mail" name="javax.mail" rev="1.4.7" />
+		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.mail.mock" rev="[1.4,)"/>
     </dependencies>
 </ivy-module>

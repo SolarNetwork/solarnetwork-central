@@ -62,6 +62,8 @@ public class LocalizedInvoiceItemUsageRecord
 	 *        the item to localize
 	 * @param locale
 	 *        the locale to localize to
+	 * @param localizedUnitType
+	 *        the localized unit type name
 	 */
 	public LocalizedInvoiceItemUsageRecord(InvoiceItemUsageRecord item, Locale locale,
 			String localizedUnitType) {

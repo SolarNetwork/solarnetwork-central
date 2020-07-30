@@ -32,10 +32,6 @@
 	
 	<!-- Published Services -->
 	
-	<!--service ref="hardwareDao" interface="net.solarnetwork.central.dao.HardwareDao"/>
-	
-	<service ref="hardwareControlDao" interface="net.solarnetwork.central.dao.HardwareControlDao"/-->
-	
 	<service ref="networkAssociationDao" interface="net.solarnetwork.central.dao.NetworkAssociationDao" ranking="5"/>
 
 	<service ref="solarLocationDao" interface="net.solarnetwork.central.dao.SolarLocationDao" ranking="5"/>
@@ -43,6 +39,8 @@
 	<service ref="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao" ranking="5"/>
 
 	<service ref="solarNodeMetadataDao" interface="net.solarnetwork.central.dao.SolarNodeMetadataDao" ranking="5"/>
+
+	<service ref="versionedMessageDao" interface="net.solarnetwork.central.dao.VersionedMessageDao" ranking="5"/>
 
 	<service ref="sqlSessionFactory" interface="org.apache.ibatis.session.SqlSessionFactory">
 		<service-properties>
@@ -56,28 +54,24 @@
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="txManager"/>
 
-	<!--bean id="hardwareDao" class="net.solarnetwork.central.dao.mybatis.MyBatisHardwareDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-	
-	<bean id="hardwareControlDao" class="net.solarnetwork.central.dao.mybatis.MyBatisHardwareControlDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean-->
-	
 	<bean id="networkAssociationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisNetworkAssociationDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 
 	<bean id="solarLocationDao" class="net.solarnetwork.central.dao.mybatis.MyBatisSolarLocationDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 	
 	<bean id="solarNodeDao" class="net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 	
 	<bean id="solarNodeMetadataDao" class="net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+	
+	<bean id="versionedMessageDao" class="net.solarnetwork.central.dao.mybatis.MyBatisVersionedMessageDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 	
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
@@ -109,8 +103,20 @@
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNodeMetadata.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/VersionedMessage.xml</value>
 			</list>
 		</property>
+	</bean>
+	
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<argument ref="sqlSessionFactory"/>
+		<argument value="#{T(org.apache.ibatis.session.ExecutorType).SIMPLE}"/>
+		<argument>
+			<bean class="net.solarnetwork.central.dao.mybatis.support.MyBatisExceptionTranslator">
+				<argument ref="dataSource"/>
+				<argument value="true"/>
+			</bean>
+		</argument>
 	</bean>
 	
 </blueprint>

@@ -28,6 +28,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -78,7 +79,7 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
  * REST implementation of {@link KillbillClient}.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class KillbillRestClient implements KillbillClient {
 
@@ -149,10 +150,16 @@ public class KillbillRestClient implements KillbillClient {
 		client = template;
 
 		// set to our own ObjectMapper to ensure we have Joda support and NON_NULL inclusion
-		for ( HttpMessageConverter<?> converter : template.getMessageConverters() ) {
+		for ( Iterator<HttpMessageConverter<?>> itr = template.getMessageConverters().iterator(); itr
+				.hasNext(); ) {
+			HttpMessageConverter<?> converter = itr.next();
 			if ( converter instanceof MappingJackson2HttpMessageConverter ) {
 				MappingJackson2HttpMessageConverter messageConverter = (MappingJackson2HttpMessageConverter) converter;
 				messageConverter.setObjectMapper(KillbillUtils.defaultObjectMapper());
+			} else if ( converter.getClass().getSimpleName()
+					.equals("MappingJackson2XmlHttpMessageConverter") ) {
+				// remove Jackson XML, we only want JSON
+				itr.remove();
 			}
 		}
 

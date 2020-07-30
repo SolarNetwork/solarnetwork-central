@@ -44,7 +44,7 @@ import net.solarnetwork.javax.money.MoneyUtils;
  * Localized version of {@link Invoice}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 
@@ -98,6 +98,15 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	public String getLocalizedBalance() {
 		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
 				getBalance());
+	}
+
+	@Override
+	public String getLocalizedNonTaxAmount() {
+		BigDecimal taxAmount = getTaxAmount();
+		BigDecimal total = getAmount();
+		BigDecimal nonTaxAmount = total.subtract(taxAmount);
+		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
+				nonTaxAmount);
 	}
 
 	@Override
@@ -164,12 +173,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 		} else if ( items.isEmpty() ) {
 			return Collections.emptyList();
 		}
-		return items.stream().map(item -> {
-			if ( item instanceof LocalizedInvoiceItemInfo ) {
-				return (LocalizedInvoiceItemInfo) item;
-			}
-			return new LocalizedInvoiceItem(item, locale);
-		}).collect(Collectors.toList());
+		return localizedItems(items.stream());
 	}
 
 	private Stream<InvoiceItem> getTaxInvoiceItemsStream() {
@@ -178,6 +182,28 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 			items = Collections.emptyList();
 		}
 		return items.stream().filter(item -> InvoiceItem.TYPE_TAX.equals(item.getItemType()));
+	}
+
+	private Stream<InvoiceItem> getNonTaxInvoiceItemsStream() {
+		List<InvoiceItem> items = getInvoiceItems();
+		if ( items == null ) {
+			items = Collections.emptyList();
+		}
+		return items.stream().filter(item -> !InvoiceItem.TYPE_TAX.equals(item.getItemType()));
+	}
+
+	private List<LocalizedInvoiceItemInfo> localizedItems(Stream<InvoiceItem> items) {
+		return items.map(item -> {
+			if ( item instanceof LocalizedInvoiceItemInfo ) {
+				return (LocalizedInvoiceItemInfo) item;
+			}
+			return new LocalizedInvoiceItem(item, locale);
+		}).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<LocalizedInvoiceItemInfo> getLocalizedNonTaxInvoiceItems() {
+		return localizedItems(getNonTaxInvoiceItemsStream());
 	}
 
 	@Override

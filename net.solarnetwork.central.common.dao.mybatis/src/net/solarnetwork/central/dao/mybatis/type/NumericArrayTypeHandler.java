@@ -1,7 +1,7 @@
 /* ==================================================================
- * MailService.java - Jan 13, 2010 6:11:31 PM
+ * NumericArrayTypeHandler.java - 23/07/2020 2:50:18 PM
  * 
- * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,24 +20,22 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.mail;
+package net.solarnetwork.central.dao.mybatis.type;
 
 /**
- * API for a mail sending service.
+ * Type handler for {@code NUMERIC[]} arrays.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 2.5
  */
-public interface MailService {
+public class NumericArrayTypeHandler extends BaseArrayTypeHandler {
 
 	/**
-	 * Send a template-based mail message.
-	 * 
-	 * @param address
-	 *        where to send the mail to
-	 * @param messageDataSource
-	 *        the message data source
+	 * Constructor.
 	 */
-	void sendMail(MailAddress address, MessageDataSource messageDataSource);
+	public NumericArrayTypeHandler() {
+		super("numeric");
+	}
 
 }

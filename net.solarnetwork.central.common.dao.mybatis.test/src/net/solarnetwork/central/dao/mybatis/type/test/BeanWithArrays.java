@@ -1,7 +1,7 @@
 /* ==================================================================
- * MailService.java - Jan 13, 2010 6:11:31 PM
+ * BeanWithArrays.java - 23/07/2020 2:55:09 PM
  * 
- * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,24 +20,26 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.mail;
+package net.solarnetwork.central.dao.mybatis.type.test;
+
+import java.math.BigDecimal;
 
 /**
- * API for a mail sending service.
+ * Bean to help with testing type handlers.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface MailService {
+public class BeanWithArrays {
 
-	/**
-	 * Send a template-based mail message.
-	 * 
-	 * @param address
-	 *        where to send the mail to
-	 * @param messageDataSource
-	 *        the message data source
-	 */
-	void sendMail(MailAddress address, MessageDataSource messageDataSource);
+	private BigDecimal[] bigDecimals;
+
+	public BigDecimal[] getBigDecimals() {
+		return bigDecimals;
+	}
+
+	public void setBigDecimals(BigDecimal[] bigDecimals) {
+		this.bigDecimals = bigDecimals;
+	}
 
 }

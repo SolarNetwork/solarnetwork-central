@@ -43,7 +43,7 @@ import net.solarnetwork.javax.money.MoneyUtils;
  * Localized version of {@link InvoiceItem}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemInfo {
 
@@ -83,6 +83,8 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	 *        the item to localize
 	 * @param locale
 	 *        the locale to localize to
+	 * @param localizedDescription
+	 *        the localized description
 	 */
 	public LocalizedInvoiceItem(InvoiceItem item, Locale locale, String localizedDescription) {
 		super();
@@ -103,7 +105,7 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 		if ( tz != null ) {
 			fmt = fmt.withZone(DateTimeZone.forID(tz));
 		}
-		return fmt.print(getCreated());
+		return fmt.print(getStartDate());
 	}
 
 	@Override
@@ -113,7 +115,7 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 		if ( tz != null ) {
 			fmt = fmt.withZone(DateTimeZone.forID(tz));
 		}
-		return fmt.print(getEnded());
+		return fmt.print(getEndDate());
 	}
 
 	@Override

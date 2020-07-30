@@ -32,7 +32,7 @@ import org.springframework.core.io.Resource;
  * @author matt
  * @version 1.1
  */
-public interface MessageTemplateDataSource {
+public interface MessageTemplateDataSource extends MessageDataSource {
 
 	/**
 	 * A sensible standard column width to use for word-wrapping.
@@ -67,6 +67,7 @@ public interface MessageTemplateDataSource {
 	 * 
 	 * @return message subject
 	 */
+	@Override
 	String getSubject();
 
 	/**
