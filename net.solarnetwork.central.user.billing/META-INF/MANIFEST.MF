@@ -10,11 +10,11 @@ Export-Package:
  net.solarnetwork.central.user.billing.domain;version="1.1.0",
  net.solarnetwork.central.user.billing.support;version="1.1.0"
 Import-Package: 
- net.solarnetwork.central.domain;version="1.21.0",
- net.solarnetwork.central.support;version="1.13.0",
- net.solarnetwork.central.user.domain;version="1.14.0",
- net.solarnetwork.domain;version="1.14.0",
- net.solarnetwork.javax.money;version="1.0.0",
+ net.solarnetwork.central.domain;version="[1.21,3.0)",
+ net.solarnetwork.central.support;version="[1.13,3.0)",
+ net.solarnetwork.central.user.domain;version="[1.14,3.0)",
+ net.solarnetwork.domain;version="[1.14,2.0)",
+ net.solarnetwork.javax.money;version="[1.0,2.0)",
  org.joda.time;version="[2.4,3.0)",
  org.joda.time.format;version="2.9.7",
  org.springframework.core.io;version="[4.2,5.0)",
