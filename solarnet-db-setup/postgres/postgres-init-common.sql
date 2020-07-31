@@ -640,3 +640,15 @@ CREATE AGGREGATE solarcommon.jsonb_diffsum_jdata(jsonb) (
     stype = jsonb,
     finalfunc = solarcommon.jsonb_diffsum_jdata_finalfunc
 );
+
+/**
+ * Table for verioned localized messages.
+ */
+CREATE TABLE solarcommon.messages (
+	vers			TIMESTAMP WITH TIME ZONE NOT NULL,
+	bundle			CHARACTER VARYING(128) NOT NULL,
+	locale			CHARACTER VARYING(8) NOT NULL,
+	msg_key			CHARACTER VARYING(128) NOT NULL,
+	msg_val			TEXT,
+	CONSTRAINT messages_pkey PRIMARY KEY (bundle,locale,vers,msg_key)
+);
