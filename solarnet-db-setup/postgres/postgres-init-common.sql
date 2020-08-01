@@ -674,6 +674,30 @@ $$
 $$;
 
 /**
+ * Convert a bigint into a base 36 string.
+ *
+ * @param n the number to encode
+ */
+CREATE OR REPLACE FUNCTION solarcommon.to_baseX(n BIGINT, radix INT DEFAULT 16) RETURNS TEXT LANGUAGE plpgsql IMMUTABLE AS
+$$
+DECLARE
+	s TEXT := ''
+BEGIN
+	IF ( n < 0 ) THEN
+		RETURN NULL;
+	END IF;
+	LOOP
+		EXIT WHEN n <= 0;
+		s := CHR(n % radix + CASE WHEN n % radix < 10 THEN 48 ELSE 55 END) || s;
+		n := FLOOR(n / radix);
+	END LOOP; 
+	RETURN s::BIGINT;
+	EXCEPTION WHEN OTHERS THEN
+	RETURN NULL;
+END
+$$;
+
+/**
  * Convert a base-10 integer string into a bigint.
  *
  * This function ignores all parsing errors and returns `NULL` if `s` cannot be parsed.
