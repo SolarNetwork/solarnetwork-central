@@ -652,3 +652,39 @@ CREATE TABLE solarcommon.messages (
 	msg_val			TEXT,
 	CONSTRAINT messages_pkey PRIMARY KEY (bundle,locale,vers,msg_key)
 );
+
+/**
+ * Decode an integer string of a specific radix.
+ *
+ * No validation is performed to check the input is a valid value for the given radix.
+ *
+ * @param s the string to decode
+ * @param radix the radix; defaults to `16`
+ */
+CREATE OR REPLACE FUNCTION solarcommon.baseX_integer(s text, radix INTEGER DEFAULT 16) RETURNS BIGINT LANGUAGE SQL IMMUTABLE AS
+$$
+	WITH chars AS (
+		SELECT * FROM UNNEST(string_to_array(UPPER(REVERSE(s)), NULL)) WITH ORDINALITY AS a(c, p)
+	)
+	SELECT SUM(POWER(radix, c.p - 1)::BIGINT * CASE 
+									WHEN c.c BETWEEN '0' AND '9' THEN c.c::INTEGER
+									ELSE (10 + ASCII(c.c) - ASCII('A'))::INTEGER
+									END)::BIGINT AS v
+	FROM chars c
+$$;
+
+/**
+ * Convert a base-10 integer string into a bigint.
+ *
+ * This function ignores all parsing errors and returns `NULL` if `s` cannot be parsed.
+ *
+ * @param s the string to decode
+ */
+CREATE OR REPLACE FUNCTION solarcommon.to_bigint(s text) RETURNS BIGINT LANGUAGE plpgsql IMMUTABLE AS
+$$
+BEGIN
+	RETURN s::BIGINT;
+	EXCEPTION WHEN OTHERS THEN
+	RETURN NULL;
+END
+$$;
