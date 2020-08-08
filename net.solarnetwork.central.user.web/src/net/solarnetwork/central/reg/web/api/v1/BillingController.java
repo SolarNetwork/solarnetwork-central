@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static java.lang.String.format;
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.List;
 import java.util.Locale;
@@ -58,7 +59,7 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for billing management.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @RestController("v1BillingController")
 @RequestMapping(value = { "/sec/billing", "/v1/sec/user/billing" })
@@ -168,9 +169,34 @@ public class BillingController extends WebServiceControllerSupport {
 		if ( result != null ) {
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(outputType);
+			if ( !outputType.isCompatibleWith(MediaType.TEXT_HTML) ) {
+				// add "attachment" header with suggested file name based on invoice
+				headers.set(HttpHeaders.CONTENT_DISPOSITION,
+						format("attachment; filename=\"%s\"", result.getFilename()));
+			}
 			return new ResponseEntity<Resource>(result, headers, HttpStatus.OK);
 		}
 		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
+
+	/**
+	 * Render an invoice as PDF.
+	 * 
+	 * @param invoiceId
+	 *        the invoice ID to render
+	 * @param userId
+	 *        the optional user ID to get the invoice for; if not provided the
+	 *        current actor's ID is used
+	 * @param locale
+	 *        the request locale
+	 * @return the rendered invoice entity
+	 * @since 1.3
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/invoices/{invoiceId}/render/pdf", method = RequestMethod.GET)
+	public ResponseEntity<Resource> renderPdfInvoice(@PathVariable("invoiceId") String invoiceId,
+			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
+		return renderInvoice(invoiceId, "application/pdf", userId, locale);
 	}
 
 	/**
