@@ -111,7 +111,7 @@ $(document).ready(function() {
 			}
 		}
 		
-		modal.find('a.invoice-render').attr('href', SolarReg.solarUserURL('/sec/billing/invoices/' +invoice.id +'/render'));
+		modal.find('a.invoice-render').attr('href', SolarReg.solarUserURL('/sec/billing/invoices/' +invoice.id +'/render/pdf'));
 
 		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/' +invoice.id), function(json) {
 			console.log('Got invoice detail: %o', json);
