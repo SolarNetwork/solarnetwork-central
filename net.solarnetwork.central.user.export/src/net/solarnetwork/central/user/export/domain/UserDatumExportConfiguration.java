@@ -88,9 +88,8 @@ public class UserDatumExportConfiguration extends BaseEntity
 	/**
 	 * Get the schedule type key value.
 	 * 
-	 * @return the schedule type; if {@link #getScheduleType()} is
-	 *         {@literal null} this will return the key value for
-	 *         {@link ScheduleType#Daily}
+	 * @return the schedule type; if {@link #getSchedule()} is {@literal null}
+	 *         this will return the key value for {@link ScheduleType#Daily}
 	 */
 	public char getScheduleKey() {
 		ScheduleType type = getSchedule();

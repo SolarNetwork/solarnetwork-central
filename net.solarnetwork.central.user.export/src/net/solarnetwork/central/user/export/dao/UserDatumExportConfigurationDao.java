@@ -51,7 +51,7 @@ public interface UserDatumExportConfigurationDao
 
 	/**
 	 * Update the minimum export date on an existing configuration, as long as
-	 * it is <b>older</b> than {@link minimumDate}.
+	 * it is <b>older</b> than {@code minimumDate}.
 	 * 
 	 * @param id
 	 *        the configuration ID to update
