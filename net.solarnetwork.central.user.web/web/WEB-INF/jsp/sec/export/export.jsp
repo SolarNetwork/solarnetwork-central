@@ -64,7 +64,14 @@
 				<th><fmt:message key='export.adhocConfig.status.label'/></th>
 			</tr>
 			<tr class="template">
-				<td data-tprop="name"></td>
+				<td >
+					<span data-tprop="name"></span>
+					<p class="help-block"><small>
+						<span data-tprop="startDate"></span>
+						<span> - </span>
+						<span data-tprop="endDate"></span>
+					</small></p>
+				</td>
 				<td data-tprop="nodes"></td>
 				<td data-tprop="sources"></td>
 				<td data-tprop="aggregation"></td>
