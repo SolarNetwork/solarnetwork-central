@@ -1,7 +1,8 @@
 $(document).ready(function() {
 	'use strict';
 	
-	var exportConfigs = {};
+	var exportConfigs = [];
+	var adhocExportConfigs = [];
 	var dataServices = [{
 		id : 'net.solarnetwork.central.datum.export.standard.DefaultDatumExportDataFilterService'
 	}];
@@ -17,10 +18,91 @@ $(document).ready(function() {
 		if ( typeof configs !== 'object' ) {
 			configs = {};
 		}
+		configs.adhocDatumExportConfigs = populateAdhocDatumExportConfigs(adhocExportConfigs || []);
 		configs.datumExportConfigs = populateDatumExportConfigs(configs.datumExportConfigs);
 		configs.dataConfigs = populateDataConfigs(configs.dataConfigs);
 		configs.destinationConfigs = populateDestinationConfigs(configs.destinationConfigs);
 		configs.outputConfigs = populateOutputConfigs(configs.outputConfigs)
+		return configs;
+	}
+
+	function populateAdhocDatumExportConfigs(configs, preserve) {
+		var container = $('#adhoc-datum-export-list-container');
+		var items = configs.map(function(adhocConfig) {
+			var statusKey = 'q';
+			var config = adhocConfig.config;
+			if ( !(config.dataConfiguration && config.dataConfiguration.datumFilter && config.destinationConfiguration && config.outputConfiguration ) ) {
+				return;
+			}
+			var task = adhocConfig.task;
+			var model = {
+				_contextItem: adhocConfig,
+				id: config.id,
+				name: config.name,
+				startDate: moment(config.dataConfiguration.datumFilter.startDate).format('D MMM YYYY'),
+				endDate: moment(config.dataConfiguration.datumFilter.endDate).format('D MMM YYYY'),
+				destinationConfigName: config.destinationConfiguration.name,
+				outputConfigName: config.outputConfiguration.name,
+			};
+			if ( config.dataConfiguration.datumFilter.nodeIds && config.dataConfiguration.datumFilter.nodeIds.length > 0 ) {
+				model.nodes = config.dataConfiguration.datumFilter.nodeIds.join(', ');
+			} else {
+				model.nodes = '*';
+			}
+			if ( config.dataConfiguration.datumFilter.sourceIds && config.dataConfiguration.datumFilter.sourceIds.length > 0 ) {
+				model.sources = config.dataConfiguration.datumFilter.sourceIds.join(', ');
+			} else {
+				model.sources = '*';
+			}
+			model.aggregation = SolarReg.Templates.serviceDisplayName(aggregationTypes, 
+					config.dataConfiguration.datumFilter.aggregationKey) || '';
+			model.statusClass = 'info';
+			if ( task ) {
+				model.message = task.message;
+				if ( task.completionDate ) {
+					model.completed = moment(task.completionDate).format('D MMM YYYY HH:mm');
+				}
+				statusKey = task.statusKey ? task.statusKey : 'q';
+				if ( task.statusKey === 'c' ) {
+					model.statusClass = task.success ? 'success' : 'danger';
+				}
+			}
+			model.status = 	container.find('.statuses').data('labelStatus'+statusKey.toUpperCase());
+			return model;
+		});
+		SolarReg.Templates.populateTemplateItems(container, items, preserve, function(item, el) {
+			el.find('.status').addClass('label-' +item.statusClass);
+			if ( item.completed ) {
+				el.find('.completed.hidden').removeClass('hidden');
+			}
+		});
+
+		// attach actual service configuration to each link
+		container.find('a.edit-link:not(*[data-config-type])').each(function(idx, el) {
+			var btn = $(el),			
+				config = SolarReg.Templates.findContextItem(btn);
+			if ( !config ) {
+				return;
+			}
+
+			btn.parent().find('.edit-link[data-config-type]').each(function(idx, el) {
+				var link = $(el),
+					configType = link.data('config-type'),
+					relatedConfig;
+				if ( configType === 'destination' ) {
+					relatedConfig = SolarReg.findByName(exportConfigs.destinationConfigs, config.config.destinationConfiguration.name);
+				} else if ( configType === 'output'  ) {
+					relatedConfig = SolarReg.findByName(exportConfigs.outputConfigs, config.config.outputConfiguration.name);
+				}
+				if ( relatedConfig ) {
+					SolarReg.Templates.setContextItem(link, relatedConfig);
+				}
+				// this cannot be edited without a config
+				link.toggleClass('edit-link', !!relatedConfig);
+			});
+		});
+
+		SolarReg.populateListCount(container, configs);
 		return configs;
 	}
 
@@ -101,7 +183,7 @@ $(document).ready(function() {
 			});
 		});
 
-		SolarReg.populateListCount(container, exportConfigs.datumExportConfigs);
+		SolarReg.populateListCount(container, configs);
 		return configs;
 	}
 	
@@ -154,6 +236,64 @@ $(document).ready(function() {
 			SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, modal.data('context-item'));
 		}
 	}
+
+	// ***** Edit ad hoc datum export job form
+	$('#edit-adhoc-datum-export-config-modal').on('show.bs.modal', function(event) {
+		SolarReg.Settings.prepareEditServiceForm($(event.target), [], settingTemplates);
+		SolarReg.Templates.populateServiceSelectOptions(exportConfigs.dataConfigs, 'select[name=dataConfigurationId]');
+		SolarReg.Templates.populateServiceSelectOptions(exportConfigs.destinationConfigs, 'select[name=destinationConfigurationId]');
+		SolarReg.Templates.populateServiceSelectOptions(exportConfigs.outputConfigs, 'select[name=outputConfigurationId]');
+	})
+	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+	.on('change', function(event) {
+		handleServiceIdentifierChange(event, []);
+	})
+	.on('submit', function(event) {
+		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			SolarReg.storeServiceConfiguration(res, exportConfigs.adhocDatumExportConfigs);
+			populateAdhocDatumExportConfigs([res], true);
+		}, function serializeDataConfigForm(form) {
+			var data = SolarReg.Settings.encodeServiceItemForm(form);
+			if ( data.dataConfiguration.datumFilter ) {
+				var filter = data.dataConfiguration.datumFilter;
+				var nodeIds =  SolarReg.splitAsNumberArray(filter.nodeIds);
+				if ( nodeIds.length ) {
+					filter.nodeIds = nodeIds;
+				} else {
+					delete filter.nodeIds;
+				}
+				var sourceIds = (filter.sourceIds ? filter.sourceIds.split(/\s*,\s*/) : []);
+				if ( sourceIds.length ) {
+					filter.sourceIds = sourceIds;
+				} else {
+					delete filter.sourceIds;
+				}
+
+				// convert dates to epoch
+				if ( filter.startDate ) {
+					filter.startDate = moment(filter.startDate).valueOf();
+				}
+				if ( filter.endDate ) {
+					filter.endDate = moment(filter.endDate).valueOf();
+				}
+			}
+			return data;
+		});
+		return false;
+	})
+	.on('hidden.bs.modal', function() {
+		SolarReg.Settings.resetEditServiceForm(this, $('#datum-export-list-container .list-container'), function(id, deleted) {
+			if ( deleted ) {
+				var idx = exportConfigs.adhocDatumExportConfigs.findIndex(function(el) {
+					return (id == el.id);
+				});
+				if ( idx >= 0 ) {
+					exportConfigs.adhocDatumExportConfigs.splice(idx, 1);
+				}
+				SolarReg.populateListCount($('#datum-export-list-container'), exportConfigs.adhocDatumExportConfigs);
+			}
+		});
+	});
 
 	// ***** Edit datum export job form
 	$('#edit-datum-export-config-modal').on('show.bs.modal', function(event) {
@@ -297,7 +437,7 @@ $(document).ready(function() {
 	$('.export.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
 
 	$('#datum-export-configs').first().each(function() {
-		var loadCountdown = 6;
+		var loadCountdown = 7;
 
 		function liftoff() {
 			loadCountdown -= 1;
@@ -358,6 +498,15 @@ $(document).ready(function() {
 			console.log('Got export configurations: %o', json);
 			if ( json && json.success === true ) {
 				exportConfigs = json.data;
+			}
+			liftoff();
+		});
+
+		// get ad hoc jobs
+		$.getJSON(SolarReg.solarUserURL('/sec/export/adhoc'), function(json) {
+			console.log('Got adhoc exports: %o', json);
+			if ( json && json.success === true ) {
+				adhocExportConfigs = json.data;
 			}
 			liftoff();
 		});

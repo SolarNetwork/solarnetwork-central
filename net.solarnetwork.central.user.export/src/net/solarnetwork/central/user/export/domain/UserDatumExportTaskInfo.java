@@ -113,6 +113,7 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 	 * </p>
 	 * 
 	 * @param config
+	 *        the configuration to set
 	 */
 	@JsonDeserialize(as = BasicConfiguration.class)
 	public void setConfig(Configuration config) {

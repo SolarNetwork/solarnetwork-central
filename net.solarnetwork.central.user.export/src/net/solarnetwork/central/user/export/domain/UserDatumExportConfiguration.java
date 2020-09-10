@@ -40,7 +40,7 @@ import net.solarnetwork.central.user.domain.UserRelatedEntity;
  * User related {@link Configuration} entity.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UserDatumExportConfiguration extends BaseEntity
 		implements Configuration, UserRelatedEntity<Long>, Serializable {
@@ -88,9 +88,8 @@ public class UserDatumExportConfiguration extends BaseEntity
 	/**
 	 * Get the schedule type key value.
 	 * 
-	 * @return the schedule type; if {@link #getScheduleType()} is
-	 *         {@literal null} this will return the key value for
-	 *         {@link ScheduleType#Daily}
+	 * @return the schedule type; if {@link #getSchedule()} is {@literal null}
+	 *         this will return the key value for {@link ScheduleType#Daily}
 	 */
 	public char getScheduleKey() {
 		ScheduleType type = getSchedule();
@@ -135,6 +134,23 @@ public class UserDatumExportConfiguration extends BaseEntity
 	}
 
 	/**
+	 * Set the data configuration ID.
+	 * 
+	 * @param id
+	 *        the ID to set
+	 * @since 1.2
+	 */
+	@JsonSetter("dataConfigurationId")
+	public void setUserDataConfigurationId(Long id) {
+		UserDataConfiguration conf = getUserDataConfiguration();
+		if ( conf == null ) {
+			conf = new UserDataConfiguration();
+			setUserDataConfiguration(conf);
+		}
+		conf.setId(id);
+	}
+
+	/**
 	 * Get the {@link UserDataConfiguration} ID.
 	 * 
 	 * @return the ID, or {@literal null}
@@ -158,6 +174,23 @@ public class UserDatumExportConfiguration extends BaseEntity
 	@JsonSetter("outputConfiguration")
 	public void setUserOutputConfiguration(UserOutputConfiguration userOutputConfiguration) {
 		this.userOutputConfiguration = userOutputConfiguration;
+	}
+
+	/**
+	 * Set the output configuration ID.
+	 * 
+	 * @param id
+	 *        the ID to set
+	 * @since 1.2
+	 */
+	@JsonSetter("outputConfigurationId")
+	public void setUserOutputConfigurationId(Long id) {
+		UserOutputConfiguration conf = getUserOutputConfiguration();
+		if ( conf == null ) {
+			conf = new UserOutputConfiguration();
+			setUserOutputConfiguration(conf);
+		}
+		conf.setId(id);
 	}
 
 	/**
@@ -185,6 +218,23 @@ public class UserDatumExportConfiguration extends BaseEntity
 	public void setUserDestinationConfiguration(
 			UserDestinationConfiguration userDestinationConfiguration) {
 		this.userDestinationConfiguration = userDestinationConfiguration;
+	}
+
+	/**
+	 * Set the destination configuration ID.
+	 * 
+	 * @param id
+	 *        the ID to set
+	 * @since 1.2
+	 */
+	@JsonSetter("destinationConfigurationId")
+	public void setUserDestinationConfigurationId(Long id) {
+		UserDestinationConfiguration conf = getUserDestinationConfiguration();
+		if ( conf == null ) {
+			conf = new UserDestinationConfiguration();
+			setUserDestinationConfiguration(conf);
+		}
+		conf.setId(id);
 	}
 
 	/**

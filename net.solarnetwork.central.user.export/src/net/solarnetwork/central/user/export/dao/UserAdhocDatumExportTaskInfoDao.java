@@ -63,7 +63,7 @@ public interface UserAdhocDatumExportTaskInfoDao
 	 * 
 	 * @param userId
 	 *        the ID of the user to get tasks for
-	 * @param state
+	 * @param states
 	 *        if provided, a specific set of states to filter the results by
 	 *        (only tasks in one of the given states are returned)
 	 * @param success

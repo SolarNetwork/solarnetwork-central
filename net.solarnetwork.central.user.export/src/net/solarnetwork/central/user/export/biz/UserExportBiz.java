@@ -60,6 +60,8 @@ public interface UserExportBiz {
 	/**
 	 * Get a localized list of all available compression type information.
 	 * 
+	 * @param locale
+	 *        the desired locale
 	 * @return the compression type info
 	 */
 	Iterable<LocalizedServiceInfo> availableOutputCompressionTypes(Locale locale);
@@ -67,6 +69,8 @@ public interface UserExportBiz {
 	/**
 	 * Get a localized list of all available schedule type information.
 	 * 
+	 * @param locale
+	 *        the desired locale
 	 * @return the schedule type info
 	 */
 	Iterable<LocalizedServiceInfo> availableScheduleTypes(Locale locale);
@@ -74,6 +78,8 @@ public interface UserExportBiz {
 	/**
 	 * Get a localized list of all available aggregation type information.
 	 * 
+	 * @param locale
+	 *        the desired locale
 	 * @return the aggregation type info
 	 */
 	Iterable<LocalizedServiceInfo> availableAggregationTypes(Locale locale);
@@ -118,6 +124,8 @@ public interface UserExportBiz {
 	/**
 	 * Get a specific configuration kind for a given user.
 	 * 
+	 * @param <T>
+	 *        the desired configuration type
 	 * @param userId
 	 *        the user ID to get configurations for
 	 * @param configurationClass
@@ -149,8 +157,12 @@ public interface UserExportBiz {
 	/**
 	 * Get a list of all available data export configurations for a given user.
 	 * 
+	 * @param <T>
+	 *        the desired configuration type
 	 * @param userId
 	 *        the user ID to get configurations for
+	 * @param configurationClass
+	 *        the desired configuration type
 	 * @return the available configurations, never {@literal null}
 	 */
 	<T extends UserIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
@@ -192,7 +204,7 @@ public interface UserExportBiz {
 	 * 
 	 * @param userId
 	 *        the ID of the user to get tasks for
-	 * @param state
+	 * @param states
 	 *        if provided, a specific set of states to filter the results by
 	 *        (only tasks in one of the given states are returned)
 	 * @param success

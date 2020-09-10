@@ -81,6 +81,7 @@ public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UUID>
 	 * Set the configuration.
 	 * 
 	 * @param config
+	 *        the configuration to set
 	 */
 	@JsonDeserialize(as = BasicConfiguration.class)
 	public void setConfig(Configuration config) {

@@ -31,7 +31,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.billing" rev="[1.0,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.event" rev="[1.1,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.expire" rev="[1.0,)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.export" rev="[1.1,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.export" rev="[1.2,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.nim" rev="[1.1,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.ocpp" rev="[1.0,)"/>
 		<dependency org="javax.annotation" name="javax.annotation-api" rev="1.3.2" />

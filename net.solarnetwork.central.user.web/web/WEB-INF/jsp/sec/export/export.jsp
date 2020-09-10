@@ -36,6 +36,62 @@
 	</div>
 </section>
 
+<section id="adhoc-datum-export-configs">
+	<h2>
+		<fmt:message key='export.adhocDatumExportList.header'/>
+		<a href="#edit-adhoc-datum-export-config-modal" class="btn btn-primary pull-right" data-toggle="modal" 
+			title="<fmt:message key='export.adhocDatumExportList.action.create'/>">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro">
+		<fmt:message key='export.adhocDatumExportList.intro'>
+			<fmt:param value='0'/>
+		</fmt:message>
+	</p>
+	<table id="adhoc-datum-export-list-container" class="table configs hidden">
+		<thead class="statuses"
+			data-label-status-q="<fmt:message key='export.adhocConfig.status.q.label'/>"
+			data-label-status-p="<fmt:message key='export.adhocConfig.status.p.label'/>"
+			data-label-status-e="<fmt:message key='export.adhocConfig.status.e.label'/>"
+			data-label-status-c="<fmt:message key='export.adhocConfig.status.c.label'/>"
+			>
+			<tr>
+				<th><fmt:message key='export.adhocConfig.name.label'/></th>
+				<th><fmt:message key='export.adhocConfig.nodes.label'/></th>
+				<th><fmt:message key='export.adhocConfig.sources.label'/></th>
+				<th><fmt:message key='export.adhocConfig.aggregation.label'/></th>
+				<th><fmt:message key='export.adhocConfig.status.label'/></th>
+			</tr>
+			<tr class="template">
+				<td >
+					<span data-tprop="name"></span>
+					<p class="help-block"><small>
+						<span data-tprop="startDate"></span>
+						<span> - </span>
+						<span data-tprop="endDate"></span>
+					</small></p>
+				</td>
+				<td data-tprop="nodes"></td>
+				<td data-tprop="sources"></td>
+				<td data-tprop="aggregation"></td>
+				<td>
+					<span class="label status" data-tprop="status"></span>
+					<p class="completed hidden">
+						<fmt:message key='export.adhocConfig.status.completed.label'/>
+						<span> </span>
+						<span data-tprop="completed"></span>
+						<span> </span>
+						<small class="help-block" data-tprop="message"></small>
+					</p>
+				</td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+
 <section id="export-data-configs">
 	<h2>
 		<fmt:message key='export.dataConfigList.header'/>
@@ -162,6 +218,7 @@
 <jsp:include page="edit-data-modal.jsp"/>
 <jsp:include page="edit-destination-modal.jsp"/>
 <jsp:include page="edit-output-modal.jsp"/>
+<jsp:include page="edit-adhoc-export-job-modal.jsp"/>
 
 <%-- Setting templates --%>
 
