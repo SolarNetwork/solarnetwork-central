@@ -29,46 +29,53 @@ $(document).ready(function() {
 	function populateAdhocDatumExportConfigs(configs, preserve) {
 		var container = $('#adhoc-datum-export-list-container');
 		var items = configs.map(function(adhocConfig) {
-			var relatedConfig;
+			var statusKey = 'q';
 			var config = adhocConfig.config;
-			if ( !(config.dataConfiguration && config.destinationConfiguration && config.outputConfiguration) ) {
+			if ( !(config.dataConfiguration && config.dataConfiguration.datumFilter && config.destinationConfiguration && config.outputConfiguration ) ) {
 				return;
 			}
+			var task = adhocConfig.task;
 			var model = {
 				_contextItem: adhocConfig,
 				id: config.id,
 				name: config.name,
-				nodes: config.dataConfiguration.datumFilter ? config.dataConfiguration.datumFilter.nodeIds : 'All',
-				sources: config.dataConfiguration.datumFilter ? config.dataConfiguration.datumFilter.sourceIds : 'All',
-				aggregation: config.dataConfiguration.datumFilter ? config.dataConfiguration.datumFilter.aggregation : 'None',
-				startDate: config.dataConfiguration.datumFilter ? moment(config.dataConfiguration.datumFilter.startDate).format('D MMM YYYY') : '?',
-				endDate: config.dataConfiguration.datumFilter ? moment(config.dataConfiguration.datumFilter.endDate).format('D MMM YYYY') : '?',
+				startDate: moment(config.dataConfiguration.datumFilter.startDate).format('D MMM YYYY'),
+				endDate: moment(config.dataConfiguration.datumFilter.endDate).format('D MMM YYYY'),
 				destinationConfigName: config.destinationConfiguration.name,
 				outputConfigName: config.outputConfiguration.name,
 			};
-			if ( !model.dataConfigName ) {
-				model.dataConfigName = (model.aggregation == 'None' ? 'Raw' : model.aggregation).toLowerCase() +' datum for ';
-				if ( model.nodes && model.nodes.length > 0 ) {
-					model.dataConfigName += ' node' + (model.nodes.length > 1 ? 's ' : ' ') +model.nodes.join(', ');
-				} else {
-					model.dataConfigName += ' all nodes';
+			if ( config.dataConfiguration.datumFilter.nodeIds && config.dataConfiguration.datumFilter.nodeIds.length > 0 ) {
+				model.nodes = config.dataConfiguration.datumFilter.nodeIds.join(', ');
+			} else {
+				model.nodes = '*';
+			}
+			if ( config.dataConfiguration.datumFilter.sourceIds && config.dataConfiguration.datumFilter.sourceIds.length > 0 ) {
+				model.sources = config.dataConfiguration.datumFilter.sourceIds.join(', ');
+			} else {
+				model.sources = '*';
+			}
+			model.aggregation = SolarReg.Templates.serviceDisplayName(aggregationTypes, 
+					config.dataConfiguration.datumFilter.aggregationKey) || '';
+			model.statusClass = 'info';
+			if ( task ) {
+				model.message = task.message;
+				if ( task.completionDate ) {
+					model.completed = moment(task.completionDate).format('D MMM YYYY HH:mm');
 				}
-				if ( model.sources && model.sources.length > 0 ) {
-					model.dataConfigName += ' source' + (model.sources.length > 1 ? 's ' : ' ') +model.sources.join(', ');
-				} else {
-					model.dataConfigName += ' all sources';
+				statusKey = task.statusKey ? task.statusKey : 'q';
+				if ( task.statusKey === 'c' ) {
+					model.statusClass = task.success ? 'success' : 'danger';
 				}
-				model.dataConfigName += ' between ' + model.startDate +' and ' +model.endDate;
 			}
-			if ( !model.destinationConfigName ) {
-				model.destinationConfigName = '?';
-			}
-			if ( !model.outputConfigName ) {
-				model.outputConfigName = '?';
-			}
+			model.status = 	container.find('.statuses').data('labelStatus'+statusKey.toUpperCase());
 			return model;
 		});
-		SolarReg.Templates.populateTemplateItems(container, items, preserve);
+		SolarReg.Templates.populateTemplateItems(container, items, preserve, function(item, el) {
+			el.find('.status').addClass('label-' +item.statusClass);
+			if ( item.completed ) {
+				el.find('.completed.hidden').removeClass('hidden');
+			}
+		});
 
 		// attach actual service configuration to each link
 		container.find('a.edit-link:not(*[data-config-type])').each(function(idx, el) {
