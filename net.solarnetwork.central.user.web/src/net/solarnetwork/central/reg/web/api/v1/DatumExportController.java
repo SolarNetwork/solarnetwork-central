@@ -76,7 +76,7 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for datum export management.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.26
  */
 @RestController("v1DatumExportController")
@@ -404,6 +404,45 @@ public class DatumExportController extends WebServiceControllerSupport {
 			}
 			if ( config.getCreated() == null ) {
 				config.setCreated(new DateTime());
+			}
+			UserAdhocDatumExportTaskInfo info = biz.saveAdhocDatumExportTaskForConfiguration(config);
+			if ( info != null ) {
+				info.setConfig(maskExportConfiguration(info.getConfig(), biz));
+				return response(info);
+			}
+		}
+		return new Response<UserAdhocDatumExportTaskInfo>(false, null, null, null);
+	}
+
+	/**
+	 * Submit an ad hoc export job request that refers to existing format and
+	 * destination configurations, instead of submitting ad-hoc versions of
+	 * those.
+	 * 
+	 * @param config
+	 *        the export job configuration
+	 * @return the task info
+	 * @since 1.3
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/adhocRef", method = RequestMethod.POST)
+	public Response<UserAdhocDatumExportTaskInfo> submitAdhocExportReferenceJobRequest(
+			@RequestBody UserDatumExportConfiguration config) {
+		final UserExportBiz biz = exportBiz.service();
+		if ( biz != null ) {
+			if ( config.getUserId() == null ) {
+				config.setUserId(SecurityUtils.getCurrentActorUserId());
+			}
+			if ( config.getCreated() == null ) {
+				config.setCreated(new DateTime());
+			}
+			if ( config.getUserDestinationConfigurationId() != null ) {
+				config.setUserDestinationConfiguration(biz.configurationForUser(config.getUserId(),
+						UserDestinationConfiguration.class, config.getUserDestinationConfigurationId()));
+			}
+			if ( config.getUserOutputConfigurationId() != null ) {
+				config.setUserOutputConfiguration(biz.configurationForUser(config.getUserId(),
+						UserOutputConfiguration.class, config.getUserOutputConfigurationId()));
 			}
 			UserAdhocDatumExportTaskInfo info = biz.saveAdhocDatumExportTaskForConfiguration(config);
 			if ( info != null ) {

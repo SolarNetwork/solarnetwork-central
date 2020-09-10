@@ -36,6 +36,32 @@
 	</div>
 </section>
 
+<section id="adhoc-datum-export-configs">
+	<h2>
+		<fmt:message key='export.adhocDatumExportList.header'/>
+		<a href="#edit-adhoc-datum-export-config-modal" class="btn btn-primary pull-right" data-toggle="modal" 
+			title="<fmt:message key='export.adhocDatumExportList.action.create'/>">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro">
+		<fmt:message key='export.adhocDatumExportList.intro'>
+			<fmt:param value='0'/>
+		</fmt:message>
+	</p>
+	<div id="adhoc-datum-export-list-container" class="table configs hidden">
+		<ol class="list-container">
+		</ol>
+		<ol class="hidden">
+			<li class="template">
+				<p>
+					<fmt:message key='export.adhocDatumExportList.exportListItem'/>
+				</p>
+			</li>
+		</ol>
+	</div>
+</section>
+
 <section id="export-data-configs">
 	<h2>
 		<fmt:message key='export.dataConfigList.header'/>
@@ -162,6 +188,7 @@
 <jsp:include page="edit-data-modal.jsp"/>
 <jsp:include page="edit-destination-modal.jsp"/>
 <jsp:include page="edit-output-modal.jsp"/>
+<jsp:include page="edit-adhoc-export-job-modal.jsp"/>
 
 <%-- Setting templates --%>
 
