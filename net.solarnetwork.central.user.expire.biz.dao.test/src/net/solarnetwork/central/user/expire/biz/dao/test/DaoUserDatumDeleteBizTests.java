@@ -23,13 +23,14 @@
 package net.solarnetwork.central.user.expire.biz.dao.test;
 
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
-import static org.easymock.EasyMock.anyDouble;
-import static org.easymock.EasyMock.anyLong;
 import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.captureDouble;
+import static org.easymock.EasyMock.captureLong;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -226,7 +227,10 @@ public class DaoUserDatumDeleteBizTests {
 		expect(jobInfoDao.get(id)).andReturn(jobInfo).anyTimes();
 
 		// update progress for each batch segment
-		expect(jobInfoDao.updateJobProgress(eq(id), anyDouble(), anyLong())).andReturn(true).times(5);
+		Capture<Double> progressCapture = new Capture<>(CaptureType.ALL);
+		Capture<Long> resultCountsCapture = new Capture<>(CaptureType.ALL);
+		expect(jobInfoDao.updateJobProgress(eq(id), captureDouble(progressCapture),
+				captureLong(resultCountsCapture))).andReturn(true).times(5);
 
 		// allow updating the status as job progresses
 		expect(jobInfoDao.store(jobInfo)).andReturn(id).anyTimes();
@@ -250,13 +254,20 @@ public class DaoUserDatumDeleteBizTests {
 
 		List<GeneralNodeDatumFilter> batchFilters = filterCaptor.getValues();
 
-		// first 4 batch periods are exactly 1w
+		// first 4 batch periods are exactly 1w, 5th remaining
 		LocalDateTime currStartDate = filter.getLocalStartDate();
+		Double lastProgressValue = 0.0;
+		long accumulatedResultCount = 0L;
 		for ( int i = 0; i < 5; i++ ) {
 			GeneralNodeDatumFilter batchFilter = batchFilters.get(i);
 			assertThat("User ID preserved " + i, batchFilter.getUserId(), equalTo(filter.getUserId()));
 			assertThat("Node ID preserved " + i, batchFilter.getNodeId(), equalTo(filter.getNodeId()));
 			assertThat("Batch start date " + i, batchFilter.getLocalStartDate(), equalTo(currStartDate));
+			assertThat("Progress incremented " + i, progressCapture.getValues().get(i),
+					greaterThan(lastProgressValue));
+			accumulatedResultCount += (i + 1);
+			assertThat("Result count " + i, resultCountsCapture.getValues().get(i),
+					equalTo(accumulatedResultCount));
 
 			LocalDateTime currEndDate = currStartDate.plusDays(7);
 			if ( currEndDate.isAfter(filter.getLocalEndDate()) ) {
