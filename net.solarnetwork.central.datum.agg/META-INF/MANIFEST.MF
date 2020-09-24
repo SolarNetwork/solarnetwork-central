@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Datum Aggregation
 Bundle-SymbolicName: net.solarnetwork.central.datum.agg
-Bundle-Version: 1.13.1
+Bundle-Version: 1.13.2
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
@@ -29,4 +29,5 @@ Import-Package:
  org.springframework.core;version="[4.3,5.0)",
  org.springframework.dao;version="[4.3,5.0)",
  org.springframework.jdbc.core;version="[4.3,5.0)",
- org.springframework.scheduling.concurrent;version="[4.3,5.0)"
+ org.springframework.scheduling.concurrent;version="[4.3,5.0)",
+ org.springframework.transaction;version="[4.3,5.0)"

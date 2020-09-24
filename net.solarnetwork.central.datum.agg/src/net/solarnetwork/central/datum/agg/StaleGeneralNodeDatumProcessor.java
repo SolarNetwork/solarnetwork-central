@@ -29,7 +29,10 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import org.osgi.service.event.EventAdmin;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.transaction.CannotCreateTransactionException;
 import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.datum.domain.BasicDatumAppEvent;
@@ -114,6 +117,10 @@ public class StaleGeneralNodeDatumProcessor extends TieredStoredProcedureStaleDa
 				for ( DatumAppEventAcceptor acceptor : acceptors ) {
 					try {
 						acceptor.offerDatumEvent(event);
+					} catch ( CannotCreateTransactionException | TransientDataAccessException
+							| DataAccessResourceFailureException e ) {
+						log.warn("Transient DB error offering datum event {} to {}: {}", event, acceptor,
+								e.toString());
 					} catch ( Throwable t ) {
 						Throwable root = t;
 						while ( root.getCause() != null ) {
