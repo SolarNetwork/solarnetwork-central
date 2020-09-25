@@ -25,8 +25,6 @@ package net.solarnetwork.central.user.event.dao.mybatis;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisDao;
 import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
 import net.solarnetwork.central.datum.domain.DatumAppEvent;
@@ -40,24 +38,21 @@ import net.solarnetwork.central.user.event.domain.UserNodeEventTaskState;
  * datum tasks out of datum events.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisDatumAppEventAcceptor extends BaseMyBatisDao
 		implements UserNodeEventTaskDao, DatumAppEventAcceptor {
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void offerDatumEvent(DatumAppEvent event) {
 		getSqlSession().insert("create-user-node-event-tasks-from-event", event);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public UserNodeEvent claimQueuedTask(String topic) {
 		return selectFirst("claim-queued-user-node-event-task", topic);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void taskCompleted(UserNodeEventTask task) {
 		if ( task.getCompleted() == null ) {
@@ -72,7 +67,6 @@ public class MyBatisDatumAppEventAcceptor extends BaseMyBatisDao
 		getSqlSession().update("complete-user-node-event-task", task);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public long purgeCompletedTasks(Instant olderThanDate) {
 		Map<String, Object> params = new HashMap<String, Object>(2);

@@ -22,6 +22,7 @@
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.expire.biz.dao">
 		<beans:prop key="executor.parallelism">1</beans:prop>
 		<beans:prop key="completedTaskMinimumCacheTime">14400000</beans:prop>
+		<beans:prop key="deleteBatchDays">7</beans:prop>
 	</osgix:cm-properties>
 	
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -82,6 +83,7 @@
 		<argument ref="datumDeleteJobInfoDao"/>
 		<property name="scheduler" ref="scheduler"/>
 		<property name="completedTaskMinimumCacheTime" value="${completedTaskMinimumCacheTime}"/>
+		<property name="deleteBatchDays" value="${deleteBatchDays}"/>
 		<property name="eventAdmin">
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>

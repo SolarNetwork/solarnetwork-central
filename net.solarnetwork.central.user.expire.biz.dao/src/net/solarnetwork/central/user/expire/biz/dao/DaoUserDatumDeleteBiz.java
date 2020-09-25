@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -40,6 +41,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
+import org.joda.time.Interval;
+import org.joda.time.LocalDateTime;
 import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +74,12 @@ import net.solarnetwork.util.OptionalService;
  */
 public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDeleteJobBiz {
 
+	/** The default batch delete duration: 7 days. */
+	public static final Duration DEFAULT_DELETE_BATCH_DURATION = Duration.standardDays(7);
+
+	/** The minimum batch delete duration: 1 hour. */
+	public static final Duration MIN_BATCH_DURATION = Duration.standardHours(1);
+
 	private final UserNodeDao userNodeDao;
 	private final GeneralNodeDatumDao datumDao;
 	private final UserDatumDeleteJobInfoDao jobInfoDao;
@@ -80,6 +91,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	private ScheduledExecutorService scheduler;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
 	private OptionalService<EventAdmin> eventAdmin;
+	private Duration deleteBatchDuration = DEFAULT_DELETE_BATCH_DURATION;
 
 	private ScheduledFuture<?> taskPurgerTask = null;
 
@@ -266,6 +278,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 		private DatumDeleteJobInfo info;
 		private Future<DatumDeleteJobInfo> delegate;
+		private ExecutorService progressExecutor;
 
 		/**
 		 * Construct from a task info.
@@ -354,6 +367,16 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 			postJobStatusChangedEvent(this, info);
 		}
 
+		private void updateTaskProgress(double amountComplete, long resultCount) {
+			info.setPercentComplete(amountComplete);
+			info.setResultCount(resultCount);
+			if ( progressExecutor == null ) {
+				progressExecutor = Executors.newSingleThreadExecutor();
+			}
+			progressExecutor.submit(new ProgressUpdater(info.getId(), amountComplete, resultCount));
+			postJobStatusChangedEvent(this, info);
+		}
+
 		private void doDelete() throws IOException {
 			final String id = info.getJobId();
 			final GeneralNodeDatumFilter f = info.getConfiguration();
@@ -363,15 +386,45 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 			final String sourceIds = (f.getSourceIds() != null
 					? stream(f.getSourceIds()).collect(Collectors.joining(","))
 					: "*");
-			//log.info("Submitting user {} datum delete request {}: nodes = {}; sources = {}; {} - {}",
-			//		f.getUserId(), id, nodeIds, sourceIds, f.getLocalStartDate(), f.getLocalEndDate());
-
 			log.info("Executing user {} datum delete request {}: nodes = {}; sources = {}; {} - {}",
 					f.getUserId(), id, nodeIds, sourceIds, f.getLocalStartDate(), f.getLocalEndDate());
 			final long start = System.currentTimeMillis();
-			long result = datumDao.deleteFiltered(f);
+			long result = 0;
+			final LocalDateTime startDate = f.getLocalStartDate();
+			final LocalDateTime endDate = f.getLocalEndDate();
+			final Duration timeBatchDuration = getDeleteBatchDuration();
+			if ( startDate != null && endDate != null && endDate.isAfter(startDate)
+					&& timeBatchDuration != null
+					&& !timeBatchDuration.isShorterThan(MIN_BATCH_DURATION) ) {
+				// break up delete into time-based batches
+				final long intervalTime = new Interval(startDate.toDateTime(DateTimeZone.UTC),
+						endDate.toDateTime(DateTimeZone.UTC)).toDurationMillis();
+				LocalDateTime currStartDate = startDate;
+				DatumFilterCommand batchFilter = new DatumFilterCommand(f);
+				long offsetTime = 0;
+				while ( currStartDate.isBefore(endDate) ) {
+					LocalDateTime currEndDate = currStartDate.plus(timeBatchDuration);
+					if ( currEndDate.isAfter(endDate) ) {
+						currEndDate = endDate;
+					}
+					batchFilter.setLocalStartDate(currStartDate);
+					batchFilter.setLocalEndDate(currEndDate);
+					final long batchStart = System.currentTimeMillis();
+					final long batchResult = datumDao.deleteFiltered(batchFilter);
+					log.info(
+							"Deleted {} datum in {}s for user {} request {}: nodes = {}; sources = {}; {} - {}",
+							batchResult, (int) ((System.currentTimeMillis() - batchStart) / 1000.0),
+							f.getUserId(), id, nodeIds, sourceIds, currStartDate, currEndDate);
+					result += batchResult;
+					offsetTime += timeBatchDuration.getMillis();
+					currStartDate = currStartDate.plus(timeBatchDuration);
+					updateTaskProgress(Math.min((double) offsetTime / intervalTime, 1.0), result);
+				}
+			} else {
+				result = datumDao.deleteFiltered(f);
+				info.setPercentComplete(1.0);
+			}
 			info.setResultCount(result);
-			info.setPercentComplete(1.0);
 			log.info("Deleted {} datum in {}s for user {} request {}: nodes = {}; sources = {}; {} - {}",
 					result, (int) ((System.currentTimeMillis() - start) / 1000.0), f.getUserId(), id,
 					nodeIds, sourceIds, f.getLocalStartDate(), f.getLocalEndDate());
@@ -471,6 +524,26 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	}
 
+	private class ProgressUpdater implements Runnable {
+
+		private final UserUuidPK id;
+		private final double percentComplete;
+		private final long deletedCount;
+
+		private ProgressUpdater(UserUuidPK id, double percentComplete, long deletedCount) {
+			super();
+			this.id = id;
+			this.percentComplete = percentComplete;
+			this.deletedCount = deletedCount;
+		}
+
+		@Override
+		public void run() {
+			jobInfoDao.updateJobProgress(id, percentComplete, deletedCount);
+		}
+
+	}
+
 	/**
 	 * Set the minimum time, in milliseconds, to maintain import job status
 	 * information after the job has completed.
@@ -509,6 +582,38 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 */
 	public void setScheduler(ScheduledExecutorService scheduler) {
 		this.scheduler = scheduler;
+	}
+
+	/**
+	 * Get the delete batch duration.
+	 * 
+	 * @return the duration, or {@literal null} to not perform time-based delete
+	 *         batching; defaults to {@link #DEFAULT_DELETE_BATCH_DURATION}
+	 */
+	public Duration getDeleteBatchDuration() {
+		return deleteBatchDuration;
+	}
+
+	/**
+	 * Set the delete batch duration.
+	 * 
+	 * @param deleteBatchDuration
+	 *        the duration to set, or {@literal null} to not perform time-based
+	 *        delete batching
+	 */
+	public void setDeleteBatchDuration(Duration deleteBatchDuration) {
+		this.deleteBatchDuration = deleteBatchDuration;
+	}
+
+	/**
+	 * Set the delete batch duration as a number of days.
+	 * 
+	 * @param days
+	 *        the number of days to use for delete batches, or {@literal 0} to
+	 *        disable batching
+	 */
+	public void setDeleteBatchDays(int days) {
+		setDeleteBatchDuration(days > 0 ? Duration.standardDays(days) : null);
 	}
 
 }
