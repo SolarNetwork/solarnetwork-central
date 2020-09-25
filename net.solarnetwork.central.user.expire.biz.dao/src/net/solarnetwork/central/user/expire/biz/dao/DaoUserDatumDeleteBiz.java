@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -277,6 +278,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 		private DatumDeleteJobInfo info;
 		private Future<DatumDeleteJobInfo> delegate;
+		private ExecutorService progressExecutor;
 
 		/**
 		 * Construct from a task info.
@@ -368,7 +370,10 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		private void updateTaskProgress(double amountComplete, long resultCount) {
 			info.setPercentComplete(amountComplete);
 			info.setResultCount(resultCount);
-			executor.submit(new ProgressUpdater(info.getId(), amountComplete, resultCount));
+			if ( progressExecutor == null ) {
+				progressExecutor = Executors.newSingleThreadExecutor();
+			}
+			progressExecutor.submit(new ProgressUpdater(info.getId(), amountComplete, resultCount));
 			postJobStatusChangedEvent(this, info);
 		}
 
