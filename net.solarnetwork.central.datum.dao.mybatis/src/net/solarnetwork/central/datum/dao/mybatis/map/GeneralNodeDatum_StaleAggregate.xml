@@ -11,6 +11,15 @@
 			)}
 	</update>
 	
+	<update id="update-GeneralNodeDatum-aggregates-stale-range" statementType="CALLABLE">
+		{call solaragg.mark_datum_stale_hour_slots_range(
+			  #{filter.nodeId,javaType=java.lang.Long,jdbcType=BIGINT}
+			, #{filter.sourceId,javaType=java.lang.String,jdbcType=VARCHAR}
+			, #{filter.startDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			, #{filter.endDate,javaType=org.joda.time.DateTime,jdbcType=TIMESTAMP}
+			)}
+	</update>
+	
 	<resultMap id="StaleAggregateDatumResult" type="net.solarnetwork.central.datum.domain.StaleAggregateDatum">
 		<id property="nodeId" column="stale_node_id"/>
 		<id property="startDate" column="stale_ts_start"/>

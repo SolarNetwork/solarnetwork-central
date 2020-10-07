@@ -78,7 +78,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -311,6 +311,13 @@ public class MyBatisGeneralNodeDatumDao
 	public static final String UPDATE_AGGREGATES_STALE = "update-GeneralNodeDatum-aggregates-stale";
 
 	/**
+	 * The default query name for marking a node/source/range as stale..
+	 * 
+	 * @since 2.4
+	 */
+	public static final String UPDATE_AGGREGATES_STALE_RANGE = "update-GeneralNodeDatum-aggregates-stale-range";
+
+	/**
 	 * The default query name for the
 	 * {@link #markDatumAggregatesStale(GeneralNodeDatumFilter)}.
 	 * 
@@ -358,6 +365,7 @@ public class MyBatisGeneralNodeDatumDao
 	private String deleteFiltered;
 	private String updateDatumRangeDates;
 	private String updateDatumAggregatesStale;
+	private String updateDatumAggregatesStaleRange;
 	private String queryForAggregatesStale;
 	private ObjectMapper filterObjectMapper;
 	private int maxMinuteAggregationHours;
@@ -389,6 +397,7 @@ public class MyBatisGeneralNodeDatumDao
 		this.deleteFiltered = DELETE_FILTERED;
 		this.updateDatumRangeDates = UPDATE_DATUM_RANGE_DATES;
 		this.updateDatumAggregatesStale = UPDATE_AGGREGATES_STALE;
+		this.updateDatumAggregatesStaleRange = UPDATE_AGGREGATES_STALE_RANGE;
 		this.queryForAggregatesStale = QUERY_FOR_AGGREGATES_STALE;
 		this.maxMinuteAggregationHours = DEFAULT_MAX_MINUTE_AGG_HOURS;
 	}
@@ -1268,6 +1277,7 @@ public class MyBatisGeneralNodeDatumDao
 		}
 
 		private void commitDateRanges() {
+			DatumFilterCommand filter = new DatumFilterCommand();
 			GeneralNodeDatumPK key = new GeneralNodeDatumPK();
 			for ( NodeSourceRange range : dateRanges.values() ) {
 				key.setNodeId(range.getNodeId());
@@ -1280,6 +1290,13 @@ public class MyBatisGeneralNodeDatumDao
 					key.setCreated(range.getEndDate());
 					getSqlSession().update(updateDatumRangeDates, key);
 				}
+
+				// mark the range of data as stale for aggregate processing
+				filter.setNodeId(range.getNodeId());
+				filter.setSourceId(range.getSourceId());
+				filter.setStartDate(range.getStartDate());
+				filter.setEndDate(range.getEndDate());
+				getSqlSession().update(updateDatumAggregatesStaleRange, filter);
 			}
 			dateRanges.clear();
 		}
@@ -1791,6 +1808,18 @@ public class MyBatisGeneralNodeDatumDao
 	 */
 	public void setUpdateDatumAggregatesStale(String updateDatumAggregatesStale) {
 		this.updateDatumAggregatesStale = updateDatumAggregatesStale;
+	}
+
+	/**
+	 * Set the statement name for updating a range of datum data's aggregates as
+	 * stale.
+	 * 
+	 * @param updateDatumAggregatesStaleRange
+	 *        the query name; defaults to {@link #UPDATE_AGGREGATES_STALE_RANGE}
+	 * @since 2.4
+	 */
+	public void setUpdateDatumAggregatesStaleRange(String updateDatumAggregatesStaleRange) {
+		this.updateDatumAggregatesStaleRange = updateDatumAggregatesStaleRange;
 	}
 
 	/**
