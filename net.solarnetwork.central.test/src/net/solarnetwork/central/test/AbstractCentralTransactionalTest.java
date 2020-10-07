@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.test;
 
+import static java.util.stream.Collectors.joining;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.slf4j.Logger;
@@ -36,6 +39,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -199,36 +203,46 @@ public abstract class AbstractCentralTransactionalTest
 	 * @since 1.1
 	 */
 	protected void processAggregateStaleData() {
-		log.debug("Stale datum at start: " + jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.agg_stale_datum ORDER BY ts_start, node_id, source_id"));
+		List<Map<String, Object>> staleRows = jdbcTemplate.queryForList(
+				"SELECT * FROM solaragg.agg_stale_datum ORDER BY ts_start, node_id, source_id");
+		log.debug("Stale datum at start:\n{}",
+				staleRows.stream().map(e -> e.toString()).collect(joining("\n")));
 
-		jdbcTemplate.execute(new CallableStatementCreator() {
-
-			@Override
-			public CallableStatement createCallableStatement(Connection con) throws SQLException {
-				CallableStatement stmt = con
-						.prepareCall("{call solaragg.process_one_agg_stale_datum(?)}");
-				return stmt;
-			}
-		}, new CallableStatementCallback<Object>() {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
 			@Override
-			public Object doInCallableStatement(CallableStatement cs)
-					throws SQLException, DataAccessException {
-				int processed = processKind("h", cs);
-				log.debug("Processed " + processed + " stale hourly datum");
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (CallableStatement cs = con
+						.prepareCall("{call solaragg.process_one_agg_stale_datum(?)}")) {
 
-				processed = processKind("d", cs);
-				log.debug("Processed " + processed + " stale daily datum");
+					int processed = processKind("h", cs);
+					log.debug("Processed " + processed + " stale hourly datum");
 
-				processed = processKind("m", cs);
-				log.debug("Processed " + processed + " stale monthly datum");
+					List<Map<String, Object>> staleRows = jdbcTemplate.queryForList(
+							"SELECT * FROM solaragg.agg_stale_datum ORDER BY ts_start, node_id, source_id");
+					log.debug("Stale datum after process hourly: \n{}",
+							staleRows.stream().map(e -> e.toString()).collect(joining("\n")));
+
+					processed = processKind("d", cs);
+					log.debug("Processed " + processed + " stale daily datum");
+
+					staleRows = jdbcTemplate.queryForList(
+							"SELECT * FROM solaragg.agg_stale_datum ORDER BY ts_start, node_id, source_id");
+					log.debug("Stale datum after process daily: \n{}",
+							staleRows.stream().map(e -> e.toString()).collect(joining("\n")));
+
+					processed = processKind("m", cs);
+					log.debug("Processed " + processed + " stale monthly datum");
+
+				}
 				return null;
 			}
 		});
 
-		log.debug("Stale location datum at start: "
-				+ jdbcTemplate.queryForList("SELECT * FROM solaragg.agg_stale_loc_datum"));
+		staleRows = jdbcTemplate.queryForList(
+				"SELECT * FROM solaragg.agg_stale_loc_datum ORDER BY ts_start, loc_id, source_id");
+		log.debug("Stale location datum at start:\n{}",
+				staleRows.stream().map(e -> e.toString()).collect(joining("\n")));
 
 		jdbcTemplate.execute(new CallableStatementCreator() {
 
