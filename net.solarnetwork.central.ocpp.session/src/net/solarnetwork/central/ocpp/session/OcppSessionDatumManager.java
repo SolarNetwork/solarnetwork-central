@@ -89,7 +89,7 @@ import net.solarnetwork.util.StringUtils;
  * transaction data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class OcppSessionDatumManager extends BasicIdentifiable
 		implements ChargeSessionManager, SettingsChangeObserver {
@@ -656,7 +656,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			}
 
 			case K: {
-				BigDecimal celsius = num.subtract(new BigDecimal("-273.15"));
+				BigDecimal celsius = num.subtract(new BigDecimal("273.15"));
 				if ( maxTemperatureScale >= 0 && celsius.scale() > maxTemperatureScale ) {
 					celsius = celsius.setScale(maxTemperatureScale, RoundingMode.HALF_UP);
 				}
