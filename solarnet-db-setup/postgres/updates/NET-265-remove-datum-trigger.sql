@@ -191,6 +191,104 @@ BEGIN
 END;
 $$;
 
+-- update to delete aggregate data as well
+CREATE OR REPLACE FUNCTION solardatum.delete_datum(
+	nodes 		BIGINT[],
+	sources 	TEXT[],
+	ts_min 		TIMESTAMP,
+	ts_max 		TIMESTAMP
+) RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS $$
+DECLARE
+	all_source_ids boolean := sources IS NULL OR array_length(sources, 1) < 1;
+	start_date timestamp := COALESCE(ts_min, CURRENT_TIMESTAMP);
+	end_date timestamp := COALESCE(ts_max, CURRENT_TIMESTAMP);
+	total_count bigint := 0;
+	--stale_count bigint := 0;
+BEGIN
+	WITH nlt AS (
+		SELECT time_zone, ts_start, ts_end, node_ids, source_ids
+		FROM solarnet.node_source_time_ranges_local(nodes, sources, start_date, end_date)
+	)
+	, audit AS (
+		UPDATE solaragg.aud_datum_daily d
+		SET datum_count = 0, datum_daily_pres = FALSE
+		FROM nlt
+		WHERE
+			-- whole days only; partial to be handled by stale processing
+			d.ts_start >= CASE
+				WHEN date_trunc('day', nlt.ts_start) = nlt.ts_start THEN nlt.ts_start
+				ELSE date_trunc('day', nlt.ts_start) + interval '1 day'
+				END
+			AND d.ts_start < date_trunc('day', nlt.ts_end)
+			AND d.node_id = ANY(nlt.node_ids)
+			AND (all_source_ids OR d.source_id = ANY(nlt.source_ids))
+	)
+	, hourly AS (
+		DELETE FROM solaragg.agg_datum_hourly d
+		USING nlt
+		WHERE
+			-- whole hours (ceil) only; partial to be handled by stale processing
+			d.ts_start >= date_trunc('hour', nlt.ts_start) + interval '1 hour'
+			AND d.ts_start < date_trunc('hour', nlt.ts_end)
+			AND d.node_id = ANY(nlt.node_ids)
+			AND (all_source_ids OR d.source_id = ANY(nlt.source_ids))
+	)
+	, daily AS (
+		DELETE FROM solaragg.agg_datum_daily d
+		USING nlt
+		WHERE
+			-- whole days only; partial to be handled by stale processing
+			d.ts_start >= CASE
+				WHEN date_trunc('day', nlt.ts_start) = nlt.ts_start THEN nlt.ts_start
+				ELSE date_trunc('day', nlt.ts_start) + interval '1 day'
+				END
+			AND d.ts_start < date_trunc('day', nlt.ts_end)
+			AND d.node_id = ANY(nlt.node_ids)
+			AND (all_source_ids OR d.source_id = ANY(nlt.source_ids))
+	)
+	, monthly AS (
+		DELETE FROM solaragg.agg_datum_monthly d
+		USING nlt
+		WHERE
+			-- whole months only; partial to be handled by stale processing
+			d.ts_start >= CASE
+				WHEN date_trunc('month', nlt.ts_start) = nlt.ts_start THEN nlt.ts_start
+				ELSE date_trunc('month', nlt.ts_start) + interval '1 month'
+				END
+			AND d.ts_start < date_trunc('month', nlt.ts_end)
+			AND d.node_id = ANY(nlt.node_ids)
+			AND (all_source_ids OR d.source_id = ANY(nlt.source_ids))
+	)
+	DELETE FROM solardatum.da_datum d
+	USING nlt
+	WHERE
+		d.ts >= nlt.ts_start
+		AND d.ts < nlt.ts_end
+		AND d.node_id = ANY(nlt.node_ids)
+		AND (all_source_ids OR d.source_id = ANY(nlt.source_ids));
+	GET DIAGNOSTICS total_count = ROW_COUNT;
+
+	WITH nlt AS (
+		SELECT time_zone, ts_start, ts_end, node_ids, source_ids
+		FROM solarnet.node_source_time_ranges_local(nodes, sources, start_date, end_date)
+	)
+	-- mark remaining hourly aggregates as stale, so partial hours/days/months recalculated
+	INSERT INTO solaragg.agg_stale_datum (node_id, ts_start, source_id, agg_kind)
+	SELECT d.node_id, d.ts_start, d.source_id, 'h'
+	FROM nlt
+	INNER JOIN solaragg.agg_datum_hourly d ON
+		d.ts_start >= date_trunc('hour', nlt.ts_start)
+		AND d.ts_start < date_trunc('hour', nlt.ts_end) + interval '1 hour'
+		AND d.node_id = ANY(nlt.node_ids)
+		AND (all_source_ids OR d.source_id = ANY(nlt.source_ids))
+	ON CONFLICT DO NOTHING;
+
+	--GET DIAGNOSTICS stale_count = ROW_COUNT;
+	--RAISE NOTICE 'INSERTED % solaragg.agg_stale_datum rows after delete.', stale_count;
+
+	RETURN total_count;
+END
+$$;
 
 --
 -- LOCATION DATUM
