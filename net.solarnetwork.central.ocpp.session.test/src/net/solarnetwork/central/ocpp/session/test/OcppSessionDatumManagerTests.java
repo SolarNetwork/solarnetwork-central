@@ -660,6 +660,88 @@ public class OcppSessionDatumManagerTests {
 	}
 
 	@Test
+	public void addReadings_tempInKelvin() {
+		// given
+		String idTag = "tester";
+		String identifier = UUID.randomUUID().toString();
+		CentralChargePoint cp = new CentralChargePoint(UUID.randomUUID().getMostSignificantBits(),
+				UUID.randomUUID().getMostSignificantBits(), UUID.randomUUID().getMostSignificantBits(),
+				Instant.now(), new ChargePointInfo(identifier));
+		int connectorId = 1;
+		int transactionId = 123;
+
+		// get ChargePoint
+		expect(chargePointDao.get(cp.getId())).andReturn(cp);
+
+		// get ChargePointSettings
+		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
+		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
+		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
+
+		// get current session
+		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
+				connectorId, transactionId);
+		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
+
+		// get current readings for session
+		expect(chargeSessionDao.findReadingsForSession(sess.getId())).andReturn(Collections.emptyList());
+
+		// save readings
+		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
+		chargeSessionDao.addReadings(capture(readingsCaptor));
+
+		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
+		expect(datumDao.store(capture(datumCaptor)))
+				.andReturn(new GeneralNodeDatumPK(cp.getNodeId(), null, null));
+
+		// publish to SolarFlux
+		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>();
+		expect(fluxPublisher.isConfigured()).andReturn(true);
+		expect(fluxPublisher.processDatum(capture(fluxPublishCaptor))).andReturn(true);
+
+		// when
+		replayAll();
+
+		// @formatter:off
+		SampledValue r1 = SampledValue.builder()
+				.withTimestamp(sess.getCreated())
+				.withSessionId(sess.getId())
+				.withContext(ReadingContext.TransactionBegin)
+				.withLocation(Location.Outlet)
+				.withMeasurand(Measurand.Temperature)
+				.withUnit(UnitOfMeasure.K)
+				.withValue("305.6")
+				.build();
+		// @formatter:on
+		manager.addChargingSessionReadings(asList(r1));
+
+		// then
+		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
+
+		GeneralNodeDatum persistedDatum = datumCaptor.getValue();
+		assertThat("Datum source ID ", persistedDatum.getSourceId(),
+				equalTo("/ocpp/cp/" + identifier + "/" + connectorId + "/Outlet"));
+		assertThat("Datum session ID ", persistedDatum.getSamples().getStatusSampleString("sessionId"),
+				equalTo(sess.getId().toString()));
+		assertThat("Datum 1 @ transaction start", persistedDatum.getCreated().getMillis(),
+				equalTo(r1.getTimestamp().toEpochMilli()));
+		assertThat("Datum 1 consolidated properties", persistedDatum.getSampleData(),
+				hasEntry("temp", new BigDecimal("32.5")));
+
+		Identity<GeneralNodeDatumPK> fluxDatum = fluxPublishCaptor.getValue();
+		assertThat("Published datum is GeneralNodeDatum", fluxDatum, instanceOf(GeneralNodeDatum.class));
+		GeneralNodeDatum publishedDatum = (GeneralNodeDatum) fluxDatum;
+		assertThat("Datum source ID ", publishedDatum.getSourceId(),
+				equalTo("/ocpp/cp/" + identifier + "/" + connectorId + "/Outlet"));
+		assertThat("Datum session ID ", publishedDatum.getSamples().getStatusSampleString("sessionId"),
+				equalTo(sess.getId().toString()));
+		assertThat("Datum 1 @ transaction start", publishedDatum.getCreated().getMillis(),
+				equalTo(r1.getTimestamp().toEpochMilli()));
+		assertThat("Datum 1 consolidated properties", publishedDatum.getSampleData(),
+				hasEntry("temp", new BigDecimal("32.5")));
+	}
+
+	@Test
 	public void addReadings_noSolarFlux() {
 		// given
 		String idTag = "tester";
