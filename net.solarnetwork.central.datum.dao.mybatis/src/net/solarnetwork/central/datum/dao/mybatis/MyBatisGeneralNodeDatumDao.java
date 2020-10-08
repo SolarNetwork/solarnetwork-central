@@ -1278,6 +1278,7 @@ public class MyBatisGeneralNodeDatumDao
 
 		private void commitDateRanges() {
 			DatumFilterCommand filter = new DatumFilterCommand();
+			Map<String, Object> staleRangeParams = Collections.singletonMap(PARAM_FILTER, filter);
 			GeneralNodeDatumPK key = new GeneralNodeDatumPK();
 			for ( NodeSourceRange range : dateRanges.values() ) {
 				key.setNodeId(range.getNodeId());
@@ -1296,7 +1297,7 @@ public class MyBatisGeneralNodeDatumDao
 				filter.setSourceId(range.getSourceId());
 				filter.setStartDate(range.getStartDate());
 				filter.setEndDate(range.getEndDate());
-				getSqlSession().update(updateDatumAggregatesStaleRange, filter);
+				getSqlSession().update(updateDatumAggregatesStaleRange, staleRangeParams);
 			}
 			dateRanges.clear();
 		}
