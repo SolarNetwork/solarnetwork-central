@@ -1,4 +1,5 @@
 DROP TRIGGER IF EXISTS aa_agg_stale_datum ON solardatum.da_datum;
+DROP FUNCTION IF EXISTS solardatum.trigger_agg_stale_datum;
 
 /**
  * Calculate "stale datum" rows for a given datum primary key that has changed.
@@ -301,6 +302,7 @@ $$;
 
 
 DROP TRIGGER IF EXISTS aa_agg_stale_loc_datum ON solardatum.da_loc_datum;
+DROP FUNCTION IF EXISTS solardatum.trigger_agg_stale_loc_datum;
 
 /**
  * Calculate "stale location datum" rows for a given location datum primary key that has changed.
@@ -421,4 +423,134 @@ BEGIN
 	FROM solardatum.calculate_stale_loc_datum(loc, src, cdate)
 	ON CONFLICT (agg_kind, loc_id, ts_start, source_id) DO NOTHING;
 END;
+$$;
+
+/**
+ * Calculate the minimum number of absolute time spans required for a given set of locations.
+ *
+ * The time zones of each location are used to group them into rows where all locations have the
+ * same absolute start/end dates.
+ *
+ * @param locs the list of location to resolve absolute dates for
+ * @param sources a list of source IDs to include in the results (optional)
+ * @param ts_min the starting local date
+ * @param ts_max the ending local date
+ */
+CREATE OR REPLACE FUNCTION solarnet.loc_source_time_ranges_local(
+	locs bigint[], sources text[], ts_min timestamp, ts_max timestamp)
+RETURNS TABLE(
+  ts_start timestamp with time zone,
+  ts_end timestamp with time zone,
+  time_zone text,
+  loc_ids bigint[],
+  source_ids character varying(64)[]
+) LANGUAGE sql STABLE AS $$
+	SELECT ts_min AT TIME ZONE l.time_zone AS sdate,
+		ts_max AT TIME ZONE l.time_zone AS edate,
+		l.time_zone AS time_zone,
+		array_agg(DISTINCT l.id) AS loc_ids,
+		array_agg(DISTINCT s.source_id::character varying(64)) FILTER (WHERE s.source_id IS NOT NULL) AS sources
+	FROM solarnet.sn_loc l
+	LEFT JOIN (
+		SELECT unnest(sources) AS source_id
+	) s ON TRUE
+	WHERE l.id = ANY(locs)
+	GROUP BY time_zone
+$$;
+
+/**
+ * Delete location datum and associated aggregates and insert appropriate "stale loc datum" rows
+ * into the `solargg.agg_stale_loc_datum` table.
+ *
+ * @param locs the list of locations to delete
+ * @param sources a list of source IDs to include in the results (optional)
+ * @param ts_min the starting local date
+ * @param ts_max the ending local date
+ */
+CREATE OR REPLACE FUNCTION solardatum.delete_loc_datum(
+	locs 		BIGINT[],
+	sources 	TEXT[],
+	ts_min 		TIMESTAMP,
+	ts_max 		TIMESTAMP
+) RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS $$
+DECLARE
+	all_source_ids boolean := sources IS NULL OR array_length(sources, 1) < 1;
+	start_date timestamp := COALESCE(ts_min, CURRENT_TIMESTAMP);
+	end_date timestamp := COALESCE(ts_max, CURRENT_TIMESTAMP);
+	total_count bigint := 0;
+	--stale_count bigint := 0;
+BEGIN
+	WITH llt AS (
+		SELECT time_zone, ts_start, ts_end, loc_ids, source_ids
+		FROM solarnet.loc_source_time_ranges_local(locs, sources, start_date, end_date)
+	)
+	, hourly AS (
+		DELETE FROM solaragg.agg_loc_datum_hourly d
+		USING llt
+		WHERE
+			-- whole hours (ceil) only; partial to be handled by stale processing
+			d.ts_start >= date_trunc('hour', llt.ts_start) + interval '1 hour'
+			AND d.ts_start < date_trunc('hour', llt.ts_end)
+			AND d.loc_id = ANY(llt.loc_ids)
+			AND (all_source_ids OR d.source_id = ANY(llt.source_ids))
+	)
+	, daily AS (
+		DELETE FROM solaragg.agg_loc_datum_daily d
+		USING llt
+		WHERE
+			-- whole days only; partial to be handled by stale processing
+			d.ts_start >= CASE
+				WHEN date_trunc('day', llt.ts_start) = llt.ts_start THEN llt.ts_start
+				ELSE date_trunc('day', llt.ts_start) + interval '1 day'
+				END
+			AND d.ts_start < date_trunc('day', llt.ts_end)
+			AND d.loc_id = ANY(llt.loc_ids)
+			AND (all_source_ids OR d.source_id = ANY(llt.source_ids))
+	)
+	, monthly AS (
+		DELETE FROM solaragg.agg_loc_datum_monthly d
+		USING llt
+		WHERE
+			-- whole months only; partial to be handled by stale processing
+			d.ts_start >= CASE
+				WHEN date_trunc('month', llt.ts_start) = llt.ts_start THEN llt.ts_start
+				ELSE date_trunc('month', llt.ts_start) + interval '1 month'
+				END
+			AND d.ts_start < date_trunc('month', llt.ts_end)
+			AND d.loc_id = ANY(llt.loc_ids)
+			AND (all_source_ids OR d.source_id = ANY(llt.source_ids))
+	)
+	DELETE FROM solardatum.da_loc_datum d
+	USING llt
+	WHERE
+		d.ts >= llt.ts_start
+		AND d.ts < llt.ts_end
+		AND d.loc_id = ANY(llt.loc_ids)
+		AND (all_source_ids OR d.source_id = ANY(llt.source_ids));
+	GET DIAGNOSTICS total_count = ROW_COUNT;
+
+	-- mark remaining hourly aggregates as stale, so partial hours/days/months recalculated
+	WITH llt AS (
+		SELECT l.id AS loc_id
+			, source_id
+			, start_date AT TIME ZONE l.time_zone AS ts_start
+		FROM solarnet.sn_loc l, UNNEST(sources) AS source_id
+		WHERE l.id = ANY(locs)
+		UNION ALL
+		SELECT l.id AS loc_id
+			, source_id
+			, end_date AT TIME ZONE l.time_zone AS ts_start
+		FROM solarnet.sn_loc l, UNNEST(sources) AS source_id
+		WHERE l.id = ANY(locs)
+	)
+	INSERT INTO solaragg.agg_stale_loc_datum(loc_id, source_id, ts_start, agg_kind)
+	SELECT s.loc_id, s.source_id, s.ts_start, 'h'
+	FROM llt, solardatum.calculate_stale_loc_datum(llt.loc_id, llt.source_id, llt.ts_start) s
+	ON CONFLICT DO NOTHING;
+
+	--GET DIAGNOSTICS stale_count = ROW_COUNT;
+	--RAISE NOTICE 'INSERTED % solaragg.agg_stale_loc_datum rows after delete.', stale_count;
+
+	RETURN total_count;
+END
 $$;
