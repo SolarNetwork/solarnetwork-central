@@ -417,7 +417,7 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 	@Test
 	public void insertDatumAddStaleRowAfterPrevHour() {
 		// given
-		DateTime ts1 = new DateTime(2018, 6, 22, 14, 55);
+		DateTime ts1 = new DateTime(2018, 6, 22, 14, 55, DateTimeZone.forID(TEST_TZ));
 		populateTestData(ts1.getMillis(), 1, 0, TEST_LOC_ID, TEST_SOURCE_ID);
 
 		// clear stale datum row
@@ -440,7 +440,7 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 	@Test
 	public void insertDatumAddStaleRowBeforeNextHour() {
 		// given
-		DateTime ts1 = new DateTime(2018, 6, 22, 15, 05);
+		DateTime ts1 = new DateTime(2018, 6, 22, 15, 05, DateTimeZone.forID(TEST_TZ));
 		populateTestData(ts1.getMillis(), 1, 0, TEST_LOC_ID, TEST_SOURCE_ID);
 
 		// clear stale datum row
@@ -605,7 +605,7 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 	@Test
 	public void deleteDatumAddStaleRow() {
 		// given
-		DateTime ts1 = new DateTime(2018, 6, 22, 15, 05);
+		DateTime ts1 = new DateTime(2018, 6, 22, 15, 05, DateTimeZone.forID(TEST_TZ));
 		populateTestData(ts1.getMillis(), 1, 0, TEST_LOC_ID, TEST_SOURCE_ID);
 		processAggregateStaleData(log, jdbcTemplate);
 
@@ -625,7 +625,7 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 	@Test
 	public void deleteDatumAddStaleRowAfterPrevHour() {
 		// given
-		DateTime ts1 = new DateTime(2018, 6, 22, 14, 55);
+		DateTime ts1 = new DateTime(2018, 6, 22, 14, 55, DateTimeZone.forID(TEST_TZ));
 		populateTestData(ts1.getMillis(), 2, TimeUnit.MINUTES.toMillis(10), TEST_LOC_ID, TEST_SOURCE_ID);
 		processAggregateStaleData(log, jdbcTemplate);
 
@@ -649,7 +649,7 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 	@Test
 	public void deleteDatumAddStaleRowBeforeNextHour() {
 		// given
-		DateTime ts1 = new DateTime(2018, 6, 22, 14, 55);
+		DateTime ts1 = new DateTime(2018, 6, 22, 14, 55, DateTimeZone.forID(TEST_TZ));
 		populateTestData(ts1.getMillis(), 2, TimeUnit.MINUTES.toMillis(10), TEST_LOC_ID, TEST_SOURCE_ID);
 		processAggregateStaleData(log, jdbcTemplate);
 
