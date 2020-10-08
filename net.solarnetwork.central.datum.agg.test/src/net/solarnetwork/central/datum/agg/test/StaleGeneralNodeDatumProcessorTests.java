@@ -543,18 +543,22 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 				TEST_SOURCE_ID, "h");
 	}
 
+	/*- 
+	 * Per NET-265, updating datum no longer maintains aggregate states. Leaving these
+	 * tests here in case need to device support for updates in the future.
+	
 	@Test
 	public void updateDatumAddStaleRow() {
 		// given
 		DateTime ts1 = new DateTime(2018, 6, 22, 15, 05);
 		populateTestData(ts1.getMillis(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
-
+	
 		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
-
+	
 		// when
 		int updateCount = jdbcTemplate
 				.update("UPDATE solardatum.da_datum SET posted = posted + interval '1 minute'");
-
+	
 		// then
 		assertThat("Update row count", updateCount, equalTo(1));
 		List<Map<String, Object>> staleRows = jdbcTemplate.queryForList(
@@ -563,25 +567,25 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 		validateStaleRow("1", staleRows.get(0), ts1.hourOfDay().roundFloorCopy(), TEST_NODE_ID,
 				TEST_SOURCE_ID, "h");
 	}
-
+	
 	@Test
 	public void updateDatumAddStaleRowAfterPrevHour() {
 		// given
 		DateTime ts1 = new DateTime(2018, 6, 22, 14, 55);
 		populateTestData(ts1.getMillis(), 2, TimeUnit.MINUTES.toMillis(10), TEST_NODE_ID,
 				TEST_SOURCE_ID);
-
+	
 		// clear stale datum row
 		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
-
+	
 		// when
-
+	
 		// update 2nd datum, in 2nd hour
 		int updateCount = jdbcTemplate.update(
 				"UPDATE solardatum.da_datum SET posted = posted + interval '1 minute'"
 						+ " WHERE ts = ? AND node_id = ? AND source_id = ?",
 				new Timestamp(ts1.plusMinutes(10).getMillis()), TEST_NODE_ID, TEST_SOURCE_ID);
-
+	
 		// then
 		assertThat("Update row count", updateCount, equalTo(1));
 		List<Map<String, Object>> staleRows = jdbcTemplate.queryForList(
@@ -592,25 +596,25 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 		validateStaleRow("2", staleRows.get(1), ts1.hourOfDay().roundFloorCopy().plusHours(1),
 				TEST_NODE_ID, TEST_SOURCE_ID, "h");
 	}
-
+	
 	@Test
 	public void updateDatumAddStaleRowBeforeNextHour() {
 		// given
 		DateTime ts1 = new DateTime(2018, 6, 22, 14, 55);
 		populateTestData(ts1.getMillis(), 2, TimeUnit.MINUTES.toMillis(10), TEST_NODE_ID,
 				TEST_SOURCE_ID);
-
+	
 		// clear stale datum row
 		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
-
+	
 		// when
-
+	
 		// update 2nd datum, in 2nd hour
 		int updateCount = jdbcTemplate.update(
 				"UPDATE solardatum.da_datum SET posted = posted + interval '1 minute'"
 						+ " WHERE ts = ? AND node_id = ? AND source_id = ?",
 				new Timestamp(ts1.getMillis()), TEST_NODE_ID, TEST_SOURCE_ID);
-
+	
 		// then
 		assertThat("Update row count", updateCount, equalTo(1));
 		List<Map<String, Object>> staleRows = jdbcTemplate.queryForList(
@@ -621,6 +625,32 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 		validateStaleRow("2", staleRows.get(1), ts1.hourOfDay().roundFloorCopy().plusHours(1),
 				TEST_NODE_ID, TEST_SOURCE_ID, "h");
 	}
+	
+	@Test
+	public void updateDatumChangeSourceIdAddStaleRows() {
+		// given
+		DateTime ts1 = new DateTime(2018, 6, 22, 15, 05);
+		populateTestData(ts1.getMillis(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
+	
+		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
+	
+		// when
+		final String testSourceId2 = "test.source.2";
+		int updateCount = jdbcTemplate.update("UPDATE solardatum.da_datum SET source_id = ?",
+				testSourceId2);
+	
+		// then
+		assertThat("Update row count", updateCount, equalTo(1));
+		List<Map<String, Object>> staleRows = jdbcTemplate.queryForList(
+				"SELECT * FROM solaragg.agg_stale_datum WHERE agg_kind = 'h' ORDER BY ts_start, node_id, source_id");
+		assertThat("Stale rows inserted", staleRows, hasSize(2));
+		validateStaleRow("1", staleRows.get(0), ts1.hourOfDay().roundFloorCopy(), TEST_NODE_ID,
+				TEST_SOURCE_ID, "h");
+		validateStaleRow("2", staleRows.get(1), ts1.hourOfDay().roundFloorCopy(), TEST_NODE_ID,
+				testSourceId2, "h");
+	}
+	
+	*/
 
 	private static final String DELETE_DATUM_SQL = "{? = call solardatum.delete_datum(?::BIGINT[], ?, ?, ?)}";
 
@@ -724,30 +754,6 @@ public class StaleGeneralNodeDatumProcessorTests extends AggTestSupport {
 				TEST_SOURCE_ID, "h");
 		validateStaleRow("2", staleRows.get(1), ts1.hourOfDay().roundFloorCopy().plusHours(1),
 				TEST_NODE_ID, TEST_SOURCE_ID, "h");
-	}
-
-	@Test
-	public void updateDatumChangeSourceIdAddStaleRows() {
-		// given
-		DateTime ts1 = new DateTime(2018, 6, 22, 15, 05);
-		populateTestData(ts1.getMillis(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
-
-		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
-
-		// when
-		final String testSourceId2 = "test.source.2";
-		int updateCount = jdbcTemplate.update("UPDATE solardatum.da_datum SET source_id = ?",
-				testSourceId2);
-
-		// then
-		assertThat("Update row count", updateCount, equalTo(1));
-		List<Map<String, Object>> staleRows = jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.agg_stale_datum WHERE agg_kind = 'h' ORDER BY ts_start, node_id, source_id");
-		assertThat("Stale rows inserted", staleRows, hasSize(2));
-		validateStaleRow("1", staleRows.get(0), ts1.hourOfDay().roundFloorCopy(), TEST_NODE_ID,
-				TEST_SOURCE_ID, "h");
-		validateStaleRow("2", staleRows.get(1), ts1.hourOfDay().roundFloorCopy(), TEST_NODE_ID,
-				testSourceId2, "h");
 	}
 
 	private List<Map<String, Object>> staleRows() {
