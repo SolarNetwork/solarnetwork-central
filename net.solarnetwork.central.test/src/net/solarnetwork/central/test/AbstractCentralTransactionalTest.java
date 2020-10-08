@@ -212,6 +212,10 @@ public abstract class AbstractCentralTransactionalTest
 	 * {@code solaragg.process_agg_stale_loc_datum} procedures to populate
 	 * reporting data.
 	 * 
+	 * @param log
+	 *        the logger to use
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
 	 * @since 2.1
 	 */
 	public static void processAggregateStaleData(Logger log, JdbcTemplate jdbcTemplate) {
