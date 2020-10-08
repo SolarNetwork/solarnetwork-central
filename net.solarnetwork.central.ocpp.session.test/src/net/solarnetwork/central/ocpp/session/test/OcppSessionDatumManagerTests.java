@@ -500,9 +500,9 @@ public class OcppSessionDatumManagerTests {
 						OcppSessionDatumManager.DatumProperty.SessionDuration.getPropertyName()),
 				equalTo(Duration.between(sess.getCreated(), info.getTimestampEnd()).getSeconds()));
 		assertThat("Datum prop end date",
-				datum.getSamples().getStatusSampleString(
+				datum.getSamples().getStatusSampleLong(
 						OcppSessionDatumManager.DatumProperty.SessionEndDate.getPropertyName()),
-				equalTo(info.getTimestampEnd().toString()));
+				equalTo(info.getTimestampEnd().toEpochMilli()));
 		assertThat("Datum prop end reason",
 				datum.getSamples().getStatusSampleString(
 						OcppSessionDatumManager.DatumProperty.SessionEndReason.getPropertyName()),

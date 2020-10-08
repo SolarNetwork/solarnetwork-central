@@ -469,8 +469,10 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			//		DatumProperty.ReservationId.getPropertyName(), sess.getReservationId());
 			d.getSamples().putSampleValue(DatumProperty.SessionId.getClassification(),
 					DatumProperty.SessionId.getPropertyName(), sess.getId().toString());
-			d.getSamples().putSampleValue(DatumProperty.SessionEndDate.getClassification(),
-					DatumProperty.SessionEndDate.getPropertyName(), sess.getEnded());
+			if ( sess.getEnded() != null ) {
+				d.getSamples().putSampleValue(DatumProperty.SessionEndDate.getClassification(),
+						DatumProperty.SessionEndDate.getPropertyName(), sess.getEnded().toEpochMilli());
+			}
 			d.getSamples().putSampleValue(DatumProperty.SessionEndAuthorizationToken.getClassification(),
 					DatumProperty.SessionEndAuthorizationToken.getPropertyName(), sess.getEndAuthId());
 			if ( sess.getEndReason() != null ) {
