@@ -30,7 +30,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -54,7 +53,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import net.solarnetwork.central.datum.agg.StaleGeneralLocationDatumProcessor;
@@ -122,8 +120,14 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 		cleanupDatabase();
 	}
 
-	private static final String SQL_INSERT_DATUM = "INSERT INTO solardatum.da_loc_datum(ts, loc_id, source_id, posted, jdata_i, jdata_a) "
-			+ "VALUES (?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb))";
+	/*-
+		<parameter property="created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="nodeId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="sourceId" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="posted" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="sampleJson" jdbcType="VARCHAR" mode="IN"/>
+	 */
+	private static final String SQL_INSERT_DATUM = "{call solardatum.store_loc_datum(?, ?, ?, ?, ?)}";
 
 	private static final long MS_PER_HOUR = 60 * 60 * 1000L;
 
@@ -138,21 +142,20 @@ public class StaleGeneralLocationDatumProcessorTests extends AggTestSupport {
 	private void populateTestData(final long start, final int count, final long step,
 			final Long locationId, final String sourceId) {
 		final long now = System.currentTimeMillis();
-		jdbcTemplate.execute(SQL_INSERT_DATUM, new PreparedStatementCallback<Object>() {
+		jdbcTemplate.execute(SQL_INSERT_DATUM, new CallableStatementCallback<Void>() {
 
 			@Override
-			public Object doInPreparedStatement(PreparedStatement stmt)
+			public Void doInCallableStatement(CallableStatement cs)
 					throws SQLException, DataAccessException {
 				// round to hour ts
 				long ts = start;
 				for ( int i = 0; i < count; i++ ) {
-					stmt.setTimestamp(1, new Timestamp(ts));
-					stmt.setLong(2, locationId);
-					stmt.setString(3, sourceId);
-					stmt.setTimestamp(4, new Timestamp(now));
-					stmt.setString(5, "{\"watts\":125}");
-					stmt.setString(6, "{\"wattHours\":10}");
-					stmt.executeUpdate();
+					cs.setTimestamp(1, new Timestamp(ts));
+					cs.setLong(2, locationId);
+					cs.setString(3, sourceId);
+					cs.setTimestamp(4, new Timestamp(now));
+					cs.setString(5, "{\"i\":{\"watts\":125},\"a\":{\"wattHours\":10}}");
+					cs.executeUpdate();
 					ts += step;
 				}
 				return null;

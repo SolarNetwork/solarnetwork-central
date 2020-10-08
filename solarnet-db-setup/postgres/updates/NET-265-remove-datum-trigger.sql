@@ -122,12 +122,13 @@ CREATE OR REPLACE FUNCTION solaragg.mark_datum_stale_hour_slots_range(
 		ts_upper 	TIMESTAMP WITH TIME ZONE
 	) RETURNS VOID LANGUAGE SQL VOLATILE AS
 $$
-	WITH r AS (
-		SELECT ts_min, ts_max
-		FROM solardatum.calculate_stale_datum_range(node, source, ts_lower, ts_upper)
-	)
-	SELECT solaragg.mark_datum_stale_hour_slots(ARRAY[node], ARRAY[source], r.ts_min, r.ts_max)
-	FROM r
+	INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+	SELECT ts_start, node, source, 'h'
+	FROM solardatum.calculate_stale_datum(node, source, ts_lower)
+	UNION
+	SELECT ts_start, node, source, 'h'
+	FROM solardatum.calculate_stale_datum(node, source, ts_upper)
+	ON CONFLICT DO NOTHING
 $$;
 
 /**
@@ -268,19 +269,23 @@ BEGIN
 		AND (all_source_ids OR d.source_id = ANY(nlt.source_ids));
 	GET DIAGNOSTICS total_count = ROW_COUNT;
 
-	WITH nlt AS (
-		SELECT time_zone, ts_start, ts_end, node_ids, source_ids
-		FROM solarnet.node_source_time_ranges_local(nodes, sources, start_date, end_date)
-	)
 	-- mark remaining hourly aggregates as stale, so partial hours/days/months recalculated
-	INSERT INTO solaragg.agg_stale_datum (node_id, ts_start, source_id, agg_kind)
-	SELECT d.node_id, d.ts_start, d.source_id, 'h'
-	FROM nlt
-	INNER JOIN solaragg.agg_datum_hourly d ON
-		d.ts_start >= date_trunc('hour', nlt.ts_start)
-		AND d.ts_start < date_trunc('hour', nlt.ts_end) + interval '1 hour'
-		AND d.node_id = ANY(nlt.node_ids)
-		AND (all_source_ids OR d.source_id = ANY(nlt.source_ids))
+	WITH nlt AS (
+		SELECT nlt.node_id
+			, source_id
+			, start_date AT TIME ZONE nlt.time_zone AS ts_start
+		FROM solarnet.node_local_time nlt, UNNEST(sources) AS source_id
+		WHERE nlt.node_id = ANY(nodes)
+		UNION ALL
+		SELECT nlt.node_id
+			, source_id
+			, end_date AT TIME ZONE nlt.time_zone AS ts_start
+		FROM solarnet.node_local_time nlt, UNNEST(sources) AS source_id
+		WHERE nlt.node_id = ANY(nodes)
+	)
+	INSERT INTO solaragg.agg_stale_datum(node_id, source_id, ts_start, agg_kind)
+	SELECT s.node_id, s.source_id, s.ts_start, 'h'
+	FROM nlt, solardatum.calculate_stale_datum(nlt.node_id, nlt.source_id, nlt.ts_start) s
 	ON CONFLICT DO NOTHING;
 
 	--GET DIAGNOSTICS stale_count = ROW_COUNT;

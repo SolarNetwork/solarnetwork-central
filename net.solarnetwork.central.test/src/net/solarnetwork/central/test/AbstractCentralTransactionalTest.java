@@ -40,6 +40,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.ConnectionCallback;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -54,7 +55,7 @@ import net.solarnetwork.central.security.AuthenticatedNode;
  * Base test class for transactional unit tests.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml",
 		"classpath:/net/solarnetwork/central/test/test-tx-context.xml" })
@@ -176,7 +177,7 @@ public abstract class AbstractCentralTransactionalTest
 				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, timeZoneId);
 	}
 
-	private int processKind(String kind, CallableStatement cs) throws SQLException {
+	private static int processKind(String kind, CallableStatement cs) throws SQLException {
 		int processed = 0;
 		while ( true ) {
 			cs.setString(1, kind);
@@ -203,6 +204,17 @@ public abstract class AbstractCentralTransactionalTest
 	 * @since 1.1
 	 */
 	protected void processAggregateStaleData() {
+		processAggregateStaleData(log, jdbcTemplate);
+	}
+
+	/**
+	 * Call the {@code solaragg.process_agg_stale_datum} and
+	 * {@code solaragg.process_agg_stale_loc_datum} procedures to populate
+	 * reporting data.
+	 * 
+	 * @since 2.1
+	 */
+	public static void processAggregateStaleData(Logger log, JdbcTemplate jdbcTemplate) {
 		List<Map<String, Object>> staleRows = jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.agg_stale_datum ORDER BY ts_start, node_id, source_id");
 		log.debug("Stale datum at start:\n{}",
@@ -268,6 +280,75 @@ public abstract class AbstractCentralTransactionalTest
 				return null;
 			}
 		});
+	}
+
+	/**
+	 * List all raw datum rows.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @return the rows
+	 * @since 2.1
+	 */
+	public static List<Map<String, Object>> getDatum(JdbcTemplate jdbcTemplate) {
+		return jdbcTemplate
+				.queryForList("select * from solardatum.da_datum order by node_id,ts,source_id");
+	}
+
+	/**
+	 * List all raw datum rows.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @return the rows
+	 * @since 2.1
+	 */
+	public static List<Map<String, Object>> getDatumAggregateHourly(JdbcTemplate jdbcTemplate) {
+		return jdbcTemplate.queryForList(
+				"select * from solaragg.agg_datum_hourly order by node_id,ts_start,source_id");
+	}
+
+	/**
+	 * List all raw datum rows.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @return the rows
+	 * @since 2.1
+	 */
+	public static List<Map<String, Object>> getDatumAggregateDaily(JdbcTemplate jdbcTemplate) {
+		return jdbcTemplate.queryForList(
+				"select * from solaragg.agg_datum_daily order by node_id,ts_start,source_id");
+	}
+
+	/**
+	 * List all raw datum rows for a given node.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @param nodeId
+	 *        the node ID to limit the results to
+	 * @return the rows
+	 * @since 2.1
+	 */
+	public static List<Map<String, Object>> getDatumAggregateDaily(JdbcTemplate jdbcTemplate,
+			Long nodeId) {
+		return jdbcTemplate.queryForList(
+				"select * from solaragg.agg_datum_daily where node_id = ? order by ts_start,source_id",
+				nodeId);
+	}
+
+	/**
+	 * List all raw datum rows.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @return the rows
+	 * @since 2.1
+	 */
+	public static List<Map<String, Object>> getDatumAggregateMonthly(JdbcTemplate jdbcTemplate) {
+		return jdbcTemplate.queryForList(
+				"select * from solaragg.agg_datum_monthly order by node_id,ts_start,source_id");
 	}
 
 }
