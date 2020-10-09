@@ -1,5 +1,7 @@
 DROP TRIGGER IF EXISTS aa_agg_stale_datum ON solardatum.da_datum;
-DROP FUNCTION IF EXISTS solardatum.trigger_agg_stale_datum;
+
+-- This trigger function still used by the aa_agg_stale_datum_aux on solardatum.da_datum_aux table
+--DROP FUNCTION IF EXISTS solardatum.trigger_agg_stale_datum();
 
 /**
  * Calculate "stale datum" rows for a given datum primary key that has changed.
