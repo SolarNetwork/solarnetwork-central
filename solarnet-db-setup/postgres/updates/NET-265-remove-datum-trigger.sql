@@ -302,7 +302,7 @@ $$;
 
 
 DROP TRIGGER IF EXISTS aa_agg_stale_loc_datum ON solardatum.da_loc_datum;
-DROP FUNCTION IF EXISTS solardatum.trigger_agg_stale_loc_datum;
+DROP FUNCTION IF EXISTS solardatum.trigger_agg_stale_loc_datum();
 
 /**
  * Calculate "stale location datum" rows for a given location datum primary key that has changed.
