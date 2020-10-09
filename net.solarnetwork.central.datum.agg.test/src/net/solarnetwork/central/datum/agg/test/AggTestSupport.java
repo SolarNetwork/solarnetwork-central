@@ -72,6 +72,7 @@ public abstract class AggTestSupport extends AbstractCentralTest {
 			return;
 		}
 		jdbcTemplate.update("DELETE FROM solardatum.da_datum");
+		jdbcTemplate.update("DELETE FROM solardatum.da_datum_range");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_flux");
 		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_hourly");
