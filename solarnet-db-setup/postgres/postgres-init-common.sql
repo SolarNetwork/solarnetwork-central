@@ -681,7 +681,7 @@ $$;
 CREATE OR REPLACE FUNCTION solarcommon.to_baseX(n BIGINT, radix INT DEFAULT 16) RETURNS TEXT LANGUAGE plpgsql IMMUTABLE AS
 $$
 DECLARE
-	s TEXT := ''
+	s TEXT := '';
 BEGIN
 	IF ( n < 0 ) THEN
 		RETURN NULL;
