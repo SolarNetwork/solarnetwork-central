@@ -2,7 +2,7 @@
 
 /**
  * FUNCTION solardatum.find_least_recent_direct(bigint)
- * 
+ *
  * Find the smallest available dates for all source IDs for the given node ID. This does **not**
  * use the `solardatum.da_datum_range` table.
  *
@@ -26,7 +26,7 @@ $$
 		GROUP BY d.source_id
 	)
 	-- finally query the raw data using the exact found timestamps, so loop over each (ts,source) tuple found in mins
-	SELECT d.* 
+	SELECT d.*
 	FROM solardatum.da_datum_data d
 	INNER JOIN mins ON mins.node_id = d.node_id AND mins.source_id = d.source_id AND mins.ts = d.ts
 	ORDER BY d.source_id ASC
@@ -34,7 +34,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent_direct(bigint)
- * 
+ *
  * Find the highest available dates for all source IDs for the given node ID. This does **not**
  * use the `solardatum.da_datum_range` table.
  *
@@ -58,7 +58,7 @@ $$
 		GROUP BY d.source_id
 	)
 	-- finally query the raw data using the exact found timestamps, so loop over each (ts,source) tuple found in maxes
-	SELECT d.* 
+	SELECT d.*
 	FROM solardatum.da_datum_data d
 	INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts = d.ts
 	ORDER BY d.source_id ASC
@@ -66,7 +66,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent_direct(bigint, text[])
- * 
+ *
  * Find the highest available dates for the given source IDs for the given node ID. This query does **not** rely on
  * the `solardatum.da_datum_range` table.
  *
@@ -92,7 +92,7 @@ $$
 		GROUP BY d.source_id
 	)
 	-- finally query the raw data using the exact found timestamps, so loop over each (ts,source) tuple found in maxes
-	SELECT d.* 
+	SELECT d.*
 	FROM solardatum.da_datum_data d
 	INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts = d.ts
 	ORDER BY d.source_id ASC
@@ -100,7 +100,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent(bigint)
- * 
+ *
  * Find the highest available dates for all source IDs for the given node ID. This query relies on
  * the `solardatum.da_datum_range` table.
  *
@@ -118,7 +118,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent(bigint, text[])
- * 
+ *
  * Find the highest available dates for the given source IDs for the given node ID. This query relies on
  * the `solardatum.da_datum_range` table.
  *
@@ -138,7 +138,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent(bigint[], text[])
- * 
+ *
  * Find the highest available data for all source IDs for the given node IDs. This query relies on
  * the `solardatum.da_datum_range` table.
  *
@@ -157,7 +157,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent_direct(bigint[])
- * 
+ *
  * Find the highest available dates for all source IDs for the given node IDs. This query does **not** rely on
  * the `solardatum.da_datum_range` table.
  *
@@ -174,7 +174,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent(bigint[])
- * 
+ *
  * Find the highest available dates for all source IDs for the given node IDs. This query relies on
  * the `solardatum.da_datum_range` table.
  *
