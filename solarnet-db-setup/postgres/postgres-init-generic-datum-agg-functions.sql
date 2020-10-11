@@ -93,6 +93,36 @@ $BODY$
 	) * interval '1 second'
 $BODY$;
 
+
+/**
+ * Find hours with datum data in them based on a node, source, and date range; mark them as "stale"
+ * for aggregate processing.
+ *
+ * This function will insert into the `solaragg.agg_stale_datum` table records for all hours
+ * of available data matching the given criteria.
+ *
+ * @param node 		the node ID of the datum that has been changed (inserted, deleted)
+ * @param source 	the source ID of the datum that has been changed
+ * @param ts_lower	the lower date of the datum that has changed
+ * @param ts_upper	the upper date of the datum that has changed
+ */
+CREATE OR REPLACE FUNCTION solaragg.mark_datum_stale_hour_slots_range(
+		node 		BIGINT,
+		source 		CHARACTER VARYING(64),
+		ts_lower 	TIMESTAMP WITH TIME ZONE,
+		ts_upper 	TIMESTAMP WITH TIME ZONE
+	) RETURNS VOID LANGUAGE SQL VOLATILE AS
+$$
+	INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+	SELECT ts_start, node, source, 'h'
+	FROM solardatum.calculate_stale_datum(node, source, ts_lower)
+	UNION
+	SELECT ts_start, node, source, 'h'
+	FROM solardatum.calculate_stale_datum(node, source, ts_upper)
+	ON CONFLICT DO NOTHING
+$$;
+
+
 /**
  * Trigger that inserts a row into the <b>solaragg.agg_stale_datum<b> table based on
  * a change to a <b>solardatum.da_datum</b> type row. The <b>agg_kind</b> column is
