@@ -102,7 +102,7 @@ CREATE TABLE solaruser.user_export_task (
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT user_export_task_user_export_datum_conf_fk FOREIGN KEY (conf_id)
 		REFERENCES solaruser.user_export_datum_conf (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 /**
