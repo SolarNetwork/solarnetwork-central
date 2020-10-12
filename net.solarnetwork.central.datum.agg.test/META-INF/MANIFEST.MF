@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Datum Aggregate Test
 Bundle-SymbolicName: net.solarnetwork.central.datum.agg.test
-Bundle-Version: 1.8.0
+Bundle-Version: 1.9.1
 Bundle-Vendor: SolarNetwork
 Fragment-Host: net.solarnetwork.central.datum.agg;bundle-version="[1.12,2.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -14,7 +14,7 @@ Import-Package:
  io.moquette.interception;version="[0.12,1.0)",
  io.moquette.interception.messages;version="[0.12,1.0)",
  io.netty.buffer;version="[4.1.22,5.0)",
- net.solarnetwork.central.test;version="1.0",
+ net.solarnetwork.central.test;version="[2.2,3.0)",
  net.solarnetwork.common.mqtt.netty;version="1.0.0",
  net.solarnetwork.test.mqtt;version="1.0.0",
  net.solarnetwork.util;version="1.32.0",

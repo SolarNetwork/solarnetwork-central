@@ -493,7 +493,7 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 			for ( prop in el ) {
 				// stash current val on "last" record
 				l[prop] = el[prop];
-				
+
 				if ( f[prop] === undefined ) {
 					// property discovered mid-way while aggregating; add to "first" now
 					f[prop] = el[prop];
@@ -510,7 +510,7 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 					t[prop] = val;
 				}
 			}
-			
+
 			// clear prev record
 			delete agg_state.prev;
 		} else {
@@ -548,7 +548,7 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 			}
 		}
 	}
-	
+
 	// add in _start/_end props
 	for ( prop in t ) {
 		val = f[prop];
@@ -567,7 +567,7 @@ $$;
  * Difference and sum aggregate for JSON object values, resulting in a JSON object.
  *
  * This aggregate will subtract the _property values_ of the odd JSON objects in the aggregate group
- * from the next even object in the group, resulting in a JSON object. Each pair or objects are then 
+ * from the next even object in the group, resulting in a JSON object. Each pair or objects are then
  * added together to form a final aggregate value. An `ORDER BY` clause is thus essential
  * to ensure the odd/even values are captured correctly. The first and last values for each property
  * will be included in the output JSON object with `_start` and `_end` suffixes added to their names.
@@ -606,7 +606,7 @@ RETURNS jsonb LANGUAGE plv8 IMMUTABLE AS $$
 			}
 		}
 	}
-	
+
 	for ( prop in t ) {
 		return {'a':t, 'af':l, 'as':f};
 	}
@@ -617,7 +617,7 @@ $$;
  * Difference and sum aggregate for JSON object values, resulting in a JSON object.
  *
  * This aggregate will subtract the _property values_ of the odd JSON objects in the aggregate group
- * from the next even object in the group, resulting in a JSON object. Each pair or objects are then 
+ * from the next even object in the group, resulting in a JSON object. Each pair or objects are then
  * added together to form a final aggregate value. An `ORDER BY` clause is thus essential
  * to ensure the odd/even values are captured correctly.
  *
@@ -666,7 +666,7 @@ $$
 	WITH chars AS (
 		SELECT * FROM UNNEST(string_to_array(UPPER(REVERSE(s)), NULL)) WITH ORDINALITY AS a(c, p)
 	)
-	SELECT SUM(POWER(radix, c.p - 1)::BIGINT * CASE 
+	SELECT SUM(POWER(radix, c.p - 1)::BIGINT * CASE
 									WHEN c.c BETWEEN '0' AND '9' THEN c.c::INTEGER
 									ELSE (10 + ASCII(c.c) - ASCII('A'))::INTEGER
 									END)::BIGINT AS v
@@ -681,7 +681,7 @@ $$;
 CREATE OR REPLACE FUNCTION solarcommon.to_baseX(n BIGINT, radix INT DEFAULT 16) RETURNS TEXT LANGUAGE plpgsql IMMUTABLE AS
 $$
 DECLARE
-	s TEXT := ''
+	s TEXT := '';
 BEGIN
 	IF ( n < 0 ) THEN
 		RETURN NULL;
@@ -690,7 +690,7 @@ BEGIN
 		EXIT WHEN n <= 0;
 		s := CHR(n % radix + CASE WHEN n % radix < 10 THEN 48 ELSE 55 END) || s;
 		n := FLOOR(n / radix);
-	END LOOP; 
+	END LOOP;
 	RETURN s::BIGINT;
 	EXCEPTION WHEN OTHERS THEN
 	RETURN NULL;

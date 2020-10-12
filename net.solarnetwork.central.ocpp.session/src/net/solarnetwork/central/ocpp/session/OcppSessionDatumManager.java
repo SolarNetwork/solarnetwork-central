@@ -89,7 +89,7 @@ import net.solarnetwork.util.StringUtils;
  * transaction data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class OcppSessionDatumManager extends BasicIdentifiable
 		implements ChargeSessionManager, SettingsChangeObserver {
@@ -469,8 +469,10 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			//		DatumProperty.ReservationId.getPropertyName(), sess.getReservationId());
 			d.getSamples().putSampleValue(DatumProperty.SessionId.getClassification(),
 					DatumProperty.SessionId.getPropertyName(), sess.getId().toString());
-			d.getSamples().putSampleValue(DatumProperty.SessionEndDate.getClassification(),
-					DatumProperty.SessionEndDate.getPropertyName(), sess.getEnded());
+			if ( sess.getEnded() != null ) {
+				d.getSamples().putSampleValue(DatumProperty.SessionEndDate.getClassification(),
+						DatumProperty.SessionEndDate.getPropertyName(), sess.getEnded().toEpochMilli());
+			}
 			d.getSamples().putSampleValue(DatumProperty.SessionEndAuthorizationToken.getClassification(),
 					DatumProperty.SessionEndAuthorizationToken.getPropertyName(), sess.getEndAuthId());
 			if ( sess.getEndReason() != null ) {
@@ -656,7 +658,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			}
 
 			case K: {
-				BigDecimal celsius = num.subtract(new BigDecimal("-273.15"));
+				BigDecimal celsius = num.subtract(new BigDecimal("273.15"));
 				if ( maxTemperatureScale >= 0 && celsius.scale() > maxTemperatureScale ) {
 					celsius = celsius.setScale(maxTemperatureScale, RoundingMode.HALF_UP);
 				}

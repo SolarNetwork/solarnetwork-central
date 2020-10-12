@@ -66,7 +66,7 @@ CREATE TYPE solardatum.da_datum_aux_type AS ENUM ('Reset');
  * TABLE solardatum.da_datum_aux
  *
  * Holds auxiliary records for datum records, where final/start data is inserted into the data stream.
- * Thus each row contains essentially two datum records. These auxiliary records serve to 
+ * Thus each row contains essentially two datum records. These auxiliary records serve to
  * help transition the data stream in some way.
  *
  * atype - the auxiliary record type
@@ -103,12 +103,12 @@ CREATE OR REPLACE FUNCTION solardatum.store_datum_aux(
   RETURNS void LANGUAGE SQL VOLATILE AS
 $$
 	INSERT INTO solardatum.da_datum_aux(ts, node_id, source_id, atype, updated, notes, jdata_af, jdata_as, jmeta)
-	VALUES (cdate, node, src, aux_type, CURRENT_TIMESTAMP, aux_notes, 
+	VALUES (cdate, node, src, aux_type, CURRENT_TIMESTAMP, aux_notes,
 		(jdata_final::jsonb)->'a', (jdata_start::jsonb)->'a', jmeta::jsonb)
 	ON CONFLICT (ts, node_id, source_id, atype) DO UPDATE
 	SET notes = EXCLUDED.notes,
 		jdata_af = EXCLUDED.jdata_af,
-		jdata_as = EXCLUDED.jdata_as, 
+		jdata_as = EXCLUDED.jdata_as,
 		jmeta = EXCLUDED.jmeta,
 		updated = EXCLUDED.updated;
 $$;
@@ -139,13 +139,13 @@ BEGIN
 	-- note we are doing DELETE/INSERT so that trigger_agg_stale_datum can correctly pick up old/new stale rows
 	DELETE FROM solardatum.da_datum_aux
 	WHERE ts = cdate_from AND node_id = node_from AND source_id = src_from AND atype = aux_type_from;
-	
+
 	GET DIAGNOSTICS del_count = ROW_COUNT;
-	
+
 	IF del_count > 0 THEN
 		PERFORM solardatum.store_datum_aux(cdate, node, src, aux_type, aux_notes, jdata_final, jdata_start, meta_json);
 	END IF;
-	
+
 	RETURN (del_count > 0);
 END;
 $$;
@@ -179,7 +179,7 @@ $$;
 /**
  * TABLE solardatum.da_datum_range
  *
- * Table with one row per node+source combination, with associated timestamps that are meant to 
+ * Table with one row per node+source combination, with associated timestamps that are meant to
  * be the "most/least recent" timestamps for that node+source in the `solardatum.da_datum` table. This
  * is used for query performance only, as finding the most recent data directly from `solardatum.da_datum`
  * can be prohibitively expensive.
@@ -522,6 +522,112 @@ FROM solardatum.da_datum d
 INNER JOIN nodetz ON nodetz.node_id = d.node_id
 GROUP BY date_trunc('month', d.ts at time zone nodetz.tz) at time zone nodetz.tz, d.node_id, d.source_id;
 
+
+/**
+ * Calculate "stale datum" rows for a given datum primary key that has changed.
+ *
+ * This function will return 1-3 rows representing stale rows that must be re-calculated.
+ * It is designed so that the results can be inserted into `solaragg.agg_stale_datum`, like:
+ *
+ * 	INSERT INTO solaragg.agg_stale_datum (agg_kind, node_id, ts_start, source_id)
+ * 	SELECT 'h' AS agg_kind, node_id, ts_start, source_id
+ * 	FROM solardatum.calculate_stale_datum(179,'Mock Energy Meter','2020-10-07 08:00:40+13'::timestamptz)
+ * 	ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
+ *
+ * @param node 		the node ID of the datum that has been changed (inserted, deleted)
+ * @param source 	the source ID of the datum that has been changed
+ * @param ts_in		the date of the datum that has changed
+ */
+CREATE OR REPLACE FUNCTION solardatum.calculate_stale_datum(
+		node 		BIGINT,
+		source 		CHARACTER VARYING(64),
+		ts_in 		TIMESTAMP WITH TIME ZONE
+	) RETURNS TABLE (
+		node_id		BIGINT,
+		source_id 	CHARACTER VARYING(64),
+		ts_start 	TIMESTAMP WITH TIME ZONE
+	) LANGUAGE PLPGSQL STABLE ROWS 3 AS
+$$
+DECLARE
+	orig_slot	TIMESTAMP WITH TIME ZONE 	:= date_trunc('hour', ts_in);
+	dur_back 	INTERVAL 					:= interval '1 hour';
+	dur_fwd  	INTERVAL 					:= interval '3 months';
+BEGIN
+	node_id 	:= node;
+	source_id 	:= source;
+	ts_start 	:= orig_slot;
+	RETURN NEXT;
+
+	-- prev slot; if the previous record for this source falls on the previous hour, we have to mark that hour as stale as well
+
+	SELECT d.node_id, d.source_id, date_trunc('hour', d.ts) AS ts_start
+		FROM solardatum.da_datum d
+		WHERE d.ts < ts_in
+			AND d.ts > ts_in - dur_back
+			AND d.node_id = node
+			AND d.source_id = source
+		ORDER BY d.ts DESC
+		LIMIT 1
+		INTO node_id, source_id, ts_start;
+
+	IF FOUND AND ts_start < orig_slot THEN
+		RETURN NEXT;
+	END IF;
+
+	-- next slot; if there is another record in a future hour, we have to mark that hour as stale as well
+
+	SELECT d.node_id, d.source_id, date_trunc('hour', d.ts) AS ts_start
+		FROM solardatum.da_datum d
+		WHERE d.ts > ts_in
+			AND d.ts < ts_in + dur_fwd
+			AND d.node_id = node
+			AND d.source_id = source
+		ORDER BY d.ts ASC
+		LIMIT 1
+		INTO node_id, source_id, ts_start;
+
+	IF FOUND AND ts_start > orig_slot THEN
+		RETURN NEXT;
+	END IF;
+
+	RETURN;
+END;
+$$;
+
+
+/**
+ * Calculate a date range for stale datum given a node, source, and lower and upper dates.
+ *
+ * Note that the returned `ts_max` represents an **exclusive** date value, suitable for passing
+ * to the `solaragg.mark_datum_stale_hour_slots` function.
+ *
+ * @param node 		the node ID of the datum that has been changed (inserted, deleted)
+ * @param source 	the source ID of the datum that has been changed
+ * @param ts_lower	the lower date of the datum that has changed
+ * @param ts_upper	the upper date of the datum that has changed
+ */
+CREATE OR REPLACE FUNCTION solardatum.calculate_stale_datum_range(
+		node 		BIGINT,
+		source 		CHARACTER VARYING(64),
+		ts_lower 	TIMESTAMP WITH TIME ZONE,
+		ts_upper 	TIMESTAMP WITH TIME ZONE
+	) RETURNS TABLE (
+		ts_min 		TIMESTAMP WITH TIME ZONE,
+		ts_max		TIMESTAMP WITH TIME ZONE
+	) LANGUAGE SQL STABLE ROWS 1 AS
+$$
+	WITH d AS (
+		SELECT ts_start
+		FROM solardatum.calculate_stale_datum(node, source, ts_lower)
+		UNION ALL
+		SELECT ts_start
+		FROM solardatum.calculate_stale_datum(node, source, ts_upper)
+	)
+	SELECT min(ts_start) AS ts_min, max(ts_start) + interval '1 hour' AS ts_max
+	FROM d
+$$;
+
+
 CREATE OR REPLACE FUNCTION solardatum.store_meta(
 	cdate timestamp with time zone,
 	node bigint,
@@ -578,7 +684,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_reportable_interval(bigint, text)
- * 
+ *
  * Find the least and highest available dates for the given source ID and node ID.
  * This query relies on the `solardatum.da_datum_range` table.
  *
@@ -963,7 +1069,7 @@ RETURNS TABLE(
 		FROM (
 			(
 				SELECT DISTINCT ON (d.node_id, d.source_id) d.ts, d.node_id, d.source_id, d.jdata_a
-				FROM solardatum.da_datum d 
+				FROM solardatum.da_datum d
 				WHERE d.node_id = ANY(nodes)
 					AND d.source_id = ANY(sources)
 					AND d.ts <= ts_min
@@ -1350,7 +1456,7 @@ RETURNS TABLE(
 					AND ts < ts_min
 					AND ts >= ts_min - tolerance
 					AND jdata_a IS NOT NULL
-				ORDER BY ts DESC 
+				ORDER BY ts DESC
 				LIMIT 1
 			)
 			UNION ALL
@@ -1382,7 +1488,7 @@ RETURNS TABLE(
 					AND ts >= ts_min
 					AND ts < ts_max
 					AND jdata_a IS NOT NULL
-				ORDER BY ts 
+				ORDER BY ts
 				LIMIT 1
 			)
 			UNION ALL
@@ -1414,7 +1520,7 @@ RETURNS TABLE(
 					AND ts < ts_max
 					AND ts >= ts_min
 					AND jdata_a IS NOT NULL
-				ORDER BY ts DESC 
+				ORDER BY ts DESC
 				LIMIT 1
 			)
 			UNION ALL
@@ -1458,15 +1564,15 @@ RETURNS TABLE(
 	)
 	, combined AS (
 		SELECT * FROM d
-	
+
 		UNION ALL
 		SELECT aux.ts - unnest(ARRAY['1 millisecond','0'])::interval AS ts
 			, aux.node_id
 			, aux.source_id
 			, unnest(ARRAY[aux.jdata_af, aux.jdata_as]) AS jdata_a
-		FROM ranges, solardatum.da_datum_aux aux 
+		FROM ranges, solardatum.da_datum_aux aux
 		WHERE atype = 'Reset'::solardatum.da_datum_aux_type
-			AND aux.node_id = node 
+			AND aux.node_id = node
 			AND aux.source_id = source
 			AND aux.ts > ranges.sdate
 			AND aux.ts < ranges.edate
@@ -1494,7 +1600,7 @@ $$;
  * between the starting/ending rows, using the `solarcommon.jsonb_diff_object()` aggregate function.
  *
  * The `solardatum.da_datum_aux` table will be considered, for `Reset` type rows.
- * 
+ *
  * This function makes use of `solardatum.find_latest_before()` and `solardatum.find_earliest_after`
  * and thus has the same restrictions as those, and as a consequence will consider all data before
  * the given `ts_max` as possible data.
@@ -1645,7 +1751,7 @@ $$;
  * between the starting/ending rows, using the `solarcommon.jsonb_diff_object()` aggregate function.
  *
  * The `solardatum.da_datum_aux` table will be considered, for `Reset` type rows.
- * 
+ *
  * This function makes use of `solardatum.find_latest_before()` and `solardatum.find_earliest_after`
  * and thus has the same restrictions as those, and as a consequence will consider all data before
  * the given `ts_max` as possible data.
@@ -1755,7 +1861,7 @@ RETURNS TABLE(
 			) d
 			ORDER BY d.node_id, d.source_id, d.ts
 		) earliest
-		UNION 
+		UNION
 		SELECT * FROM latest_before_end
 	)
 	-- begin search for reset records WITHIN [start, final] date ranges via table of found [start, final] dates
@@ -1805,9 +1911,9 @@ $$;
  *
  * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
  *
- * This returns one row per node ID and source ID combination found. The returned `ts_start` and 
+ * This returns one row per node ID and source ID combination found. The returned `ts_start` and
  * `ts_end` columns will be the timestamps of the found starting/ending datum records. The `jdata_a`
- * column will be computed as the difference between the starting/ending rows, using the 
+ * column will be computed as the difference between the starting/ending rows, using the
  * `solarcommon.jsonb_diffsum_object()` aggregate function.
  *
  * The `solardatum.da_datum_aux` table will be considered, for `Reset` type rows.
@@ -1850,7 +1956,7 @@ RETURNS TABLE(
 			, aux.source_id
 			, unnest(ARRAY[aux.ts - interval '1 millisecond', aux.ts]) AS ts
 			, unnest(ARRAY[aux.jdata_af, aux.jdata_as]) AS jdata_a
-		FROM solardatum.da_datum_aux aux 
+		FROM solardatum.da_datum_aux aux
 		WHERE aux.node_id = ANY(nodes)
 			AND aux.source_id = ANY(sources)
 			AND aux.ts >= ts_min
@@ -1882,9 +1988,9 @@ $$;
  *
  * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
  *
- * This returns one row per node ID and source ID combination found. The returned `ts_start` and 
+ * This returns one row per node ID and source ID combination found. The returned `ts_start` and
  * `ts_end` columns will be the timestamps of the found starting/ending datum records. The `jdata_a`
- * column will be computed as the difference between the starting/ending rows, using the 
+ * column will be computed as the difference between the starting/ending rows, using the
  * `solarcommon.jsonb_diffsum_object()` aggregate function.
  *
  * The `solardatum.da_datum_aux` table will be considered, for `Reset` type rows.
@@ -1963,7 +2069,7 @@ RETURNS TABLE(
 	-- latest_before_start in preference to earliest_after_start
 	, d AS (
 		SELECT * FROM earliest_after_start
-		UNION 
+		UNION
 		SELECT * FROM latest_before_end
 	)
 	-- begin search for reset records WITHIN [start, final] date ranges via table of found [start, final] dates
@@ -2012,9 +2118,9 @@ $$;
  *
  * NOTE this query only considers rows with accumulating data, i.e. non-NULL `jdata_a` values.
  *
- * This returns one row per node ID and source ID combination found. The returned `ts_start` and 
+ * This returns one row per node ID and source ID combination found. The returned `ts_start` and
  * `ts_end` columns will be the timestamps of the found starting/ending datum records. The `jdata_a`
- * column will be computed as the difference between the starting/ending rows, using the 
+ * column will be computed as the difference between the starting/ending rows, using the
  * `solarcommon.jsonb_diffsum_object()` aggregate function.
  *
  * The `solardatum.da_datum_aux` table will be considered, for `Reset` type rows.
@@ -2070,7 +2176,7 @@ $$;
  * earliest on or after the `ts_min` date and the latest before or on the `ts_max` date.
  *
  * This query is optimized for time ranges of 24 hours or less.
- * 
+ *
  * @param nodes 		the node IDs to find
  * @param sources 		the source IDs to find
  * @param ts_min		the timestamp of the start of the time range (inclusive), in node local time
@@ -2110,7 +2216,7 @@ RETURNS TABLE(
 			, aux.source_id
 			, unnest(ARRAY[aux.ts - interval '1 millisecond', aux.ts]) AS ts
 			, unnest(ARRAY[aux.jdata_af, aux.jdata_as]) AS jdata_a
-		FROM solardatum.da_datum_aux aux 
+		FROM solardatum.da_datum_aux aux
 		WHERE aux.node_id = ANY(nodes)
 			AND aux.source_id = ANY(sources)
 			AND aux.ts >= ts_min
@@ -2151,7 +2257,7 @@ $$;
  * earliest on or after the `ts_min` date and the latest before or on the `ts_max` date.
  *
  * This query is optimized for time ranges greater than 24 hours.
- * 
+ *
  * @param nodes 		the node IDs to find
  * @param sources 		the source IDs to find
  * @param ts_min		the timestamp of the start of the time range (inclusive), in node local time
@@ -2230,7 +2336,7 @@ RETURNS TABLE(
 	-- latest_before_start in preference to earliest_after_start
 	, d AS (
 		SELECT * FROM earliest_after_start
-		UNION 
+		UNION
 		SELECT * FROM latest_before_end
 	)
 	-- begin search for reset records WITHIN [start, final] date ranges via table of found [start, final] dates
@@ -2287,10 +2393,10 @@ $$;
  *
  * This query will **not** use rows from outside the given date range. It will only use the
  * earliest on or after the `ts_min` date and the latest before or on the `ts_max` date.
- * 
+ *
  * This function delegates to `solardatum.calculate_datum_diff_within_local_close` for time ranges
  * of 24 hours or less. Otherwise it delegates to `solardatum.calculate_datum_diff_within_local_far`.
- * 
+ *
  * @param nodes 		the node IDs to find
  * @param sources 		the source IDs to find
  * @param ts_min		the timestamp of the start of the time range (inclusive), in node local time
@@ -2324,7 +2430,7 @@ $$;
  * Calculate the count of rows matching a set of nodes, sources, and a local date range.
  *
  * The time zones of each node are used to calculate absolute date ranges for each node.
- * 
+ *
  * @param nodes the list of nodes to resolve absolute dates for
  * @param sources a list of source IDs to include in the results (optional)
  * @param ts_min the starting local date, or the current time if not provided
@@ -2333,10 +2439,10 @@ $$;
 CREATE OR REPLACE FUNCTION solardatum.datum_record_counts(
 	nodes bigint[], sources text[], ts_min timestamp, ts_max timestamp)
 RETURNS TABLE(
-	query_date timestamptz, 
-	datum_count bigint, 
-	datum_hourly_count integer, 
-	datum_daily_count integer, 
+	query_date timestamptz,
+	datum_count bigint,
+	datum_hourly_count integer,
+	datum_daily_count integer,
 	datum_monthly_count integer
 ) LANGUAGE plpgsql STABLE AS $$
 DECLARE
@@ -2351,7 +2457,7 @@ BEGIN
 	)
 	SELECT count(*)
 	FROM solardatum.da_datum d, nlt
-	WHERE 
+	WHERE
 		d.ts >= nlt.ts_start
 		AND d.ts < nlt.ts_end
 		AND d.node_id = ANY(nlt.node_ids)
@@ -2365,7 +2471,7 @@ BEGIN
 	)
 	SELECT count(*)
 	FROM solaragg.agg_datum_hourly d, nlt
-	WHERE 
+	WHERE
 		d.ts_start >= nlt.ts_start
 		AND d.ts_start < date_trunc('hour', nlt.ts_end)
 		AND d.node_id = ANY(nlt.node_ids)
@@ -2379,7 +2485,7 @@ BEGIN
 	)
 	SELECT count(*)
 	FROM solaragg.agg_datum_daily d, nlt
-	WHERE 
+	WHERE
 		d.ts_start >= nlt.ts_start
 		AND d.ts_start < date_trunc('day', nlt.ts_end)
 		AND d.node_id = ANY(nlt.node_ids)
@@ -2393,7 +2499,7 @@ BEGIN
 	)
 	SELECT count(*)
 	FROM solaragg.agg_datum_monthly d, nlt
-	WHERE 
+	WHERE
 		d.ts_start >= nlt.ts_start
 		AND d.ts_start < date_trunc('month', nlt.ts_end)
 		AND d.node_id = ANY(nlt.node_ids)
@@ -2409,12 +2515,12 @@ $$;
  * Calculate the count of rows matching a set of nodes, sources, and a local date range.
  *
  * The `jfilter` parameter must provide the following items:
- * 
+ *
  * * `nodeIds` - array of node IDs
  * * `sourceIds` - (optional) array of source IDs
  * * `localStartDate` - (optional) string date, yyyy-MM-dd HH:mm format; current time used if not provided
  * * `localEndDate` - (optional) string date, yyyy-MM-dd HH:mm format; current time used if not provided
- * 
+ *
  * @param nodes the list of nodes to resolve absolute dates for
  * @param sources a list of source IDs to include in the results (optional)
  * @param ts_min the starting local date
@@ -2422,10 +2528,10 @@ $$;
  */
 CREATE OR REPLACE FUNCTION solardatum.datum_record_counts_for_filter(jfilter jsonb)
 RETURNS TABLE(
-	query_date timestamptz, 
-	datum_count bigint, 
-	datum_hourly_count integer, 
-	datum_daily_count integer, 
+	query_date timestamptz,
+	datum_count bigint,
+	datum_hourly_count integer,
+	datum_daily_count integer,
 	datum_monthly_count integer
 ) LANGUAGE plpgsql STABLE AS $$
 DECLARE
@@ -2443,48 +2549,125 @@ $$;
  * Delete datum rows matching a set of nodes, sources, and a local date range.
  *
  * The time zones of each node are used to calculate absolute date ranges for each node.
- * 
+ *
  * @param nodes the list of nodes to resolve absolute dates for
  * @param sources a list of source IDs to include in the results (optional)
  * @param ts_min the starting local date, or the current time if not provided
  * @param ts_max the ending local date, or the current time if not provided
  */
 CREATE OR REPLACE FUNCTION solardatum.delete_datum(
-	nodes bigint[], sources text[], ts_min timestamp, ts_max timestamp)
-RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS $$
+	nodes 		BIGINT[],
+	sources 	TEXT[],
+	ts_min 		TIMESTAMP,
+	ts_max 		TIMESTAMP
+) RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS $$
 DECLARE
 	all_source_ids boolean := sources IS NULL OR array_length(sources, 1) < 1;
 	start_date timestamp := COALESCE(ts_min, CURRENT_TIMESTAMP);
 	end_date timestamp := COALESCE(ts_max, CURRENT_TIMESTAMP);
 	total_count bigint := 0;
+	--stale_count bigint := 0;
 BEGIN
 	WITH nlt AS (
 		SELECT time_zone, ts_start, ts_end, node_ids, source_ids
 		FROM solarnet.node_source_time_ranges_local(nodes, sources, start_date, end_date)
 	)
+	, audit AS (
+		UPDATE solaragg.aud_datum_daily d
+		SET datum_count = 0, datum_daily_pres = FALSE
+		FROM nlt
+		WHERE
+			-- whole days only; partial to be handled by stale processing
+			d.ts_start >= CASE
+				WHEN date_trunc('day', nlt.ts_start) = nlt.ts_start THEN nlt.ts_start
+				ELSE date_trunc('day', nlt.ts_start) + interval '1 day'
+				END
+			AND d.ts_start < date_trunc('day', nlt.ts_end)
+			AND d.node_id = ANY(nlt.node_ids)
+			AND (all_source_ids OR d.source_id = ANY(nlt.source_ids))
+	)
+	, hourly AS (
+		DELETE FROM solaragg.agg_datum_hourly d
+		USING nlt
+		WHERE
+			-- whole hours (ceil) only; partial to be handled by stale processing
+			d.ts_start >= date_trunc('hour', nlt.ts_start) + interval '1 hour'
+			AND d.ts_start < date_trunc('hour', nlt.ts_end)
+			AND d.node_id = ANY(nlt.node_ids)
+			AND (all_source_ids OR d.source_id = ANY(nlt.source_ids))
+	)
+	, daily AS (
+		DELETE FROM solaragg.agg_datum_daily d
+		USING nlt
+		WHERE
+			-- whole days only; partial to be handled by stale processing
+			d.ts_start >= CASE
+				WHEN date_trunc('day', nlt.ts_start) = nlt.ts_start THEN nlt.ts_start
+				ELSE date_trunc('day', nlt.ts_start) + interval '1 day'
+				END
+			AND d.ts_start < date_trunc('day', nlt.ts_end)
+			AND d.node_id = ANY(nlt.node_ids)
+			AND (all_source_ids OR d.source_id = ANY(nlt.source_ids))
+	)
+	, monthly AS (
+		DELETE FROM solaragg.agg_datum_monthly d
+		USING nlt
+		WHERE
+			-- whole months only; partial to be handled by stale processing
+			d.ts_start >= CASE
+				WHEN date_trunc('month', nlt.ts_start) = nlt.ts_start THEN nlt.ts_start
+				ELSE date_trunc('month', nlt.ts_start) + interval '1 month'
+				END
+			AND d.ts_start < date_trunc('month', nlt.ts_end)
+			AND d.node_id = ANY(nlt.node_ids)
+			AND (all_source_ids OR d.source_id = ANY(nlt.source_ids))
+	)
 	DELETE FROM solardatum.da_datum d
 	USING nlt
-	WHERE 
+	WHERE
 		d.ts >= nlt.ts_start
 		AND d.ts < nlt.ts_end
 		AND d.node_id = ANY(nlt.node_ids)
 		AND (all_source_ids OR d.source_id = ANY(nlt.source_ids));
 	GET DIAGNOSTICS total_count = ROW_COUNT;
 
+	-- mark remaining hourly aggregates as stale, so partial hours/days/months recalculated
+	WITH nlt AS (
+		SELECT nlt.node_id
+			, source_id
+			, start_date AT TIME ZONE nlt.time_zone AS ts_start
+		FROM solarnet.node_local_time nlt, UNNEST(sources) AS source_id
+		WHERE nlt.node_id = ANY(nodes)
+		UNION ALL
+		SELECT nlt.node_id
+			, source_id
+			, end_date AT TIME ZONE nlt.time_zone AS ts_start
+		FROM solarnet.node_local_time nlt, UNNEST(sources) AS source_id
+		WHERE nlt.node_id = ANY(nodes)
+	)
+	INSERT INTO solaragg.agg_stale_datum(node_id, source_id, ts_start, agg_kind)
+	SELECT s.node_id, s.source_id, s.ts_start, 'h'
+	FROM nlt, solardatum.calculate_stale_datum(nlt.node_id, nlt.source_id, nlt.ts_start) s
+	ON CONFLICT DO NOTHING;
+
+	--GET DIAGNOSTICS stale_count = ROW_COUNT;
+	--RAISE NOTICE 'INSERTED % solaragg.agg_stale_datum rows after delete.', stale_count;
+
 	RETURN total_count;
 END
 $$;
+
 
 /**
  * Delete rows matching a set of nodes, sources, and a local date range.
  *
  * The `jfilter` parameter must provide the following items:
- * 
+ *
  * * `nodeIds` - array of node IDs
  * * `sourceIds` - (optional) array of source IDs
  * * `localStartDate` - (optional) string date, yyyy-MM-dd HH:mm format; current time used if not provided
  * * `localEndDate` - (optional) string date, yyyy-MM-dd HH:mm format; current time used if not provided
- * 
+ *
  * @param nodes the list of nodes to resolve absolute dates for
  * @param sources a list of source IDs to include in the results (optional)
  * @param ts_min the starting local date
@@ -2510,7 +2693,7 @@ $$;
  * The time zones of each node are used to group them into rows where all nodes have the
  * same absolute dates. This function depends on the `solardatum.da_datum_range` table
  * to filter out node+source combinations that don't exist.
- * 
+ *
  * @param nodes     the list of nodes to resolve absolute dates for
  * @param sources   a list of source IDs to include in the results (optional)
  * @param field     the Postgres date_trunc compatible field to truncate the date on, e.g. 'hour', 'day', 'month', etc.
@@ -2526,13 +2709,13 @@ RETURNS TABLE(
   node_ids bigint[],
   source_ids character varying(64)[]
 ) LANGUAGE sql STABLE AS $$
-	SELECT 
+	SELECT
 		date_trunc(field, min_date) AT TIME ZONE nlt.time_zone AS ts_start
 		, date_trunc(field, max_date) AT TIME ZONE nlt.time_zone AS ts_end
 		, nlt.time_zone AS time_zone
 		, array_agg(DISTINCT dr.node_id) AS node_ids
 		, array_agg(DISTINCT dr.source_id) FILTER (WHERE dr.source_id IS NOT NULL) AS source_ids
-	FROM solardatum.da_datum_range dr 
+	FROM solardatum.da_datum_range dr
 	INNER JOIN solarnet.node_local_time nlt ON nlt.node_id = dr.node_id
 	WHERE dr.node_id = ANY(nodes)
 	AND dr.source_id = ANY(sources)

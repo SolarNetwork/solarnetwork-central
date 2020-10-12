@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.expire.dao.mybatis.test;
 
+import static java.util.stream.Collectors.joining;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -290,37 +291,55 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 	}
 
 	private List<Map<String, Object>> findAllDatum(Long nodeId, String sourceId) {
-		return jdbcTemplate.queryForList(
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
 				"SELECT * FROM solardatum.da_datum WHERE node_id = ? AND source_id = ? ORDER BY ts",
 				nodeId, sourceId);
+		log.debug("Current solardatum.da_datum table:\n{}\n",
+				rows.stream().map(Object::toString).collect(joining("\n")));
+		return rows;
 	}
 
 	private List<Map<String, Object>> findAllHourlyDatum(Long nodeId, String sourceId) {
-		return jdbcTemplate.queryForList(
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.agg_datum_hourly WHERE node_id = ? AND source_id = ? ORDER BY ts_start",
 				nodeId, sourceId);
+		log.debug("Current solaragg.agg_datum_hourly table:\n{}\n",
+				rows.stream().map(Object::toString).collect(joining("\n")));
+		return rows;
 	}
 
 	private List<Map<String, Object>> findAllDailyDatum(Long nodeId, String sourceId) {
-		return jdbcTemplate.queryForList(
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.agg_datum_daily WHERE node_id = ? AND source_id = ? ORDER BY ts_start",
 				nodeId, sourceId);
+		log.debug("Current solaragg.agg_datum_daily table:\n{}\n",
+				rows.stream().map(Object::toString).collect(joining("\n")));
+		return rows;
 	}
 
 	private List<Map<String, Object>> findAllMonthlyDatum(Long nodeId, String sourceId) {
-		return jdbcTemplate.queryForList(
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.agg_datum_monthly WHERE node_id = ? AND source_id = ? ORDER BY ts_start",
 				nodeId, sourceId);
+		log.debug("Current solaragg.agg_datum_monthly table:\n{}\n",
+				rows.stream().map(Object::toString).collect(joining("\n")));
+		return rows;
 	}
 
 	private List<Map<String, Object>> findAllAggStaleDatum() {
-		return jdbcTemplate.queryForList(
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.agg_stale_datum ORDER BY agg_kind, node_id, ts_start, source_id");
+		log.debug("Current solaragg.agg_stale_datum table:\n{}\n",
+				rows.stream().map(Object::toString).collect(joining("\n")));
+		return rows;
 	}
 
 	private List<Map<String, Object>> findAllAuditDatumDailyStale() {
-		return jdbcTemplate.queryForList(
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
 				"SELECT * FROM solaragg.aud_datum_daily_stale ORDER BY aud_kind, node_id, ts_start, source_id");
+		log.debug("Current solaragg.aud_datum_daily_stale table:\n{}\n",
+				rows.stream().map(Object::toString).collect(joining("\n")));
+		return rows;
 	}
 
 	private static final class DataToExpire {
@@ -335,6 +354,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		private int expiredDayCount = 0;
 		private int monthCount = 0;
 		private int expiredMonthCount = 0;
+		private int staleAuditMonthCount = 0;
 	}
 
 	private DataToExpire setupDataToExpire() {
@@ -371,9 +391,17 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 				if ( currMonth.isBefore(result.expire.monthOfYear().roundFloorCopy()) ) {
 					result.expiredMonthCount++;
 				}
+				if ( currMonth.isBefore(result.expire) ) {
+					result.staleAuditMonthCount++;
+				}
 				month = currMonth;
 			}
 		}
+
+		findAllDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		findAllHourlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		findAllDailyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
 
 		// delete any "stale hourly agg" records
 		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
@@ -444,7 +472,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
-		assertAuditDatumDailyStaleMonths(start, range.monthCount);
+		assertAuditDatumDailyStaleMonths(start, range.staleAuditMonthCount);
 		assertNoAggStaleDatum();
 	}
 
@@ -486,7 +514,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
-		assertAuditDatumDailyStaleMonths(start, range.monthCount);
+		assertAuditDatumDailyStaleMonths(start, range.staleAuditMonthCount);
 		assertNoAggStaleDatum();
 	}
 
@@ -531,7 +559,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
-		assertAuditDatumDailyStaleMonths(start, range.monthCount);
+		assertAuditDatumDailyStaleMonths(start, range.staleAuditMonthCount);
 		assertNoAggStaleDatum();
 	}
 
