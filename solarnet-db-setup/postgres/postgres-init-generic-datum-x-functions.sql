@@ -2,7 +2,7 @@
 
 /**
  * FUNCTION solardatum.find_least_recent_direct(bigint)
- * 
+ *
  * Find the smallest available dates for all source IDs for the given node ID. This does **not**
  * use the `solardatum.da_datum_range` table.
  *
@@ -26,7 +26,7 @@ $$
 		GROUP BY d.source_id
 	)
 	-- finally query the raw data using the exact found timestamps, so loop over each (ts,source) tuple found in mins
-	SELECT d.* 
+	SELECT d.*
 	FROM solardatum.da_datum_data d
 	INNER JOIN mins ON mins.node_id = d.node_id AND mins.source_id = d.source_id AND mins.ts = d.ts
 	ORDER BY d.source_id ASC
@@ -34,7 +34,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent_direct(bigint)
- * 
+ *
  * Find the highest available dates for all source IDs for the given node ID. This does **not**
  * use the `solardatum.da_datum_range` table.
  *
@@ -58,7 +58,7 @@ $$
 		GROUP BY d.source_id
 	)
 	-- finally query the raw data using the exact found timestamps, so loop over each (ts,source) tuple found in maxes
-	SELECT d.* 
+	SELECT d.*
 	FROM solardatum.da_datum_data d
 	INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts = d.ts
 	ORDER BY d.source_id ASC
@@ -66,7 +66,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent_direct(bigint, text[])
- * 
+ *
  * Find the highest available dates for the given source IDs for the given node ID. This query does **not** rely on
  * the `solardatum.da_datum_range` table.
  *
@@ -92,7 +92,7 @@ $$
 		GROUP BY d.source_id
 	)
 	-- finally query the raw data using the exact found timestamps, so loop over each (ts,source) tuple found in maxes
-	SELECT d.* 
+	SELECT d.*
 	FROM solardatum.da_datum_data d
 	INNER JOIN maxes ON maxes.node_id = d.node_id AND maxes.source_id = d.source_id AND maxes.ts = d.ts
 	ORDER BY d.source_id ASC
@@ -100,7 +100,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent(bigint)
- * 
+ *
  * Find the highest available dates for all source IDs for the given node ID. This query relies on
  * the `solardatum.da_datum_range` table.
  *
@@ -118,7 +118,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent(bigint, text[])
- * 
+ *
  * Find the highest available dates for the given source IDs for the given node ID. This query relies on
  * the `solardatum.da_datum_range` table.
  *
@@ -138,7 +138,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent(bigint[], text[])
- * 
+ *
  * Find the highest available data for all source IDs for the given node IDs. This query relies on
  * the `solardatum.da_datum_range` table.
  *
@@ -157,7 +157,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent_direct(bigint[])
- * 
+ *
  * Find the highest available dates for all source IDs for the given node IDs. This query does **not** rely on
  * the `solardatum.da_datum_range` table.
  *
@@ -174,7 +174,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent(bigint[])
- * 
+ *
  * Find the highest available dates for all source IDs for the given node IDs. This query relies on
  * the `solardatum.da_datum_range` table.
  *
@@ -190,32 +190,36 @@ $$
 	ORDER BY d.node_id, d.source_id
 $$;
 
+
 /**
- * Add or update a datum record. The data is stored in the <code>solardatum.da_datum</code> table.
+ * Add or update a datum record. The data is stored in the `solardatum.da_datum` table.
  *
  * @param cdate The datum creation date.
  * @param node The node ID.
  * @param src The source ID.
  * @param pdate The date the datum was posted to SolarNet.
  * @param jdata The datum JSON document.
- * @param track_recent if `TRUE` then also call solardatum.update_datum_range_dates() to keep the da_datum_range table up-to-date 
+ * @param track_recent if `TRUE` then also insert results of `solardatum.calculate_stale_datum()`
+ *                     into the `solaragg.agg_stale_datum` table and call
+ *                     `solardatum.update_datum_range_dates()` to keep the
+ *                     `solardatum.da_datum_range` table up-to-date
  */
 CREATE OR REPLACE FUNCTION solardatum.store_datum(
-	cdate timestamp with time zone,
-	node bigint,
-	src text,
-	pdate timestamp with time zone,
-	jdata text,
-	track_recent boolean DEFAULT TRUE)
+	cdate 			TIMESTAMP WITH TIME ZONE,
+	node 			BIGINT,
+	src 			TEXT,
+	pdate 			TIMESTAMP WITH TIME ZONE,
+	jdata 			TEXT,
+	track_recent 	BOOLEAN DEFAULT TRUE)
   RETURNS void LANGUAGE plpgsql VOLATILE AS
-$BODY$
+$$
 DECLARE
-	ts_crea timestamp with time zone := COALESCE(cdate, now());
-	ts_post timestamp with time zone := COALESCE(pdate, now());
-	jdata_json jsonb := jdata::jsonb;
-	jdata_prop_count integer := solardatum.datum_prop_count(jdata_json);
-	ts_post_hour timestamp with time zone := date_trunc('hour', ts_post);
-	is_insert boolean := false;
+	ts_crea 			TIMESTAMP WITH TIME ZONE 	:= COALESCE(cdate, now());
+	ts_post 			TIMESTAMP WITH TIME ZONE	:= COALESCE(pdate, now());
+	jdata_json 			JSONB 						:= jdata::jsonb;
+	jdata_prop_count 	INTEGER 					:= solardatum.datum_prop_count(jdata_json);
+	ts_post_hour 		TIMESTAMP WITH TIME ZONE 	:= date_trunc('hour', ts_post);
+	is_insert 			BOOLEAN 					:= false;
 BEGIN
 	INSERT INTO solardatum.da_datum(ts, node_id, source_id, posted, jdata_i, jdata_a, jdata_s, jdata_t)
 	VALUES (ts_crea, node, src, ts_post, jdata_json->'i', jdata_json->'a', jdata_json->'s', solarcommon.json_array_to_text_array(jdata_json->'t'))
@@ -234,12 +238,20 @@ BEGIN
 	ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
 	SET datum_count = aud_datum_hourly.datum_count + (CASE is_insert WHEN TRUE THEN 1 ELSE 0 END),
 		prop_count = aud_datum_hourly.prop_count + EXCLUDED.prop_count;
-		
-	IF track_recent AND is_insert THEN
-		PERFORM solardatum.update_datum_range_dates(node, src, cdate);
+
+	IF track_recent THEN
+		INSERT INTO solaragg.agg_stale_datum (agg_kind, node_id, ts_start, source_id)
+		SELECT 'h' AS agg_kind, node_id, ts_start, source_id
+		FROM solardatum.calculate_stale_datum(node, src, cdate)
+		ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
+
+		IF is_insert THEN
+			PERFORM solardatum.update_datum_range_dates(node, src, cdate);
+		END IF;
 	END IF;
 END;
-$BODY$;
+$$;
+
 
 /**
  * Increment a datum query count for a single source.

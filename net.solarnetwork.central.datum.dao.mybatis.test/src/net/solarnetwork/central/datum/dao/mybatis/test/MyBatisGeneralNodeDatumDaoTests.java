@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
+import static java.util.stream.Collectors.joining;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.contains;
@@ -47,6 +48,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
@@ -3607,6 +3610,113 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	}
 
 	@Test
+	public void deleteForFilterLocal_partialHourRange() {
+		// given
+		final DateTime start = new DateTime(2018, 11, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
+		final DateTime end = new DateTime(2018, 11, 2, 1, 0, 0, DateTimeZone.forID(TEST_TZ));
+		DateTime curr = start;
+		long rawInsertedCount = 0;
+		List<DateTime> rowDates = new ArrayList<>(128);
+		SortedSet<DateTime> rowDateHoursSet = new TreeSet<>();
+		while ( !curr.isAfter(end) ) {
+			rowDates.add(curr.minusMinutes(1));
+			rowDates.add(curr.plusMinutes(1));
+			rowDateHoursSet.add(curr.minusMinutes(1).hourOfDay().roundFloorCopy());
+			rowDateHoursSet.add(curr.plusMinutes(1).hourOfDay().roundFloorCopy());
+			GeneralNodeDatum d1 = getTestInstance(curr.minusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+			GeneralNodeDatum d2 = getTestInstance(curr.plusMinutes(1), TEST_NODE_ID, TEST_SOURCE_ID);
+			dao.store(d1);
+			dao.store(d2);
+			curr = curr.plusMinutes(30);
+			rawInsertedCount += 2;
+		}
+		List<DateTime> rowDateHours = new ArrayList<>(rowDateHoursSet);
+
+		processAggregateStaleData();
+
+		// when
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setLocalStartDate(new LocalDateTime(2018, 11, 1, 0, 30));
+		filter.setLocalEndDate(new LocalDateTime(2018, 11, 1, 23, 30));
+		long result = dao.deleteFiltered(filter);
+
+		List<Map<String, Object>> rows = getDatumAggregateHourly();
+		log.debug("Hour rows after delete:\n{}",
+				rows.stream().map(e -> e.toString()).collect(joining("\n")));
+
+		assertThat("Hour rows on or before/after start/end delete range should remain", rows,
+				hasSize(5));
+		int idx;
+		for ( idx = 0; idx < 2; idx++ ) {
+			assertThat("Remaining leading hour row date " + idx,
+					((Timestamp) rows.get(idx).get("ts_start")),
+					equalTo(new Timestamp(rowDateHours.get(idx).getMillis())));
+		}
+		int i;
+		for ( i = 2, idx = rowDateHours.size() - 3; idx < rowDateHours.size(); idx++, i++ ) {
+			assertThat("Remaining trailing hour row date " + i,
+					((Timestamp) rows.get(i).get("ts_start")),
+					equalTo(new Timestamp(rowDateHours.get(idx).getMillis())));
+		}
+
+		processAggregateStaleData();
+
+		// then
+		assertThat("Raw delete count leaves 3 leading, 7 trailing", result,
+				equalTo(rawInsertedCount - 10));
+
+		List<Map<String, Object>> rawData = getDatum();
+		log.debug("Raw rows after delete:\n{}",
+				rawData.stream().map(e -> e.toString()).collect(joining("\n")));
+		assertThat("Raw delete count leaves 3 leading, 7 trailing", rawData, hasSize(10));
+		for ( i = 0; i < 3; i++ ) {
+			assertThat("Remaining leading raw row date " + i, ((Timestamp) rawData.get(i).get("ts")),
+					equalTo(new Timestamp(rowDates.get(i).getMillis())));
+		}
+		for ( i = 3, idx = rowDates.size() - 7; i < rows.size(); i++, idx++ ) {
+			assertThat("Remaining trailing raw row date " + i, ((Timestamp) rawData.get(i).get("ts")),
+					equalTo(new Timestamp(rowDates.get(idx).getMillis())));
+		}
+
+		List<Map<String, Object>> hourData = getDatumAggregateHourly();
+		log.debug("Hour rows after delete:\n{}",
+				hourData.stream().map(e -> e.toString()).collect(joining("\n")));
+		assertThat("Remaining hour count", hourData, hasSize(5));
+		assertThat("Hour 1 date", hourData.get(0).get("ts_start"),
+				equalTo(new Timestamp(rowDateHours.get(0).getMillis())));
+		assertThat("Hour 2 date", hourData.get(1).get("ts_start"),
+				equalTo(new Timestamp(rowDateHours.get(1).getMillis())));
+		assertThat("Hour 3 date", hourData.get(2).get("ts_start"),
+				equalTo(new Timestamp(rowDateHours.get(rowDateHours.size() - 3).getMillis())));
+		assertThat("Hour 4 date", hourData.get(3).get("ts_start"),
+				equalTo(new Timestamp(rowDateHours.get(rowDateHours.size() - 2).getMillis())));
+		assertThat("Hour 5 date", hourData.get(4).get("ts_start"),
+				equalTo(new Timestamp(rowDateHours.get(rowDateHours.size() - 1).getMillis())));
+
+		List<Map<String, Object>> dayData = getDatumAggregateDaily();
+		log.debug("Day rows after delete:\n{}",
+				dayData.stream().map(e -> e.toString()).collect(joining("\n")));
+		assertThat("Remaining day count", dayData, hasSize(3));
+		assertThat("Day 1 date", dayData.get(0).get("ts_start"),
+				equalTo(new Timestamp(rowDateHours.get(0).dayOfMonth().roundFloorCopy().getMillis())));
+		assertThat("Day 2 date", dayData.get(1).get("ts_start"), equalTo(new Timestamp(
+				rowDateHours.get(0).dayOfMonth().roundFloorCopy().plusDays(1).getMillis())));
+		assertThat("Day 3 date", dayData.get(2).get("ts_start"), equalTo(new Timestamp(
+				rowDateHours.get(0).dayOfMonth().roundFloorCopy().plusDays(2).getMillis())));
+
+		List<Map<String, Object>> monthData = getDatumAggregateMonthly();
+		log.debug("Month rows after delete:\n{}",
+				monthData.stream().map(e -> e.toString()).collect(joining("\n")));
+		assertThat("Remaining month count", monthData, hasSize(2));
+		assertThat("Month 1 date", monthData.get(0).get("ts_start"),
+				equalTo(new Timestamp(rowDateHours.get(0).monthOfYear().roundFloorCopy().getMillis())));
+		assertThat("Month 2 date", monthData.get(1).get("ts_start"), equalTo(new Timestamp(
+				rowDateHours.get(rowDateHours.size() - 1).monthOfYear().roundFloorCopy().getMillis())));
+	}
+
+	@Test
 	public void findDatumRecordCountsLocalMultipleNodesDifferentTimeZones() {
 		// given
 		DateTime ts = new DateTime(2018, 11, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
@@ -3658,16 +3768,27 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		filter.setLocalStartDate(new LocalDateTime(2018, 11, 1, 0, 0));
 		filter.setLocalEndDate(new LocalDateTime(2018, 12, 1, 0, 0));
 
+		List<Map<String, Object>> rows = getDatum();
+		log.debug("Raw rows before delete:\n{}",
+				rows.stream().map(e -> e.toString()).collect(joining("\n")));
+
 		long result = dao.deleteFiltered(filter);
+
+		rows = getStaleDatumOrderedByNode(Aggregation.Hour);
+		log.debug("Stale rows after delete:\n{}",
+				rows.stream().map(e -> e.toString()).collect(joining("\n")));
 
 		processAggregateStaleData();
 
 		// then
-		List<Map<String, Object>> rawData = getDatum();
 		assertThat("Raw delete count", result, equalTo(2L));
 
 		DateTime ts_z1 = new DateTime(2018, 11, 1, 0, 0, 0, DateTimeZone.forID(TEST_TZ));
 		DateTime ts_z2 = new DateTime(2018, 11, 1, 0, 0, 0, tz2);
+
+		List<Map<String, Object>> rawData = getDatum();
+		log.debug("Raw rows after delete:\n{}",
+				rawData.stream().map(e -> e.toString()).collect(joining("\n")));
 
 		assertThat("Remaining raw count", rawData, hasSize(2));
 		assertThat("Raw 1 date", rawData.get(0).get("ts"),
@@ -3676,6 +3797,8 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 				equalTo(new Timestamp(ts_z1.minusMinutes(1).getMillis())));
 
 		List<Map<String, Object>> hourData = getDatumAggregateHourly();
+		log.debug("Hour rows after delete:\n{}",
+				hourData.stream().map(e -> e.toString()).collect(joining("\n")));
 		assertThat("Remaining hour count", hourData, hasSize(2));
 		assertThat("Hour 1 date", hourData.get(0).get("ts_start"),
 				equalTo(new Timestamp(ts_z2.minusMinutes(1).hourOfDay().roundFloorCopy().getMillis())));
@@ -3683,6 +3806,8 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 				equalTo(new Timestamp(ts_z1.minusMinutes(1).hourOfDay().roundFloorCopy().getMillis())));
 
 		List<Map<String, Object>> dayData = getDatumAggregateDaily();
+		log.debug("Day rows after delete:\n{}",
+				dayData.stream().map(e -> e.toString()).collect(joining("\n")));
 		assertThat("Remaining day count", dayData, hasSize(2));
 		assertThat("Day 1 date", dayData.get(0).get("ts_start"),
 				equalTo(new Timestamp(ts_z2.minusMinutes(1).dayOfMonth().roundFloorCopy().getMillis())));
@@ -3690,6 +3815,8 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 				equalTo(new Timestamp(ts_z1.minusMinutes(1).dayOfMonth().roundFloorCopy().getMillis())));
 
 		List<Map<String, Object>> monthData = getDatumAggregateMonthly();
+		log.debug("Month rows after delete:\n{}",
+				monthData.stream().map(e -> e.toString()).collect(joining("\n")));
 		assertThat("Remaining month count", monthData, hasSize(2));
 		assertThat("Month 1 date", monthData.get(0).get("ts_start"), equalTo(
 				new Timestamp(ts_z2.minusMinutes(1).monthOfYear().roundFloorCopy().getMillis())));

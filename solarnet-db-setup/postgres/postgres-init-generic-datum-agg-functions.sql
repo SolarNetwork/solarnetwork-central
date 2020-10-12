@@ -28,7 +28,7 @@ $$;
 /**
  * Aggregate aggregated datum records into a higher aggregation level.
  *
- * This aggregate accepts aggregate datum objects, such as those from the `agg_datum_monthly` 
+ * This aggregate accepts aggregate datum objects, such as those from the `agg_datum_monthly`
  * table, and combines them into an aggregat datum object, such as for a year. The input
  * object must include`jdata` and `jmeta` properties. For example:
  *
@@ -38,7 +38,7 @@ $$;
  *		'jmeta', d.jmeta) ORDER BY d.ts_start) AS jobj
  * FROM solaragg.agg_datum_monthly d
  * WHERE ...
- * GROUP BY d.node_id, d.source_id 
+ * GROUP BY d.node_id, d.source_id
 `* ````
  *
  * The resulting object contains the same `jdata` and `jmeta` properties with the results.
@@ -92,6 +92,36 @@ $BODY$
 		- ceil(extract('epoch' from ts))::bigint % sec
 	) * interval '1 second'
 $BODY$;
+
+
+/**
+ * Find hours with datum data in them based on a node, source, and date range; mark them as "stale"
+ * for aggregate processing.
+ *
+ * This function will insert into the `solaragg.agg_stale_datum` table records for all hours
+ * of available data matching the given criteria.
+ *
+ * @param node 		the node ID of the datum that has been changed (inserted, deleted)
+ * @param source 	the source ID of the datum that has been changed
+ * @param ts_lower	the lower date of the datum that has changed
+ * @param ts_upper	the upper date of the datum that has changed
+ */
+CREATE OR REPLACE FUNCTION solaragg.mark_datum_stale_hour_slots_range(
+		node 		BIGINT,
+		source 		CHARACTER VARYING(64),
+		ts_lower 	TIMESTAMP WITH TIME ZONE,
+		ts_upper 	TIMESTAMP WITH TIME ZONE
+	) RETURNS VOID LANGUAGE SQL VOLATILE AS
+$$
+	INSERT INTO solaragg.agg_stale_datum (ts_start, node_id, source_id, agg_kind)
+	SELECT ts_start, node, source, 'h'
+	FROM solardatum.calculate_stale_datum(node, source, ts_lower)
+	UNION
+	SELECT ts_start, node, source, 'h'
+	FROM solardatum.calculate_stale_datum(node, source, ts_upper)
+	ON CONFLICT DO NOTHING
+$$;
+
 
 /**
  * Trigger that inserts a row into the <b>solaragg.agg_stale_datum<b> table based on
@@ -438,7 +468,7 @@ $$;
 
 /**
  * FUNCTION solaragg.find_datum_for_time_span(bigint, text[], timestamp with time zone, interval, interval)
- * 
+ *
  * Find rows in the <b>solardatum.da_datum</b> table necessary to calculate aggregate
  * data for a specific duration of time, node, and set of sources. This function will return
  * all available rows within the specified duration, possibly with some rows <em>before</em> or
@@ -925,7 +955,7 @@ BEGIN
 			RAISE NOTICE 'Node % has no time zone, will use UTC.', stale.node_id;
 			node_tz := 'UTC';
 		END IF;
-		
+
 		-- stash local time start/end so date calculations for day+ correctly handles DST boundaries
 		stale_t_start := stale.ts_start AT TIME ZONE node_tz;
 		stale_t_end := stale_t_start + agg_span;
@@ -935,11 +965,11 @@ BEGIN
 		CASE kind
 			WHEN 'h' THEN
 				-- Dramatically faster execution via EXECUTE than embedded SQL here; better query plan
-				
+
 				EXECUTE 'SELECT jdata, jmeta FROM solaragg.calc_datum_time_slots($1, $2, $3, $4, $5, $6)'
 				INTO agg_json, agg_jmeta
 				USING stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, agg_span, 0, interval '1 hour';
-				
+
 				EXECUTE 'SELECT jdata, ts_start, ts_end FROM solardatum.calculate_datum_diff_over($1, $2, $3, $4)'
 				INTO agg_reading, agg_reading_ts_start, agg_reading_ts_end
 				USING stale.node_id, stale.source_id::text, stale.ts_start, stale.ts_start + agg_span;
@@ -948,7 +978,7 @@ BEGIN
 				EXECUTE 'SELECT jdata, jmeta FROM solaragg.calc_agg_datum_agg($1, $2, $3, $4, $5)'
 				INTO agg_json, agg_jmeta
 				USING stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale_ts_end, 'h';
-				
+
 				SELECT jsonb_strip_nulls(jsonb_build_object(
 					 'as', solarcommon.first(jdata_as ORDER BY ts_start),
 					 'af', solarcommon.first(jdata_af ORDER BY ts_start DESC),
@@ -966,7 +996,7 @@ BEGIN
 				EXECUTE 'SELECT jdata, jmeta FROM solaragg.calc_agg_datum_agg($1, $2, $3, $4, $5)'
 				INTO agg_json, agg_jmeta
 				USING stale.node_id, ARRAY[stale.source_id::text], stale.ts_start, stale_ts_end, 'd';
-				
+
 				SELECT jsonb_strip_nulls(jsonb_build_object(
 					 'as', solarcommon.first(jdata_as ORDER BY ts_start),
 					 'af', solarcommon.first(jdata_af ORDER BY ts_start DESC),
@@ -981,7 +1011,7 @@ BEGIN
 				INTO agg_reading;
 		END CASE;
 
-		IF agg_json IS NULL AND (agg_reading IS NULL 
+		IF agg_json IS NULL AND (agg_reading IS NULL
 				OR (agg_reading_ts_start IS NOT NULL AND agg_reading_ts_start = agg_reading_ts_end)
 				) THEN
 			-- no data in range, so delete agg row
@@ -1365,7 +1395,7 @@ $BODY$;
 
 /**
  * FUNCTION solardatum.find_most_recent_hourly(bigint[], text[])
- * 
+ *
  * Find the highest available hourly data for all source IDs for the given node IDs. This query
  * relies on the `solardatum.da_datum_range` table.
  *
@@ -1375,7 +1405,7 @@ $BODY$;
 CREATE OR REPLACE FUNCTION solaragg.find_most_recent_hourly(nodes bigint[], sources text[])
 RETURNS SETOF solaragg.agg_datum_hourly_data  LANGUAGE sql STABLE ROWS 100 AS
 $$
-	SELECT d.* 
+	SELECT d.*
 	FROM solardatum.da_datum_range mr
 	INNER JOIN solaragg.agg_datum_hourly_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id AND d.ts_start = date_trunc('hour', mr.ts_max)
 	WHERE mr.node_id = ANY(nodes) AND (COALESCE(array_length(sources, 1), 0) < 1 OR mr.source_id = ANY(sources))
@@ -1384,7 +1414,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent_daily(bigint[], text[])
- * 
+ *
  * Find the highest available daily data for all source IDs for the given node IDs. This query
  * relies on the `solardatum.da_datum_range` table.
  *
@@ -1394,10 +1424,10 @@ $$;
 CREATE OR REPLACE FUNCTION solaragg.find_most_recent_daily(nodes bigint[], sources text[])
 RETURNS SETOF solaragg.agg_datum_daily_data  LANGUAGE sql STABLE ROWS 100 AS
 $$
-	SELECT d.* 
+	SELECT d.*
 	FROM solardatum.da_datum_range mr
 	LEFT OUTER JOIN solarnet.node_local_time nlt ON nlt.node_id = mr.node_id
-	INNER JOIN solaragg.agg_datum_daily_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id 
+	INNER JOIN solaragg.agg_datum_daily_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id
 		AND d.ts_start = date_trunc('day', mr.ts_max AT TIME ZONE COALESCE(nlt.time_zone, 'UTC')) AT TIME ZONE COALESCE(nlt.time_zone, 'UTC')
 	WHERE mr.node_id = ANY(nodes) AND (COALESCE(array_length(sources, 1), 0) < 1 OR mr.source_id = ANY(sources))
 	ORDER BY d.node_id, d.source_id
@@ -1405,7 +1435,7 @@ $$;
 
 /**
  * FUNCTION solardatum.find_most_recent_monthly(bigint[], text[])
- * 
+ *
  * Find the highest available monthly data for all source IDs for the given node IDs. This query
  * relies on the `solardatum.da_datum_range` table.
  *
@@ -1415,10 +1445,10 @@ $$;
 CREATE OR REPLACE FUNCTION solaragg.find_most_recent_monthly(nodes bigint[], sources text[])
 RETURNS SETOF solaragg.agg_datum_daily_data  LANGUAGE sql STABLE ROWS 100 AS
 $$
-	SELECT d.* 
+	SELECT d.*
 	FROM solardatum.da_datum_range mr
 	LEFT OUTER JOIN solarnet.node_local_time nlt ON nlt.node_id = mr.node_id
-	INNER JOIN solaragg.agg_datum_monthly_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id 
+	INNER JOIN solaragg.agg_datum_monthly_data d ON d.node_id = mr.node_id AND d.source_id = mr.source_id
 		AND d.ts_start = date_trunc('month', mr.ts_max AT TIME ZONE COALESCE(nlt.time_zone, 'UTC')) AT TIME ZONE COALESCE(nlt.time_zone, 'UTC')
 	WHERE mr.node_id = ANY(nodes) AND (COALESCE(array_length(sources, 1), 0) < 1 OR mr.source_id = ANY(sources))
 	ORDER BY d.node_id, d.source_id
@@ -1684,7 +1714,7 @@ END;$BODY$
 
 /**
  * FUNCTION solaragg.find_available_sources(bigint[])
- * 
+ *
  * Find distinct sources for a set of node IDs.
  * This query relies on the `solardatum.da_datum_range` table.
  *
@@ -1826,7 +1856,7 @@ $$;
  * Trigger function to handle a changed (inserted, updated) aggregate datum row.
  *
  * The trigger must be passed the aggregate type as the first trigger argument. It then inserts
- * a row into the `solaragg.agg_stale_flux` for clients to pull from. 
+ * a row into the `solaragg.agg_stale_flux` for clients to pull from.
  */
 CREATE OR REPLACE FUNCTION solaragg.handle_curr_change()
   RETURNS trigger LANGUAGE 'plpgsql' AS
@@ -1863,7 +1893,7 @@ $$
 		SELECT a.node_id, a.source_id
 		FROM solaragg.aud_acc_datum_daily a
 		INNER JOIN solarnet.node_local_time nlt ON nlt.node_id = a.node_id
-		WHERE 
+		WHERE
 			ts_start >= ts::timestamptz - interval '24 hours'
 			AND ts_start < ts::timestamptz + interval '24 hours'
 			AND ts_start = (((ts AT TIME ZONE nlt.time_zone)::date)::timestamp) AT TIME ZONE nlt.time_zone
@@ -1892,7 +1922,7 @@ DECLARE
 	ins_count bigint := 0;
 BEGIN
 	INSERT INTO solaragg.aud_datum_daily_stale (ts_start, node_id, source_id, aud_kind)
-	SELECT 
+	SELECT
 		date_trunc('month', ts_start at time zone time_zone) at time zone time_zone
 		, node_id
 		, source_id

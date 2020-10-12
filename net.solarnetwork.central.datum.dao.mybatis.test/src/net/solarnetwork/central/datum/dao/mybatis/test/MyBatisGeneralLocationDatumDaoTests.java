@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
+import static java.util.stream.Collectors.joining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -100,6 +101,10 @@ public class MyBatisGeneralLocationDatumDaoTests extends MyBatisGeneralLocationD
 	}
 
 	private int getAuditDatumHourlyPropCount(GeneralLocationDatum datum) {
+		List<Map<String, Object>> rows = jdbcTemplate
+				.queryForList("SELECT * FROM solaragg.aud_loc_datum_hourly");
+		log.debug("Current aud_loc_datum_hourly data:\n{}\n",
+				rows.stream().map(e -> e.toString()).collect(joining("\n")));
 		DateTime tsStart = datum.getPosted().property(DateTimeFieldType.hourOfDay()).roundFloorCopy();
 		Integer propCount = this.jdbcTemplate.queryForObject(
 				"SELECT prop_count FROM solaragg.aud_loc_datum_hourly WHERE ts_start = ? AND loc_id = ? AND source_id = ?",

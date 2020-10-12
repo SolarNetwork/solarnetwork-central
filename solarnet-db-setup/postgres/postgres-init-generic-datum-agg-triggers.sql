@@ -1,19 +1,12 @@
--- NOTE the trigger name has aa_ prefix so sorts before pg_partman trigger name
-CREATE TRIGGER aa_agg_stale_datum
-  BEFORE INSERT OR UPDATE OR DELETE
-  ON solardatum.da_datum
-  FOR EACH ROW
-  EXECUTE PROCEDURE solardatum.trigger_agg_stale_datum();
-
--- use same procedure to make agg rows stale when da_datum_aux records change
+-- mark agg rows stale when da_datum_aux records change
 CREATE TRIGGER aa_agg_stale_datum_aux
-    BEFORE INSERT OR DELETE OR UPDATE 
+    BEFORE INSERT OR DELETE OR UPDATE
     ON solardatum.da_datum_aux
     FOR EACH ROW
     EXECUTE PROCEDURE solardatum.trigger_agg_stale_datum();
 
 /**
- * After trigger to call `solaragg.handle_curr_change('h')` if the 
+ * After trigger to call `solaragg.handle_curr_change('h')` if the
  * changed row is for the current hour.
  */
 CREATE TRIGGER curr_change
@@ -24,7 +17,7 @@ CREATE TRIGGER curr_change
   EXECUTE PROCEDURE solaragg.handle_curr_change('h');
 
 /**
- * After trigger to call `solaragg.handle_curr_change('d')` if the 
+ * After trigger to call `solaragg.handle_curr_change('d')` if the
  * changed row is for the current day in the rows's local time zone.
  */
 CREATE TRIGGER curr_change
@@ -35,7 +28,7 @@ CREATE TRIGGER curr_change
   EXECUTE PROCEDURE solaragg.handle_curr_change('d');
 
 /**
- * After trigger to call `solaragg.handle_curr_change('m')` if the 
+ * After trigger to call `solaragg.handle_curr_change('m')` if the
  * changed row is for the current month in the rows's local time zone.
  */
 CREATE TRIGGER curr_change
