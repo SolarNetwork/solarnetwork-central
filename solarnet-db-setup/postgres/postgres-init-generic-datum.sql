@@ -489,39 +489,6 @@ CREATE VIEW solaragg.agg_datum_monthly_data AS
   SELECT d.ts_start, d.local_date, d.node_id, d.source_id, solaragg.jdata_from_datum(d) AS jdata
   FROM solaragg.agg_datum_monthly d;
 
-CREATE VIEW solaragg.da_datum_avail_hourly AS
-WITH nodetz AS (
-	SELECT n.node_id, COALESCE(l.time_zone, 'UTC') AS tz
-	FROM solarnet.sn_node n
-	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-)
-SELECT date_trunc('hour', d.ts at time zone nodetz.tz) at time zone nodetz.tz AS ts_start, d.node_id, d.source_id
-FROM solardatum.da_datum d
-INNER JOIN nodetz ON nodetz.node_id = d.node_id
-GROUP BY date_trunc('hour', d.ts at time zone nodetz.tz) at time zone nodetz.tz, d.node_id, d.source_id;
-
-CREATE VIEW solaragg.da_datum_avail_daily AS
-WITH nodetz AS (
-	SELECT n.node_id, COALESCE(l.time_zone, 'UTC') AS tz
-	FROM solarnet.sn_node n
-	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-)
-SELECT date_trunc('day', d.ts at time zone nodetz.tz) at time zone nodetz.tz AS ts_start, d.node_id, d.source_id
-FROM solardatum.da_datum d
-INNER JOIN nodetz ON nodetz.node_id = d.node_id
-GROUP BY date_trunc('day', d.ts at time zone nodetz.tz) at time zone nodetz.tz, d.node_id, d.source_id;
-
-CREATE VIEW solaragg.da_datum_avail_monthly AS
-WITH nodetz AS (
-	SELECT n.node_id, COALESCE(l.time_zone, 'UTC') AS tz
-	FROM solarnet.sn_node n
-	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-)
-SELECT date_trunc('month', d.ts at time zone nodetz.tz) at time zone nodetz.tz AS ts_start, d.node_id, d.source_id
-FROM solardatum.da_datum d
-INNER JOIN nodetz ON nodetz.node_id = d.node_id
-GROUP BY date_trunc('month', d.ts at time zone nodetz.tz) at time zone nodetz.tz, d.node_id, d.source_id;
-
 
 /**
  * Calculate "stale datum" rows for a given datum primary key that has changed.
