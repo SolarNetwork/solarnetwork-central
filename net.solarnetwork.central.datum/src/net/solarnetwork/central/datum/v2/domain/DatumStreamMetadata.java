@@ -1,5 +1,5 @@
 /* ==================================================================
- * Datum.java - 22/10/2020 1:59:49 pm
+ * DatumStreamMetadata.java - 22/10/2020 3:01:10 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,44 +20,42 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.datum.v2.domain;
 
-import java.time.Instant;
 import java.util.UUID;
+import net.solarnetwork.domain.GeneralDatumSamplesType;
 
 /**
- * API for an object that exists within a unique stream at a specific point in
- * time and a set of property values.
+ * Metadata about a datum stream.
  * 
  * @author matt
  * @version 1.0
+ * @since 2.8
  */
-public interface Datum {
+public interface DatumStreamMetadata {
 
 	/**
-	 * Get the unique ID of the stream this datum is a part of.
+	 * Get the stream ID.
 	 * 
 	 * @return the stream ID
 	 */
 	UUID getStreamId();
 
 	/**
-	 * Get the associated timestamp of this datum.
+	 * Get all property names included in the stream.
 	 * 
-	 * <p>
-	 * This value represents the point in time the properties associated with
-	 * this datum were observed, collected, inferred, predicted, etc.
-	 * </p>
-	 * 
-	 * @return the timestamp for this datum
+	 * @return the property names
 	 */
-	Instant getTimestamp();
+	String[] getPropertyNames();
 
 	/**
-	 * Get the properties associated with this datum.
+	 * Get the subset of all property names that are of a specific type.
 	 * 
-	 * @return the properties
+	 * @param type
+	 *        the type of property to get the names for
+	 * @return the property names, or {@literal null} if none available or
+	 *         {@code type} is {@link GeneralDatumSamplesType#Tag}
 	 */
-	DatumProperties getProperties();
+	String[] propertyNamesForType(GeneralDatumSamplesType type);
 
 }

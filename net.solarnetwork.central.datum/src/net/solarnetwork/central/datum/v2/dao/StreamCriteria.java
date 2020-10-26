@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumCriteria.java - Dec 2, 2013 5:08:29 PM
+ * StreamCriteria.java - 27/10/2020 9:38:25 am
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,24 +20,36 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.central.domain.DateRangeFilter;
-import net.solarnetwork.central.domain.Filter;
+import java.util.UUID;
 
 /**
- * Filter for Datum entities.
+ * Search criteria for streams.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
+ * @since 2.8
  */
-public interface DatumFilter extends Filter, DateRangeFilter {
+public interface StreamCriteria {
 
 	/**
-	 * Get a type of datum.
+	 * Get the first datum stream ID.
 	 * 
-	 * @return the datum type
+	 * <p>
+	 * This returns the first available datum stream ID from the
+	 * {@link #getStreamIds()} array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the datum stream ID, or {@literal null} if not available
 	 */
-	String getType();
+	UUID getStreamId();
+
+	/**
+	 * Get the datum stream IDs to filter by.
+	 * 
+	 * @return the dateum stream IDs
+	 */
+	UUID[] getStreamIds();
 
 }

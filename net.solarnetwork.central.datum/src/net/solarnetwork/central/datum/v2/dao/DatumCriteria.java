@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumStreamMetadata.java - 22/10/2020 3:01:10 pm
+ * DatumCriteria.java - 23/10/2020 1:58:16 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,34 +20,22 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.domain.GeneralDatumSamplesType;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.dao.DateRangeCriteria;
+import net.solarnetwork.dao.LocalDateRangeCriteria;
+import net.solarnetwork.dao.RecentCriteria;
 
 /**
- * Metadata about a datum stream.
+ * Search criteria for {@link Datum}.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface DatumStreamMetadata {
-
-	/**
-	 * Get all property names included in the stream.
-	 * 
-	 * @return the property names
-	 */
-	String[] getPropertyNames();
-
-	/**
-	 * Get the subset of all property names that are of a specific type.
-	 * 
-	 * @param type
-	 *        the type of property to get the names for
-	 * @return the property names, or {@literal null} if none available or
-	 *         {@code type} is {@link GeneralDatumSamplesType#Tag}
-	 */
-	String[] propertyNamesForType(GeneralDatumSamplesType type);
+public interface DatumCriteria
+		extends DateRangeCriteria, LocalDateRangeCriteria, NodeCriteria, NodeMetadataCriteria,
+		SourceCriteria, LocationCriteria, LocationMetadataCriteria, StreamCriteria, RecentCriteria {
 
 }

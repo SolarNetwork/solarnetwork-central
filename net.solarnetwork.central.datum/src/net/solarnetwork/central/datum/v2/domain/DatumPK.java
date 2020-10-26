@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumStreamPK.java - 22/10/2020 8:55:47 am
+ * DatumPK.java - 22/10/2020 8:55:47 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,12 +20,13 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.datum.v2.domain;
 
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import net.solarnetwork.central.datum.domain.BasePK;
 
 /**
  * Primary key for a datum stream.
@@ -34,7 +35,7 @@ import java.util.UUID;
  * @version 1.0
  * @since 2.8
  */
-public class DatumStreamPK extends BasePK implements Serializable, Cloneable, Comparable<DatumStreamPK> {
+public class DatumPK extends BasePK implements Serializable, Cloneable, Comparable<DatumPK> {
 
 	private static final long serialVersionUID = -8674108064779256512L;
 
@@ -49,15 +50,15 @@ public class DatumStreamPK extends BasePK implements Serializable, Cloneable, Co
 	 * @param timestamp
 	 *        the time stamp
 	 */
-	public DatumStreamPK(UUID streamId, Instant timestamp) {
+	public DatumPK(UUID streamId, Instant timestamp) {
 		super();
 		this.streamId = streamId;
 		this.timestamp = timestamp;
 	}
 
 	@Override
-	protected DatumStreamPK clone() {
-		return (DatumStreamPK) super.clone();
+	protected DatumPK clone() {
+		return (DatumPK) super.clone();
 	}
 
 	@Override
@@ -100,10 +101,10 @@ public class DatumStreamPK extends BasePK implements Serializable, Cloneable, Co
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof DatumStreamPK) ) {
+		if ( !(obj instanceof DatumPK) ) {
 			return false;
 		}
-		DatumStreamPK other = (DatumStreamPK) obj;
+		DatumPK other = (DatumPK) obj;
 		return Objects.equals(streamId, other.streamId) && Objects.equals(timestamp, other.timestamp);
 	}
 
@@ -118,7 +119,7 @@ public class DatumStreamPK extends BasePK implements Serializable, Cloneable, Co
 	 * {@inheritDoc}
 	 */
 	@Override
-	public int compareTo(DatumStreamPK o) {
+	public int compareTo(DatumPK o) {
 		if ( this == o ) {
 			return 0;
 		}

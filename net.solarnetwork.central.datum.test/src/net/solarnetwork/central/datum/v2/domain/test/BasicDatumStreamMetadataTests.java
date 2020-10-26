@@ -20,14 +20,15 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain.test;
+package net.solarnetwork.central.datum.v2.domain.test;
 
+import static java.util.UUID.randomUUID;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import org.junit.Test;
-import net.solarnetwork.central.datum.domain.BasicDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicDatumStreamMetadata;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 
 /**
@@ -40,8 +41,9 @@ public class BasicDatumStreamMetadataTests {
 
 	@Test
 	public void lengths() {
-		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(new String[] { "one", "two", "three" },
-				new String[] { "four", "five" }, new String[] { "six" });
+		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(randomUUID(),
+				new String[] { "one", "two", "three" }, new String[] { "four", "five" },
+				new String[] { "six" });
 		assertThat("Total length", m.getPropertyNamesLength(), equalTo(6));
 		assertThat("Instantaneous length", m.getInstantaneousLength(), equalTo(3));
 		assertThat("Accumulating length", m.getAccumulatingLength(), equalTo(2));
@@ -50,7 +52,7 @@ public class BasicDatumStreamMetadataTests {
 
 	@Test
 	public void lengths_null() {
-		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(null, null, null);
+		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(randomUUID(), null, null, null);
 		assertThat("Total length", m.getPropertyNamesLength(), equalTo(0));
 		assertThat("Instantaneous length", m.getInstantaneousLength(), equalTo(0));
 		assertThat("Accumulating length", m.getAccumulatingLength(), equalTo(0));
@@ -59,8 +61,8 @@ public class BasicDatumStreamMetadataTests {
 
 	@Test
 	public void lengths_empty() {
-		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(new String[0], new String[0],
-				new String[0]);
+		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(randomUUID(), new String[0],
+				new String[0], new String[0]);
 		assertThat("Total length", m.getPropertyNamesLength(), equalTo(0));
 		assertThat("Instantaneous length", m.getInstantaneousLength(), equalTo(0));
 		assertThat("Accumulating length", m.getAccumulatingLength(), equalTo(0));
@@ -69,8 +71,9 @@ public class BasicDatumStreamMetadataTests {
 
 	@Test
 	public void typeArrays() {
-		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(new String[] { "one", "two", "three" },
-				new String[] { "four", "five" }, new String[] { "six" });
+		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(randomUUID(),
+				new String[] { "one", "two", "three" }, new String[] { "four", "five" },
+				new String[] { "six" });
 		assertThat("All props", m.getPropertyNames(),
 				arrayContaining("one", "two", "three", "four", "five", "six"));
 		assertThat("Instantaneous props", m.propertyNamesForType(GeneralDatumSamplesType.Instantaneous),
@@ -84,7 +87,7 @@ public class BasicDatumStreamMetadataTests {
 
 	@Test
 	public void typeArrays_null() {
-		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(null, null, null);
+		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(randomUUID(), null, null, null);
 		assertThat("All props", m.getPropertyNames(), nullValue());
 		assertThat("Instantaneous props", m.propertyNamesForType(GeneralDatumSamplesType.Instantaneous),
 				nullValue());
@@ -96,8 +99,8 @@ public class BasicDatumStreamMetadataTests {
 
 	@Test
 	public void typeArrays_empty() {
-		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(new String[0], new String[0],
-				new String[0]);
+		BasicDatumStreamMetadata m = new BasicDatumStreamMetadata(randomUUID(), new String[0],
+				new String[0], new String[0]);
 		assertThat("All props", m.getPropertyNames(), nullValue());
 		assertThat("Instantaneous props", m.propertyNamesForType(GeneralDatumSamplesType.Instantaneous),
 				nullValue());

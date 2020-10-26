@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumCriteria.java - Dec 2, 2013 5:08:29 PM
+ * LocationDatumStreamMetadata.java - 26/10/2020 9:21:27 pm
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,24 +20,29 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
-
-import net.solarnetwork.central.domain.DateRangeFilter;
-import net.solarnetwork.central.domain.Filter;
+package net.solarnetwork.central.datum.v2.domain;
 
 /**
- * Filter for Datum entities.
+ * Location-specific datum stream metadata.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
+ * @since 2.8
  */
-public interface DatumFilter extends Filter, DateRangeFilter {
+public interface LocationDatumStreamMetadata extends DatumStreamMetadata {
 
 	/**
-	 * Get a type of datum.
+	 * Get the location ID.
 	 * 
-	 * @return the datum type
+	 * @return the location ID
 	 */
-	String getType();
+	Long getLocationId();
+
+	/**
+	 * Get the source ID.
+	 * 
+	 * @return the source ID
+	 */
+	String getSourceId();
 
 }

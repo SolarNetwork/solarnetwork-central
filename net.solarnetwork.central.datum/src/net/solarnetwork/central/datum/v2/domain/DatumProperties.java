@@ -20,10 +20,11 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.datum.v2.domain;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Arrays;
 
 /**
  * A collection of property values for a datum.
@@ -68,6 +69,58 @@ public class DatumProperties implements Serializable {
 		s.status = status;
 		s.tags = tags;
 		return s;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(accumulating);
+		result = prime * result + Arrays.hashCode(instantaneous);
+		result = prime * result + Arrays.hashCode(status);
+		result = prime * result + Arrays.hashCode(tags);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !(obj instanceof DatumProperties) ) {
+			return false;
+		}
+		DatumProperties other = (DatumProperties) obj;
+		return Arrays.equals(accumulating, other.accumulating)
+				&& Arrays.equals(instantaneous, other.instantaneous)
+				&& Arrays.equals(status, other.status) && Arrays.equals(tags, other.tags);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("DatumProperties{");
+		if ( instantaneous != null ) {
+			builder.append("instantaneous=");
+			builder.append(Arrays.toString(instantaneous));
+			builder.append(", ");
+		}
+		if ( accumulating != null ) {
+			builder.append("accumulating=");
+			builder.append(Arrays.toString(accumulating));
+			builder.append(", ");
+		}
+		if ( status != null ) {
+			builder.append("status=");
+			builder.append(Arrays.toString(status));
+			builder.append(", ");
+		}
+		if ( tags != null ) {
+			builder.append("tags=");
+			builder.append(Arrays.toString(tags));
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 	/**

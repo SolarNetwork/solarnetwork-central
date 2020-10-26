@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumCriteria.java - Dec 2, 2013 5:08:29 PM
+ * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,24 +20,15 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
-
-import net.solarnetwork.central.domain.DateRangeFilter;
-import net.solarnetwork.central.domain.Filter;
+package net.solarnetwork.central.datum.v2.dao;
 
 /**
- * Filter for Datum entities.
+ * Search criteria for node metadata.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
+ * @since 2.8
  */
-public interface DatumFilter extends Filter, DateRangeFilter {
-
-	/**
-	 * Get a type of datum.
-	 * 
-	 * @return the datum type
-	 */
-	String getType();
+public interface LocationMetadataCriteria extends LocationCriteria, SourceCriteria, StreamCriteria {
 
 }

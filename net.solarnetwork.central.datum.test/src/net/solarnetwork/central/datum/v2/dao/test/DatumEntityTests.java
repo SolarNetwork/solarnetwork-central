@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain.test;
+package net.solarnetwork.central.datum.v2.dao.test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.sameInstance;
@@ -28,8 +28,8 @@ import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.Test;
-import net.solarnetwork.central.datum.domain.DatumEntity;
-import net.solarnetwork.central.datum.domain.DatumStreamPK;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 
 /**
  * Test cases for the {@link DatumEntity} class.
@@ -71,7 +71,7 @@ public class DatumEntityTests {
 		final Instant timestamp = Instant.now();
 		DatumEntity d = new DatumEntity(streamId, timestamp, null, null);
 		assertThat("getId() returns PK with constructor values", d.getId(),
-				equalTo(new DatumStreamPK(streamId, timestamp)));
+				equalTo(new DatumPK(streamId, timestamp)));
 	}
 
 	@Test

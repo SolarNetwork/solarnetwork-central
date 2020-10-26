@@ -20,11 +20,15 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.datum.v2.dao;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.BasicIdentity;
 
@@ -41,8 +45,8 @@ import net.solarnetwork.domain.BasicIdentity;
  * @version 1.0
  * @since 2.8
  */
-public class DatumEntity extends BasicIdentity<DatumStreamPK>
-		implements Datum, Entity<DatumStreamPK>, Cloneable, Serializable {
+public class DatumEntity extends BasicIdentity<DatumPK>
+		implements Datum, Entity<DatumPK>, Cloneable, Serializable {
 
 	private static final long serialVersionUID = -6655090793049766389L;
 
@@ -59,7 +63,7 @@ public class DatumEntity extends BasicIdentity<DatumStreamPK>
 	 * @param properties
 	 *        the properties
 	 */
-	public DatumEntity(DatumStreamPK id, Instant received, DatumProperties properties) {
+	public DatumEntity(DatumPK id, Instant received, DatumProperties properties) {
 		super(id);
 		this.received = received;
 		this.properties = properties;
@@ -78,12 +82,42 @@ public class DatumEntity extends BasicIdentity<DatumStreamPK>
 	 *        the samples
 	 */
 	public DatumEntity(UUID streamId, Instant timestamp, Instant received, DatumProperties properties) {
-		this(new DatumStreamPK(streamId, timestamp), received, properties);
+		this(new DatumPK(streamId, timestamp), received, properties);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * Note this constructor has {@code Object} arguments to work around MyBatis
+	 * mapping issues.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param timestamp
+	 *        the timestamp
+	 * @param received
+	 *        the date the datum was received by SolarNetwork
+	 * @param instantaneous
+	 *        the instantaneous values; must be {@code BigDecimal[]}
+	 * @param accumulating
+	 *        the accumulating values; must be {@code BigDecimal[]}
+	 * @param status
+	 *        the status values; must be {@code String[]}
+	 * @param tags
+	 *        the tag values; must be {@code String[]}
+	 */
+	public DatumEntity(UUID streamId, Instant timestamp, Instant received, Object instantaneous,
+			Object accumulating, Object status, Object tags) {
+		this(new DatumPK(streamId, timestamp), received,
+				DatumProperties.propertiesOf((BigDecimal[]) instantaneous, (BigDecimal[]) accumulating,
+						(String[]) status, (String[]) tags));
 	}
 
 	@Override
 	public boolean hasId() {
-		DatumStreamPK id = getId();
+		DatumPK id = getId();
 		return (id != null && id.getStreamId() != null && id.getTimestamp() != null);
 	}
 
@@ -104,7 +138,7 @@ public class DatumEntity extends BasicIdentity<DatumStreamPK>
 	 */
 	@Override
 	public Instant getTimestamp() {
-		DatumStreamPK id = getId();
+		DatumPK id = getId();
 		return (id != null ? id.getTimestamp() : null);
 	}
 
@@ -119,7 +153,7 @@ public class DatumEntity extends BasicIdentity<DatumStreamPK>
 	 */
 	@Override
 	public UUID getStreamId() {
-		DatumStreamPK id = getId();
+		DatumPK id = getId();
 		return (id != null ? id.getStreamId() : null);
 	}
 

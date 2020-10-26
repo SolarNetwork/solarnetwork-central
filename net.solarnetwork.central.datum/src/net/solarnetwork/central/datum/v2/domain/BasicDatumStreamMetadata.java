@@ -20,8 +20,9 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.datum.v2.domain;
 
+import java.util.UUID;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 
 /**
@@ -29,9 +30,11 @@ import net.solarnetwork.domain.GeneralDatumSamplesType;
  * 
  * @author matt
  * @version 1.0
+ * @since 2.8
  */
 public class BasicDatumStreamMetadata implements DatumStreamMetadata {
 
+	private final UUID streamId;
 	private final String[] instantaneousProperties;
 	private final String[] accumulatingProperties;
 	private final String[] statusProperties;
@@ -40,20 +43,28 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata {
 	 * Constructor.
 	 * 
 	 * <p>
-	 * All arguments are allowed to be {@literal null}. If any array is empty,
-	 * it will be treated as if it were {@literal null}.
+	 * All arguments except {@code streamId} are allowed to be {@literal null}.
+	 * If any array is empty, it will be treated as if it were {@literal null}.
 	 * </p>
 	 * 
+	 * @param streamId
+	 *        the stream ID
 	 * @param instantaneousProperties
 	 *        the instantaneous property names
 	 * @param accumulatingProperties
 	 *        the accumulating property names
 	 * @param statusProperties
 	 *        the status property names
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} is {@literal null}
 	 */
-	public BasicDatumStreamMetadata(String[] instantaneousProperties, String[] accumulatingProperties,
-			String[] statusProperties) {
+	public BasicDatumStreamMetadata(UUID streamId, String[] instantaneousProperties,
+			String[] accumulatingProperties, String[] statusProperties) {
 		super();
+		if ( streamId == null ) {
+			throw new IllegalArgumentException("The streamId argument must not be null.");
+		}
+		this.streamId = streamId;
 		this.instantaneousProperties = instantaneousProperties != null
 				&& instantaneousProperties.length > 0 ? instantaneousProperties : null;
 		this.accumulatingProperties = accumulatingProperties != null && accumulatingProperties.length > 0
@@ -62,6 +73,42 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata {
 		this.statusProperties = statusProperties != null && statusProperties.length > 0
 				? statusProperties
 				: null;
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * All arguments except {@code streamId} are allowed to be {@literal null}.
+	 * The other arguments are {@code Object} to work around MyBatis mapping
+	 * issues. If any array is empty, it will be treated as if it were
+	 * {@literal null}.
+	 * </p>
+	 * 
+	 * @param streamId
+	 *        the stream ID
+	 * @param instantaneousProperties
+	 *        the instantaneous property names; must be a {@code String[]}
+	 * @param accumulatingProperties
+	 *        the accumulating property names; must be a {@code String[]}
+	 * @param statusProperties
+	 *        the status property names; must be a {@code String[]}
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} is {@literal null}
+	 */
+	public BasicDatumStreamMetadata(UUID streamId, Object instantaneousProperties,
+			Object accumulatingProperties, Object statusProperties) {
+		this(streamId, (String[]) instantaneousProperties, (String[]) accumulatingProperties,
+				(String[]) statusProperties);
+	}
+
+	/**
+	 * Get the stream ID.
+	 * 
+	 * @return the stream ID
+	 */
+	public UUID getStreamId() {
+		return streamId;
 	}
 
 	/**

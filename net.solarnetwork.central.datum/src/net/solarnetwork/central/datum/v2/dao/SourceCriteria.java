@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumCriteria.java - Dec 2, 2013 5:08:29 PM
+ * SourceCriteria.java - 23/10/2020 9:19:11 pm
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,24 +20,34 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
-
-import net.solarnetwork.central.domain.DateRangeFilter;
-import net.solarnetwork.central.domain.Filter;
+package net.solarnetwork.central.datum.v2.dao;
 
 /**
- * Filter for Datum entities.
+ * Search criteria for source related data.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
+ * @since 2.8
  */
-public interface DatumFilter extends Filter, DateRangeFilter {
+public interface SourceCriteria {
 
 	/**
-	 * Get a type of datum.
+	 * Get the first source ID.
 	 * 
-	 * @return the datum type
+	 * <p>
+	 * This returns the first available source ID from the
+	 * {@link #getSourceIds()} array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the first source ID, or {@literal null} if not available
 	 */
-	String getType();
+	String getSourceId();
+
+	/**
+	 * Get an array of source IDs.
+	 * 
+	 * @return array of source IDs (may be {@literal null})
+	 */
+	String[] getSourceIds();
 
 }
