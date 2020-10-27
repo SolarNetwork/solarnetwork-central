@@ -39,7 +39,6 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
-import net.solarnetwork.central.datum.v2.domain.BasicDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
@@ -50,6 +49,17 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * MyBatis implementation of {@link DatumEntityDao}.
+ * 
+ * <p>
+ * <b>Pagination note:</b> this implementation makes use of the
+ * {@link DatumCriteria#getMax()} and {@link DatumCriteria#getOffset()} values
+ * to handle pagination more efficiently on the server side, rather than here on
+ * the client. This has been implemented with Postgres in mind, where
+ * {@code FORWARD_ONLY} must be used for server-side cursor support on large
+ * results. With that in mind, {@code LIMIT} and {@code OFFSET} SQL constructs
+ * are used so JDBC does not have to stream back all results just to skip to a
+ * particular offset.
+ * </p>
  * 
  * @author matt
  * @version 1.0
@@ -96,10 +106,12 @@ public class MyBatisDatumEntityDao
 		final String queryName = filter.getLocationId() != null
 				? QueryName.LocationMetadataForFilter.getQueryName()
 				: QueryName.NodeMetadataForFilter.getQueryName();
-		List<BasicDatumStreamMetadata> metaList = selectList(queryName, sqlProps, null, null);
-		Map<UUID, DatumStreamMetadata> meta = metaList.stream().collect(toMap(
-				BasicDatumStreamMetadata::getStreamId, identity(), (u, v) -> u, LinkedHashMap::new));
-		return new BasicDatumStreamFilterResults(meta, rows);
+		List<DatumStreamMetadata> metaList = selectList(queryName, sqlProps, null, null);
+		Map<UUID, DatumStreamMetadata> meta = metaList.stream().collect(
+				toMap(DatumStreamMetadata::getStreamId, identity(), (u, v) -> u, LinkedHashMap::new));
+		return new BasicDatumStreamFilterResults(meta, rows, totalCount,
+				(offset != null ? offset.intValue() : 0),
+				(returnedCount != null ? returnedCount.intValue() : 0));
 	}
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)

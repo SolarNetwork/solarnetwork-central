@@ -206,6 +206,15 @@
 				datum.ts
 			</otherwise>
 		</choose>
+		<if test="filter.max != null and filter.max &gt; 0 and filter.offset != null and filter.offset &gt;= 0">
+			LIMIT #{filter.max} OFFSET #{filter.offset}
+		</if>
+	</select>
+
+	<select id="findall-DatumEntity-DatumEntity-count" resultType="long">
+		SELECT count(*)
+		<include refid="fragment-findall-DatumEntity-DatumEntity-from"/>
+		<include refid="fragment-findall-DatumEntity-DatumEntity-where"/>
 	</select>
 
 </mapper>

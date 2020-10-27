@@ -43,6 +43,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	private LocalDateTime localStartDate;
 	private LocalDateTime localEndDate;
 	private boolean mostRecent = false;
+	private boolean withoutTotalResultsCount = true;
 
 	@Override
 	public Instant getStartDate() {
@@ -154,6 +155,21 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	 */
 	public void setMostRecent(boolean mostRecent) {
 		this.mostRecent = mostRecent;
+	}
+
+	/**
+	 * Toggle the "without total results" mode.
+	 * 
+	 * @param mode
+	 *        the mode to set
+	 */
+	public void setWithoutTotalResultsCount(boolean mode) {
+		this.withoutTotalResultsCount = mode;
+	}
+
+	@Override
+	public boolean isWithoutTotalResultsCount() {
+		return withoutTotalResultsCount;
 	}
 
 }

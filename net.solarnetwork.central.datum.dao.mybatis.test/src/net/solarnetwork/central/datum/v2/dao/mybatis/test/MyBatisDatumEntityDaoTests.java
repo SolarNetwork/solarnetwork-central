@@ -23,9 +23,15 @@
 package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
@@ -39,11 +45,15 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,6 +65,7 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.mybatis.MyBatisDatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
@@ -120,9 +131,9 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 						Timestamp received = Timestamp.from(Instant.now());
 						GeneralDatumSamples data = new GeneralDatumSamples();
 						for ( int i = 0; i < count; i++ ) {
-							cs.setLong(1, nodeId);
-							cs.setString(2, sourceId);
-							cs.setTimestamp(3, Timestamp.from(ts.toInstant()));
+							cs.setTimestamp(1, Timestamp.from(ts.toInstant()));
+							cs.setLong(2, nodeId);
+							cs.setString(3, sourceId);
 							cs.setTimestamp(4, received);
 
 							data.putInstantaneousSampleValue(propPrefix + "_i", Math.random() * 1000000);
@@ -248,6 +259,24 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 		}
 	}
 
+	// UUID sorter that matches how Postgres orders UUIDS (byte by byte)
+	private static Comparator<UUID> UUID_STRING_ORDER = new UuidByteOrder();
+
+	private static class UuidByteOrder implements Comparator<UUID> {
+
+		@Override
+		public int compare(UUID o1, UUID o2) {
+			return o1.toString().compareTo(o2.toString());
+		}
+
+	}
+
+	private static SortedSet<UUID> sortedStreamIds(DatumStreamFilterResults results) {
+		return results.metadataStreamIds().stream().collect(Collectors.toCollection(() -> {
+			return new TreeSet<>(UUID_STRING_ORDER);
+		}));
+	}
+
 	@Test
 	public void find_multipleStreams() {
 		// GIVEN
@@ -265,6 +294,173 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(12L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(12));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		SortedSet<UUID> streamIds = sortedStreamIds(results);
+		assertThat("Result stream IDs count", streamIds, hasSize(3));
+		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(12));
+
+		int streamIdx = 0;
+		for ( UUID streamId : streamIds ) {
+			Instant ts = start.toInstant();
+			for ( int i = 0; i < 4; i++ ) {
+				Datum d = datumList.get(streamIdx * 4 + i);
+				assertThat("Ordered by stream ID " + streamIdx, d.getStreamId(), equalTo(streamId));
+				assertThat("Ordered by timestamp next", d.getTimestamp(), not(lessThan(ts)));
+				ts = d.getTimestamp();
+			}
+			streamIdx++;
+		}
 	}
 
+	@Test
+	public void find_byStreamId() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final Duration freq = Duration.ofMinutes(30);
+		insertDatum(1L, "s1", "foo", start, freq, 4);
+		insertDatum(2L, "s2", "bim", start.plusMinutes(15), freq, 4);
+
+		Map<UUID, NodeDatumStreamMetadata> metas = StreamSupport
+				.stream(dao.getNodeDatumStreamMetadata(new BasicDatumCriteria()).spliterator(), false)
+				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
+
+		// WHEN
+		final UUID streamId = metas.keySet().iterator().next();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStreamId(streamId);
+		DatumStreamFilterResults results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(4L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(4));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		SortedSet<UUID> streamIds = sortedStreamIds(results);
+		assertThat("Result stream IDs count", streamIds, contains(streamId));
+		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(4));
+
+		DatumStreamMetadata meta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", meta, instanceOf(NodeDatumStreamMetadata.class));
+		assertThat("Node ID", ((NodeDatumStreamMetadata) meta).getNodeId(),
+				equalTo(metas.get(streamId).getNodeId()));
+		Instant ts = start.toInstant();
+		for ( int i = 0; i < 4; i++ ) {
+			Datum d = datumList.get(i);
+			assertThat("Stream ID ", d.getStreamId(), equalTo(streamId));
+			assertThat("Ordered by timestamp", d.getTimestamp(), not(lessThan(ts)));
+			ts = d.getTimestamp();
+		}
+	}
+
+	@Test
+	public void find_paginated_withTotalResultCount_first() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final Duration freq = Duration.ofMinutes(30);
+		insertDatum(1L, "s1", "foo", start, freq, 6);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setWithoutTotalResultsCount(false);
+		filter.setNodeId(1L);
+		filter.setMax(2);
+		filter.setOffset(0);
+		DatumStreamFilterResults results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		Instant ts = start.toInstant();
+		for ( Datum d : results ) {
+			assertThat("Datum timestamp", d.getTimestamp(), equalTo(ts));
+			ts = ts.plus(freq);
+		}
+	}
+
+	@Test
+	public void find_paginated_withTotalResultCount_middle() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final Duration freq = Duration.ofMinutes(30);
+		insertDatum(1L, "s1", "foo", start, freq, 6);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setWithoutTotalResultsCount(false);
+		filter.setNodeId(1L);
+		filter.setMax(2);
+		filter.setOffset(2);
+		DatumStreamFilterResults results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(2));
+
+		Instant ts = start.plus(freq.multipliedBy(2)).toInstant();
+		for ( Datum d : results ) {
+			assertThat("Datum timestamp", d.getTimestamp(), equalTo(ts));
+			ts = ts.plus(freq);
+		}
+	}
+
+	@Test
+	public void find_paginated_withTotalResultCount_last() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final Duration freq = Duration.ofMinutes(30);
+		insertDatum(1L, "s1", "foo", start, freq, 6);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setWithoutTotalResultsCount(false);
+		filter.setNodeId(1L);
+		filter.setMax(2);
+		filter.setOffset(4);
+		DatumStreamFilterResults results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(4));
+
+		Instant ts = start.plus(freq.multipliedBy(4)).toInstant();
+		for ( Datum d : results ) {
+			assertThat("Datum timestamp", d.getTimestamp(), equalTo(ts));
+			ts = ts.plus(freq);
+		}
+	}
+
+	@Test
+	public void find_paginated_withTotalResultCount_over() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final Duration freq = Duration.ofMinutes(30);
+		insertDatum(1L, "s1", "foo", start, freq, 6);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setWithoutTotalResultsCount(false);
+		filter.setNodeId(1L);
+		filter.setMax(2);
+		filter.setOffset(6);
+		DatumStreamFilterResults results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(6));
+	}
 }

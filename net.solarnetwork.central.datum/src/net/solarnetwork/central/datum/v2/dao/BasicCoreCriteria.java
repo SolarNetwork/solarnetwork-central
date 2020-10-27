@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.domain.SimplePagination;
 
 /**
  * Basic implementation of some core criteria APIs.
@@ -31,7 +32,8 @@ import com.fasterxml.jackson.annotation.JsonSetter;
  * @author matt
  * @version 1.0
  */
-public class BasicCoreCriteria implements LocationCriteria, NodeCriteria, SourceCriteria {
+public class BasicCoreCriteria extends SimplePagination
+		implements LocationCriteria, NodeCriteria, SourceCriteria {
 
 	private Long[] locationIds;
 	private Long[] nodeIds;

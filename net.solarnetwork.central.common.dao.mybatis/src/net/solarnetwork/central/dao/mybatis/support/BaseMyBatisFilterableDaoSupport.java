@@ -31,6 +31,9 @@ import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
+import net.solarnetwork.dao.OptimizedQueryCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.dao.SortCriteria;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -39,7 +42,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link SqlSessionDaoSupport}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.7
  */
 public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M extends Identity<K>, F>
@@ -123,7 +126,14 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	 * <li>Create a SQL parameters map with a
 	 * {@link BaseMyBatisGenericDaoSupport#FILTER_PROPERTY} key and {@code f}
 	 * value.</li>
+	 * <li>If {@code filter} implements {@link SortCriteria} and provides sort
+	 * descriptors, those will be set as the SQL parameter
+	 * {@link BaseMyBatisGenericDaoSupport#SORT_DESCRIPTORS_PROPERTY}. Otherwise
+	 * the {@code sorts} argument will be set.</li>
 	 * <li>Call {@link #postProcessFilterProperties(Object, Map)}</li>
+	 * <li>If {@code filter} implements {@link PaginationCriteria} and provides
+	 * pagination values, those will be used in preference to the {@code offset}
+	 * and {@code max} method arguments.</li>
 	 * <li>If {@code max} is not {@literal null} then call
 	 * {@link #executeFilterCountQuery(String, Object, Map)}</li>
 	 * <li>Call
@@ -150,21 +160,43 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 		final String query = getFilteredQuery(filterDomain, filter);
 		Map<String, Object> sqlProps = new HashMap<String, Object>(1);
 		sqlProps.put(FILTER_PROPERTY, filter);
-		if ( sorts != null && sorts.size() > 0 ) {
+
+		// if filter is SortCriteria and provides sort values, use those over method args
+		if ( filter instanceof SortCriteria && ((SortCriteria) filter).getSorts() != null
+				&& !((SortCriteria) filter).getSorts().isEmpty() ) {
+			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, ((SortCriteria) filter).getSorts());
+		} else if ( sorts != null && sorts.size() > 0 ) {
 			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sorts);
 		}
+
 		postProcessFilterProperties(filter, sqlProps);
 
-		// attempt count first, if max NOT specified as -1
+		// if filter is PaginationCriteria and provides pagination values, don't use MyBatis pagination
+		Integer m = max;
+		Integer o = offset;
+		if ( filter instanceof PaginationCriteria ) {
+			PaginationCriteria pagination = (PaginationCriteria) filter;
+			if ( pagination.getMax() != null && pagination.getMax().intValue() > 0
+					&& pagination.getOffset() != null && pagination.getOffset().intValue() >= 0 ) {
+				max = pagination.getMax();
+				m = null;
+				offset = pagination.getOffset();
+				o = null;
+			}
+		}
+
+		// attempt count first, if max NOT null or specified as -1; if filter is instance of OptimizedQueryCriteria
+		// check the withoutTotalResultsCount flag
 		Long totalCount = null;
-		if ( max != null && max.intValue() != -1 ) {
+		if ( max != null && max.intValue() != -1 && !((filter instanceof OptimizedQueryCriteria)
+				&& ((OptimizedQueryCriteria) filter).isWithoutTotalResultsCount()) ) {
 			Long n = executeFilterCountQuery(query + "-count", filter, sqlProps);
 			if ( n != null ) {
 				totalCount = n.longValue();
 			}
 		}
 
-		List<M> rows = selectList(query, sqlProps, offset, max);
+		List<M> rows = selectList(query, sqlProps, o, m);
 
 		FilterResults<M, K> results = createResults(filter, sqlProps, rows,
 				(totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
