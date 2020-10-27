@@ -145,22 +145,6 @@
 		</where>
 	</select>
 	
-	<sql id="fragment-findall-DatumEntity-DatumEntity-cte">
-		<trim prefix="WITH">
-			<trim prefix=",">
-				<choose>
-					<when test="filter.nodeIds != null and filter.nodeIds.length > 0">
-					</when>
-					<when test="filter.locationIds != null and filter.locationIds.length > 0">
-					</when>
-				</choose>
-			</trim>
-		</trim>
-		<where>
-		
-		</where>
-	</sql>
-	
 	<sql id="fragment-findall-DatumEntity-DatumEntity-from">
 		FROM solardatm.da_datm datum
 		<if test="filter.streamIds == null or filter.streamIds.length &lt; 1">
@@ -202,7 +186,6 @@
 	</sql>
 	
 	<select id="findall-DatumEntity-DatumEntity" parameterType="map" resultMap="DatumEntity-FullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
-		<include refid="fragment-findall-DatumEntity-DatumEntity-cte"/>
 		SELECT
 			<include refid="fragment-DatumEntity-full-result"/>
 		<include refid="fragment-findall-DatumEntity-DatumEntity-from"/>
@@ -213,6 +196,7 @@
 				 <foreach collection="SortDescriptors" item="item" separator=",">
 					<if test="item.sortKey == &quot;ts&quot;">datum.ts</if>
 					<if test="item.sortKey == &quot;node&quot;">smeta.node_id</if>
+					<if test="item.sortKey == &quot;location&quot;">smeta.loc_id</if>
 					<if test="item.sortKey == &quot;source&quot;">smeta.source_id</if>
 					<if test="item.descending">DESC</if>
 				</foreach>
