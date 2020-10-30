@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -103,6 +104,33 @@ public class BasicNodeDatumStreamMetadata extends BasicDatumStreamMetadata
 			Object instantaneousProperties, Object accumulatingProperties, Object statusProperties) {
 		this(streamId, nodeId, sourceId, (String[]) instantaneousProperties,
 				(String[]) accumulatingProperties, (String[]) statusProperties);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("BasicNodeDatumStreamMetadata{");
+		if ( getStreamId() != null ) {
+			builder.append("streamId=");
+			builder.append(getStreamId());
+			builder.append(", ");
+		}
+		if ( nodeId != null ) {
+			builder.append("nodeId=");
+			builder.append(nodeId);
+			builder.append(", ");
+		}
+		if ( sourceId != null ) {
+			builder.append("sourceId=");
+			builder.append(sourceId);
+			builder.append(", ");
+		}
+		if ( getPropertyNames() != null ) {
+			builder.append("propertyNames=");
+			builder.append(Arrays.toString(getPropertyNames()));
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 	@Override

@@ -38,6 +38,7 @@ import java.util.Arrays;
  * 
  * @author matt
  * @version 1.0
+ * @since 2.8
  */
 public class DatumProperties implements Serializable {
 
@@ -49,7 +50,7 @@ public class DatumProperties implements Serializable {
 	private String[] tags;
 
 	/**
-	 * Create stample instance.
+	 * Create a datum properties instance.
 	 * 
 	 * @param instantaneous
 	 *        the instantaneous values
@@ -59,7 +60,7 @@ public class DatumProperties implements Serializable {
 	 *        the status values
 	 * @param tags
 	 *        the tag values
-	 * @return the samples instance, never {@literal null}
+	 * @return the new instance, never {@literal null}
 	 */
 	public static DatumProperties propertiesOf(BigDecimal[] instantaneous, BigDecimal[] accumulating,
 			String[] status, String[] tags) {
