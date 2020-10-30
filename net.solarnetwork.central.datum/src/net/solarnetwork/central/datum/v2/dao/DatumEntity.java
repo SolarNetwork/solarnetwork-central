@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.dao;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.UUID;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
@@ -113,6 +114,38 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 		this(new DatumPK(streamId, timestamp), received,
 				DatumProperties.propertiesOf((BigDecimal[]) instantaneous, (BigDecimal[]) accumulating,
 						(String[]) status, (String[]) tags));
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("DatumEntity{");
+		if ( getId() != null ) {
+			builder.append("streamId=");
+			builder.append(getId().getStreamId());
+			builder.append(", ts=");
+			builder.append(getId().getTimestamp());
+		}
+		if ( properties != null ) {
+			if ( properties.getInstantaneous() != null ) {
+				builder.append(", i=");
+				builder.append(Arrays.toString(properties.getInstantaneous()));
+			}
+			if ( properties.getAccumulating() != null ) {
+				builder.append(", a=");
+				builder.append(Arrays.toString(properties.getAccumulating()));
+			}
+			if ( properties.getStatus() != null ) {
+				builder.append(", s=");
+				builder.append(Arrays.toString(properties.getStatus()));
+			}
+			if ( properties.getTags() != null ) {
+				builder.append(", t=");
+				builder.append(Arrays.toString(properties.getTags()));
+			}
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 	@Override
