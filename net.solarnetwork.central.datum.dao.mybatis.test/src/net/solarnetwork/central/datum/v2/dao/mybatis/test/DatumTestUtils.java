@@ -22,7 +22,14 @@
 
 package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
+import static java.lang.String.format;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,11 +37,16 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.slf4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -45,6 +57,7 @@ import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * Helper methods for datum tests.
@@ -56,6 +69,70 @@ public final class DatumTestUtils {
 
 	private DatumTestUtils() {
 		// don't construct me
+	}
+
+	/** Regex for a line starting with a {@literal #} comment character. */
+	public static final Pattern COMMENT = Pattern.compile("\\s*#");
+
+	/**
+	 * Create a {@link Matcher} for an array of {@link BigDecimal} values.
+	 * 
+	 * @param nums
+	 *        the string numbers, which will be parsed as {@link BigDecimal}
+	 *        instances
+	 * @return the matcher
+	 */
+	public static Matcher<BigDecimal[]> arrayOfDecimals(String... nums) {
+		BigDecimal[] vals = new BigDecimal[nums.length];
+		for ( int i = 0; i < nums.length; i++ ) {
+			vals[i] = new BigDecimal(nums[i]);
+		}
+		return Matchers.arrayContaining(vals);
+	}
+
+	/**
+	 * Load JSON datum from a classpath resource.
+	 * 
+	 * <p>
+	 * This method loads JSON datum records from a resource, with one JSON datum
+	 * object per line. Empty lines or those starting with a {@literal #}
+	 * character are ignored. An example JSON datum looks like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:00:00Z","samples":{"i":{"x":1.2},"a":{"w":100}}}</code>
+	 * </pre>
+	 * 
+	 * @param resource
+	 *        the name of the resource to load
+	 * @param clazz
+	 *        the class to load the resource from
+	 * @return the loaded data, never {@literal null}
+	 * @throws IOException
+	 *         if the resource cannot be found or parsed correctly
+	 */
+	public static List<GeneralNodeDatum> loadJsonDatumResource(String resource, Class<?> clazz)
+			throws IOException {
+		List<GeneralNodeDatum> result = new ArrayList<>();
+		int row = 0;
+		try (BufferedReader r = new BufferedReader(
+				new InputStreamReader(clazz.getResourceAsStream(resource), Charset.forName("UTF-8")))) {
+			while ( true ) {
+				String line = r.readLine();
+				if ( line == null ) {
+					break;
+				}
+				row++;
+				if ( line.isEmpty() || COMMENT.matcher(line).find() ) {
+					// skip empty/comment line
+					continue;
+				}
+				GeneralNodeDatum d = JsonUtils.getObjectFromJSON(line, GeneralNodeDatum.class);
+				assertThat(format("Parsed JSON datum in row %d", row), d, notNullValue());
+				result.add(d);
+			}
+		}
+		return result;
 	}
 
 	/**
