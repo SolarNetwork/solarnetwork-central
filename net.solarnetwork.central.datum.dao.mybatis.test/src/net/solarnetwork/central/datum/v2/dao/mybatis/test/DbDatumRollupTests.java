@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.arrayOfDecimals;
+import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumResource;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -30,10 +31,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -53,62 +52,111 @@ import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
  */
 public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
-	@SuppressWarnings("unchecked")
-	@Test
-	public void regularHour() throws IOException {
-		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
+	private static interface RollupCallback {
+
+		public void doWithStream(List<GeneralNodeDatum> datums,
+				Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+				List<AggregateDatumEntity> results);
+	}
+
+	private void loadStreamAndRollup(String resource, ZonedDateTime aggStart, ZonedDateTime aggEnd,
+			RollupCallback callback) throws IOException {
+		List<GeneralNodeDatum> datums = loadJsonDatumResource(resource, getClass());
 		log.debug("Got test data: {}", datums);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = DatumTestUtils.insertDatum(log, jdbcTemplate,
-				datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums);
 		UUID streamId = meta.values().iterator().next().getStreamId();
-		Instant aggStartDate = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC).toInstant();
 		List<AggregateDatumEntity> results = jdbcTemplate.query(
 				"select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",
 				AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
-				Timestamp.from(aggStartDate), Timestamp.from(aggStartDate.plus(1, ChronoUnit.HOURS)));
-		assertThat("Agg result returned", results, hasSize(1));
+				Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()));
+		callback.doWithStream(datums, meta, streamId, results);
+	}
 
-		AggregateDatumEntity result = results.get(0);
-		log.debug("Got result: {}", result);
-		assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
-		assertThat("Agg timestamp", result.getTimestamp(), equalTo(aggStartDate));
-		assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
-				arrayOfDecimals("1.45", "4.6"));
-		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("25"));
-		assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
-				arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
-						arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
-		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
-				arrayContaining(arrayOfDecimals(new String[] { "20", "100", "120" })));
+	@SuppressWarnings("unchecked")
+	@Test
+	public void regularHour() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamAndRollup("test-datum-01.txt", start, start.plusHours(1), new RollupCallback() {
+
+			@Override
+			public void doWithStream(List<GeneralNodeDatum> datums,
+					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					List<AggregateDatumEntity> results) {
+				assertThat("Agg result returned", results, hasSize(1));
+
+				AggregateDatumEntity result = results.get(0);
+				log.debug("Got result: {}", result);
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+				assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+						arrayOfDecimals("1.45", "4.6"));
+				assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+						arrayOfDecimals("25"));
+				assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+						arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
+								arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
+				assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+						arrayContaining(arrayOfDecimals(new String[] { "20", "100", "120" })));
+			}
+		});
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public void imperfectHour() throws IOException {
-		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-02.txt", getClass());
-		log.debug("Got test data: {}", datums);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = DatumTestUtils.insertDatum(log, jdbcTemplate,
-				datums);
-		UUID streamId = meta.values().iterator().next().getStreamId();
-		Instant aggStartDate = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC).toInstant();
-		List<AggregateDatumEntity> results = jdbcTemplate.query(
-				"select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",
-				AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
-				Timestamp.from(aggStartDate), Timestamp.from(aggStartDate.plus(1, ChronoUnit.HOURS)));
-		assertThat("Agg result returned", results, hasSize(1));
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamAndRollup("test-datum-02.txt", start, start.plusHours(1), new RollupCallback() {
 
-		AggregateDatumEntity result = results.get(0);
-		log.debug("Got result: {}", result);
-		assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
-		assertThat("Agg timestamp", result.getTimestamp(), equalTo(aggStartDate));
-		assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
-				arrayOfDecimals("1.45", "4.6"));
-		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("30"));
-		assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
-				arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
-						arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
-		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
-				arrayContaining(arrayOfDecimals(new String[] { "30", "100", "130" })));
+			@Override
+			public void doWithStream(List<GeneralNodeDatum> datums,
+					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					List<AggregateDatumEntity> results) {
+				assertThat("Agg result returned", results, hasSize(1));
+
+				AggregateDatumEntity result = results.get(0);
+				log.debug("Got result: {}", result);
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+				assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+						arrayOfDecimals("1.45", "4.6"));
+				assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+						arrayOfDecimals("30"));
+				assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+						arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
+								arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
+				assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+						arrayContaining(arrayOfDecimals(new String[] { "30", "100", "130" })));
+			}
+		});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void incompleteHour() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamAndRollup("test-datum-03.txt", start, start.plusHours(1), new RollupCallback() {
+
+			@Override
+			public void doWithStream(List<GeneralNodeDatum> datums,
+					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					List<AggregateDatumEntity> results) {
+				assertThat("Agg result returned", results, hasSize(1));
+
+				AggregateDatumEntity result = results.get(0);
+				log.debug("Got result: {}", result);
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+				assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+						arrayOfDecimals("1.35", "3.6"));
+				assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+						arrayOfDecimals("19.5"));
+				assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+						arrayContaining(arrayOfDecimals(new String[] { "4", "1.2", "1.5" }),
+								arrayOfDecimals(new String[] { "4", "2.1", "5.1" })));
+				assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+						arrayContaining(arrayOfDecimals(new String[] { "20", "100", "120" })));
+			}
+		});
 	}
 
 }

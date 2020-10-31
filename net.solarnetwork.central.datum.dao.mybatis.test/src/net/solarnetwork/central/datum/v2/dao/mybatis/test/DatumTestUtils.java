@@ -183,7 +183,7 @@ public final class DatumTestUtils {
 	 *        the datum to insert
 	 * @return the resulting stream metadata
 	 */
-	public static Map<NodeSourcePK, NodeDatumStreamMetadata> insertDatum(Logger log,
+	public static Map<NodeSourcePK, NodeDatumStreamMetadata> insertDatumStream(Logger log,
 			JdbcTemplate jdbcTemplate, Iterable<GeneralNodeDatum> datums) {
 		final Map<NodeSourcePK, NodeDatumStreamMetadata> result = new LinkedHashMap<>();
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
