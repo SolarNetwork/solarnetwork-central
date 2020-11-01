@@ -278,7 +278,7 @@ $$
 			, sum(CASE rtype WHEN 2 THEN 1 ELSE 0 END) OVER slice AS slice
 			, CASE rtype
 				WHEN 2 THEN 0
-				ELSE p.val - lag(p.val) OVER slice
+				ELSE COALESCE(p.val - lag(p.val) OVER slice, 0::numeric)
 				END AS diff
 			, first_value(p.val) OVER slot AS rstart
 			, CASE
