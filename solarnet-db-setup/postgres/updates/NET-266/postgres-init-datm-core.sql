@@ -58,6 +58,44 @@ CREATE TABLE solardatm.da_datm_aux (
 	CONSTRAINT da_datm_aux_pkey PRIMARY KEY (stream_id, ts, atype)
 );
 
+-- agg hourly datum table
+CREATE TABLE solardatm.agg_datm_hourly (
+	stream_id	UUID NOT NULL,
+	ts_start	TIMESTAMP WITH TIME ZONE NOT NULL,
+	data_i		NUMERIC[],
+	data_a		NUMERIC[],
+	data_s		TEXT[],
+	data_t		TEXT[],
+	stat_i		NUMERIC[][],
+	read_a		NUMERIC[][],
+	CONSTRAINT agg_datm_hourly_pkey PRIMARY KEY (stream_id, ts_start)
+);
+
+-- agg daily datum table
+CREATE TABLE solardatm.agg_datm_daily (
+	stream_id	UUID NOT NULL,
+	ts_start	TIMESTAMP WITH TIME ZONE NOT NULL,
+	data_i		NUMERIC[],
+	data_a		NUMERIC[],
+	data_s		TEXT[],
+	data_t		TEXT[],
+	stat_i		NUMERIC[][],
+	read_a		NUMERIC[][],
+	CONSTRAINT agg_datm_daily_pkey PRIMARY KEY (stream_id, ts_start)
+);
+
+-- agg monthly datum table
+CREATE TABLE solardatm.agg_datm_monthly (
+	stream_id	UUID NOT NULL,
+	ts_start	TIMESTAMP WITH TIME ZONE NOT NULL,
+	data_i		NUMERIC[],
+	data_a		NUMERIC[],
+	data_s		TEXT[],
+	data_t		TEXT[],
+	stat_i		NUMERIC[][],
+	read_a		NUMERIC[][],
+	CONSTRAINT agg_datm_monthly_pkey PRIMARY KEY (stream_id, ts_start)
+);
 
 /**
  * Add or update a datum record. The data is stored in the `solardatm.da_datm` table.
